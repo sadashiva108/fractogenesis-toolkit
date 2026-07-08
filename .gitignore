@@ -1,0 +1,13 @@
+# Local, machine-specific — never commit
+reimage.env
+*.local.sh
+
+# Build artifacts from bin/build-jump-drive-payload.sh
+.toolkit-version
+*.tar.gz
+*.tar.gz.sha256
+
+# macOS / editor noise
+.DS_Store
+__pycache__/
+*.pyc
