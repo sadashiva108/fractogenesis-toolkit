@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # bootstrap.sh
 #
-# Installs the reimage toolkit to $FRACTOGENESIS_HOME (default: $HOME/reimage-toolkit).
+# Installs the fractogenesis toolkit to $FRACTOGENESIS_HOME (default: $HOME/fractogenesis-toolkit).
 #
 # Usage:
 #   bootstrap.sh                        # fetch from GitHub via curl
@@ -13,7 +13,7 @@
 
 set -euo pipefail
 
-DEST="${FRACTOGENESIS_HOME:-$HOME/reimage-toolkit}"
+DEST="${FRACTOGENESIS_HOME:-$HOME/fractogenesis-toolkit}"
 SRC_TARBALL="${1:-}"
 
 mkdir -p "$DEST"

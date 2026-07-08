@@ -14,7 +14,7 @@ This is the canonical top-level guide for the Mac reimage workflow.
 - [[#Backup Strategy|Backup Strategy]]
 - [[#Restore Strategy|Restore Strategy]]
 - [[#Phase 0 — Confirm the Reimage Plan with IT|Phase 0 — Confirm the Reimage Plan with IT]]
-- [[#Phase 1 — Prepare the External Backup and Capture Root|Phase 1 — Prepare the External Backup and Capture Root]]
+- [[#Phase 1 — Prepare the External Artifact Root|Phase 1 — Prepare the External Artifact Root]]
 - [[#Phase 2 — Pre-Image Backups|Phase 2 — Pre-Image Backups]]
     - [[#Phase 2A — Backup Git Repositories|Phase 2A — Backup Git Repositories]]
     - [[#Phase 2B — Backup Local Files|Phase 2B — Backup Local Files]]
@@ -53,7 +53,7 @@ This is the canonical top-level guide for the Mac reimage workflow.
 
 Use this guide as the practical sequence for preparing, reimaging, restoring, and validating a managed Mac laptop.
 
-> This repo (`fractogenesis-toolkit`) holds only the reimage runbooks and scripts, split out from the personal `reference-vault` repo referenced later in this guide (Phase 9, Restore Strategy) — that's a separate, private repo for general notes, unrelated to reimaging. For how to get this repo's contents onto a freshly reimaged Mac before Git/SSH access exists, see the [README's Quickstart](README.md#quickstart).
+> This repo holds only the reimage runbooks and scripts, split out from the personal `reference-vault` repo referenced later in this guide (Phase 9, Restore Strategy) — that's a separate, private repo for general notes, unrelated to reimaging. For how to get this repo's contents onto a freshly reimaged Mac before Git/SSH access exists, see the [README's Quickstart](README.md#quickstart).
 
 ---
 ## Migration Status
@@ -61,7 +61,7 @@ Use this guide as the practical sequence for preparing, reimaging, restoring, an
 This repo is being built phase by phase, not all at once. Links to phases below marked 🔲 point to files that don't exist here yet on purpose — check `reference-vault`'s copy of this workflow instead until a phase flips to ✅. Flip the box when a phase's runbook + scripts land here with working links and a passing gist/jump-drive test.
 
 - 🔲 Phase 0 — Confirm the Reimage Plan with IT
-- 🔲 Phase 1 — Prepare the External Backup and Capture Root
+- 🔲 Phase 1 — Prepare the External Artifact Root (scripts migrated and tested: `prepare-artifact-root.py`, `artifact-config.sh`; `prepare-artifact-root.md` rework in progress)
 - 🔲 Phase 2 — Pre-Image Backups (2A–2F)
 - 🔲 Phase 3 — Pre-Image Captures (3A–3E)
 - 🔲 Phase 4 — Reimage Preparation Checks
@@ -130,7 +130,7 @@ Follow **this guide** in order. Then, when you reach a phase that points to anot
 | Category | Purpose | Primary Docs |
 |---|---|---|
 | Reimage plan confirmation | Capture the IT-approved erase/reinstall method, ownership, timing, and restore constraints before backups begin. | Phase 0 and `templates/it-reimage-confirmation-template.md`. |
-| Preparation and backup drive setup | Prepare the external backup/capture volume, create `$BACKUP_ROOT`, create the standard subdirectories, set up `reimage.env`, and establish the generated-artifact layout used by the rest of the workflow. | Phase 1 in this guide. |
+| Preparation and backup drive setup | Prepare the external backup/capture volume, create `$REIMAGE_ARTIFACT_ROOT`, create the standard subdirectories, set up `reimage.env`, and establish the generated-artifact layout used by the rest of the workflow. | Phase 1 in this guide. |
 | Backups | Preserve files that must be restored after reimage. | Phase 2 sections, `backup-file-reference.md`, and backup-specific guides. |
 | Validation | Decide whether it is safe to proceed with erase and reimage. | Phase 4 in this guide. |
 
@@ -169,11 +169,11 @@ For the full list of phase guides used in this stage, in the order they are typi
 
 ## Backup Strategy
 
-Keep the top-level rule simple: do not rely on one backup method, do not store secrets loose in cloud storage, keep active scripts in Git rather than `$BACKUP_ROOT`, avoid deleting managed Office/MDM data unless IT explicitly instructs it, and capture evidence before reopening Outlook or OneNote after unexpected closure.
+Keep the top-level rule simple: do not rely on one backup method, do not store secrets loose in cloud storage, keep active scripts in Git rather than `$REIMAGE_ARTIFACT_ROOT`, avoid deleting managed Office/MDM data unless IT explicitly instructs it, and capture evidence before reopening Outlook or OneNote after unexpected closure.
 
 Full strategy, destination guidance, and safety rules: [Backup Strategy Guide](references/backup-strategy-guide.md).
 
-If you plan to collect optional performance evidence for several days or weeks before the actual backup window, start those captures locally under `REIMAGE_WORKSPACE_ROOT` first and copy the finalized artifacts into `$BACKUP_ROOT` later. This avoids missing the evidence window just because the external backup drive is not mounted yet.
+If you plan to collect optional performance evidence for several days or weeks before the actual backup window, start those captures locally under `REIMAGE_WORKSPACE_ROOT` first and copy the finalized artifacts into `$REIMAGE_ARTIFACT_ROOT` later. This avoids missing the evidence window just because the external backup drive is not mounted yet.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -181,7 +181,7 @@ If you plan to collect optional performance evidence for several days or weeks b
 
 ## Restore Strategy
 
-The reference-vault repo, Obsidian, and Git/SSH access are all gone right after the reimage — but Phase 6 onward assumes you can read this guide and its linked runbooks. Prepare a small, redundant bootstrap cheat sheet before the reimage so you can get from a bare Mac back to a cloned, readable repo without depending on the vault being open yet.
+The `reference-vault` repo, Obsidian, and Git/SSH access are all gone right after the reimage — but Phase 6 onward assumes you can read this guide and its linked runbooks. This repo is fetchable without any of those (see the README Quickstart) precisely so this dependency doesn't block early restore phases. `reference-vault` itself stays gone until Phase 9 restores Git/SSH properly — nothing before that needs it.
 
 Full strategy, the three-tier access model, and where to keep the cheat sheet: [Restore Strategy Guide](references/restore-strategy-guide.md).
 
@@ -196,31 +196,31 @@ Captures the IT-approved erase/reinstall method, ownership, timing, wipe expecta
 
 Primary guide: [templates/it-reimage-confirmation-template.md](templates/it-reimage-confirmation-template.md)
 
-Fill out a working copy of the template in a local workspace outside `reference-vault` (`$REIMAGE_WORKSPACE_ROOT/reimage-planning/`). Do not copy it into `$BACKUP_ROOT` yet — Phase 1 copies the filled version into `$BACKUP_ROOT/reimage-plan/` once the external root exists. See [Prepare Backup and Capture Root](prepare-backup-root.md) for `REIMAGE_WORKSPACE_ROOT` setup and the `copy-it-plan` command.
+Fill out a working copy of the template in a local workspace outside this repo (`$REIMAGE_WORKSPACE_ROOT/reimage-planning/`). Do not copy it into `$REIMAGE_ARTIFACT_ROOT` yet — Phase 1 copies the filled version into `$REIMAGE_ARTIFACT_ROOT/reimage-plan/` once the external root exists. See [Prepare Artifact Root](prepare-artifact-root.md) for `REIMAGE_WORKSPACE_ROOT` setup and the `copy-it-plan` command.
 
 Primary outputs:
 
 ```text
 $REIMAGE_WORKSPACE_ROOT/reimage-planning/it-reimage-confirmation-YYYYMMDD.md
-$BACKUP_ROOT/reimage-plan/it-reimage-confirmation-YYYYMMDD.md    # copied in Phase 1
+$REIMAGE_ARTIFACT_ROOT/reimage-plan/it-reimage-confirmation-YYYYMMDD.md    # copied in Phase 1
 ```
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
 
 ---
-## Phase 1 — Prepare the External Backup and Capture Root
+## Phase 1 — Prepare the External Artifact Root
 
-After the reimage plan has been confirmed, prepare the external data/artifact volume, create and verify `$BACKUP_ROOT`, set up `reimage.env`, and create the standard generated-artifact folders.
+After the reimage plan has been confirmed, prepare the external data/artifact volume, create and verify `$REIMAGE_ARTIFACT_ROOT`, set up `reimage.env`, and create the standard generated-artifact folders.
 
 Keep this phase concise but complete:
 
 1. Verify the correct external backup drive is mounted, writable, has enough free space, and uses the expected volumes before any backup starts.
-2. Verify `reimage.env` resolves to the intended external drive and `BACKUP_ROOT`, not an old path or a local fallback.
+2. Verify `reimage.env` resolves to the intended external drive and `REIMAGE_ARTIFACT_ROOT`, not an old path or a local fallback.
 3. Verify the standard folder layout exists and the current workflow docs have been copied into the backup so the same instructions travel with the artifacts.
-4. Copy `templates/bootstrap-cheatsheet.md` to `$BACKUP_ROOT/workflow-bootstrap/` and to your OneDrive workflow folder — this is the artifact that gets you from a bare reimaged Mac back to a cloned reference-vault. See [[#Restore Strategy|Restore Strategy]] above.
+4. Refresh the jump-drive fallback: copy `bootstrap.sh` and a current `bin/build-jump-drive-payload.sh`-built tarball onto the prepared jump drive — this is the artifact that gets this repo onto a bare reimaged Mac without needing Git/SSH. See [[#Restore Strategy|Restore Strategy]] above and Phase 6's callout for the exact commands.
 
-Follow this phase guide: [Prepare Backup and Capture Root](prepare-backup-root.md).
+Follow this phase guide: [Prepare Artifact Root](prepare-artifact-root.md).
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -253,11 +253,11 @@ Preserves Git repository risk state (local-only commits, dirty repos, stashes, u
 Primary outputs:
 
 ```text
-$BACKUP_ROOT/git-audit-reports/
-$BACKUP_ROOT/gitignore-superset/
-$BACKUP_ROOT/selected-ignored-files-dryrun/
-$BACKUP_ROOT/selected-ignored-files-filtered-dryrun/
-$BACKUP_ROOT/selected-ignored-files/
+$REIMAGE_ARTIFACT_ROOT/git-audit-reports/
+$REIMAGE_ARTIFACT_ROOT/gitignore-superset/
+$REIMAGE_ARTIFACT_ROOT/selected-ignored-files-dryrun/
+$REIMAGE_ARTIFACT_ROOT/selected-ignored-files-filtered-dryrun/
+$REIMAGE_ARTIFACT_ROOT/selected-ignored-files/
 ```
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -269,13 +269,13 @@ Follow this phase guide: [Backup Local Files](backup-local-files.md).
 
 This phase owns the plain local-file copy driven by `backup-local-files.sh`.
 
-Use it for the authoritative pre-image copies of home-directory files, dotfiles, shell scripts, and other non-secret local config selected by `backup-config.sh`.
+Use it for the authoritative pre-image copies of home-directory files, dotfiles, shell scripts, and other non-secret local config selected by `artifact-config.sh`.
 
 Primary output:
 
 ```text
-$BACKUP_ROOT/local-files/
-$BACKUP_ROOT/local-files/dotfiles/
+$REIMAGE_ARTIFACT_ROOT/local-files/
+$REIMAGE_ARTIFACT_ROOT/local-files/dotfiles/
 ```
 
 If OneDrive is enabled, this phase may also create a secondary local CloudStorage copy, but OneDrive completion is not considered proven until the Phase 4 manual sync checks from `capture-validated-reimage-prep.md` are complete.
@@ -294,11 +294,11 @@ IntelliJ has a dedicated companion runbook, `backup-intellij.md`, for detailed r
 Primary outputs:
 
 ```text
-$BACKUP_ROOT/app-backups/
-$BACKUP_ROOT/secrets-encrypted/docker/
-$BACKUP_ROOT/secrets-encrypted/chrome/
-$BACKUP_ROOT/secrets-encrypted/postman/
-$BACKUP_ROOT/secrets-encrypted/raycast/, if used
+$REIMAGE_ARTIFACT_ROOT/app-backups/
+$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/docker/
+$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/chrome/
+$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/postman/
+$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/raycast/, if used
 ```
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -313,9 +313,9 @@ This phase owns the certificate and Keychain review/export/staging workflow befo
 Primary outputs:
 
 ```text
-$BACKUP_ROOT/public-certs/
-$BACKUP_ROOT/secrets-encrypted/certs/
-$BACKUP_ROOT/secrets-encrypted/extra-secrets-certs-review/
+$REIMAGE_ARTIFACT_ROOT/public-certs/
+$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/certs/
+$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/extra-secrets-certs-review/
 ```
 
 Important ordering rule: if you add any new Keychain export, `.p12` / `.pfx`, keystore, private key, or selected certificate/key candidate, rerun the Phase 2D scan/plan pass and then rerun Phase 2E so the newest consolidated secrets DMG includes those files before final validation.
@@ -340,14 +340,14 @@ This phase is the consolidated encrypted-secrets pass: build the final `all-secr
 
 Follow this phase guide: [Backup Time Machine](backup-time-machine.md).
 
-Run Time Machine after the other Phase 2 backup subphases are complete — by default it's the last backup action before final pre-image validation. It's the broad safety-net backup layer, separate from the manual `$BACKUP_ROOT` artifacts on the external `Data` volume.
+Run Time Machine after the other Phase 2 backup subphases are complete — by default it's the last backup action before final pre-image validation. It's the broad safety-net backup layer, separate from the manual `$REIMAGE_ARTIFACT_ROOT` artifacts on the external `Data` volume.
 
 Time Machine destination: `/Volumes/AppleBackups`
 
 Primary outputs:
 
 ```text
-$BACKUP_ROOT/time-machine/pre-image-time-machine-status-YYYYMMDD-HHMMSS/
+$REIMAGE_ARTIFACT_ROOT/time-machine/pre-image-time-machine-status-YYYYMMDD-HHMMSS/
 ```
 
 The Time Machine status workflow automates the status table as much as possible. Manual sign-off remains for reviewing the Phase 4 sync/manual sign-off note, the external root spot-check, and final eject (see `backup-time-machine.md` — Eject the Drive Before Reimage).
@@ -358,7 +358,7 @@ The Time Machine status workflow automates the status table as much as possible.
 
 ## Phase 3 — Pre-Image Captures
 
-Pre-image captures are **not backups** in the restore sense. They are read-only snapshots stored under the prepared `$BACKUP_ROOT` so the post-image system can be compared against the pre-image state.
+Pre-image captures are **not backups** in the restore sense. They are read-only snapshots stored under the prepared `$REIMAGE_ARTIFACT_ROOT` so the post-image system can be compared against the pre-image state.
 
 This section owns the **phase order**. The linked capture runbooks explain command details and output structure, and the owning runbook keeps any manual-only notes or templates for that phase.
 
@@ -366,7 +366,7 @@ Reference link: [[reimage-prep-evidence]]
 
 All Phase 3 captures are optional. **Phase 3A** is the lightweight workflow snapshot capture; run it when you want the current reimage workflow docs and lightweight restore reference bundle preserved on the external root. If you run only one **system-state** capture, run **Phase 3B system inventory** because it preserves the broadest rebuild context.
 
-If a capture needs to run for days or weeks before the broader backup phase, stage it locally under `REIMAGE_WORKSPACE_ROOT` first and then copy it into `$BACKUP_ROOT` before Phase 4 final validation.
+If a capture needs to run for days or weeks before the broader backup phase, stage it locally under `REIMAGE_WORKSPACE_ROOT` first and then copy it into `$REIMAGE_ARTIFACT_ROOT` before Phase 4 final validation.
 
 Use the others when they answer a specific need:
 
@@ -377,7 +377,7 @@ Use the others when they answer a specific need:
 
 ### Recommended Pre-Image Capture Order
 
-1. Confirm `$BACKUP_ROOT` exists and matches your current `reimage.env`.
+1. Confirm `$REIMAGE_ARTIFACT_ROOT` exists and matches your current `reimage.env`.
 2. Run Phase 3A workflow snapshot capture.
 3. Run Phase 3B system inventory.
 4. Run Phase 3C company-managed inventory if you want a precise record of IT-managed state before erase.
@@ -391,11 +391,11 @@ Do not reset the Office marker after an incident until the incident evidence has
 
 | Subphase | Evidence | Destination | Supporting reference | Manual notes or checklist section |
 |---|---|---|---|---|
-| Phase 3A | Workflow snapshot | `$BACKUP_ROOT/workflow-snapshot/pre-image-workflow-snapshot-*`, `$BACKUP_ROOT/workflow-snapshot/reimage-workflow-docs/` | capture-workflow-snapshot.md | — |
-| Phase 3B | System inventory | `$BACKUP_ROOT/system-inventory/pre-image-*` | capture-system-inventory.md | `capture-system-inventory.md` — Manual context note only when needed |
-| Phase 3C | Company-managed inventory | `$BACKUP_ROOT/managed-inventory/pre-image-*` | capture-managed-inventory.md | — |
-| Phase 3D | Performance audit | `$BACKUP_ROOT/performance-audit/pre-image-*` | capture-performance-audit.md | `capture-performance-audit.md` — Manual Observations |
-| Phase 3E | Office stability | `$BACKUP_ROOT/office-stability/pre-reimage-*` | capture-office-stability-audit.md | `capture-office-stability-audit.md` — Final Pre-Reimage Checklist |
+| Phase 3A | Workflow snapshot | `$REIMAGE_ARTIFACT_ROOT/workflow-snapshot/pre-image-workflow-snapshot-*`, `$REIMAGE_ARTIFACT_ROOT/workflow-snapshot/reimage-workflow-docs/` | capture-workflow-snapshot.md | — |
+| Phase 3B | System inventory | `$REIMAGE_ARTIFACT_ROOT/system-inventory/pre-image-*` | capture-system-inventory.md | `capture-system-inventory.md` — Manual context note only when needed |
+| Phase 3C | Company-managed inventory | `$REIMAGE_ARTIFACT_ROOT/managed-inventory/pre-image-*` | capture-managed-inventory.md | — |
+| Phase 3D | Performance audit | `$REIMAGE_ARTIFACT_ROOT/performance-audit/pre-image-*` | capture-performance-audit.md | `capture-performance-audit.md` — Manual Observations |
+| Phase 3E | Office stability | `$REIMAGE_ARTIFACT_ROOT/office-stability/pre-reimage-*` | capture-office-stability-audit.md | `capture-office-stability-audit.md` — Final Pre-Reimage Checklist |
 
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -475,7 +475,7 @@ Primary guide: [[capture-validated-reimage-prep|capture-validated-reimage-prep.m
 Primary generated evidence:
 
 ```text
-$BACKUP_ROOT/reimage-prep-checks/
+$REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/
 ```
 
 
@@ -523,6 +523,8 @@ System Settings / General / Transfer or Reset / Erase All Content and Settings
 ```
 
 After the erase completes and the Mac restarts, connect to Wi-Fi and sign in with the company Microsoft 365 / O365 account when prompted. That sign-in should enroll the Mac into Intune and start installation of required profiles and base software such as CrowdStrike, Zscaler, Microsoft Office, and other managed apps.
+
+> **This is also the earliest point you can fetch this toolkit onto the Mac** — curl doesn't need Intune enrollment to finish, just Wi-Fi. See the callout at the top of Phase 6 below for the exact command and the jump-drive fallback.
 
 Do not reconnect the external backup drive or begin development restore until the initial Intune enrollment and base profile/app installation has had time to complete.
 
@@ -576,6 +578,22 @@ Record the exact method used in the notes.
 
 This phase brings the rebuilt Mac to a clean, trusted managed baseline before any restore work begins. It focuses on completing company enrollment, letting required profiles, security tools, and base managed apps install, applying any required macOS updates, performing the first stabilization restart, and confirming afterward that the managed state still looks healthy. Its purpose is to make sure the machine is ready for the later restore phases without mixing in Git, apps, secrets, or local-file recovery too early.
 
+> **Step 1 of this phase: get this toolkit onto the Mac.** No repo, `git`, or SSH key exists yet — this is by design (see the Restore Strategy section above). Do this before anything else in Phase 6:
+>
+> **Primary — if Wi-Fi is connected (it should be, from Phase 5's sign-in step):**
+> ```bash
+> curl -fsSL https://raw.githubusercontent.com/sadashiva108/fractogenesis-toolkit/main/bootstrap.sh | bash
+> ```
+> Installs to `$HOME/reimage-toolkit` (or `$FRACTOGENESIS_HOME` if set). No `git` needed — installing `git` on a bare Mac triggers a large Xcode Command Line Tools popup/download, which this deliberately avoids.
+>
+> **Fallback — if there's no network yet** (captive portal, delayed profile push, etc.), use the prepared jump drive:
+> ```bash
+> bash /Volumes/REIMAGEKIT/bootstrap.sh /Volumes/REIMAGEKIT/fractogenesis-toolkit.tar.gz
+> ```
+> Checksum-verified before installing; refuses to proceed on a corrupted copy rather than installing something broken.
+>
+> Once either succeeds, continue this phase's remaining steps using the local copy — no further network dependency for reading the guide itself.
+
 Primary guide: [[enroll-and-stabilize|enroll-and-stabilize.md]]
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -591,7 +609,7 @@ Primary guide: [[capture-initial-reimaged-system|capture-initial-reimaged-system
 Primary generated evidence:
 
 ```text
-$BACKUP_ROOT/reimaged-system/initial-reimaged-system--YYYYMMDD-HHMMSS/
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/initial-reimaged-system--YYYYMMDD-HHMMSS/
 ```
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -632,7 +650,7 @@ Primary guides:
 
 ## Phase 9 — Restore Git
 
-**Restore Git** reestablishes source-control access and repository context on top of the restored runtime and access foundation. It focuses on restoring or  recreating Git configuration, SSH routing, work and personal identity handling, and the  reference-vault  checkout first, then restoring or recloning the repositories needed for the remaining setup work. The goal is to ensure the rebuilt Mac can authenticate to the correct remotes, use the intended Git identity automatically, and bring the core repo workspace back online before broader app and local-file restore begins.
+**Restore Git** reestablishes source-control access and repository context on top of the restored runtime and access foundation. It focuses on restoring or recreating Git configuration, SSH routing, work and personal identity handling, and the reference-vault checkout first, then restoring or recloning the repositories needed for the remaining setup work. The goal is to ensure the rebuilt Mac can authenticate to the correct remotes, use the intended Git identity automatically, and bring the core repo workspace back online before broader app and local-file restore begins.
 
 Primary guide: [[restore-git|restore-git.md]]
 
@@ -666,7 +684,7 @@ If a particular capture from Phase 3 was run, run the corresponding Phase 11 cap
 
 ### Recommended Post-Image Capture Order
 
-1. Confirm `$BACKUP_ROOT` exists and matches your current `reimage.env`.
+1. Confirm `$REIMAGE_ARTIFACT_ROOT` exists and matches your current `reimage.env`.
 2. Run Phase 11A workflow snapshot capture if you want a refreshed workflow-doc bundle on the external root.
 3. Run Phase 11B post-image system inventory.
 4. Run Phase 11C post-image company-managed inventory if you want a precise record of IT-managed state after rebuild.
@@ -680,11 +698,11 @@ Do not reset the Office marker after an incident until the incident evidence has
 
 | Subphase | Evidence | Destination | Supporting reference | Manual notes or checklist section |
 |---|---|---|---|---|
-| Phase 11A | Workflow snapshot | `$BACKUP_ROOT/workflow-snapshot/pre-image-workflow-snapshot-*`, `$BACKUP_ROOT/workflow-snapshot/reimage-workflow-docs/` | capture-workflow-snapshot.md | — |
-| Phase 11B | System inventory | `$BACKUP_ROOT/system-inventory/post-image-*` | capture-system-inventory.md | `capture-system-inventory.md` — Manual context note only when needed |
-| Phase 11C | Company-managed inventory | `$BACKUP_ROOT/managed-inventory/post-image-*` | capture-managed-inventory.md | — |
-| Phase 11D | Performance audit | `$BACKUP_ROOT/performance-audit/post-image-*` | capture-performance-audit.md | `capture-performance-audit.md` — Manual Observations |
-| Phase 11E | Office stability | `$BACKUP_ROOT/office-stability/post-reimage-*` | capture-office-stability-audit.md | `capture-office-stability-audit.md` — Post-Image Office Stability Checklist Template |
+| Phase 11A | Workflow snapshot | `$REIMAGE_ARTIFACT_ROOT/workflow-snapshot/pre-image-workflow-snapshot-*`, `$REIMAGE_ARTIFACT_ROOT/workflow-snapshot/reimage-workflow-docs/` | capture-workflow-snapshot.md | — |
+| Phase 11B | System inventory | `$REIMAGE_ARTIFACT_ROOT/system-inventory/post-image-*` | capture-system-inventory.md | `capture-system-inventory.md` — Manual context note only when needed |
+| Phase 11C | Company-managed inventory | `$REIMAGE_ARTIFACT_ROOT/managed-inventory/post-image-*` | capture-managed-inventory.md | — |
+| Phase 11D | Performance audit | `$REIMAGE_ARTIFACT_ROOT/performance-audit/post-image-*` | capture-performance-audit.md | `capture-performance-audit.md` — Manual Observations |
+| Phase 11E | Office stability | `$REIMAGE_ARTIFACT_ROOT/office-stability/post-reimage-*` | capture-office-stability-audit.md | `capture-office-stability-audit.md` — Post-Image Office Stability Checklist Template |
 
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -747,7 +765,9 @@ If Outlook or OneNote closes unexpectedly, do not reopen either app first. Captu
 
 Follow this capture runbook: [capture-office-stability-audit.md](capture-office-stability-audit.md).
 
-Generated checklist, when needed: `scripts/office-stability-checklist.sh --phase post-reimage --backup-root "$BACKUP_ROOT"`.
+Generated checklist, when needed: `scripts/office-stability-checklist.sh --phase post-reimage --backup-root "$REIMAGE_ARTIFACT_ROOT"`.
+
+> **Naming TODO:** the `--backup-root` flag name itself belongs to `office-stability-checklist.sh`, which isn't migrated to this repo yet (Phase 11E). Only its *value* was updated above (`$BACKUP_ROOT` → `$REIMAGE_ARTIFACT_ROOT`) — revisit whether the flag itself should become `--artifact-root` or similar once that script actually lands here.
 
 Manual checklist, if needed: [capture-office-stability-audit.md — Post-Image Office Stability Checklist Template](capture-office-stability-audit.md#post-image-office-stability-checklist-template).
 
@@ -764,7 +784,7 @@ Primary guide: [[capture-validated-reimaged-system|capture-validated-reimaged-sy
 Primary generated evidence:
 
 ```text
-$BACKUP_ROOT/reimaged-system/
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/
 ```
 
 [[#Table of Contents|⬆ Back to Table of Contents]]

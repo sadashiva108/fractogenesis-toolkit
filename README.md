@@ -8,8 +8,8 @@ Runbooks and scripts for reimaging a Mac (Windows/Linux/other-device reimage wor
 
 - [Quickstart](#quickstart)
 - [Getting the Toolkit onto a Freshly Reimaged Mac](#getting-the-toolkit-onto-a-freshly-reimaged-mac)
-  - [Primary Path — curl](#primary-path--curl)
-  - [Fallback Path — Jump Drive](#fallback-path--jump-drive)
+    - [Primary Path — curl](#primary-path--curl)
+    - [Fallback Path — Jump Drive](#fallback-path--jump-drive)
 - [Repository Structure](#repository-structure)
 - [Why a Separate Repo](#why-a-separate-repo)
 - [Naming Conventions](#naming-conventions)
@@ -36,7 +36,7 @@ Right after Erase All Content and Settings, there's no repo, no SSH key, and no 
 Once the Mac has Wi-Fi (available as early as the Intune/O365 enrollment step), fetch and run the bootstrap script directly — no `git`, no auth, no prior setup required:
 
 ```bash
-curl -fsSL <gist-or-raw-url-here>/bootstrap.sh | bash
+curl -fsSL https://raw.githubusercontent.com/sadashiva108/fractogenesis-toolkit/main/bootstrap.sh | bash
 ```
 
 This installs the toolkit to `$HOME/reimage-toolkit`.
@@ -56,7 +56,7 @@ bash /Volumes/<stick-name>/bootstrap.sh /Volumes/<stick-name>/fractogenesis-tool
 ## Repository Structure
 
 ```text
-fractogenesis-toolkit/
+<repo-root>/
 ├── README.md
 ├── bootstrap.sh                  # the one file fetched before anything else exists
 ├── reimaging-guide.md            # start here — sequences every phase
