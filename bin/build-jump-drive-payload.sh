@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # build-jump-drive-payload.sh
 #
-# Builds a versioned, checksummed tarball of the reimage toolkit repo for
+# Builds a versioned, checksummed tarball of the fractogenesis toolkit repo for
 # copying onto a jump drive as a no-network fallback for bootstrap.sh.
 #
 # Usage:
-#   build-jump-drive-payload.sh /path/to/reimage-toolkit /path/to/output-dir
+#   build-jump-drive-payload.sh /path/to/fractogenesis-toolkit /path/to/output-dir
 #
 # Run this shortly before each reimage to keep the jump drive's copy current.
 # The version stamp (commit hash + build date) lets you tell at a glance how
@@ -13,8 +13,8 @@
 
 set -euo pipefail
 
-REPO_ROOT="${1:?Usage: build-jump-drive-payload.sh /path/to/reimage-toolkit /path/to/output-dir}"
-OUT_DIR="${2:?Usage: build-jump-drive-payload.sh /path/to/reimage-toolkit /path/to/output-dir}"
+REPO_ROOT="${1:?Usage: build-jump-drive-payload.sh /path/to/fractogenesis-toolkit /path/to/output-dir}"
+OUT_DIR="${2:?Usage: build-jump-drive-payload.sh /path/to/fractogenesis-toolkit /path/to/output-dir}"
 
 mkdir -p "$OUT_DIR"
 cd "$REPO_ROOT"
