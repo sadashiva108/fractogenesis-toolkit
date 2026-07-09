@@ -11,3 +11,6 @@ reimage.env
 .DS_Store
 __pycache__/
 *.pyc
+
+# Obsidian vault config -- local editor state, not shared repo content
+.obsidian/
