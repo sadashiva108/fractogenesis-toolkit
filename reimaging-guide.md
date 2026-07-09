@@ -28,8 +28,9 @@ This is the canonical top-level guide for the Mac reimage workflow.
     - [[#Phase 3C — Pre-Image Company-Managed Inventory Capture|Phase 3C — Pre-Image Company-Managed Inventory Capture]]
     - [[#Phase 3D — Pre-Image Performance Audit Capture|Phase 3D — Pre-Image Performance Audit Capture]]
     - [[#Phase 3E — Pre-Image Office Stability Capture|Phase 3E — Pre-Image Office Stability Capture]]
-- [[#Phase 4A — Capture Validated Reimage Preparation|Phase 4A — Capture Validated Reimage Preparation]]
-- [[#Phase 4B — Test Guide Access on a Freshly Reimaged Mac|Phase 4B — Test Guide Access on a Freshly Reimaged Mac]]
+- [[#Phase 4 — Reimage Preparation|Phase 4 — Reimage Preparation]]
+    - [[#Phase 4A — Guide Access on a Freshly Reimaged Mac|Phase 4A — Guide Access on a Freshly Reimaged Mac]]
+    - [[#Phase 4B — Reimage Preparation Checks|Phase 4B — Reimage Preparation Checks]]
 - [[#Phase 5 — Reimage / Erase Procedure|Phase 5 — Reimage / Erase Procedure]]
 - [[#Phase 6 — Enroll and Stabilize|Phase 6 — Enroll and Stabilize]]
 - [[#Phase 7 — Initial Captures and Sanity Checks|Phase 7 — Initial Captures and Sanity Checks]]
@@ -65,8 +66,8 @@ This repo is being built phase by phase, not all at once. Links to phases below 
 - 🔲 Phase 1 — Prepare the External Artifact Root (scripts migrated and tested: `prepare-artifact-root.py`, `artifact-config.sh`; `prepare-artifact-root.md` rework in progress)
 - 🔲 Phase 2 — Pre-Image Backups (2A–2F)
 - 🔲 Phase 3 — Pre-Image Captures (3A–3E)
-- 🔲 Phase 4A — Capture Validated Reimage Preparation
-- ✅ Phase 4B — Test Guide Access on a Freshly Reimaged Mac (`test-guide-access.md` migrated and tested; both curl and jump-drive paths verified end to end)
+- ✅ Phase 4A — Guide Access on a Freshly Reimaged Mac (`reimage-guide-access.md` migrated and tested; both curl and jump-drive paths verified end to end)
+- 🟡 Phase 4B — Reimage Preparation Checks (`reimage-prep-checks.md`, `bin/reimage-checklist.sh`, `templates/app-backup-and-cloud-sync-signoff-template.md` migrated and tested; blocked on one remaining missing dependency: `.internal/load-reimage-config-snippet.sh`, not uploaded yet)
 - 🔲 Phase 5 — Reimage / Erase Procedure
 - 🔲 Phase 6 — Enroll and Stabilize
 - 🔲 Phase 7 — Initial Captures and Sanity Checks
@@ -134,7 +135,7 @@ Follow **this guide** in order. Then, when you reach a phase that points to anot
 | Reimage plan confirmation | Capture the IT-approved erase/reinstall method, ownership, timing, and restore constraints before backups begin. | Phase 0 and `templates/it-reimage-confirmation-template.md`. |
 | Preparation and backup drive setup | Prepare the external backup/capture volume, create `$REIMAGE_ARTIFACT_ROOT`, create the standard subdirectories, set up `reimage.env`, and establish the generated-artifact layout used by the rest of the workflow. | Phase 1 in this guide. |
 | Backups | Preserve files that must be restored after reimage. | Phase 2 sections, `backup-file-reference.md`, and backup-specific guides. |
-| Validation | Decide whether it is safe to proceed with erase and reimage. | Phase 4A in this guide. |
+| Validation | Decide whether it is safe to proceed with erase and reimage. | Phase 4B in this guide. |
 
 For the full list of phase guides used in this stage, in the order they are typically reached, see [Backup File Reference — Phase Guide Reference](references/backup-file-reference.md#phase-guide-reference).
 
@@ -280,7 +281,7 @@ $REIMAGE_ARTIFACT_ROOT/local-files/
 $REIMAGE_ARTIFACT_ROOT/local-files/dotfiles/
 ```
 
-If OneDrive is enabled, this phase may also create a secondary local CloudStorage copy, but OneDrive completion is not considered proven until the Phase 4A manual sync checks from `capture-validated-reimage-prep.md` are complete.
+If OneDrive is enabled, this phase may also create a secondary local CloudStorage copy, but OneDrive completion is not considered proven until the Phase 4B manual sync checks from `reimage-prep-checks.md` are complete.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -352,7 +353,7 @@ Primary outputs:
 $REIMAGE_ARTIFACT_ROOT/time-machine/pre-image-time-machine-status-YYYYMMDD-HHMMSS/
 ```
 
-The Time Machine status workflow automates the status table as much as possible. Manual sign-off remains for reviewing the Phase 4A sync/manual sign-off note, the external root spot-check, and final eject (see `backup-time-machine.md` — Eject the Drive Before Reimage).
+The Time Machine status workflow automates the status table as much as possible. Manual sign-off remains for reviewing the Phase 4B sync/manual sign-off note, the external root spot-check, and final eject (see `backup-time-machine.md` — Eject the Drive Before Reimage).
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -368,7 +369,7 @@ Reference link: [[reimage-prep-evidence]]
 
 All Phase 3 captures are optional. **Phase 3A** is the lightweight workflow snapshot capture; run it when you want the current reimage workflow docs and lightweight restore reference bundle preserved on the external root. If you run only one **system-state** capture, run **Phase 3B system inventory** because it preserves the broadest rebuild context.
 
-If a capture needs to run for days or weeks before the broader backup phase, stage it locally under `REIMAGE_WORKSPACE_ROOT` first and then copy it into `$REIMAGE_ARTIFACT_ROOT` before Phase 4A final validation.
+If a capture needs to run for days or weeks before the broader backup phase, stage it locally under `REIMAGE_WORKSPACE_ROOT` first and then copy it into `$REIMAGE_ARTIFACT_ROOT` before Phase 4B final validation.
 
 Use the others when they answer a specific need:
 
@@ -387,7 +388,7 @@ Use the others when they answer a specific need:
 6. Start or continue the Office watcher if Office stability evidence is still needed.
 7. Confirm the Office marker timestamp.
 8. Run Phase 3E Office stability baseline and Office-specific checklist.
-9. Review the generated evidence and any remaining manual rows in the owning capture runbooks before Phase 4A final validation.
+9. Review the generated evidence and any remaining manual rows in the owning capture runbooks before Phase 4B final validation.
 
 Do not reset the Office marker after an incident until the incident evidence has been captured.
 
@@ -468,11 +469,31 @@ Manual checklist, if needed: [capture-office-stability-audit.md — Final Pre-Re
 
 ---
 
-## Phase 4A — Capture Validated Reimage Preparation
+## Phase 4 — Reimage Preparation
 
-**Phase 4A — Capture Validated Reimage Preparation** is the final pre-erase gate that confirms the backup, capture, and staging work is complete enough to proceed safely. It brings together the results of the earlier pre-image phases so you can verify that critical Git history, local files, app backups, certificates, secrets, Time Machine state, and any chosen evidence captures are present, readable, and stored in the expected locations before the Mac is erased. The goal is to catch missing or incomplete preparation work while the original system is still available, so the reimage starts only after the recovery path and supporting evidence are in place.
+**Reimage Preparation** is the final pre-erase stage, split into two parts. First, confirming the escape hatch itself works — that `fractogenesis-toolkit` can actually be fetched onto a bare Mac via curl or jump drive, since every phase from 6 onward depends on that assumption holding. Second, the traditional final gate — confirming the backup, capture, and staging work from the earlier pre-image phases is complete enough to proceed safely. Both checks happen while the original system is still available and easy to fix problems on, before anything destructive starts.
 
-Primary guide: [[capture-validated-reimage-prep|capture-validated-reimage-prep.md]]
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
+## Phase 4A — Guide Access on a Freshly Reimaged Mac
+
+**Phase 4A — Guide Access on a Freshly Reimaged Mac** validates, before the Mac is erased, that both ways of getting `fractogenesis-toolkit` onto a bare Mac actually work — the curl/bootstrap path and the jump drive fallback. Phase 6 onward assumes one of these succeeds; this phase is where that assumption gets proven, not assumed, while the original system (and a normal way to fix problems) is still available.
+
+Primary guide: [[reimage-guide-access|reimage-guide-access.md]]
+
+For the reasoning behind why this repo needs to be independently fetchable at all, see the Guide Access Solutions section of [[restore-strategy-guide|restore-strategy-guide.md]].
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
+## Phase 4B — Reimage Preparation Checks
+
+**Phase 4B — Reimage Preparation Checks** is the final pre-erase gate that confirms the backup, capture, and staging work is complete enough to proceed safely. It brings together the results of the earlier pre-image phases so you can verify that critical Git history, local files, app backups, certificates, secrets, Time Machine state, and any chosen evidence captures are present, readable, and stored in the expected locations before the Mac is erased. The goal is to catch missing or incomplete preparation work while the original system is still available, so the reimage starts only after the recovery path and supporting evidence are in place.
+
+Primary guide: [[reimage-prep-checks|reimage-prep-checks.md]]
 
 Primary generated evidence:
 
@@ -484,18 +505,6 @@ $REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/
 ### Disconnect backup media
 
 After final verification, eject the entire external drive — it may expose multiple partitions (for example, `Data` and `AppleBackups`), and ejecting either one unmounts the whole physical drive. See `backup-time-machine.md` — Eject the Drive Before Reimage for the full command sequence and confirmation steps.
-
-[[#Table of Contents|⬆ Back to Table of Contents]]
-
----
-
-## Phase 4B — Test Guide Access on a Freshly Reimaged Mac
-
-**Phase 4B — Test Guide Access on a Freshly Reimaged Mac** validates, before the Mac is erased, that both ways of getting `fractogenesis-toolkit` onto a bare Mac actually work — the curl/bootstrap path and the jump drive fallback. Phase 6 onward assumes one of these succeeds; this phase is where that assumption gets proven, not assumed, while the original system (and a normal way to fix problems) is still available.
-
-Primary guide: [[test-guide-access|test-guide-access.md]]
-
-For the reasoning behind why this repo needs to be independently fetchable at all, see the Guide Access Solutions section of [[restore-strategy-guide|restore-strategy-guide.md]].
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 

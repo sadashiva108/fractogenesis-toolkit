@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "test-guide-access.md",
+                "file": "prepare-artifact-root.md",
                 "mode": "preview",
                 "source": true
               },
               "icon": "lucide-file",
-              "title": "test-guide-access"
+              "title": "prepare-artifact-root"
             }
           }
         ]
@@ -185,9 +185,13 @@
   },
   "active": "d496cc82069fafee",
   "lastOpenFiles": [
-    "references/restore-strategy-guide.md",
-    "test-guide-access.md",
+    "templates/app-backup-and-cloud-sync-signoff-template.md",
+    "bin/reimage-checklist.sh",
+    "reimage-prep-checks.md",
+    "templates/manual-export-pass-criteria-template.md",
     "reimaging-guide.md",
+    "test-guide-access.md",
+    "references/restore-strategy-guide.md",
     "prepare-artifact-root.md",
     "templates/it-reimage-confirmation-template.md",
     "reimage.env",
