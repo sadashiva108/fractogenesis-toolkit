@@ -67,7 +67,7 @@ This repo is being built phase by phase, not all at once. Links to phases below 
 - 🔲 Phase 2 — Pre-Image Backups (2A–2F)
 - 🔲 Phase 3 — Pre-Image Captures (3A–3E)
 - ✅ Phase 4A — Guide Access on a Freshly Reimaged Mac (`reimage-guide-access.md` migrated and tested; both curl and jump-drive paths verified end to end)
-- 🟡 Phase 4B — Reimage Preparation Checks (`reimage-prep-checks.md`, `bin/reimage-checklist.sh`, `templates/app-backup-and-cloud-sync-signoff-template.md` migrated and tested; blocked on one remaining missing dependency: `.internal/load-reimage-config-snippet.sh`, not uploaded yet)
+- ✅ Phase 4B — Reimage Preparation Checks (`reimage-prep-checks.md`, `bin/reimage-checklist.sh`, `.internal/load-reimage-config-snippet.sh`, `.internal/artifact-config.sh`, `templates/app-backup-and-cloud-sync-signoff-template.md` all migrated; full chain tested end to end with no stubs)
 - 🔲 Phase 5 — Reimage / Erase Procedure
 - 🔲 Phase 6 — Enroll and Stabilize
 - 🔲 Phase 7 — Initial Captures and Sanity Checks

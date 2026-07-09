@@ -1,6 +1,6 @@
-[[reimaging-guide#Phase 1 — Prepare the External Backup and Capture Root|← Back to Mac Reimaging Guide]]
+[[reimaging-guide#Phase 1 — Prepare the External Artifact Root|← Back to Mac Reimaging Guide]]
 
-# Prepare Backup and Capture Root
+# Prepare Artifact Root
 
 Sequential guide for preparing the external backup/capture location before running pre-image backups, evidence captures, validation scripts, restore steps, and post-image comparison captures.
 
@@ -12,10 +12,6 @@ Recommended path: create the local `reimage.env` file first, then source it in e
 
 - [[#Purpose|Purpose]]
 - [[#Artifact and Script Locations|Artifact and Script Locations]]
-- [[#Guide Access on a Freshly Reimaged Mac|Guide Access on a Freshly Reimaged Mac]]
-    - [[#Test the Bootstrap (curl) Path|Test the Bootstrap (curl) Path]]
-    - [[#Test the Jump Drive Fallback Path|Test the Jump Drive Fallback Path]]
-    - [[#Clean Up|Clean Up]]
 - [[#Before You Run Anything|Before You Run Anything]]
     - [[#Preparation Sequence|Preparation Sequence]]
     - [[#Repo, Workspace, and External Drive Boundary|Repo, Workspace, and External Drive Boundary]]
@@ -30,8 +26,8 @@ Recommended path: create the local `reimage.env` file first, then source it in e
     - [[#Define Git Repository Roots|Define Git Repository Roots]]
     - [[#Create the Artifact Root|Create the Artifact Root]]
     - [[#Load and Confirm the Environment|Load and Confirm the Environment]]
-    - [[#Create the Standard Directory Layout|Create the Standard Directory Layout]]
     - [[#Understand artifact-config.sh|Understand artifact-config.sh]]
+    - [[#Create the Standard Directory Layout|Create the Standard Directory Layout]]
     - [[#Verify the Prepared Root|Verify the Prepared Root]]
 - [[#Troubleshooting|Troubleshooting]]
     - [[#External Data Volume Not Visible|External Data Volume Not Visible]]
@@ -102,79 +98,6 @@ The reimage workflow has two separate storage roles (a third, this repo itself, 
 
 ---
 
-## Guide Access on a Freshly Reimaged Mac
-
-This validates the two ways this repo gets onto a Mac with no Git, no SSH keys, and no prior checkout -- the exact situation Phase 6 depends on. Run both tests now, before relying on either mechanism for a real reimage, and again any time this repo changes meaningfully (new phase migrated, `bootstrap.sh` edited, jump drive payload rebuilt).
-
-Both tests below extract into a throwaway location, never your real dev checkout -- same safety pattern as [[#Testing this safely without touching your real dev checkout|Testing this safely without touching your real dev checkout]], just formalized here as a repeatable check with clear pass/fail criteria instead of a one-off caution.
-
-One thing you'll likely see while running these: paths may print as `/tmp/...` in one place and `/private/tmp/...` in another. That's not a bug or a duplicate copy -- on macOS, `/tmp` is a symlink to `/private/tmp` (confirm with `ls -ld /tmp`), so both spellings point at the exact same file.
-
-### Test the Bootstrap (curl) Path
-
-```bash
-mkdir -p /tmp/fractogenesis-access-test
-cd /tmp/fractogenesis-access-test
-export FRACTOGENESIS_HOME=/tmp/fractogenesis-access-test/curl-result
-
-curl -fsSL https://raw.githubusercontent.com/<your-github-account>/fractogenesis-toolkit/main/bootstrap.sh | bash
-```
-
-Pass criteria -- all three should be true:
-
-```bash
-test -d "$FRACTOGENESIS_HOME" && echo "OK: destination directory exists"
-test -f "$FRACTOGENESIS_HOME/bootstrap.sh" && echo "OK: bootstrap.sh present"
-test -x "$FRACTOGENESIS_HOME/bin/build-jump-drive-payload.sh" && echo "OK: bin/ scripts came through executable"
-```
-
-If any of these fail, stop and diagnose before trusting this path during an actual reimage -- see the curl-specific entries under [[#Troubleshooting|Troubleshooting]].
-
-### Test the Jump Drive Fallback Path
-
-Point this at wherever your real checkout actually lives -- not the throwaway paths above. If you're picking this section up in a fresh terminal (which is expected, since this is meant to be rerun periodically), `$FRACTOGENESIS_PARENT` won't already be set from `Confirm the Repo Is Cloned` -- set it fresh here:
-
-```bash
-export FRACTOGENESIS_PARENT="/path/to/wherever/you/actually/cloned/it"
-```
-
-Build a fresh payload from that real checkout (the payload should reflect your actual current repo state, not the throwaway one above). Pass the real path, not `.` -- the tarball's name is derived from `basename` of this argument, so `.` would produce a tarball literally named `..tar.gz`:
-
-```bash
-bin/build-jump-drive-payload.sh "$FRACTOGENESIS_PARENT/fractogenesis-toolkit" /tmp/fractogenesis-jump-drive-test
-```
-
-Then test installing from that local tarball into a separate throwaway location, simulating the no-network jump-drive scenario. `build-jump-drive-payload.sh` only builds the tarball -- it doesn't copy `bootstrap.sh` itself -- so reference `bootstrap.sh` from your real checkout directly:
-
-```bash
-mkdir -p /tmp/fractogenesis-access-test-jumpdrive
-export FRACTOGENESIS_HOME=/tmp/fractogenesis-access-test-jumpdrive/jumpdrive-result
-
-bash "$FRACTOGENESIS_PARENT/fractogenesis-toolkit/bootstrap.sh" \
-  /tmp/fractogenesis-jump-drive-test/fractogenesis-toolkit.tar.gz
-```
-
-Same pass criteria as the curl test:
-
-```bash
-test -d "$FRACTOGENESIS_HOME" && echo "OK: destination directory exists"
-test -f "$FRACTOGENESIS_HOME/bootstrap.sh" && echo "OK: bootstrap.sh present"
-test -x "$FRACTOGENESIS_HOME/bin/build-jump-drive-payload.sh" && echo "OK: bin/ scripts came through executable"
-```
-
-If this is the actual physical jump drive (not a local tarball test), copy `bootstrap.sh` plus the tarball/checksum onto it and run the same command with the drive's mount path instead of `/tmp/...` -- see the repo README's jump-drive section for the exact copy commands.
-
-### Clean Up
-
-```bash
-rm -rf /tmp/fractogenesis-access-test /tmp/fractogenesis-access-test-jumpdrive /tmp/fractogenesis-jump-drive-test
-unset FRACTOGENESIS_HOME
-```
-
-[[#Table of Contents|⬆ Back to Table of Contents]]
-
----
-
 ## Before You Run Anything
 
 ### Preparation Sequence
@@ -195,8 +118,8 @@ Use this sequence:
 | 8 | Define Git repository roots | Save the parent folders that later Git backup steps will search. |
 | 9 | Create the artifact root | Actually create the directory on the external volume, now that `reimage.env` has the resolved path. |
 | 10 | Load and confirm the environment | Deeper validation that the created root and full config are consistent. |
-| 11 | Create the standard workflow layout | Seed the directories used across the reimage workflow. |
-| 12 | Confirm `artifact-config.sh` is aligned | Verify backup scripts can read the same environment and expected top-level folders. |
+| 11 | Confirm `artifact-config.sh` is aligned | Verify backup scripts can read the same environment and expected top-level folders -- must happen before step 12, since it determines what that step creates. |
+| 12 | Create the standard workflow layout | Seed the directories used across the reimage workflow, using the folder list `artifact-config.sh` just resolved. |
 | 13 | Verify the prepared root | Confirm the prepared top-level structure is ready for backup and evidence scripts. |
 
 Troubleshooting is intentionally at the end. Specific steps link to the relevant troubleshooting section only when something fails.
@@ -786,6 +709,12 @@ done
 
 If the validation prints no Git repositories, confirm the variables are loaded and point to parent folders that actually contain Git checkouts.
 
+#### About reimage-git-roots.local.sh
+
+You may have a `reimage-git-roots.local.sh` file from a previous setup (matches this repo's `*.local.sh` `.gitignore` pattern -- machine-local, never committed, same treatment as `reimage.env`). Its name suggests it's a generated cache of the discovered Git roots/repos from the validation step above, meant to avoid rescanning `GIT_WORK_REPO_ROOT`/`GIT_PERSONAL_REPO_ROOT` on every run.
+
+**Honest gap:** this repo doesn't yet document or generate this file, because the script that actually creates and consumes it -- `backup-git-repository.sh` (Phase 2A) -- hasn't been migrated into `fractogenesis-toolkit` yet. This guide only covers *defining the roots*, not the caching behavior downstream Phase 2A tooling builds on top of them. If you have `backup-git-repository.sh`'s original content, uploading it would let this get documented accurately instead of guessed at.
+
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
 ---
@@ -891,6 +820,98 @@ If you set up direnv earlier, this already persists automatically across termina
 
 ---
 
+### Understand artifact-config.sh
+
+`artifact-config.sh` is the single source of truth for local-file backup targets, excludes, descriptions, and expected top-level folders used by the backup scripts.
+
+The arrays and flags are now stored in reusable shell config fragments instead of being hard-coded inline in the loader. Shell fragments were chosen instead of YAML so the existing bash scripts can source them directly while keeping the annotation comments intact.
+
+It is sourced by scripts such as:
+
+```text
+bin/backup-local-files.sh
+bin/capture-size-audit.sh
+bin/capture-workflow-snapshot.sh
+bin/create-secrets-dmg.sh
+```
+
+Do not run it directly.
+
+Important behavior:
+
+| Behavior | Meaning |
+|---|---|
+| It self-locates `REPO_ROOT` from its own script path (parent of `.internal/`). | Sourcing scripts must reference it by its actual path relative to the repo root, e.g. `bin/backup-local-files.sh` — there's no `REIMAGE_ROOT` variable to fall back on. |
+| It loads `reimage.env` if present. | Your local `REIMAGE_ARTIFACT_ROOT` plus optional `OFFICE_WATCH`, `ONEDRIVE_FOLDER_NAME`, `ONEDRIVE_ROOT`, and related paths are shared with scripts. |
+| It defines `EXTERNAL_APPLE_BACKUPS_VOLUME`. | Time Machine scripts use this as the backup destination mount path instead of assuming the destination volume is named `AppleBackups`. |
+| It exits if `REIMAGE_ARTIFACT_ROOT` is empty. | Create and source `reimage.env` before running scripts that depend on the backup root. |
+| It prefers workspace-backed config fragments when they exist. | `REIMAGE_WORKSPACE_ROOT/artifact-config/` becomes the reusable local copy for reruns; otherwise the loader falls back to `.internal/templates/artifact-config/`. |
+| It defines `EXTERNAL_TARGETS`. | These become subfolders under `$REIMAGE_ARTIFACT_ROOT/local-files/`. |
+| It defines OneDrive handling. | `ONEDRIVE_ROOT` should be a full path, or `ONEDRIVE_FOLDER_NAME` can be used to resolve a folder under `~/Library/CloudStorage/`. Do not use a bare OneDrive folder name relative to the current directory. |
+| It defines `SECRETS_TARGETS`. | These become file or directory entries under `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/`. Use `certs/` for certificate/keystore material and `certs/java-security/` for Java `jssecacerts`. |
+| It defines `EXTERNAL_EXCLUDES` and `ONEDRIVE_EXTRA_EXCLUDES`. | Add backup exclusions in config, not in each script. |
+| It defines `EXPECTED_BACKUP_FOLDERS`. | Keep this aligned with the stable top-level folders created by this guide. Optional evidence roots are created later by capture guides. |
+
+Current expected top-level folders from `artifact-config.sh`:
+
+```text
+app-backups
+reimage-prep-checks
+git-audit-reports
+gitignore-superset
+local-files
+reimaged-system
+reimage-plan
+secrets-encrypted
+selected-ignored-files
+selected-ignored-files-dryrun
+selected-ignored-files-filtered-dryrun
+time-machine
+workflow-snapshot
+```
+
+The layout created in [[#Create the Standard Directory Layout|Create the Standard Directory Layout]] includes only the stable top-level folders. Child folders for setup notes, secrets staging, optional evidence captures, and other workflow-owned artifacts are created later by their owning runbooks or scripts.
+
+#### If You Already Have Real Config Fragments
+
+If you already have real `*.conf.sh` fragments -- from a previous setup, copied out of a `reference-vault` checkout, or anywhere else -- **you don't need to copy them anywhere**. Place (or confirm they already exist) at:
+
+```text
+$REIMAGE_WORKSPACE_ROOT/artifact-config/
+```
+
+`artifact-config.sh` checks this path first, automatically, every time it's sourced -- see the "prefers workspace-backed config fragments" row above. There's no manual copy step, no flag to set; the presence of real files at this exact path is the entire mechanism. Confirm it's actually picking them up:
+
+```bash
+bash -c 'source .internal/artifact-config.sh && printf "%s\n" "${EXPECTED_BACKUP_FOLDERS[@]}"'
+```
+
+If that prints your real folder names (not the generic stub list further below), the workspace copy is being used correctly.
+
+#### Initialize the Fragments From Scratch (if you don't already have them)
+
+```bash
+python3 bin/prepare-artifact-root.py \
+  init-artifact-config \
+  --env-file reimage.env
+```
+
+This copies this repo's placeholder template fragments into `$REIMAGE_WORKSPACE_ROOT/artifact-config/` -- **but only for files that don't already exist there**. It refuses to overwrite anything you already have (confirmed by testing: running it against a workspace directory with real fragments in place reports `Copied: 0, Skipped existing: 9` and leaves every real file untouched). Safe to run either way, whether or not you already have real fragments.
+
+Use the workspace copy going forward when you rerun backups later and most of the target/exclude config has not changed. You can adjust only the files that actually changed instead of rebuilding the full artifact-config setup from scratch.
+
+Before running local-file backup scripts, confirm the loader can still be parsed:
+
+```bash
+bash -n .internal/artifact-config.sh
+```
+
+If a script reports that `REIMAGE_ARTIFACT_ROOT` is not set, jump to [[#REIMAGE_ARTIFACT_ROOT Is Empty in Scripts|REIMAGE_ARTIFACT_ROOT Is Empty in Scripts]].
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Create the Standard Directory Layout
 
 Create only the stable top-level generated-artifact directories owned by this preparation guide. Optional evidence-capture roots are created later by the capture guides that actually use them. Child directories belong to the runbook or script that creates them.
@@ -987,86 +1008,6 @@ $REIMAGE_ARTIFACT_ROOT/reimage-plan/it-reimage-confirmation-YYYYMMDD.md
 ```
 
 The entrypoint preserves the source filename and saves a timestamped `.previous-*` backup only when the destination already exists and differs.
-
-[[#Table of Contents|⬆ Back to Table of Contents]]
-
----
-
-### Understand artifact-config.sh
-
-`artifact-config.sh` is the single source of truth for local-file backup targets, excludes, descriptions, and expected top-level folders used by the backup scripts.
-
-The arrays and flags are now stored in reusable shell config fragments instead of being hard-coded inline in the loader. Shell fragments were chosen instead of YAML so the existing bash scripts can source them directly while keeping the annotation comments intact.
-
-It is sourced by scripts such as:
-
-```text
-bin/backup-local-files.sh
-bin/capture-size-audit.sh
-bin/capture-workflow-snapshot.sh
-bin/create-secrets-dmg.sh
-```
-
-Do not run it directly.
-
-Important behavior:
-
-| Behavior | Meaning |
-|---|---|
-| It self-locates `REPO_ROOT` from its own script path (parent of `.internal/`). | Sourcing scripts must reference it by its actual path relative to the repo root, e.g. `bin/backup-local-files.sh` — there's no `REIMAGE_ROOT` variable to fall back on. |
-| It loads `reimage.env` if present. | Your local `REIMAGE_ARTIFACT_ROOT` plus optional `OFFICE_WATCH`, `ONEDRIVE_FOLDER_NAME`, `ONEDRIVE_ROOT`, and related paths are shared with scripts. |
-| It defines `EXTERNAL_APPLE_BACKUPS_VOLUME`. | Time Machine scripts use this as the backup destination mount path instead of assuming the destination volume is named `AppleBackups`. |
-| It exits if `REIMAGE_ARTIFACT_ROOT` is empty. | Create and source `reimage.env` before running scripts that depend on the backup root. |
-| It prefers workspace-backed config fragments when they exist. | `REIMAGE_WORKSPACE_ROOT/artifact-config/` becomes the reusable local copy for reruns; otherwise the loader falls back to `.internal/templates/artifact-config/`. |
-| It defines `EXTERNAL_TARGETS`. | These become subfolders under `$REIMAGE_ARTIFACT_ROOT/local-files/`. |
-| It defines OneDrive handling. | `ONEDRIVE_ROOT` should be a full path, or `ONEDRIVE_FOLDER_NAME` can be used to resolve a folder under `~/Library/CloudStorage/`. Do not use a bare OneDrive folder name relative to the current directory. |
-| It defines `SECRETS_TARGETS`. | These become file or directory entries under `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/`. Use `certs/` for certificate/keystore material and `certs/java-security/` for Java `jssecacerts`. |
-| It defines `EXTERNAL_EXCLUDES` and `ONEDRIVE_EXTRA_EXCLUDES`. | Add backup exclusions in config, not in each script. |
-| It defines `EXPECTED_BACKUP_FOLDERS`. | Keep this aligned with the stable top-level folders created by this guide. Optional evidence roots are created later by capture guides. |
-
-Current expected top-level folders from `artifact-config.sh`:
-
-```text
-app-backups
-reimage-prep-checks
-git-audit-reports
-gitignore-superset
-local-files
-reimaged-system
-reimage-plan
-secrets-encrypted
-selected-ignored-files
-selected-ignored-files-dryrun
-selected-ignored-files-filtered-dryrun
-time-machine
-workflow-snapshot
-```
-
-The layout created in [[#Create the Standard Directory Layout|Create the Standard Directory Layout]] includes only the stable top-level folders. Child folders for setup notes, secrets staging, optional evidence captures, and other workflow-owned artifacts are created later by their owning runbooks or scripts.
-
-Initialize the reusable workspace-backed config fragments:
-
-```bash
-python3 bin/prepare-artifact-root.py \
-  init-artifact-config \
-  --env-file reimage.env
-```
-
-This copies the template fragments into:
-
-```text
-$REIMAGE_WORKSPACE_ROOT/artifact-config/
-```
-
-Use that workspace copy when you rerun backups later and most of the target/exclude config has not changed. You can adjust only the files that actually changed instead of rebuilding the full artifact-config setup from scratch.
-
-Before running local-file backup scripts, confirm the loader can still be parsed:
-
-```bash
-bash -n .internal/artifact-config.sh
-```
-
-If a script reports that `REIMAGE_ARTIFACT_ROOT` is not set, jump to [[#REIMAGE_ARTIFACT_ROOT Is Empty in Scripts|REIMAGE_ARTIFACT_ROOT Is Empty in Scripts]].
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 

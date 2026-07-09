@@ -7,13 +7,9 @@ Runbooks and scripts for reimaging a Mac (Windows/Linux/other-device reimage wor
 ## Table of Contents
 
 - [Quickstart](#quickstart)
-- [Getting the Toolkit onto a Freshly Reimaged Mac](#getting-the-toolkit-onto-a-freshly-reimaged-mac)
-    - [Primary Path — curl](#primary-path--curl)
-    - [Fallback Path — Jump Drive](#fallback-path--jump-drive)
 - [Repository Structure](#repository-structure)
 - [Why a Separate Repo](#why-a-separate-repo)
 - [Naming Conventions](#naming-conventions)
-- [Keeping the Jump Drive Current](#keeping-the-jump-drive-current)
 - [Future Workflows](#future-workflows)
 - [Status](#status)
 
@@ -23,33 +19,7 @@ Runbooks and scripts for reimaging a Mac (Windows/Linux/other-device reimage wor
 
 Start at [`reimaging-guide.md`](reimaging-guide.md) — it sequences every phase of the reimage and links out to each individual runbook.
 
-If you're picking this up mid-reimage on a freshly erased Mac with no local checkout yet, skip straight to [Getting the Toolkit onto a Freshly Reimaged Mac](#getting-the-toolkit-onto-a-freshly-reimaged-mac).
-
----
-
-## Getting the Toolkit onto a Freshly Reimaged Mac
-
-Right after Erase All Content and Settings, there's no repo, no SSH key, and no `git` (installing it triggers an Xcode Command Line Tools popup and a large download). Two ways to get this repo's contents onto the machine before any of that exists:
-
-### Primary Path — curl
-
-Once the Mac has Wi-Fi (available as early as the Intune/O365 enrollment step), fetch and run the bootstrap script directly — no `git`, no auth, no prior setup required:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/<your-github-account>/fractogenesis-toolkit/main/bootstrap.sh | bash
-```
-
-This installs the toolkit to `$HOME/reimage-toolkit`.
-
-### Fallback Path — Jump Drive
-
-If there's no network yet (captive portal, delayed profile push, etc.), use a small dedicated USB stick prepared ahead of time — see [Keeping the Jump Drive Current](#keeping-the-jump-drive-current) for how the stick's contents get built and refreshed.
-
-```bash
-bash /Volumes/<stick-name>/bootstrap.sh /Volumes/<stick-name>/fractogenesis-toolkit.tar.gz
-```
-
-`bootstrap.sh` supports both paths with the same logic: no argument fetches from GitHub via curl; a tarball path installs from that file directly, checksum-verified first. See the script's own header comment for details.
+If you're picking this up mid-reimage on a freshly erased Mac with no local checkout yet, see [`reimage-guide-access.md`](reimage-guide-access.md).
 
 ---
 
@@ -60,8 +30,10 @@ bash /Volumes/<stick-name>/bootstrap.sh /Volumes/<stick-name>/fractogenesis-tool
 ├── README.md
 ├── bootstrap.sh                  # the one file fetched before anything else exists
 ├── reimaging-guide.md            # start here — sequences every phase
+├── reimage-guide-access.md       # Phase 4A — validate curl/jump-drive access before erasing
 ├── <phase-runbooks>.md           # one runbook per phase, verb-first names
-├── references/                  # strategy guides, file references, evidence indexes
+├── references/
+│   └── restore-strategy-guide.md # includes why the guide-access mechanism exists
 ├── templates/                   # sign-off templates, confirmation forms, cheatsheets
 ├── bin/                          # entrypoint scripts — run directly, one per runbook
 └── .internal/                    # sourced-only helpers — never run directly
@@ -92,16 +64,6 @@ The original vault-hosted version of this workflow is left in place, untouched, 
 - Runbooks and their matching top-level script share a name (`backup-apps.md` ↔ `bin/backup-apps.sh`) — same tool, discoverable by one name from either direction.
 - Runbook/script prefixes signal the action: `prepare-`, `backup-`, `capture-`, `restore-`, `stage-`, `create-`, `enroll-`, `validate-`.
 - Nothing in this repo should require secrets or company-specific values to be useful on its own — machine-specific values belong in a local, untracked `reimage.env`, not in any committed file.
-
----
-
-## Keeping the Jump Drive Current
-
-```bash
-bin/build-jump-drive-payload.sh /path/to/this/repo /path/to/output-dir
-```
-
-Produces a checksummed, versioned tarball (commit hash + build date baked in as `.toolkit-version`) suitable for copying onto the fallback jump drive alongside `bootstrap.sh`. Re-run this shortly before any reimage to keep the stick's contents current — the version stamp printed after install tells you at a glance how stale a given stick's copy is.
 
 ---
 

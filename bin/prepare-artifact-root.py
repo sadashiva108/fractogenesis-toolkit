@@ -148,7 +148,14 @@ def parse_assignment(text: str) -> Tuple[str, str]:
 
 
 def bash_output(script: str) -> bytes:
-    return subprocess.check_output(["bash", "-lc", script], stderr=subprocess.STDOUT)
+    # Deliberately NOT a login shell (-l): a login shell sources
+    # .zprofile/.bash_profile -> .zshrc/.bashrc, which can print startup
+    # noise (SDKMAN's "Setting candidates csv: ..." banner is a confirmed
+    # real example) directly into this function's output stream, silently
+    # corrupting the parsed values downstream. source/reimage.env loading
+    # is done explicitly in the script text passed in, so a login shell
+    # was never actually required.
+    return subprocess.check_output(["bash", "-c", script], stderr=subprocess.STDOUT)
 
 
 def load_env_values(env_file: Path) -> Dict[str, str]:
