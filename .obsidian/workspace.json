@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "prepare-artifact-root.md",
+                "file": "test-guide-access.md",
                 "mode": "preview",
                 "source": true
               },
               "icon": "lucide-file",
-              "title": "prepare-artifact-root"
+              "title": "test-guide-access"
             }
           }
         ]
@@ -185,8 +185,11 @@
   },
   "active": "d496cc82069fafee",
   "lastOpenFiles": [
+    "references/restore-strategy-guide.md",
+    "test-guide-access.md",
     "reimaging-guide.md",
     "prepare-artifact-root.md",
+    "templates/it-reimage-confirmation-template.md",
     "reimage.env",
     "bin/setup-reimage-env.sh"
   ]
