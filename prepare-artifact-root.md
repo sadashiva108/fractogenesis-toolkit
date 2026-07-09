@@ -297,42 +297,6 @@ Installs to `$HOME/fractogenesis-toolkit` by default. If there's no network yet,
 
 The repo is public, so no access request is needed either way.
 
-#### Testing this safely without touching your real dev checkout
-
-If you already have `fractogenesis-toolkit` cloned normally (e.g. under `$FRACTOGENESIS_PARENT`, with `.envrc` active there), running the curl command **while `cd`'d into that real checkout is dangerous** — direnv has already exported `FRACTOGENESIS_HOME` to point at it, and `bootstrap.sh` will extract the tarball on top of it, silently overwriting tracked files with whatever's currently on `main`.
-
-Do both of the following, not just one -- belt and suspenders:
-
-1. **`cd` to a throwaway directory first** -- somewhere with no `.envrc` of its own, so direnv has nothing to export:
-   ```bash
-   mkdir -p /tmp/fractogenesis-bootstrap-test
-   cd /tmp/fractogenesis-bootstrap-test
-   ```
-2. **Explicitly override `FRACTOGENESIS_HOME` on its own line first** -- this is the authoritative safeguard, since it works regardless of which directory you're actually in:
-   ```bash
-   export FRACTOGENESIS_HOME=/tmp/fractogenesis-bootstrap-test/fractogenesis-toolkit
-   ```
-   Note: a `VAR=val` prefix directly on the curl command (`FRACTOGENESIS_HOME=... curl ... | bash`) does **not** work here -- that only sets the variable for `curl`, not for `bash` on the other side of the pipe, which is where `bootstrap.sh` actually runs. It has to be `export`ed on its own line beforehand.
-
-Then run the curl command normally:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/<your-github-account>/fractogenesis-toolkit/main/bootstrap.sh | bash
-```
-
-Confirm it landed in the throwaway location, not your real checkout:
-
-```bash
-ls "$FRACTOGENESIS_HOME"
-```
-
-Delete the throwaway copy once you're done testing:
-
-```bash
-rm -rf /tmp/fractogenesis-bootstrap-test
-unset FRACTOGENESIS_HOME
-```
-
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
 ---
