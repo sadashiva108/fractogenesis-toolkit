@@ -8,12 +8,7 @@
 
 EXPECTED_BACKUP_FOLDERS=(
   app-backups
-  git-audit-reports
+  repo-audit-reports
   gitignore-superset
-  managed-inventory
-  office-stability
-  performance-audit
   secrets-encrypted
-  system-inventory
-  workflow-snapshot
 )

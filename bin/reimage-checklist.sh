@@ -385,7 +385,7 @@ if [[ "$PHASE" == "pre" ]]; then
   # -------------------------------------------------------------------------
   record_section "Backup Root Subdirectories"
   # -------------------------------------------------------------------------
-  for subdir in app-backups git-audit-reports gitignore-superset managed-inventory office-stability performance-audit secrets-encrypted system-inventory workflow-snapshot; do
+  for subdir in app-backups repo-audit-reports gitignore-superset managed-inventory office-stability performance-audit secrets-encrypted system-inventory workflow-snapshot; do
     if dir_nonempty "$REIMAGE_ARTIFACT_ROOT/$subdir"; then
       SIZE="$(du -sh "$REIMAGE_ARTIFACT_ROOT/$subdir" 2>/dev/null | cut -f1)"
       record_check PASS "Subdir: $subdir" "$SIZE on disk"
@@ -399,8 +399,8 @@ if [[ "$PHASE" == "pre" ]]; then
   # -------------------------------------------------------------------------
   record_section "Git Audit"
   # -------------------------------------------------------------------------
-  GIT_AUDIT_DIR="$REIMAGE_ARTIFACT_ROOT/git-audit-reports"
-  LATEST_AUDIT="$(newest_matching "$GIT_AUDIT_DIR" "git-audit-summary-*.txt")"
+  REPO_AUDIT_DIR="$REIMAGE_ARTIFACT_ROOT/repo-audit-reports"
+  LATEST_AUDIT="$(newest_matching "$REPO_AUDIT_DIR" "git-audit-summary-*.txt")"
 
   if [[ -n "$LATEST_AUDIT" ]]; then
     AGE_H="$(file_age_hours "$LATEST_AUDIT")"
@@ -420,18 +420,18 @@ if [[ "$PHASE" == "pre" ]]; then
       record_check PASS "Stashes" "No stash references found"
     fi
   else
-    record_check FAIL "Git audit report" "No git-audit-summary-*.txt under $GIT_AUDIT_DIR"
+    record_check FAIL "Git audit report" "No git-audit-summary-*.txt under $REPO_AUDIT_DIR"
     record_check SKIP "Local-only commits" "Skipped -- no audit report"
     record_check SKIP "Stashes" "Skipped -- no audit report"
   fi
 
-  if [[ -n "$(newest_matching "$GIT_AUDIT_DIR" "local-only-commits-*.tsv")" ]]; then
+  if [[ -n "$(newest_matching "$REPO_AUDIT_DIR" "local-only-commits-*.tsv")" ]]; then
     record_check PASS "Git audit TSV present" "local-only-commits TSV found"
   else
     record_check WARN "Git audit TSV present" "Not found"
   fi
 
-  UNTRACKED_TSV="$(newest_matching "$GIT_AUDIT_DIR" "untracked-nonignored-*.tsv")"
+  UNTRACKED_TSV="$(newest_matching "$REPO_AUDIT_DIR" "untracked-nonignored-*.tsv")"
   if [[ -n "$UNTRACKED_TSV" ]]; then
     UNTRACKED_COUNT="$(($(wc -l <"$UNTRACKED_TSV" 2>/dev/null || echo 1) - 1))"
     if [[ "$UNTRACKED_COUNT" -gt 0 ]]; then
@@ -440,7 +440,7 @@ if [[ "$PHASE" == "pre" ]]; then
       record_check PASS "Untracked non-ignored files reviewed" "$(basename "$UNTRACKED_TSV") -- none found"
     fi
   else
-    record_check WARN "Untracked non-ignored files reviewed" "No untracked-nonignored-*.tsv under $GIT_AUDIT_DIR"
+    record_check WARN "Untracked non-ignored files reviewed" "No untracked-nonignored-*.tsv under $REPO_AUDIT_DIR"
   fi
 
   # -------------------------------------------------------------------------

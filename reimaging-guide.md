@@ -55,33 +55,6 @@ This is the canonical top-level guide for the Mac reimage workflow.
 
 Use this guide as the practical sequence for preparing, reimaging, restoring, and validating a managed Mac laptop.
 
-> This repo holds only the reimage runbooks and scripts, split out from the personal `reference-vault` repo referenced later in this guide (Phase 9, Restore Strategy) — that's a separate, private repo for general notes, unrelated to reimaging. For how to get this repo's contents onto a freshly reimaged Mac before Git/SSH access exists, see the [README's Quickstart](README.md#quickstart).
-
----
-## Migration Status
-
-This repo is being built phase by phase, not all at once. Links to phases below marked 🔲 point to files that don't exist here yet on purpose — check `reference-vault`'s copy of this workflow instead until a phase flips to ✅. Flip the box when a phase's runbook + scripts land here with working links and a passing gist/jump-drive test.
-
-- 🔲 Phase 0 — Confirm the Reimage Plan with IT
-- 🔲 Phase 1 — Prepare the External Artifact Root (scripts migrated and tested: `prepare-artifact-root.py`, `artifact-config.sh`; `prepare-artifact-root.md` rework in progress)
-- 🔲 Phase 2 — Pre-Image Backups (2A–2F)
-- 🔲 Phase 3 — Pre-Image Captures (3A–3E)
-- ✅ Phase 4A — Guide Access on a Freshly Reimaged Mac (`reimage-guide-access.md` migrated and tested; both curl and jump-drive paths verified end to end)
-- ✅ Phase 4B — Reimage Preparation Checks (`reimage-prep-checks.md`, `bin/reimage-checklist.sh`, `.internal/load-reimage-config-snippet.sh`, `.internal/artifact-config.sh`, `templates/app-backup-and-cloud-sync-signoff-template.md` all migrated; full chain tested end to end with no stubs)
-- 🔲 Phase 5 — Reimage / Erase Procedure
-- 🔲 Phase 6 — Enroll and Stabilize
-- 🔲 Phase 7 — Initial Captures and Sanity Checks
-- 🔲 Phase 8 — Restore Runtime Environment (8A–8B)
-- 🔲 Phase 9 — Restore Git
-- 🔲 Phase 10 — Restore Apps
-- 🔲 Phase 11 — Post-Image Captures (11A–11E)
-- 🔲 Phase 12 — Reimaged System Checks
-- 🔲 Phase 13 — Restore Local Files
-
-[[#Table of Contents|⬆ Back to Table of Contents]]
-
-The goals are:
-
 - document the approved IT handoff or self-service reimage steps before starting disruptive work
 - avoid losing local-only source code, Git branches, stashes, untracked files, ignored files, and credentials
 - preserve selected local config files such as `.env.local`, certificates, and local application settings
@@ -199,12 +172,12 @@ Captures the IT-approved erase/reinstall method, ownership, timing, wipe expecta
 
 Primary guide: [templates/it-reimage-confirmation-template.md](templates/it-reimage-confirmation-template.md)
 
-Fill out a working copy of the template in a local workspace outside this repo (`$REIMAGE_WORKSPACE_ROOT/reimage-planning/`). Do not copy it into `$REIMAGE_ARTIFACT_ROOT` yet — Phase 1 copies the filled version into `$REIMAGE_ARTIFACT_ROOT/reimage-plan/` once the external root exists. See [Prepare Artifact Root](prepare-artifact-root.md) for `REIMAGE_WORKSPACE_ROOT` setup and the `copy-it-plan` command.
+Fill out a working copy of the template in a local workspace outside this repo (`$REIMAGE_WORKSPACE_ROOT/reimage-plan/`). Do not copy it into `$REIMAGE_ARTIFACT_ROOT` yet — Phase 1 copies the filled version into `$REIMAGE_ARTIFACT_ROOT/reimage-plan/` once the external root exists. See [Prepare Artifact Root](prepare-artifact-root.md) for `REIMAGE_WORKSPACE_ROOT` setup and the `copy-it-plan` command.
 
 Primary outputs:
 
 ```text
-$REIMAGE_WORKSPACE_ROOT/reimage-planning/it-reimage-confirmation-YYYYMMDD.md
+$REIMAGE_WORKSPACE_ROOT/reimage-plan/it-reimage-confirmation-YYYYMMDD.md
 $REIMAGE_ARTIFACT_ROOT/reimage-plan/it-reimage-confirmation-YYYYMMDD.md    # copied in Phase 1
 ```
 
@@ -247,9 +220,9 @@ Phase 3 capture work, including `capture-workflow-snapshot.md`, follows after th
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
 ---
-### Phase 2A — Backup Git Repositories
+### Phase 2A — Backup Repositories
 
-Follow this phase guide: [Backup Git Repositories](backup-git-repository.md).
+Follow this phase guide: [Backup Repositories](backup-repos.md).
 
 Preserves Git repository risk state (local-only commits, dirty repos, stashes, untracked files) and selected ignored-file backups before erase.
 

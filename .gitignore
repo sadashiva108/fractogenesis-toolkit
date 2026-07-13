@@ -1,5 +1,11 @@
 # Local, machine-specific — never commit
+
+# Local Mac reimage workflow config
 reimage.env
+
+# Archived/stale copies from Check for an Existing reimage.env
+reimage.env.stale-*
+
 *.local.sh
 
 # Build artifacts from bin/build-jump-drive-payload.sh

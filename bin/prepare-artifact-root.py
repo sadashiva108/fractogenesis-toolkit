@@ -292,14 +292,14 @@ def resolve_it_plan_source(explicit_source: str, values: Dict[str, str], workspa
         return source
 
     # IT_PLAN_DIR, if explicitly set (in reimage.env or elsewhere), is used as-is.
-    # Otherwise fall back to REIMAGE_WORKSPACE_ROOT/reimage-planning so callers are not
+    # Otherwise fall back to REIMAGE_WORKSPACE_ROOT/reimage-plan so callers are not
     # required to persist IT_PLAN_DIR in reimage.env just for this one-time Phase 0 copy.
     it_plan_dir = values.get("IT_PLAN_DIR")
     if it_plan_dir:
         search_root = it_plan_dir
     else:
         workspace_root = workspace_root_override or values.get("REIMAGE_WORKSPACE_ROOT") or default_workspace_root()
-        search_root = str(Path(workspace_root) / "reimage-planning")
+        search_root = str(Path(workspace_root) / "reimage-plan")
     search_path = Path(search_root).expanduser()
     if not search_path.is_dir():
         raise SystemExit(
@@ -322,7 +322,7 @@ def resolve_it_plan_source(explicit_source: str, values: Dict[str, str], workspa
 
 def cmd_init_reimage_env(args: argparse.Namespace) -> int:
     workspace_root = args.workspace_root or default_workspace_root()
-    it_plan_dir = args.it_plan_dir or str(Path(workspace_root) / "reimage-planning")
+    it_plan_dir = args.it_plan_dir or str(Path(workspace_root) / "reimage-plan")
     updates = {
         "REIMAGE_WORKSPACE_ROOT": workspace_root,
         "IT_PLAN_DIR": it_plan_dir,
@@ -739,7 +739,7 @@ def build_parser() -> argparse.ArgumentParser:
         default="",
         help=(
             "Override REIMAGE_WORKSPACE_ROOT for locating the filled IT plan note under "
-            "<workspace-root>/reimage-planning/. Use this instead of persisting IT_PLAN_DIR "
+            "<workspace-root>/reimage-plan/. Use this instead of persisting IT_PLAN_DIR "
             "or REIMAGE_WORKSPACE_ROOT in reimage.env. Ignored if --source or IT_PLAN_DIR "
             "(from reimage.env) is provided."
         ),

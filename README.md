@@ -8,7 +8,6 @@ Runbooks and scripts for reimaging a Mac (Windows/Linux/other-device reimage wor
 
 - [Quickstart](#quickstart)
 - [Repository Structure](#repository-structure)
-- [Why a Separate Repo](#why-a-separate-repo)
 - [Naming Conventions](#naming-conventions)
 - [Future Workflows](#future-workflows)
 - [Status](#status)
@@ -45,17 +44,6 @@ If you're picking this up mid-reimage on a freshly erased Mac with no local chec
 - **`bin/`** — anything a person runs directly. Verb-first names matching their runbook (`backup-apps.sh` ↔ `backup-apps.md`).
 - **`.internal/`** — anything only ever `source`d by another script, never run standalone. No verb-prefix requirement here — the directory itself is the "don't run this" signal. Grouped into subfolders (`apps/`, `git/`) where several helpers serve one concern.
 - **`.share/`** — reserved for scripts genuinely reused across repos (this one, a future backup-workflow repo, a future performance-investigation repo, etc.). Empty for now; see [Future Workflows](#future-workflows).
-
----
-
-## Why a Separate Repo
-
-This used to live inside a general-purpose personal reference vault (Obsidian-based, markdown-only). Two problems with that:
-
-1. **Obsidian is a documentation tool, not a script host.** Mixing scripts into a markdown vault meant treating it as a Swiss Army knife it was never designed to be.
-2. **Restore-phase scripts need to run before the vault is reachable again.** SSH keys, Git identity, and the vault checkout itself are all things later phases of this workflow *restore* — so the tooling that does the restoring can't depend on already having them. A small, standalone, publicly-fetchable repo with no secrets in it sidesteps that chicken-and-egg problem entirely.
-
-The original vault-hosted version of this workflow is left in place, untouched, as a fallback until this repo is proven out across a real reimage end to end.
 
 ---
 
