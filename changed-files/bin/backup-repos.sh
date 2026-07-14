@@ -23,8 +23,8 @@
 #   ./bin/backup-repos.sh --selected-copy
 #
 #   # Override artifact root or Git roots
-#   ./bin/backup-repos.sh --artifact-root /path/to/reimage-artifact-root
-#   ./bin/backup-repos.sh --root /path/to/work-repositories --root /path/to/personal-repositories
+#   ./bin/backup-repos.sh --artifact-root /Volumes/Data/reimage-backup-YYYYMMDD
+#   ./bin/backup-repos.sh --root ~/Development/IdeaProjects --root ~/Development/personal
 #
 #   # Open primary output after the run
 #   ./bin/backup-repos.sh --open
@@ -41,10 +41,8 @@
 #   --artifact-root PATH   Override REIMAGE_ARTIFACT_ROOT from reimage.env.
 #   --root DIR              Override Git roots from reimage.env. Repeatable.
 #   --include-heavy         Only valid with direct ignored-file modes.
-#   --status-interval SEC   Print a still-running update every SEC seconds. Default: 10.
-#   --no-status             Disable periodic still-running updates.
 #   --open                  Open the primary output after the run.
-#   -h, --help              Show this message and exit.
+#   -h, --help               Show this message and exit.
 # =============================================================================
 
 set -euo pipefail
@@ -62,18 +60,14 @@ fi
 source "$CONFIG_LOADER"
 # ─────────────────────────────────────────────────────────────────────────────
 
+SCRIPT_NAME="${REIMAGE_SCRIPT_DISPLAY_NAME:-backup-repos.sh}"
+
 usage() {
-  awk '
-    NR == 2 { in_header = 1; next }
-    in_header && /^# =+$/ { exit }
-    in_header { sub(/^# ?/, ""); print }
-  ' "$0"
+  sed -n 's/^# \{0,2\}//p' "$0" | head -45
 }
 
 OPEN_AFTER=false
 INCLUDE_HEAVY=false
-STATUS_ENABLED=true
-STATUS_INTERVAL=10
 MODE="default"
 MODE_SET_COUNT=0
 ROOTS=()
@@ -98,15 +92,6 @@ while [[ $# -gt 0 ]]; do
     --selected-filtered-dry-run) MODE="selected-filtered-dry-run"; MODE_SET_COUNT=$((MODE_SET_COUNT + 1)); shift ;;
     --selected-copy) MODE="selected-copy"; MODE_SET_COUNT=$((MODE_SET_COUNT + 1)); shift ;;
     --include-heavy) INCLUDE_HEAVY=true; shift ;;
-    --status-interval)
-      if [[ $# -lt 2 || -z "${2:-}" || "${2:-}" == --* ]]; then
-        echo "ERROR: --status-interval requires a positive integer." >&2
-        exit 2
-      fi
-      STATUS_INTERVAL="$2"
-      shift 2
-      ;;
-    --no-status) STATUS_ENABLED=false; shift ;;
     --open) OPEN_AFTER=true; shift ;;
     -h|--help) usage; exit 0 ;;
     *)
@@ -121,13 +106,6 @@ if [[ "$MODE_SET_COUNT" -gt 1 ]]; then
   echo "ERROR: choose only one mode flag per run." >&2
   exit 1
 fi
-
-case "$STATUS_INTERVAL" in
-  ''|*[!0-9]*|0)
-    echo "ERROR: --status-interval must be a positive integer." >&2
-    exit 2
-    ;;
-esac
 
 if [[ -z "${REIMAGE_ARTIFACT_ROOT:-}" ]]; then
   echo "ERROR: REIMAGE_ARTIFACT_ROOT is not set. Source reimage.env or pass --artifact-root PATH." >&2
@@ -148,6 +126,9 @@ if [[ ${#ROOTS[@]} -eq 0 ]]; then
   fi
 fi
 
+if [[ ${#ROOTS[@]} -eq 0 && -d "$HOME/Development" ]]; then
+  ROOTS=("$HOME/Development")
+fi
 
 if [[ ${#ROOTS[@]} -eq 0 ]]; then
   echo "ERROR: No Git repository roots found." >&2
@@ -177,7 +158,6 @@ SELECTED_DRYRUN_DIR="$REIMAGE_ARTIFACT_ROOT/selected-ignored-files-dryrun"
 SELECTED_FILTERED_DRYRUN_DIR="$REIMAGE_ARTIFACT_ROOT/selected-ignored-files-filtered-dryrun"
 SELECTED_FINAL_DIR="$REIMAGE_ARTIFACT_ROOT/selected-ignored-files"
 MANIFEST_PATH="$REPO_AUDIT_DIR/MANIFEST.md"
-LATEST_RUN_PATH="$REPO_AUDIT_DIR/latest-run.txt"
 
 for dir in \
   "$REPO_AUDIT_DIR" \
@@ -219,108 +199,21 @@ EXCLUDE_LIST_PATH="$GITIGNORE_DIR/backup-exclude-list.txt"
 LATEST_AUDIT_REPORT=""
 OPEN_TARGET=""
 MODE_SUMMARY=""
-ACTIVE_CHILD_PID=""
-
-stop_active_child() {
-  if [[ -n "$ACTIVE_CHILD_PID" ]] && kill -0 "$ACTIVE_CHILD_PID" 2>/dev/null; then
-    kill "$ACTIVE_CHILD_PID" 2>/dev/null || true
-    wait "$ACTIVE_CHILD_PID" 2>/dev/null || true
-  fi
-}
-
-trap 'stop_active_child; exit 130' INT TERM
-
-run_with_status() {
-  local label="$1"
-  shift
-
-  local started now elapsed next_update rc
-  printf '\n==> %s\n' "$label"
-  printf '    Started: %s\n' "$(date '+%Y-%m-%d %H:%M:%S')"
-
-  "$@" &
-  ACTIVE_CHILD_PID=$!
-  started="$(date +%s)"
-  next_update="$STATUS_INTERVAL"
-
-  while kill -0 "$ACTIVE_CHILD_PID" 2>/dev/null; do
-    sleep 1
-    if [[ "$STATUS_ENABLED" == true ]] && kill -0 "$ACTIVE_CHILD_PID" 2>/dev/null; then
-      now="$(date +%s)"
-      elapsed=$((now - started))
-      if (( elapsed >= next_update )); then
-        printf '    [%s] Still running: %s (%ds elapsed)\n' "$(date '+%H:%M:%S')" "$label" "$elapsed"
-        next_update=$((next_update + STATUS_INTERVAL))
-      fi
-    fi
-  done
-
-  if wait "$ACTIVE_CHILD_PID"; then
-    rc=0
-  else
-    rc=$?
-  fi
-  ACTIVE_CHILD_PID=""
-
-  now="$(date +%s)"
-  elapsed=$((now - started))
-  if [[ "$rc" -eq 0 ]]; then
-    printf '    Completed: %s (%ds)\n' "$label" "$elapsed"
-  else
-    printf '    FAILED: %s (exit %d after %ds)\n' "$label" "$rc" "$elapsed" >&2
-  fi
-  return "$rc"
-}
-
-resolve_latest_audit_report() {
-  local latest_run_relative=""
-  local latest_report=""
-
-  if [[ ! -f "$LATEST_RUN_PATH" ]]; then
-    echo "ERROR: latest repository-audit pointer not found: $LATEST_RUN_PATH" >&2
-    return 1
-  fi
-
-  IFS= read -r latest_run_relative < "$LATEST_RUN_PATH" || true
-  case "$latest_run_relative" in
-    runs/pre-image-*|runs/post-image-*) ;;
-    *)
-      echo "ERROR: invalid latest repository-audit run pointer: ${latest_run_relative:-<empty>}" >&2
-      return 1
-      ;;
-  esac
-
-  case "$latest_run_relative" in
-    *..*|/*)
-      echo "ERROR: unsafe latest repository-audit run pointer: $latest_run_relative" >&2
-      return 1
-      ;;
-  esac
-
-  latest_report="$REPO_AUDIT_DIR/$latest_run_relative/repo-audit-summary.txt"
-  if [[ ! -f "$latest_report" ]]; then
-    echo "ERROR: latest repository-audit report not found: $latest_report" >&2
-    return 1
-  fi
-
-  printf '%s\n' "$latest_report"
-}
 
 run_default_refresh() {
-  run_with_status "Repository audit" \
-    bash "$AUDIT_HELPER" "${HELPER_ROOT_ARGS[@]}" --dest "$REPO_AUDIT_DIR" --context pre-image
-  LATEST_AUDIT_REPORT="$(resolve_latest_audit_report)"
-  run_with_status "Gitignore superset scan" \
-    bash "$SUPERSET_HELPER" "${HELPER_ROOT_ARGS[@]}" --dest "$GITIGNORE_DIR" --include-git-excludes --include-global-excludes
-  OPEN_TARGET="$LATEST_AUDIT_REPORT"
+  chmod +x "$AUDIT_HELPER" "$SUPERSET_HELPER"
+  "$AUDIT_HELPER" "${HELPER_ROOT_ARGS[@]}" --dest "$REPO_AUDIT_DIR"
+  "$SUPERSET_HELPER" "${HELPER_ROOT_ARGS[@]}" --dest "$GITIGNORE_DIR" --include-git-excludes --include-global-excludes
+  LATEST_AUDIT_REPORT="$(ls -1t "$REPO_AUDIT_DIR"/git-audit-summary-*.txt 2>/dev/null | head -1 || true)"
+  OPEN_TARGET="${LATEST_AUDIT_REPORT:-$GITIGNORE_DIR}"
   MODE_SUMMARY="Refreshed repo audit and gitignore superset outputs"
 }
 
 run_direct_ignored() {
   local dest="$1"
   shift
-  run_with_status "Broad ignored-file scan" \
-    bash "$DIRECT_IGNORED_HELPER" "${HELPER_ROOT_ARGS[@]}" --dest "$dest" "$@"
+  chmod +x "$DIRECT_IGNORED_HELPER"
+  "$DIRECT_IGNORED_HELPER" "${HELPER_ROOT_ARGS[@]}" --dest "$dest" "$@"
   OPEN_TARGET="$dest"
 }
 
@@ -332,8 +225,7 @@ run_selected() {
     echo "Run backup-repos.sh with no mode first to refresh the gitignore superset." >&2
     exit 2
   fi
-  run_with_status "Selected-pattern staging scan" \
-    python3 "$SELECTED_HELPER" --include-template "$TEMPLATE_PATH" "${HELPER_ROOT_ARGS[@]}" --dest "$dest" "$@"
+  python3 "$SELECTED_HELPER" --include-template "$TEMPLATE_PATH" "${HELPER_ROOT_ARGS[@]}" --dest "$dest" "$@"
   OPEN_TARGET="$dest"
 }
 
@@ -379,16 +271,69 @@ case "$MODE" in
     ;;
 esac
 
+{
+  echo "# Repo Backup Manifest"
+  echo
+  echo "Generated: $(date '+%Y-%m-%d %H:%M:%S')"
+  echo "Artifact root: $REIMAGE_ARTIFACT_ROOT"
+  echo "Mode: $MODE"
+  echo
+  echo "## Git roots"
+  for root in "${ROOTS[@]}"; do
+    echo "- $root"
+  done
+  echo
+  echo "## Latest action"
+  echo
+  echo "- $MODE_SUMMARY"
+  echo
+  echo "## Primary outputs"
+  echo
+  echo '```text'
+  echo '$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/'
+  echo '$REIMAGE_ARTIFACT_ROOT/gitignore-superset/'
+  echo '$REIMAGE_ARTIFACT_ROOT/selected-ignored-files-dryrun/'
+  echo '$REIMAGE_ARTIFACT_ROOT/selected-ignored-files-filtered-dryrun/'
+  echo '$REIMAGE_ARTIFACT_ROOT/selected-ignored-files/'
+  echo '```'
+  echo
+  echo "## Next step"
+  echo
+  case "$MODE" in
+    default)
+      echo "- Review the newest \`git-audit-summary-*.txt\` report."
+      echo "- Push backup branches or convert stashes where needed."
+      echo "- Mark selections in \`$TEMPLATE_PATH\`."
+      echo "- Create or update \`$EXCLUDE_LIST_PATH\`."
+      echo "- Run \`./bin/backup-repos.sh --artifact-root \"\$REIMAGE_ARTIFACT_ROOT\" --selected-dry-run\`."
+      ;;
+    direct-ignored-dry-run)
+      echo "- Review \`$SELECTED_DRYRUN_DIR\` before using \`--direct-ignored-copy\`."
+      ;;
+    direct-ignored-copy)
+      echo "- Review copied ignored files and move any secret-bearing material into the encrypted secrets flow."
+      ;;
+    selected-dry-run)
+      echo "- Review \`$SELECTED_DRYRUN_DIR\`, then run \`--selected-filtered-dry-run\` after updating the exclude list."
+      ;;
+    selected-filtered-dry-run)
+      echo "- Review \`$SELECTED_FILTERED_DRYRUN_DIR\`, then run \`--selected-copy\` when it looks correct."
+      ;;
+    selected-copy)
+      echo "- Review \`$SELECTED_FINAL_DIR\` and move secret-bearing files into the encrypted secrets flow when needed."
+      ;;
+  esac
+  echo
+  echo "---"
+  echo
+  echo "*Report generated by \`$SCRIPT_NAME\`*"
+} > "$MANIFEST_PATH"
+
 echo "Repo backup: $MODE_SUMMARY"
-if [[ "$MODE" == "default" ]]; then
-  echo "Audit manifest: $MANIFEST_PATH"
-  echo "Latest-run pointer: $LATEST_RUN_PATH"
+echo "Manifest: $MANIFEST_PATH"
+if [[ -n "$LATEST_AUDIT_REPORT" ]]; then
   echo "Latest audit report: $LATEST_AUDIT_REPORT"
 fi
-if [[ "$OPEN_AFTER" == true ]]; then
-  if [[ -z "$OPEN_TARGET" || ! -e "$OPEN_TARGET" ]]; then
-    echo "ERROR: primary output is not available to open: ${OPEN_TARGET:-<empty>}" >&2
-    exit 1
-  fi
-  open "$OPEN_TARGET"
+if [[ "$OPEN_AFTER" == true && -n "$OPEN_TARGET" ]]; then
+  open "$OPEN_TARGET" 2>/dev/null || true
 fi

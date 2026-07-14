@@ -9,47 +9,41 @@
 # Options:
 #   --drive NAME       External drive partition name (default: Data)
 #   --backup-root DIR  Specific backup/capture root to audit (default: BACKUP_ROOT env var or newest reimage-*)
-#   --local-only          Skip OneDrive and external drive sections
-#   --check-loose-secrets Run a read-only lingering-secret candidate check.
+#   --local-only       Skip OneDrive and external drive sections
 #   --help
 
 set -euo pipefail
 
-# ── Locate and source shared reimage config ──────────────────────────────────
+# ── Locate and source config ──────────────────────────────────────────────────
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-CONFIG_LOADER="$REPO_ROOT/.internal/load-reimage-config.sh"
+CONFIG_LOADER="${SCRIPT_DIR}/load-reimage-config.sh"
 if [[ ! -f "$CONFIG_LOADER" ]]; then
-  echo "ERROR: shared config loader not found: $CONFIG_LOADER" >&2
-  exit 2
+  echo "ERROR: shared config loader not found: ${CONFIG_LOADER}" >&2
+  exit 1
 fi
-# shellcheck source=../.internal/load-reimage-config.sh
+# shellcheck source=load-reimage-config.sh
 source "$CONFIG_LOADER"
 
-# Display-only fallback. The shared loader does not define a generic CONFIG
-# variable; show the effective artifact-config source when available.
-CONFIG="${CONFIG:-${ARTIFACT_CONFIG_SOURCE_DIR:-$CONFIG_LOADER}}"
+# Display-only fallback. The shared loader does not always set CONFIG.
+CONFIG="${CONFIG:-${BACKUP_CONFIG_SOURCE_DIR:-${BACKUP_CONFIG_SOURCE:-${BACKUP_CONFIG_FILE:-$CONFIG_LOADER}}}}"
 
 # ── Argument parsing ──────────────────────────────────────────────────────────
 DRIVE_NAME="$DEFAULT_DRIVE_NAME"
 AUDIT_BACKUP_ROOT="${BACKUP_ROOT:-}"
 LOCAL_ONLY=false
-CHECK_LOOSE_SECRETS=false
 
 for arg in "$@"; do
   case "$arg" in
-    --local-only)          LOCAL_ONLY=true ;;
-    --check-loose-secrets) CHECK_LOOSE_SECRETS=true ;;
+    --local-only)   LOCAL_ONLY=true ;;
     --help|-h)
       cat <<'USAGE'
-Usage: ./capture-size-audit.sh [--drive NAME_OR_MOUNT_PATH] [--backup-root DIR] [--local-only] [--check-loose-secrets]
+Usage: ./capture-size-audit.sh [--drive NAME_OR_MOUNT_PATH] [--backup-root DIR] [--local-only]
 
   --drive NAME_OR_MOUNT_PATH
                        External drive partition name or /Volumes/... mount path
                        (default: Data)
   --backup-root DIR   Backup/capture root to audit (default: BACKUP_ROOT env var or newest reimage-* on drive)
-  --local-only          Show local targets only — skip OneDrive and external drive
-  --check-loose-secrets Run after the secrets phase to identify plaintext secret candidates outside secrets-encrypted/ and loose payloads still under secrets-encrypted/.
+  --local-only        Show local targets only — skip OneDrive and external drive
 USAGE
       exit 0 ;;
     --drive)        : ;;   # handled below
@@ -85,133 +79,36 @@ RST='\033[0m'
 hr()      { printf '%s\n' "────────────────────────────────────────────────────────" ; }
 thin_hr() { printf '%s\n' "  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄" ; }
 
-# Return success for routine macOS metadata that should not be treated as
-# backup content or reported as loose files.
-is_macos_metadata_name() {
-  local name="$1"
-
-  case "$name" in
-    .DS_Store|._*|.AppleDouble|.LSOverride|.localized|.VolumeIcon.icns|\
-    .DocumentRevisions-V100|.fseventsd|.Spotlight-V100|.TemporaryItems|.Trashes)
-      return 0
-      ;;
-    *)
-      return 1
-      ;;
-  esac
-}
-
-# Heuristic only: identifies filenames commonly used for plaintext credentials,
-# private keys, keystores, and environment-secret files. It deliberately does
-# not inspect file contents or delete anything.
-is_loose_secret_candidate_name() {
-  local name lower
-  name="$1"
-  lower="$(printf '%s' "$name" | tr '[:upper:]' '[:lower:]')"
-
-  case "$lower" in
-    .env|.env.*|.netrc|.npmrc|.pypirc|credentials|credentials.json|id_rsa|id_dsa|id_ecdsa|id_ed25519|*.pem|*.key|*.p12|*.pfx|*.jks|*.keystore|*.kubeconfig|*credential*.json|*token*.json|*password*.csv|*password*.json)
-      return 0
-      ;;
-    *)
-      return 1
-      ;;
-  esac
-}
-
-is_allowed_secrets_evidence_name() {
-  local name lower
-  name="$1"
-  lower="$(printf '%s' "$name" | tr '[:upper:]' '[:lower:]')"
-
-  case "$lower" in
-    *.dmg|*.sha256|*.sha256sum|*.txt|*.tsv|*.md|*.log)
-      return 0
-      ;;
-    *)
-      return 1
-      ;;
-  esac
-}
-
 raw_bytes() {
-  local path="$1" kilobytes
-
-  if [[ ! -e "$path" && ! -L "$path" ]]; then
-    printf '0\n'
-    return 0
-  fi
-
-  # `du` can print a valid size and still return non-zero when part of a tree is
-  # unreadable. Capture only its first numeric field and always emit exactly
-  # one integer so callers can safely use the result in arithmetic expressions.
-  kilobytes="$(du -sk "$path" 2>/dev/null | awk 'NR == 1 && $1 ~ /^[0-9]+$/ { print $1; exit }' || true)"
-  case "$kilobytes" in
-    ''|*[!0-9]*) printf '0\n' ;;
-    *) printf '%s\n' "$((10#$kilobytes * 1024))" ;;
-  esac
+  [[ -e "$1" ]] && du -sk "$1" 2>/dev/null | cut -f1 | awk '{print $1*1024}' || echo 0
 }
 
 bytes_to_human() {
-  local b="${1:-0}"
-
-  case "$b" in
-    ''|*[!0-9]*) b=0 ;;
-  esac
-
-  if (( b >= 1073741824 )); then
-    awk -v bytes="$b" 'BEGIN { printf "%.1f GB", bytes / 1073741824 }'
-  elif (( b >= 1048576 )); then
-    awk -v bytes="$b" 'BEGIN { printf "%.1f MB", bytes / 1048576 }'
-  elif (( b >= 1024 )); then
-    awk -v bytes="$b" 'BEGIN { printf "%.1f KB", bytes / 1024 }'
-  else
-    printf "%d B" "$b"
-  fi
+  local b="$1"
+  if   (( b >= 1073741824 )); then printf "%.1f GB" "$(echo "scale=1; $b/1073741824" | bc)"
+  elif (( b >= 1048576    )); then printf "%.1f MB" "$(echo "scale=1; $b/1048576"    | bc)"
+  elif (( b >= 1024       )); then printf "%.1f KB" "$(echo "scale=1; $b/1024"       | bc)"
+  else printf "%d B" "$b"; fi
 }
 
 dir_size_human() {
-  local path="$1" size
-
-  if [[ ! -e "$path" && ! -L "$path" ]]; then
-    printf 'not found\n'
-    return 0
-  fi
-
-  size="$(du -sh "$path" 2>/dev/null | awk 'NR == 1 { print $1; exit }' || true)"
-  printf '%s\n' "${size:-unavailable}"
+  [[ -e "$1" ]] && du -sh "$1" 2>/dev/null | cut -f1 || echo "not found"
 }
 
 # List immediate children with sizes, flag large and sensitive items
 list_dir_contents() {
   local path="$1" max_items="${2:-50}"
-  local item name rb sz flag
   local count=0
-  local items=()
-
   [[ -d "$path" ]] || return
-
   while IFS= read -r item; do
-    name="${item##*/}"
-    is_macos_metadata_name "$name" && continue
-    items+=("$item")
-  done < <(
-    find "$path" -maxdepth 1 -mindepth 1 -type d  2>/dev/null | sort
-    find "$path" -maxdepth 1 -mindepth 1 ! -type d 2>/dev/null | sort
-  )
-
-  for item in "${items[@]}"; do
-    count=$((count + 1))
+    (( count++ )) || true
     if (( count > max_items )); then
-      printf "  ${DIM}  … and %d more items${RST}\n" $(( ${#items[@]} - max_items ))
+      local total; total=$(find "$path" -maxdepth 1 -mindepth 1 2>/dev/null | wc -l | tr -d ' ')
+      printf "  ${DIM}  … and %d more items${RST}\n" $(( total - max_items ))
       break
     fi
-
-    name="${item##*/}"
-    rb=$(raw_bytes "$item")
-    sz=$(bytes_to_human "$rb")
-    flag=""
-
+    local name rb sz flag=""
+    name=$(basename "$item"); rb=$(raw_bytes "$item"); sz=$(bytes_to_human "$rb")
     if [[ -d "$item" ]]; then
       if   (( rb > 10737418240 )); then printf "  ${YEL}  📁  %-42s  %s ⚠ large${RST}\n" "$name" "$sz"
       elif (( rb >  1073741824 )); then printf "  ${CYN}  📁  %-42s  %s${RST}\n"          "$name" "$sz"
@@ -222,7 +119,10 @@ list_dir_contents() {
         && flag=" ${RED}⚠ sensitive${RST}"
       printf "  ${DIM}      %-42s  %s${RST}%b\n" "$name" "$sz" "$flag"
     fi
-  done
+  done < <(
+    find "$path" -maxdepth 1 -mindepth 1 -type d  2>/dev/null | sort
+    find "$path" -maxdepth 1 -mindepth 1 ! -type d 2>/dev/null | sort
+  )
 }
 
 # ── Header ────────────────────────────────────────────────────────────────────
@@ -232,15 +132,6 @@ echo -e "${BLD}${CYN}║        Pre-Reimage Backup Size Audit                 �
 echo -e "${BLD}${CYN}║        $(date '+%Y-%m-%d %H:%M:%S')                        ║${RST}"
 echo -e "${BLD}${CYN}╚══════════════════════════════════════════════════════╝${RST}"
 echo -e "  ${DIM}Config: ${CONFIG}${RST}"
-echo ""
-echo -e "  ${BLD}Legend${RST}"
-echo -e "  ${GRN}Green${RST}   expected, present, healthy, or enough capacity"
-echo -e "  ${CYN}Cyan${RST}    section headings and larger directories (over 1 GB)"
-echo -e "  ${YEL}Yellow${RST}  review needed: large items, missing items, loose files, or secret candidates"
-echo -e "  ${RED}Red${RST}     critical error or explicit sensitive-data warning"
-echo -e "  ${DIM}Dim${RST}     routine detail, small/normal items, or optional item not found"
-echo -e "  ${DIM}macOS metadata such as .DS_Store and AppleDouble files is hidden and excluded from loose-file warnings.${RST}"
-echo -e "  ${DIM}Configured source secrets are inventory items and are expected before the later secrets phase.${RST}"
 
 total_bytes=0
 
@@ -302,8 +193,7 @@ done
 
 # ── Secrets ───────────────────────────────────────────────────────────────────
 echo ""
-echo -e "  ${BLD}── SECRETS (→ secrets-encrypted/ LATER PHASE) ────────────${RST}"
-echo -e "  ${DIM}Inventory only: presence here is expected before the secrets phase; source files should not be deleted by this audit.${RST}"
+echo -e "  ${BLD}── SECRETS (→ secrets-encrypted/) ─────────────────────────${RST}"
 
 for entry in "${SECRETS_TARGETS[@]}"; do
   key=$(config_field "$entry" 1)
@@ -312,7 +202,7 @@ for entry in "${SECRETS_TARGETS[@]}"; do
   rb=$(raw_bytes "$src"); sz=$(bytes_to_human "$rb")
   total_bytes=$(( total_bytes + rb ))
   if [[ -e "$src" ]]; then
-    printf "  ${CYN}  %-28s  %-10s  %s${RST}\n" "$key" "$sz" "$desc"
+    printf "  ${YEL}  %-28s  %-10s  %s${RST}\n" "$key" "$sz" "$desc"
   else
     printf "  ${DIM}  %-28s  not found${RST}\n" "$key"
   fi
@@ -478,16 +368,12 @@ echo ""
 echo ""
 echo -e "${BLD}${CYN}━━  BACKUP ROOT CONTENTS  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RST}"
 
-BACKUP_ROOTS=()
 if [[ -d "$EXTERNAL_MOUNT" ]]; then
   # Use specified root or find newest on drive
   if [[ -n "$AUDIT_BACKUP_ROOT" ]]; then
     BACKUP_ROOTS=( "$AUDIT_BACKUP_ROOT" )
   else
-    BACKUP_ROOTS=()
-    while IFS= read -r discovered_root; do
-      [[ -n "$discovered_root" ]] && BACKUP_ROOTS+=("$discovered_root")
-    done < <(
+    mapfile -t BACKUP_ROOTS < <(
       find "$EXTERNAL_MOUNT" -maxdepth 1 -type d \( -name 'reimage-*' -o -name 'reimage-preimage-*' -o -name 'reimage-postimage-*' \) 2>/dev/null | sort -r
     )
   fi
@@ -502,14 +388,8 @@ if [[ -d "$EXTERNAL_MOUNT" ]]; then
       echo -e "  ${BLD}${bname}${RST}  ${DIM}($(bytes_to_human $braw) total)${RST}"
       thin_hr
 
-      metadata_ignored=0
       while IFS= read -r item; do
-        name="${item##*/}"
-        if is_macos_metadata_name "$name"; then
-          metadata_ignored=$((metadata_ignored + 1))
-          continue
-        fi
-
+        name=$(basename "$item")
         rb=$(raw_bytes "$item"); sz=$(bytes_to_human "$rb")
         if [[ -d "$item" ]]; then
           is_expected=0
@@ -542,77 +422,9 @@ if [[ -d "$EXTERNAL_MOUNT" ]]; then
         echo -e "  ${GRN}  All expected folders present ✓${RST}"
       fi
 
-      loose=0
-      while IFS= read -r loose_item; do
-        loose_name="${loose_item##*/}"
-        is_macos_metadata_name "$loose_name" && continue
-        loose=$((loose + 1))
-      done < <(find "$backup_root" -maxdepth 1 -mindepth 1 ! -type d 2>/dev/null)
-
-      if (( loose > 0 )); then
+      loose=$(find "$backup_root" -maxdepth 1 -mindepth 1 ! -type d 2>/dev/null | wc -l | tr -d ' ')
+      (( loose > 0 )) && \
         echo -e "  ${YEL}  ⚠ ${loose} loose file(s) at backup root — organize into subfolders${RST}"
-      fi
-      if (( metadata_ignored > 0 )); then
-        echo -e "  ${DIM}  Ignored ${metadata_ignored} routine macOS metadata item(s).${RST}"
-      fi
-    done
-  fi
-fi
-
-# ══════════════════════════════════════════════════════════════════════════════
-# OPTIONAL — POST-SECRETS LINGERING CANDIDATE CHECK
-# ══════════════════════════════════════════════════════════════════════════════
-if [[ "$CHECK_LOOSE_SECRETS" == true ]]; then
-  echo ""
-  echo ""
-  echo -e "${BLD}${CYN}━━  POST-SECRETS LINGERING CANDIDATE CHECK  ━━━━━━━━━━━${RST}"
-  echo -e "  ${DIM}Read-only heuristic. It does not inspect contents or delete files.${RST}"
-  echo -e "  ${DIM}Run after the encrypted secrets artifact has been created and loose staging has been cleaned up.${RST}"
-
-  roots_to_check=()
-  if [[ -n "$AUDIT_BACKUP_ROOT" ]]; then
-    roots_to_check+=("$AUDIT_BACKUP_ROOT")
-  elif (( ${#BACKUP_ROOTS[@]} > 0 )); then
-    roots_to_check=("${BACKUP_ROOTS[@]}")
-  elif [[ -n "$ACTIVE_BACKUP_ROOT" ]]; then
-    roots_to_check+=("$ACTIVE_BACKUP_ROOT")
-  fi
-
-  if (( ${#roots_to_check[@]} == 0 )); then
-    echo -e "  ${YEL}No backup root was available for the lingering-secret check.${RST}"
-  else
-    for check_root in "${roots_to_check[@]}"; do
-      [[ -d "$check_root" ]] || continue
-      outside_count=0
-      staging_count=0
-      echo ""
-      echo -e "  ${BLD}Root: $check_root${RST}"
-
-      while IFS= read -r candidate; do
-        candidate_name="${candidate##*/}"
-        is_macos_metadata_name "$candidate_name" && continue
-        if is_loose_secret_candidate_name "$candidate_name"; then
-          outside_count=$((outside_count + 1))
-          printf "  ${YEL}  ⚠ outside secrets-encrypted/: %s${RST}\n" "${candidate#"$check_root/"}"
-        fi
-      done < <(find "$check_root" -type f ! -path "$check_root/secrets-encrypted/*" 2>/dev/null | sort)
-
-      secrets_root="$check_root/secrets-encrypted"
-      if [[ -d "$secrets_root" ]]; then
-        while IFS= read -r candidate; do
-          candidate_name="${candidate##*/}"
-          is_macos_metadata_name "$candidate_name" && continue
-          is_allowed_secrets_evidence_name "$candidate_name" && continue
-          staging_count=$((staging_count + 1))
-          printf "  ${YEL}  ⚠ loose payload under secrets-encrypted/: %s${RST}\n" "${candidate#"$secrets_root/"}"
-        done < <(find "$secrets_root" -type f 2>/dev/null | sort)
-      fi
-
-      if (( outside_count == 0 && staging_count == 0 )); then
-        echo -e "  ${GRN}  ✓ No lingering plaintext secret candidates found.${RST}"
-      else
-        echo -e "  ${YEL}  Review: ${outside_count} candidate(s) outside secrets-encrypted/; ${staging_count} loose payload file(s) inside secrets-encrypted/.${RST}"
-      fi
     done
   fi
 fi

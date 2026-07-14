@@ -16,8 +16,9 @@
 #   workspace-level files.
 #
 # Default roots:
-#   GIT_WORK_REPO_ROOT and GIT_PERSONAL_REPO_ROOT from reimage.env.
-#   Pass --root more than once to override them for a specific run.
+#   ~/Development/IdeaProjects
+#   ~/Development/Documentation
+#   ~/Development
 #
 # Default output:
 #   $REIMAGE_ARTIFACT_ROOT/gitignore-superset, or
@@ -38,7 +39,7 @@
 # Options:
 #   --root <dir>                  Add a root directory to crawl.
 #                                 Can be passed multiple times.
-#                                 If omitted, uses configured Git roots from reimage.env.
+#                                 If omitted, defaults to common ~/Development roots.
 #   --dest <dir>                   Destination directory for reports.
 #                                 Default: $REIMAGE_ARTIFACT_ROOT/gitignore-superset
 #   --include-git-excludes         Also collect per-repo .git/info/exclude files.
@@ -50,23 +51,17 @@
 #
 # Output files:
 #   gitignore-files.tsv
-#       Machine-readable inventory of every discovered ignore source.
-#   gitignore-files-review.txt
-#       Human-readable view of the ignore-source inventory.
+#       Every ignore source found, including path, kind, nearest Git repo, and workspace root.
 #   gitignore-patterns-all.tsv
-#       Machine-readable provenance for every non-comment pattern occurrence.
-#   gitignore-patterns-all-review.txt
-#       Human-readable patterns grouped by source file.
+#       Every non-empty, non-comment ignore pattern found, with source path and line number.
 #   gitignore-patterns-superset.txt
 #       Unique normalized pattern list for review.
 #   gitignore-patterns-superset-with-counts.tsv
 #       Unique normalized pattern list with occurrence counts.
 #   gitignore-pattern-sources.tsv
-#       Machine-readable unique-pattern-to-source summary.
-#   gitignore-pattern-sources-review.txt
-#       Human-readable pattern provenance grouped by pattern.
+#       Pattern-to-source mapping so you can see where each pattern came from.
 #   gitignore-concatenated-with-sources.txt
-#       Exact source contents with structured provenance headings.
+#       Human-readable concatenation of all ignore files with source headings.
 #   gitignore-review-template.txt
 #       A copy-friendly template where you can mark patterns to stage for backup later.
 #
@@ -99,6 +94,11 @@ INCLUDE_GIT_EXCLUDES="false"
 INCLUDE_GLOBAL_EXCLUDES="false"
 
 ROOTS=()
+DEFAULT_ROOTS=(
+  "$HOME/Development/IdeaProjects"
+  "$HOME/Development/Documentation"
+  "$HOME/Development"
+)
 
 usage() {
   sed -n 's/^# \{0,2\}//p' "$0" | head -73
@@ -135,45 +135,30 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ ${#ROOTS[@]} -eq 0 ]]; then
-  if [[ -n "${GIT_WORK_REPO_ROOT:-}" ]]; then
-    ROOTS+=("$GIT_WORK_REPO_ROOT")
-  fi
-  if [[ -n "${GIT_PERSONAL_REPO_ROOT:-}" ]]; then
-    ROOTS+=("$GIT_PERSONAL_REPO_ROOT")
-  fi
+  for root in "${DEFAULT_ROOTS[@]}"; do
+    [[ -d "$root" ]] && ROOTS+=("$root")
+  done
 fi
 
 if [[ ${#ROOTS[@]} -eq 0 ]]; then
-  echo "ERROR: no Git roots are configured." >&2
-  echo "Set GIT_WORK_REPO_ROOT and/or GIT_PERSONAL_REPO_ROOT in reimage.env," >&2
-  echo "or pass one or more --root <dir> arguments." >&2
-  exit 2
+  echo "ERROR: no root directories exist. Pass at least one --root <dir>." >&2
+  exit 1
 fi
-
-for root in "${ROOTS[@]}"; do
-  if [[ ! -d "$root" ]]; then
-    echo "ERROR: root directory does not exist: $root" >&2
-    exit 2
-  fi
-done
 
 mkdir -p "$DEST"
 
 IGNORE_FILES_TSV="$DEST/gitignore-files.tsv"
-IGNORE_FILES_REVIEW="$DEST/gitignore-files-review.txt"
 PATTERNS_ALL_TSV="$DEST/gitignore-patterns-all.tsv"
-PATTERNS_ALL_REVIEW="$DEST/gitignore-patterns-all-review.txt"
 PATTERNS_SUPERSET_TXT="$DEST/gitignore-patterns-superset.txt"
 PATTERNS_SUPERSET_COUNTS_TSV="$DEST/gitignore-patterns-superset-with-counts.tsv"
 PATTERN_SOURCES_TSV="$DEST/gitignore-pattern-sources.tsv"
-PATTERN_SOURCES_REVIEW="$DEST/gitignore-pattern-sources-review.txt"
 CONCAT_TXT="$DEST/gitignore-concatenated-with-sources.txt"
 REVIEW_TEMPLATE="$DEST/gitignore-review-template.txt"
 SUMMARY_TXT="$DEST/summary.txt"
 
 tmp_sources="$(mktemp)"
-trap 'rm -f "$tmp_sources"' EXIT
-GENERATED_AT="$(date '+%Y-%m-%d %H:%M:%S %Z')"
+tmp_patterns="$(mktemp)"
+trap 'rm -f "$tmp_sources" "$tmp_patterns"' EXIT
 
 # Git root helper. Returns blank if path is not inside a Git repo.
 nearest_git_root() {
@@ -312,130 +297,62 @@ if [[ "$INCLUDE_GLOBAL_EXCLUDES" == "true" ]]; then
   add_source_file "$HOME/.config/git/ignore"
 fi
 
-# De-duplicate source file records and sort them deterministically by kind/path.
+# De-duplicate source file records by kind+path.
 {
   printf "kind\tsource_path\tnearest_git_root\trelative_to_git_root\tidea_workspace_root\trelative_to_workspace\n"
-  LC_ALL=C sort -u -t $'\t' -k1,1 -k2,2 "$tmp_sources"
+  sort -u "$tmp_sources"
 } > "$IGNORE_FILES_TSV"
 
-source_count="$(tail -n +2 "$IGNORE_FILES_TSV" | wc -l | tr -d ' ')"
-
-# Human-readable source inventory. The TSV remains the machine-readable source of truth.
-{
-  echo "Gitignore Source Inventory"
-  echo "=========================="
-  echo
-  echo "Generated: $GENERATED_AT"
-  echo "Sources:   $source_count"
-  echo
-
-  source_index=0
-  tail -n +2 "$IGNORE_FILES_TSV" | while IFS=$'\t' read -r kind source_path git_root rel_git workspace_root rel_workspace; do
-    source_index=$((source_index + 1))
-    printf '[%d] %s\n' "$source_index" "$kind"
-    printf '    Source:              %s\n' "$source_path"
-    printf '    Nearest Git root:    %s\n' "${git_root:-<none>}"
-    printf '    Repo-relative path:  %s\n' "${rel_git:-<none>}"
-    printf '    Workspace root:      %s\n' "${workspace_root:-<none>}"
-    printf '    Workspace-relative:  %s\n' "${rel_workspace:-<none>}"
-    echo
-  done
-} > "$IGNORE_FILES_REVIEW"
-
-# Exact source contents with structured provenance headings for manual review.
-{
-  echo "Gitignore Sources — Concatenated Review"
-  echo "========================================"
-  echo
-  echo "Generated: $GENERATED_AT"
-  echo "Sources included: $source_count"
-  echo "Roots scanned:"
-  for root in "${ROOTS[@]}"; do
-    echo "  - $root"
-  done
-  echo
-} > "$CONCAT_TXT"
-
-source_index=0
-while IFS=$'\t' read -r kind source_path git_root rel_git workspace_root rel_workspace; do
-  source_index=$((source_index + 1))
+# Concatenate sources with headings for easy manual inspection.
+: > "$CONCAT_TXT"
+tail -n +2 "$IGNORE_FILES_TSV" | while IFS=$'\t' read -r kind source_path git_root rel_git workspace_root rel_workspace; do
   {
-    printf 'Source %d of %d\n' "$source_index" "$source_count"
-    echo "=============================="
-    printf 'Kind:                  %s\n' "$kind"
-    printf 'Source path:           %s\n' "$source_path"
-    printf 'Nearest Git root:      %s\n' "${git_root:-<none>}"
-    printf 'Repo-relative path:    %s\n' "${rel_git:-<none>}"
-    printf 'Workspace root:        %s\n' "${workspace_root:-<none>}"
-    printf 'Workspace-relative:    %s\n' "${rel_workspace:-<none>}"
     echo
-    echo "--- BEGIN IGNORE CONTENT ---"
+    echo "===================================================================================================="
+    echo "SOURCE_KIND: $kind"
+    echo "SOURCE_PATH: $source_path"
+    echo "NEAREST_GIT_ROOT: ${git_root:-<none>}"
+    echo "RELATIVE_TO_GIT_ROOT: ${rel_git:-<none>}"
+    echo "IDEA_WORKSPACE_ROOT: ${workspace_root:-<none>}"
+    echo "RELATIVE_TO_WORKSPACE: ${rel_workspace:-<none>}"
+    echo "===================================================================================================="
     echo
     cat "$source_path"
     echo
-    echo "--- END IGNORE CONTENT ---"
-    echo
   } >> "$CONCAT_TXT"
-done < <(tail -n +2 "$IGNORE_FILES_TSV")
+done
 
 # Extract patterns from all ignore files.
 # Keep negations (!) as distinct patterns.
 # Strip CRs, surrounding whitespace, blank lines, and full-line comments.
 # Preserve inline # because in .gitignore it can be literal unless escaped/positioned with whitespace.
-tmp_pattern_rows="$(mktemp)"
-trap 'rm -f "$tmp_sources" "$tmp_pattern_rows"' EXIT
-
-tail -n +2 "$IGNORE_FILES_TSV" | while IFS=$'\t' read -r kind source_path git_root rel_git workspace_root rel_workspace; do
-  awk -v kind="$kind" \
-      -v source_path="$source_path" \
-      -v git_root="$git_root" \
-      -v rel_git="$rel_git" \
-      -v workspace_root="$workspace_root" \
-      -v rel_workspace="$rel_workspace" '
-    BEGIN { OFS = "\t" }
-    {
-      raw = $0
-      sub(/\r$/, "", raw)
-
-      trimmed = raw
-      gsub(/^[[:space:]]+|[[:space:]]+$/, "", trimmed)
-
-      if (trimmed == "") next
-      if (trimmed ~ /^#/) next
-
-      print trimmed, raw, NR, kind, source_path, git_root, rel_git, workspace_root, rel_workspace
-    }
-  ' "$source_path" >> "$tmp_pattern_rows"
-done
-
 {
   printf "normalized_pattern\traw_pattern\tline_number\tsource_kind\tsource_path\tnearest_git_root\trelative_to_git_root\tidea_workspace_root\trelative_to_workspace\n"
-  LC_ALL=C sort -t $'\t' -k5,5 -k3,3n -k1,1 "$tmp_pattern_rows"
-} > "$PATTERNS_ALL_TSV"
+  tail -n +2 "$IGNORE_FILES_TSV" | while IFS=$'\t' read -r kind source_path git_root rel_git workspace_root rel_workspace; do
+    awk -v kind="$kind" \
+        -v source_path="$source_path" \
+        -v git_root="$git_root" \
+        -v rel_git="$rel_git" \
+        -v workspace_root="$workspace_root" \
+        -v rel_workspace="$rel_workspace" '
+      BEGIN { OFS = "\t" }
+      {
+        raw = $0
+        sub(/\r$/, "", raw)
 
-# Human-readable pattern provenance grouped by source file.
-{
-  echo "Gitignore Pattern Occurrences"
-  echo "============================="
-  echo
-  echo "Generated: $GENERATED_AT"
-  echo
+        trimmed = raw
+        gsub(/^[[:space:]]+|[[:space:]]+$/, "", trimmed)
 
-  current_source=""
-  tail -n +2 "$PATTERNS_ALL_TSV" | while IFS=$'\t' read -r normalized raw line_number source_kind source_path git_root rel_git workspace_root rel_workspace; do
-    if [[ "$source_path" != "$current_source" ]]; then
-      [[ -z "$current_source" ]] || echo
-      echo "SOURCE: $source_path"
-      echo "KIND:   $source_kind"
-      echo "------------------------------------------------------------"
-      current_source="$source_path"
-    fi
-    printf 'Line %-6s %s\n' "$line_number" "$raw"
-    if [[ "$normalized" != "$raw" ]]; then
-      printf '           normalized: %s\n' "$normalized"
-    fi
+        if (trimmed == "") next
+        if (trimmed ~ /^#/) next
+
+        normalized = trimmed
+
+        print normalized, raw, NR, kind, source_path, git_root, rel_git, workspace_root, rel_workspace
+      }
+    ' "$source_path"
   done
-} > "$PATTERNS_ALL_REVIEW"
+} > "$PATTERNS_ALL_TSV"
 
 # Unique pattern list.
 tail -n +2 "$PATTERNS_ALL_TSV" | cut -f1 | sort -u > "$PATTERNS_SUPERSET_TXT"
@@ -446,7 +363,7 @@ tail -n +2 "$PATTERNS_ALL_TSV" | cut -f1 | sort -u > "$PATTERNS_SUPERSET_TXT"
   tail -n +2 "$PATTERNS_ALL_TSV" | cut -f1 | sort | uniq -c | awk 'BEGIN{OFS="\t"} {count=$1; $1=""; sub(/^ /,""); print count,$0}'
 } > "$PATTERNS_SUPERSET_COUNTS_TSV"
 
-# Pattern-to-source mapping, ordered by most widely used patterns first.
+# Pattern-to-source mapping.
 {
   printf "normalized_pattern\tsource_count\tsources\n"
   tail -n +2 "$PATTERNS_ALL_TSV" \
@@ -468,24 +385,8 @@ tail -n +2 "$PATTERNS_ALL_TSV" | cut -f1 | sort -u > "$PATTERNS_SUPERSET_TXT"
           }
         }
       ' \
-    | LC_ALL=C sort -t $'\t' -k2,2nr -k1,1
+    | sort
 } > "$PATTERN_SOURCES_TSV"
-
-# Human-readable pattern-to-source view.
-{
-  echo "Gitignore Pattern Sources"
-  echo "========================="
-  echo
-  echo "Generated: $GENERATED_AT"
-  echo
-
-  tail -n +2 "$PATTERN_SOURCES_TSV" | while IFS=$'\t' read -r pattern source_total sources; do
-    printf 'PATTERN: %s\n' "$pattern"
-    printf 'Used by %s ignore source(s):\n' "$source_total"
-    printf '%s\n' "$sources" | awk -F'; ' '{ for (i = 1; i <= NF; i++) print "  - " $i }'
-    echo
-  done
-} > "$PATTERN_SOURCES_REVIEW"
 
 # Review template.
 {
@@ -504,6 +405,7 @@ tail -n +2 "$PATTERNS_ALL_TSV" | cut -f1 | sort -u > "$PATTERNS_SUPERSET_TXT"
   done < "$PATTERNS_SUPERSET_TXT"
 } > "$REVIEW_TEMPLATE"
 
+source_count="$(tail -n +2 "$IGNORE_FILES_TSV" | wc -l | tr -d ' ')"
 pattern_count="$(wc -l < "$PATTERNS_SUPERSET_TXT" | tr -d ' ')"
 all_pattern_rows="$(tail -n +2 "$PATTERNS_ALL_TSV" | wc -l | tr -d ' ')"
 
@@ -511,7 +413,7 @@ all_pattern_rows="$(tail -n +2 "$PATTERNS_ALL_TSV" | wc -l | tr -d ' ')"
   echo "Gitignore Superset Summary"
   echo "==========================="
   echo
-  echo "Generated: $GENERATED_AT"
+  echo "Generated: $(date)"
   echo
   echo "Roots scanned:"
   for root in "${ROOTS[@]}"; do
@@ -527,24 +429,13 @@ all_pattern_rows="$(tail -n +2 "$PATTERNS_ALL_TSV" | wc -l | tr -d ' ')"
   echo "  Unique normalized patterns:     $pattern_count"
   echo
   echo "Files:"
-  echo "  $SUMMARY_TXT"
   echo "  $IGNORE_FILES_TSV"
-  echo "  $IGNORE_FILES_REVIEW"
   echo "  $PATTERNS_ALL_TSV"
-  echo "  $PATTERNS_ALL_REVIEW"
   echo "  $PATTERNS_SUPERSET_TXT"
   echo "  $PATTERNS_SUPERSET_COUNTS_TSV"
   echo "  $PATTERN_SOURCES_TSV"
-  echo "  $PATTERN_SOURCES_REVIEW"
   echo "  $CONCAT_TXT"
   echo "  $REVIEW_TEMPLATE"
-  echo
-  echo "Suggested review order:"
-  echo "  1. summary.txt"
-  echo "  2. gitignore-files-review.txt"
-  echo "  3. gitignore-pattern-sources-review.txt"
-  echo "  4. gitignore-concatenated-with-sources.txt when source context is needed"
-  echo "  5. gitignore-review-template.txt"
   echo
   echo "Next step:"
   echo "  Mark patterns in gitignore-review-template.txt with [x], then run"

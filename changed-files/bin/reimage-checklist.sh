@@ -6,7 +6,6 @@
 # (Phase 4B) and post-image reimaged-system (Phase 12) Mac reimage workflow
 # stages.
 #
-# BEGIN USAGE
 # Usage:
 #   cd <repo-root>
 #   chmod +x bin/reimage-checklist.sh
@@ -17,144 +16,78 @@
 #   # Phase 12 -- final reimaged-system validation
 #   ./bin/reimage-checklist.sh --phase post
 #
-#   # Override config-backed paths
-#   ./bin/reimage-checklist.sh \
-#     --phase post \
-#     --artifact-root /path/to/reimage-artifact-root \
-#     --external-data-volume /path/to/external-data-volume \
-#     --workspace-root /path/to/work-repositories \
-#     --workspace-root /path/to/personal-repositories
+#   # Override artifact root
+#   ./bin/reimage-checklist.sh --phase pre --artifact-root /Volumes/Data/reimage-backup-YYYYMMDD
 #
 #   # Open output in Finder after run
 #   ./bin/reimage-checklist.sh --phase post --open
 #
 # Options:
-#   --phase pre|post            Required. Which checklist to run.
-#   --artifact-root PATH        Override REIMAGE_ARTIFACT_ROOT from reimage.env.
-#   --external-data-volume PATH Override EXTERNAL_DATA_VOLUME from reimage.env.
-#   --output-root PATH          Override where the report bundle is written.
-#                               Default: $REIMAGE_ARTIFACT_ROOT/reimage-prep-checks          (pre)
-#                                        $REIMAGE_ARTIFACT_ROOT/reimaged-system/checklists  (post)
-#   --workspace-root PATH       Workspace root to scan for Git repo status.
-#                               Can be repeated. (post only)
-#                               Default: configured GIT_WORK_REPO_ROOT and
-#                                        GIT_PERSONAL_REPO_ROOT when set.
-#   --onedrive-root PATH        Override ONEDRIVE_ROOT from reimage.env. (post only)
-#   --internal-url URL          Optional internal URL to verify VPN/network. (post only)
-#   --no-color                  Disable colored terminal output.
-#   --open                      Open the output directory in Finder after run.
-#   -h, --help                  Show this message and exit.
+#   --phase pre|post       Required. Which checklist to run.
+#   --artifact-root PATH     Override REIMAGE_ARTIFACT_ROOT from reimage.env.
+#   --output-root PATH     Override where the report bundle is written.
+#                          Default: $REIMAGE_ARTIFACT_ROOT/reimage-prep-checks         (pre)
+#                                   $REIMAGE_ARTIFACT_ROOT/reimaged-system/checklists  (post)
+#   --workspace-root PATH  Workspace root to scan for Git repo status.
+#                          Can be repeated. (post only)
+#   --internal-url URL     Optional internal URL to verify VPN/network. (post only)
+#   --no-color             Disable colored terminal output.
+#   --open                 Open the output directory in Finder after run.
+#   -h, --help             Show this message and exit.
 #
-# Configuration precedence:
-#   1. Command-line options
-#   2. Already-exported environment values
-#   3. reimage.env
-#   4. artifact-config.sh defaults
-#
-# Exit status:
-#   0  Checklist completed with no FAIL items.
-#   1  One or more FAIL items were recorded.
-#   2  Invalid arguments or required configuration could not be loaded.
-# END USAGE
+# The script exits non-zero when any FAIL items are found so it can be used
+# in shell pipelines and makefiles.
 # =============================================================================
 
 set -uo pipefail
 # NOTE: intentionally NOT set -e. Arithmetic and checks that return non-zero
 # must not abort the script; every check must produce a PASS/WARN/FAIL line.
 
-# ── Locate repo and load shared reimage config ────────────────────────────────
+# ── Load shared reimage config ────────────────────────────────────────────────
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-CONFIG_LOADER="$REPO_ROOT/.internal/load-reimage-config.sh"
+# This script lives at <repo>/bin/reimage-checklist.sh, so .internal/ is a
+# sibling of bin/, one level up from this script's own directory.
+CONFIG_LOADER="$(dirname "$SCRIPT_DIR")/.internal/load-reimage-config.sh"
 if [[ ! -f "$CONFIG_LOADER" ]]; then
   echo "ERROR: shared config loader not found: $CONFIG_LOADER" >&2
   exit 2
 fi
 # shellcheck source=../.internal/load-reimage-config.sh
-if ! source "$CONFIG_LOADER"; then
-  echo "ERROR: shared reimage configuration could not be loaded." >&2
-  exit 2
-fi
+source "$CONFIG_LOADER"
 # ─────────────────────────────────────────────────────────────────────────────
 
 SCRIPT_NAME="${REIMAGE_SCRIPT_DISPLAY_NAME:-reimage-checklist.sh}"
 PHASE=""
 OUTPUT_ROOT=""
-OPEN_RESULT=false
+OPEN_RESULT="false"
 USE_COLOR=true
 WORKSPACE_ROOTS=()
 INTERNAL_URL=""
 
 usage() {
-  awk '
-    /^# BEGIN USAGE$/ { show = 1; next }
-    /^# END USAGE$/   { exit }
-    show {
-      sub(/^# ?/, "")
-      print
-    }
-  ' "$0"
-}
-
-require_option_value() {
-  local option="$1"
-  local value="${2:-}"
-
-  if [[ -z "$value" || "$value" == --* ]]; then
-    echo "ERROR: $option requires a non-empty value." >&2
-    usage >&2
-    exit 2
-  fi
-}
-
-append_unique_workspace_root() {
-  local candidate="$1"
-  local existing
-
-  [[ -n "$candidate" ]] || return 0
-
-  for existing in "${WORKSPACE_ROOTS[@]}"; do
-    [[ "$existing" == "$candidate" ]] && return 0
-  done
-
-  WORKSPACE_ROOTS+=("$candidate")
+  sed -n 's/^# \{0,2\}//p' "$0" | head -40
 }
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --phase)
-      require_option_value "$1" "${2:-}"
-      PHASE="$2"
+      PHASE="${2:-}"
       shift 2
       ;;
     --artifact-root)
-      require_option_value "$1" "${2:-}"
-      REIMAGE_ARTIFACT_ROOT="$2"
-      shift 2
-      ;;
-    --external-data-volume)
-      require_option_value "$1" "${2:-}"
-      EXTERNAL_DATA_VOLUME="${2%/}"
+      REIMAGE_ARTIFACT_ROOT="${2:-}"
       shift 2
       ;;
     --output-root)
-      require_option_value "$1" "${2:-}"
-      OUTPUT_ROOT="$2"
+      OUTPUT_ROOT="${2:-}"
       shift 2
       ;;
     --workspace-root)
-      require_option_value "$1" "${2:-}"
-      append_unique_workspace_root "${2%/}"
-      shift 2
-      ;;
-    --onedrive-root)
-      require_option_value "$1" "${2:-}"
-      ONEDRIVE_ROOT="${2%/}"
+      WORKSPACE_ROOTS+=("${2:-}")
       shift 2
       ;;
     --internal-url)
-      require_option_value "$1" "${2:-}"
-      INTERNAL_URL="$2"
+      INTERNAL_URL="${2:-}"
       shift 2
       ;;
     --no-color)
@@ -181,7 +114,7 @@ done
 # Validate required args
 # ---------------------------------------------------------------------------
 if [[ -z "$PHASE" ]]; then
-  echo "ERROR: --phase pre|post is required." >&2
+  echo "Error: --phase pre|post is required." >&2
   usage >&2
   exit 2
 fi
@@ -189,23 +122,15 @@ fi
 case "$PHASE" in
   pre|post) ;;
   *)
-    echo "ERROR: --phase must be 'pre' or 'post', got: '$PHASE'" >&2
+    echo "Error: --phase must be 'pre' or 'post', got: '$PHASE'" >&2
     exit 2
     ;;
 esac
 
 if [[ -z "$REIMAGE_ARTIFACT_ROOT" ]]; then
-  echo "ERROR: REIMAGE_ARTIFACT_ROOT is not set. Configure reimage.env or pass --artifact-root PATH." >&2
+  echo "Error: REIMAGE_ARTIFACT_ROOT is not set. Source reimage.env or pass --artifact-root PATH." >&2
   exit 2
 fi
-
-if [[ -z "${EXTERNAL_DATA_VOLUME:-}" ]]; then
-  echo "ERROR: EXTERNAL_DATA_VOLUME is not set. Configure reimage.env or pass --external-data-volume PATH." >&2
-  exit 2
-fi
-
-REIMAGE_ARTIFACT_ROOT="${REIMAGE_ARTIFACT_ROOT%/}"
-EXTERNAL_DATA_VOLUME="${EXTERNAL_DATA_VOLUME%/}"
 
 # ---------------------------------------------------------------------------
 # Output paths
@@ -223,15 +148,22 @@ fi
 REPORT_FILE="$OUTPUT_ROOT/reimage-checklist-${TIMESTAMP}.md"
 mkdir -p "$OUTPUT_ROOT"
 
+# Ensure the standard reimaged-system subdirectories exist if post
+if [[ "$PHASE" == "post" && -d "$REIMAGE_ARTIFACT_ROOT" ]]; then
+  mkdir -p \
+    "$REIMAGE_ARTIFACT_ROOT/reimaged-system/checklists" \
+    "$REIMAGE_ARTIFACT_ROOT/reimaged-system/time-machine" \
+    "$REIMAGE_ARTIFACT_ROOT/reimaged-system/restarts" \
+    "$REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes" 2>/dev/null || true
+fi
+
 # ---------------------------------------------------------------------------
-# Configured workspace roots (post only)
+# Default workspace roots (post only)
 # ---------------------------------------------------------------------------
-# Explicit --workspace-root values win. When none are provided, use the Git
-# roots loaded from reimage.env. Do not invent broad development-directory defaults:
-# missing configured roots are useful post-image findings and should be reported.
 if [[ "$PHASE" == "post" && ${#WORKSPACE_ROOTS[@]} -eq 0 ]]; then
-  append_unique_workspace_root "${GIT_WORK_REPO_ROOT:-}"
-  append_unique_workspace_root "${GIT_PERSONAL_REPO_ROOT:-}"
+  [[ -d "$HOME/Development/IdeaProjects" ]]  && WORKSPACE_ROOTS+=("$HOME/Development/IdeaProjects")
+  [[ -d "$HOME/Development/Documentation" ]] && WORKSPACE_ROOTS+=("$HOME/Development/Documentation")
+  [[ -d "$HOME/Development/documentation" ]] && WORKSPACE_ROOTS+=("$HOME/Development/documentation")
 fi
 
 # ---------------------------------------------------------------------------
@@ -311,74 +243,13 @@ newest_matching() {
   find "$dir" -maxdepth 3 -name "$pattern" -type f 2>/dev/null | sort | tail -1
 }
 
-resolve_latest_repo_audit_run() {
-  local audit_root="$1"
-  local pointer="$audit_root/latest-run.txt"
-  local run_relative=""
-  local run_dir=""
-
-  [[ -f "$pointer" ]] || return 1
-  IFS= read -r run_relative < "$pointer" || true
-
-  case "$run_relative" in
-    runs/pre-image-*|runs/post-image-*) ;;
-    *) return 1 ;;
-  esac
-
-  case "$run_relative" in
-    *..*|/*) return 1 ;;
-  esac
-
-  run_dir="$audit_root/$run_relative"
-  [[ -d "$run_dir" ]] || return 1
-  printf '%s\n' "$run_dir"
-}
-
 file_age_hours() {
   local f="$1"
-  local now=""
-  local mtime=""
-
-  if [[ ! -f "$f" ]]; then
-    echo 999
-    return
-  fi
-
+  if [[ ! -f "$f" ]]; then echo 999; return; fi
+  local now mtime
   now="$(date +%s)"
-  mtime="$(stat -f %m "$f" 2>/dev/null || true)"
-  case "$mtime" in
-    ''|*[!0-9]*) mtime="$(stat -c %Y "$f" 2>/dev/null || true)" ;;
-  esac
-
-  case "$now:$mtime" in
-    *[!0-9:]*|:|*:)
-      echo 999
-      return
-      ;;
-  esac
-
+  mtime="$(stat -f %m "$f" 2>/dev/null || echo 0)"
   echo $(( (now - mtime) / 3600 ))
-}
-
-tsv_data_count() {
-  local file="$1"
-  local line_count=""
-
-  if [[ ! -f "$file" ]]; then
-    echo 0
-    return
-  fi
-
-  line_count="$(wc -l < "$file" 2>/dev/null | tr -d ' ')"
-  case "$line_count" in
-    ''|*[!0-9]*) line_count=1 ;;
-  esac
-
-  if [[ "$line_count" -gt 0 ]]; then
-    echo $((line_count - 1))
-  else
-    echo 0
-  fi
 }
 
 check_app() {
@@ -430,10 +301,9 @@ printf "%b+--------------------------------------------------------------+%b\n" 
 printf "%b|  %-60s|%b\n" "$BOLD" "$PHASE_LABEL" "$RESET"
 printf "%b+--------------------------------------------------------------+%b\n" "$BOLD" "$RESET"
 printf "\n"
-printf "  PHASE                  : %s\n" "$PHASE"
-printf "  EXTERNAL_DATA_VOLUME   : %s\n" "$EXTERNAL_DATA_VOLUME"
-printf "  REIMAGE_ARTIFACT_ROOT  : %s\n" "$REIMAGE_ARTIFACT_ROOT"
-printf "  Report                 : %s\n" "$REPORT_FILE"
+printf "  PHASE       : %s\n" "$PHASE"
+printf "  REIMAGE_ARTIFACT_ROOT : %s\n" "$REIMAGE_ARTIFACT_ROOT"
+printf "  Report      : %s\n" "$REPORT_FILE"
 printf "  Timestamp   : %s\n" "$TIMESTAMP"
 printf "\n"
 
@@ -445,36 +315,28 @@ printf "\n"
 record_section "External Drive and Backup Root"
 # ---------------------------------------------------------------------------
 
-if [[ -d "$EXTERNAL_DATA_VOLUME" ]]; then
-  record_check PASS "External data volume mounted" "$EXTERNAL_DATA_VOLUME exists"
+VOLUMES_DATA="$(dirname "$REIMAGE_ARTIFACT_ROOT")"
+if [[ -d "$VOLUMES_DATA" ]]; then
+  record_check PASS "External backup volume mounted" "$VOLUMES_DATA exists"
 else
-  record_check FAIL "External data volume mounted" "$EXTERNAL_DATA_VOLUME not found -- drive not mounted"
+  record_check FAIL "External backup volume mounted" "$VOLUMES_DATA not found -- drive not mounted"
 fi
-
-case "$REIMAGE_ARTIFACT_ROOT" in
-  "$EXTERNAL_DATA_VOLUME"/*)
-    record_check PASS "Artifact root location" "$REIMAGE_ARTIFACT_ROOT is under $EXTERNAL_DATA_VOLUME"
-    ;;
-  *)
-    record_check FAIL "Artifact root location" "$REIMAGE_ARTIFACT_ROOT is not under configured EXTERNAL_DATA_VOLUME: $EXTERNAL_DATA_VOLUME"
-    ;;
-esac
 
 if [[ -d "$REIMAGE_ARTIFACT_ROOT" ]]; then
-  record_check PASS "Artifact root exists" "$REIMAGE_ARTIFACT_ROOT"
+  record_check PASS "Backup root exists" "$REIMAGE_ARTIFACT_ROOT"
 else
-  record_check FAIL "Artifact root exists" "$REIMAGE_ARTIFACT_ROOT not found"
+  record_check FAIL "Backup root exists" "$REIMAGE_ARTIFACT_ROOT not found"
 fi
 
-if [[ -d "$EXTERNAL_DATA_VOLUME" ]]; then
-  FREE_KB="$(df -k "$EXTERNAL_DATA_VOLUME" 2>/dev/null | awk 'NR==2{print $4}')"
+if [[ -d "$VOLUMES_DATA" ]]; then
+  FREE_KB="$(df -k "$VOLUMES_DATA" 2>/dev/null | awk 'NR==2{print $4}')"
   FREE_GB=$(( ${FREE_KB:-0} / 1048576 ))
   if [[ $FREE_GB -ge 5 ]]; then
-    record_check PASS "External data volume free space" "${FREE_GB} GB free"
+    record_check PASS "External drive free space" "${FREE_GB} GB free"
   elif [[ $FREE_GB -ge 1 ]]; then
-    record_check WARN "External data volume free space" "${FREE_GB} GB free -- low"
+    record_check WARN "External drive free space" "${FREE_GB} GB free -- low"
   else
-    record_check FAIL "External data volume free space" "${FREE_GB} GB free -- critically low"
+    record_check FAIL "External drive free space" "${FREE_GB} GB free -- critically low"
   fi
 fi
 
@@ -488,26 +350,17 @@ else
   record_check WARN "OneDrive process running" "Not running -- confirm sync was completed before this run"
 fi
 
-BACKUP_BASENAME="$(basename "$REIMAGE_ARTIFACT_ROOT")"
-ONEDRIVE_BACKUP_SUBDIR="${ONEDRIVE_DEST_SUBDIR:-$BACKUP_BASENAME}"
-ONEDRIVE_MATCH=""
-
-if [[ -n "${ONEDRIVE_ROOT:-}" ]]; then
-  ONEDRIVE_MATCH="${ONEDRIVE_ROOT%/}/$ONEDRIVE_BACKUP_SUBDIR"
-  if [[ -d "$ONEDRIVE_MATCH" ]]; then
-    MARKER_COUNT="$(find "$ONEDRIVE_MATCH" -maxdepth 1 -name "onedrive-upload-marker-*.txt" 2>/dev/null | wc -l | tr -d ' ')"
-    if [[ "$MARKER_COUNT" -gt 0 ]]; then
-      record_check PASS "OneDrive backup folder detected" "$ONEDRIVE_MATCH -- upload marker present (evidence only, not proof of sync)"
-    else
-      record_check WARN "OneDrive backup folder detected" "$ONEDRIVE_MATCH -- no upload marker found; confirm sync manually"
-    fi
-  elif [[ -d "$ONEDRIVE_ROOT" ]]; then
-    record_check WARN "OneDrive backup folder detected" "$ONEDRIVE_MATCH not found -- confirm the configured destination and sync state"
+BACKUP_BASENAME="$(basename "${REIMAGE_ARTIFACT_ROOT%/}")"
+ONEDRIVE_MATCH="$(find "$HOME/Library/CloudStorage" -maxdepth 3 -type d -name "$BACKUP_BASENAME" 2>/dev/null | head -1)"
+if [[ -n "$ONEDRIVE_MATCH" ]]; then
+  MARKER_COUNT="$(find "$ONEDRIVE_MATCH" -maxdepth 1 -name "onedrive-upload-marker-*.txt" 2>/dev/null | wc -l | tr -d ' ')"
+  if [[ "$MARKER_COUNT" -gt 0 ]]; then
+    record_check PASS "OneDrive backup folder detected" "$ONEDRIVE_MATCH -- upload marker present (evidence only, not proof of sync)"
   else
-    record_check WARN "OneDrive root available" "$ONEDRIVE_ROOT not found -- sign in or correct ONEDRIVE_ROOT"
+    record_check WARN "OneDrive backup folder detected" "$ONEDRIVE_MATCH -- no upload marker found; confirm sync manually"
   fi
 else
-  record_check SKIP "OneDrive backup folder detected" "ONEDRIVE_ROOT is not configured"
+  record_check WARN "OneDrive backup folder detected" "No $BACKUP_BASENAME folder found under $HOME/Library/CloudStorage -- confirm OneDrive copy manually"
 fi
 
 ICLOUD_DRIVE="$HOME/Library/Mobile Documents/com~apple~CloudDocs"
@@ -547,60 +400,47 @@ if [[ "$PHASE" == "pre" ]]; then
   record_section "Git Audit"
   # -------------------------------------------------------------------------
   REPO_AUDIT_DIR="$REIMAGE_ARTIFACT_ROOT/repo-audit-reports"
-  REPO_AUDIT_MANIFEST="$REPO_AUDIT_DIR/MANIFEST.md"
-  LATEST_AUDIT_RUN="$(resolve_latest_repo_audit_run "$REPO_AUDIT_DIR" 2>/dev/null || true)"
-  LATEST_AUDIT="${LATEST_AUDIT_RUN:+$LATEST_AUDIT_RUN/repo-audit-summary.txt}"
+  LATEST_AUDIT="$(newest_matching "$REPO_AUDIT_DIR" "git-audit-summary-*.txt")"
 
-  if [[ -f "$REPO_AUDIT_MANIFEST" ]] && grep -q '^# Repository Audit Runs$' "$REPO_AUDIT_MANIFEST" 2>/dev/null; then
-    record_check PASS "Repository audit manifest" "$REPO_AUDIT_MANIFEST"
-  elif [[ -f "$REPO_AUDIT_MANIFEST" ]]; then
-    record_check FAIL "Repository audit manifest" "Existing MANIFEST.md is not the canonical append-only run index"
-  else
-    record_check FAIL "Repository audit manifest" "Missing $REPO_AUDIT_MANIFEST"
-  fi
-
-  if [[ -n "$LATEST_AUDIT_RUN" && -f "$LATEST_AUDIT" ]]; then
+  if [[ -n "$LATEST_AUDIT" ]]; then
     AGE_H="$(file_age_hours "$LATEST_AUDIT")"
     if [[ $AGE_H -le 24 ]]; then
-      record_check PASS "Git audit report" "$(basename "$LATEST_AUDIT_RUN")/repo-audit-summary.txt (${AGE_H}h ago)"
+      record_check PASS "Git audit report" "$(basename "$LATEST_AUDIT") (${AGE_H}h ago)"
     else
-      record_check WARN "Git audit report" "$(basename "$LATEST_AUDIT_RUN")/repo-audit-summary.txt is ${AGE_H}h old -- consider re-running"
+      record_check WARN "Git audit report" "$(basename "$LATEST_AUDIT") is ${AGE_H}h old -- consider re-running"
     fi
-    LOCAL_ONLY_COUNT="$(tsv_data_count "$LATEST_AUDIT_RUN/local-only-commits.tsv")"
-    if [[ "$LOCAL_ONLY_COUNT" -gt 0 ]]; then
-      record_check WARN "Local-only commits" "$LOCAL_ONLY_COUNT local-only commit row(s) in the latest audit -- review"
+    if grep -qi "local.only\|unpushed\|no remote" "$LATEST_AUDIT" 2>/dev/null; then
+      record_check WARN "Local-only commits" "Audit may still contain local-only commits -- review"
     else
-      record_check PASS "Local-only commits" "Latest audit reports none"
+      record_check PASS "Local-only commits" "No warnings found in audit"
     fi
-
-    STASH_COUNT="$(tsv_data_count "$LATEST_AUDIT_RUN/stashes.tsv")"
-    if [[ "$STASH_COUNT" -gt 0 ]]; then
-      record_check WARN "Stashes" "$STASH_COUNT stash row(s) in the latest audit -- review"
+    if grep -qi "stash" "$LATEST_AUDIT" 2>/dev/null; then
+      record_check WARN "Stashes" "Stash references found -- confirm converted or abandoned"
     else
-      record_check PASS "Stashes" "Latest audit reports none"
+      record_check PASS "Stashes" "No stash references found"
     fi
   else
-    record_check FAIL "Git audit report" "latest-run.txt does not resolve to a run containing repo-audit-summary.txt"
-    record_check SKIP "Local-only commits" "Skipped -- latest audit report unavailable"
-    record_check SKIP "Stashes" "Skipped -- latest audit report unavailable"
+    record_check FAIL "Git audit report" "No git-audit-summary-*.txt under $REPO_AUDIT_DIR"
+    record_check SKIP "Local-only commits" "Skipped -- no audit report"
+    record_check SKIP "Stashes" "Skipped -- no audit report"
   fi
 
-  if [[ -n "$LATEST_AUDIT_RUN" && -f "$LATEST_AUDIT_RUN/local-only-commits.tsv" ]]; then
-    record_check PASS "Git audit TSV present" "$(basename "$LATEST_AUDIT_RUN")/local-only-commits.tsv"
+  if [[ -n "$(newest_matching "$REPO_AUDIT_DIR" "local-only-commits-*.tsv")" ]]; then
+    record_check PASS "Git audit TSV present" "local-only-commits TSV found"
   else
-    record_check WARN "Git audit TSV present" "local-only-commits.tsv not found in the latest audit run"
+    record_check WARN "Git audit TSV present" "Not found"
   fi
 
-  UNTRACKED_TSV="${LATEST_AUDIT_RUN:+$LATEST_AUDIT_RUN/untracked-nonignored.tsv}"
-  if [[ -n "$UNTRACKED_TSV" && -f "$UNTRACKED_TSV" ]]; then
-    UNTRACKED_COUNT="$(tsv_data_count "$UNTRACKED_TSV")"
+  UNTRACKED_TSV="$(newest_matching "$REPO_AUDIT_DIR" "untracked-nonignored-*.tsv")"
+  if [[ -n "$UNTRACKED_TSV" ]]; then
+    UNTRACKED_COUNT="$(($(wc -l <"$UNTRACKED_TSV" 2>/dev/null || echo 1) - 1))"
     if [[ "$UNTRACKED_COUNT" -gt 0 ]]; then
-      record_check WARN "Untracked non-ignored files reviewed" "Latest run lists $UNTRACKED_COUNT file(s) -- review before reimage"
+      record_check WARN "Untracked non-ignored files reviewed" "$(basename "$UNTRACKED_TSV") lists $UNTRACKED_COUNT file(s) -- review before reimage"
     else
-      record_check PASS "Untracked non-ignored files reviewed" "Latest run reports none"
+      record_check PASS "Untracked non-ignored files reviewed" "$(basename "$UNTRACKED_TSV") -- none found"
     fi
   else
-    record_check WARN "Untracked non-ignored files reviewed" "untracked-nonignored.tsv not found in the latest audit run"
+    record_check WARN "Untracked non-ignored files reviewed" "No untracked-nonignored-*.tsv under $REPO_AUDIT_DIR"
   fi
 
   # -------------------------------------------------------------------------
@@ -1054,14 +894,10 @@ if [[ "$PHASE" == "post" ]]; then
   # -------------------------------------------------------------------------
   record_section "Development Environment Extras"
   # -------------------------------------------------------------------------
-  if [[ -f "$REPO_ROOT/reimaging-guide.md" && -d "$REPO_ROOT/bin" && -d "$REPO_ROOT/.internal" ]]; then
-    if [[ -d "$REPO_ROOT/.git" ]]; then
-      record_check PASS "fractogenesis-toolkit checkout" "$REPO_ROOT -- Git checkout available"
-    else
-      record_check WARN "fractogenesis-toolkit checkout" "$REPO_ROOT -- toolkit files are available, but this is not a Git checkout"
-    fi
+  if [[ -d "$HOME/Development/documentation/reference-vault" ]]; then
+    record_check PASS "reference-vault restored" "Found at ~/Development/documentation/reference-vault"
   else
-    record_check WARN "fractogenesis-toolkit checkout" "$REPO_ROOT is missing expected toolkit files or directories"
+    record_check WARN "reference-vault restored" "Not found at expected path -- clone/restore it"
   fi
 
   if command -v brew >/dev/null 2>&1; then
@@ -1136,7 +972,7 @@ if [[ "$PHASE" == "post" ]]; then
   if [[ ${#WORKSPACE_ROOTS[@]} -gt 0 ]]; then
     for WROOT in "${WORKSPACE_ROOTS[@]}"; do
       if [[ -d "$WROOT" ]]; then
-        REPO_COUNT="$(find "$WROOT" -maxdepth 4 -name ".git" \( -type d -o -type f \) 2>/dev/null | wc -l | tr -d ' ')"
+        REPO_COUNT="$(find "$WROOT" -maxdepth 3 -name ".git" -type d 2>/dev/null | wc -l | tr -d ' ')"
         if [[ $REPO_COUNT -gt 0 ]]; then
           record_check PASS "Git repos in $WROOT" "${REPO_COUNT} repo(s) found"
         else
@@ -1148,6 +984,14 @@ if [[ "$PHASE" == "post" ]]; then
     done
   else
     record_check SKIP "Git workspace roots" "No workspace roots configured"
+  fi
+
+  # personal (non-work) repos
+  if [[ -d "$HOME/<personal-projects-dir>" ]]; then
+    PERSONAL_COUNT="$(find "$HOME/<personal-projects-dir>" -maxdepth 3 -name ".git" -type d 2>/dev/null | wc -l | tr -d ' ')"
+    record_check PASS "Personal repos in ~/<personal-projects-dir>" "${PERSONAL_COUNT} repo(s)"
+  else
+    record_check WARN "Personal repos in ~/<personal-projects-dir>" "~/<personal-projects-dir> does not exist"
   fi
 
   # -------------------------------------------------------------------------
@@ -1234,13 +1078,11 @@ if [[ "$PHASE" == "post" ]]; then
     record_check WARN "Office stability directory" "Empty"
   fi
 
-  TM_EXCLUSION_STATUS="$(tmutil isexcluded "$EXTERNAL_DATA_VOLUME" 2>/dev/null || true)"
-  if printf '%s\n' "$TM_EXCLUSION_STATUS" | grep -q '^\[Excluded\]'; then
-    record_check PASS "External data volume excluded from Time Machine" "$EXTERNAL_DATA_VOLUME"
-  elif [[ -n "$TM_EXCLUSION_STATUS" ]]; then
-    record_check WARN "External data volume excluded from Time Machine" "$EXTERNAL_DATA_VOLUME is not reported as excluded -- review tmutil output"
+  TM_EXCL="$(tmutil listexclusions 2>/dev/null | grep -c "Data" || true)"
+  if [[ $TM_EXCL -gt 0 ]]; then
+    record_check PASS "/Volumes/Data excluded from Time Machine" "Exclusion found"
   else
-    record_check WARN "External data volume excluded from Time Machine" "Could not determine exclusion status for $EXTERNAL_DATA_VOLUME"
+    record_check WARN "/Volumes/Data excluded from Time Machine" "Run: sudo tmutil addexclusion -v /Volumes/Data"
   fi
 
   # -------------------------------------------------------------------------
@@ -1286,13 +1128,12 @@ printf "\n"
   if [[ "$PHASE" == "pre" ]]; then
     printf "# Phase 4B -- Final Pre-Image Validation Checklist\n\n"
   else
-    printf "# Phase 12 -- Final Post-Image Validation Checklist\n\n"
+    printf "# Phase 11 -- Final Post-Image Validation Checklist\n\n"
   fi
 
   printf "Generated: \`%s\`\n\n" "$TIMESTAMP"
   printf "| | |\n| --- | --- |\n"
   printf "| **Phase** | \`%s\` |\n" "$PHASE"
-  printf "| **EXTERNAL_DATA_VOLUME** | \`%s\` |\n" "$EXTERNAL_DATA_VOLUME"
   printf "| **REIMAGE_ARTIFACT_ROOT** | \`%s\` |\n" "$REIMAGE_ARTIFACT_ROOT"
   printf "| **PASS** | %d |\n" "$PASS"
   printf "| **WARN** | %d |\n" "$WARN"
@@ -1328,11 +1169,7 @@ printf "\n"
     printf "| Loose private-key/keystore/certificate candidates reviewed | TODO |\n"
     printf "| All important branches pushed to remote | TODO |\n"
     printf "| Stashes converted to branches/commits or intentionally abandoned | TODO |\n"
-    if [[ -n "${EXTERNAL_APPLE_BACKUPS_VOLUME:-}" ]]; then
-      printf "| External volumes ejected before reimage starts (\`%s\` and \`%s\`) | TODO |\n" "$EXTERNAL_DATA_VOLUME" "$EXTERNAL_APPLE_BACKUPS_VOLUME"
-    else
-      printf "| External data volume ejected before reimage starts (\`%s\`) | TODO |\n" "$EXTERNAL_DATA_VOLUME"
-    fi
+    printf "| Both Data and AppleBackups partitions ejected before reimage starts | TODO |\n"
   else
     printf "## Manual Sign-Off (Post-Image)\n\n"
     printf "Complete these items manually before final sign-off:\n\n"
@@ -1354,16 +1191,8 @@ printf "\n"
     printf "| Postman collections/environments imported | TODO | Confirm in Postman UI |\n"
     printf "| Chrome JSON Formatter and important extensions restored | TODO | Confirm in Chrome extension UI |\n"
     printf "| Display arrangement, scaling, keyboard, mouse, audio correct | TODO | Confirm physically |\n"
-    if [[ -n "${GIT_WORK_REPO_ROOT:-}" ]]; then
-      printf "| Work Git identity confirmed in configured work repo root | TODO | %s; verify git config user.email |\n" "$GIT_WORK_REPO_ROOT"
-    else
-      printf "| Work Git identity confirmed in a real work repo | TODO | GIT_WORK_REPO_ROOT is not configured; verify git config user.email in an actual work repo |\n"
-    fi
-    if [[ -n "${GIT_PERSONAL_REPO_ROOT:-}" ]]; then
-      printf "| Personal Git identity confirmed in configured personal repo root | TODO | %s; verify git config user.email |\n" "$GIT_PERSONAL_REPO_ROOT"
-    else
-      printf "| Personal Git identity confirmed, if personal repos are used | TODO | GIT_PERSONAL_REPO_ROOT is not configured |\n"
-    fi
+    printf "| Work Git identity confirmed in a real work repo | TODO | git config user.email == <your-work-email> |\n"
+    printf "| Personal Git identity confirmed inside ~/<personal-projects-dir>/ | TODO | git config user.email == <your-personal-email> |\n"
     printf "| Personal SSH (github-personal) authenticated | TODO | ssh -T git@github-personal |\n"
     printf "| SSH key fingerprints match GitHub Settings | TODO | ssh-keygen -lf against both keys |\n"
     printf "| Git Together decision made (use it or skip it) | TODO | Confirm installed and alias working, or document the decision to skip |\n"

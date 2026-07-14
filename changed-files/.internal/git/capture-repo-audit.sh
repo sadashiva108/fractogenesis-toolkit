@@ -23,27 +23,23 @@
 #   ./.internal/git/capture-repo-audit.sh
 #
 #   ./.internal/git/capture-repo-audit.sh \
-#     --root "$GIT_WORK_REPO_ROOT" \
-#     --root "$GIT_PERSONAL_REPO_ROOT" \
-#     --dest "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports"
+#     --root ~/Development/IdeaProjects \
+#     --root ~/Development/Documentation \
+#     --dest /Volumes/Data/reimage-backup-YYYYMMDD/repo-audit-reports
 #
 #   ./.internal/git/capture-repo-audit.sh \
-#     --root /path/to/repositories \
-#     --dest /path/to/repo-audit-reports \
+#     --root ~/Development \
+#     --dest /Volumes/Data/reimage-backup-YYYYMMDD/repo-audit-reports \
 #     --rollup-threshold 3 \
 #     --max-lines-per-section 80
 #
 # Options:
 #   --root <dir>                  Root directory to crawl for Git repos.
 #                                 Can be passed multiple times.
-#                                 Default: configured GIT_WORK_REPO_ROOT and
-#                                 GIT_PERSONAL_REPO_ROOT values.
-#   --dest <dir>                  Repository-audit root directory.
-#                                 Default: $REIMAGE_ARTIFACT_ROOT/repo-audit-reports.
-#                                 Required when REIMAGE_ARTIFACT_ROOT is not set.
-#   --context pre-image|post-image
-#                                 Context prefix for the timestamped run directory.
-#                                 Default: pre-image
+#                                 Default: GIT_WORK_REPO_ROOT and GIT_PERSONAL_REPO_ROOT
+#                                 from reimage.env when set; otherwise ~/Development
+#   --dest <dir>                   Destination directory for audit reports.
+#                                 Default: $REIMAGE_ARTIFACT_ROOT/repo-audit-reports
 #   --rollup-threshold <n>         If a directory contains more than this many files,
 #                                 show "directory/* (N files)" instead of listing each file.
 #                                 Default: 3
@@ -54,20 +50,21 @@
 #   --no-ignored                   Do not list ignored files in the text report.
 #   -h, --help                     Show this help.
 #
-# Output (written beneath --dest):
-#   MANIFEST.md
-#       Append-only index of successful repository-audit runs.
-#   latest-run.txt
-#       Relative path to the newest successful run directory.
-#   runs/<context>-YYYYMMDD-HHMMSS/
-#       One self-contained audit run with stable filenames:
-#         repo-audit-summary.txt
-#         repos.tsv
-#         tracked-changes.tsv
-#         local-only-commits.tsv
-#         stashes.tsv
-#         untracked-nonignored.tsv
-#         ignored-files.tsv
+# Output (written to --dest):
+#   git-audit-summary-YYYYMMDD-HHMMSS.txt
+#       Main concise human-readable report expected by the pre-image checklist.
+#   git-pre-reimage-audit-YYYYMMDD-HHMMSS.txt
+#       Legacy compatibility copy of the main report.
+#   repos-YYYYMMDD-HHMMSS.tsv
+#       One row per repo with branch, HEAD, remote info, and status counts.
+#   local-only-commits-YYYYMMDD-HHMMSS.tsv
+#       Local commits not present on any remote.
+#   stashes-YYYYMMDD-HHMMSS.tsv
+#       Git stashes.
+#   untracked-nonignored-YYYYMMDD-HHMMSS.tsv
+#       Full untracked non-ignored file list.
+#   ignored-files-YYYYMMDD-HHMMSS.tsv
+#       Full ignored file list reported by Git.
 #
 # Notes:
 #   - This script does not copy files.
@@ -90,22 +87,27 @@ fi
 source "$CONFIG_LOADER"
 # ─────────────────────────────────────────────────────────────────────────────
 
-DEST="${REIMAGE_ARTIFACT_ROOT:+${REIMAGE_ARTIFACT_ROOT}/repo-audit-reports}"
+_default_dest="${REIMAGE_ARTIFACT_ROOT:+${REIMAGE_ARTIFACT_ROOT}/repo-audit-reports}"
+DEST="${_default_dest:-$HOME/Desktop/repo-audit-reports}"
+unset _default_dest
 ROLLUP_THRESHOLD=3
 MAX_LINES_PER_SECTION=80
 INCLUDE_IGNORED="true"
-CONTEXT="pre-image"
 
 ROOTS=()
 
 usage() {
-  sed -n '/^# Usage:/,/^# =============================================================================/p' "$0" \
-    | sed 's/^# \{0,2\}//' \
-    | sed '$d'
+  sed -n 's/^# \{0,2\}//p' "$0" | head -73
 }
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    "")
+      # Ignore an accidental empty argument. This can happen when a copied
+      # command includes "${ROOT_ARGS[@]}" but ROOT_ARGS was not built as an
+      # array in the current shell.
+      shift
+      ;;
     --root)
       if [[ $# -lt 2 || "${2:-}" == --* ]]; then
         echo "ERROR: --root requires a directory path." >&2
@@ -124,15 +126,6 @@ while [[ $# -gt 0 ]]; do
         exit 2
       fi
       DEST="$2"
-      shift 2
-      ;;
-    --context)
-      if [[ $# -lt 2 || -z "${2:-}" || "${2:-}" == --* ]]; then
-        echo "ERROR: --context requires pre-image or post-image." >&2
-        usage >&2
-        exit 2
-      fi
-      CONTEXT="$2"
       shift 2
       ;;
     --rollup-threshold)
@@ -173,14 +166,6 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-case "$CONTEXT" in
-  pre-image|post-image) ;;
-  *)
-    echo "ERROR: --context must be pre-image or post-image, got: $CONTEXT" >&2
-    exit 2
-    ;;
-esac
-
 if [[ ${#ROOTS[@]} -eq 0 ]]; then
   if [[ -n "${GIT_WORK_REPO_ROOT:-}" && -d "${GIT_WORK_REPO_ROOT:-}" ]]; then
     ROOTS+=("$GIT_WORK_REPO_ROOT")
@@ -191,22 +176,13 @@ if [[ ${#ROOTS[@]} -eq 0 ]]; then
   fi
 fi
 
-if [[ ${#ROOTS[@]} -eq 0 ]]; then
-  echo "ERROR: No Git repository roots configured." >&2
-  echo "Set GIT_WORK_REPO_ROOT and/or GIT_PERSONAL_REPO_ROOT in reimage.env, or pass --root <dir>." >&2
-  exit 2
+if [[ ${#ROOTS[@]} -eq 0 && -d "$HOME/Development" ]]; then
+  ROOTS=("$HOME/Development")
 fi
 
-for root in "${ROOTS[@]}"; do
-  if [[ ! -d "$root" ]]; then
-    echo "ERROR: Git repository root does not exist: $root" >&2
-    exit 2
-  fi
-done
-
-if [[ -z "$DEST" ]]; then
-  echo "ERROR: No audit destination configured." >&2
-  echo "Set REIMAGE_ARTIFACT_ROOT in reimage.env, or pass --dest <dir>." >&2
+if [[ ${#ROOTS[@]} -eq 0 ]]; then
+  echo "ERROR: No Git repository roots found." >&2
+  echo "Set GIT_WORK_REPO_ROOT and/or GIT_PERSONAL_REPO_ROOT in reimage.env, or pass --root <dir>." >&2
   exit 2
 fi
 
@@ -215,45 +191,17 @@ if ! command -v git >/dev/null 2>&1; then
   exit 1
 fi
 
-mkdir -p "$DEST/runs"
+mkdir -p "$DEST"
 
-MANIFEST_PATH="$DEST/MANIFEST.md"
-LATEST_RUN_PATH="$DEST/latest-run.txt"
 STAMP="$(date +%Y%m%d-%H%M%S)"
-RUN_ID="${CONTEXT}-${STAMP}"
-RUN_RELATIVE="runs/$RUN_ID"
-FINAL_RUN_DIR="$DEST/$RUN_RELATIVE"
-WORK_RUN_DIR="$DEST/runs/.${RUN_ID}.incomplete"
-
-if [[ -e "$FINAL_RUN_DIR" || -e "$WORK_RUN_DIR" ]]; then
-  echo "ERROR: repository-audit run directory already exists for this timestamp: $FINAL_RUN_DIR" >&2
-  exit 1
-fi
-
-if [[ -e "$MANIFEST_PATH" ]] && ! grep -q '^# Repository Audit Runs$' "$MANIFEST_PATH" 2>/dev/null; then
-  echo "ERROR: existing manifest is not the canonical append-only repository-audit index:" >&2
-  echo "  $MANIFEST_PATH" >&2
-  echo "Remove that file before running the current audit workflow." >&2
-  exit 2
-fi
-
-mkdir "$WORK_RUN_DIR"
-
-cleanup_incomplete_run() {
-  if [[ -d "$WORK_RUN_DIR" ]]; then
-    rm -rf "$WORK_RUN_DIR"
-  fi
-}
-trap cleanup_incomplete_run EXIT
-trap 'exit 130' INT TERM
-
-REPORT="$WORK_RUN_DIR/repo-audit-summary.txt"
-REPOS_TSV="$WORK_RUN_DIR/repos.tsv"
-COMMITS_TSV="$WORK_RUN_DIR/local-only-commits.tsv"
-STASHES_TSV="$WORK_RUN_DIR/stashes.tsv"
-UNTRACKED_TSV="$WORK_RUN_DIR/untracked-nonignored.tsv"
-IGNORED_TSV="$WORK_RUN_DIR/ignored-files.tsv"
-TRACKED_TSV="$WORK_RUN_DIR/tracked-changes.tsv"
+REPORT="$DEST/git-audit-summary-$STAMP.txt"
+LEGACY_REPORT="$DEST/git-pre-reimage-audit-$STAMP.txt"
+REPOS_TSV="$DEST/repos-$STAMP.tsv"
+COMMITS_TSV="$DEST/local-only-commits-$STAMP.tsv"
+STASHES_TSV="$DEST/stashes-$STAMP.tsv"
+UNTRACKED_TSV="$DEST/untracked-nonignored-$STAMP.tsv"
+IGNORED_TSV="$DEST/ignored-files-$STAMP.tsv"
+TRACKED_TSV="$DEST/tracked-changes-$STAMP.tsv"
 
 printf "repo\tbranch\thead\tremote_urls\tstatus_summary\tlocal_only_commit_count\tstash_count\ttracked_change_count\tuntracked_nonignored_count\tignored_count\n" > "$REPOS_TSV"
 printf "repo\tcommit\tmessage\n" > "$COMMITS_TSV"
@@ -362,13 +310,10 @@ find_repos() {
 }
 
 {
-  echo "Git Repository Audit"
-  echo "===================="
+  echo "Git Pre-Reimage Audit"
+  echo "====================="
   echo
-  echo "Context: $CONTEXT"
-  echo "Run: $RUN_ID"
   echo "Generated: $(date)"
-  echo "Run directory: $FINAL_RUN_DIR"
   echo
   echo "Roots scanned:"
   for root in "${ROOTS[@]}"; do
@@ -380,14 +325,15 @@ find_repos() {
   echo "  Max lines per section:  $MAX_LINES_PER_SECTION"
   echo "  Include ignored files:  $INCLUDE_IGNORED"
   echo
-  echo "Run files:"
-  echo "  Main report:            repo-audit-summary.txt"
-  echo "  Repo index:             repos.tsv"
-  echo "  Local-only commits:     local-only-commits.tsv"
-  echo "  Stashes:                stashes.tsv"
-  echo "  Tracked changes:        tracked-changes.tsv"
-  echo "  Untracked files:        untracked-nonignored.tsv"
-  echo "  Ignored files:          ignored-files.tsv"
+  echo "Reports:"
+  echo "  Main report:            $REPORT"
+  echo "  Legacy report copy:     $LEGACY_REPORT"
+  echo "  Repo index:             $REPOS_TSV"
+  echo "  Local-only commits:     $COMMITS_TSV"
+  echo "  Stashes:                $STASHES_TSV"
+  echo "  Tracked changes:        $TRACKED_TSV"
+  echo "  Untracked files:        $UNTRACKED_TSV"
+  echo "  Ignored files:          $IGNORED_TSV"
   echo
 } > "$REPORT"
 
@@ -585,54 +531,28 @@ done < <(find_repos)
   echo "  4. Commit/push important work or back it up before reimaging."
   echo
   echo "Full detail TSV files:"
-  echo "  repos.tsv"
-  echo "  local-only-commits.tsv"
-  echo "  stashes.tsv"
-  echo "  tracked-changes.tsv"
-  echo "  untracked-nonignored.tsv"
-  echo "  ignored-files.tsv"
+  echo "  $REPOS_TSV"
+  echo "  $COMMITS_TSV"
+  echo "  $STASHES_TSV"
+  echo "  $TRACKED_TSV"
+  echo "  $UNTRACKED_TSV"
+  echo "  $IGNORED_TSV"
 } >> "$REPORT"
 
-mv "$WORK_RUN_DIR" "$FINAL_RUN_DIR"
-
-if [[ ! -e "$MANIFEST_PATH" ]]; then
-  cat > "$MANIFEST_PATH" <<'EOF'
-# Repository Audit Runs
-
-This file is an append-only index of successful repository-audit runs.
-
-| Completed | Context | Run | Repositories | Dirty repos | Local-only commit repos | Stash repos | Untracked repos | Summary |
-|---|---|---|---:|---:|---:|---:|---:|---|
-EOF
+# Keep the historical filename available for older docs/scripts while making the
+# checklist-friendly git-audit-summary-*.txt the primary report.
+if [[ "$LEGACY_REPORT" != "$REPORT" ]]; then
+  cp -p "$REPORT" "$LEGACY_REPORT"
 fi
 
-COMPLETED_AT="$(date '+%Y-%m-%d %H:%M:%S')"
-printf '| %s | `%s` | `%s` | %d | %d | %d | %d | %d | [Open report](%s/repo-audit-summary.txt) |\n' \
-  "$COMPLETED_AT" "$CONTEXT" "$RUN_ID" \
-  "$repo_count" "$dirty_repo_count" "$local_commit_repo_count" \
-  "$stash_repo_count" "$untracked_repo_count" "$RUN_RELATIVE" >> "$MANIFEST_PATH"
-
-LATEST_TEMP="$DEST/.latest-run.$$.tmp"
-printf '%s\n' "$RUN_RELATIVE" > "$LATEST_TEMP"
-mv "$LATEST_TEMP" "$LATEST_RUN_PATH"
-
-trap - EXIT INT TERM
-
 echo "Audit complete:"
-echo "  $FINAL_RUN_DIR/repo-audit-summary.txt"
-echo
-echo "Run directory:"
-echo "  $FINAL_RUN_DIR"
+echo "  $REPORT"
+echo "  $LEGACY_REPORT"
 echo
 echo "TSV indexes:"
-echo "  $FINAL_RUN_DIR/repos.tsv"
-echo "  $FINAL_RUN_DIR/local-only-commits.tsv"
-echo "  $FINAL_RUN_DIR/stashes.tsv"
-echo "  $FINAL_RUN_DIR/tracked-changes.tsv"
-echo "  $FINAL_RUN_DIR/untracked-nonignored.tsv"
-echo "  $FINAL_RUN_DIR/ignored-files.tsv"
-echo
-echo "Manifest:"
-echo "  $MANIFEST_PATH"
-echo "Latest-run pointer:"
-echo "  $LATEST_RUN_PATH"
+echo "  $REPOS_TSV"
+echo "  $COMMITS_TSV"
+echo "  $STASHES_TSV"
+echo "  $TRACKED_TSV"
+echo "  $UNTRACKED_TSV"
+echo "  $IGNORED_TSV"

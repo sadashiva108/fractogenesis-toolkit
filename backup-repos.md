@@ -16,12 +16,14 @@ It does not turn `repo-audit-reports/` into a full source backup, and it does no
 - [[#Artifact and Script Locations|Artifact and Script Locations]]
 - [[#Before You Run Anything|Before You Run Anything]]
     - [[#Prerequisites|Prerequisites]]
+    - [[#Repository Audit Run Layout|Repository Audit Run Layout]]
+    - [[#Gitignore Superset Outputs at a Glance|Gitignore Superset Outputs at a Glance]]
     - [[#Preferred Scripted Workflow|Preferred Scripted Workflow]]
 - [[#Sequential Steps|Sequential Steps]]
     - [[#Load Shared Configuration|Load Shared Configuration]]
     - [[#Run the Size Audit First|Run the Size Audit First]]
     - [[#Run the Repo Audit|Run the Repo Audit]]
-    - [[#Back Up Repository State|Back Up Repository State]]
+    - [[#Back Up Git Repository State|Back Up Git Repository State]]
     - [[#Optional Direct Ignored-File Backup Script|Optional Direct Ignored-File Backup Script]]
     - [[#Collect the gitignore Superset|Collect the gitignore Superset]]
     - [[#Mark Selected Ignored Patterns|Mark Selected Ignored Patterns]]
@@ -31,6 +33,11 @@ It does not turn `repo-audit-reports/` into a full source backup, and it does no
     - [[#Run the Final Selected Ignored-File Copy|Run the Final Selected Ignored-File Copy]]
     - [[#Review Output Files|Review Output Files]]
 - [[#Manual Decisions That Remain Manual|Manual Decisions That Remain Manual]]
+- [[#Appendix A — Gitignore Superset Generated Files|Appendix A — Gitignore Superset Generated Files]]
+    - [[#How the Superset Files Are Generated|How the Superset Files Are Generated]]
+    - [[#Recommended Review Order|Recommended Review Order]]
+    - [[#Generated File Reference|Generated File Reference]]
+    - [[#TSV Column Reference|TSV Column Reference]]
 
 > In Obsidian, these are internal heading links. Click in Reading View, or Cmd-click in Live Preview/editing mode.
 
@@ -84,6 +91,9 @@ Git backup artifacts are part of the standard shared generated-artifact layout:
 ```text
 $REIMAGE_ARTIFACT_ROOT/
 ├── repo-audit-reports/
+│   ├── MANIFEST.md
+│   ├── latest-run.txt
+│   └── runs/
 ├── gitignore-superset/
 ├── selected-ignored-files/
 ├── selected-ignored-files-dryrun/
@@ -96,7 +106,7 @@ Folder purpose:
 
 | Folder | Purpose                                                                               |
 |---|---------------------------------------------------------------------------------------|
-| `repo-audit-reports/` | Repo state reports; not a full source backup.                                         |
+| `repo-audit-reports/` | Append-only repository-audit index, latest-run pointer, and self-contained timestamped run directories; not a full source backup. |
 | `gitignore-superset/` | Reviewable superset of ignored patterns, selected-pattern template, and exclude list. |
 | `selected-ignored-files-dryrun/` | First dry-run candidate output before exclusions.                                     |
 | `selected-ignored-files-filtered-dryrun/` | Filtered dry-run output after `backup-exclude-list.txt`.                              |
@@ -140,6 +150,46 @@ $FRACTOGENESIS_HOME/bin/         # entrypoints, e.g. backup-repos.sh
 $FRACTOGENESIS_HOME/.internal/   # helpers, e.g. .internal/git/capture-repo-audit.sh
 ```
 
+### Repository Audit Run Layout
+
+Each successful repository audit is stored as one self-contained run directory. The directory name owns the context and timestamp; files inside the run use stable names without repeated timestamps.
+
+```text
+$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/
+├── MANIFEST.md
+├── latest-run.txt
+└── runs/
+    ├── pre-image-YYYYMMDD-HHMMSS/
+    │   ├── repo-audit-summary.txt
+    │   ├── repos.tsv
+    │   ├── tracked-changes.tsv
+    │   ├── local-only-commits.tsv
+    │   ├── stashes.tsv
+    │   ├── untracked-nonignored.tsv
+    │   └── ignored-files.tsv
+    └── post-image-YYYYMMDD-HHMMSS/
+        └── ...
+```
+
+`backup-repos.sh` is the Phase 2A pre-image entrypoint, so it creates `pre-image-...` runs. A standalone invocation of `.internal/git/capture-repo-audit.sh --context post-image` creates a `post-image-...` run when a later comparison is intentionally needed.
+
+`MANIFEST.md` is an append-only index of successful audits. Selected ignored-file dry runs and copies do not rewrite it. `latest-run.txt` contains one relative run path, such as `runs/pre-image-20260714-221500`, and is updated only after a run completes successfully.
+
+The current workflow does not read flat timestamped audit files. If `repo-audit-reports/MANIFEST.md` contains the former single-run summary format, remove it before the first run with the current scripts.
+
+### Gitignore Superset Outputs at a Glance
+
+The default repo-backup refresh creates two kinds of gitignore evidence under `$REIMAGE_ARTIFACT_ROOT/gitignore-superset/`:
+
+| Output type | Purpose |
+|---|---|
+| Machine-readable TSV files | Preserve complete, sortable provenance for scripts, spreadsheets, `awk`, `cut`, and later analysis. |
+| Human-readable review files | Present the same information in grouped sections that are easier to inspect in a text editor. |
+
+Start with `summary.txt`, then review `gitignore-files-review.txt` and `gitignore-pattern-sources-review.txt`. Use `gitignore-concatenated-with-sources.txt` when you need the original file context, and make backup selections only in `gitignore-review-template.txt`.
+
+The TSV files intentionally remain tab-delimited and are not padded with decorative spacing. See [[#Appendix A — Gitignore Superset Generated Files|Appendix A — Gitignore Superset Generated Files]] for the complete file descriptions, generation flow, column definitions, and review order.
+
 ### Preferred Scripted Workflow
 
 Use `backup-repos.sh` as the public Phase 2A entrypoint.
@@ -147,9 +197,10 @@ Use `backup-repos.sh` as the public Phase 2A entrypoint.
 What it does by default:
 
 - resolves Git roots from `reimage.env` or repeated `--root` flags
-- refreshes the repo audit under `repo-audit-reports/`
+- creates a self-contained `repo-audit-reports/runs/pre-image-YYYYMMDD-HHMMSS/` audit run
+- appends the successful run to `repo-audit-reports/MANIFEST.md`
+- updates `repo-audit-reports/latest-run.txt` to the newest successful run
 - refreshes the gitignore superset under `gitignore-superset/`
-- writes a stable summary at `$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/MANIFEST.md`
 
 Later reviewed stages stay explicit and use the same entrypoint:
 
@@ -199,7 +250,7 @@ source ./reimage.env
 set +a
 ```
 
-The Git entrypoint script loads shared path handling through `.internal/load-reimage-config-snippet.sh`, which in turn sources `.internal/artifact-config.sh` and loads `reimage.env`. This keeps `REIMAGE_ARTIFACT_ROOT`, OneDrive, Office watcher, and Git-root path handling centralized instead of duplicated in each script.
+The Git entrypoint script loads shared path handling through `.internal/load-reimage-config.sh`, which in turn sources `.internal/artifact-config.sh` and loads `reimage.env`. This keeps `REIMAGE_ARTIFACT_ROOT`, OneDrive, Office watcher, and Git-root path handling centralized instead of duplicated in each script.
 
 Confirm the important paths:
 
@@ -250,23 +301,25 @@ chmod +x bin/backup-repos.sh
 ./bin/backup-repos.sh --artifact-root "$REIMAGE_ARTIFACT_ROOT" --open
 ```
 
-The audit script writes the checklist-compatible report name:
+The audit creates one prefixed run directory:
 
 ```text
-git-audit-summary-YYYYMMDD-HHMMSS.txt
+$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/runs/pre-image-YYYYMMDD-HHMMSS/
 ```
 
-It also writes the TSV evidence files:
+The timestamp and context are carried by the directory name. Inside the run, filenames are stable:
 
 ```text
-repos-YYYYMMDD-HHMMSS.tsv
-tracked-changes-YYYYMMDD-HHMMSS.tsv
-local-only-commits-YYYYMMDD-HHMMSS.tsv
-stashes-YYYYMMDD-HHMMSS.tsv
-untracked-nonignored-YYYYMMDD-HHMMSS.tsv
-ignored-files-YYYYMMDD-HHMMSS.tsv
+repo-audit-summary.txt
+repos.tsv
+tracked-changes.tsv
+local-only-commits.tsv
+stashes.tsv
+untracked-nonignored.tsv
+ignored-files.tsv
 ```
 
+After the run succeeds, the helper appends one row to `repo-audit-reports/MANIFEST.md` and updates `repo-audit-reports/latest-run.txt`. Failed or interrupted runs are not added to the manifest and do not replace the latest-run pointer.
 
 Important distinction:
 
@@ -276,21 +329,48 @@ Important distinction:
 | `Untracked non-ignored files` | Brand-new files that are not tracked by Git and are not excluded by `.gitignore`, `.git/info/exclude`, or global Git excludes. |
 | `Ignored files reported by Git` | Brand-new files that are intentionally ignored and may need separate selected ignored-file backup review. |
 
-A repo can have many modified files and still show `Untracked non-ignored files: 0`. That is expected when all local work is on files Git already tracks. Review `Uncommitted tracked changes` and `tracked-changes-*.tsv` for those files.
+A repo can have many modified files and still show `Untracked non-ignored files: 0`. That is expected when all local work is on files Git already tracks. Review `Uncommitted tracked changes` and `tracked-changes.tsv` in that run directory for those files.
 
-Confirm the checklist-facing summary exists:
+Confirm the append-only manifest and latest-run pointer exist:
 
 ```bash
-ls -1t "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports"/repo-audit-summary-*.txt | head -3
+AUDIT_ROOT="$REIMAGE_ARTIFACT_ROOT/repo-audit-reports"
+test -f "$AUDIT_ROOT/MANIFEST.md" && echo "PASS: manifest exists"
+test -f "$AUDIT_ROOT/latest-run.txt" && echo "PASS: latest-run pointer exists"
 ```
 
-Review the newest report:
+Review the newest report safely:
 
 ```bash
-LATEST_REPO_AUDIT="$(ls -1t "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports"/git-audit-summary-*.txt | head -1)"
+AUDIT_ROOT="$REIMAGE_ARTIFACT_ROOT/repo-audit-reports"
+LATEST_RUN_RELATIVE="$(cat "$AUDIT_ROOT/latest-run.txt" 2>/dev/null || true)"
+
+case "$LATEST_RUN_RELATIVE" in
+  runs/pre-image-*|runs/post-image-*) ;;
+  *)
+    printf 'ERROR: invalid latest-run pointer: %s\n' "${LATEST_RUN_RELATIVE:-<empty>}" >&2
+    return 1 2>/dev/null || exit 1
+    ;;
+esac
+
+case "$LATEST_RUN_RELATIVE" in
+  *..*|/*)
+    printf 'ERROR: unsafe latest-run pointer: %s\n' "$LATEST_RUN_RELATIVE" >&2
+    return 1 2>/dev/null || exit 1
+    ;;
+esac
+
+LATEST_REPO_AUDIT="$AUDIT_ROOT/$LATEST_RUN_RELATIVE/repo-audit-summary.txt"
+if [[ ! -f "$LATEST_REPO_AUDIT" ]]; then
+  printf 'ERROR: latest repository audit was not found: %s\n' "$LATEST_REPO_AUDIT" >&2
+  return 1 2>/dev/null || exit 1
+fi
+
 printf 'LATEST_REPO_AUDIT=%s\n' "$LATEST_REPO_AUDIT"
 open "$LATEST_REPO_AUDIT"
 ```
+
+This guarded lookup prevents an empty `open` command from opening the current Finder directory when no report was found.
 
 Optional explicit-root variant. Use this only when you want to override the roots from `reimage.env`:
 
@@ -327,7 +407,7 @@ git push -u origin HEAD
 
 #### Uncommitted tracked work
 
-These are files that appear in the audit under `Uncommitted tracked changes` or in `tracked-changes-YYYYMMDD-HHMMSS.tsv`. They are not counted as `Untracked non-ignored files` because Git already knows about them.
+These are files that appear in the audit under `Uncommitted tracked changes` or in `tracked-changes.tsv` in the selected audit run. They are not counted as `Untracked non-ignored files` because Git already knows about them.
 
 Review the exact changes first:
 
@@ -337,13 +417,37 @@ git diff --stat
 git diff
 ```
 
-If the changes should be preserved as a temporary backup branch:
+If the changes should be preserved as a temporary backup branch, use the canonical branch structure:
+
+```text
+reimage/YYYYMMDD/reason
+```
+
+`wip` means **work in progress** and is the safe default when the purpose is unclear.
+
+| Situation | Recommended branch |
+|---|---|
+| Purpose is unclear | `reimage/YYYYMMDD/wip` |
+| Known ticket or feature | `reimage/YYYYMMDD/TICKET-short-description` |
+| Local commits on the default branch | `reimage/YYYYMMDD/default-branch-commits` |
+| First stash | `reimage/YYYYMMDD/stash-0` |
+| Second general backup on the same day | `reimage/YYYYMMDD/wip-2` |
+
+Safe default:
 
 ```bash
-git switch -c backup/reimage-YYYYMMDD
+BACKUP_BRANCH="reimage/$(date +%Y%m%d)/wip"
+
+git switch -c "$BACKUP_BRANCH"
 git add -A
-git commit -m "WIP backup before computer reimage"
-git push -u origin HEAD
+git commit -m "Preserve work in progress before computer reimage"
+git push -u origin "$BACKUP_BRANCH"
+```
+
+When the purpose is known, replace `wip` with a short ticket or feature description:
+
+```bash
+BACKUP_BRANCH="reimage/$(date +%Y%m%d)/<ticket-or-short-purpose>"
 ```
 
 #### Local commits on the default branch that should not go to the remote default branch
@@ -354,24 +458,28 @@ Use the branch name from the repo instead of assuming every repo uses `master`:
 DEFAULT_BRANCH="$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's|^origin/||')"
 DEFAULT_BRANCH="${DEFAULT_BRANCH:-${GIT_DEFAULT_BRANCH:-master}}"
 
+BACKUP_BRANCH="reimage/$(date +%Y%m%d)/default-branch-commits"
+
 git switch "$DEFAULT_BRANCH"
-git branch "reimage-ASSETNAME-YYYYMMDD/unfinishedFeature"
-git push -u origin "reimage-ASSETNAME-YYYYMMDD/unfinishedFeature"
+git branch "$BACKUP_BRANCH"
+git push -u origin "$BACKUP_BRANCH"
 ```
 
 #### Stashes
 
 ```bash
 git stash list
-git stash branch reimage-ASSETNAME-YYYYMMDD/stash0 stash@{0}
+
+BACKUP_BRANCH="reimage/$(date +%Y%m%d)/stash-0"
+git stash branch "$BACKUP_BRANCH" 'stash@{0}'
 git add -A
-git commit -m "WIP backup from stash before computer reimage"
-git push -u origin HEAD
+git commit -m "Preserve stashed work before computer reimage"
+git push -u origin "$BACKUP_BRANCH"
 ```
 
 #### Untracked non-ignored files
 
-These are brand-new files that Git is not tracking and that are not ignored. They appear in `untracked-nonignored-YYYYMMDD-HHMMSS.tsv`.
+These are brand-new files that Git is not tracking and that are not ignored. They appear in `untracked-nonignored.tsv` in the selected audit run.
 
 For files shown as untracked but not ignored:
 
@@ -441,6 +549,8 @@ Review:
 ```bash
 open "$REIMAGE_ARTIFACT_ROOT/gitignore-superset/gitignore-review-template.txt"
 ```
+
+For a file-by-file explanation of the generated superset evidence, use [[#Appendix A — Gitignore Superset Generated Files|Appendix A — Gitignore Superset Generated Files]].
 
 ### Mark Selected Ignored Patterns
 
@@ -590,13 +700,23 @@ Only run `--copy` after the dry run and filtered dry run are reviewed.
 Review these before final validation:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/git-audit-summary-YYYYMMDD-HHMMSS.txt
-$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/repos-YYYYMMDD-HHMMSS.tsv
-$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/tracked-changes-YYYYMMDD-HHMMSS.tsv
-$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/local-only-commits-YYYYMMDD-HHMMSS.tsv
-$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/stashes-YYYYMMDD-HHMMSS.tsv
-$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/untracked-nonignored-YYYYMMDD-HHMMSS.tsv
-$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/ignored-files-YYYYMMDD-HHMMSS.tsv
+$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/MANIFEST.md
+$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/latest-run.txt
+$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/runs/pre-image-YYYYMMDD-HHMMSS/repo-audit-summary.txt
+$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/runs/pre-image-YYYYMMDD-HHMMSS/repos.tsv
+$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/runs/pre-image-YYYYMMDD-HHMMSS/tracked-changes.tsv
+$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/runs/pre-image-YYYYMMDD-HHMMSS/local-only-commits.tsv
+$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/runs/pre-image-YYYYMMDD-HHMMSS/stashes.tsv
+$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/runs/pre-image-YYYYMMDD-HHMMSS/untracked-nonignored.tsv
+$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/runs/pre-image-YYYYMMDD-HHMMSS/ignored-files.tsv
+$REIMAGE_ARTIFACT_ROOT/gitignore-superset/summary.txt
+$REIMAGE_ARTIFACT_ROOT/gitignore-superset/gitignore-files.tsv
+$REIMAGE_ARTIFACT_ROOT/gitignore-superset/gitignore-files-review.txt
+$REIMAGE_ARTIFACT_ROOT/gitignore-superset/gitignore-patterns-all.tsv
+$REIMAGE_ARTIFACT_ROOT/gitignore-superset/gitignore-patterns-all-review.txt
+$REIMAGE_ARTIFACT_ROOT/gitignore-superset/gitignore-pattern-sources.tsv
+$REIMAGE_ARTIFACT_ROOT/gitignore-superset/gitignore-pattern-sources-review.txt
+$REIMAGE_ARTIFACT_ROOT/gitignore-superset/gitignore-concatenated-with-sources.txt
 $REIMAGE_ARTIFACT_ROOT/gitignore-superset/gitignore-review-template.txt
 $REIMAGE_ARTIFACT_ROOT/gitignore-superset/backup-exclude-list.txt
 $REIMAGE_ARTIFACT_ROOT/selected-ignored-files-dryrun/
@@ -617,6 +737,8 @@ large generated folders that should have been excluded
 
 Before copying anything to cloud storage, review any selected ignored files that might contain credentials. Credential-bearing files should be encrypted or restored from an approved password manager / encrypted backup path.
 
+Use [[#Appendix A — Gitignore Superset Generated Files|Appendix A — Gitignore Superset Generated Files]] when you need to interpret a gitignore superset output or understand how one file was derived from another.
+
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
 ---
@@ -633,3 +755,151 @@ Before copying anything to cloud storage, review any selected ignored files that
 | Whether a repo root should be included | Requires knowing the current Mac's local workspace layout. |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
+## Appendix A — Gitignore Superset Generated Files
+
+This appendix documents the stable evidence written by `.internal/git/collect-gitignore-superset.sh` under:
+
+```text
+$REIMAGE_ARTIFACT_ROOT/gitignore-superset/
+```
+
+The collector scans the configured Git roots from `GIT_WORK_REPO_ROOT`, `GIT_PERSONAL_REPO_ROOT`, or repeated `--root` overrides. It discovers ignore sources, records their provenance, extracts active patterns, creates aggregate views, and writes the selection template used by the later selected ignored-file stages.
+
+The TSV files are the machine-readable source of truth. The `*-review.txt` files and the concatenated text file are human-readable views derived from those TSV records and source files.
+
+### How the Superset Files Are Generated
+
+```text
+Configured Git roots
+    │
+    ├── discover .gitignore files
+    ├── optionally discover .git/info/exclude
+    └── optionally include global Git excludes
+            │
+            ▼
+    gitignore-files.tsv
+            │
+            ├── gitignore-files-review.txt
+            └── gitignore-concatenated-with-sources.txt
+            │
+            ▼
+    extract every nonblank, non-comment pattern occurrence
+            │
+            ▼
+    gitignore-patterns-all.tsv
+            │
+            ├── gitignore-patterns-all-review.txt
+            ├── gitignore-patterns-superset.txt
+            ├── gitignore-patterns-superset-with-counts.tsv
+            ├── gitignore-pattern-sources.tsv
+            ├── gitignore-pattern-sources-review.txt
+            └── gitignore-review-template.txt
+```
+
+The collector preserves negated patterns such as `!example.env`, removes surrounding whitespace for the normalized value, preserves the original source line in `raw_pattern`, and omits blank lines and full-line comments from the pattern datasets.
+
+### Recommended Review Order
+
+1. Open `summary.txt` for the roots scanned, counts, output paths, and next step.
+2. Open `gitignore-files-review.txt` to confirm the expected ignore sources were discovered.
+3. Open `gitignore-pattern-sources-review.txt` to see which patterns are shared across multiple source files.
+4. Open `gitignore-concatenated-with-sources.txt` when a pattern needs its original surrounding comments or file context.
+5. Use `gitignore-patterns-all-review.txt` when you need exact source line numbers.
+6. Mark only intentionally preserved patterns in `gitignore-review-template.txt`.
+7. Run the selected ignored-file dry run and review its candidate output before copying anything.
+
+The TSV files are most useful for sorting, filtering, spreadsheet import, scripted checks, and deeper troubleshooting. The review text files are intended for normal manual inspection.
+
+### Generated File Reference
+
+| File | Represents | How it is generated | Primary use |
+|---|---|---|---|
+| `summary.txt` | Run-level overview, roots scanned, counts, output paths, and suggested review order. | Written after all source and pattern datasets are complete. | Start here after every refresh. |
+| `gitignore-files.tsv` | One row for every discovered ignore source. | The collector finds `.gitignore` files under each configured scan root and optionally adds repository and global exclude files; rows are deduplicated and sorted by source kind and path. | Machine-readable source inventory and provenance. |
+| `gitignore-files-review.txt` | A grouped, readable rendering of `gitignore-files.tsv`. | Each TSV row is expanded into labeled fields such as source path, nearest Git root, scan root, and relative paths. | Confirm the collector found the expected source files. |
+| `gitignore-concatenated-with-sources.txt` | The exact contents of all discovered ignore sources with structured provenance headings. | Sources are processed in the deterministic order recorded by `gitignore-files.tsv`; the original file content is copied between begin/end markers. | Review surrounding comments and source-file context without opening each file separately. |
+| `gitignore-patterns-all.tsv` | Every active pattern occurrence, including duplicates, source path, and source line number. | Blank lines and full-line comments are skipped. Each remaining line is recorded with both normalized and raw values plus source provenance. | Authoritative detailed pattern provenance. |
+| `gitignore-patterns-all-review.txt` | Patterns grouped by source file and displayed with line numbers. | Derived from `gitignore-patterns-all.tsv` in source-path and line-number order. | Human review of exact pattern occurrences. |
+| `gitignore-patterns-superset.txt` | One sorted copy of each unique normalized pattern. | The normalized pattern column from `gitignore-patterns-all.tsv` is deduplicated and sorted. | Compact complete pattern list. |
+| `gitignore-patterns-superset-with-counts.tsv` | Unique normalized patterns with total occurrence counts. | Patterns are grouped and counted across all rows in `gitignore-patterns-all.tsv`. | Find common or repeated patterns. |
+| `gitignore-pattern-sources.tsv` | One row per unique normalized pattern, with the number of distinct source files and the combined source list. | Pattern/source pairs from `gitignore-patterns-all.tsv` are deduplicated, aggregated, and sorted by descending source count and then pattern. | Machine-readable pattern-to-source summary. |
+| `gitignore-pattern-sources-review.txt` | A readable pattern-to-source report. | Each row from `gitignore-pattern-sources.tsv` is expanded into a pattern heading and one source path per line. | Quickly understand where a pattern is used. |
+| `gitignore-review-template.txt` | The actionable checklist of unique patterns using `[ ]` and `[x]` markers. | Each unique pattern from `gitignore-patterns-superset.txt` is written as an unchecked entry. | Select patterns for the reviewed ignored-file dry run. |
+| `backup-exclude-list.txt` | Manual exclusions applied after selecting patterns. | Created or maintained by the operator; it is not regenerated by the collector. | Remove generated, cache, dependency, or otherwise unwanted matches from later staging. |
+
+#### The Four Core Provenance Files
+
+`gitignore-files.tsv` answers:
+
+```text
+Which ignore files were discovered, and where do they sit relative to a Git repo and configured scan root?
+```
+
+`gitignore-patterns-all.tsv` answers:
+
+```text
+What active pattern occurred on which exact line of which source file?
+```
+
+`gitignore-pattern-sources.tsv` answers:
+
+```text
+For each unique pattern, how many distinct ignore sources use it, and which sources are they?
+```
+
+`gitignore-concatenated-with-sources.txt` answers:
+
+```text
+What did every original ignore source contain, including comments and surrounding context?
+```
+
+### TSV Column Reference
+
+#### `gitignore-files.tsv`
+
+| Column | Meaning |
+|---|---|
+| `kind` | Source classification: `gitignore`, `git_info_exclude`, `global_git_ignore`, or `ignore_file`. |
+| `source_path` | Absolute path to the discovered ignore source. |
+| `nearest_git_root` | Closest enclosing Git repository root, when one exists. |
+| `relative_to_git_root` | Source path relative to `nearest_git_root`. |
+| `scan_root` | Configured `--root` path that contained the source. Global exclude files can have this field blank. |
+| `relative_to_scan_root` | Source path relative to `scan_root`. |
+
+#### `gitignore-patterns-all.tsv`
+
+| Column | Meaning |
+|---|---|
+| `normalized_pattern` | Pattern after carriage-return removal, surrounding-whitespace trimming, and blank/comment filtering. |
+| `raw_pattern` | Original source line after only a trailing carriage return is removed. |
+| `line_number` | One-based line number in the source ignore file. |
+| `source_kind` | Same source classification used by `gitignore-files.tsv`. |
+| `source_path` | Absolute path to the source ignore file. |
+| `nearest_git_root` | Closest enclosing Git repository root, when one exists. |
+| `relative_to_git_root` | Source path relative to the Git root. |
+| `scan_root` | Configured root that contained the source. |
+| `relative_to_scan_root` | Source path relative to the configured root. |
+
+#### `gitignore-pattern-sources.tsv`
+
+| Column | Meaning |
+|---|---|
+| `normalized_pattern` | Unique normalized ignore pattern. |
+| `source_count` | Number of distinct ignore source files containing that pattern. |
+| `sources` | Deterministically ordered, semicolon-separated absolute source paths. |
+
+Because these files are true TSV data, use a TSV-aware viewer or format them only at display time:
+
+```bash
+column -s $'\t' -t \
+  "$REIMAGE_ARTIFACT_ROOT/gitignore-superset/gitignore-files.tsv" \
+  | less -S
+```
+
+Do not save the padded `column` output back over the TSV file.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
