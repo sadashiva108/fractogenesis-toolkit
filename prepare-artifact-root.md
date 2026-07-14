@@ -85,19 +85,42 @@ redacted restore notes
 
 ## Artifact and Script Locations
 
+Top-level directories created under `$REIMAGE_ARTIFACT_ROOT` by [[#Create the Standard Directory Layout|Create the Standard Directory Layout]]:
+
+```text
+$REIMAGE_ARTIFACT_ROOT/
+├── app-backups/
+├── gitignore-superset/
+├── local-files/
+├── reimage-plan/
+├── reimage-prep-checks/
+├── reimaged-system/
+├── repo-audit-reports/
+├── secrets-encrypted/
+├── selected-ignored-files/
+├── selected-ignored-files-dryrun/
+├── selected-ignored-files-filtered-dryrun/
+├── time-machine/
+└── workflow-snapshot/
+```
+
+See [[#Create the Standard Directory Layout|Create the Standard Directory Layout]] for the full tree with per-folder descriptions.
+
 Script locations:
 
 ```text
-bin/         # entrypoints — run directly
-.internal/   # sourced-only helpers, never run directly
+$FRACTOGENESIS_HOME/bin/         # entrypoints — run directly
+$FRACTOGENESIS_HOME/.internal/   # sourced-only helpers, never run directly
 ```
 
 Key files referenced by this guide include:
 
 ```text
-bin/prepare-artifact-root.py
-.internal/artifact-config.sh
+$FRACTOGENESIS_HOME/bin/prepare-artifact-root.py
+$FRACTOGENESIS_HOME/.internal/artifact-config.sh
 ```
+
+`$FRACTOGENESIS_HOME` above is reference notation showing where these files live, not a literal path you can use from a fresh terminal -- direnv only populates it once you've already `cd`ed into the repo. Commands elsewhere in this guide `cd "$FRACTOGENESIS_HOME"` first for that reason; see [[#Repo Path Variables and Self-Locating Scripts|Repo Path Variables and Self-Locating Scripts]] for the full explanation.
 
 Both self-locate relative to their own position in the repo — nothing needs to be told where the repo is; there's no `REIMAGE_ROOT`-equivalent variable to keep in sync. For what that does and doesn't mean in practice, and how `FRACTOGENESIS_PARENT`/`FRACTOGENESIS_HOME`/`$HOME` relate to each other, see [[#Repo Path Variables and Self-Locating Scripts|Repo Path Variables and Self-Locating Scripts]] in the supplemental reference at the end of this guide -- not required reading to continue, only if you want the detail.
 
@@ -1103,7 +1126,7 @@ Important behavior:
 | It defines OneDrive handling. | `ONEDRIVE_ROOT` should be a full path, or `ONEDRIVE_FOLDER_NAME` can be used to resolve a folder under `~/Library/CloudStorage/`. Do not use a bare OneDrive folder name relative to the current directory. |
 | It defines `SECRETS_TARGETS`. | These become file or directory entries under `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/`. Use `certs/` for certificate/keystore material and `certs/java-security/` for Java `jssecacerts`. |
 | It defines `EXTERNAL_EXCLUDES` and `ONEDRIVE_EXTRA_EXCLUDES`. | Add backup exclusions in config, not in each script. |
-| It defines `EXPECTED_BACKUP_FOLDERS`. | Keep this aligned with the stable top-level folders created by this guide. Optional evidence roots are created later by capture guides. |
+| It defines `EXPECTED_ARTIFACT_FOLDERS`. | Keep this aligned with the stable top-level folders created by this guide. Optional evidence roots are created later by capture guides. |
 
 Current expected top-level folders from `artifact-config.sh`:
 
@@ -1153,7 +1176,7 @@ $REIMAGE_WORKSPACE_ROOT/artifact-config/
 `artifact-config.sh` checks this path first, automatically, every time it's sourced -- see the "prefers workspace-backed config fragments" row in [[#Understand artifact-config.sh|Understand artifact-config.sh]]. There's no manual copy step, no flag to set; the presence of real files at this exact path is the entire mechanism. Confirm it's actually picking them up:
 
 ```bash
-bash -c 'source .internal/artifact-config.sh && printf "%s\n" "${EXPECTED_BACKUP_FOLDERS[@]}"'
+bash -c 'source .internal/artifact-config.sh && printf "%s\n" "${EXPECTED_ARTIFACT_FOLDERS[@]}"'
 ```
 
 If that prints your real folder names (not the generic stub list in [[#Understand artifact-config.sh|Understand artifact-config.sh]]), the workspace copy is being used correctly.
@@ -1227,13 +1250,14 @@ Folder purpose:
 | `repo-audit-reports/`                     | Repository state reports; not a full source backup.                                                                                                                                                                                            |
 | `gitignore-superset/`                     | Reviewable superset of ignored patterns across repos.                                                                                                                                                                                   |
 | `local-files/`                            | Home folders, dotfiles, and selected local files copied by `backup-local-files.sh`.                                                                                                                                                     |
+| `reimaged-system/`                        | Initial enrollment captures and checks, reimaged system evidence, restart notes, restore notes, Time Machine notes, and final validation artifacts.                                                                                     |
 | `reimage-plan/`                           | Filled copy of the Phase 0 IT reimage confirmation kept with the external backup root from the start of the reimage effort.                                                                                                             |
 | `secrets-encrypted/`                      | Top-level container for the secrets workflow. Nested secret staging folders, final DMG artifacts, Java inventory, certificate review reports, and restore README are created later by the owning secrets steps.                         |
 | `selected-ignored-files/`                 | Final selected ignored/local file copies needed for restore.                                                                                                                                                                            |
 | `selected-ignored-files-dryrun/`          | Initial dry-run output for selected ignored/local file backups.                                                                                                                                                                         |
-| `selected-ignored-files-filtered-dryrun/` | Filtered dry-run output after exclusions are applied.                                                                                                                                                                                   | |
+| `selected-ignored-files-filtered-dryrun/` | Filtered dry-run output after exclusions are applied.                                                                                                                                                                                   |
 | `time-machine/`                           | Time Machine status capture bundles only. Actual Time Machine backups live on the Time Machine volume.                                                                                                                                  |
-| `reimaged-system/`                        | Initial enrollment captures and checks, reimaged system evidence, restart notes, restore notes, Time Machine notes, and final validation artifacts.                                                                                     |
+| `workflow-snapshot/`                      | Workflow snapshot captures and workflow documentation snapshots, created by `capture-workflow-snapshot.md`/`bin/capture-workflow-snapshot.sh`, not by this preparation guide.                                                            |
 
 
 [[#Table of Contents|⬆ Back to Table of Contents]]

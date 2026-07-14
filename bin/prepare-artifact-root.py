@@ -187,7 +187,7 @@ def load_expected_backup_folders(env_file: Path, repo_root: str) -> List[str]:
             "set +a",
             "ARTIFACT_CONFIG_REQUIRE_REIMAGE_ARTIFACT_ROOT=false",
             f"source {shlex.quote(str(config_path))}",
-            'printf "%s\\0" "${EXPECTED_BACKUP_FOLDERS[@]}"',
+            'printf "%s\\0" "${EXPECTED_ARTIFACT_FOLDERS[@]}"',
         ]
     )
     raw = bash_output(script)

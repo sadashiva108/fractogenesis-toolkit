@@ -16,7 +16,7 @@ This is the canonical top-level guide for the Mac reimage workflow.
 - [[#Phase 0 — Confirm the Reimage Plan with IT|Phase 0 — Confirm the Reimage Plan with IT]]
 - [[#Phase 1 — Prepare the External Artifact Root|Phase 1 — Prepare the External Artifact Root]]
 - [[#Phase 2 — Pre-Image Backups|Phase 2 — Pre-Image Backups]]
-    - [[#Phase 2A — Backup Git Repositories|Phase 2A — Backup Git Repositories]]
+    - [[#Phase 2A — Backup Repos|Phase 2A — Backup Repos]]
     - [[#Phase 2B — Backup Local Files|Phase 2B — Backup Local Files]]
     - [[#Phase 2C — Backup Apps|Phase 2C — Backup Apps]]
     - [[#Phase 2D — Certificate and Keychain Staging|Phase 2D — Certificate and Keychain Staging]]
@@ -220,20 +220,20 @@ Phase 3 capture work, including `capture-workflow-snapshot.md`, follows after th
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
 ---
-### Phase 2A — Backup Repositories
+### Phase 2A — Backup Repos
 
-Follow this phase guide: [Backup Repositories](backup-repos.md).
+Follow this phase guide: [Backup Repos](backup-repos.md).
 
 Preserves Git repository risk state (local-only commits, dirty repos, stashes, untracked files) and selected ignored-file backups before erase.
 
 Primary outputs:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/git-audit-reports/
 $REIMAGE_ARTIFACT_ROOT/gitignore-superset/
+$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/
+$REIMAGE_ARTIFACT_ROOT/selected-ignored-files/
 $REIMAGE_ARTIFACT_ROOT/selected-ignored-files-dryrun/
 $REIMAGE_ARTIFACT_ROOT/selected-ignored-files-filtered-dryrun/
-$REIMAGE_ARTIFACT_ROOT/selected-ignored-files/
 ```
 
 [[#Table of Contents|⬆ Back to Table of Contents]]

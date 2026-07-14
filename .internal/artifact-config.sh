@@ -152,7 +152,7 @@ for fragment in \
   onedrive-targets.conf.sh \
   onedrive-extra-excludes.conf.sh \
   skip-entries.conf.sh \
-  expected-backup-folders.conf.sh
+  expected-artifact-folders.conf.sh
 do
   source_artifact_config_fragment "$fragment"
 done

@@ -2,9 +2,9 @@
 
 # Backup Repositories
 
-This runbook owns the Git repository backup workflow before a Mac reimage.
+This runbook owns the backup repositories workflow before a Mac reimage.
 
-It keeps the Git audit, local branch preservation, stash handling, `.gitignore` superset review, selected ignored-file dry runs, exclude list, and final selected ignored-file copy in one place.
+It keeps the repo audit, local branch preservation, stash handling, `.gitignore` superset review, selected ignored-file dry runs, exclude list, and final selected ignored-file copy in one place.
 
 It does not turn `repo-audit-reports/` into a full source backup, and it does not replace secret handling through `secrets-encrypted/` and the consolidated DMG workflow.
 
@@ -76,7 +76,7 @@ manual publish/sync decisions about local branches, default-branch commits, stas
 Primary script:
 
 ```text
-bin/backup-repos.sh
+$FRACTOGENESIS_HOME/bin/backup-repos.sh
 ```
 
 Git backup artifacts are part of the standard shared generated-artifact layout:
@@ -90,16 +90,7 @@ $REIMAGE_ARTIFACT_ROOT/
 └── selected-ignored-files-filtered-dryrun/
 ```
 
-Create or re-confirm the Git folders before running the scripts:
-
-```bash
-mkdir -p \
-  "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports" \
-  "$REIMAGE_ARTIFACT_ROOT/gitignore-superset" \
-  "$REIMAGE_ARTIFACT_ROOT/selected-ignored-files" \
-  "$REIMAGE_ARTIFACT_ROOT/selected-ignored-files-dryrun" \
-  "$REIMAGE_ARTIFACT_ROOT/selected-ignored-files-filtered-dryrun"
-```
+These directories are created by Phase 1 (`prepare-artifact-root.sh` / `prepare-artifact-root.md`) as part of the standard artifact-root layout -- this runbook does not create them. `bin/backup-repos.sh` checks for all five on startup and exits with an error pointing back to Phase 1 if any are missing, rather than silently creating them. If you see that error, either run the Phase 1 step first or confirm `REIMAGE_ARTIFACT_ROOT` points at the right location.
 
 Folder purpose:
 
@@ -156,7 +147,7 @@ Use `backup-repos.sh` as the public Phase 2A entrypoint.
 What it does by default:
 
 - resolves Git roots from `reimage.env` or repeated `--root` flags
-- refreshes the Git audit under `repo-audit-reports/`
+- refreshes the repo audit under `repo-audit-reports/`
 - refreshes the gitignore superset under `gitignore-superset/`
 - writes a stable summary at `$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/MANIFEST.md`
 
@@ -245,7 +236,7 @@ Review these lines in the output:
 - `Available on /Volumes/<drive>`
 - `✓ External drive: enough space` or `✗ External drive: NOT ENOUGH SPACE`
 
-### Run the Git Audit
+### Run the Repo Audit
 
 Run from the workflow root. The default Phase 2A command refreshes both the audit and the gitignore superset so you can move directly into review.
 
@@ -290,15 +281,15 @@ A repo can have many modified files and still show `Untracked non-ignored files:
 Confirm the checklist-facing summary exists:
 
 ```bash
-ls -1t "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports"/git-audit-summary-*.txt | head -3
+ls -1t "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports"/repo-audit-summary-*.txt | head -3
 ```
 
 Review the newest report:
 
 ```bash
-LATEST_GIT_AUDIT="$(ls -1t "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports"/git-audit-summary-*.txt | head -1)"
-printf 'LATEST_GIT_AUDIT=%s\n' "$LATEST_GIT_AUDIT"
-open "$LATEST_GIT_AUDIT"
+LATEST_REPO_AUDIT="$(ls -1t "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports"/git-audit-summary-*.txt | head -1)"
+printf 'LATEST_REPO_AUDIT=%s\n' "$LATEST_REPO_AUDIT"
+open "$LATEST_REPO_AUDIT"
 ```
 
 Optional explicit-root variant. Use this only when you want to override the roots from `reimage.env`:
@@ -349,7 +340,7 @@ git diff
 If the changes should be preserved as a temporary backup branch:
 
 ```bash
-git switch -c backup/pre-reimage-YYYYMMDD
+git switch -c backup/reimage-YYYYMMDD
 git add -A
 git commit -m "WIP backup before computer reimage"
 git push -u origin HEAD
@@ -364,15 +355,15 @@ DEFAULT_BRANCH="$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null 
 DEFAULT_BRANCH="${DEFAULT_BRANCH:-${GIT_DEFAULT_BRANCH:-master}}"
 
 git switch "$DEFAULT_BRANCH"
-git branch "backup/pre-reimage-YYYYMMDD"
-git push -u origin "backup/pre-reimage-YYYYMMDD"
+git branch "reimage-ASSETNAME-YYYYMMDD/unfinishedFeature"
+git push -u origin "reimage-ASSETNAME-YYYYMMDD/unfinishedFeature"
 ```
 
 #### Stashes
 
 ```bash
 git stash list
-git stash branch backup/pre-reimage-stash-YYYYMMDD stash@{0}
+git stash branch reimage-ASSETNAME-YYYYMMDD/stash0 stash@{0}
 git add -A
 git commit -m "WIP backup from stash before computer reimage"
 git push -u origin HEAD
