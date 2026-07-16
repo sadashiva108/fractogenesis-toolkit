@@ -173,9 +173,9 @@ fi
 # creates itself -- see the "Prerequisites" section of backup-repos.md.
 REPO_AUDIT_DIR="$REIMAGE_ARTIFACT_ROOT/repo-audit-reports"
 GITIGNORE_DIR="$REIMAGE_ARTIFACT_ROOT/gitignore-superset"
-SELECTED_DRYRUN_DIR="$REIMAGE_ARTIFACT_ROOT/selected-ignored-files-dryrun"
-SELECTED_FILTERED_DRYRUN_DIR="$REIMAGE_ARTIFACT_ROOT/selected-ignored-files-filtered-dryrun"
-SELECTED_FINAL_DIR="$REIMAGE_ARTIFACT_ROOT/selected-ignored-files"
+SELECTED_DRYRUN_DIR="$REIMAGE_ARTIFACT_ROOT/staged-ignored-files/dryrun"
+SELECTED_FILTERED_DRYRUN_DIR="$REIMAGE_ARTIFACT_ROOT/staged-ignored-files/dryrun-filtered"
+SELECTED_FINAL_DIR="$REIMAGE_ARTIFACT_ROOT/staged-ignored-files/live"
 MANIFEST_PATH="$REPO_AUDIT_DIR/MANIFEST.md"
 LATEST_RUN_PATH="$REPO_AUDIT_DIR/latest-run.txt"
 

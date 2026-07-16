@@ -17,7 +17,7 @@ This is the canonical top-level guide for the Mac reimage workflow.
 - [[#Phase 1 — Prepare the External Artifact Root|Phase 1 — Prepare the External Artifact Root]]
 - [[#Phase 2 — Pre-Image Backups|Phase 2 — Pre-Image Backups]]
     - [[#Phase 2A — Backup Repos|Phase 2A — Backup Repos]]
-    - [[#Phase 2B — Backup Local Files|Phase 2B — Backup Local Files]]
+    - [[#Phase 2B — Backup Home|Phase 2B — Backup Home]]
     - [[#Phase 2C — Backup Apps|Phase 2C — Backup Apps]]
     - [[#Phase 2D — Certificate and Keychain Staging|Phase 2D — Certificate and Keychain Staging]]
     - [[#Phase 2E — Create Secrets DMG|Phase 2E — Create Secrets DMG]]
@@ -172,13 +172,13 @@ Captures the IT-approved erase/reinstall method, ownership, timing, wipe expecta
 
 Primary guide: [templates/it-reimage-confirmation-template.md](templates/it-reimage-confirmation-template.md)
 
-Fill out a working copy of the template in a local workspace outside this repo (`$REIMAGE_WORKSPACE_ROOT/reimage-plan/`). Do not copy it into `$REIMAGE_ARTIFACT_ROOT` yet — Phase 1 copies the filled version into `$REIMAGE_ARTIFACT_ROOT/reimage-plan/` once the external root exists. See [Prepare Artifact Root](prepare-artifact-root.md) for `REIMAGE_WORKSPACE_ROOT` setup and the `copy-it-plan` command.
+Fill out a working copy of the template in a local workspace outside this repo (`$REIMAGE_WORKSPACE_ROOT/reimage-confirmation/`). Do not copy it into `$REIMAGE_ARTIFACT_ROOT` yet — Phase 1 copies the filled version into `$REIMAGE_ARTIFACT_ROOT/reimage-confirmation/` once the external root exists. See [Prepare Artifact Root](prepare-artifact-root.md) for `REIMAGE_WORKSPACE_ROOT` setup and the `copy-it-plan` command.
 
 Primary outputs:
 
 ```text
-$REIMAGE_WORKSPACE_ROOT/reimage-plan/it-reimage-confirmation-YYYYMMDD.md
-$REIMAGE_ARTIFACT_ROOT/reimage-plan/it-reimage-confirmation-YYYYMMDD.md    # copied in Phase 1
+$REIMAGE_WORKSPACE_ROOT/reimage-confirmation/it-reimage-confirmation-YYYYMMDD.md
+$REIMAGE_ARTIFACT_ROOT/reimage-confirmation/it-reimage-confirmation-YYYYMMDD.md    # copied in Phase 1
 ```
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -231,27 +231,27 @@ Primary outputs:
 ```text
 $REIMAGE_ARTIFACT_ROOT/gitignore-superset/
 $REIMAGE_ARTIFACT_ROOT/repo-audit-reports/
-$REIMAGE_ARTIFACT_ROOT/selected-ignored-files/
-$REIMAGE_ARTIFACT_ROOT/selected-ignored-files-dryrun/
-$REIMAGE_ARTIFACT_ROOT/selected-ignored-files-filtered-dryrun/
+$REIMAGE_ARTIFACT_ROOT/staged-ignored-files/live/
+$REIMAGE_ARTIFACT_ROOT/staged-ignored-files/dryrun/
+$REIMAGE_ARTIFACT_ROOT/staged-ignored-files/dryrun-filtered/
 ```
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
 ---
-### Phase 2B — Backup Local Files
+### Phase 2B — Backup Home
 
-Follow this phase guide: [Backup Local Files](backup-local-files.md).
+Follow this phase guide: [Backup Home](backup-home.md).
 
-This phase owns the plain local-file copy driven by `backup-local-files.sh`.
+This phase owns the home-directory and secrets-encrypted copy driven by `backup-home.sh`.
 
-Use it for the authoritative pre-image copies of home-directory files, dotfiles, shell scripts, and other non-secret local config selected by `artifact-config.sh`.
+Use it for the authoritative pre-image copies of home-directory files, dotfiles, and secrets-encrypted targets (ssh, gnupg, Java jssecacerts, and other secret staging) selected by `artifact-config.sh`.
 
 Primary output:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/local-files/
-$REIMAGE_ARTIFACT_ROOT/local-files/dotfiles/
+$REIMAGE_ARTIFACT_ROOT/home-files-backup/
+$REIMAGE_ARTIFACT_ROOT/home-files-backup/dotfiles/
 ```
 
 If OneDrive is enabled, this phase may also create a secondary local CloudStorage copy, but OneDrive completion is not considered proven until the Phase 4B manual sync checks from `reimage-prep-checks.md` are complete.
@@ -270,7 +270,7 @@ IntelliJ has a dedicated companion runbook, `backup-intellij.md`, for detailed r
 Primary outputs:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/app-backups/
+$REIMAGE_ARTIFACT_ROOT/app-settings-backup/
 $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/docker/
 $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/chrome/
 $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/postman/

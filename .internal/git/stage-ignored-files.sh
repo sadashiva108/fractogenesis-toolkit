@@ -13,7 +13,7 @@
 #   - Dry run only.
 #   - Searches roots from GIT_WORK_REPO_ROOT and GIT_PERSONAL_REPO_ROOT in reimage.env.
 #   - Falls back to ~/Development when no Git roots are configured.
-#   - Writes to $REIMAGE_ARTIFACT_ROOT/selected-ignored-files when --copy is used.
+#   - Writes to $REIMAGE_ARTIFACT_ROOT/staged-ignored-files/live when --copy is used.
 #   - Skips common generated/heavy folders like node_modules, target, build, .gradle, .venv.
 #   - Skips files that disappear between Git's scan and the copy step.
 #
@@ -25,7 +25,7 @@
 #   ./.internal/git/stage-ignored-files.sh --copy
 #   ./.internal/git/stage-ignored-files.sh --root ~/Development/IdeaProjects --copy
 #   ./.internal/git/stage-ignored-files.sh --root ~/Development/IdeaProjects --root ~/Development/personal --copy
-#   ./.internal/git/stage-ignored-files.sh --dest "$REIMAGE_ARTIFACT_ROOT/selected-ignored-files" --copy
+#   ./.internal/git/stage-ignored-files.sh --dest "$REIMAGE_ARTIFACT_ROOT/staged-ignored-files/live" --copy
 #   ./.internal/git/stage-ignored-files.sh --include-heavy --copy
 #
 # Options:
@@ -34,7 +34,7 @@
 #                      Default: GIT_WORK_REPO_ROOT and GIT_PERSONAL_REPO_ROOT
 #                      from reimage.env when set; otherwise ~/Development.
 #   --dest <dir>       Destination staging directory.
-#                      Default: $REIMAGE_ARTIFACT_ROOT/selected-ignored-files.
+#                      Default: $REIMAGE_ARTIFACT_ROOT/staged-ignored-files/live.
 #   --copy             Actually copy files.
 #                      Without this, the script performs a dry run.
 #   --include-heavy    Include commonly ignored/generated folders such as:
@@ -71,7 +71,7 @@ source "$CONFIG_LOADER"
 # ─────────────────────────────────────────────────────────────────────────────
 
 ROOTS=()
-_default_dest="${REIMAGE_ARTIFACT_ROOT:+${REIMAGE_ARTIFACT_ROOT}/selected-ignored-files}"
+_default_dest="${REIMAGE_ARTIFACT_ROOT:+${REIMAGE_ARTIFACT_ROOT}/staged-ignored-files/live}"
 DEST="${_default_dest:-$HOME/Desktop/git-ignored-backup-$(date +%Y%m%d-%H%M%S)}"
 unset _default_dest
 DO_COPY="false"

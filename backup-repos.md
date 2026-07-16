@@ -95,9 +95,10 @@ $REIMAGE_ARTIFACT_ROOT/
 │   ├── latest-run.txt
 │   └── runs/
 ├── gitignore-superset/
-├── selected-ignored-files/
-├── selected-ignored-files-dryrun/
-└── selected-ignored-files-filtered-dryrun/
+└── staged-ignored-files/
+    ├── live/
+    ├── dryrun/
+    └── dryrun-filtered/
 ```
 
 These directories are created by Phase 1 (`prepare-artifact-root.sh` / `prepare-artifact-root.md`) as part of the standard artifact-root layout -- this runbook does not create them. `bin/backup-repos.sh` checks for all five on startup and exits with an error pointing back to Phase 1 if any are missing, rather than silently creating them. If you see that error, either run the Phase 1 step first or confirm `REIMAGE_ARTIFACT_ROOT` points at the right location.
@@ -108,9 +109,9 @@ Folder purpose:
 |---|---------------------------------------------------------------------------------------|
 | `repo-audit-reports/` | Append-only repository-audit index, latest-run pointer, and self-contained timestamped run directories; not a full source backup. |
 | `gitignore-superset/` | Reviewable superset of ignored patterns, selected-pattern template, and exclude list. |
-| `selected-ignored-files-dryrun/` | First dry-run candidate output before exclusions.                                     |
-| `selected-ignored-files-filtered-dryrun/` | Filtered dry-run output after `backup-exclude-list.txt`.                              |
-| `selected-ignored-files/` | Final selected ignored/local file copy for restore.                                   |
+| `staged-ignored-files/dryrun/` | First dry-run candidate output before exclusions.                                     |
+| `staged-ignored-files/dryrun-filtered/` | Filtered dry-run output after `backup-exclude-list.txt`.                              |
+| `staged-ignored-files/live/` | Final selected ignored/local file copy for restore.                                   |
 
 Optional reusable local review files can live under:
 
@@ -668,7 +669,7 @@ chmod +x bin/backup-repos.sh
 Review:
 
 ```bash
-open "$REIMAGE_ARTIFACT_ROOT/selected-ignored-files-dryrun"
+open "$REIMAGE_ARTIFACT_ROOT/staged-ignored-files/dryrun"
 ```
 
 ### Run the Filtered Dry Run
@@ -682,7 +683,7 @@ This pass applies `backup-exclude-list.txt` and should be reviewed before copyin
 Review:
 
 ```bash
-open "$REIMAGE_ARTIFACT_ROOT/selected-ignored-files-filtered-dryrun"
+open "$REIMAGE_ARTIFACT_ROOT/staged-ignored-files/dryrun-filtered"
 ```
 
 Confirm excluded files moved from candidates to excluded output when applicable.
@@ -719,9 +720,9 @@ $REIMAGE_ARTIFACT_ROOT/gitignore-superset/gitignore-pattern-sources-review.txt
 $REIMAGE_ARTIFACT_ROOT/gitignore-superset/gitignore-concatenated-with-sources.txt
 $REIMAGE_ARTIFACT_ROOT/gitignore-superset/gitignore-review-template.txt
 $REIMAGE_ARTIFACT_ROOT/gitignore-superset/backup-exclude-list.txt
-$REIMAGE_ARTIFACT_ROOT/selected-ignored-files-dryrun/
-$REIMAGE_ARTIFACT_ROOT/selected-ignored-files-filtered-dryrun/
-$REIMAGE_ARTIFACT_ROOT/selected-ignored-files/
+$REIMAGE_ARTIFACT_ROOT/staged-ignored-files/dryrun/
+$REIMAGE_ARTIFACT_ROOT/staged-ignored-files/dryrun-filtered/
+$REIMAGE_ARTIFACT_ROOT/staged-ignored-files/live/
 ```
 
 Look for:

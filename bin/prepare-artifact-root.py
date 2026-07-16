@@ -292,14 +292,14 @@ def resolve_it_plan_source(explicit_source: str, values: Dict[str, str], workspa
         return source
 
     # IT_PLAN_DIR, if explicitly set (in reimage.env or elsewhere), is used as-is.
-    # Otherwise fall back to REIMAGE_WORKSPACE_ROOT/reimage-plan so callers are not
+    # Otherwise fall back to REIMAGE_WORKSPACE_ROOT/reimage-confirmation so callers are not
     # required to persist IT_PLAN_DIR in reimage.env just for this one-time Phase 0 copy.
     it_plan_dir = values.get("IT_PLAN_DIR")
     if it_plan_dir:
         search_root = it_plan_dir
     else:
         workspace_root = workspace_root_override or values.get("REIMAGE_WORKSPACE_ROOT") or default_workspace_root()
-        search_root = str(Path(workspace_root) / "reimage-plan")
+        search_root = str(Path(workspace_root) / "reimage-confirmation")
     search_path = Path(search_root).expanduser()
     if not search_path.is_dir():
         raise SystemExit(
@@ -322,7 +322,7 @@ def resolve_it_plan_source(explicit_source: str, values: Dict[str, str], workspa
 
 def cmd_init_reimage_env(args: argparse.Namespace) -> int:
     workspace_root = args.workspace_root or default_workspace_root()
-    it_plan_dir = args.it_plan_dir or str(Path(workspace_root) / "reimage-plan")
+    it_plan_dir = args.it_plan_dir or str(Path(workspace_root) / "reimage-confirmation")
     updates = {
         "REIMAGE_WORKSPACE_ROOT": workspace_root,
         "IT_PLAN_DIR": it_plan_dir,
@@ -508,7 +508,7 @@ def cmd_copy_it_plan(args: argparse.Namespace) -> int:
     ensure_artifact_root_under_external(values["EXTERNAL_DATA_VOLUME"], values["REIMAGE_ARTIFACT_ROOT"])
 
     source = resolve_it_plan_source(args.source, values, args.workspace_root)
-    destination_dir = Path(values["REIMAGE_ARTIFACT_ROOT"]) / "reimage-plan"
+    destination_dir = Path(values["REIMAGE_ARTIFACT_ROOT"]) / "reimage-confirmation"
     destination_dir.mkdir(parents=True, exist_ok=True)
     destination = destination_dir / source.name
 
@@ -618,13 +618,13 @@ def cmd_verify_prepared_root(args: argparse.Namespace) -> int:
             "Create the standard directory layout, then rerun this helper."
         )
 
-    reimage_plan_dir = Path(values["REIMAGE_ARTIFACT_ROOT"]) / "reimage-plan"
-    it_plan_files = sorted(reimage_plan_dir.glob("it-reimage-confirmation-*.md"))
+    reimage_confirmation_dir = Path(values["REIMAGE_ARTIFACT_ROOT"]) / "reimage-confirmation"
+    it_plan_files = sorted(reimage_confirmation_dir.glob("it-reimage-confirmation-*.md"))
     if it_plan_files:
-        print(f"OK: reimage-plan IT confirmation: {it_plan_files[-1].name}")
+        print(f"OK: reimage-confirmation IT confirmation: {it_plan_files[-1].name}")
     else:
         raise SystemExit(
-            "Missing IT reimage confirmation under reimage-plan/.\n"
+            "Missing IT reimage confirmation under reimage-confirmation/.\n"
             "Copy it during Phase 1, then rerun this helper."
         )
     return 0
@@ -730,7 +730,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     copy_it_plan_parser = subparsers.add_parser(
         "copy-it-plan",
-        help="Copy the filled IT reimage confirmation into REIMAGE_ARTIFACT_ROOT/reimage-plan/.",
+        help="Copy the filled IT reimage confirmation into REIMAGE_ARTIFACT_ROOT/reimage-confirmation/.",
     )
     copy_it_plan_parser.add_argument("--env-file", type=Path, required=True)
     copy_it_plan_parser.add_argument("--source", default="")
@@ -739,7 +739,7 @@ def build_parser() -> argparse.ArgumentParser:
         default="",
         help=(
             "Override REIMAGE_WORKSPACE_ROOT for locating the filled IT plan note under "
-            "<workspace-root>/reimage-plan/. Use this instead of persisting IT_PLAN_DIR "
+            "<workspace-root>/reimage-confirmation/. Use this instead of persisting IT_PLAN_DIR "
             "or REIMAGE_WORKSPACE_ROOT in reimage.env. Ignored if --source or IT_PLAN_DIR "
             "(from reimage.env) is provided."
         ),

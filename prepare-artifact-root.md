@@ -37,7 +37,7 @@ Recommended path: create the local `reimage.env` file first, then source it in e
         - [[#If You Already Have Real Config Fragments|If You Already Have Real Config Fragments]]
         - [[#Initialize the Fragments From Scratch|Initialize the Fragments From Scratch]]
     - [[#Create the Standard Directory Layout|Create the Standard Directory Layout]]
-    - [[#Copy the Filled IT Reimage Confirmation Into reimage-plan|Copy the Filled IT Reimage Confirmation Into reimage-plan]]
+    - [[#Copy the Filled IT Reimage Confirmation Into reimage-confirmation|Copy the Filled IT Reimage Confirmation Into reimage-confirmation]]
     - [[#Verify the Prepared Root|Verify the Prepared Root]]
 - [[#Supplemental Reference|Supplemental Reference]]
     - [[#Repo Path Variables and Self-Locating Scripts|Repo Path Variables and Self-Locating Scripts]]
@@ -89,17 +89,18 @@ Top-level directories created under `$REIMAGE_ARTIFACT_ROOT` by [[#Create the St
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/
-├── app-backups/
+├── app-settings-backup/
 ├── gitignore-superset/
-├── local-files/
-├── reimage-plan/
+├── home-files-backup/
+├── reimage-confirmation/
 ├── reimage-prep-checks/
 ├── reimaged-system/
 ├── repo-audit-reports/
 ├── secrets-encrypted/
-├── selected-ignored-files/
-├── selected-ignored-files-dryrun/
-├── selected-ignored-files-filtered-dryrun/
+├── staged-ignored-files/
+│   ├── live/
+│   ├── dryrun/
+│   └── dryrun-filtered/
 ├── time-machine/
 └── workflow-snapshot/
 ```
@@ -1105,7 +1106,7 @@ The arrays and flags are now stored in reusable shell config fragments instead o
 It is sourced by scripts such as:
 
 ```text
-bin/backup-local-files.sh
+bin/backup-home-files-backup.sh
 bin/capture-size-audit.sh
 bin/capture-workflow-snapshot.sh
 bin/create-secrets-dmg.sh
@@ -1117,12 +1118,12 @@ Important behavior:
 
 | Behavior | Meaning |
 |---|---|
-| It self-locates `REPO_ROOT` from its own script path (parent of `.internal/`). | Sourcing scripts must reference it by its actual path relative to the repo root, e.g. `bin/backup-local-files.sh` — there's no `REIMAGE_ROOT` variable to fall back on. |
+| It self-locates `REPO_ROOT` from its own script path (parent of `.internal/`). | Sourcing scripts must reference it by its actual path relative to the repo root, e.g. `bin/backup-home-files-backup.sh` — there's no `REIMAGE_ROOT` variable to fall back on. |
 | It loads `reimage.env` if present. | Your local `REIMAGE_ARTIFACT_ROOT` plus optional `OFFICE_WATCH`, `ONEDRIVE_FOLDER_NAME`, `ONEDRIVE_ROOT`, and related paths are shared with scripts. |
 | It defines `EXTERNAL_APPLE_BACKUPS_VOLUME`. | Time Machine scripts use this as the backup destination mount path instead of assuming the destination volume is named `AppleBackups`. |
 | It exits if `REIMAGE_ARTIFACT_ROOT` is empty. | Create and source `reimage.env` before running scripts that depend on the backup root. |
 | It prefers workspace-backed config fragments when they exist. | `REIMAGE_WORKSPACE_ROOT/artifact-config/` becomes the reusable local copy for reruns; otherwise the loader falls back to `.internal/templates/artifact-config/`. |
-| It defines `EXTERNAL_TARGETS`. | These become subfolders under `$REIMAGE_ARTIFACT_ROOT/local-files/`. |
+| It defines `EXTERNAL_TARGETS`. | These become subfolders under `$REIMAGE_ARTIFACT_ROOT/home-files-backup/`. |
 | It defines OneDrive handling. | `ONEDRIVE_ROOT` should be a full path, or `ONEDRIVE_FOLDER_NAME` can be used to resolve a folder under `~/Library/CloudStorage/`. Do not use a bare OneDrive folder name relative to the current directory. |
 | It defines `SECRETS_TARGETS`. | These become file or directory entries under `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/`. Use `certs/` for certificate/keystore material and `certs/java-security/` for Java `jssecacerts`. |
 | It defines `EXTERNAL_EXCLUDES` and `ONEDRIVE_EXTRA_EXCLUDES`. | Add backup exclusions in config, not in each script. |
@@ -1131,17 +1132,15 @@ Important behavior:
 Current expected top-level folders from `artifact-config.sh`:
 
 ```text
-app-backups
+app-settings-backup
 reimage-prep-checks
 repo-audit-reports
 gitignore-superset
-local-files
+home-files-backup
 reimaged-system
-reimage-plan
+reimage-confirmation
 secrets-encrypted
-selected-ignored-files
-selected-ignored-files-dryrun
-selected-ignored-files-filtered-dryrun
+staged-ignored-files
 time-machine
 workflow-snapshot
 ```
@@ -1210,8 +1209,8 @@ Create only the stable top-level generated-artifact directories owned by this pr
 For example:
 
 - `secrets-encrypted/` is created here only as a top-level container.
-- nested secrets folders are created later by the secrets runbook, manual staging steps, `backup-local-files.sh`, or `create-secrets-dmg.sh`.
-- `reimage-plan/` is created here so the filled Phase 0 IT confirmation can be copied into the external root during Phase 1.
+- nested secrets folders are created later by the secrets runbook, manual staging steps, `backup-home-files-backup.sh`, or `create-secrets-dmg.sh`.
+- `reimage-confirmation/` is created here so the filled Phase 0 IT confirmation can be copied into the external root during Phase 1.
 - workflow snapshot child folders are created later by `capture-workflow-snapshot.md`.
 
 ```bash
@@ -1224,17 +1223,18 @@ Layout after this step, top-level directories only:
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/
-├── app-backups/
+├── app-settings-backup/
 ├── reimage-prep-checks/
 ├── repo-audit-reports/
 ├── gitignore-superset/
-├── local-files/
+├── home-files-backup/
 ├── reimaged-system/
-├── reimage-plan/
+├── reimage-confirmation/
 ├── secrets-encrypted/
-├── selected-ignored-files/
-├── selected-ignored-files-dryrun/
-├── selected-ignored-files-filtered-dryrun/
+├── staged-ignored-files/
+│   ├── live/
+│   ├── dryrun/
+│   └── dryrun-filtered/
 ├── time-machine/
 └── workflow-snapshot/
 ```
@@ -1245,17 +1245,17 @@ Folder purpose:
 
 | Folder                                    | Purpose                                                                                                                                                                                                                                 |
 |-------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `app-backups/`                            | App-specific exported settings, inventories, notes, and app-owned restore artifacts such as Chrome bookmarks, Docker settings, Postman exports, Raycast exports, Obsidian copies, VS Code fallback state, and IntelliJ backup material. |
+| `app-settings-backup/`                            | App-specific exported settings, inventories, notes, and app-owned restore artifacts such as Chrome bookmarks, Docker settings, Postman exports, Raycast exports, Obsidian copies, VS Code fallback state, and IntelliJ backup material. |
 | `reimage-prep-checks/`                    | Final reimage preparation checks go/no-go checklist reports.                                                                                                                                                                            |
 | `repo-audit-reports/`                     | Repository state reports; not a full source backup.                                                                                                                                                                                            |
 | `gitignore-superset/`                     | Reviewable superset of ignored patterns across repos.                                                                                                                                                                                   |
-| `local-files/`                            | Home folders, dotfiles, and selected local files copied by `backup-local-files.sh`.                                                                                                                                                     |
+| `home-files-backup/`                            | Home folders, dotfiles, and selected local files copied by `backup-home-files-backup.sh`.                                                                                                                                                     |
 | `reimaged-system/`                        | Initial enrollment captures and checks, reimaged system evidence, restart notes, restore notes, Time Machine notes, and final validation artifacts.                                                                                     |
-| `reimage-plan/`                           | Filled copy of the Phase 0 IT reimage confirmation kept with the external backup root from the start of the reimage effort.                                                                                                             |
+| `reimage-confirmation/`                           | Filled copy of the Phase 0 IT reimage confirmation kept with the external backup root from the start of the reimage effort.                                                                                                             |
 | `secrets-encrypted/`                      | Top-level container for the secrets workflow. Nested secret staging folders, final DMG artifacts, Java inventory, certificate review reports, and restore README are created later by the owning secrets steps.                         |
-| `selected-ignored-files/`                 | Final selected ignored/local file copies needed for restore.                                                                                                                                                                            |
-| `selected-ignored-files-dryrun/`          | Initial dry-run output for selected ignored/local file backups.                                                                                                                                                                         |
-| `selected-ignored-files-filtered-dryrun/` | Filtered dry-run output after exclusions are applied.                                                                                                                                                                                   |
+| `staged-ignored-files/live/`                 | Final selected ignored/local file copies needed for restore.                                                                                                                                                                            |
+| `staged-ignored-files/dryrun/`          | Initial dry-run output for selected ignored/local file backups.                                                                                                                                                                         |
+| `staged-ignored-files/dryrun-filtered/` | Filtered dry-run output after exclusions are applied.                                                                                                                                                                                   |
 | `time-machine/`                           | Time Machine status capture bundles only. Actual Time Machine backups live on the Time Machine volume.                                                                                                                                  |
 | `workflow-snapshot/`                      | Workflow snapshot captures and workflow documentation snapshots, created by `capture-workflow-snapshot.md`/`bin/capture-workflow-snapshot.sh`, not by this preparation guide.                                                            |
 
@@ -1264,9 +1264,9 @@ Folder purpose:
 
 ---
 
-### Copy the Filled IT Reimage Confirmation Into reimage-plan
+### Copy the Filled IT Reimage Confirmation Into reimage-confirmation
 
-After the standard layout exists, copy the filled Phase 0 IT confirmation into the new top-level `reimage-plan/` folder:
+After the standard layout exists, copy the filled Phase 0 IT confirmation into the new top-level `reimage-confirmation/` folder:
 
 ```bash
 python3 bin/prepare-artifact-root.py \
@@ -1274,7 +1274,7 @@ python3 bin/prepare-artifact-root.py \
   --env-file reimage.env
 ```
 
-This looks for the newest `it-reimage-confirmation-*.md` under `IT_PLAN_DIR` (if set in `reimage.env`), otherwise under `<REIMAGE_WORKSPACE_ROOT>/reimage-plan/`.
+This looks for the newest `it-reimage-confirmation-*.md` under `IT_PLAN_DIR` (if set in `reimage.env`), otherwise under `<REIMAGE_WORKSPACE_ROOT>/reimage-confirmation/`.
 
 If you do not want to persist `IT_PLAN_DIR` or `REIMAGE_WORKSPACE_ROOT` in `reimage.env`, pass the workspace root directly instead:
 
@@ -1285,7 +1285,7 @@ python3 bin/prepare-artifact-root.py \
   --workspace-root "$REIMAGE_WORKSPACE_ROOT"
 ```
 
-This searches `<REIMAGE_WORKSPACE_ROOT>/reimage-plan/` without requiring either variable to already be defined in `reimage.env` (`--workspace-root` is ignored if `IT_PLAN_DIR` is already set there, or if `--source` is used).
+This searches `<REIMAGE_WORKSPACE_ROOT>/reimage-confirmation/` without requiring either variable to already be defined in `reimage.env` (`--workspace-root` is ignored if `IT_PLAN_DIR` is already set there, or if `--source` is used).
 
 If the filled note is not under `IT_PLAN_DIR` or `REIMAGE_WORKSPACE_ROOT`, provide the explicit source path:
 
@@ -1299,7 +1299,7 @@ python3 bin/prepare-artifact-root.py \
 Expected destination:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/reimage-plan/it-reimage-confirmation-YYYYMMDD.md
+$REIMAGE_ARTIFACT_ROOT/reimage-confirmation/it-reimage-confirmation-YYYYMMDD.md
 ```
 
 The entrypoint preserves the source filename and saves a timestamped `.previous-*` backup only when the destination already exists and differs.
@@ -1779,8 +1779,8 @@ Return to: [[#Check for an Existing reimage.env|Check for an Existing reimage.en
 Symptoms:
 
 ```text
-MISSING: app-backups
-MISSING: local-files
+MISSING: app-settings-backup
+MISSING: home-files-backup
 MISSING: secrets-encrypted
 ```
 
@@ -1834,7 +1834,7 @@ source ./reimage.env
 set +a
 
 printf 'ONEDRIVE_ROOT=%s\n' "$ONEDRIVE_ROOT"
-./bin/backup-local-files.sh --dry-run --onedrive-only
+./bin/backup-home-files-backup.sh --dry-run --onedrive-only
 ```
 
 If a previous run already created the wrong folder, copy it into the real OneDrive root before removing anything (run this from inside the repo checkout, since `$(pwd)` below assumes that):

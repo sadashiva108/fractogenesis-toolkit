@@ -7,16 +7,15 @@
 # not fabricated -- it's the real expected set as of this migration.
 
 EXPECTED_ARTIFACT_FOLDERS=(
-  app-backups
+  app-settings-backup
   gitignore-superset
-  local-files
-  reimage-plan
+  home-files-backup
+  reimage-confirmation
   reimage-prep-checks
   reimaged-system
   repo-audit-reports
   secrets-encrypted
-  selected-ignored-files
-  selected-ignored-files-filtered-dryrun
+  staged-ignored-files
   time-machine
   workflow-snapshot
 )

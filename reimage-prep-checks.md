@@ -163,7 +163,7 @@ For workflow-snapshot validation, the expected source is the newest timestamped 
 $REIMAGE_ARTIFACT_ROOT/workflow-snapshot/pre-image-workflow-snapshot-YYYYMMDD-HHMMSS/
 ```
 
-The checklist should discover that folder directly from `workflow-snapshot/pre-image-workflow-snapshot-*`. VS Code local fallback state is validated from `app-backups/vscode/`.
+The checklist should discover that folder directly from `workflow-snapshot/pre-image-workflow-snapshot-*`. VS Code local fallback state is validated from `app-settings-backup/vscode/`.
 
 The script exits with a non-zero status if any **FAIL** item is found. Do not proceed to Phase 5 until it exits cleanly with zero FAILs.
 
@@ -341,16 +341,16 @@ Record in the sign-off note:
 signed-in account
 Settings Sync on/off
 last synced data visible or not visible
-whether the local VS Code backup under `app-backups/vscode/` or Settings Sync is the restore source instead
+whether the local VS Code backup under `app-settings-backup/vscode/` or Settings Sync is the restore source instead
 ```
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
 ### Confirm OneDrive Sync Separately
 
-Use this when `backup-local-files.sh` was run with OneDrive enabled or when any relied-on file depends on OneDrive. The script's "OneDrive backup folder detected" check only confirms the folder and an upload marker exist locally -- it cannot prove the cloud copy is current.
+Use this when `backup-home.sh` was run with OneDrive enabled or when any relied-on file depends on OneDrive. The script's "OneDrive backup folder detected" check only confirms the folder and an upload marker exist locally -- it cannot prove the cloud copy is current.
 
-The detailed procedure -- identifying the expected OneDrive target, dropping a current-run upload marker, the local spot-check commands, and the four-point confirmed checklist -- now lives in the "Confirm OneDrive Sync" section of `backup-local-files.md`. Run that procedure, then come back here and record the result in the go/no-go checklist below.
+The detailed procedure -- identifying the expected OneDrive target, dropping a current-run upload marker, the local spot-check commands, and the four-point confirmed checklist -- now lives in the "Confirm OneDrive Sync" section of `backup-home.md`. Run that procedure, then come back here and record the result in the go/no-go checklist below.
 
 Pass/fail for this phase:
 
@@ -363,7 +363,7 @@ Pass/fail for this phase:
 
 #### Fix an Accidental OneDrive Folder Under FRACTOGENESIS_HOME
 
-If an older script run wrote to a relative path under `$FRACTOGENESIS_HOME` instead of the real OneDrive CloudStorage folder, see the "Accidental relative OneDrive folder" note in the "Confirm OneDrive Sync" section of `backup-local-files.md` for the fix.
+If an older script run wrote to a relative path under `$FRACTOGENESIS_HOME` instead of the real OneDrive CloudStorage folder, see the "Accidental relative OneDrive folder" note in the "Confirm OneDrive Sync" section of `backup-home.md` for the fix.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -415,12 +415,12 @@ Check that the most important directories are non-empty:
 for d in \
   git-audit-reports \
   gitignore-superset \
-  selected-ignored-files \
+  staged-ignored-files \
   intellij \
   secrets-encrypted \
   system-inventory \
   performance-audit \
-  app-backups \
+  app-settings-backup \
   time-machine \
   reimage-prep-checks; do
   echo "--- $d"

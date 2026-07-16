@@ -29,7 +29,7 @@ Examples:
     --include-template "$REIMAGE_ARTIFACT_ROOT/gitignore-superset/gitignore-review-template.txt" \
     --root ~/Development/IdeaProjects \
     --root ~/Development/Documentation \
-    --dest "$REIMAGE_ARTIFACT_ROOT/selected-ignored-files-dryrun"
+    --dest "$REIMAGE_ARTIFACT_ROOT/staged-ignored-files/dryrun"
 
   # Filtered dry run
   python3 stage-selected-patterns.py \
@@ -37,7 +37,7 @@ Examples:
     --exclude-list "$REIMAGE_ARTIFACT_ROOT/gitignore-superset/backup-exclude-list.txt" \
     --root ~/Development/IdeaProjects \
     --root ~/Development/Documentation \
-    --dest "$REIMAGE_ARTIFACT_ROOT/selected-ignored-files-filtered-dryrun"
+    --dest "$REIMAGE_ARTIFACT_ROOT/staged-ignored-files/dryrun-filtered"
 
   # Final copy
   python3 stage-selected-patterns.py \
@@ -45,7 +45,7 @@ Examples:
     --exclude-list "$REIMAGE_ARTIFACT_ROOT/gitignore-superset/backup-exclude-list.txt" \
     --root ~/Development/IdeaProjects \
     --root ~/Development/Documentation \
-    --dest "$REIMAGE_ARTIFACT_ROOT/selected-ignored-files" \
+    --dest "$REIMAGE_ARTIFACT_ROOT/staged-ignored-files/live" \
     --copy
 
 Exclude list examples:
