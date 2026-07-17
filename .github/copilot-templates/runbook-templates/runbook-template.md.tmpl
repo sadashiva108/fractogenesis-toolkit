@@ -1,0 +1,144 @@
+---
+# Runbook template metadata
+# This YAML block should be updated when instantiating the template.
+# Fields: title, back_link, runbook_version, verb_first (true/false), primary_scripts (list), related_scripts (list), artifact_paths (list)
+---
+
+<!--
+Runbook template for fractogenesis-toolkit
+Placeholders to replace (uppercase) or provide in the YAML header:
+- RUNBOOK_TITLE or `title` in YAML
+- BACK_LINK or `back_link` in YAML
+- RUNBOOK_SHORT_DESC
+- PRIMARY_SCRIPT / PRIMARY_SCRIPTS (one or more entrypoint scripts)
+- RELATED_SCRIPTS (list)
+- ARTIFACT_PATHS (example: $REIMAGE_ARTIFACT_ROOT/...)
+-->
+
+# {{RUNBOOK_TITLE}}
+
+Back link: {{BACK_LINK}}
+
+Purpose
+- {{RUNBOOK_SHORT_DESC}}
+
+Table of contents
+- [Purpose](#purpose)
+- [Artifact and Script Locations](#artifact-and-script-locations)
+- [Before You Run Anything](#before-you-run-anything)
+  - [Prerequisites](#prerequisites)
+  - [Configuration (reimage.env)](#configuration-reimageenv)
+  - [Safety & Validation](#safety--validation)
+- [Sequential Steps](#sequential-steps)
+  - [Step 1 — Prepare / Validate](#step-1-—-prepare--validate)
+  - [Step 2 — Execute primary action](#step-2-—-execute-primary-action)
+  - [Step 3 — Verify outputs](#step-3-—-verify-outputs)
+- [Supplemental Reference](#supplemental-reference)
+
+---
+
+## Artifact and Script Locations
+
+Primary script(s)
+- {{PRIMARY_SCRIPT}}
+
+Related scripts / helpers
+- {{RELATED_SCRIPTS}}
+
+Primary artifact locations (examples)
+- $REIMAGE_ARTIFACT_ROOT/{{ARTIFACT_PATHS}}
+- Local workspace: $REIMAGE_WORKSPACE_ROOT/
+
+If including a directory tree, show only subdirectories relevant to these steps (short, focused):
+
+repo (partial)
+```
+/bin/
+  - {{PRIMARY_SCRIPT | basename }}
+/.internal/
+  - load-reimage-config.sh
+  - artifact-config.sh
+/.github/copilot-templates/
+  - runbook-template.md.tmpl  # this template
+```
+
+---
+
+## Before You Run Anything
+
+### Prerequisites
+- Run from the repository root.
+- Ensure reimage.env exists (created from reimage.env.example) and contains resolved absolute paths.
+- Confirm required tools are installed (bash, python3, jq, rsync as needed). List only what's actually required by the script.
+
+### Configuration (reimage.env)
+- The generated runbook SHOULD list exact reimage.env keys the scripts require. If possible, auto-populate this list by scanning PRIMARY_SCRIPT for exported variable names or references to REIMAGE_* and common variables (EXTERNAL_DATA_VOLUME, REIMAGE_ARTIFACT_ROOT, GIT_*_REPO_ROOT).
+- Verify these variables in reimage.env are set and resolved.
+
+### Safety & Validation
+- Dry-run where supported.
+- Validate scripts: `bash -n {{PRIMARY_SCRIPT}}` and `shellcheck -x {{PRIMARY_SCRIPT}}` (if shellcheck is available).
+- Do not run from another directory; many entrypoints self-locate and expect repo-root context.
+- The TOC above must match the document headings. After filling, run a simple check to ensure every markdown link in the TOC targets an existing heading.
+
+---
+
+## Sequential Steps
+
+### Step 1 — Prepare / Validate
+- Brief one-line goal.
+- Commands: show minimal commands to prepare, e.g.:
+
+```bash
+# syntax-check and dry-run
+bash -n {{PRIMARY_SCRIPT}}
+# optional: run with -n/--dry-run flag if implemented
+bash {{PRIMARY_SCRIPT}} --dry-run
+```
+
+If multiple primary scripts exist (helpers or alternative entrypoints), list and show which script is primary for which sub-step.
+
+### Step 2 — Execute primary action
+- Run the primary script with any required args.
+
+```bash
+bash {{PRIMARY_SCRIPT}} [--env-file reimage.env] [--artifact-root "$REIMAGE_ARTIFACT_ROOT/..." ]
+```
+
+- What the script writes and where (explicit file/path examples):
+  - $REIMAGE_ARTIFACT_ROOT/<event>/backups/
+  - $REIMAGE_ARTIFACT_ROOT/<event>/manifests/
+
+### Step 3 — Verify outputs
+- Quick checks to confirm success (existence, checksum, sample file list):
+
+```bash
+ls -la "$REIMAGE_ARTIFACT_ROOT"/$(date +%Y%m%d)-{{ASSET_OR_HOST}}/
+# or verify manifest
+sha256sum "$REIMAGE_ARTIFACT_ROOT"/.../manifest.txt
+```
+
+Optional: note manual review or signer steps here.
+
+---
+
+## Supplemental Reference
+- Link to runbook sources, relevant references, and internal prompts:
+  - README.md
+  - reimaging-guide.md
+  - reimaging-scripts-guide.md
+  - .internal/load-reimage-config.sh
+  - .internal/artifact-config.sh
+  - .github/copilot-prompts/bash-script-authoring-and-review.md
+
+---
+
+## Template metadata (fill before publishing)
+- Author:
+- Last-updated:
+- Runbook-version:
+- Linked-runbook-from: {{BACK_LINK}}
+- Enforced verb-first title? (set verb_first: true in YAML header to assert)
+
+
+<!-- End of template -->
