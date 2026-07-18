@@ -1,13 +1,37 @@
-# external-excludes.conf.sh
-# PLACEHOLDER -- not migrated from the original reference-vault content.
-# This file exists only so artifact-config.sh can source it without
-# crashing (see the "Missing artifact-config fragment" error it would
-# otherwise raise). It defines nothing real yet.
-#
-# Upload the original workflows/mac/reimage/scripts/templates/backup-config/external-excludes.conf.sh
-# from your reference-vault checkout to replace this with real content --
-# it likely defines an array or set of paths this fragment's name implies
-# (e.g. EXTERNAL_TARGETS=(...)), which this stub deliberately does not
-# guess at, since getting backup target/exclude lists wrong could cause
-# real files to be silently skipped or wrongly included during an actual
-# backup run.
+# EXTERNAL DRIVE GLOBAL EXCLUDES
+# Applied to every rsync call. Use rsync filter pattern syntax.
+# Add a pattern here instead of editing individual rsync calls.
+
+EXTERNAL_EXCLUDES=(
+
+  # -- macOS noise -------------------------------------------------------------
+  ".DS_Store"
+  "desktop.ini"
+  ".localized"
+
+  # -- Office lock/temp files --------------------------------------------------
+  "~$*"
+
+  # -- Dev artifacts safe to skip ----------------------------------------------
+  "DockerDesktop/"              # Docker.raw virtual disk — rebuild from registries
+  "github-copilot-intellij/"    # Plugin cache — reinstall post-reimage
+
+  # -- Installers --------------------------------------------------------------
+  "*.dmg"
+  "*.pkg"
+  "*.zip"
+  "\$RECYCLE.BIN/"
+
+  # -- Tool caches (large, regenerated) ----------------------------------------
+  "github-copilot/"             # Inside ~/.config — 54 MB cache
+
+  # -- Azure noise -------------------------------------------------------------
+  "logs/"
+  "telemetry/"
+
+  # -- Copilot session noise ---------------------------------------------------
+  "history-session-state/"
+  "session-state/"
+  "jb/"
+
+)

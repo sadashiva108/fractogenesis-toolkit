@@ -1,13 +1,14 @@
-# onedrive-targets.conf.sh
-# PLACEHOLDER -- not migrated from the original reference-vault content.
-# This file exists only so artifact-config.sh can source it without
-# crashing (see the "Missing artifact-config fragment" error it would
-# otherwise raise). It defines nothing real yet.
+# ONEDRIVE TARGETS
+# Subset of EXTERNAL_TARGETS. Keep narrower — OneDrive is for documents,
+# not dotfiles or secrets.
 #
-# Upload the original workflows/mac/reimage/scripts/templates/backup-config/onedrive-targets.conf.sh
-# from your reference-vault checkout to replace this with real content --
-# it likely defines an array or set of paths this fragment's name implies
-# (e.g. EXTERNAL_TARGETS=(...)), which this stub deliberately does not
-# guess at, since getting backup target/exclude lists wrong could cause
-# real files to be silently skipped or wrongly included during an actual
-# backup run.
+# Same format as EXTERNAL_TARGETS. DEST is relative to $ONEDRIVE_DEST/.
+# Comment out lines to disable.
+
+ONEDRIVE_TARGETS=(
+  "Documents | $HOME/Documents/ | Documents | home | Work documents synced to corporate OneDrive"
+  "Desktop   | $HOME/Desktop/   | Desktop   | home | Desktop files synced to corporate OneDrive"
+  # "Downloads | $HOME/Downloads/ | Downloads | home | Downloaded files — uncomment if wanted"
+  # "Music     | $HOME/Music/     | Music     | media | Personal music — uncomment if wanted"
+  # "Pictures  | $HOME/Pictures/  | Pictures  | media | Photos — uncomment if wanted"
+)

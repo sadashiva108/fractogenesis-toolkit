@@ -8,18 +8,18 @@ selected entries so you can review and run the updater in dry-run mode.
 
 Usage example:
 
-python3 .internal/scripts/generate-mapping-template.py \
+python3 .internal/copilot-scripts/generate-mapping-template.py \
   /path/to/reference-vault/workflows/mac/reimage/backup-apps.md \
   /path/to/reference-vault/workflows/mac/reimage/scripts/backup-apps.sh \
   --default-md-dir references \
-  --out .internal/mappings/one-mapping.json
+  --out /tmp/mappings/one-mapping.json
 
 Options
 - sources: one or more source file paths (posix or absolute)
-- --default-md-dir: destination dir for Markdown files (default: references)
+- --default-md-dir: destination dir for Markdown files (default: current working dir)
 - --script-default-bin-dir: destination dir for non-helper scripts (default: bin)
-- --script-helper-keyword: path segment indicating helper scripts (default: helpers)
-- --out: output mapping JSON path (default: .internal/mappings/generated-mapping.json)
+- --script-helper-keyword: path segment indicating helper scripts (default: .internal)
+- --out: output mapping JSON path (default: /tmp/mappings/generated-mapping.json)
 - --repo-root: repo root to use for proposed relative targets (default: current working dir)
 
 Behavior
@@ -60,17 +60,38 @@ def propose_target_for_source(src: Path, md_dir: str, bin_dir: str, helper_keywo
     s = src
     suffix = s.name
     low = s.suffix.lower()
+    parts = [p.lower() for p in s.parts]
+
+    # Markdown -> standard md dir
     if low == '.md':
-        target = Path(md_dir) / suffix
+        parts = [p.lower() for p in s.parts]
+        # Only map into the md_dir when the source path is already under a 'references' segment
+        if 'references' in parts:
+            target = Path(md_dir) / suffix
+        else:
+            # otherwise keep as a repo-root-level file proposal (basename)
+            target = Path(suffix)
         return target.as_posix()
 
+    # Scripts: try to detect helper categories and preserve useful subpaths
     if low in {'.sh', '.py'}:
-        parts = [p.lower() for p in s.parts]
+        # Specific helper category: scripts/helpers/apps -> .internal/apps ...
+        if 'scripts' in parts and helper_keyword.lower() in parts:
+            try:
+                idx_scripts = parts.index('scripts')
+                # ensure helper_keyword follows scripts when possible
+                if idx_scripts + 1 < len(parts) and parts[idx_scripts + 1] == helper_keyword.lower():
+                    after = Path(*s.parts[idx_scripts + 2:]) if idx_scripts + 2 < len(parts) else Path(s.name)
+                    # drop the scripts/helpers/... structure under .internal
+                    target = Path('.internal') /  after
+                    return target.as_posix()
+            except ValueError:
+                pass
+        # Fallback: if helper_keyword appears anywhere, preserve subpath after it under .internal
         if helper_keyword.lower() in parts:
-            # preserve subpath after the helper keyword under .internal
             try:
                 idx = parts.index(helper_keyword.lower())
-                after = Path(*s.parts[idx + 1:])
+                after = Path(*s.parts[idx + 1:]) if idx + 1 < len(parts) else Path(s.name)
                 target = Path('.internal') / after
                 return target.as_posix()
             except ValueError:
@@ -79,6 +100,47 @@ def propose_target_for_source(src: Path, md_dir: str, bin_dir: str, helper_keywo
         target = Path(bin_dir) / suffix
         return target.as_posix()
 
+    # Specific mappings requested:
+    # - scripts/templates -> .internal/templates
+    # - scripts/helpers/apps -> .internal/apps
+    # - scripts/helpers/git -> .internal/git
+    # - templates (non-scripts) -> templates
+    try:
+        if 'scripts' in parts and 'templates' in parts:
+            idx = parts.index('templates')
+            after = Path(*s.parts[idx + 1:]) if idx + 1 < len(parts) else Path(s.name)
+            target = Path('.internal') / 'templates' / after
+            return target.as_posix()
+    except ValueError:
+        pass
+
+    try:
+        # scripts/helpers/apps -> .internal/apps
+        if 'scripts' in parts and 'helpers' in parts:
+            idx_helpers = parts.index('helpers')
+            # check next segment
+            if idx_helpers + 1 < len(parts) and parts[idx_helpers + 1] == 'apps':
+                after = Path(*s.parts[idx_helpers + 2:]) if idx_helpers + 2 < len(parts) else Path(s.name)
+                target = Path('.internal') / 'apps' / after
+                return target.as_posix()
+            # scripts/helpers/git -> .internal/git
+            if idx_helpers + 1 < len(parts) and parts[idx_helpers + 1] == 'git':
+                after = Path(*s.parts[idx_helpers + 2:]) if idx_helpers + 2 < len(parts) else Path(s.name)
+                target = Path('.internal') / 'git' / after
+                return target.as_posix()
+    except ValueError:
+        pass
+
+    # If the path contains a top-level templates dir (not under scripts), map to templates/
+    if 'templates' in parts:
+        try:
+            idx = parts.index('templates')
+            after = Path(*s.parts[idx + 1:]) if idx + 1 < len(parts) else Path(s.name)
+            target = Path('templates') / after
+            return target.as_posix()
+        except ValueError:
+            pass
+
     # fallback: put under md_dir as file
     return (Path(md_dir) / suffix).as_posix()
 
@@ -86,10 +148,10 @@ def propose_target_for_source(src: Path, md_dir: str, bin_dir: str, helper_keywo
 def main(argv: List[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description='Generate a small mapping JSON for update-references.py')
     parser.add_argument('sources', nargs='+', help='Source files to include in the mapping')
-    parser.add_argument('--default-md-dir', default='references', help='Destination dir for markdown files (default: references)')
+    parser.add_argument('--default-md-dir', default='.', help='Destination dir for markdown files (default: cwd)')
     parser.add_argument('--script-default-bin-dir', default='bin', help='Destination dir for scripts (default: bin)')
-    parser.add_argument('--script-helper-keyword', default='helpers', help='Path segment indicating helper scripts (default: helpers)')
-    parser.add_argument('--out', default='.internal/mappings/generated-mapping.json', help='Output mapping JSON path')
+    parser.add_argument('--script-helper-keyword', default='.internal', help='Path segment indicating helper scripts (default: .internal)')
+    parser.add_argument('--out', default='/tmp/mappings/generated-mapping.json', help='Output mapping JSON path')
     parser.add_argument('--repo-root', default='.', help='Repository root for relative target resolution')
 
     args = parser.parse_args(argv)
@@ -128,7 +190,7 @@ def main(argv: List[str] | None = None) -> int:
 
     print(f'Wrote mapping with {len(mapping)} entries to {out_path}')
     print('Run the updater in dry-run to preview changes:')
-    print(f'python3 .internal/scripts/update-references.py --dir references --mapping {out_path} --repo-root .')
+    print(f'python3 .internal/copilot-scripts/update-references.py --dir references --mapping {out_path} --repo-root .')
     return 0
 
 

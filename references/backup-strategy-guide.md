@@ -62,7 +62,7 @@ Each destination has strengths and weaknesses:
 
 Do not rely on only one of these. Use the external backup/capture root, Git remotes, encrypted secrets storage, optional approved cloud copies, and Time Machine as complementary layers.
 
-For optional evidence that may need to be gathered over several days or weeks before the actual backup window, it is acceptable to stage those captures locally first under `REIMAGE_WORKSPACE_ROOT` and copy the finalized artifacts into `$BACKUP_ROOT` later. This is especially relevant for performance-history collection that may start well before the external backup drive is mounted.
+For optional evidence that may need to be gathered over several days or weeks before the actual backup window, it is acceptable to stage those captures locally first under `REIMAGE_WORKSPACE_ROOT` and copy the finalized artifacts into `$REIMAGE_ARTIFACT_ROOT` later. This is especially relevant for performance-history collection that may start well before the external backup drive is mounted.
 
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -84,11 +84,11 @@ Keep the roles separate:
 
 Do not manually place backup working files under the Time Machine volume. Keep that volume reserved for Time Machine.
 
-If you are collecting optional multi-day evidence before the backup drive is mounted, keep those staged artifacts under `REIMAGE_WORKSPACE_ROOT` until you are ready to copy them into `$BACKUP_ROOT` on the external data volume.
+If you are collecting optional multi-day evidence before the backup drive is mounted, keep those staged artifacts under `REIMAGE_WORKSPACE_ROOT` until you are ready to copy them into `$REIMAGE_ARTIFACT_ROOT` on the external data volume.
 
 ### 2. Company OneDrive
 
-Use company OneDrive mainly for the approved work-safe secondary copy created by `backup-local-files.sh`, plus any additional manual work-safe artifacts you intentionally duplicate there. Typical examples are:
+Use company OneDrive mainly for the approved work-safe secondary copy created by `backup-home.sh`, plus any additional manual work-safe artifacts you intentionally duplicate there. Typical examples are:
 
 ```text
 Documents/ and Desktop/ copied under <OneDrive root>/$ONEDRIVE_DEST_SUBDIR/
@@ -123,7 +123,7 @@ Minimum checks:
 | iCloud Drive          | Confirm no pending upload cloud icons remain for files you rely on.                                                | Finder presence alone may include local-only pending uploads.                                                      |
 | Obsidian              | Record the vault path and source of truth: Obsidian Sync, Git, iCloud, OneDrive, or manual external-drive copy.    | The app-backups snapshot preserves reimage docs, but it does not prove the whole vault is synced.                  |
 
-For OneDrive copies created by `backup-local-files.sh`, the default cloud folder name should match the external backup/capture root basename unless `ONEDRIVE_DEST_SUBDIR` is intentionally overridden:
+For OneDrive copies created by `backup-home.sh`, the default cloud folder name should match the external backup/capture root basename unless `ONEDRIVE_DEST_SUBDIR` is intentionally overridden:
 
 ```text
 External root: $REIMAGE_ARTIFACT_ROOT
@@ -138,7 +138,7 @@ OneDrive copy: <OneDrive root>/<basename-of-$REIMAGE_ARTIFACT_ROOT>/
 
 ### Do not treat Git audit reports as backups
 
-`git-audit-reports/` is an audit trail and checklist. It tells you which repos need attention, but it does not replace pushing branches, committing work, or copying local files.
+`repo-audit-reports/` is an audit trail and checklist. It tells you which repos need attention, but it does not replace pushing branches, committing work, or copying local files.
 
 ### Do not put secrets loose in cloud storage
 
@@ -168,9 +168,9 @@ OneNote cache
 
 For a managed work Mac, IT should confirm whether the wipe is self-service, IT-initiated, or performed through MDM. Do not unenroll, remove profiles, disable FileVault, or alter management agents unless IT gives that exact instruction.
 
-### Keep scripts in the reference-vault repo, not on the external backup/capture root
+### Keep scripts in the fractogenesis-toolkit repo, not on the external backup/capture root
 
-The external backup/capture root should contain evidence outputs, logs, snapshots, summaries, and compressed evidence bundles. Keep active helper scripts in Git under `workflows/mac/reimage/scripts/`. Do not copy `*.sh` or `*.py` helper scripts to `$BACKUP_ROOT` unless IT specifically requests script copies as evidence.
+The external backup/capture root should contain evidence outputs, logs, snapshots, summaries, and compressed evidence bundles. Keep active helper scripts in Git under `.internal/`. Do not copy `*.sh` or `*.py` helper scripts to `$REIMAGE_ARTIFACT_ROOT` unless IT specifically requests script copies as evidence.
 
 ### Do not reopen Outlook or OneNote immediately after unexpected closure if evidence is needed
 

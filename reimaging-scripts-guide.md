@@ -127,7 +127,7 @@ Current preferred script layout:
 
 ```text
 workflows/mac/reimage/scripts/
-├── backup-config.sh              # migrated -- now .internal/artifact-config.sh in fractogenesis-toolkit
+├── backup-config.sh              
 ├── backup-apps.sh
 ├── backup-git-repository.sh
 ├── backup-local-files.sh
@@ -150,10 +150,10 @@ workflows/mac/reimage/scripts/
 │       ├── backup-selected-gitignore-patterns.py
 │       ├── capture-git-audit.sh
 │       └── collect-gitignore-superset.sh
-├── prepare-artifact-root.py      # migrated -- now bin/prepare-artifact-root.py in fractogenesis-toolkit
+├── prepare-artifact-root.py       
 ├── office-stability-checklist.sh
-├── reimage-checklist.sh          # migrated -- now bin/reimage-checklist.sh in fractogenesis-toolkit; --backup-root became --artifact-root
-├── load-reimage-config-snippet.sh # migrated -- now .internal/load-reimage-config-snippet.sh in fractogenesis-toolkit
+├── reimage-checklist.sh          
+├── load-reimage-config-snippet.sh 
 ├── initial-reimaged-system-checklist.sh
 ├── capture-enrollment.sh
 ├── restore-apps.sh
@@ -250,7 +250,7 @@ This helper does not replace Phase 1. The drive checks, shell validation, root c
 Run pre-image backup scripts from:
 
 ```bash
-cd "$FRACTOGENESIS_HOME"   # REIMAGE_ROOT is retired -- see reimaging-scripts-guide.md Script Source and Artifact Rules
+cd "$FRACTOGENESIS_HOME"  
 chmod +x scripts/*.sh scripts/*.py
 ```
 
@@ -297,7 +297,7 @@ The OneDrive copy, when used, still requires manual sync verification later in P
 
 ### Phase 2C Backup Apps
 
-`backup-apps.md` owns the Phase 2C app backup flow. `backup-apps.sh` is now the preferred single-script path; it prepares the standard app folders, runs the Docker helper when applicable, captures the local VS Code fallback, writes `app-backups/MANIFEST.md`, and can also generate the optional candidate-review bundle when you add `--candidate-review`.
+`backup-apps.md` owns the Phase 2C app backup flow. `backup-apps.sh` is the single-script path; it prepares the standard app folders, runs the Docker helper when applicable, captures the local VS Code fallback, writes `app-backups/MANIFEST.md`, and can also generate the optional candidate-review bundle when you add `--candidate-review`.
 
 Preferred Phase 2C run:
 

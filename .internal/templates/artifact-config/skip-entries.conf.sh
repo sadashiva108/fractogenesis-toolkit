@@ -1,13 +1,31 @@
-# skip-entries.conf.sh
-# PLACEHOLDER -- not migrated from the original reference-vault content.
-# This file exists only so artifact-config.sh can source it without
-# crashing (see the "Missing artifact-config fragment" error it would
-# otherwise raise). It defines nothing real yet.
-#
-# Upload the original workflows/mac/reimage/scripts/templates/backup-config/skip-entries.conf.sh
-# from your reference-vault checkout to replace this with real content --
-# it likely defines an array or set of paths this fragment's name implies
-# (e.g. EXTERNAL_TARGETS=(...)), which this stub deliberately does not
-# guess at, since getting backup target/exclude lists wrong could cause
-# real files to be silently skipped or wrongly included during an actual
-# backup run.
+# SKIP CATEGORIES
+# Used by capture-size-audit.sh to explain what is intentionally skipped.
+# Format: "PATH | REASON"
+
+SKIP_ENTRIES=(
+  "~/Documents/DockerDesktop        | Docker.raw virtual disk — 13.9 GB; rebuild images from registries post-reimage"
+  "~/Documents/github-copilot-intellij | IntelliJ Copilot plugin cache — 384 MB; reinstall post-reimage"
+  "~/.gradle                        | Gradle dependency cache — 18 GB; re-downloads on first build"
+  "~/.m2                            | Maven dependency cache — 100 MB; re-downloads on first build"
+  "~/.cache                         | Assorted tool caches (gh, npm, copilot, pluginVerifier)"
+  "~/.npm                           | npm download cache"
+  "~/.nvm                           | Node Version Manager install — reinstall nvm then: nvm install <version>"
+  "~/.rbenv                         | Ruby version manager — reinstall rbenv then restore .ruby-version files"
+  "~/.sdkman                        | SDKMAN Java/Kotlin/Gradle version manager — reinstall then: sdk install <candidate>"
+  "~/.android                       | Android SDK cache"
+  "~/.aspnet                        | .NET DataProtection keys — regenerated automatically"
+  "JDK lib/security/cacerts           | Default JDK truststore — do not copy wholesale; capture corporate jssecacerts instead"
+  "~/.hawtjni                       | JNI native library cache"
+  "~/.gem                           | Ruby gem cache — reinstall via Gemfile"
+  "~/.local                         | Mostly generated state and bin symlinks"
+  "~/.parallel                      | GNU parallel temp files"
+  "~/.config/github-copilot         | GitHub Copilot cache — 54 MB"
+  "~/.azure/logs                    | Azure CLI logs"
+  "~/.azure/telemetry               | Azure CLI telemetry"
+  "~/.copilot/logs                  | Copilot session logs"
+  "~/.copilot/history-session-state | Copilot session history state"
+  "~/.copilot/session-state         | Copilot active session state"
+  "Downloads/*.dmg *.pkg *.zip      | Installers — re-download post-reimage"
+  "~/.Trash                         | Trash — empty before reimage"
+  "~/Library/Logs/OneDrive/*/general.keystore | OneDrive internal TLS cert store — auto-generated, skip"
+)

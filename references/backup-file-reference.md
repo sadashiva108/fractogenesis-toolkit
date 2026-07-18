@@ -67,16 +67,16 @@ This file focuses on the **backup artifacts themselves**: what categories are pr
 
 It complements the broader workflow docs:
 
-| Need | Use |
-|---|---|
-| Backup phase order and decisions | `reimaging-guide.md` Phase 2 |
-| Local-file backup workflow | `backup-home.md` |
-| App backups | `backup-apps.md` |
-| Phase 4 cloud sync and manual sign-off reference | `reimage-prep-checks.md` |
-| Certificate and Keychain staging | `stage-cert-keychain.md` |
+| Need                                              | Use |
+|---------------------------------------------------|---|
+| Backup phase order and decisions                  | `reimaging-guide.md` Phase 2 |
+| Home files backup workflow                        | `backup-home.md` |
+| App backups                                       | `backup-apps.md` |
+| Phase 4 cloud sync and manual sign-off reference  | `reimage-prep-checks.md` |
+| Certificate and Keychain staging                  | `stage-cert-keychain.md` |
 | Encrypted secret staging, validation, and cleanup | `backup-dmg-secrets.md` |
-| IntelliJ-specific backup artifacts | `backup-intellij.md` |
-| Time Machine backup and status evidence | `backup-time-machine.md`; runtime script `bin/backup-time-machine.sh`; read-only capture script `bin/capture-time-machine.sh` |
+| IntelliJ-specific backup artifacts                | `backup-intellij.md` |
+| Time Machine backup and status evidence           | `backup-time-machine.md`; runtime script `bin/backup-time-machine.sh`; read-only capture script `bin/capture-time-machine.sh` |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -266,12 +266,6 @@ Optional commented-out target:
 |---|---|---|---|
 | Downloads | `~/Downloads/` | `$REIMAGE_ARTIFACT_ROOT/home-files-backup/home/Downloads/` | Commented out in config by default. Enable only if needed after reviewing size and excluding installers. |
 
-Restore examples:
-
-```bash
-rsync -av "$REIMAGE_ARTIFACT_ROOT/home-files-backup/home/Documents/" ~/Documents/
-rsync -av "$REIMAGE_ARTIFACT_ROOT/home-files-backup/home/Desktop/"   ~/Desktop/
-```
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -287,13 +281,6 @@ Current enabled media targets:
 | Pictures | `~/Pictures/` | `$REIMAGE_ARTIFACT_ROOT/home-files-backup/home/Pictures/` | Photos library and screenshots. |
 | Movies | `~/Movies/` | `$REIMAGE_ARTIFACT_ROOT/home-files-backup/home/Movies/` | Screen recordings and captured video. |
 
-Restore examples:
-
-```bash
-rsync -av "$REIMAGE_ARTIFACT_ROOT/home-files-backup/home/Music/"    ~/Music/
-rsync -av "$REIMAGE_ARTIFACT_ROOT/home-files-backup/home/Pictures/" ~/Pictures/
-rsync -av "$REIMAGE_ARTIFACT_ROOT/home-files-backup/home/Movies/"   ~/Movies/
-```
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -306,12 +293,6 @@ rsync -av "$REIMAGE_ARTIFACT_ROOT/home-files-backup/home/Movies/"   ~/Movies/
 | `scripts/` | `~/scripts/` | `$REIMAGE_ARTIFACT_ROOT/home-files-backup/home/scripts/` | Personal shell scripts at home root. |
 | `config-files-backups/` | `~/config-files-backups/` | `$REIMAGE_ARTIFACT_ROOT/home-files-backup/home/config-files-backups/` | Manual config file snapshots taken outside this workflow. |
 
-Restore examples:
-
-```bash
-rsync -av "$REIMAGE_ARTIFACT_ROOT/home-files-backup/home/scripts/"              ~/scripts/
-rsync -av "$REIMAGE_ARTIFACT_ROOT/home-files-backup/home/config-files-backups/" ~/config-files-backups/
-```
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -346,18 +327,6 @@ Config directories from `~/` backed up under `$REIMAGE_ARTIFACT_ROOT/home-files-
 | `copilot/ide/` | `~/.copilot/ide/` | `home-files-backup/dotfiles/copilot/ide/` | GitHub Copilot IDE integration settings. |
 | `dotfiles.falkor.d/` | `~/dotfiles.falkor.d/` | `home-files-backup/dotfiles/dotfiles.falkor.d/` | Falkor dotfiles framework — shell theme, aliases, and environment config. |
 
-Restore examples:
-
-```bash
-rsync -av "$REIMAGE_ARTIFACT_ROOT/home-files-backup/dotfiles/config/" ~/.config/
-rsync -av "$REIMAGE_ARTIFACT_ROOT/home-files-backup/dotfiles/kube/"   ~/.kube/
-rsync -av "$REIMAGE_ARTIFACT_ROOT/home-files-backup/dotfiles/cf/"     ~/.cf/
-rsync -av "$REIMAGE_ARTIFACT_ROOT/home-files-backup/dotfiles/azure/"  ~/.azure/
-rsync -av "$REIMAGE_ARTIFACT_ROOT/home-files-backup/dotfiles/fiddler/" ~/.fiddler/
-rsync -av "$REIMAGE_ARTIFACT_ROOT/home-files-backup/dotfiles/copilot/instructions/" ~/.copilot/instructions/
-rsync -av "$REIMAGE_ARTIFACT_ROOT/home-files-backup/dotfiles/copilot/prompts/"      ~/.copilot/prompts/
-rsync -av "$REIMAGE_ARTIFACT_ROOT/home-files-backup/dotfiles/dotfiles.falkor.d/"    ~/dotfiles.falkor.d/
-```
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -375,9 +344,6 @@ Individual non-secret files at `~/` are backed up to `$REIMAGE_ARTIFACT_ROOT/hom
 | `.bashrc` | Bash interactive shell config. |
 | `.bash_profile` | Bash login shell config. |
 | `.zprofile` | Zsh login shell config — PATH and env setup. |
-| `.shell_common.sh` | Shared shell config sourced by both Zsh and Bash — aliases, functions, exports. |
-| `.shell_local.sh` | Machine-local shell overrides not tracked in version control. |
-| `.shell_aliases.sh` | Shell aliases broken out from main shell config. |
 | `.exports` | Exported environment variables. |
 | `.aliases` | Additional alias definitions. |
 | `.functions` | Shell function definitions. |
@@ -403,13 +369,6 @@ Individual non-secret files at `~/` are backed up to `$REIMAGE_ARTIFACT_ROOT/hom
 |---|---|---|
 | `.netrc` | FTP/HTTP credentials for command-line tools. | Treat as secret-bearing and include in the consolidated secrets DMG. |
 
-Restore examples:
-
-```bash
-cp "$REIMAGE_ARTIFACT_ROOT/home-files-backup/dotfiles/.zshrc"           ~/
-cp "$REIMAGE_ARTIFACT_ROOT/home-files-backup/dotfiles/.shell_common.sh" ~/
-cp "$REIMAGE_ARTIFACT_ROOT/home-files-backup/dotfiles/.gitconfig"       ~/
-```
 
 Do not bulk overwrite a fresh post-image home directory. Compare first, then restore selectively.
 
@@ -423,39 +382,27 @@ Secret material is staged under `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/`, the
 
 This area includes both live secret sources, such as Docker `~/.docker/config.json`, and manual secret-staging folders that already live under `secrets-encrypted/`, such as Postman and Raycast.
 
-| Category                      | Source / Manual Source                                                                                          | Staging Destination                                           | Description                                                                                                                                               |
-| ----------------------------- | --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ssh/`                        | `~/.ssh/`                                                                                                       | `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/ssh/`                         | SSH config, public keys, private keys, and known hosts. Preserve permissions.                                                                             |
-| `gnupg/`                      | `~/.gnupg/`                                                                                                     | `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/gnupg/`                       | GPG private keys and trust DB. `random_seed` excluded.                                                                                                    |
-| `docker/`                     | `~/.docker/config.json`                                                                                         | `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/docker/config.json`           | Docker auth tokens and credential helpers.                                                                                                                |
-| `kube/`                       | `~/.kube/config`                                                                                                | `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/kube/config`                  | Kubernetes contexts, tokens, certificates, and cluster credentials.                                                                                       |
-| `certs/`                      | `~/.keystore`, manual Keychain exports, and Phase 2D reviewed loose cert/key/truststore selections                | `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/certs/`                       | Certificate, keystore, truststore, and private-key-bearing material. Phase 2D manual exports land under `keychain-manual-exports/`, `loose-candidates-selected/`, `project-local/`, and `tool-local/`. |
-| `certs/java-security/`        | discovered `jssecacerts` under `$JAVA_HOME`, installed JDKs, or IntelliJ JBR                                    | `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/certs/java-security/`         | Java-specific corporate trust override; restore only after target JDK is confirmed.                                                                       |
-| `cli-credentials/`            | `~/.netrc` and similar CLI credential files                                                                     | `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/cli-credentials/`             | Command-line HTTP/FTP credentials.                                                                                                                        |
-| `git/`                        | `~/.git-credentials`                                                                                            | `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/git/`                         | Git credential-helper plaintext cache, if present.                                                                                                        |
-| `licenses/`                   | vendor-issued license keys, serial files, activation exports, or recovery bundles                               | `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/licenses/`                    | Secret-bearing license/activation material when local export is actually required.                                                                         |
-| `package-managers/`           | `.npmrc`, `.yarnrc`, `.yarnrc.yml`, `.pypirc`, Gradle properties, Maven settings                                | `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/package-managers/`            | Internal package registry tokens and server credentials.                                                                                                  |
-| `cloud/`                      | `~/.aws/`                                                                                                       | `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/cloud/aws/`                   | AWS CLI profiles, cached SSO material, and credentials when present.                                                                                      |
-| `chrome/`                     | Chrome manual password CSV export                                                                               | `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/chrome/Chrome Passwords*.csv` | Optional password CSV. Must be included in the consolidated secrets DMG, then loose CSV deleted after validation.                                         |
-| `intellij/`                   | IntelliJ HTTP Client env files such as `http-client.private.env.json`, `http-client.env.json`, and `*.env.json` | `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/intellij/`                    | HTTP Client environment files may contain tokens and should not be left loose.                                                                            |
-| `postman/`                    | Postman environment exports, Vault exports, or other secret-bearing Postman staging                             | `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/postman/`                     | Secret-bearing Postman exports. Use `environments/` and `vault-if-export-allowed/` under this root; redacted inventories belong in app-settings-backup.         |
-| `raycast/`                    | Raycast `.rayconfig` or sensitive/unreviewed Quick Links exports                                                | `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/raycast/`                     | Password-protected Raycast configuration and sensitive Quick Links exports; sensitive Quick Links belong under `quicklinks-if-sensitive/`.                |
-| `extra-secrets-certs-review/` | Keychain inventories and loose cert/key candidate inventories                                                   | `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/extra-secrets-certs-review/`  | Pre-DMG review artifacts. Manual Keychain certificate exports belong under `secrets-encrypted/certs/keychain-manual-exports/`.                            |
+| Category                      | Source / Manual Source                                                                                          | Staging Destination                                                     | Description                                                                                                                                                                                            |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `ssh/`                        | `~/.ssh/`                                                                                                       | `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/ssh/`                         | SSH config, public keys, private keys, and known hosts. Preserve permissions.                                                                                                                          |
+| `gnupg/`                      | `~/.gnupg/`                                                                                                     | `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/gnupg/`                       | GPG private keys and trust DB. `random_seed` excluded.                                                                                                                                                 |
+| `docker/`                     | `~/.docker/config.json`                                                                                         | `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/docker/config.json`           | Docker auth tokens and credential helpers.                                                                                                                                                             |
+| `kube/`                       | `~/.kube/config`                                                                                                | `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/kube/config`                  | Kubernetes contexts, tokens, certificates, and cluster credentials.                                                                                                                                    |
+| `certs/`                      | `~/.keystore`, manual Keychain exports, and Phase 2D reviewed loose cert/key/truststore selections              | `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/certs/`                       | Certificate, keystore, truststore, and private-key-bearing material. Phase 2D manual exports land under `keychain-manual-exports/`, `loose-candidates-selected/`, `project-local/`, and `tool-local/`. |
+| `certs/java-security/`        | discovered `jssecacerts` under `$JAVA_HOME`, installed JDKs, or IntelliJ JBR                                    | `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/certs/java-security/`         | Java-specific corporate trust override; restore only after target JDK is confirmed.                                                                                                                    |
+| `cli-credentials/`            | `~/.netrc` and similar CLI credential files                                                                     | `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/cli-credentials/`             | Command-line HTTP/FTP credentials.                                                                                                                                                                     |
+| `git/`                        | `~/.git-credentials`                                                                                            | `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/git/`                         | Git credential-helper plaintext cache, if present.                                                                                                                                                     |
+| `licenses/`                   | vendor-issued license keys, serial files, activation exports, or recovery bundles                               | `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/licenses/`                    | Secret-bearing license/activation material when local export is actually required.                                                                                                                     |
+| `package-managers/`           | `.npmrc`, `.yarnrc`, `.yarnrc.yml`, `.pypirc`, Gradle properties, Maven settings                                | `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/package-managers/`            | Internal package registry tokens and server credentials.                                                                                                                                               |
+| `cloud/`                      | `~/.aws/`                                                                                                       | `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/cloud/aws/`                   | AWS CLI profiles, cached SSO material, and credentials when present.                                                                                                                                   |
+| `chrome/`                     | Chrome manual password CSV export                                                                               | `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/chrome/Chrome Passwords*.csv` | Optional password CSV. Must be included in the consolidated secrets DMG, then loose CSV deleted after validation.                                                                                      |
+| `intellij/`                   | IntelliJ HTTP Client env files such as `http-client.private.env.json`, `http-client.env.json`, and `*.env.json` | `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/intellij/`                    | HTTP Client environment files may contain tokens and should not be left loose.                                                                                                                         |
+| `postman/`                    | Postman environment exports, Vault exports, or other secret-bearing Postman staging                             | `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/postman/`                     | Secret-bearing Postman exports. Use `environments/` and `vault-if-export-allowed/` under this root; redacted inventories belong in app-settings-backup.                                                |
+| `extra-secrets-certs-review/` | Keychain inventories and loose cert/key candidate inventories                                                   | `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/extra-secrets-certs-review/`  | Pre-DMG review artifacts. Manual Keychain certificate exports belong under `secrets-encrypted/certs/keychain-manual-exports/`.                                                                         |
 
 Validation and cleanup are covered in [Create Secrets DMG](../create-secrets-dmg.md).
 
-Mount/restore pattern:
 
-```bash
-DMG=$(ls -t "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted"/all-secrets-*.dmg | head -1)
-hdiutil attach "$DMG"
-VOLNAME=$(ls /Volumes | grep "all-secrets-" | tail -1)
-
-# Restore only the specific category you need, then detach.
-find "/Volumes/$VOLNAME" -maxdepth 2 -type f | sort | head -100
-
-hdiutil detach "/Volumes/$VOLNAME"
-```
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -500,15 +447,7 @@ Settings are backed up under `app-settings-backup/docker/`. `Docker.raw` is inte
 | `container-inventory.txt` | `docker ps -a` output | `$REIMAGE_ARTIFACT_ROOT/app-settings-backup/docker/container-inventory.txt` | Reference for container state. |
 | `compose-projects.txt` | `docker compose ls` output | `$REIMAGE_ARTIFACT_ROOT/app-settings-backup/docker/compose-projects.txt` | Reference list when Docker Compose is available. |
 
-Restore examples:
 
-```bash
-cp "$REIMAGE_ARTIFACT_ROOT/app-settings-backup/docker/settings-store.json" \
-   "$HOME/Library/Group Containers/group.com.docker/settings-store.json"
-
-cat "$REIMAGE_ARTIFACT_ROOT/app-settings-backup/docker/image-inventory.txt"
-docker pull <repository>:<tag>
-```
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -642,18 +581,17 @@ Before relying on OneDrive, check the menu bar icon and the OneDrive web interfa
 
 Applied to every external-drive local-file backup copy and also included in OneDrive syncs.
 
-| Pattern | Category | Reason |
-|---|---|---|
-| `.DS_Store`, `desktop.ini`, `.localized` | OS noise | Metadata files. |
-| `~$*` | Office temp | Office lock/temp files. |
-| `DockerDesktop/` | Dev artifact | Docker.raw virtual disk. |
-| `github-copilot-intellij/` | Dev artifact | Plugin cache. |
-| `junk/` | Personal | Junk folder. |
-| `*.dmg`, `*.pkg`, `*.zip` | Installers | Re-download post-reimage. |
-| `$RECYCLE.BIN/` | Windows stub | Recycle-bin stub. |
-| `github-copilot/` | Cache | Copilot cache inside `~/.config`. |
-| `logs/`, `telemetry/` | Noise | Azure/Copilot logs and telemetry. |
-| `history-session-state/`, `session-state/`, `jb/` | Noise | Copilot session state. |
+| Pattern                                           | Category     | Reason                            |
+| ------------------------------------------------- | ------------ | --------------------------------- |
+| `.DS_Store`, `desktop.ini`, `.localized`          | OS noise     | Metadata files.                   |
+| `~$*`                                             | Office temp  | Office lock/temp files.           |
+| `DockerDesktop/`                                  | Dev artifact | Docker.raw virtual disk.          |
+| `github-copilot-intellij/`                        | Dev artifact | Plugin cache.                     |
+| `*.dmg`, `*.pkg`, `*.zip`                         | Installers   | Re-download post-reimage.         |
+| `$RECYCLE.BIN/`                                   | Windows stub | Recycle-bin stub.                 |
+| `github-copilot/`                                 | Cache        | Copilot cache inside `~/.config`. |
+| `logs/`, `telemetry/`                             | Noise        | Azure/Copilot logs and telemetry. |
+| `history-session-state/`, `session-state/`, `jb/` | Noise        | Copilot session state.            |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -671,15 +609,6 @@ github-copilot-intellij/
 Kubernetes/
 Falcon/
 Dynatrace/
-Replay/
-transformer-refactor-files/
-patches/
-Checkins/
-Career & Compensation/
-Performance Plan Meeting Notes/
-Benefits/
-junk/
-StuffFromOldComputer/
 ```
 
 ### Sensitive File Types

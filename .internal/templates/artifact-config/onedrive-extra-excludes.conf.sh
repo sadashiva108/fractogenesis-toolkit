@@ -1,13 +1,51 @@
-# onedrive-extra-excludes.conf.sh
-# PLACEHOLDER -- not migrated from the original reference-vault content.
-# This file exists only so artifact-config.sh can source it without
-# crashing (see the "Missing artifact-config fragment" error it would
-# otherwise raise). It defines nothing real yet.
-#
-# Upload the original workflows/mac/reimage/scripts/templates/backup-config/onedrive-extra-excludes.conf.sh
-# from your reference-vault checkout to replace this with real content --
-# it likely defines an array or set of paths this fragment's name implies
-# (e.g. EXTERNAL_TARGETS=(...)), which this stub deliberately does not
-# guess at, since getting backup target/exclude lists wrong could cause
-# real files to be silently skipped or wrongly included during an actual
-# backup run.
+# ONEDRIVE EXTRA EXCLUDES
+# Applied in addition to EXTERNAL_EXCLUDES for OneDrive syncs only.
+# Use to strip anything not appropriate for corporate cloud storage.
+
+ONEDRIVE_EXTRA_EXCLUDES=(
+
+  # -- Personal — keep off corporate cloud -------------------------------------
+  "Personal/"
+
+  # -- Dev folders — fine on external drive, not needed in OneDrive ------------
+  "DockerDesktop/"
+  "github-copilot-intellij/"
+  "Kubernetes/"
+  "Falcon/"
+  "Dynatrace/"
+
+  # -- Sensitive file types — keep off corporate cloud -------------------------
+  "*.pem"
+  "*.key"
+  "*.p12"
+  "*.pfx"
+  "*.cer"
+  "*.crt"
+  "*.der"
+  "*.p7b"
+  "*.p8"
+  "*.rayconfig"
+  "*.env"
+  "*.env.local"
+  "http-client.private.env.json"
+  ".netrc"
+  ".git-credentials"
+  ".pypirc"
+  ".yarnrc"
+  ".yarnrc.yml"
+  "settings.xml"
+  "gradle.properties"
+  "credentials"
+  "*.keystore"
+  "*.jks"
+  "*.exe"
+  "*.dll"
+  "*.msi"
+  "*.bat"
+  "*.cmd"
+  "*.ps1"
+  "node_modules/"
+  ".vscode/extensions/"
+  "github-copilot/"
+  "github-copilot-intellij/"
+)
