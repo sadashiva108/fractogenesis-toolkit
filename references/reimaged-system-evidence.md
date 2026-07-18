@@ -6,10 +6,10 @@ This is the single comprehensive **post-image** evidence reference for the Mac r
 
 Use it to understand both:
 
-- what Phase 6, Phase 7, Phase 11, and Phase 12 commands generate under `$BACKUP_ROOT`
+- what Phase 6, Phase 7, Phase 11, and Phase 12 commands generate under `$REIMAGE_ARTIFACT_ROOT`
 - which manual sign-off rows, fallback notes, and templates still matter after the generated evidence exists
 
-This file complements [[reimaging-guide|reimaging-guide.md]] for phase order and [restore-file-reference.md](restore-file-reference.md) for restore-source mapping.
+This file complements [[reimaging-guide|./restore-file-reference.md]] for restore-source mapping.
 
 ---
 
@@ -67,14 +67,14 @@ Do not manually duplicate the final validation report when reimage-checklist.sh 
 
 | Phase | Capture | Primary destination | Purpose |
 |---|---|---|---|
-| Phase 6 | Enrollment and stabilization | `$BACKUP_ROOT/reimaged-system/enrollment/capture-enrollment-*` | Managed enrollment, profiles, security tools, macOS update state, and first stabilization review. |
-| Phase 7 | Initial captures and sanity checks | `$BACKUP_ROOT/reimaged-system/initial-reimaged-system-*` | First post-image evidence bundle before deeper restore work, including restart and Time Machine planning notes. |
-| Phase 11A | Workflow snapshot | `$BACKUP_ROOT/workflow-snapshot/pre-image-workflow-snapshot-*`, `$BACKUP_ROOT/workflow-snapshot/reimage-workflow-docs/` | Final workflow-doc snapshot showing the workflow state actually used after rebuild. |
-| Phase 11B | System inventory | `$BACKUP_ROOT/system-inventory/post-image-*` | Broad rebuilt-system snapshot for comparison against Phase 3B. |
-| Phase 11C | Company-managed inventory | `$BACKUP_ROOT/managed-inventory/post-image-*` | Managed apps, profiles, launch items, extensions, receipts, and managed preferences after enrollment. |
-| Phase 11D | Performance audit | `$BACKUP_ROOT/performance-audit/post-image-*` | Scenario-based after-state performance bundles that match the pre-image scenarios. |
-| Phase 11E | Office stability | `$BACKUP_ROOT/office-stability/post-reimage-*`, `checklists/post-image-office-stability-checklist-*` | Office stability baseline, watcher-derived evidence, and post-image comparison checklist output. |
-| Phase 12 | Reimaged system checks | `$BACKUP_ROOT/reimaged-system/checklists/reimage-checklist-*.md` | Final validation report plus the remaining manual sign-off rows before the rebuilt Mac is considered trusted. |
+| Phase 6 | Enrollment and stabilization | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/enrollment/capture-enrollment-*` | Managed enrollment, profiles, security tools, macOS update state, and first stabilization review. |
+| Phase 7 | Initial captures and sanity checks | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/initial-reimaged-system-*` | First post-image evidence bundle before deeper restore work, including restart and Time Machine planning notes. |
+| Phase 11A | Workflow snapshot | `$REIMAGE_ARTIFACT_ROOT/workflow-snapshot/pre-image-workflow-snapshot-*`, `$REIMAGE_ARTIFACT_ROOT/workflow-snapshot/reimage-workflow-docs/` | Final workflow-doc snapshot showing the workflow state actually used after rebuild. |
+| Phase 11B | System inventory | `$REIMAGE_ARTIFACT_ROOT/system-inventory/post-image-*` | Broad rebuilt-system snapshot for comparison against Phase 3B. |
+| Phase 11C | Company-managed inventory | `$REIMAGE_ARTIFACT_ROOT/managed-inventory/post-image-*` | Managed apps, profiles, launch items, extensions, receipts, and managed preferences after enrollment. |
+| Phase 11D | Performance audit | `$REIMAGE_ARTIFACT_ROOT/performance-audit/post-image-*` | Scenario-based after-state performance bundles that match the pre-image scenarios. |
+| Phase 11E | Office stability | `$REIMAGE_ARTIFACT_ROOT/office-stability/post-reimage-*`, `checklists/post-image-office-stability-checklist-*` | Office stability baseline, watcher-derived evidence, and post-image comparison checklist output. |
+| Phase 12 | Reimaged system checks | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/checklists/reimage-checklist-*.md` | Final validation report plus the remaining manual sign-off rows before the rebuilt Mac is considered trusted. |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -83,19 +83,25 @@ Do not manually duplicate the final validation report when reimage-checklist.sh 
 ## Reimaged-System Artifact Layout
 
 ```text
-$BACKUP_ROOT/
+$REIMAGE_ARTIFACT_ROOT/
 ├── reimaged-system/
 │   ├── enrollment/
-│   │   ├── capture-enrollment-YYYYMMDD-HHMMSS/
-│   │   └── latest-enrollment-capture.txt
-│   ├── initial-reimaged-system-YYYYMMDD-HHMMSS/
+│   │   ├── latest-enrollment-capture.txt
+│   │   └── capture-enrollment-YYYYMMDD-HHMMSS/
 │   ├── latest-initial-reimaged-system-bundle.txt
+│   ├── checklists/
+│   │   ├── reimage-checklist-YYYYMMDD-HHMMSS.md
+│   │   └── latest-reimage-checklist.txt
+│   ├── initial-reimaged-system-YYYYMMDD-HHMMSS/
 │   ├── time-machine/
 │   ├── restarts/
-│   ├── restore-notes/
+│   └── restore-notes/
+├── office-stability/
+│   ├── office-stability-summary-YYYYMMDD-HHMMSS.md
+│   ├── post-reimage-office-baseline-YYYYMMDD-HHMMSS.zip
+│   ├── post-reimage-office-baseline-YYYYMMDD-HHMMSS/
 │   └── checklists/
-│       ├── reimage-checklist-YYYYMMDD-HHMMSS.md
-│       └── latest-reimage-checklist.txt
+│       └── post-image-office-stability-checklist-YYYYMMDD-HHMMSS/
 ├── workflow-snapshot/
 │   ├── pre-image-workflow-snapshot-YYYYMMDD-HHMMSS/
 │   └── reimage-workflow-docs/
@@ -103,16 +109,10 @@ $BACKUP_ROOT/
 │   └── post-image-YYYYMMDD-HHMMSS/
 ├── managed-inventory/
 │   └── post-image-YYYYMMDD-HHMMSS/
-├── performance-audit/
-│   ├── post-image-performance-audit-<scenario>-YYYYMMDD-HHMMSS/
-│   └── rollup-summary/
-│       └── <phase>-YYYYMMDD-HHMMSS/
-└── office-stability/
-    ├── office-stability-summary-YYYYMMDD-HHMMSS.md
-    ├── post-reimage-office-baseline-YYYYMMDD-HHMMSS/
-    ├── post-reimage-office-baseline-YYYYMMDD-HHMMSS.zip
-    └── checklists/
-        └── post-image-office-stability-checklist-YYYYMMDD-HHMMSS/
+└── performance-audit/
+    ├── post-image-performance-audit-<scenario>-YYYYMMDD-HHMMSS/
+    └── rollup-summary/
+        └── <phase>-YYYYMMDD-HHMMSS/
 ```
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -171,7 +171,7 @@ Manual / fallback notes:
 
 - The generated `enrollment-capture.md` prefills the command-verifiable rows and leaves the mixed/manual rows for you.
 - Manual confirmation is still needed for Company Portal UI state, whether the required managed app set looks normal, whether macOS updates were intentionally deferred, and whether the first stabilization restart completed cleanly.
-- If `$BACKUP_ROOT` is not available yet, capture Phase 6 locally first, then keep the output path available so it can be copied into the main artifact tree later.
+- If `$REIMAGE_ARTIFACT_ROOT` is not available yet, capture Phase 6 locally first, then keep the output path available so it can be copied into the main artifact tree later.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -227,7 +227,7 @@ Manual / fallback notes:
 
 - Run the script twice around the planned restart and compare the two generated bundles for regressions.
 - The manual checklist still owns first-boot confirmation items such as Company Portal UI state, real internal-site reachability, Chrome/Terminal/display/peripheral usability, and whether the first post-enrollment restart actually happened.
-- If the external drive is temporarily unavailable, the runbook documents a local `--output-root` fallback; copy that bundle back under `$BACKUP_ROOT/reimaged-system/` later.
+- If the external drive is temporarily unavailable, the runbook documents a local `--output-root` fallback; copy that bundle back under `$REIMAGE_ARTIFACT_ROOT/reimaged-system/` later.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -413,7 +413,7 @@ Manual / fallback notes:
 - Use the same scenario names as the pre-image run so the before/after comparison stays meaningful.
 - Review the generated `manual-observations.md` and `workload-reproduction-config.md` instead of creating separate duplicate notes first.
 - The post-image comparison checklist still needs a human decision about workload match, memory/process deltas, responsiveness, and Docker/IntelliJ resource comparability.
-- If you staged results locally, copy the completed audit folders into `$BACKUP_ROOT/performance-audit/` before Phase 12 final validation.
+- If you staged results locally, copy the completed audit folders into `$REIMAGE_ARTIFACT_ROOT/performance-audit/` before Phase 12 final validation.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -478,7 +478,7 @@ Manual / fallback notes:
 
 Workflow: [[reimaging-guide#Phase 12 — Reimaged System Checks|reimaging-guide.md — Phase 12]].
 
-Detailed capture runbooks: [capture-validated-reimaged-system.md](../capture-validated-reimaged-system.md) and [scripts/reimage-checklist.sh](../scripts/reimage-checklist.sh)
+Detailed capture runbooks: [capture-validated-reimaged-system.md](../capture-validated-reimaged-system.md) and [bin/reimage-checklist.sh](../bin/reimage-checklist.sh)
 
 Script-generated evidence:
 
@@ -523,7 +523,7 @@ Manual / fallback notes:
 
 - The generated report is the source of truth; use this section only for the manual rows it cannot prove.
 - Manual sign-off still includes Company Portal compliance UI, real internal-site access, OneDrive completion, Office stability under normal use, important project readiness, Git identity checks, SSH fingerprint checks, shell alias restore, display/peripheral correctness, and the second post-image Time Machine backup.
-- Review any notes placed under `$BACKUP_ROOT/reimaged-system/restore-notes/` before final sign-off so restore exceptions and deferred items stay attached to the validation evidence.
+- Review any notes placed under `$REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/` before final sign-off so restore exceptions and deferred items stay attached to the validation evidence.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 

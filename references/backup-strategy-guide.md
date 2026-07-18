@@ -121,7 +121,7 @@ Minimum checks:
 | VS Code Settings Sync | Confirm Settings Sync state in VS Code and record the signed-in account or that sync is intentionally unused.      | Local `settings.json`, keybindings, snippets, and extension list do not prove Settings Sync is enabled or settled. |
 | OneDrive              | Confirm the menu bar icon has no pending uploads or sync errors, then spot-check the matching OneDrive web folder. | Copying into the OneDrive folder does not prove upload completion.                                                 |
 | iCloud Drive          | Confirm no pending upload cloud icons remain for files you rely on.                                                | Finder presence alone may include local-only pending uploads.                                                      |
-| Obsidian              | Record the vault path and source of truth: Obsidian Sync, Git, iCloud, OneDrive, or manual external-drive copy.    | The app-backups snapshot preserves reimage docs, but it does not prove the whole vault is synced.                  |
+| Obsidian              | Record the vault path and source of truth: Obsidian Sync, Git, iCloud, OneDrive, or manual external-drive copy.    | The app-settings-backup snapshot preserves reimage docs, but it does not prove the whole vault is synced.                  |
 
 For OneDrive copies created by `backup-home.sh`, the default cloud folder name should match the external backup/capture root basename unless `ONEDRIVE_DEST_SUBDIR` is intentionally overridden:
 

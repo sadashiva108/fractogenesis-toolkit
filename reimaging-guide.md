@@ -172,7 +172,7 @@ Captures the IT-approved erase/reinstall method, ownership, timing, wipe expecta
 
 Primary guide: [templates/it-reimage-confirmation-template.md](templates/it-reimage-confirmation-template.md)
 
-Fill out a working copy of the template in a local workspace outside this repo (`$REIMAGE_WORKSPACE_ROOT/reimage-confirmation/`). Do not copy it into `$REIMAGE_ARTIFACT_ROOT` yet — Phase 1 copies the filled version into `$REIMAGE_ARTIFACT_ROOT/reimage-confirmation/` once the external root exists. See [Prepare Artifact Root](prepare-artifact-root.md) for `REIMAGE_WORKSPACE_ROOT` setup and the `copy-it-plan` command.
+Fill out a working copy of the template in a local workspace outside this repo (`$REIMAGE_WORKSPACE_ROOT/reimage-confirmation/`). Do not copy it into `$REIMAGE_ARTIFACT_ROOT` yet — Phase 1 copies the filled version into `$REIMAGE_ARTIFACT_ROOT/reimage-confirmation/` once the external root exists. See [Prepare Artifact Root](./prepare-artifact-root.md) for `REIMAGE_WORKSPACE_ROOT` setup and the `copy-it-plan` command.
 
 Primary outputs:
 
@@ -196,7 +196,7 @@ Keep this phase concise but complete:
 3. Verify the standard folder layout exists and the current workflow docs have been copied into the backup so the same instructions travel with the artifacts.
 4. Refresh the jump-drive fallback: copy `bootstrap.sh` and a current `bin/build-jump-drive-payload.sh`-built tarball onto the prepared jump drive — this is the artifact that gets this repo onto a bare reimaged Mac without needing Git/SSH. See [[#Restore Strategy|Restore Strategy]] above and Phase 6's callout for the exact commands.
 
-Follow this phase guide: [Prepare Artifact Root](prepare-artifact-root.md).
+Follow this phase guide: [Prepare Artifact Root](./prepare-artifact-root.md).
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -222,7 +222,7 @@ Phase 3 capture work, including `capture-workflow-snapshot.md`, follows after th
 ---
 ### Phase 2A — Backup Repos
 
-Follow this phase guide: [Backup Repos](backup-repos.md).
+Follow this phase guide: [Backup Repos](./backup-repos.md).
 
 Preserves Git repository risk state (local-only commits, dirty repos, stashes, untracked files) and selected ignored-file backups before erase.
 
@@ -241,7 +241,7 @@ $REIMAGE_ARTIFACT_ROOT/staged-ignored-files/dryrun-filtered/
 ---
 ### Phase 2B — Backup Home
 
-Follow this phase guide: [Backup Home](backup-home.md).
+Follow this phase guide: [Backup Home](./backup-home.md).
 
 This phase owns the home-directory and secrets-encrypted copy driven by `backup-home.sh`.
 
@@ -261,7 +261,7 @@ If OneDrive is enabled, this phase may also create a secondary local CloudStorag
 ---
 ### Phase 2C — Backup Apps
 
-Follow this phase guide: [Backup Apps](backup-apps.md).
+Follow this phase guide: [Backup Apps](./backup-apps.md).
 
 Preserves app-specific state for apps installed on this Mac that are worth keeping and not already covered by local-file backup, Git, sync, or company-managed reinstall. Optional apps include Docker, IntelliJ, VS Code, Raycast, and Obsidian when a local fallback backup is worth keeping. Use the app coverage map in `backup-apps.md` to decide which optional subsections apply.
 
@@ -763,7 +763,7 @@ Follow this capture runbook: [capture-office-stability-audit.md](capture-office-
 
 Generated checklist, when needed: `scripts/office-stability-checklist.sh --phase post-reimage --backup-root "$REIMAGE_ARTIFACT_ROOT"`.
 
-> **Naming TODO:** the `--backup-root` flag name itself belongs to `office-stability-checklist.sh`, which isn't migrated to this repo yet (Phase 11E). Only its *value* was updated above (`$BACKUP_ROOT` → `$REIMAGE_ARTIFACT_ROOT`) — revisit whether the flag itself should become `--artifact-root` or similar once that script actually lands here.
+> **Naming TODO:** the `--backup-root` flag name itself belongs to `office-stability-checklist.sh`, which isn't migrated to this repo yet (Phase 11E). Only its *value* was updated above (`$REIMAGE_ARTIFACT_ROOT` → `$REIMAGE_ARTIFACT_ROOT`) — revisit whether the flag itself should become `--artifact-root` or similar once that script actually lands here.
 
 Manual checklist, if needed: [capture-office-stability-audit.md — Post-Image Office Stability Checklist Template](capture-office-stability-audit.md#post-image-office-stability-checklist-template).
 

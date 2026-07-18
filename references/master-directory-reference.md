@@ -4,7 +4,7 @@
 
 **Last Updated:** 2026-07-07
 
-This is the consolidated `$BACKUP_ROOT` directory map for the Mac reimage workflow.
+This is the consolidated `$REIMAGE_ARTIFACT_ROOT` directory map for the Mac reimage workflow.
 
 It combines the currently documented backup, capture, validation, and post-image artifact locations from:
 
@@ -42,22 +42,23 @@ Use this file when you want one place to see the intended artifact layout withou
 ## Master Root Layout
 
 ```text
-$BACKUP_ROOT/
-├── app-backups/
+$REIMAGE_ARTIFACT_ROOT/
+├── app-settings-backup/
 ├── reimage-prep-checks/
-├── git-audit-reports/
+├── repo-audit-reports/
 ├── gitignore-superset/
-├── local-files/
+├── home-files-backup/
 ├── managed-inventory/
 ├── office-stability/
 ├── performance-audit/
 ├── reimaged-system/
 ├── public-certs/
-├── reimage-plan/
+├── reimage-confirmation/
 ├── secrets-encrypted/
-├── selected-ignored-files/
-├── selected-ignored-files-dryrun/
-├── selected-ignored-files-filtered-dryrun/
+├── staged-ignored-files/
+│   ├── live/
+│   ├── dryrun/
+│   └── dryrun-filtered/
 ├── system-inventory/
 ├── time-machine/
 └── workflow-snapshot/
@@ -71,9 +72,9 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 
 ## Collapsible Directory Sections
 
-> [!example]- `$BACKUP_ROOT/app-backups/`
+> [!example]- `$REIMAGE_ARTIFACT_ROOT/app-settings-backup/`
 > ```text
-> $BACKUP_ROOT/app-backups/
+> $REIMAGE_ARTIFACT_ROOT/app-settings-backup/
 > ├── MANIFEST.md
 > ├── candidate-review/
 > │   └── app-backup-candidates-YYYYMMDD-HHMMSS/
@@ -128,9 +129,9 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 >         └── snippets/
 > ```
 
-> [!example]- `$BACKUP_ROOT/local-files/`
+> [!example]- `$REIMAGE_ARTIFACT_ROOT/home-files-backup/`
 > ```text
-> $BACKUP_ROOT/local-files/
+> $REIMAGE_ARTIFACT_ROOT/home-files-backup/
 > ├── home/
 > │   ├── Desktop/
 > │   ├── Documents/
@@ -165,9 +166,9 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 > └── MANIFEST.md
 > ```
 
-> [!example]- `$BACKUP_ROOT/workflow-snapshot/`
+> [!example]- `$REIMAGE_ARTIFACT_ROOT/workflow-snapshot/`
 > ```text
-> $BACKUP_ROOT/workflow-snapshot/
+> $REIMAGE_ARTIFACT_ROOT/workflow-snapshot/
 > ├── README.md
 > ├── reimage-workflow-docs/
 > │   ├── *.md
@@ -180,9 +181,9 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 >         └── latest-aliases.txt
 > ```
 
-> [!example]- `$BACKUP_ROOT/system-inventory/`
+> [!example]- `$REIMAGE_ARTIFACT_ROOT/system-inventory/`
 > ```text
-> $BACKUP_ROOT/system-inventory/
+> $REIMAGE_ARTIFACT_ROOT/system-inventory/
 > ├── version-inventory.txt
 > ├── pre-image-YYYYMMDD-HHMMSS/
 > │   ├── MANIFEST.txt
@@ -226,9 +227,9 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 >     └── 16-certs.txt
 > ```
 
-> [!example]- `$BACKUP_ROOT/managed-inventory/`
+> [!example]- `$REIMAGE_ARTIFACT_ROOT/managed-inventory/`
 > ```text
-> $BACKUP_ROOT/managed-inventory/
+> $REIMAGE_ARTIFACT_ROOT/managed-inventory/
 > ├── pre-image-YYYYMMDD-HHMMSS/
 > │   ├── 01-enrollment-status.txt
 > │   ├── 02-profiles-configuration.txt
@@ -249,9 +250,9 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 >     └── MANIFEST.txt
 > ```
 
-> [!example]- `$BACKUP_ROOT/performance-audit/`
+> [!example]- `$REIMAGE_ARTIFACT_ROOT/performance-audit/`
 > ```text
-> $BACKUP_ROOT/performance-audit/
+> $REIMAGE_ARTIFACT_ROOT/performance-audit/
 > ├── pre-image-performance-audit-clean-boot-YYYYMMDD-HHMMSS/
 > ├── pre-image-performance-audit-normal-workload-YYYYMMDD-HHMMSS/
 > ├── pre-image-performance-audit-active-dev-YYYYMMDD-HHMMSS/
@@ -278,9 +279,9 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 >     └── system/
 > ```
 
-> [!example]- `$BACKUP_ROOT/office-stability/`
+> [!example]- `$REIMAGE_ARTIFACT_ROOT/office-stability/`
 > ```text
-> $BACKUP_ROOT/office-stability/
+> $REIMAGE_ARTIFACT_ROOT/office-stability/
 > ├── office-stability-summary-YYYYMMDD-HHMMSS.md
 > ├── pre-reimage-office-baseline-YYYYMMDD-HHMMSS/
 > │   ├── 00-baseline-window.txt
@@ -323,9 +324,9 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 >         └── ...
 > ```
 
-> [!example]- `$BACKUP_ROOT/reimage-prep-checks/`
+> [!example]- `$REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/`
 > ```text
-> $BACKUP_ROOT/reimage-prep-checks/
+> $REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/
 > ├── reimage-checklist-YYYYMMDD-HHMMSS.md
 > ├── latest-reimage-checklist.txt
 > └── manual/
@@ -333,9 +334,9 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 > ```
 
 
-> [!example]- `$BACKUP_ROOT/time-machine/`
+> [!example]- `$REIMAGE_ARTIFACT_ROOT/time-machine/`
 > ```text
-> $BACKUP_ROOT/time-machine/
+> $REIMAGE_ARTIFACT_ROOT/time-machine/
 > ├── completion-check-YYYYMMDD-HHMMSS.md
 > ├── final-time-machine-checklist-YYYYMMDD-HHMMSS.md
 > ├── compare-YYYYMMDD-HHMMSS.txt
@@ -373,9 +374,9 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 > scripts/capture-time-machine.sh  read-only captures: pre-run bundle, verify-volume, final checklist
 > ```
 
-> [!example]- `$BACKUP_ROOT/reimaged-system/`
+> [!example]- `$REIMAGE_ARTIFACT_ROOT/reimaged-system/`
 > ```text
-> $BACKUP_ROOT/reimaged-system/
+> $REIMAGE_ARTIFACT_ROOT/reimaged-system/
 > ├── enrollment/
 > │   ├── latest-enrollment-capture.txt
 > │   └── capture-enrollment-YYYYMMDD-HHMMSS/
@@ -434,9 +435,9 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 > └── time-machine/
 > ```
 
-> [!example]- `$BACKUP_ROOT/secrets-encrypted/`
+> [!example]- `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/`
 > ```text
-> $BACKUP_ROOT/secrets-encrypted/
+> $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/
 > ├── all-secrets-YYYYMMDD-HHMMSS.dmg
 > ├── all-secrets-YYYYMMDD-HHMMSS-manifest.txt
 > ├── RESTORE-README.md
@@ -478,9 +479,9 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 > └── ssh/
 > ```
 
-> [!example]- `$BACKUP_ROOT/public-certs/`
+> [!example]- `$REIMAGE_ARTIFACT_ROOT/public-certs/`
 > ```text
-> $BACKUP_ROOT/public-certs/
+> $REIMAGE_ARTIFACT_ROOT/public-certs/
 > └── certs/
 >     ├── README.md
 >     ├── keychain-cert-export-inventory-YYYYMMDD-HHMMSS.md

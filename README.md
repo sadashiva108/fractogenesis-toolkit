@@ -16,9 +16,9 @@ Runbooks and scripts for reimaging a Mac (Windows/Linux/other-device reimage wor
 
 ## Quickstart
 
-Start at [`reimaging-guide.md`](reimaging-guide.md) — it sequences every phase of the reimage and links out to each individual runbook.
+Start at [`reimaging-guide.md`](./reimaging-guide.md) — it sequences every phase of the reimage and links out to each individual runbook.
 
-If you're picking this up mid-reimage on a freshly erased Mac with no local checkout yet, see [`reimage-guide-access.md`](reimage-guide-access.md).
+If you're picking this up mid-reimage on a freshly erased Mac with no local checkout yet, see [`reimage-guide-access.md`](./reimage-guide-access.md).
 
 ---
 

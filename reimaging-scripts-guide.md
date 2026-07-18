@@ -2,7 +2,7 @@
 
 # Reimaging Scripts Guide
 
-> **Migration note:** this guide describes the full pre-split script layout and is only *partially* updated. Confirmed migrated into `fractogenesis-toolkit` so far: `prepare-artifact-root.py`/`.md`, `.internal/artifact-config.sh` (renamed from `backup-config.sh`), `bin/reimage-checklist.sh`, `.internal/load-reimage-config-snippet.sh`, and `reimage-prep-checks.md` (renamed from `capture-validated-reimage-prep.md`) — these have updated paths, names, and the `$REIMAGE_ARTIFACT_ROOT`/`REIMAGE_ROOT`-retirement changes applied and cross-checked against the real migrated files. Every other script referenced below (`backup-apps.sh`, `backup-git-repository.sh`, the `capture-*.sh`/`restore-*.sh` family, etc.) still reflects the **old** `scripts/`-prefixed, `--backup-root`-flagged reference-vault layout, since those haven't been migrated yet — don't assume their paths or flag names below are current until they get their own migration pass.
+> **Migration note:** this guide describes the full pre-split script layout and is only *partially* updated. Confirmed migrated into `fractogenesis-toolkit` so far: `prepare-artifact-root.py`/`.md`, `.internal/artifact-config.sh` (renamed from `artifact-config.sh`), `bin/reimage-checklist.sh`, `.internal/load-reimage-config-snippet.sh`, and `reimage-prep-checks.md` (renamed from `capture-validated-reimage-prep.md`) — these have updated paths, names, and the `$REIMAGE_ARTIFACT_ROOT`/`REIMAGE_ROOT`-retirement changes applied and cross-checked against the real migrated files. Every other script referenced below (`backup-apps.sh`, `backup-repos.sh`, the `capture-*.sh`/`restore-*.sh` family, etc.) still reflects the **old** `scripts/`-prefixed, `--backup-root`-flagged reference-vault layout, since those haven't been migrated yet — don't assume their paths or flag names below are current until they get their own migration pass.
 
 Use this as the script index for the Mac reimage workflow. The Markdown runbooks explain the workflow; this guide maps each phase to the scripts that generate backups, evidence captures, and validation checklists.
 
@@ -91,11 +91,11 @@ export ONEDRIVE_DEST_SUBDIR="${ONEDRIVE_DEST_SUBDIR:-$(basename "${REIMAGE_ARTIF
 
 | Phase | Purpose | Markdown guide | Primary script(s) | Generated output |
 |---|---|---|---|---|
-| Phase 1 | Prepare external artifact root | `reimaging-guide.md`, `prepare-artifact-root.md` | `prepare-artifact-root.py` plus guide-owned shell checks and directory creation | `reimage.env`, `$REIMAGE_ARTIFACT_ROOT/` structure, `$REIMAGE_ARTIFACT_ROOT/reimage-plan/it-reimage-confirmation-*.md` |
-| Phase 2A | Git repository backups | `backup-git-repository.md` | `backup-git-repository.sh` (public entrypoint), Git helpers under `scripts/helpers/git/` | `$REIMAGE_ARTIFACT_ROOT/git-audit-reports/`, `$REIMAGE_ARTIFACT_ROOT/gitignore-superset/`, `$REIMAGE_ARTIFACT_ROOT/selected-ignored-files*/` |
-| Phase 2B | Local files backup | `backup-local-files.md` | `backup-local-files.sh` | `$REIMAGE_ARTIFACT_ROOT/local-files/` |
-| Phase 2C | Backup apps | `backup-apps.md` | `backup-apps.sh` (public entrypoint), `helpers/apps/backup-docker-settings.sh` and `helpers/apps/backup-intellij-scratches-consoles.sh` (internal helpers), plus app-controlled/manual exports for other apps | `$REIMAGE_ARTIFACT_ROOT/app-backups/` plus matching `secrets-encrypted/` folders |
-| Phase 2C detail | IntelliJ companion flow | `backup-intellij.md` | `backup-apps.sh` (public IntelliJ path), `helpers/apps/backup-intellij-scratches-consoles.sh` (internal helper) | `$REIMAGE_ARTIFACT_ROOT/app-backups/intellij/` |
+| Phase 1 | Prepare external artifact root | `reimaging-guide.md`, `prepare-artifact-root.md` | `prepare-artifact-root.py` plus guide-owned shell checks and directory creation | `reimage.env`, `$REIMAGE_ARTIFACT_ROOT/` structure, `$REIMAGE_ARTIFACT_ROOT/reimage-confirmation/it-reimage-confirmation-*.md` |
+| Phase 2A | Git repository backups | `backup-repos.md` | `backup-repos.sh` (public entrypoint), Git helpers under `scripts/helpers/git/` | `$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/`, `$REIMAGE_ARTIFACT_ROOT/gitignore-superset/`, `$REIMAGE_ARTIFACT_ROOT/staged-ignored-files/live/*` |
+| Phase 2B | Local files backup | `backup-home.md` | `backup-home.sh` | `$REIMAGE_ARTIFACT_ROOT/home-files-backup/` |
+| Phase 2C | Backup apps | `backup-apps.md` | `backup-apps.sh` (public entrypoint), `helpers/apps/backup-docker-settings.sh` and `helpers/apps/backup-intellij-scratches-consoles.sh` (internal helpers), plus app-controlled/manual exports for other apps | `$REIMAGE_ARTIFACT_ROOT/app-settings-backup/` plus matching `secrets-encrypted/` folders |
+| Phase 2C detail | IntelliJ companion flow | `backup-intellij.md` | `backup-apps.sh` (public IntelliJ path), `helpers/apps/backup-intellij-scratches-consoles.sh` (internal helper) | `$REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/` |
 | Phase 2D | Certificate and Keychain staging | `stage-cert-keychain.md` | `stage-cert-keychain.sh` | `$REIMAGE_ARTIFACT_ROOT/public-certs/`, `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/certs/`, `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/extra-secrets-certs-review/` |
 | Phase 2E | Encrypted secrets backup | `backup-dmg-secrets.md` | `create-secrets-dmg.sh` | `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/all-secrets-*.dmg` |
 | Phase 2F | Time Machine backup/status | `backup-time-machine.md` | `backup-time-machine.sh`, `capture-time-machine.sh` | `/Volumes/AppleBackups`, `$REIMAGE_ARTIFACT_ROOT/time-machine/`, `final-time-machine-checklist-*.md` |
@@ -108,9 +108,9 @@ export ONEDRIVE_DEST_SUBDIR="${ONEDRIVE_DEST_SUBDIR:-$(basename "${REIMAGE_ARTIF
 | Phase 4B | Final pre-image validation | `reimaging-guide.md`, `reimage-prep-checks.md` | `bin/reimage-checklist.sh --phase pre --artifact-root ...` | `$REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/` |
 | Phase 6 | Enrollment/stabilization capture | `enroll-and-stabilize.md` | `capture-enrollment.sh` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/enrollment/*` when mounted, otherwise `$REIMAGE_WORKSPACE_ROOT/enrollment/*` or `~/Desktop/post-image-artifacts/enrollment/*` |
 | Phase 7 | Initial post-image checklist | `capture-initial-reimaged-system.md` | `initial-reimaged-system-checklist.sh` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/initial-reimaged-system-YYYYMMDD-HHMMSS/` |
-| Phase 8 | Runtime/access restore helpers | `restore-runtime.md`, `restore-access.md` | targeted manual checks; no single public restore script | selective restore from `local-files/` and `secrets-encrypted/` |
+| Phase 8 | Runtime/access restore helpers | `restore-runtime.md`, `restore-access.md` | targeted manual checks; no single public restore script | selective restore from `home-files-backup/` and `secrets-encrypted/` |
 | Phase 9 | Git restore | `restore-git.md` | targeted manual checks; optional `bin/reimage-checklist.sh --phase post` later | repo restore state and later validation under `$REIMAGE_ARTIFACT_ROOT/reimaged-system/` |
-| Phase 10 | App restore | `restore-apps.md`, `restore-intellij.md`, `restore-docker.md` | `restore-apps.sh`, `restore-intellij.sh`, `restore-docker.sh` | restore-planning notes under `$REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/` plus app restore from `app-backups/` and `secrets-encrypted/` |
+| Phase 10 | App restore | `restore-apps.md`, `restore-intellij.md`, `restore-docker.md` | `restore-apps.sh`, `restore-intellij.sh`, `restore-docker.sh` | restore-planning notes under `$REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/` plus app restore from `app-settings-backup/` and `secrets-encrypted/` |
 | Phase 11 | Post-image system inventory evidence | `capture-system-inventory.md` | `capture-system-inventory.sh` | `$REIMAGE_ARTIFACT_ROOT/system-inventory/post-image-*` |
 | Phase 11 | Post-image company-managed inventory evidence | `capture-managed-inventory.md` | `capture-managed-inventory.sh --phase post-image` | `$REIMAGE_ARTIFACT_ROOT/managed-inventory/post-image-*` |
 | Phase 11 | Post-image performance evidence | `capture-performance-audit.md` | `capture-performance-audit.sh` | `$REIMAGE_ARTIFACT_ROOT/performance-audit/post-image-*` |
@@ -126,41 +126,48 @@ export ONEDRIVE_DEST_SUBDIR="${ONEDRIVE_DEST_SUBDIR:-$(basename "${REIMAGE_ARTIF
 Current preferred script layout:
 
 ```text
-workflows/mac/reimage/scripts/
-├── backup-config.sh              
-├── backup-apps.sh
-├── backup-git-repository.sh
-├── backup-local-files.sh
-├── capture-managed-inventory.sh
-├── capture-office-stability-baseline.sh
-├── capture-workflow-snapshot.sh
-├── backup-time-machine.sh
-├── capture-time-machine.sh
-├── capture-performance-audit.sh
-├── capture-system-inventory.sh
-├── capture-workload-snapshot.sh
-├── create-secrets-dmg.sh
-├── stage-cert-keychain.sh
-├── helpers/
-│   ├── apps/
-│   │   ├── backup-docker-settings.sh
-│   │   └── backup-intellij-scratches-consoles.sh
-│   └── git/
-│       ├── backup-git-ignored-files.sh
-│       ├── backup-selected-gitignore-patterns.py
-│       ├── capture-git-audit.sh
-│       └── collect-gitignore-superset.sh
-├── prepare-artifact-root.py       
-├── office-stability-checklist.sh
-├── reimage-checklist.sh          
-├── load-reimage-config-snippet.sh 
-├── initial-reimaged-system-checklist.sh
-├── capture-enrollment.sh
-├── restore-apps.sh
-├── restore-intellij.sh
-├── restore-docker.sh
-├── capture-size-audit.sh
-├── watch-office-today.sh
+<repo-root>/
+├── .internal/
+│   ├── artifact-config.sh
+│   ├── git/
+│   │   ├── stage-ignored-files.sh
+│   │   ├── stage-selected-patterns.py
+│   │   ├── capture-repo-audit.sh
+│   │   └── collect-gitignore-superset.sh
+│   └── load-reimage-config.sh
+├── bin/
+│   ├── backup-apps.sh
+│   ├── backup-repos.sh
+│   ├── backup-home.sh
+│   ├── backup-docker-settings.sh
+│   ├── backup-intellij-scratches-consoles.sh
+│   ├── reimage-checklist.sh
+│   └── capture-size-audit.sh
+├── workflows/
+│   └── mac/
+│       └── reimage/
+│           └── scripts/
+│               ├── capture-managed-inventory.sh
+│               ├── capture-office-stability-baseline.sh
+│               ├── capture-workflow-snapshot.sh
+│               ├── backup-time-machine.sh
+│               ├── capture-time-machine.sh
+│               ├── capture-performance-audit.sh
+│               ├── capture-system-inventory.sh
+│               ├── capture-workload-snapshot.sh
+│               ├── create-secrets-dmg.sh
+│               ├── stage-cert-keychain.sh
+│               ├── prepare-artifact-root.py
+│               ├── office-stability-checklist.sh
+│               ├── initial-reimaged-system-checklist.sh
+│               ├── capture-enrollment.sh
+│               ├── restore-apps.sh
+│               ├── restore-intellij.sh
+│               ├── restore-docker.sh
+│               ├── watch-office-today.sh
+│               └── helpers/
+│                   ├── apps/
+│                   └── git/
 └── reimaging-scripts-guide.md
 ```
 
@@ -174,7 +181,7 @@ Recommended generated artifact layout under the prepared external data/artifact 
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/
-├── app-backups/
+├── app-settings-backup/
 │   ├── chrome/
 │   ├── docker/
 │   ├── intellij/
@@ -183,9 +190,9 @@ $REIMAGE_ARTIFACT_ROOT/
 │   ├── raycast/
 │   └── vscode/
 ├── reimage-prep-checks/
-├── git-audit-reports/
+├── repo-audit-reports/
 ├── gitignore-superset/
-├── local-files/
+├── home-files-backup/
 ├── office-stability/
 ├── performance-audit/
 ├── secrets-encrypted/
@@ -204,13 +211,14 @@ $REIMAGE_ARTIFACT_ROOT/
 │   ├── postman/
 │   ├── raycast/
 │   └── ssh/
-├── selected-ignored-files/
-├── selected-ignored-files-dryrun/
-├── selected-ignored-files-filtered-dryrun/
+├── staged-ignored-files/
+│   ├── live/
+│   ├── dryrun/
+│   └── dryrun-filtered/
 ├── workflow-snapshot/
 │   ├── reimage-workflow-docs/
 │   └── pre-image-workflow-snapshot-YYYYMMDD-HHMMSS/
-│       ├── logs/
+│       └── logs/
 ├── system-inventory/
 ├── time-machine/
 └── reimaged-system/
@@ -230,7 +238,7 @@ Do not copy active `*.sh` or `*.py` helper scripts into this artifact tree unles
 
 ## Phase 1 Preparation Entrypoint
 
-`prepare-artifact-root.py` is the public Phase 1 entrypoint. It keeps the longer `reimage.env` rewrite logic out of the Markdown guide while leaving the overall sequence in `prepare-artifact-root.md`, and it reads `.internal/artifact-config.sh` (renamed from `backup-config.sh`) when Phase 1 needs the shared expected backup-folder layout.
+`prepare-artifact-root.py` is the public Phase 1 entrypoint. It keeps the longer `reimage.env` rewrite logic out of the Markdown guide while leaving the overall sequence in `prepare-artifact-root.md`, and it reads `.internal/artifact-config.sh` (renamed from `artifact-config.sh`) when Phase 1 needs the shared expected backup-folder layout.
 
 Use it only when `prepare-artifact-root.md` tells you to:
 
@@ -273,7 +281,7 @@ Run before copying large folders:
 ./scripts/backup-git-repository.sh --backup-root "$REIMAGE_ARTIFACT_ROOT" --selected-copy
 ```
 
-Then review the generated Git audit report, mark selected ignored-file patterns, update the exclude list, and use the later entrypoint modes from `backup-git-repository.md`.
+Then review the generated Git audit report, mark selected ignored-file patterns, update the exclude list, and use the later entrypoint modes from `backup-repos.md`.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -297,7 +305,7 @@ The OneDrive copy, when used, still requires manual sync verification later in P
 
 ### Phase 2C Backup Apps
 
-`backup-apps.md` owns the Phase 2C app backup flow. `backup-apps.sh` is the single-script path; it prepares the standard app folders, runs the Docker helper when applicable, captures the local VS Code fallback, writes `app-backups/MANIFEST.md`, and can also generate the optional candidate-review bundle when you add `--candidate-review`.
+`backup-apps.md` owns the Phase 2C app backup flow. `backup-apps.sh` is the single-script path; it prepares the standard app folders, runs the Docker helper when applicable, captures the local VS Code fallback, writes `app-settings-backup/MANIFEST.md`, and can also generate the optional candidate-review bundle when you add `--candidate-review`.
 
 Preferred Phase 2C run:
 
@@ -692,7 +700,7 @@ $REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/latest-reimage-checklist.txt
 
 Use the generated report as the primary Phase 4B checklist. Do not proceed to Phase 5 until `FAIL` items are resolved. Then use `reimage-prep-checks.md` only for the remaining manual sign-off rows.
 
-For workflow-snapshot checks, the validator should discover the newest timestamped bundle directly from `workflow-snapshot/pre-image-workflow-snapshot-*`. VS Code local fallback state is validated from `app-backups/vscode/`.
+For workflow-snapshot checks, the validator should discover the newest timestamped bundle directly from `workflow-snapshot/pre-image-workflow-snapshot-*`. VS Code local fallback state is validated from `app-settings-backup/vscode/`.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 

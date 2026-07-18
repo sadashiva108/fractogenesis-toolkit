@@ -6,7 +6,7 @@ This is the single comprehensive **pre-image** evidence reference for the Mac re
 
 Use it to understand both:
 
-- what Phase 3 and Phase 4 commands generate under `$BACKUP_ROOT`
+- what Phase 3 and Phase 4 commands generate under `$REIMAGE_ARTIFACT_ROOT`
 - which manual sign-off rows, fallback notes, and templates still matter after the generated evidence exists
 
 The phase order lives in [[reimaging-guide|reimaging-guide.md]]. The detailed command behavior lives in the phase runbooks and `scripts/`.
@@ -66,12 +66,12 @@ Do not manually recreate the Phase 4 checklist when reimage-checklist.sh already
 
 | Phase | Capture | Primary destination | Purpose |
 |---|---|---|---|
-| Phase 3A | Workflow snapshot | `$BACKUP_ROOT/workflow-snapshot/pre-image-workflow-snapshot-*`, `$BACKUP_ROOT/workflow-snapshot/reimage-workflow-docs/` | Current reimage workflow docs and lightweight workflow snapshot context that should travel with the capture set. |
-| Phase 3B | System inventory | `$BACKUP_ROOT/system-inventory/pre-image-*` | Broad workstation rebuild context: hardware, macOS, apps, toolchains, shell, Git, network, cloud, and certificates. |
-| Phase 3C | Company-managed inventory | `$BACKUP_ROOT/managed-inventory/pre-image-*` | Managed apps, profiles, background services, system extensions, package receipts, and managed preferences. |
-| Phase 3D | Performance audit | `$BACKUP_ROOT/performance-audit/pre-image-*` | Scenario-based performance baselines and optional historical trend summaries/charts. |
-| Phase 3E | Office stability | `$BACKUP_ROOT/office-stability/` | Office-specific baseline bundles, watcher-derived evidence, incident captures, and Office checklist output. |
-| Phase 4 | Reimage preparation checks | `$BACKUP_ROOT/reimage-prep-checks/` | Final go / no-go validation, readable checklist output, and remaining manual sign-off rows before erase. |
+| Phase 3A | Workflow snapshot | `$REIMAGE_ARTIFACT_ROOT/workflow-snapshot/pre-image-workflow-snapshot-*`, `$REIMAGE_ARTIFACT_ROOT/workflow-snapshot/reimage-workflow-docs/` | Current reimage workflow docs and lightweight workflow snapshot context that should travel with the capture set. |
+| Phase 3B | System inventory | `$REIMAGE_ARTIFACT_ROOT/system-inventory/pre-image-*` | Broad workstation rebuild context: hardware, macOS, apps, toolchains, shell, Git, network, cloud, and certificates. |
+| Phase 3C | Company-managed inventory | `$REIMAGE_ARTIFACT_ROOT/managed-inventory/pre-image-*` | Managed apps, profiles, background services, system extensions, package receipts, and managed preferences. |
+| Phase 3D | Performance audit | `$REIMAGE_ARTIFACT_ROOT/performance-audit/pre-image-*` | Scenario-based performance baselines and optional historical trend summaries/charts. |
+| Phase 3E | Office stability | `$REIMAGE_ARTIFACT_ROOT/office-stability/` | Office-specific baseline bundles, watcher-derived evidence, incident captures, and Office checklist output. |
+| Phase 4 | Reimage preparation checks | `$REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/` | Final go / no-go validation, readable checklist output, and remaining manual sign-off rows before erase. |
 
 These captures are **reference snapshots and read-only evidence**, not restore backups.
 
@@ -82,37 +82,28 @@ These captures are **reference snapshots and read-only evidence**, not restore b
 ## External Backup and Capture Root Layout
 
 ```text
-$BACKUP_ROOT/
-├── workflow-snapshot/
-│   ├── pre-image-workflow-snapshot-YYYYMMDD-HHMMSS/
-│   └── reimage-workflow-docs/
-├── system-inventory/
-│   ├── pre-image-YYYYMMDD-HHMMSS/
-│   └── post-image-YYYYMMDD-HHMMSS/
-├── managed-inventory/
-│   ├── pre-image-YYYYMMDD-HHMMSS/
-│   └── post-image-YYYYMMDD-HHMMSS/
+$REIMAGE_ARTIFACT_ROOT/
 ├── performance-audit/
+│   ├── ...
 │   ├── pre-image-performance-audit-<scenario>-YYYYMMDD-HHMMSS/
 │   ├── post-image-performance-audit-<scenario>-YYYYMMDD-HHMMSS/
-│   ├── rollup-summary/
-│   │   └── <phase>-YYYYMMDD-HHMMSS/
-│   └── ...
+│   └── rollup-summary/
+│       └── <phase>-YYYYMMDD-HHMMSS/
 ├── office-stability/
 │   ├── README.md
 │   ├── office-stability-summary-YYYYMMDD-HHMMSS.md
-│   ├── pre-reimage-office-baseline-YYYYMMDD-HHMMSS/
 │   ├── pre-reimage-office-baseline-YYYYMMDD-HHMMSS.zip
-│   ├── post-reimage-office-baseline-YYYYMMDD-HHMMSS/
 │   ├── post-reimage-office-baseline-YYYYMMDD-HHMMSS.zip
-│   ├── checklists/
-│   │   ├── pre-image-office-stability-checklist-YYYYMMDD-HHMMSS/
-│   │   └── post-image-office-stability-checklist-YYYYMMDD-HHMMSS/
 │   ├── workload-snapshot-YYYYMMDD-HHMMSS.txt
 │   ├── unified-log-office-YYYYMMDD-HHMMSS.txt
 │   ├── install-log-office-YYYYMMDD-HHMMSS.txt
 │   ├── latest-watcher-after-close-YYYYMMDD-HHMMSS.txt
-│   └── ms-office-stability-watch-evidence-YYYYMMDD-HHMMSS.zip
+│   ├── ms-office-stability-watch-evidence-YYYYMMDD-HHMMSS.zip
+│   ├── pre-reimage-office-baseline-YYYYMMDD-HHMMSS/
+│   ├── post-reimage-office-baseline-YYYYMMDD-HHMMSS/
+│   └── checklists/
+│       ├── pre-image-office-stability-checklist-YYYYMMDD-HHMMSS/
+│       └── post-image-office-stability-checklist-YYYYMMDD-HHMMSS/
 ├── time-machine/
 │   ├── completion-check-YYYYMMDD-HHMMSS.md
 │   ├── final-time-machine-checklist-YYYYMMDD-HHMMSS.md
@@ -125,9 +116,18 @@ $BACKUP_ROOT/
 │       ├── time-machine-pre-run.md
 │       ├── time-machine-status.md
 │       └── raw/
-└── reimage-prep-checks/
-    ├── reimage-checklist-YYYYMMDD-HHMMSS.md
-    └── latest-reimage-checklist.txt
+├── reimage-prep-checks/
+│   ├── reimage-checklist-YYYYMMDD-HHMMSS.md
+│   └── latest-reimage-checklist.txt
+├── workflow-snapshot/
+│   ├── pre-image-workflow-snapshot-YYYYMMDD-HHMMSS/
+│   └── reimage-workflow-docs/
+├── system-inventory/
+│   ├── pre-image-YYYYMMDD-HHMMSS/
+│   └── post-image-YYYYMMDD-HHMMSS/
+└── managed-inventory/
+    ├── pre-image-YYYYMMDD-HHMMSS/
+    └── post-image-YYYYMMDD-HHMMSS/
 ```
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -216,7 +216,7 @@ Manual / fallback notes:
 
 - Manual rows are usually unnecessary unless the generated inventory is missing a needed context note.
 - Add a short note only when a missing detail still matters, such as display arrangement/scaling context, a restore constraint for a licensed app, or a one-off environment quirk that would not be obvious from the generated bundle alone.
-- Record any manual note beside the generated inventory bundle or in related setup notes under `$BACKUP_ROOT`.
+- Record any manual note beside the generated inventory bundle or in related setup notes under `$REIMAGE_ARTIFACT_ROOT`.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -265,7 +265,7 @@ Use this when you want a more precise record of MDM-delivered apps, profiles, ba
 Manual / fallback notes:
 
 - There is no separate fallback checklist for this capture.
-- Run the script or manual commands first, then review the bundle under `$BACKUP_ROOT/managed-inventory/`.
+- Run the script or manual commands first, then review the bundle under `$REIMAGE_ARTIFACT_ROOT/managed-inventory/`.
 - Add a short comparison note only if a managed-state difference still needs explanation after reviewing the captured bundle.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -328,14 +328,14 @@ Optional companion outputs:
 | Output | Destination | Purpose |
 |---|---|---|
 | Historical trend summary | `performance-history/` inside a scenario bundle | Preserves multi-snapshot memory/process summaries when available. |
-| Rollup summary package | `$BACKUP_ROOT/performance-audit/rollup-summary/<phase>-*` | Quantitative summary package built from helper history, diagnostic CSVs, and selected text reports. |
+| Rollup summary package | `$REIMAGE_ARTIFACT_ROOT/performance-audit/rollup-summary/<phase>-*` | Quantitative summary package built from helper history, diagnostic CSVs, and selected text reports. |
 
 Manual / fallback notes:
 
 - `manual-observations.md` and `workload-reproduction-config.md` are generated automatically; review them instead of creating a separate manual checklist first.
 - `manual-observations.md` is the place to record workload context the script cannot prove, especially how closely the capture matched normal work.
 - For a `clean-boot` scenario, it is acceptable for Docker Desktop to be stopped. The performance script records that state in `docker/docker-daemon-state.txt` and skips daemon-dependent Docker commands when the daemon is unavailable. Record in `manual-observations.md` whether Docker was intentionally stopped, so the post-image clean-boot comparison uses the same assumption.
-- If the external drive was unavailable, stage results locally under `$REIMAGE_WORKSPACE_ROOT/performance-audit/` and copy the completed folders into `$BACKUP_ROOT/performance-audit/` before Phase 4 final validation.
+- If the external drive was unavailable, stage results locally under `$REIMAGE_WORKSPACE_ROOT/performance-audit/` and copy the completed folders into `$REIMAGE_ARTIFACT_ROOT/performance-audit/` before Phase 4 final validation.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -434,10 +434,10 @@ Common manual rows still requiring human confirmation:
 
 | Manual item | Where to record |
 |---|---|
-| IT confirmed approved reimage method | generated Phase 4 report and/or `$BACKUP_ROOT/reimage-plan/it-reimage-confirmation-YYYYMMDD.md` |
+| IT confirmed approved reimage method | generated Phase 4 report and/or `$REIMAGE_ARTIFACT_ROOT/reimage-confirmation/it-reimage-confirmation-YYYYMMDD.md` |
 | Loose private-key / keystore / certificate candidates reviewed | generated Phase 4 report manual rows |
 | `.p12` / `.pfx` export passwords saved only in approved password manager, if applicable | generated Phase 4 report manual rows |
-| Time Machine backup completed and latest backup confirmed | generated Phase 4 report; `backup-time-machine.sh complete` output and `capture-time-machine.sh final --open` final checklist under `$BACKUP_ROOT/time-machine/`; optional `capture-time-machine.sh verify-volume --open` focused APFS volume evidence |
+| Time Machine backup completed and latest backup confirmed | generated Phase 4 report; `backup-time-machine.sh complete` output and `capture-time-machine.sh final --open` final checklist under `$REIMAGE_ARTIFACT_ROOT/time-machine/`; optional `capture-time-machine.sh verify-volume --open` focused APFS volume evidence |
 | LastPass vault verified accessible | generated Phase 4 report manual rows |
 | DMG password saved and DMG verified | generated Phase 4 report manual rows |
 | VS Code Settings Sync state confirmed | generated Phase 4 report manual rows |
@@ -498,10 +498,10 @@ Optional evidence and integrity spot checks:
 
 Notes:
 
-- `capture-time-machine.sh pre-run --open` creates the pre-backup evidence bundle under `$BACKUP_ROOT/time-machine/pre-image-time-machine-status-YYYYMMDD-HHMMSS/`.
+- `capture-time-machine.sh pre-run --open` creates the pre-backup evidence bundle under `$REIMAGE_ARTIFACT_ROOT/time-machine/pre-image-time-machine-status-YYYYMMDD-HHMMSS/`.
 - `time-machine-pre-run.md` intentionally keeps the older minimal layout: Destination, Latest Backup, Backup List, and Exclusions.
 - The pre-run bundle does not include a manual sign-off template.
-- `capture-time-machine.sh final --open` writes `$BACKUP_ROOT/time-machine/final-time-machine-checklist-YYYYMMDD-HHMMSS.md`, auto-filling Time Machine checks that the script can prove.
+- `capture-time-machine.sh final --open` writes `$REIMAGE_ARTIFACT_ROOT/time-machine/final-time-machine-checklist-YYYYMMDD-HHMMSS.md`, auto-filling Time Machine checks that the script can prove.
 - `capture-time-machine.sh verify-volume --open` creates a standalone focused APFS destination-volume verification file.
 - `backup-time-machine.sh complete` records the latest backup timestamp and recommends a separate log command instead of embedding noisy logs.
 - `backup-time-machine.sh compare --compare-path /Users/...` resolves APFS Time Machine `Data/Users/...` paths and treats explicit compare paths strictly.
