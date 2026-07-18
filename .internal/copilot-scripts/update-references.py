@@ -168,24 +168,32 @@ def parse_tree_block(block_text: str) -> Tuple[str, List[Dict[str, object]]]:
 
 
 def _render_tree(node: Dict[str, dict], annotations: Dict[str, str],
-                 path_prefix: str = '', line_prefix: str = '') -> List[Tuple[str, str]]:
+                 path_prefix: str = '', line_prefix: str = '',
+                 dir_paths: Optional[set] = None) -> List[Tuple[str, str]]:
     """Return a list of (main_line, annotation_or_empty) pairs. The annotation
     is kept separate so callers can style it (e.g. muted grey in HTML) while
     still producing a plain-text fallback.
+
+    ``dir_paths`` carries the set of full paths that were originally listed
+    as directories so leaf directories (empty subtrees) still render with a
+    trailing ``/``.
     """
+    if dir_paths is None:
+        dir_paths = set()
     out: List[Tuple[str, str]] = []
     items = list(node.items())
     for i, (name, child) in enumerate(items):
         last = (i == len(items) - 1)
         connector = '└── ' if last else '├── '
-        is_dir = bool(child)
-        display = name + ('/' if is_dir else '')
         full_path = f"{path_prefix}/{name}" if path_prefix else name
+        is_dir = bool(child) or (full_path in dir_paths)
+        display = name + ('/' if is_dir else '')
         note = annotations.get(full_path, '')
         out.append((f"{line_prefix}{connector}{display}", note))
         if child:
             ext = '    ' if last else '│   '
-            out.extend(_render_tree(child, annotations, full_path, line_prefix + ext))
+            out.extend(_render_tree(child, annotations, full_path,
+                                    line_prefix + ext, dir_paths))
     return out
 
 
@@ -221,11 +229,13 @@ def build_updated_tree(root_line: str, entries: List[Dict[str, object]],
     """
     changed = 0
     new_paths: List[str] = []
+    dir_paths: List[str] = []
     annotations: Dict[str, str] = {}
     for e in entries:
-        if e['is_dir']:
-            continue
         old_full = str(e['full_path'])
+        if e['is_dir']:
+            dir_paths.append(old_full)
+            continue
         mk, mv = strict_tree_match(old_full, mapping)
         if mk and mv and mv != mk:
             new_full = mv
@@ -240,18 +250,28 @@ def build_updated_tree(root_line: str, entries: List[Dict[str, object]],
         node = tree_root
         for part in p.split('/'):
             node = node.setdefault(part, {})
+    # Preserve directory entries that had no listed children so `_render_tree`
+    # can still emit them with a trailing '/'.
+    for p in dir_paths:
+        node = tree_root
+        for part in p.split('/'):
+            node = node.setdefault(part, {})
+
+    dir_set = set(dir_paths)
 
     lines: List[Tuple[str, str]] = []
     header_prefix = ''
     if root_line:
         header = root_line.strip().rstrip('/')
-        if header and header in tree_root and all(p.startswith(header + '/') or p == header for p in new_paths):
+        if header and header in tree_root and all(
+            p.startswith(header + '/') or p == header for p in new_paths + dir_paths
+        ):
             lines.append((root_line, ''))
             tree_root = tree_root[header]
             header_prefix = header
         else:
             lines.append(('<repo-root>/', ''))
-    lines.extend(_render_tree(tree_root, annotations, header_prefix))
+    lines.extend(_render_tree(tree_root, annotations, header_prefix, '', dir_set))
     return lines, changed
 
 
@@ -332,7 +352,7 @@ def build_external_tree(root_line: str, entries: List[Dict[str, object]],
             header_prefix = new_header
         else:
             lines.append((display_header, note))
-    lines.extend(_render_tree(tree_root, annotations, header_prefix))
+    lines.extend(_render_tree(tree_root, annotations, header_prefix, '', set(dir_paths)))
     return lines, changed
 
 
@@ -521,10 +541,15 @@ def replace_links_in_text(text: str, mapping: Dict[str, str], file_path: Path, r
 
 
 def unified_diff(old: str, new: str, path: Path) -> str:
+    # Preserve whatever line endings the source used (many docs here are
+    # CRLF). Feed keepends-True lines to difflib and join with "" so the
+    # generated diff is consistent with the working-tree file and applies
+    # cleanly via `git apply` / `patch`.
     old_lines = old.splitlines(keepends=True)
     new_lines = new.splitlines(keepends=True)
-    diff = difflib.unified_diff(old_lines, new_lines, fromfile=str(path), tofile=str(path), lineterm="")
-    return "\n".join(diff)
+    diff = difflib.unified_diff(old_lines, new_lines,
+                                fromfile=str(path), tofile=str(path))
+    return "".join(diff)
 
 
 def validate_target_exists(repo_root: Path, target: str) -> bool:
@@ -756,18 +781,240 @@ def main():
     def build_new_prose(snippet: str, orig: str, new_token: str) -> str:
         return re.sub(re.escape(orig), new_token, snippet, flags=re.IGNORECASE)
 
+    def rewrite_prose_capture(snippet: str) -> Tuple[str, List[Tuple[str, str]]]:
+        """Apply every prose-mapping rewrite (repo + external) to ``snippet``
+        and return ``(new_snippet, changes)`` where ``changes`` is the list
+        of ``(orig_span, new_span)`` pairs. Used by the report to render a
+        row that reflects *all* mappings affecting the same context, not
+        just the single entry the row was recorded for.
+        """
+        changes: List[Tuple[str, str]] = []
+        text = snippet
+        for mk, mv in mapping.items():
+            if mk == mv:
+                continue
+            bname = Path(mk).name
+            new_bname = Path(mv).name
+            stem = Path(mk).stem
+            new_stem = Path(mv).stem
+            # (a) literal path
+            def _repl_a(m: re.Match, _mv: str = mv) -> str:
+                changes.append((m.group(0), _mv))
+                return _mv
+            text = re.sub(re.escape(mk), _repl_a, text)
+            # (b) basename (not embedded in a longer path)
+            if bname and bname != new_bname:
+                def _repl_b(m: re.Match, _nb: str = new_bname) -> str:
+                    changes.append((m.group(0), _nb))
+                    return _nb
+                text = re.sub(r'(?<![\w/\-.])' + re.escape(bname) + r'\b',
+                              _repl_b, text)
+            # (c) tokenized derivative (e.g. "Restore Git" -> "Restore Repos")
+            token = re.sub(r'[-_]+', ' ', stem)
+            words = token.split()
+            if words and stem.lower() != new_stem.lower():
+                if len(words) == 1:
+                    pattern = r'(?<![\w./\-])' + re.escape(words[0]) + r'(?![\w./\-])'
+                else:
+                    pattern = r'\b' + r'\s+'.join(re.escape(w) for w in words) + r'\b'
+                new_display = re.sub(r'[-_]+', ' ', new_stem)
+                def _repl_c(m: re.Match, _nd: str = new_display) -> str:
+                    new_tok = match_case(m.group(0), _nd)
+                    changes.append((m.group(0), new_tok))
+                    return new_tok
+                text = re.sub(pattern, _repl_c, text, flags=re.IGNORECASE)
+        for ek, ev in external_mapping.items():
+            pattern = r'(?<![\w\-])(\$?)' + re.escape(ek) + r'(\*/)?(?![\w\-])'
+            def _repl_e(m: re.Match, _ev: str = ev) -> str:
+                orig = m.group(0)
+                dollar = m.group(1)
+                trailing = m.group(2) or ''
+                had = dollar == '$'
+                val_dollar = _ev.startswith('$')
+                if had and val_dollar:
+                    new_val = _ev
+                elif had and not val_dollar:
+                    new_val = '$' + _ev
+                elif not had and val_dollar:
+                    new_val = _ev[1:]
+                else:
+                    new_val = _ev
+                if trailing:
+                    new_val = new_val + ('/*' if '/' in new_val else '*/')
+                changes.append((orig, new_val))
+                return new_val
+            text = re.sub(pattern, _repl_e, text)
+        return text, changes
+
     def match_case(orig: str, repl: str) -> str:
         if orig and orig.isupper():
             return repl.upper()
+        stripped = (orig or '').strip()
+        # Preserve all-lowercase tokens (e.g. inline `bootstrap` in prose).
+        if stripped and stripped == stripped.lower():
+            return repl.lower()
         words = re.findall(r"\w+", orig or "")
         if words and all(w[0].isupper() for w in words if w):
             return ' '.join(w.capitalize() for w in repl.split())
-        stripped = (orig or '').strip()
         if stripped and stripped[0].isupper():
             return repl.capitalize()
-        if stripped and stripped == stripped.lower():
-            return ' '.join(w.capitalize() for w in repl.split())
         return repl
+
+    def build_updated_text(src: str, file_path: Path) -> str:
+        """Apply every mechanical rewrite the report describes: link
+        rewrites (inline + wiki + heuristic ``./`` prefix), fenced tree
+        rebuilds (primary + external mapping), and prose token
+        substitutions outside links and fences.
+        """
+        # Pass 1: rebuild fenced tree blocks with primary then external mappings.
+        def _serialize(lines: List[Tuple[str, str]]) -> str:
+            return '\n'.join(main for main, _ in lines)
+
+        def rebuild_fence(m: re.Match) -> str:
+            raw = m.group(0)
+            lang = m.group(1)
+            body = m.group(2)
+            # CODE_FENCE_RE optionally captures the newline before the opening
+            # ``` (via `(?:^|\n)`). Preserve it so the replacement plugs back
+            # into the source without dropping the fence opener.
+            prefix_nl = '\n' if raw.startswith('\n') else ''
+            if '├──' not in body and '└──' not in body:
+                return raw
+            root_line, entries = parse_tree_block(body)
+            if not entries:
+                return raw
+            new_body = body
+            new_lines_1, changed_1 = build_updated_tree(root_line, entries, mapping)
+            if changed_1:
+                new_body = _serialize(new_lines_1)
+            if external_mapping:
+                root2, entries2 = parse_tree_block(new_body)
+                if entries2:
+                    new_lines_2, changed_2 = build_external_tree(root2, entries2, external_mapping)
+                    if changed_2:
+                        new_body = _serialize(new_lines_2)
+            if new_body == body:
+                return raw
+            return f"{prefix_nl}```{lang}\n{new_body}\n```"
+
+        src = CODE_FENCE_RE.sub(rebuild_fence, src)
+
+        # Pass 2: inline `[text](url)` links.
+        def rewrite_inline(m: re.Match) -> str:
+            current_link = m.group(0)
+            raw_target = m.group(2)
+            target = raw_target.split(' ', 1)[0].split('#', 1)[0]
+            if not target or target.startswith(('http://', 'https://', 'mailto:')):
+                return current_link
+            tn = normalize_target(target)
+            mk, mv, _ = match_mapping_for_target(tn, mapping)
+            if mk and mv:
+                category, new_link, _ = classify_link(mk, mv, current_link, tn, file_path, repo_root)
+                return new_link if category != 'skip' else current_link
+            raw = target
+            if not raw or '/' in raw or raw.startswith('.'):
+                return current_link
+            candidate = (file_path.parent / raw).resolve()
+            if not candidate.exists() or not candidate.is_file():
+                return current_link
+            new_rel = './' + raw
+            candidate_link = build_new_link(current_link, new_rel,
+                                            Path(raw).stem, Path(raw).stem)
+            return candidate_link
+
+        src = LINK_RE.sub(rewrite_inline, src)
+
+        # Pass 3: Obsidian wiki links `[[...]]`.
+        def rewrite_wiki(m: re.Match) -> str:
+            full = m.group(1)
+            inner = m.group(2)
+            target = inner.split('|', 1)[1] if '|' in inner else inner
+            tn = normalize_target(target)
+            mk, mv, _ = match_mapping_for_target(tn, mapping)
+            if mk and mv:
+                category, new_link, _ = classify_link(mk, mv, full, tn, file_path, repo_root)
+                return new_link if category != 'skip' else full
+            return full
+
+        src = LINK_WIKI.sub(rewrite_wiki, src)
+
+        # Pass 4: prose token substitutions in regions outside fences and links.
+        def rewrite_prose_chunk(chunk: str) -> str:
+            # Primary mapping: literal path, standalone basename, tokenized derivative.
+            for mk, mv in mapping.items():
+                if mk == mv:
+                    continue
+                bname = Path(mk).name
+                new_bname = Path(mv).name
+                if mk in chunk:
+                    chunk = chunk.replace(mk, mv)
+                if bname and bname != new_bname:
+                    chunk = re.sub(r'(?<![\w/\-.])' + re.escape(bname) + r'\b',
+                                   new_bname, chunk)
+                stem = Path(mk).stem
+                new_stem = Path(mv).stem
+                token = re.sub(r'[-_]+', ' ', stem)
+                words = token.split()
+                if words and stem.lower() != new_stem.lower():
+                    if len(words) == 1:
+                        pattern = r'(?<![\w./\-])' + re.escape(words[0]) + r'(?![\w./\-])'
+                    else:
+                        pattern = r'\b' + r'\s+'.join(re.escape(w) for w in words) + r'\b'
+                    new_display = re.sub(r'[-_]+', ' ', new_stem)
+                    def _case_repl(mm: re.Match) -> str:
+                        return match_case(mm.group(0), new_display)
+                    chunk = re.sub(pattern, _case_repl, chunk, flags=re.IGNORECASE)
+            # External mapping tokens. When the source path is followed by
+            # ``*/`` and the mapping value introduces a new sub-directory
+            # (contains ``/``), reposition the star as ``/*`` so a directory
+            # glob keeps its "contents of" meaning after the rename.
+            for ek, ev in external_mapping.items():
+                pattern = r'(?<![\w\-])(\$?)' + re.escape(ek) + r'(\*/)?(?![\w\-])'
+                def _ext_repl(mm: re.Match) -> str:
+                    dollar = mm.group(1)
+                    trailing = mm.group(2) or ''
+                    had = dollar == '$'
+                    val_dollar = ev.startswith('$')
+                    if had and val_dollar:
+                        new_val = ev
+                    elif had and not val_dollar:
+                        new_val = '$' + ev
+                    elif not had and val_dollar:
+                        new_val = ev[1:]
+                    else:
+                        new_val = ev
+                    if trailing:
+                        return new_val + ('/*' if '/' in new_val else '*/')
+                    return new_val
+                chunk = re.sub(pattern, _ext_repl, chunk)
+            return chunk
+
+        boundaries: List[Tuple[int, int]] = []
+        for cm in CODE_FENCE_RE.finditer(src):
+            boundaries.append((cm.start(), cm.end()))
+        for cm in LINK_RE.finditer(src):
+            boundaries.append((cm.start(), cm.end()))
+        for cm in LINK_WIKI.finditer(src):
+            boundaries.append((cm.start(), cm.end()))
+        boundaries.sort()
+        # Merge overlaps so we don't re-process spliced regions.
+        merged: List[Tuple[int, int]] = []
+        for s, e in boundaries:
+            if merged and s <= merged[-1][1]:
+                merged[-1] = (merged[-1][0], max(merged[-1][1], e))
+            else:
+                merged.append((s, e))
+
+        out: List[str] = []
+        cursor = 0
+        for s, e in merged:
+            if cursor < s:
+                out.append(rewrite_prose_chunk(src[cursor:s]))
+            out.append(src[s:e])
+            cursor = e
+        if cursor < len(src):
+            out.append(rewrite_prose_chunk(src[cursor:]))
+        return ''.join(out)
 
     for f in files:
         src = f.read_text(encoding="utf-8")
@@ -894,10 +1141,17 @@ def main():
                 snippet = cleaned_src[max(0, s-40):min(len(cleaned_src), e+40)]
                 record_prose(snippet, bname, new_basename, mk, mv)
 
-            # (c) tokenized derivative e.g. `Restore Git` -> `Restore Repos`
-            if words:
-                pattern = r"\b" + r"\s+".join(re.escape(w) for w in words) + r"\b"
-                new_stem = Path(mv).stem
+            # (c) tokenized derivative e.g. `Restore Git` -> `Restore Repos`.
+            # Skip when the stem is unchanged (identity in the derivative)
+            # so we never trigger a spurious case rewrite. For single-word
+            # stems, tighten the boundary so we don't match inside filenames
+            # like `bootstrap.sh` or `bootstrap-cheatsheet.md`.
+            new_stem = Path(mv).stem
+            if words and stem.lower() != new_stem.lower():
+                if len(words) == 1:
+                    pattern = r"(?<![\w./\-])" + re.escape(words[0]) + r"(?![\w./\-])"
+                else:
+                    pattern = r"\b" + r"\s+".join(re.escape(w) for w in words) + r"\b"
                 for it in re.finditer(pattern, cleaned_src, flags=re.IGNORECASE):
                     s, e = it.span()
                     snippet = cleaned_src[max(0, s-40):min(len(cleaned_src), e+40)]
@@ -974,8 +1228,9 @@ def main():
                     snippet = cleaned_src[max(0, s-40):min(len(cleaned_src), e+40)]
                     record_prose(snippet, orig_tok, new_tok, orig_tok, new_tok, allow_code=True)
 
-        # Build the unified diff for --patch/--diffs output using inline link replacements.
-        new_text, _replacements = replace_links_in_text(src, mapping, f, repo_root)
+        # Build the unified diff for --patch/--diffs output using the full
+        # apply pipeline so every category the report describes is included.
+        new_text = build_updated_text(src, f)
         diff_text = unified_diff(src, new_text, f)
         has_findings = bool(
             renamed_by_file.get(fkey)
@@ -1064,21 +1319,32 @@ def main():
                     .replace('|', '&#124;'))
         return f"<code>{text}</code>"
 
-    def bold_cell(snippet: str, token: str) -> str:
+    def bold_cell(snippet: str, tokens) -> str:
         """Render a prose snippet inside a Markdown table cell. HTML-escapes
         every markdown-active character (``|``, ``[``, ``]``, ``` ` ```,
         ``*``, ``<``, ``>``) so the cell renders as literal text, then wraps
-        the first case-insensitive occurrence of ``token`` in ``<strong>``.
+        the first case-insensitive occurrence of each token in ``tokens``
+        with ``<strong>``. ``tokens`` may be a single string or a list of
+        strings; each unique token is bolded once (first occurrence).
         """
         snippet = snippet.replace('\n', ' ').strip()
         # Also drop tree drawing characters that leak in from adjacent
         # fenced or blockquoted trees — they were meant to be stripped upstream.
         snippet = re.sub(r'[├└│─]+', ' ', snippet)
         snippet = re.sub(r'\s+', ' ', snippet)
-        if len(snippet) > 140:
-            snippet = snippet[:139] + '…'
+        if len(snippet) > 200:
+            snippet = snippet[:199] + '…'
         marker_open, marker_close = '\x00OPEN\x00', '\x00CLOSE\x00'
-        if token:
+        if isinstance(tokens, str):
+            token_list = [tokens] if tokens else []
+        else:
+            token_list = [t for t in tokens if t]
+        # Bold longest first so a short token can't gobble part of a longer one.
+        seen: set = set()
+        for token in sorted(token_list, key=len, reverse=True):
+            if not token or token in seen:
+                continue
+            seen.add(token)
             snippet = re.sub(re.escape(token),
                              lambda m: f"{marker_open}{m.group(0)}{marker_close}",
                              snippet, count=1, flags=re.IGNORECASE)
@@ -1137,10 +1403,15 @@ def main():
             w("|---|---|---|")
             for entry in per_file[ref_file]:
                 before_after = f"{entry['mk']} -> {entry['mv']}"
-                current_col = bold_cell(str(entry['current_prose']),
-                                        str(entry.get('orig_token', '')))
-                new_col = bold_cell(str(entry['new_prose']),
-                                    str(entry.get('new_token', '')))
+                # Recompute new_prose across ALL mappings (repo + external)
+                # so a row's Current/New cells reflect every change touching
+                # the same context, not just the mapping that recorded the row.
+                orig_snippet = str(entry['current_prose'])
+                final_new, changes = rewrite_prose_capture(orig_snippet)
+                orig_tokens = [c[0] for c in changes] or [str(entry.get('orig_token', ''))]
+                new_tokens = [c[1] for c in changes] or [str(entry.get('new_token', ''))]
+                current_col = bold_cell(orig_snippet, orig_tokens)
+                new_col = bold_cell(final_new, new_tokens)
                 w(f"| {before_after} | {current_col} | {new_col} |")
         w()
 
