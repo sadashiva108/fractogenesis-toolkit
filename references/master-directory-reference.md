@@ -2,27 +2,31 @@
 
 # Master Directory Reference
 
-**Last Updated:** 2026-07-07
+**Last Updated:** 2026-07-19
 
 This is the consolidated `$REIMAGE_ARTIFACT_ROOT` directory map for the Mac reimage workflow.
 
 It combines the currently documented backup, capture, validation, and post-image artifact locations from:
 
-- `backup-file-reference.md`
 - `backup-apps.md`
+- `backup-file-reference.md`
+- `backup-home.md`
 - `backup-intellij.md`
+- `backup-repos.md`
+- `capture-initial-reimaged-system.md`
+- `capture-managed-inventory.md`
+- `capture-office-stability-audit.md`
+- `capture-performance-audit.md`
+- `capture-system-inventory.md`
+- `capture-validated-reimaged-system.md`
+- `capture-workflow-snapshot.md`
+- `enroll-and-stabilize.md`
+- `prepare-artifact-root.md`
 - `reimage-prep-evidence.md`
 - `reimaged-system-evidence.md`
-- `capture-workflow-snapshot.md`
-- `capture-system-inventory.md`
-- `capture-managed-inventory.md`
-- `capture-performance-audit.md`
-- `capture-office-stability-audit.md`
-- `enroll-and-stabilize.md`
-- `capture-initial-reimaged-system.md`
-- `capture-validated-reimaged-system.md`
-- `restore-intellij.md`
 - `restore-apps.md`
+- `restore-intellij.md`
+- `stage-cert-keychain.md`
 
 Use this file when you want one place to see the intended artifact layout without jumping between multiple phase guides.
 
@@ -41,24 +45,30 @@ Use this file when you want one place to see the intended artifact layout withou
 
 ## Master Root Layout
 
+This tree shows the full superset of top-level directories that can appear
+under `$REIMAGE_ARTIFACT_ROOT` across every phase in the workflow, including
+situational phases that only apply for certain reimage reasons (such as a
+performance or Office-stability symptom). A given reimage run may populate
+some or all of them, depending on which situational phases apply. Child
+directories are omitted here and shown instead in each directory's own
+collapsible section below, consistent with every other top-level entry in
+this reference.
+
 ```text
 $REIMAGE_ARTIFACT_ROOT/
 ├── app-settings-backup/
-├── reimage-prep-checks/
-├── repo-audit-reports/
 ├── gitignore-superset/
 ├── home-files-backup/
 ├── managed-inventory/
 ├── office-stability/
 ├── performance-audit/
-├── reimaged-system/
 ├── public-certs/
 ├── reimage-confirmation/
+├── reimage-prep-checks/
+├── reimaged-system/
+├── repo-audit-reports/
 ├── secrets-encrypted/
 ├── staged-ignored-files/
-│   ├── live/
-│   ├── dryrun/
-│   └── dryrun-filtered/
 ├── system-inventory/
 ├── time-machine/
 └── workflow-snapshot/
@@ -129,6 +139,23 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 >         └── snippets/
 > ```
 
+> [!example]- `$REIMAGE_ARTIFACT_ROOT/gitignore-superset/`
+> ```text
+> $REIMAGE_ARTIFACT_ROOT/gitignore-superset/
+> ├── summary.txt
+> ├── gitignore-files.tsv
+> ├── gitignore-files-review.txt
+> ├── gitignore-concatenated-with-sources.txt
+> ├── gitignore-patterns-all.tsv
+> ├── gitignore-patterns-all-review.txt
+> ├── gitignore-patterns-superset.txt
+> ├── gitignore-patterns-superset-with-counts.tsv
+> ├── gitignore-pattern-sources.tsv
+> ├── gitignore-pattern-sources-review.txt
+> ├── gitignore-review-template.txt
+> └── backup-exclude-list.txt
+> ```
+
 > [!example]- `$REIMAGE_ARTIFACT_ROOT/home-files-backup/`
 > ```text
 > $REIMAGE_ARTIFACT_ROOT/home-files-backup/
@@ -166,67 +193,6 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 > └── MANIFEST.md
 > ```
 
-> [!example]- `$REIMAGE_ARTIFACT_ROOT/workflow-snapshot/`
-> ```text
-> $REIMAGE_ARTIFACT_ROOT/workflow-snapshot/
-> ├── README.md
-> ├── reimage-workflow-docs/
-> │   ├── *.md
-> │   └── templates/
-> ├── latest-pre-image-workflow-snapshot.txt
-> ├── latest-pre-image-workflow-snapshot -> pre-image-workflow-snapshot-YYYYMMDD-HHMMSS
-> └── pre-image-workflow-snapshot-YYYYMMDD-HHMMSS/
->     ├── README.md
->     └── logs/
->         └── latest-aliases.txt
-> ```
-
-> [!example]- `$REIMAGE_ARTIFACT_ROOT/system-inventory/`
-> ```text
-> $REIMAGE_ARTIFACT_ROOT/system-inventory/
-> ├── version-inventory.txt
-> ├── pre-image-YYYYMMDD-HHMMSS/
-> │   ├── MANIFEST.txt
-> │   ├── Brewfile
-> │   ├── dotfiles/
-> │   ├── 01-hardware.txt
-> │   ├── 02-macos.txt
-> │   ├── 03-disk.txt
-> │   ├── 04-display.txt
-> │   ├── 05-apps.txt
-> │   ├── 06-homebrew.txt
-> │   ├── 07-shell.txt
-> │   ├── 08-git.txt
-> │   ├── 09-python.txt
-> │   ├── 10-java.txt
-> │   ├── 11-node.txt
-> │   ├── 12-docker.txt
-> │   ├── 13-network.txt
-> │   ├── 14-cloud.txt
-> │   ├── 15-env.txt
-> │   └── 16-certs.txt
-> └── post-image-YYYYMMDD-HHMMSS/
->     ├── MANIFEST.txt
->     ├── Brewfile
->     ├── dotfiles/
->     ├── 01-hardware.txt
->     ├── 02-macos.txt
->     ├── 03-disk.txt
->     ├── 04-display.txt
->     ├── 05-apps.txt
->     ├── 06-homebrew.txt
->     ├── 07-shell.txt
->     ├── 08-git.txt
->     ├── 09-python.txt
->     ├── 10-java.txt
->     ├── 11-node.txt
->     ├── 12-docker.txt
->     ├── 13-network.txt
->     ├── 14-cloud.txt
->     ├── 15-env.txt
->     └── 16-certs.txt
-> ```
-
 > [!example]- `$REIMAGE_ARTIFACT_ROOT/managed-inventory/`
 > ```text
 > $REIMAGE_ARTIFACT_ROOT/managed-inventory/
@@ -248,35 +214,6 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 >     ├── 06-managed-preference-payloads.txt
 >     ├── 07-gaig-filter-pass.txt
 >     └── MANIFEST.txt
-> ```
-
-> [!example]- `$REIMAGE_ARTIFACT_ROOT/performance-audit/`
-> ```text
-> $REIMAGE_ARTIFACT_ROOT/performance-audit/
-> ├── pre-image-performance-audit-clean-boot-YYYYMMDD-HHMMSS/
-> ├── pre-image-performance-audit-normal-workload-YYYYMMDD-HHMMSS/
-> ├── pre-image-performance-audit-active-dev-YYYYMMDD-HHMMSS/
-> ├── post-image-performance-audit-clean-boot-YYYYMMDD-HHMMSS/
-> ├── post-image-performance-audit-normal-workload-YYYYMMDD-HHMMSS/
-> ├── post-image-performance-audit-active-dev-YYYYMMDD-HHMMSS/
-> ├── rollup-summary/
-> │   └── <phase>-YYYYMMDD-HHMMSS/
-> │       ├── performance-rollup-summary.md
-> │       └── summary/
-> └── <phase>-performance-audit-<scenario>-YYYYMMDD-HHMMSS/
->     ├── README.md
->     ├── manifest.txt
->     ├── manual-observations.md
->     ├── workload-reproduction-config.md
->     ├── docker/
->     ├── intellij/
->     ├── logs/
->     ├── mac-memory-health-output/
->     ├── memory/
->     ├── processes/
->     ├── raw/
->     ├── responsiveness/
->     └── system/
 > ```
 
 > [!example]- `$REIMAGE_ARTIFACT_ROOT/office-stability/`
@@ -324,6 +261,50 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 >         └── ...
 > ```
 
+> [!example]- `$REIMAGE_ARTIFACT_ROOT/performance-audit/`
+> ```text
+> $REIMAGE_ARTIFACT_ROOT/performance-audit/
+> ├── pre-image-performance-audit-clean-boot-YYYYMMDD-HHMMSS/
+> ├── pre-image-performance-audit-normal-workload-YYYYMMDD-HHMMSS/
+> ├── pre-image-performance-audit-active-dev-YYYYMMDD-HHMMSS/
+> ├── post-image-performance-audit-clean-boot-YYYYMMDD-HHMMSS/
+> ├── post-image-performance-audit-normal-workload-YYYYMMDD-HHMMSS/
+> ├── post-image-performance-audit-active-dev-YYYYMMDD-HHMMSS/
+> ├── rollup-summary/
+> │   └── <phase>-YYYYMMDD-HHMMSS/
+> │       ├── performance-rollup-summary.md
+> │       └── summary/
+> └── <phase>-performance-audit-<scenario>-YYYYMMDD-HHMMSS/
+>     ├── README.md
+>     ├── manifest.txt
+>     ├── manual-observations.md
+>     ├── workload-reproduction-config.md
+>     ├── docker/
+>     ├── intellij/
+>     ├── logs/
+>     ├── mac-memory-health-output/
+>     ├── memory/
+>     ├── processes/
+>     ├── raw/
+>     ├── responsiveness/
+>     └── system/
+> ```
+
+> [!example]- `$REIMAGE_ARTIFACT_ROOT/public-certs/`
+> ```text
+> $REIMAGE_ARTIFACT_ROOT/public-certs/
+> └── certs/
+>     ├── README.md
+>     ├── keychain-cert-export-inventory-YYYYMMDD-HHMMSS.md
+>     └── *.cer / *.pem                          # optional public-only convenience copies
+> ```
+
+> [!example]- `$REIMAGE_ARTIFACT_ROOT/reimage-confirmation/`
+> ```text
+> $REIMAGE_ARTIFACT_ROOT/reimage-confirmation/
+> └── it-reimage-confirmation-YYYYMMDD.md
+> ```
+
 > [!example]- `$REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/`
 > ```text
 > $REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/
@@ -331,47 +312,6 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 > ├── latest-reimage-checklist.txt
 > └── manual/
 >     └── manual-app-export-and-sync-signoff-YYYYMMDD.md
-> ```
-
-
-> [!example]- `$REIMAGE_ARTIFACT_ROOT/time-machine/`
-> ```text
-> $REIMAGE_ARTIFACT_ROOT/time-machine/
-> ├── completion-check-YYYYMMDD-HHMMSS.md
-> ├── final-time-machine-checklist-YYYYMMDD-HHMMSS.md
-> ├── compare-YYYYMMDD-HHMMSS.txt
-> ├── logs-YYYYMMDD-HHMMSS.txt
-> ├── verifychecksums-YYYYMMDD-HHMMSS.txt
-> ├── diskutil-verifyvolume-applebackups-YYYYMMDD-HHMMSS.txt
-> ├── diagnose-YYYYMMDD-HHMMSS.txt
-> └── pre-image-time-machine-status-YYYYMMDD-HHMMSS/
->     ├── README.md
->     ├── time-machine-pre-run.md
->     ├── time-machine-status.md
->     └── raw/
->         ├── backup-root-spot-check.txt
->         ├── cloud-sync-process-hints.txt
->         ├── diskutil-applebackups.txt
->         ├── diskutil-applebackups-snapshots.txt
->         ├── diskutil-verifyvolume-applebackups.txt
->         ├── diskutil-data.txt
->         ├── tmutil-currentphase.txt
->         ├── tmutil-destinationinfo.txt
->         ├── tmutil-isexcluded-applebackups.txt
->         ├── tmutil-isexcluded-data.txt
->         ├── tmutil-latestbackup-targeted-applebackups.txt
->         ├── tmutil-latestbackup.txt
->         ├── tmutil-listbackups-targeted-applebackups.txt
->         ├── tmutil-listbackups.txt
->         ├── tmutil-status.txt
->         └── volumes.txt
-> ```
->
-> Script ownership:
->
-> ```text
-> scripts/backup-time-machine.sh   runtime operations: start, monitor, complete, logs, compare, verify, mount/unmount, diagnose, eject
-> scripts/capture-time-machine.sh  read-only captures: pre-run bundle, verify-volume, final checklist
 > ```
 
 > [!example]- `$REIMAGE_ARTIFACT_ROOT/reimaged-system/`
@@ -435,6 +375,24 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 > └── time-machine/
 > ```
 
+> [!example]- `$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/`
+> ```text
+> $REIMAGE_ARTIFACT_ROOT/repo-audit-reports/
+> ├── MANIFEST.md
+> ├── latest-run.txt
+> └── runs/
+>     ├── pre-image-YYYYMMDD-HHMMSS/
+>     │   ├── repo-audit-summary.txt
+>     │   ├── repos.tsv
+>     │   ├── tracked-changes.tsv
+>     │   ├── local-only-commits.tsv
+>     │   ├── stashes.tsv
+>     │   ├── untracked-nonignored.tsv
+>     │   └── ignored-files.tsv
+>     └── post-image-YYYYMMDD-HHMMSS/
+>         └── ...
+> ```
+
 > [!example]- `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/`
 > ```text
 > $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/
@@ -479,14 +437,128 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 > └── ssh/
 > ```
 
-> [!example]- `$REIMAGE_ARTIFACT_ROOT/public-certs/`
+> [!example]- `$REIMAGE_ARTIFACT_ROOT/staged-ignored-files/`
 > ```text
-> $REIMAGE_ARTIFACT_ROOT/public-certs/
-> └── certs/
->     ├── README.md
->     ├── keychain-cert-export-inventory-YYYYMMDD-HHMMSS.md
->     └── *.cer / *.pem                          # optional public-only convenience copies
+> $REIMAGE_ARTIFACT_ROOT/staged-ignored-files/
+> ├── dryrun/
+> │   ├── summary.txt
+> │   ├── candidates.tsv
+> │   └── excluded.tsv
+> ├── dryrun-filtered/
+> │   ├── summary.txt
+> │   ├── candidates.tsv
+> │   └── excluded.tsv
+> └── live/
+>     ├── summary.txt
+>     ├── candidates.tsv
+>     ├── excluded.tsv
+>     ├── copied.tsv
+>     ├── copy-failed.tsv
+>     └── <repo-label>/
+>         └── <relative-path-within-repo>
 > ```
+
+> [!example]- `$REIMAGE_ARTIFACT_ROOT/system-inventory/`
+> ```text
+> $REIMAGE_ARTIFACT_ROOT/system-inventory/
+> ├── version-inventory.txt
+> ├── pre-image-YYYYMMDD-HHMMSS/
+> │   ├── MANIFEST.txt
+> │   ├── Brewfile
+> │   ├── dotfiles/
+> │   ├── 01-hardware.txt
+> │   ├── 02-macos.txt
+> │   ├── 03-disk.txt
+> │   ├── 04-display.txt
+> │   ├── 05-apps.txt
+> │   ├── 06-homebrew.txt
+> │   ├── 07-shell.txt
+> │   ├── 08-git.txt
+> │   ├── 09-python.txt
+> │   ├── 10-java.txt
+> │   ├── 11-node.txt
+> │   ├── 12-docker.txt
+> │   ├── 13-network.txt
+> │   ├── 14-cloud.txt
+> │   ├── 15-env.txt
+> │   └── 16-certs.txt
+> └── post-image-YYYYMMDD-HHMMSS/
+>     ├── MANIFEST.txt
+>     ├── Brewfile
+>     ├── dotfiles/
+>     ├── 01-hardware.txt
+>     ├── 02-macos.txt
+>     ├── 03-disk.txt
+>     ├── 04-display.txt
+>     ├── 05-apps.txt
+>     ├── 06-homebrew.txt
+>     ├── 07-shell.txt
+>     ├── 08-git.txt
+>     ├── 09-python.txt
+>     ├── 10-java.txt
+>     ├── 11-node.txt
+>     ├── 12-docker.txt
+>     ├── 13-network.txt
+>     ├── 14-cloud.txt
+>     ├── 15-env.txt
+>     └── 16-certs.txt
+> ```
+
+> [!example]- `$REIMAGE_ARTIFACT_ROOT/time-machine/`
+> ```text
+> $REIMAGE_ARTIFACT_ROOT/time-machine/
+> ├── completion-check-YYYYMMDD-HHMMSS.md
+> ├── final-time-machine-checklist-YYYYMMDD-HHMMSS.md
+> ├── compare-YYYYMMDD-HHMMSS.txt
+> ├── logs-YYYYMMDD-HHMMSS.txt
+> ├── verifychecksums-YYYYMMDD-HHMMSS.txt
+> ├── diskutil-verifyvolume-applebackups-YYYYMMDD-HHMMSS.txt
+> ├── diagnose-YYYYMMDD-HHMMSS.txt
+> └── pre-image-time-machine-status-YYYYMMDD-HHMMSS/
+>     ├── README.md
+>     ├── time-machine-pre-run.md
+>     ├── time-machine-status.md
+>     └── raw/
+>         ├── backup-root-spot-check.txt
+>         ├── cloud-sync-process-hints.txt
+>         ├── diskutil-applebackups.txt
+>         ├── diskutil-applebackups-snapshots.txt
+>         ├── diskutil-verifyvolume-applebackups.txt
+>         ├── diskutil-data.txt
+>         ├── tmutil-currentphase.txt
+>         ├── tmutil-destinationinfo.txt
+>         ├── tmutil-isexcluded-applebackups.txt
+>         ├── tmutil-isexcluded-data.txt
+>         ├── tmutil-latestbackup-targeted-applebackups.txt
+>         ├── tmutil-latestbackup.txt
+>         ├── tmutil-listbackups-targeted-applebackups.txt
+>         ├── tmutil-listbackups.txt
+>         ├── tmutil-status.txt
+>         └── volumes.txt
+> ```
+>
+> Script ownership:
+>
+> ```text
+> scripts/backup-time-machine.sh   runtime operations: start, monitor, complete, logs, compare, verify, mount/unmount, diagnose, eject
+> scripts/capture-time-machine.sh  read-only captures: pre-run bundle, verify-volume, final checklist
+> ```
+
+> [!example]- `$REIMAGE_ARTIFACT_ROOT/workflow-snapshot/`
+> ```text
+> $REIMAGE_ARTIFACT_ROOT/workflow-snapshot/
+> ├── README.md
+> ├── reimage-workflow-docs/
+> │   ├── *.md
+> │   └── templates/
+> ├── latest-pre-image-workflow-snapshot.txt
+> ├── latest-pre-image-workflow-snapshot -> pre-image-workflow-snapshot-YYYYMMDD-HHMMSS
+> └── pre-image-workflow-snapshot-YYYYMMDD-HHMMSS/
+>     ├── README.md
+>     └── logs/
+>         └── latest-aliases.txt
+> ```
+
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 

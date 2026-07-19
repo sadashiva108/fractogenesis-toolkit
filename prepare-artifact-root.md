@@ -87,20 +87,27 @@ redacted restore notes
 
 Top-level directories created under `$REIMAGE_ARTIFACT_ROOT` by [[#Create the Standard Directory Layout|Create the Standard Directory Layout]]:
 
+These are the standard top-level folders this phase creates — the ones
+needed on every reimage run, regardless of symptoms or which situational
+phases apply. Folders tied to a situational capture, such as a performance
+or Office-stability symptom, are created later by that phase's own script
+when it actually runs, not here. See `master-directory-reference.md` for
+the complete superset.
+
 ```text
 $REIMAGE_ARTIFACT_ROOT/
 ├── app-settings-backup/
 ├── gitignore-superset/
 ├── home-files-backup/
+├── managed-inventory/
+├── public-certs/
 ├── reimage-confirmation/
 ├── reimage-prep-checks/
 ├── reimaged-system/
 ├── repo-audit-reports/
 ├── secrets-encrypted/
 ├── staged-ignored-files/
-│   ├── live/
-│   ├── dryrun/
-│   └── dryrun-filtered/
+├── system-inventory/
 ├── time-machine/
 └── workflow-snapshot/
 ```
@@ -1133,12 +1140,14 @@ Current expected top-level folders from `artifact-config.sh`:
 
 ```text
 app-settings-backup
-reimage-prep-checks
-repo-audit-reports
 gitignore-superset
 home-files-backup
-reimaged-system
+managed-inventory
+public-certs
 reimage-confirmation
+reimage-prep-checks
+reimaged-system
+repo-audit-reports
 secrets-encrypted
 staged-ignored-files
 time-machine
@@ -1224,17 +1233,17 @@ Layout after this step, top-level directories only:
 ```text
 $REIMAGE_ARTIFACT_ROOT/
 ├── app-settings-backup/
-├── reimage-prep-checks/
-├── repo-audit-reports/
 ├── gitignore-superset/
 ├── home-files-backup/
-├── reimaged-system/
+├── managed-inventory/
+├── public-certs/
 ├── reimage-confirmation/
+├── reimage-prep-checks/
+├── reimaged-system/
+├── repo-audit-reports/
 ├── secrets-encrypted/
 ├── staged-ignored-files/
-│   ├── live/
-│   ├── dryrun/
-│   └── dryrun-filtered/
+├── system-inventory/
 ├── time-machine/
 └── workflow-snapshot/
 ```
@@ -1243,22 +1252,22 @@ For child-directory details, use the guide that owns that workflow. For example,
 
 Folder purpose:
 
-| Folder                                    | Purpose                                                                                                                                                                                                                                 |
-|-------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `app-settings-backup/`                            | App-specific exported settings, inventories, notes, and app-owned restore artifacts such as Chrome bookmarks, Docker settings, Postman exports, Raycast exports, Obsidian copies, VS Code fallback state, and IntelliJ backup material. |
-| `reimage-prep-checks/`                    | Final reimage preparation checks go/no-go checklist reports.                                                                                                                                                                            |
-| `repo-audit-reports/`                     | Repository state reports; not a full source backup.                                                                                                                                                                                            |
-| `gitignore-superset/`                     | Reviewable superset of ignored patterns across repos.                                                                                                                                                                                   |
-| `home-files-backup/`                            | Home folders, dotfiles, and selected local files copied by `backup-home-files-backup.sh`.                                                                                                                                                     |
-| `reimaged-system/`                        | Initial enrollment captures and checks, reimaged system evidence, restart notes, restore notes, Time Machine notes, and final validation artifacts.                                                                                     |
-| `reimage-confirmation/`                           | Filled copy of the Phase 0 IT reimage confirmation kept with the external backup root from the start of the reimage effort.                                                                                                             |
-| `secrets-encrypted/`                      | Top-level container for the secrets workflow. Nested secret staging folders, final DMG artifacts, Java inventory, certificate review reports, and restore README are created later by the owning secrets steps.                         |
-| `staged-ignored-files/live/`                 | Final selected ignored/local file copies needed for restore.                                                                                                                                                                            |
-| `staged-ignored-files/dryrun/`          | Initial dry-run output for selected ignored/local file backups.                                                                                                                                                                         |
-| `staged-ignored-files/dryrun-filtered/` | Filtered dry-run output after exclusions are applied.                                                                                                                                                                                   |
-| `time-machine/`                           | Time Machine status capture bundles only. Actual Time Machine backups live on the Time Machine volume.                                                                                                                                  |
-| `workflow-snapshot/`                      | Workflow snapshot captures and workflow documentation snapshots, created by `capture-workflow-snapshot.md`/`bin/capture-workflow-snapshot.sh`, not by this preparation guide.                                                            |
-
+| Folder                     | Purpose                                                                                                                                                                                                                                   |
+|-----------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `app-settings-backup/`      | App-specific exported settings, inventories, notes, and app-owned restore artifacts such as Chrome bookmarks, Docker settings, Postman exports, Raycast exports, Obsidian copies, VS Code fallback state, and IntelliJ backup material.    |
+| `gitignore-superset/`       | Reviewable superset of ignored patterns across repos.                                                                                                                                                                                        |
+| `home-files-backup/`        | Home folders, dotfiles, and selected local files copied by `backup-home.sh`.                                                                                                                                                                 |
+| `managed-inventory/`        | Company-managed component inventory before erase — MDM/Intune enrollment status, installed profiles, managed app bundles and package receipts, background managed services, and managed preference payloads.                              |
+| `public-certs/`             | Non-secret certificate material — sanitized notes, inventories, decision logs, and public-only convenience certificate copies. Secret-bearing or uncertain certificate material goes under `secrets-encrypted/certs/` instead.              |
+| `reimage-confirmation/`     | Filled copy of the Phase 0 IT reimage confirmation kept with the external backup root from the start of the reimage effort.                                                                                                                 |
+| `reimage-prep-checks/`      | Final reimage preparation checks go/no-go checklist reports.                                                                                                                                                                                 |
+| `reimaged-system/`          | Initial enrollment captures and checks, reimaged system evidence, restart notes, restore notes, Time Machine notes, and final validation artifacts.                                                                                         |
+| `repo-audit-reports/`       | Repository state reports; not a full source backup.                                                                                                                                                                                          |
+| `secrets-encrypted/`        | Top-level container for the secrets workflow. Nested secret staging folders, final DMG artifacts, Java inventory, certificate review reports, and restore README are created later by the owning secrets steps.                            |
+| `staged-ignored-files/`     | Ignored/local file staging output from the Git-repo backup selected-pattern workflow — dry run, filtered dry run, and final live copies.                                                                                                    |
+| `system-inventory/`         | Developer-tool version and workstation inventory captured before erase, to speed up rebuilding the environment afterward.                                                                                                                   |
+| `time-machine/`             | Time Machine status capture bundles only. Actual Time Machine backups live on the Time Machine volume.                                                                                                                                       |
+| `workflow-snapshot/`        | Workflow snapshot captures and workflow documentation snapshots.                                                                                                                                                                              |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 

@@ -42,24 +42,31 @@ Table of contents
 Primary script(s)
 - {{PRIMARY_SCRIPT}}
 
-Related scripts / helpers
+Related scripts / helpers (alphabetical order)
 - {{RELATED_SCRIPTS}}
 
 Primary artifact locations (examples)
 - $REIMAGE_ARTIFACT_ROOT/{{ARTIFACT_PATHS}}
 - Local workspace: $REIMAGE_WORKSPACE_ROOT/
 
-If including a directory tree, show only subdirectories relevant to these steps (short, focused):
+If including a directory tree, show only the top-level directories and
+sub-directories this runbook's steps actually touch, alphabetized at every
+level. Represent the rest of $REIMAGE_ARTIFACT_ROOT with a `...` continuation
+entry immediately before the first shown directory and immediately after the
+last one — signaling that other top-level directories exist without listing
+them (single source of truth stays in prepare-artifact-root.md /
+master-directory-reference.md). Omit the leading `...` only when the first
+shown directory is alphabetically first among all top-level directories;
+omit the trailing `...` only when the last shown directory is alphabetically
+last.
 
 repo (partial)
 ```
-/bin/
-  - {{PRIMARY_SCRIPT | basename }}
-/.internal/
-  - load-reimage-config.sh
-  - artifact-config.sh
-/.github/copilot-templates/
-  - runbook-template.md.tmpl  # this template
+$REIMAGE_ARTIFACT_ROOT/
+├── ...
+├── {{ARTIFACT_DIR}}/
+│   └── ...
+└── ...
 ```
 
 ---

@@ -45,6 +45,14 @@ Filling rules and constraints
 - If adding a directory tree, include only subdirectories relevant to the runbook steps.
 - Use the RUNBOOK_SHORT_DESC to craft a 1–3 sentence Purpose section.
 - Populate "Artifact and Script Locations" with PRIMARY_SCRIPT, RELATED_SCRIPTS, and ARTIFACT_PATHS.
+- List PRIMARY_SCRIPTS, RELATED_SCRIPTS, and any other enumerated runbook or script references in alphabetical order.
+- If adding a directory tree, include only subdirectories relevant to the
+  runbook steps, sorted alphabetically at every level. Represent omitted
+  siblings with a single `...` entry immediately before the first included
+  entry and immediately after the last — except omit the leading `...` when
+  the first included entry is alphabetically first among the root's
+  top-level directories, and omit the trailing `...` when the last included
+  entry is alphabetically last.
 - Support migrations where the source runbook's title or script names differ: include a "Renaming considerations" bullet that documents the proposed name change and reason.
 - If multiple scripts exist, classify each as "entrypoint", "helper", or "deprecated/throwaway" in Artifact and Script Locations.
 
@@ -61,6 +69,17 @@ Sequential Steps guidance
 TOC and anchors
 - Generate the TOC and ensure all anchors link to existing headings. Add a small "TOC verification" instruction in the runbook footer that lists the check performed.
 
+Cross-reference master-directory-reference.md
+- After finalizing this runbook's "Artifact and Script Locations" tree,
+  compare each directory it touches against master-directory-reference.md's
+  Master Root Layout and Collapsible Directory Sections.
+- Add a new collapsible section if the directory is missing there.
+- Update the existing collapsible if its contents diverge from what this
+  runbook's tree now shows.
+- Rename the collapsible's heading and Master Root Layout entry if the
+  directory name changed during migration.
+- Keep collapsible contents alphabetized, consistent with the rule above.
+
 Renaming and file placement rules
 - Suggest a canonical new filename using verb-first naming. Provide one recommended filename and up to two alternates.
 - If rename_suggestion provided, include the old path and the new path in a short changelog note at the top of the generated runbook.
@@ -74,6 +93,7 @@ Validation checklist (run after generating the filled runbook)
 - [ ] No absolute personal paths or secrets introduced.
 - [ ] Commands shown are syntactically valid and minimal.
 - [ ] Renaming suggestions documented if applied.
+- [ ] master-directory-reference.md checked against this runbook's tree; added, updated, or renamed as needed.
 
 Formatting and style
 - Headline: use verb-first title pattern when practical; if source title deviates, include a short rationale for preserving it.

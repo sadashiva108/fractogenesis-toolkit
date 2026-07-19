@@ -90,15 +90,52 @@ Git backup artifacts are part of the standard shared generated-artifact layout:
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/
+├── ...
+├── gitignore-superset/
+│   ├── summary.txt
+│   ├── gitignore-files.tsv
+│   ├── gitignore-files-review.txt
+│   ├── gitignore-concatenated-with-sources.txt
+│   ├── gitignore-patterns-all.tsv
+│   ├── gitignore-patterns-all-review.txt
+│   ├── gitignore-patterns-superset.txt
+│   ├── gitignore-patterns-superset-with-counts.tsv
+│   ├── gitignore-pattern-sources.tsv
+│   ├── gitignore-pattern-sources-review.txt
+│   ├── gitignore-review-template.txt
+│   └── backup-exclude-list.txt
 ├── repo-audit-reports/
 │   ├── MANIFEST.md
 │   ├── latest-run.txt
 │   └── runs/
-├── gitignore-superset/
-└── staged-ignored-files/
-    ├── live/
-    ├── dryrun/
-    └── dryrun-filtered/
+│       ├── pre-image-YYYYMMDD-HHMMSS/
+│       │   ├── repo-audit-summary.txt
+│       │   ├── repos.tsv
+│       │   ├── tracked-changes.tsv
+│       │   ├── local-only-commits.tsv
+│       │   ├── stashes.tsv
+│       │   ├── untracked-nonignored.tsv
+│       │   └── ignored-files.tsv
+│       └── post-image-YYYYMMDD-HHMMSS/
+│           └── ...
+├── staged-ignored-files/
+│   ├── dryrun/
+│   │   ├── summary.txt
+│   │   ├── candidates.tsv
+│   │   └── excluded.tsv
+│   ├── dryrun-filtered/
+│   │   ├── summary.txt
+│   │   ├── candidates.tsv
+│   │   └── excluded.tsv
+│   └── live/
+│       ├── summary.txt
+│       ├── candidates.tsv
+│       ├── excluded.tsv
+│       ├── copied.tsv
+│       ├── copy-failed.tsv
+│       └── <repo-label>/
+│           └── <relative-path-within-repo>
+└── ...
 ```
 
 These directories are created by Phase 1 (`prepare-artifact-root.sh` / `prepare-artifact-root.md`) as part of the standard artifact-root layout -- this runbook does not create them. `bin/backup-repos.sh` checks for all five on startup and exits with an error pointing back to Phase 1 if any are missing, rather than silently creating them. If you see that error, either run the Phase 1 step first or confirm `REIMAGE_ARTIFACT_ROOT` points at the right location.
@@ -903,4 +940,3 @@ column -s $'\t' -t \
 Do not save the padded `column` output back over the TSV file.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
-
