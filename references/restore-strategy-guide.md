@@ -30,7 +30,7 @@ This document supports `reimaging-guide.md` by keeping the bootstrap problem —
 
 ## Purpose
 
-Once the Mac is wiped, more than just your data is gone — Obsidian, the vault checkout, and Git/SSH access all disappear too. Phase 6 onward assumes you can read `reimaging-guide.md` and follow linked runbooks. This guide covers how that's actually possible with nothing restored yet, and why the answer is different depending on which repo you mean.
+Once the Mac is wiped, more than just your data is gone — Obsidian, the repository cloning, and Git/SSH access all disappear too. Phase 6 onward assumes you can read `reimaging-guide.md` and follow linked runbooks. This guide covers how that's actually possible with nothing restored yet, and why the answer is different depending on which repo you mean.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -48,7 +48,7 @@ Requires: reading restore-git.md
 Requires: workflow docs cloned locally  <- circular
 ```
 
-That circularity is exactly why the reimage workflow was split out of `reference-vault` into its own repo, `fractogenesis-toolkit` — see the repo README's "Why a Separate Repo" section. Splitting the repo didn't just relocate the problem, it structurally broke the cycle for the docs and scripts that matter most in the early post-erase window.
+That circularity is exactly why the reimage workflow was moved into toolkit shaped repository named `fractogenesis-toolkit` rather than maintained in `reference-vault` repository — see the repo README's "Why a Separate Repo" section. Splitting the repo didn't just relocate the problem, it structurally broke the cycle for the docs and scripts that matter most in the early post-erase window.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 

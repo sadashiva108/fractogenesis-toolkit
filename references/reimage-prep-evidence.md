@@ -1,4 +1,4 @@
-[← Back to Mac Reimaging Guide](../reimaging-guide.md)
+[[reimaging-guide#Phase 3 — Pre-Image Captures|← Back to Mac Reimaging Guide]]
 
 # Reimage Preparation Captures and Checklists Evidence
 

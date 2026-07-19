@@ -111,14 +111,14 @@ $REIMAGE_ARTIFACT_ROOT/
 ├── time-machine/
 └── workflow-snapshot/
 ```
-
-See [[#Create the Standard Directory Layout|Create the Standard Directory Layout]] for the full tree with per-folder descriptions.
+See [Master Directory Reference](./references/master-directory-reference.md) for the full tree with per-folder descriptions.
 
 Script locations:
 
 ```text
-$FRACTOGENESIS_HOME/bin/         # entrypoints — run directly
-$FRACTOGENESIS_HOME/.internal/   # sourced-only helpers, never run directly
+$FRACTOGENESIS_HOME/bin/                      # entrypoints — run directly
+$FRACTOGENESIS_HOME/bin/setup-reimage-env.sh
+$FRACTOGENESIS_HOME/.internal/                # sourced-only helpers, never run directly
 ```
 
 Key files referenced by this guide include:
@@ -158,7 +158,7 @@ Use this sequence:
 | 2 | Choose the external data/artifact volume | Identify the parent volume that will hold manual artifacts -- as a plain export, since `reimage.env` doesn't exist yet. |
 | 3 | Confirm external data volume readiness | Prove the parent external volume is mounted, not read-only, and writable by the current user before creating `$REIMAGE_ARTIFACT_ROOT`. |
 | 4 | Check for an existing `reimage.env` | Catch a leftover file (and any stale shell exports it already loaded) from a previous reimage effort on this Mac, *before* the next step's auto-detect logic can silently reuse a stale value instead of recomputing it. |
-| 5 | Decide the artifact root path | Compute the resolved `$REIMAGE_ARTIFACT_ROOT` path, still as a plain export, following the naming convention read earlier in [[#Artifact Root Naming Convention|Before You Run Anything]]. |
+| 5 | Decide the artifact root path | Compute the resolved `$REIMAGE_ARTIFACT_ROOT` path, still as a plain export. |
 | 6 | Create `reimage.env` | Write the local source of truth, seeded with the already-confirmed volume and artifact-root values -- resolved correctly from the start, no follow-up edit needed. |
 | 7 | Set up direnv | Make `reimage.env` load automatically on `cd` into the repo from here on. |
 | 8 | Load and print the config | Confirm the environment resolves as expected. |
@@ -308,6 +308,8 @@ The actual computation of `$REIMAGE_ARTIFACT_ROOT` from these patterns is an act
 ---
 
 ## Sequential Steps
+
+---
 
 ### Confirm the Repo Is Cloned
 
@@ -537,7 +539,12 @@ If the volume is mounted read-only, jump to [[#External Data Volume Is Read Only
 
 ---
 
-### Check for an Existing reimage.env
+### Setup Reimage Environment
+
+
+---
+
+#### Check for Existing reimage.env
 
 This has to happen now, before [[#Decide the Artifact Root Path|Decide the Artifact Root Path]], not after -- that step's `ASSET_OR_HOST`/`REIMAGE_START_DATE` computation uses an `${VAR:-default}` fallback pattern, which keeps an already-exported value instead of recomputing it, so a stale value already loaded by direnv from a previous session would silently survive with no error. `.envrc` and manual `source` both load whatever `reimage.env` currently exists with no warning about its age, and while `bin/setup-reimage-env.sh` later refuses to run if one already exists, that refusal is easy to misread as a generic error rather than "you already have one."
 

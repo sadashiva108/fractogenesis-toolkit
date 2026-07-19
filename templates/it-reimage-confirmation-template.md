@@ -1,3 +1,5 @@
+[[reimaging-guide#Phase 0 — Confirm the Reimage Plan with IT|← Back to Mac Reimaging Guide]]
+
 # IT Reimage Confirmation Template
 
 Create a working copy of this file outside this repo, for example:

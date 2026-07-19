@@ -110,7 +110,7 @@ Follow **this guide** in order. Then, when you reach a phase that points to anot
 | Backups | Preserve files that must be restored after reimage. | Phase 2 sections, `backup-file-reference.md`, and backup-specific guides. |
 | Validation | Decide whether it is safe to proceed with erase and reimage. | Phase 4B in this guide. |
 
-For the full list of phase guides used in this stage, in the order they are typically reached, see [Backup File Reference — Phase Guide Reference](references/backup-file-reference.md#phase-guide-reference).
+For the full list of phase guides used in this stage, in the order they are typically reached, see [Backup File Reference — Phase Guide Reference](./references/backup-file-reference.md#phase-guide-reference).
 
 ### Reimaging Process
 
@@ -137,7 +137,7 @@ Phase guides used in this stage, in the order they are typically reached:
 | Post-image evidence captures | Capture the post-image comparison evidence for system inventory, optional managed-state verification, performance, and Office stability. | Phase 11 in this guide plus `capture-system-inventory.md`, `capture-managed-inventory.md`, `capture-performance-audit.md`, and `capture-office-stability-audit.md`. |
 | Final validation and late local-file restore | Validate the rebuilt Mac, then restore bulk local files only after the rebuild is already trusted. | Phase 12 and Phase 13 in this guide, `capture-validated-reimaged-system.md`, and `restore-local-files.md`. |
 
-For the full list of phase guides used in this stage, in the order they are typically reached, see [Restore File Reference — Phase Guide Reference](references/restore-file-reference.md#phase-guide-reference).
+For the full list of phase guides used in this stage, in the order they are typically reached, see [Restore File Reference — Phase Guide Reference](./references/restore-file-reference.md#phase-guide-reference).
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -147,7 +147,7 @@ For the full list of phase guides used in this stage, in the order they are typi
 
 Keep the top-level rule simple: do not rely on one backup method, do not store secrets loose in cloud storage, keep active scripts in Git rather than `$REIMAGE_ARTIFACT_ROOT`, avoid deleting managed Office/MDM data unless IT explicitly instructs it, and capture evidence before reopening Outlook or OneNote after unexpected closure.
 
-Full strategy, destination guidance, and safety rules: [Backup Strategy Guide](references/backup-strategy-guide.md).
+Full strategy, destination guidance, and safety rules: [Backup Strategy Guide](./references/backup-strategy-guide.md).
 
 If you plan to collect optional performance evidence for several days or weeks before the actual backup window, start those captures locally under `REIMAGE_WORKSPACE_ROOT` first and copy the finalized artifacts into `$REIMAGE_ARTIFACT_ROOT` later. This avoids missing the evidence window just because the external backup drive is not mounted yet.
 
@@ -157,11 +157,9 @@ If you plan to collect optional performance evidence for several days or weeks b
 
 ## Restore Strategy
 
-The `reference-vault` repo, Obsidian, and Git/SSH access are all gone right after the reimage — but Phase 6 onward assumes you can read this guide and its linked runbooks. This repo is fetchable without any of those (see the README Quickstart) precisely so this dependency doesn't block early restore phases. `reference-vault` itself stays gone until Phase 9 restores Git/SSH properly — nothing before that needs it.
+This repository, Obsidian, and Git/SSH access are all gone right after the reimage — but Phase 6 onward assumes you can read this guide and its linked runbooks. This repo is fetchable without any of those (see the README Quickstart) precisely so this dependency doesn't block early restore phases. The repository can't be cloned until Phase 9 restores Git/SSH properly — nothing before that needs it.
 
-Full strategy — why the two repos need different solutions, and where to keep the `reference-vault` cheat sheet: [Restore Strategy Guide](references/restore-strategy-guide.md).
-
-Standalone cheat sheet for restoring `reference-vault` specifically (not needed for this repo — see above) to copy out to the external drive and OneDrive: [templates/bootstrap-cheatsheet.md](templates/bootstrap-cheatsheet.md).
+The restore strategy has a solution for guide access as well as a backup refer to [Restore Strategy Guide](./references/restore-strategy-guide.md).
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -170,9 +168,9 @@ Standalone cheat sheet for restoring `reference-vault` specifically (not needed 
 
 Captures the IT-approved erase/reinstall method, ownership, timing, wipe expectations, and restore constraints in writing before any backup work starts. Verify the plan with **IT or the department that supports the company-managed asset and specifically the Mac** — ask first if you don't know which team owns that support path.
 
-Primary guide: [templates/it-reimage-confirmation-template.md](templates/it-reimage-confirmation-template.md)
+Template: [IT Reimage Confirmation Template](./templates/it-reimage-confirmation-template.md)
 
-Fill out a working copy of the template in a local workspace outside this repo (`$REIMAGE_WORKSPACE_ROOT/reimage-confirmation/`). Do not copy it into `$REIMAGE_ARTIFACT_ROOT` yet — Phase 1 copies the filled version into `$REIMAGE_ARTIFACT_ROOT/reimage-confirmation/` once the external root exists. See [Prepare Artifact Root](./prepare-artifact-root.md) for `REIMAGE_WORKSPACE_ROOT` setup and the `copy-it-plan` command.
+Fill out a working copy of the template in a local workspace outside this repo (`$REIMAGE_WORKSPACE_ROOT/reimage-confirmation/`). Do not copy it into `$REIMAGE_ARTIFACT_ROOT` yet — Phase 1 copies the filled version into `$REIMAGE_ARTIFACT_ROOT/reimage-confirmation/` once the external root exists. 
 
 Primary outputs:
 
@@ -194,7 +192,7 @@ Keep this phase concise but complete:
 1. Verify the correct external backup drive is mounted, writable, has enough free space, and uses the expected volumes before any backup starts.
 2. Verify `reimage.env` resolves to the intended external drive and `REIMAGE_ARTIFACT_ROOT`, not an old path or a local fallback.
 3. Verify the standard folder layout exists and the current workflow docs have been copied into the backup so the same instructions travel with the artifacts.
-4. Refresh the jump-drive fallback: copy `bootstrap.sh` and a current `bin/build-jump-drive-payload.sh`-built tarball onto the prepared jump drive — this is the artifact that gets this repo onto a bare reimaged Mac without needing Git/SSH. See [[#Restore Strategy|Restore Strategy]] above and Phase 6's callout for the exact commands.
+4. Refresh the jump-drive fallback: copy `bootstrap.sh` and a current `bin/build-jump-drive-payload.sh`-built tarball onto the prepared jump drive — this is the artifact that gets this repo onto a bare reimaged Mac without needing Git/SSH. 
 
 Follow this phase guide: [Prepare Artifact Root](./prepare-artifact-root.md).
 
@@ -338,7 +336,7 @@ Pre-image captures are **not backups** in the restore sense. They are read-only 
 
 This section owns the **phase order**. The linked capture runbooks explain command details and output structure, and the owning runbook keeps any manual-only notes or templates for that phase.
 
-Reference link: [[reimage-prep-evidence]]
+Reference link: [Reimage Preparation Evidence](./references/reimage-prep-evidence.md)
 
 All Phase 3 captures are optional. **Phase 3A** is the lightweight workflow snapshot capture; run it when you want the current reimage workflow docs and lightweight restore reference bundle preserved on the external root. If you run only one **system-state** capture, run **Phase 3B system inventory** because it preserves the broadest rebuild context.
 
@@ -466,7 +464,7 @@ For the reasoning behind why this repo needs to be independently fetchable at al
 
 **Phase 4B — Reimage Preparation Checks** is the final pre-erase gate that confirms the backup, capture, and staging work is complete enough to proceed safely. It brings together the results of the earlier pre-image phases so you can verify that critical Git history, local files, app backups, certificates, secrets, Time Machine state, and any chosen evidence captures are present, readable, and stored in the expected locations before the Mac is erased. The goal is to catch missing or incomplete preparation work while the original system is still available, so the reimage starts only after the recovery path and supporting evidence are in place.
 
-Primary guide: [[reimage-prep-checks|reimage-prep-checks.md]]
+Primary guide: [[reimage-prep-checks.md|reimage-prep-checks.md]]
 
 Primary generated evidence:
 

@@ -181,7 +181,7 @@ Required source-of-truth locations:
 | Local machine-specific paths | `$FRACTOGENESIS_HOME/reimage.env` |
 | Git repository root paths | `GIT_WORK_REPO_ROOT` and `GIT_PERSONAL_REPO_ROOT` in `reimage.env` |
 
-Define the Git repository root paths during Phase 1 in [[prepare-backup-root#Step 3 Define Git Repository Roots|Prepare Backup and Capture Root — Step 3]] before starting this Git backup workflow.
+Define the Git repository root paths during Phase 1 in [[prepare-artifact-root#Step 3 Define Git Repository Roots|Prepare Backup and Capture Root — Step 3]] before starting this Git backup workflow.
 
 ```text
 $FRACTOGENESIS_HOME/bin/         # entrypoints, e.g. backup-repos.sh

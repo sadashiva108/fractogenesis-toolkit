@@ -1,4 +1,4 @@
-[[reimaging-guide#Phase 2 — Pre-Image Backups|← Back to Mac Reimaging Guide]]
+[[reimaging-guide#Pre-Image|← Back to Mac Reimaging Guide]]
 
 # Backup File Reference
 
