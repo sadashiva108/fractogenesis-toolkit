@@ -167,32 +167,36 @@ if [[ "$INCLUDE_HEAVY" == true && "$MODE" != "direct-ignored-dry-run" && "$MODE"
   exit 1
 fi
 
-# These subdirectories are part of the standard artifact-root layout created
-# by Phase 1 (prepare-artifact-root.sh / prepare-artifact-root.md). They are
-# a required prerequisite for this script, not something backup-repos.sh
-# creates itself -- see the "Prerequisites" section of backup-repos.md.
+# The top-level containers below are assumed to already exist, created by
+# prepare-artifact-root.md's standard artifact-root layout -- this script
+# does not create them itself, see the "Prerequisites" section of
+# backup-repos.md. dryrun/, dryrun-filtered/, and live/ under
+# staged-ignored-files/ are different: those are child directories owned by
+# this runbook's own helper scripts, not by prepare-artifact-root.md, so
+# they're created below instead of checked as a prerequisite.
 REPO_AUDIT_DIR="$REIMAGE_ARTIFACT_ROOT/repo-audit-reports"
 GITIGNORE_DIR="$REIMAGE_ARTIFACT_ROOT/gitignore-superset"
-SELECTED_DRYRUN_DIR="$REIMAGE_ARTIFACT_ROOT/staged-ignored-files/dryrun"
-SELECTED_FILTERED_DRYRUN_DIR="$REIMAGE_ARTIFACT_ROOT/staged-ignored-files/dryrun-filtered"
-SELECTED_FINAL_DIR="$REIMAGE_ARTIFACT_ROOT/staged-ignored-files/live"
+STAGED_IGNORED_DIR="$REIMAGE_ARTIFACT_ROOT/staged-ignored-files"
+SELECTED_DRYRUN_DIR="$STAGED_IGNORED_DIR/dryrun"
+SELECTED_FILTERED_DRYRUN_DIR="$STAGED_IGNORED_DIR/dryrun-filtered"
+SELECTED_FINAL_DIR="$STAGED_IGNORED_DIR/live"
 MANIFEST_PATH="$REPO_AUDIT_DIR/MANIFEST.md"
 LATEST_RUN_PATH="$REPO_AUDIT_DIR/latest-run.txt"
 
 for dir in \
   "$REPO_AUDIT_DIR" \
   "$GITIGNORE_DIR" \
-  "$SELECTED_DRYRUN_DIR" \
-  "$SELECTED_FILTERED_DRYRUN_DIR" \
-  "$SELECTED_FINAL_DIR"; do
+  "$STAGED_IGNORED_DIR"; do
   if [[ ! -d "$dir" ]]; then
     echo "ERROR: expected artifact directory not found: $dir" >&2
     echo "This directory should already exist as part of the standard artifact-root" >&2
-    echo "layout created by Phase 1. Run prepare-artifact-root.sh first, or confirm" >&2
+    echo "layout created by prepare-artifact-root.md. Run that runbook first, or confirm" >&2
     echo "REIMAGE_ARTIFACT_ROOT points at the right location." >&2
     exit 2
   fi
 done
+
+mkdir -p "$SELECTED_DRYRUN_DIR" "$SELECTED_FILTERED_DRYRUN_DIR" "$SELECTED_FINAL_DIR"
 
 # This script lives at <repo>/bin/backup-repos.sh; helpers live alongside
 # the shared config loader under <repo>/.internal/git/.

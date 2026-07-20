@@ -14,9 +14,13 @@
 #   --dest DIR           Size-audit-reports root directory.
 #                         Default: $REIMAGE_ARTIFACT_ROOT/size-audit-reports.
 #                         When neither is available, the report is not saved.
-#   --context pre-image|post-image
+#   --context pre-image|post-image|pre-image-<label>|post-image-<label>
 #                         Context prefix for the timestamped run directory.
-#                         Default: pre-image
+#                         Default: pre-image. Use a sub-label (e.g.
+#                         pre-image-backup-repos) to distinguish multiple
+#                         pre-image captures on the same day in
+#                         MANIFEST.md; the run directory still starts with
+#                         pre-image- or post-image- either way.
 #   --help
 #
 # Output (written beneath --dest, when a destination is available):
@@ -59,7 +63,7 @@ for arg in "$@"; do
     --check-loose-secrets) CHECK_LOOSE_SECRETS=true ;;
     --help|-h)
       cat <<'USAGE'
-Usage: ./capture-size-audit.sh [--drive NAME_OR_MOUNT_PATH] [--backup-root DIR] [--local-only] [--check-loose-secrets] [--dest DIR] [--context pre-image|post-image]
+Usage: ./capture-size-audit.sh [--drive NAME_OR_MOUNT_PATH] [--backup-root DIR] [--local-only] [--check-loose-secrets] [--dest DIR] [--context pre-image|post-image|pre-image-<label>|post-image-<label>]
 
   --drive NAME_OR_MOUNT_PATH
                        External drive partition name or /Volumes/... mount path
@@ -68,8 +72,10 @@ Usage: ./capture-size-audit.sh [--drive NAME_OR_MOUNT_PATH] [--backup-root DIR] 
   --local-only          Show local targets only — skip OneDrive and external drive
   --check-loose-secrets Run after the secrets phase to identify plaintext secret candidates outside secrets-encrypted/ and loose payloads still under secrets-encrypted/.
   --dest DIR           Size-audit-reports root directory (default: $REIMAGE_ARTIFACT_ROOT/size-audit-reports)
-  --context pre-image|post-image
-                       Context prefix for the timestamped run directory (default: pre-image)
+  --context pre-image|post-image|pre-image-<label>|post-image-<label>
+                       Context prefix for the timestamped run directory (default: pre-image).
+                       A sub-label such as pre-image-backup-repos distinguishes multiple
+                       pre-image captures the same day; must start with pre-image- or post-image-.
 USAGE
       exit 0 ;;
     --drive)        : ;;   # handled below
@@ -87,9 +93,16 @@ USAGE
 done
 
 case "$REPORT_CONTEXT" in
-  pre-image|post-image) ;;
+  pre-image|post-image|pre-image-?*|post-image-?*)
+    case "$REPORT_CONTEXT" in
+      *[/\\]*|*..*|.*|*[[:space:]]*)
+        echo "ERROR: --context must not contain slashes, '..', a leading dot, or whitespace, got: $REPORT_CONTEXT" >&2
+        exit 2
+        ;;
+    esac
+    ;;
   *)
-    echo "ERROR: --context must be pre-image or post-image, got: $REPORT_CONTEXT" >&2
+    echo "ERROR: --context must be pre-image, post-image, or start with pre-image- or post-image- (e.g. pre-image-backup-repos), got: $REPORT_CONTEXT" >&2
     exit 2
     ;;
 esac

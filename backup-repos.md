@@ -39,6 +39,9 @@ It does not turn `repo-audit-reports/` into a full source backup, and it does no
     - [[#Recommended Review Order|Recommended Review Order]]
     - [[#Generated File Reference|Generated File Reference]]
     - [[#TSV Column Reference|TSV Column Reference]]
+- [[#Appendix B — Known Gaps and Future Considerations|Appendix B — Known Gaps and Future Considerations]]
+  - [[#Secret-Shaped Selected Ignored Files Are Not Automatically Flagged|Secret-Shaped Selected Ignored Files Are Not Automatically Flagged]]
+  - [[#Gitignore Superset Refresh Has No Automated Diff|Gitignore Superset Refresh Has No Automated Diff]]
 
 > In Obsidian, these are internal heading links. Click in Reading View, or Cmd-click in Live Preview/editing mode.
 
@@ -123,9 +126,9 @@ $REIMAGE_ARTIFACT_ROOT/
 │   ├── MANIFEST.md
 │   ├── latest-run.txt
 │   └── runs/
-│       ├── pre-image-YYYYMMDD-HHMMSS/
+│       ├── pre-image-backup-repos-YYYYMMDD-HHMMSS/
 │       │   └── size-audit-report.txt
-│       └── post-image-YYYYMMDD-HHMMSS/
+│       └── post-image-backup-repos-YYYYMMDD-HHMMSS/
 │           └── ...
 ├── staged-ignored-files/
 │   ├── dryrun/
@@ -147,7 +150,38 @@ $REIMAGE_ARTIFACT_ROOT/
 └── ...
 ```
 
-These directories are created by Phase 1 (`prepare-artifact-root.sh` / `prepare-artifact-root.md`) as part of the standard artifact-root layout -- this runbook does not create them. `bin/backup-repos.sh` checks for all five on startup and exits with an error pointing back to Phase 1 if any are missing, rather than silently creating them. If you see that error, either run the Phase 1 step first or confirm `REIMAGE_ARTIFACT_ROOT` points at the right location.
+The following top-level containers are assumed to have already been created
+by `prepare-artifact-root.md`'s standard artifact-root layout:
+
+- `size-audit-reports/`
+- `repo-audit-reports/`
+- `gitignore-superset/`
+- `staged-ignored-files/` (the folder itself, not its children)
+
+This runbook does not create them.
+
+`bin/backup-repos.sh` checks three of these on startup:
+
+- `repo-audit-reports/`
+- `gitignore-superset/`
+- `staged-ignored-files/`
+
+If any are missing, it exits with an error pointing back to
+`prepare-artifact-root.md` rather than silently creating them. If you see
+that error, either run that runbook first or confirm
+`REIMAGE_ARTIFACT_ROOT` points at the right location.
+
+`staged-ignored-files/dryrun/`, `dryrun-filtered/`, and `live/` are
+different — those are child directories owned by this runbook's own
+scripts, not by `prepare-artifact-root.md`, so `bin/backup-repos.sh` creates
+them itself on startup instead of treating their absence as a prerequisite
+error.
+
+> `size-audit-reports/` isn't checked by `bin/backup-repos.sh` directly —
+> it's provisioned independently by `capture-size-audit.sh` — but it's
+> listed above since "Run the Size Audit First" is now the first step in
+> this runbook's Sequential Steps.
+
 
 Folder purpose:
 
@@ -209,14 +243,14 @@ $REIMAGE_ARTIFACT_ROOT/size-audit-reports/
 ├── MANIFEST.md
 ├── latest-run.txt
 └── runs/
-    ├── pre-image-YYYYMMDD-HHMMSS/
+    ├── pre-image-backup-repos-YYYYMMDD-HHMMSS/
     │   └── size-audit-report.txt
-    └── post-image-YYYYMMDD-HHMMSS/
+    └── post-image-restore-repos-YYYYMMDD-HHMMSS/
         └── ...
 ```
 
-`capture-size-audit.sh` defaults to `--context pre-image`. Pass
-`--context post-image` for a later comparison run.
+`capture-size-audit.sh` defaults to `--context pre-image` but instead use the more descriptive `--context pre-image-backup-repos` since other pre-image phases run this script. Pass
+`--context post-image-restore-repos` for a later comparison run.
 
 `MANIFEST.md` is an append-only index of successful runs; `latest-run.txt`
 contains one relative run path and is updated only after a run completes
@@ -362,7 +396,7 @@ This audit is still global to the Phase 2 backup root. It does **not** estimate 
 ```bash
 cd "$FRACTOGENESIS_HOME"
 bash -n bin/capture-size-audit.sh
-./bin/capture-size-audit.sh --context backup-repos
+./bin/capture-size-audit.sh --context pre-image-backup-repos
 ```
 
 Review these lines in the output:
@@ -988,5 +1022,82 @@ column -s $'\t' -t \
 ```
 
 Do not save the padded `column` output back over the TSV file.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
+## Appendix B — Known Gaps and Future Considerations
+
+This appendix records known gaps in the current selected-ignored-file
+workflow that have been analyzed but not yet decided or implemented. Nothing
+in this appendix changes script behavior — it exists so the analysis isn't
+lost between sessions, and so a future implementation pass starts from a
+reviewed design space instead of from scratch.
+
+### Secret-Shaped Selected Ignored Files Are Not Automatically Flagged
+
+`stage-selected-patterns.py` has no secret-awareness today. `candidates.tsv`
+has no classification column — every matched pattern's files land in the
+same `candidates.tsv` / `dryrun/` / `live/` output, secret-shaped or not.
+The current workflow handles this purely as a manual gate:
+
+| Decision | Why |
+|---|---|
+| Whether a selected ignored file is a secret | Requires content review before cloud sync. |
+
+(This is the same row already in [[#Manual Decisions That Remain Manual|Manual Decisions That Remain Manual]].)
+
+[[#Mark Selected Ignored Patterns|Mark Selected Ignored Patterns]] already
+lists a starter set of credential-shaped patterns to watch for — `.env`,
+`.env.local`, `*.pem`, `*.key`, `*.p12`, `*.jks`, `credentials.json`, and
+similar — but that list is prose in the runbook, not wired into the script.
+
+Three directions have been considered for closing this gap. **No direction
+has been chosen** — these are documented as separate alternatives, not a
+combined design, so a future decision can pick one (or explicitly decline
+all three) without re-deriving the analysis:
+
+**Option A — Marking file (`secrets-patterns.txt`)**
+
+A `secrets-patterns.txt` sibling file next to `gitignore-review-template.txt`
+in `$REIMAGE_WORKSPACE_ROOT/gitignore-superset/` — a persisted, reusable list
+(like `backup-exclude-list.txt`, but marking rather than excluding) of
+patterns already known to be credential-shaped. The script would tag any
+candidate whose matched pattern appears in that list with a `flagged_secret`
+column in `candidates.tsv`, making it visible without re-deriving it every
+run.
+
+**Option B — Separate output bucket**
+
+A separate output bucket, e.g. `staged-ignored-files/secrets-candidates/`,
+so flagged files physically land apart from ordinary `dryrun/`/`live/`
+output — making it harder to accidentally sync a secret-shaped file into the
+same place as regular staged files.
+
+**Option C — Naming-convention alignment with `backup-home`**
+
+`backup-home` already has `SECRETS_TARGETS`/`secret-flags.conf.sh`
+conventions on the home-directory side. A `secrets-patterns.txt` here would
+be the git-repo-side counterpart, giving one mental model across both
+phases instead of two unrelated ones.
+
+None of the three options require touching `stage-selected-patterns.py`'s
+matching engine — each would be an additional cross-reference step against
+`candidates.tsv` after the existing dry run, keeping it additive rather than
+a rewrite.
+
+### Gitignore Superset Refresh Has No Automated Diff
+
+The existing refresh workflow handles "the superset is a moving target"
+reasonably well: copy a reviewed template in as a starting point, then
+re-review against the freshly generated superset rather than trusting the
+old one blindly.
+
+The gap: there is no automated diff between the last-reviewed template and
+the new superset. "What's actually new since last time" is currently a
+manual eyeball job across the whole list, not a filtered one. Worth
+considering later if the repo set grows large enough that a full manual
+re-review becomes impractical each refresh.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
