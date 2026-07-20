@@ -110,16 +110,12 @@ See [Master Directory Reference](./references/master-directory-reference.md) for
 Script locations:
 
 ```text
-$FRACTOGENESIS_HOME/bin/                      # entrypoints — run directly
-$FRACTOGENESIS_HOME/bin/setup-reimage-env.sh
-$FRACTOGENESIS_HOME/.internal/                # sourced-only helpers, never run directly
-```
-
-Key files referenced by this guide include:
-
-```text
-$FRACTOGENESIS_HOME/bin/prepare-artifact-root.py
-$FRACTOGENESIS_HOME/.internal/artifact-config.sh
+$FRACTOGENESIS_HOME/bin/                          # entrypoints -- run directly
+$FRACTOGENESIS_HOME/bin/check-reimage-env.sh      # diagnostic -- reports whether reimage.env already exists, never writes
+$FRACTOGENESIS_HOME/bin/setup-reimage-env.sh      # creates reimage.env, fully resolved, in one pass
+$FRACTOGENESIS_HOME/bin/prepare-artifact-root.py  # invoked via subcommands, e.g. `python3 bin/prepare-artifact-root.py init-reimage-env` -- not run bare
+$FRACTOGENESIS_HOME/.internal/                    # sourced-only helpers, never run directly
+$FRACTOGENESIS_HOME/.internal/artifact-config.sh  # sourced by backup scripts, never run directly
 ```
 
 `$FRACTOGENESIS_HOME` above is reference notation showing where these files live, not a literal path you can use from a fresh terminal -- direnv only populates it once you've already `cd`ed into the repo. Commands elsewhere in this guide `cd "$FRACTOGENESIS_HOME"` first for that reason; see [[#Repo Path Variables and Self-Locating Scripts|Repo Path Variables and Self-Locating Scripts]] for the full explanation.
