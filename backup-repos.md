@@ -19,6 +19,7 @@ It does not turn `repo-audit-reports/` into a full source backup, and it does no
     - [[#Size Audit Report Layout|Size Audit Report Layout]]
     - [[#Repository Audit Run Layout|Repository Audit Run Layout]]
     - [[#Gitignore Superset Outputs at a Glance|Gitignore Superset Outputs at a Glance]]
+    - [[#Secrets-Candidates Output|Secrets-Candidates Output]]
     - [[#Preferred Scripted Workflow|Preferred Scripted Workflow]]
 - [[#Sequential Steps|Sequential Steps]]
     - [[#Load Shared Configuration|Load Shared Configuration]]
@@ -232,6 +233,10 @@ $FRACTOGENESIS_HOME/bin/         # entrypoints, e.g. backup-repos.sh
 $FRACTOGENESIS_HOME/.internal/   # helpers, e.g. .internal/git/capture-repo-audit.sh
 ```
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Size Audit Report Layout
 
 Each successful size audit is stored as one self-contained run directory. The
@@ -267,6 +272,9 @@ LATEST_RUN_RELATIVE="$(cat "$AUDIT_ROOT/latest-run.txt" 2>/dev/null || true)"
 less -R "$AUDIT_ROOT/$LATEST_RUN_RELATIVE/size-audit-report.txt"
 ```
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Repository Audit Run Layout
 
@@ -295,6 +303,10 @@ $REIMAGE_ARTIFACT_ROOT/repo-audit-reports/
 
 The current workflow does not read flat timestamped audit files. If `repo-audit-reports/MANIFEST.md` contains the former single-run summary format, remove it before the first run with the current scripts.
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Gitignore Superset Outputs at a Glance
 
 The default repo-backup refresh creates two kinds of gitignore evidence under `$REIMAGE_ARTIFACT_ROOT/gitignore-superset/`:
@@ -307,6 +319,87 @@ The default repo-backup refresh creates two kinds of gitignore evidence under `$
 Start with `summary.txt`, then review `gitignore-files-review.txt` and `gitignore-pattern-sources-review.txt`. Use `gitignore-concatenated-with-sources.txt` when you need the original file context, and make backup selections only in `gitignore-review-template.txt`.
 
 The TSV files intentionally remain tab-delimited and are not padded with decorative spacing. See [[#Appendix A — Gitignore Superset Generated Files|Appendix A — Gitignore Superset Generated Files]] for the complete file descriptions, generation flow, column definitions, and review order.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
+### Secrets-Candidates Output
+
+`stage-selected-patterns.py` can route credential-shaped candidates apart
+from the ordinary output tree, so they're never comingled with the regular
+staged files that eventually get synced. This is opt-in and off by default.
+
+To enable it, create:
+
+```text
+$REIMAGE_ARTIFACT_ROOT/gitignore-superset/secrets-patterns.txt
+```
+
+This uses the exact same file format and matching engine as
+`backup-exclude-list.txt` — one pattern per line, `#`-prefixed comments and
+blank lines ignored, gitignore-style matching against the same path forms
+(`repo:path`, `backup-label/path`, absolute globs, relative globs). A
+starter list based on the credential-shaped patterns already named in
+[[#Mark Selected Ignored Patterns|Mark Selected Ignored Patterns]] (`.env`,
+`.env.local`, `*.pem`, `*.key`, `*.p12`, `*.jks`, `credentials.json`, and
+similar) is the expected starting point, reviewed and adjusted for your own
+repos before first use.
+
+`bin/backup-repos.sh` checks for this file automatically — if present, it's
+passed to every `--selected-*` mode (`selected-dry-run`,
+`selected-filtered-dry-run`, `selected-copy`) without any additional flag.
+If absent, behavior is unchanged from before this feature existed.
+
+Any matched candidate whose pattern also appears in `secrets-patterns.txt`
+is diverted into a `secrets-candidates/` subfolder — nested inside whichever
+stage directory is currently being written to, not a single shared bucket:
+
+```text
+staged-ignored-files/
+├── dryrun/
+│   ├── candidates.tsv
+│   ├── excluded.tsv
+│   ├── skipped.tsv
+│   ├── parsed-exclude-patterns.txt
+│   ├── secrets-candidates.tsv
+│   ├── parsed-secrets-patterns.txt
+│   └── secrets-candidates/
+│       └── <repo-label>/
+│           └── <relative-path-within-repo>
+├── dryrun-filtered/
+│   └── ... same shape ...
+└── live/
+    ├── candidates.tsv
+    ├── ...
+    ├── copied.tsv
+    ├── copy-failed.tsv
+    ├── secrets-candidates.tsv
+    ├── secrets-copied.tsv
+    ├── secrets-copy-failed.tsv
+    └── secrets-candidates/
+        └── <repo-label>/
+            └── <relative-path-within-repo>
+```
+
+`secrets-candidates.tsv` has the same columns as `candidates.tsv` plus one
+extra: `secret_pattern`, the specific `secrets-patterns.txt` entry that
+matched. `secrets-copied.tsv` and `secrets-copy-failed.tsv` only appear when
+running with `--copy` (i.e. the `live/` stage), mirroring `copied.tsv` and
+`copy-failed.tsv` exactly.
+
+A file matched by more than one checked pattern still produces exactly one
+row — same dedup behavior as the ordinary candidate list, with
+`matched_patterns` merged rather than duplicated.
+
+`summary.txt` reports secrets-candidate counts (`Secrets candidates:`,
+and `Secrets copied:`/`Secrets copy failures:` under `--copy`) only when
+`secrets-patterns.txt` was actually used, so output stays unchanged for
+runs that don't use this feature at all.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Preferred Scripted Workflow
 
@@ -357,6 +450,10 @@ Explicit-root override when you intentionally do not want the roots from `reimag
 
 Use this order for the runnable Git backup procedure, including the optional ignored-file branch when you need it.
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Load Shared Configuration
 
 Source the local environment file before running the manual commands in this guide. Re-run this block any time you edit `reimage.env` in the same terminal session:
@@ -387,6 +484,10 @@ bash -n .internal/artifact-config.sh
 
 The Git roots must exist before running the entrypoint. If a path does not exist, fix `reimage.env` before continuing.
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Run the Size Audit First
 
 Run `capture-size-audit.sh` before refreshing Git artifacts when you want a quick destination-capacity check for the shared backup root.
@@ -408,6 +509,10 @@ Review these lines in the output:
 The saved report keeps its original ANSI color codes so the severity colors
 match what you saw on screen. See [[#Size Audit Report Layout|Size Audit Report Layout]]
 below for the run directory structure and how to view it.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Run the Repo Audit
 
@@ -517,6 +622,10 @@ repos on temporary branches
 upstream/tracking branch problems
 ```
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Back Up Git Repository State
 
 #### Existing feature branch
@@ -612,6 +721,10 @@ add them to selected ignored-file backup if appropriate
 delete them if they are not needed
 ```
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Optional Direct Ignored-File Backup Script
 
 The selected-pattern workflow below remains the preferred path because it forces review through `gitignore-review-template.txt` and `backup-exclude-list.txt` before anything is copied.
@@ -633,6 +746,10 @@ Copy using roots from `reimage.env` only after reviewing the dry run:
 ```
 
 Do not use the direct ignored-file mode as a shortcut around secret review. Ignored files may include `.env.local`, keys, certificates, keystores, or local credentials that should be handled through `secrets-encrypted/` and the consolidated DMG workflow.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Collect the gitignore Superset
 
@@ -673,6 +790,10 @@ open "$REIMAGE_ARTIFACT_ROOT/gitignore-superset/gitignore-review-template.txt"
 ```
 
 For a file-by-file explanation of the generated superset evidence, use [[#Appendix A — Gitignore Superset Generated Files|Appendix A — Gitignore Superset Generated Files]].
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Mark Selected Ignored Patterns
 
@@ -727,6 +848,10 @@ cp -p \
   "$REIMAGE_WORKSPACE_ROOT/gitignore-superset/gitignore-review-template.txt"
 ```
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Create or Update the Exclude List
 
 Choose one starting point:
@@ -777,6 +902,10 @@ cp -p \
   "$REIMAGE_WORKSPACE_ROOT/gitignore-superset/backup-exclude-list.txt"
 ```
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Run the Selected Ignored-File Dry Run
 
 This first pass shows selected candidates before applying the exclude list.
@@ -792,6 +921,10 @@ Review:
 ```bash
 open "$REIMAGE_ARTIFACT_ROOT/staged-ignored-files/dryrun"
 ```
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Run the Filtered Dry Run
 
@@ -809,6 +942,10 @@ open "$REIMAGE_ARTIFACT_ROOT/staged-ignored-files/dryrun-filtered"
 
 Confirm excluded files moved from candidates to excluded output when applicable.
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Run the Final Selected Ignored-File Copy
 
 Only run `--copy` after the dry run and filtered dry run are reviewed.
@@ -816,6 +953,10 @@ Only run `--copy` after the dry run and filtered dry run are reviewed.
 ```bash
 ./bin/backup-repos.sh --artifact-root "$REIMAGE_ARTIFACT_ROOT" --selected-copy
 ```
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Review Output Files
 
@@ -892,6 +1033,10 @@ The collector scans the configured Git roots from `GIT_WORK_REPO_ROOT`, `GIT_PER
 
 The TSV files are the machine-readable source of truth. The `*-review.txt` files and the concatenated text file are human-readable views derived from those TSV records and source files.
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### How the Superset Files Are Generated
 
 ```text
@@ -923,6 +1068,10 @@ Configured Git roots
 
 The collector preserves negated patterns such as `!example.env`, removes surrounding whitespace for the normalized value, preserves the original source line in `raw_pattern`, and omits blank lines and full-line comments from the pattern datasets.
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Recommended Review Order
 
 1. Open `summary.txt` for the roots scanned, counts, output paths, and next step.
@@ -934,6 +1083,10 @@ The collector preserves negated patterns such as `!example.env`, removes surroun
 7. Run the selected ignored-file dry run and review its candidate output before copying anything.
 
 The TSV files are most useful for sorting, filtering, spreadsheet import, scripted checks, and deeper troubleshooting. The review text files are intended for normal manual inspection.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Generated File Reference
 
@@ -977,6 +1130,10 @@ For each unique pattern, how many distinct ignore sources use it, and which sour
 ```text
 What did every original ignore source contain, including comments and surrounding context?
 ```
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### TSV Column Reference
 
@@ -1035,6 +1192,10 @@ in this appendix changes script behavior — it exists so the analysis isn't
 lost between sessions, and so a future implementation pass starts from a
 reviewed design space instead of from scratch.
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Secret-Shaped Selected Ignored Files Are Not Automatically Flagged
 
 `stage-selected-patterns.py` has no secret-awareness today. `candidates.tsv`
@@ -1053,10 +1214,13 @@ lists a starter set of credential-shaped patterns to watch for — `.env`,
 `.env.local`, `*.pem`, `*.key`, `*.p12`, `*.jks`, `credentials.json`, and
 similar — but that list is prose in the runbook, not wired into the script.
 
-Three directions have been considered for closing this gap. **No direction
-has been chosen** — these are documented as separate alternatives, not a
-combined design, so a future decision can pick one (or explicitly decline
-all three) without re-deriving the analysis:
+Three directions were considered for closing this gap, documented as
+separate alternatives rather than a combined design. 
+
+**Option B has since been implemented** 
+see [[#Secrets-Candidates Output|Secrets-CandidatesOutput]]
+
+Options A and C remain undecided.
 
 **Option A — Marking file (`secrets-patterns.txt`)**
 
@@ -1068,12 +1232,28 @@ candidate whose matched pattern appears in that list with a `flagged_secret`
 column in `candidates.tsv`, making it visible without re-deriving it every
 run.
 
-**Option B — Separate output bucket**
+**Option B — Separate output bucket (IMPLEMENTED)**
 
-A separate output bucket, e.g. `staged-ignored-files/secrets-candidates/`,
-so flagged files physically land apart from ordinary `dryrun/`/`live/`
-output — making it harder to accidentally sync a secret-shaped file into the
-same place as regular staged files.
+A separate output bucket — `secrets-candidates/`, nested inside whichever
+stage directory `stage-selected-patterns.py` is writing to
+(`dryrun/secrets-candidates/`, `dryrun-filtered/secrets-candidates/`,
+`live/secrets-candidates/`) — so flagged files physically land apart from
+ordinary output, never comingled with the regular staged files in the same
+run. Routing is driven by an optional `secrets-patterns.txt` list, using the
+exact same matching engine `backup-exclude-list.txt` already uses. See
+[[#Secrets-Candidates Output|Secrets-Candidates Output]] for the file
+format, the new `--secrets-patterns` flag, and the full output layout.
+
+Implementing this also surfaced and fixed an unrelated pre-existing bug in
+`stage-selected-patterns.py`'s matching engine: a `str.lstrip("./")` call
+was stripping the character set `{'.', '/'}` from the left instead of a
+literal `"./"` prefix, silently mangling relative paths like `.env` into
+`env` and breaking matches for `.env`, `.gitconfig`, `.aws/`, and other
+dotfile-style credential patterns sitting at a scan root. This was already
+undermining reliable detection of exactly the credential-shaped patterns
+listed in [[#Mark Selected Ignored Patterns|Mark Selected Ignored Patterns]], 
+independent of whether secrets-patterns.txt routing is used at
+all.
 
 **Option C — Naming-convention alignment with `backup-home`**
 
@@ -1086,6 +1266,10 @@ None of the three options require touching `stage-selected-patterns.py`'s
 matching engine — each would be an additional cross-reference step against
 `candidates.tsv` after the existing dry run, keeping it additive rather than
 a rewrite.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Gitignore Superset Refresh Has No Automated Diff
 

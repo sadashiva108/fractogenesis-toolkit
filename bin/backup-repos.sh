@@ -220,6 +220,7 @@ done
 
 TEMPLATE_PATH="$GITIGNORE_DIR/gitignore-review-template.txt"
 EXCLUDE_LIST_PATH="$GITIGNORE_DIR/backup-exclude-list.txt"
+SECRETS_PATTERNS_PATH="$GITIGNORE_DIR/secrets-patterns.txt"
 LATEST_AUDIT_REPORT=""
 OPEN_TARGET=""
 MODE_SUMMARY=""
@@ -336,8 +337,16 @@ run_selected() {
     echo "Run backup-repos.sh with no mode first to refresh the gitignore superset." >&2
     exit 2
   fi
+  # secrets-patterns.txt is opt-in: if present, route credential-shaped
+  # candidates into secrets-candidates/ instead of the ordinary output tree.
+  # Its absence is not an error -- unlike EXCLUDE_LIST_PATH below, this
+  # capability works whether or not the file has been created yet.
+  local secrets_args=()
+  if [[ -f "$SECRETS_PATTERNS_PATH" ]]; then
+    secrets_args=(--secrets-patterns "$SECRETS_PATTERNS_PATH")
+  fi
   run_with_status "Selected-pattern staging scan" \
-    python3 "$SELECTED_HELPER" --include-template "$TEMPLATE_PATH" "${HELPER_ROOT_ARGS[@]}" --dest "$dest" "$@"
+    python3 "$SELECTED_HELPER" --include-template "$TEMPLATE_PATH" "${HELPER_ROOT_ARGS[@]}" --dest "$dest" "${secrets_args[@]}" "$@"
   OPEN_TARGET="$dest"
 }
 
