@@ -323,22 +323,31 @@ def resolve_it_plan_source(explicit_source: str, values: Dict[str, str], workspa
 def cmd_init_reimage_env(args: argparse.Namespace) -> int:
     workspace_root = args.workspace_root or default_workspace_root()
     it_plan_dir = args.it_plan_dir or str(Path(workspace_root) / "reimage-confirmation")
+    asset_or_host = args.asset_or_host or detect_asset_or_host()
+    reimage_start_date = args.reimage_start_date or dt.datetime.now().strftime("%Y%m%d")
+    external_data_volume = args.external_data_volume.rstrip("/")
+    reimage_artifact_root = f"{external_data_volume}/reimage-{asset_or_host}-{reimage_start_date}-open"
+    onedrive_dest_subdir = Path(reimage_artifact_root).name
+
     updates = {
         "REIMAGE_WORKSPACE_ROOT": workspace_root,
         "IT_PLAN_DIR": it_plan_dir,
         "PERFORMANCE_HISTORY_SOURCE": args.performance_history_source,
-        "EXTERNAL_DATA_VOLUME": args.external_data_volume,
+        "EXTERNAL_DATA_VOLUME": external_data_volume,
         "EXTERNAL_APPLE_BACKUPS_VOLUME": args.external_apple_backups_volume,
-        "ASSET_OR_HOST": args.asset_or_host or detect_asset_or_host(),
-        "REIMAGE_START_DATE": args.reimage_start_date or dt.datetime.now().strftime("%Y%m%d"),
-        "REIMAGE_ARTIFACT_ROOT": "",
+        "ASSET_OR_HOST": asset_or_host,
+        "REIMAGE_START_DATE": reimage_start_date,
+        "REIMAGE_ARTIFACT_ROOT": reimage_artifact_root,
         "OFFICE_WATCH": "",
         "ONEDRIVE_FOLDER_NAME": "",
         "ONEDRIVE_ROOT": "",
-        "ONEDRIVE_DEST_SUBDIR": "",
+        "ONEDRIVE_DEST_SUBDIR": onedrive_dest_subdir,
     }
     update_env_exports(args.env_file, updates)
     ensure_workspace_dirs(workspace_root, it_plan_dir)
+    print(f"ASSET_OR_HOST={asset_or_host}")
+    print(f"REIMAGE_START_DATE={reimage_start_date}")
+    print(f"REIMAGE_ARTIFACT_ROOT={reimage_artifact_root}")
     return 0
 
 
