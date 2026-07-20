@@ -16,6 +16,7 @@ It does not turn `repo-audit-reports/` into a full source backup, and it does no
 - [[#Artifact and Script Locations|Artifact and Script Locations]]
 - [[#Before You Run Anything|Before You Run Anything]]
     - [[#Prerequisites|Prerequisites]]
+    - [[#Size Audit Report Layout|Size Audit Report Layout]]
     - [[#Repository Audit Run Layout|Repository Audit Run Layout]]
     - [[#Gitignore Superset Outputs at a Glance|Gitignore Superset Outputs at a Glance]]
     - [[#Preferred Scripted Workflow|Preferred Scripted Workflow]]
@@ -118,6 +119,14 @@ $REIMAGE_ARTIFACT_ROOT/
 │       │   └── ignored-files.tsv
 │       └── post-image-YYYYMMDD-HHMMSS/
 │           └── ...
+├── size-audit-reports/
+│   ├── MANIFEST.md
+│   ├── latest-run.txt
+│   └── runs/
+│       ├── pre-image-YYYYMMDD-HHMMSS/
+│       │   └── size-audit-report.txt
+│       └── post-image-YYYYMMDD-HHMMSS/
+│           └── ...
 ├── staged-ignored-files/
 │   ├── dryrun/
 │   │   ├── summary.txt
@@ -144,6 +153,7 @@ Folder purpose:
 
 | Folder | Purpose                                                                               |
 |---|---------------------------------------------------------------------------------------|
+| `size-audit-reports/` | Append-only backup-size-audit index, latest-run pointer, and self-contained timestamped run directories with the full colorized report. |
 | `repo-audit-reports/` | Append-only repository-audit index, latest-run pointer, and self-contained timestamped run directories; not a full source backup. |
 | `gitignore-superset/` | Reviewable superset of ignored patterns, selected-pattern template, and exclude list. |
 | `staged-ignored-files/dryrun/` | First dry-run candidate output before exclusions.                                     |
@@ -187,6 +197,42 @@ Define the Git repository root paths during Phase 1 in [[prepare-artifact-root#S
 $FRACTOGENESIS_HOME/bin/         # entrypoints, e.g. backup-repos.sh
 $FRACTOGENESIS_HOME/.internal/   # helpers, e.g. .internal/git/capture-repo-audit.sh
 ```
+
+### Size Audit Report Layout
+
+Each successful size audit is stored as one self-contained run directory. The
+directory name owns the context and timestamp; the report inside uses a
+stable name.
+
+```text
+$REIMAGE_ARTIFACT_ROOT/size-audit-reports/
+├── MANIFEST.md
+├── latest-run.txt
+└── runs/
+    ├── pre-image-YYYYMMDD-HHMMSS/
+    │   └── size-audit-report.txt
+    └── post-image-YYYYMMDD-HHMMSS/
+        └── ...
+```
+
+`capture-size-audit.sh` defaults to `--context pre-image`. Pass
+`--context post-image` for a later comparison run.
+
+`MANIFEST.md` is an append-only index of successful runs; `latest-run.txt`
+contains one relative run path and is updated only after a run completes
+successfully — same contract as `repo-audit-reports/`.
+
+The saved report keeps its original ANSI color codes on purpose, so the same
+yellow/red/green severity cues read the same way later. Text editors such as
+VS Code or IntelliJ render the raw escape codes as literal characters instead
+of color — view the report in a terminal instead:
+
+```bash
+AUDIT_ROOT="$REIMAGE_ARTIFACT_ROOT/size-audit-reports"
+LATEST_RUN_RELATIVE="$(cat "$AUDIT_ROOT/latest-run.txt" 2>/dev/null || true)"
+less -R "$AUDIT_ROOT/$LATEST_RUN_RELATIVE/size-audit-report.txt"
+```
+
 
 ### Repository Audit Run Layout
 
@@ -316,7 +362,7 @@ This audit is still global to the Phase 2 backup root. It does **not** estimate 
 ```bash
 cd "$FRACTOGENESIS_HOME"
 bash -n bin/capture-size-audit.sh
-./bin/capture-size-audit.sh
+./bin/capture-size-audit.sh --context backup-repos
 ```
 
 Review these lines in the output:
@@ -324,6 +370,10 @@ Review these lines in the output:
 - `Target backup root`
 - `Available on /Volumes/<drive>`
 - `✓ External drive: enough space` or `✗ External drive: NOT ENOUGH SPACE`
+
+The saved report keeps its original ANSI color codes so the severity colors
+match what you saw on screen. See [[#Size Audit Report Layout|Size Audit Report Layout]]
+below for the run directory structure and how to view it.
 
 ### Run the Repo Audit
 

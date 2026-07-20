@@ -17,6 +17,7 @@ EXPECTED_ARTIFACT_FOLDERS=(
   "reimaged-system"
   "repo-audit-reports"
   "secrets-encrypted"
+  "size-audit-reports"
   "staged-ignored-files"
   "system-inventory"
   "time-machine"

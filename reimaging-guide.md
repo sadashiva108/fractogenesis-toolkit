@@ -229,6 +229,7 @@ Primary outputs:
 ```text
 $REIMAGE_ARTIFACT_ROOT/gitignore-superset/
 $REIMAGE_ARTIFACT_ROOT/repo-audit-reports/
+$REIMAGE_ARTIFACT_ROOT/size-audit-reports/
 $REIMAGE_ARTIFACT_ROOT/staged-ignored-files/live/
 $REIMAGE_ARTIFACT_ROOT/staged-ignored-files/dryrun/
 $REIMAGE_ARTIFACT_ROOT/staged-ignored-files/dryrun-filtered/

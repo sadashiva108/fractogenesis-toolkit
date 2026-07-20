@@ -175,9 +175,43 @@ $REIMAGE_ARTIFACT_ROOT/
 │       ├── README.md
 │       ├── keychain-cert-export-inventory-YYYYMMDD-HHMMSS.md
 │       └── *.cer / *.pem                          # optional public-only convenience copies
-├── workflow-snapshot/
-│   ├── reimage-workflow-docs/
-│   └── pre-image-workflow-snapshot-YYYYMMDD-HHMMSS/
+├── secrets-encrypted/
+│   ├── all-secrets-YYYYMMDD-HHMMSS.dmg
+│   ├── all-secrets-YYYYMMDD-HHMMSS-manifest.txt
+│   ├── RESTORE-README.md
+│   ├── chrome/
+│   │   ├── Chrome Passwords*.csv              # if exported; temporary plaintext staging only
+│   │   └── README.md
+│   ├── certs/
+│   │   ├── README.md
+│   │   ├── java-security/
+│   │   ├── keychain-manual-exports/
+│   │   │   ├── README.md
+│   │   │   └── keychain-export-summary-YYYYMMDD-HHMMSS.md
+│   │   ├── loose-candidates-selected/
+│   │   ├── project-local/
+│   │   └── tool-local/
+│   ├── cli-credentials/
+│   ├── cloud/
+│   │   └── aws/
+│   ├── docker/config.json
+│   ├── extra-secrets-certs-review/
+│   ├── git/
+│   ├── gnupg/
+│   ├── intellij/
+│   ├── kube/
+│   ├── licenses/                                  # manual freeform staging, if applicable -- no fixed filenames
+│   ├── package-managers/
+│   ├── postman/
+│   │   ├── environments/                          # if exported
+│   │   ├── vault-if-export-allowed/                # if exported
+│   │   └── README.md
+│   ├── raycast/
+│   │   ├── *.rayconfig                            # if exported
+│   │   ├── quicklinks-if-sensitive/
+│   │   │   └── raycast-quicklinks-YYYYMMDD-HHMMSS.json   # if sensitive/unreviewed
+│   │   └── README.md
+│   └── ssh/
 ├── time-machine/
 │   ├── completion-check-YYYYMMDD-HHMMSS.md
 │   ├── final-time-machine-checklist-YYYYMMDD-HHMMSS.md
@@ -206,43 +240,10 @@ $REIMAGE_ARTIFACT_ROOT/
 │           ├── tmutil-listbackups.txt
 │           ├── tmutil-status.txt
 │           └── volumes.txt
-└── secrets-encrypted/
-    ├── all-secrets-YYYYMMDD-HHMMSS.dmg
-    ├── all-secrets-YYYYMMDD-HHMMSS-manifest.txt
-    ├── RESTORE-README.md
-    ├── chrome/
-    │   ├── Chrome Passwords*.csv              # if exported; temporary plaintext staging only
-    │   └── README.md
-    ├── certs/
-    │   ├── README.md
-    │   ├── java-security/
-    │   ├── keychain-manual-exports/
-    │   │   ├── README.md
-    │   │   └── keychain-export-summary-YYYYMMDD-HHMMSS.md
-    │   ├── loose-candidates-selected/
-    │   ├── project-local/
-    │   └── tool-local/
-    ├── cli-credentials/
-    ├── cloud/
-    │   └── aws/
-    ├── docker/config.json
-    ├── extra-secrets-certs-review/
-    ├── git/
-    ├── gnupg/
-    ├── intellij/
-    ├── kube/
-    ├── licenses/                                  # manual freeform staging, if applicable -- no fixed filenames
-    ├── package-managers/
-    ├── postman/
-    │   ├── environments/                          # if exported
-    │   ├── vault-if-export-allowed/                # if exported
-    │   └── README.md
-    ├── raycast/
-    │   ├── *.rayconfig                            # if exported
-    │   ├── quicklinks-if-sensitive/
-    │   │   └── raycast-quicklinks-YYYYMMDD-HHMMSS.json   # if sensitive/unreviewed
-    │   └── README.md
-    └── ssh/
+├── workflow-snapshot/
+│   ├── reimage-workflow-docs/
+│   └── pre-image-workflow-snapshot-YYYYMMDD-HHMMSS/
+└── ...
 ```
 
 Expected final secrets state after DMG validation is different from staging. After the newest `all-secrets-*.dmg` has been mounted and verified, loose plaintext secret folders such as `ssh/`, `gnupg/`, `chrome/`, `postman/`, and `intellij/` should be removed unless you intentionally keep them temporarily for a documented reason.

@@ -1,17 +1,32 @@
 #!/usr/bin/env bash
 # capture-size-audit.sh
 # Audits local backup targets, OneDrive, external drive capacity, and the
-# backup root structure. All targets and excludes are read from backup-config.sh.
+# backup root structure. All targets and excludes are read from artifact-config.sh.
 #
 # Usage:
 #   ./capture-size-audit.sh [options]
 #
 # Options:
-#   --drive NAME       External drive partition name (default: Data)
-#   --backup-root DIR  Specific backup/capture root to audit (default: BACKUP_ROOT env var or newest reimage-*)
+#   --drive NAME        External drive partition name (default: Data)
+#   --backup-root DIR   Specific backup/capture root to audit (default: BACKUP_ROOT env var or newest reimage-*)
 #   --local-only          Skip OneDrive and external drive sections
 #   --check-loose-secrets Run a read-only lingering-secret candidate check.
+#   --dest DIR           Size-audit-reports root directory.
+#                         Default: $REIMAGE_ARTIFACT_ROOT/size-audit-reports.
+#                         When neither is available, the report is not saved.
+#   --context pre-image|post-image
+#                         Context prefix for the timestamped run directory.
+#                         Default: pre-image
 #   --help
+#
+# Output (written beneath --dest, when a destination is available):
+#   MANIFEST.md
+#       Append-only index of successful size-audit runs.
+#   latest-run.txt
+#       Relative path to the newest successful run directory.
+#   runs/<context>-YYYYMMDD-HHMMSS/size-audit-report.txt
+#       Full terminal output of the run, ANSI color codes intact. View with
+#       `less -R` or `cat` in a terminal so the severity colors still render.
 
 set -euo pipefail
 
@@ -35,6 +50,8 @@ DRIVE_NAME="$DEFAULT_DRIVE_NAME"
 AUDIT_BACKUP_ROOT="${BACKUP_ROOT:-}"
 LOCAL_ONLY=false
 CHECK_LOOSE_SECRETS=false
+REPORT_DEST="${REIMAGE_ARTIFACT_ROOT:+${REIMAGE_ARTIFACT_ROOT}/size-audit-reports}"
+REPORT_CONTEXT="pre-image"
 
 for arg in "$@"; do
   case "$arg" in
@@ -42,7 +59,7 @@ for arg in "$@"; do
     --check-loose-secrets) CHECK_LOOSE_SECRETS=true ;;
     --help|-h)
       cat <<'USAGE'
-Usage: ./capture-size-audit.sh [--drive NAME_OR_MOUNT_PATH] [--backup-root DIR] [--local-only] [--check-loose-secrets]
+Usage: ./capture-size-audit.sh [--drive NAME_OR_MOUNT_PATH] [--backup-root DIR] [--local-only] [--check-loose-secrets] [--dest DIR] [--context pre-image|post-image]
 
   --drive NAME_OR_MOUNT_PATH
                        External drive partition name or /Volumes/... mount path
@@ -50,17 +67,32 @@ Usage: ./capture-size-audit.sh [--drive NAME_OR_MOUNT_PATH] [--backup-root DIR] 
   --backup-root DIR   Backup/capture root to audit (default: BACKUP_ROOT env var or newest reimage-* on drive)
   --local-only          Show local targets only — skip OneDrive and external drive
   --check-loose-secrets Run after the secrets phase to identify plaintext secret candidates outside secrets-encrypted/ and loose payloads still under secrets-encrypted/.
+  --dest DIR           Size-audit-reports root directory (default: $REIMAGE_ARTIFACT_ROOT/size-audit-reports)
+  --context pre-image|post-image
+                       Context prefix for the timestamped run directory (default: pre-image)
 USAGE
       exit 0 ;;
     --drive)        : ;;   # handled below
     --backup-root)  : ;;
+    --dest)         : ;;   # handled below
+    --context)      : ;;   # handled below
     *)
-      if [[ "${PREV_ARG:-}" == "--drive" ]];       then DRIVE_NAME="$arg"
+      if [[ "${PREV_ARG:-}" == "--drive" ]];         then DRIVE_NAME="$arg"
       elif [[ "${PREV_ARG:-}" == "--backup-root" ]]; then AUDIT_BACKUP_ROOT="$arg"
+      elif [[ "${PREV_ARG:-}" == "--dest" ]];        then REPORT_DEST="$arg"
+      elif [[ "${PREV_ARG:-}" == "--context" ]];     then REPORT_CONTEXT="$arg"
       fi ;;
   esac
   PREV_ARG="$arg"
 done
+
+case "$REPORT_CONTEXT" in
+  pre-image|post-image) ;;
+  *)
+    echo "ERROR: --context must be pre-image or post-image, got: $REPORT_CONTEXT" >&2
+    exit 2
+    ;;
+esac
 
 if [[ "$DRIVE_NAME" == /* ]]; then
   EXTERNAL_MOUNT="${DRIVE_NAME%/}"
@@ -225,10 +257,98 @@ list_dir_contents() {
   done
 }
 
+# ── Report capture (size-audit-reports) ───────────────────────────────────────
+# Mirrors the repo-audit-reports pattern: MANIFEST.md + latest-run.txt +
+# self-contained runs/<context>-YYYYMMDD-HHMMSS/ directories, written to a
+# .incomplete staging name and atomically renamed on success so a failed or
+# interrupted run never lands in the manifest.
+SAVE_REPORT=false
+if [[ -n "$REPORT_DEST" ]]; then
+  mkdir -p "$REPORT_DEST/runs"
+
+  MANIFEST_PATH="$REPORT_DEST/MANIFEST.md"
+  LATEST_RUN_PATH="$REPORT_DEST/latest-run.txt"
+  STAMP="$(date +%Y%m%d-%H%M%S)"
+  RUN_ID="${REPORT_CONTEXT}-${STAMP}"
+  RUN_RELATIVE="runs/$RUN_ID"
+  FINAL_RUN_DIR="$REPORT_DEST/$RUN_RELATIVE"
+  WORK_RUN_DIR="$REPORT_DEST/runs/.${RUN_ID}.incomplete"
+
+  if [[ -e "$FINAL_RUN_DIR" || -e "$WORK_RUN_DIR" ]]; then
+    echo "ERROR: size-audit run directory already exists for this timestamp: $FINAL_RUN_DIR" >&2
+    exit 1
+  fi
+
+  if [[ -e "$MANIFEST_PATH" ]] && ! grep -q '^# Size Audit Runs$' "$MANIFEST_PATH" 2>/dev/null; then
+    echo "ERROR: existing manifest is not the canonical append-only size-audit index:" >&2
+    echo "  $MANIFEST_PATH" >&2
+    echo "Remove that file before running the current size-audit workflow." >&2
+    exit 2
+  fi
+
+  mkdir "$WORK_RUN_DIR"
+
+  cleanup_incomplete_size_audit_run() {
+    if [[ -d "$WORK_RUN_DIR" ]]; then
+      rm -rf "$WORK_RUN_DIR"
+    fi
+  }
+  trap cleanup_incomplete_size_audit_run EXIT
+  trap 'exit 130' INT TERM
+
+  REPORT="$WORK_RUN_DIR/size-audit-report.txt"
+  # ANSI color codes are captured on purpose so the same severity colors read
+  # the same way later. View with `less -R` or `cat` in a terminal; a raw
+  # dump (e.g. `cat -v`) will show the escape codes literally instead.
+  exec > >(tee -a "$REPORT") 2>&1
+  SAVE_REPORT=true
+fi
+
+# Appends the manifest row, updates the latest-run pointer, and atomically
+# promotes the run directory. Called at every exit point that reaches a
+# clean end of the report (both the --local-only early exit and normal
+# completion) so there is exactly one place that finalizes a successful run.
+finalize_size_audit_report() {
+  [[ "$SAVE_REPORT" == true ]] || return 0
+
+  mv "$WORK_RUN_DIR" "$FINAL_RUN_DIR"
+
+  if [[ ! -e "$MANIFEST_PATH" ]]; then
+    cat > "$MANIFEST_PATH" <<'EOF'
+# Size Audit Runs
+
+This file is an append-only index of successful backup-size-audit runs.
+Reports keep their original ANSI color codes — use `less -R` or `cat` in a
+terminal to view them with the severity colors intact.
+
+| Completed | Context | Run | External total | Skipped total | OneDrive planned | Report |
+|---|---|---|---:|---:|---:|---|
+EOF
+  fi
+
+  COMPLETED_AT="$(date '+%Y-%m-%d %H:%M:%S')"
+  printf '| %s | `%s` | `%s` | %s | %s | %s | [Open report](%s/size-audit-report.txt) |\n' \
+    "$COMPLETED_AT" "$REPORT_CONTEXT" "$RUN_ID" \
+    "$(bytes_to_human "${total_bytes:-0}")" "$(bytes_to_human "${skip_bytes:-0}")" "$(bytes_to_human "${od_total:-0}")" \
+    "$RUN_RELATIVE" >> "$MANIFEST_PATH"
+
+  LATEST_TEMP="$REPORT_DEST/.latest-run.$$.tmp"
+  printf '%s\n' "$RUN_RELATIVE" > "$LATEST_TEMP"
+  mv "$LATEST_TEMP" "$LATEST_RUN_PATH"
+
+  trap - EXIT INT TERM
+
+  echo ""
+  echo -e "${DIM}Report saved (ANSI color codes intact):${RST}"
+  echo -e "${DIM}  $FINAL_RUN_DIR/size-audit-report.txt${RST}"
+  echo -e "${DIM}Manifest:    $MANIFEST_PATH${RST}"
+  echo -e "${DIM}Latest-run:  $LATEST_RUN_PATH${RST}"
+}
+
 # ── Header ────────────────────────────────────────────────────────────────────
 echo ""
 echo -e "${BLD}${CYN}╔══════════════════════════════════════════════════════╗${RST}"
-echo -e "${BLD}${CYN}║        Pre-Reimage Backup Size Audit                 ║${RST}"
+echo -e "${BLD}${CYN}║        Pre-Image Backup Size Audit                   ║${RST}"
 echo -e "${BLD}${CYN}║        $(date '+%Y-%m-%d %H:%M:%S')                        ║${RST}"
 echo -e "${BLD}${CYN}╚══════════════════════════════════════════════════════╝${RST}"
 echo -e "  ${DIM}Config: ${CONFIG}${RST}"
@@ -249,7 +369,7 @@ total_bytes=0
 # ══════════════════════════════════════════════════════════════════════════════
 echo ""
 echo -e "${BLD}${CYN}━━  EXTERNAL DRIVE TARGETS  ━━━━━━━━━━━━━━━━━━━━━━━━━━${RST}"
-echo -e "  ${DIM}Sources defined in backup-config.sh EXTERNAL_TARGETS${RST}"
+echo -e "  ${DIM}Sources defined in artifact-config.sh EXTERNAL_TARGETS${RST}"
 
 current_category=""
 
@@ -325,7 +445,7 @@ echo -e "  ${BLD}External targets total:  $(bytes_to_human $total_bytes)${RST}"
 # ── What's being skipped ──────────────────────────────────────────────────────
 echo ""
 echo -e "${BLD}${CYN}━━  INTENTIONALLY SKIPPED  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RST}"
-echo -e "  ${DIM}Defined in backup-config.sh SKIP_ENTRIES${RST}"
+echo -e "  ${DIM}Defined in artifact-config.sh SKIP_ENTRIES${RST}"
 echo ""
 
 skip_bytes=0
@@ -356,6 +476,7 @@ if $LOCAL_ONLY; then
   hr
   echo -e "${DIM}--local-only: OneDrive and external drive sections skipped.${RST}"
   echo ""
+  finalize_size_audit_report
   exit 0
 fi
 
@@ -365,7 +486,7 @@ fi
 echo ""
 echo ""
 echo -e "${BLD}${CYN}━━  ONEDRIVE  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RST}"
-echo -e "  ${DIM}Targets defined in backup-config.sh ONEDRIVE_TARGETS${RST}"
+echo -e "  ${DIM}Targets defined in artifact-config.sh ONEDRIVE_TARGETS${RST}"
 echo ""
 
 # Auto-detect OneDrive
@@ -513,7 +634,7 @@ if [[ -d "$EXTERNAL_MOUNT" ]]; then
         rb=$(raw_bytes "$item"); sz=$(bytes_to_human "$rb")
         if [[ -d "$item" ]]; then
           is_expected=0
-          for ef in "${EXPECTED_BACKUP_FOLDERS[@]}"; do
+          for ef in "${EXPECTED_ARTIFACT_FOLDERS[@]}"; do
             [[ "$name" == "$ef" ]] && is_expected=1 && break
           done
           (( is_expected )) \
@@ -532,7 +653,7 @@ if [[ -d "$EXTERNAL_MOUNT" ]]; then
 
       echo ""
       missing=()
-      for ef in "${EXPECTED_BACKUP_FOLDERS[@]}"; do
+      for ef in "${EXPECTED_ARTIFACT_FOLDERS[@]}"; do
         [[ -d "$backup_root/$ef" ]] || missing+=("$ef")
       done
       if (( ${#missing[@]} > 0 )); then
@@ -689,3 +810,5 @@ echo -e "${DIM}⚠  Skipped items (Gradle, Docker.raw, caches) save $(bytes_to_h
 echo -e "${DIM}⚠  Sensitive items flagged ⚠ should live in secrets-encrypted/.${RST}"
 echo -e "${DIM}   Config: ${CONFIG}${RST}"
 echo ""
+
+finalize_size_audit_report

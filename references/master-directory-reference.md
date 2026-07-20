@@ -68,6 +68,7 @@ $REIMAGE_ARTIFACT_ROOT/
 ├── reimaged-system/
 ├── repo-audit-reports/
 ├── secrets-encrypted/
+├── size-audit-reports/
 ├── staged-ignored-files/
 ├── system-inventory/
 ├── time-machine/
@@ -435,6 +436,18 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 > │   │   └── raycast-quicklinks-YYYYMMDD-HHMMSS.json   # if sensitive/unreviewed
 > │   └── raycast-settings-and-data-YYYYMMDD-HHMMSS.rayconfig   # if exported
 > └── ssh/
+> ```
+
+> [!example]- `$REIMAGE_ARTIFACT_ROOT/size-audit-reports/`
+> ```text
+> $REIMAGE_ARTIFACT_ROOT/size-audit-reports/
+> ├── MANIFEST.md
+> ├── latest-run.txt
+> └── runs/
+>     ├── pre-image-YYYYMMDD-HHMMSS/
+>     │   └── size-audit-report.txt
+>     └── post-image-YYYYMMDD-HHMMSS/
+>         └── ...
 > ```
 
 > [!example]- `$REIMAGE_ARTIFACT_ROOT/staged-ignored-files/`
