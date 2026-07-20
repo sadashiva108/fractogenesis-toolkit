@@ -20,28 +20,6 @@ Workflow:
   5. Run again with --exclude-list.
   6. Run with --copy.
 
-Secret-shaped candidates:
-  --secrets-patterns points at a reusable pattern list (same file format as
-  the include template and exclude list, one gitignore-style pattern per
-  line -- see secrets-patterns.txt examples below) of patterns already known
-  to be credential-shaped, e.g. .env, *.pem, *.key, credentials.json. Any
-  candidate whose path matches one of those patterns is tagged
-  flagged_secret=yes in candidates.tsv (and copied.tsv / copy-failed.tsv),
-  with the matching pattern(s) recorded in secret_patterns_matched. This is
-  the git-repo-side counterpart to backup-home's secrets-targets.conf.sh /
-  secret-flags.conf.sh -- same "secrets get flagged, not silently mixed in
-  with everything else" idea, using a plain pattern file here instead of a
-  sourced bash array because this script is consumed by Python, not bash.
-
-  --secrets-dest additionally redirects flagged candidates to a physically
-  separate destination during --copy (e.g.
-  staged-ignored-files/secrets-candidates/ as a sibling of dryrun/,
-  dryrun-filtered/, and live/), so a secret-shaped file can't land in the
-  same tree as ordinary staged files by accident. Without --secrets-dest,
-  flagged candidates are still tagged in the TSVs but copy to their normal
-  location -- --secrets-patterns alone gives you visibility, adding
-  --secrets-dest also gives you physical separation.
-
 Examples:
 
   REIMAGE_ARTIFACT_ROOT="/Volumes/Data/reimage-backup-YYYYMMDD"
@@ -49,7 +27,6 @@ Examples:
   # Dry run
   python3 stage-selected-patterns.py \
     --include-template "$REIMAGE_ARTIFACT_ROOT/gitignore-superset/gitignore-review-template.txt" \
-    --secrets-patterns "$REIMAGE_WORKSPACE_ROOT/gitignore-superset/secrets-patterns.txt" \
     --root ~/Development/IdeaProjects \
     --root ~/Development/Documentation \
     --dest "$REIMAGE_ARTIFACT_ROOT/staged-ignored-files/dryrun"
@@ -58,17 +35,14 @@ Examples:
   python3 stage-selected-patterns.py \
     --include-template "$REIMAGE_ARTIFACT_ROOT/gitignore-superset/gitignore-review-template.txt" \
     --exclude-list "$REIMAGE_ARTIFACT_ROOT/gitignore-superset/backup-exclude-list.txt" \
-    --secrets-patterns "$REIMAGE_WORKSPACE_ROOT/gitignore-superset/secrets-patterns.txt" \
     --root ~/Development/IdeaProjects \
     --root ~/Development/Documentation \
     --dest "$REIMAGE_ARTIFACT_ROOT/staged-ignored-files/dryrun-filtered"
 
-  # Final copy, with flagged secrets redirected to their own bucket
+  # Final copy
   python3 stage-selected-patterns.py \
     --include-template "$REIMAGE_ARTIFACT_ROOT/gitignore-superset/gitignore-review-template.txt" \
     --exclude-list "$REIMAGE_ARTIFACT_ROOT/gitignore-superset/backup-exclude-list.txt" \
-    --secrets-patterns "$REIMAGE_WORKSPACE_ROOT/gitignore-superset/secrets-patterns.txt" \
-    --secrets-dest "$REIMAGE_ARTIFACT_ROOT/staged-ignored-files/secrets-candidates" \
     --root ~/Development/IdeaProjects \
     --root ~/Development/Documentation \
     --dest "$REIMAGE_ARTIFACT_ROOT/staged-ignored-files/live" \
@@ -89,19 +63,6 @@ Exclude list examples:
 
   # Exclude by backup-relative path
   ese-policy-listener/.idea/httpRequests/
-
-secrets-patterns.txt examples (same pattern syntax as the include template
-and exclude list -- these are gitignore-style patterns, matched against each
-candidate's path, independent of which include pattern selected it):
-  .env
-  .env.*
-  *.pem
-  *.key
-  *.p12
-  *.jks
-  credentials.json
-  id_rsa
-  id_ed25519
 """
 
 from __future__ import annotations
@@ -151,8 +112,7 @@ class Candidate:
     backup_path: Path
     matched_scope: Path
     matched_patterns: List[str] = field(default_factory=list)
-    flagged_secret: bool = False
-    secret_patterns_matched: List[str] = field(default_factory=list)
+    secret_pattern: str = ""
 
 
 def expand_path(value: str | Path) -> Path:
@@ -236,38 +196,6 @@ def read_exclude_patterns(exclude_path: Optional[Path]) -> List[Pattern]:
     return dedupe_patterns(patterns)
 
 
-def read_secrets_patterns(secrets_path: Optional[Path]) -> List[Pattern]:
-    """Same file format as read_exclude_patterns: gitignore-style patterns,
-    one per line, blank lines and #-comments skipped, TSV candidate rows
-    pasted in from candidates.tsv also accepted. These patterns are matched
-    against each candidate's path independently of which include pattern
-    selected it -- see the module docstring for why."""
-    if not secrets_path:
-        return []
-
-    patterns: List[Pattern] = []
-
-    with secrets_path.open("r", encoding="utf-8", errors="replace") as f:
-        for line_number, line in enumerate(f, start=1):
-            stripped = line.strip()
-            if not stripped or stripped.startswith("#"):
-                continue
-
-            if "\t" in stripped:
-                parts = stripped.split("\t")
-                if parts[0] in {"backup_label", "abs_path"}:
-                    continue
-                if len(parts) >= 2 and parts[0] and parts[1]:
-                    patterns.append(Pattern(raw=stripped, effective=f"{parts[0]}:{parts[1]}", source_line=line_number))
-                    continue
-
-            effective = normalize_template_pattern(stripped)
-            if effective:
-                patterns.append(Pattern(raw=strip_checkbox(stripped), effective=effective, source_line=line_number))
-
-    return dedupe_patterns(patterns)
-
-
 def dedupe_patterns(patterns: Iterable[Pattern]) -> List[Pattern]:
     seen: Set[str] = set()
     result: List[Pattern] = []
@@ -298,7 +226,7 @@ def matches_gitignore_style(rel: str, pattern: str) -> bool:
     important local files or noisy excludes.
     """
     rel = rel.replace(os.sep, "/")
-    while rel.startswith("./"):
+    if rel.startswith("./"):
         rel = rel[2:]
     basename = rel.rsplit("/", 1)[-1]
 
@@ -498,115 +426,85 @@ def make_label_map(scope_roots: List[Path]) -> Dict[Path, str]:
     return labels
 
 
-def candidate_excluded(candidate: Candidate, exclude_patterns: List[Pattern]) -> Tuple[bool, str]:
-    if not exclude_patterns:
-        return False, ""
-
+def _pattern_matches_candidate(candidate: Candidate, ex: str) -> bool:
+    """
+    Single-pattern match against a candidate, checked in the same forms used
+    throughout this script: exact match against label/rel/backup-rel/repo:rel/
+    abs-path strings, repo:path form, backup-label/path form, absolute path
+    glob, direct glob against the same string forms, and gitignore-style
+    relative matches against both the scope-relative and backup-label-relative
+    paths. Shared by candidate_excluded and candidate_matches_secrets so the
+    matching rules only exist in one place.
+    """
     abs_posix = candidate.abs_path.as_posix()
     rel = candidate.backup_rel_path.replace(os.sep, "/")
     label = candidate.backup_label
     backup_rel = f"{label}/{rel}"
     repo_colon = f"{label}:{rel}"
+    test_paths = [rel, backup_rel, repo_colon, abs_posix]
 
-    test_paths = [
-        rel,
-        backup_rel,
-        repo_colon,
-        abs_posix,
-    ]
+    ex = ex.replace(os.sep, "/").strip()
+    if not ex:
+        return False
 
-    for p in exclude_patterns:
-        ex = p.effective.replace(os.sep, "/").strip()
-        if not ex:
-            continue
+    if ex in {label, rel, backup_rel, repo_colon, abs_posix}:
+        return True
 
-        if ex in {label, rel, backup_rel, repo_colon, abs_posix}:
-            return True, p.raw
+    # repo:path form.
+    if ":" in ex and not ex.startswith("/"):
+        ex_label, ex_rel = ex.split(":", 1)
+        if fnmatch.fnmatchcase(label, ex_label) and matches_gitignore_style(rel, ex_rel):
+            return True
 
-        # repo:path form.
-        if ":" in ex and not ex.startswith("/"):
-            ex_label, ex_rel = ex.split(":", 1)
-            if fnmatch.fnmatchcase(label, ex_label) and matches_gitignore_style(rel, ex_rel):
-                return True, p.raw
+    # backup-label/path form.
+    if "/" in ex:
+        maybe_label, maybe_rel = ex.split("/", 1)
+        if maybe_label == label and matches_gitignore_style(rel, maybe_rel):
+            return True
 
-        # backup-label/path form.
-        if "/" in ex:
-            maybe_label, maybe_rel = ex.split("/", 1)
-            if maybe_label == label and matches_gitignore_style(rel, maybe_rel):
-                return True, p.raw
+    # Absolute path glob.
+    if ex.startswith("/") and fnmatch.fnmatchcase(abs_posix, ex):
+        return True
 
-        # Absolute path glob.
-        if ex.startswith("/") and fnmatch.fnmatchcase(abs_posix, ex):
-            return True, p.raw
+    # Direct glob against useful string forms.
+    for value in test_paths:
+        if fnmatch.fnmatchcase(value, ex):
+            return True
 
-        # Direct glob against useful string forms.
-        for value in test_paths:
-            if fnmatch.fnmatchcase(value, ex):
-                return True, p.raw
+    # Gitignore-style relative match against repo-relative path.
+    if matches_gitignore_style(rel, ex):
+        return True
 
-        # Gitignore-style relative match against repo-relative path.
-        if matches_gitignore_style(rel, ex):
-            return True, p.raw
+    # Gitignore-style match against backup-label-relative path.
+    if matches_gitignore_style(backup_rel, ex):
+        return True
 
-        # Gitignore-style match against backup-label-relative path.
-        if matches_gitignore_style(backup_rel, ex):
+    return False
+
+
+def candidate_matches_pattern_list(candidate: Candidate, patterns: List[Pattern]) -> Tuple[bool, str]:
+    if not patterns:
+        return False, ""
+
+    for p in patterns:
+        if _pattern_matches_candidate(candidate, p.effective):
             return True, p.raw
 
     return False, ""
 
 
-def candidate_secret_matches(candidate: Candidate, secrets_patterns: List[Pattern]) -> List[str]:
-    """Returns the raw text of every secrets-pattern that matches this
-    candidate's path, checked against the same set of path forms
-    candidate_excluded() uses (repo-relative, backup-label-relative,
-    repo:path, absolute) so a secrets pattern behaves exactly like an
-    exclude pattern for matching purposes -- it just tags instead of
-    dropping. Deliberately independent of matched_patterns (the include
-    pattern that selected this file): a broad include pattern can still
-    select a file that's individually secret-shaped."""
-    if not secrets_patterns:
-        return []
+def candidate_excluded(candidate: Candidate, exclude_patterns: List[Pattern]) -> Tuple[bool, str]:
+    return candidate_matches_pattern_list(candidate, exclude_patterns)
 
-    abs_posix = candidate.abs_path.as_posix()
-    rel = candidate.backup_rel_path.replace(os.sep, "/")
-    label = candidate.backup_label
-    backup_rel = f"{label}/{rel}"
-    repo_colon = f"{label}:{rel}"
 
-    test_paths = [rel, backup_rel, repo_colon, abs_posix]
-
-    matched: List[str] = []
-    for p in secrets_patterns:
-        ex = p.effective.replace(os.sep, "/").strip()
-        if not ex:
-            continue
-
-        hit = False
-
-        if ex in {label, rel, backup_rel, repo_colon, abs_posix}:
-            hit = True
-        elif ":" in ex and not ex.startswith("/"):
-            ex_label, ex_rel = ex.split(":", 1)
-            if fnmatch.fnmatchcase(label, ex_label) and matches_gitignore_style(rel, ex_rel):
-                hit = True
-        elif "/" in ex and not ex.startswith("/"):
-            maybe_label, maybe_rel = ex.split("/", 1)
-            if maybe_label == label and matches_gitignore_style(rel, maybe_rel):
-                hit = True
-        elif ex.startswith("/") and fnmatch.fnmatchcase(abs_posix, ex):
-            hit = True
-        else:
-            for value in test_paths:
-                if fnmatch.fnmatchcase(value, ex):
-                    hit = True
-                    break
-            if not hit and (matches_gitignore_style(rel, ex) or matches_gitignore_style(backup_rel, ex)):
-                hit = True
-
-        if hit and p.raw not in matched:
-            matched.append(p.raw)
-
-    return matched
+def candidate_matches_secrets(candidate: Candidate, secrets_patterns: List[Pattern]) -> Tuple[bool, str]:
+    """
+    Checks a candidate against secrets-patterns.txt using the exact same
+    matching forms as candidate_excluded. Returns (True, matched_pattern_raw)
+    when the candidate looks secret-shaped, so it can be routed to the
+    secrets-candidates/ bucket instead of the ordinary output tree.
+    """
+    return candidate_matches_pattern_list(candidate, secrets_patterns)
 
 
 def write_tsv(path: Path, rows: List[Dict[str, str]], fieldnames: List[str]) -> None:
@@ -622,8 +520,7 @@ def main() -> int:
     )
     parser.add_argument("--include-template", required=True, help="Path to gitignore-review-template.txt.")
     parser.add_argument("--exclude-list", help="Optional list of patterns/paths to exclude after dry run review.")
-    parser.add_argument("--secrets-patterns", help="Optional pattern file (same format as --exclude-list) flagging credential-shaped candidates in the TSV reports.")
-    parser.add_argument("--secrets-dest", help="Optional destination for flagged candidates during --copy, physically separate from --dest. Requires --secrets-patterns.")
+    parser.add_argument("--secrets-patterns", help="Optional list of credential-shaped patterns. Matching files are routed to secrets-candidates/ instead of the ordinary output tree.")
     parser.add_argument("--root", action="append", required=True, help="Root directory to crawl. Can be passed multiple times.")
     parser.add_argument("--dest", required=True, help="Destination directory for dry-run reports or copied backup files.")
     parser.add_argument("--copy", action="store_true", help="Actually copy files. Without this, dry run only.")
@@ -634,7 +531,6 @@ def main() -> int:
     include_template = expand_path(args.include_template)
     exclude_list = expand_path(args.exclude_list) if args.exclude_list else None
     secrets_patterns_path = expand_path(args.secrets_patterns) if args.secrets_patterns else None
-    secrets_dest = expand_path(args.secrets_dest) if args.secrets_dest else None
     roots = [expand_path(r) for r in args.root]
     dest = expand_path(args.dest)
 
@@ -647,24 +543,18 @@ def main() -> int:
         return 2
 
     if secrets_patterns_path and not secrets_patterns_path.is_file():
-        print(f"ERROR: secrets patterns file not found: {secrets_patterns_path}", file=sys.stderr)
-        return 2
-
-    if secrets_dest and not secrets_patterns_path:
-        print("ERROR: --secrets-dest requires --secrets-patterns.", file=sys.stderr)
+        print(f"ERROR: secrets patterns list not found: {secrets_patterns_path}", file=sys.stderr)
         return 2
 
     include_patterns = read_checked_patterns(include_template)
     exclude_patterns = read_exclude_patterns(exclude_list)
-    secrets_patterns = read_secrets_patterns(secrets_patterns_path)
+    secrets_patterns = read_exclude_patterns(secrets_patterns_path)
 
     if not include_patterns:
         print(f"ERROR: no checked [x] patterns found in {include_template}", file=sys.stderr)
         return 2
 
     dest.mkdir(parents=True, exist_ok=True)
-    if secrets_dest:
-        secrets_dest.mkdir(parents=True, exist_ok=True)
 
     scopes = discover_scopes(roots)
     all_git_roots = sorted({g for root in roots for g in find_git_roots(root)}, key=lambda p: str(p))
@@ -673,6 +563,7 @@ def main() -> int:
     labels = make_label_map(backup_roots)
 
     candidates_by_abs: Dict[Path, Candidate] = {}
+    secrets_candidates_by_abs: Dict[Path, Candidate] = {}
     excluded_rows: List[Dict[str, str]] = []
     skipped_rows: List[Dict[str, str]] = []
 
@@ -758,7 +649,7 @@ def main() -> int:
 
                 backup_path = dest / backup_label / backup_rel_path
 
-                existing = candidates_by_abs.get(abs_path)
+                existing = candidates_by_abs.get(abs_path) or secrets_candidates_by_abs.get(abs_path)
                 if existing:
                     existing.matched_patterns.extend(p.raw for p in matched if p.raw not in existing.matched_patterns)
                     continue
@@ -772,13 +663,6 @@ def main() -> int:
                     matched_patterns=[p.raw for p in matched],
                 )
 
-                secret_matches = candidate_secret_matches(candidate, secrets_patterns)
-                if secret_matches:
-                    candidate.flagged_secret = True
-                    candidate.secret_patterns_matched = secret_matches
-                    if secrets_dest:
-                        candidate.backup_path = secrets_dest / backup_label / backup_rel_path
-
                 is_excluded, exclude_reason = candidate_excluded(candidate, exclude_patterns)
                 if is_excluded:
                     excluded_rows.append({
@@ -787,17 +671,32 @@ def main() -> int:
                         "abs_path": candidate.abs_path.as_posix(),
                         "exclude_pattern": exclude_reason,
                         "matched_patterns": "; ".join(candidate.matched_patterns),
-                        "flagged_secret": "yes" if candidate.flagged_secret else "no",
                     })
+                    continue
+
+                is_secret, secret_pattern = candidate_matches_secrets(candidate, secrets_patterns)
+                if is_secret:
+                    # Route secret-shaped candidates apart from the ordinary
+                    # output tree instead of adding them to candidates_by_abs,
+                    # so a secret-shaped file never lands next to regular
+                    # staged files in dryrun/dryrun-filtered/live output.
+                    candidate.backup_path = dest / "secrets-candidates" / backup_label / backup_rel_path
+                    candidate.secret_pattern = secret_pattern
+                    secrets_candidates_by_abs[abs_path] = candidate
                     continue
 
                 candidates_by_abs[abs_path] = candidate
 
     candidates = sorted(candidates_by_abs.values(), key=lambda c: (c.backup_label, c.backup_rel_path))
+    secrets_candidates = sorted(secrets_candidates_by_abs.values(), key=lambda c: (c.backup_label, c.backup_rel_path))
 
     candidate_rows: List[Dict[str, str]] = []
     copied_rows: List[Dict[str, str]] = []
     copy_failed_rows: List[Dict[str, str]] = []
+
+    secrets_candidate_rows: List[Dict[str, str]] = []
+    secrets_copied_rows: List[Dict[str, str]] = []
+    secrets_copy_failed_rows: List[Dict[str, str]] = []
 
     for c in candidates:
         try:
@@ -813,8 +712,6 @@ def main() -> int:
             "size_bytes": str(size),
             "matched_scope": c.matched_scope.as_posix(),
             "matched_patterns": "; ".join(c.matched_patterns),
-            "flagged_secret": "yes" if c.flagged_secret else "no",
-            "secret_patterns_matched": "; ".join(c.secret_patterns_matched),
         }
         candidate_rows.append(row)
 
@@ -828,6 +725,39 @@ def main() -> int:
             except OSError as e:
                 copy_failed_rows.append({**row, "reason": f"copy_failed: {e}"})
 
+    # Same shape as the loop above, kept separate rather than merged with a
+    # branch inside it: secrets candidates carry an extra secret_pattern
+    # column and write to their own TSVs, so the ordinary candidates.tsv
+    # schema and copy behavior stay unchanged for callers that never pass
+    # --secrets-patterns.
+    for c in secrets_candidates:
+        try:
+            size = c.abs_path.stat().st_size if c.abs_path.exists() else 0
+        except OSError:
+            size = 0
+
+        row = {
+            "backup_label": c.backup_label,
+            "backup_rel_path": c.backup_rel_path,
+            "abs_path": c.abs_path.as_posix(),
+            "backup_path": c.backup_path.as_posix(),
+            "size_bytes": str(size),
+            "matched_scope": c.matched_scope.as_posix(),
+            "matched_patterns": "; ".join(c.matched_patterns),
+            "secret_pattern": c.secret_pattern,
+        }
+        secrets_candidate_rows.append(row)
+
+        if args.copy:
+            try:
+                c.backup_path.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(c.abs_path, c.backup_path, follow_symlinks=False)
+                secrets_copied_rows.append(row)
+            except FileNotFoundError:
+                secrets_copy_failed_rows.append({**row, "reason": "missing_during_copy"})
+            except OSError as e:
+                secrets_copy_failed_rows.append({**row, "reason": f"copy_failed: {e}"})
+
     write_tsv(
         dest / "candidates.tsv",
         candidate_rows,
@@ -839,15 +769,13 @@ def main() -> int:
             "size_bytes",
             "matched_scope",
             "matched_patterns",
-            "flagged_secret",
-            "secret_patterns_matched",
         ],
         )
 
     write_tsv(
         dest / "excluded.tsv",
         excluded_rows,
-        ["backup_label", "backup_rel_path", "abs_path", "exclude_pattern", "matched_patterns", "flagged_secret"],
+        ["backup_label", "backup_rel_path", "abs_path", "exclude_pattern", "matched_patterns"],
         )
 
     write_tsv(
@@ -856,11 +784,33 @@ def main() -> int:
         ["reason", "abs_path", "matched_scope", "matched_patterns"],
         )
 
+    if secrets_patterns:
+        write_tsv(
+            dest / "secrets-candidates.tsv",
+            secrets_candidate_rows,
+            [
+                "backup_label",
+                "backup_rel_path",
+                "abs_path",
+                "backup_path",
+                "size_bytes",
+                "matched_scope",
+                "matched_patterns",
+                "secret_pattern",
+            ],
+            )
+
     # Record the parsed exclude patterns so it is easy to verify the script read them.
     with (dest / "parsed-exclude-patterns.txt").open("w", encoding="utf-8") as f:
         for p in exclude_patterns:
             line_info = f"line {p.source_line}" if p.source_line else "line ?"
             f.write(f"{line_info}\t{p.effective}\t(raw: {p.raw})\n")
+
+    if secrets_patterns:
+        with (dest / "parsed-secrets-patterns.txt").open("w", encoding="utf-8") as f:
+            for p in secrets_patterns:
+                line_info = f"line {p.source_line}" if p.source_line else "line ?"
+                f.write(f"{line_info}\t{p.effective}\t(raw: {p.raw})\n")
 
     if args.copy:
         write_tsv(
@@ -874,8 +824,6 @@ def main() -> int:
                 "size_bytes",
                 "matched_scope",
                 "matched_patterns",
-                "flagged_secret",
-                "secret_patterns_matched",
             ],
             )
         write_tsv(
@@ -889,13 +837,40 @@ def main() -> int:
                 "size_bytes",
                 "matched_scope",
                 "matched_patterns",
-                "flagged_secret",
-                "secret_patterns_matched",
                 "reason",
             ],
             )
 
-    flagged_count = sum(1 for r in candidate_rows if r["flagged_secret"] == "yes")
+        if secrets_patterns:
+            write_tsv(
+                dest / "secrets-copied.tsv",
+                secrets_copied_rows,
+                [
+                    "backup_label",
+                    "backup_rel_path",
+                    "abs_path",
+                    "backup_path",
+                    "size_bytes",
+                    "matched_scope",
+                    "matched_patterns",
+                    "secret_pattern",
+                ],
+                )
+            write_tsv(
+                dest / "secrets-copy-failed.tsv",
+                secrets_copy_failed_rows,
+                [
+                    "backup_label",
+                    "backup_rel_path",
+                    "abs_path",
+                    "backup_path",
+                    "size_bytes",
+                    "matched_scope",
+                    "matched_patterns",
+                    "secret_pattern",
+                    "reason",
+                ],
+                )
 
     summary = [
         "Selected Gitignore Staging Summary",
@@ -904,8 +879,7 @@ def main() -> int:
         f"Mode:                  {'COPY' if args.copy else 'DRY RUN'}",
         f"Include template:      {include_template}",
         f"Exclude list:          {exclude_list if exclude_list else '<none>'}",
-        f"Secrets patterns file: {secrets_patterns_path if secrets_patterns_path else '<none>'}",
-        f"Secrets destination:   {secrets_dest if secrets_dest else '<none -- flagged files stay in normal destination>'}",
+        f"Secrets patterns:      {secrets_patterns_path if secrets_patterns_path else '<none>'}",
         f"Destination:           {dest}",
         "",
         "Roots:",
@@ -915,18 +889,24 @@ def main() -> int:
         f"Git repos discovered:  {len(all_git_roots)}",
         f"Include patterns:      {len(include_patterns)}",
         f"Exclude patterns:      {len(exclude_patterns)}",
-        f"Secrets patterns:      {len(secrets_patterns)}",
         f"Candidate files:       {len(candidate_rows)}",
-        f"Secret-flagged files:  {flagged_count}",
         f"Excluded files:        {len(excluded_rows)}",
         f"Skipped files:         {len(skipped_rows)}",
     ]
+
+    if secrets_patterns:
+        summary.append(f"Secrets candidates:    {len(secrets_candidate_rows)}")
 
     if args.copy:
         summary.extend([
             f"Copied files:          {len(copied_rows)}",
             f"Copy failures:         {len(copy_failed_rows)}",
         ])
+        if secrets_patterns:
+            summary.extend([
+                f"Secrets copied:        {len(secrets_copied_rows)}",
+                f"Secrets copy failures: {len(secrets_copy_failed_rows)}",
+            ])
 
     summary.extend([
         "",
@@ -937,13 +917,22 @@ def main() -> int:
         f"  {dest / 'parsed-exclude-patterns.txt'}",
     ])
 
+    if secrets_patterns:
+        summary.extend([
+            f"  {dest / 'secrets-candidates.tsv'}",
+            f"  {dest / 'parsed-secrets-patterns.txt'}",
+        ])
+
     if args.copy:
         summary.extend([
             f"  {dest / 'copied.tsv'}",
             f"  {dest / 'copy-failed.tsv'}",
         ])
-        if secrets_dest and flagged_count:
-            summary.append(f"  {secrets_dest}  (flagged secret-shaped files copied here instead)")
+        if secrets_patterns:
+            summary.extend([
+                f"  {dest / 'secrets-copied.tsv'}",
+                f"  {dest / 'secrets-copy-failed.tsv'}",
+            ])
 
     summary_text = "\n".join(summary) + "\n"
     (dest / "summary.txt").write_text(summary_text, encoding="utf-8")
@@ -952,10 +941,10 @@ def main() -> int:
 
     if not args.copy:
         print("Dry run only. Review candidates.tsv and excluded.tsv, then rerun with --copy when ready.")
-        if flagged_count:
-            print(f"{flagged_count} candidate(s) flagged_secret=yes in candidates.tsv -- review secret_patterns_matched before copying.")
+        if secrets_patterns:
+            print("Secret-shaped matches were routed to secrets-candidates.tsv, kept apart from the ordinary candidates.")
 
-    return 0 if not copy_failed_rows else 1
+    return 0 if not copy_failed_rows and not secrets_copy_failed_rows else 1
 
 
 if __name__ == "__main__":

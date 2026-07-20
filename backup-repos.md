@@ -1218,7 +1218,7 @@ Three directions were considered for closing this gap, documented as
 separate alternatives rather than a combined design. 
 
 **Option B has since been implemented** 
-see [[#Secrets-Candidates Output|Secrets-CandidatesOutput]]
+see [[#Secrets-Candidates Output|Secrets-Candidates Output]]
 
 Options A and C remain undecided.
 
