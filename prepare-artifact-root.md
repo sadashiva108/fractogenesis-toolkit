@@ -599,6 +599,7 @@ Required, exported earlier in [[#Choose the External Data Volume|Choose the Exte
 | `ASSET_OR_HOST` | The Mac's short hostname | You want a shorter/cleaner tag than the raw hostname, or need to anonymize it in shared notes. |
 | `REIMAGE_START_DATE` | Today's date (`YYYYMMDD`) | The reimage effort actually started on an earlier date than when you're running this command. |
 | `REIMAGE_ARTIFACT_ROOT` * | `$EXTERNAL_DATA_VOLUME/reimage-$ASSET_OR_HOST-$REIMAGE_START_DATE-open` | Not set directly -- always built from the two values above. |
+| `ONEDRIVE_FOLDER_NAME` | Unset -- OneDrive is skipped | You want the optional OneDrive secondary copy. Export it to the CloudStorage OneDrive folder name (for example `OneDrive-AcmeGroup`); `setup-reimage-env.sh` then resolves `ONEDRIVE_ROOT` and pre-creates the per-reimage OneDrive destination. |
 
 \* See [[#Artifact Root Naming Convention|Artifact Root Naming Convention]] for the full naming pattern this interpolation follows.
 
@@ -635,7 +636,7 @@ Run `bin/setup-reimage-env.sh` to create the file. It does the following, in ord
 2. Confirms `reimage.env` doesn't already exist -- refuses otherwise, and points you at `bin/check-reimage-env.sh` rather than overwriting anything.
 3. Confirms `EXTERNAL_DATA_VOLUME` is exported -- refuses to run otherwise, rather than silently writing a blank/placeholder value you'd have to fix later.
 4. Copies the template to `reimage.env`.
-5. Runs `prepare-artifact-root.py init-reimage-env`, which resolves `ASSET_OR_HOST` and `REIMAGE_START_DATE` (your exported override, or its own default if unset), builds `REIMAGE_ARTIFACT_ROOT` from them, and writes all three into `reimage.env` in the same step -- along with the remaining resolved starter values (default workspace paths, confirmed volume paths).
+5. Runs `prepare-artifact-root.py init-reimage-env`, which resolves `ASSET_OR_HOST` and `REIMAGE_START_DATE` (your exported override, or its own default if unset), builds `REIMAGE_ARTIFACT_ROOT` from them, and writes all three into `reimage.env` in the same step -- along with the remaining resolved starter values (default workspace paths, confirmed volume paths). When `ONEDRIVE_FOLDER_NAME` is exported, it also resolves `ONEDRIVE_ROOT` under `~/Library/CloudStorage/` and pre-creates the per-reimage OneDrive destination -- but only when the CloudStorage root already exists (OneDrive signed in); otherwise it notes that the backup run will create it.
 6. Locks the file down to `chmod 600`.
 7. Prints the result for review.
 
@@ -659,8 +660,8 @@ Review these values -- they should already be correct, since they came from conf
 | `REIMAGE_START_DATE`         | Resolved once, the same way. |
 | `REIMAGE_ARTIFACT_ROOT`                | Should already be the resolved absolute path -- not blank.                                                                                                                             |
 | `OFFICE_WATCH`               | Optional. Leave blank unless Office stability watcher output is part of this workflow. If used, store a resolved absolute path such as `/Users/<user>/Desktop/<office-watch-folder>`, not a literal `$HOME/...` string. `artifact-config.sh` shares it with scripts. |
-| `ONEDRIVE_FOLDER_NAME`       | Optional. Use only when the local OneDrive folder should be resolved under `$HOME/Library/CloudStorage/`. Leave blank if OneDrive is not used.                                                                                                                     |
-| `ONEDRIVE_ROOT`              | Optional. Prefer a resolved absolute path to the local OneDrive sync folder when OneDrive is used. Leave blank if OneDrive is not used. Do not store a literal `$HOME/...` string.                                                                                 |
+| `ONEDRIVE_FOLDER_NAME`       | Optional. Set it by exporting `ONEDRIVE_FOLDER_NAME` before running `setup-reimage-env.sh`; blank means OneDrive is skipped.                                                                                                                     |
+| `ONEDRIVE_ROOT`              | Auto-resolved to `$HOME/Library/CloudStorage/$ONEDRIVE_FOLDER_NAME` when that override is set; blank otherwise. Stored as a resolved absolute path, never a literal `$HOME/...` string.                                                                                 |
 | `ONEDRIVE_DEST_SUBDIR`       | Already defaulted to the artifact root folder name by `setup-reimage-env.sh`.                                                                                            |
 
 There's no environment variable to set for the repository's own path. `prepare-artifact-root.py` self-locates from its own position in the repo -- wherever this checkout lives, the script finds `bin/` and `.internal/` relative to itself, so nothing needs to be told where the repo is. See [[#Repo Path Variables and Self-Locating Scripts|Repo Path Variables and Self-Locating Scripts]] in Supplemental Reference for what that does and doesn't cover. Stay in `FRACTOGENESIS_HOME` for this and every remaining step.
@@ -1030,7 +1031,7 @@ Important behavior:
 | It loads `reimage.env` if present. | Your local `REIMAGE_ARTIFACT_ROOT` plus optional `OFFICE_WATCH`, `ONEDRIVE_FOLDER_NAME`, `ONEDRIVE_ROOT`, and related paths are shared with scripts. |
 | It defines `EXTERNAL_APPLE_BACKUPS_VOLUME`. | Time Machine scripts use this as the backup destination mount path instead of assuming the destination volume is named `AppleBackups`. |
 | It exits if `REIMAGE_ARTIFACT_ROOT` is empty. | Create and source `reimage.env` before running scripts that depend on the backup root. |
-| It prefers workspace-backed config fragments when they exist. | `REIMAGE_WORKSPACE_ROOT/artifact-config/` becomes the reusable local copy for reruns; otherwise the loader falls back to `.github/copilot-templates/artifact-config/`. |
+| It prefers workspace-backed config fragments when they exist. | `REIMAGE_WORKSPACE_ROOT/artifact-config/` becomes the reusable local copy for reruns; otherwise the loader falls back to `.internal/templates/artifact-config/`. |
 | It defines `EXTERNAL_TARGETS`. | These become subfolders under `$REIMAGE_ARTIFACT_ROOT/home-files-backup/`. |
 | It defines OneDrive handling. | `ONEDRIVE_ROOT` should be a full path, or `ONEDRIVE_FOLDER_NAME` can be used to resolve a folder under `~/Library/CloudStorage/`. Do not use a bare OneDrive folder name relative to the current directory. |
 | It defines `SECRETS_TARGETS`. | These become file or directory entries under `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/`. Use `certs/` for certificate/keystore material and `certs/java-security/` for Java `jssecacerts`. |

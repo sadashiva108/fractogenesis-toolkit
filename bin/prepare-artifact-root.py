@@ -284,6 +284,37 @@ def ensure_workspace_dirs(*paths: str) -> None:
             Path(path).mkdir(parents=True, exist_ok=True)
 
 
+def resolve_onedrive_root(onedrive_folder_name: str) -> str:
+    # OneDrive is optional. When a folder name is supplied, resolve the full
+    # CloudStorage-backed path the same way REIMAGE_ARTIFACT_ROOT is built from
+    # parts, so reimage.env stores a resolved absolute path — never a bare
+    # folder name (which older scripts could treat as relative to the cwd) or a
+    # literal "$HOME/..." string. Return "" to leave OneDrive unconfigured.
+    name = onedrive_folder_name.strip()
+    if not name:
+        return ""
+    return str(Path.home() / "Library" / "CloudStorage" / name)
+
+
+def create_onedrive_destination(onedrive_root: str, onedrive_dest_subdir: str) -> None:
+    # Pre-create the per-reimage OneDrive destination that mirrors the
+    # artifact-root name — but only when the CloudStorage root already exists
+    # (OneDrive signed in). Creating it otherwise would make a plain local
+    # folder that never syncs (the accidental-relative-folder failure), so leave
+    # it for the signed-in backup run instead.
+    if not onedrive_root:
+        return
+    print(f"ONEDRIVE_ROOT={onedrive_root}")
+    root_path = Path(onedrive_root)
+    if root_path.is_dir():
+        destination = root_path / onedrive_dest_subdir
+        destination.mkdir(parents=True, exist_ok=True)
+        print(f"OK: OneDrive destination ready: {destination}")
+    else:
+        print(f"NOTE: OneDrive root not found yet: {onedrive_root}")
+        print("      Sign in to OneDrive so CloudStorage creates it; the backup will create the destination on first run.")
+
+
 def resolve_it_plan_source(explicit_source: str, values: Dict[str, str], workspace_root_override: str = "") -> Path:
     if explicit_source:
         source = Path(explicit_source).expanduser()
@@ -328,6 +359,8 @@ def cmd_init_reimage_env(args: argparse.Namespace) -> int:
     external_data_volume = args.external_data_volume.rstrip("/")
     reimage_artifact_root = f"{external_data_volume}/reimage-{asset_or_host}-{reimage_start_date}-open"
     onedrive_dest_subdir = Path(reimage_artifact_root).name
+    onedrive_folder_name = args.onedrive_folder_name.strip()
+    onedrive_root = resolve_onedrive_root(onedrive_folder_name)
 
     updates = {
         "REIMAGE_WORKSPACE_ROOT": workspace_root,
@@ -339,8 +372,8 @@ def cmd_init_reimage_env(args: argparse.Namespace) -> int:
         "REIMAGE_START_DATE": reimage_start_date,
         "REIMAGE_ARTIFACT_ROOT": reimage_artifact_root,
         "OFFICE_WATCH": "",
-        "ONEDRIVE_FOLDER_NAME": "",
-        "ONEDRIVE_ROOT": "",
+        "ONEDRIVE_FOLDER_NAME": onedrive_folder_name,
+        "ONEDRIVE_ROOT": onedrive_root,
         "ONEDRIVE_DEST_SUBDIR": onedrive_dest_subdir,
     }
     update_env_exports(args.env_file, updates)
@@ -348,6 +381,7 @@ def cmd_init_reimage_env(args: argparse.Namespace) -> int:
     print(f"ASSET_OR_HOST={asset_or_host}")
     print(f"REIMAGE_START_DATE={reimage_start_date}")
     print(f"REIMAGE_ARTIFACT_ROOT={reimage_artifact_root}")
+    create_onedrive_destination(onedrive_root, onedrive_dest_subdir)
     return 0
 
 
@@ -692,6 +726,16 @@ def build_parser() -> argparse.ArgumentParser:
     init_parser.add_argument("--external-apple-backups-volume", default="/Volumes/AppleBackups")
     init_parser.add_argument("--asset-or-host", default="")
     init_parser.add_argument("--reimage-start-date", default="")
+    init_parser.add_argument(
+        "--onedrive-folder-name",
+        default="",
+        help=(
+            "Optional CloudStorage OneDrive folder name (e.g. OneDrive-AcmeGroup). When set, "
+            "ONEDRIVE_ROOT is resolved to $HOME/Library/CloudStorage/<name> and the per-reimage "
+            "OneDrive destination is created when the CloudStorage root exists. Leave empty to "
+            "skip OneDrive."
+        ),
+    )
     init_parser.set_defaults(func=cmd_init_reimage_env)
 
     upsert_parser = subparsers.add_parser(

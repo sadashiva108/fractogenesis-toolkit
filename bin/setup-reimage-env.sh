@@ -6,7 +6,9 @@
 # through "Confirm External Data Volume Readiness" in prepare-artifact-root.md).
 # Computes ASSET_OR_HOST, REIMAGE_START_DATE, and REIMAGE_ARTIFACT_ROOT itself
 # (sensible defaults, overridable via env vars) and writes reimage.env fully
-# resolved in a single pass -- no follow-up edit needed.
+# resolved in a single pass -- no follow-up edit needed. When ONEDRIVE_FOLDER_NAME
+# is set, prepare-artifact-root.py also resolves ONEDRIVE_ROOT under CloudStorage
+# and pre-creates the per-reimage OneDrive destination.
 #
 # Usage: run from inside the repo checkout, with EXTERNAL_DATA_VOLUME already
 # exported from "Choose the External Data Volume":
@@ -18,6 +20,10 @@
 #   ASSET_OR_HOST              default: hostname
 #   REIMAGE_START_DATE         default: today (YYYYMMDD)
 #   EXTERNAL_APPLE_BACKUPS_VOLUME
+#   ONEDRIVE_FOLDER_NAME       CloudStorage OneDrive folder name (for example
+#                              OneDrive-AcmeGroup). When set, ONEDRIVE_ROOT is
+#                              resolved and the per-reimage OneDrive destination
+#                              is created. Leave unset to skip OneDrive entirely.
 
 set -euo pipefail
 
@@ -44,7 +50,8 @@ python3 bin/prepare-artifact-root.py \
   --external-data-volume "$EXTERNAL_DATA_VOLUME" \
   --external-apple-backups-volume "$EXTERNAL_APPLE_BACKUPS_VOLUME" \
   --asset-or-host "${ASSET_OR_HOST:-}" \
-  --reimage-start-date "${REIMAGE_START_DATE:-}"
+  --reimage-start-date "${REIMAGE_START_DATE:-}" \
+  --onedrive-folder-name "${ONEDRIVE_FOLDER_NAME:-}"
 
 chmod 600 reimage.env
 

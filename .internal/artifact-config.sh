@@ -41,7 +41,7 @@
 # Artifact-config fragment precedence:
 #   1. Caller- or reimage.env-provided ARTIFACT_CONFIG_DIR.
 #   2. $REIMAGE_WORKSPACE_ROOT/artifact-config when that directory exists.
-#   3. Committed templates under .github/copilot-templates/artifact-config.
+#   3. Committed templates under .internal/templates/artifact-config.
 #
 # Public outputs include:
 #   REIMAGE_ENV
