@@ -2,93 +2,46 @@
 # =============================================================================
 # backup-docker-settings.sh
 #
-# Internal helper for backup-apps.sh (Phase 2C). Backs up Docker Desktop
-# settings, daemon config, CLI config, Docker contexts, and produces
-# image/container inventories for reference after reimage. Does NOT back up
-# Docker.raw — rebuild images from registries/Dockerfiles.
+# Internal helper for bin/backup-apps.sh. Backs up Docker Desktop settings,
+# daemon config, CLI config, and produces image/container inventories for
+# reference after reimage. Does NOT back up Docker.raw -- rebuild images from
+# registries/Dockerfiles.
 #
-# This file lives in .internal/apps/ and is normally invoked by
-# bin/backup-apps.sh. Shared reimage config is intentionally NOT loaded here;
-# the caller passes resolved paths explicitly. It is safe to run standalone
-# when --artifact-root (or --dest) is supplied.
+# This file is intended for .internal/apps/. Shared config is intentionally
+# NOT loaded by default when a destination is passed explicitly -- see below.
 #
-# --- BEGIN USAGE ---
-# Usage:
-#   # Normal (through the entrypoint)
+# Typical usage (through the entrypoint):
+#   ./bin/backup-apps.sh
 #   ./bin/backup-apps.sh --docker-only
 #
-#   # Standalone, deriving both destinations from the artifact root
-#   .internal/apps/backup-docker-settings.sh --artifact-root /path/to/reimage-artifact-root
-#
-#   # Standalone, explicit non-secret destination (no secret staging)
-#   .internal/apps/backup-docker-settings.sh --dest /path/to/docker-backup
-#
-# Options:
-#   --artifact-root PATH  Derive DEST=<root>/app-settings-backup/docker and
-#                         SECRET_DEST=<root>/secrets-encrypted/docker.
-#   --dest PATH           Non-secret destination override.
-#   --secret-dest PATH    Secret-bearing destination override (for config.json).
-#   -h, --help            Show this message and exit.
-#
-# Exit status:
-#   0  Completed successfully.
-#   1  Runtime or copy failure.
-#   2  Usage or prerequisite error.
-# --- END USAGE ---
+# Advanced direct usage:
+#   ./.internal/apps/backup-docker-settings.sh
+#       # writes to $REIMAGE_ARTIFACT_ROOT/app-settings-backup/docker when
+#       # REIMAGE_ARTIFACT_ROOT is set
+#   ./.internal/apps/backup-docker-settings.sh /Volumes/Data/mybackup
+#       # writes non-secret files to the given directory instead
 # =============================================================================
 
 set -euo pipefail
 
-usage() {
-  sed -n '/^# --- BEGIN USAGE ---$/,/^# --- END USAGE ---$/p' "$0" \
-    | sed '1d;$d;s/^# //;s/^#$//'
-}
-
-require_option_value() {
-  local option="$1"
-  local value="${2:-}"
-  if [[ -z "$value" || "$value" == --* ]]; then
-    echo "ERROR: $option requires a non-empty value." >&2
-    usage >&2
-    exit 2
-  fi
-}
-
-ARTIFACT_ROOT=""
-DEST=""
-SECRET_DEST=""
-
-while [[ $# -gt 0 ]]; do
-  case "$1" in
-    --artifact-root)
-      require_option_value "$1" "${2:-}"
-      ARTIFACT_ROOT="$2"; shift 2 ;;
-    --dest)
-      require_option_value "$1" "${2:-}"
-      DEST="$2"; shift 2 ;;
-    --secret-dest)
-      require_option_value "$1" "${2:-}"
-      SECRET_DEST="$2"; shift 2 ;;
-    -h|--help)
-      usage; exit 0 ;;
-    *)
-      echo "ERROR: unknown argument: $1" >&2
-      usage >&2
-      exit 2 ;;
-  esac
-done
-
-# Derive the standard destinations from the artifact root unless overridden.
-if [[ -n "$ARTIFACT_ROOT" ]]; then
-  [[ -z "$DEST" ]] && DEST="$ARTIFACT_ROOT/app-settings-backup/docker"
-  [[ -z "$SECRET_DEST" ]] && SECRET_DEST="$ARTIFACT_ROOT/secrets-encrypted/docker"
-fi
-
-if [[ -z "$DEST" ]]; then
-  echo "ERROR: no destination resolved. Pass --artifact-root PATH or --dest PATH." >&2
-  usage >&2
+# ---------------------------------------------------------------------------
+# Locate repository and load shared reimage config
+# ---------------------------------------------------------------------------
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CONFIG_LOADER="$(dirname "$SCRIPT_DIR")/load-reimage-config.sh"
+if [[ ! -f "$CONFIG_LOADER" ]]; then
+  echo "ERROR: shared config loader not found: $CONFIG_LOADER" >&2
   exit 2
 fi
+# shellcheck source=../load-reimage-config.sh
+source "$CONFIG_LOADER"
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── Destination ───────────────────────────────────────────────────────────────
+_default_dest="${REIMAGE_ARTIFACT_ROOT:+${REIMAGE_ARTIFACT_ROOT}/app-settings-backup/docker}"
+DEST="${1:-${_default_dest:-./docker-settings-backup-$(date +%Y%m%d)}}"
+SECRET_DEST="${REIMAGE_ARTIFACT_ROOT:+${REIMAGE_ARTIFACT_ROOT}/secrets-encrypted/docker}"
+unset _default_dest
 
 # ── Colors ────────────────────────────────────────────────────────────────────
 GRN='\033[0;32m'
@@ -157,10 +110,11 @@ if [[ -f "$CLI_CONFIG" ]]; then
     info "Contains: credential helpers, auths, default context, HTTP proxy headers"
     echo ""
     echo -e "  ${YEL}⚠  config.json may contain auth tokens.${RST}"
-    echo -e "  ${YEL}   Prefer an --artifact-root run so it lands under secrets-encrypted/docker/.${RST}"
+    echo -e "  ${YEL}   Prefer a REIMAGE_ARTIFACT_ROOT-based run so it lands under secrets-encrypted/docker/.${RST}"
   fi
   echo ""
-  echo -e "  ${YEL}⚠  After reimage: run 'docker login' to regenerate credentials as needed.${RST}"
+  echo -e "  ${YEL}⚠  config.json may contain auth tokens.${RST}"
+  echo -e "  ${YEL}   After reimage run: docker login to regenerate credentials as needed.${RST}"
 else
   skip "config.json"
 fi
@@ -180,7 +134,7 @@ else
   info "Only default context in use"
 fi
 
-# ── 5. Image & container inventory ────────────────────────────────────────────
+# ── 5. Image inventory ────────────────────────────────────────────────────────
 echo ""
 echo -e "${BLD}Image & Container Inventory${RST}"
 
@@ -253,7 +207,7 @@ if [[ -n "$SECRET_DEST" && -f "$SECRET_DEST/config.json" ]]; then
 fi
 echo ""
 if [[ -n "$SECRET_DEST" ]]; then
-  echo -e "${YEL}Next step: rerun the consolidated secrets DMG workflow (Phase 2F) after reviewing staged Docker credentials.${RST}"
+  echo -e "${YEL}Next step: rerun the consolidated secrets DMG workflow after reviewing staged Docker credentials.${RST}"
 else
   echo -e "${YEL}Next step: move config.json into secrets-encrypted/docker/ on your external drive.${RST}"
 fi
