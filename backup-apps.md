@@ -1,6 +1,6 @@
 ---
 title: Backup Apps
-back_link: "reimaging-guide#Phase 2C — Backup Apps"
+back_link: "reimaging-guide#Phase 2D — Backup Apps"
 runbook_version: 0.1.0
 verb_first: true
 primary_scripts:
@@ -15,7 +15,7 @@ artifact_paths:
 author: Orah Kittrell
 last_updated: 2026-07-21
 ---
-[[reimaging-guide#Phase 2C — Backup Apps|← Back to Mac Reimaging Guide]]
+[[reimaging-guide#Phase 2D — Backup Apps|← Back to Mac Reimaging Guide]]
 
 # Backup Apps
 
@@ -299,9 +299,6 @@ Step 3 helps you make this call with actual detection of what is installed and w
 
 Run these in order. Prepare, check capacity, decide your app set, run the automated capture, complete the manual exports, then verify. The manual exports are not cleanup after the script — for the manual-class apps they are the actual backup.
 
-> [!note] Pending toolkit support
-> A few commands below assume capabilities being added in the script phase: the `--supported-apps` info mode (Step 1), the `--context` label on `capture-size-audit.sh` (Step 2), and a `--vscode-only` rerun (Step 4). Until each lands, use the fallback noted at its step.
-
 ### Step 1 — Prepare and Validate
 
 Confirm the script runs and the environment resolves before writing anything. `backup-apps.sh` self-locates and loads shared config through `.internal/load-reimage-config.sh`, so you do not source `reimage.env` by hand.
@@ -314,7 +311,7 @@ cd "$FRACTOGENESIS_HOME"
 ```
 
 > [!note]
-> Until `--supported-apps` lands, use `./bin/backup-apps.sh --help` to confirm the script runs; the covered apps are the table in [[#What Gets Backed Up, and How|What Gets Backed Up, and How]].
+> `--supported-apps` is info only — it lists coverage and exits without writing anything or computing sizes. The same coverage is in the table under [[#What Gets Backed Up, and How|What Gets Backed Up, and How]].
 
 Confirm the artifact root that will be used (scan-only, creates nothing):
 
@@ -386,10 +383,8 @@ Rerun a single script-class portion through the same entrypoint when needed — 
 ```bash
 ./bin/backup-apps.sh --artifact-root "$REIMAGE_ARTIFACT_ROOT" --docker-only --open
 ./bin/backup-apps.sh --artifact-root "$REIMAGE_ARTIFACT_ROOT" --intellij-only --open
+./bin/backup-apps.sh --artifact-root "$REIMAGE_ARTIFACT_ROOT" --vscode-only --open
 ```
-
-> [!note]
-> A `--vscode-only` rerun is planned for parity with `--docker-only` and `--intellij-only`. Until it lands, rerun the full backup to refresh VS Code.
 
 > [!warning] Pitfall
 > A successful run here is **not** a completed phase. It backs up only the script-class apps; Chrome, Postman, Terminal, the IntelliJ settings ZIP, and (if you use them) Raycast and Obsidian still need their manual exports.

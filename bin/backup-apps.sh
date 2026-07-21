@@ -2,7 +2,7 @@
 # =============================================================================
 # backup-apps.sh
 #
-# Phase 2C app-backup entrypoint: automates the safe steps that don't require
+# Phase 2D app-backup entrypoint: automates the safe steps that don't require
 # app UI exports. Prepares the standard app-settings-backup/ and
 # secrets-encrypted/ folders, runs the Docker helper when Docker state is
 # detected, runs the IntelliJ helper when IntelliJ state is detected, captures
@@ -95,7 +95,7 @@ usage() {
 }
 
 supported_apps_registry() {
-  # Single source of truth for Phase 2C app coverage. Consumed by
+  # Single source of truth for Phase 2D app coverage. Consumed by
   # --supported-apps (all rows) and the candidate review (detectable rows only),
   # so the covered-app list lives in exactly one place. Tab-delimited fields:
   #   app  group  how  non_secret_dest  secret_dest
@@ -130,7 +130,7 @@ supported_apps_registry() {
 print_supported_apps() {
   # Info only: writes nothing and computes no sizes (sizing is the sole
   # responsibility of capture-size-audit.sh).
-  echo "Apps this toolkit can back up (Phase 2C):"
+  echo "Apps this toolkit can back up (Phase 2D):"
   echo ""
   printf '  %-20s  %-9s  %s\n' "App" "Group" "How backed up"
   printf '  %-20s  %-9s  %s\n' "--------------------" "---------" "-------------"
@@ -486,22 +486,22 @@ Generated: $(date '+%Y-%m-%d %H:%M:%S')
 Script: $(basename "$0") --candidate-review
 Output directory: $out
 
-This helper is **review-only**. Use it to narrow the list of apps worth checking in Phase 2C, then apply the decision criteria in \`backup-apps.md\`.
+This helper is **review-only**. Use it to narrow the list of apps worth checking in Phase 2D, then apply the decision criteria in \`backup-apps.md\`.
 
 ## How to use this artifact
 
-1. Review **known Phase 2C candidates** first.
+1. Review **known Phase 2D candidates** first.
 2. Skip anything not installed or not worth preserving.
 3. Use **related apps to review manually** when an app looks important but probably belongs to another workflow or restore source.
 4. Use the raw installed-app and state-signal files under \`raw/\` if you want a wider scan than the curated tables.
 
-## Known Phase 2C candidates
+## Known Phase 2D candidates
 
-| App | Installed | Phase 2C fit | Suggested route | State signals found |
+| App | Installed | Phase 2D fit | Suggested route | State signals found |
 |---|---|---|---|---|
 EOF
 
-  printf 'app\tphase2c_fit\tinstalled\tinstalled_path\tversion\tsuggested_route\tuse_when\tnon_secret_destination\tsecret_destination\tstate_signals_found\n' > "$known_tsv"
+  printf 'app\tphase2d_fit\tinstalled\tinstalled_path\tversion\tsuggested_route\tuse_when\tnon_secret_destination\tsecret_destination\tstate_signals_found\n' > "$known_tsv"
   # Emit one row per detectable app from the shared registry, preserving the
   # registry order. Terminal (detectable=no) is skipped here.
   while IFS=$'\t' read -r app group how non_secret_dest secret_dest detectable phase_fit route use_when bundle_paths state_paths; do
@@ -513,13 +513,13 @@ EOF
 
 ## Related apps to review manually
 
-These apps often matter during a reimage, but they usually belong to another workflow or restore source rather than the main Phase 2C app-backup runbook.
+These apps often matter during a reimage, but they usually belong to another workflow or restore source rather than the main Phase 2D app-backup runbook.
 
-| App | Installed | Phase 2C fit | Suggested route | State signals found |
+| App | Installed | Phase 2D fit | Suggested route | State signals found |
 |---|---|---|---|---|
 EOF
 
-  printf 'app\tphase2c_fit\tinstalled\tinstalled_path\tversion\tsuggested_route\tuse_when\tnon_secret_destination\tsecret_destination\tstate_signals_found\n' > "$review_tsv"
+  printf 'app\tphase2d_fit\tinstalled\tinstalled_path\tversion\tsuggested_route\tuse_when\tnon_secret_destination\tsecret_destination\tstate_signals_found\n' > "$review_tsv"
   emit_candidate_row "$review_tsv" "$summary_md" "Music" "Review separately" "Usually Phase 2B local files, iCloud, or Time Machine" "Local media, playlists, or manually managed library content matter." "$root_display/home-files-backup/home/Music/" "usually none from this route" "/System/Applications/Music.app" "$HOME/Music"
 
   cat >> "$summary_md" <<EOF
@@ -535,7 +535,7 @@ EOF
 
 ## Notes
 
-- This helper does **not** decide whether an app belongs in Phase 2C. It only collects likely candidates and nearby review targets.
+- This helper does **not** decide whether an app belongs in Phase 2D. It only collects likely candidates and nearby review targets.
 - Company-managed apps may reinstall automatically but still leave user-specific state unresolved. Use \`capture-managed-inventory.md\` when you need managed-state evidence.
 - Apple/system apps are not exhaustively classified here. Review them manually when local libraries or local-only media matter.
 EOF
@@ -564,7 +564,7 @@ Artifact root: $REIMAGE_ARTIFACT_ROOT
 | VS Code local fallback capture | $VSCODE_STATUS |
 | Candidate review helper | $CANDIDATE_REVIEW_STATUS |
 
-## Primary Phase 2C locations
+## Primary Phase 2D locations
 
 \`\`\`text
 $REIMAGE_ARTIFACT_ROOT/app-settings-backup/
@@ -581,12 +581,12 @@ $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/
 
 ## Notes
 
-- Treat this manifest as the stable Phase 2C summary.
+- Treat this manifest as the stable Phase 2D summary.
 - Use \`backup-apps.md\` for the manual or app-controlled steps that the script cannot complete.
 - Use \`reimage-prep-checks.md\` later in Phase 4 only for the manual rows that remain after reviewing the generated \`reimage-checklist.sh --phase pre\` report.
 EOF
 
-echo "Prepared Phase 2C app backup root: $APP_ROOT"
+echo "Prepared Phase 2D app backup root: $APP_ROOT"
 echo "Wrote manifest: $APP_ROOT/MANIFEST.md"
 echo "Docker helper: $DOCKER_STATUS"
 echo "IntelliJ helper: $INTELLIJ_STATUS"
