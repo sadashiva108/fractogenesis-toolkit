@@ -2,7 +2,7 @@
 
 # Master Directory Reference
 
-**Last Updated:** 2026-07-19
+**Last Updated:** 2026-07-21
 
 This is the consolidated `$REIMAGE_ARTIFACT_ROOT` directory map for the Mac reimage workflow.
 
@@ -131,6 +131,9 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 > │   ├── raycast-quicklinks-YYYYMMDD-HHMMSS.json
 > │   ├── raycast-export-inventory-YYYYMMDD-HHMMSS.md
 > │   └── README.md
+> ├── terminal/
+> │   ├── <profile-name>.terminal
+> │   └── window-size-note.txt
 > └── vscode/
 >     ├── extensions.txt
 >     └── user/

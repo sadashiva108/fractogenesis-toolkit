@@ -18,16 +18,16 @@ This is the canonical top-level guide for the Mac reimage workflow.
 - [[#Phase 2 — Pre-Image Backups|Phase 2 — Pre-Image Backups]]
     - [[#Phase 2A — Backup Repos|Phase 2A — Backup Repos]]
     - [[#Phase 2B — Backup Home|Phase 2B — Backup Home]]
-    - [[#Phase 2C — Backup Apps|Phase 2C — Backup Apps]]
-    - [[#Phase 2D — Certificate and Keychain Staging|Phase 2D — Certificate and Keychain Staging]]
-    - [[#Phase 2E — Create Secrets DMG|Phase 2E — Create Secrets DMG]]
-    - [[#Phase 2F — Backup Time Machine|Phase 2F — Backup Time Machine]]
+    - [[#Phase 2C — Company-Managed Inventory Capture|Phase 2C — Company-Managed Inventory Capture]]
+    - [[#Phase 2D — Backup Apps|Phase 2D — Backup Apps]]
+    - [[#Phase 2E — Certificate and Keychain Staging|Phase 2E — Certificate and Keychain Staging]]
+    - [[#Phase 2F — Create Secrets DMG|Phase 2F — Create Secrets DMG]]
+    - [[#Phase 2G — Backup Time Machine|Phase 2G — Backup Time Machine]]
 - [[#Phase 3 — Pre-Image Captures|Phase 3 — Pre-Image Captures]]
     - [[#Phase 3A — Capture Workflow Snapshot|Phase 3A — Capture Workflow Snapshot]]
-    - [[#Phase 3B — Pre-Image System Inventory Capture|Phase 3B — Pre-Image System Inventory Capture]]
-    - [[#Phase 3C — Pre-Image Company-Managed Inventory Capture|Phase 3C — Pre-Image Company-Managed Inventory Capture]]
-    - [[#Phase 3D — Pre-Image Performance Audit Capture|Phase 3D — Pre-Image Performance Audit Capture]]
-    - [[#Phase 3E — Pre-Image Office Stability Capture|Phase 3E — Pre-Image Office Stability Capture]]
+    - [[#Phase 3B — System Inventory Capture|Phase 3B — System Inventory Capture]]
+    - [[#Phase 3C — Performance Audit Capture|Phase 3C — Performance Audit Capture]]
+    - [[#Phase 3D — Office Stability Capture|Phase 3D — Office Stability Capture]]
 - [[#Phase 4 — Reimage Preparation|Phase 4 — Reimage Preparation]]
     - [[#Phase 4A — Guide Access on a Freshly Reimaged Mac|Phase 4A — Guide Access on a Freshly Reimaged Mac]]
     - [[#Phase 4B — Reimage Preparation Checks|Phase 4B — Reimage Preparation Checks]]
@@ -41,10 +41,10 @@ This is the canonical top-level guide for the Mac reimage workflow.
 - [[#Phase 10 — Restore Apps|Phase 10 — Restore Apps]]
 - [[#Phase 11 — Post-Image Captures|Phase 11 — Post-Image Captures]]
     - [[#Phase 11A — Capture Workflow Snapshot|Phase 11A — Capture Workflow Snapshot]]
-    - [[#Phase 11B — Post-Image System Inventory Capture|Phase 11B —Post-Image System Inventory Capture]]
-    - [[#Phase 11C — Post-Image Company-Managed Inventory Capture|Phase 11C — Post-Image Company-Managed Inventory Capture]]
-    - [[#Phase 11D — Post-Image Performance Audit Capture|Phase 11D — Post-Image Performance Audit Capture]]
-    - [[#Phase 11E — Post-Image Office Stability Capture|Phase 11E — Post-Image Office Stability Capture]]
+    - [[#Phase 11B — System Inventory Capture|Phase 11B —System Inventory Capture]]
+    - [[#Phase 11C — Company-Managed Inventory Capture|Phase 11C — Company-Managed Inventory Capture]]
+    - [[#Phase 11D —  Performance Audit Capture|Phase 11D — Performance Audit Capture]]
+    - [[#Phase 11E — Office Stability Capture|Phase 11E —  Office Stability Capture]]
 - [[#Phase 12 — Reimaged System Checks|Phase 12 — Reimaged System Checks]]
 - [[#Phase 13 — Restore Local Files|Phase 13 — Restore Local Files]]
 
@@ -207,11 +207,12 @@ The subphases can be repeated as needed, but the intended Phase 2 order is:
 
 1. Git repository backups and selected ignored-file review.
 2. Local file backup.
-3. App backups: common apps first, then optional apps when they apply.
-4. IntelliJ-specific backup.
-5. Certificate and Keychain staging: use reviewed temporary staging folders and normalized review artifacts to prepare only the certificate/Keychain material that should feed the encrypted secrets backup.
-6. Extra certificate/Keychain review, then encrypted secrets DMG after any manual secret exports, selected certificate/Keychain files, and other secret-bearing staged material are ready.
-7. Time Machine backup after the backup root on the external drive has been reviewed and excluded from Time Machine.
+3. Capture a precise record of MDM-delivered apps, profiles, agents, daemons, system extensions, and managed preferences before erase.
+4. App backups: common apps first, then optional apps when they apply.
+5. IntelliJ-specific backup.
+6. Certificate and Keychain staging: use reviewed temporary staging folders and normalized review artifacts to prepare only the certificate/Keychain material that should feed the encrypted secrets backup.
+7. Extra certificate/Keychain review, then encrypted secrets DMG after any manual secret exports, selected certificate/Keychain files, and other secret-bearing staged material are ready.
+8. Time Machine backup after the backup root on the external drive has been reviewed and excluded from Time Machine.
 
 Phase 3 capture work, including `capture-workflow-snapshot.md`, follows after these Phase 2 backups rather than inside this backup sequence.
 
@@ -258,7 +259,17 @@ If OneDrive is enabled, this phase may also create a secondary local CloudStorag
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
 ---
-### Phase 2C — Backup Apps
+
+### Phase 2C —  Company-Managed Inventory Capture
+
+Run this when you want a more precise record of company-managed apps, package receipts, MDM profiles, launch agents/daemons, system extensions, and managed preference payloads before the reimage.
+
+Follow this capture runbook: [capture-managed-inventory.md](capture-managed-inventory.md).
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+### Phase 2D — Backup Apps
 
 Follow this phase guide: [Backup Apps](./backup-apps.md).
 
@@ -279,11 +290,11 @@ $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/raycast/, if used
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
 ---
-### Phase 2D — Certificate and Keychain Staging
+### Phase 2E — Certificate and Keychain Staging
 
 Follow this phase guide: [Stage Certificate and Keychain](stage-cert-keychain.md).
 
-This phase owns the certificate and Keychain review/export/staging workflow before encryption. In this context, **staging** means placing reviewed files, manual Keychain exports, notes, and generated review artifacts into the correct temporary backup folders so Phase 2E can package them into the encrypted secrets DMG. The planning pass also produces normalized/deduped review tables, proposed staged-certs fragments, out-of-cert-scope secret crosswalks, and generated-noise filter evidence before anything is copied.
+This phase owns the certificate and Keychain review/export/staging workflow before encryption. In this context, **staging** means placing reviewed files, manual Keychain exports, notes, and generated review artifacts into the correct temporary backup folders so Phase 2F can package them into the encrypted secrets DMG. The planning pass also produces normalized/deduped review tables, proposed staged-certs fragments, out-of-cert-scope secret crosswalks, and generated-noise filter evidence before anything is copied.
 
 Primary outputs:
 
@@ -293,16 +304,16 @@ $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/certs/
 $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/extra-secrets-certs-review/
 ```
 
-Important ordering rule: if you add any new Keychain export, `.p12` / `.pfx`, keystore, private key, or selected certificate/key candidate, rerun the Phase 2D scan/plan pass and then rerun Phase 2E so the newest consolidated secrets DMG includes those files before final validation.
+Important ordering rule: if you add any new Keychain export, `.p12` / `.pfx`, keystore, private key, or selected certificate/key candidate, rerun the Phase 2E scan/plan pass and then rerun Phase 2F so the newest consolidated secrets DMG includes those files before final validation.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
 ---
-### Phase 2E — Create Secrets DMG
+### Phase 2F — Create Secrets DMG
 
 Follow this phase guide: [Create Secrets DMG](create-secrets-dmg.md).
 
-By Phase 2E, the expectation is that all secret material that needs to be preserved has already been intentionally staged.
+By Phase 2F, the expectation is that all secret material that needs to be preserved has already been intentionally staged.
 
 A **DMG** is a macOS disk image file. In this workflow, `all-secrets-*.dmg` is the encrypted restore container that packages the reviewed secret staging folders from earlier phases.
 
@@ -311,7 +322,7 @@ This phase is the consolidated encrypted-secrets pass: build the final `all-secr
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
 ---
-### Phase 2F — Backup Time Machine
+### Phase 2G — Backup Time Machine
 
 Follow this phase guide: [Backup Time Machine](backup-time-machine.md).
 
@@ -346,7 +357,6 @@ If a capture needs to run for days or weeks before the broader backup phase, sta
 Use the others when they answer a specific need:
 
 - **Phase 3A workflow snapshot** — when you want the current reimage workflow docs and lightweight restore reference bundle preserved on the external root.
-- **Phase 3C company-managed inventory** — when you want a precise record of MDM-delivered apps, profiles, agents, daemons, system extensions, and managed preferences before erase.
 - **Phase 3D performance audit** — when you want before/after evidence for slowness, resource pressure, or workload-specific regressions.
 - **Phase 3E Office stability** — when Outlook or OneNote instability, update churn, or unexpected closures are part of the reason for the reimage.
 
@@ -355,12 +365,11 @@ Use the others when they answer a specific need:
 1. Confirm `$REIMAGE_ARTIFACT_ROOT` exists and matches your current `reimage.env`.
 2. Run Phase 3A workflow snapshot capture.
 3. Run Phase 3B system inventory.
-4. Run Phase 3C company-managed inventory if you want a precise record of IT-managed state before erase.
-5. Run Phase 3D performance audit under one or more named scenarios if performance comparison will be useful.
-6. Start or continue the Office watcher if Office stability evidence is still needed.
-7. Confirm the Office marker timestamp.
-8. Run Phase 3E Office stability baseline and Office-specific checklist.
-9. Review the generated evidence and any remaining manual rows in the owning capture runbooks before Phase 4B final validation.
+4. Run Phase 3C performance audit under one or more named scenarios if performance comparison will be useful.
+5. Start or continue the Office watcher if Office stability evidence is still needed.
+6. Confirm the Office marker timestamp.
+7. Run Phase 3D Office stability baseline and Office-specific checklist.
+8. Review the generated evidence and any remaining manual rows in the owning capture runbooks before Phase 4B final validation.
 
 Do not reset the Office marker after an incident until the incident evidence has been captured.
 
@@ -368,9 +377,8 @@ Do not reset the Office marker after an incident until the incident evidence has
 |---|---|---|---|---|
 | Phase 3A | Workflow snapshot | `$REIMAGE_ARTIFACT_ROOT/workflow-snapshot/pre-image-workflow-snapshot-*`, `$REIMAGE_ARTIFACT_ROOT/workflow-snapshot/reimage-workflow-docs/` | capture-workflow-snapshot.md | — |
 | Phase 3B | System inventory | `$REIMAGE_ARTIFACT_ROOT/system-inventory/pre-image-*` | capture-system-inventory.md | `capture-system-inventory.md` — Manual context note only when needed |
-| Phase 3C | Company-managed inventory | `$REIMAGE_ARTIFACT_ROOT/managed-inventory/pre-image-*` | capture-managed-inventory.md | — |
-| Phase 3D | Performance audit | `$REIMAGE_ARTIFACT_ROOT/performance-audit/pre-image-*` | capture-performance-audit.md | `capture-performance-audit.md` — Manual Observations |
-| Phase 3E | Office stability | `$REIMAGE_ARTIFACT_ROOT/office-stability/pre-reimage-*` | capture-office-stability-audit.md | `capture-office-stability-audit.md` — Final Pre-Reimage Checklist |
+| Phase 3C | Performance audit | `$REIMAGE_ARTIFACT_ROOT/performance-audit/pre-image-*` | capture-performance-audit.md | `capture-performance-audit.md` — Manual Observations |
+| Phase 3D | Office stability | `$REIMAGE_ARTIFACT_ROOT/office-stability/pre-reimage-*` | capture-office-stability-audit.md | `capture-office-stability-audit.md` — Final Pre-Reimage Checklist |
 
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -387,7 +395,7 @@ Follow this capture runbook: [capture-workflow-snapshot.md](capture-workflow-sna
 
 ---
 
-### Phase 3B — Pre-Image System Inventory Capture
+### Phase 3B — System Inventory Capture
 
 Use this capture to preserve hardware/macOS identity, installed apps, Homebrew inventory, shell state, developer tool inventory, Docker state, network, SSH, cloud, environment, and display context.
 
@@ -401,17 +409,7 @@ Manual notes, if needed: [capture-system-inventory.md — Manual context note on
 
 ---
 
-### Phase 3C — Pre-Image Company-Managed Inventory Capture
-
-Run this when you want a more precise record of company-managed apps, package receipts, MDM profiles, launch agents/daemons, system extensions, and managed preference payloads before the reimage.
-
-Follow this capture runbook: [capture-managed-inventory.md](capture-managed-inventory.md).
-
-[[#Table of Contents|⬆ Back to Table of Contents]]
-
----
-
-### Phase 3D — Pre-Image Performance Audit Capture
+### Phase 3C — Performance Audit Capture
 
 Run this when you want before/after evidence for general Mac performance.
 
@@ -427,7 +425,7 @@ Manual notes, if needed: [capture-performance-audit.md — Manual Observations](
 
 ---
 
-### Phase 3E — Pre-Image Office Stability Capture
+### Phase 3D — Office Stability Capture
 
 If you are collecting Office stability evidence, start or continue the Office watcher, then capture the structured Office baseline and checklist using that capture runbook.
 
@@ -714,7 +712,7 @@ Follow this capture runbook: [capture-workflow-snapshot.md](capture-workflow-sna
 
 ---
 
-### Phase 11B — Post-Image System Inventory Capture
+### Phase 11B — System Inventory Capture
 
 Use this capture to record the rebuilt system state so it can be compared directly against Phase 3B. The emphasis here is on confirming that the Mac came back with the expected hardware/macOS identity, apps, Homebrew packages, shell setup, developer tooling, Docker state, network context, SSH state, cloud tooling, environment variables, and display/peripheral context rather than just documenting what existed before erase.
 
@@ -726,7 +724,7 @@ Manual notes, if needed: [capture-system-inventory.md — Manual context note on
 
 ---
 
-### Phase 11C — Post-Image Company-Managed Inventory Capture
+### Phase 11C —  Company-Managed Inventory Capture
 
 Run this when you want to verify that company-managed state was correctly re-applied after enrollment. Unlike Phase 3C, which preserves the pre-image managed footprint, Phase 11C is used to confirm that expected MDM profiles, managed apps, package receipts, launch agents/daemons, system extensions, and managed preference payloads returned on the rebuilt Mac and to highlight anything missing or unexpectedly added.
 
@@ -736,7 +734,7 @@ Follow this capture runbook: [capture-managed-inventory.md](capture-managed-inve
 
 ---
 
-### Phase 11D — Post-Image Performance Audit Capture
+### Phase 11D —  Performance Audit Capture
 
 Run this when you want the **after** side of the performance comparison. Unlike Phase 3D, which establishes the baseline before erase, Phase 11D reruns the same named scenarios on the rebuilt Mac so you can judge whether responsiveness, resource pressure, memory health, and workload behavior improved, stayed the same, or regressed.
 
@@ -752,7 +750,7 @@ Manual notes, if needed: [capture-performance-audit.md — Manual Observations](
 
 ---
 
-### Phase 11E — Post-Image Office Stability Capture
+### Phase 11E — Office Stability Capture
 
 If you are collecting Office stability evidence, start or continue the Office watcher, then capture the structured Office baseline and checklist using that capture runbook. Unlike Phase 3E, which documents the unstable or suspicious pre-image state, Phase 11E is intended to show whether Outlook, OneNote, Office update behavior, and related supporting processes are now stable on the rebuilt Mac or whether the original issue still reproduces.
 

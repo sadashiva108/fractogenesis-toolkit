@@ -21,9 +21,13 @@
 #   # Review-only bundle of app-backup candidates worth checking
 #   ./bin/backup-apps.sh --candidate-review
 #
+#   # List the apps this toolkit can back up (info only)
+#   ./bin/backup-apps.sh --supported-apps
+#
 #   # Rerun a single portion through this entrypoint
 #   ./bin/backup-apps.sh --docker-only
 #   ./bin/backup-apps.sh --intellij-only
+#   ./bin/backup-apps.sh --vscode-only
 #
 #   # Override the artifact root for this invocation
 #   ./bin/backup-apps.sh --artifact-root /path/to/reimage-artifact-root
@@ -34,8 +38,11 @@
 # Optional:
 #   --candidate-review      Generate a review-only app candidate bundle under:
 #                           $REIMAGE_ARTIFACT_ROOT/app-settings-backup/candidate-review/
+#   --supported-apps        List the supported apps (app, group, how backed up) and exit.
+#                           Info only; writes nothing and computes no sizes.
 #   --docker-only            Rerun only the Docker portion through this entrypoint.
 #   --intellij-only          Rerun only the IntelliJ portion through this entrypoint.
+#   --vscode-only            Rerun only the VS Code fallback capture through this entrypoint.
 #
 # IntelliJ options passed through to the internal helper:
 #   --intellij-workspace-root PATH
@@ -87,10 +94,59 @@ usage() {
     | sed '1d;$d;s/^# //;s/^#$//'
 }
 
+supported_apps_registry() {
+  # Single source of truth for Phase 2C app coverage. Consumed by
+  # --supported-apps (all rows) and the candidate review (detectable rows only),
+  # so the covered-app list lives in exactly one place. Tab-delimited fields:
+  #   app  group  how  non_secret_dest  secret_dest
+  #   detectable  phase_fit  route  use_when  bundle_paths  state_paths
+  local r="${REIMAGE_ARTIFACT_ROOT:-}"
+  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+    "IntelliJ IDEA" "Common" "Script + manual settings ZIP" "$r/app-settings-backup/intellij/" "$r/secrets-encrypted/" \
+    "yes" "Common — dedicated runbook" "backup-intellij.md" "IDE state, Scratches, settings export, plugins, project metadata, or HTTP Client env files matter." "/Applications/IntelliJ IDEA.app;$HOME/Applications/IntelliJ IDEA.app" "$HOME/Library/Application Support/JetBrains;$HOME/Library/Preferences/JetBrains"
+  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+    "Docker Desktop" "Common" "Script" "$r/app-settings-backup/docker/" "$r/secrets-encrypted/docker/" \
+    "yes" "Common" "backup-apps.md" "Docker Desktop settings, contexts, image inventory, or container inventory matter." "/Applications/Docker.app;$HOME/Applications/Docker.app" "$HOME/Library/Group Containers/group.com.docker;$HOME/Library/Containers/com.docker.docker"
+  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+    "Chrome" "Common" "Manual" "$r/app-settings-backup/chrome/" "$r/secrets-encrypted/chrome/" \
+    "yes" "Common" "backup-apps.md" "Bookmarks export or password export is needed." "/Applications/Google Chrome.app;$HOME/Applications/Google Chrome.app" "$HOME/Library/Application Support/Google/Chrome;$HOME/Library/Preferences/com.google.Chrome.plist"
+  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+    "Postman" "Common" "Manual" "$r/app-settings-backup/postman/" "$r/secrets-encrypted/postman/" \
+    "yes" "Common" "backup-apps.md" "Collections, environments, or Vault state matter." "/Applications/Postman.app;$HOME/Applications/Postman.app" "$HOME/Library/Application Support/Postman;$HOME/Library/Preferences/com.postmanlabs.mac.plist"
+  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+    "Raycast" "Optional" "Manual" "$r/app-settings-backup/raycast/" "$r/secrets-encrypted/raycast/" \
+    "yes" "Optional" "backup-apps.md" "Quick Links or settings/data export matter." "/Applications/Raycast.app;$HOME/Applications/Raycast.app" "$HOME/Library/Application Support/com.raycast.macos;$HOME/Library/Preferences/com.raycast.macos.plist"
+  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+    "Obsidian" "Optional" "Manual" "$r/app-settings-backup/obsidian/" "usually none from this runbook" \
+    "yes" "Optional" "backup-apps.md" "Vault content, vault-local config, or restore-source choice matters." "/Applications/Obsidian.app;$HOME/Applications/Obsidian.app" "$HOME/Library/Application Support/obsidian"
+  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+    "Visual Studio Code" "Common" "Script" "$r/app-settings-backup/vscode/" "usually none from this runbook" \
+    "yes" "Optional" "backup-apps.md" "Extensions, settings, snippets, profiles, or a local fallback beyond Settings Sync matter." "/Applications/Visual Studio Code.app;$HOME/Applications/Visual Studio Code.app" "$HOME/Library/Application Support/Code;$HOME/Library/Preferences/com.microsoft.VSCode.plist"
+  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+    "Terminal" "Common" "Manual" "$r/app-settings-backup/terminal/" "none" \
+    "no" "Common" "backup-apps.md" "Custom Terminal.app profile (colors, font, window size) worth preserving." "/System/Applications/Utilities/Terminal.app" "$HOME/Library/Preferences/com.apple.Terminal.plist"
+}
+
+print_supported_apps() {
+  # Info only: writes nothing and computes no sizes (sizing is the sole
+  # responsibility of capture-size-audit.sh).
+  echo "Apps this toolkit can back up (Phase 2C):"
+  echo ""
+  printf '  %-20s  %-9s  %s\n' "App" "Group" "How backed up"
+  printf '  %-20s  %-9s  %s\n' "--------------------" "---------" "-------------"
+  while IFS=$'\t' read -r app group how _; do
+    printf '  %-20s  %-9s  %s\n' "$app" "$group" "$how"
+  done < <(supported_apps_registry)
+  echo ""
+  echo "Apps not listed are your responsibility to back up. See backup-apps.md for full detail."
+}
+
 OPEN_AFTER=false
 RUN_CANDIDATE_REVIEW=false
 DOCKER_ONLY=false
 INTELLIJ_ONLY=false
+VSCODE_ONLY=false
+SHOW_SUPPORTED=false
 INTELLIJ_ALL_CONFIG_DIRS=false
 INTELLIJ_INCLUDE_SYSTEM_CACHE=false
 INTELLIJ_SKIP_WORKSPACES=false
@@ -112,6 +168,8 @@ while [[ $# -gt 0 ]]; do
     --candidate-review) RUN_CANDIDATE_REVIEW=true; shift ;;
     --docker-only) DOCKER_ONLY=true; shift ;;
     --intellij-only) INTELLIJ_ONLY=true; shift ;;
+    --vscode-only) VSCODE_ONLY=true; shift ;;
+    --supported-apps) SHOW_SUPPORTED=true; shift ;;
     --intellij-workspace-root) INTELLIJ_WORKSPACE_ROOT="${2:-}"; shift 2 ;;
     --intellij-workspace-max-depth) INTELLIJ_WORKSPACE_MAX_DEPTH="${2:-}"; shift 2 ;;
     --intellij-all-config-dirs) INTELLIJ_ALL_CONFIG_DIRS=true; shift ;;
@@ -128,6 +186,12 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+# --supported-apps is info only: it needs no artifact root and writes nothing.
+if [[ "$SHOW_SUPPORTED" == true ]]; then
+  print_supported_apps
+  exit 0
+fi
+
 if [[ -z "${REIMAGE_ARTIFACT_ROOT:-}" ]]; then
   echo "ERROR: REIMAGE_ARTIFACT_ROOT is not set." >&2
   echo "Create/source reimage.env or pass --artifact-root PATH." >&2
@@ -139,13 +203,20 @@ if [[ ! -d "$REIMAGE_ARTIFACT_ROOT" ]]; then
   exit 2
 fi
 
-if [[ "$DOCKER_ONLY" == true && "$INTELLIJ_ONLY" == true ]]; then
-  echo "ERROR: choose only one of --docker-only or --intellij-only" >&2
+# Only one single-app rerun mode may be active at a time, and none of them
+# combine with the scan-only candidate review.
+ONLY_COUNT=0
+[[ "$DOCKER_ONLY" == true ]] && ONLY_COUNT=$((ONLY_COUNT + 1))
+[[ "$INTELLIJ_ONLY" == true ]] && ONLY_COUNT=$((ONLY_COUNT + 1))
+[[ "$VSCODE_ONLY" == true ]] && ONLY_COUNT=$((ONLY_COUNT + 1))
+
+if (( ONLY_COUNT > 1 )); then
+  echo "ERROR: choose only one of --docker-only, --intellij-only, or --vscode-only" >&2
   exit 2
 fi
 
-if [[ ("$DOCKER_ONLY" == true || "$INTELLIJ_ONLY" == true) && "$RUN_CANDIDATE_REVIEW" == true ]]; then
-  echo "ERROR: --candidate-review cannot be combined with --docker-only or --intellij-only" >&2
+if (( ONLY_COUNT > 0 )) && [[ "$RUN_CANDIDATE_REVIEW" == true ]]; then
+  echo "ERROR: --candidate-review cannot be combined with --docker-only, --intellij-only, or --vscode-only" >&2
   exit 2
 fi
 
@@ -179,9 +250,11 @@ CANDIDATE_REVIEW_STATUS="Not run"
 DOCKER_HELPER="$(dirname "$SCRIPT_DIR")/.internal/apps/backup-docker-settings.sh"
 if [[ "$INTELLIJ_ONLY" == true ]]; then
   DOCKER_STATUS="Skipped by --intellij-only"
+elif [[ "$VSCODE_ONLY" == true ]]; then
+  DOCKER_STATUS="Skipped by --vscode-only"
 elif [[ -f "$DOCKER_HELPER" ]]; then
   if [[ -d "/Applications/Docker.app" ]] || [[ -d "$HOME/Library/Group Containers/group.com.docker" ]] || [[ -f "$HOME/.docker/config.json" ]] || command -v docker >/dev/null 2>&1; then
-    bash "$DOCKER_HELPER" "$APP_ROOT/docker"
+    bash "$DOCKER_HELPER" --artifact-root "$REIMAGE_ARTIFACT_ROOT"
     DOCKER_STATUS="Captured to app-settings-backup/docker/ and secrets-encrypted/docker/ when available"
   else
     DOCKER_STATUS="Skipped; Docker Desktop state not detected on this Mac"
@@ -213,6 +286,8 @@ fi
 
 if [[ "$DOCKER_ONLY" == true ]]; then
   INTELLIJ_STATUS="Skipped by --docker-only"
+elif [[ "$VSCODE_ONLY" == true ]]; then
+  INTELLIJ_STATUS="Skipped by --vscode-only"
 elif [[ -f "$INTELLIJ_HELPER" ]]; then
   if [[ -d "/Applications/IntelliJ IDEA.app" ]] || [[ -d "$HOME/Applications/IntelliJ IDEA.app" ]] || [[ -d "$HOME/Library/Application Support/JetBrains" ]]; then
     bash "$INTELLIJ_HELPER" "${INTELLIJ_HELPER_ARGS[@]}"
@@ -427,13 +502,12 @@ This helper is **review-only**. Use it to narrow the list of apps worth checking
 EOF
 
   printf 'app\tphase2c_fit\tinstalled\tinstalled_path\tversion\tsuggested_route\tuse_when\tnon_secret_destination\tsecret_destination\tstate_signals_found\n' > "$known_tsv"
-  emit_candidate_row "$known_tsv" "$summary_md" "IntelliJ IDEA" "Common — dedicated runbook" "backup-intellij.md" "IDE state, Scratches, settings export, plugins, project metadata, or HTTP Client env files matter." "$root_display/app-settings-backup/intellij/" "$root_display/secrets-encrypted/" "/Applications/IntelliJ IDEA.app;$HOME/Applications/IntelliJ IDEA.app" "$HOME/Library/Application Support/JetBrains;$HOME/Library/Preferences/JetBrains"
-  emit_candidate_row "$known_tsv" "$summary_md" "Docker Desktop" "Common" "backup-apps.md" "Docker Desktop settings, contexts, image inventory, or container inventory matter." "$root_display/app-settings-backup/docker/" "$root_display/secrets-encrypted/docker/" "/Applications/Docker.app;$HOME/Applications/Docker.app" "$HOME/Library/Group Containers/group.com.docker;$HOME/Library/Containers/com.docker.docker"
-  emit_candidate_row "$known_tsv" "$summary_md" "Chrome" "Common" "backup-apps.md" "Bookmarks export or password export is needed." "$root_display/app-settings-backup/chrome/" "$root_display/secrets-encrypted/chrome/" "/Applications/Google Chrome.app;$HOME/Applications/Google Chrome.app" "$HOME/Library/Application Support/Google/Chrome;$HOME/Library/Preferences/com.google.Chrome.plist"
-  emit_candidate_row "$known_tsv" "$summary_md" "Postman" "Common" "backup-apps.md" "Collections, environments, or Vault state matter." "$root_display/app-settings-backup/postman/" "$root_display/secrets-encrypted/postman/" "/Applications/Postman.app;$HOME/Applications/Postman.app" "$HOME/Library/Application Support/Postman;$HOME/Library/Preferences/com.postmanlabs.mac.plist"
-  emit_candidate_row "$known_tsv" "$summary_md" "Raycast" "Optional" "backup-apps.md" "Quick Links or settings/data export matter." "$root_display/app-settings-backup/raycast/" "$root_display/secrets-encrypted/raycast/" "/Applications/Raycast.app;$HOME/Applications/Raycast.app" "$HOME/Library/Application Support/com.raycast.macos;$HOME/Library/Preferences/com.raycast.macos.plist"
-  emit_candidate_row "$known_tsv" "$summary_md" "Obsidian" "Optional" "backup-apps.md" "Vault content, vault-local config, or restore-source choice matters." "$root_display/app-settings-backup/obsidian/" "usually none from this runbook" "/Applications/Obsidian.app;$HOME/Applications/Obsidian.app" "$HOME/Library/Application Support/obsidian"
-  emit_candidate_row "$known_tsv" "$summary_md" "Visual Studio Code" "Optional" "backup-apps.md" "Extensions, settings, snippets, profiles, or a local fallback beyond Settings Sync matter." "$root_display/app-settings-backup/vscode/" "usually none from this runbook" "/Applications/Visual Studio Code.app;$HOME/Applications/Visual Studio Code.app" "$HOME/Library/Application Support/Code;$HOME/Library/Preferences/com.microsoft.VSCode.plist"
+  # Emit one row per detectable app from the shared registry, preserving the
+  # registry order. Terminal (detectable=no) is skipped here.
+  while IFS=$'\t' read -r app group how non_secret_dest secret_dest detectable phase_fit route use_when bundle_paths state_paths; do
+    [[ "$detectable" == "yes" ]] || continue
+    emit_candidate_row "$known_tsv" "$summary_md" "$app" "$phase_fit" "$route" "$use_when" "$non_secret_dest" "$secret_dest" "$bundle_paths" "$state_paths"
+  done < <(supported_apps_registry)
 
   cat >> "$summary_md" <<'EOF'
 
@@ -467,7 +541,7 @@ EOF
 EOF
 }
 
-if [[ "$DOCKER_ONLY" == true || "$INTELLIJ_ONLY" == true ]]; then
+if [[ "$DOCKER_ONLY" == true || "$INTELLIJ_ONLY" == true || "$VSCODE_ONLY" == true ]]; then
   CANDIDATE_REVIEW_STATUS="Skipped by single-app rerun mode"
 elif [[ "$RUN_CANDIDATE_REVIEW" == true ]]; then
   generate_candidate_review
