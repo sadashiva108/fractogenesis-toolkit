@@ -34,6 +34,12 @@
 #   --include-heavy   Include generated/heavy content when supported.
 #   -h, --help        Show this message and exit.
 #
+# Role-specific options some helpers also accept (add only when the helper's
+# job needs them; keep names consistent with existing helpers):
+#   --context LABEL          Context prefix for a timestamped run directory.
+#   --exclude-list FILE      Operator-maintained patterns to drop from output.
+#   --secrets-patterns FILE  Patterns whose matches route to a secrets holding area.
+#
 # Configuration:
 #   Shared reimage config is intentionally NOT loaded by default. The caller
 #   passes resolved paths explicitly. Add shared loading only when standalone
@@ -184,6 +190,15 @@ process_root() {
   # - Prefer NUL-delimited traversal when filenames may contain whitespace.
   # - In copy mode, continue safely for expected disappearing/generated files
   #   only when the runbook defines that behavior and the skip is recorded.
+  #
+  # NUL-delimited traversal skeleton (Bash 3.2 safe — no mapfile):
+  #   local rel
+  #   while IFS= read -r -d '' path; do
+  #     rel="${path#"$root"/}"
+  #     should_skip_path "$rel" && continue
+  #     # ... process "$path" (dry run: record it; --copy: copy it) ...
+  #   done < <(find "$root" -type f -print0 2>/dev/null)
+
   printf 'TODO: process root: %s\n' "$root"
 }
 

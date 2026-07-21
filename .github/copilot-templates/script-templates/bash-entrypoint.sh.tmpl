@@ -26,8 +26,8 @@
 #
 #   # Supply repeatable input roots when this operation needs them
 #   ./bin/TODO-script-name.sh \
-#     --input-root /absolute/path/one \
-#     --input-root /absolute/path/two
+#     --root /absolute/path/one \
+#     --root /absolute/path/two
 #
 #   # Open the primary output after completion
 #   ./bin/TODO-script-name.sh --open
@@ -35,7 +35,7 @@
 # Options:
 #   --artifact-root PATH  Override REIMAGE_ARTIFACT_ROOT from shared config.
 #   --output-root PATH    Override the operation-specific output directory.
-#   --input-root PATH     Add an input root. Repeatable when applicable.
+#   --root PATH           Add an input root. Repeatable.
 #   --open                Open the primary output in Finder after completion.
 #   -h, --help            Show this message and exit.
 #
@@ -53,6 +53,15 @@
 # =============================================================================
 
 set -euo pipefail
+# For a user-facing entrypoint that benefits from a line-referenced failure
+# message, use `set -Eeuo pipefail` (note the E) plus an ERR trap instead —
+# see backup-home.sh. The E makes the ERR trap fire inside functions/subshells:
+#
+#   set -Eeuo pipefail
+#   trap 'status=$?; echo "" >&2; \
+#     echo "ERROR: TODO-script-name.sh failed near line ${LINENO}: ${BASH_COMMAND}" >&2; \
+#     exit "$status"' ERR
+#
 # For aggregate checklist/report scripts only, use `set -uo pipefail` instead
 # and explain why `set -e` is intentionally omitted. Do not omit `set -e`
 # merely for consistency with a validator.
@@ -78,12 +87,35 @@ source "$CONFIG_LOADER"
 
 SCRIPT_NAME="${REIMAGE_SCRIPT_DISPLAY_NAME:-TODO-script-name.sh}"
 
+# Display-only fallback, matching backup-home.sh and capture-size-audit.sh: the
+# shared loader does not define a generic CONFIG variable, so surface the
+# effective fragment source when this entrypoint prints a config line.
+# CONFIG="${CONFIG:-${ARTIFACT_CONFIG_SOURCE_DIR:-$CONFIG_LOADER}}"
+
+# ---------------------------------------------------------------------------
+# User-facing output helpers (optional)
+# ---------------------------------------------------------------------------
+# Delete this block if the entrypoint does not print colorized, sectioned
+# output. When kept, reuse the same palette and helpers as backup-home.sh /
+# capture-size-audit.sh so runs read consistently.
+#
+# Note: capturing this colored output into a saved report (ANSI codes intact,
+# viewed with `less -R`) is a per-workflow manifest/retention decision — do not
+# add report capture here by default. See the script prompt's timestamped
+# outputs section.
+#
+# RED='\033[0;31m'; YEL='\033[1;33m'; GRN='\033[0;32m'; CYN='\033[0;36m'
+# BLD='\033[1m'; DIM='\033[2m'; RST='\033[0m'
+# hr()          { printf '%s\n' "────────────────────────────────────────────────────────"; }
+# thin_hr()     { printf '%s\n' "  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄"; }
+# log_section() { echo ""; echo -e "${BLD}${CYN}▸ $1${RST}"; thin_hr; }
+
 # ---------------------------------------------------------------------------
 # Defaults and command-line state
 # ---------------------------------------------------------------------------
 OUTPUT_ROOT=""
 OPEN_AFTER=false
-INPUT_ROOTS=()
+ROOTS=()
 
 usage() {
   sed -n '/^# --- BEGIN USAGE ---$/,/^# --- END USAGE ---$/p' "$0" \
@@ -116,9 +148,9 @@ while [[ $# -gt 0 ]]; do
       OUTPUT_ROOT="$2"
       shift 2
       ;;
-    --input-root)
+    --root)
       require_option_value "$1" "${2:-}"
-      INPUT_ROOTS+=("$2")
+      ROOTS+=("$2")
       shift 2
       ;;
     --open)
@@ -158,25 +190,37 @@ if [[ -z "$OUTPUT_ROOT" ]]; then
   OUTPUT_ROOT="$REIMAGE_ARTIFACT_ROOT/TODO-output-subdir"
 fi
 
-if [[ ${#INPUT_ROOTS[@]} -eq 0 ]]; then
+if [[ ${#ROOTS[@]} -eq 0 ]]; then
   # TODO: Add only configuration-backed defaults that are meaningful for this
   # operation. Do not hardcode user-specific workspace paths.
   #
   # Example for Git-oriented entrypoints:
-  # [[ -n "${GIT_WORK_REPO_ROOT:-}" ]] && INPUT_ROOTS+=("$GIT_WORK_REPO_ROOT")
-  # [[ -n "${GIT_PERSONAL_REPO_ROOT:-}" ]] && INPUT_ROOTS+=("$GIT_PERSONAL_REPO_ROOT")
+  # [[ -n "${GIT_WORK_REPO_ROOT:-}" && -d "${GIT_WORK_REPO_ROOT:-}" ]] && ROOTS+=("$GIT_WORK_REPO_ROOT")
+  # [[ -n "${GIT_PERSONAL_REPO_ROOT:-}" && -d "${GIT_PERSONAL_REPO_ROOT:-}" ]] && ROOTS+=("$GIT_PERSONAL_REPO_ROOT")
   :
 fi
 
 # ---------------------------------------------------------------------------
 # Validate prerequisites and dependencies
 # ---------------------------------------------------------------------------
-for input_root in "${INPUT_ROOTS[@]}"; do
-  if [[ ! -d "$input_root" ]]; then
-    echo "ERROR: input root not found: $input_root" >&2
-    exit 2
-  fi
-done
+# Guard the expansion: on stock macOS Bash 3.2, "${ROOTS[@]}" on an empty
+# array errors under `set -u`. Only iterate when at least one root is set.
+if (( ${#ROOTS[@]} > 0 )); then
+  for input_root in "${ROOTS[@]}"; do
+    if [[ ! -d "$input_root" ]]; then
+      echo "ERROR: input root not found: $input_root" >&2
+      exit 2
+    fi
+  done
+fi
+
+# Safety invariant (optional): when this operation resolves a destination that
+# could be misconfigured to a relative path, refuse to write it inside the repo
+# checkout — a copy there would not be a real backup. Modeled on backup-home.sh.
+# if [[ -n "${REPO_ROOT:-}" && ( "$OUTPUT_ROOT" == "$REPO_ROOT" || "$OUTPUT_ROOT" == "$REPO_ROOT"/* ) ]]; then
+#   echo "ERROR: refusing to write output under the repo checkout: $OUTPUT_ROOT" >&2
+#   exit 2
+# fi
 
 HELPER_SCRIPT="$REPO_ROOT/.internal/TODO/TODO-helper.sh"
 if [[ ! -f "$HELPER_SCRIPT" ]]; then
@@ -199,10 +243,23 @@ fi
 # they are supposed to verify.
 mkdir -p "$OUTPUT_ROOT"
 
+# Reading artifact-config fragment arrays: iterate with config_field, and guard
+# optional arrays that a fragment may not define. Both come from the shared
+# loader — see backup-home.sh for a full example.
+# if declare -p EXTERNAL_TARGETS >/dev/null 2>&1; then
+#   for entry in "${EXTERNAL_TARGETS[@]}"; do
+#     label=$(config_field "$entry" 1)
+#     src=$(config_field "$entry" 2)
+#     # ...
+#   done
+# fi
+
 HELPER_ARGS=(--dest "$OUTPUT_ROOT")
-for input_root in "${INPUT_ROOTS[@]}"; do
-  HELPER_ARGS+=(--root "$input_root")
-done
+if (( ${#ROOTS[@]} > 0 )); then
+  for input_root in "${ROOTS[@]}"; do
+    HELPER_ARGS+=(--root "$input_root")
+  done
+fi
 
 # Invoke with bash instead of changing executable bits at runtime. Script
 # permissions should be committed correctly; a run should not dirty the repo.

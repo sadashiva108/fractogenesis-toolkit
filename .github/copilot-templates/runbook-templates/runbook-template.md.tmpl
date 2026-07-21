@@ -1,67 +1,140 @@
 ---
-# Runbook template metadata
-# This YAML block should be updated when instantiating the template.
-# Fields: title, back_link, runbook_version, verb_first (true/false), primary_scripts (list), related_scripts (list), artifact_paths (list)
+title: {{RUNBOOK_TITLE}}
+back_link: "{{BACK_LINK}}"
+runbook_version: 0.1.0
+verb_first: true
+primary_scripts:
+  - {{PRIMARY_SCRIPT}}
+related_scripts: []
+artifact_paths:
+  - $REIMAGE_ARTIFACT_ROOT/{{ARTIFACT_PATHS}}
+author: {{AUTHOR}}
+last_updated: {{LAST_UPDATED}}
 ---
-
-<!--
-Runbook template for fractogenesis-toolkit
-Placeholders to replace (uppercase) or provide in the YAML header:
-- RUNBOOK_TITLE or `title` in YAML
-- BACK_LINK or `back_link` in YAML
-- RUNBOOK_SHORT_DESC
-- PRIMARY_SCRIPT / PRIMARY_SCRIPTS (one or more entrypoint scripts)
-- RELATED_SCRIPTS (list)
-- ARTIFACT_PATHS (example: $REIMAGE_ARTIFACT_ROOT/...)
--->
+[[{{BACK_LINK}}|← Back to Mac Reimaging Guide]]
 
 # {{RUNBOOK_TITLE}}
 
-Back link: {{BACK_LINK}}
+{{RUNBOOK_SHORT_DESC}}
 
-Purpose
-- {{RUNBOOK_SHORT_DESC}}
+<!--
+Runbook template for fractogenesis-toolkit.
 
-Table of contents
-- [Purpose](#purpose)
-- [Artifact and Script Locations](#artifact-and-script-locations)
-- [Before You Run Anything](#before-you-run-anything)
-  - [Prerequisites](#prerequisites)
-  - [Configuration (reimage.env)](#configuration-reimageenv)
-  - [Safety & Validation](#safety--validation)
-- [Sequential Steps](#sequential-steps)
-  - [Step 1 — Prepare / Validate](#step-1-—-prepare--validate)
-  - [Step 2 — Execute primary action](#step-2-—-execute-primary-action)
-  - [Step 3 — Verify outputs](#step-3-—-verify-outputs)
-- [Supplemental Reference](#supplemental-reference)
+- The YAML block above MUST be the first thing in the file so Obsidian parses
+  it as frontmatter. Author/last_updated/version live there only — do not add a
+  second metadata block elsewhere.
+- Replace every {{UPPERCASE}} placeholder and delete these guidance comments
+  before publishing.
+- Optional sections are marked with an HTML comment under their heading. Keep an
+  optional section only when it earns its place; otherwise delete the heading,
+  its body, and its Table of Contents entry.
+- Every directory tree lives once, under "Artifact and Script Locations".
+- Links are Obsidian wiki-links ([[#Heading|Label]]) and callouts are Obsidian
+  callouts (> [!type]). Keep prose otherwise link-free so a hurried reader stays
+  on the path.
+-->
+
+---
+
+## Table of Contents
+
+- [[#Purpose|Purpose]]
+- [[#How the Workflow Works|How the Workflow Works]]
+    - [[#Terminology|Terminology]]
+- [[#Artifact and Script Locations|Artifact and Script Locations]]
+    - [[#Environment Variables|Environment Variables]]
+- [[#Before You Run Anything|Before You Run Anything]]
+    - [[#Prerequisites|Prerequisites]]
+    - [[#Confirm Your Intent|Confirm Your Intent]]
+- [[#Sequential Steps|Sequential Steps]]
+    - [[#Step 1 — Prepare and Validate|Step 1 — Prepare and Validate]]
+    - [[#Step 2 — Execute the Primary Action|Step 2 — Execute the Primary Action]]
+    - [[#Step 3 — Verify Outputs|Step 3 — Verify Outputs]]
+- [[#Decisions|Decisions]]
+- [[#Troubleshooting|Troubleshooting]]
+- [[#Supplemental Reference|Supplemental Reference]]
+
+> In Obsidian, these are internal heading links. Click in Reading View, or Cmd-click in Live Preview/editing mode.
+
+> [!info] Callout legend
+> This runbook uses Obsidian callouts so each type reads distinctly: `[!note]` an easily-missed fact · `[!warning]` Pitfall, a mistake you are likely to make here · `[!bug]` Troubleshooting, what to do when a step misbehaves · `[!info] Return` how to get back after an out-of-sequence detour.
+
+---
+
+## Purpose
+
+{{RUNBOOK_SHORT_DESC}} — expanded to 1–3 sentences that say what carrying out this runbook achieves.
+
+State the scope boundaries here; this is the single place sibling-runbook cross-references live (there is no separate "Related Guides" list).
+
+This runbook owns:
+
+```text
+{{OWNED_ITEM_1}}
+{{OWNED_ITEM_2}}
+```
+
+It does not own:
+
+```text
+{{EXCLUDED_AREA_1}} — {{OWNING_RUNBOOK_1}}
+{{EXCLUDED_AREA_2}} — {{OWNING_RUNBOOK_2}}
+```
+
+<!-- Note if the runbook can be rerun independently, and any precondition on rerun. -->
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
+## How the Workflow Works
+<!-- Optional section: keep when the flow needs conceptual background. This is the home for the concepts and the *why* — what the flow achieves, why the steps are ordered as they are, terminology, and run modes. Keep it shallow; push detailed mechanics to Supplemental Reference. Do not repeat the why inside Before You Run Anything. -->
+
+Read this before running anything. State what the whole flow achieves before any location, flag, or file detail, then give the reason each part exists in a sentence or two — the reader should finish knowing *why*, not just *what*. Name the preferred path and its reason in one line.
+
+<!-- If the runbook forks or has run modes, describe them here as a small table:
+| Mode | Command | What it does |
+|---|---|---|
+-->
+
+### Terminology
+<!-- Optional subsection: define ambiguous domain terms before the steps rely on them. Delete if the runbook has no ambiguous terms. -->
+
+| Term | Meaning |
+|---|---|
+| {{TERM}} | {{DEFINITION}} |
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
 
 ---
 
 ## Artifact and Script Locations
 
-Primary script(s)
-- {{PRIMARY_SCRIPT}}
+Every path and directory tree this runbook uses is defined here, once. Later sections refer back to these names instead of redrawing them.
 
-Related scripts / helpers (alphabetical order)
-- {{RELATED_SCRIPTS}}
+Primary script(s), alphabetical (classify each as entrypoint / helper):
 
-Primary artifact locations (examples)
-- $REIMAGE_ARTIFACT_ROOT/{{ARTIFACT_PATHS}}
-- Local workspace: $REIMAGE_WORKSPACE_ROOT/
-
-If including a directory tree, show only the top-level directories and
-sub-directories this runbook's steps actually touch, alphabetized at every
-level. Represent the rest of $REIMAGE_ARTIFACT_ROOT with a `...` continuation
-entry immediately before the first shown directory and immediately after the
-last one — signaling that other top-level directories exist without listing
-them (single source of truth stays in prepare-artifact-root.md /
-master-directory-reference.md). Omit the leading `...` only when the first
-shown directory is alphabetically first among all top-level directories;
-omit the trailing `...` only when the last shown directory is alphabetically
-last.
-
-repo (partial)
+```text
+$FRACTOGENESIS_HOME/bin/{{PRIMARY_SCRIPT}}   # entrypoint | helper
 ```
+
+Artifact locations:
+
+```text
+$REIMAGE_ARTIFACT_ROOT/{{ARTIFACT_PATHS}}
+```
+
+<!--
+If a directory tree helps, show only the directories this runbook's steps touch,
+alphabetized at every level. Represent the rest of $REIMAGE_ARTIFACT_ROOT with a
+single `...` continuation entry immediately before the first shown directory and
+immediately after the last — the full layout stays in prepare-artifact-root.md /
+master-directory-reference.md. Omit the leading `...` only when the first shown
+directory is alphabetically first among all top-level directories; omit the
+trailing `...` only when the last shown directory is alphabetically last.
+-->
+
+```text
 $REIMAGE_ARTIFACT_ROOT/
 ├── ...
 ├── {{ARTIFACT_DIR}}/
@@ -69,83 +142,168 @@ $REIMAGE_ARTIFACT_ROOT/
 └── ...
 ```
 
+<!-- When another runbook owns the full layout of a tree this runbook only touches part of, link to it on its own line rather than redrawing it, e.g.:
+The complete {{DIR}}/ layout is defined once in the Master Directory Reference:
+
+[[master-directory-reference|Master Directory Reference]]
+-->
+
+### Environment Variables
+
+The `reimage.env` values this runbook depends on. Auto-detect by scanning the
+scripts for `REIMAGE_*`, `EXTERNAL_DATA_VOLUME`, `ONEDRIVE*`, and
+`GIT_*_REPO_ROOT`. Values are resolved and written during `prepare-artifact-root.md`.
+
+| Variable | Meaning |
+|---|---|
+| {{ENV_VAR}} | {{MEANING}} |
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
 ---
 
 ## Before You Run Anything
 
+A short pre-flight: confirm you are set up, then confirm what you intend this run to do. The conceptual background is in [[#How the Workflow Works|How the Workflow Works]]; this is the checklist, kept brief enough that a hurried reader still reads it.
+
 ### Prerequisites
-- Run from the repository root.
-- Ensure reimage.env exists (created from reimage.env.example) and contains resolved absolute paths.
-- Confirm required tools are installed (bash, python3, jq, rsync as needed). List only what's actually required by the script.
 
-### Configuration (reimage.env)
-- The generated runbook SHOULD list exact reimage.env keys the scripts require. If possible, auto-populate this list by scanning PRIMARY_SCRIPT for exported variable names or references to REIMAGE_* and common variables (EXTERNAL_DATA_VOLUME, REIMAGE_ARTIFACT_ROOT, GIT_*_REPO_ROOT).
-- Verify these variables in reimage.env are set and resolved.
+- {{Precondition that must already be true — mounted volume, resolved `$REIMAGE_ARTIFACT_ROOT`, `reimage.env` produced by prepare-artifact-root, required tools installed}}.
 
-### Safety & Validation
-- Dry-run where supported.
-- Validate scripts: `bash -n {{PRIMARY_SCRIPT}}` and `shellcheck -x {{PRIMARY_SCRIPT}}` (if shellcheck is available).
-- Do not run from another directory; many entrypoints self-locate and expect repo-root context.
-- The TOC above must match the document headings. After filling, run a simple check to ensure every markdown link in the TOC targets an existing heading.
+<!-- List only what this runbook actually needs. -->
+
+> [!bug] Troubleshooting
+> {{common precondition failure and the one-line fix}}.
+
+### Confirm Your Intent
+
+- {{The choice the reader makes before running — which mode/path, which options, whether to preview with a dry run}}.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
 
 ---
 
 ## Sequential Steps
 
-### Step 1 — Prepare / Validate
-- Brief one-line goal.
-- Commands: show minimal commands to prepare, e.g.:
+Run these in order; every dependency must be produced before the step that consumes it. Keep this intro link-free — describe the shape of the flow in a sentence rather than wiring up every subsection.
+
+<!--
+If the flow forks into a preferred path and an alternate/off-ramp:
+- put the shared steps first as common setup;
+- add a short path-index that names each path, says which is preferred and why;
+- at each divergence point use a `> [!info] Return` callout linking back to the
+  path index (not to the Table of Contents).
+Map the steps to the script's phases: prepare -> execute -> verify. Verification
+that a person must do by hand belongs in the relevant verify step (and rolls up
+to the Phase 4B sign-off), not in the Decisions section.
+-->
+
+### Step 1 — Prepare and Validate
+
+One-line goal. Precede each command block with a single sentence saying what it is for.
+
+Syntax-check and confirm the environment resolves:
 
 ```bash
-# syntax-check and dry-run
-bash -n {{PRIMARY_SCRIPT}}
-# optional: run with -n/--dry-run flag if implemented
-bash {{PRIMARY_SCRIPT}} --dry-run
+cd "$FRACTOGENESIS_HOME"
+bash -n bin/{{PRIMARY_SCRIPT}}
 ```
 
-If multiple primary scripts exist (helpers or alternative entrypoints), list and show which script is primary for which sub-step.
-
-### Step 2 — Execute primary action
-- Run the primary script with any required args.
+Preview without changing anything, when the script supports it:
 
 ```bash
-bash {{PRIMARY_SCRIPT}} [--env-file reimage.env] [--artifact-root "$REIMAGE_ARTIFACT_ROOT/..." ]
+./bin/{{PRIMARY_SCRIPT}} {{DRY_RUN_FLAG}}
 ```
 
-- What the script writes and where (explicit file/path examples):
-  - $REIMAGE_ARTIFACT_ROOT/<event>/backups/
-  - $REIMAGE_ARTIFACT_ROOT/<event>/manifests/
+> [!note]
+> {{an easily-missed fact about this step}}.
 
-### Step 3 — Verify outputs
-- Quick checks to confirm success (existence, checksum, sample file list):
+### Step 2 — Execute the Primary Action
+
+Run the primary script with any required arguments:
 
 ```bash
-ls -la "$REIMAGE_ARTIFACT_ROOT"/$(date +%Y%m%d)-{{ASSET_OR_HOST}}/
-# or verify manifest
-sha256sum "$REIMAGE_ARTIFACT_ROOT"/.../manifest.txt
+./bin/{{PRIMARY_SCRIPT}} [--artifact-root "$REIMAGE_ARTIFACT_ROOT"]
 ```
 
-Optional: note manual review or signer steps here.
+What it writes and where (refer to the names defined in Artifact and Script Locations, do not redraw the tree):
+
+```text
+$REIMAGE_ARTIFACT_ROOT/{{ARTIFACT_PATHS}}
+```
+
+### Step 3 — Verify Outputs
+
+Confirm success before moving on:
+
+```bash
+find "$REIMAGE_ARTIFACT_ROOT/{{ARTIFACT_PATHS}}" -maxdepth 2 -type f | sort | head
+```
+
+> [!warning] Pitfall
+> {{a mistake a reader is likely to make when verifying}}.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
+## Decisions
+<!-- Optional section: keep only the genuine judgment calls with no single right answer that do not attach to one step (e.g. whether a file is really a secret). A fact you verify by hand is not a decision — put that in the relevant verify step and the Phase 4B sign-off. Intent (which mode/path) belongs in Confirm Your Intent. Delete this section if the runbook has no standing judgment calls. -->
+
+The scripts do X; these judgment calls stay with you.
+
+| Decision | Why it stays with you |
+|---|---|
+| {{DECISION}} | {{REASON}} |
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
+## Troubleshooting
+<!--
+Optional section. Use it only for a problem that spans multiple steps, whose fix
+is long enough to break a step's flow, or that is common enough that readers will
+scan for a "Troubleshooting" heading. A step-local problem with a short fix stays
+inline as a `> [!bug] Troubleshooting` callout next to its step instead. Any given
+failure's fix lives in exactly one place — inline OR here, never both. When it is
+here, the step carries a one-line callout linking in:
+`> [!bug] Troubleshooting` … `see [[#Troubleshooting|Troubleshooting]]`.
+Delete this section if every troubleshooting note is better placed inline.
+-->
+
+### {{Symptom, stated as the reader would see it}}
+
+{{What is happening and the fix, or the safe recovery steps.}}
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
 
 ---
 
 ## Supplemental Reference
-- Link to runbook sources, relevant references, and internal prompts:
-  - README.md
-  - reimaging-guide.md
-  - reimaging-scripts-guide.md
-  - .internal/load-reimage-config.sh
-  - .internal/artifact-config.sh
-  - .github/copilot-prompts/bash-script-authoring-and-review.md
+<!-- Optional section: longer material most runs will not need — detailed mechanics, generated-file references, known gaps. Delete if there is none. -->
+
+Longer material most runs will not need, kept out of the main flow.
+
+### {{Deep-dive topic}}
+
+{{Detailed mechanics or reference content.}}
+
+<!--
+Add a "### Worked Example" here ONLY when a concept is hard to grasp without a
+concrete one — a multi-file or multi-stage flow that is easy to misread. Walk a
+small setup end to end, showing what each stage produces, and illustrate the
+alternate/off-ramp path on the same setup. Do not add a worked example by default.
+-->
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
 
 ---
 
-## Template metadata (fill before publishing)
-- Author:
-- Last-updated:
-- Runbook-version:
-- Linked-runbook-from: {{BACK_LINK}}
-- Enforced verb-first title? (set verb_first: true in YAML header to assert)
-
-
-<!-- End of template -->
+<!--
+TOC verification performed before publishing:
+- every Table of Contents entry resolves to a heading present in this file;
+- deleted optional sections were also removed from the Table of Contents;
+- each top-level section ends with a single "Back to Table of Contents" link,
+  except where a `> [!info] Return` callout intentionally links to a path index.
+-->
