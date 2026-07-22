@@ -265,6 +265,12 @@ fi
 
 INTELLIJ_HELPER="$(dirname "$SCRIPT_DIR")/.internal/apps/backup-intellij-scratches-consoles.sh"
 INTELLIJ_HELPER_ARGS=(--artifact-root "$REIMAGE_ARTIFACT_ROOT")
+# Default the IntelliJ workspace root to the configured work-repo root when the
+# caller did not pass --intellij-workspace-root, mirroring how backup-repos.sh
+# defaults --root to GIT_WORK_REPO_ROOT.
+if [[ -z "$INTELLIJ_WORKSPACE_ROOT" && -n "${GIT_WORK_REPO_ROOT:-}" ]]; then
+  INTELLIJ_WORKSPACE_ROOT="$GIT_WORK_REPO_ROOT"
+fi
 if [[ -n "$INTELLIJ_WORKSPACE_ROOT" ]]; then
   INTELLIJ_HELPER_ARGS+=(--workspace-root "$INTELLIJ_WORKSPACE_ROOT")
 fi
