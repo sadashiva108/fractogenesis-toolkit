@@ -152,7 +152,7 @@ It is not possible to maintain an exhaustive backup strategy for every app. If y
 
 | Mode | Command | What it does |
 |---|---|---|
-| Candidate review | `./bin/backup-apps.sh --candidate-review` | Scan-only. Writes a review bundle listing what a real run would create. Creates no app folders, runs no captures, writes no `MANIFEST.md`. |
+| Candidate review | `./bin/backup-apps.sh --candidate-review` | Scan-only. Detects installed apps, folds in the managed-inventory bundle, and writes a review that partitions managed apps out of the candidate list. Creates no app folders, runs no captures, writes no `MANIFEST.md`. |
 | Real backup | `./bin/backup-apps.sh` | Creates a folder for each detected app, runs the Docker/IntelliJ/VS Code captures where applicable, and writes `MANIFEST.md`. |
 
 ### Terminology
@@ -161,7 +161,7 @@ It is not possible to maintain an exhaustive backup strategy for every app. If y
 |---|---|
 | Non-secret export | App artifact safe to keep in plaintext under `app-settings-backup/` after review. |
 | Secret-bearing export | Artifact that may carry tokens, passwords, keys, cookies, or unreviewed values; staged under `secrets-encrypted/`. |
-| Candidate review | The scan-only mode; detects apps and reports intent without creating real backup artifacts. |
+| Candidate review | The scan-only mode; detects installed apps, consults the managed inventory, and reports intent without creating real backup artifacts. |
 | Managed app | An app installed and restored by company management (MDM). It usually returns automatically, so it may not need a backup here — though its user-specific state still might. |
 | Artifact-local validation | Confirming an export landed in the correct folder — the only validation this runbook owns. |
 | Restore source | Where a given app's state will actually come back from after reimage (Git, sync, a copy, a password manager, re-enrollment). |
@@ -230,7 +230,7 @@ $REIMAGE_ARTIFACT_ROOT/
 └── ...
 ```
 
-Step 3 consults the managed-inventory artifacts produced by the prior managed-inventory phase under `managed-inventory/`; that layout and the complete `$REIMAGE_ARTIFACT_ROOT` map are drawn once elsewhere:
+Step 3's candidate review folds in the managed-inventory artifacts produced by the prior managed-inventory phase under `managed-inventory/`; that layout and the complete `$REIMAGE_ARTIFACT_ROOT` map are drawn once elsewhere:
 
 [[backup-intellij|Backup IntelliJ]] — full `intellij/` subtree
 
@@ -338,28 +338,34 @@ Review these lines in the output:
 
 ### Step 3 — Determine Which Apps to Back Up
 
-Decide your app set with real detection instead of memory. Two detectors answer two different questions: this runbook's `--candidate-review` scan finds what is *installed*, and the managed-inventory phase — already run before this one — reports what *management will restore* (so you can skip those). Use both, then apply the [[#Confirm Your Intent|Confirm Your Intent]] criteria.
+Decide your app set with real detection instead of memory. `--candidate-review` answers both questions in one pass: it scans what is *installed* and folds in the managed-inventory bundle from the prior phase to see what *management will restore*, then partitions the two so managed apps are moved out of your main candidate list automatically. Apply the [[#Confirm Your Intent|Confirm Your Intent]] criteria to what remains.
 
-Scan installed apps and see what a real run would create, without touching anything:
+Scan installed apps, consult the managed inventory, and see what a real run would create — without touching anything:
 
 ```bash
 cd "$FRACTOGENESIS_HOME"
 ./bin/backup-apps.sh --artifact-root "$REIMAGE_ARTIFACT_ROOT" --candidate-review --open
 ```
 
-The bundle lands under `app-settings-backup/candidate-review/` and contains a known-candidates summary with an install-detected column, a "planned directories and artifacts" table, a related-app review table (for apps that belong elsewhere, such as Music), and raw installed-app and state-signal files under `raw/`.
+The bundle lands under `app-settings-backup/candidate-review/`. Read `app-backup-candidates.md`, which now splits the covered apps into two tables:
 
-Then consult the managed-inventory artifacts from the prior phase to see which installed apps management will bring back, so you can skip them here:
+- **Known Phase 2D candidates** — installed apps with no managed-inventory match. These are the ones to decide on.
+- **Managed — likely restored by IT** — apps with a **strong** managed signal in the managed-inventory section 03 verdict (a configuration profile, a managed preference, or the corporate-tooling filter), shown in a **Managed evidence** column. Management will almost certainly reinstall these, so they are out of the main list — but still skim them for local-only user state a reinstall will not bring back. Apps whose only signal is a package receipt stay in **Known** on purpose, since installed-from-a-package is not proof of management.
+
+A **related-app review** table (for apps that belong elsewhere, such as Music) and the raw files under `raw/` round out the bundle. Two of those raw files come from this fold-in: `raw/managed-apps-detected.txt` (the managed and likely-managed apps read from section 03) and `raw/managed-inventory-source.txt` (which bundle was consulted).
+
+By default candidate review consults the newest `pre-image-*` bundle under `managed-inventory/`. Point it at a specific one with `--managed-inventory DIR`:
 
 ```bash
-find "$REIMAGE_ARTIFACT_ROOT/managed-inventory" -maxdepth 2 -name '03-installed-app-bundles.txt' | sort | tail -1
+./bin/backup-apps.sh --artifact-root "$REIMAGE_ARTIFACT_ROOT" --candidate-review \
+  --managed-inventory "$REIMAGE_ARTIFACT_ROOT/managed-inventory/pre-image-YYYYMMDD-HHMMSS"
 ```
 
 > [!note]
-> This runbook only *reads* those artifacts — it does not run the capture. If the managed-inventory phase has not run yet, run it first (`capture-managed-inventory.md`) or decide managed apps by hand.
+> Candidate review reads the managed verdict from the bundle's `03-installed-app-bundles.txt` — the single authoritative per-app call written by the managed-inventory phase — and never re-derives its own, so the two never disagree. It only reads; it never runs the capture. If no bundle exists yet, the run still succeeds but skips the partition (every detected app stays a Known candidate) and says so in `raw/managed-inventory-source.txt`; run `capture-managed-inventory.md` first for the managed split.
 
 > [!warning] Pitfall
-> Detection tells you what is *present*, not what is *worth backing up*. A managed app that reinstalls automatically may still hold local-only user state that management will not restore — judge each app, do not assume.
+> Only a *strong* signal — a configuration profile, a managed preference, or the corporate-tooling filter — moves an app to the Managed table; a lone package receipt is treated as weak and left in the candidate list, because installed-from-a-package is not "managed". And a managed app that reinstalls automatically may still hold local-only user state management will not restore, so judge each managed app rather than assuming it is fully covered.
 
 ### Step 4 — Run the Automated Backup
 

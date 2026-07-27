@@ -19,7 +19,11 @@
 #   ./bin/backup-apps.sh
 #
 #   # Review-only bundle of app-backup candidates worth checking
+#   # (folds in the managed-inventory bundle and partitions managed apps out)
 #   ./bin/backup-apps.sh --candidate-review
+#
+#   # Point candidate review at a specific managed-inventory bundle
+#   ./bin/backup-apps.sh --candidate-review --managed-inventory /path/to/managed-inventory/pre-image-<stamp>
 #
 #   # List the apps this toolkit can back up (info only)
 #   ./bin/backup-apps.sh --supported-apps
@@ -38,6 +42,13 @@
 # Optional:
 #   --candidate-review      Generate a review-only app candidate bundle under:
 #                           $REIMAGE_ARTIFACT_ROOT/app-settings-backup/candidate-review/
+#                           Consumes the newest managed-inventory bundle (if present)
+#                           to enrich raw/ and partition managed apps into their own
+#                           table. Runs standalone when no managed bundle exists.
+#   --managed-inventory DIR Managed-inventory bundle candidate review should consult.
+#                           Default: newest pre-image-* under
+#                           $REIMAGE_ARTIFACT_ROOT/managed-inventory/. Only used with
+#                           --candidate-review.
 #   --supported-apps        List the supported apps (app, group, how backed up) and exit.
 #                           Info only; writes nothing and computes no sizes.
 #   --docker-only            Rerun only the Docker portion through this entrypoint.
@@ -100,6 +111,9 @@ supported_apps_registry() {
   # so the covered-app list lives in exactly one place. Tab-delimited fields:
   #   app  group  how  non_secret_dest  secret_dest
   #   detectable  phase_fit  route  use_when  bundle_paths  state_paths
+  # The candidate review's managed partition is keyed off each app's bundle
+  # basename (from bundle_paths) against the managed-inventory section 03 verdict,
+  # so no per-app managed-match list is kept here.
   local r="${REIMAGE_ARTIFACT_ROOT:-}"
   printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
     "IntelliJ IDEA" "Common" "Script + manual settings ZIP" "$r/app-settings-backup/intellij/" "$r/secrets-encrypted/" \
@@ -143,6 +157,7 @@ print_supported_apps() {
 
 OPEN_AFTER=false
 RUN_CANDIDATE_REVIEW=false
+MANAGED_INVENTORY_DIR=""
 DOCKER_ONLY=false
 INTELLIJ_ONLY=false
 VSCODE_ONLY=false
@@ -166,6 +181,15 @@ while [[ $# -gt 0 ]]; do
       shift 2
       ;;
     --candidate-review) RUN_CANDIDATE_REVIEW=true; shift ;;
+    --managed-inventory)
+      if [[ -z "${2:-}" || "$2" == --* ]]; then
+        echo "ERROR: --managed-inventory requires a directory." >&2
+        usage >&2
+        exit 2
+      fi
+      MANAGED_INVENTORY_DIR="$2"
+      shift 2
+      ;;
     --docker-only) DOCKER_ONLY=true; shift ;;
     --intellij-only) INTELLIJ_ONLY=true; shift ;;
     --vscode-only) VSCODE_ONLY=true; shift ;;
@@ -414,6 +438,7 @@ emit_candidate_row() {
   local secret_dest="$8"
   local bundle_paths="$9"
   local state_paths="${10}"
+  local managed_evidence="${11:-}"
 
   local installed_path installed version installed_label state_inline state_md
   installed_path="$(first_existing_path "$bundle_paths" || true)"
@@ -429,7 +454,7 @@ emit_candidate_row() {
   state_inline="$(existing_paths_inline "$state_paths")"
   state_md="$(existing_paths_markdown "$state_paths")"
 
-  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
     "$app" \
     "$phase_fit" \
     "$installed" \
@@ -439,18 +464,75 @@ emit_candidate_row() {
     "$use_when" \
     "$non_secret_dest" \
     "$secret_dest" \
-    "$state_inline" >> "$file"
+    "$state_inline" \
+    "$managed_evidence" >> "$file"
 
-  printf '| %s | %s | %s | %s | %s |\n' \
-    "$app" \
-    "$installed_label" \
-    "$phase_fit" \
-    "$route" \
-    "$state_md" >> "$summary_file"
+  # A non-empty managed_evidence routes the row to the Managed table, which
+  # carries an extra evidence column; otherwise the standard five-column row.
+  if [[ -n "$managed_evidence" ]]; then
+    printf '| %s | %s | %s | %s | %s | %s |\n' \
+      "$app" \
+      "$installed_label" \
+      "$managed_evidence" \
+      "$phase_fit" \
+      "$route" \
+      "$state_md" >> "$summary_file"
+  else
+    printf '| %s | %s | %s | %s | %s |\n' \
+      "$app" \
+      "$installed_label" \
+      "$phase_fit" \
+      "$route" \
+      "$state_md" >> "$summary_file"
+  fi
+}
+
+find_managed_inventory_bundle() {
+  # Echo the managed-inventory bundle candidate review should consult, or nothing.
+  # Honors --managed-inventory; otherwise picks the newest pre-image-* bundle
+  # (falling back to the newest bundle of any context). Never fails the review.
+  if [[ -n "$MANAGED_INVENTORY_DIR" ]]; then
+    [[ -d "$MANAGED_INVENTORY_DIR" ]] && printf '%s\n' "$MANAGED_INVENTORY_DIR"
+    return 0
+  fi
+  local base="$REIMAGE_ARTIFACT_ROOT/managed-inventory"
+  [[ -d "$base" ]] || return 0
+  local d
+  d="$(find "$base" -maxdepth 1 -mindepth 1 -type d -name 'pre-image-*' 2>/dev/null | sort | tail -1)"
+  if [[ -z "$d" ]]; then
+    d="$(find "$base" -maxdepth 1 -mindepth 1 -type d 2>/dev/null | sort | tail -1)"
+  fi
+  [[ -n "$d" ]] && printf '%s\n' "$d"
+  return 0
+}
+
+managed_verdict_from_03() {
+  # Read the single authoritative managed verdict for one app from the
+  # managed-inventory section 03 file (capture-managed-inventory.sh owns the
+  # verdict logic; this only consumes it). Args: 03 file path, app bundle
+  # basename (e.g. "Docker.app"). Echoes "<verdict><TAB><evidence>" where
+  # verdict is "managed" or "likely"; echoes nothing when the app is absent,
+  # tagged "[-]", or the file predates the tagged format.
+  local file="$1" base="$2"
+  [[ -f "$file" ]] || return 0
+  local tab; tab="$(printf '\t')"
+  local line tag
+  # Match the app's own line: path ending in "/<basename><TAB>", comments skipped.
+  line="$(grep -v '^#' "$file" 2>/dev/null | grep -F -- "/$base$tab" 2>/dev/null | head -1)"
+  [[ -n "$line" ]] || return 0
+  tag="${line#*"$tab"}"          # everything after the first tab: "[verdict: ev]" or "[-]"
+  tag="${tag#\[}"; tag="${tag%\]}"
+  case "$tag" in
+    managed:*) printf 'managed%s%s\n' "$tab" "$(printf '%s' "${tag#managed:}" | sed 's/^ *//')" ;;
+    likely:*)  printf 'likely%s%s\n'  "$tab" "$(printf '%s' "${tag#likely:}"  | sed 's/^ *//')" ;;
+    *) return 0 ;;
+  esac
 }
 
 generate_candidate_review() {
   local out raw app_root_list app_user_list app_all_list known_tsv review_tsv summary_md state_signals root_display
+  local managed_bundle managed_03 managed_index managed_source known_md_tmp managed_md_tmp related_md_tmp
+  local TAB; TAB="$(printf '\t')"
 
   out="$APP_ROOT/candidate-review/app-backup-candidates-$(date +%Y%m%d-%H%M%S)"
   raw="$out/raw"
@@ -464,6 +546,11 @@ generate_candidate_review() {
   review_tsv="$out/related-app-review.tsv"
   summary_md="$out/app-backup-candidates.md"
   state_signals="$raw/state-signal-paths.txt"
+  managed_index="$raw/managed-apps-detected.txt"
+  managed_source="$raw/managed-inventory-source.txt"
+  known_md_tmp="$out/.known-md.tmp"
+  managed_md_tmp="$out/.managed-md.tmp"
+  related_md_tmp="$out/.related-md.tmp"
   root_display="$REIMAGE_ARTIFACT_ROOT"
 
   find /Applications -maxdepth 1 -type d -name '*.app' 2>/dev/null | sort > "$app_root_list"
@@ -485,35 +572,126 @@ generate_candidate_review() {
     \( -iname '*chrome*' -o -iname '*postman*' -o -iname '*raycast*' -o -iname '*obsidian*' -o -iname '*docker*' -o -iname '*jetbrains*' -o -iname '*code*' -o -iname '*music*' \) \
     | sort -u > "$state_signals" || true
 
+  # Fold the managed-inventory bundle into the raw results. The managed verdict
+  # is read from that bundle's section 03 (its single authoritative per-app
+  # verdict) — this review does not re-derive it. When no bundle is found the
+  # review still runs; every detected app then stays a Known candidate.
+  managed_bundle="$(find_managed_inventory_bundle)"
+  managed_03=""
+  if [[ -n "$managed_bundle" ]]; then
+    managed_03="$managed_bundle/03-installed-app-bundles.txt"
+    {
+      echo "Managed-inventory bundle consulted by this candidate review:"
+      echo "$managed_bundle"
+      echo ""
+      echo "Managed verdicts are read from that bundle's 03-installed-app-bundles.txt,"
+      echo "the single authoritative per-app verdict written by capture-managed-inventory.sh."
+    } > "$managed_source"
+    # The distilled managed set is section 03's own tagged lines (managed + likely).
+    {
+      echo "# Managed and likely-managed apps, read from:"
+      echo "# $managed_03"
+      grep -v '^#' "$managed_03" 2>/dev/null | grep -E "\\[(managed|likely):" 2>/dev/null || true
+    } > "$managed_index"
+  else
+    : > "$managed_index"
+    {
+      echo "No managed-inventory bundle was found under:"
+      echo "$REIMAGE_ARTIFACT_ROOT/managed-inventory/"
+      echo ""
+      echo "Managed-app partitioning was skipped, so every detected app is listed as a"
+      echo "Known Phase 2D candidate. Run capture-managed-inventory.md first, or pass"
+      echo "--managed-inventory DIR, to partition managed apps out."
+    } > "$managed_source"
+  fi
+
+  : > "$known_md_tmp"
+  : > "$managed_md_tmp"
+  : > "$related_md_tmp"
+
+  # Both TSVs carry the managed_evidence column so the machine-readable set stays
+  # complete and single-sourced.
+  printf 'app\tphase2d_fit\tinstalled\tinstalled_path\tversion\tsuggested_route\tuse_when\tnon_secret_destination\tsecret_destination\tstate_signals_found\tmanaged_evidence\n' > "$known_tsv"
+  printf 'app\tphase2d_fit\tinstalled\tinstalled_path\tversion\tsuggested_route\tuse_when\tnon_secret_destination\tsecret_destination\tstate_signals_found\tmanaged_evidence\n' > "$review_tsv"
+
+  # Partition detectable registry apps into Known vs Managed, preserving registry
+  # order. Each app's managed verdict is looked up in section 03 by bundle
+  # basename. Only a strong verdict (managed) is subtracted into the Managed
+  # table; a weak verdict (likely: receipt-only) stays a Known candidate, since a
+  # lone receipt does not prove management owns it. Terminal (detectable=no) is
+  # skipped here.
+  local verdict evidence bpaths bp base res
+  while IFS=$'\t' read -r app group how non_secret_dest secret_dest detectable phase_fit route use_when bundle_paths state_paths; do
+    [[ "$detectable" == "yes" ]] || continue
+    verdict=""
+    evidence=""
+    if [[ -n "$managed_03" && -f "$managed_03" ]]; then
+      IFS=';' read -r -a bpaths <<< "$bundle_paths"
+      for bp in "${bpaths[@]}"; do
+        base="${bp##*/}"
+        res="$(managed_verdict_from_03 "$managed_03" "$base")"
+        if [[ -n "$res" ]]; then
+          verdict="${res%%"$TAB"*}"
+          evidence="${res#*"$TAB"}"
+          break
+        fi
+      done
+    fi
+    if [[ "$verdict" == "managed" ]]; then
+      emit_candidate_row "$known_tsv" "$managed_md_tmp" "$app" "$phase_fit" "$route" "$use_when" "$non_secret_dest" "$secret_dest" "$bundle_paths" "$state_paths" "$evidence"
+    else
+      emit_candidate_row "$known_tsv" "$known_md_tmp" "$app" "$phase_fit" "$route" "$use_when" "$non_secret_dest" "$secret_dest" "$bundle_paths" "$state_paths" ""
+    fi
+  done < <(supported_apps_registry)
+
+  # Related apps belong to other workflows or restore sources.
+  emit_candidate_row "$review_tsv" "$related_md_tmp" "Music" "Review separately" "Usually Phase 2B local files, iCloud, or Time Machine" "Local media, playlists, or manually managed library content matter." "$root_display/home-files-backup/home/Music/" "usually none from this route" "/System/Applications/Music.app" "$HOME/Music" ""
+
   cat > "$summary_md" <<EOF
 # App Backup Candidates Review
 
 Generated: $(date '+%Y-%m-%d %H:%M:%S')
 Script: $(basename "$0") --candidate-review
 Output directory: $out
+Managed-inventory bundle: ${managed_bundle:-none found (see raw/managed-inventory-source.txt)}
 
 This helper is **review-only**. Use it to narrow the list of apps worth checking in Phase 2D, then apply the decision criteria in \`backup-apps.md\`.
 
 ## How to use this artifact
 
-1. Review **known Phase 2D candidates** first.
-2. Skip anything not installed or not worth preserving.
-3. Use **related apps to review manually** when an app looks important but probably belongs to another workflow or restore source.
-4. Use the raw installed-app and state-signal files under \`raw/\` if you want a wider scan than the curated tables.
+1. Work the **Known Phase 2D candidates** — these are the apps to decide on. Apps with only a weak, receipt-only signal stay here on purpose.
+2. Skim **Managed — likely restored by IT**: management almost certainly brings these back, so review them only for local-only user state it will not restore.
+3. Skip anything not installed or not worth preserving.
+4. Use **related apps to review manually** when an app looks important but probably belongs to another workflow or restore source.
+5. Use the raw installed-app, state-signal, and managed-evidence files under \`raw/\` for a wider scan than the curated tables.
 
 ## Known Phase 2D candidates
 
 | App | Installed | Phase 2D fit | Suggested route | State signals found |
 |---|---|---|---|---|
 EOF
+  if [[ -s "$known_md_tmp" ]]; then
+    cat "$known_md_tmp" >> "$summary_md"
+  else
+    echo "| _none — every detected candidate matched the managed inventory_ | | | | |" >> "$summary_md"
+  fi
 
-  printf 'app\tphase2d_fit\tinstalled\tinstalled_path\tversion\tsuggested_route\tuse_when\tnon_secret_destination\tsecret_destination\tstate_signals_found\n' > "$known_tsv"
-  # Emit one row per detectable app from the shared registry, preserving the
-  # registry order. Terminal (detectable=no) is skipped here.
-  while IFS=$'\t' read -r app group how non_secret_dest secret_dest detectable phase_fit route use_when bundle_paths state_paths; do
-    [[ "$detectable" == "yes" ]] || continue
-    emit_candidate_row "$known_tsv" "$summary_md" "$app" "$phase_fit" "$route" "$use_when" "$non_secret_dest" "$secret_dest" "$bundle_paths" "$state_paths"
-  done < <(supported_apps_registry)
+  cat >> "$summary_md" <<EOF
+
+## Managed — likely restored by IT
+
+These apps carry a **strong** managed signal in the managed-inventory section 03 verdict — a configuration profile, a managed preference, or the corporate-tooling filter — so management will almost certainly reinstall them. They are moved out of the candidate list above. Apps with only a weak, receipt-only signal are **not** listed here; they stay in the candidate list, because a lone package receipt (pkg-installed) does not prove management owns the app. The Managed evidence column shows which signals matched. **Still review each for local-only user state** management will not restore — a managed reinstall brings back the app, not necessarily your settings.
+
+| App | Installed | Managed evidence | Phase 2D fit | Suggested route | State signals found |
+|---|---|---|---|---|---|
+EOF
+  if [[ -s "$managed_md_tmp" ]]; then
+    cat "$managed_md_tmp" >> "$summary_md"
+  elif [[ -n "$managed_bundle" ]]; then
+    echo "| _none — no covered app matched the managed inventory_ | | | | | |" >> "$summary_md"
+  else
+    echo "| _managed inventory not consulted — see raw/managed-inventory-source.txt_ | | | | | |" >> "$summary_md"
+  fi
 
   cat >> "$summary_md" <<'EOF'
 
@@ -524,9 +702,7 @@ These apps often matter during a reimage, but they usually belong to another wor
 | App | Installed | Phase 2D fit | Suggested route | State signals found |
 |---|---|---|---|---|
 EOF
-
-  printf 'app\tphase2d_fit\tinstalled\tinstalled_path\tversion\tsuggested_route\tuse_when\tnon_secret_destination\tsecret_destination\tstate_signals_found\n' > "$review_tsv"
-  emit_candidate_row "$review_tsv" "$summary_md" "Music" "Review separately" "Usually Phase 2B local files, iCloud, or Time Machine" "Local media, playlists, or manually managed library content matter." "$root_display/home-files-backup/home/Music/" "usually none from this route" "/System/Applications/Music.app" "$HOME/Music"
+  cat "$related_md_tmp" >> "$summary_md"
 
   cat >> "$summary_md" <<EOF
 
@@ -536,15 +712,21 @@ EOF
 - \`raw/applications-user.txt\`
 - \`raw/applications-all.txt\`
 - \`raw/state-signal-paths.txt\`
+- \`raw/managed-apps-detected.txt\`
+- \`raw/managed-inventory-source.txt\`
 - \`known-app-candidates.tsv\`
 - \`related-app-review.tsv\`
 
 ## Notes
 
-- This helper does **not** decide whether an app belongs in Phase 2D. It only collects likely candidates and nearby review targets.
-- Company-managed apps may reinstall automatically but still leave user-specific state unresolved. Use \`capture-managed-inventory.md\` when you need managed-state evidence.
+- This helper does **not** decide whether an app belongs in Phase 2D. It collects likely candidates, partitions out apps company management already owns, and lists nearby review targets.
+- The managed partition is **read from** the managed-inventory bundle's section 03 verdict (\`03-installed-app-bundles.txt\`) — the single authoritative per-app managed call written by \`capture-managed-inventory.sh\`. This review does not compute its own; the two never disagree.
+- Only a strong verdict (profile, managed preference, or corporate-tooling filter) is subtracted. A weak, receipt-only verdict is left in the candidate list, since "installed via a package" is not "managed".
+- Company-managed apps may reinstall automatically but still leave user-specific state unresolved. Review the managed table for local-only state, and see \`capture-managed-inventory.md\` for the underlying evidence.
 - Apple/system apps are not exhaustively classified here. Review them manually when local libraries or local-only media matter.
 EOF
+
+  rm -f "$known_md_tmp" "$managed_md_tmp" "$related_md_tmp"
 }
 
 if [[ "$DOCKER_ONLY" == true || "$INTELLIJ_ONLY" == true || "$VSCODE_ONLY" == true ]]; then

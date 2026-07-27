@@ -93,7 +93,7 @@ One numbered file per subsystem, plus a manifest:
 ```text
 01  MDM enrollment status              profiles status -type enrollment
 02  configuration profiles             profiles show -type configuration
-03  installed app bundles              /Applications + /System/Applications
+03  installed app bundles              /Applications + /System/Applications + ~/Applications (verdict-tagged)
 04  installed package receipts         pkgutil --pkgs
 05  background managed components       LaunchAgents/Daemons + system extensions
 06  managed preference payloads         /Library/Managed Preferences
@@ -104,7 +104,7 @@ The filter pass (section 07) does not add new data — it re-runs the earlier qu
 
 ### Read-Only Guarantee
 
-Every command in this capture reads state and writes only into the bundle. Nothing unenrolls the Mac, removes a profile, unloads an agent, or changes a managed preference. `profiles`, `pkgutil`, `find`, `ls`, and `systemextensionsctl` are all used in their reporting modes only. You can run it on a live managed machine without risk to compliance.
+Every command in this capture reads state and writes only into the bundle. Nothing unenrolls the Mac, removes a profile, unloads an agent, or changes a managed preference. `profiles`, `pkgutil`, `find`, `ls`, `systemextensionsctl`, and `PlistBuddy` (used only to read each app's bundle identifier for the section 03 annotation) are all used in their reporting modes only. You can run it on a live managed machine without risk to compliance.
 
 > [!warning] Pitfall
 > Do not substitute the removal variants of these commands (for example `profiles remove`) while poking around. This runbook is inventory only; changing managed state is out of scope and can break enrollment.
@@ -315,10 +315,10 @@ profiles status -type enrollment
 profiles show -type configuration
 ```
 
-**`03` — Installed app bundles.** A practical list of apps present without the slow `system_profiler` enumeration.
+**`03` — Installed app bundles.** The full list of apps present, without the slow `system_profiler` enumeration. In the script's output each line carries a managed verdict — and this is the single authoritative per-app call the [[backup-apps|Backup Apps]] candidate review reads for its managed partition, rather than deriving its own. A **strong** signal prints `[managed: …]`: a configuration profile (02), a managed preference (06), or the corporate-tooling filter (07). A receipt-only match prints `[likely: receipt]` — weak, because a package receipt means pkg-installed, which can be self-installed. Neither prints `[-]`. Bundle-identifier matches use the app's real `CFBundleIdentifier` (read via `PlistBuddy`) for precision. The list stays complete on purpose, so 03 remains the installed-apps baseline for pre-image/post-image comparison; the verdict is a heuristic hint, not proof (an MDM or App Store install may leave no receipt, so `[-]` does not prove an app is unmanaged). The raw, unannotated equivalent:
 
 ```bash
-find /Applications /System/Applications -maxdepth 2 -name "*.app" -type d 2>/dev/null | sort
+find /Applications /System/Applications "$HOME/Applications" -maxdepth 2 -name "*.app" -type d 2>/dev/null | sort
 ```
 
 **`04` — Installed package receipts.** Installer receipts, often the best clue for centrally deployed software.
