@@ -518,7 +518,7 @@ managed_verdict_from_03() {
   local tab; tab="$(printf '\t')"
   local line tag
   # Match the app's own line: path ending in "/<basename><TAB>", comments skipped.
-  line="$(grep -v '^#' "$file" 2>/dev/null | grep -F -- "/$base$tab" 2>/dev/null | head -1)"
+  line="$(grep -v '^#' "$file" 2>/dev/null | grep -F -- "/$base$tab" 2>/dev/null | head -1 || true)"
   [[ -n "$line" ]] || return 0
   tag="${line#*"$tab"}"          # everything after the first tab: "[verdict: ev]" or "[-]"
   tag="${tag#\[}"; tag="${tag%\]}"
@@ -530,8 +530,8 @@ managed_verdict_from_03() {
 }
 
 generate_candidate_review() {
-  local out raw app_root_list app_user_list app_all_list known_tsv review_tsv summary_md state_signals root_display
-  local managed_bundle managed_03 managed_index managed_source known_md_tmp managed_md_tmp related_md_tmp
+  local out raw app_root_list app_user_list app_all_list known_tsv supported_tsv review_tsv summary_md state_signals root_display
+  local managed_bundle managed_03 managed_index managed_source known_md_tmp managed_md_tmp related_md_tmp supported_lookup
   local TAB; TAB="$(printf '\t')"
 
   out="$APP_ROOT/candidate-review/app-backup-candidates-$(date +%Y%m%d-%H%M%S)"
@@ -543,11 +543,13 @@ generate_candidate_review() {
   app_user_list="$raw/applications-user.txt"
   app_all_list="$raw/applications-all.txt"
   known_tsv="$out/known-app-candidates.tsv"
+  supported_tsv="$out/toolkit-supported-candidates.tsv"
   review_tsv="$out/related-app-review.tsv"
   summary_md="$out/app-backup-candidates.md"
   state_signals="$raw/state-signal-paths.txt"
   managed_index="$raw/managed-apps-detected.txt"
   managed_source="$raw/managed-inventory-source.txt"
+  supported_lookup="$out/.supported-lookup.tmp"
   known_md_tmp="$out/.known-md.tmp"
   managed_md_tmp="$out/.managed-md.tmp"
   related_md_tmp="$out/.related-md.tmp"
@@ -608,10 +610,12 @@ generate_candidate_review() {
   : > "$known_md_tmp"
   : > "$managed_md_tmp"
   : > "$related_md_tmp"
+  : > "$supported_lookup"
 
-  # Both TSVs carry the managed_evidence column so the machine-readable set stays
-  # complete and single-sourced.
-  printf 'app\tphase2d_fit\tinstalled\tinstalled_path\tversion\tsuggested_route\tuse_when\tnon_secret_destination\tsecret_destination\tstate_signals_found\tmanaged_evidence\n' > "$known_tsv"
+  # toolkit-supported-candidates.tsv is the subset of installed apps this toolkit
+  # can back up (script or runbook). related-app-review.tsv holds curated
+  # cross-workflow callouts (e.g. Music). Both keep the rich registry schema.
+  printf 'app\tphase2d_fit\tinstalled\tinstalled_path\tversion\tsuggested_route\tuse_when\tnon_secret_destination\tsecret_destination\tstate_signals_found\tmanaged_evidence\n' > "$supported_tsv"
   printf 'app\tphase2d_fit\tinstalled\tinstalled_path\tversion\tsuggested_route\tuse_when\tnon_secret_destination\tsecret_destination\tstate_signals_found\tmanaged_evidence\n' > "$review_tsv"
 
   # Partition detectable registry apps into Known vs Managed, preserving registry
@@ -619,14 +623,18 @@ generate_candidate_review() {
   # basename. Only a strong verdict (managed) is subtracted into the Managed
   # table; a weak verdict (likely: receipt-only) stays a Known candidate, since a
   # lone receipt does not prove management owns it. Terminal (detectable=no) is
-  # skipped here.
+  # skipped here. The same pass records a bundle-basename → route lookup so the
+  # all-apps candidate list below can mark which installed apps have toolkit support.
   local verdict evidence bpaths bp base res
   while IFS=$'\t' read -r app group how non_secret_dest secret_dest detectable phase_fit route use_when bundle_paths state_paths; do
+    IFS=';' read -r -a bpaths <<< "$bundle_paths"
+    for bp in "${bpaths[@]}"; do
+      printf '%s\t%s\t%s\n' "${bp##*/}" "$app" "$route" >> "$supported_lookup"
+    done
     [[ "$detectable" == "yes" ]] || continue
     verdict=""
     evidence=""
     if [[ -n "$managed_03" && -f "$managed_03" ]]; then
-      IFS=';' read -r -a bpaths <<< "$bundle_paths"
       for bp in "${bpaths[@]}"; do
         base="${bp##*/}"
         res="$(managed_verdict_from_03 "$managed_03" "$base")"
@@ -638,14 +646,39 @@ generate_candidate_review() {
       done
     fi
     if [[ "$verdict" == "managed" ]]; then
-      emit_candidate_row "$known_tsv" "$managed_md_tmp" "$app" "$phase_fit" "$route" "$use_when" "$non_secret_dest" "$secret_dest" "$bundle_paths" "$state_paths" "$evidence"
+      emit_candidate_row "$supported_tsv" "$managed_md_tmp" "$app" "$phase_fit" "$route" "$use_when" "$non_secret_dest" "$secret_dest" "$bundle_paths" "$state_paths" "$evidence"
     else
-      emit_candidate_row "$known_tsv" "$known_md_tmp" "$app" "$phase_fit" "$route" "$use_when" "$non_secret_dest" "$secret_dest" "$bundle_paths" "$state_paths" ""
+      emit_candidate_row "$supported_tsv" "$known_md_tmp" "$app" "$phase_fit" "$route" "$use_when" "$non_secret_dest" "$secret_dest" "$bundle_paths" "$state_paths" ""
     fi
   done < <(supported_apps_registry)
 
   # Related apps belong to other workflows or restore sources.
   emit_candidate_row "$review_tsv" "$related_md_tmp" "Music" "Review separately" "Usually Phase 2B local files, iCloud, or Time Machine" "Local media, playlists, or manually managed library content matter." "$root_display/home-files-backup/home/Music/" "usually none from this route" "/System/Applications/Music.app" "$HOME/Music" ""
+
+  # known-app-candidates.tsv is the full candidate inventory: every installed app
+  # under /Applications and ~/Applications, regardless of toolkit support. Each
+  # row carries the section 03 managed verdict and whether the toolkit covers it.
+  local cand_path cand_base cand_name cand_verdict cand_evidence cand_route cand_supported cand_res
+  printf 'app\tinstalled_path\tmanaged_verdict\tmanaged_evidence\ttoolkit_supported\tsuggested_route\n' > "$known_tsv"
+  while IFS= read -r cand_path; do
+    [[ -z "$cand_path" ]] && continue
+    cand_base="${cand_path##*/}"
+    cand_name="${cand_base%.app}"
+    cand_verdict="none"
+    cand_evidence=""
+    if [[ -n "$managed_03" && -f "$managed_03" ]]; then
+      cand_res="$(managed_verdict_from_03 "$managed_03" "$cand_base")"
+      if [[ -n "$cand_res" ]]; then
+        cand_verdict="${cand_res%%"$TAB"*}"
+        cand_evidence="${cand_res#*"$TAB"}"
+      fi
+    fi
+    cand_route="$(grep -F -- "$cand_base$TAB" "$supported_lookup" 2>/dev/null | head -1 | cut -d"$TAB" -f3 || true)"
+    if [[ -n "$cand_route" ]]; then cand_supported="yes"; else cand_supported="no"; fi
+    printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$cand_name" "$cand_path" "$cand_verdict" "$cand_evidence" "$cand_supported" "$cand_route" >> "$known_tsv"
+  done < "$app_all_list"
+
+  rm -f "$supported_lookup"
 
   cat > "$summary_md" <<EOF
 # App Backup Candidates Review
@@ -657,13 +690,15 @@ Managed-inventory bundle: ${managed_bundle:-none found (see raw/managed-inventor
 
 This helper is **review-only**. Use it to narrow the list of apps worth checking in Phase 2D, then apply the decision criteria in \`backup-apps.md\`.
 
+The curated tables below cover only apps this **toolkit supports** (has a script or runbook for). The **complete** installed-app inventory — every app regardless of toolkit support, with its managed verdict — is in \`known-app-candidates.tsv\`; the toolkit-supported subset is in \`toolkit-supported-candidates.tsv\`.
+
 ## How to use this artifact
 
-1. Work the **Known Phase 2D candidates** — these are the apps to decide on. Apps with only a weak, receipt-only signal stay here on purpose.
+1. Work the **Known Phase 2D candidates** — the toolkit-supported apps to decide on. Apps with only a weak, receipt-only signal stay here on purpose.
 2. Skim **Managed — likely restored by IT**: management almost certainly brings these back, so review them only for local-only user state it will not restore.
 3. Skip anything not installed or not worth preserving.
 4. Use **related apps to review manually** when an app looks important but probably belongs to another workflow or restore source.
-5. Use the raw installed-app, state-signal, and managed-evidence files under \`raw/\` for a wider scan than the curated tables.
+5. Open \`known-app-candidates.tsv\` to sweep **every** installed app (not just toolkit-supported ones) — sort by \`toolkit_supported\` to find apps you may need to back up by hand.
 
 ## Known Phase 2D candidates
 
@@ -706,7 +741,15 @@ EOF
 
   cat >> "$summary_md" <<EOF
 
-## Raw review files
+## Data files
+
+Candidate tables (curated):
+
+- \`known-app-candidates.tsv\` — **every** installed app under /Applications and ~/Applications, regardless of toolkit support. Columns: app, installed_path, managed_verdict, managed_evidence, toolkit_supported, suggested_route.
+- \`toolkit-supported-candidates.tsv\` — the subset above that this toolkit can back up (script or runbook), with full Phase 2D detail.
+- \`related-app-review.tsv\` — apps that usually belong to another workflow or restore source (e.g. Music).
+
+Raw scan files:
 
 - \`raw/applications-root.txt\`
 - \`raw/applications-user.txt\`
@@ -714,12 +757,11 @@ EOF
 - \`raw/state-signal-paths.txt\`
 - \`raw/managed-apps-detected.txt\`
 - \`raw/managed-inventory-source.txt\`
-- \`known-app-candidates.tsv\`
-- \`related-app-review.tsv\`
 
 ## Notes
 
-- This helper does **not** decide whether an app belongs in Phase 2D. It collects likely candidates, partitions out apps company management already owns, and lists nearby review targets.
+- This helper does **not** decide whether an app belongs in Phase 2D. It inventories every installed app, marks which the toolkit supports, partitions out apps company management already owns, and lists nearby review targets.
+- \`known-app-candidates.tsv\` is the full candidate universe; the curated tables and \`toolkit-supported-candidates.tsv\` are the toolkit-supported slice of it. An app with \`toolkit_supported=no\` is yours to back up by hand.
 - The managed partition is **read from** the managed-inventory bundle's section 03 verdict (\`03-installed-app-bundles.txt\`) — the single authoritative per-app managed call written by \`capture-managed-inventory.sh\`. This review does not compute its own; the two never disagree.
 - Only a strong verdict (profile, managed preference, or corporate-tooling filter) is subtracted. A weak, receipt-only verdict is left in the candidate list, since "installed via a package" is not "managed".
 - Company-managed apps may reinstall automatically but still leave user-specific state unresolved. Review the managed table for local-only state, and see \`capture-managed-inventory.md\` for the underlying evidence.

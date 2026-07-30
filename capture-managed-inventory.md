@@ -340,13 +340,13 @@ systemextensionsctl list
 find /Library/Managed\ Preferences -maxdepth 2 -type f 2>/dev/null
 ```
 
-**`07` — Company-focused filter pass.** The earlier queries narrowed to likely corporate tooling.
+**`07` — Company-focused filter pass.** The earlier queries narrowed to likely corporate tooling, across the GAIG managed fleet (Microsoft/Intune/Company Portal, CrowdStrike/Falcon, Zscaler, Defender, Checkpoint, Absolute, Proofpoint, Jamf, Flexera/ManageSoft). The script runs these directly — not through a login shell — so your shell profile's output (SDKMAN completions, etc.) can't leak into the capture, and it reuses the already-collected package receipts.
 
 ```bash
-pkgutil --pkgs | grep -Ei 'microsoft|intune|companyportal|crowdstrike|zscaler|defender|vpn|security|falcon'
-find /Applications /System/Applications -maxdepth 2 -name "*.app" -type d 2>/dev/null | grep -Ei 'Company Portal|Microsoft|CrowdStrike|Zscaler|Defender|VPN'
-ls /Library/LaunchAgents /Library/LaunchDaemons 2>/dev/null | grep -Ei 'microsoft|intune|companyportal|crowdstrike|zscaler|defender'
-systemextensionsctl list | grep -Ei 'microsoft|crowdstrike|zscaler|defender'
+printf '%s\n' "$ALL_RECEIPTS" | grep -Ei 'microsoft|intune|companyportal|crowdstrike|falcon|zscaler|defender|wdav|checkpoint|absolute|proofpoint|jamf|flexera|managesoft'
+find /Applications /System/Applications "$HOME/Applications" -maxdepth 2 -name "*.app" -type d 2>/dev/null | grep -Ei 'Company Portal|Microsoft|CrowdStrike|Falcon|Zscaler|Defender|Intune|VPN'
+find /Library/LaunchAgents /Library/LaunchDaemons -maxdepth 1 -type f 2>/dev/null | grep -Ei 'microsoft|intune|companyportal|crowdstrike|falcon|zscaler|defender|wdav|checkpoint|absolute|proofpoint|jamf|flexera|managesoft'
+systemextensionsctl list 2>/dev/null | grep -Ei 'microsoft|intune|companyportal|crowdstrike|falcon|zscaler|defender|wdav|checkpoint|absolute|proofpoint|jamf|flexera|managesoft'
 ```
 
 ### Interpretation Notes

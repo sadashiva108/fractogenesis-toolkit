@@ -354,6 +354,8 @@ The bundle lands under `app-settings-backup/candidate-review/`. Read `app-backup
 
 A **related-app review** table (for apps that belong elsewhere, such as Music) and the raw files under `raw/` round out the bundle. Two of those raw files come from this fold-in: `raw/managed-apps-detected.txt` (the managed and likely-managed apps read from section 03) and `raw/managed-inventory-source.txt` (which bundle was consulted).
 
+Two TSVs sit alongside the Markdown. `known-app-candidates.tsv` is the **full** candidate inventory — every installed app under `/Applications` and `~/Applications`, whether or not the toolkit supports it, each with its managed verdict and a `toolkit_supported` column. `toolkit-supported-candidates.tsv` is the subset this toolkit can back up (the apps in the curated tables). Sort `known-app-candidates.tsv` by `toolkit_supported` to find installed apps you may need to back up by hand — the curated tables above only cover the supported ones.
+
 By default candidate review consults the newest `pre-image-*` bundle under `managed-inventory/`. Point it at a specific one with `--managed-inventory DIR`:
 
 ```bash

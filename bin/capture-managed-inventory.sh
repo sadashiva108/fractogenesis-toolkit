@@ -173,10 +173,17 @@ h() { echo "$1" >> "$_SECTION_FILE"; }
 # Shared managed-signal helpers (used by sections 03, 04, and 07)
 # ---------------------------------------------------------------------------
 
-# Corporate-tooling name filter for app bundles. Single source shared by the
-# section 03 per-app annotation and the section 07 filter pass, so "would this
-# app show up in the filter pass?" has exactly one definition.
-MANAGED_APP_FILTER='Company Portal|Microsoft|CrowdStrike|Zscaler|Defender|VPN'
+# Corporate-tooling filters for the GAIG managed fleet. Two forms, because they
+# match different text:
+#   MANAGED_APP_FILTER — app display names/paths (mixed case, spaces). Shared by
+#     the section 03 per-app annotation and the section 07 app-bundle pass, so
+#     "would this app show up in the filter pass?" has exactly one definition.
+#     Includes Falcon so CrowdStrike's "Falcon.app" (whose Info.plist is often
+#     unreadable, defeating the bundle-id path) is still caught.
+#   MANAGED_ID_FILTER — bundle-id / receipt / launchd / extension tokens
+#     (lowercase reverse-domain). Used by the section 07 id-based sub-passes.
+MANAGED_APP_FILTER='Company Portal|Microsoft|CrowdStrike|Falcon|Zscaler|Defender|Intune|VPN'
+MANAGED_ID_FILTER='microsoft|intune|companyportal|crowdstrike|falcon|zscaler|defender|wdav|checkpoint|absolute|proofpoint|jamf|flexera|managesoft'
 
 # Capture the per-app cross-reference signals once, so each underlying command
 # runs a single time. Sections 02/04/06 print these; section 03 matches each
@@ -268,17 +275,20 @@ section "Managed preference payloads" "06-managed-preference-payloads.txt"
 end_section
 
 section "GAIG-focused filter pass" "07-gaig-filter-pass.txt"
+  # Direct commands (no `bash -lc`), so the login shell's profile output
+  # (SDKMAN completions, etc.) can no longer leak into the capture. Package
+  # receipts reuse the already-captured ALL_RECEIPTS.
   h "--- Package receipts ---"
-  bash -lc "pkgutil --pkgs | grep -Ei 'microsoft|intune|companyportal|crowdstrike|zscaler|defender|vpn|security|falcon'" >> "$_SECTION_FILE" 2>&1 || true
+  { printf '%s\n' "$ALL_RECEIPTS" | grep -Ei -- "$MANAGED_ID_FILTER" || true; } >> "$_SECTION_FILE"
   h ""
   h "--- Installed app bundles ---"
-  bash -lc "find /Applications /System/Applications -maxdepth 2 -name '*.app' -type d 2>/dev/null | grep -Ei '$MANAGED_APP_FILTER'" >> "$_SECTION_FILE" 2>&1 || true
+  { find /Applications /System/Applications "$HOME/Applications" -maxdepth 2 -name '*.app' -type d 2>/dev/null | grep -Ei -- "$MANAGED_APP_FILTER" || true; } >> "$_SECTION_FILE"
   h ""
   h "--- LaunchAgents and LaunchDaemons ---"
-  bash -lc "ls /Library/LaunchAgents /Library/LaunchDaemons 2>/dev/null | grep -Ei 'microsoft|intune|companyportal|crowdstrike|zscaler|defender'" >> "$_SECTION_FILE" 2>&1 || true
+  { find /Library/LaunchAgents /Library/LaunchDaemons -maxdepth 1 -type f 2>/dev/null | grep -Ei -- "$MANAGED_ID_FILTER" || true; } >> "$_SECTION_FILE"
   h ""
   h "--- System extensions ---"
-  bash -lc "systemextensionsctl list | grep -Ei 'microsoft|crowdstrike|zscaler|defender'" >> "$_SECTION_FILE" 2>&1 || true
+  { systemextensionsctl list 2>/dev/null | grep -Ei -- "$MANAGED_ID_FILTER" || true; } >> "$_SECTION_FILE"
 end_section
 
 cat > "$OUT/MANIFEST.txt" <<EOF
