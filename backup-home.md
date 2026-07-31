@@ -240,7 +240,6 @@ Run these in order. The first three are shared setup; you then choose the backup
 Confirm the scripts parse:
 
 ```bash
-cd "$FRACTOGENESIS_HOME"
 bash -n bin/backup-home.sh
 bash -n bin/capture-size-audit.sh
 ```

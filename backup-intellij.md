@@ -232,7 +232,6 @@ Confirm the environment resolves and IntelliJ is closed before anything writes.
 Confirm the artifact root and (optionally) the active config directory. `backup-apps.sh` self-locates and loads shared config through `.internal/load-reimage-config.sh`, so you do not source `reimage.env` by hand:
 
 ```bash
-cd "$FRACTOGENESIS_HOME"
 ./bin/backup-apps.sh --supported-apps
 ```
 
@@ -252,7 +251,6 @@ You can cross-check the active config path inside IntelliJ under `Help → Diagn
 Run the scriptable capture through the Phase 2D entrypoint. `--intellij-only` skips the Docker and VS Code captures and runs just the IntelliJ helper:
 
 ```bash
-cd "$FRACTOGENESIS_HOME"
 ./bin/backup-apps.sh --intellij-only --artifact-root "$REIMAGE_ARTIFACT_ROOT" --open
 ```
 

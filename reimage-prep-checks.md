@@ -118,7 +118,6 @@ Use the single script for the standard run. Use the individual commands only for
 From the reimage workflow root:
 
 ```bash
-cd "$FRACTOGENESIS_HOME"
 set -a
 source ./reimage.env
 set +a

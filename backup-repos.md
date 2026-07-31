@@ -336,7 +336,6 @@ Run these in order. The first four — [[#Load Shared Configuration|Load Shared 
 Source the local environment before running any command below, and re-source it after any edit to `reimage.env` in the same shell:
 
 ```bash
-cd "$FRACTOGENESIS_HOME"
 set -a
 source ./reimage.env
 set +a

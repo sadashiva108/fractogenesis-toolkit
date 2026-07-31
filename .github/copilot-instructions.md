@@ -29,6 +29,7 @@ Purpose
 - Naming: runbooks and their executable share the same name (backup-apps.md ↔ bin/backup-apps.sh). Runbook filenames are verb-first: prepare-, backup-, capture-, restore-, stage-, enroll-, validate-.
 - Execution semantics:
   - Always run scripts from the repository root unless a script documents explicit absolute-path invocation.
+  - Runbook command examples assume this repo-root working directory — stated once in reimaging-guide.md → Core Assumptions and each runbook's Prerequisites. Do not prefix command blocks with `cd "$FRACTOGENESIS_HOME"`; command blocks start at the command.
   - Entrypoints should self-locate via BASH_SOURCE and then load .internal/load-reimage-config.sh.
   - reimage.env must contain resolved absolute values only. Do not commit reimage.env. Keep only reimage.env.example committed.
 - Loader vs helper rules (important for edits and AI-driven changes):

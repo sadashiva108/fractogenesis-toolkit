@@ -212,7 +212,6 @@ Run these in order: confirm the environment, run the capture, then verify the bu
 Confirm the artifact root resolves and the destination volume is mounted. `capture-managed-inventory.sh` self-locates and loads shared config through `.internal/load-reimage-config.sh`, so you do not source `reimage.env` by hand:
 
 ```bash
-cd "$FRACTOGENESIS_HOME"
 ./bin/capture-managed-inventory.sh --help
 ```
 
@@ -227,7 +226,6 @@ Confirm the destination has room if you have not already run the size audit for 
 Run the full capture. For the pre-image run, the default context is correct, so no flag is needed:
 
 ```bash
-cd "$FRACTOGENESIS_HOME"
 ./bin/capture-managed-inventory.sh
 ```
 

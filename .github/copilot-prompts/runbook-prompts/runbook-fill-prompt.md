@@ -262,6 +262,7 @@ Filling rules and constraints
 - Do not invent or commit secrets, personal paths, or company-specific values.
 - Do not add legacy/compatibility shims — prefer a single authoritative path. If compatibility is required, add an explicit short rationale and keep scope narrow.
 - Ensure all paths are shown relative to the repository root and use $REIMAGE_ARTIFACT_ROOT or $REIMAGE_WORKSPACE_ROOT placeholders for artifact locations.
+- Do not prefix command blocks with `cd "$FRACTOGENESIS_HOME"`. The repo-root working directory is stated once in `reimaging-guide.md` → Core Assumptions and restated in the runbook's Prerequisites; command blocks start at the command. Keep a literal `cd` only where a command must run from a different directory, and say why.
 - If adding a directory tree, include only subdirectories relevant to the runbook steps.
 - Use the RUNBOOK_SHORT_DESC to craft a 1–3 sentence Purpose section, followed by the ownership map.
 - Populate "Artifact and Script Locations" with PRIMARY_SCRIPT, RELATED_SCRIPTS, ARTIFACT_PATHS, and the Environment Variables subsection, and treat that section as the single home for every directory tree the runbook uses.

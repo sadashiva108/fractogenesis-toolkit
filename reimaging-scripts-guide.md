@@ -64,6 +64,7 @@ This matters because Phase 3 captures are stored on the backup drive, but they a
 
 | Item | Location | Rule |
 |---|---|---|
+| Working directory | Repository root (`$FRACTOGENESIS_HOME`) | Run every script command from here; `cd` there once per session. Runbooks assume this (see [[reimaging-guide#Core Assumptions\|Core Assumptions]]) and do not repeat `cd "$FRACTOGENESIS_HOME"` before each command. |
 | Script source of truth | `workflows/mac/reimage/scripts/` | Keep in Git. Do not treat the external backup copy as authoritative. |
 | Pre-image backup artifacts | `$REIMAGE_ARTIFACT_ROOT/<topic>/` | Store under the prepared external data/artifact `$REIMAGE_ARTIFACT_ROOT`. |
 | Pre-image evidence artifacts | `$REIMAGE_ARTIFACT_ROOT/system-inventory/`, `$REIMAGE_ARTIFACT_ROOT/performance-audit/`, `$REIMAGE_ARTIFACT_ROOT/office-stability/`, `$REIMAGE_ARTIFACT_ROOT/time-machine/` | Generated captures only. |
@@ -197,7 +198,6 @@ This helper does not replace Phase 1. The drive checks, shell validation, root c
 Run pre-image backup scripts from:
 
 ```bash
-cd "$FRACTOGENESIS_HOME"  
 chmod +x scripts/*.sh scripts/*.py
 ```
 
@@ -762,7 +762,6 @@ chmod +x scripts/*.sh scripts/*.py
 Post-image (Phases 6–12):
 
 ```bash
-cd "$FRACTOGENESIS_HOME"   # REIMAGE_ROOT is retired -- see reimaging-scripts-guide.md Script Source and Artifact Rules
 
 # Phase 6 — enroll and stabilize capture
 ./scripts/capture-enrollment.sh --open

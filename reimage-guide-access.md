@@ -126,7 +126,6 @@ Any one of these confirms the file is legible plain text. None of them render Ob
 **8. Test run the scripts, to confirm they actually execute — not just that the files exist:**
 
 ```bash
-cd "$FRACTOGENESIS_HOME"
 python3 bin/prepare-artifact-root.py --help
 ```
 
@@ -253,7 +252,6 @@ cat "$FRACTOGENESIS_HOME/prepare-artifact-root.md" | head -50
 **12. Test run the scripts, to confirm they actually execute:**
 
 ```bash
-cd "$FRACTOGENESIS_HOME"
 python3 bin/prepare-artifact-root.py --help
 ```
 

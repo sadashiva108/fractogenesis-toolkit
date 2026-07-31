@@ -1,19 +1,21 @@
 ---
 title: Backup Apps
 back_link: "reimaging-guide#Phase 2D — Backup Apps"
-runbook_version: 0.1.0
+runbook_version: 0.2.0
 verb_first: true
 primary_scripts:
   - bin/backup-apps.sh
 related_scripts:
   - .internal/apps/backup-docker-settings.sh
   - .internal/apps/backup-intellij-scratches-consoles.sh
+  - .internal/apps/backup-app-config.sh
+  - .internal/apps/app-selection.sh
   - bin/capture-size-audit.sh
 artifact_paths:
   - $REIMAGE_ARTIFACT_ROOT/app-settings-backup/
   - $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/
 author: Orah Kittrell
-last_updated: 2026-07-21
+last_updated: 2026-07-30
 ---
 [[reimaging-guide#Phase 2D — Backup Apps|← Back to Mac Reimaging Guide]]
 
@@ -46,6 +48,7 @@ Collect and stage application state — settings, exports, inventories, and prof
     - [[#Step 5 — Complete Manual Exports|Step 5 — Complete Manual Exports]]
         - [[#Chrome|Chrome]]
         - [[#Postman|Postman]]
+        - [[#Fiddler Everywhere|Fiddler Everywhere]]
         - [[#Terminal|Terminal]]
         - [[#IntelliJ Settings Export|IntelliJ Settings Export]]
     - [[#Step 6 — Verify Outputs|Step 6 — Verify Outputs]]
@@ -56,6 +59,9 @@ Collect and stage application state — settings, exports, inventories, and prof
     - [[#Optional App Exports|Optional App Exports]]
         - [[#Raycast|Raycast]]
         - [[#Obsidian|Obsidian]]
+        - [[#TNAS PC|TNAS PC]]
+        - [[#iMovie|iMovie]]
+        - [[#Note-Only Apps|Note-Only Apps]]
     - [[#Optional Note Capture|Optional Note Capture]]
     - [[#Relationship to Later Phases|Relationship to Later Phases]]
 
@@ -73,9 +79,11 @@ Back up application state where the app itself controls export, sync, or restore
 This runbook owns:
 
 ```text
-app-controlled backups for Chrome, Docker, IntelliJ IDEA, Obsidian, Postman, Raycast, Terminal, and VS Code
+app-controlled backups for BBEdit, Chrome, Claude, Docker, draw.io, Fiddler Everywhere, iMovie, IntelliJ IDEA, Mos, Obsidian, Postman, Raycast, TNAS PC, Terminal, VS Code, Wireshark, and Zoom
+the app-backup selection checklist that decides which detected apps are backed up
 non-secret app backup artifacts under app-settings-backup/
 secret-bearing app export staging under secrets-encrypted/
+drop-folders and manual TODOs for selected unsupported apps under app-settings-backup/manual-unsupported/
 app-local notes and artifact-local validation of those exports
 ```
 
@@ -131,16 +139,30 @@ The table lists every covered app, how it is backed up, and whether it is in the
 | Docker Desktop | Script — settings, contexts, image/container inventories; `config.json` staged as secret | Common |
 | VS Code | Script — extension list, user settings, keybindings, snippets, profiles | Common |
 | IntelliJ IDEA | Script for Scratches/Consoles/config; **manual** settings ZIP export | Common |
+| BBEdit | Script — app config (scripts, text filters, clippings, color schemes) and preferences | Common |
+| Claude | Script — MCP config (`claude_desktop_config.json`) staged as secret; account restored by sign-in | Common |
+| draw.io | Script — app config and custom libraries; diagrams themselves restored as files (Phase 2B / Git) | Common |
+| Zoom | Script — local settings plist; account and most settings restored by sign-in | Common |
 | Chrome | Manual — bookmarks export; optional password CSV | Common |
 | Postman | Manual — collections, environments, optional vault export | Common |
+| Fiddler Everywhere | Manual — session / AutoResponder export; captures are secret-bearing | Common |
 | Terminal | Manual — custom profile export (no script folder) | Common |
+| Mos | Script — preferences plist (scroll settings, per-app exceptions) | Optional |
+| Wireshark | Script — profiles, capture/display filters, coloring rules | Optional |
 | Raycast | Manual — Quick Links and settings/data export | Optional |
 | Obsidian | Manual — restore-source decision; optional vault copy | Optional |
+| TNAS PC | Manual — reconnect / re-auth; saved credentials secret-bearing | Optional |
+| iMovie | Manual — confirm libraries (user files) are backed up via Phase 2B | Optional |
+| 4K Live Wallpaper | Note only — no meaningful local state; reconfigure after reimage | Optional |
+| NexiGo Webcam Settings | Note only — no meaningful local state; reconfigure after reimage | Optional |
 
-The two optional apps (Raycast, Obsidian) keep their full steps in [[#Optional App Exports|Supplemental Reference]], indexed from [[#Optional Apps|Optional Apps]] at the end of Sequential Steps, so the main flow stays focused on what most Macs have.
+Optional-group apps with manual steps (Raycast, Obsidian, TNAS PC, iMovie) keep those steps in [[#Optional App Exports|Supplemental Reference]], indexed from [[#Optional Apps|Optional Apps]] at the end of Sequential Steps, so the main flow stays focused on what most Macs have. Scripted optional apps (Mos, Wireshark) are captured automatically in Step 4 and need no manual steps; the note-only apps need nothing at all.
 
 > [!note]
-> The script only acts on apps it detects. For an app you do not have, it creates no folder and the manifest marks it "Not detected on this Mac" — so a clean run on a Mac without Docker is correct, not a failure.
+> The script only acts on apps it detects **and** that you check in the selection checklist (see [[#Step 3 — Determine Which Apps to Back Up|Step 3]]). For an app you do not have, it creates no folder and the manifest marks it "Not detected on this Mac" — so a clean run on a Mac without Docker is correct, not a failure.
+
+> [!note]
+> Two Zoom entries were reconciled into one. "Join for Zoom Meetings" is a third-party App Store launcher that only opens meeting links and holds no state to back up; only the full **zoom.us** client is covered (detected in both `/Applications` and `~/Applications`). Recordings under `~/Documents/Zoom` belong to Phase 2B.
 
 ### Apps Not Covered Here
 
@@ -152,8 +174,9 @@ It is not possible to maintain an exhaustive backup strategy for every app. If y
 
 | Mode | Command | What it does |
 |---|---|---|
-| Candidate review | `./bin/backup-apps.sh --candidate-review` | Scan-only. Detects installed apps, folds in the managed-inventory bundle, and writes a review that partitions managed apps out of the candidate list. Creates no app folders, runs no captures, writes no `MANIFEST.md`. |
-| Real backup | `./bin/backup-apps.sh` | Creates a folder for each detected app, runs the Docker/IntelliJ/VS Code captures where applicable, and writes `MANIFEST.md`. |
+| Candidate review | `./bin/backup-apps.sh --candidate-review` | Scan-only. Detects installed apps, folds in the managed-inventory bundle, writes a review that partitions managed apps out of the candidate list, and generates/refreshes the [[#Step 3 — Determine Which Apps to Back Up\|app-backup selection checklist]]. Creates no app folders, runs no captures, writes no `MANIFEST.md`. |
+| Real backup | `./bin/backup-apps.sh` | Reads the selection checklist and backs up only the apps you checked: runs the Docker/IntelliJ/VS Code and registry-driven captures for selected supported apps, creates drop-folders for selected unsupported apps, and writes `MANIFEST.md`. Requires the checklist (errors if missing). |
+| Real backup, no checklist | `./bin/backup-apps.sh --all-detected` | Same as above but bypasses the checklist and backs up every detected supported app. |
 
 ### Terminology
 
@@ -185,6 +208,8 @@ Related scripts:
 ```text
 $FRACTOGENESIS_HOME/.internal/apps/backup-docker-settings.sh              # helper — invoked by backup-apps.sh
 $FRACTOGENESIS_HOME/.internal/apps/backup-intellij-scratches-consoles.sh  # helper — invoked by backup-apps.sh
+$FRACTOGENESIS_HOME/.internal/apps/backup-app-config.sh                   # helper — registry-driven config capture (Claude, draw.io, Zoom, Mos, Wireshark)
+$FRACTOGENESIS_HOME/.internal/apps/app-selection.sh                       # helper — generates and reads the app-backup selection checklist
 $FRACTOGENESIS_HOME/bin/capture-size-audit.sh                            # entrypoint — capacity check for the backup root
 ```
 
@@ -200,11 +225,20 @@ Directories this runbook's steps touch, alphabetized at every level. Omitted sib
 ```text
 $REIMAGE_ARTIFACT_ROOT/
 ├── app-settings-backup/
+│   ├── app-backup-selection.md    # the Step 3 checklist Step 4 reads
+│   ├── bbedit/
 │   ├── candidate-review/
 │   ├── chrome/
+│   ├── claude/
 │   ├── docker/
+│   ├── drawio/
+│   ├── fiddler-everywhere/
+│   ├── imovie/
 │   ├── intellij/                  # full subtree drawn in backup-intellij.md
 │   ├── MANIFEST.md
+│   ├── manual-unsupported/        # drop-folders for selected unsupported apps
+│   │   └── <app>/
+│   ├── mos/
 │   ├── obsidian/
 │   │   ├── global-settings/
 │   │   └── vault-copy/
@@ -214,18 +248,24 @@ $REIMAGE_ARTIFACT_ROOT/
 │   │   └── inventory/
 │   ├── raycast/
 │   ├── terminal/
-│   └── vscode/
-│       └── user/
+│   ├── tnas-pc/
+│   ├── vscode/
+│   │   └── user/
+│   ├── wireshark/
+│   └── zoom/
 ├── ...
 ├── secrets-encrypted/
 │   ├── ...
 │   ├── chrome/
+│   ├── claude/
 │   ├── docker/
+│   ├── fiddler-everywhere/
 │   ├── postman/
 │   │   ├── environments/
 │   │   └── vault-if-export-allowed/
 │   ├── raycast/
 │   │   └── quicklinks-if-sensitive/
+│   ├── tnas-pc/
 │   └── ...
 └── ...
 ```
@@ -270,9 +310,12 @@ A short pre-flight: confirm you are set up, then decide what this run is for. Th
 ### Prerequisites
 
 - `REIMAGE_ARTIFACT_ROOT` resolves and its destination volume is mounted (`reimage.env` produced by `prepare-artifact-root.md`).
-- You are running commands from `$FRACTOGENESIS_HOME`.
+- Your shell is at the repository root — `cd "$FRACTOGENESIS_HOME"` once for the session. Per the guide's [[reimaging-guide#Core Assumptions|Core Assumptions]], the commands below assume this and don't repeat it.
 - The managed-inventory phase (`capture-managed-inventory.md`) has already run for this pre-image pass, so its artifacts are available to consult in Step 3.
 - Docker Desktop is running **if** you want current image and container inventories captured; settings files are captured either way.
+
+> [!note]
+> The commands below omit `--artifact-root`: `backup-apps.sh` resolves the artifact root automatically from `reimage.env` (via shared config), so it is implicit. Pass `--artifact-root PATH` only when you want to override that value for a single run.
 
 > [!bug] Troubleshooting
 > If `REIMAGE_ARTIFACT_ROOT` is empty, fix `reimage.env` or pass `--artifact-root PATH` explicitly on every command below.
@@ -289,7 +332,7 @@ For each app, skip the backup here when its state is already covered, and keep i
 | Git or Phase 2B local-file backup already holds the state | The state lives only in the app, not in files you already back up |
 | You do not use the app, or do not care about its state | The state is costly or annoying to recreate by hand |
 
-Step 3 helps you make this call with actual detection of what is installed and what management will restore. Managed apps are the common trap: management may bring the app back, but not necessarily its user-specific state.
+Step 3 helps you make this call with actual detection of what is installed and what management will restore. Managed apps are the common trap: management may bring the app back, but not necessarily its user-specific state. You record the decision itself in the **app-backup selection checklist** that Step 3 generates — Step 4 backs up exactly the apps you check there, and nothing else.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -306,7 +349,6 @@ Confirm the script runs and the environment resolves before writing anything. `b
 List what this toolkit can back up, and confirm the script runs:
 
 ```bash
-cd "$FRACTOGENESIS_HOME"
 ./bin/backup-apps.sh --supported-apps
 ```
 
@@ -316,7 +358,7 @@ cd "$FRACTOGENESIS_HOME"
 Confirm the artifact root that will be used (scan-only, creates nothing):
 
 ```bash
-./bin/backup-apps.sh --candidate-review --artifact-root "$REIMAGE_ARTIFACT_ROOT" 2>&1 | head -5
+./bin/backup-apps.sh --candidate-review 2>&1 | head -5
 ```
 
 ### Step 2 — Check Backup-Root Capacity
@@ -343,8 +385,7 @@ Decide your app set with real detection instead of memory. `--candidate-review` 
 Scan installed apps, consult the managed inventory, and see what a real run would create — without touching anything:
 
 ```bash
-cd "$FRACTOGENESIS_HOME"
-./bin/backup-apps.sh --artifact-root "$REIMAGE_ARTIFACT_ROOT" --candidate-review --open
+./bin/backup-apps.sh --candidate-review --open
 ```
 
 The bundle lands under `app-settings-backup/candidate-review/`. Read `app-backup-candidates.md`, which now splits the covered apps into two tables:
@@ -359,7 +400,7 @@ Two TSVs sit alongside the Markdown. `known-app-candidates.tsv` is the **full** 
 By default candidate review consults the newest `pre-image-*` bundle under `managed-inventory/`. Point it at a specific one with `--managed-inventory DIR`:
 
 ```bash
-./bin/backup-apps.sh --artifact-root "$REIMAGE_ARTIFACT_ROOT" --candidate-review \
+./bin/backup-apps.sh --candidate-review \
   --managed-inventory "$REIMAGE_ARTIFACT_ROOT/managed-inventory/pre-image-YYYYMMDD-HHMMSS"
 ```
 
@@ -369,40 +410,84 @@ By default candidate review consults the newest `pre-image-*` bundle under `mana
 > [!warning] Pitfall
 > Only a *strong* signal — a configuration profile, a managed preference, or the corporate-tooling filter — moves an app to the Managed table; a lone package receipt is treated as weak and left in the candidate list, because installed-from-a-package is not "managed". And a managed app that reinstalls automatically may still hold local-only user state management will not restore, so judge each managed app rather than assuming it is fully covered.
 
+#### Select the apps to back up
+
+Candidate review also generates your **app-backup selection checklist** — the file Step 4 reads to decide what to back up:
+
+```text
+$REIMAGE_ARTIFACT_ROOT/app-settings-backup/app-backup-selection.md
+```
+
+It has four selectable sections, each listing only apps detected on *this* Mac. The three supported sections are split by backup mechanism, derived from each app's registry coverage (not a hand-maintained list), so they stay accurate as apps change:
+
+- **Automatic backup (supported)** — the script fully backs these up; no manual step. They start **checked**; uncheck any you do not want.
+- **Both automatic and manual backup (supported)** — the script captures part of these **and** each also has a manual export step (an app lands here only when it is both script-backed *and* has a manual section under [[#Step 5 — Complete Manual Exports|Step 5]] or its companion runbook — currently IntelliJ IDEA). They start **checked** for the automatic capture; the manual half is still yours to do.
+- **Manual backup (supported)** — the toolkit supports these but the backup is entirely manual (Chrome, Postman, Fiddler Everywhere, Terminal, Raycast, Obsidian, TNAS PC, iMovie). Step 4 makes a ready folder for the ones you keep; you perform the export from the app's UI. They start **checked**.
+- **Unsupported apps on this Mac (manual backup)** — installed apps the toolkit does not cover, **excluding company-managed apps** (a strong managed verdict means IT restores the app, so it is not a manual-backup candidate). Check the ones you will back up by hand; Step 4 creates a drop-folder under `app-settings-backup/manual-unsupported/<app>/` and lists them as manual TODOs in the manifest. The excluded managed apps are recorded in the candidate review's `raw/unsupported-managed-excluded.txt`.
+
+> [!note]
+> Note-only apps (like 4K Live Wallpaper and NexiGo Webcam Settings) have no automatic backup and no manual export step, so they are left off the checklist entirely — reconfigure them from their app UI after reimage. They remain documented in the coverage table.
+
+Open the checklist, put an `x` between the brackets for each app to act on, and save:
+
+```text
+- [x] Wireshark      # backed up
+- [ ] Zoom           # skipped
+```
+
+> [!note]
+> The managed exclusion reads the managed verdict from the managed-inventory bundle. If managed apps (Company Portal, the Microsoft suite, security agents, and so on) still appear in the unsupported list, candidate review ran without a managed inventory — run [[capture-managed-inventory|Capture Managed Inventory]] first, then rerun candidate review to regenerate the checklist with those apps dropped. Apps flagged only by a weak, receipt-only signal are treated as not-managed and remain in the list on purpose.
+
+Re-running candidate review is safe — it **preserves the choices you have made** (checked or unchecked) and adds newly-installed apps at their section default (supported checked, unsupported unchecked), so you can iterate as you install or remove apps.
+
+> [!warning] Pitfall
+> Step 4 backs up **only what is checked here**. A freshly generated checklist starts with **all supported apps checked** (across the automatic, both, and manual sections) and all unsupported apps unchecked — so review it before Step 4: uncheck any supported app you do not want, and check any unsupported app you will back up by hand. Remember the both- and manual-section apps still need their manual export done. The candidate tables above help you decide.
+
+> [!note]
+> The full Step 4 backup **requires** this checklist and stops with instructions if it is missing. To deliberately skip the checklist and back up everything detected instead, run Step 4 with `--all-detected`.
+
 ### Step 4 — Run the Automated Backup
 
-Run the real backup. It creates a folder only for each app it detects, so apps you do not have are silently skipped.
+Run the real backup. It reads your selection checklist from [[#Select the apps to back up|Step 3]] and acts only on the apps you checked — running the scripted captures for selected supported apps, creating drop-folders for selected unsupported apps, and skipping everything else. Apps you do not have are silently skipped even when checked.
 
 ```bash
-cd "$FRACTOGENESIS_HOME"
-./bin/backup-apps.sh --artifact-root "$REIMAGE_ARTIFACT_ROOT" --open
+./bin/backup-apps.sh --open
 ```
+
+> [!note]
+> If you have not built the checklist yet, this run stops and points you to Step 3. To back up every detected app without a checklist, add `--all-detected`.
 
 This captures the script-class apps and prepares folders for the manual-class ones:
 
 - **Docker** — `settings-store.json`, `daemon.json`, `contexts/`, and image/container/compose inventories to `app-settings-backup/docker/`; `config.json` staged to `secrets-encrypted/docker/`. `Docker.raw`, image layers, and volumes are intentionally not backed up.
 - **VS Code** — extension list, `settings.json`, `keybindings.json`, `snippets/`, and `profiles/` to `app-settings-backup/vscode/`. Caches, logs, and workspace history are intentionally excluded.
 - **IntelliJ IDEA** — Scratches, Consoles, and config to `app-settings-backup/intellij/`. The settings ZIP is manual — see [[#IntelliJ Settings Export|Step 5]].
-- **Chrome, Postman, Raycast, Obsidian** — an empty, ready folder only, for the manual exports below.
-- the stable summary at `app-settings-backup/MANIFEST.md`, with a per-app "Detected / Not detected" row.
+- **BBEdit, Claude, draw.io, Zoom, Mos, Wireshark** — registry-driven config capture to `app-settings-backup/<app>/` for each selected app detected; Claude's MCP config (`claude_desktop_config.json`) is staged to `secrets-encrypted/claude/`.
+- **Chrome, Postman, Fiddler Everywhere, Raycast, Obsidian, TNAS PC, iMovie** — an empty, ready folder only (when selected), for the manual exports below.
+- **selected unsupported apps** — a drop-folder with a README under `app-settings-backup/manual-unsupported/<app>/`, for you to fill by hand.
+- the stable summary at `app-settings-backup/MANIFEST.md`, with the selection used and the manual TODOs that remain.
 
-Rerun a single script-class portion through the same entrypoint when needed — for example after starting Docker Desktop, or to refresh one app:
+Rerun a single script-class portion through the same entrypoint when needed — for example after starting Docker Desktop, or to refresh one app. These `--*-only` reruns bypass the checklist and act on their portion for every detected app:
 
 ```bash
-./bin/backup-apps.sh --artifact-root "$REIMAGE_ARTIFACT_ROOT" --docker-only --open
-./bin/backup-apps.sh --artifact-root "$REIMAGE_ARTIFACT_ROOT" --intellij-only --open
-./bin/backup-apps.sh --artifact-root "$REIMAGE_ARTIFACT_ROOT" --vscode-only --open
+./bin/backup-apps.sh --docker-only --open
+./bin/backup-apps.sh --intellij-only --open
+./bin/backup-apps.sh --vscode-only --open
+./bin/backup-apps.sh --apps-only --open   # Claude, draw.io, Zoom, Mos, Wireshark
 ```
 
 > [!warning] Pitfall
-> A successful run here is **not** a completed phase. It backs up only the script-class apps; Chrome, Postman, Terminal, the IntelliJ settings ZIP, and (if you use them) Raycast and Obsidian still need their manual exports.
+> A successful run here is **not** a completed phase. It backs up only the selected script-class apps; any selected Chrome, Postman, Fiddler Everywhere, Terminal, the IntelliJ settings ZIP, and (if you use them) Raycast, Obsidian, TNAS PC, and iMovie still need their manual exports, and your selected unsupported apps still need to be filled into their drop-folders.
+
+> [!note]
+> BBEdit's support folder can live in different places: the direct-download build uses `~/Library/Application Support/BBEdit/`, the Mac App Store build is sandboxed under `~/Library/Containers/com.barebones.bbedit/`, and recent versions can sync it to iCloud Drive. The capture copies whichever local paths exist; if your support folder is in iCloud, it already syncs and restores through your Apple ID.
 
 > [!bug] Troubleshooting
 > If Docker Desktop is not running, `settings-store.json`, `daemon.json`, and `contexts/` are still captured, but `image-inventory.txt` and `container-inventory.txt` are skipped. Start Docker Desktop, wait for the daemon, then rerun `--docker-only`.
 
 ### Step 5 — Complete Manual Exports
 
-These exports must be triggered from each app's own UI — the script cannot perform them or prove they are complete. Do the ones you decided to keep in Step 3; skip the rest. For the optional apps (Raycast, Obsidian), the full steps are in [[#Optional App Exports|Supplemental Reference]], indexed at [[#Optional Apps|Optional Apps]].
+These exports must be triggered from each app's own UI — the script cannot perform them or prove they are complete. Do the ones you checked in Step 3; skip the rest. For the optional apps (Raycast, Obsidian, TNAS PC, iMovie), the full steps are in [[#Optional App Exports|Supplemental Reference]], indexed at [[#Optional Apps|Optional Apps]].
 
 Each export sorts its outputs by the [[#Destination Rules|Destination Rules]]: reviewed non-secret material under `app-settings-backup/<app>/`, anything secret-bearing under `secrets-encrypted/<app>/`.
 
@@ -458,6 +543,8 @@ Postman exports are manual because the app UI owns the export flow. Treat Postma
 | Inventory when export is blocked | `app-settings-backup/postman/inventory/` | Redacted list of variable names, owning collection/environment, and restore source. No secret values. |
 | External-vault references | `app-settings-backup/postman/README.md` | Document the provider and restore steps, not the secret values. |
 
+Use `app-settings-backup/postman/` only for non-secret collection exports, redacted environment examples, variable inventories, and restore notes. Use `secrets-encrypted/postman/` for anything that may contain tokens, passwords, API keys, client secrets, cookies, bearer tokens, or unreviewed environment exports.
+
 If Step 4 detected Postman, its folders already exist; otherwise create them:
 
 ```bash
@@ -469,6 +556,46 @@ mkdir -p \
   "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/postman/vault-if-export-allowed"
 ```
 
+Create the starter READMEs so each area documents its own rules. These use an unquoted heredoc (`<<EOF`) so `$REIMAGE_ARTIFACT_ROOT` expands to the resolved path in the written file:
+
+```bash
+cat > "$REIMAGE_ARTIFACT_ROOT/app-settings-backup/postman/README.md" <<EOF
+# Postman Backup Notes
+
+Use this folder for non-secret Postman collection exports, redacted environment
+examples, inventories, and restore notes.
+
+Do not place tokens, passwords, client secrets, API keys, cookies, bearer
+tokens, or unreviewed environment exports here.
+
+If Postman Vault export is blocked, document variable names and restore sources
+under:
+
+  $REIMAGE_ARTIFACT_ROOT/app-settings-backup/postman/inventory/
+
+Secret-bearing Postman files belong under:
+
+  $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/postman/
+EOF
+
+cat > "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/postman/README.md" <<EOF
+# Postman Secret Material
+
+Stage secret-bearing Postman exports here, for example:
+
+- environment exports containing tokens, passwords, API keys, client secrets,
+  cookies, or bearer tokens
+- Postman Local Vault export files, only when export is allowed
+- unreviewed Postman exports that may contain credentials
+
+Vault export may be unavailable or blocked by policy. If export is blocked, do
+not bypass it. Keep only a redacted inventory under app-settings-backup and
+restore the values from the approved secret source after reimage.
+EOF
+```
+
+##### Collections
+
 Export collections from `Postman Desktop > Collections > Export` and save non-secret ones under `app-settings-backup/postman/collections/`. Before trusting a collection as non-secret, scan it for embedded credentials:
 
 ```bash
@@ -477,19 +604,156 @@ grep -RniE 'token|password|passwd|secret|apikey|api_key|authorization|bearer|coo
   || true
 ```
 
-Export environments from `Postman Desktop > Environments > Export`. Environments often carry tokens, usernames, passwords, bearer tokens, API keys, or client secrets — stage them under `secrets-encrypted/postman/environments/` unless you are certain they are non-secret, and keep only redacted copies under `app-settings-backup/postman/environments-redacted/` using placeholders such as:
+##### Environments
+
+Export environments from `Postman Desktop > Environments > Export`. Environments often carry URLs, IDs, tokens, usernames, passwords, bearer tokens, API keys, or client secrets — stage them under `secrets-encrypted/postman/environments/` unless you are certain they are non-secret, and keep only redacted copies under `app-settings-backup/postman/environments-redacted/` using placeholders such as:
 
 ```text
 TODO_RESTORE_FROM_POSTMAN_VAULT
+TODO_RESTORE_FROM_LASTPASS
 TODO_RESTORE_FROM_1PASSWORD
 TODO_RESTORE_FROM_AZURE_KEY_VAULT
+TODO_RESTORE_FROM_TEAM_POSTMAN_ENVIRONMENT
 TODO_REAUTHENTICATE_AFTER_REIMAGE
 ```
 
-Postman Local Vault export may be blocked by app, workspace, account, or corporate policy. If export is **allowed**, use `Postman Desktop > Vault > Export` and save under `secrets-encrypted/postman/vault-if-export-allowed/` as `postman-vault-secrets-YYYYMMDD-HHMMSS.encrypted.json`. If Postman requests pull from an external vault or password manager, do not duplicate those values — document the restore path in `app-settings-backup/postman/README.md` instead.
+Do not leave unreviewed environment exports loose in `app-settings-backup/` or cloud-synced folders.
+
+##### Postman Local Vault
+
+Postman Local Vault export may be blocked by app, workspace, account, or corporate policy. Treat vault export as optional.
+
+###### If vault export is allowed
+
+Use `Postman Desktop > Vault > Export` and save under `secrets-encrypted/postman/vault-if-export-allowed/`:
+
+```text
+$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/postman/vault-if-export-allowed/postman-vault-secrets-YYYYMMDD-HHMMSS.encrypted.json
+```
+
+If Postman requests pull values from an external vault or password manager, do not duplicate those secret values into the backup — document the restore path in `app-settings-backup/postman/README.md` instead. Useful non-secret notes:
+
+```text
+workspace name
+collection name
+environment name
+variable or vault key names with values redacted
+which approved vault/password manager, team environment, SSO flow, or secret owner owns the values
+whether the value must be recreated, reauthorized, imported, or requested after reimage
+```
+
+Example redacted note:
+
+```text
+Collection: Carrier Services Local Testing
+Environment: dev
+Variables requiring restore:
+- api_base_url = non-secret URL
+- access_token = TODO_RESTORE_FROM_POSTMAN_VAULT_OR_REAUTHENTICATE
+- client_secret = TODO_RESTORE_FROM_LASTPASS_OR_SECRET_OWNER
+Vault restore: vault export was blocked; recreate/import required values from the approved secret source after signing in to Postman Desktop.
+```
+
+###### If vault export is blocked
+
+Do not bypass the restriction. Record a redacted inventory so each required value has a known restore source — never put secret values in the file. This uses a quoted heredoc (`<<'EOF'`) so the template is written verbatim:
+
+```bash
+VAULT_INVENTORY="$REIMAGE_ARTIFACT_ROOT/app-settings-backup/postman/inventory/postman-vault-inventory-$(date +%Y%m%d-%H%M%S).md"
+mkdir -p "$(dirname "$VAULT_INVENTORY")"
+
+cat > "$VAULT_INVENTORY" <<'EOF'
+# Postman Vault Inventory — Export Blocked
+
+Vault export status: blocked / unavailable
+Captured by: manual review
+
+## Restore plan
+
+Do not store secret values in this file. Restore values after reimage from the
+approved source.
+
+| Workspace | Collection / Request | Environment | Variable / Vault Key Name | Secret Value Stored Here? | Restore Source | Restore Action | Notes |
+|---|---|---|---|---|---|---|---|
+| TODO | TODO | TODO | TODO | No | TODO_LASTPASS_OR_APPROVED_SOURCE | Recreate after reimage | TODO |
+
+## Sign-off
+
+- [ ] Confirmed vault export was blocked or unavailable.
+- [ ] Confirmed no vault secret values were copied into the inventory note.
+- [ ] Confirmed restore source is known for each required value.
+EOF
+```
+
+Useful non-secret details to capture:
+
+```text
+workspace name
+collection/request name
+environment name
+variable or vault key names
+which approved password manager, team environment, SSO flow, or secret owner can restore the value
+whether the value should be recreated rather than restored
+```
+
+Example redacted inventory entry:
+
+```text
+Workspace: Carrier Services
+Collection: Local Testing
+Environment: dev
+Variable / Vault key: client_secret
+Secret Value Stored Here?: No
+Restore Source: TODO_RESTORE_FROM_LASTPASS_OR_SECRET_OWNER
+Restore Action: Recreate/import after signing in to Postman Desktop
+```
+
+##### Artifact-local checks
+
+```bash
+find "$REIMAGE_ARTIFACT_ROOT/app-settings-backup/postman" -maxdepth 3 -type f | sort 2>/dev/null || true
+find "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/postman" -maxdepth 3 -type f | sort 2>/dev/null || true
+```
 
 > [!warning] Pitfall
 > If Vault export is blocked, do not work around the control. Record a redacted inventory under `app-settings-backup/postman/inventory/` (variable names, owning collection/environment, and restore source — no values) and restore from the approved source after reimage.
+
+#### Fiddler Everywhere
+
+Fiddler Everywhere is manual because the app UI owns session and rule export, and its settings sync to your Progress (Telerik) account rather than to predictable local files. Treat its data as distinct categories:
+
+| Category | Destination | Rule |
+|---|---|---|
+| Reviewed AutoResponder rules / composed requests | `app-settings-backup/fiddler-everywhere/` | Safe only after review — no tokens, cookies, or credentials in URLs, headers, or bodies. |
+| Saved sessions (captured traffic) | `secrets-encrypted/fiddler-everywhere/` | Captured traffic routinely carries auth headers, cookies, and tokens — treat as secret-bearing. |
+| Account-synced settings | (no local artifact) | Return on sign-in; record only that sync is enabled. |
+
+If Step 4 detected and you selected Fiddler Everywhere its folder already exists; otherwise create both:
+
+```bash
+mkdir -p \
+  "$REIMAGE_ARTIFACT_ROOT/app-settings-backup/fiddler-everywhere" \
+  "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/fiddler-everywhere"
+```
+
+Export your saved sessions from the Fiddler Everywhere UI (session list → export, typically a `.saz` archive) and save them **only** under secret-bearing staging:
+
+```text
+$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/fiddler-everywhere/fiddler-sessions-YYYYMMDD-HHMMSS.saz
+```
+
+Export any AutoResponder rules or composed requests you want to keep. Before trusting a rule set as non-secret, scan it for embedded credentials, then save reviewed copies under `app-settings-backup/fiddler-everywhere/`:
+
+```bash
+grep -RniE 'token|password|passwd|secret|apikey|api_key|authorization|bearer|cookie|client_secret' \
+  "$REIMAGE_ARTIFACT_ROOT/app-settings-backup/fiddler-everywhere" \
+  || true
+```
+
+After reimage, sign back into your Progress account to restore synced settings.
+
+> [!warning] Pitfall
+> Fiddler session captures almost always contain live auth material. Default any exported traffic to `secrets-encrypted/fiddler-everywhere/`; keep only reviewed, credential-free rule sets under `app-settings-backup/`.
 
 #### Terminal
 
@@ -543,12 +807,14 @@ find "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted" -maxdepth 3 -type f | sort 2>/de
 
 ### Optional Apps
 
-These apps are manual and belong to the optional group, so their full steps live under Supplemental Reference to keep the main flow lean. Complete any you kept in Step 3 as part of [[#Step 5 — Complete Manual Exports|Step 5]] — this index just points to each one.
+These apps are manual and belong to the optional group, so their full steps live under Supplemental Reference to keep the main flow lean. Complete any you checked in Step 3 as part of [[#Step 5 — Complete Manual Exports|Step 5]] — this index just points to each one. The scripted optional apps (Mos, Wireshark) are captured automatically in Step 4 and are not listed here.
 
 | App | Use when | Steps |
 |---|---|---|
-| Raycast | Quick Links or settings/data export matter | [[#Raycast|Optional App Exports → Raycast]] |
-| Obsidian | Vault content, vault-local config, or a restore-source choice matters | [[#Obsidian|Optional App Exports → Obsidian]] |
+| Raycast | Quick Links or settings/data export matter | [[#Raycast\|Optional App Exports → Raycast]] |
+| Obsidian | Vault content, vault-local config, or a restore-source choice matters | [[#Obsidian\|Optional App Exports → Obsidian]] |
+| TNAS PC | Saved TNAS connections or credentials matter | [[#TNAS PC\|Optional App Exports → TNAS PC]] |
+| iMovie | You keep iMovie projects/libraries and must confirm they are backed up | [[#iMovie\|Optional App Exports → iMovie]] |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -572,13 +838,15 @@ The scripts sort artifacts by rule and detect installed apps; these judgment cal
 
 ### An app was installed after your last backup run and has no folder
 
-Detection runs only while the script runs, so a newly installed app has no folder yet. Rerun the entrypoint so it is detected and its folders are created:
+Detection runs only while the script runs, so a newly installed app has no folder yet. Rerun Step 3 first so the app is added to the selection checklist, check it, then rerun the entrypoint so it is detected and its folders are created:
 
 ```bash
-./bin/backup-apps.sh --artifact-root "$REIMAGE_ARTIFACT_ROOT"
+./bin/backup-apps.sh --candidate-review   # adds the new app to the checklist
+# check the new app in app-backup-selection.md, then:
+./bin/backup-apps.sh
 ```
 
-For a single script-class app, use `--docker-only` or `--intellij-only`. For a manual-class app (Chrome, Postman, Terminal, Raycast, Obsidian), create the folders by hand from that app's export section.
+For a single script-class app, use `--docker-only`, `--intellij-only`, or `--apps-only` (these bypass the checklist). For a manual-class app (Chrome, Postman, Fiddler Everywhere, Terminal, Raycast, Obsidian, TNAS PC), create the folders by hand from that app's export section.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -590,7 +858,7 @@ Longer material most runs will not need, kept out of the main flow.
 
 ### Optional App Exports
 
-Raycast and Obsidian are manual-class apps in the optional group. Their folders are still created by [[#Step 4 — Run the Automated Backup|Step 4]] when detected; complete these exports only if you decided to keep them in Step 3.
+Raycast, Obsidian, TNAS PC, and iMovie are manual-class apps in the optional group. Their folders are created by [[#Step 4 — Run the Automated Backup|Step 4]] when detected and selected; complete these exports only if you checked them in Step 3.
 
 #### Raycast
 
@@ -603,6 +871,8 @@ Raycast export is manual because the app owns the export flow and the settings e
 | Sensitive or unreviewed Quick Links JSON | `secrets-encrypted/raycast/quicklinks-if-sensitive/` | Secret-bearing until reviewed. |
 | Raycast `.rayconfig` | `secrets-encrypted/raycast/` | Secret-bearing even when password-protected. |
 
+##### Directories and starter notes
+
 If Step 4 detected Raycast, its folders already exist; otherwise create them:
 
 ```bash
@@ -611,7 +881,48 @@ mkdir -p \
   "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/raycast/quicklinks-if-sensitive"
 ```
 
-Find the export commands from Raycast root search:
+Create the starter READMEs so each area documents its own rules. These use an unquoted heredoc (`<<EOF`) so `$REIMAGE_ARTIFACT_ROOT` expands to the resolved path in the written file:
+
+```bash
+cat > "$REIMAGE_ARTIFACT_ROOT/app-settings-backup/raycast/README.md" <<EOF
+# Raycast App Settings Backup Notes
+
+Use this folder for reviewed non-secret Raycast exports and restore notes.
+
+Expected examples:
+
+- raycast-quicklinks-YYYYMMDD-HHMMSS.json
+- raycast-export-inventory-YYYYMMDD-HHMMSS.md
+
+Before saving Quick Links here, review whether the exported links include
+sensitive internal URLs, tokens, query strings, private identifiers, customer
+references, repo links, or company-only information.
+
+If Quick Links are sensitive or unreviewed, save them under:
+
+  $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/raycast/quicklinks-if-sensitive/
+
+Do not store the password-protected .rayconfig file here. It belongs under:
+
+  $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/raycast/
+EOF
+
+cat > "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/raycast/README.md" <<EOF
+# Raycast Secret Material
+
+Stage secret-bearing Raycast exports here, for example:
+
+- raycast-settings-and-data-YYYYMMDD-HHMMSS.rayconfig
+- quicklinks-if-sensitive/raycast-quicklinks-YYYYMMDD-HHMMSS.json
+
+Treat the Raycast .rayconfig export as secret-bearing even when
+password-protected.
+EOF
+```
+
+##### Find the export commands
+
+The simplest way to find the export actions is from Raycast root search:
 
 ```text
 Open Raycast
@@ -619,9 +930,26 @@ Search: Export Quicklinks
 Search: Export Settings & Data
 ```
 
-If they do not appear, enable the built-in commands under `Raycast > Settings > Extensions > Quicklinks` and `Raycast > Settings > Extensions > Raycast`.
+If they do not appear, enable the built-in commands:
 
-Use `Export Quicklinks` for the standalone JSON. Save it under the non-secret folder **only after review**:
+```text
+Raycast > Settings > Extensions > Quicklinks
+Raycast > Settings > Extensions > Raycast
+```
+
+Useful places to review before exporting:
+
+```text
+Raycast > Settings > Quicklinks
+Raycast > Settings > Extensions
+Raycast > Settings > Account / Sync, if used
+```
+
+Use `Export Quicklinks` for the standalone Quick Links JSON. Use `Export Settings & Data` for the full `.rayconfig` backup.
+
+##### Quick Links
+
+Save the exported JSON under the non-secret folder **only after review**:
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/app-settings-backup/raycast/raycast-quicklinks-YYYYMMDD-HHMMSS.json
@@ -633,7 +961,9 @@ If the Quick Links contain or might contain sensitive data, save them under secr
 $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/raycast/quicklinks-if-sensitive/raycast-quicklinks-YYYYMMDD-HHMMSS.json
 ```
 
-Use `Export Settings & Data` for the full `.rayconfig`. Because it is password-protected and carries sensitive data, save it only under secret-bearing staging:
+##### Settings and data
+
+The `.rayconfig` from `Export Settings & Data` is password-protected and carries sensitive data, so save it only under secret-bearing staging:
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/raycast/raycast-settings-and-data-YYYYMMDD-HHMMSS.rayconfig
@@ -641,6 +971,54 @@ $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/raycast/raycast-settings-and-data-YYYYM
 
 > [!warning] Pitfall
 > Do not store the `.rayconfig` export password in this runbook or in any app backup. Keep it in your approved password manager; if you need a reminder, record only a non-secret hint such as `TODO_ENTRY_NAME`.
+
+##### Artifact-local checks
+
+After exporting, confirm the files landed in the correct folders:
+
+```bash
+find "$REIMAGE_ARTIFACT_ROOT/app-settings-backup/raycast" -maxdepth 2 -type f | sort 2>/dev/null || true
+find "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/raycast" -maxdepth 3 -type f | sort 2>/dev/null || true
+```
+
+If an export landed in Downloads, move it by sensitivity (swap in the real filename):
+
+```bash
+# Password-protected settings/data export — secret-bearing.
+mv "$HOME/Downloads/raycast-settings-and-data-YYYYMMDD-HHMMSS.rayconfig" \
+  "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/raycast/"
+
+# Reviewed non-secret Quick Links JSON.
+mv "$HOME/Downloads/raycast-quicklinks-YYYYMMDD-HHMMSS.json" \
+  "$REIMAGE_ARTIFACT_ROOT/app-settings-backup/raycast/"
+
+# Sensitive or unreviewed Quick Links JSON.
+mv "$HOME/Downloads/raycast-quicklinks-YYYYMMDD-HHMMSS.json" \
+  "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/raycast/quicklinks-if-sensitive/"
+```
+
+Optionally record a redacted inventory. This uses a quoted heredoc (`<<'EOF'`) so the template is written verbatim:
+
+```bash
+RAYCAST_INV="$REIMAGE_ARTIFACT_ROOT/app-settings-backup/raycast/raycast-export-inventory-$(date +%Y%m%d-%H%M%S).md"
+mkdir -p "$(dirname "$RAYCAST_INV")"
+
+cat > "$RAYCAST_INV" <<'EOF'
+# Raycast Export Inventory
+
+| Item | Status | Destination | Sensitive? | Notes |
+|---|---|---|---|---|
+| Quick Links JSON | TODO | TODO_APP_SETTINGS_OR_SECRETS_ENCRYPTED | TODO | TODO |
+| Raycast account/sync status | TODO | Raycast app UI | TODO | TODO |
+
+## Sign-off
+
+- [ ] Quick Links were exported or intentionally skipped.
+- [ ] Quick Links were reviewed for sensitive URLs, query strings, tokens, private identifiers, and internal links.
+- [ ] Sensitive or unreviewed Quick Links were staged under secrets-encrypted/raycast/.
+- [ ] Raycast .rayconfig was staged under secrets-encrypted/raycast/.
+EOF
+```
 
 > [!info] Return
 > Back to [[#Optional Apps|Optional Apps]].
@@ -692,6 +1070,60 @@ fi
 > [!info] Return
 > Back to [[#Optional Apps|Optional Apps]].
 
+#### TNAS PC
+
+`backup-apps.sh` does not capture TNAS PC automatically: its connection profiles live in an app-specific location that varies, and any saved NAS credentials are secret-bearing. The decision here is whether you have saved connections worth preserving, or will simply re-add them after reimage.
+
+| What to capture | Destination | Rule |
+|---|---|---|
+| Redacted list of TNAS connections (host/IP, share names, account — no passwords) | `app-settings-backup/tnas-pc/` | Safe inventory that speeds re-adding connections. |
+| Any exported or stored credential file you locate | `secrets-encrypted/tnas-pc/` | Secret-bearing; stage for the Phase 2F encrypted DMG. |
+
+Most people just re-add their TNAS in the app after reimage. If you want a reminder of what to re-add, record a redacted note:
+
+```bash
+mkdir -p "$REIMAGE_ARTIFACT_ROOT/app-settings-backup/tnas-pc"
+cat > "$REIMAGE_ARTIFACT_ROOT/app-settings-backup/tnas-pc/connections-note.txt" <<'EOF'
+TNAS connections to re-add after reimage:
+- <name> — host/IP: <...>  shares: <...>  account: <...>  (password from your password manager)
+EOF
+```
+
+> [!warning] Pitfall
+> Do not copy TNAS-stored passwords into `app-settings-backup/`. Restore credentials from your password manager, and stage any credential file only under `secrets-encrypted/tnas-pc/`.
+
+> [!info] Return
+> Back to [[#Optional Apps|Optional Apps]].
+
+#### iMovie
+
+iMovie has no app settings worth capturing here — its real content is your **iMovie libraries**, which are user files, not app state. The toolkit deliberately does not script them: a library is often tens of gigabytes and belongs to your Phase 2B local-file backup or an external drive, not the app-settings artifact root. The manual step is to make sure the libraries are actually captured somewhere.
+
+- **Find your libraries.** The default is `~/Movies/iMovie Library.imovielibrary`; you may have more, and some may live on external drives. In iMovie, open the library list (**File → Open Library → Other…**) to see each one's location.
+- **Confirm coverage.** Check that each library's location is inside what Phase 2B (`backup-home.md`) actually backs up. `~/Movies` is large and may be excluded, or a library may live on an external volume — if so, copy the `.imovielibrary` package to your backup destination explicitly.
+- **Record where they are**, so restore is unambiguous:
+
+```bash
+mkdir -p "$REIMAGE_ARTIFACT_ROOT/app-settings-backup/imovie"
+cat > "$REIMAGE_ARTIFACT_ROOT/app-settings-backup/imovie/libraries-note.txt" <<'EOF'
+iMovie libraries to preserve (restore as files, not app settings):
+- <path to Library.imovielibrary>   size: <...>   backed up by: <Phase 2B / external drive / Time Machine>
+EOF
+```
+
+> [!warning] Pitfall
+> Do not copy multi-gigabyte iMovie libraries into the app-settings artifact root. Keep them in your local-file backup (Phase 2B) or on an external drive; record only their locations here.
+
+> [!info] Return
+> Back to [[#Optional Apps|Optional Apps]].
+
+#### Note-Only Apps
+
+**4K Live Wallpaper** and **NexiGo Webcam Settings** are registered so they appear in the candidate review and selection checklist, but they have no meaningful local state worth backing up — wallpaper choices and webcam presets are cosmetic and quick to redo. The toolkit captures nothing and stages nothing for them; reconfigure both from their app UI after reimage. If you have another app like this, leave it unchecked in the supported section, or check it in the **unsupported** section to get a drop-folder for a manual copy.
+
+> [!info] Return
+> Back to [[#Optional Apps|Optional Apps]].
+
 ### Optional Note Capture
 
 Per-app notes, mini checklists, and inventories are optional. Use them only when they reduce risk or preserve a restore decision you are likely to forget. From most central to most app-local:
@@ -708,7 +1140,7 @@ Use app-local notes sparingly; you do not need one for every app. A missing or u
 
 The main forward dependency is the secret-staging sequence that ends at the consolidated secrets DMG. Stage secret-bearing app exports under `secrets-encrypted/` as you work through this phase. Phase 2E then handles certificate and Keychain staging. Phase 2F builds the encrypted DMG **once**, after both this phase's app-secret staging and Phase 2E's certificate/Keychain staging are complete, so the DMG covers the full staged secret set in a single build.
 
-If you add any Docker `config.json`, Chrome password CSV, secret-bearing Postman export, or Raycast secret export later, rerun Phase 2F so the DMG includes the complete final secret set before final validation.
+If you add any Docker `config.json`, Chrome password CSV, secret-bearing Postman export, Claude MCP config, Fiddler Everywhere session export, TNAS PC credential, or Raycast secret export later, rerun Phase 2F so the DMG includes the complete final secret set before final validation.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 

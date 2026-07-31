@@ -15,12 +15,16 @@
 #   cd <repo-root>
 #   chmod +x bin/backup-apps.sh
 #
-#   # Default -- Docker, IntelliJ, VS Code fallback, and manifest
+#   # Step 3 -- scan, build the candidate bundle, and generate/refresh the
+#   # app-backup selection checklist (writes no backups, no MANIFEST.md)
+#   ./bin/backup-apps.sh --candidate-review
+#
+#   # Step 4 -- back up the apps you checked in the selection checklist
+#   # (requires app-settings-backup/app-backup-selection.md; run Step 3 first)
 #   ./bin/backup-apps.sh
 #
-#   # Review-only bundle of app-backup candidates worth checking
-#   # (folds in the managed-inventory bundle and partitions managed apps out)
-#   ./bin/backup-apps.sh --candidate-review
+#   # Back up everything detected, bypassing the selection checklist
+#   ./bin/backup-apps.sh --all-detected
 #
 #   # Point candidate review at a specific managed-inventory bundle
 #   ./bin/backup-apps.sh --candidate-review --managed-inventory /path/to/managed-inventory/pre-image-<stamp>
@@ -32,6 +36,7 @@
 #   ./bin/backup-apps.sh --docker-only
 #   ./bin/backup-apps.sh --intellij-only
 #   ./bin/backup-apps.sh --vscode-only
+#   ./bin/backup-apps.sh --apps-only     # only the registry-driven app-config captures
 #
 #   # Override the artifact root for this invocation
 #   ./bin/backup-apps.sh --artifact-root /path/to/reimage-artifact-root
@@ -54,6 +59,20 @@
 #   --docker-only            Rerun only the Docker portion through this entrypoint.
 #   --intellij-only          Rerun only the IntelliJ portion through this entrypoint.
 #   --vscode-only            Rerun only the VS Code fallback capture through this entrypoint.
+#   --apps-only              Rerun only the registry-driven app-config captures
+#                            (Claude, draw.io, Zoom, Mos, Wireshark, ...) through
+#                            this entrypoint.
+#   --all-detected           Full run that backs up every detected supported app,
+#                            bypassing the app-backup selection checklist. Without
+#                            it, a full run reads the checklist and backs up only
+#                            the apps you checked (and errors if it is missing).
+#
+# Selection checklist:
+#   A full run (no --*-only flag) is driven by:
+#     $REIMAGE_ARTIFACT_ROOT/app-settings-backup/app-backup-selection.md
+#   --candidate-review generates/refreshes it with two selectable sections —
+#   supported apps and unsupported apps present on this Mac. Check the apps to
+#   act on, then run a full backup. Single-app reruns and --all-detected bypass it.
 #
 # IntelliJ options passed through to the internal helper:
 #   --intellij-workspace-root PATH
@@ -64,7 +83,9 @@
 #   --intellij-include-system-cache
 #
 # Options:
-#   --artifact-root PATH   Override REIMAGE_ARTIFACT_ROOT from shared config.
+#   --artifact-root PATH   Override the artifact root for this invocation. By
+#                          default it is resolved automatically from reimage.env
+#                          (via shared config), so you normally omit this.
 #   --open                  Open the primary output after the run.
 #   -h, --help              Show this message and exit.
 #
@@ -107,38 +128,109 @@ usage() {
 
 supported_apps_registry() {
   # Single source of truth for Phase 2D app coverage. Consumed by
-  # --supported-apps (all rows) and the candidate review (detectable rows only),
-  # so the covered-app list lives in exactly one place. Tab-delimited fields:
+  # --supported-apps (all rows), the candidate review (detectable rows only),
+  # and the registry-driven capture loop, so the covered-app list lives in
+  # exactly one place. Tab-delimited fields:
   #   app  group  how  non_secret_dest  secret_dest
   #   detectable  phase_fit  route  use_when  bundle_paths  state_paths
+  #   capture_paths  secret_capture_paths
   # The candidate review's managed partition is keyed off each app's bundle
   # basename (from bundle_paths) against the managed-inventory section 03 verdict,
   # so no per-app managed-match list is kept here.
+  #
+  # capture_paths / secret_capture_paths are ';'-delimited absolute sources the
+  # registry-driven helper (backup-app-config.sh) copies when the app is
+  # detected: capture_paths -> app-settings-backup/<app>/, secret_capture_paths
+  # -> secrets-encrypted/<app>/. Both are "-" (the "none" sentinel) for apps
+  # handled another way:
+  #   - dedicated helpers/logic: Docker, IntelliJ IDEA, Visual Studio Code
+  #   - manual app-UI exports:   Chrome, Postman, Terminal, Raycast, Obsidian,
+  #                              Fiddler Everywhere, TNAS PC
+  #   - note-only (no state):    4K Live Wallpaper, NexiGo Webcam Settings
+  # A missing source is skipped at capture time, so a single registry row is
+  # safe on any Mac.
+  #
+  # IMPORTANT: every field must be non-empty — use "-" for "none", never "".
+  # Readers split rows with `IFS=$'\t' read`, and a literal tab is IFS
+  # whitespace, so two consecutive tabs (an empty field) collapse into one and
+  # shift every later field left. Keeping all fields non-empty avoids that.
   local r="${REIMAGE_ARTIFACT_ROOT:-}"
-  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
     "IntelliJ IDEA" "Common" "Script + manual settings ZIP" "$r/app-settings-backup/intellij/" "$r/secrets-encrypted/" \
-    "yes" "Common — dedicated runbook" "backup-intellij.md" "IDE state, Scratches, settings export, plugins, project metadata, or HTTP Client env files matter." "/Applications/IntelliJ IDEA.app;$HOME/Applications/IntelliJ IDEA.app" "$HOME/Library/Application Support/JetBrains;$HOME/Library/Preferences/JetBrains"
-  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+    "yes" "Common — dedicated runbook" "backup-intellij.md" "IDE state, Scratches, settings export, plugins, project metadata, or HTTP Client env files matter." "/Applications/IntelliJ IDEA.app;$HOME/Applications/IntelliJ IDEA.app" "$HOME/Library/Application Support/JetBrains;$HOME/Library/Preferences/JetBrains" \
+    "-" "-"
+  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
     "Docker Desktop" "Common" "Script" "$r/app-settings-backup/docker/" "$r/secrets-encrypted/docker/" \
-    "yes" "Common" "backup-apps.md" "Docker Desktop settings, contexts, image inventory, or container inventory matter." "/Applications/Docker.app;$HOME/Applications/Docker.app" "$HOME/Library/Group Containers/group.com.docker;$HOME/Library/Containers/com.docker.docker"
-  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+    "yes" "Common" "backup-apps.md" "Docker Desktop settings, contexts, image inventory, or container inventory matter." "/Applications/Docker.app;$HOME/Applications/Docker.app" "$HOME/Library/Group Containers/group.com.docker;$HOME/Library/Containers/com.docker.docker" \
+    "-" "-"
+  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
     "Chrome" "Common" "Manual" "$r/app-settings-backup/chrome/" "$r/secrets-encrypted/chrome/" \
-    "yes" "Common" "backup-apps.md" "Bookmarks export or password export is needed." "/Applications/Google Chrome.app;$HOME/Applications/Google Chrome.app" "$HOME/Library/Application Support/Google/Chrome;$HOME/Library/Preferences/com.google.Chrome.plist"
-  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+    "yes" "Common" "backup-apps.md" "Bookmarks export or password export is needed." "/Applications/Google Chrome.app;$HOME/Applications/Google Chrome.app" "$HOME/Library/Application Support/Google/Chrome;$HOME/Library/Preferences/com.google.Chrome.plist" \
+    "-" "-"
+  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
     "Postman" "Common" "Manual" "$r/app-settings-backup/postman/" "$r/secrets-encrypted/postman/" \
-    "yes" "Common" "backup-apps.md" "Collections, environments, or Vault state matter." "/Applications/Postman.app;$HOME/Applications/Postman.app" "$HOME/Library/Application Support/Postman;$HOME/Library/Preferences/com.postmanlabs.mac.plist"
-  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+    "yes" "Common" "backup-apps.md" "Collections, environments, or Vault state matter." "/Applications/Postman.app;$HOME/Applications/Postman.app" "$HOME/Library/Application Support/Postman;$HOME/Library/Preferences/com.postmanlabs.mac.plist" \
+    "-" "-"
+  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+    "Claude" "Common" "Script — MCP config staged as secret; account via sign-in" "$r/app-settings-backup/claude/" "$r/secrets-encrypted/claude/" \
+    "yes" "Common" "backup-apps.md" "MCP server config or Claude Desktop developer settings matter." "/Applications/Claude.app;$HOME/Applications/Claude.app" "$HOME/Library/Application Support/Claude;$HOME/Library/Preferences/com.anthropic.claudefordesktop.plist" \
+    "-" "$HOME/Library/Application Support/Claude/claude_desktop_config.json"
+  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+    "draw.io" "Common" "Script — app config; diagrams restored as files" "$r/app-settings-backup/drawio/" "usually none from this runbook" \
+    "yes" "Common" "backup-apps.md" "App config or custom shape libraries matter; diagrams themselves come back via Phase 2B / Git." "/Applications/draw.io.app;$HOME/Applications/draw.io.app" "$HOME/Library/Application Support/draw.io;$HOME/Library/Preferences/com.jgraph.drawio.desktop.plist" \
+    "$HOME/Library/Application Support/draw.io/config.json;$HOME/Library/Application Support/draw.io/Preferences;$HOME/Library/Preferences/com.jgraph.drawio.desktop.plist" "-"
+  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+    "Fiddler Everywhere" "Common" "Manual — session/AutoResponder export; secret-bearing" "$r/app-settings-backup/fiddler-everywhere/" "$r/secrets-encrypted/fiddler-everywhere/" \
+    "yes" "Common" "backup-apps.md" "Saved sessions, composed requests, or AutoResponder rules matter; settings sync to your Progress account." "/Applications/Fiddler Everywhere.app;$HOME/Applications/Fiddler Everywhere.app" "$HOME/.fiddler;$HOME/Library/Application Support/Fiddler Everywhere" \
+    "-" "-"
+  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+    "Zoom" "Common" "Script — settings plist; restore mainly via sign-in" "$r/app-settings-backup/zoom/" "usually none from this runbook" \
+    "yes" "Common" "backup-apps.md" "Local Zoom client settings matter; account and most preferences return on sign-in, recordings belong to Phase 2B." "/Applications/zoom.us.app;$HOME/Applications/zoom.us.app" "$HOME/Library/Application Support/zoom.us;$HOME/Library/Preferences/us.zoom.xos.plist" \
+    "$HOME/Library/Preferences/us.zoom.xos.plist" "-"
+  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+    "BBEdit" "Common" "Script — app config and preferences" "$r/app-settings-backup/bbedit/" "usually none from this runbook" \
+    "yes" "Common" "backup-apps.md" "Custom BBEdit scripts, text filters, language modules, clippings, color schemes, or preferences matter." "/Applications/BBEdit.app;$HOME/Applications/BBEdit.app" "$HOME/Library/Application Support/BBEdit;$HOME/Library/Preferences/com.barebones.bbedit.plist" \
+    "$HOME/Library/Application Support/BBEdit;$HOME/Library/Preferences/com.barebones.bbedit.plist;$HOME/Library/Containers/com.barebones.bbedit/Data/Library/Application Support/BBEdit" "-"
+  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
     "Raycast" "Optional" "Manual" "$r/app-settings-backup/raycast/" "$r/secrets-encrypted/raycast/" \
-    "yes" "Optional" "backup-apps.md" "Quick Links or settings/data export matter." "/Applications/Raycast.app;$HOME/Applications/Raycast.app" "$HOME/Library/Application Support/com.raycast.macos;$HOME/Library/Preferences/com.raycast.macos.plist"
-  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+    "yes" "Optional" "backup-apps.md" "Quick Links or settings/data export matter." "/Applications/Raycast.app;$HOME/Applications/Raycast.app" "$HOME/Library/Application Support/com.raycast.macos;$HOME/Library/Preferences/com.raycast.macos.plist" \
+    "-" "-"
+  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
     "Obsidian" "Optional" "Manual" "$r/app-settings-backup/obsidian/" "usually none from this runbook" \
-    "yes" "Optional" "backup-apps.md" "Vault content, vault-local config, or restore-source choice matters." "/Applications/Obsidian.app;$HOME/Applications/Obsidian.app" "$HOME/Library/Application Support/obsidian"
-  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+    "yes" "Optional" "backup-apps.md" "Vault content, vault-local config, or restore-source choice matters." "/Applications/Obsidian.app;$HOME/Applications/Obsidian.app" "$HOME/Library/Application Support/obsidian" \
+    "-" "-"
+  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+    "Mos" "Optional" "Script — preferences plist" "$r/app-settings-backup/mos/" "usually none from this runbook" \
+    "yes" "Optional" "backup-apps.md" "Custom scroll settings or per-app scroll exceptions matter." "/Applications/Mos.app;$HOME/Applications/Mos.app" "$HOME/Library/Preferences/com.caldis.Mos.plist" \
+    "$HOME/Library/Preferences/com.caldis.Mos.plist" "-"
+  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+    "Wireshark" "Optional" "Script — profiles and config" "$r/app-settings-backup/wireshark/" "usually none from this runbook" \
+    "yes" "Optional" "backup-apps.md" "Custom profiles, capture/display filters, or coloring rules matter." "/Applications/Wireshark.app;$HOME/Applications/Wireshark.app" "$HOME/.config/wireshark;$HOME/.wireshark" \
+    "$HOME/.config/wireshark;$HOME/.wireshark" "-"
+  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+    "iMovie" "Optional" "Manual — libraries are user files (Phase 2B)" "$r/app-settings-backup/imovie/" "usually none from this runbook" \
+    "yes" "Optional" "backup-apps.md" "You keep iMovie projects or libraries and need to confirm they are backed up as local files." "/Applications/iMovie.app;$HOME/Applications/iMovie.app" "$HOME/Movies/iMovie Library.imovielibrary;$HOME/Library/Containers/com.apple.iMovieApp" \
+    "-" "-"
+  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+    "TNAS PC" "Optional" "Manual — reconnect/re-auth; credentials secret-bearing" "$r/app-settings-backup/tnas-pc/" "$r/secrets-encrypted/tnas-pc/" \
+    "yes" "Optional" "backup-apps.md" "Saved TNAS connection profiles matter; stored credentials are secret-bearing." "/Applications/TNAS PC.app;$HOME/Applications/TNAS PC.app" "$HOME/Library/Application Support/TNAS PC" \
+    "-" "-"
+  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+    "4K Live Wallpaper" "Optional" "Note only — no meaningful local state; reconfigure after reimage" "none" "none" \
+    "yes" "Optional" "backup-apps.md" "Cosmetic only; re-select wallpapers after reimage." "/Applications/4K Live Wallpaper.app;$HOME/Applications/4K Live Wallpaper.app" "-" \
+    "-" "-"
+  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+    "NexiGo Webcam Settings" "Optional" "Note only — no meaningful local state; reconfigure after reimage" "none" "none" \
+    "yes" "Optional" "backup-apps.md" "Webcam presets are quick to redo; reconfigure after reimage." "/Applications/NexiGo Webcam Settings.app;$HOME/Applications/NexiGo Webcam Settings.app" "-" \
+    "-" "-"
+  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
     "Visual Studio Code" "Common" "Script" "$r/app-settings-backup/vscode/" "usually none from this runbook" \
-    "yes" "Optional" "backup-apps.md" "Extensions, settings, snippets, profiles, or a local fallback beyond Settings Sync matter." "/Applications/Visual Studio Code.app;$HOME/Applications/Visual Studio Code.app" "$HOME/Library/Application Support/Code;$HOME/Library/Preferences/com.microsoft.VSCode.plist"
-  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+    "yes" "Optional" "backup-apps.md" "Extensions, settings, snippets, profiles, or a local fallback beyond Settings Sync matter." "/Applications/Visual Studio Code.app;$HOME/Applications/Visual Studio Code.app" "$HOME/Library/Application Support/Code;$HOME/Library/Preferences/com.microsoft.VSCode.plist" \
+    "-" "-"
+  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
     "Terminal" "Common" "Manual" "$r/app-settings-backup/terminal/" "none" \
-    "no" "Common" "backup-apps.md" "Custom Terminal.app profile (colors, font, window size) worth preserving." "/System/Applications/Utilities/Terminal.app" "$HOME/Library/Preferences/com.apple.Terminal.plist"
+    "yes" "Common" "backup-apps.md" "Custom Terminal.app profile (colors, font, window size) worth preserving." "/System/Applications/Utilities/Terminal.app;/Applications/Utilities/Terminal.app" "$HOME/Library/Preferences/com.apple.Terminal.plist" \
+    "-" "-"
 }
 
 print_supported_apps() {
@@ -161,6 +253,8 @@ MANAGED_INVENTORY_DIR=""
 DOCKER_ONLY=false
 INTELLIJ_ONLY=false
 VSCODE_ONLY=false
+APPS_ONLY=false
+ALL_DETECTED=false
 SHOW_SUPPORTED=false
 INTELLIJ_ALL_CONFIG_DIRS=false
 INTELLIJ_INCLUDE_SYSTEM_CACHE=false
@@ -193,6 +287,8 @@ while [[ $# -gt 0 ]]; do
     --docker-only) DOCKER_ONLY=true; shift ;;
     --intellij-only) INTELLIJ_ONLY=true; shift ;;
     --vscode-only) VSCODE_ONLY=true; shift ;;
+    --apps-only) APPS_ONLY=true; shift ;;
+    --all-detected) ALL_DETECTED=true; shift ;;
     --supported-apps) SHOW_SUPPORTED=true; shift ;;
     --intellij-workspace-root) INTELLIJ_WORKSPACE_ROOT="${2:-}"; shift 2 ;;
     --intellij-workspace-max-depth) INTELLIJ_WORKSPACE_MAX_DEPTH="${2:-}"; shift 2 ;;
@@ -233,38 +329,111 @@ ONLY_COUNT=0
 [[ "$DOCKER_ONLY" == true ]] && ONLY_COUNT=$((ONLY_COUNT + 1))
 [[ "$INTELLIJ_ONLY" == true ]] && ONLY_COUNT=$((ONLY_COUNT + 1))
 [[ "$VSCODE_ONLY" == true ]] && ONLY_COUNT=$((ONLY_COUNT + 1))
+[[ "$APPS_ONLY" == true ]] && ONLY_COUNT=$((ONLY_COUNT + 1))
 
 if (( ONLY_COUNT > 1 )); then
-  echo "ERROR: choose only one of --docker-only, --intellij-only, or --vscode-only" >&2
+  echo "ERROR: choose only one of --docker-only, --intellij-only, --vscode-only, or --apps-only" >&2
   exit 2
 fi
 
 if (( ONLY_COUNT > 0 )) && [[ "$RUN_CANDIDATE_REVIEW" == true ]]; then
-  echo "ERROR: --candidate-review cannot be combined with --docker-only, --intellij-only, or --vscode-only" >&2
+  echo "ERROR: --candidate-review cannot be combined with --docker-only, --intellij-only, --vscode-only, or --apps-only" >&2
   exit 2
 fi
 
 APP_ROOT="$REIMAGE_ARTIFACT_ROOT/app-settings-backup"
-SECRETS_ROOT="$REIMAGE_ARTIFACT_ROOT/secrets-encrypted"
 STAMP="$(date '+%Y-%m-%d %H:%M:%S')"
 CANDIDATE_REVIEW_DIR=""
 
-mkdir -p \
-  "$APP_ROOT" \
-  "$APP_ROOT/candidate-review" \
-  "$APP_ROOT/chrome" \
-  "$APP_ROOT/docker" \
-  "$APP_ROOT/obsidian" \
-  "$APP_ROOT/postman/collections" \
-  "$APP_ROOT/postman/environments-redacted" \
-  "$APP_ROOT/postman/inventory" \
-  "$APP_ROOT/raycast" \
-  "$APP_ROOT/vscode/user" \
-  "$SECRETS_ROOT/chrome" \
-  "$SECRETS_ROOT/docker" \
-  "$SECRETS_ROOT/postman/environments" \
-  "$SECRETS_ROOT/postman/vault-if-export-allowed" \
-  "$SECRETS_ROOT/raycast/quicklinks-if-sensitive"
+# The app-backup selection checklist is the authoritative input for a full run:
+# Step 3 (--candidate-review) generates it, the user checks apps, and Step 4
+# reads it here. See .internal/apps/app-selection.sh.
+SELECTION_HELPER="$(dirname "$SCRIPT_DIR")/.internal/apps/app-selection.sh"
+SELECTION_FILE="$APP_ROOT/app-backup-selection.md"
+
+# Classify this invocation. A "full run" is the real backup with no single-app
+# rerun flag and not the scan-only candidate review. Selection gating is active
+# on a full run unless --all-detected explicitly bypasses the checklist.
+FULL_RUN=false
+if [[ "$RUN_CANDIDATE_REVIEW" != true && "$DOCKER_ONLY" != true \
+      && "$INTELLIJ_ONLY" != true && "$VSCODE_ONLY" != true && "$APPS_ONLY" != true ]]; then
+  FULL_RUN=true
+fi
+SELECTION_ACTIVE=false
+if [[ "$FULL_RUN" == true && "$ALL_DETECTED" != true ]]; then
+  SELECTION_ACTIVE=true
+fi
+
+# A full, checklist-driven run needs the checklist. Fail early with guidance
+# rather than silently backing up everything (or nothing).
+if [[ "$SELECTION_ACTIVE" == true && ! -f "$SELECTION_FILE" ]]; then
+  echo "ERROR: no app-backup selection checklist found:" >&2
+  echo "  $SELECTION_FILE" >&2
+  echo "Generate it first (Step 3 — Determine Which Apps to Back Up):" >&2
+  echo "  ./bin/backup-apps.sh --candidate-review" >&2
+  echo "Then check the apps to back up in that file and re-run, or pass" >&2
+  echo "--all-detected to back up everything detected without a checklist." >&2
+  exit 2
+fi
+
+# Load the current selections once. Empty when not a checklist-driven run. The
+# three supported sections — automatic, both (automatic+manual), and manual — are
+# all supported apps for backup purposes; they are separated in the checklist only
+# to show the mechanism. Unsupported is a distinct category (drop-folders).
+SELECTED_AUTOMATIC=""
+SELECTED_BOTH=""
+SELECTED_MANUAL=""
+SELECTED_UNSUPPORTED=""
+if [[ "$SELECTION_ACTIVE" == true ]]; then
+  SELECTED_AUTOMATIC="$(bash "$SELECTION_HELPER" --list-selected --selection "$SELECTION_FILE" --section automatic || true)"
+  SELECTED_BOTH="$(bash "$SELECTION_HELPER" --list-selected --selection "$SELECTION_FILE" --section both || true)"
+  SELECTED_MANUAL="$(bash "$SELECTION_HELPER" --list-selected --selection "$SELECTION_FILE" --section manual || true)"
+  SELECTED_UNSUPPORTED="$(bash "$SELECTION_HELPER" --list-selected --selection "$SELECTION_FILE" --section unsupported || true)"
+fi
+
+# is_selected_supported NAME — is a supported app (by registry name) chosen for
+# backup? Checks all three supported sections (automatic, both, manual).
+# Selection gates only the checklist-driven run; single-app reruns and
+# --all-detected bypass it, so every detected app is eligible there.
+is_selected_supported() {
+  [[ "$SELECTION_ACTIVE" == true ]] || return 0
+  local name="$1" line
+  while IFS= read -r line; do
+    [[ "$line" == "$name" ]] && return 0
+  done <<< "$SELECTED_AUTOMATIC"
+  while IFS= read -r line; do
+    [[ "$line" == "$name" ]] && return 0
+  done <<< "$SELECTED_BOTH"
+  while IFS= read -r line; do
+    [[ "$line" == "$name" ]] && return 0
+  done <<< "$SELECTED_MANUAL"
+  return 1
+}
+
+# classify_backup_kind HOW — derive the checklist category from the registry
+# "how" text (the single source of truth for mechanism). "both" when it names a
+# script AND a manual step; otherwise "auto" (script), "manual", or "note".
+classify_backup_kind() {
+  local h
+  h="$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]')"
+  case "$h" in
+    note\ only*|*note-only*) printf 'note' ;;
+    *script*manual*|*manual*script*) printf 'both' ;;
+    *script*) printf 'auto' ;;
+    *manual*) printf 'manual' ;;
+    *) printf 'auto' ;;
+  esac
+}
+
+# app_slug NAME — lowercase, non-alphanumeric collapsed to single hyphens.
+app_slug() {
+  printf '%s' "$1" | tr '[:upper:]' '[:lower:]' | tr -c 'a-z0-9' '-' \
+    | sed 's/--*/-/g; s/^-//; s/-$//'
+}
+
+# Always-present roots. Per-app folders are created only for what a run will
+# actually back up (see create_selected_app_dirs and the per-app helpers).
+mkdir -p "$APP_ROOT" "$APP_ROOT/candidate-review"
 
 DOCKER_STATUS="Not run"
 INTELLIJ_STATUS="Not run"
@@ -276,15 +445,19 @@ if [[ "$INTELLIJ_ONLY" == true ]]; then
   DOCKER_STATUS="Skipped by --intellij-only"
 elif [[ "$VSCODE_ONLY" == true ]]; then
   DOCKER_STATUS="Skipped by --vscode-only"
-elif [[ -f "$DOCKER_HELPER" ]]; then
-  if [[ -d "/Applications/Docker.app" ]] || [[ -d "$HOME/Library/Group Containers/group.com.docker" ]] || [[ -f "$HOME/.docker/config.json" ]] || command -v docker >/dev/null 2>&1; then
-    bash "$DOCKER_HELPER" --artifact-root "$REIMAGE_ARTIFACT_ROOT"
-    DOCKER_STATUS="Captured to app-settings-backup/docker/ and secrets-encrypted/docker/ when available"
-  else
-    DOCKER_STATUS="Skipped; Docker Desktop state not detected on this Mac"
-  fi
-else
+elif [[ "$APPS_ONLY" == true ]]; then
+  DOCKER_STATUS="Skipped by --apps-only"
+elif [[ "$RUN_CANDIDATE_REVIEW" == true ]]; then
+  DOCKER_STATUS="Skipped; candidate-review is scan-only"
+elif [[ ! -f "$DOCKER_HELPER" ]]; then
   DOCKER_STATUS="Skipped; .internal/apps/backup-docker-settings.sh not found"
+elif ! is_selected_supported "Docker Desktop"; then
+  DOCKER_STATUS="Skipped; Docker Desktop not selected in the app-backup checklist"
+elif [[ -d "/Applications/Docker.app" ]] || [[ -d "$HOME/Library/Group Containers/group.com.docker" ]] || [[ -f "$HOME/.docker/config.json" ]] || command -v docker >/dev/null 2>&1; then
+  bash "$DOCKER_HELPER" --artifact-root "$REIMAGE_ARTIFACT_ROOT"
+  DOCKER_STATUS="Captured to app-settings-backup/docker/ and secrets-encrypted/docker/ when available"
+else
+  DOCKER_STATUS="Skipped; Docker Desktop state not detected on this Mac"
 fi
 
 INTELLIJ_HELPER="$(dirname "$SCRIPT_DIR")/.internal/apps/backup-intellij-scratches-consoles.sh"
@@ -318,34 +491,83 @@ if [[ "$DOCKER_ONLY" == true ]]; then
   INTELLIJ_STATUS="Skipped by --docker-only"
 elif [[ "$VSCODE_ONLY" == true ]]; then
   INTELLIJ_STATUS="Skipped by --vscode-only"
-elif [[ -f "$INTELLIJ_HELPER" ]]; then
-  if [[ -d "/Applications/IntelliJ IDEA.app" ]] || [[ -d "$HOME/Applications/IntelliJ IDEA.app" ]] || [[ -d "$HOME/Library/Application Support/JetBrains" ]]; then
-    bash "$INTELLIJ_HELPER" "${INTELLIJ_HELPER_ARGS[@]}"
-    INTELLIJ_STATUS="Captured under app-settings-backup/intellij/ when IntelliJ state was found"
-  else
-    INTELLIJ_STATUS="Skipped; IntelliJ IDEA state not detected on this Mac"
-  fi
-else
+elif [[ "$APPS_ONLY" == true ]]; then
+  INTELLIJ_STATUS="Skipped by --apps-only"
+elif [[ "$RUN_CANDIDATE_REVIEW" == true ]]; then
+  INTELLIJ_STATUS="Skipped; candidate-review is scan-only"
+elif [[ ! -f "$INTELLIJ_HELPER" ]]; then
   INTELLIJ_STATUS="Skipped; .internal/apps/backup-intellij-scratches-consoles.sh not found"
+elif ! is_selected_supported "IntelliJ IDEA"; then
+  INTELLIJ_STATUS="Skipped; IntelliJ IDEA not selected in the app-backup checklist"
+elif [[ -d "/Applications/IntelliJ IDEA.app" ]] || [[ -d "$HOME/Applications/IntelliJ IDEA.app" ]] || [[ -d "$HOME/Library/Application Support/JetBrains" ]]; then
+  bash "$INTELLIJ_HELPER" "${INTELLIJ_HELPER_ARGS[@]}"
+  INTELLIJ_STATUS="Captured under app-settings-backup/intellij/ when IntelliJ state was found"
+else
+  INTELLIJ_STATUS="Skipped; IntelliJ IDEA state not detected on this Mac"
 fi
 
-if [[ "$DOCKER_ONLY" == true || "$INTELLIJ_ONLY" == true ]]; then
+if [[ "$DOCKER_ONLY" == true || "$INTELLIJ_ONLY" == true || "$APPS_ONLY" == true ]]; then
   VSCODE_STATUS="Skipped by single-app rerun mode"
+elif [[ "$RUN_CANDIDATE_REVIEW" == true ]]; then
+  VSCODE_STATUS="Skipped; candidate-review is scan-only"
+elif ! is_selected_supported "Visual Studio Code"; then
+  VSCODE_STATUS="Skipped; Visual Studio Code not selected in the app-backup checklist"
 else
   VSCODE_DEST="$APP_ROOT/vscode"
   VSCODE_USER="$HOME/Library/Application Support/Code/User"
   VSCODE_FOUND=false
-  CODE_BIN=""
+  mkdir -p "$VSCODE_DEST/user"
 
-  if command -v code >/dev/null 2>&1; then
-    CODE_BIN="$(command -v code)"
-  elif [[ -x "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code" ]]; then
-    CODE_BIN="/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code"
+  # Extensions list. Read it straight from the on-disk extensions folder rather
+  # than `code --list-extensions`: the CLI frequently writes nothing when its
+  # stdout is redirected in a non-interactive run. Standard and Insiders builds
+  # keep each extension as a publisher.name-version folder under
+  # ~/.vscode[-insiders]/extensions, with a manifest at extensions.json.
+  EXT_FOUND=false
+  for EXT_DIR in "$HOME/.vscode/extensions" "$HOME/.vscode-insiders/extensions"; do
+    [[ -d "$EXT_DIR" ]] || continue
+    # Primary: folder names -> strip the trailing -version(-platform) suffix.
+    # `|| true`: grep exits non-zero when nothing matches (empty/extension-less
+    # dir); without it, set -o pipefail + set -e would abort the whole run here.
+    find "$EXT_DIR" -maxdepth 1 -mindepth 1 -type d 2>/dev/null \
+      | sed 's#.*/##' \
+      | sed -E 's/-[0-9]+\.[0-9]+\.[0-9]+.*$//' \
+      | grep -E '\.' \
+      | sort -u > "$VSCODE_DEST/extensions.txt" || true
+    # Fallback: parse publisher.name ids from the manifest (dot-bearing values;
+    # GUID-style ids have no dot and are dropped). No jq dependency.
+    if [[ ! -s "$VSCODE_DEST/extensions.txt" && -f "$EXT_DIR/extensions.json" ]]; then
+      grep -oE '"id"[[:space:]]*:[[:space:]]*"[^"]+"' "$EXT_DIR/extensions.json" 2>/dev/null \
+        | sed -E 's/.*:[[:space:]]*"([^"]+)".*/\1/' \
+        | grep -E '\.' \
+        | sort -u > "$VSCODE_DEST/extensions.txt" || true
+    fi
+    if [[ -s "$VSCODE_DEST/extensions.txt" ]]; then
+      EXT_FOUND=true
+      VSCODE_FOUND=true
+      break
+    fi
+  done
+
+  # Last resort: the CLI, only if the on-disk read found nothing.
+  if [[ "$EXT_FOUND" != true ]]; then
+    CODE_BIN=""
+    if command -v code >/dev/null 2>&1; then
+      CODE_BIN="$(command -v code)"
+    elif [[ -x "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code" ]]; then
+      CODE_BIN="/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code"
+    elif [[ -x "$HOME/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code" ]]; then
+      CODE_BIN="$HOME/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code"
+    fi
+    if [[ -n "$CODE_BIN" ]]; then
+      "$CODE_BIN" --list-extensions > "$VSCODE_DEST/extensions.txt" 2>/dev/null || true
+      [[ -s "$VSCODE_DEST/extensions.txt" ]] && VSCODE_FOUND=true
+    fi
   fi
 
-  if [[ -n "$CODE_BIN" ]]; then
-    "$CODE_BIN" --list-extensions > "$VSCODE_DEST/extensions.txt" 2>/dev/null || true
-    VSCODE_FOUND=true
+  # Do not leave a misleading empty extensions.txt behind.
+  if [[ -f "$VSCODE_DEST/extensions.txt" && ! -s "$VSCODE_DEST/extensions.txt" ]]; then
+    rm -f "$VSCODE_DEST/extensions.txt"
   fi
 
   for f in settings.json keybindings.json; do
@@ -626,7 +848,10 @@ generate_candidate_review() {
   # skipped here. The same pass records a bundle-basename → route lookup so the
   # all-apps candidate list below can mark which installed apps have toolkit support.
   local verdict evidence bpaths bp base res
-  while IFS=$'\t' read -r app group how non_secret_dest secret_dest detectable phase_fit route use_when bundle_paths state_paths; do
+  local capture_paths secret_capture_paths
+  while IFS=$'\t' read -r app group how non_secret_dest secret_dest detectable phase_fit route use_when bundle_paths state_paths capture_paths secret_capture_paths; do
+    # Normalize the "none" sentinel so empty-state apps read as "none found".
+    [[ "$state_paths" == "-" ]] && state_paths=""
     IFS=';' read -r -a bpaths <<< "$bundle_paths"
     for bp in "${bpaths[@]}"; do
       printf '%s\t%s\t%s\n' "${bp##*/}" "$app" "$route" >> "$supported_lookup"
@@ -679,6 +904,60 @@ generate_candidate_review() {
   done < "$app_all_list"
 
   rm -f "$supported_lookup"
+
+  # Generate/refresh the app-backup selection checklist from this scan. Supported
+  # present apps come from the toolkit-supported subset (installed==yes); the
+  # unsupported-and-present apps are the full-inventory rows the toolkit does not
+  # cover. The helper preserves any checks already made and adds new apps unchecked.
+  #
+  # Company-managed apps are dropped from the unsupported list: a *strong* managed
+  # verdict ($3=="managed" in known-app-candidates.tsv) means IT restores the app,
+  # so it is not a manual-backup candidate. A weak "likely" (receipt-only) or
+  # "none" verdict stays, matching the supported-side Known/Managed partition,
+  # since "installed via a package" is not proof of management. The excluded set
+  # is recorded under raw/ so nothing is dropped silently. When no managed
+  # inventory was consulted, every verdict is "none" and nothing is excluded here.
+  # Toolkit-supported installed apps are split into three checklist sections by
+  # backup mechanism, derived from each app's registry "how" text (the single
+  # source of truth): the script covers it -> automatic; script + a manual step
+  # -> both; a manual step but no scripted capture -> manual. Note-only apps have
+  # neither and are left off the checklist. This mirrors the runbook: an app is
+  # "both" only when it is script-backed AND has a Step 5 manual-export section.
+  local sel_automatic="$raw/selection-automatic.txt"
+  local sel_both="$raw/selection-both.txt"
+  local sel_manual="$raw/selection-manual.txt"
+  local sel_unsupported="$raw/selection-unsupported.txt"
+  : > "$sel_automatic"; : > "$sel_both"; : > "$sel_manual"
+  local _app _grp _how _nsd _sd _det _pf _rt _uw _bp _sp _cp _scp _kind
+  while IFS=$'\t' read -r _app _grp _how _nsd _sd _det _pf _rt _uw _bp _sp _cp _scp; do
+    [[ "$_det" == "yes" ]] || continue
+    [[ -n "$(first_existing_path "$_bp" || true)" ]] || continue
+    _kind="$(classify_backup_kind "$_how")"
+    case "$_kind" in
+      auto)   printf '%s\n' "$_app" >> "$sel_automatic" ;;
+      both)   printf '%s\n' "$_app" >> "$sel_both" ;;
+      manual) printf '%s\n' "$_app" >> "$sel_manual" ;;
+      note)   : ;;  # note-only: no backup and no manual step; left off the checklist
+    esac
+  done < <(supported_apps_registry)
+  sort -u "$sel_automatic" -o "$sel_automatic"
+  sort -u "$sel_both" -o "$sel_both"
+  sort -u "$sel_manual" -o "$sel_manual"
+  awk -F'\t' 'NR>1 && $5=="no" && $3!="managed"{print $1}' "$known_tsv" | sort -u > "$sel_unsupported"
+  awk -F'\t' 'NR>1 && $5=="no" && $3=="managed"{print $1"\t"$4}' "$known_tsv" | sort -u \
+    > "$raw/unsupported-managed-excluded.txt"
+  if [[ -f "$SELECTION_HELPER" ]]; then
+    bash "$SELECTION_HELPER" --generate \
+      --automatic-list "$sel_automatic" \
+      --both-list "$sel_both" \
+      --manual-list "$sel_manual" \
+      --unsupported-list "$sel_unsupported" \
+      --selection "$SELECTION_FILE" \
+      --run-hint "./bin/backup-apps.sh" \
+      || echo "WARNING: could not generate selection checklist: $SELECTION_FILE" >&2
+  else
+    echo "WARNING: selection helper not found: $SELECTION_HELPER" >&2
+  fi
 
   cat > "$summary_md" <<EOF
 # App Backup Candidates Review
@@ -757,6 +1036,7 @@ Raw scan files:
 - \`raw/state-signal-paths.txt\`
 - \`raw/managed-apps-detected.txt\`
 - \`raw/managed-inventory-source.txt\`
+- \`raw/unsupported-managed-excluded.txt\` — unsupported apps left off the selection checklist because they are company-managed (app + evidence)
 
 ## Notes
 
@@ -771,13 +1051,156 @@ EOF
   rm -f "$known_md_tmp" "$managed_md_tmp" "$related_md_tmp"
 }
 
-if [[ "$DOCKER_ONLY" == true || "$INTELLIJ_ONLY" == true || "$VSCODE_ONLY" == true ]]; then
+if [[ "$DOCKER_ONLY" == true || "$INTELLIJ_ONLY" == true || "$VSCODE_ONLY" == true || "$APPS_ONLY" == true ]]; then
   CANDIDATE_REVIEW_STATUS="Skipped by single-app rerun mode"
 elif [[ "$RUN_CANDIDATE_REVIEW" == true ]]; then
   generate_candidate_review
   CANDIDATE_REVIEW_STATUS="Generated candidate-review bundle under app-settings-backup/candidate-review/"
 fi
 
+# ---------------------------------------------------------------------------
+# Registry-driven app-config captures
+# ---------------------------------------------------------------------------
+APP_CONFIG_HELPER="$(dirname "$SCRIPT_DIR")/.internal/apps/backup-app-config.sh"
+APP_CONFIG_STATUS="Not run"
+APP_CONFIG_FAILURES=0
+
+run_registry_app_captures() {
+  # For each registry app that declares capture_paths and/or secret_capture_paths
+  # and is detected on this Mac, hand its resolved sources and destinations to
+  # backup-app-config.sh. Apps handled by dedicated helpers (Docker/IntelliJ/VS
+  # Code), manual app-UI exports, and note-only apps have empty capture columns
+  # and are skipped here. Returns 0 if at least one app was captured, else 1.
+  local any=false
+  local app group how non_secret_dest secret_dest detectable phase_fit route use_when bundle_paths state_paths capture_paths secret_capture_paths
+  local present args caps secs p
+  while IFS=$'\t' read -r app group how non_secret_dest secret_dest detectable phase_fit route use_when bundle_paths state_paths capture_paths secret_capture_paths; do
+    # Normalize the "none" sentinel back to empty.
+    [[ "$capture_paths" == "-" ]] && capture_paths=""
+    [[ "$secret_capture_paths" == "-" ]] && secret_capture_paths=""
+    [[ -z "$capture_paths" && -z "$secret_capture_paths" ]] && continue
+    is_selected_supported "$app" || continue
+    present="$(first_existing_path "$bundle_paths" || true)"
+    [[ -n "$present" ]] || continue
+    args=(--app "$app" --dest "$non_secret_dest")
+    if [[ -n "$secret_capture_paths" ]]; then
+      args+=(--secret-dest "$secret_dest")
+    fi
+    if [[ -n "$capture_paths" ]]; then
+      IFS=';' read -r -a caps <<< "$capture_paths"
+      for p in "${caps[@]}"; do
+        [[ -n "$p" ]] && args+=(--path "$p")
+      done
+    fi
+    if [[ -n "$secret_capture_paths" ]]; then
+      IFS=';' read -r -a secs <<< "$secret_capture_paths"
+      for p in "${secs[@]}"; do
+        [[ -n "$p" ]] && args+=(--secret-path "$p")
+      done
+    fi
+    if bash "$APP_CONFIG_HELPER" "${args[@]}"; then
+      any=true
+    else
+      any=true
+      APP_CONFIG_FAILURES=$((APP_CONFIG_FAILURES + 1))
+    fi
+  done < <(supported_apps_registry)
+  [[ "$any" == true ]]
+}
+
+# create_selected_app_dirs — on a full run, create the destination/drop folders
+# for exactly what will be backed up: the top-level folder for each selected +
+# detected supported app, and a drop-folder plus manual-TODO README for each
+# selected unsupported app. Per-app helpers still create their own subfolders.
+UNSUPPORTED_DROP_ROOT="$APP_ROOT/manual-unsupported"
+create_selected_app_dirs() {
+  local app group how non_secret_dest secret_dest detectable phase_fit route use_when bundle_paths state_paths capture_paths secret_capture_paths
+  while IFS=$'\t' read -r app group how non_secret_dest secret_dest detectable phase_fit route use_when bundle_paths state_paths capture_paths secret_capture_paths; do
+    [[ "$detectable" == "yes" ]] || continue
+    is_selected_supported "$app" || continue
+    [[ -n "$(first_existing_path "$bundle_paths" || true)" ]] || continue
+    [[ "$non_secret_dest" == none ]] || mkdir -p "$non_secret_dest"
+    case "$secret_dest" in
+      "$REIMAGE_ARTIFACT_ROOT"/*) mkdir -p "$secret_dest" ;;
+    esac
+  done < <(supported_apps_registry)
+
+  # Unsupported apps the user chose to back up by hand: give each a drop-folder.
+  [[ "$SELECTION_ACTIVE" == true ]] || return 0
+  local uname slug dropdir
+  while IFS= read -r uname; do
+    [[ -n "$uname" ]] || continue
+    slug="$(app_slug "$uname")"
+    [[ -n "$slug" ]] || continue
+    dropdir="$UNSUPPORTED_DROP_ROOT/$slug"
+    mkdir -p "$dropdir"
+    if [[ ! -f "$dropdir/README.txt" ]]; then
+      {
+        echo "Manual backup drop-folder for: $uname"
+        echo ""
+        echo "This app is not automatically supported by the reimage toolkit."
+        echo "Export or copy its state into this folder before the erase, then"
+        echo "restore it yourself after reimage. If any export is secret-bearing,"
+        echo "stage it under secrets-encrypted/ instead of here."
+      } > "$dropdir/README.txt"
+    fi
+  done <<< "$SELECTED_UNSUPPORTED"
+}
+
+# prune_empty_app_dirs — after all captures, remove directories left empty:
+# rsync-mirrored app support subfolders that held no user content (e.g. the
+# BBEdit "Language Modules", "Scripts", ... subtree), a VS Code user/snippets
+# with nothing in it, or a dest folder for an app that matched nothing. The
+# manual export steps in backup-apps.md each `mkdir -p` their own folder, so
+# nothing here is a required pre-existing drop target. Scoped to APP_ROOT
+# (app-settings-backup); secrets-encrypted drop-folders are left untouched.
+# -mindepth 1 keeps APP_ROOT itself; -depth removes nested empties bottom-up.
+prune_empty_app_dirs() {
+  [[ -d "$APP_ROOT" ]] || return 0
+  find "$APP_ROOT" -mindepth 1 -depth -type d -empty -exec rmdir {} \; 2>/dev/null || true
+}
+
+if [[ "$FULL_RUN" == true ]]; then
+  create_selected_app_dirs
+fi
+
+if [[ "$DOCKER_ONLY" == true || "$INTELLIJ_ONLY" == true || "$VSCODE_ONLY" == true ]]; then
+  APP_CONFIG_STATUS="Skipped by single-app rerun mode"
+elif [[ "$RUN_CANDIDATE_REVIEW" == true ]]; then
+  APP_CONFIG_STATUS="Skipped; candidate-review is scan-only"
+elif [[ ! -f "$APP_CONFIG_HELPER" ]]; then
+  APP_CONFIG_STATUS="Skipped; .internal/apps/backup-app-config.sh not found"
+elif run_registry_app_captures; then
+  if (( APP_CONFIG_FAILURES > 0 )); then
+    APP_CONFIG_STATUS="Captured registry-driven app configs, but $APP_CONFIG_FAILURES source(s) failed — review output"
+  else
+    APP_CONFIG_STATUS="Captured registry-driven app configs to app-settings-backup/<app>/ (and secrets-encrypted/<app>/ where applicable)"
+  fi
+else
+  APP_CONFIG_STATUS="Skipped; no registry-driven apps detected on this Mac"
+fi
+
+# Selection summary for the manifest and run output.
+if [[ "$SELECTION_ACTIVE" == true ]]; then
+  SELECTION_STATUS="Checklist: $SELECTION_FILE"
+elif [[ "$ALL_DETECTED" == true ]]; then
+  SELECTION_STATUS="Bypassed with --all-detected (all detected apps eligible)"
+else
+  SELECTION_STATUS="Not applicable for this run mode"
+fi
+
+UNSUPPORTED_TODO_MD="- none selected"
+if [[ "$SELECTION_ACTIVE" == true ]]; then
+  _unsup_md="$(while IFS= read -r u; do
+    [[ -n "$u" ]] || continue
+    printf -- '- %s  (drop-folder: app-settings-backup/manual-unsupported/%s/)\n' "$u" "$(app_slug "$u")"
+  done <<< "$SELECTED_UNSUPPORTED")"
+  [[ -n "$_unsup_md" ]] && UNSUPPORTED_TODO_MD="$_unsup_md"
+fi
+
+# The scan-only candidate review writes no MANIFEST.md — it only produces the
+# review bundle and refreshes the selection checklist.
+if [[ "$RUN_CANDIDATE_REVIEW" != true ]]; then
 cat > "$APP_ROOT/MANIFEST.md" <<EOF
 # App Backup Manifest
 
@@ -788,10 +1211,12 @@ Artifact root: $REIMAGE_ARTIFACT_ROOT
 
 | Item | Status |
 |---|---|
+| App-backup selection | $SELECTION_STATUS |
 | Standard app-backup directories prepared | Complete |
 | Docker helper | $DOCKER_STATUS |
 | IntelliJ helper | $INTELLIJ_STATUS |
 | VS Code local fallback capture | $VSCODE_STATUS |
+| Registry-driven app configs | $APP_CONFIG_STATUS |
 | Candidate review helper | $CANDIDATE_REVIEW_STATUS |
 
 ## Primary Phase 2D locations
@@ -801,32 +1226,54 @@ $REIMAGE_ARTIFACT_ROOT/app-settings-backup/
 $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/
 \`\`\`
 
+## Manual backup — unsupported apps you selected
+
+$UNSUPPORTED_TODO_MD
+
 ## Manual or app-controlled follow-up still required when applicable
 
 - Chrome bookmarks export and optional password CSV staging
 - Postman collections, environment exports, and optional vault export handling
+- Fiddler Everywhere session/AutoResponder export and secret-bearing staging
+- TNAS PC connection re-add and any secret-bearing credential staging
 - Raycast export review and any secret-bearing quicklinks handling
 - Obsidian restore-source decision and any manual vault copy
+- iMovie libraries confirmed backed up as local files (Phase 2B), not copied into the artifact root
 - IntelliJ settings ZIP export from the dedicated IntelliJ companion runbook when applicable
+- Claude MCP config reviewed after scripted staging to secrets-encrypted/claude/ when applicable
 
 ## Notes
 
 - Treat this manifest as the stable Phase 2D summary.
+- Only the apps checked in \`app-backup-selection.md\` were acted on (unless run with --all-detected).
 - Use \`backup-apps.md\` for the manual or app-controlled steps that the script cannot complete.
 - Use \`reimage-prep-checks.md\` later in Phase 4 only for the manual rows that remain after reviewing the generated \`reimage-checklist.sh --phase pre\` report.
 EOF
+fi
 
-echo "Prepared Phase 2D app backup root: $APP_ROOT"
-echo "Wrote manifest: $APP_ROOT/MANIFEST.md"
-echo "Docker helper: $DOCKER_STATUS"
-echo "IntelliJ helper: $INTELLIJ_STATUS"
-echo "VS Code capture: $VSCODE_STATUS"
+# Remove capture folders that ended up empty (rsync-mirrored subfolders with no
+# content, or dest folders for apps that matched nothing). Full runs only.
+if [[ "$FULL_RUN" == true ]]; then
+  prune_empty_app_dirs
+fi
+
 if [[ "$RUN_CANDIDATE_REVIEW" == true ]]; then
   echo "Candidate review: $CANDIDATE_REVIEW_STATUS"
   echo "Candidate review output: $CANDIDATE_REVIEW_DIR"
+  echo "Selection checklist: $SELECTION_FILE"
+  echo "Next: check the apps to back up in that checklist, then run the Step 4 backup."
+else
+  echo "Prepared Phase 2D app backup root: $APP_ROOT"
+  echo "Wrote manifest: $APP_ROOT/MANIFEST.md"
+  echo "App-backup selection: $SELECTION_STATUS"
+  echo "Docker helper: $DOCKER_STATUS"
+  echo "IntelliJ helper: $INTELLIJ_STATUS"
+  echo "VS Code capture: $VSCODE_STATUS"
+  echo "App configs: $APP_CONFIG_STATUS"
 fi
 
 if $OPEN_AFTER; then
   [[ -n "$CANDIDATE_REVIEW_DIR" ]] && open "$CANDIDATE_REVIEW_DIR" 2>/dev/null || true
+  [[ "$RUN_CANDIDATE_REVIEW" == true && -f "$SELECTION_FILE" ]] && open "$SELECTION_FILE" 2>/dev/null || true
   open "$APP_ROOT" 2>/dev/null || true
 fi

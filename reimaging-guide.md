@@ -92,6 +92,7 @@ This guide assumes:
 
   Treat those apps, profiles, agents, daemons, and managed preferences as IT-owned state; do not remove Office caches, Outlook profiles, OneNote caches, Office licensing data, security/network agents, management profiles, or other managed-app data unless IT explicitly asks.
 - Credential-bearing files should be stored on the external drive and preferably encrypted before placing any copy in cloud storage.
+- Script commands are run from the repository root (`$FRACTOGENESIS_HOME`). `cd` there once at the start of a working session; the runbooks assume this and do not repeat `cd "$FRACTOGENESIS_HOME"` before every command. Scripts self-locate and resolve their paths from `reimage.env` regardless — this is only about where your shell sits so relative invocations like `./bin/<script>.sh` resolve. If a command must run from somewhere else, that runbook says so explicitly.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 

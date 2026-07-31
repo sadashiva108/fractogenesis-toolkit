@@ -119,7 +119,7 @@ $FRACTOGENESIS_HOME/.internal/                    # sourced-only helpers, never 
 $FRACTOGENESIS_HOME/.internal/artifact-config.sh  # sourced by backup scripts, never run directly
 ```
 
-`$FRACTOGENESIS_HOME` above is reference notation showing where these files live, not a literal path you can use from a fresh terminal -- direnv only populates it once you've already `cd`ed into the repo. Commands elsewhere in this guide `cd "$FRACTOGENESIS_HOME"` first for that reason; see [[#Repo Path Variables and Self-Locating Scripts|Repo Path Variables and Self-Locating Scripts]] for the full explanation.
+`$FRACTOGENESIS_HOME` above is reference notation showing where these files live, not a literal path you can use from a fresh terminal -- direnv only populates it once you've already `cd`ed into the repo. Per the guide's [[reimaging-guide#Core Assumptions|Core Assumptions]], you `cd` into the repository root once at the start of a session, which is what populates `$FRACTOGENESIS_HOME`; see [[#Repo Path Variables and Self-Locating Scripts|Repo Path Variables and Self-Locating Scripts]] for the full explanation.
 
 Both self-locate relative to their own position in the repo — nothing needs to be told where the repo is; there's no `REIMAGE_ROOT`-equivalent variable to keep in sync. For what that does and doesn't mean in practice, and how `FRACTOGENESIS_PARENT`/`FRACTOGENESIS_HOME`/`$HOME` relate to each other, see [[#Repo Path Variables and Self-Locating Scripts|Repo Path Variables and Self-Locating Scripts]] in the supplemental reference at the end of this guide -- not required reading to continue, only if you want the detail.
 
