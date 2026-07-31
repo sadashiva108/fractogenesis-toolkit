@@ -1,7 +1,7 @@
 ---
 title: Backup Home
 back_link: "reimaging-guide#Phase 2B — Backup Home"
-runbook_version: 0.1.0
+runbook_version: 0.2.0
 verb_first: true
 primary_scripts:
   - bin/backup-home.sh
@@ -12,7 +12,7 @@ artifact_paths:
   - $REIMAGE_ARTIFACT_ROOT/home-files-backup/
   - $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/certs/java-security/
 author: dkittrell
-last_updated: 2026-07-21
+last_updated: 2026-07-31
 ---
 [[reimaging-guide#Phase 2B — Backup Home|← Back to Mac Reimaging Guide]]
 
@@ -42,6 +42,7 @@ This runbook copies the home-directory files, dotfiles, and secret-bearing targe
     - [[#Run the Backup|Run the Backup]]
     - [[#Review Output|Review Output]]
     - [[#Confirm the OneDrive Sync|Confirm the OneDrive Sync]]
+- [[#Re-running This Phase|Re-running This Phase]]
 - [[#Decisions|Decisions]]
 - [[#Troubleshooting|Troubleshooting]]
 - [[#Supplemental Reference|Supplemental Reference]]
@@ -395,6 +396,31 @@ The single pass/fail checkbox for OneDrive sync in the Phase 4B sign-off lives i
 
 ---
 
+## Re-running This Phase
+
+This phase is safe to re-run at any point before the erase — including right after a later pre-image phase like Backup Apps (Phase 2D). A re-run refreshes the home copy to match your disk as it is now; nothing about the earlier run has to be undone first, and you do **not** need to re-run Backup Apps.
+
+It does not disturb other phases' output. `backup-home.sh` writes only to `home-files-backup/` and its own `secrets-encrypted/` targets (ssh, gnupg, `certs/java-security/`, and the others named in the artifact-config fragments). It never touches `app-settings-backup/`, so a re-run leaves your Backup Apps artifacts intact.
+
+What a re-run changes: the external home targets are synced with `rsync -a --delete`, so the backup is brought into line with your current home directory — new and changed files are copied in, and files you have since deleted are pruned from the backup. Secret-bearing targets are refreshed additively (no delete). Preview first with `--dry-run`:
+
+```bash
+./bin/backup-home.sh --dry-run --external-only
+```
+
+For a mid-phase refresh, use `--external-only` to update just the authoritative external copy and skip re-writing the OneDrive secondary. Use the default (no flag) only if you also want the OneDrive work-safe subset refreshed, then re-confirm it in [[#Confirm the OneDrive Sync|Confirm the OneDrive Sync]].
+
+```bash
+./bin/backup-home.sh --external-only
+```
+
+> [!warning] Pitfall
+> If you have already built the Phase 2F secrets DMG, a re-run that changes any secret-bearing target means that DMG no longer covers the full staged secret set — rebuild it in Phase 2F after this refresh. While you are still staging and have not built the DMG yet (the normal case here), there is nothing extra to do.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ## Decisions
 
 The scripts copy and inventory; these judgment calls stay with you.
@@ -427,6 +453,27 @@ export ONEDRIVE_DEST_SUBDIR="$(basename "${REIMAGE_ARTIFACT_ROOT%/}")"
 ```
 
 `backup-home.sh` now refuses to write under the repo checkout and errors instead. To recover: move any stray contents into the real OneDrive root, quarantine the stray folder until the move shows in OneDrive web, then correct `reimage.env` (via `prepare-artifact-root.md`) before rerunning.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
+### Directory Target Not Backed Up
+
+If a directory you added to `external-targets.conf.sh` doesn't show up in the backup, the entry is almost always being read but skipped — not unread. The run's **External drive — directory targets** section tells you which of two cases you are in.
+
+The target's label prints with `– <label>  not found, skipping`. The entry is active, but its `SOURCE` (field 2) does not exist as written. This is the most common cause. Watch for:
+
+- a misspelled or wrong-plurality folder name — `ai-contexts` when the folder is `ai-context`;
+- a path pointing at a **file or script instead of its directory** — `…/elastic-start-local.sh` instead of the `…/elastic-start-local/` directory that contains it;
+- a path pointing at a **single loose file** rather than a directory. `EXTERNAL_TARGETS` entries are directory targets; capture a one-off file through its parent directory, or route it via a dotfile/secret fragment instead.
+
+The label does not appear at all. The entry is not active: it starts with `#` (commented out), is malformed (not five `|`-delimited fields), or sits outside the `EXTERNAL_TARGETS=( … )` parentheses.
+
+A third case hides even a valid, existing target: a pattern in `external-excludes.conf.sh` filters it out. If a directory that exists and is correctly listed still comes back empty or missing, check the excludes fragment before anything else — an exclude you added earlier quietly wins over a later include.
+
+> [!note]
+> `SOURCE` uses trailing-slash semantics: `…/dir/` syncs the directory's contents into `DEST`, while `…/dir` syncs the directory itself. Before assuming the script is at fault, confirm the source resolves to a directory exactly as written: `ls -d "$HOME/path/you/entered"`.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 

@@ -143,8 +143,9 @@ its shape.
     - Add a short **path-index** section that names each path, says which is preferred and
       why, and links into each chain.
     - Chain the steps within each path so they read straight through.
-    - Where the paths rejoin, link forward to the shared step; at each divergence point use
-      a `> [!info] Return` callout linking back to the path index (not to the Table of Contents).
+    - Where the paths rejoin, link forward to the shared step; at each divergence point add
+      a plain back-link to the path index (not the Table of Contents), using the same
+      `[[#Heading|⬆ Back to <label>]]` form as the Table-of-Contents back-link.
 - Do not drop an "optional" or off-ramp step inline in the middle of the preferred flow;
   route to it from the path index instead.
 
@@ -200,17 +201,21 @@ its shape.
   cross-references are the only elements that convert — keeping other prose link-free keeps
   that change small.
 - Put a single "Back to Table of Contents" link at the end of each top-level section, not
-  after every subsection. The one exception is a `> [!info] Return` callout, which links
-  back to a path index rather than the Table of Contents.
+  after every subsection. Where a subsection can be reached out of sequence from a path
+  index (for example, a supplemental section indexed from a step), end it with a matching
+  plain back-link to that index instead — the same `[[#Heading|⬆ Back to <label>]]` form as
+  the Table-of-Contents back-link, pointing to the index rather than the Table of Contents.
+  Return links are plain links, not callouts.
 
 ### Callouts (Obsidian, consistent form)
 
 - Runbooks are read in Obsidian, so use Obsidian callouts, which color and icon each type
-  distinctly. Give Pitfall/Troubleshooting/Return a custom title so the vocabulary survives:
+  distinctly. Give Pitfall/Troubleshooting a custom title so the vocabulary survives:
     - `> [!note]` — clarification or easily-missed fact.
     - `> [!warning] Pitfall` — a mistake the reader is likely to make here.
     - `> [!bug] Troubleshooting` — what to do when a step misbehaves.
-    - `> [!info] Return` — how to get back after an out-of-sequence detour.
+
+  Out-of-sequence returns are plain back-links, not callouts (see the Links section).
 - In a non-Obsidian viewer these degrade to plain blockquotes with the `[!type]` label
   still readable (GitHub styles note/warning natively).
 - Keep the type set small and use it the same way in every runbook, so readers learn to
@@ -327,7 +332,7 @@ Validation checklist (run after generating the filled runbook)
 - [ ] Every directory tree appears once, under Artifact and Script Locations; no tree is redrawn elsewhere.
 - [ ] Reason-before-command holds: no runnable command precedes the rationale a reader needs to run it correctly.
 - [ ] A Worked Example appears only when a concept is hard without one.
-- [ ] Each top-level section ends with one "Back to Table of Contents" link, except Return callouts that link to a path index.
+- [ ] Each top-level section ends with one "Back to Table of Contents" link; a subsection reachable from a path index ends with a matching plain back-link to that index instead.
 - [ ] Renaming suggestions documented if applied.
 - [ ] master-directory-reference.md checked against this runbook's tree; added, updated, or renamed as needed.
 

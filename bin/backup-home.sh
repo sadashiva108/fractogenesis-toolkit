@@ -263,7 +263,7 @@ copy_java_jssecacerts() {
     ! $dry && rmdir "$dest_root" 2>/dev/null || true
   else
     printf "  ${YEL}  ⚠  Restore only after Java 17 is installed and target JAVA_HOME is confirmed${RST}\n"
-    ! $dry && printf "  ${DIM}  Inventory: %s${RST}\n" "$inventory"
+    ! $dry && printf "  ${DIM}  Inventory: %s${RST}\n" "$inventory" || true
   fi
 }
 

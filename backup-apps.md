@@ -51,8 +51,8 @@ Collect and stage application state — settings, exports, inventories, and prof
         - [[#Fiddler Everywhere|Fiddler Everywhere]]
         - [[#Terminal|Terminal]]
         - [[#IntelliJ Settings Export|IntelliJ Settings Export]]
-    - [[#Step 6 — Verify Outputs|Step 6 — Verify Outputs]]
-    - [[#Optional Apps|Optional Apps]]
+    - [[#Step 6 — Optional Apps|Step 6 — Optional Apps]]
+    - [[#Step 7 — Verify Outputs|Step 7 — Verify Outputs]]
 - [[#Decisions|Decisions]]
 - [[#Troubleshooting|Troubleshooting]]
 - [[#Supplemental Reference|Supplemental Reference]]
@@ -68,7 +68,7 @@ Collect and stage application state — settings, exports, inventories, and prof
 > In Obsidian, these are internal heading links. Click in Reading View, or Cmd-click in Live Preview/editing mode.
 
 > [!info] Callout legend
-> This runbook uses Obsidian callouts so each type reads distinctly: `[!note]` an easily-missed fact · `[!warning]` Pitfall, a mistake you are likely to make here · `[!bug]` Troubleshooting, what to do when a step misbehaves · `[!info] Return` how to get back after an out-of-sequence detour.
+> This runbook uses Obsidian callouts so each type reads distinctly: `[!note]` an easily-missed fact · `[!warning]` Pitfall, a mistake you are likely to make here · `[!bug]` Troubleshooting, what to do when a step misbehaves.
 
 ---
 
@@ -156,7 +156,7 @@ The table lists every covered app, how it is backed up, and whether it is in the
 | 4K Live Wallpaper | Note only — no meaningful local state; reconfigure after reimage | Optional |
 | NexiGo Webcam Settings | Note only — no meaningful local state; reconfigure after reimage | Optional |
 
-Optional-group apps with manual steps (Raycast, Obsidian, TNAS PC, iMovie) keep those steps in [[#Optional App Exports|Supplemental Reference]], indexed from [[#Optional Apps|Optional Apps]] at the end of Sequential Steps, so the main flow stays focused on what most Macs have. Scripted optional apps (Mos, Wireshark) are captured automatically in Step 4 and need no manual steps; the note-only apps need nothing at all.
+Optional-group apps with manual steps (Raycast, Obsidian, TNAS PC, iMovie) keep those steps in [[#Optional App Exports|Supplemental Reference]], indexed from [[#Step 6 — Optional Apps|Step 6 — Optional Apps]] in Sequential Steps, so the main flow stays focused on what most Macs have. Scripted optional apps (Mos, Wireshark) are captured automatically in Step 4 and need no manual steps; the note-only apps need nothing at all.
 
 > [!note]
 > The script only acts on apps it detects **and** that you check in the selection checklist (see [[#Step 3 — Determine Which Apps to Back Up|Step 3]]). For an app you do not have, it creates no folder and the manifest marks it "Not detected on this Mac" — so a clean run on a Mac without Docker is correct, not a failure.
@@ -487,7 +487,7 @@ Rerun a single script-class portion through the same entrypoint when needed — 
 
 ### Step 5 — Complete Manual Exports
 
-These exports must be triggered from each app's own UI — the script cannot perform them or prove they are complete. Do the ones you checked in Step 3; skip the rest. For the optional apps (Raycast, Obsidian, TNAS PC, iMovie), the full steps are in [[#Optional App Exports|Supplemental Reference]], indexed at [[#Optional Apps|Optional Apps]].
+These exports must be triggered from each app's own UI — the script cannot perform them or prove they are complete. Do the ones you checked in Step 3; skip the rest. For the optional apps (Raycast, Obsidian, TNAS PC, iMovie), the full steps are in [[#Optional App Exports|Supplemental Reference]], indexed at [[#Step 6 — Optional Apps|Step 6 — Optional Apps]].
 
 Each export sorts its outputs by the [[#Destination Rules|Destination Rules]]: reviewed non-secret material under `app-settings-backup/<app>/`, anything secret-bearing under `secrets-encrypted/<app>/`.
 
@@ -790,7 +790,18 @@ The scriptable IntelliJ capture ran in [[#Step 4 — Run the Automated Backup|St
 > [!warning] Pitfall
 > IntelliJ HTTP Client environment files can contain working credentials. Route them to Phase 2E encrypted secrets, not the normal IntelliJ backup.
 
-### Step 6 — Verify Outputs
+### Step 6 — Optional Apps
+
+These apps are manual and belong to the optional group, so their full steps live under Supplemental Reference to keep the main flow lean. Complete any you checked in Step 3 — this index just points to each one's full steps. The scripted optional apps (Mos, Wireshark) are captured automatically in Step 4 and are not listed here.
+
+| App | Use when | Steps |
+|---|---|---|
+| Raycast | Quick Links or settings/data export matter | [[#Raycast\|Optional App Exports → Raycast]] |
+| Obsidian | Vault content, vault-local config, or a restore-source choice matters | [[#Obsidian\|Optional App Exports → Obsidian]] |
+| TNAS PC | Saved TNAS connections or credentials matter | [[#TNAS PC\|Optional App Exports → TNAS PC]] |
+| iMovie | You keep iMovie projects/libraries and must confirm they are backed up | [[#iMovie\|Optional App Exports → iMovie]] |
+
+### Step 7 — Verify Outputs
 
 Confirm the exports landed in the right places before moving on. This runbook owns artifact-local validation only — did the file get created, and is it in the correct `app-settings-backup/` or `secrets-encrypted/` location. The cross-phase readiness sign-off happens later in `reimage-prep-checks.md` (Phase 4B).
 
@@ -804,17 +815,6 @@ find "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted" -maxdepth 3 -type f | sort 2>/de
 
 > [!warning] Pitfall
 > Do not treat a missing optional note or unfilled template as a failure. Optional notes are not required backup artifacts; at most, a note you intended to capture and forgot is worth a warning, not a blocked phase.
-
-### Optional Apps
-
-These apps are manual and belong to the optional group, so their full steps live under Supplemental Reference to keep the main flow lean. Complete any you checked in Step 3 as part of [[#Step 5 — Complete Manual Exports|Step 5]] — this index just points to each one. The scripted optional apps (Mos, Wireshark) are captured automatically in Step 4 and are not listed here.
-
-| App | Use when | Steps |
-|---|---|---|
-| Raycast | Quick Links or settings/data export matter | [[#Raycast\|Optional App Exports → Raycast]] |
-| Obsidian | Vault content, vault-local config, or a restore-source choice matters | [[#Obsidian\|Optional App Exports → Obsidian]] |
-| TNAS PC | Saved TNAS connections or credentials matter | [[#TNAS PC\|Optional App Exports → TNAS PC]] |
-| iMovie | You keep iMovie projects/libraries and must confirm they are backed up | [[#iMovie\|Optional App Exports → iMovie]] |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -1020,8 +1020,7 @@ cat > "$RAYCAST_INV" <<'EOF'
 EOF
 ```
 
-> [!info] Return
-> Back to [[#Optional Apps|Optional Apps]].
+[[#Step 6 — Optional Apps|⬆ Back to Optional Apps]]
 
 #### Obsidian
 
@@ -1067,8 +1066,7 @@ fi
 > [!note]
 > `.obsidian/` at the vault root holds themes, hotkeys, and community-plugin config. Confirm your chosen restore source actually includes it, or copy it with the vault.
 
-> [!info] Return
-> Back to [[#Optional Apps|Optional Apps]].
+[[#Step 6 — Optional Apps|⬆ Back to Optional Apps]]
 
 #### TNAS PC
 
@@ -1092,8 +1090,7 @@ EOF
 > [!warning] Pitfall
 > Do not copy TNAS-stored passwords into `app-settings-backup/`. Restore credentials from your password manager, and stage any credential file only under `secrets-encrypted/tnas-pc/`.
 
-> [!info] Return
-> Back to [[#Optional Apps|Optional Apps]].
+[[#Step 6 — Optional Apps|⬆ Back to Optional Apps]]
 
 #### iMovie
 
@@ -1114,15 +1111,13 @@ EOF
 > [!warning] Pitfall
 > Do not copy multi-gigabyte iMovie libraries into the app-settings artifact root. Keep them in your local-file backup (Phase 2B) or on an external drive; record only their locations here.
 
-> [!info] Return
-> Back to [[#Optional Apps|Optional Apps]].
+[[#Step 6 — Optional Apps|⬆ Back to Optional Apps]]
 
 #### Note-Only Apps
 
 **4K Live Wallpaper** and **NexiGo Webcam Settings** are registered so they appear in the candidate review and selection checklist, but they have no meaningful local state worth backing up — wallpaper choices and webcam presets are cosmetic and quick to redo. The toolkit captures nothing and stages nothing for them; reconfigure both from their app UI after reimage. If you have another app like this, leave it unchecked in the supported section, or check it in the **unsupported** section to get a drop-folder for a manual copy.
 
-> [!info] Return
-> Back to [[#Optional Apps|Optional Apps]].
+[[#Step 6 — Optional Apps|⬆ Back to Optional Apps]]
 
 ### Optional Note Capture
 
@@ -1151,5 +1146,5 @@ TOC verification performed before publishing:
 - every Table of Contents entry resolves to a heading present in this file;
 - deleted optional sections were also removed from the Table of Contents;
 - each top-level section ends with a single "Back to Table of Contents" link;
-  Sequential Steps carries its single link at the end of Step 6.
+  Sequential Steps carries its single link at the end of Step 7 — Verify Outputs.
 -->
