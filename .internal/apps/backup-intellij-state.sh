@@ -1,99 +1,121 @@
 #!/usr/bin/env bash
 # =============================================================================
-# backup-intellij-scratches-consoles.sh
+# backup-intellij-state.sh
 #
-# Internal helper for bin/backup-apps.sh. Backs up IntelliJ Scratches,
-# Consoles, selected global IDE config, project-level .idea metadata across
-# every workspace under a scan root, and diagnostic logs.
+# Internal helper for backup-apps.sh (Phase 2D). Backs up IntelliJ IDEA state:
+# Scratches and Consoles, selected global IDE config, project-level .idea
+# metadata across the workspace root, and diagnostic logs. Excludes HTTP Client
+# environment files and other secret-like material from the clear-text copy and
+# records them for the encrypted secrets workflow.
 #
-# This file is intended for .internal/apps/. Shared config is intentionally
-# NOT loaded by default when --artifact-root is passed explicitly.
+# This file lives in .internal/apps/ and is normally invoked by
+# bin/backup-apps.sh. Shared reimage config is intentionally NOT loaded here;
+# the caller passes --artifact-root (and, from the entrypoint, --workspace-root)
+# explicitly. It is safe to run standalone when --artifact-root PATH (or an
+# exported REIMAGE_ARTIFACT_ROOT) is supplied.
+#
+# The active IntelliJ config directory is auto-detected (the most recently
+# modified IntelliJIdea*/IdeaIC* directory under the JetBrains root); set
+# IDE_PRODUCT explicitly only when your config directory uses a non-standard
+# name.
+#
+# --- BEGIN USAGE ---
+# Usage:
+#   # Normal (through the entrypoint)
+#   ./bin/backup-apps.sh --intellij-only
+#
+#   # Standalone
+#   .internal/apps/backup-intellij-state.sh --artifact-root /path/to/reimage-artifact-root --workspace-root /path/to/projects
+#   .internal/apps/backup-intellij-state.sh --artifact-root <root> --all-config-dirs
+#   .internal/apps/backup-intellij-state.sh --artifact-root <root> --include-system-cache
+#
+# Options:
+#   --artifact-root PATH       Artifact root. Also honored from an exported
+#                              REIMAGE_ARTIFACT_ROOT. Output goes under
+#                              <root>/app-settings-backup/intellij/ and
+#                              <root>/secrets-encrypted/intellij/.
+#
+#   --all-config-dirs          Back up every IntelliJIdea* / IdeaIC* config
+#                              directory under the JetBrains root. Default is to
+#                              back up the auto-detected active config directory
+#                              (the most recently modified one), falling back to
+#                              all dirs only if an explicit IDE_PRODUCT is not
+#                              found.
+#
+#   --workspace-root PATH      Root containing all IntelliJ workspaces/projects
+#                              to scan for project-level .idea metadata. No
+#                              baked-in default: the entrypoint supplies it from
+#                              GIT_WORK_REPO_ROOT; for standalone use, pass this
+#                              flag (or export INTELLIJ_WORKSPACE_ROOT). When
+#                              unset, the project-level scan is skipped.
+#                              This is intentionally broader than IntelliJ's
+#                              PROJECT BasePath, which only reflects the
+#                              currently open project/window.
+#
+#   --workspace-max-depth N    Max depth used when finding .idea directories
+#                              under --workspace-root. Default: 6
+#
+#   --skip-workspaces          Do not scan/copy project-level .idea metadata
+#                              from the workspace root.
+#
+#   --include-shelf            Include .idea/shelf folders when copying
+#                              project-level .idea metadata. Default is to skip
+#                              shelves because they can be large/noisy.
+#
+#   --include-system-cache     Copy the IntelliJ system/cache directory. Not
+#                              recommended unless you have a specific diagnostic
+#                              need, because it can be large and is not normally
+#                              needed for restore.
+#
+#   -h, --help                 Show this message and exit.
+#
+# What it does:
+#   - Auto-detects the active IntelliJ config directory (newest under the JetBrains root).
+#   - Copies Scratches and Consoles from the active IntelliJ config directory.
+#   - Copies selected global IDE config folders such as codestyles, keymaps, inspections,
+#     colors, templates, options, tools, settingsSync, plugins, jdbc-drivers, and tasks.
+#   - Scans the workspace root and copies project-level .idea metadata for every
+#     workspace/project it finds, not just the one currently open in IntelliJ.
+#   - Copies IntelliJ logs for diagnostics.
+#   - Records app bundle, runtime, lib, preinstalled plugins, system/cache, temp, current
+#     Project BasePath concept, and workspace root in manifests.
+#   - Excludes http-client.env.json and http-client.private.env.json from the clear-text copy
+#     by default.
+#
+# Security note:
+#   Run create-secrets-dmg.sh (Phase 2F) after this script to place HTTP Client
+#   environment files and other credential-bearing files in the consolidated
+#   encrypted secrets DMG.
+#
+# Exit status:
+#   0  Completed successfully.
+#   1  Runtime or copy failure.
+#   2  Usage or prerequisite error.
+# --- END USAGE ---
 # =============================================================================
 
 set -euo pipefail
 
-# ---------------------------------------------------------------------------
-# Locate repository and load shared reimage config
-# ---------------------------------------------------------------------------
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CONFIG_LOADER="$(dirname "$SCRIPT_DIR")/load-reimage-config.sh"
-if [[ ! -f "$CONFIG_LOADER" ]]; then
-  echo "ERROR: shared config loader not found: $CONFIG_LOADER" >&2
-  exit 2
-fi
-# shellcheck source=../load-reimage-config.sh
-source "$CONFIG_LOADER"
-# ─────────────────────────────────────────────────────────────────────────────
-
-SCRIPT_VERSION="20260625-intellij-layout-doc-match"
+SCRIPT_VERSION="20260721-artifact-root-autodetect"
 
 usage() {
-  cat <<'USAGE'
-Usage:
-  backup-intellij-scratches-consoles.sh [--artifact-root PATH] [options]
-
-Examples:
-  backup-intellij-scratches-consoles.sh --artifact-root /Volumes/Data/reimage-<asset-or-host>-<start-date>-open
-  REIMAGE_ARTIFACT_ROOT=/Volumes/Data/reimage-<asset-or-host>-<start-date>-open backup-intellij-scratches-consoles.sh
-  backup-intellij-scratches-consoles.sh --artifact-root /Volumes/Data/reimage-<asset-or-host>-<start-date>-open --all-config-dirs
-  backup-intellij-scratches-consoles.sh --artifact-root /Volumes/Data/reimage-<asset-or-host>-<start-date>-open --workspace-root ~/Development/IdeaProjects
-  backup-intellij-scratches-consoles.sh --artifact-root /Volumes/Data/reimage-<asset-or-host>-<start-date>-open --include-system-cache
-
-Options:
-  --artifact-root PATH       External artifact root. Defaults to REIMAGE_ARTIFACT_ROOT from reimage.env.
-
-  --all-config-dirs          Back up every IntelliJIdea* / IdeaIC* config directory under JetBrains root.
-                             Default is to back up the active IntelliJIdea2026.1 config directory from
-                             IntelliJ's Special Files and Folders screen, falling back to all dirs only
-                             if the active directory is not found.
-
-  --workspace-root PATH      Root containing all IntelliJ workspaces/projects to scan for project-level
-                             .idea metadata. Default:
-                               ~/Development/IdeaProjects
-
-                             This is intentionally broader than IntelliJ's PROJECT BasePath shown in
-                             Special Files and Folders, because PROJECT BasePath only reflects the
-                             currently open project/window.
-
-  --workspace-max-depth N    Max depth used when finding .idea directories under --workspace-root.
-                             Default: 6
-
-  --skip-workspaces          Do not scan/copy project-level .idea metadata from the workspace root.
-
-  --include-shelf            Include .idea/shelf folders when copying project-level .idea metadata.
-                             Default is to skip shelves because they can be large/noisy.
-
-  --include-system-cache     Copy the IntelliJ system/cache directory. Not recommended unless you have
-                             a specific diagnostic need, because it can be large and is not normally
-                             needed for restore.
-
-  -h, --help                 Show this help.
-
-What it does:
-  - Uses the active IntelliJ IDEA Special Files and Folders paths captured before reimage.
-  - Copies Scratches and Consoles from the active IntelliJ config directory.
-  - Copies selected global IDE config folders such as codestyles, keymaps, inspections,
-    colors, templates, options, tools, settingsSync, plugins, jdbc-drivers, and tasks.
-  - Scans ~/Development/IdeaProjects by default and copies project-level .idea metadata
-    for every workspace/project it finds, not just the one currently open in IntelliJ.
-  - Copies IntelliJ logs for diagnostics.
-  - Records app bundle, runtime, lib, preinstalled plugins, system/cache, temp, current
-    Project BasePath concept, and workspace root in manifests.
-  - Excludes http-client.env.json and http-client.private.env.json from the clear-text copy
-    by default.
-
-Security note:
-  Run create-secrets-dmg.sh after this script to place HTTP Client environment files
-  and other credential-bearing files in the consolidated encrypted secrets DMG.
-USAGE
+  sed -n '/^# --- BEGIN USAGE ---$/,/^# --- END USAGE ---$/p' "$0" \
+    | sed '1d;$d;s/^# //;s/^#$//'
 }
 
+# Shared reimage config is intentionally NOT sourced here. The artifact root
+# arrives via --artifact-root (from the entrypoint) or an exported
+# REIMAGE_ARTIFACT_ROOT for standalone use.
+ARTIFACT_ROOT="${REIMAGE_ARTIFACT_ROOT:-}"
 ALL_CONFIG_DIRS=0
 INCLUDE_SYSTEM_CACHE=0
 SKIP_WORKSPACES=0
 INCLUDE_SHELF=0
 WORKSPACE_MAX_DEPTH=6
-WORKSPACE_ROOT="${INTELLIJ_WORKSPACE_ROOT:-$HOME/Development/IdeaProjects}"
+# No baked-in default: the entrypoint passes --workspace-root from
+# GIT_WORK_REPO_ROOT, and standalone callers pass it (or export
+# INTELLIJ_WORKSPACE_ROOT). When empty, the project-level scan is skipped.
+WORKSPACE_ROOT="${INTELLIJ_WORKSPACE_ROOT:-}"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -106,11 +128,11 @@ while [[ $# -gt 0 ]]; do
         echo "ERROR: --artifact-root requires a path" >&2
         exit 2
       fi
-      REIMAGE_ARTIFACT_ROOT="$2"
+      ARTIFACT_ROOT="$2"
       shift 2
       ;;
     --artifact-root=*)
-      REIMAGE_ARTIFACT_ROOT="${1#*=}"
+      ARTIFACT_ROOT="${1#*=}"
       shift
       ;;
     --all-config-dirs)
@@ -159,9 +181,14 @@ while [[ $# -gt 0 ]]; do
       exit 2
       ;;
     *)
-      echo "ERROR: Unexpected positional argument: $1" >&2
-      usage >&2
-      exit 2
+      if [[ -z "$ARTIFACT_ROOT" ]]; then
+        ARTIFACT_ROOT="$1"
+        shift
+      else
+        echo "ERROR: Unexpected positional argument: $1" >&2
+        usage >&2
+        exit 2
+      fi
       ;;
   esac
 done
@@ -173,18 +200,61 @@ case "$WORKSPACE_MAX_DEPTH" in
     ;;
 esac
 
-if [[ -z "${REIMAGE_ARTIFACT_ROOT:-}" ]]; then
-  echo "ERROR: REIMAGE_ARTIFACT_ROOT is not set. Create/source reimage.env or pass --artifact-root PATH." >&2
+if [[ -z "$ARTIFACT_ROOT" ]]; then
+  echo "ERROR: artifact root not set. Pass --artifact-root PATH (or export REIMAGE_ARTIFACT_ROOT)." >&2
   exit 2
 fi
 
-INTELLIJ_ROOT="$REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij"
+INTELLIJ_ROOT="$ARTIFACT_ROOT/app-settings-backup/intellij"
 DEST="$INTELLIJ_ROOT"
 JETBRAINS_ROOT="$HOME/Library/Application Support/JetBrains"
 
+if [[ ! -d "$JETBRAINS_ROOT" ]]; then
+  echo "ERROR: JetBrains config root not found: $JETBRAINS_ROOT" >&2
+  exit 2
+fi
+
+# Prefer macOS/BSD stat even if GNU coreutils stat appears earlier in PATH.
+# GNU stat treats "-f" as filesystem mode, which creates noisy errors like:
+#   stat: cannot read file system information for '%m': No such file or directory
+mtime_epoch() {
+  local path="$1"
+  if [[ -x /usr/bin/stat ]]; then
+    /usr/bin/stat -f '%m' "$path"
+  else
+    stat -c '%Y' "$path"
+  fi
+}
+
+# Print the basename of the most recently modified IntelliJIdea*/IdeaIC* config
+# directory under JETBRAINS_ROOT, or nothing when none exist. This is how the
+# active IDE product is chosen when IDE_PRODUCT is not set explicitly.
+detect_newest_config_dir() {
+  local dir m newest="" newest_mtime=0
+  shopt -s nullglob
+  for dir in "$JETBRAINS_ROOT"/IntelliJIdea* "$JETBRAINS_ROOT"/IdeaIC*; do
+    [[ -d "$dir" ]] || continue
+    m="$(mtime_epoch "$dir" 2>/dev/null || true)"
+    case "$m" in ''|*[!0-9]*) continue ;; esac
+    if (( m > newest_mtime )); then
+      newest_mtime="$m"
+      newest="$dir"
+    fi
+  done
+  shopt -u nullglob
+  [[ -n "$newest" ]] && basename "$newest"
+}
+
 # Active paths from IntelliJ IDEA -> Help -> Diagnostic Tools -> Special Files and Folders.
 # Override any of these with environment variables if the active IDE version/path changes.
-IDE_PRODUCT="${IDE_PRODUCT:-IntelliJIdea2026.1}"
+# IDE_PRODUCT defaults to the auto-detected active (most recently modified) config directory.
+IDE_PRODUCT="${IDE_PRODUCT:-$(detect_newest_config_dir)}"
+if [[ -z "$IDE_PRODUCT" ]]; then
+  echo "ERROR: No IntelliJIdea* or IdeaIC* config directory found under: $JETBRAINS_ROOT" >&2
+  echo "Set IDE_PRODUCT explicitly if the config directory uses a non-standard name." >&2
+  exit 2
+fi
+
 IDE_APP="${IDE_APP:-/Applications/IntelliJ IDEA.app}"
 IDE_BIN_DIR="${IDE_BIN_DIR:-$IDE_APP/Contents/bin}"
 IDE_CONFIG_DIR="${IDE_CONFIG_DIR:-$JETBRAINS_ROOT/$IDE_PRODUCT}"
@@ -203,18 +273,6 @@ IDE_PLUGINS_PREINSTALLED_DIR="${IDE_PLUGINS_PREINSTALLED_DIR:-$IDE_APP/Contents/
 # For backup coverage, use the broader workspace root by default.
 IDE_PROJECT_BASEPATH="${IDE_PROJECT_BASEPATH:-$WORKSPACE_ROOT}"
 IDE_SYSTEM_DIR="${IDE_SYSTEM_DIR:-$HOME/Library/Caches/JetBrains/$IDE_PRODUCT}"
-
-# Prefer macOS/BSD stat even if GNU coreutils stat appears earlier in PATH.
-# GNU stat treats "-f" as filesystem mode, which creates noisy errors like:
-#   stat: cannot read file system information for '%m': No such file or directory
-mtime_epoch() {
-  local path="$1"
-  if [[ -x /usr/bin/stat ]]; then
-    /usr/bin/stat -f '%m' "$path"
-  else
-    stat -c '%Y' "$path"
-  fi
-}
 
 path_type() {
   local path="$1"
@@ -277,13 +335,8 @@ sanitize_for_manifest_label() {
   fi
 }
 
-if [[ ! -d "$JETBRAINS_ROOT" ]]; then
-  echo "ERROR: JetBrains config root not found: $JETBRAINS_ROOT" >&2
-  exit 2
-fi
-
 mkdir -p "$DEST" "$DEST/manual-settings-export" "$DEST/restore-notes"
-mkdir -p "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/intellij"
+mkdir -p "$ARTIFACT_ROOT/secrets-encrypted/intellij"
 
 rm -rf "$DEST/project-metadata" "$DEST/manifests" "$DEST/logs"
 shopt -s nullglob
@@ -299,19 +352,19 @@ README="$DEST/README.md"
 cat > "$README" <<EOF_README
 # IntelliJ Backup
 
-This directory is refreshed in place by \`backup-intellij-scratches-consoles.sh\`.
+This directory is refreshed in place by \`backup-intellij-state.sh\`.
 
 \`\`\`text
-$REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/
+$ARTIFACT_ROOT/app-settings-backup/intellij/
 \`\`\`
 
 HTTP Client environment files that may contain credentials should be encrypted under:
 
 \`\`\`text
-$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/intellij/
+$ARTIFACT_ROOT/secrets-encrypted/intellij/
 \`\`\`
 
-Active IDE product captured from Special Files and Folders:
+Active IDE product (auto-detected as the most recently modified config directory):
 
 \`\`\`text
 $IDE_PRODUCT
@@ -322,14 +375,14 @@ Workspace root scanned for project-level IntelliJ metadata:
 \`\`\`text
 $WORKSPACE_ROOT
 \`\`\`
- 
+
 Generated: $(date '+%Y-%m-%d %H:%M:%S')
 Script version: $SCRIPT_VERSION
 
 ## Layout
 
 \`\`\`text
-$REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/
+$ARTIFACT_ROOT/app-settings-backup/intellij/
 ├── $IDE_PRODUCT/
 │   ├── config-copy/
 │   ├── scratches-and-consoles/
@@ -410,7 +463,7 @@ safe_find_one_level "$WORKSPACE_ROOT" "Workspace root scanned for all projects" 
 safe_find_one_level "$IDE_SYSTEM_DIR" "System directory" "$SPECIAL_LISTING_FILE"
 
 # Choose config directories to back up.
-# Default: active config directory from Special Files and Folders.
+# Default: active config directory (auto-detected or explicit IDE_PRODUCT).
 # Optional: all IntelliJIdea* and IdeaIC* directories.
 if [[ "$ALL_CONFIG_DIRS" -eq 1 ]]; then
   shopt -s nullglob
@@ -567,7 +620,7 @@ done < <(sort -rn "$SORT_FILE")
 printf 'relative_project_path\tproject_path\tidea_dir\n' > "$WORKSPACE_DIRS_FILE"
 WORKSPACE_COUNT=0
 if [[ "$SKIP_WORKSPACES" -eq 0 ]]; then
-  if [[ -d "$WORKSPACE_ROOT" ]]; then
+  if [[ -n "$WORKSPACE_ROOT" && -d "$WORKSPACE_ROOT" ]]; then
     while IFS= read -r idea_dir; do
       [[ -d "$idea_dir" ]] || continue
       project_dir="$(dirname "$idea_dir")"
@@ -639,6 +692,8 @@ if [[ "$SKIP_WORKSPACES" -eq 0 ]]; then
       -not -path '*/.venv/*' \
       -not -path '*/venv/*' \
       -print 2>/dev/null >> "$SECRET_LIKE_FILE" || true
+  elif [[ -z "$WORKSPACE_ROOT" ]]; then
+    echo "NOTE: No workspace root set, skipping project-level workspace scan. Pass --workspace-root or export INTELLIJ_WORKSPACE_ROOT." >&2
   else
     echo "WARNING: Workspace root not found, skipping project-level workspace scan: $WORKSPACE_ROOT" >&2
   fi
@@ -668,9 +723,9 @@ find "$DEST" -type f | sort > "$FILES_FILE"
 cat > "$SUMMARY_FILE" <<EOF_SUMMARY
 IntelliJ backup created: $DEST
 Script version: $SCRIPT_VERSION
-Artifact root: $REIMAGE_ARTIFACT_ROOT
+Artifact root: $ARTIFACT_ROOT
 JetBrains root: $JETBRAINS_ROOT
-Active IDE product: $IDE_PRODUCT
+Active IDE product (auto-detected): $IDE_PRODUCT
 Active config directory: $IDE_CONFIG_DIR
 Config directories backed up: $SORTED_COUNT
 Workspace root scanned: $WORKSPACE_ROOT
@@ -700,12 +755,12 @@ Project BasePath note:
     $WORKSPACE_ROOT
 
 Next step:
-  Run create-secrets-dmg.sh after reviewing HTTP Client environment candidates and other secret-like files.
+  Run create-secrets-dmg.sh (Phase 2F) after reviewing HTTP Client environment candidates and other secret-like files.
 
 Manual step:
   Export IntelliJ settings ZIP from IntelliJ IDEA -> File -> Manage IDE Settings -> Export Settings
   Save it under:
-    $REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/manual-settings-export/
+    $ARTIFACT_ROOT/app-settings-backup/intellij/manual-settings-export/
 EOF_SUMMARY
 
 cat "$SUMMARY_FILE"

@@ -460,7 +460,7 @@ else
   DOCKER_STATUS="Skipped; Docker Desktop state not detected on this Mac"
 fi
 
-INTELLIJ_HELPER="$(dirname "$SCRIPT_DIR")/.internal/apps/backup-intellij-scratches-consoles.sh"
+INTELLIJ_HELPER="$(dirname "$SCRIPT_DIR")/.internal/apps/backup-intellij-state.sh"
 INTELLIJ_HELPER_ARGS=(--artifact-root "$REIMAGE_ARTIFACT_ROOT")
 # Default the IntelliJ workspace root to the configured work-repo root when the
 # caller did not pass --intellij-workspace-root, mirroring how backup-repos.sh
@@ -496,7 +496,7 @@ elif [[ "$APPS_ONLY" == true ]]; then
 elif [[ "$RUN_CANDIDATE_REVIEW" == true ]]; then
   INTELLIJ_STATUS="Skipped; candidate-review is scan-only"
 elif [[ ! -f "$INTELLIJ_HELPER" ]]; then
-  INTELLIJ_STATUS="Skipped; .internal/apps/backup-intellij-scratches-consoles.sh not found"
+  INTELLIJ_STATUS="Skipped; .internal/apps/backup-intellij-state.sh not found"
 elif ! is_selected_supported "IntelliJ IDEA"; then
   INTELLIJ_STATUS="Skipped; IntelliJ IDEA not selected in the app-backup checklist"
 elif [[ -d "/Applications/IntelliJ IDEA.app" ]] || [[ -d "$HOME/Applications/IntelliJ IDEA.app" ]] || [[ -d "$HOME/Library/Application Support/JetBrains" ]]; then
