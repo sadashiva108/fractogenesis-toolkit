@@ -422,6 +422,16 @@ def match_mapping_for_target(target: str, mapping: Dict[str, str]) -> Tuple[str,
     if base in mapping:
         return base, mapping[base], 'basename'
 
+    # Extension-less target (common in Obsidian wiki links like [[note]]):
+    # retry the match with a .md suffix appended.
+    if '.' not in base:
+        alt = t + '.md'
+        if alt in mapping:
+            return alt, mapping[alt], 'exact'
+        alt_base = Path(alt).name
+        if alt_base in mapping:
+            return alt_base, mapping[alt_base], 'basename'
+
     # suffix/component match: prefer longest trailing component sequence match
     t_parts = t.split("/")
     best_key = None
@@ -570,6 +580,24 @@ def apply_changes(file_path: Path, new_text: str):
     file_path.write_text(new_text, encoding="utf-8")
 
 
+def _split_target_suffix(target: str) -> Tuple[str, str]:
+    """Split a link target into (path, suffix), where suffix is any trailing
+    ``#anchor`` and/or `` "title"`` that must ride along with the rewritten path
+    so deep-links and link titles survive a rename."""
+    suffix = ''
+    for q in (' "', " '"):
+        idx = target.find(q)
+        if idx != -1:
+            suffix = target[idx:] + suffix
+            target = target[:idx]
+            break
+    if '#' in target:
+        h = target.find('#')
+        suffix = target[h:] + suffix
+        target = target[:h]
+    return target, suffix
+
+
 def build_new_link(current_link: str, new_rel: str, new_stem: str, old_stem: str,
                    old_full: str = '', new_full: str = '') -> str:
     """Given the original link snippet and the computed new relative target,
@@ -578,9 +606,14 @@ def build_new_link(current_link: str, new_rel: str, new_stem: str, old_stem: str
     - Inline ``[text](old)`` -> ``[text](new_rel)``. When ``text`` embeds the
       old path or old basename literally, it is rewritten to the new one so
       the visible label doesn't stay stale.
-    - Wiki ``[[display|old]]`` -> ``[[display|new_rel]]`` (display swapped to
-      ``new_stem`` when it matches ``old_stem``).
-    - Wiki ``[[old]]`` -> ``[[new_stem|new_rel]]``.
+    - Wiki ``[[target|display]]`` -> ``[[new_target|display]]`` (Obsidian order:
+      the target is before the pipe). The target is emitted as a bare note name
+      (no ``./``), keeping the original's note-name-vs-``.md`` style; ``display``
+      is left alone unless it embeds the stale name verbatim.
+    - Wiki ``[[old]]`` -> ``[[new_target]]``.
+
+    Any trailing ``#anchor`` / `` "title"`` on the original target is carried
+    onto the new target so deep-links survive the rewrite.
     """
     stripped = current_link.strip()
     old_basename = Path(old_full).name if old_full else ''
@@ -588,28 +621,39 @@ def build_new_link(current_link: str, new_rel: str, new_stem: str, old_stem: str
 
     if stripped.startswith('[['):
         inner = stripped[2:-2]
+        # Obsidian wiki links are [[target|display]] — target BEFORE the pipe.
         if '|' in inner:
-            display, _ = inner.split('|', 1)
-            display_stripped = display.strip()
-            if display_stripped.lower() == old_stem.lower():
-                display = new_stem
-            elif old_full and old_full in display:
-                display = display.replace(old_full, new_full)
-            elif old_basename and old_basename in display:
-                display = display.replace(old_basename, new_basename)
-            return f"[[{display}|{new_rel}]]"
-        return f"[[{new_stem}|{new_rel}]]"
+            old_target, display = inner.split('|', 1)
+        else:
+            old_target, display = inner, None
+        target_path, suffix = _split_target_suffix(old_target)
+        # Wiki targets are note references, not filesystem paths: emit a bare
+        # note name (no './'), matching the original's extension style.
+        had_ext = target_path.lower().endswith('.md')
+        new_core = new_basename if (had_ext and new_basename) else new_stem
+        new_target = f"{new_core}{suffix}"
+        if display is None:
+            return f"[[{new_target}]]"
+        display_stripped = display.strip()
+        if display_stripped.lower() == old_stem.lower():
+            display = new_stem
+        elif old_full and old_full in display:
+            display = display.replace(old_full, new_full)
+        elif old_basename and old_basename in display:
+            display = display.replace(old_basename, new_basename)
+        return f"[[{new_target}|{display}]]"
 
     m = re.match(r"(\[)(.*?)(\])\(([^)]+)\)", current_link)
     if m:
         text = m.group(2)
+        _, suffix = _split_target_suffix(m.group(4))
         # Rewrite label if it embeds the stale path/basename verbatim so the
         # visible link doesn't lag its target.
         if old_full and old_full in text:
             text = text.replace(old_full, new_full)
         elif old_basename and old_basename in text and old_basename != new_basename:
             text = text.replace(old_basename, new_basename)
-        return f"[{text}]({new_rel})"
+        return f"[{text}]({new_rel}{suffix})"
     return current_link
 
 
@@ -664,6 +708,9 @@ def main():
     parser.add_argument("--force", action="store_true", help="Apply replacements even if the new target does not exist")
     # applying changes should be gated: require a patch file to be provided so users can review before apply
     parser.add_argument("--apply", action="store_true", help="Apply changes in-place (creates .bak backups). Requires --patch to be provided for safety.")
+    parser.add_argument("--dot-slash", action="store_true",
+                        help="Also add a leading './' to same-directory links whose "
+                             "target did not otherwise change (default: off).")
     # keep backward compatibility for --dry-run behavior
     # note: --dry-run is a flag; when not present and not --apply, script still runs in preview mode but will not write patches/diffs unless requested
 
@@ -671,6 +718,7 @@ def main():
 
     target_dir = Path(args.dir)
     repo_root = Path(args.repo_root)
+    dot_slash = args.dot_slash
 
     if not target_dir.exists():
         print(f"Error: target dir does not exist: {target_dir}")
@@ -911,6 +959,8 @@ def main():
             if mk and mv:
                 category, new_link, _ = classify_link(mk, mv, current_link, tn, file_path, repo_root)
                 return new_link if category != 'skip' else current_link
+            if not dot_slash:
+                return current_link
             raw = target
             if not raw or '/' in raw or raw.startswith('.'):
                 return current_link
@@ -928,7 +978,7 @@ def main():
         def rewrite_wiki(m: re.Match) -> str:
             full = m.group(1)
             inner = m.group(2)
-            target = inner.split('|', 1)[1] if '|' in inner else inner
+            target = inner.split('|', 1)[0] if '|' in inner else inner
             tn = normalize_target(target)
             mk, mv, _ = match_mapping_for_target(tn, mapping)
             if mk and mv:
@@ -1052,6 +1102,9 @@ def main():
                     location_by_file.setdefault(fkey, []).append(entry)
                 return
 
+            if not dot_slash:
+                return
+
             # Heuristic-only path: no mapping match. Suggest a leading './' when
             # the referenced file is a bare filename that lives in the same
             # directory as the referencing file and exists on disk.
@@ -1081,7 +1134,7 @@ def main():
             record_link(m.group(0), m.group(2))
         for wm in LINK_WIKI.finditer(src):
             inner = wm.group(2)
-            target = inner.split('|', 1)[1] if '|' in inner else inner
+            target = inner.split('|', 1)[0] if '|' in inner else inner
             record_link(wm.group(1), target)
 
         # Prose occurrences: scan text with fenced code blocks AND link syntaxes

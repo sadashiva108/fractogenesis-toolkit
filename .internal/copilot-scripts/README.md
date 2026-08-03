@@ -94,8 +94,19 @@ The updater applies three heuristics per entry:
 3. **Tokenized derivative** in prose (e.g., ``Backup Apps`` /
    ``backup apps``), with case preserved.
 
-Link path/heuristic rewrites and fenced directory-tree rebuilds are handled
-alongside these.
+Link rewrites (inline ``[text](path)`` and Obsidian ``[[target|display]]``) and
+fenced directory-tree rebuilds are handled alongside these:
+
+- **Anchors and titles are preserved.** A trailing ``#anchor`` or `` "title"`` on
+  a link target rides through the rewrite, so deep-links survive a rename.
+- **Wiki links use Obsidian order** ``[[target|display]]`` — the target is the
+  part before the pipe. An extension-less target (``[[stage-certs-keychain|…]]``)
+  matches a mapping key ending in ``.md``, the rewritten target keeps the
+  original's note-name-vs-``.md`` style, and ``display`` is left alone unless it
+  embeds the stale name verbatim.
+- **The leading ``./`` is opt-in.** By default a link whose target did not
+  otherwise change is left untouched. Pass ``--dot-slash`` to also normalize
+  same-directory links to a leading ``./``.
 
 ### Sample: `external-data-root-mapping-*.json`
 
