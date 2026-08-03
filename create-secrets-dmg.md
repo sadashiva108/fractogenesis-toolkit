@@ -81,7 +81,7 @@ the Phase 4B pre-image sign-off these verifications roll up to — reimage-prep-
 
 ## How the Workflow Works
 
-Read this before running anything. Phase 2F is the *consolidation and validation* pass. The earlier phases already routed most credential-shaped files into `secrets-encrypted/` — SSH, GPG, Docker, kube, and app-secret exports as a byproduct of backing up home and apps (Phases 2B/2D), and reviewed certificate/Keychain material through the Phase 2E staging runbook. This phase collects all of it, plus a few things it captures live (Java `jssecacerts` from installed JDKs, loose cert bundles on Desktop/Downloads, IntelliJ HTTP-client env files), into one encrypted image so restore depends on a single password and a single artifact.
+Read this before running anything. Phase 2F is the *consolidation and validation* pass. The earlier phases already routed most credential-shaped files into `secrets-encrypted/` — SSH, GPG, Docker, kube, and app-secret exports as a byproduct of backing up home and apps (Phases 2B/2D), and reviewed certificate/Keychain material through the Phase 2E staging runbook. This phase collects all of it, plus a few things it captures live (Java `jssecacerts` from installed JDKs, and loose cert bundles on Desktop/Downloads), into one encrypted image so restore depends on a single password and a single artifact.
 
 The reason for the strict order is that the cleanup step deletes plaintext secrets. That is only safe once the encrypted copy is proven readable, so the flow never lets validation and cleanup swap places:
 
@@ -126,8 +126,6 @@ Related script (entrypoint; rerun by the build for the Phase 2E review refresh u
 ```text
 $FRACTOGENESIS_HOME/bin/stage-certs-keychain.sh
 ```
-
-**Renaming considerations —** migrated from `reference-vault/workflows/mac/reimage/create-secrets-dmg.md` and its `scripts/create-secrets-dmg.sh`. The name is already verb-first and is kept. The script moves to `bin/`, `$REIMAGE_ROOT`/`$BACKUP_ROOT` become `$FRACTOGENESIS_HOME`/`$REIMAGE_ARTIFACT_ROOT`, the legacy `--backup-root`/positional root becomes `--artifact-root`, and the review helper reference updates to the renamed `bin/stage-certs-keychain.sh`.
 
 Artifact locations — everything this phase reads and writes lives under one tree:
 
