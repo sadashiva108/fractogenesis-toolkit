@@ -27,8 +27,8 @@ This file maps the script classifications used in the authoring prompts to where
 - Placement: prefer .internal/ for helpers; migrate to bin/ only when intended to be user-facing.
 
 Notes
-- Prompts and templates: .github/copilot-prompts/ and .github/copilot-templates/ (discoverable to contributors). Script templates are templates (not executables) and belong in .github/copilot-templates/script-templates/.
-- Migration mappings: use /tmp/mappings/ for ephemeral per-migration files. Move long-lived mappings to .github/copilot-templates/mappings/ if you decide to keep them.
+- Prompts and templates: .github/ai-prompts/ and .github/ai-templates/ (discoverable to contributors). Script templates are templates (not executables) and belong in .github/ai-templates/script-templates/.
+- Migration mappings: use /tmp/mappings/ for ephemeral per-migration files. Move long-lived mappings to .github/ai-templates/mappings/ if you decide to keep them.
 
 If you'd like, the next steps I can take now:
 - Move any remaining prompt/template files into .github as agreed, and update references in .github/copilot-instructions.md

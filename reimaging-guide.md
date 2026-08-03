@@ -293,7 +293,7 @@ $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/raycast/, if used
 ---
 ### Phase 2E — Certificate and Keychain Staging
 
-Follow this phase guide: [Stage Certificate and Keychain](stage-cert-keychain.md).
+Follow this phase guide: [Stage Certificates and Keychain](stage-certs-keychain.md).
 
 This phase owns the certificate and Keychain review/export/staging workflow before encryption. In this context, **staging** means placing reviewed files, manual Keychain exports, notes, and generated review artifacts into the correct temporary backup folders so Phase 2F can package them into the encrypted secrets DMG. The planning pass also produces normalized/deduped review tables, proposed staged-certs fragments, out-of-cert-scope secret crosswalks, and generated-noise filter evidence before anything is copied.
 

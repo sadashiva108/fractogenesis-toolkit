@@ -142,3 +142,16 @@ script templates:
 .internal/templates/scripts/bash-entrypoint.sh.tmpl
 .internal/templates/scripts/bash-helper.sh.tmpl
 
+
+---
+
+## Migrated: Certificate and Keychain Staging (Phase 2E)
+
+Runbook and paired scripts migrated from reference-vault:
+
+- $FRACTOGENESIS_HOME/stage-certs-keychain.md
+- $FRACTOGENESIS_HOME/bin/stage-certs-keychain.sh
+- $FRACTOGENESIS_HOME/.internal/certs/prepare-certs-keychain-staging.py
+- $FRACTOGENESIS_HOME/.internal/templates/staged-certs/loose-candidates-selected.conf.sh
+- $FRACTOGENESIS_HOME/.internal/templates/staged-certs/project-local.conf.sh
+- $FRACTOGENESIS_HOME/.internal/templates/staged-certs/tool-local.conf.sh

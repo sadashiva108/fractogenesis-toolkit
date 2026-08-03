@@ -41,11 +41,20 @@
 #                                 If omitted, uses configured Git roots from reimage.env.
 #   --dest <dir>                   Destination directory for reports.
 #                                 Default: $REIMAGE_ARTIFACT_ROOT/gitignore-superset
+#   --review-dir <dir>             Directory for the curated gitignore-review-template.txt.
+#                                 Default: same as --dest. Point this at
+#                                 $REIMAGE_WORKSPACE_ROOT/gitignore-superset to keep the
+#                                 marked-up template with your other workspace config.
 #   --include-git-excludes         Also collect per-repo .git/info/exclude files.
 #   --include-global-excludes      Also collect your global Git excludes file from:
 #                                   git config --global core.excludesfile
 #                                 and the common default:
 #                                   ~/.config/git/ignore
+#   --preserve-selections          Carry forward [x] marks from an existing
+#                                   gitignore-review-template.txt instead of
+#                                   resetting every checkbox to [ ]. New patterns
+#                                   are added unchecked; a checked pattern no longer
+#                                   in the superset is dropped (with a warning).
 #   -h, --help                     Show this help.
 #
 # Output files:
@@ -68,7 +77,21 @@
 #   gitignore-concatenated-with-sources.txt
 #       Exact source contents with structured provenance headings.
 #   gitignore-review-template.txt
-#       A copy-friendly template where you can mark patterns to stage for backup later.
+#       A copy-friendly template where you mark patterns ([x]) to stage for backup later.
+#
+# Reads / writes:
+#   - Every output above is WRITTEN under --dest (default:
+#     $REIMAGE_ARTIFACT_ROOT/gitignore-superset). This script never writes to
+#     REIMAGE_WORKSPACE_ROOT.
+#   - The only file it READS back is an existing gitignore-review-template.txt at
+#     --dest, and only with --preserve-selections (to carry your [x] marks forward).
+#
+# Re-run behavior:
+#   - Every run REGENERATES and overwrites all output files above, including
+#     gitignore-review-template.txt. Without --preserve-selections the template is
+#     reset to all [ ], discarding any [x] marks. With --preserve-selections your
+#     checked patterns are carried forward (new patterns added as [ ]; a checked
+#     pattern no longer in the superset is dropped, with a warning).
 #
 # Notes:
 #   - This script does not copy ignored files.
@@ -97,11 +120,17 @@ DEST="${_default_dest:-$HOME/Desktop/gitignore-superset-$(date +%Y%m%d-%H%M%S)}"
 unset _default_dest
 INCLUDE_GIT_EXCLUDES="false"
 INCLUDE_GLOBAL_EXCLUDES="false"
+PRESERVE_SELECTIONS="false"
+REVIEW_DIR=""
 
 ROOTS=()
 
 usage() {
-  sed -n 's/^# \{0,2\}//p' "$0" | head -73
+  awk '
+    NR == 2 { in_header = 1; next }
+    in_header && /^# =+$/ { exit }
+    in_header { sub(/^# ?/, ""); print }
+  ' "$0"
 }
 
 while [[ $# -gt 0 ]]; do
@@ -114,12 +143,20 @@ while [[ $# -gt 0 ]]; do
       DEST="${2:?Missing value for --dest}"
       shift 2
       ;;
+    --review-dir)
+      REVIEW_DIR="${2:?Missing value for --review-dir}"
+      shift 2
+      ;;
     --include-git-excludes)
       INCLUDE_GIT_EXCLUDES="true"
       shift
       ;;
     --include-global-excludes)
       INCLUDE_GLOBAL_EXCLUDES="true"
+      shift
+      ;;
+    --preserve-selections)
+      PRESERVE_SELECTIONS="true"
       shift
       ;;
     -h|--help)
@@ -159,6 +196,11 @@ done
 
 mkdir -p "$DEST"
 
+# The curated review template can live apart from the generated reports (e.g. in
+# REIMAGE_WORKSPACE_ROOT/gitignore-superset). Default it alongside the reports.
+REVIEW_DIR="${REVIEW_DIR:-$DEST}"
+mkdir -p "$REVIEW_DIR"
+
 IGNORE_FILES_TSV="$DEST/gitignore-files.tsv"
 IGNORE_FILES_REVIEW="$DEST/gitignore-files-review.txt"
 PATTERNS_ALL_TSV="$DEST/gitignore-patterns-all.tsv"
@@ -168,7 +210,7 @@ PATTERNS_SUPERSET_COUNTS_TSV="$DEST/gitignore-patterns-superset-with-counts.tsv"
 PATTERN_SOURCES_TSV="$DEST/gitignore-pattern-sources.tsv"
 PATTERN_SOURCES_REVIEW="$DEST/gitignore-pattern-sources-review.txt"
 CONCAT_TXT="$DEST/gitignore-concatenated-with-sources.txt"
-REVIEW_TEMPLATE="$DEST/gitignore-review-template.txt"
+REVIEW_TEMPLATE="$REVIEW_DIR/gitignore-review-template.txt"
 SUMMARY_TXT="$DEST/summary.txt"
 
 tmp_sources="$(mktemp)"
@@ -488,6 +530,16 @@ tail -n +2 "$PATTERNS_ALL_TSV" | cut -f1 | sort -u > "$PATTERNS_SUPERSET_TXT"
 } > "$PATTERN_SOURCES_REVIEW"
 
 # Review template.
+# By default this is regenerated fresh, resetting every checkbox to [ ].
+# With --preserve-selections, [x] marks from an existing template are carried
+# forward: checked patterns stay checked, newly discovered patterns are added
+# as [ ], and any checked pattern no longer in the superset is dropped (warned).
+_checked_patterns=""
+if [[ "$PRESERVE_SELECTIONS" == "true" && -f "$REVIEW_TEMPLATE" ]]; then
+  _checked_patterns="$(mktemp)"
+  sed -n 's/^\[[xX]\] //p' "$REVIEW_TEMPLATE" > "$_checked_patterns"
+fi
+
 {
   echo "# Gitignore Superset Review Template"
   echo
@@ -498,11 +550,27 @@ tail -n +2 "$PATTERNS_ALL_TSV" | cut -f1 | sort -u > "$PATTERNS_SUPERSET_TXT"
   echo
   echo "# Generated: $(date)"
   echo "# Destination: $DEST"
+  if [[ -n "$_checked_patterns" ]]; then
+    echo "# Selections carried forward from the previous template (--preserve-selections)."
+  fi
   echo
   while IFS= read -r pattern; do
-    printf "[ ] %s\n" "$pattern"
+    if [[ -n "$_checked_patterns" ]] && grep -Fxq -- "$pattern" "$_checked_patterns"; then
+      printf "[x] %s\n" "$pattern"
+    else
+      printf "[ ] %s\n" "$pattern"
+    fi
   done < "$PATTERNS_SUPERSET_TXT"
 } > "$REVIEW_TEMPLATE"
+
+if [[ -n "$_checked_patterns" ]]; then
+  _dropped="$(grep -Fxv -f "$PATTERNS_SUPERSET_TXT" "$_checked_patterns" || true)"
+  if [[ -n "$_dropped" ]]; then
+    echo "WARNING: previously-checked patterns no longer in the superset (dropped from template):" >&2
+    printf '  %s\n' "$_dropped" >&2
+  fi
+  rm -f "$_checked_patterns"
+fi
 
 pattern_count="$(wc -l < "$PATTERNS_SUPERSET_TXT" | tr -d ' ')"
 all_pattern_rows="$(tail -n +2 "$PATTERNS_ALL_TSV" | wc -l | tr -d ' ')"
