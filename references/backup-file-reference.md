@@ -43,7 +43,7 @@ Single source of truth for the phase guides used across the pre-image stage (Pha
 | `backup-home.md` | Scripted home-directory and secrets-encrypted backup workflow and output review. |
 | `backup-apps.md` | App backup runbook for common apps first, then optional apps when they apply. |
 | `backup-intellij.md` | Pre-image IntelliJ Scratches, Consoles, IDE settings, plugins, run configs, and project metadata backup. |
-| `stage-cert-keychain.md` | Certificate and Keychain review, export, and staging workflow before DMG encryption. |
+| `stage-certs-keychain.md` | Certificate and Keychain review, export, and staging workflow before DMG encryption. |
 | `backup-dmg-secrets.md` | Consolidated encrypted secrets DMG staging, validation, cleanup, and restore notes. |
 | `backup-time-machine.md` | Time Machine setup, status capture, monitoring, and pre-reimage completion checks. |
 | `reimage-prep-evidence.md` | Comprehensive pre-image evidence reference for Phase 3 capture artifacts plus Phase 4 manual sign-off rows and templates under `$REIMAGE_ARTIFACT_ROOT`. |
@@ -73,7 +73,7 @@ It complements the broader workflow docs:
 | Home files backup workflow                        | `backup-home.md` |
 | App backups                                       | `backup-apps.md` |
 | Phase 4 cloud sync and manual sign-off reference  | `reimage-prep-checks.md` |
-| Certificate and Keychain staging                  | `stage-cert-keychain.md` |
+| Certificate and Keychain staging                  | `stage-certs-keychain.md` |
 | Encrypted secret staging, validation, and cleanup | `backup-dmg-secrets.md` |
 | IntelliJ-specific backup artifacts                | `backup-intellij.md` |
 | Time Machine backup and status evidence           | `backup-time-machine.md`; runtime script `bin/backup-time-machine.sh`; read-only capture script `bin/capture-time-machine.sh` |

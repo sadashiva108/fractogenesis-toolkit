@@ -97,7 +97,7 @@ export ONEDRIVE_DEST_SUBDIR="${ONEDRIVE_DEST_SUBDIR:-$(basename "${REIMAGE_ARTIF
 | Phase 2B | Local files backup | `backup-home.md` | `backup-home.sh` | `$REIMAGE_ARTIFACT_ROOT/home-files-backup/` |
 | Phase 2C | Backup apps | `backup-apps.md` | `backup-apps.sh` (public entrypoint), `helpers/apps/backup-docker-settings.sh` and `helpers/apps/backup-intellij-scratches-consoles.sh` (internal helpers), plus app-controlled/manual exports for other apps | `$REIMAGE_ARTIFACT_ROOT/app-settings-backup/` plus matching `secrets-encrypted/` folders |
 | Phase 2C detail | IntelliJ companion flow | `backup-intellij.md` | `backup-apps.sh` (public IntelliJ path), `helpers/apps/backup-intellij-scratches-consoles.sh` (internal helper) | `$REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/` |
-| Phase 2D | Certificate and Keychain staging | `stage-cert-keychain.md` | `stage-cert-keychain.sh` | `$REIMAGE_ARTIFACT_ROOT/public-certs/`, `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/certs/`, `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/extra-secrets-certs-review/` |
+| Phase 2D | Certificate and Keychain staging | `stage-certs-keychain.md` | `stage-certs-keychain.sh` | `$REIMAGE_ARTIFACT_ROOT/public-certs/`, `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/certs/`, `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/extra-secrets-certs-review/` |
 | Phase 2E | Encrypted secrets backup | `backup-dmg-secrets.md` | `create-secrets-dmg.sh` | `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/all-secrets-*.dmg` |
 | Phase 2F | Time Machine backup/status | `backup-time-machine.md` | `backup-time-machine.sh`, `capture-time-machine.sh` | `/Volumes/AppleBackups`, `$REIMAGE_ARTIFACT_ROOT/time-machine/`, `final-time-machine-checklist-*.md` |
 | Phase 3A | Workflow snapshot capture | `capture-workflow-snapshot.md` | `capture-workflow-snapshot.sh` | `$REIMAGE_ARTIFACT_ROOT/workflow-snapshot/pre-image-workflow-snapshot-*/`, `$REIMAGE_ARTIFACT_ROOT/workflow-snapshot/reimage-workflow-docs/` |
@@ -128,48 +128,50 @@ Current preferred script layout:
 
 ```text
 <repo-root>/
-├── .internal/
-│   ├── artifact-config.sh
-│   ├── git/
-│   │   ├── stage-ignored-files.sh
-│   │   ├── stage-selected-patterns.py
-│   │   ├── capture-repo-audit.sh
-│   │   └── collect-gitignore-superset.sh
-│   └── load-reimage-config.sh
-├── bin/
-│   ├── backup-apps.sh
-│   ├── backup-repos.sh
-│   ├── backup-home.sh
-│   ├── backup-docker-settings.sh
-│   ├── backup-intellij-scratches-consoles.sh
-│   ├── reimage-checklist.sh
-│   └── capture-size-audit.sh
-├── workflows/
-│   └── mac/
-│       └── reimage/
-│           └── scripts/
-│               ├── capture-managed-inventory.sh
-│               ├── capture-office-stability-baseline.sh
-│               ├── capture-workflow-snapshot.sh
-│               ├── backup-time-machine.sh
-│               ├── capture-time-machine.sh
-│               ├── capture-performance-audit.sh
-│               ├── capture-system-inventory.sh
-│               ├── capture-workload-snapshot.sh
-│               ├── create-secrets-dmg.sh
-│               ├── stage-cert-keychain.sh
-│               ├── prepare-artifact-root.py
-│               ├── office-stability-checklist.sh
-│               ├── initial-reimaged-system-checklist.sh
-│               ├── capture-enrollment.sh
-│               ├── restore-apps.sh
-│               ├── restore-intellij.sh
-│               ├── restore-docker.sh
-│               ├── watch-office-today.sh
-│               └── helpers/
-│                   ├── apps/
-│                   └── git/
-└── reimaging-scripts-guide.md
+├── <repo-root>/
+│   ├── .internal/
+│   │   ├── artifact-config.sh
+│   │   ├── git/
+│   │   │   ├── stage-ignored-files.sh
+│   │   │   ├── stage-selected-patterns.py
+│   │   │   ├── capture-repo-audit.sh
+│   │   │   └── collect-gitignore-superset.sh
+│   │   └── load-reimage-config.sh
+│   ├── bin/
+│   │   ├── backup-apps.sh
+│   │   ├── backup-repos.sh
+│   │   ├── backup-home.sh
+│   │   ├── backup-docker-settings.sh
+│   │   ├── backup-intellij-scratches-consoles.sh
+│   │   ├── reimage-checklist.sh
+│   │   └── capture-size-audit.sh
+│   ├── workflows/
+│   │   └── mac/
+│   │       └── reimage/
+│   │           └── scripts/
+│   │               ├── capture-office-stability-baseline.sh
+│   │               ├── capture-workflow-snapshot.sh
+│   │               ├── backup-time-machine.sh
+│   │               ├── capture-time-machine.sh
+│   │               ├── capture-performance-audit.sh
+│   │               ├── capture-system-inventory.sh
+│   │               ├── capture-workload-snapshot.sh
+│   │               ├── prepare-artifact-root.py
+│   │               ├── office-stability-checklist.sh
+│   │               ├── initial-reimaged-system-checklist.sh
+│   │               ├── capture-enrollment.sh
+│   │               ├── restore-apps.sh
+│   │               ├── restore-intellij.sh
+│   │               ├── restore-docker.sh
+│   │               ├── watch-office-today.sh
+│   │               └── helpers/
+│   │                   ├── apps/
+│   │                   └── git/
+│   └── reimaging-scripts-guide.md
+└── bin/
+    ├── capture-managed-inventory.sh
+    ├── create-secrets-dmg.sh
+    └── stage-certs-keychain.sh
 ```
 
 [[#Table of Contents|⬆ Back to Table of Contents]]

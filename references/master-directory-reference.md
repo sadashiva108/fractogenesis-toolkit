@@ -26,7 +26,7 @@ It combines the currently documented backup, capture, validation, and post-image
 - `reimaged-system-evidence.md`
 - `restore-apps.md`
 - `restore-intellij.md`
-- `stage-cert-keychain.md`
+- `stage-certs-keychain.md`
 
 Use this file when you want one place to see the intended artifact layout without jumping between multiple phase guides.
 
