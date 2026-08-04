@@ -22,7 +22,7 @@ This is the canonical top-level guide for the Mac reimage workflow.
     - [[#Phase 2D — Backup Apps|Phase 2D — Backup Apps]]
     - [[#Phase 2E — Certificate and Keychain Staging|Phase 2E — Certificate and Keychain Staging]]
     - [[#Phase 2F — Create Secrets DMG|Phase 2F — Create Secrets DMG]]
-    - [[#Phase 2G — Backup Time Machine|Phase 2G — Backup Time Machine]]
+    - [[#Phase 2G — Run Time Machine|Phase 2G — Run Time Machine]]
 - [[#Phase 3 — Pre-Image Captures|Phase 3 — Pre-Image Captures]]
     - [[#Phase 3A — Capture Workflow Snapshot|Phase 3A — Capture Workflow Snapshot]]
     - [[#Phase 3B — System Inventory Capture|Phase 3B — System Inventory Capture]]
@@ -135,7 +135,7 @@ Phase guides used in this stage, in the order they are typically reached:
 | Runtime and access restore | Restore the toolchain, shell/CLI config, certificates, SSH, credentials, and activation material that the later phases depend on. | Phase 8 in this guide, `restore-runtime.md`, and `restore-access.md`. |
 | Git restore | Restore Git identities, SSH routing, `reference-vault`, and core repositories. | Phase 9 in this guide and `restore-git.md`. |
 | App restore | Restore daily apps through the umbrella app phase, with dedicated sub-runbooks for IntelliJ and Docker. | Phase 10 in this guide, `restore-apps.md`, `restore-intellij.md`, and `restore-docker.md`. |
-| Post-image evidence captures | Capture the post-image comparison evidence for system inventory, optional managed-state verification, performance, and Office stability. | Phase 11 in this guide plus `capture-system-inventory.md`, `capture-managed-inventory.md`, `capture-performance-audit.md`, and `capture-office-stability-audit.md`. |
+| Post-image evidence captures | Capture the post-image comparison evidence for system inventory, optional managed-state verification, performance, and Office stability. | Phase 11 in this guide plus `capture-system-inventory.md`, `capture-managed-inventory.md`, `capture-performance-audit.md`, and `capture-office-stability.md`. |
 | Final validation and late local-file restore | Validate the rebuilt Mac, then restore bulk local files only after the rebuild is already trusted. | Phase 12 and Phase 13 in this guide, `capture-validated-reimaged-system.md`, and `restore-local-files.md`. |
 
 For the full list of phase guides used in this stage, in the order they are typically reached, see [Restore File Reference — Phase Guide Reference](./references/restore-file-reference.md#phase-guide-reference).
@@ -323,9 +323,9 @@ This phase is the consolidated encrypted-secrets pass: build the final `all-secr
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
 ---
-### Phase 2G — Backup Time Machine
+### Phase 2G — Run Time Machine
 
-Follow this phase guide: [Backup Time Machine](backup-time-machine.md).
+Follow this phase guide: [Run Time Machine](run-time-machine.md).
 
 Run Time Machine after the other Phase 2 backup subphases are complete — by default it's the last backup action before final pre-image validation. It's the broad safety-net backup layer, separate from the manual `$REIMAGE_ARTIFACT_ROOT` artifacts on the external `Data` volume.
 
@@ -358,8 +358,8 @@ If a capture needs to run for days or weeks before the broader backup phase, sta
 Use the others when they answer a specific need:
 
 - **Phase 3A workflow snapshot** — when you want the current reimage workflow docs and lightweight restore reference bundle preserved on the external root.
-- **Phase 3D performance audit** — when you want before/after evidence for slowness, resource pressure, or workload-specific regressions.
-- **Phase 3E Office stability** — when Outlook or OneNote instability, update churn, or unexpected closures are part of the reason for the reimage.
+- **Phase 3C performance audit** — when you want before/after evidence for slowness, resource pressure, or workload-specific regressions.
+- **Phase 3D Office stability** — when Outlook or OneNote instability, update churn, or unexpected closures are part of the reason for the reimage.
 
 ### Recommended Pre-Image Capture Order
 
@@ -379,7 +379,7 @@ Do not reset the Office marker after an incident until the incident evidence has
 | Phase 3A | Workflow snapshot | `$REIMAGE_ARTIFACT_ROOT/workflow-snapshot/pre-image-workflow-snapshot-*`, `$REIMAGE_ARTIFACT_ROOT/workflow-snapshot/reimage-workflow-docs/` | capture-workflow-snapshot.md | — |
 | Phase 3B | System inventory | `$REIMAGE_ARTIFACT_ROOT/system-inventory/pre-image-*` | capture-system-inventory.md | `capture-system-inventory.md` — Manual context note only when needed |
 | Phase 3C | Performance audit | `$REIMAGE_ARTIFACT_ROOT/performance-audit/pre-image-*` | capture-performance-audit.md | `capture-performance-audit.md` — Manual Observations |
-| Phase 3D | Office stability | `$REIMAGE_ARTIFACT_ROOT/office-stability/pre-reimage-*` | capture-office-stability-audit.md | `capture-office-stability-audit.md` — Final Pre-Reimage Checklist |
+| Phase 3D | Office stability | `$REIMAGE_ARTIFACT_ROOT/office-stability/pre-reimage-*` | capture-office-stability.md | `capture-office-stability.md` — Final Pre-Reimage Checklist |
 
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -432,9 +432,9 @@ If you are collecting Office stability evidence, start or continue the Office wa
 
 If Outlook or OneNote closes unexpectedly, do not reopen either app first. Capture a workload snapshot and a fast Office baseline.
 
-Follow this capture runbook: [capture-office-stability-audit.md](capture-office-stability-audit.md).
+Follow this capture runbook: [capture-office-stability.md](capture-office-stability.md).
 
-Manual checklist, if needed: [capture-office-stability-audit.md — Final Pre-Reimage Checklist](capture-office-stability-audit.md#final-pre-reimage-checklist).
+Manual checklist, if needed: [capture-office-stability.md — Final Pre-Reimage Checklist](capture-office-stability.md#final-pre-reimage-checklist).
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -696,7 +696,7 @@ Do not reset the Office marker after an incident until the incident evidence has
 | Phase 11B | System inventory | `$REIMAGE_ARTIFACT_ROOT/system-inventory/post-image-*` | capture-system-inventory.md | `capture-system-inventory.md` — Manual context note only when needed |
 | Phase 11C | Company-managed inventory | `$REIMAGE_ARTIFACT_ROOT/managed-inventory/post-image-*` | capture-managed-inventory.md | — |
 | Phase 11D | Performance audit | `$REIMAGE_ARTIFACT_ROOT/performance-audit/post-image-*` | capture-performance-audit.md | `capture-performance-audit.md` — Manual Observations |
-| Phase 11E | Office stability | `$REIMAGE_ARTIFACT_ROOT/office-stability/post-reimage-*` | capture-office-stability-audit.md | `capture-office-stability-audit.md` — Post-Image Office Stability Checklist Template |
+| Phase 11E | Office stability | `$REIMAGE_ARTIFACT_ROOT/office-stability/post-reimage-*` | capture-office-stability.md | `capture-office-stability.md` — Post-Image Office Stability Checklist Template |
 
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -737,7 +737,7 @@ Follow this capture runbook: [capture-managed-inventory.md](capture-managed-inve
 
 ### Phase 11D —  Performance Audit Capture
 
-Run this when you want the **after** side of the performance comparison. Unlike Phase 3D, which establishes the baseline before erase, Phase 11D reruns the same named scenarios on the rebuilt Mac so you can judge whether responsiveness, resource pressure, memory health, and workload behavior improved, stayed the same, or regressed.
+Run this when you want the **after** side of the performance comparison. Unlike Phase 3C, which establishes the baseline before erase, Phase 11D reruns the same named scenarios on the rebuilt Mac so you can judge whether responsiveness, resource pressure, memory health, and workload behavior improved, stayed the same, or regressed.
 
 At minimum, capture a `normal-workload` scenario. Add `clean-boot`, `active-dev`, or `symptom-capture` only when they will help the comparison. Use the same scenario names that were used pre-image whenever comparison matters.
 
@@ -753,17 +753,17 @@ Manual notes, if needed: [capture-performance-audit.md — Manual Observations](
 
 ### Phase 11E — Office Stability Capture
 
-If you are collecting Office stability evidence, start or continue the Office watcher, then capture the structured Office baseline and checklist using that capture runbook. Unlike Phase 3E, which documents the unstable or suspicious pre-image state, Phase 11E is intended to show whether Outlook, OneNote, Office update behavior, and related supporting processes are now stable on the rebuilt Mac or whether the original issue still reproduces.
+If you are collecting Office stability evidence, start or continue the Office watcher, then capture the structured Office baseline and checklist using that capture runbook. Unlike Phase 3D, which documents the unstable or suspicious pre-image state, Phase 11E is intended to show whether Outlook, OneNote, Office update behavior, and related supporting processes are now stable on the rebuilt Mac or whether the original issue still reproduces.
 
 If Outlook or OneNote closes unexpectedly, do not reopen either app first. Capture a workload snapshot and a fast Office baseline.
 
-Follow this capture runbook: [capture-office-stability-audit.md](capture-office-stability-audit.md).
+Follow this capture runbook: [capture-office-stability.md](capture-office-stability.md).
 
 Generated checklist, when needed: `scripts/office-stability-checklist.sh --phase post-reimage --backup-root "$REIMAGE_ARTIFACT_ROOT"`.
 
 > **Naming TODO:** the `--backup-root` flag name itself belongs to `office-stability-checklist.sh`, which isn't migrated to this repo yet (Phase 11E). Only its *value* was updated above (`$REIMAGE_ARTIFACT_ROOT` → `$REIMAGE_ARTIFACT_ROOT`) — revisit whether the flag itself should become `--artifact-root` or similar once that script actually lands here.
 
-Manual checklist, if needed: [capture-office-stability-audit.md — Post-Image Office Stability Checklist Template](capture-office-stability-audit.md#post-image-office-stability-checklist-template).
+Manual checklist, if needed: [capture-office-stability.md — Post-Image Office Stability Checklist Template](capture-office-stability.md#post-image-office-stability-checklist-template).
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 

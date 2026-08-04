@@ -423,7 +423,7 @@ Manual / fallback notes:
 
 Workflow: [[reimaging-guide#Phase 11E — Post-Image Office Stability Capture|reimaging-guide.md — Phase 11E]].
 
-Detailed capture runbook: [capture-office-stability-audit.md](../capture-office-stability-audit.md)
+Detailed capture runbook: [capture-office-stability.md](../capture-office-stability.md)
 
 Script-generated evidence:
 
