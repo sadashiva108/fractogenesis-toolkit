@@ -241,6 +241,24 @@ resolve_vol_for_dmg() {
   [[ -n "$v" ]] && printf '%s' "$v"
 }
 
+# Ensure the DMG is mounted and echo its volume path. Reuses an existing mount so
+# a DMG left attached by an earlier validate/cleanup run or open in Finder does
+# not cause a spurious failure; only attaches (prompting for the password) when
+# the volume is not already present. Echoes nothing and returns non-zero on
+# failure. Password prompt and hdiutil errors stay on the terminal.
+mount_or_reuse_dmg() {
+  local dmg="$1" vol
+  vol="$(resolve_vol_for_dmg "$dmg")"
+  if [[ -n "$vol" && -d "$vol" ]]; then
+    printf '%s' "$vol"; return 0
+  fi
+  echo "  Mounting $(basename "$dmg") — enter the DMG password when prompted." >&2
+  hdiutil attach "$dmg" >/dev/null || return 1
+  vol="$(resolve_vol_for_dmg "$dmg")"
+  [[ -n "$vol" && -d "$vol" ]] || return 1
+  printf '%s' "$vol"
+}
+
 # Report accumulation. Each subcommand sets REPORT_FILE, then calls rpt/status.
 REPORT_FILE=""
 PASS_N=0; WARN_N=0; FAIL_N=0
@@ -695,15 +713,9 @@ cmd_validate() {
   rpt "| Status | Check | Detail |"
   rpt "|---|---|---|"
 
-  info "Mounting $(basename "$DMG") — enter the DMG password when prompted."
-  if ! hdiutil attach "$DMG" >/dev/null; then
-    status FAIL "DMG mounts with the saved password" "hdiutil attach failed"
-    report_footer_and_path
-    exit 1
-  fi
-  VOL="$(resolve_vol_for_dmg "$DMG")"
+  VOL="$(mount_or_reuse_dmg "$DMG")"
   if [[ -z "$VOL" || ! -d "$VOL" ]]; then
-    status FAIL "Mounted volume resolved" "could not locate /Volumes/all-secrets-*"
+    status FAIL "DMG mounts with the saved password" "could not mount or locate /Volumes/all-secrets-*"
     report_footer_and_path
     exit 1
   fi
@@ -812,16 +824,16 @@ cmd_cleanup() {
   # password (a deliberate final gate); a dry run previews without mounting.
   local have_dmg_contents=false
   if [[ "$FORCE" == true ]]; then
-    info "Mounting $(basename "$DMG") to confirm contents — enter the DMG password when prompted."
-    if hdiutil attach "$DMG" >/dev/null; then
-      VOL="$(resolve_vol_for_dmg "$DMG")"
-      if [[ -n "$VOL" && -d "$VOL" ]]; then
-        have_dmg_contents=true
-        MOUNTED_VOL="$VOL"
-        trap detach_mounted EXIT
-      fi
-    fi
-    if [[ "$have_dmg_contents" != true ]]; then
+    VOL="$(mount_or_reuse_dmg "$DMG")"
+    if [[ -n "$VOL" && -d "$VOL" ]]; then
+      have_dmg_contents=true
+      MOUNTED_VOL="$VOL"
+      trap detach_mounted EXIT
+    else
+      status FAIL "DMG mount" "could not mount or locate the volume for $(basename "$DMG") — nothing deleted"
+      rpt ""
+      rpt "> Mount the DMG (or eject any stale copy) and re-run \`cleanup --force\`."
+      report_footer_and_path
       echo "ERROR: could not mount the DMG to confirm contents; refusing to delete." >&2
       exit 1
     fi
@@ -844,6 +856,18 @@ cmd_cleanup() {
     case "$KEEP_LIST" in *":$cat:"*)
       status INFO "KEEP $cat/" "--keep requested"; (( kept++ )) || true; continue ;;
     esac
+
+    # An empty category holds no secrets, so there is nothing to confirm inside
+    # the DMG; remove the leftover folder rather than warn it is "not in the DMG".
+    if [[ "$n" -eq 0 ]]; then
+      if [[ "$FORCE" == true ]]; then
+        rm -rf -- "${SECRETS_ROOT:?}/$cat"
+        status PASS "REMOVED $cat/" "empty — no secrets to preserve"; (( removed++ )) || true
+      else
+        status INFO "WOULD REMOVE $cat/" "empty — no secrets to preserve"
+      fi
+      continue
+    fi
 
     if [[ "$FORCE" != true ]]; then
       status INFO "WOULD REMOVE $cat/" "$n file(s) — pending DMG confirmation at --force"
