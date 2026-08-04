@@ -241,6 +241,8 @@ Confirm the destination has room if you have not already run the size audit for 
 
 ### Step 2 — Run the Capture
 
+If you want section 12 to capture your Docker images, containers, volumes, and networks, start Docker Desktop before you run — with the daemon stopped, `12-docker.txt` records only a "cannot connect to the Docker daemon" error (the client version and `docker compose version` still capture). A `clean-boot` snapshot with Docker intentionally off is fine.
+
 Run the full capture. For the pre-image run, the default context is correct, so no flag is needed:
 
 ```bash
@@ -253,7 +255,7 @@ For the post-image run (Phase 11B, after the Mac is rebuilt), set the context so
 ./bin/capture-system-inventory.sh --context post-image
 ```
 
-To point at a different artifact root for one invocation, add `--artifact-root PATH`. To write to an exact directory and skip the `system-inventory/<context>-<stamp>` layout entirely, use `--output DIR`.
+To point at a different artifact root for one invocation, add `--artifact-root PATH`. To write to an exact directory and skip the `system-inventory/<context>-<stamp>` layout entirely, use `--output DIR`. To re-run a single section, add `--section NAME` (e.g. `--section docker`); by default it updates that section in your most recent bundle of the same `--context` (overwriting just that file and leaving the others and `MANIFEST.txt` untouched). Add `--new-bundle` to write a fresh timestamped bundle instead.
 
 The script prints each section as it runs and finishes with the bundle path. It writes the 16 section files, `MANIFEST.txt`, the `Brewfile`, and the `dotfiles/` snapshot under `system-inventory/<context>-<stamp>/`.
 
@@ -410,7 +412,7 @@ nvm ls 2>/dev/null
 npm list -g --depth=0 2>/dev/null
 ```
 
-**`12` — Docker.** Engine versions, images, containers, volumes, and networks. Official images re-pull from a registry; save only locally-built images (a judgment call — see [[#Decisions|Decisions]]).
+**`12` — Docker.** Engine versions, images, containers, volumes, and networks. Official images re-pull from a registry; save only locally-built images (a judgment call — see [[#Decisions|Decisions]]). Start Docker Desktop first, or these record only daemon-unreachable errors.
 
 ```bash
 docker version 2>/dev/null

@@ -20,9 +20,6 @@ last_updated: 2026-08-04
 
 Capture the evidence behind Outlook / OneNote instability when Office update churn or unexpected app closures are part of the reason this Mac is being reimaged. A continuous watcher logs the apps, their bundles, crash reports, and Microsoft update/management activity over days or weeks; a baseline collector then summarizes everything newer than a timestamp marker into a self-contained bundle. Run it pre-image (Phase 3D) to record the before picture, and again post-image (Phase 11E) to show whether the rebuilt Mac stayed stable.
 
-> [!note]
-> Renamed during migration from `capture-office-stability-audit.md` → `capture-office-stability.md` (verb-first, dropping the redundant "audit" suffix). Update any inbound links accordingly.
-
 ---
 
 ## Table of Contents

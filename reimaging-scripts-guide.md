@@ -107,10 +107,10 @@ export ONEDRIVE_DEST_SUBDIR="${ONEDRIVE_DEST_SUBDIR:-$(basename "${REIMAGE_ARTIF
 | Phase 3E | Pre-image Office stability evidence | `reimaging-guide.md` (Phase 3), `capture-office-stability-audit.md` | `watch-office-today.sh`, `capture-workload-snapshot.sh`, `capture-office-stability-baseline.sh`, `office-stability-checklist.sh --phase pre-reimage` | `$REIMAGE_ARTIFACT_ROOT/office-stability/`, `$REIMAGE_ARTIFACT_ROOT/office-stability/checklists/` |
 | Phase 4A | Guide access validation (curl/jump drive) | `reimaging-guide.md`, `reimage-guide-access.md` | `bootstrap.sh`, `bin/build-jump-drive-payload.sh` | throwaway test installs only -- no `$REIMAGE_ARTIFACT_ROOT` output |
 | Phase 4B | Final pre-image validation | `reimaging-guide.md`, `reimage-prep-checks.md` | `bin/reimage-checklist.sh --phase pre --artifact-root ...` | `$REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/` |
-| Phase 6 | Enrollment/stabilization capture | `enroll-and-stabilize.md` | `capture-enrollment.sh` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/enrollment/*` when mounted, otherwise `$REIMAGE_WORKSPACE_ROOT/enrollment/*` or `~/Desktop/post-image-artifacts/enrollment/*` |
-| Phase 7 | Initial post-image checklist | `capture-initial-reimaged-system.md` | `initial-reimaged-system-checklist.sh` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/initial-reimaged-system-YYYYMMDD-HHMMSS/` |
+| Phase 6 | Enrollment/stabilization record | `enroll-and-stabilize.md` | `record-enrollment.sh` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/enrollment/*` when mounted, otherwise `$REIMAGE_WORKSPACE_ROOT/enrollment/*` or `~/Desktop/reimaged-system-artifacts/enrollment/*` |
+| Phase 7 | First-boot record twice around a stabilization restart | `verify-reimaged-system.md` | `record-reimaged-system.sh` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/initial-reimaged-system-YYYYMMDD-HHMMSS/` |
 | Phase 8 | Runtime/access restore helpers | `restore-runtime.md`, `restore-access.md` | targeted manual checks; no single public restore script | selective restore from `home-files-backup/` and `secrets-encrypted/` |
-| Phase 9 | Git restore | `restore-git.md` | targeted manual checks; optional `bin/reimage-checklist.sh --phase post` later | repo restore state and later validation under `$REIMAGE_ARTIFACT_ROOT/reimaged-system/` |
+| Phase 9 | Git identity restore | `restore-git.md` | targeted manual writes to `~/.gitconfig`, `~/.ssh/config`, and the personal-root override; no toolkit script | consumes `secrets-encrypted/ssh/` and `secrets-encrypted/git/` restored in Phase 8B |
 | Phase 10 | App restore | `restore-apps.md`, `restore-intellij.md`, `restore-docker.md` | `restore-apps.sh`, `restore-intellij.sh`, `restore-docker.sh` | restore-planning notes under `$REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/` plus app restore from `app-settings-backup/` and `secrets-encrypted/` |
 | Phase 11 | Post-image system inventory evidence | `capture-system-inventory.md` | `capture-system-inventory.sh` | `$REIMAGE_ARTIFACT_ROOT/system-inventory/post-image-*` |
 | Phase 11 | Post-image company-managed inventory evidence | `capture-managed-inventory.md` | `capture-managed-inventory.sh --phase post-image` | `$REIMAGE_ARTIFACT_ROOT/managed-inventory/post-image-*` |
@@ -158,8 +158,8 @@ Current preferred script layout:
 │   │               ├── capture-workload-snapshot.sh
 │   │               ├── prepare-artifact-root.py
 │   │               ├── office-stability-checklist.sh
-│   │               ├── initial-reimaged-system-checklist.sh
-│   │               ├── capture-enrollment.sh
+│   │               ├── record-reimaged-system.sh
+│   │               ├── record-enrollment.sh
 │   │               ├── restore-apps.sh
 │   │               ├── restore-intellij.sh
 │   │               ├── restore-docker.sh
@@ -422,7 +422,7 @@ Detailed pre/post evidence capture manual rows and templates now live in the own
 capture-system-inventory.md
 capture-performance-audit.md
 capture-office-stability-audit.md
-capture-initial-reimaged-system.md
+verify-reimaged-system.md
 capture-validated-reimaged-system.md
 restore-intellij.md
 restore-apps.md
@@ -645,12 +645,10 @@ For workflow-snapshot checks, the validator should discover the newest timestamp
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
-### Phase 7 Initial Reimaged System Checklist
+### Phase 7 First-Boot Record
 
 ```bash
-./scripts/initial-reimaged-system-checklist.sh \
-  --backup-root "$REIMAGE_ARTIFACT_ROOT" \
-  --open
+./bin/record-reimaged-system.sh --open
 ```
 
 The generated bundle is written under:
@@ -765,11 +763,11 @@ Post-image (Phases 6–12):
 
 ```bash
 
-# Phase 6 — enroll and stabilize capture
-./scripts/capture-enrollment.sh --open
+# Phase 6 — enroll and stabilize; record enrollment evidence
+./bin/record-enrollment.sh --open
 
-# Phase 7 — initial checklist
-./scripts/initial-reimaged-system-checklist.sh --backup-root "$REIMAGE_ARTIFACT_ROOT" --open
+# Phase 7 — first-boot record (pre-restart and post-restart)
+./bin/record-reimaged-system.sh --open
 
 # Phase 10 — restore helpers
 ./scripts/restore-apps.sh --backup-root "$REIMAGE_ARTIFACT_ROOT" --open

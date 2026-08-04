@@ -532,7 +532,7 @@ if [[ "$PHASE" == "pre" ]]; then
   # -------------------------------------------------------------------------
   record_section "Backup Root Subdirectories"
   # -------------------------------------------------------------------------
-  for subdir in app-backups repo-audit-reports gitignore-superset managed-inventory office-stability performance-audit secrets-encrypted system-inventory workflow-snapshot; do
+  for subdir in app-settings-backup repo-audit-reports gitignore-superset managed-inventory office-stability performance-audit secrets-encrypted system-inventory workflow-snapshot; do
     if dir_nonempty "$REIMAGE_ARTIFACT_ROOT/$subdir"; then
       SIZE="$(du -sh "$REIMAGE_ARTIFACT_ROOT/$subdir" 2>/dev/null | cut -f1)"
       record_check PASS "Subdir: $subdir" "$SIZE on disk"
@@ -604,7 +604,7 @@ if [[ "$PHASE" == "pre" ]]; then
   fi
 
   # -------------------------------------------------------------------------
-  record_section ".gitignore Superset and Selected Ignored Files"
+  record_section ".gitignore Superset and Staged Ignored Files"
   # -------------------------------------------------------------------------
   GITIGNORE_DIR="$REIMAGE_ARTIFACT_ROOT/gitignore-superset"
 
@@ -621,14 +621,14 @@ if [[ "$PHASE" == "pre" ]]; then
     record_check SKIP "gitignore-review-template.txt reviewed" "Skipped"
   fi
 
-  if dir_nonempty "$REIMAGE_ARTIFACT_ROOT/selected-ignored-files"; then
-    SIZE="$(du -sh "$REIMAGE_ARTIFACT_ROOT/selected-ignored-files" 2>/dev/null | cut -f1)"
-    record_check PASS "Selected ignored files copied" "$SIZE"
+  if dir_nonempty "$REIMAGE_ARTIFACT_ROOT/staged-ignored-files"; then
+    SIZE="$(du -sh "$REIMAGE_ARTIFACT_ROOT/staged-ignored-files" 2>/dev/null | cut -f1)"
+    record_check PASS "Staged ignored files copied" "$SIZE"
   else
-    record_check WARN "Selected ignored files copied" "Empty -- intentional if no patterns needed"
+    record_check WARN "Staged ignored files copied" "Empty -- intentional if no patterns needed"
   fi
 
-  if dir_nonempty "$REIMAGE_ARTIFACT_ROOT/selected-ignored-files-filtered-dryrun"; then
+  if dir_nonempty "$REIMAGE_ARTIFACT_ROOT/staged-ignored-files/dryrun-filtered"; then
     record_check PASS "Filtered dry run completed" "Non-empty"
   else
     record_check WARN "Filtered dry run completed" "No results found"
@@ -637,7 +637,7 @@ if [[ "$PHASE" == "pre" ]]; then
   # -------------------------------------------------------------------------
   record_section "IntelliJ Backup"
   # -------------------------------------------------------------------------
-  INTELLIJ_DIR="$REIMAGE_ARTIFACT_ROOT/app-backups/intellij"
+  INTELLIJ_DIR="$REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij"
 
   if dir_nonempty "$INTELLIJ_DIR"; then
     record_check PASS "IntelliJ backup directory" "$(du -sh "$INTELLIJ_DIR" 2>/dev/null | cut -f1)"
@@ -684,9 +684,9 @@ if [[ "$PHASE" == "pre" ]]; then
   if [[ -f "$EXTRA_CERTS_REVIEW_DIR/MANIFEST.md" ]]; then
     record_check PASS "Extra certificate/Keychain review inventory" "MANIFEST.md found under extra-secrets-certs-review/"
   elif [[ -d "$EXTRA_CERTS_REVIEW_DIR" ]]; then
-    record_check WARN "Extra certificate/Keychain review inventory" "Directory exists but no MANIFEST.md -- re-run stage-cert-keychain.sh"
+    record_check WARN "Extra certificate/Keychain review inventory" "Directory exists but no MANIFEST.md -- re-run stage-certs-keychain.sh"
   else
-    record_check WARN "Extra certificate/Keychain review inventory" "No extra-secrets-certs-review/ under $SECRETS_DIR -- run stage-cert-keychain.sh"
+    record_check WARN "Extra certificate/Keychain review inventory" "No extra-secrets-certs-review/ under $SECRETS_DIR -- run stage-certs-keychain.sh"
   fi
 
   KEYCHAIN_EXPORTS_DIR="$SECRETS_DIR/certs/keychain-manual-exports"
@@ -761,7 +761,7 @@ if [[ "$PHASE" == "pre" ]]; then
   if dir_nonempty "$OFFICE_DIR"; then
     record_check PASS "Office stability evidence present" "$(du -sh "$OFFICE_DIR" 2>/dev/null | cut -f1)"
   else
-    record_check WARN "Office stability evidence present" "Empty -- run capture-office-stability-baseline.sh"
+    record_check WARN "Office stability evidence present" "Empty -- run capture-office-stability.sh"
   fi
   if [[ -n "$(find "$OFFICE_DIR" \( -name "*.sh" -o -name "*.py" \) 2>/dev/null | head -1)" ]]; then
     record_check WARN "No active scripts in office-stability/" "Scripts found -- remove; keep in Git repo only"
@@ -782,15 +782,15 @@ if [[ "$PHASE" == "pre" ]]; then
   if dir_nonempty "$TM_DIR"; then
     record_check PASS "Time Machine status bundle" "$(du -sh "$TM_DIR" 2>/dev/null | cut -f1)"
   else
-    record_check WARN "Time Machine status bundle" "Empty -- run capture-time-machine-status.sh"
+    record_check WARN "Time Machine status bundle" "Empty -- run the Phase 3 Time Machine status capture (see run-time-machine.md)"
   fi
 
   # -------------------------------------------------------------------------
   record_section "Workflow Snapshot and Manual Notes"
   # -------------------------------------------------------------------------
   WORKFLOW_SNAPSHOT_ROOT="$REIMAGE_ARTIFACT_ROOT/workflow-snapshot"
-  APP_BACKUPS_ROOT="$REIMAGE_ARTIFACT_ROOT/app-backups"
-  LOCAL_FILES_DIR="$REIMAGE_ARTIFACT_ROOT/local-files"
+  APP_SETTINGS_BACKUP_ROOT="$REIMAGE_ARTIFACT_ROOT/app-settings-backup"
+  HOME_FILES_BACKUP_DIR="$REIMAGE_ARTIFACT_ROOT/home-files-backup"
 
   LATEST_WORKFLOW_CAPTURE="$(
     find "$WORKFLOW_SNAPSHOT_ROOT" -maxdepth 1 -type d -name 'pre-image-workflow-snapshot-*' -print 2>/dev/null \
@@ -810,35 +810,35 @@ if [[ "$PHASE" == "pre" ]]; then
   #   $REIMAGE_ARTIFACT_ROOT/workflow-snapshot/pre-image-workflow-snapshot-YYYYMMDD-HHMMSS/{logs,...}
   #
   # Stable hand-maintained/export folders stay directly under
-  # app-backups/ and are checked separately.
+  # app-settings-backup/ and are checked separately.
   if dir_nonempty "$WORKFLOW_SNAPSHOT_ROOT/reimage-workflow-docs"; then
     record_check PASS "workflow-snapshot/reimage-workflow-docs" "$(du -sh "$WORKFLOW_SNAPSHOT_ROOT/reimage-workflow-docs" 2>/dev/null | cut -f1)"
   else
     record_check WARN "workflow-snapshot/reimage-workflow-docs" "Empty or missing"
   fi
 
-  REIMAGE_PLAN_DIR="$REIMAGE_ARTIFACT_ROOT/reimage-plan"
-  if [[ -n "$(find "$REIMAGE_PLAN_DIR" -maxdepth 1 -type f -name 'it-reimage-confirmation-*.md' -print -quit 2>/dev/null)" ]]; then
-    record_check PASS "reimage-plan IT confirmation" "Found"
+  REIMAGE_CONFIRMATION_DIR="$REIMAGE_ARTIFACT_ROOT/reimage-confirmation"
+  if [[ -n "$(find "$REIMAGE_CONFIRMATION_DIR" -maxdepth 1 -type f -name 'it-reimage-confirmation-*.md' -print -quit 2>/dev/null)" ]]; then
+    record_check PASS "reimage-confirmation IT confirmation" "Found"
   else
-    record_check WARN "reimage-plan IT confirmation" "Missing -- copy the filled IT confirmation into reimage-plan/"
+    record_check WARN "reimage-confirmation IT confirmation" "Missing -- copy the filled IT confirmation into reimage-confirmation/"
   fi
 
-  if [[ -f "$APP_BACKUPS_ROOT/vscode/extensions.txt" ]]; then
-    EXT_COUNT="$(wc -l < "$APP_BACKUPS_ROOT/vscode/extensions.txt" 2>/dev/null | tr -d ' ')"
+  if [[ -f "$APP_SETTINGS_BACKUP_ROOT/vscode/extensions.txt" ]]; then
+    EXT_COUNT="$(wc -l < "$APP_SETTINGS_BACKUP_ROOT/vscode/extensions.txt" 2>/dev/null | tr -d ' ')"
     record_check PASS "VS Code extensions.txt" "${EXT_COUNT} extensions"
   else
-    record_check WARN "VS Code extensions.txt" "Not found in app-backups/vscode"
+    record_check WARN "VS Code extensions.txt" "Not found in app-settings-backup/vscode"
   fi
 
-  DOTFILES_DIR="$LOCAL_FILES_DIR/dotfiles"
+  DOTFILES_DIR="$HOME_FILES_BACKUP_DIR/dotfiles"
   if dir_nonempty "$DOTFILES_DIR"; then
     record_check PASS "local-files/dotfiles" "$(du -sh "$DOTFILES_DIR" 2>/dev/null | cut -f1)"
   else
-    record_check WARN "local-files/dotfiles" "Empty or missing -- run Phase 2B local-files backup"
+    record_check WARN "home-files-backup/dotfiles" "Empty or missing -- run Phase 2B backup-home.sh"
   fi
 
-  POSTMAN_DIR="$APP_BACKUPS_ROOT/postman"
+  POSTMAN_DIR="$APP_SETTINGS_BACKUP_ROOT/postman"
   if [[ -d "$POSTMAN_DIR" ]]; then
     if dir_nonempty "$POSTMAN_DIR"; then
       record_check PASS "Postman exports" "Files present"
@@ -852,27 +852,27 @@ if [[ "$PHASE" == "pre" ]]; then
   # -------------------------------------------------------------------------
   record_section "Local Files Backup"
   # -------------------------------------------------------------------------
-  if dir_nonempty "$LOCAL_FILES_DIR"; then
-    record_check PASS "backup-local-files.sh run" "$(du -sh "$LOCAL_FILES_DIR" 2>/dev/null | cut -f1)"
+  if dir_nonempty "$HOME_FILES_BACKUP_DIR"; then
+    record_check PASS "backup-home.sh run" "$(du -sh "$HOME_FILES_BACKUP_DIR" 2>/dev/null | cut -f1)"
   else
-    record_check FAIL "backup-local-files.sh run" "Empty -- run backup-local-files.sh"
+    record_check FAIL "backup-home.sh run" "Empty -- run backup-home.sh"
   fi
-  if [[ -f "$LOCAL_FILES_DIR/MANIFEST.md" ]]; then
-    record_check PASS "local-files/MANIFEST.md" "Found"
+  if [[ -f "$HOME_FILES_BACKUP_DIR/MANIFEST.md" ]]; then
+    record_check PASS "home-files-backup/MANIFEST.md" "Found"
   else
-    record_check WARN "local-files/MANIFEST.md" "Not found"
+    record_check WARN "home-files-backup/MANIFEST.md" "Not found"
   fi
 
   # -------------------------------------------------------------------------
   record_section "App Backups"
   # -------------------------------------------------------------------------
-  if [[ -f "$APP_BACKUPS_ROOT/MANIFEST.md" ]]; then
-    record_check PASS "app-backups/MANIFEST.md" "Found"
+  if [[ -f "$APP_SETTINGS_BACKUP_ROOT/MANIFEST.md" ]]; then
+    record_check PASS "app-settings-backup/MANIFEST.md" "Found"
   else
-    record_check WARN "app-backups/MANIFEST.md" "Not found"
+    record_check WARN "app-settings-backup/MANIFEST.md" "Not found"
   fi
 
-  VSCODE_DIR="$APP_BACKUPS_ROOT/vscode"
+  VSCODE_DIR="$APP_SETTINGS_BACKUP_ROOT/vscode"
   if dir_nonempty "$VSCODE_DIR"; then
     record_check PASS "VS Code local fallback" "Non-empty"
   else
@@ -882,7 +882,7 @@ if [[ "$PHASE" == "pre" ]]; then
   # -------------------------------------------------------------------------
   record_section "Docker and Chrome"
   # -------------------------------------------------------------------------
-  DOCKER_DIR="$REIMAGE_ARTIFACT_ROOT/app-backups/docker"
+  DOCKER_DIR="$REIMAGE_ARTIFACT_ROOT/app-settings-backup/docker"
   if dir_nonempty "$DOCKER_DIR"; then
     record_check PASS "Docker settings backed up" "Non-empty"
   else
@@ -895,7 +895,7 @@ if [[ "$PHASE" == "pre" ]]; then
     record_check WARN "Docker image inventory" "image-inventory.txt not found"
   fi
 
-  CHROME_DIR="$REIMAGE_ARTIFACT_ROOT/app-backups/chrome"
+  CHROME_DIR="$REIMAGE_ARTIFACT_ROOT/app-settings-backup/chrome"
   if dir_nonempty "$CHROME_DIR"; then
     record_check PASS "Chrome bookmarks exported" "Non-empty"
   else
@@ -1197,18 +1197,18 @@ if [[ "$PHASE" == "post" ]]; then
   # -------------------------------------------------------------------------
   POST_DIR="$REIMAGE_ARTIFACT_ROOT/reimaged-system"
 
-  POST_ENROLLMENT="$(find "$POST_DIR/enrollment" -maxdepth 1 -type d -name "capture-enrollment-*" 2>/dev/null | sort | tail -1)"
+  POST_ENROLLMENT="$(find "$POST_DIR/enrollment" -maxdepth 1 -type d -name "record-enrollment-*" 2>/dev/null | sort | tail -1)"
   if [[ -n "$POST_ENROLLMENT" ]]; then
     record_check PASS "reimaged-system/enrollment" "$(basename "$POST_ENROLLMENT")"
   else
-    record_check WARN "reimaged-system/enrollment" "Empty -- run bin/capture-enrollment.sh"
+    record_check WARN "reimaged-system/enrollment" "Empty -- run bin/record-enrollment.sh"
   fi
 
   POST_INITIAL="$(find "$POST_DIR" -maxdepth 1 -type d -name "initial-reimaged-system-*" 2>/dev/null | sort | tail -1)"
   if [[ -n "$POST_INITIAL" ]]; then
     record_check PASS "reimaged-system/initial-reimaged-system-*" "$(basename "$POST_INITIAL")"
   else
-    record_check WARN "reimaged-system/initial-reimaged-system-*" "Empty -- run bin/initial-reimaged-system-checklist.sh"
+    record_check WARN "reimaged-system/initial-reimaged-system-*" "Empty -- run bin/record-reimaged-system.sh"
   fi
 
   if dir_nonempty "$REIMAGE_ARTIFACT_ROOT/performance-audit"; then
@@ -1228,7 +1228,7 @@ if [[ "$PHASE" == "post" ]]; then
     if [[ -n "$POST_OFFICE" ]]; then
       record_check PASS "Post-image Office stability bundle" "$(basename "$POST_OFFICE")"
     else
-      record_check WARN "Post-image Office stability bundle" "No post-reimage-* bundle yet -- run capture-office-stability-baseline.sh --phase post-reimage"
+      record_check WARN "Post-image Office stability bundle" "No post-reimage-* bundle yet -- run capture-office-stability.sh --phase post-reimage"
     fi
   else
     record_check WARN "Office stability directory" "Empty"

@@ -53,8 +53,8 @@ Do not manually duplicate generated post-image evidence when the scripts already
 Examples:
 
 ```text
-Do not manually recreate enrollment command output if capture-enrollment.sh generated the bundle.
-Do not manually rewrite the initial first-boot checklist if initial-reimaged-system-checklist.sh generated it twice around the restart.
+Do not manually recreate enrollment command output if record-enrollment.sh generated the bundle.
+Do not manually rewrite the initial first-boot checklist if record-reimaged-system.sh generated it twice around the restart.
 Do not manually rebuild system/managed/performance/Office comparison bundles if the Phase 11 scripts generated them.
 Do not manually duplicate the final validation report when reimage-checklist.sh --phase post already generated the final checklist.
 ```
@@ -67,7 +67,7 @@ Do not manually duplicate the final validation report when reimage-checklist.sh 
 
 | Phase | Capture | Primary destination | Purpose |
 |---|---|---|---|
-| Phase 6 | Enrollment and stabilization | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/enrollment/capture-enrollment-*` | Managed enrollment, profiles, security tools, macOS update state, and first stabilization review. |
+| Phase 6 | Enrollment and stabilization | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/enrollment/record-enrollment-*` | Managed enrollment, profiles, security tools, macOS update state, and first stabilization review. |
 | Phase 7 | Initial captures and sanity checks | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/initial-reimaged-system-*` | First post-image evidence bundle before deeper restore work, including restart and Time Machine planning notes. |
 | Phase 11A | Workflow snapshot | `$REIMAGE_ARTIFACT_ROOT/workflow-snapshot/pre-image-workflow-snapshot-*`, `$REIMAGE_ARTIFACT_ROOT/workflow-snapshot/reimage-workflow-docs/` | Final workflow-doc snapshot showing the workflow state actually used after rebuild. |
 | Phase 11B | System inventory | `$REIMAGE_ARTIFACT_ROOT/system-inventory/post-image-*` | Broad rebuilt-system snapshot for comparison against Phase 3B. |
@@ -86,8 +86,8 @@ Do not manually duplicate the final validation report when reimage-checklist.sh 
 $REIMAGE_ARTIFACT_ROOT/
 ├── reimaged-system/
 │   ├── enrollment/
-│   │   ├── latest-enrollment-capture.txt
-│   │   └── capture-enrollment-YYYYMMDD-HHMMSS/
+│   │   ├── latest-enrollment-record.txt
+│   │   └── record-enrollment-YYYYMMDD-HHMMSS/
 │   ├── latest-initial-reimaged-system-bundle.txt
 │   ├── checklists/
 │   │   ├── reimage-checklist-YYYYMMDD-HHMMSS.md
@@ -128,27 +128,20 @@ Detailed capture runbook: [enroll-and-stabilize.md](../enroll-and-stabilize.md)
 Script-generated evidence:
 
 ```bash
-export REIMAGE_WORKSPACE_ROOT=/path/to/local/reimage-workspace
-
-cd "$REIMAGE_ROOT"
-set -a
-source ./reimage.env
-set +a
-chmod +x scripts/capture-enrollment.sh
-
-./scripts/capture-enrollment.sh   --backup-root "$BACKUP_ROOT"   --open
+cd "$FRACTOGENESIS_HOME"
+./bin/record-enrollment.sh --open
 ```
 
 Preferred generated output:
 
 ```text
-$BACKUP_ROOT/reimaged-system/enrollment/capture-enrollment-YYYYMMDD-HHMMSS/
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/enrollment/record-enrollment-YYYYMMDD-HHMMSS/
 ```
 
 Typical contents:
 
 ```text
-enrollment-capture.md
+enrollment-record.md
 MANIFEST.txt
 raw/
   01-enrollment-status.txt
@@ -163,13 +156,13 @@ raw/
 Fallback output roots verified by the script:
 
 ```text
-$REIMAGE_WORKSPACE_ROOT/enrollment/capture-enrollment-YYYYMMDD-HHMMSS/
-~/Desktop/reimaged-system-artifacts/enrollment/capture-enrollment-YYYYMMDD-HHMMSS/
+$REIMAGE_WORKSPACE_ROOT/enrollment/record-enrollment-YYYYMMDD-HHMMSS/
+~/Desktop/reimaged-system-artifacts/enrollment/record-enrollment-YYYYMMDD-HHMMSS/
 ```
 
 Manual / fallback notes:
 
-- The generated `enrollment-capture.md` prefills the command-verifiable rows and leaves the mixed/manual rows for you.
+- The generated `enrollment-record.md` prefills the command-verifiable rows and leaves the mixed/manual rows for you.
 - Manual confirmation is still needed for Company Portal UI state, whether the required managed app set looks normal, whether macOS updates were intentionally deferred, and whether the first stabilization restart completed cleanly.
 - If `$REIMAGE_ARTIFACT_ROOT` is not available yet, capture Phase 6 locally first, then keep the output path available so it can be copied into the main artifact tree later.
 
@@ -181,27 +174,22 @@ Manual / fallback notes:
 
 Workflow: [[reimaging-guide#Phase 7 — Initial Captures and Sanity Checks|reimaging-guide.md — Phase 7]].
 
-Detailed capture runbook: [capture-initial-reimaged-system.md](../capture-initial-reimaged-system.md)
+Detailed capture runbook: [verify-reimaged-system.md](../verify-reimaged-system.md)
 
 Script-generated evidence:
 
 ```bash
-cd "$REIMAGE_ROOT"
-set -a
-source ./reimage.env
-set +a
-chmod +x scripts/initial-reimaged-system-checklist.sh
-
-./scripts/initial-reimaged-system-checklist.sh   --backup-root "$BACKUP_ROOT"   --open
+cd "$FRACTOGENESIS_HOME"
+./bin/record-reimaged-system.sh --open
 ```
 
 Generated bundle location:
 
 ```text
-$BACKUP_ROOT/reimaged-system/initial-reimaged-system-YYYYMMDD-HHMMSS/
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/initial-reimaged-system-YYYYMMDD-HHMMSS/
 ```
 
-Typical contents verified from `initial-reimaged-system-checklist.sh`:
+Typical contents verified from `record-reimaged-system.sh`:
 
 ```text
 README.md
@@ -217,16 +205,16 @@ checks/
 Related `reimaged-system/` paths created or reused by the script:
 
 ```text
-$BACKUP_ROOT/reimaged-system/time-machine/
-$BACKUP_ROOT/reimaged-system/restarts/
-$BACKUP_ROOT/reimaged-system/restore-notes/
-$BACKUP_ROOT/reimaged-system/latest-initial-reimaged-system-bundle.txt
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/time-machine/
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/restarts/
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/latest-initial-reimaged-system-bundle.txt
 ```
 
 Manual / fallback notes:
 
 - Run the script twice around the planned restart and compare the two generated bundles for regressions.
-- The manual checklist still owns first-boot confirmation items such as Company Portal UI state, real internal-site reachability, Chrome/Terminal/display/peripheral usability, and whether the first post-enrollment restart actually happened.
+- The manual checklist still owns first-boot confirmation items such as Company Portal UI state, real internal-site reachability, Chrome/Terminal/display/peripheral usability, and whether the second stabilization restart actually happened.
 - If the external drive is temporarily unavailable, the runbook documents a local `--output-root` fallback; copy that bundle back under `$REIMAGE_ARTIFACT_ROOT/reimaged-system/` later.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]

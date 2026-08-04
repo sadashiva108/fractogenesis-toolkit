@@ -13,7 +13,7 @@ It combines the currently documented backup, capture, validation, and post-image
 - `backup-home.md`
 - `backup-intellij.md`
 - `backup-repos.md`
-- `capture-initial-reimaged-system.md`
+- `verify-reimaged-system.md`
 - `capture-managed-inventory.md`
 - `capture-office-stability.md`
 - `capture-performance-audit.md`
@@ -322,9 +322,9 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 > ```text
 > $REIMAGE_ARTIFACT_ROOT/reimaged-system/
 > ├── enrollment/
-> │   ├── latest-enrollment-capture.txt
-> │   └── capture-enrollment-YYYYMMDD-HHMMSS/
-> │       ├── enrollment-capture.md
+> │   ├── latest-enrollment-record.txt
+> │   └── record-enrollment-YYYYMMDD-HHMMSS/
+> │       ├── enrollment-record.md
 > │       ├── MANIFEST.txt
 > │       └── raw/
 > │           ├── 01-enrollment-status.txt

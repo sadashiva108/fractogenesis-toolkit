@@ -33,7 +33,7 @@ Single source of truth for the phase guides used across the post-image stage (Ph
 |---|---|
 | `reimaging-guide.md` | Canonical phase map for the full post-image restore and validation flow. |
 | `enroll-and-stabilize.md` | Managed enrollment, required apps/security tools, updates, and the first stabilization restart. |
-| `capture-initial-reimaged-system.md` | External-drive reconnect, initial checklist runs, sanity checks, and the first post-image Time Machine timing. |
+| `verify-reimaged-system.md` | External-drive reconnect, first-boot record twice around a restart, sanity checks, and the first post-image Time Machine timing. |
 | `restore-runtime.md` | Xcode CLT, Homebrew, Java, Node, Gradle, Maven, Groovy, and platform CLI restore. |
 | `restore-access.md` | SSH, certificates, Java trust overrides, shell/CLI config, secrets, and license/activation restore. |
 | `restore-git.md` | Git identities, SSH routing, and work/personal repo configuration restore. |
@@ -62,7 +62,7 @@ It complements the broader workflow docs:
 |---|---|
 | Full post-image phase order | `reimaging-guide.md` Phases 6–13 |
 | Managed enrollment baseline | `enroll-and-stabilize.md` |
-| Early post-image checklist and sanity checks | `capture-initial-reimaged-system.md` |
+| Early post-image checklist and sanity checks | `verify-reimaged-system.md` |
 | Runtime restore | `restore-runtime.md` |
 | Access restore | `restore-access.md` |
 | Git restore | `restore-git.md` |
@@ -109,8 +109,8 @@ $REIMAGE_ARTIFACT_ROOT/
 │   └── rollup-summary/
 ├── reimaged-system/
 │   ├── enrollment/
-│   │   ├── capture-enrollment-YYYYMMDD-HHMMSS/
-│   │   └── latest-enrollment-capture.txt
+│   │   ├── record-enrollment-YYYYMMDD-HHMMSS/
+│   │   └── latest-enrollment-record.txt
 │   ├── checklists/
 │   │   ├── reimage-checklist-YYYYMMDD-HHMMSS.md
 │   │   └── latest-reimage-checklist.txt
@@ -168,7 +168,7 @@ Not every restore uses every category. Treat this as the full restore/capture ma
 
 | Phase | Main sources under `$REIMAGE_ARTIFACT_ROOT` | Main outputs under `$REIMAGE_ARTIFACT_ROOT` |
 |---|---|---|
-| Phase 6 — Enroll and Stabilize | none required beyond `reimage.env`; optional mounted backup root | `reimaged-system/enrollment/capture-enrollment-*/`, `reimaged-system/enrollment/latest-enrollment-capture.txt` |
+| Phase 6 — Enroll and Stabilize | none required beyond `reimage.env`; optional mounted artifact root | `reimaged-system/enrollment/record-enrollment-*/`, `reimaged-system/enrollment/latest-enrollment-record.txt` |
 | Phase 7 — Initial Captures and Sanity Checks | prepared external root, optional `reimaged-system/restore-notes/` | `reimaged-system/initial-reimaged-system-*/`, `reimaged-system/latest-initial-reimaged-system-bundle.txt`, `reimaged-system/restore-notes/`, `reimaged-system/restarts/`, `reimaged-system/time-machine/` |
 | Phase 8A — Restore Runtime Libraries | `system-inventory/pre-image-*/`, `system-inventory/post-image-*/`, `home-files-backup/dotfiles/` | usually notes only; later validated under `reimaged-system/` |
 | Phase 8B — Restore Access | `secrets-encrypted/`, `public-certs/`, `home-files-backup/dotfiles/` | `reimaged-system/restore-notes/` |
@@ -188,8 +188,8 @@ These paths are used before deeper restore work begins.
 
 | Need | Source or destination |
 |---|---|
-| Enrollment capture bundle | `reimaged-system/enrollment/capture-enrollment-YYYYMMDD-HHMMSS/` |
-| Enrollment latest-pointer file | `reimaged-system/enrollment/latest-enrollment-capture.txt` |
+| Enrollment record bundle | `reimaged-system/enrollment/record-enrollment-YYYYMMDD-HHMMSS/` |
+| Enrollment latest-pointer file | `reimaged-system/enrollment/latest-enrollment-record.txt` |
 | First post-image checklist bundle root | `reimaged-system/initial-reimaged-system-YYYYMMDD-HHMMSS/` |
 | Initial checklist latest-pointer file | `reimaged-system/latest-initial-reimaged-system-bundle.txt` |
 | Initial bundle summary and checklist | `reimaged-system/initial-reimaged-system-YYYYMMDD-HHMMSS/README.md`, `reimaged-system/initial-reimaged-system-YYYYMMDD-HHMMSS/initial-checklist.md` |

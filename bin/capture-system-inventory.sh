@@ -29,11 +29,25 @@
 #   # Write to an exact output directory (skips the system-inventory/<context>-<stamp> layout)
 #   ./bin/capture-system-inventory.sh --output /absolute/path/to/output
 #
+#   # Capture only one section, updating the latest bundle of this context
+#   ./bin/capture-system-inventory.sh --section docker
+#
+#   # Capture only one section into a fresh timestamped bundle
+#   ./bin/capture-system-inventory.sh --section docker --new-bundle
+#
 # Options:
 #   --artifact-root PATH  Override REIMAGE_ARTIFACT_ROOT from shared config.
 #   --context LABEL       pre-image | post-image | pre-image-<label> | post-image-<label>.
 #                         Prefix for the timestamped run directory. Default: pre-image.
 #   --output DIR          Exact output directory for generated files.
+#   --section NAME        Capture only one section. One of: hardware, macos, disk,
+#                         display, apps, homebrew, shell, git, python, java, node,
+#                         docker, network, cloud, env, certs. Default: all. By
+#                         default a single-section run updates the latest existing
+#                         bundle of the same --context (overwriting just that one
+#                         section file); pass --new-bundle to force a fresh bundle.
+#   --new-bundle          With --section, force a fresh timestamped bundle instead
+#                         of updating the latest one. Default: off.
 #   -h, --help            Show this message and exit.
 #
 # Configuration precedence:
@@ -75,6 +89,13 @@ usage() {
 STAMP="$(date +%Y%m%d-%H%M%S)"
 CONTEXT="pre-image"
 OUTPUT_DIR=""
+SECTION_FILTER=""   # empty = all sections
+NEW_BUNDLE=false    # with --section, force a fresh bundle instead of updating latest
+UPDATED_EXISTING=false   # set true when a --section run updates an existing bundle
+
+# Gate for --section: true when no filter is set, or when the filter matches
+# this section's keyword. Wraps each section block without altering its body.
+want() { [[ -z "$SECTION_FILTER" || "$SECTION_FILTER" == "$1" ]]; }
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -105,6 +126,19 @@ while [[ $# -gt 0 ]]; do
       OUTPUT_DIR="$2"
       shift 2
       ;;
+    --section)
+      if [[ -z "${2:-}" || "$2" == --* ]]; then
+        echo "ERROR: --section requires a value." >&2
+        usage >&2
+        exit 2
+      fi
+      SECTION_FILTER="$2"
+      shift 2
+      ;;
+    --new-bundle)
+      NEW_BUNDLE=true
+      shift
+      ;;
     -h|--help)
       usage
       exit 0
@@ -133,6 +167,18 @@ case "$CONTEXT" in
     ;;
 esac
 
+# Validate the section filter against the fixed 01-16 keyword set.
+if [[ -n "$SECTION_FILTER" ]]; then
+  case "$SECTION_FILTER" in
+    hardware|macos|disk|display|apps|homebrew|shell|git|python|java|node|docker|network|cloud|env|certs)
+      ;;
+    *)
+      echo "ERROR: --section must be one of: hardware, macos, disk, display, apps, homebrew, shell, git, python, java, node, docker, network, cloud, env, certs (got: $SECTION_FILTER)" >&2
+      exit 2
+      ;;
+  esac
+fi
+
 # Resolve the output directory. --output overrides the standard layout entirely.
 if [[ -z "$OUTPUT_DIR" ]]; then
   if [[ -z "${REIMAGE_ARTIFACT_ROOT:-}" ]]; then
@@ -144,7 +190,22 @@ if [[ -z "$OUTPUT_DIR" ]]; then
     echo "ERROR: artifact root not found: $REIMAGE_ARTIFACT_ROOT" >&2
     exit 2
   fi
-  OUTPUT_DIR="$REIMAGE_ARTIFACT_ROOT/system-inventory/${CONTEXT}-${STAMP}"
+
+  if [[ -n "$SECTION_FILTER" && "$NEW_BUNDLE" != true ]]; then
+    # Default single-section behavior: update the latest bundle of this context
+    # rather than spawning a new one. The `|| true` and `head -1` keep the glob
+    # safe under set -euo pipefail when no bundle matches.
+    LATEST_BUNDLE="$(ls -dt "$REIMAGE_ARTIFACT_ROOT/system-inventory/${CONTEXT}-"*/ 2>/dev/null | head -1 || true)"
+    if [[ -n "$LATEST_BUNDLE" ]]; then
+      OUTPUT_DIR="${LATEST_BUNDLE%/}"
+      UPDATED_EXISTING=true
+    else
+      echo "Note: no existing ${CONTEXT} bundle found; creating a new one." >&2
+      OUTPUT_DIR="$REIMAGE_ARTIFACT_ROOT/system-inventory/${CONTEXT}-${STAMP}"
+    fi
+  else
+    OUTPUT_DIR="$REIMAGE_ARTIFACT_ROOT/system-inventory/${CONTEXT}-${STAMP}"
+  fi
 fi
 
 OUT="$OUTPUT_DIR"
@@ -214,13 +275,16 @@ h() { echo "$1" >> "$_SECTION_FILE"; }
 # ---------------------------------------------------------------------------
 # 01 — Hardware
 # ---------------------------------------------------------------------------
+if want hardware; then
 section "Hardware — Mac model, chip, serial" "01-hardware.txt"
   r system_profiler SPHardwareDataType
 end_section
+fi
 
 # ---------------------------------------------------------------------------
 # 02 — macOS version
 # ---------------------------------------------------------------------------
+if want macos; then
 section "macOS version" "02-macos.txt"
   r sw_vers
   h ""
@@ -228,10 +292,12 @@ section "macOS version" "02-macos.txt"
   h ""
   r csrutil status
 end_section
+fi
 
 # ---------------------------------------------------------------------------
 # 03 — Disk layout
 # ---------------------------------------------------------------------------
+if want disk; then
 section "Disk layout and volumes" "03-disk.txt"
   r diskutil list
   h ""
@@ -244,17 +310,21 @@ section "Disk layout and volumes" "03-disk.txt"
   h "--- Home directory top level ---"
   r ls -lh "$HOME"
 end_section
+fi
 
 # ---------------------------------------------------------------------------
 # 04 — Display
 # ---------------------------------------------------------------------------
+if want display; then
 section "Display setup" "04-display.txt"
   safe_run 20 system_profiler SPDisplaysDataType >> "$_SECTION_FILE" 2>&1 || true
 end_section
+fi
 
 # ---------------------------------------------------------------------------
 # 05 — Installed apps
 # ---------------------------------------------------------------------------
+if want apps; then
 section "Installed applications" "05-apps.txt"
   h "--- /Applications ---"
   r ls -1 /Applications
@@ -262,10 +332,12 @@ section "Installed applications" "05-apps.txt"
   h "--- Mac App Store apps (mas) ---"
   r mas list
 end_section
+fi
 
 # ---------------------------------------------------------------------------
 # 06 — Homebrew
 # ---------------------------------------------------------------------------
+if want homebrew; then
 section "Homebrew formulae and casks" "06-homebrew.txt"
   h "--- Homebrew version ---"
   r brew --version
@@ -284,10 +356,12 @@ section "Homebrew formulae and casks" "06-homebrew.txt"
     && echo "Brewfile saved → $(basename "$OUT")/Brewfile" >> "$_SECTION_FILE" \
     || echo "brew bundle dump failed" >> "$_SECTION_FILE"
 end_section
+fi
 
 # ---------------------------------------------------------------------------
 # 07 — Shell config
 # ---------------------------------------------------------------------------
+if want shell; then
 section "Shell config and PATH" "07-shell.txt"
   h "--- Current shell ---"
   r echo "$SHELL"
@@ -314,10 +388,12 @@ section "Shell config and PATH" "07-shell.txt"
   h "--- .zshenv ---"
   r cat "$HOME/.zshenv"
 end_section
+fi
 
 # ---------------------------------------------------------------------------
 # 08 — Git
 # ---------------------------------------------------------------------------
+if want git; then
 section "Git global config" "08-git.txt"
   r git config --list --show-origin
   h ""
@@ -327,10 +403,12 @@ section "Git global config" "08-git.txt"
   h "--- .gitignore_global ---"
   r cat "$HOME/.gitignore_global"
 end_section
+fi
 
 # ---------------------------------------------------------------------------
 # 09 — Python
 # ---------------------------------------------------------------------------
+if want python; then
 section "Python environment" "09-python.txt"
   h "--- python3 ---"
   r python3 --version
@@ -349,10 +427,12 @@ section "Python environment" "09-python.txt"
   find "$HOME" -name 'pyvenv.cfg' -not -path '*/.*' 2>/dev/null \
     | head -30 >> "$_SECTION_FILE" || true
 end_section
+fi
 
 # ---------------------------------------------------------------------------
 # 10 — Java and Gradle
 # ---------------------------------------------------------------------------
+if want java; then
 section "Java and Gradle" "10-java.txt"
   h "--- java version ---"
   java -version >> "$_SECTION_FILE" 2>&1 || echo "java not found" >> "$_SECTION_FILE"
@@ -377,10 +457,12 @@ section "Java and Gradle" "10-java.txt"
         grep 'distributionUrl' "$f" >> "$_SECTION_FILE" 2>/dev/null || true
       done || true
 end_section
+fi
 
 # ---------------------------------------------------------------------------
 # 11 — Node
 # ---------------------------------------------------------------------------
+if want node; then
 section "Node.js and npm" "11-node.txt"
   h "--- node ---"
   r node --version
@@ -396,11 +478,21 @@ section "Node.js and npm" "11-node.txt"
   h "--- yarn ---"
   r yarn --version
 end_section
+fi
 
 # ---------------------------------------------------------------------------
 # 12 — Docker
 # ---------------------------------------------------------------------------
+if want docker; then
 section "Docker" "12-docker.txt"
+  if ! command -v docker >/dev/null 2>&1; then
+    h "Docker CLI: not found on PATH."
+  elif docker info >/dev/null 2>&1; then
+    h "Docker daemon: reachable"
+  else
+    h "Docker daemon: NOT reachable — start Docker Desktop to capture images/containers/volumes."
+  fi
+  h ""
   h "--- Docker version ---"
   r docker version
   h ""
@@ -419,10 +511,12 @@ section "Docker" "12-docker.txt"
   h "--- Compose version ---"
   r docker compose version
 end_section
+fi
 
 # ---------------------------------------------------------------------------
 # 13 — Network and SSH
 # ---------------------------------------------------------------------------
+if want network; then
 section "Network and SSH" "13-network.txt"
   h "--- Hostname ---"
   r hostname
@@ -440,10 +534,12 @@ section "Network and SSH" "13-network.txt"
   h "--- known_hosts line count ---"
   wc -l "$HOME/.ssh/known_hosts" >> "$_SECTION_FILE" 2>&1 || echo "no known_hosts" >> "$_SECTION_FILE"
 end_section
+fi
 
 # ---------------------------------------------------------------------------
 # 14 — Cloud paths
 # ---------------------------------------------------------------------------
+if want cloud; then
 section "OneDrive and iCloud paths" "14-cloud.txt"
   h "--- CloudStorage directory ---"
   r ls "$HOME/Library/CloudStorage/"
@@ -456,18 +552,22 @@ section "OneDrive and iCloud paths" "14-cloud.txt"
   defaults read "$HOME/Library/Preferences/com.microsoft.OneDrive.plist" 2>/dev/null \
     | grep -i folder >> "$_SECTION_FILE" || echo "OneDrive plist not found" >> "$_SECTION_FILE"
 end_section
+fi
 
 # ---------------------------------------------------------------------------
 # 15 — Environment variables (redacted)
 # ---------------------------------------------------------------------------
+if want env; then
 section "Environment variables (redacted)" "15-env.txt"
   env | grep -Ev 'SECRET|TOKEN|KEY|PASS|PWD|AWS|CREDENTIAL' \
     | sort >> "$_SECTION_FILE" 2>&1 || true
 end_section
+fi
 
 # ---------------------------------------------------------------------------
 # 16 — Certs and keychains
 # ---------------------------------------------------------------------------
+if want certs; then
 section "Certificates and keychains" "16-certs.txt"
   h "--- Keychains ---"
   r security list-keychains
@@ -478,10 +578,12 @@ section "Certificates and keychains" "16-certs.txt"
     -not -path '*/.git/*' \
     2>/dev/null | head -30 >> "$_SECTION_FILE" || true
 end_section
+fi
 
 # ---------------------------------------------------------------------------
-# Dotfiles
+# Dotfiles (pairs with section 07 — shell)
 # ---------------------------------------------------------------------------
+if [[ -z "$SECTION_FILTER" || "$SECTION_FILTER" == "shell" ]]; then
 echo ""
 echo "============================================="
 echo " Copying dotfiles → $(basename "$OUT")/dotfiles/"
@@ -507,34 +609,49 @@ for f in \
       || echo "   ! could not copy $(basename "$f")" >&2
   fi
 done
+fi
 
 # ---------------------------------------------------------------------------
 # Manifest
 # ---------------------------------------------------------------------------
-echo ""
-echo "============================================="
-echo " Generating manifest"
-echo "============================================="
-
-{
-  echo "# System Inventory Manifest"
-  echo "# Generated: $(date)"
-  echo "# Host: $(hostname)"
-  echo "# Artifact root: ${REIMAGE_ARTIFACT_ROOT:-(not set)}"
-  echo "# Context: $CONTEXT"
+# When updating an existing bundle (single-section default), leave its original
+# full-run MANIFEST.txt untouched so the manifest and its generation date still
+# describe the complete bundle. The re-captured section file keeps its own fresh
+# "# Generated:" header from the section helper.
+if [[ "$UPDATED_EXISTING" != true ]]; then
   echo ""
-  echo "## Files captured"
-  ls -lh "$OUT"
-} > "$OUT/MANIFEST.txt"
+  echo "============================================="
+  echo " Generating manifest"
+  echo "============================================="
 
-echo ""
-echo "============================================="
-echo " ✅ Done!"
-echo "    $OUT"
-echo ""
-echo " Next steps:"
-echo "   1. Verify Brewfile: $OUT/Brewfile"
-echo "   2. Review 15-env.txt for anything sensitive"
-echo "   3. Store SSH keys encrypted in secrets-encrypted/"
-echo "============================================="
-echo ""
+  {
+    echo "# System Inventory Manifest"
+    echo "# Generated: $(date)"
+    echo "# Host: $(hostname)"
+    echo "# Artifact root: ${REIMAGE_ARTIFACT_ROOT:-(not set)}"
+    echo "# Context: $CONTEXT"
+    [[ -n "$SECTION_FILTER" ]] && echo "# Section filter: $SECTION_FILTER"
+    echo ""
+    echo "## Files captured"
+    ls -lh "$OUT"
+  } > "$OUT/MANIFEST.txt"
+fi
+
+if [[ "$UPDATED_EXISTING" == true ]]; then
+  echo ""
+  echo "Updated section '$SECTION_FILTER' in existing bundle:"
+  echo "   $OUT"
+  echo "Other sections and MANIFEST.txt were left unchanged."
+else
+  echo ""
+  echo "============================================="
+  echo " ✅ Done!"
+  echo "    $OUT"
+  echo ""
+  echo " Next steps:"
+  echo "   1. Verify Brewfile: $OUT/Brewfile"
+  echo "   2. Review 15-env.txt for anything sensitive"
+  echo "   3. Store SSH keys encrypted in secrets-encrypted/"
+  echo "============================================="
+  echo ""
+fi

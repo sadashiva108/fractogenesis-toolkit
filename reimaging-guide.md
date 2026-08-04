@@ -131,9 +131,9 @@ Phase guides used in this stage, in the order they are typically reached:
 | Category | Purpose | Primary Docs |
 |---|---|---|
 | Enroll and stabilize | Complete enrollment, base managed-app install, required updates, and the first stabilization restart before restore work. | Phase 6 in this guide and `enroll-and-stabilize.md`. |
-| Initial captures and sanity checks | Reconnect the backup root, run the initial post-image checklist twice around a restart, and confirm the rebuilt Mac is basically usable. | Phase 7 in this guide and `capture-initial-reimaged-system.md`. |
+| Initial captures and sanity checks | Reconnect the artifact root, run the first-boot record twice around a restart, and confirm the rebuilt Mac is basically usable. | Phase 7 in this guide and `verify-reimaged-system.md`. |
 | Runtime and access restore | Restore the toolchain, shell/CLI config, certificates, SSH, credentials, and activation material that the later phases depend on. | Phase 8 in this guide, `restore-runtime.md`, and `restore-access.md`. |
-| Git restore | Restore Git identities, SSH routing, `reference-vault`, and core repositories. | Phase 9 in this guide and `restore-git.md`. |
+| Git restore | Restore Git identity plumbing (dual `.gitconfig`, SSH host aliases) and provide the clone template used to re-clone repositories as needed. | Phase 9 in this guide and `restore-git.md`. |
 | App restore | Restore daily apps through the umbrella app phase, with dedicated sub-runbooks for IntelliJ and Docker. | Phase 10 in this guide, `restore-apps.md`, `restore-intellij.md`, and `restore-docker.md`. |
 | Post-image evidence captures | Capture the post-image comparison evidence for system inventory, optional managed-state verification, performance, and Office stability. | Phase 11 in this guide plus `capture-system-inventory.md`, `capture-managed-inventory.md`, `capture-performance-audit.md`, and `capture-office-stability.md`. |
 | Final validation and late local-file restore | Validate the rebuilt Mac, then restore bulk local files only after the rebuild is already trusted. | Phase 12 and Phase 13 in this guide, `capture-validated-reimaged-system.md`, and `restore-local-files.md`. |
@@ -598,7 +598,7 @@ Primary guide: [[enroll-and-stabilize|enroll-and-stabilize.md]]
 
 **Initial Captures and Sanity Checks** is the first post-enrollment verification phase after the managed baseline is stable. It reconnects the backup and capture root, records the first post-image checklist evidence, and confirms that the rebuilt Mac is basically usable before deeper restore work begins. The focus is on validating backup-root visibility, rerunning the initial checklist around a restart, and checking core day-one usability such as browser, network, terminal, display, keyboard, mouse, and audio so later restore phases start from a known-good state.
 
-Primary guide: [[capture-initial-reimaged-system|capture-initial-reimaged-system.md]]
+Primary guide: [[verify-reimaged-system|verify-reimaged-system.md]]
 
 Primary generated evidence:
 
@@ -644,7 +644,7 @@ Primary guides:
 
 ## Phase 9 — Restore Git
 
-**Restore Git** reestablishes source-control access and repository context on top of the restored runtime and access foundation. It focuses on restoring or recreating Git configuration, SSH routing, work and personal identity handling, and the reference-vault checkout first, then restoring or recloning the repositories needed for the remaining setup work. The goal is to ensure the rebuilt Mac can authenticate to the correct remotes, use the intended Git identity automatically, and bring the core repo workspace back online before broader app and local-file restore begins.
+**Restore Git** reestablishes source-control access on top of the restored runtime and access foundation. It focuses on restoring or recreating Git configuration, SSH routing, and work and personal identity handling, and provides the `git clone` template used to re-clone repositories one at a time as they are needed. The goal is to ensure the rebuilt Mac can authenticate to the correct remotes and use the intended Git identity automatically, based only on which directory a repo lives in. Enumerating a repo list, driving a clone loop, and laying back preserved local-only material (stashes, local branches, chosen kept ignored files from Phase 2C) are out of scope here and are handled manually per repo for now — a future `restore-repos.md` will own that flow end-to-end.
 
 Primary guide: [[restore-git|restore-git.md]]
 
