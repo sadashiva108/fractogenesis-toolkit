@@ -6,7 +6,7 @@ This runbook preserves repository state and intentionally chosen local files bef
 
 Git remotes protect what you have committed and pushed. They do not protect local-only commits, uncommitted changes, stashes, untracked files, or the ignored local files — env files, IDE settings, certificates, local scripts — that never leave your machine. This runbook captures that gap.
 
-It does not turn `repo-audit-reports/` into a full source backup, and it does not replace secret handling through `secrets-encrypted/` and the consolidated DMG workflow.
+It does not turn `repo-audit-reports/` into a full source backup. Credential-shaped ignored files it routes are staged into `secrets-encrypted/repos-gitignored/` for the consolidated DMG workflow to encrypt; it does not build or replace that DMG.
 
 ---
 
@@ -78,8 +78,8 @@ The goal is to turn *everything your repos ignore* into *a small, reviewed set o
    Collect                Select                  Exclude                 Route
      │                      │                        │                       │
 [ superset ] ─▶ [ selected set ] ─▶ [ filtered set ] ─▶ ┬─▶ [ secret candidates ]
-every ignore    files whose          noise dropped        │    → secrets-candidates/
-pattern found   pattern you          via backup-          │      (held for encryption)
+every ignore    files whose          noise dropped        │    → repos-gitignored/
+pattern found   pattern you          via backup-          │      (in secrets-encrypted/)
 across the      checked [x] in       exclude-list.txt     │
 scanned repos   the template                              └─▶ [ backup candidates ]
                                                                 → ordinary staging
@@ -88,7 +88,7 @@ scanned repos   the template                              └─▶ [ backup can
 - **Collect** — scan every repo under your configured roots and gather all their `.gitignore` patterns into one **superset**. Nothing is staged yet; this is only the catalog of what *could* be kept.
 - **Select** — check `[x]` the patterns whose files you want. Matched against disk, they become the **selected set**.
 - **Exclude** — drop generated, cache, and build noise from the selected set. What survives is the **filtered set** — the files that will actually be backed up.
-- **Route** — sort the filtered set by shape: credential-shaped files go to `secrets-candidates/` for encrypted handling, everything else to ordinary staging.
+- **Route** — sort the filtered set by shape: credential-shaped files go to `secrets-encrypted/repos-gitignored/` so the Phase 2F DMG sweeps them, everything else to ordinary staging.
 
 > **Note —** Both routing destinations are files you are keeping. Routing decides *where a kept file lands*, never *whether* it is kept.
 
@@ -102,7 +102,7 @@ The word "ignored" is doing double duty in Git, so this runbook fixes precise te
 | Superset | Every unique ignore pattern found across all scanned repos. |
 | Selected set | Files matched by the patterns you checked `[x]`. These are the files you want to keep. |
 | Filtered set | The selected set after the exclude list removes noise. |
-| Secret candidates | Filtered files whose pattern matches the secrets list; staged into `secrets-candidates/`. |
+| Secret candidates | Filtered files whose pattern matches the secrets list; staged into `secrets-encrypted/repos-gitignored/` and listed in `secrets-candidates.tsv`. |
 | Backup candidates | Filtered files that are not secret-shaped; staged normally. |
 
 > **Note —** "Selected" means *chosen to keep*, not *chosen to discard*. Checking a pattern preserves its files.
@@ -115,7 +115,7 @@ Three files you maintain drive the three review stages:
 |---|---|---|
 | Select | `gitignore-review-template.txt` | Checkbox list of which ignored patterns to keep. |
 | Exclude | `backup-exclude-list.txt` | Patterns to drop back out of the selected set. |
-| Route | `secrets-patterns.txt` | Patterns whose kept matches divert to `secrets-candidates/`. |
+| Route | `secrets-patterns.txt` | Patterns whose kept matches divert to `secrets-encrypted/repos-gitignored/`. |
 
 `bin/backup-repos.sh` is the single entrypoint, and its mode flag decides how far down the pipeline a run goes:
 
@@ -244,7 +244,7 @@ gitignore-superset/
 └── secrets-patterns.txt            # you edit this (Route)
 ```
 
-Staged ignored files. Each stage directory has the same shape; `secrets-candidates/` and the `secrets-*.tsv` files appear only when `secrets-patterns.txt` is in use, and the `copied`/`copy-failed` files only under `--selected-copy`:
+Staged ignored files. Each stage directory has the same shape; the `secrets-*.tsv` files appear only when `secrets-patterns.txt` is in use, and the `copied`/`copy-failed` files only under `--selected-copy`. Routed secret files are copied out to `secrets-encrypted/repos-gitignored/` (so the Phase 2F DMG sweeps them), not kept beside the ordinary staged files:
 
 ```text
 staged-ignored-files/
@@ -257,12 +257,17 @@ staged-ignored-files/
     ├── skipped.tsv
     ├── copied.tsv
     ├── copy-failed.tsv
-    ├── secrets-candidates.tsv
+    ├── secrets-candidates.tsv    # routed secrets → secrets-encrypted/repos-gitignored/
     ├── secrets-copied.tsv
     ├── secrets-copy-failed.tsv
-    ├── secrets-candidates/       # secret candidates, held apart
-    │   └── <repo-label>/<relative-path>
     └── <repo-label>/<relative-path>
+```
+
+The routed secret files themselves land under the encrypted-secrets root, where `create-secrets-dmg` sweeps them:
+
+```text
+secrets-encrypted/repos-gitignored/
+└── <repo-label>/<relative-path>
 ```
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -321,7 +326,7 @@ The **Direct path** is an off-ramp: a broad dump of every file Git reports as ig
 
 ### Why Secrets Are Routed Separately
 
-Some files you need for development are also credential-shaped — env files, keys, keystores, IDE data sources. You still want them after the reimage, so you keep them; you just must not let them sync in the clear. `secrets-patterns.txt` diverts kept, credential-shaped files into `secrets-candidates/`, held apart for the encrypted secrets DMG. See [[#Set Up the Secrets-Patterns List|Set Up the Secrets-Patterns List]] for how to configure it, and the [[#Worked Example|Worked Example]] to see it in action.
+Some files you need for development are also credential-shaped — env files, keys, keystores, IDE data sources. You still want them after the reimage, so you keep them; you just must not let them sync in the clear. `secrets-patterns.txt` diverts kept, credential-shaped files into `secrets-encrypted/repos-gitignored/`, where the Phase 2F DMG encrypts them. See [[#Set Up the Secrets-Patterns List|Set Up the Secrets-Patterns List]] for how to configure it, and the [[#Worked Example|Worked Example]] to see it in action.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -453,7 +458,7 @@ cp -p \
 
 ### Set Up the Secrets-Patterns List
 
-This is the **Route** stage. `secrets-patterns.txt` diverts kept, credential-shaped files into `secrets-candidates/` so they never sit beside the ordinary staged files that sync to cloud storage. It uses the same one-pattern-per-line format and matching engine as the exclude list, and `bin/backup-repos.sh` picks it up automatically whenever it exists — no flag.
+This is the **Route** stage. `secrets-patterns.txt` diverts kept, credential-shaped files into `secrets-encrypted/repos-gitignored/` so they never sit beside the ordinary staged files that sync to cloud storage, and so the Phase 2F DMG sweeps them. It uses the same one-pattern-per-line format and matching engine as the exclude list, and `bin/backup-repos.sh` picks it up automatically whenever it exists — no flag.
 
 Create or edit it under the backup root:
 
@@ -478,6 +483,8 @@ credentials*.json
 ```
 
 > **Note —** Routing is not staging. A file must be checked `[x]` in the template to be captured at all; this list only decides *where* a captured, matching file lands. See [[#Why Secrets Are Routed Separately|Why Secrets Are Routed Separately]].
+
+> **Note —** IntelliJ HTTP Client env files (`http-client.env.json`, `http-client.private.env.json`) are owned by `backup-intellij`, which stages them into `secrets-encrypted/intellij/`. Do not list them here — routing them again would stage the same file twice.
 
 Save it back to the workspace for reuse:
 
@@ -505,7 +512,7 @@ Second pass — Select + Exclude, with all three files in play. This is the run 
 ./bin/backup-repos.sh --artifact-root "$REIMAGE_ARTIFACT_ROOT" --selected-filtered-dry-run --open
 ```
 
-Confirm excluded files moved into `dryrun-filtered/excluded.tsv`, and that the `secrets-candidates/` output matches what the first pass showed.
+Confirm excluded files moved into `dryrun-filtered/excluded.tsv`, and that the `secrets-candidates.tsv` output matches what the first pass showed.
 
 ### Run the Selected Copy
 
@@ -515,7 +522,7 @@ Only after both dry runs look right. This copies the filtered, routed set into `
 ./bin/backup-repos.sh --artifact-root "$REIMAGE_ARTIFACT_ROOT" --selected-copy
 ```
 
-Secret candidates are copied under `live/secrets-candidates/`, with `secrets-copied.tsv` and `secrets-copy-failed.tsv` alongside the ordinary `copied.tsv`.
+Secret candidates are copied out to `secrets-encrypted/repos-gitignored/`, with `secrets-copied.tsv` and `secrets-copy-failed.tsv` recorded under `live/` alongside the ordinary `copied.tsv`.
 
 > **Return —** Selected path done. Continue to [[#Review Output Files|Review Output Files]].
 
@@ -554,9 +561,9 @@ copy-failed.tsv          copy failures (live only)
 summary.txt              counts and the paths above
 ```
 
-Watch for: copy failures, credential-shaped files that landed in `candidates.tsv` instead of `secrets-candidates/`, and large generated folders that should have been excluded.
+Watch for: copy failures, credential-shaped files that landed in `candidates.tsv` instead of `secrets-candidates.tsv`, and large generated folders that should have been excluded.
 
-> **Note —** Anything under `secrets-candidates/` is already segregated for exactly this review. Before syncing anything to cloud storage, confirm no credential-bearing file remains in the ordinary output.
+> **Note —** Routed secrets are already segregated under `secrets-encrypted/repos-gitignored/` for exactly this review. Before syncing anything to cloud storage, confirm no credential-bearing file remains in the ordinary output.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -633,7 +640,7 @@ How the four stages resolve for the Selected path:
 | Collect | superset = `.env`, `build/`, `.idea/`, `*.log`, `.DS_Store`, `docs/user/` |
 | Select | selected set = `.env`, `src/local_main.py`, `.idea/workspace.xml`, `docs/user/design.md`, `docs/user/.DS_Store` |
 | Exclude | `.DS_Store` dropped → filtered set = `.env`, `src/local_main.py`, `.idea/workspace.xml`, `docs/user/design.md` |
-| Route | `.env` → `secrets-candidates/`; the other three → backup candidates |
+| Route | `.env` → `secrets-encrypted/repos-gitignored/` (listed in `secrets-candidates.tsv`); the other three → backup candidates |
 
 Resulting dry-run output (abbreviated):
 

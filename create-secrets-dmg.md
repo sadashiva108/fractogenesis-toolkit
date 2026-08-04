@@ -39,7 +39,7 @@ Package every credential-bearing file that must survive the reimage into one AES
 - [[#Decisions|Decisions]]
 - [[#Supplemental Reference|Supplemental Reference]]
     - [[#What Gets Staged|What Gets Staged]]
-    - [[#Manifest and Mounted-DMG Evidence|Manifest and Mounted-DMG Evidence]]
+    - [[#Verification Reports|Verification Reports]]
     - [[#Expected Final Layout|Expected Final Layout]]
     - [[#Post-Image Restore Notes|Post-Image Restore Notes]]
     - [[#Manual Items That Remain Manual|Manual Items That Remain Manual]]
@@ -97,6 +97,15 @@ The preferred path is a single consolidated `all-secrets-*.dmg` built once after
 
 By default the build first reruns the Phase 2E review scan so the certificate/Keychain review artifacts in the DMG are current; `--skip-cert-review` turns that refresh off when you intentionally want the existing review files frozen.
 
+The phase runs as four subcommands of the same entrypoint. Each check reads what actually exists (on disk and inside the DMG), so it never drifts as the app set grows, and `verify-staging` / `validate` / `cleanup` each write a timestamped report to the drive:
+
+| Subcommand | Command | What it does |
+|---|---|---|
+| Verify | `create-secrets-dmg.sh verify-staging` | Report what is staged under `secrets-encrypted/`, before building. |
+| Build | `create-secrets-dmg.sh` (default) | Stage every category and build `all-secrets-*.dmg`. |
+| Validate | `create-secrets-dmg.sh validate` | Mount the newest DMG, check it against what's on disk, detach. |
+| Cleanup | `create-secrets-dmg.sh cleanup [--force]` | Remove loose plaintext confirmed inside the DMG (dry-run without `--force`). |
+
 ### Terminology
 
 | Term | Meaning |
@@ -140,6 +149,12 @@ all-secrets-YYYYMMDD-HHMMSS.dmg              # the encrypted restore artifact �
 all-secrets-YYYYMMDD-HHMMSS-manifest.txt     # source paths included — keep
 RESTORE-README.md                            # generated restore notes — keep
 java-jssecacerts-inventory-YYYYMMDD-HHMMSS.md  # discovered jssecacerts sources — keep
+```
+
+The `verify-staging`, `validate`, and `cleanup` subcommands write timestamped reports (never overwritten) to:
+
+```text
+$REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/secrets-dmg/
 ```
 
 The full `secrets-encrypted/` layout — the loose staging subfolders this phase consumes and cleans up (`certs/`, `chrome/`, `postman/`, `raycast/`, `extra-secrets-certs-review/`, and the rest) — is defined once in the Master Directory Reference, not redrawn here:
@@ -210,18 +225,15 @@ printf 'REIMAGE_ARTIFACT_ROOT=%s\n' "$REIMAGE_ARTIFACT_ROOT"
 
 ### Confirm Manual Staging Is Present
 
-Before building, confirm the manual exports you meant to include are actually in their staging folders — the build only packages what is already there. List the manual staging surface:
+Before building, confirm the manual exports you meant to include are actually staged — the build only packages what is already there. Run:
 
 ```bash
-find "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/chrome" -maxdepth 1 -type f -name 'Chrome Passwords*.csv' -print 2>/dev/null || true
-find "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/postman" -maxdepth 4 -type f -print 2>/dev/null | sort || true
-find "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/raycast" -maxdepth 4 -type f -print 2>/dev/null | sort || true
-find "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/licenses" -maxdepth 4 -type f -print 2>/dev/null | sort || true
-find "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/certs/keychain-manual-exports" -maxdepth 4 -type f -print 2>/dev/null | sort || true
-find "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/extra-secrets-certs-review/state" -maxdepth 1 -type f -name 'phase2f-rerun-required-*.md' -print 2>/dev/null || true
+./bin/create-secrets-dmg.sh verify-staging
 ```
 
-If an export you intended is missing, move it into the matching `secrets-encrypted/` folder before building. If a category was intentionally skipped, note that in the Phase 4B sign-off (`reimage-prep-checks.md`) — the mounted DMG does not need to contain a category you chose not to export. A `state/phase2f-rerun-required-*.md` hit confirms Phase 2E staged new cert material since the last build — a go signal for this run.
+It enumerates **every** folder under `secrets-encrypted/` and reports each as STAGED or EMPTY, flags the `cloud/` exclusion and the `phase2f-rerun-required` marker, and writes a timestamped report under `reimage-prep-checks/secrets-dmg/`. Because it reads what is actually on disk, it never drifts as the app set grows.
+
+Act on the report: if an export you intended shows EMPTY, stage it into the matching `secrets-encrypted/<category>/` folder before building. An intentionally skipped category is fine — the report's manual checklist is where you confirm that. Anything you staged **outside** `secrets-encrypted/` (a custom app) is not visible to the script; verify it by hand.
 
 > [!warning] Pitfall
 > Do not delete any loose staged export here. Nothing is removed until after the DMG is built, mounted, and verified.
@@ -253,98 +265,46 @@ The script prints a staging summary, then prompts twice for an encryption passwo
 
 ### Validate the Mounted DMG
 
-Validation has two goals: prove the DMG mounts with the saved password, and prove every intentionally staged secret is inside it before any plaintext is removed.
-
-Resolve the newest outputs and confirm they exist:
+Mount the newest DMG, check its contents, and detach — one command:
 
 ```bash
-DMG="$(ls -t "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted"/all-secrets-*.dmg | head -1)"
-MANIFEST="$(ls -t "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted"/all-secrets-*-manifest.txt | head -1)"
-ls -lh "$DMG" "$MANIFEST" "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/RESTORE-README.md"
+./bin/create-secrets-dmg.sh validate
 ```
 
-Mount the newest DMG:
+Enter the DMG password when prompted. `validate` cross-checks **every** category staged on disk against what is actually inside the mounted image (so the check can't drift), confirms foundational GPG/SSH material, counts private-key-bearing files inside the image, checks public-PEM BEGIN/END balance, and confirms the manifest and `RESTORE-README.md` exist. It writes a PASS/WARN/FAIL report under `reimage-prep-checks/secrets-dmg/` and exits non-zero if any check FAILs.
 
-```bash
-hdiutil attach "$DMG"
-VOLNAME="$(ls /Volumes | grep 'all-secrets-' | tail -1)"
-printf 'VOLNAME=%s\n' "$VOLNAME"
-```
+A FAIL means a category is staged on disk but missing from the image. Do **not** clean up — move the file into the correct `secrets-encrypted/` folder and rerun [[#Build the Encrypted DMG|Build the Encrypted DMG]] so the newest DMG includes it.
 
-List what is inside and spot-check the high-risk categories that must be present when their source existed:
+Then confirm the few things a script cannot (these roll up to the Phase 4B sign-off in `reimage-prep-checks.md` and appear as the report's manual checklist):
 
-```bash
-find "/Volumes/$VOLNAME" -maxdepth 2 -type f -print 2>/dev/null | sort | head -50
-find "/Volumes/$VOLNAME/gnupg/private-keys-v1.d" -type f -print 2>/dev/null || true
-find "/Volumes/$VOLNAME/ssh" -maxdepth 1 -type f -print 2>/dev/null || true
-find "/Volumes/$VOLNAME/certs" -type f \( -name '*.p12' -o -name '*.pfx' -o -name '*.jks' -o -name '*.keystore' -o -name '*.key' \) -print 2>/dev/null | sort || true
-```
-
-Detach when the check is done:
-
-```bash
-hdiutil detach "/Volumes/$VOLNAME"
-```
-
-Before moving on, confirm by hand — these roll up to the Phase 4B sign-off in `reimage-prep-checks.md`:
-
-1. The DMG mounts with the password saved in the approved password manager.
-2. Foundational secrets are present: GPG private keys under `gnupg/private-keys-v1.d/`, SSH keys, and any other material this machine must restore.
-3. Every category you intentionally exported (Keychain, Chrome, Postman, Raycast, licenses, selected loose certs) is inside the mounted image.
-4. Private-key-bearing files (`.p12`, `.pfx`, `.jks`, `.keystore`, `*.key`) exist **only** inside the encrypted image, not as loose plaintext you are about to keep.
-5. The manifest and `RESTORE-README.md` exist.
-
-The fuller manifest-grep and per-category checks are in [[#Manifest and Mounted-DMG Evidence|Manifest and Mounted-DMG Evidence]]; a fillable record is in [[#Sign-Off Templates|Sign-Off Templates]].
+1. The DMG password is saved in an approved password manager.
+2. Every category you *intended* to export is present — only you know your intent.
+3. Managed/non-exportable Keychain identities are documented, not silently missing.
+4. Java trust overrides in the image match the JDKs you actually need.
 
 > [!bug] Troubleshooting
-> If an expected export is missing from the mounted DMG, do **not** clean up. Move the file into the correct `secrets-encrypted/` folder and rerun [[#Build the Encrypted DMG|Build the Encrypted DMG]] — the newest DMG must contain it before cleanup.
+> If `validate` cannot mount the DMG, the password is wrong or the image is damaged. Re-enter it carefully; if it still fails, rebuild.
 
 ### Clean Up Loose Plaintext After Validation
 
-Only after every check in the previous step is true, remove the temporary plaintext staging. Keep the DMG, its manifest, the jssecacerts inventory, and `RESTORE-README.md`; keep `public-certs/` (reference material, not temporary staging).
-
-Preview first — this resets `PATH` and uses absolute tool paths because a malformed `PATH` after sourcing `reimage.env` can make core tools such as `rm` or `sort` unavailable in some shells:
+Only after `validate` passed and you saved the password, clean up. Preview first — dry-run is the default and deletes nothing:
 
 ```bash
-export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:${PATH:-}"
-: "${REIMAGE_ARTIFACT_ROOT:?ERROR: REIMAGE_ARTIFACT_ROOT is not set}"
-SECRETS_ROOT="$REIMAGE_ARTIFACT_ROOT/secrets-encrypted"
-
-printf '\nHigh-risk loose staging that will be removed:\n'
-for path in \
-  "$SECRETS_ROOT/ssh" "$SECRETS_ROOT/gnupg" "$SECRETS_ROOT/docker" "$SECRETS_ROOT/kube" \
-  "$SECRETS_ROOT/intellij" "$SECRETS_ROOT/cli-credentials" "$SECRETS_ROOT/git" \
-  "$SECRETS_ROOT/package-managers" "$SECRETS_ROOT/certs" \
-  "$SECRETS_ROOT/extra-secrets-certs-review"; do
-  [[ -e "$path" ]] && printf '%s\n' "$path"
-done
+./bin/create-secrets-dmg.sh cleanup
 ```
 
-When the preview matches what you verified inside the mounted DMG, remove the loose staging. The safety `case` refuses to run if `SECRETS_ROOT` does not look like an absolute `.../secrets-encrypted` path:
+When the preview matches what you verified, execute:
 
 ```bash
-case "$SECRETS_ROOT" in
-  /*/secrets-encrypted) ;;
-  *) printf 'ERROR: refusing cleanup, SECRETS_ROOT looks unsafe: %s\n' "$SECRETS_ROOT" >&2; exit 2 ;;
-esac
-
-for path in \
-  "$SECRETS_ROOT/ssh" "$SECRETS_ROOT/gnupg" "$SECRETS_ROOT/docker" "$SECRETS_ROOT/kube" \
-  "$SECRETS_ROOT/intellij" "$SECRETS_ROOT/cli-credentials" "$SECRETS_ROOT/git" \
-  "$SECRETS_ROOT/package-managers" "$SECRETS_ROOT/certs" \
-  "$SECRETS_ROOT/extra-secrets-certs-review"; do
-  [[ -e "$path" ]] && { printf 'Removing: %s\n' "$path"; /bin/rm -rf -- "$path"; }
-done
-
-/usr/bin/find "$SECRETS_ROOT/chrome" -maxdepth 1 -type f -name 'Chrome Passwords*.csv' -exec /bin/rm -f -- {} + 2>/dev/null || true
+./bin/create-secrets-dmg.sh cleanup --force
 ```
 
-This list covers the core high-risk categories. Other categories the build also swept in — `claude/` (secret-bearing config), `licenses/`, and app-secret exports — are equally safe to remove once you confirmed them inside the mounted DMG; add them to the loop above, or leave them if you intend to keep the loose copy. `cloud/` is intentionally **not** listed: AWS is not backed up into the DMG, so deleting a loose `cloud/` would lose it.
+`cleanup` mounts the newest DMG and removes a loose category **only if it is confirmed present inside the image** — so `cloud/` (not backed up) and anything missing from the DMG are kept automatically, no special-casing. The DMG, its manifest, the jssecacerts inventory, `RESTORE-README.md`, and `public-certs/` are never touched, and it writes a cleanup report under `reimage-prep-checks/secrets-dmg/`. Use `--keep <category>` to preserve one you want to leave on disk (for example `--keep postman`).
 
 > [!warning] Pitfall
 > Do not move `.p12`, `.pfx`, `.jks`, `.keystore`, `*.key`, PEM exports, or Keychain identity material into `public-certs/`. Those belong only inside the encrypted DMG. Only a confirmed public-only CA certificate may be *copied* (not moved) into `public-certs/certs/` as a convenience, and only after the encrypted copy is verified.
 
-Postman staging has an extra nuance — you may want to keep `environments/` and the folder `README.md` while removing other loose Postman secrets. That partial-cleanup form is in [[#Manifest and Mounted-DMG Evidence|Manifest and Mounted-DMG Evidence]]. Record the cleanup outcome with the [[#Sign-Off Templates|Sign-Off Templates]] if you keep a durable note.
+To keep Postman while dropping everything else, run `cleanup --keep postman`; for a finer split (keep only `environments/`), keep the whole folder and prune the rest by hand. Record the outcome in the [[#Sign-Off Templates|Sign-Off Templates]] if you want a durable note.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -393,46 +353,17 @@ Phase 2E organizes these under by-function subfolders — `discovery/` (scan rep
 
 The `state/` subfolder is regenerable workflow control — a cross-run staging-state pointer plus the `phase2f-rerun-required-*.md` marker — and is deliberately **not** staged into the DMG; the rerun check reads that marker off the live drive, not the image, so leaving it out is safe. The public decision log `public-certs/certs/keychain-cert-export-inventory-*.md` is also left out: `public-certs/` is reference material, and only `secrets-encrypted/` rides into the encrypted image.
 
-### Manifest and Mounted-DMG Evidence
+### Verification Reports
 
-Before cleanup, grep the manifest to confirm the manually staged categories are referenced (extend the pattern as needed):
+`verify-staging`, `validate`, and `cleanup` each write a timestamped Markdown report (never overwritten) to:
 
-```bash
-grep -niE 'Chrome Passwords|postman|raycast|rayconfig|licenses|keychain-manual-exports|keychain-export-summary|loose-candidates-selected|project-local|tool-local|extra-secrets-certs-review|certs/java-security|jssecacerts' \
-  "$MANIFEST" || true
+```text
+$REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/secrets-dmg/
 ```
 
-Verify app and Keychain exports inside the mounted image when they were intentionally staged:
+Each report has automated PASS / WARN / FAIL rows and a short "manual — you confirm" checklist for the items a script cannot judge. Between them they replace the manual manifest-grep, per-category mounted-DMG spot-checks, and PEM balance checks that used to live here: `validate` cross-checks every on-disk category against the mounted image, counts private-key-bearing files inside it, and balances public PEM blocks; `verify-staging` reports the pre-build staging surface; `cleanup` records exactly what was removed or kept.
 
-```bash
-find "/Volumes/$VOLNAME/chrome" -maxdepth 2 -type f -name 'Chrome Passwords*.csv' -print 2>/dev/null || true
-find "/Volumes/$VOLNAME/postman" -maxdepth 4 -type f -print 2>/dev/null | sort || true
-find "/Volumes/$VOLNAME/raycast" -maxdepth 4 -type f \( -name '*.rayconfig' -o -iname '*quicklink*.json' \) -print 2>/dev/null | sort || true
-find "/Volumes/$VOLNAME/intellij" -type f -name '*.json' -print 2>/dev/null | sort || true
-find "/Volumes/$VOLNAME/certs/keychain-manual-exports" -maxdepth 2 -type f -print 2>/dev/null | sort || true
-find "/Volumes/$VOLNAME/certs/java-security" -name jssecacerts -print 2>/dev/null | sort || true
-```
-
-For public PEM exports, confirm the certificate blocks are balanced:
-
-```bash
-for pem in "/Volumes/$VOLNAME/certs/keychain-manual-exports"/user-public-certificates-*.pem; do
-  [[ -f "$pem" ]] || continue
-  b="$(grep -c 'BEGIN CERTIFICATE' "$pem" || true)"
-  e="$(grep -c 'END CERTIFICATE' "$pem" || true)"
-  if [[ "$b" -gt 0 && "$b" == "$e" ]]; then echo "PASS balanced: $pem"; else echo "WARN unbalanced: $pem"; fi
-done
-```
-
-Partial Postman cleanup — keep `environments/` and `README.md`, remove the rest:
-
-```bash
-POSTMAN_SECRET_ROOT="$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/postman"
-if [[ -d "$POSTMAN_SECRET_ROOT" ]]; then
-  /usr/bin/find "$POSTMAN_SECRET_ROOT" -mindepth 1 -maxdepth 1 \
-    ! -name 'environments' ! -name 'README.md' -exec /bin/rm -rf -- {} +
-fi
-```
+These reports are the automated sign-off evidence for the Phase 4B pre-image checks. The fillable templates in [[#Sign-Off Templates|Sign-Off Templates]] carry only the human-judgment items.
 
 ### Expected Final Layout
 
@@ -473,14 +404,14 @@ These still require human review or app/Keychain interaction even with the Phase
 
 ### Sign-Off Templates
 
-Two fillable records back the manual verifications, kept as files rather than inline so there is one authoritative copy of each:
+The generated reports (see [[#Verification Reports|Verification Reports]]) carry the automated evidence. Two small fillable templates hold only what a script cannot verify — password custody and human judgment:
 
 ```text
 $FRACTOGENESIS_HOME/templates/manual-export-pass-criteria-template.md
 $FRACTOGENESIS_HOME/templates/loose-plaintext-cleanup-signoff-template.md
 ```
 
-Create the working copy under the Phase 4B manual sign-off folder so it rolls up with the rest of the pre-image checks, then edit it in place. Do this for the pass-criteria note before cleanup, and the cleanup note before deleting anything:
+Create a working copy under the Phase 4B manual sign-off folder and tick the manual items after `validate` and before `cleanup --force`:
 
 ```bash
 mkdir -p "$REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/manual"

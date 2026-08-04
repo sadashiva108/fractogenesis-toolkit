@@ -4,9 +4,9 @@
 #
 # Internal helper for backup-apps.sh (Phase 2D). Backs up IntelliJ IDEA state:
 # Scratches and Consoles, selected global IDE config, project-level .idea
-# metadata across the workspace root, and diagnostic logs. Excludes HTTP Client
-# environment files and other secret-like material from the clear-text copy and
-# records them for the encrypted secrets workflow.
+# metadata across the workspace root, and diagnostic logs. Keeps secret-shaped
+# material out of the clear-text copy and stages the files matching your reviewed
+# patterns into secrets-encrypted/intellij/ for the encrypted secrets workflow.
 #
 # This file lives in .internal/apps/ and is normally invoked by
 # bin/backup-apps.sh. Shared reimage config is intentionally NOT loaded here;
@@ -79,13 +79,13 @@
 #   - Copies IntelliJ logs for diagnostics.
 #   - Records app bundle, runtime, lib, preinstalled plugins, system/cache, temp, current
 #     Project BasePath concept, and workspace root in manifests.
-#   - Excludes http-client.env.json and http-client.private.env.json from the clear-text copy
-#     by default.
+#   - Keeps secret-shaped files out of the clear-text copy, and stages the files
+#     matching your reviewed patterns (intellij-secret-review-template.txt) into
+#     secrets-encrypted/intellij/by-source/. Nothing is staged unless checked.
 #
 # Security note:
-#   Run create-secrets-dmg.sh (Phase 2F) after this script to place HTTP Client
-#   environment files and other credential-bearing files in the consolidated
-#   encrypted secrets DMG.
+#   Run create-secrets-dmg.sh (Phase 2F) after this script to encrypt the staged
+#   IntelliJ secrets (secrets-encrypted/intellij/) into the consolidated DMG.
 #
 # Exit status:
 #   0  Completed successfully.
@@ -214,6 +214,16 @@ if [[ ! -d "$JETBRAINS_ROOT" ]]; then
   exit 2
 fi
 
+# Encrypted-secrets destination for staged IntelliJ secrets, and the review
+# selection files. Like gitignore-superset, these are written to the external
+# artifact root; persist them to your local workspace by hand if you want the
+# selections to survive between reimages, and copy them back before a rerun.
+INTELLIJ_SECRETS_DEST="$ARTIFACT_ROOT/secrets-encrypted/intellij"
+INTELLIJ_SECRETS_REVIEW_DIR="$ARTIFACT_ROOT/app-settings-backup/intellij/secret-review"
+INTELLIJ_SECRETS_TEMPLATE="$INTELLIJ_SECRETS_REVIEW_DIR/intellij-secret-review-template.txt"
+INTELLIJ_EXCLUDE_LIST="$INTELLIJ_SECRETS_REVIEW_DIR/backup-exclude-list.txt"
+INTELLIJ_STAGED_COUNT=0
+
 # Prefer macOS/BSD stat even if GNU coreutils stat appears earlier in PATH.
 # GNU stat treats "-f" as filesystem mode, which creates noisy errors like:
 #   stat: cannot read file system information for '%m': No such file or directory
@@ -335,6 +345,198 @@ sanitize_for_manifest_label() {
   fi
 }
 
+# --- IntelliJ secret pattern selection (mirrors gitignore-review-template.txt) ---
+# The reviewed selections are written to the external artifact root (persist them
+# to your local workspace by hand to survive between reimages). Nothing is
+# auto-selected: on first use an all-unchecked template is written and staging is
+# skipped until the user checks patterns and reruns. A default seed is emitted on
+# first generation; edit the
+# workspace copy to add or remove patterns.
+INTELLIJ_SECRET_SEED_PATTERNS=(
+  'http-client.env.json'
+  'http-client.private.env.json'
+  '*.env.json'
+  '*.secrets.json'
+  '*.private.env.json'
+  'dataSources.local.xml'
+  'dataSourcesLocal.xml'
+  '*.pem'
+  '*.key'
+  '*.p12'
+  '*.pfx'
+  '*.jks'
+  '*.keystore'
+  '*credential*'
+  '*secret*'
+)
+
+SELECTED_PATTERNS=()
+ALL_PATTERNS=()
+FIND_PRED=()
+
+write_intellij_secret_template() {
+  local dest="$1"
+  local p
+  mkdir -p "$(dirname "$dest")"
+  {
+    echo "# IntelliJ Secret Review Template"
+    echo "#"
+    echo "# Mark patterns whose matching files should be staged into"
+    echo "# secrets-encrypted/intellij/ by changing:"
+    echo "#   [ ] pattern"
+    echo "# to:"
+    echo "#   [x] pattern"
+    echo "#"
+    echo "# Files matching a checked pattern under the JetBrains config dirs and the"
+    echo "# workspace root are copied into the encrypted-secrets tree so Phase 2F"
+    echo "# sweeps them. Nothing is staged unless you check it."
+    echo "#"
+    echo "# Generated: $(date '+%Y-%m-%d %H:%M:%S')"
+    echo ""
+    for p in "${INTELLIJ_SECRET_SEED_PATTERNS[@]}"; do
+      echo "[ ] $p"
+    done
+  } > "$dest"
+}
+
+# Read a review template into SELECTED_PATTERNS ([x]-checked) and ALL_PATTERNS
+# (every listed pattern). Tolerant of CRLF and surrounding whitespace.
+load_intellij_secret_patterns() {
+  local file="$1"
+  local line marker pat
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    line="${line%$'\r'}"
+    case "$line" in
+      '#'*|'') continue ;;
+    esac
+    marker="${line:0:4}"
+    pat="${line:4}"
+    # trim leading and trailing whitespace from the pattern
+    pat="${pat#"${pat%%[![:space:]]*}"}"
+    pat="${pat%"${pat##*[![:space:]]}"}"
+    [[ -n "$pat" ]] || continue
+    case "$marker" in
+      '[x] '|'[X] ')
+        SELECTED_PATTERNS+=("$pat")
+        ALL_PATTERNS+=("$pat")
+        ;;
+      '[ ] ')
+        ALL_PATTERNS+=("$pat")
+        ;;
+    esac
+  done < "$file"
+}
+
+# Build a find name/path predicate (FIND_PRED) from SELECTED_PATTERNS. A pattern
+# containing "/" is matched as a path suffix; everything else as a basename.
+build_find_predicate() {
+  FIND_PRED=()
+  local first=1 p flag
+  [[ ${#SELECTED_PATTERNS[@]} -gt 0 ]] || return 0
+  for p in "${SELECTED_PATTERNS[@]}"; do
+    flag="-name"
+    case "$p" in
+      */*) flag="-path"; p="*/$p" ;;
+    esac
+    if [[ $first -eq 1 ]]; then
+      FIND_PRED+=("$flag" "$p")
+      first=0
+    else
+      FIND_PRED+=(-o "$flag" "$p")
+    fi
+  done
+}
+
+# Record and copy one matched secret file into the encrypted-secrets tree.
+# Identical filenames recur across products/modules, so each file is placed under
+# by-source/<path-below-home> to stay unique and keep provenance.
+stage_one_intellij_secret() {
+  local src="$1"
+  local rel dst
+  [[ -f "$src" ]] || return 0
+  printf '%s\n' "$src" >> "$INTELLIJ_SECRET_CANDIDATES"
+  rel="${src#"$HOME"/}"
+  rel="${rel#/}"
+  dst="$INTELLIJ_SECRETS_DEST/by-source/$rel"
+  mkdir -p "$(dirname "$dst")"
+  if cp -p "$src" "$dst" 2>/dev/null; then
+    printf '%s\t%s\n' "$src" "$dst" >> "$INTELLIJ_SECRET_STAGED"
+    INTELLIJ_STAGED_COUNT=$((INTELLIJ_STAGED_COUNT + 1))
+  else
+    printf '%s\t%s\n' "$src" "COPY-FAILED" >> "$INTELLIJ_SECRET_STAGED"
+  fi
+}
+
+# Operator-maintained noise excludes for the clear-text IntelliJ copy, seeded on
+# first use. Mirrors gitignore-superset/backup-exclude-list.txt: one pattern per
+# line, '#' comments and blank lines ignored. Secrets are handled by the review
+# template, not here.
+INTELLIJ_EXCLUDE_SEED=(
+  'httpRequests/'
+  'httpRequests/**'
+  'shelf/'
+  'shelf/**'
+  '.DS_Store'
+)
+
+# Secret-shape floor: always excluded from the clear-text copy even when no
+# review template exists, so credential-shaped files never leak into plaintext.
+INTELLIJ_SECRET_EXCLUDE_FLOOR=(
+  'http-client.env.json'
+  'http-client.private.env.json'
+  '*.env.json'
+  'dataSources.local.xml'
+  'dataSourcesLocal.xml'
+)
+
+RSYNC_EXCLUDE_ARGS=()
+
+write_intellij_exclude_list() {
+  local dest="$1" p
+  mkdir -p "$(dirname "$dest")"
+  {
+    echo "# backup-exclude-list.txt  (Exclude — drop noise from the clear-text IntelliJ copy)"
+    echo "#"
+    echo "# One pattern per line; '#' comments and blank lines are ignored."
+    echo "# Secret handling lives in intellij-secret-review-template.txt, not here."
+    echo "# Do not list secrets here; this only drops files from the plaintext copy."
+    echo "# 'shelf/' is honored unless you pass --include-shelf."
+    echo ""
+    for p in "${INTELLIJ_EXCLUDE_SEED[@]}"; do
+      echo "$p"
+    done
+  } > "$dest"
+}
+
+# Build the effective rsync exclude set for the clear-text copy: secret-shape
+# floor + every review-template pattern (checked or not) + the operator exclude
+# list. 'shelf/' entries are dropped from the set when --include-shelf is passed.
+build_rsync_exclude_args() {
+  RSYNC_EXCLUDE_ARGS=()
+  local p
+  for p in "${INTELLIJ_SECRET_EXCLUDE_FLOOR[@]}"; do
+    RSYNC_EXCLUDE_ARGS+=(--exclude "$p")
+  done
+  if [[ ${#ALL_PATTERNS[@]} -gt 0 ]]; then
+    for p in "${ALL_PATTERNS[@]}"; do
+      RSYNC_EXCLUDE_ARGS+=(--exclude "$p")
+    done
+  fi
+  if [[ -n "$INTELLIJ_EXCLUDE_LIST" && -f "$INTELLIJ_EXCLUDE_LIST" ]]; then
+    while IFS= read -r p || [[ -n "$p" ]]; do
+      p="${p%$'\r'}"
+      case "$p" in '#'*|'') continue ;; esac
+      p="${p#"${p%%[![:space:]]*}"}"
+      p="${p%"${p##*[![:space:]]}"}"
+      [[ -n "$p" ]] || continue
+      case "$p" in
+        'shelf/'|'shelf/**') [[ "$INCLUDE_SHELF" -eq 1 ]] && continue ;;
+      esac
+      RSYNC_EXCLUDE_ARGS+=(--exclude "$p")
+    done < "$INTELLIJ_EXCLUDE_LIST"
+  fi
+}
+
 mkdir -p "$DEST" "$DEST/manual-settings-export" "$DEST/restore-notes"
 mkdir -p "$ARTIFACT_ROOT/secrets-encrypted/intellij"
 
@@ -397,7 +599,7 @@ $ARTIFACT_ROOT/app-settings-backup/intellij/
 
 - Project-level .idea metadata is copied under project-metadata/.
 - IntelliJ diagnostic logs are copied under logs/.
-- HTTP Client environment candidates are listed in manifests/http-client-env-candidates.txt and should be handled by the consolidated secrets DMG workflow.
+- Secret files matching your reviewed patterns are staged into secrets-encrypted/intellij/by-source/ and listed in manifests/intellij-secrets-staged.tsv; the consolidated secrets DMG workflow encrypts them.
 EOF_README
 
 CONFIG_DIRS_FILE="$DEST/manifests/intellij-config-dirs.tsv"
@@ -406,16 +608,16 @@ SPECIAL_STATUS_FILE="$DEST/manifests/special-paths-status.tsv"
 SPECIAL_LISTING_FILE="$DEST/manifests/special-paths-listing.txt"
 WORKSPACE_DIRS_FILE="$DEST/manifests/workspace-projects.tsv"
 WORKSPACE_STATUS_FILE="$DEST/manifests/workspace-root-status.tsv"
-HTTP_ENV_FILE="$DEST/manifests/http-client-env-candidates.txt"
-SECRET_LIKE_FILE="$DEST/manifests/secret-like-files.txt"
+INTELLIJ_SECRET_CANDIDATES="$DEST/manifests/intellij-secret-candidates.txt"
+INTELLIJ_SECRET_STAGED="$DEST/manifests/intellij-secrets-staged.tsv"
 FILES_FILE="$DEST/manifests/files-backed-up.txt"
 SUMMARY_FILE="$DEST/manifests/summary.txt"
 SORT_FILE="$DEST/manifests/intellij-config-dirs-sort.tmp"
 WORKSPACE_SORT_FILE="$DEST/manifests/workspace-projects-sort.tmp"
 
 : > "$CONFIG_DIRS_FILE"
-: > "$HTTP_ENV_FILE"
-: > "$SECRET_LIKE_FILE"
+: > "$INTELLIJ_SECRET_CANDIDATES"
+printf 'source_path\tstaged_path\n' > "$INTELLIJ_SECRET_STAGED"
 : > "$SORT_FILE"
 : > "$WORKSPACE_SORT_FILE"
 : > "$SPECIAL_LISTING_FILE"
@@ -514,13 +716,7 @@ copy_dir_if_exists() {
   if [[ -d "$src" ]]; then
     mkdir -p "$dst"
     echo "Copying $label"
-    rsync -aE \
-      --exclude 'http-client.env.json' \
-      --exclude 'http-client.private.env.json' \
-      --exclude '*.env.json' \
-      --exclude 'dataSources.local.xml' \
-      --exclude 'dataSourcesLocal.xml' \
-      "$src/" "$dst/"
+    rsync -aE ${RSYNC_EXCLUDE_ARGS[@]+"${RSYNC_EXCLUDE_ARGS[@]}"} "$src/" "$dst/"
   fi
 }
 
@@ -551,32 +747,35 @@ copy_project_idea_if_exists() {
   mkdir -p "$project_dest"
   echo "Copying project-level IntelliJ metadata: $label/.idea"
 
-  if [[ "$INCLUDE_SHELF" -eq 1 ]]; then
-    rsync -aE \
-      --exclude 'httpRequests/' \
-      --exclude 'httpRequests/**' \
-      --exclude 'http-client.env.json' \
-      --exclude 'http-client.private.env.json' \
-      --exclude '*.env.json' \
-      --exclude 'dataSources.local.xml' \
-      --exclude 'dataSourcesLocal.xml' \
-      "$idea_dir/" "$project_dest/.idea/"
-  else
-    rsync -aE \
-      --exclude 'httpRequests/' \
-      --exclude 'httpRequests/**' \
-      --exclude 'shelf/' \
-      --exclude 'shelf/**' \
-      --exclude 'http-client.env.json' \
-      --exclude 'http-client.private.env.json' \
-      --exclude '*.env.json' \
-      --exclude 'dataSources.local.xml' \
-      --exclude 'dataSourcesLocal.xml' \
-      "$idea_dir/" "$project_dest/.idea/"
-  fi
+  rsync -aE ${RSYNC_EXCLUDE_ARGS[@]+"${RSYNC_EXCLUDE_ARGS[@]}"} "$idea_dir/" "$project_dest/.idea/"
 
   printf '%s\t%s\t%s\n' "$rel" "$project_dir" "$idea_dir" >> "$WORKSPACE_DIRS_FILE"
 }
+
+# Resolve the reviewed IntelliJ secret patterns before scanning. Mirrors
+# gitignore-review-template.txt: nothing is pre-selected; the review file's [x]
+# marks drive staging. On first use it is written to the external artifact root
+# (all unchecked) and nothing is staged until you check patterns and rerun.
+if [[ -f "$INTELLIJ_SECRETS_TEMPLATE" ]]; then
+  load_intellij_secret_patterns "$INTELLIJ_SECRETS_TEMPLATE"
+  build_find_predicate
+  echo "Using IntelliJ secret selections: $INTELLIJ_SECRETS_TEMPLATE"
+  echo "  Checked patterns: ${#SELECTED_PATTERNS[@]}"
+else
+  write_intellij_secret_template "$INTELLIJ_SECRETS_TEMPLATE"
+  echo "NOTE: No IntelliJ secret review template found; wrote a fresh one (all unchecked):" >&2
+  echo "  $INTELLIJ_SECRETS_TEMPLATE" >&2
+  echo "  Check the patterns you want staged, then rerun to stage them." >&2
+fi
+
+# Seed the operator-maintained plaintext-exclude list on first use, then build
+# the effective rsync exclude set applied to every clear-text copy below.
+if [[ -n "$INTELLIJ_EXCLUDE_LIST" && ! -f "$INTELLIJ_EXCLUDE_LIST" ]]; then
+  write_intellij_exclude_list "$INTELLIJ_EXCLUDE_LIST"
+  echo "NOTE: Wrote a starter IntelliJ plaintext-exclude list (edit to taste):" >&2
+  echo "  $INTELLIJ_EXCLUDE_LIST" >&2
+fi
+build_rsync_exclude_args
 
 while IFS=$'\t' read -r _mtime config_dir; do
   [[ -n "${config_dir:-}" && -d "$config_dir" ]] || continue
@@ -594,23 +793,11 @@ while IFS=$'\t' read -r _mtime config_dir; do
     copy_dir_if_exists "$config_dir/$d" "$product_dest/config-copy/$d" "$product $d"
   done
 
-  find "$config_dir" -type f \( \
-      -name 'http-client.env.json' \
-      -o -name 'http-client.private.env.json' \
-      -o -name '*.env.json' \
-    \) -print 2>/dev/null >> "$HTTP_ENV_FILE" || true
-
-  find "$config_dir" -type f \( \
-      -iname '*secret*' \
-      -o -iname '*credential*' \
-      -o -iname '*.pem' \
-      -o -iname '*.key' \
-      -o -iname '*.p12' \
-      -o -iname '*.pfx' \
-      -o -iname '*.jks' \
-      -o -iname 'dataSources.local.xml' \
-      -o -iname 'dataSourcesLocal.xml' \
-    \) -print 2>/dev/null >> "$SECRET_LIKE_FILE" || true
+  if [[ ${#FIND_PRED[@]} -gt 0 ]]; then
+    while IFS= read -r secret_file; do
+      stage_one_intellij_secret "$secret_file"
+    done < <(find "$config_dir" -type f \( "${FIND_PRED[@]}" \) -print 2>/dev/null)
+  fi
 
 done < <(sort -rn "$SORT_FILE")
 
@@ -650,48 +837,26 @@ if [[ "$SKIP_WORKSPACES" -eq 0 ]]; then
       done < <(sort -rn "$WORKSPACE_SORT_FILE")
     fi
 
-    # Record project-level HTTP Client env files and other secret-like filenames under workspaces.
-    find "$WORKSPACE_ROOT" \
-      -maxdepth "$WORKSPACE_MAX_DEPTH" \
-      -type f \( \
-        -name 'http-client.env.json' \
-        -o -name 'http-client.private.env.json' \
-        -o -name '*.env.json' \
-      \) \
-      -not -path '*/.git/*' \
-      -not -path '*/node_modules/*' \
-      -not -path '*/.gradle/*' \
-      -not -path '*/build/*' \
-      -not -path '*/target/*' \
-      -not -path '*/dist/*' \
-      -not -path '*/out/*' \
-      -not -path '*/.venv/*' \
-      -not -path '*/venv/*' \
-      -print 2>/dev/null >> "$HTTP_ENV_FILE" || true
-
-    find "$WORKSPACE_ROOT" \
-      -maxdepth "$WORKSPACE_MAX_DEPTH" \
-      -type f \( \
-        -iname '*secret*' \
-        -o -iname '*credential*' \
-        -o -iname '*.pem' \
-        -o -iname '*.key' \
-        -o -iname '*.p12' \
-        -o -iname '*.pfx' \
-        -o -iname '*.jks' \
-        -o -iname 'dataSources.local.xml' \
-        -o -iname 'dataSourcesLocal.xml' \
-      \) \
-      -not -path '*/.git/*' \
-      -not -path '*/node_modules/*' \
-      -not -path '*/.gradle/*' \
-      -not -path '*/build/*' \
-      -not -path '*/target/*' \
-      -not -path '*/dist/*' \
-      -not -path '*/out/*' \
-      -not -path '*/.venv/*' \
-      -not -path '*/venv/*' \
-      -print 2>/dev/null >> "$SECRET_LIKE_FILE" || true
+    # Stage project-level secrets matching the reviewed patterns under workspaces.
+    if [[ ${#FIND_PRED[@]} -gt 0 ]]; then
+      while IFS= read -r secret_file; do
+        stage_one_intellij_secret "$secret_file"
+      done < <(
+        find "$WORKSPACE_ROOT" \
+          -maxdepth "$WORKSPACE_MAX_DEPTH" \
+          -type f \( "${FIND_PRED[@]}" \) \
+          -not -path '*/.git/*' \
+          -not -path '*/node_modules/*' \
+          -not -path '*/.gradle/*' \
+          -not -path '*/build/*' \
+          -not -path '*/target/*' \
+          -not -path '*/dist/*' \
+          -not -path '*/out/*' \
+          -not -path '*/.venv/*' \
+          -not -path '*/venv/*' \
+          -print 2>/dev/null
+      )
+    fi
   elif [[ -z "$WORKSPACE_ROOT" ]]; then
     echo "NOTE: No workspace root set, skipping project-level workspace scan. Pass --workspace-root or export INTELLIJ_WORKSPACE_ROOT." >&2
   else
@@ -716,8 +881,7 @@ else
 fi
 
 rm -f "$SORT_FILE" "$WORKSPACE_SORT_FILE"
-sort -u "$HTTP_ENV_FILE" -o "$HTTP_ENV_FILE"
-sort -u "$SECRET_LIKE_FILE" -o "$SECRET_LIKE_FILE"
+sort -u "$INTELLIJ_SECRET_CANDIDATES" -o "$INTELLIJ_SECRET_CANDIDATES"
 find "$DEST" -type f | sort > "$FILES_FILE"
 
 cat > "$SUMMARY_FILE" <<EOF_SUMMARY
@@ -733,8 +897,10 @@ Workspace max depth: $WORKSPACE_MAX_DEPTH
 Project-level .idea workspaces backed up: $WORKSPACE_COUNT
 Include .idea/shelf: $INCLUDE_SHELF
 Files copied: $(wc -l < "$FILES_FILE" | tr -d ' ')
-HTTP Client env candidates: $(wc -l < "$HTTP_ENV_FILE" | tr -d ' ')
-Secret-like file candidates: $(wc -l < "$SECRET_LIKE_FILE" | tr -d ' ')
+IntelliJ secret candidates matched: $(wc -l < "$INTELLIJ_SECRET_CANDIDATES" | tr -d ' ')
+IntelliJ secrets staged to secrets-encrypted/intellij/: $INTELLIJ_STAGED_COUNT
+Secret pattern selections: $INTELLIJ_SECRETS_TEMPLATE
+Plaintext exclude list: $INTELLIJ_EXCLUDE_LIST
 System/cache copied: $INCLUDE_SYSTEM_CACHE
 
 Special Files and Folders manifests:
@@ -755,7 +921,9 @@ Project BasePath note:
     $WORKSPACE_ROOT
 
 Next step:
-  Run create-secrets-dmg.sh (Phase 2F) after reviewing HTTP Client environment candidates and other secret-like files.
+  Review ${INTELLIJ_SECRETS_TEMPLATE:-the IntelliJ secret review template} and check the patterns
+  you want staged, then rerun to stage the matches into secrets-encrypted/intellij/.
+  Run create-secrets-dmg.sh (Phase 2F) afterward to encrypt them into the DMG.
 
 Manual step:
   Export IntelliJ settings ZIP from IntelliJ IDEA -> File -> Manage IDE Settings -> Export Settings
@@ -765,14 +933,13 @@ EOF_SUMMARY
 
 cat "$SUMMARY_FILE"
 
-if [[ -s "$HTTP_ENV_FILE" ]]; then
+if [[ "$INTELLIJ_STAGED_COUNT" -gt 0 ]]; then
   echo
-  echo "HTTP Client env candidates were found. Review and encrypt them:"
-  echo "  $HTTP_ENV_FILE"
-fi
-
-if [[ -s "$SECRET_LIKE_FILE" ]]; then
+  echo "Staged $INTELLIJ_STAGED_COUNT IntelliJ secret file(s) into:"
+  echo "  $INTELLIJ_SECRETS_DEST/by-source/"
+  echo "Manifest: $INTELLIJ_SECRET_STAGED"
+elif [[ -n "$INTELLIJ_SECRETS_TEMPLATE" && -f "$INTELLIJ_SECRETS_TEMPLATE" ]]; then
   echo
-  echo "Secret-like filenames were found. Review before copying this backup to cloud storage:"
-  echo "  $SECRET_LIKE_FILE"
+  echo "No IntelliJ secrets staged. Check patterns in the review template and rerun:"
+  echo "  $INTELLIJ_SECRETS_TEMPLATE"
 fi

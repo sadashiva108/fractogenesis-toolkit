@@ -520,7 +520,8 @@ def main() -> int:
     )
     parser.add_argument("--include-template", required=True, help="Path to gitignore-review-template.txt.")
     parser.add_argument("--exclude-list", help="Optional list of patterns/paths to exclude after dry run review.")
-    parser.add_argument("--secrets-patterns", help="Optional list of credential-shaped patterns. Matching files are routed to secrets-candidates/ instead of the ordinary output tree.")
+    parser.add_argument("--secrets-patterns", help="Optional list of credential-shaped patterns. Matching files are routed to the secrets destination instead of the ordinary output tree.")
+    parser.add_argument("--secrets-dest", help="Destination root for secret-shaped candidates. Defaults to <dest>/secrets-candidates. Point at secrets-encrypted/repos-gitignored/ so the Phase 2F DMG sweeps them.")
     parser.add_argument("--root", action="append", required=True, help="Root directory to crawl. Can be passed multiple times.")
     parser.add_argument("--dest", required=True, help="Destination directory for dry-run reports or copied backup files.")
     parser.add_argument("--copy", action="store_true", help="Actually copy files. Without this, dry run only.")
@@ -533,6 +534,7 @@ def main() -> int:
     secrets_patterns_path = expand_path(args.secrets_patterns) if args.secrets_patterns else None
     roots = [expand_path(r) for r in args.root]
     dest = expand_path(args.dest)
+    secrets_dest = expand_path(args.secrets_dest) if args.secrets_dest else (dest / "secrets-candidates")
 
     if not include_template.is_file():
         print(f"ERROR: include template not found: {include_template}", file=sys.stderr)
@@ -680,7 +682,7 @@ def main() -> int:
                     # output tree instead of adding them to candidates_by_abs,
                     # so a secret-shaped file never lands next to regular
                     # staged files in dryrun/dryrun-filtered/live output.
-                    candidate.backup_path = dest / "secrets-candidates" / backup_label / backup_rel_path
+                    candidate.backup_path = secrets_dest / backup_label / backup_rel_path
                     candidate.secret_pattern = secret_pattern
                     secrets_candidates_by_abs[abs_path] = candidate
                     continue

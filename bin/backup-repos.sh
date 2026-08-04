@@ -406,12 +406,14 @@ run_selected() {
     exit 2
   fi
   # secrets-patterns.txt is opt-in: if present, route credential-shaped
-  # candidates into secrets-candidates/ instead of the ordinary output tree.
+  # candidates into secrets-encrypted/repos-gitignored/ so the Phase 2F DMG
+  # sweeps them, instead of leaving them in a holding tree the DMG never reads.
   # Its absence is not an error -- unlike EXCLUDE_LIST_PATH below, this
   # capability works whether or not the file has been created yet.
   local secrets_args=()
   if [[ -f "$SECRETS_PATTERNS_PATH" ]]; then
-    secrets_args=(--secrets-patterns "$SECRETS_PATTERNS_PATH")
+    secrets_args=(--secrets-patterns "$SECRETS_PATTERNS_PATH" \
+                  --secrets-dest "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/repos-gitignored")
   fi
   run_with_status "Selected-pattern staging scan" \
     python3 "$SELECTED_HELPER" --include-template "$TEMPLATE_PATH" "${HELPER_ROOT_ARGS[@]}" --dest "$dest" "${secrets_args[@]}" "$@"
