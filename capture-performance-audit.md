@@ -6,7 +6,7 @@ verb_first: true
 primary_scripts:
   - bin/capture-performance-audit.sh
 related_scripts:
-  - bin/generate-performance-manual-observations.py
+  - .internal/performance/generate-performance-manual-observations.py
   - bin/generate-performance-rollup-summary.py
   - mac_memory_health.sh
 artifact_paths:
@@ -120,21 +120,18 @@ A scenario is a run mode: a named workload the capture samples under. Every run 
 
 Every path and directory tree this runbook uses is defined here, once. Later sections refer back to these names instead of redrawing them.
 
-> [!note]
-> The scripts below have **not yet been migrated into `bin/`**. This runbook documents them as the intended entrypoint and helpers; treat every path under `$FRACTOGENESIS_HOME/bin/` here as a TODO until the migration lands.
-
 Primary script:
 
 ```text
-$FRACTOGENESIS_HOME/bin/capture-performance-audit.sh          # entrypoint — TODO: not yet migrated to bin/
+$FRACTOGENESIS_HOME/bin/capture-performance-audit.sh          # entrypoint
 ```
 
 Related scripts, alphabetical:
 
 ```text
-$FRACTOGENESIS_HOME/bin/generate-performance-manual-observations.py   # helper — TODO: not yet migrated; auto-fills the manual-context files (called by the entrypoint)
-$FRACTOGENESIS_HOME/bin/generate-performance-rollup-summary.py        # helper — TODO: not yet migrated; optional quantitative rollup from helper history
-mac_memory_health.sh                                                  # helper — TODO: not yet migrated; reusable long-running history helper, run from ~/.local/bin/
+$FRACTOGENESIS_HOME/.internal/performance/generate-performance-manual-observations.py   # helper — auto-fills the manual-context files (called by the entrypoint)
+$FRACTOGENESIS_HOME/bin/generate-performance-rollup-summary.py        # entrypoint — optional quantitative rollup from helper history
+mac_memory_health.sh                                                  # external helper — not part of this toolkit; run from ~/.local/bin/ when present
 ```
 
 Artifact root:
@@ -227,7 +224,7 @@ Confirm the entrypoint parses and the environment resolves. `capture-performance
 ```
 
 > [!note]
-> With no `--output`, the capture defaults to `$REIMAGE_ARTIFACT_ROOT/performance-audit/`. Pass `--output "$REIMAGE_WORKSPACE_ROOT/performance-audit"` only when staging locally before the backup drive is mounted.
+> With no `--output`, the capture defaults to `$REIMAGE_ARTIFACT_ROOT/performance-audit/`. Pass `--output "$REIMAGE_WORKSPACE_ROOT/performance-audit"` only when staging locally before the backup drive is mounted, or `--artifact-root PATH` to point at a different artifact root for one invocation.
 
 ### Step 2 — Run the Capture
 
@@ -339,7 +336,7 @@ Two optional pieces sit outside the scenario bundle and add longer-range context
 For a clean pre/post cutover, keep the final pre-image history window intact, archive it (for example under `REIMAGE_WORKSPACE_ROOT/performance-audit/history-archives/`), then start a fresh post-image series so the windows do not intermix. Use the most recent representative 7–14 days as the pre-image window and the first representative 2–7 days after setup settles as the post-image window.
 
 > [!note]
-> These helpers are not yet migrated into `bin/`. Until they are, treat `bin/generate-performance-rollup-summary.py` and `mac_memory_health.sh` as intended entrypoints, not runnable paths.
+> Only `mac_memory_health.sh` is external — it lives at `~/.local/bin/`, is not part of this toolkit, and may be absent. `generate-performance-rollup-summary.py` is a migrated `bin/` entrypoint.
 
 **Rollup summary (`generate-performance-rollup-summary.py`).** When you have many diagnostic rollups over days or weeks, this produces a quantitative CSV package under `performance-audit/rollup-summary/<phase>-<stamp>/` (`performance-rollup-summary.md` plus a `summary/` of grouped app RSS/CPU/process-count pivots and health-window CSVs). It does not compute a single merged pre/post score — it produces structured inputs that make that follow-up analysis possible.
 

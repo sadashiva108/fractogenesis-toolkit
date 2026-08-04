@@ -132,11 +132,11 @@ Every path and directory tree this runbook uses is defined here, once. Later sec
 Primary script:
 
 ```text
-$FRACTOGENESIS_HOME/bin/capture-system-inventory.sh    # entrypoint — TODO: not yet migrated to bin/
+$FRACTOGENESIS_HOME/bin/capture-system-inventory.sh    # entrypoint
 ```
 
 > [!note]
-> `bin/capture-system-inventory.sh` has not been migrated into `bin/` yet. This runbook documents its intended entrypoint interface and is ready to run once the script lands; until then the [[#Per-Section Command Reference|Per-Section Command Reference]] is the standing fallback for capturing any section by hand.
+> The [[#Per-Section Command Reference|Per-Section Command Reference]] is available for rerunning or troubleshooting a single section by hand.
 
 Related scripts:
 
@@ -368,7 +368,7 @@ brew list --cask
 brew doctor
 ```
 
-**`07` — Shell config and dotfiles.** Shell and version, `PATH`, and the dotfiles the script copies into `dotfiles/` (`.zshrc`, `.zprofile`, `.zshenv`, `.bashrc`, `.bash_profile`, `.gitconfig`, `.gitignore_global`, `.npmrc`, `.ssh/config`).
+**`07` — Shell config and dotfiles.** Shell and version, `PATH`, and the dotfiles the script copies into `dotfiles/` (`.zshrc`, `.zprofile`, `.zshenv`, `.bashrc`, `.bash_profile`, `.gitconfig`, `.gitignore_global`, `.npmrc`, `.pip/pip.conf`, `.ssh/config`).
 
 ```bash
 echo "$SHELL"

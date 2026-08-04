@@ -108,7 +108,7 @@ There is one capture flow, run at two capture depths. The depth is the only thin
 
 | Mode | When to use it | How |
 |---|---|---|
-| Full baseline | The normal end-of-window capture. | `./bin/capture-office-stability.sh --phase pre-reimage --backup-root "$REIMAGE_ARTIFACT_ROOT"` |
+| Full baseline | The normal end-of-window capture. | `./bin/capture-office-stability.sh --phase pre-reimage --artifact-root "$REIMAGE_ARTIFACT_ROOT"` |
 | Fast incident baseline | Immediately after an unexpected close, before reopening — skips the slow unified-log pull. | add `--skip-unified-log` |
 
 ### Terminology
@@ -131,20 +131,20 @@ There is one capture flow, run at two capture depths. The depth is the only thin
 Every path and directory tree this runbook uses is defined here, once. Later sections refer back to these names instead of redrawing them.
 
 > [!note]
-> None of the Office-stability scripts have been migrated into `bin/` yet. The `bin/` paths below are the reflowed target names; each is marked `TODO: not yet migrated to bin/`. Flag names are carried over from the reference-vault scripts and may be revisited once the scripts land — in particular `--backup-root` now takes `$REIMAGE_ARTIFACT_ROOT` and may be renamed to `--artifact-root`.
+> These entrypoints live in `bin/` and take `--artifact-root`. `--phase` accepts `pre-reimage`/`post-reimage` (pre-image/post-image are normalized to those).
 
 Primary script:
 
 ```text
-$FRACTOGENESIS_HOME/bin/capture-office-stability.sh    # entrypoint — TODO: not yet migrated to bin/ (baseline collector; runs every section in one pass)
+$FRACTOGENESIS_HOME/bin/capture-office-stability.sh    # entrypoint (baseline collector; runs every section in one pass)
 ```
 
 Related scripts, alphabetical:
 
 ```text
-$FRACTOGENESIS_HOME/bin/capture-workload-snapshot.sh   # entrypoint — TODO: not yet migrated to bin/ (point-in-time workload snapshot)
-$FRACTOGENESIS_HOME/bin/office-stability-checklist.sh  # entrypoint — TODO: not yet migrated to bin/ (generates the sign-off checklist report)
-$FRACTOGENESIS_HOME/bin/watch-office-today.sh          # entrypoint — TODO: not yet migrated to bin/ (long-running Office watcher)
+$FRACTOGENESIS_HOME/bin/capture-workload-snapshot.sh   # entrypoint (point-in-time workload snapshot)
+$FRACTOGENESIS_HOME/bin/office-stability-checklist.sh  # entrypoint (generates the sign-off checklist report)
+$FRACTOGENESIS_HOME/bin/watch-office-today.sh          # entrypoint (long-running Office watcher)
 ```
 
 Artifact root:
@@ -280,7 +280,7 @@ Stages, in order:
 At the end of the window, turn everything the watcher recorded into a structured, timestamped bundle and ZIP under `office-stability/`. The collector re-runs the marker-relative crash/bundle/process checks itself, so you do not need to have run them by hand:
 
 ```bash
-./bin/capture-office-stability.sh --phase pre-reimage --backup-root "$REIMAGE_ARTIFACT_ROOT"
+./bin/capture-office-stability.sh --phase pre-reimage --artifact-root "$REIMAGE_ARTIFACT_ROOT"
 ```
 
 It writes the numbered section files `00`–`08` and `office-stability-summary.md` into the bundle (see [[#Bundle Layout|Bundle Layout]] for the tree and [[#Per-Section Baseline Files|Per-Section Baseline Files]] for what each file holds).
@@ -293,7 +293,7 @@ It writes the numbered section files `00`–`08` and `office-stability-summary.m
 Turn the bundle into a readable sign-off report under `office-stability/checklists/`. Run this after the collector and before closing out the phase; `--open` opens the report when it finishes:
 
 ```bash
-./bin/office-stability-checklist.sh --phase pre-reimage --backup-root "$REIMAGE_ARTIFACT_ROOT" --open
+./bin/office-stability-checklist.sh --phase pre-reimage --artifact-root "$REIMAGE_ARTIFACT_ROOT" --open
 ```
 
 This is Office-specific and runs separately from the general Phase 4B checklist. Its findings roll up to the [[reimaging-guide#Core Assumptions|Phase 4B]] sign-off. The manual equivalents are in [[#Final Pre-Reimage Checklist|Final Pre-Reimage Checklist]].
@@ -368,7 +368,7 @@ find "$HOME/Library/Logs/DiagnosticReports" "/Library/Logs/DiagnosticReports" \
 Then run the fast incident baseline to snapshot everything before reopening:
 
 ```bash
-./bin/capture-office-stability.sh --phase pre-reimage --backup-root "$REIMAGE_ARTIFACT_ROOT" --skip-unified-log
+./bin/capture-office-stability.sh --phase pre-reimage --artifact-root "$REIMAGE_ARTIFACT_ROOT" --skip-unified-log
 ```
 
 ### The Watcher Is Not Running

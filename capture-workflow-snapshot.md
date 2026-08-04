@@ -93,11 +93,8 @@ Every path and directory tree this runbook uses is defined here, once. Later sec
 Primary script:
 
 ```text
-$FRACTOGENESIS_HOME/bin/capture-workflow-snapshot.sh    # entrypoint — TODO: not yet migrated to bin/
+$FRACTOGENESIS_HOME/bin/capture-workflow-snapshot.sh    # entrypoint
 ```
-
-> [!note]
-> `bin/capture-workflow-snapshot.sh` has not been migrated into this repository yet, so the scripted path is pending. Until it lands, produce the documentation copy with the manual doc-copy block in [[#Step 2 — Capture the Workflow Snapshot|Step 2]]; the scripted commands below are the intended shape once the entrypoint exists.
 
 Artifact root:
 
@@ -146,9 +143,6 @@ A short pre-flight: confirm you are set up, then confirm what this run is for. T
 - You are running commands from `$FRACTOGENESIS_HOME`.
 - The repository holds the current workflow runbooks and templates you intend to snapshot — the doc copy reflects `$FRACTOGENESIS_HOME` as it is right now.
 
-> [!note]
-> `bin/capture-workflow-snapshot.sh` is not yet migrated, so the scripted capture is pending. The manual doc-copy block in [[#Step 2 — Capture the Workflow Snapshot|Step 2]] produces `reimage-workflow-docs/` in the meantime.
-
 ### Confirm Your Intent
 
 - Whether this is the **pre-image** run (Phase 3A, before wiping) or the **post-image** run (Phase 11A, after the rebuild) — this sets the bundle's `context` prefix and which side of the reimage it records.
@@ -170,7 +164,7 @@ Confirm the artifact root resolves and its volume is mounted before writing anyt
 test -d "$REIMAGE_ARTIFACT_ROOT" && echo "artifact root: $REIMAGE_ARTIFACT_ROOT"
 ```
 
-Once `bin/capture-workflow-snapshot.sh` is migrated, syntax-check it before the first run:
+Syntax-check the entrypoint before the first run:
 
 ```bash
 bash -n bin/capture-workflow-snapshot.sh
@@ -181,15 +175,19 @@ bash -n bin/capture-workflow-snapshot.sh
 
 ### Step 2 — Capture the Workflow Snapshot
 
-Run the scripted capture (pending migration). It writes a fresh timestamped bundle and refreshes the documentation copy in one pass; `--open` reveals the bundle when it finishes:
+Run the scripted capture. It writes a fresh timestamped bundle and refreshes the documentation copy in one pass; `--open` reveals the bundle when it finishes:
 
 ```bash
 ./bin/capture-workflow-snapshot.sh --open
 ```
 
-The post-image run in Phase 11A is the same command; the script labels the bundle with the `post-image` context so it sits beside the pre-image bundle rather than overwriting it.
+For the post-image run (Phase 11A, after the rebuild), set the context so the bundle is labelled distinctly and sits beside the pre-image bundle rather than overwriting it:
 
-Until the entrypoint lands — or whenever the docs changed after a bundle was captured and you want the backup drive to carry the latest instructions — refresh the documentation copy directly. This copies the repository's top-level workflow docs and its `templates/` into `reimage-workflow-docs/`:
+```bash
+./bin/capture-workflow-snapshot.sh --context post-image --open
+```
+
+If the docs changed after a bundle was captured and you want the backup drive to carry the latest instructions without a full recapture, refresh the documentation copy directly. This copies the repository's top-level workflow docs and its `templates/` into `reimage-workflow-docs/`:
 
 ```bash
 DOC_DEST="$REIMAGE_ARTIFACT_ROOT/workflow-snapshot/reimage-workflow-docs"
@@ -219,7 +217,7 @@ test -d "$WORKFLOW_SNAPSHOT_ROOT/reimage-workflow-docs" && echo "PASS: workflow 
 ```
 
 > [!bug] Troubleshooting
-> An empty `reimage-workflow-docs/` means the doc-copy block did not run (expected while the entrypoint is pending) — run it from Step 2. A missing bundle README means the scripted capture has not run yet; the manual doc copy alone does not create the timestamped bundle.
+> An empty `reimage-workflow-docs/` means the doc-copy block did not run — run it from Step 2. A missing bundle README means the scripted capture has not run yet; the manual doc copy alone does not create the timestamped bundle.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
