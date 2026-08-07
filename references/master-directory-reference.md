@@ -18,11 +18,11 @@ It combines the currently documented backup, capture, validation, and post-image
 - `capture-office-stability.md`
 - `capture-performance-audit.md`
 - `capture-system-inventory.md`
-- `capture-validated-reimaged-system.md`
 - `capture-workflow-snapshot.md`
 - `enroll-and-stabilize.md`
 - `prepare-artifact-root.md`
 - `reimage-prep-evidence.md`
+- `reimaged-system-checks.md`
 - `reimaged-system-evidence.md`
 - `restore-apps.md`
 - `restore-intellij.md`
@@ -384,6 +384,7 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 > $REIMAGE_ARTIFACT_ROOT/repo-audit-reports/
 > ├── MANIFEST.md
 > ├── latest-run.txt
+> ├── latest-post-image-restore.txt
 > └── runs/
 >     ├── pre-image-YYYYMMDD-HHMMSS/
 >     │   ├── repo-audit-summary.txt
@@ -393,8 +394,10 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 >     │   ├── stashes.tsv
 >     │   ├── untracked-nonignored.tsv
 >     │   └── ignored-files.tsv
->     └── post-image-YYYYMMDD-HHMMSS/
->         └── ...
+>     └── post-image-restore-YYYYMMDD-HHMMSS/
+>         ├── restore-status.md
+>         ├── clone-commands.sh
+>         └── rsync-ignored-files.sh
 > ```
 
 > [!example]- `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/`

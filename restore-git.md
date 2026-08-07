@@ -15,7 +15,7 @@ last_updated: 2026-08-04
 
 # Restore Git
 
-Restore the Git identity plumbing on the reimaged Mac so both work and personal GitHub accounts route automatically based on where a repository lives on disk. This runbook wires up the dual-identity `~/.gitconfig` (work as default, `includeIf` override under the personal repo root), lays down the matching `~/.ssh/config` host aliases, validates both identities, and leaves you with a `git clone` template you can then apply to re-clone whichever repositories you actually need. It does not enumerate a repo list, drive a clone loop, or restore preserved local branches or stashes — that carry-forward work is out of scope here and belongs to a future `restore-repos.md`.
+Restore the Git identity plumbing on the reimaged Mac so both work and personal GitHub accounts route automatically based on where a repository lives on disk. This runbook wires up the dual-identity `~/.gitconfig` (work as default, `includeIf` override under the personal repo root), lays down the matching `~/.ssh/config` host aliases, validates both identities, and leaves you with a `git clone` template that Phase 9B ([[restore-repos|restore-repos.md]]) then applies at scale against the pre-image repository audit. It does not enumerate a repo list, drive a clone loop, or restore preserved local branches or stashes — that carry-forward work belongs to [[restore-repos|restore-repos.md]].
 
 ---
 
@@ -73,8 +73,8 @@ It does not own:
 ```text
 restoring SSH key files from the encrypted secrets DMG — Phase 8B (restore-access)
 capturing branches, uncommitted work, stashes, local-only commits, and chosen kept ignored files pre-image — Phase 2C (backup-repos)
-laying that carry-forward material back into re-cloned repos post-image — deferred to a future restore-repos.md; do it manually per repo for now
-enumerating which repositories to re-clone or driving a clone loop — deferred to the same future runbook
+laying that carry-forward material back into re-cloned repos post-image — Phase 9B (restore-repos)
+enumerating which repositories to re-clone or driving a clone loop — Phase 9B (restore-repos)
 the fractogenesis-toolkit checkout itself — already installed in Phase 5 by bootstrap.sh, not re-cloned here
 IDE-specific repo state (IntelliJ project files, VS Code workspace) — Phase 10 (restore-intellij.md, restore-apps.md)
 Docker container/image restore — Phase 10 (restore-docker.md)
@@ -169,6 +169,7 @@ The `reimage.env` values this runbook depends on. Values are resolved during `pr
 | `GIT_WORK_SSH_KEY` | Absolute path to the work private key on disk (already restored in Phase 8B). |
 | `GIT_PERSONAL_SSH_KEY` | Absolute path to the personal private key on disk (already restored in Phase 8B). |
 | `GIT_DEFAULT_BRANCH` | Default branch name for `git init` (defaults to `master` when unset). |
+| `GIT_INTERNAL_TLS_SKIP_HOST` | Optional. Internal Enterprise Server host (e.g. `github.internal.example`) whose TLS cert this Mac doesn't trust; scopes `sslVerify=false` to that host only. Unset = verification stays on everywhere. |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -296,9 +297,6 @@ Work identity is the global default; `includeIf` overrides it only inside the pe
 source ./reimage.env
 
 cat > ~/.gitconfig <<EOF
-[http]
-    sslVerify = false
-
 [credential]
     helper = osxkeychain
 
@@ -312,6 +310,13 @@ cat > ~/.gitconfig <<EOF
 [init]
     defaultBranch = ${GIT_DEFAULT_BRANCH:-master}
 EOF
+
+# Optional: skip TLS verification for ONE internal Enterprise Server host whose
+# certificate this Mac doesn't trust. Leave GIT_INTERNAL_TLS_SKIP_HOST unset to
+# keep verification on everywhere (the secure default).
+if [ -n "${GIT_INTERNAL_TLS_SKIP_HOST:-}" ]; then
+  git config --global "http.https://${GIT_INTERNAL_TLS_SKIP_HOST}/.sslVerify" false
+fi
 ```
 
 Validate the global identity resolves:
@@ -323,6 +328,9 @@ git config --global user.email
 
 > [!note]
 > If the pre-image config had more than one `[user]` block, Git used the lower matching value globally. The layout above keeps a single `[user]` block on purpose — work is the deliberate global default, and the override lives in a separate file that only fires under the personal root.
+
+> [!note]
+> Skipping TLS verification is a workaround, not the goal. The cleaner long-term fix is to **trust the internal Enterprise Server's CA certificate** — import it into the login keychain with `security add-trusted-cert`, or deploy it via an MDM trust profile — then leave `GIT_INTERNAL_TLS_SKIP_HOST` unset so verification stays on everywhere. Scope the skip to a single host only while you don't yet trust that CA; never disable verification globally.
 
 ### Step 5 — Write the Personal-Root .gitconfig Override
 
@@ -386,9 +394,6 @@ cat > ~/.config/git/config.local <<EOF
 # ~/.config/git/config.local
 # Local private Git configuration — loaded via ~/.config/git/config include
 
-[http]
-    sslVerify = false
-
 [credential]
     helper = osxkeychain
 
@@ -402,6 +407,12 @@ cat > ~/.config/git/config.local <<EOF
 [init]
     defaultBranch = ${GIT_DEFAULT_BRANCH:-master}
 EOF
+
+# Optional: same host-scoped skip, written into config.local. Unset the variable
+# to keep verification on everywhere (the secure default).
+if [ -n "${GIT_INTERNAL_TLS_SKIP_HOST:-}" ]; then
+  git config --file ~/.config/git/config.local "http.https://${GIT_INTERNAL_TLS_SKIP_HOST}/.sslVerify" false
+fi
 ```
 
 > [!warning] Pitfall
@@ -450,7 +461,7 @@ Do not move on until every spot-check prints the expected value. A silent mismat
 
 ### Step 8 — Apply the Clone Pattern to Re-Clone Repositories
 
-Use the templates below to re-clone repositories one at a time as you need them. This runbook does not enumerate which repos to clone or drive a clone loop — that is deferred to a future `restore-repos.md`.
+Use the templates below to re-clone repositories one at a time as you need them, or hand the completed identity plumbing off to [[restore-repos|restore-repos.md]] (Phase 9B) which reads the pre-image repository audit and emits ready-to-run `git clone` commands at scale.
 
 **Work repos** — use the work GitHub host directly and clone into `$GIT_WORK_REPO_ROOT`:
 
@@ -479,7 +490,7 @@ Once cloned in the right directory, identity and key selection are automatic for
 > ```
 
 > [!note]
-> Preserved local-only material from Phase 2C ([[backup-repos|backup-repos.md]]) — stashes, local-only branches, chosen kept ignored files — is not restored by this runbook. Apply it manually per repo after re-cloning: `git stash apply` from a saved patch, `git fetch` a preserved branch bundle, and copy chosen ignored files back from `$REIMAGE_ARTIFACT_ROOT/repos-backup/`. A future `restore-repos.md` will own that flow end-to-end.
+> Preserved local-only material from Phase 2C ([[backup-repos|backup-repos.md]]) — stashes, local-only branches, chosen kept ignored files — is restored by Phase 9B ([[restore-repos|restore-repos.md]]), which reads the pre-image `repos.tsv` and staged ignored files and emits reviewable clone + rsync commands. Do not chase that reconciliation manually here.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 

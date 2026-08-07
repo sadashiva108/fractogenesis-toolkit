@@ -36,6 +36,10 @@ Use this as the script index for the Mac reimage workflow. The Markdown runbooks
 - [[#Validation Automation|Validation Automation]]
     - [[#Phase 4B Final Pre-Image Validation|Phase 4B Final Pre-Image Validation]]
     - [[#Phase 7 Initial Reimaged System Checklist|Phase 7 Initial Reimaged System Checklist]]
+    - [[#Phase 9B Repository Restore|Phase 9B Repository Restore]]
+    - [[#Phase 10 Restore-Apps Plan-Note|Phase 10 Restore-Apps Plan-Note]]
+    - [[#Phase 10 Restore-IntelliJ Plan-Note|Phase 10 Restore-IntelliJ Plan-Note]]
+    - [[#Phase 10 Restore-Docker Plan-Note|Phase 10 Restore-Docker Plan-Note]]
     - [[#Phase 12 Post-Image Final Validation|Phase 12 Post-Image Final Validation]]
 - [[#Manual Captures That Remain Manual|Manual Captures That Remain Manual]]
 - [[#Common Run Order|Common Run Order]]
@@ -110,13 +114,14 @@ export ONEDRIVE_DEST_SUBDIR="${ONEDRIVE_DEST_SUBDIR:-$(basename "${REIMAGE_ARTIF
 | Phase 6 | Enrollment/stabilization record | `enroll-and-stabilize.md` | `record-enrollment.sh` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/enrollment/*` when mounted, otherwise `$REIMAGE_WORKSPACE_ROOT/enrollment/*` or `~/Desktop/reimaged-system-artifacts/enrollment/*` |
 | Phase 7 | First-boot record twice around a stabilization restart | `verify-reimaged-system.md` | `record-reimaged-system.sh` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/initial-reimaged-system-YYYYMMDD-HHMMSS/` |
 | Phase 8 | Runtime/access restore helpers | `restore-runtime.md`, `restore-access.md` | targeted manual checks; no single public restore script | selective restore from `home-files-backup/` and `secrets-encrypted/` |
-| Phase 9 | Git identity restore | `restore-git.md` | targeted manual writes to `~/.gitconfig`, `~/.ssh/config`, and the personal-root override; no toolkit script | consumes `secrets-encrypted/ssh/` and `secrets-encrypted/git/` restored in Phase 8B |
+| Phase 9A | Git identity restore | `restore-git.md` | targeted manual writes to `~/.gitconfig`, `~/.ssh/config`, and the personal-root override; no toolkit script | consumes `secrets-encrypted/ssh/` and `secrets-encrypted/git/` restored in Phase 8B |
+| Phase 9B | Repository restore | `restore-repos.md` | `restore-repos.sh` | `$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/runs/post-image-restore-YYYYMMDD-HHMMSS/`; consumes pre-image `repo-audit-reports/runs/pre-image-*/repos.tsv` and `staged-ignored-files/live/<label>/` |
 | Phase 10 | App restore | `restore-apps.md`, `restore-intellij.md`, `restore-docker.md` | `restore-apps.sh`, `restore-intellij.sh`, `restore-docker.sh` | restore-planning notes under `$REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/` plus app restore from `app-settings-backup/` and `secrets-encrypted/` |
 | Phase 11 | Post-image system inventory evidence | `capture-system-inventory.md` | `capture-system-inventory.sh` | `$REIMAGE_ARTIFACT_ROOT/system-inventory/post-image-*` |
 | Phase 11 | Post-image company-managed inventory evidence | `capture-managed-inventory.md` | `capture-managed-inventory.sh --phase post-image` | `$REIMAGE_ARTIFACT_ROOT/managed-inventory/post-image-*` |
 | Phase 11 | Post-image performance evidence | `capture-performance-audit.md` | `capture-performance-audit.sh` | `$REIMAGE_ARTIFACT_ROOT/performance-audit/post-image-*` |
 | Phase 11 | Post-image Office stability evidence | `capture-office-stability-audit.md` | `capture-office-stability-baseline.sh`, `office-stability-checklist.sh --phase post-reimage` | `$REIMAGE_ARTIFACT_ROOT/office-stability/post-reimage-*`, `$REIMAGE_ARTIFACT_ROOT/office-stability/checklists/` |
-| Phase 12 | Final post-image validation | `capture-validated-reimaged-system.md` | `bin/reimage-checklist.sh --phase post` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/checklists/` |
+| Phase 12 | Final post-image validation | `reimaged-system-checks.md` | `bin/reimage-checklist.sh --phase post` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/checklists/` |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -161,8 +166,9 @@ Current preferred script layout:
 │   │               ├── record-reimaged-system.sh
 │   │               ├── record-enrollment.sh
 │   │               ├── restore-apps.sh
-│   │               ├── restore-intellij.sh
 │   │               ├── restore-docker.sh
+│   │               ├── restore-intellij.sh
+│   │               ├── restore-repos.sh
 │   │               ├── watch-office-today.sh
 │   │               └── helpers/
 │   │                   ├── apps/
@@ -423,7 +429,7 @@ capture-system-inventory.md
 capture-performance-audit.md
 capture-office-stability-audit.md
 verify-reimaged-system.md
-capture-validated-reimaged-system.md
+reimaged-system-checks.md
 restore-intellij.md
 restore-apps.md
 backup-intellij.md
@@ -659,6 +665,71 @@ $REIMAGE_ARTIFACT_ROOT/reimaged-system/initial-reimaged-system-YYYYMMDD-HHMMSS/
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
+### Phase 9B Repository Restore
+
+```bash
+./bin/restore-repos.sh --open
+```
+
+Reads the latest pre-image `repo-audit-reports/runs/pre-image-*/repos.tsv`, classifies each repo's current state on disk, and emits reviewable `clone-commands.sh` and `rsync-ignored-files.sh` action files. The operator reviews and runs them selectively; the script does not autonomously clone. Pass `--apply-ignored-files` to interactively rsync `staged-ignored-files/live/<label>/` into each cloned working tree.
+
+The generated bundle is written under:
+
+```text
+$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/runs/post-image-restore-YYYYMMDD-HHMMSS/
+$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/latest-post-image-restore.txt
+```
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+### Phase 10 Restore-Apps Plan-Note
+
+```bash
+./bin/restore-apps.sh --open
+```
+
+Surveys the Phase 2C `app-settings-backup/` subtree plus the encrypted-secrets sources that feed Postman, IntelliJ, Docker, and licenses, marks each as `PRESENT` / `MISSING`, and emits a plan-note with the ordered restore sequence and sign-off checklist. Install nothing on its own; the operator ticks the checklist by hand while following [[restore-apps|restore-apps.md]].
+
+The generated plan-note is written under:
+
+```text
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/restore-apps-plan-YYYYMMDD-HHMMSS.md
+```
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+### Phase 10 Restore-IntelliJ Plan-Note
+
+```bash
+./bin/restore-intellij.sh --open
+```
+
+Surveys the Phase 2C `app-settings-backup/intellij/` subtree (per-version `config-copy/`, `scratches-and-consoles/`, `manifests/`, plus `manual-settings-export/IntelliJ-settings-*.zip` and `project-metadata/`) and the encrypted-secrets sources that hold HTTP Client `*.env.json` files. Marks each as `PRESENT` / `MISSING`, points at the most recent settings ZIP for `File → Manage IDE Settings → Import Settings`, and emits an IntelliJ-specific sign-off checklist. Install nothing on its own; the operator ticks the checklist by hand while following [[restore-intellij|restore-intellij.md]].
+
+The generated plan-note is written under:
+
+```text
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/restore-intellij-plan-YYYYMMDD-HHMMSS.md
+```
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+### Phase 10 Restore-Docker Plan-Note
+
+```bash
+./bin/restore-docker.sh --open
+```
+
+Surveys the Phase 2C `app-settings-backup/docker/` subtree (settings-store, daemon.json, contexts/, image/container/compose inventories) plus the encrypted `secrets-encrypted/docker/config.json`, checks whether Docker Desktop is installed and whether the daemon is currently reachable on the reimaged Mac, and emits a Docker-specific sign-off checklist that covers Desktop install, resource settings, registry credentials, and the local container fleet (Redis, RabbitMQ, Elasticsearch + Kibana, MarkLogic).
+
+The generated plan-note is written under:
+
+```text
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/restore-docker-plan-YYYYMMDD-HHMMSS.md
+```
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
 ### Phase 12 Post-Image Final Validation
 
 ```bash
@@ -769,11 +840,15 @@ Post-image (Phases 6–12):
 # Phase 7 — first-boot record (pre-restart and post-restart)
 ./bin/record-reimaged-system.sh --open
 
+# Phase 9B — repository restore (after Phase 9A Git identity plumbing)
+./bin/restore-repos.sh --open
+# Optional: interactively rsync reviewed kept ignored files into each cloned repo
+# ./bin/restore-repos.sh --apply-ignored-files --open
+
 # Phase 10 — restore helpers
-./scripts/restore-apps.sh --backup-root "$REIMAGE_ARTIFACT_ROOT" --open
-# Optional focused helpers:
-# ./scripts/restore-intellij.sh --backup-root "$REIMAGE_ARTIFACT_ROOT" --open
-# ./scripts/restore-docker.sh --backup-root "$REIMAGE_ARTIFACT_ROOT" --open
+./bin/restore-apps.sh --open
+./bin/restore-intellij.sh --open
+./bin/restore-docker.sh --open
 
 # Phase 11 — post-image evidence captures
 ./scripts/capture-system-inventory.sh

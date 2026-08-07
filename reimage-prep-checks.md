@@ -72,7 +72,7 @@ producing the artifacts it checks — each owning runbook creates them:
   certificate and Keychain staging — stage-certs-keychain.md (Phase 2E)
   consolidated secrets DMG — create-secrets-dmg.md (Phase 2F)
   system, performance, and Office captures — the capture-*.md runbooks (Phase 3)
-the post-image Phase 12 validation — the same script under --phase post, driven by capture-validated-reimaged-system.md
+the post-image Phase 12 validation — the same script under --phase post, driven by reimaged-system-checks.md
 ```
 
 This runbook is a validator: it reports on artifacts but never creates them. Rerun it as often as you like — each run writes a fresh timestamped report and refreshes `latest-reimage-checklist.txt`.

@@ -466,7 +466,7 @@ Manual / fallback notes:
 
 Workflow: [[reimaging-guide#Phase 12 — Reimaged System Checks|reimaging-guide.md — Phase 12]].
 
-Detailed capture runbooks: [capture-validated-reimaged-system.md](../capture-validated-reimaged-system.md) and [bin/reimage-checklist.sh](../bin/reimage-checklist.sh)
+Detailed capture runbooks: [reimaged-system-checks.md](../reimaged-system-checks.md) and [bin/reimage-checklist.sh](../bin/reimage-checklist.sh)
 
 Script-generated evidence:
 

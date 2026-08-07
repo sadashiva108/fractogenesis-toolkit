@@ -78,7 +78,7 @@ managed enrollment and the first stabilization restart — enroll-and-stabilize.
 runtime tooling restore (Xcode CLT, Homebrew, Java, Node) — Phase 8A (restore-runtime)
 access material and secrets restore — Phase 8B (restore-access)
 post-image managed-inventory comparison — capture-managed-inventory.md (Phase 11C)
-final validated sign-off — capture-validated-reimaged-system.md (Phase 12)
+final validated sign-off — reimaged-system-checks.md (Phase 12)
 ```
 
 This runbook can be rerun. Each run of `record-reimaged-system.sh` writes a fresh timestamped bundle and updates the `latest-initial-reimaged-system-bundle.txt` pointer, so a later run does not overwrite the pre-restart bundle you use for comparison.

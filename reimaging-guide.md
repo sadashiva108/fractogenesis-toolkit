@@ -37,7 +37,9 @@ This is the canonical top-level guide for the Mac reimage workflow.
 - [[#Phase 8 — Restore Runtime Environment|Phase 8 — Restore Runtime Environment]]
     - [[#Phase 8A — Restore Runtime Libraries|Phase 8A — Restore Runtime Libraries]]
     - [[#Phase 8B — Restore Access|Phase 8B — Restore Access]]
-- [[#Phase 9 — Restore Git|Phase 9 — Restore Git]]
+- [[#Phase 9 — Restore Git and Repositories|Phase 9 — Restore Git and Repositories]]
+    - [[#Phase 9A — Restore Git|Phase 9A — Restore Git]]
+    - [[#Phase 9B — Restore Repositories|Phase 9B — Restore Repositories]]
 - [[#Phase 10 — Restore Apps|Phase 10 — Restore Apps]]
 - [[#Phase 11 — Post-Image Captures|Phase 11 — Post-Image Captures]]
     - [[#Phase 11A — Capture Workflow Snapshot|Phase 11A — Capture Workflow Snapshot]]
@@ -46,7 +48,7 @@ This is the canonical top-level guide for the Mac reimage workflow.
     - [[#Phase 11D —  Performance Audit Capture|Phase 11D — Performance Audit Capture]]
     - [[#Phase 11E — Office Stability Capture|Phase 11E —  Office Stability Capture]]
 - [[#Phase 12 — Reimaged System Checks|Phase 12 — Reimaged System Checks]]
-- [[#Phase 13 — Restore Local Files|Phase 13 — Restore Local Files]]
+- [[#Phase 13 — Restore Home|Phase 13 — Restore Home]]
 
 > In Obsidian, these are internal heading links. Click in Reading View, or Cmd-click in Live Preview/editing mode.
 
@@ -133,10 +135,10 @@ Phase guides used in this stage, in the order they are typically reached:
 | Enroll and stabilize | Complete enrollment, base managed-app install, required updates, and the first stabilization restart before restore work. | Phase 6 in this guide and `enroll-and-stabilize.md`. |
 | Initial captures and sanity checks | Reconnect the artifact root, run the first-boot record twice around a restart, and confirm the rebuilt Mac is basically usable. | Phase 7 in this guide and `verify-reimaged-system.md`. |
 | Runtime and access restore | Restore the toolchain, shell/CLI config, certificates, SSH, credentials, and activation material that the later phases depend on. | Phase 8 in this guide, `restore-runtime.md`, and `restore-access.md`. |
-| Git restore | Restore Git identity plumbing (dual `.gitconfig`, SSH host aliases) and provide the clone template used to re-clone repositories as needed. | Phase 9 in this guide and `restore-git.md`. |
+| Git and repository restore | Restore Git identity plumbing (dual `.gitconfig`, SSH host aliases) and re-clone the tracked repositories from the pre-image audit, rsyncing the reviewed kept ignored files back into each working tree. | Phase 9 in this guide, `restore-git.md`, and `restore-repos.md`. |
 | App restore | Restore daily apps through the umbrella app phase, with dedicated sub-runbooks for IntelliJ and Docker. | Phase 10 in this guide, `restore-apps.md`, `restore-intellij.md`, and `restore-docker.md`. |
 | Post-image evidence captures | Capture the post-image comparison evidence for system inventory, optional managed-state verification, performance, and Office stability. | Phase 11 in this guide plus `capture-system-inventory.md`, `capture-managed-inventory.md`, `capture-performance-audit.md`, and `capture-office-stability.md`. |
-| Final validation and late local-file restore | Validate the rebuilt Mac, then restore bulk local files only after the rebuild is already trusted. | Phase 12 and Phase 13 in this guide, `capture-validated-reimaged-system.md`, and `restore-local-files.md`. |
+| Final validation and late home-file restore | Validate the rebuilt Mac, then restore bulk home files only after the rebuild is already trusted. | Phase 12 and Phase 13 in this guide, `reimaged-system-checks.md`, and `restore-home.md`. |
 
 For the full list of phase guides used in this stage, in the order they are typically reached, see [Restore File Reference — Phase Guide Reference](./references/restore-file-reference.md#phase-guide-reference).
 
@@ -642,12 +644,29 @@ Primary guides:
 
 ---
 
-## Phase 9 — Restore Git
+## Phase 9 — Restore Git and Repositories
 
-**Restore Git** reestablishes source-control access on top of the restored runtime and access foundation. It focuses on restoring or recreating Git configuration, SSH routing, and work and personal identity handling, and provides the `git clone` template used to re-clone repositories one at a time as they are needed. The goal is to ensure the rebuilt Mac can authenticate to the correct remotes and use the intended Git identity automatically, based only on which directory a repo lives in. Enumerating a repo list, driving a clone loop, and laying back preserved local-only material (stashes, local branches, chosen kept ignored files from Phase 2C) are out of scope here and are handled manually per repo for now — a future `restore-repos.md` will own that flow end-to-end.
+**Restore Git and Repositories** reestablishes source-control access and repository content on top of the restored runtime and access foundation. This phase is intentionally split into two parts: first restoring the Git identity plumbing (dual `~/.gitconfig` with `includeIf`, `~/.ssh/config` host aliases, key permissions, both-identity validation) so any `git` command routes through the correct SSH key and stamps the correct author; and second consuming the pre-image repository audit from Phase 2C to re-clone the tracked repositories, rsync the reviewed kept ignored files back into each working tree, and reconcile every pre-image carry-forward row (local-only commits, stashes, tracked changes) against the state of the freshly cloned repos.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
+## Phase 9A — Restore Git
+
+**Restore Git** focuses on the identity, routing, and trust plumbing that lets both work and personal Git operations succeed on the reimaged Mac without manual profile switching. It restores the dual-identity `~/.gitconfig` with `includeIf` under the personal repo root, the personal-root `.gitconfig` override with `core.sshCommand` pinning the personal key, `~/.ssh/config` host aliases for the dual GitHub identities, correct permissions on the restored SSH keys, and validates that both identities route correctly end-to-end. The output is a `git clone` command template that Phase 9B then applies at scale.
 
 Primary guide: [[restore-git|restore-git.md]]
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
+## Phase 9B — Restore Repositories
+
+**Restore Repositories** consumes the pre-image repository audit produced by Phase 2C to re-clone the tracked repositories, rsync the reviewed kept ignored files back into each working tree, and reconcile every pre-image carry-forward row (local-only commits, stashes, tracked changes) against the state of the freshly cloned repos. `bin/restore-repos.sh` reads the pre-image `repos.tsv`, classifies each repo's current status on disk, and emits `clone-commands.sh` and `rsync-ignored-files.sh` action files the operator reviews and runs selectively. The script does not autonomously clone; a stale pre-image inventory would silently repopulate repos no longer wanted.
+
+Primary guide: [[restore-repos|restore-repos.md]]
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -771,9 +790,9 @@ Manual checklist, if needed: [capture-office-stability.md — Post-Image Office 
 
 ## Phase 12 — Reimaged System Checks
 
-**Capture Validated Reimaged System** is the final proof step for the rebuilt Mac. It confirms that the restored system is ready for normal work by collecting the last validation evidence, reviewing automated checklist results, and closing any remaining manual sign-off items that scripts cannot prove on their own. This phase focuses on overall readiness rather than individual restore tasks: device state, enrollment and security posture, app presence, development tooling, workspace status, backup state, and any final usability or access checks needed before the rebuild is considered complete.
+**Reimaged System Checks** is the final proof step for the rebuilt Mac. It confirms that the restored system is ready for normal work by collecting the last validation evidence, reviewing automated checklist results, and closing any remaining manual sign-off items that scripts cannot prove on their own. This phase focuses on overall readiness rather than individual restore tasks: device state, enrollment and security posture, app presence, development tooling, workspace status, backup state, and any final usability or access checks needed before the rebuild is considered complete.
 
-Primary guide: [[capture-validated-reimaged-system|capture-validated-reimaged-system.md]]
+Primary guide: [[reimaged-system-checks|reimaged-system-checks.md]]
 
 Primary generated evidence:
 
@@ -785,16 +804,17 @@ $REIMAGE_ARTIFACT_ROOT/reimaged-system/
 
 ---
 
-## Phase 13 — Restore Local Files
+## Phase 13 — Restore Home
 
-Primary guide: [[restore-local-files|restore-local-files.md]]
+Primary guide: [[restore-home|restore-home.md]]
 
 ### Phase 13 summary order
 
-1. Restore only the local-file categories still needed.
-2. Prefer cloud resync over manual copy for OneDrive-managed content.
-3. Merge dotfiles selectively rather than overwriting blindly.
-4. Leave obsolete or risky content behind on purpose.
+1. Reconnect OneDrive and let it settle before touching any OneDrive-managed path.
+2. Draw an explicit shortlist of home subfolders and dotfiles worth restoring.
+3. Restore only the categories still needed; prefer cloud resync over manual copy.
+4. Merge dotfiles selectively rather than overwriting blindly.
+5. Route special categories through the correct runbook and leave obsolete content behind on purpose.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 

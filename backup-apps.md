@@ -47,6 +47,7 @@ Collect and stage application state — settings, exports, inventories, and prof
     - [[#Step 4 — Run the Automated Backup|Step 4 — Run the Automated Backup]]
     - [[#Step 5 — Complete Manual Exports|Step 5 — Complete Manual Exports]]
         - [[#Chrome|Chrome]]
+        - [[#macOS Passwords (Keychain-backed)|macOS Passwords (Keychain-backed)]]
         - [[#Postman|Postman]]
         - [[#Fiddler Everywhere|Fiddler Everywhere]]
         - [[#Terminal|Terminal]]
@@ -143,7 +144,8 @@ The table lists every covered app, how it is backed up, and whether it is in the
 | Claude | Script — MCP config (`claude_desktop_config.json`) staged as secret; account restored by sign-in | Common |
 | draw.io | Script — app config and custom libraries; diagrams themselves restored as files (Phase 2B / Git) | Common |
 | Zoom | Script — local settings plist; account and most settings restored by sign-in | Common |
-| Chrome | Manual — bookmarks export; optional password CSV | Common |
+| Chrome | Manual — per-profile bookmarks export; optional password CSV | Common |
+| macOS Passwords | Manual — prefer password-manager restore; optional plaintext CSV export (secret-bearing) | Common |
 | Postman | Manual — collections, environments, optional vault export | Common |
 | Fiddler Everywhere | Manual — session / AutoResponder export; captures are secret-bearing | Common |
 | Terminal | Manual — custom profile export (no script folder) | Common |
@@ -496,7 +498,22 @@ Each export sorts its outputs by the [[#Destination Rules|Destination Rules]]: r
 
 #### Chrome
 
-Chrome exports are manual: the browser UI owns bookmarks export and password CSV export, and a script cannot prove profile sync state. If Step 4 detected Chrome, its folders already exist; otherwise create them:
+Chrome keeps bookmarks, settings, extensions, and passwords **per profile**, so back up **each profile separately** — and the restore source depends on whether that profile's Chrome sync is on. Switch to a profile (Chrome window → profile avatar, top-right) before exporting; an export only captures the active profile.
+
+First inventory each profile and its sync state so restore is unambiguous. Fill one row per profile:
+
+| Profile | Signed-in account | Sync on? | Restore source |
+|---|---|---|---|
+| <profile> | <account> | Yes | Bookmarks, settings, extensions, passwords return on sign-in |
+| <profile> | <account> | Bookmarks yes / Passwords no | Bookmarks & settings return on sign-in; passwords are local — export or password manager |
+
+Save that table so future-you knows what each profile holds:
+
+```text
+$REIMAGE_ARTIFACT_ROOT/app-settings-backup/chrome/profiles-inventory.md
+```
+
+If Step 4 detected Chrome, its folders already exist; otherwise create them:
 
 ```bash
 mkdir -p \
@@ -504,32 +521,57 @@ mkdir -p \
   "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/chrome"
 ```
 
-Export bookmarks from Chrome Desktop:
+**Bookmarks — per profile.** Switch to each profile, then:
 
 ```text
 Chrome > Bookmarks and lists > Bookmark Manager > three-dot menu > Export bookmarks
 ```
 
-Save the HTML under the non-secret folder:
+Save one HTML per profile so they don't collide:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/app-settings-backup/chrome/bookmarks_YYYYMMDD-HHMMSS.html
+$REIMAGE_ARTIFACT_ROOT/app-settings-backup/chrome/bookmarks_<profile>_YYYYMMDD-HHMMSS.html
 ```
 
-Passwords are optional — prefer Chrome profile sync or your approved password manager as the restore source. If you do export, use Chrome Desktop:
+**Settings & extensions.** Chrome has no clean settings export. Any profile with sync **on** restores its settings, themes, and extensions automatically on sign-in — nothing to export. For a sync-off profile, list its extensions (`chrome://extensions`) into the inventory note so you can reinstall them.
+
+**Passwords — per profile, secret-bearing.** Restore source depends on sync:
+
+- Sync **on**: Google Password Manager is the restore source — no export needed. Prefer this.
+- Sync **off**: passwords are local to that profile and lost on reimage. Store them in your approved password manager (preferred), or export the CSV from that profile:
 
 ```text
 Chrome > Settings > Autofill and passwords > Google Password Manager > Settings > Export passwords
 ```
 
-Save the CSV **only** under secret-bearing staging:
+Save the CSV **only** under secret-bearing staging, named per profile:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/chrome/Chrome Passwords YYYYMMDD-HHMMSS.csv
+$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/chrome/Chrome Passwords <profile> YYYYMMDD-HHMMSS.csv
 ```
 
 > [!warning] Pitfall
 > Never save a password CSV under `app-settings-backup/`, OneDrive, iCloud, email, Desktop, Downloads, or a repo. It belongs only under `secrets-encrypted/chrome/`.
+
+> [!note]
+> On a company-managed Mac, Chrome may be enrolled in browser management ("Managed by <company>"). Its enterprise policies and force-installed extensions are re-applied by MDM after reimage — don't back those up; they return with management. You're only backing up *your* per-profile bookmarks, settings, and passwords.
+
+#### macOS Passwords (Keychain-backed)
+
+The macOS **Passwords app** stores credentials in the login / Data Protection keychain. With **iCloud Keychain off** (Local Items mode), those entries are **device-bound and not synced** — lost on reimage unless captured. This covers saved *passwords*; certificates and identities are Phase 2E ([[stage-certs-keychain]]).
+
+Restore source, best to worst:
+
+1. **Approved password manager (preferred).** Re-enter each credential you care about into your approved manager; that becomes the restore source and nothing secret rides the DMG. A browser profile's account password (for a profile with password sync off) is a common case.
+2. **Account recovery.** For a single web account, the recovery email/phone resets it after reimage — fine for low-stakes logins.
+3. **Export (last resort, secret-bearing).** `Passwords app > File > Export All Passwords…` writes a **plaintext CSV**:
+
+```text
+$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/macos-passwords/passwords_YYYYMMDD-HHMMSS.csv
+```
+
+> [!warning] Pitfall
+> The Passwords export is plaintext. Never place it under `app-settings-backup/`, OneDrive, iCloud, email, Desktop, Downloads, or a repo — only `secrets-encrypted/macos-passwords/`. Prefer the password manager over exporting at all.
 
 #### Postman
 

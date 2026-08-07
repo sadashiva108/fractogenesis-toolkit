@@ -77,6 +77,7 @@ It does not own:
 encrypted DMG creation, mounted-DMG validation, and plaintext cleanup — create-secrets-dmg.md (Phase 2F)
 Java jssecacerts auto-capture into secrets-encrypted/certs/java-security/ — backup-home.md
 byproduct secret routing (ssh, gnupg, docker, app exports) into secrets-encrypted/ — backup-apps.md, backup-home.md, backup-repos.md
+macOS Passwords app / login-keychain saved web & app passwords (browser and account credentials) — backup-apps.md (this phase owns certificates and identities, not saved passwords)
 ```
 
 [[#Table of Contents|⬆ Back to Table of Contents]]

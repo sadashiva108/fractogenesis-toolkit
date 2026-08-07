@@ -20,7 +20,7 @@ This document assumes the standard artifact model: workflow source files stay in
 - [[#App Restore Sources|App Restore Sources]]
 - [[#Post-Image Comparison Captures|Post-Image Comparison Captures]]
 - [[#Final Validation and Manual Notes|Final Validation and Manual Notes]]
-- [[#Local-File Restore Sources|Local-File Restore Sources]]
+- [[#Home Restore Sources|Home Restore Sources]]
 - [[#License Keys and Activation Material|License Keys and Activation Material]]
 
 ---
@@ -37,6 +37,7 @@ Single source of truth for the phase guides used across the post-image stage (Ph
 | `restore-runtime.md` | Xcode CLT, Homebrew, Java, Node, Gradle, Maven, Groovy, and platform CLI restore. |
 | `restore-access.md` | SSH, certificates, Java trust overrides, shell/CLI config, secrets, and license/activation restore. |
 | `restore-git.md` | Git identities, SSH routing, and work/personal repo configuration restore. |
+| `restore-repos.md` | Repository re-clone from the pre-image audit, and rsync of reviewed kept ignored files back into each working tree. |
 | `restore-apps.md` | Umbrella app-restore flow for Office, OneDrive, Chrome, Obsidian, Postman, VS Code, Raycast, and other daily apps. |
 | `restore-docker.md` | Docker Desktop restore, resource tuning, and local dev container recovery. |
 | `restore-intellij.md` | IntelliJ settings, Scratches, Consoles, project metadata, and encrypted IDE secret restore. |
@@ -44,8 +45,8 @@ Single source of truth for the phase guides used across the post-image stage (Ph
 | `capture-managed-inventory.md` | Optional post-image managed-app/profile comparison capture. |
 | `capture-performance-audit.md` | Post-image performance audit and before/after comparison workflow. |
 | `capture-office-stability-audit.md` | Post-image Office stability comparison and symptom follow-up. |
-| `capture-validated-reimaged-system.md` | Final post-image validation workflow and generated sign-off artifacts. |
-| `restore-local-files.md` | Late, selective local-file restore after the clean rebuild is already validated. |
+| `reimaged-system-checks.md` | Final post-image validation workflow and generated sign-off artifacts. |
+| `restore-home.md` | Late, selective home-file restore after the clean rebuild is already validated. |
 | `reimaging-scripts-guide.md` | Supporting command reference for automation used during restore, post-image capture, and validation. |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -66,11 +67,12 @@ It complements the broader workflow docs:
 | Runtime restore | `restore-runtime.md` |
 | Access restore | `restore-access.md` |
 | Git restore | `restore-git.md` |
+| Repository restore | `restore-repos.md` |
 | App restore umbrella | `restore-apps.md` |
 | IntelliJ-specific restore | `restore-intellij.md` |
 | Docker-specific restore | `restore-docker.md` |
-| Final validation | `capture-validated-reimaged-system.md` |
-| Late local-file restore | `restore-local-files.md` |
+| Final validation | `reimaged-system-checks.md` |
+| Late home-file restore | `restore-home.md` |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -91,6 +93,12 @@ $REIMAGE_ARTIFACT_ROOT/
 │   ├── raycast/
 │   └── vscode/
 ├── repo-audit-reports/
+│   ├── runs/
+│   │   ├── pre-image-YYYYMMDD-HHMMSS/
+│   │   └── post-image-restore-YYYYMMDD-HHMMSS/
+│   ├── staged-ignored-files/
+│   ├── latest-run.txt
+│   └── latest-post-image-restore.txt
 ├── gitignore-superset/
 ├── home-files-backup/
 │   ├── home/
@@ -172,11 +180,12 @@ Not every restore uses every category. Treat this as the full restore/capture ma
 | Phase 7 — Initial Captures and Sanity Checks | prepared external root, optional `reimaged-system/restore-notes/` | `reimaged-system/initial-reimaged-system-*/`, `reimaged-system/latest-initial-reimaged-system-bundle.txt`, `reimaged-system/restore-notes/`, `reimaged-system/restarts/`, `reimaged-system/time-machine/` |
 | Phase 8A — Restore Runtime Libraries | `system-inventory/pre-image-*/`, `system-inventory/post-image-*/`, `home-files-backup/dotfiles/` | usually notes only; later validated under `reimaged-system/` |
 | Phase 8B — Restore Access | `secrets-encrypted/`, `public-certs/`, `home-files-backup/dotfiles/` | `reimaged-system/restore-notes/` |
-| Phase 9 — Restore Git | `secrets-encrypted/ssh/`, `secrets-encrypted/git/`, `repo-audit-reports/`, `workflow-snapshot/reimage-workflow-docs/` | working repo checkouts; later validated under `reimaged-system/` |
+| Phase 9A — Restore Git | `secrets-encrypted/ssh/`, `secrets-encrypted/git/`, `workflow-snapshot/reimage-workflow-docs/` | dual `~/.gitconfig` + `~/.ssh/config` in place; validated end-to-end for work and personal identities |
+| Phase 9B — Restore Repositories | `repo-audit-reports/runs/pre-image-*/repos.tsv`, `repo-audit-reports/staged-ignored-files/live/<label>/` | `repo-audit-reports/runs/post-image-restore-*/`, `repo-audit-reports/latest-post-image-restore.txt`, working repo checkouts |
 | Phase 10 — Restore Apps | `app-settings-backup/`, `secrets-encrypted/`, `reimaged-system/restore-notes/` | app-specific notes and later validation evidence |
 | Phase 11 — Post-Image Captures | matching Phase 3 capture outputs for comparison | `workflow-snapshot/reimage-workflow-docs/`, `workflow-snapshot/pre-image-workflow-snapshot-*/`, `workflow-snapshot/latest-pre-image-workflow-snapshot.txt`, `system-inventory/post-image-*/`, `managed-inventory/post-image-*/`, `performance-audit/post-image-performance-audit-*/`, `office-stability/post-reimage-*/` |
 | Phase 12 — Reimaged System Checks | everything needed for final validation context | `reimaged-system/checklists/reimage-checklist-*.md`, `reimaged-system/checklists/latest-reimage-checklist.txt`, optional manual follow-up in `reimaged-system/restore-notes/` |
-| Phase 13 — Restore Local Files | `home-files-backup/home/`, `home-files-backup/dotfiles/`, optionally `staged-ignored-files/live/` | optional final notes under `reimaged-system/restore-notes/` |
+| Phase 13 — Restore Home | `home-files-backup/home/`, `home-files-backup/dotfiles/`, optionally `staged-ignored-files/live/` | optional final notes under `reimaged-system/restore-notes/` |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -325,9 +334,9 @@ Use `capture-system-inventory.md` as the canonical source for device identity an
 
 ---
 
-## Local-File Restore Sources
+## Home Restore Sources
 
-Use these late in [[restore-local-files|restore-local-files.md]]:
+Use these late in [[restore-home|restore-home.md]]:
 
 | Source | Typical target |
 |---|---|
