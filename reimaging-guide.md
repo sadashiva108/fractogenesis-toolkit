@@ -190,12 +190,11 @@ $REIMAGE_ARTIFACT_ROOT/reimage-confirmation/it-reimage-confirmation-YYYYMMDD.md 
 
 After the reimage plan has been confirmed, prepare the external data/artifact volume, create and verify `$REIMAGE_ARTIFACT_ROOT`, set up `reimage.env`, and create the standard generated-artifact folders.
 
-Keep this phase concise but complete:
+This phase is complete once you have confirmed all of the following:
 
-1. Verify the correct external backup drive is mounted, writable, has enough free space, and uses the expected volumes before any backup starts.
-2. Verify `reimage.env` resolves to the intended external drive and `REIMAGE_ARTIFACT_ROOT`, not an old path or a local fallback.
-3. Verify the standard folder layout exists and the current workflow docs have been copied into the backup so the same instructions travel with the artifacts.
-4. Refresh the jump-drive fallback: copy `bootstrap.sh` and a current `bin/build-jump-drive-payload.sh`-built tarball onto the prepared jump drive — this is the artifact that gets this repo onto a bare reimaged Mac without needing Git/SSH. 
+1. The correct external backup drive is mounted, writable, has enough free space, and exposes the expected volumes before any backup starts.
+2. `reimage.env` resolves to the intended external drive and `REIMAGE_ARTIFACT_ROOT` — not an old path or a local fallback — and loads cleanly into your shell.
+3. The standard generated-artifact folder layout exists under `REIMAGE_ARTIFACT_ROOT`, the artifact-config fragments are initialized, and the filled IT reimage confirmation has been copied into `reimage-confirmation/`.
 
 Follow this phase guide: [Prepare Artifact Root](./prepare-artifact-root.md).
 

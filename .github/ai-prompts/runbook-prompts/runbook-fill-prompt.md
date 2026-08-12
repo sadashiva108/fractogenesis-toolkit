@@ -1,7 +1,7 @@
 # Runbook fill prompt — guidance for Copilot
 
 Purpose
-- Guide Copilot to populate .github/copilot-templates/runbook-templates/runbook-template.md.tmpl for a specific runbook in this repo. Designed for both migration and new-runbook creation.
+- Guide Copilot to populate .github/ai-templates/runbook-templates/runbook-template.md.tmpl for a specific runbook in this repo. Designed for both migration and new-runbook creation.
 
 When to use
 - Use when authoring, migrating, or reformatting a runbook. Supports:

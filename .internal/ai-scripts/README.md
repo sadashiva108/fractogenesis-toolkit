@@ -45,7 +45,7 @@ export DEST=/path/to/new/repository
 export MAPPINGS=/tmp/mappings
 export REFERENCES=/path/to/reference/files
 
-python3 .internal/copilot-scripts/generate-mapping-template.py \
+python3 .internal/ai-scripts/generate-mapping-template.py \
   "$SOURCE/backup-apps.md" \
   "$SOURCE/scripts/backup-apps.sh" \
   --default-md-dir "$REFERENCES" \
@@ -160,7 +160,7 @@ The dry run prints only the totals + report path to the terminal. Every
 category detail is written to the markdown report file.
 
 ```bash
-python3 .internal/copilot-scripts/update-references.py
+python3 .internal/ai-scripts/update-references.py
 ```
 
 ```
@@ -200,7 +200,7 @@ git status --short         # should be empty (aside from update-references.py it
 git checkout -- README.md references/ reimaging-guide.md reimaging-scripts-guide.md
 
 # 2. Regenerate the report + diff bundle.
-python3 .internal/copilot-scripts/update-references.py --diffs
+python3 .internal/ai-scripts/update-references.py --diffs
 # Note the "Wrote individual diffs to /tmp/diffs/<TS>" line — copy that path.
 
 DIFFS=/tmp/diffs/<TS>   # replace <TS> with the value just printed
@@ -242,7 +242,7 @@ alongside) `--diffs`.
 git checkout -- README.md references/ reimaging-guide.md reimaging-scripts-guide.md
 
 # 2. Generate a single combined patch.
-python3 .internal/copilot-scripts/update-references.py \
+python3 .internal/ai-scripts/update-references.py \
     --patch /tmp/reports/update-references.patch
 
 # 3. Review + dry-run apply.

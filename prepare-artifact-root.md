@@ -85,8 +85,7 @@ These are the standard top-level folders this phase creates — the ones
 needed on every reimage run, regardless of symptoms or which situational
 phases apply. Folders tied to a situational capture, such as a performance
 or Office-stability symptom, are created later by that phase's own script
-when it actually runs, not here. See `master-directory-reference.md` for
-the complete superset.
+when it actually runs, not here. 
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/
@@ -196,10 +195,6 @@ other local notes or artifacts that are not ready for the external drive yet
 #### External backup/capture root
 
 The external root stores generated files only. This guide lists the top-level folders only; child directories belong to the runbook or script that creates them.
-
-Do not copy active `*.sh` or `*.py` helper scripts into the external root. The script source of truth is this repo's Git history.
-
-Workflow snapshot captures and workflow documentation snapshots are handled by `capture-workflow-snapshot.md`, not by this preparation guide.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 

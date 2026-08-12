@@ -8,7 +8,7 @@ selected entries so you can review and run the updater in dry-run mode.
 
 Usage example:
 
-python3 .internal/copilot-scripts/generate-mapping-template.py \
+python3 .internal/ai-scripts/generate-mapping-template.py \
   /path/to/reference-vault/workflows/mac/reimage/backup-apps.md \
   /path/to/reference-vault/workflows/mac/reimage/scripts/backup-apps.sh \
   --default-md-dir references \
@@ -190,7 +190,7 @@ def main(argv: List[str] | None = None) -> int:
 
     print(f'Wrote mapping with {len(mapping)} entries to {out_path}')
     print('Run the updater in dry-run to preview changes:')
-    print(f'python3 .internal/copilot-scripts/update-references.py --dir references --mapping {out_path} --repo-root .')
+    print(f'python3 .internal/ai-scripts/update-references.py --dir references --mapping {out_path} --repo-root .')
     return 0
 
 

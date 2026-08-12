@@ -74,22 +74,22 @@ Diffs and patches (independent of --dry-run and of the report)
 Usage examples
 
 # Auto-discover both mappings from /tmp/mappings/ by prefix + newest timestamp
-python3 .internal/copilot-scripts/update-references.py
+python3 .internal/ai-scripts/update-references.py
 
 # Pin explicit mapping files
-python3 .internal/copilot-scripts/update-references.py \\
+python3 .internal/ai-scripts/update-references.py \\
     --mapping /tmp/mappings/repo-root-mapping-07-16-2026.json \\
     --external-mapping /tmp/mappings/external-data-root-mapping-07-18-2026.json
 
 # Generate the report AND per-file diffs under /tmp/diffs/<timestamp>/
-python3 .internal/copilot-scripts/update-references.py --diffs
+python3 .internal/ai-scripts/update-references.py --diffs
 
 # Generate the report AND a single combined patch file
-python3 .internal/copilot-scripts/update-references.py \\
+python3 .internal/ai-scripts/update-references.py \\
     --patch /tmp/reports/update-references.patch
 
 # Apply changes in-place after reviewing a patch (creates .bak backups)
-python3 .internal/copilot-scripts/update-references.py \\
+python3 .internal/ai-scripts/update-references.py \\
     --patch /tmp/reports/update-references.patch --apply
 
 Exit codes

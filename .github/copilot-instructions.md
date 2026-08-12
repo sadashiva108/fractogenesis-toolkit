@@ -46,13 +46,13 @@ Purpose
 - .internal/load-reimage-config.sh
 - .internal/artifact-config.sh and .internal/templates/scripts/*.tmpl
 - reimage.env.example
-- .github/copilot-prompts/bash-script-authoring-and-review.md (authoring/review rules)
+- .github/ai-prompts/script-prompts/bash-script-authoring-and-review.md (authoring/review rules)
 
 5) Other AI assistant configs found
 - None of the listed AI assistant config files (CLAUDE.md, AGENTS.md, .cursorrules, .windsurfrules, etc.) were found in the repository.
 
 Notes on edits and automation
-- Small, surgical changes preferred. When asked to refactor or edit Bash scripts, follow the classification and loader/entrypoint/helper requirements documented in .github/copilot-prompts/bash-script-authoring-and-review.md.
+- Small, surgical changes preferred. When asked to refactor or edit Bash scripts, follow the classification and loader/entrypoint/helper requirements documented in .github/ai-prompts/script-prompts/bash-script-authoring-and-review.md.
 - Recommended lightweight validation after edits:
   - bash -n path/to/edited.sh
   - shellcheck -x path/to/edited.sh (if available)
@@ -61,13 +61,10 @@ Notes on edits and automation
 If anything here should be expanded (e.g., include more runbook summaries or per-script quick usage examples), say which area and a short list of the scripts or runbooks to prioritize.
 
 6) Session prompts & templates (runbooks)
-- Runbook template: .github/copilot-templates/runbook-template.md.tmpl — canonical template with YAML header, TOC anchors, and guidance for artifact/script locations.
-- Runbook fill prompt: .github/copilot-prompts/runbook-prompts/runbook-fill-prompt.md — structured prompt Copilot should use to populate the template (supports migration from reference-vault and new-runbook creation, auto-detects env keys, and documents rename suggestions).
-- Script authoring prompt: .github/copilot-prompts/script-prompts/bash-script-authoring-and-review.md — rules for editing or creating bin/ entrypoints and .internal helpers.
-- Script templates: .github/copilot-templates/script-templates/ (bash-entrypoint.sh.tmpl, bash-helper.sh.tmpl)
-
-Migration source (if migrating runbooks):
-- Suggested scan path: /Users/dkittrell/Development/documentation/reference-vault/workflows/mac/reimage — use this as the primary content source when migrating historical runbooks.
+- Runbook template: .github/ai-templates/runbook-templates/runbook-template.md.tmpl — canonical template with YAML header, TOC anchors, and guidance for artifact/script locations.
+- Runbook fill prompt: .github/ai-prompts/runbook-prompts/runbook-fill-prompt.md — structured prompt Copilot should use to populate the template when creating a new runbook or updating an existing one (auto-detects env keys and documents rename suggestions).
+- Script authoring prompt: .github/ai-prompts/script-prompts/bash-script-authoring-and-review.md — rules for editing or creating bin/ entrypoints and .internal helpers.
+- Script templates: .github/ai-templates/script-templates/ (bash-entrypoint.sh.tmpl, bash-helper.sh.tmpl)
 
 Quick usage note for Copilot sessions:
-- When asked to create or migrate runbooks, use the runbook-fill-prompt and target the template above. Include a short human-review checklist and a rename_suggestion when relevant.
+- When asked to create or update a runbook, use the runbook-fill-prompt and target the template above. Include a short human-review checklist and a rename_suggestion when relevant.
