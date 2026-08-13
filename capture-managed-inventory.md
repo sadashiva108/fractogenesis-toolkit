@@ -1,20 +1,8 @@
----
-title: Capture Managed Inventory
-back_link: "reimaging-guide#Phase 2C — Company-Managed Inventory Capture"
-runbook_version: 0.1.0
-verb_first: true
-primary_scripts:
-  - bin/capture-managed-inventory.sh
-related_scripts:
-  - bin/capture-size-audit.sh
-artifact_paths:
-  - $REIMAGE_ARTIFACT_ROOT/managed-inventory/
-author: Orah Kittrell
-last_updated: 2026-07-21
----
 [[reimaging-guide#Phase 2C — Company-Managed Inventory Capture|← Back to Mac Reimaging Guide]]
 
 # Capture Managed Inventory
+
+**Last updated:** 2026-07-21
 
 A read-only record of what a company-managed Mac has under management — MDM enrollment, configuration profiles, installed apps and package receipts, background agents and daemons, system extensions, and managed preferences. It observes and records only; it never modifies managed state. Run it pre-image (Phase 2C) to preserve a before-reimage picture, and again post-image (Phase 11C) to compare the freshly re-enrolled machine against that record.
 

@@ -1,20 +1,8 @@
----
-title: Restore Access
-back_link: "reimaging-guide#Phase 8B — Restore Access"
-runbook_version: 0.1.0
-verb_first: true
-primary_scripts: []
-related_scripts: []
-artifact_paths:
-  - $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/
-  - $REIMAGE_ARTIFACT_ROOT/home-files-backup/dotfiles/
-  - $REIMAGE_ARTIFACT_ROOT/public-certs/
-author: Orah Kittrell
-last_updated: 2026-08-04
----
 [[reimaging-guide#Phase 8B — Restore Access|← Back to Mac Reimaging Guide]]
 
 # Restore Access
+
+**Last updated:** 2026-08-04
 
 Restore the identity, trust, and credential layer on the reimaged Mac after the runtime toolchain is in place — SSH keys and Git access, certificates and keychains, Java trust overrides pinned to the JDK from Phase 8A, shell and CLI configuration, and license or activation material. Everything here comes out of the encrypted secrets DMG and the reviewed dotfiles bundle built during the pre-image phases; this runbook is manual and does not run a fractogenesis-toolkit entrypoint.
 

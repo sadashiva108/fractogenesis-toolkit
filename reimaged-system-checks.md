@@ -1,21 +1,8 @@
----
-title: Reimaged System Checks
-back_link: "reimaging-guide#Phase 12 — Reimaged System Checks"
-runbook_version: 0.1.0
-verb_first: false
-primary_scripts:
-  - bin/reimage-checklist.sh
-related_scripts:
-  - bin/record-reimaged-system.sh
-artifact_paths:
-  - $REIMAGE_ARTIFACT_ROOT/reimaged-system/checklists/
-  - $REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/
-author: Orah Kittrell
-last_updated: 2026-08-05
----
 [[reimaging-guide#Phase 12 — Reimaged System Checks|← Back to Mac Reimaging Guide]]
 
 # Reimaged System Checks
+
+**Last updated:** 2026-08-05
 
 Run the final proof step for the rebuilt Mac: generate the Phase 12 automated checklist with `bin/reimage-checklist.sh --phase post`, resolve the remaining manual sign-off rows, and land the evidence next to the rest of the reimage artifacts. This is the phase where "the rebuild is trusted" transitions from a plan to a recorded fact, and it deliberately runs after every restore that is expected to produce evidence a script can validate.
 

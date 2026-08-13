@@ -1,22 +1,8 @@
----
-title: Stage Certificates and Keychain
-back_link: "reimaging-guide#Phase 2E — Certificate and Keychain Staging"
-runbook_version: 0.1.0
-verb_first: true
-primary_scripts:
-  - bin/stage-certs-keychain.sh
-related_scripts:
-  - .internal/certs/prepare-certs-keychain-staging.py
-artifact_paths:
-  - $REIMAGE_ARTIFACT_ROOT/public-certs/
-  - $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/certs/
-  - $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/extra-secrets-certs-review/
-author: Shiva
-last_updated: 2026-07-31
----
 [[reimaging-guide#Phase 2E — Certificate and Keychain Staging|← Back to Mac Reimaging Guide]]
 
 # Stage Certificates and Keychain
+
+**Last updated:** 2026-07-31
 
 Discover, review, and stage the certificate and macOS Keychain material worth preserving — into the temporary staging folders that Phase 2F packages into the encrypted secrets DMG. Inventory broadly; stage narrowly.
 

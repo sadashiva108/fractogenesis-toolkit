@@ -1,19 +1,8 @@
----
-title: Reimage Preparation Checks
-back_link: "reimaging-guide#Phase 4B — Reimage Preparation Checks"
-runbook_version: 0.1.0
-verb_first: false
-primary_scripts:
-  - bin/reimage-checklist.sh
-related_scripts: []
-artifact_paths:
-  - $REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/
-author: Orah Kittrell
-last_updated: 2026-08-04
----
 [[reimaging-guide#Phase 4B — Reimage Preparation Checks|← Back to Mac Reimaging Guide]]
 
 # Reimage Preparation Checks
+
+**Last updated:** 2026-08-04
 
 The Phase 4B go / no-go gate before you erase the Mac. `reimage-checklist.sh --phase pre` proves as many prep items as automation can — backup roots, Git audit, secrets DMG, captures, cloud-folder evidence — and writes a timestamped report. You then complete the handful of rows automation cannot prove: IT approval, Time Machine, DMG password storage, and whether OneDrive/iCloud uploads have actually settled. Proceed to Phase 5 only when the report has zero FAILs and every manual row is signed off.
 

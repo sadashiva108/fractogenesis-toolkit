@@ -1,21 +1,8 @@
----
-title: Restore Docker
-back_link: "reimaging-guide#Phase 10 — Restore Apps"
-runbook_version: 0.1.0
-verb_first: true
-primary_scripts:
-  - bin/restore-docker.sh
-related_scripts: []
-artifact_paths:
-  - $REIMAGE_ARTIFACT_ROOT/app-settings-backup/docker/
-  - $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/docker/
-  - $REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/
-author: Orah Kittrell
-last_updated: 2026-08-05
----
 [[reimaging-guide#Phase 10 — Restore Apps|← Back to Mac Reimaging Guide]]
 
 # Restore Docker
+
+**Last updated:** 2026-08-05
 
 Restore Docker Desktop, resource tuning, registry credentials, and the local development container fleet on the reimaged Mac — Redis, RabbitMQ, Elasticsearch (+ Kibana), and MarkLogic (single-node with ml-gradle deployment). This runbook is the dedicated Phase 10 Docker handoff that [[restore-apps|restore-apps.md]] hands to; the companion script `bin/restore-docker.sh` writes a per-run plan-note that surveys the available pre-image sources, checks whether Docker Desktop and the daemon are up on the reimaged Mac, and provides the sign-off checklist.
 

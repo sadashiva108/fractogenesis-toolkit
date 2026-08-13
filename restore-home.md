@@ -1,21 +1,8 @@
----
-title: Restore Home
-back_link: "reimaging-guide#Phase 13 — Restore Home"
-runbook_version: 0.1.0
-verb_first: true
-primary_scripts: []
-related_scripts: []
-artifact_paths:
-  - $REIMAGE_ARTIFACT_ROOT/home-files-backup/home/
-  - $REIMAGE_ARTIFACT_ROOT/home-files-backup/dotfiles/
-  - $REIMAGE_ARTIFACT_ROOT/staged-ignored-files/live/
-  - $REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/
-author: Orah Kittrell
-last_updated: 2026-08-05
----
 [[reimaging-guide#Phase 13 — Restore Home|← Back to Mac Reimaging Guide]]
 
 # Restore Home
+
+**Last updated:** 2026-08-05
 
 Restore selected personal-home content from the plain-text `home-files-backup/` bundle produced by Phase 2B, after the rebuilt Mac has already proved itself for normal development and daily use. This is the intentionally-latest phase: nothing about the reimaged system's stability, security posture, or clean-baseline claim should depend on any file restored here. The runbook is manual and does not run a fractogenesis-toolkit entrypoint — every restore is a small, deliberate `rsync` or per-file merge that the operator justifies against a specific need.
 

@@ -1,22 +1,8 @@
----
-title: Backup IntelliJ
-back_link: "reimaging-guide#Phase 2D — Backup Apps"
-runbook_version: 0.1.0
-verb_first: true
-primary_scripts:
-  - bin/backup-apps.sh
-related_scripts:
-  - .internal/apps/backup-intellij-state.sh
-  - bin/capture-size-audit.sh
-artifact_paths:
-  - $REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/
-  - $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/intellij/
-author: Orah Kittrell
-last_updated: 2026-08-03
----
 [[reimaging-guide#Phase 2D — Backup Apps|← Back to Mac Reimaging Guide]]
 
 # Backup IntelliJ
+
+**Last updated:** 2026-08-03
 
 The IntelliJ-specific companion to [[backup-apps|Backup Apps]] (Phase 2D). It preserves IDE state that Git remotes and project backups miss — Scratches, Consoles, global IDE config, plugins, and project-level `.idea` metadata across every workspace — while keeping credential-bearing files out of the plaintext backup and staging the ones you select into the encrypted secrets DMG instead.
 

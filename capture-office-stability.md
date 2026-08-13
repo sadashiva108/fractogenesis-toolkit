@@ -1,22 +1,8 @@
----
-title: Capture Office Stability
-back_link: "reimaging-guide#Phase 3D — Office Stability Capture"
-runbook_version: 0.1.0
-verb_first: true
-primary_scripts:
-  - bin/capture-office-stability.sh
-related_scripts:
-  - bin/capture-workload-snapshot.sh
-  - bin/office-stability-checklist.sh
-  - bin/watch-office-today.sh
-artifact_paths:
-  - $REIMAGE_ARTIFACT_ROOT/office-stability/
-author: Orah Kittrell
-last_updated: 2026-08-04
----
 [[reimaging-guide#Phase 3D — Office Stability Capture|← Back to Mac Reimaging Guide]]
 
 # Capture Office Stability
+
+**Last updated:** 2026-08-04
 
 Capture the evidence behind Outlook / OneNote instability when Office update churn or unexpected app closures are part of the reason this Mac is being reimaged. A continuous watcher logs the apps, their bundles, crash reports, and Microsoft update/management activity over days or weeks; a baseline collector then summarizes everything newer than a timestamp marker into a self-contained bundle. Run it pre-image (Phase 3D) to record the before picture, and again post-image (Phase 11E) to show whether the rebuilt Mac stayed stable.
 

@@ -1,22 +1,8 @@
----
-title: Capture Performance Audit
-back_link: "reimaging-guide#Phase 3C — Performance Audit Capture"
-runbook_version: 0.1.0
-verb_first: true
-primary_scripts:
-  - bin/capture-performance-audit.sh
-related_scripts:
-  - .internal/performance/generate-performance-manual-observations.py
-  - bin/generate-performance-rollup-summary.py
-  - mac_memory_health.sh
-artifact_paths:
-  - $REIMAGE_ARTIFACT_ROOT/performance-audit/
-author: Orah Kittrell
-last_updated: 2026-08-04
----
 [[reimaging-guide#Phase 3C — Performance Audit Capture|← Back to Mac Reimaging Guide]]
 
 # Capture Performance Audit
+
+**Last updated:** 2026-08-04
 
 A repeatable, read-only performance baseline. It captures short-duration scenario bundles under named workloads so general workstation performance can be compared like-for-like across a reimage. Run it pre-image (Phase 3C) under one or more named scenarios, then run the same scenarios post-image (Phase 11D) so the two sets compare cleanly.
 

@@ -1,28 +1,17 @@
----
-title: {{RUNBOOK_TITLE}}
-back_link: "{{BACK_LINK}}"
-runbook_version: 0.1.0
-verb_first: true
-primary_scripts:
-  - {{PRIMARY_SCRIPT}}
-related_scripts: []
-artifact_paths:
-  - $REIMAGE_ARTIFACT_ROOT/{{ARTIFACT_PATHS}}
-author: {{AUTHOR}}
-last_updated: {{LAST_UPDATED}}
----
 [[{{BACK_LINK}}|← Back to Mac Reimaging Guide]]
 
 # {{RUNBOOK_TITLE}}
+
+**Last updated:** {{LAST_UPDATED}}
 
 {{RUNBOOK_SHORT_DESC}}
 
 <!--
 Runbook template for fractogenesis-toolkit.
 
-- The YAML block above MUST be the first thing in the file so Obsidian parses
-  it as frontmatter. Author/last_updated/version live there only — do not add a
-  second metadata block elsewhere.
+- The runbook carries no YAML frontmatter. Keep the `**Last updated:**` line
+  under the title current when you change the runbook; it is the only metadata
+  the runbook holds.
 - Replace every {{UPPERCASE}} placeholder and delete these guidance comments
   before publishing.
 - Optional sections are marked with an HTML comment under their heading. Keep an

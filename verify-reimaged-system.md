@@ -1,20 +1,8 @@
----
-title: Verify Reimaged System
-back_link: "reimaging-guide#Phase 7 — Initial Captures and Sanity Checks"
-runbook_version: 0.1.0
-verb_first: true
-primary_scripts:
-  - bin/record-reimaged-system.sh
-related_scripts:
-  - bin/record-enrollment.sh
-artifact_paths:
-  - $REIMAGE_ARTIFACT_ROOT/reimaged-system/
-author: Orah Kittrell
-last_updated: 2026-08-04
----
 [[reimaging-guide#Phase 7 — Initial Captures and Sanity Checks|← Back to Mac Reimaging Guide]]
 
 # Verify Reimaged System
+
+**Last updated:** 2026-08-04
 
 Reconnect the external artifact drive, prove the freshly reimaged Mac is basically usable, and record the first-boot evidence twice around a stabilization restart before deeper restore work begins. This phase pairs the human-driven day-one checks — network, browser, terminal, displays, peripherals, audio — with `record-reimaged-system.sh`, which recorded the same 14 read-only signals into two comparable evidence bundles, and closes with the first post-image Time Machine backup so the machine has a safety net before Phase 8 begins.
 

@@ -1,18 +1,8 @@
----
-title: Restore Runtime
-back_link: "reimaging-guide#Phase 8A — Restore Runtime Libraries"
-runbook_version: 0.1.0
-verb_first: true
-primary_scripts: []
-related_scripts: []
-artifact_paths:
-  - $REIMAGE_ARTIFACT_ROOT/system-inventory/
-author: Orah Kittrell
-last_updated: 2026-08-04
----
 [[reimaging-guide#Phase 8A — Restore Runtime Libraries|← Back to Mac Reimaging Guide]]
 
 # Restore Runtime
+
+**Last updated:** 2026-08-04
 
 Rebuild the non-secret runtime and toolchain layer on the reimaged Mac — Xcode Command Line Tools, Homebrew, Java and the JVM build tools, Node via `nvm`, and the platform CLIs — before any secret material or repository work begins. This runbook is manual by design; every install is `xcode-select`, `brew`, or `nvm` and there is no fractogenesis-toolkit entrypoint to drive it. The captured pre-image and post-image system inventories from Phases 2A and 11B are the reference for what "restored" means here.
 

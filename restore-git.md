@@ -1,19 +1,8 @@
----
-title: Restore Git
-back_link: "reimaging-guide#Phase 9 — Restore Git"
-runbook_version: 0.1.0
-verb_first: true
-primary_scripts: []
-related_scripts: []
-artifact_paths:
-  - $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/ssh/
-  - $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/git/
-author: Orah Kittrell
-last_updated: 2026-08-04
----
 [[reimaging-guide#Phase 9 — Restore Git|← Back to Mac Reimaging Guide]]
 
 # Restore Git
+
+**Last updated:** 2026-08-04
 
 Restore the Git identity plumbing on the reimaged Mac so both work and personal GitHub accounts route automatically based on where a repository lives on disk. This runbook wires up the dual-identity `~/.gitconfig` (work as default, `includeIf` override under the personal repo root), lays down the matching `~/.ssh/config` host aliases, validates both identities, and leaves you with a `git clone` template that Phase 9B ([[restore-repos|restore-repos.md]]) then applies at scale against the pre-image repository audit. It does not enumerate a repo list, drive a clone loop, or restore preserved local branches or stashes — that carry-forward work belongs to [[restore-repos|restore-repos.md]].
 

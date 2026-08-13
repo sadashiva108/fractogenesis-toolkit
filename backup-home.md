@@ -1,22 +1,8 @@
----
-title: Backup Home
-back_link: "reimaging-guide#Phase 2B — Backup Home"
-runbook_version: 0.2.0
-verb_first: true
-primary_scripts:
-  - bin/backup-home.sh
-  - bin/capture-size-audit.sh
-  - bin/verify-artifact-config.sh
-related_scripts: []
-artifact_paths:
-  - $REIMAGE_ARTIFACT_ROOT/home-files-backup/
-  - $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/certs/java-security/
-author: dkittrell
-last_updated: 2026-07-31
----
 [[reimaging-guide#Phase 2B — Backup Home|← Back to Mac Reimaging Guide]]
 
 # Backup Home
+
+**Last updated:** 2026-07-31
 
 This runbook copies the home-directory files, dotfiles, and secret-bearing targets that a reimage would otherwise erase into `$REIMAGE_ARTIFACT_ROOT`, driven by `bin/backup-home.sh`. The external artifact root is the authoritative copy; an optional OneDrive secondary copy carries only the work-safe subset.
 

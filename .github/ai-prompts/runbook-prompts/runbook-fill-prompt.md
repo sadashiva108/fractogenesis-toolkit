@@ -1,20 +1,15 @@
 # Runbook fill prompt — guidance for Copilot
 
 Purpose
-- Guide Copilot to populate .github/ai-templates/runbook-templates/runbook-template.md.tmpl for a specific runbook in this repo. Designed for both migration and new-runbook creation.
+- Guide Copilot to populate .github/ai-templates/runbook-templates/runbook-template.md.tmpl for a specific runbook in this repo. Designed for creating a new runbook or updating an existing one.
 
 When to use
-- Use when authoring, migrating, or reformatting a runbook. Supports:
-    - Migrating content from a source repo (e.g., reference-vault) into this template
+- Use when authoring or reworking a runbook. Supports:
     - Creating a new runbook from scratch using minimal inputs
     - Reflowing existing runbook prose to match fractogenesis-toolkit conventions
 
-Migration source (recommended scan path)
-- If migrating, pre-read files under: /Users/dkittrell/Development/documentation/reference-vault/workflows/mac/reimage
-    - Use source files as content candidates; prefer single authoritative source for each topic.
-
 Inputs (provide these as structured key/value data before asking Copilot to fill)
-- title (string) — preferred, used in YAML header
+- title (string) — preferred, used as the runbook title heading
 - RUNBOOK_TITLE (fallback)
 - BACK_LINK (target the back-link points to, e.g. reimaging-guide#Phase 2B — Backup Home)
 - RUNBOOK_SHORT_DESC (1–2 sentence summary)
@@ -25,8 +20,8 @@ Inputs (provide these as structured key/value data before asking Copilot to fill
 - DRY_RUN_FLAG (option name if the primary script supports --dry-run)
 - SAMPLE_COMMANDS (optional runnable examples)
 - ASSET_OR_HOST (token for use in example paths)
-- AUTHOR and LAST_UPDATED (metadata)
-- rename_suggestion (optional: new filename if migrating and a rename is desired)
+- LAST_UPDATED (date for the runbook's **Last updated:** line)
+- rename_suggestion (optional: new filename if a rename is desired)
 
 Pre-read required files (Copilot MUST inspect these before editing)
 - README.md
@@ -34,7 +29,6 @@ Pre-read required files (Copilot MUST inspect these before editing)
 - Target bin/<script> and any helper scripts listed in RELATED_SCRIPTS
 - .internal/load-reimage-config.sh and .internal/artifact-config.sh
 - reimage.env.example
-- When migrating, the candidate source runbook(s) from the reference-vault path above.
 
 ---
 
@@ -44,9 +38,9 @@ Every runbook uses this order. Optional sections are marked; keep an optional
 section only when it earns its place, and delete its heading and its Table of
 Contents entry when it does not.
 
-1. YAML frontmatter (see Metadata below) — the literal first thing in the file.
-2. Back-link — an Obsidian wiki-link to the page that linked this runbook.
-3. `# Title`
+1. Back-link — an Obsidian wiki-link to the page that linked this runbook. The literal first thing in the file.
+2. `# Title`
+3. `**Last updated:**` line (see Metadata below).
 4. Short intro (1–3 sentences).
 5. `## Table of Contents`
 6. `## Purpose` — includes the ownership map (see below).
@@ -110,9 +104,8 @@ lists them, rather than swelling the step itself.
 
 ## Authoring conventions (prose, layout, and sequencing)
 
-These are the house style for every runbook. They take precedence over habit; when a
-source runbook violates them during migration, reflow it to match rather than copying
-its shape.
+These are the house style for every runbook. They take precedence over habit; when an
+existing runbook violates them, reflow it to match rather than copying its shape.
 
 ### Why before how
 
@@ -161,13 +154,12 @@ its shape.
   and link to it. Sibling-runbook cross-references belong in the Purpose ownership map,
   not in a second list.
 
-### Metadata (YAML frontmatter)
+### Metadata (Last updated line)
 
-- Every runbook begins with a YAML frontmatter block. It MUST be the literal first thing
-  in the file — before the back-link line — or Obsidian will not parse it as frontmatter.
-- Keep metadata in the frontmatter only: `title`, `back_link`, `runbook_version`,
-  `verb_first`, `primary_scripts`, `related_scripts`, `artifact_paths`, `author`,
-  `last_updated`. Do not add a second metadata block elsewhere in the document.
+- A runbook carries no YAML frontmatter. The back-link is the literal first thing in the
+  file, before the `# Title` heading.
+- Its only metadata is a `**Last updated:** YYYY-MM-DD` line directly under the `# Title`
+  heading; keep it current when the runbook changes.
 
 ### Environment variables
 
@@ -279,7 +271,7 @@ Filling rules and constraints
   the first included entry is alphabetically first among the root's
   top-level directories, and omit the trailing `...` when the last included
   entry is alphabetically last.
-- Support migrations where the source runbook's title or script names differ: include a "Renaming considerations" bullet that documents the proposed name change and reason.
+- When a runbook's title or script names change, include a "Renaming considerations" bullet that documents the proposed name change and reason.
 - If multiple scripts exist, classify each as "entrypoint", "helper", or "deprecated/throwaway" in Artifact and Script Locations.
 
 Auto-detection rules (attempt before asking clarifying questions)
@@ -291,8 +283,8 @@ Sequential Steps guidance
 - Break the runbook into small numbered steps that map to the script's phases: prepare -> execute -> verify.
 - Order steps so every dependency is produced before the step that consumes it; state the reason for any branching choice before the command that acts on it (see "Why before how" and "Sequencing" above).
 - Put manual verification (a fact a person must confirm by hand) in the verify action of the step it belongs to, not in the Decisions section; it rolls up to the Phase 4B sign-off.
-- For migrations, prefer to reflow original prose into the template's sections instead of verbatim copying; preserve essential implementation details, commands, and example output.
-- When a source runbook contains more than one logical action, consider creating multiple runbooks or documenting sub-commands and mapping them to specific scripts/helpers.
+- When updating a runbook, prefer to reflow existing prose into the template's sections instead of verbatim copying; preserve essential implementation details, commands, and example output.
+- When a runbook contains more than one logical action, consider creating multiple runbooks or documenting sub-commands and mapping them to specific scripts/helpers.
 
 TOC and anchors
 - Generate the TOC and ensure all anchors link to existing headings. Add a small "TOC verification" instruction in the runbook footer that lists the check performed.
@@ -305,7 +297,7 @@ Cross-reference master-directory-reference.md
 - Update the existing collapsible if its contents diverge from what this
   runbook's tree now shows.
 - Rename the collapsible's heading and Master Root Layout entry if the
-  directory name changed during migration.
+  directory name changed.
 - Keep collapsible contents alphabetized, consistent with the rule above.
 
 Renaming and file placement rules
@@ -313,8 +305,8 @@ Renaming and file placement rules
 - If rename_suggestion provided, include the old path and the new path in a short changelog note at the top of the generated runbook.
 
 Validation checklist (run after generating the filled runbook)
-- [ ] YAML frontmatter is the literal first thing in the file, populated and valid.
-- [ ] Metadata lives only in the frontmatter; no second metadata block exists.
+- [ ] The back-link is the literal first thing in the file; there is no YAML frontmatter.
+- [ ] A `**Last updated:**` line sits directly under the `# Title` heading.
 - [ ] All template placeholders replaced.
 - [ ] Section order matches the Canonical section order; deleted optional sections are gone from both the body and the TOC.
 - [ ] Purpose contains the ownership map; there is no separate Related Guides or pointers/see-also section.
@@ -337,7 +329,7 @@ Validation checklist (run after generating the filled runbook)
 - [ ] master-directory-reference.md checked against this runbook's tree; added, updated, or renamed as needed.
 
 Formatting and style
-- Headline: use verb-first title pattern when practical; if source title deviates, include a short rationale for preserving it.
+- Headline: use verb-first title pattern when practical; if the existing title deviates, include a short rationale for preserving it.
 - Keep sentences short; prefer lists for steps and checks.
 - Use fenced code blocks for commands and examples.
 - Apply the Authoring conventions above for prose spacing, callouts, tables, links, and single-source trees.
@@ -357,7 +349,6 @@ Example invocation (JSON)
 "PREREQS": ["bash","rsync"],
 "DRY_RUN_FLAG": "--dry-run",
 "ASSET_OR_HOST": "ASSET01",
-"AUTHOR": "Your Name",
 "LAST_UPDATED": "2026-07-16",
 "rename_suggestion": "backup-apps.md"
 }

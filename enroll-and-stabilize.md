@@ -1,19 +1,8 @@
----
-title: Enroll and Stabilize
-back_link: "reimaging-guide#Phase 6 — Enroll and Stabilize"
-runbook_version: 0.1.0
-verb_first: true
-primary_scripts:
-  - bin/record-enrollment.sh
-related_scripts: []
-artifact_paths:
-  - $REIMAGE_ARTIFACT_ROOT/reimaged-system/enrollment/
-author: Orah Kittrell
-last_updated: 2026-08-04
----
 [[reimaging-guide#Phase 6 — Enroll and Stabilize|← Back to Mac Reimaging Guide]]
 
 # Enroll and Stabilize
+
+**Last updated:** 2026-08-04
 
 Bring the freshly reimaged Mac to a clean, trusted managed baseline before any restore work begins. This phase covers the human-driven work — completing MDM enrollment, letting required managed apps and security tools install, applying required macOS updates, taking the first stabilization restart, and reconfirming afterward — and pairs it with `record-enrollment.sh`, which records read-only command evidence for each managed subsystem and prefills the Phase 6 exit-criteria table for the command-verifiable rows.
 

@@ -1,25 +1,8 @@
----
-title: Backup Apps
-back_link: "reimaging-guide#Phase 2D — Backup Apps"
-runbook_version: 0.2.0
-verb_first: true
-primary_scripts:
-  - bin/backup-apps.sh
-related_scripts:
-  - .internal/apps/backup-docker-settings.sh
-  - .internal/apps/backup-intellij-scratches-consoles.sh
-  - .internal/apps/backup-app-config.sh
-  - .internal/apps/app-selection.sh
-  - bin/capture-size-audit.sh
-artifact_paths:
-  - $REIMAGE_ARTIFACT_ROOT/app-settings-backup/
-  - $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/
-author: Orah Kittrell
-last_updated: 2026-07-30
----
 [[reimaging-guide#Phase 2D — Backup Apps|← Back to Mac Reimaging Guide]]
 
 # Backup Apps
+
+**Last updated:** 2026-07-30
 
 Collect and stage application state — settings, exports, inventories, and profiles — for apps whose restore source is defined by the app itself, not by copying known local files. Some of this is automated by a script; much of it is manual, because the app's own UI owns the export, secret handling needs judgment, or the backup decision is really about app state, sync, or restore semantics. Not every app is covered, and not every covered app applies to your Mac — you decide which ones to back up.
 

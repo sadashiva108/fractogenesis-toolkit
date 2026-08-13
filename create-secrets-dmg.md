@@ -1,20 +1,8 @@
----
-title: Create Secrets DMG
-back_link: "reimaging-guide#Phase 2F — Create Secrets DMG"
-runbook_version: 0.1.0
-verb_first: true
-primary_scripts:
-  - bin/create-secrets-dmg.sh
-related_scripts:
-  - bin/stage-certs-keychain.sh
-artifact_paths:
-  - $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/
-author: Shiva
-last_updated: 2026-08-03
----
 [[reimaging-guide#Phase 2F — Create Secrets DMG|← Back to Mac Reimaging Guide]]
 
 # Create Secrets DMG
+
+**Last updated:** 2026-08-03
 
 Package every credential-bearing file that must survive the reimage into one AES-256 encrypted DMG, prove the restore copy is inside the mounted image, and only then remove the loose plaintext staging. Build once, at the end of manual secret collection.
 

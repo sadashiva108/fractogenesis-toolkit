@@ -2,6 +2,8 @@
 
 # Backup Repositories
 
+**Last updated:** 2026-08-13
+
 This runbook preserves repository state and intentionally chosen local files before a Mac reimage.
 
 Git remotes protect what you have committed and pushed. They do not protect local-only commits, uncommitted changes, stashes, untracked files, or the ignored local files — env files, IDE settings, certificates, local scripts — that never leave your machine. This runbook captures that gap.

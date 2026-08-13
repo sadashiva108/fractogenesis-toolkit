@@ -2,6 +2,8 @@
 
 # Reimaging Scripts Guide
 
+**Last updated:** 2026-08-13
+
 > **Migration note:** this guide describes the full pre-split script layout and is only *partially* updated. Confirmed migrated into `fractogenesis-toolkit` so far: `prepare-artifact-root.py`/`.md`, `.internal/artifact-config.sh` (renamed from `artifact-config.sh`), `bin/reimage-checklist.sh`, `.internal/load-reimage-config-snippet.sh`, and `reimage-prep-checks.md` (renamed from `capture-validated-reimage-prep.md`) — these have updated paths, names, and the `$REIMAGE_ARTIFACT_ROOT`/`REIMAGE_ROOT`-retirement changes applied and cross-checked against the real migrated files. Every other script referenced below (`backup-apps.sh`, `backup-repos.sh`, the `capture-*.sh`/`restore-*.sh` family, etc.) still reflects the **old** `scripts/`-prefixed, `--backup-root`-flagged reference-vault layout, since those haven't been migrated yet — don't assume their paths or flag names below are current until they get their own migration pass.
 
 Use this as the script index for the Mac reimage workflow. The Markdown runbooks explain the workflow; this guide maps each phase to the scripts that generate backups, evidence captures, and validation checklists.

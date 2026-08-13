@@ -1,5 +1,7 @@
 # Guide Access on a Freshly Reimaged Mac
 
+**Last updated:** 2026-08-13
+
 > [[reimaging-guide|← Back to Mac Reimaging Guide]]
 
 ## Table of Contents

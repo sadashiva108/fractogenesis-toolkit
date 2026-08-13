@@ -1,5 +1,7 @@
 # fractogenesis-toolkit
 
+**Last updated:** 2026-08-13
+
 Runbooks and scripts for reimaging a Mac (Windows/Linux/other-device reimage workflows may join this repo later — see [Future Workflows](#future-workflows)). Split out from a personal reference vault into its own repo because restore-phase steps need to be runnable on a freshly erased Mac that hasn't cloned anything yet — see [Why a Separate Repo](#why-a-separate-repo).
 
 ---

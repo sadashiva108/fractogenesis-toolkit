@@ -2,6 +2,8 @@
 
 # Prepare Artifact Root
 
+**Last updated:** 2026-08-13
+
 Run-book for preparing the external backup/capture location before running pre-image backups, evidence captures, validation scripts, restore steps, and post-image comparison captures.
 
 Recommended path: create the local `reimage.env` file first, then source it in each terminal session. This guide uses `reimage.env` as the normal source of truth for `REIMAGE_WORKSPACE_ROOT`, `EXTERNAL_DATA_VOLUME`, `EXTERNAL_APPLE_BACKUPS_VOLUME`, and `REIMAGE_ARTIFACT_ROOT`. Manual export-only commands are kept later as a fallback, not as the normal path.

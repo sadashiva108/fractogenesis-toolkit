@@ -1,5 +1,7 @@
 # Mac Reimaging Guide
 
+**Last updated:** 2026-08-13
+
 This is the canonical top-level guide for the Mac reimage workflow.
 
 ---

@@ -1,23 +1,8 @@
----
-title: Restore Apps
-back_link: "reimaging-guide#Phase 10 — Restore Apps"
-runbook_version: 0.1.0
-verb_first: true
-primary_scripts:
-  - bin/restore-apps.sh
-related_scripts:
-  - bin/capture-office-stability.sh
-  - bin/office-stability-checklist.sh
-artifact_paths:
-  - $REIMAGE_ARTIFACT_ROOT/app-settings-backup/
-  - $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/
-  - $REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/
-author: Orah Kittrell
-last_updated: 2026-08-05
----
 [[reimaging-guide#Phase 10 — Restore Apps|← Back to Mac Reimaging Guide]]
 
 # Restore Apps
+
+**Last updated:** 2026-08-05
 
 Restore the day-to-day application layer on the reimaged Mac after the managed baseline, runtime, access, Git, and repository foundations are in place. This is the umbrella runbook for Phase 10: it walks the operator through the ordered install-and-restore sequence for Office, OneDrive, Chrome, Obsidian, Postman, VS Code, Raycast, Terminal, and the remaining daily tools, and hands off to dedicated runbooks for IntelliJ, Docker, and the late local-file restore. `bin/restore-apps.sh` writes a per-run plan-note that surveys the available pre-image backup sources and provides the sign-off checklist the operator ticks through by hand.
 

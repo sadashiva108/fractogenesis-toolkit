@@ -1,20 +1,8 @@
----
-title: Capture System Inventory
-back_link: "reimaging-guide#Phase 3B — System Inventory Capture"
-runbook_version: 0.1.0
-verb_first: true
-primary_scripts:
-  - bin/capture-system-inventory.sh
-related_scripts:
-  - bin/capture-size-audit.sh
-artifact_paths:
-  - $REIMAGE_ARTIFACT_ROOT/system-inventory/
-author: Orah Kittrell
-last_updated: 2026-08-04
----
 [[reimaging-guide#Phase 3B — System Inventory Capture|← Back to Mac Reimaging Guide]]
 
 # Capture System Inventory
+
+**Last updated:** 2026-08-04
 
 A script-first, one-pass record of how this Mac is configured — hardware and macOS, disk and display, installed apps, Homebrew, shell and dotfiles, Git, the language runtimes (Python, Java, Node), Docker, network and SSH, cloud paths, redacted environment clues, and certificate pointers. It observes and records; the only things it writes are into the bundle. Run it pre-image (Phase 3B) to preserve a before-reimage picture, and again post-image (Phase 11B) to compare the rebuilt machine against that record.
 

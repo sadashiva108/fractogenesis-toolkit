@@ -1,20 +1,8 @@
----
-title: Restore Repositories
-back_link: "reimaging-guide#Phase 9B — Restore Repositories"
-runbook_version: 0.1.0
-verb_first: true
-primary_scripts:
-  - bin/restore-repos.sh
-related_scripts: []
-artifact_paths:
-  - $REIMAGE_ARTIFACT_ROOT/repo-audit-reports/
-  - $REIMAGE_ARTIFACT_ROOT/staged-ignored-files/live/
-author: Orah Kittrell
-last_updated: 2026-08-05
----
 [[reimaging-guide#Phase 9B — Restore Repositories|← Back to Mac Reimaging Guide]]
 
 # Restore Repositories
+
+**Last updated:** 2026-08-05
 
 Consume the pre-image repository audit produced by Phase 2C ([[backup-repos|backup-repos.md]]) to re-clone the tracked repositories onto the reimaged Mac, rsync the reviewed kept ignored files back into each working tree, and reconcile every pre-image carry-forward row (local-only commits, stashes, tracked changes) against the state of the freshly cloned repos. Runs after Phase 9A ([[restore-git|restore-git.md]]) has wired up the dual-identity `~/.gitconfig` and `~/.ssh/config`, so every clone command emitted here already routes through the correct SSH key.
 

@@ -1,18 +1,3 @@
----
-title: Run Time Machine
-back_link: "reimaging-guide#Phase 2G — Backup Time Machine"
-runbook_version: 0.1.0
-verb_first: true
-primary_scripts:
-  - bin/run-time-machine.sh
-related_scripts:
-  - bin/capture-size-audit.sh
-  - bin/capture-time-machine.sh
-artifact_paths:
-  - $REIMAGE_ARTIFACT_ROOT/time-machine/
-author: Orah Kittrell
-last_updated: 2026-08-04
----
 [[reimaging-guide#Phase 2G — Backup Time Machine|← Back to Mac Reimaging Guide]]
 
 <!--
@@ -25,6 +10,8 @@ Renaming considerations:
 -->
 
 # Run Time Machine
+
+**Last updated:** 2026-08-04
 
 Run and validate a Time Machine backup before a Mac reimage — the broad, whole-home safety net that sits alongside, and never replaces, the targeted `$REIMAGE_ARTIFACT_ROOT` artifacts produced by the earlier Phase 2 backups.
 

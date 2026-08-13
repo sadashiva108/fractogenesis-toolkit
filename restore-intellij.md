@@ -1,22 +1,8 @@
----
-title: Restore IntelliJ
-back_link: "reimaging-guide#Phase 10 — Restore Apps"
-runbook_version: 0.1.0
-verb_first: true
-primary_scripts:
-  - bin/restore-intellij.sh
-related_scripts: []
-artifact_paths:
-  - $REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/
-  - $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/intellij/
-  - $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/all-secrets-*.dmg
-  - $REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/
-author: Orah Kittrell
-last_updated: 2026-08-05
----
 [[reimaging-guide#Phase 10 — Restore Apps|← Back to Mac Reimaging Guide]]
 
 # Restore IntelliJ
+
+**Last updated:** 2026-08-05
 
 Restore IntelliJ IDEA and per-project state on the reimaged Mac in a controlled sequence so imported settings, Scratches, project metadata, and HTTP Client environments end up in the right places without dragging stale machine-specific paths forward or leaking secret material into unencrypted storage. This runbook is the dedicated Phase 10 IntelliJ handoff that [[restore-apps|restore-apps.md]] hands to; the companion script `bin/restore-intellij.sh` writes a per-run plan-note that surveys the available pre-image sources and provides the sign-off checklist.
 

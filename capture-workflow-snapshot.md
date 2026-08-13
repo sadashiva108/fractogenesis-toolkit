@@ -1,19 +1,8 @@
----
-title: Capture Workflow Snapshot
-back_link: "reimaging-guide#Phase 3A — Capture Workflow Snapshot"
-runbook_version: 0.1.0
-verb_first: true
-primary_scripts:
-  - bin/capture-workflow-snapshot.sh
-related_scripts: []
-artifact_paths:
-  - $REIMAGE_ARTIFACT_ROOT/workflow-snapshot/
-author: Orah Kittrell
-last_updated: 2026-08-04
----
 [[reimaging-guide#Phase 3A — Capture Workflow Snapshot|← Back to Mac Reimaging Guide]]
 
 # Capture Workflow Snapshot
+
+**Last updated:** 2026-08-04
 
 A lightweight capture that preserves the reimage workflow's own documentation and templates alongside a timestamped snapshot bundle, so the state of the runbooks that drove this reimage travels with the backup drive. Run it pre-image (Phase 3A) to record the workflow as it stands before the rebuild, and again post-image (Phase 11A) to record the final workflow state after any runbook or script refinements made during the effort.
 
