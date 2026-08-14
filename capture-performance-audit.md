@@ -2,7 +2,7 @@
 
 # Capture Performance Audit
 
-**Last updated:** 2026-08-04
+**Last updated:** 2026-08-13
 
 A repeatable, read-only performance baseline. It captures short-duration scenario bundles under named workloads so general workstation performance can be compared like-for-like across a reimage. Run it pre-image (Phase 3C) under one or more named scenarios, then run the same scenarios post-image (Phase 11D) so the two sets compare cleanly.
 
@@ -207,6 +207,13 @@ Confirm the entrypoint parses and the environment resolves. `capture-performance
 
 ```bash
 ./bin/capture-performance-audit.sh --help
+```
+
+Optional — for the rollup trend summary, point `PERFORMANCE_HISTORY_SOURCE` at your `mac_memory_health.sh` history directory and record it in `reimage.env`. Skip this if you do not use that helper:
+
+```bash
+export PERFORMANCE_HISTORY_SOURCE="$HOME/Library/Logs/mac-memory-health"
+python3 bin/prepare-artifact-root.py upsert-env --env-file reimage.env "PERFORMANCE_HISTORY_SOURCE=$PERFORMANCE_HISTORY_SOURCE"
 ```
 
 > [!note]

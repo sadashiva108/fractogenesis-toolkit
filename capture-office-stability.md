@@ -2,7 +2,7 @@
 
 # Capture Office Stability
 
-**Last updated:** 2026-08-04
+**Last updated:** 2026-08-13
 
 Capture the evidence behind Outlook / OneNote instability when Office update churn or unexpected app closures are part of the reason this Mac is being reimaged. A continuous watcher logs the apps, their bundles, crash reports, and Microsoft update/management activity over days or weeks; a baseline collector then summarizes everything newer than a timestamp marker into a self-contained bundle. Run it pre-image (Phase 3D) to record the before picture, and again post-image (Phase 11E) to show whether the rebuilt Mac stayed stable.
 
@@ -194,7 +194,7 @@ A short pre-flight: confirm you are set up, then confirm what this run is for. T
 - Your shell is at the repository root — `cd "$FRACTOGENESIS_HOME"` once for the session. Per the guide's [[reimaging-guide#Core Assumptions|Core Assumptions]], the commands below assume this and don't repeat it.
 - You are on the affected company-managed Mac, and Office instability is genuinely part of this reimage's reason — otherwise skip this situational capture.
 - `REIMAGE_ARTIFACT_ROOT` resolves and its volume is mounted (or `REIMAGE_WORKSPACE_ROOT` is set if you are staging evidence locally before the backup drive is attached).
-- `OFFICE_WATCH` resolves and its directory exists, so the watcher and marker have a home.
+- `OFFICE_WATCH` has a home. If it is not set in `reimage.env` yet, Step 1 sets it and creates the directory.
 
 > [!bug] Troubleshooting
 > A missing `$OFFICE_WATCH` directory or missing marker will stop the collector — see [[#The Watcher Is Not Running|The Watcher Is Not Running]].
@@ -214,6 +214,14 @@ A short pre-flight: confirm you are set up, then confirm what this run is for. T
 Run these in order: open a clean window, exercise Office while the watcher records, collect the baseline, generate the checklist, then verify. The watcher runs across the whole window; the collector is a single command at the end.
 
 ### Step 1 — Prepare a Clean Test Window
+
+First, make sure the watcher has a home. Point `OFFICE_WATCH` at a local directory (a resolved absolute path), record it in `reimage.env`, then create it:
+
+```bash
+export OFFICE_WATCH="$HOME/Desktop/office-watch"
+python3 bin/prepare-artifact-root.py upsert-env --env-file reimage.env "OFFICE_WATCH=$OFFICE_WATCH"
+mkdir -p "$OFFICE_WATCH"
+```
 
 Start from a known-clean state so any later Office bundle change is unambiguous. Confirm Outlook and OneNote are fully quit (`Cmd+Q`, not backgrounded), Docker is not yet running, and no stale watcher is left over:
 

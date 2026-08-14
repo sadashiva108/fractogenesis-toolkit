@@ -35,7 +35,6 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 
 PATH_KEYS = {
     "REIMAGE_WORKSPACE_ROOT",
-    "IT_PLAN_DIR",
     "PERFORMANCE_HISTORY_SOURCE",
     "EXTERNAL_DATA_VOLUME",
     "EXTERNAL_APPLE_BACKUPS_VOLUME",
@@ -50,7 +49,6 @@ PATH_KEYS = {
 
 ENV_KEYS = [
     "REIMAGE_WORKSPACE_ROOT",
-    "IT_PLAN_DIR",
     "PERFORMANCE_HISTORY_SOURCE",
     "EXTERNAL_DATA_VOLUME",
     "EXTERNAL_APPLE_BACKUPS_VOLUME",
@@ -249,7 +247,6 @@ def ensure_artifact_root_under_external(external_data_volume: str, artifact_root
 def print_env_summary(values: Dict[str, str]) -> None:
     for key in [
         "REIMAGE_WORKSPACE_ROOT",
-        "IT_PLAN_DIR",
         "PERFORMANCE_HISTORY_SOURCE",
         "EXTERNAL_DATA_VOLUME",
         "EXTERNAL_APPLE_BACKUPS_VOLUME",
@@ -322,15 +319,9 @@ def resolve_it_plan_source(explicit_source: str, values: Dict[str, str], workspa
             raise SystemExit(f"IT plan source file not found: {source}")
         return source
 
-    # IT_PLAN_DIR, if explicitly set (in reimage.env or elsewhere), is used as-is.
-    # Otherwise fall back to REIMAGE_WORKSPACE_ROOT/reimage-confirmation so callers are not
-    # required to persist IT_PLAN_DIR in reimage.env just for this one-time Phase 0 copy.
-    it_plan_dir = values.get("IT_PLAN_DIR")
-    if it_plan_dir:
-        search_root = it_plan_dir
-    else:
-        workspace_root = workspace_root_override or values.get("REIMAGE_WORKSPACE_ROOT") or default_workspace_root()
-        search_root = str(Path(workspace_root) / "reimage-confirmation")
+    # Locate the filled note under REIMAGE_WORKSPACE_ROOT/reimage-confirmation.
+    workspace_root = workspace_root_override or values.get("REIMAGE_WORKSPACE_ROOT") or default_workspace_root()
+    search_root = str(Path(workspace_root) / "reimage-confirmation")
     search_path = Path(search_root).expanduser()
     if not search_path.is_dir():
         raise SystemExit(
@@ -353,7 +344,7 @@ def resolve_it_plan_source(explicit_source: str, values: Dict[str, str], workspa
 
 def cmd_init_reimage_env(args: argparse.Namespace) -> int:
     workspace_root = args.workspace_root or default_workspace_root()
-    it_plan_dir = args.it_plan_dir or str(Path(workspace_root) / "reimage-confirmation")
+    confirmation_dir = str(Path(workspace_root) / "reimage-confirmation")
     asset_or_host = args.asset_or_host or detect_asset_or_host()
     reimage_start_date = args.reimage_start_date or dt.datetime.now().strftime("%Y%m%d")
     external_data_volume = args.external_data_volume.rstrip("/")
@@ -364,7 +355,6 @@ def cmd_init_reimage_env(args: argparse.Namespace) -> int:
 
     updates = {
         "REIMAGE_WORKSPACE_ROOT": workspace_root,
-        "IT_PLAN_DIR": it_plan_dir,
         "PERFORMANCE_HISTORY_SOURCE": args.performance_history_source,
         "EXTERNAL_DATA_VOLUME": external_data_volume,
         "EXTERNAL_APPLE_BACKUPS_VOLUME": args.external_apple_backups_volume,
@@ -377,7 +367,7 @@ def cmd_init_reimage_env(args: argparse.Namespace) -> int:
         "ONEDRIVE_DEST_SUBDIR": onedrive_dest_subdir,
     }
     update_env_exports(args.env_file, updates)
-    ensure_workspace_dirs(workspace_root, it_plan_dir)
+    ensure_workspace_dirs(workspace_root, confirmation_dir)
     print(f"ASSET_OR_HOST={asset_or_host}")
     print(f"REIMAGE_START_DATE={reimage_start_date}")
     print(f"REIMAGE_ARTIFACT_ROOT={reimage_artifact_root}")
@@ -514,7 +504,6 @@ def cmd_confirm_env(args: argparse.Namespace) -> int:
     print_env_summary(values)
 
     ensure_absolute_path("REIMAGE_WORKSPACE_ROOT", values["REIMAGE_WORKSPACE_ROOT"])
-    ensure_absolute_path("IT_PLAN_DIR", values["IT_PLAN_DIR"])
     ensure_absolute_path("EXTERNAL_DATA_VOLUME", values["EXTERNAL_DATA_VOLUME"])
     ensure_absolute_path("EXTERNAL_APPLE_BACKUPS_VOLUME", values["EXTERNAL_APPLE_BACKUPS_VOLUME"])
     ensure_absolute_path("REIMAGE_ARTIFACT_ROOT", values["REIMAGE_ARTIFACT_ROOT"])
@@ -720,7 +709,6 @@ def build_parser() -> argparse.ArgumentParser:
     )
     init_parser.add_argument("--env-file", type=Path, required=True)
     init_parser.add_argument("--workspace-root", default="")
-    init_parser.add_argument("--it-plan-dir", default="")
     init_parser.add_argument("--performance-history-source", default="")
     init_parser.add_argument("--external-data-volume", default="/Volumes/Data")
     init_parser.add_argument("--external-apple-backups-volume", default="/Volumes/AppleBackups")
@@ -792,9 +780,8 @@ def build_parser() -> argparse.ArgumentParser:
         default="",
         help=(
             "Override REIMAGE_WORKSPACE_ROOT for locating the filled IT plan note under "
-            "<workspace-root>/reimage-confirmation/. Use this instead of persisting IT_PLAN_DIR "
-            "or REIMAGE_WORKSPACE_ROOT in reimage.env. Ignored if --source or IT_PLAN_DIR "
-            "(from reimage.env) is provided."
+            "<workspace-root>/reimage-confirmation/. Use this instead of persisting "
+            "REIMAGE_WORKSPACE_ROOT in reimage.env. Ignored if --source is provided."
         ),
     )
     copy_it_plan_parser.set_defaults(func=cmd_copy_it_plan)

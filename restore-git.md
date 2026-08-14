@@ -2,7 +2,7 @@
 
 # Restore Git
 
-**Last updated:** 2026-08-04
+**Last updated:** 2026-08-13
 
 Restore the Git identity plumbing on the reimaged Mac so both work and personal GitHub accounts route automatically based on where a repository lives on disk. This runbook wires up the dual-identity `~/.gitconfig` (work as default, `includeIf` override under the personal repo root), lays down the matching `~/.ssh/config` host aliases, validates both identities, and leaves you with a `git clone` template that Phase 9B ([[restore-repos|restore-repos.md]]) then applies at scale against the pre-image repository audit. It does not enumerate a repo list, drive a clone loop, or restore preserved local branches or stashes — that carry-forward work belongs to [[restore-repos|restore-repos.md]].
 
@@ -141,7 +141,7 @@ $FRACTOGENESIS_HOME/reimage.env    # sourced at the start of every step below
 
 ### Environment Variables
 
-The `reimage.env` values this runbook depends on. Values are resolved during `prepare-artifact-root.md` (paths and roots) and set by the operator (identity keys) before this phase runs.
+The `reimage.env` values this runbook depends on. Paths and roots are resolved during `prepare-artifact-root.md`; the identity keys, host aliases, and default branch are recorded here in Step 1.
 
 | Variable | Meaning |
 |---|---|
@@ -172,7 +172,7 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 
 - Your shell is at the repository root — `cd "$FRACTOGENESIS_HOME"` once for the session. Per the guide's [[reimaging-guide#Core Assumptions|Core Assumptions]], the commands below assume this and don't repeat it.
 - Phase 8B ([[restore-access|restore-access.md]]) is complete: the SSH keys referenced by `$GIT_WORK_SSH_KEY` and `$GIT_PERSONAL_SSH_KEY` exist on disk, the internal-CA trust is in the login keychain, and `hdiutil detach` cleaned up any mounted DMG.
-- `reimage.env` is present and every `GIT_*` value in the table above is filled in. Do not proceed with placeholders — a blank identity value silently produces a `.gitconfig` with an empty email.
+- `reimage.env` is present, and you know your Git identity values (name, email, SSH key paths, host aliases). Step 1 records them into `reimage.env`; don't leave an identity value blank — a blank email silently produces a `.gitconfig` with an empty email.
 - You know the SSH key fingerprints registered on GitHub for both accounts, or can look them up in a password manager. You will compare them in Step 2.
 
 > [!bug] Troubleshooting
@@ -182,7 +182,7 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 
 - Are you doing a **full first-time restore** (Steps 1 through 8 in order) or a **targeted rerun** of one file (e.g. re-writing `~/.ssh/config` after adding a third identity)? Both are safe; the difference is whether you also do Step 7's validation at the end.
 - Do you use the **XDG local config** (`~/.config/git/config.local`) as your primary Git config, or `~/.gitconfig` only? If the answer is "only `~/.gitconfig`", skip Step 6 entirely — do not maintain both.
-- Which **default branch name** does your workflow use? The runbook defaults to `master` because that is what the historical `reimage.env` shipped with; if your remote defaults to `main`, set `GIT_DEFAULT_BRANCH=main` in `reimage.env` before Step 4.
+- Which **default branch name** does your workflow use? The runbook defaults to `master` because that is what the historical `reimage.env` shipped with; if your remote defaults to `main`, set `GIT_DEFAULT_BRANCH=main` when you record the values in Step 1.
 
 > [!warning] Pitfall
 > Do not commit `reimage.env` itself, restored `.gitconfig` files with real email addresses, or restored SSH keys. `.gitignore` should already exclude these; verify before your first commit after restore.
@@ -205,6 +205,33 @@ Homebrew from Phase 8A is the install path. Confirm Git is available and no stal
 brew install git
 git --version
 git config --global --list
+```
+
+Record your Git identity, SSH host aliases, and default branch in `reimage.env` — these are the values this runbook writes into `~/.gitconfig`, `~/.ssh/config`, and the personal-root override. Fill in the real values (leave the `GIT_PERSONAL_*` pair blank if you have no separate personal identity), then upsert them. The repository roots (`GIT_WORK_REPO_ROOT`, `GIT_PERSONAL_REPO_ROOT`) already carry over from the pre-image backup.
+
+```bash
+export GIT_WORK_NAME="Your Name"
+export GIT_WORK_EMAIL="you@company.example"
+export GIT_PERSONAL_NAME=""
+export GIT_PERSONAL_EMAIL=""
+export GIT_WORK_SSH_KEY="$HOME/.ssh/id_work"
+export GIT_PERSONAL_SSH_KEY="$HOME/.ssh/id_personal"
+export GIT_WORK_GITHUB_HOST="github.com"
+export GIT_PERSONAL_GITHUB_HOST="github-personal"
+export GIT_DEFAULT_BRANCH="master"
+
+python3 bin/prepare-artifact-root.py \
+  upsert-env \
+  --env-file reimage.env \
+  "GIT_WORK_NAME=$GIT_WORK_NAME" \
+  "GIT_WORK_EMAIL=$GIT_WORK_EMAIL" \
+  "GIT_PERSONAL_NAME=$GIT_PERSONAL_NAME" \
+  "GIT_PERSONAL_EMAIL=$GIT_PERSONAL_EMAIL" \
+  "GIT_WORK_SSH_KEY=$GIT_WORK_SSH_KEY" \
+  "GIT_PERSONAL_SSH_KEY=$GIT_PERSONAL_SSH_KEY" \
+  "GIT_WORK_GITHUB_HOST=$GIT_WORK_GITHUB_HOST" \
+  "GIT_PERSONAL_GITHUB_HOST=$GIT_PERSONAL_GITHUB_HOST" \
+  "GIT_DEFAULT_BRANCH=$GIT_DEFAULT_BRANCH"
 ```
 
 Source the reimage environment for the rest of this runbook:

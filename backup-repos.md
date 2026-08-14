@@ -31,6 +31,7 @@ It does not turn `repo-audit-reports/` into a full source backup. Credential-sha
     - [[#Selected Path vs Direct Path|Selected Path vs Direct Path]]
     - [[#Why Secrets Are Routed Separately|Why Secrets Are Routed Separately]]
 - [[#Sequential Steps|Sequential Steps]]
+    - [[#Define Git Repository Roots|Define Git Repository Roots]]
     - [[#Load Shared Configuration|Load Shared Configuration]]
     - [[#Run the Size Audit|Run the Size Audit]]
     - [[#Run the Repository Audit|Run the Repository Audit]]
@@ -282,7 +283,7 @@ Each part below answers *why* a step exists before the Sequential Steps show *ho
 
 ### Prerequisites
 
-This runbook assumes the external artifact volume, `$REIMAGE_ARTIFACT_ROOT`, the standard generated-artifact folders, and `reimage.env` are already in place, and that the Git repository roots are defined in `reimage.env` as `GIT_WORK_REPO_ROOT` and `GIT_PERSONAL_REPO_ROOT`.
+This runbook assumes the external artifact volume, `$REIMAGE_ARTIFACT_ROOT`, the standard generated-artifact folders, and `reimage.env` are already in place. The Git repository roots (`GIT_WORK_REPO_ROOT`, `GIT_PERSONAL_REPO_ROOT`) are set by this runbook's first step, [[#Define Git Repository Roots|Define Git Repository Roots]].
 
 | Item | Location |
 |---|---|
@@ -337,6 +338,105 @@ Some files you need for development are also credential-shaped — env files, ke
 ## Sequential Steps
 
 Run these in order. The first four — [[#Load Shared Configuration|Load Shared Configuration]] through [[#Review the Gitignore Superset|Review the Gitignore Superset]] — are common setup for both paths. [[#Choose Your Path|Choose Your Path]] then sends you down either the Selected chain or the Direct off-ramp, and both rejoin at [[#Review Output Files|Review Output Files]].
+
+### Define Git Repository Roots
+
+Define the local repository root directories in `reimage.env` before running the backups below.
+
+These values tell the Git helper scripts where to search for repositories. They should point to parent folders that contain one or more Git repositories, not necessarily to a single repo.
+
+You do **not** need both roots. `GIT_WORK_REPO_ROOT` should point to your existing work/corporate repo path. `GIT_PERSONAL_REPO_ROOT` is optional and can stay blank when you do not maintain a separate personal/reference repo area on this Mac.
+
+Common examples:
+
+| Variable                 | Purpose                                        | Example shape                            |
+| ------------------------ | ---------------------------------------------- | ---------------------------------------- |
+| `GIT_WORK_REPO_ROOT`     | Work/corporate development repositories.       | `/Users/<user>/Development/IdeaProjects` |
+| `GIT_PERSONAL_REPO_ROOT` | Personal/reference/documentation repositories. | `/Users/<user>/Development/personal`     |
+
+Keep these values in `reimage.env` as resolved absolute paths. Do not write literal values such as `$HOME/path/to/repos` or `${GIT_WORK_REPO_ROOT:-...}` into `reimage.env`; those can become stale or fail under `set -u`.
+
+**These should already exist on disk as folders containing your cloned repos.** This guide doesn't create them -- it only points the Git helper scripts at them and validates that they're really there further down in this same step. If a path you set here doesn't exist yet, that's very likely a typo, not something to paper over; the validation below is specifically designed to catch that and tell you.
+
+Set the values in the current shell first, using real paths for this Mac. **Export these under their final names directly** -- `GIT_WORK_REPO_ROOT` and `GIT_PERSONAL_REPO_ROOT`, matching every other export in this guide -- not a separately-named staging variable:
+
+```bash
+export GIT_WORK_REPO_ROOT="$HOME/path/to/work/repos"
+
+export GIT_PERSONAL_REPO_ROOT=""
+```
+
+Only if you intentionally use a second personal/reference repo root, set it instead of leaving it blank:
+
+```bash
+export GIT_PERSONAL_REPO_ROOT="$HOME/path/to/personal/repos"
+```
+
+`bin/prepare-artifact-root.py upsert-env` accepts any `KEY=VALUE` pair it's given, including an empty `VALUE` -- it does not check that the value is non-empty before writing it, so a typo'd or unset shell variable on the next line gets written into `reimage.env` silently, with no error at all. Guard against that here, before it can happen, rather than relying on catching it downstream:
+
+```bash
+if [[ -z "$GIT_WORK_REPO_ROOT" ]]; then
+  echo "ERROR: GIT_WORK_REPO_ROOT is empty -- the export above didn't take. Fix it before continuing; do not run upsert-env with an empty value."
+  return 1 2>/dev/null || exit 1
+fi
+```
+
+Write the resolved Git root values into `reimage.env`:
+
+```bash
+python3 bin/prepare-artifact-root.py \
+  upsert-env \
+  --env-file reimage.env \
+  "GIT_WORK_REPO_ROOT=${GIT_WORK_REPO_ROOT%/}" \
+  "GIT_PERSONAL_REPO_ROOT=${GIT_PERSONAL_REPO_ROOT%/}"
+```
+
+After updating `reimage.env`, source it again in the current terminal. This is required because updating the file does not automatically update variables that are already loaded in an open shell.
+
+```bash
+set -a
+source ./reimage.env
+set +a
+```
+
+Confirm the loaded values and make sure they are resolved paths, not literal shell variables:
+
+```bash
+printf 'GIT_WORK_REPO_ROOT=%s\n' "${GIT_WORK_REPO_ROOT:-}"
+printf 'GIT_PERSONAL_REPO_ROOT=%s\n' "${GIT_PERSONAL_REPO_ROOT:-}"
+
+case "${GIT_WORK_REPO_ROOT:-}${GIT_PERSONAL_REPO_ROOT:-}" in
+  *'$'*)
+    echo "ERROR: Git root values contain literal shell variable text. Rewrite them as resolved absolute paths."
+    exit 2
+    ;;
+esac
+```
+
+Validate the roots before continuing. The scripts support either the work root alone or both roots together, but the work root should exist before you continue:
+
+```bash
+if [[ -z "${GIT_WORK_REPO_ROOT:-}" ]]; then
+  echo "GIT_WORK_REPO_ROOT is not set."
+  echo "Add GIT_WORK_REPO_ROOT to reimage.env, then source it again."
+  exit 2
+fi
+
+for root in "${GIT_WORK_REPO_ROOT:-}" "${GIT_PERSONAL_REPO_ROOT:-}"; do
+  [[ -z "$root" ]] && continue
+
+  if [[ -d "$root" ]]; then
+    echo "OK: Git root exists: $root"
+    find "$root" -name .git -type d -prune 2>/dev/null \
+      | sed 's|/.git$||' \
+      | head -25
+  else
+    echo "MISSING: $root"
+  fi
+done
+```
+
+If the validation prints no Git repositories, confirm the variables are loaded and point to parent folders that actually contain Git checkouts.
 
 ### Load Shared Configuration
 

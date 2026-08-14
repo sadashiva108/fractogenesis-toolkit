@@ -81,13 +81,15 @@ This matters because Phase 3 captures are stored on the backup drive, but they a
 Standard variables are set once in `reimage.env` and loaded by every script automatically — see [[reimaging-guide#Phase 1 — Prepare the External Artifact Root|Phase 1 — Prepare the External Artifact Root]] (the standalone "Shared Setup and Externalized Configuration" section this used to point to no longer exists as its own heading; reimage.env setup is now covered there and in `prepare-artifact-root.md`):
 
 ```bash
-# Example reimage.env entries — adjust to match your environment
+# Example reimage.env entries — adjust to match your environment.
+# reimage.env holds resolved absolute values only: no ${VAR:-...}, no $HOME/...,
+# and no $(...) expressions — those can go stale or fail under set -u.
 # Note: REIMAGE_ROOT is retired. Scripts self-locate from their own position
 # in the repo (see prepare-artifact-root.py's REPO_ROOT); FRACTOGENESIS_HOME
 # (set via .envrc, not reimage.env) is the shell-level equivalent if needed.
-export REIMAGE_ARTIFACT_ROOT="${REIMAGE_ARTIFACT_ROOT:-/Volumes/<external-data-volume-name>/reimage-<asset-or-host>-<start-date>-open}"
-export ONEDRIVE_ROOT="${ONEDRIVE_ROOT:-$HOME/Library/CloudStorage/OneDrive-AcmeGroup}"
-export ONEDRIVE_DEST_SUBDIR="${ONEDRIVE_DEST_SUBDIR:-$(basename "${REIMAGE_ARTIFACT_ROOT%/}")}"
+export REIMAGE_ARTIFACT_ROOT="/Volumes/<external-data-volume-name>/reimage-<asset-or-host>-<start-date>-open"
+export ONEDRIVE_ROOT="/Users/<user>/Library/CloudStorage/OneDrive-AcmeGroup"
+export ONEDRIVE_DEST_SUBDIR="reimage-<asset-or-host>-<start-date>-open"
 ```
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -194,7 +196,7 @@ Use it only when `prepare-artifact-root.md` tells you to:
 
 ```text
 init-reimage-env  -> write the starter resolved values into reimage.env after copying reimage.env.example
-upsert-env        -> write resolved Git root values, resolved BACKUP_ROOT values, or a renamed final BACKUP_ROOT back into reimage.env
+upsert-env        -> write resolved Git root values, resolved REIMAGE_ARTIFACT_ROOT values, or a renamed final REIMAGE_ARTIFACT_ROOT back into reimage.env
 ```
 
 This helper does not replace Phase 1. The drive checks, shell validation, root creation, and directory layout still belong to `prepare-artifact-root.md` and must be followed in order.
