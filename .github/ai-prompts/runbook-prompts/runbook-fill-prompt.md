@@ -43,7 +43,7 @@ Contents entry when it does not.
 3. `**Last updated:**` line (see Metadata below).
 4. Short intro (1–3 sentences).
 5. `## Table of Contents`
-6. `## Purpose` — includes the ownership map (see below).
+6. `## Purpose` — lead sentences + two labelled lists + an ownership table (see below).
 7. `## How the Workflow Works` (optional) — the concepts and the *why*: what the flow achieves and why each part exists, plus `### Terminology` (optional) and any run-mode table. Kept shallow; depth goes to Supplemental Reference.
 8. `## Artifact and Script Locations` — the single home for every directory tree, with `### Environment Variables`.
 9. `## Before You Run Anything` — a lean pre-flight checklist only: `### Prerequisites` and `### Confirm Your Intent`. No conceptual "why" here.
@@ -55,13 +55,27 @@ Contents entry when it does not.
 There is no bibliography / "see also" / pointers section, and no standalone
 "Related Guides" list: the guide (reimaging-guide.md) orchestrates the runbooks,
 each runbook is bounded context, and sibling-runbook cross-references live in the
-Purpose ownership map. Do not reintroduce a link-list section.
+Purpose ownership table. Do not reintroduce a link-list section.
 
-### The Purpose ownership map
+### The Purpose section
 
-Purpose is the single place cross-references to sibling runbooks live. State what
-the runbook *owns* and, briefly, what it *does not own* — naming the runbook that
-owns each excluded area. Do not also restate those mappings as a separate list.
+Lay Purpose out in parts, not one prose block:
+
+- A one- to three-sentence lead: what carrying out this runbook achieves and where it sits
+  in the workflow.
+- Two short labelled lists — bold labels, **not** sub-headings, so Purpose stays a single
+  section: one for what the runbook produces (e.g. **What it sets up**) and one for how the
+  rest of the workflow consumes it (e.g. **What the rest of the workflow relies on it for**).
+  Adapt the label wording to the runbook.
+- An **Ownership** table, columns *This runbook owns* | *Owned elsewhere*, where the right
+  column names the runbook (or a `glob-*.md`) that owns each excluded area. This table is the
+  single place sibling-runbook cross-references live — do not also restate them as a separate
+  list or a "Related Guides" section.
+- Optionally, one compact closing line naming what the produced artifacts are (e.g. "the root
+  houses: …") when that inventory helps — a single sentence, never a bulleted catalog.
+
+Purpose is background only: it states what the runbook achieves and who owns what, never step
+mechanics.
 
 ### How the Workflow Works holds the "why"
 
@@ -151,7 +165,7 @@ existing runbook violates them, reflow it to match rather than copying its shape
   many spots. Use `$REIMAGE_ARTIFACT_ROOT`, `$REIMAGE_WORKSPACE_ROOT`, `$FRACTOGENESIS_HOME`
   and named references so a future change touches one place.
 - If the same fact would otherwise be repeated in slightly different words, state it once
-  and link to it. Sibling-runbook cross-references belong in the Purpose ownership map,
+  and link to it. Sibling-runbook cross-references belong in the Purpose ownership table,
   not in a second list.
 
 ### Metadata (Last updated line)
@@ -192,12 +206,55 @@ existing runbook violates them, reflow it to match rather than copying its shape
 - If broad Markdown-anchor compatibility is needed later, the TOC, back-link, and
   cross-references are the only elements that convert — keeping other prose link-free keeps
   that change small.
-- Put a single "Back to Table of Contents" link at the end of each top-level section, not
-  after every subsection. Where a subsection can be reached out of sequence from a path
-  index (for example, a supplemental section indexed from a step), end it with a matching
-  plain back-link to that index instead — the same `[[#Heading|⬆ Back to <label>]]` form as
-  the Table-of-Contents back-link, pointing to the index rather than the Table of Contents.
-  Return links are plain links, not callouts.
+### Routing indexes, back-links, and nesting
+
+- A **routing index** is a parent section's routing list that sends the reader to one of
+  several sub-sections by what they see (console output) or their situation. Each option is
+  a single wiki-link whose label is the destination sub-section's heading — keep those
+  headings short so the labels stay short and match exactly. Never invent a long description
+  as the link label.
+- Lay out a routing index by what each option needs (house rule):
+    - **Console output to match — console-first (default).** Show the real output in a
+      fenced block, then route on the next line: `→ [[#Heading|Heading]]` (add a short note
+      only if it helps). Keeps continuity with what the reader is staring at.
+    - **Short criterion, no console output — bullet.** `- [[#Heading|Heading]] — short
+      criterion.` If the heading already states the branch, drop the criterion.
+    - **Error/fail outcomes — callouts.** One Obsidian callout per outcome, colored by
+      status (`> [!check]` pass, `> [!fail]` error, `> [!warning]` caution, `> [!note]`
+      neutral), each ending in `→ [[#Heading|Heading]]` with any sample inside the callout.
+    - Never a table: it can't hold multi-line console output and forces link-pipe escaping.
+- Every section ends with a back-link, then a `---` divider on the next line — no exceptions:
+    - A **parent/main section** links back to the Table of Contents:
+      `[[#Table of Contents|⬆ Back to Table of Contents]]`.
+    - A **sub-section reached from a routing index** links back to that routing index — the
+      section that routed the reader to it: `[[#Routing Heading|⬆ Back to Routing Heading]]`.
+      Nested deeper, it links back to its **immediate** parent routing index, not the top of
+      the chain. Back-links are plain links, never callouts.
+    - **Exception — routing index is the section's last part.** If no straight-through steps
+      follow the routing index (its destinations are the tail of the section), a routed
+      destination links **forward to the next section** instead of back:
+      `[[#Next Section|⮕ Continue to Next Section]]`. This holds only when every destination
+      converges on the same next section; if the destinations diverge to different next steps
+      (e.g. one resumes and skips ahead while another loops back), keep the back-link to the
+      routing index.
+- **Routed destinations stay out of the Table of Contents.** The TOC lists top-level
+  sections and their first-level steps; it does not list deeper sub-sections. A sub-section
+  the reader reaches only by routing (never by reading straight through) has the routing
+  index as its sole entry point — mirror how `Set Up direnv` keeps `First-Time Setup` and
+  `Already Set Up` out of the TOC.
+
+### Links in prose
+
+- Do not put wiki-links in body prose by default. The Table of Contents, the section and
+  routing-index back-links, and routing-index option links are the navigation wiring;
+  ordinary sentences stay link-free unless a rule here calls for a link.
+- Never link backward to an earlier step or forward to a later one. Runbooks are read in
+  order — by the time the reader reaches a step they have already seen everything before it
+  and do not need a link back, and they do not need to jump ahead to something they will
+  reach anyway. The only exception is a link that documents *where a specific artifact,
+  script, or definition lives* when that source location is not obvious from context.
+- A troubleshooting reference is the other allowed prose link — format it as a callout, not
+  a bare sentence (see the Troubleshooting guidance below).
 
 ### Callouts (Obsidian, consistent form)
 
@@ -217,12 +274,26 @@ existing runbook violates them, reflow it to match rather than copying its shape
 
 - A step-local problem with a short fix stays inline as a `> [!bug] Troubleshooting` callout
   next to its step — that is where the reader hits it.
+- Format every inline troubleshooting reference as a `> [!bug] Troubleshooting` callout whose
+  body states the symptom and links into the fix with `see [[#Section|Section]]` — not a bare
+  `jump to [[#Section]]` sentence sitting in the prose. For example:
+
+    ```
+    > [!bug] Troubleshooting
+    > If the write test fails with `Permission denied`, see [[#Can't Write to the Volume|Can't Write to the Volume]].
+    ```
 - Promote troubleshooting to the optional top-level **Troubleshooting** section only when a
   problem spans multiple steps, its fix is long enough to break a step's flow, or it is
   common enough that readers will scan for a "Troubleshooting" heading. The step then carries
   a one-line inline callout that links into the section.
 - Any given failure's fix lives in exactly one place — inline OR in the Troubleshooting
   section, never both.
+- A troubleshooting section the reader lands on to fix an error and then resumes from ends
+  with a single `⮕ Continue to <resume step>` link — the step they proceed to once the fix
+  succeeds (for example, the artifact-root errors all resume at Load and Confirm the
+  Environment). That Continue link is the section's *only* link: strip return links and
+  cross-references to other sections. Fall back to a back-link to the `## Troubleshooting`
+  index only for a section with no single resume step.
 
 ### Commands
 
@@ -261,7 +332,7 @@ Filling rules and constraints
 - Ensure all paths are shown relative to the repository root and use $REIMAGE_ARTIFACT_ROOT or $REIMAGE_WORKSPACE_ROOT placeholders for artifact locations.
 - Do not prefix command blocks with `cd "$FRACTOGENESIS_HOME"`. The repo-root working directory is stated once in `reimaging-guide.md` → Core Assumptions and restated in the runbook's Prerequisites; command blocks start at the command. Keep a literal `cd` only where a command must run from a different directory, and say why.
 - If adding a directory tree, include only subdirectories relevant to the runbook steps.
-- Use the RUNBOOK_SHORT_DESC to craft a 1–3 sentence Purpose section, followed by the ownership map.
+- Use the RUNBOOK_SHORT_DESC to craft the 1–3 sentence Purpose lead, followed by the two labelled lists and the ownership table (see The Purpose section).
 - Populate "Artifact and Script Locations" with PRIMARY_SCRIPT, RELATED_SCRIPTS, ARTIFACT_PATHS, and the Environment Variables subsection, and treat that section as the single home for every directory tree the runbook uses.
 - List PRIMARY_SCRIPTS, RELATED_SCRIPTS, and any other enumerated runbook or script references in alphabetical order.
 - If adding a directory tree, include only subdirectories relevant to the
@@ -309,7 +380,7 @@ Validation checklist (run after generating the filled runbook)
 - [ ] A `**Last updated:**` line sits directly under the `# Title` heading.
 - [ ] All template placeholders replaced.
 - [ ] Section order matches the Canonical section order; deleted optional sections are gone from both the body and the TOC.
-- [ ] Purpose contains the ownership map; there is no separate Related Guides or pointers/see-also section.
+- [ ] Purpose uses the lead + two labelled lists (what it sets up / what downstream relies on it for) + an ownership table; that table is the only place sibling cross-references live (no separate Related Guides or see-also section).
 - [ ] The "why" lives in How the Workflow Works; Before You Run Anything is a lean checklist (Prerequisites + Confirm Your Intent) with no conceptual background.
 - [ ] Artifact and Script Locations includes an Environment Variables subsection listing the required reimage.env keys.
 - [ ] Decisions, if present, holds genuine judgment calls only; manual verifications live in the relevant verify step, and intent lives in Confirm Your Intent.
@@ -317,6 +388,7 @@ Validation checklist (run after generating the filled runbook)
 - [ ] The "In Obsidian, these are internal heading links" note and the callout legend are present under the TOC.
 - [ ] Callouts use the Obsidian `> [!type]` forms; any Troubleshooting fix lives inline OR in the Troubleshooting section, never both.
 - [ ] Section and step intros are link-free; only links that earn their place remain.
+- [ ] Routing-index forks follow the layout house rule — console-first when there is output to match, a short bullet when there is not, callouts for error/fail outcomes, never a table — and each option's link label matches its destination heading.
 - [ ] PRIMARY_SCRIPT path exists in the repo or a TODO notes creation.
 - [ ] Listed reimage.env variables appear in reimage.env.example or artifact-config.sh.
 - [ ] No absolute personal paths or secrets introduced.
@@ -324,7 +396,10 @@ Validation checklist (run after generating the filled runbook)
 - [ ] Every directory tree appears once, under Artifact and Script Locations; no tree is redrawn elsewhere.
 - [ ] Reason-before-command holds: no runnable command precedes the rationale a reader needs to run it correctly.
 - [ ] A Worked Example appears only when a concept is hard without one.
-- [ ] Each top-level section ends with one "Back to Table of Contents" link; a subsection reachable from a path index ends with a matching plain back-link to that index instead.
+- [ ] Every section ends with a back-link then a `---` divider: parent/main sections link to the Table of Contents, routed sub-sections to their routing index (immediate parent when nested deeper).
+- [ ] Routed destinations are omitted from the Table of Contents; the routing index is their only entry point.
+- [ ] Body prose is link-free except routing-index options and troubleshooting callouts, and never links back to an earlier step or forward to a later one.
+- [ ] Inline troubleshooting references use the `> [!bug] Troubleshooting` callout with a `see [[#Section]]` link, not a bare sentence.
 - [ ] Renaming suggestions documented if applied.
 - [ ] master-directory-reference.md checked against this runbook's tree; added, updated, or renamed as needed.
 

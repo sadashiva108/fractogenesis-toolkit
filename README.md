@@ -12,7 +12,6 @@ Runbooks and scripts for reimaging a Mac (Windows/Linux/other-device reimage wor
 - [Repository Structure](#repository-structure)
 - [Naming Conventions](#naming-conventions)
 - [Future Workflows](#future-workflows)
-- [Status](#status)
 
 ---
 
@@ -66,9 +65,3 @@ Scripts here are being kept parameterized (taking paths/targets as arguments rat
 - A parallel reimage workflow for a second machine running CubeOS and Arch, plus an external Tails drive
 
 None of these exist yet. When a script is genuinely needed by more than one of these, it moves into `.share/` (or a separate shared-toolkit repo, if the reuse is broad enough to warrant one) rather than being copy-pasted between repos.
-
----
-
-## Status
-
-Early and actively being restructured — file names, directory layout, and this README are all subject to change as the migration from the original reference-vault version completes.

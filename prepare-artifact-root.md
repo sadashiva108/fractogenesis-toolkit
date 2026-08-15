@@ -18,6 +18,7 @@ Recommended path: create the local `reimage.env` file first, then source it in e
     - [[#Preparation Sequence|Preparation Sequence]]
     - [[#Repo, Workspace, and External Drive Boundary|Repo, Workspace, and External Drive Boundary]]
     - [[#Artifact Root Naming Convention|Artifact Root Naming Convention]]
+    - [[#About artifact-config.sh|About artifact-config.sh]]
 - [[#Sequential Steps|Sequential Steps]]
     - [[#Confirm the Repo Is Cloned|Confirm the Repo Is Cloned]]
     - [[#Choose the External Data Volume|Choose the External Data Volume]]
@@ -26,30 +27,23 @@ Recommended path: create the local `reimage.env` file first, then source it in e
     - [[#Set Up direnv|Set Up direnv]]
     - [[#Create the Artifact Root|Create the Artifact Root]]
     - [[#Load and Confirm the Environment|Load and Confirm the Environment]]
-    - [[#Understand artifact-config.sh|Understand artifact-config.sh]]
-        - [[#If You Already Have Real Config Fragments|If You Already Have Real Config Fragments]]
-        - [[#Initialize the Fragments From Scratch|Initialize the Fragments From Scratch]]
+    - [[#Set Up the artifact-config Fragments|Set Up the artifact-config Fragments]]
     - [[#Create the Standard Directory Layout|Create the Standard Directory Layout]]
     - [[#Copy the Filled IT Reimage Confirmation Into reimage-confirmation|Copy the Filled IT Reimage Confirmation Into reimage-confirmation]]
     - [[#Verify the Prepared Root|Verify the Prepared Root]]
 - [[#Supplemental Reference|Supplemental Reference]]
     - [[#Repo Path Variables and Self-Locating Scripts|Repo Path Variables and Self-Locating Scripts]]
-    - [[#Handle Existing Reimage Environment|Handle Existing Reimage Environment]]
     - [[#reimage.env Must Contain Resolved Values, Not Literal References|reimage.env Must Contain Resolved Values, Not Literal References]]
 - [[#Troubleshooting|Troubleshooting]]
     - [[#External Data Volume Not Visible|External Data Volume Not Visible]]
     - [[#External Data Volume Is Read Only|External Data Volume Is Read Only]]
-    - [[#External Data Volume Is Writable but Current User Cannot Write|External Data Volume Is Writable but Current User Cannot Write]]
-    - [[#Terminal Privacy Access Is Blocking External Volume Access|Terminal Privacy Access Is Blocking External Volume Access]]
+    - [[#Can't Write to the Volume|Can't Write to the Volume]]
+    - [[#Terminal Privacy Block|Terminal Privacy Block]]
     - [[#REIMAGE_ARTIFACT_ROOT Is Empty in Scripts|REIMAGE_ARTIFACT_ROOT Is Empty in Scripts]]
-    - [[#Pasted Code Breaks in Interactive zsh|Pasted Code Breaks in Interactive zsh]]
-    - [[#reimage.env Contains Helper Variables or Literal Paths|reimage.env Contains Helper Variables or Literal Paths]]
-    - [[#Accidental Literal-Named Folder Under the Repo Checkout|Accidental Literal-Named Folder Under the Repo Checkout]]
-    - [[#Existing reimage.env Has Stale Values From a Previous Reimage|Existing reimage.env Has Stale Values From a Previous Reimage]]
-    - [[#Empty or Unrecognized reimage.env|Empty or Unrecognized reimage.env]]
+    - [[#Literal Paths in reimage.env|Literal Paths in reimage.env]]
+    - [[#Folder Under the Repo|Folder Under the Repo]]
+    - [[#Empty / Unrecognized|Empty / Unrecognized]]
     - [[#Directory Verification Is Missing Folders|Directory Verification Is Missing Folders]]
-    - [[#OneDrive Backup Wrote Under the Repo Checkout|OneDrive Backup Wrote Under the Repo Checkout]]
-    - [[#Manual Export-Only Fallback|Manual Export-Only Fallback]]
     - [[#Permission Issues Restoring Files|Permission Issues Restoring Files]]
 
 > In Obsidian, these are internal heading links. Click in Reading View, or Cmd-click in Live Preview/editing mode.
@@ -58,29 +52,35 @@ Recommended path: create the local `reimage.env` file first, then source it in e
 
 ## Purpose
 
-Prepare one external backup/capture root for the full reimage effort.
+`prepare-artifact-root` is the first phase of the reimage workflow — it establishes the environment and the storage every later phase builds on.
 
-The root stores generated artifacts such as:
+**What it sets up**
 
-```text
-reimage plan copy
-app backups
-system inventory
-performance evidence
-Office stability evidence
-Time Machine status captures
-reimage preparation checks with go/no-go reports to begin reimaging
-reimaged system initial captures and enrollment and validation bundles
-redacted restore notes
-```
+- **The local reimage environment** — `reimage.env` with resolved machine-specific values, direnv auto-loading, and the `artifact-config` fragments that drive the backup and capture scripts.
+- **The external artifact root** — one dated, per-Mac directory on the chosen volume, its standard top-level folders, the filled IT reimage confirmation, and an end-to-end verification gate.
+
+**What the rest of the workflow relies on it for**
+
+- A single, resolvable `REIMAGE_ARTIFACT_ROOT` that every downstream phase reads from `reimage.env` and writes under.
+- A consistent folder layout so backups, captures, reimage evidence, and restore notes all land in one predictable place.
+
+**Ownership**
+
+| This runbook owns | Owned elsewhere (fills the root later) |
+|---|---|
+| `reimage.env` — resolved values + direnv loading | app / repo / home backups — `backup-*.md` |
+| `artifact-config` fragments | managed inventory + evidence captures — `capture-*.md` |
+| the external root: creation, naming, standard folders | Time Machine status |
+| the IT reimage confirmation drop-in | the reimage itself |
+| end-to-end verification | restore / enrollment / validation — `restore-*.md` |
+
+The root houses everything later phases generate: the reimage plan copy, app backups, system inventory, performance and Office-stability evidence, Time Machine status, reimage-prep go/no-go reports, reimaged-system captures, enrollment and validation bundles, and redacted restore notes.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
 ---
 
 ## Artifact and Script Locations
-
-Top-level directories created under `$REIMAGE_ARTIFACT_ROOT` by [[#Create the Standard Directory Layout|Create the Standard Directory Layout]]:
 
 These are the standard top-level folders this phase creates — the ones
 needed on every reimage run, regardless of symptoms or which situational
@@ -119,7 +119,7 @@ $FRACTOGENESIS_HOME/.internal/                    # sourced-only helpers, never 
 $FRACTOGENESIS_HOME/.internal/artifact-config.sh  # sourced by backup scripts, never run directly
 ```
 
-`$FRACTOGENESIS_HOME` above is reference notation showing where these files live, not a literal path you can use from a fresh terminal -- direnv only populates it once you've already `cd`ed into the repo. Per the guide's [[reimaging-guide#Core Assumptions|Core Assumptions]], you `cd` into the repository root once at the start of a session, which is what populates `$FRACTOGENESIS_HOME`; see [[#Repo Path Variables and Self-Locating Scripts|Repo Path Variables and Self-Locating Scripts]] for the full explanation.
+`$FRACTOGENESIS_HOME` above is reference notation showing where these files live, not a literal path you can use from a fresh terminal -- direnv only populates it once you've already `cd`ed into the repo. Per the guide's [[reimaging-guide#Core Assumptions|Core Assumptions]], you `cd` into the repository root once at the start of a session, which is what populates `$FRACTOGENESIS_HOME`.
 
 Both self-locate relative to their own position in the repo — nothing needs to be told where the repo is; there's no `REIMAGE_ROOT`-equivalent variable to keep in sync. For what that does and doesn't mean in practice, and how `FRACTOGENESIS_PARENT`/`FRACTOGENESIS_HOME`/`$HOME` relate to each other, see [[#Repo Path Variables and Self-Locating Scripts|Repo Path Variables and Self-Locating Scripts]] in the supplemental reference at the end of this guide -- not required reading to continue, only if you want the detail.
 
@@ -160,7 +160,7 @@ Use this sequence:
 | 13 | Create the standard workflow layout | Seed the directories used across the reimage workflow, using the folder list `artifact-config.sh` just resolved. |
 | 14 | Verify the prepared root | Confirm the prepared top-level structure is ready for backup and evidence scripts. |
 
-Troubleshooting is intentionally at the end. Specific steps link to the relevant troubleshooting section only when something fails. Background material that isn't needed to execute a step -- but that a step may still link out to for deeper context -- lives in [[#Supplemental Reference|Supplemental Reference]], also at the end, just before Troubleshooting.
+Troubleshooting is intentionally at the end. Specific steps link to the relevant troubleshooting section only when something fails. Background material that isn't needed to execute a step -- but that a step may still link out to for deeper context -- lives in Supplemental Reference, also at the end, just before Troubleshooting.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -203,7 +203,7 @@ The external root stores generated files only. This guide lists the top-level fo
 
 ### Artifact Root Naming Convention
 
-This is background/reference material -- read it before running anything so the name you pick in [[#Create Local Reimage Environment Profile|Create Local Reimage Environment Profile]] makes sense the first time, rather than getting renamed later. It does not itself involve running any commands.
+This is background/reference material -- read it before running anything so the name you pick makes sense the first time, rather than getting renamed later. It does not itself involve running any commands.
 
 The root name should describe the **whole reimage effort**, not only a single script run. Individual tools can still create timestamped folders inside the root using `YYYYMMDD-HHMMSS` when they need unique output bundles.
 
@@ -288,7 +288,63 @@ Why this is better:
 - `-to-<final-postimage-capture-date>` preserves the full multi-day capture window.
 - Timestamped subfolders still preserve exact script-run times without making the top-level root look like a single-run artifact.
 
-The actual computation of `$REIMAGE_ARTIFACT_ROOT` from these patterns is an active step -- see [[#Create Local Reimage Environment Profile|Create Local Reimage Environment Profile]] in Sequential Steps.
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
+### About artifact-config.sh
+
+`artifact-config.sh` is the single source of truth for local-file backup targets, excludes, descriptions, and expected top-level folders used by the backup scripts.
+
+The arrays and flags are now stored in reusable shell config fragments instead of being hard-coded inline in the loader. Shell fragments were chosen instead of YAML so the existing bash scripts can source them directly while keeping the annotation comments intact.
+
+It is sourced by scripts such as:
+
+```text
+bin/backup-home.sh
+bin/capture-size-audit.sh
+bin/capture-workflow-snapshot.sh
+bin/create-secrets-dmg.sh
+```
+
+Do not run it directly.
+
+Important behavior:
+
+| Behavior | Meaning |
+|---|---|
+| It self-locates `REPO_ROOT` from its own script path (parent of `.internal/`). | Sourcing scripts must reference it by its actual path relative to the repo root, e.g. `bin/backup-home-files-backup.sh` — there's no `REIMAGE_ROOT` variable to fall back on. |
+| It loads `reimage.env` if present. | Your local `REIMAGE_ARTIFACT_ROOT` plus optional `OFFICE_WATCH`, `ONEDRIVE_FOLDER_NAME`, `ONEDRIVE_ROOT`, and related paths are shared with scripts. |
+| It defines `EXTERNAL_APPLE_BACKUPS_VOLUME`. | Time Machine scripts use this as the backup destination mount path instead of assuming the destination volume is named `AppleBackups`. |
+| It exits if `REIMAGE_ARTIFACT_ROOT` is empty. | Create and source `reimage.env` before running scripts that depend on the backup root. |
+| It prefers workspace-backed config fragments when they exist. | `REIMAGE_WORKSPACE_ROOT/artifact-config/` becomes the reusable local copy for reruns; otherwise the loader falls back to `.internal/templates/artifact-config/`. |
+| It defines `EXTERNAL_TARGETS`. | These become subfolders under `$REIMAGE_ARTIFACT_ROOT/home-files-backup/`. |
+| It defines OneDrive handling. | `ONEDRIVE_ROOT` should be a full path, or `ONEDRIVE_FOLDER_NAME` can be used to resolve a folder under `~/Library/CloudStorage/`. Do not use a bare OneDrive folder name relative to the current directory. |
+| It defines `SECRETS_TARGETS`. | These become file or directory entries under `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/`. Use `certs/` for certificate/keystore material and `certs/java-security/` for Java `jssecacerts`. |
+| It defines `EXTERNAL_EXCLUDES` and `ONEDRIVE_EXTRA_EXCLUDES`. | Add backup exclusions in config, not in each script. |
+| It defines `EXPECTED_ARTIFACT_FOLDERS`. | Keep this aligned with the stable top-level folders created by this guide. Optional evidence roots are created later by capture guides. |
+
+Current expected top-level folders from `artifact-config.sh`:
+
+```text
+app-settings-backup
+gitignore-superset
+home-files-backup
+managed-inventory
+public-certs
+reimage-confirmation
+reimage-prep-checks
+reimaged-system
+repo-audit-reports
+secrets-encrypted
+size-audit-reports
+staged-ignored-files
+system-inventory
+time-machine
+workflow-snapshot
+```
+
+These are the stable top-level folders the Create the Standard Directory Layout step produces. Child folders for setup notes, secrets staging, optional evidence captures, and other workflow-owned artifacts are created later by their owning runbooks or scripts.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -296,7 +352,7 @@ The actual computation of `$REIMAGE_ARTIFACT_ROOT` from these patterns is an act
 
 ### Sequential Steps
 
-This section is the ordered execution path for preparing the artifact root: confirm the repo checkout, choose and verify the external volume, set up or resume `reimage.env`, load it into the shell (direnv or manual `source`), create the artifact root and its standard folder layout, drop in the filled IT reimage confirmation, then verify the result. Each step assumes the ones before it are already done -- see [[#Preparation Sequence|Preparation Sequence]] above for why the order matters.
+This section is the ordered execution path for preparing the artifact root: confirm the repo checkout, choose and verify the external volume, set up or resume `reimage.env`, load it into the shell (direnv or manual `source`), create the artifact root and its standard folder layout, drop in the filled IT reimage confirmation, then verify the result. Each step assumes the ones before it are already done.
 
 ---
 
@@ -318,11 +374,21 @@ prepare-artifact-root.md
 ...
 ```
 
-If `.internal/artifact-config.sh` is missing, stop and confirm you are in the right repo checkout.
+Route based on whether the `find` output listed those files:
 
-See [[#Path variable definitions|Path variable definitions]] above if the difference between `FRACTOGENESIS_PARENT`, `FRACTOGENESIS_HOME`, and `$HOME` isn't clear yet -- it's used throughout this section.
+If they're present:
 
-#### If the repo is already cloned
+→ [[#Already Cloned|Already Cloned]]
+
+If `.internal/artifact-config.sh` and the other expected files are missing:
+
+→ [[#Repo Not Cloned|Repo Not Cloned]]
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
+#### Already Cloned
 
 If `pwd`/`find` above already showed the expected files, you're done with this step -- just make sure you're sitting at the repo root, not a subdirectory:
 
@@ -331,9 +397,11 @@ cd "$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 pwd
 ```
 
-Skip straight to [[#Choose the External Data Volume|Choose the External Data Volume]].
+[[#Choose the External Data Volume|⮕ Continue to Choose the External Data Volume]]
 
-#### If the repo is not cloned yet
+---
+
+#### Repo Not Cloned
 
 Two paths, depending on context:
 
@@ -372,11 +440,7 @@ If there's no network yet, use the prepared jump drive fallback instead — see 
 
 The repo is public, so no access request is needed either way.
 
-#### Stay here
-
-Every remaining step in this guide, through [[#Create Local Reimage Environment Profile|Create Local Reimage Environment Profile]], assumes the current working directory is this repo root (`FRACTOGENESIS_HOME`). Keep this terminal session open and `cd`ed here -- or re-`cd` here first -- for every command from this point on, including the plain `export` commands in the next two steps, which don't strictly require it but are shown assuming it.
-
-[[#Table of Contents|⬆ Back to Table of Contents]]
+[[#Choose the External Data Volume|⮕ Continue to Choose the External Data Volume]]
 
 ---
 
@@ -433,10 +497,7 @@ Interpretation:
 
 This is the one place in the guide where `EXTERNAL_DATA_VOLUME` and `EXTERNAL_APPLE_BACKUPS_VOLUME` get created -- as plain shell exports, not written to a file, since `reimage.env` doesn't exist yet.
 
-**Run this in the same terminal session you've been in since [[#Confirm the Repo Is Cloned|Confirm the Repo Is Cloned]]**, and keep that session open through the next two steps, which reuse these same two exports rather than re-creating them:
-
-- [[#Confirm External Data Volume Readiness|Confirm External Data Volume Readiness]]
-- [[#Create Local Reimage Environment Profile|Create Local Reimage Environment Profile]]
+**Run this in the same terminal session you've been in since cloning the repo**, and keep that session open through the next two steps, which reuse these same two exports rather than re-creating them:
 
 ```bash
 export EXTERNAL_DATA_VOLUME="/Volumes/<external-data-volume-name>"
@@ -445,9 +506,10 @@ export EXTERNAL_APPLE_BACKUPS_VOLUME="/Volumes/<time-machine-volume-name>"
 
 Do not use the Time Machine volume as the manual artifact volume. In the example above, the artifact root should live under `/Volumes/Data`, not `/Volumes/AppleBackups`.
 
-These values get written into `reimage.env` for real once it's created a few steps from now ([[#Create Local Reimage Environment Profile|Create Local Reimage Environment Profile]]) -- no need to edit any file yet.
+These values get written into `reimage.env` for real once it's created a few steps from now  -- no need to edit any file yet.
 
-If the expected external data volume is missing, jump to [[#External Data Volume Not Visible|External Data Volume Not Visible]].
+> [!bug] Troubleshooting
+> If the expected external data volume is missing, see [[#External Data Volume Not Visible|External Data Volume Not Visible]].
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -464,7 +526,7 @@ printf 'EXTERNAL_DATA_VOLUME=%s\n' "${EXTERNAL_DATA_VOLUME:-}"
 printf 'EXTERNAL_APPLE_BACKUPS_VOLUME=%s\n' "${EXTERNAL_APPLE_BACKUPS_VOLUME:-}"
 ```
 
-If either printed blank -- for example because you opened a new terminal since the last step -- re-export them now (same values as [[#Choose the External Data Volume|Choose the External Data Volume]]; do not source `reimage.env` here, it doesn't exist yet):
+If either printed blank -- for example because you opened a new terminal since the last step -- re-export them now; do not source `reimage.env` here, it doesn't exist yet):
 
 ```bash
 export EXTERNAL_DATA_VOLUME="/Volumes/<external-data-volume-name>"
@@ -517,11 +579,12 @@ cat "$TEST_FILE"
 rm -f "$TEST_FILE"
 ```
 
-If the write test fails with `Permission denied` while `Volume Read-Only: No`, jump to [[#External Data Volume Is Writable but Current User Cannot Write|External Data Volume Is Writable but Current User Cannot Write]].
-
-If the write test fails with `Operation not permitted`, jump to [[#Terminal Privacy Access Is Blocking External Volume Access|Terminal Privacy Access Is Blocking External Volume Access]].
-
-If the volume is mounted read-only, jump to [[#External Data Volume Is Read Only|External Data Volume Is Read Only]].
+> [!bug] Troubleshooting
+> If the write test fails with `Permission denied` while `Volume Read-Only: No`, see [[#Can't Write to the Volume|Can't Write to the Volume]].
+>
+> If it fails with `Operation not permitted`, see [[#Terminal Privacy Block|Terminal Privacy Block]].
+>
+> If the volume is mounted read-only, see [[#External Data Volume Is Read Only|External Data Volume Is Read Only]].
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -532,12 +595,12 @@ If the volume is mounted read-only, jump to [[#External Data Volume Is Read Only
 
 Create `reimage.env`, the local, machine-specific config file the rest of this guide reads for `REIMAGE_ARTIFACT_ROOT`, `REIMAGE_WORKSPACE_ROOT`, and related paths.
 
-Before running anything below, confirm these are still exported in this terminal session from [[#Choose the External Data Volume|Choose the External Data Volume]]:
+Before running anything below, confirm these are still exported in this terminal session:
 
 - `EXTERNAL_DATA_VOLUME`
 - `EXTERNAL_APPLE_BACKUPS_VOLUME` (if used)
 
-And confirm you're still sitting in the repo root (`FRACTOGENESIS_HOME`) from [[#Confirm the Repo Is Cloned|Confirm the Repo Is Cloned]]:
+And confirm you're still sitting in the repo root (`FRACTOGENESIS_HOME`):
 
 ```bash
 pwd
@@ -557,8 +620,15 @@ Run the diagnostic -- it only reads, it never writes or deletes anything:
 bin/check-reimage-env.sh
 ```
 
-Example output when a file from an earlier attempt is still present:
+If it prints:
 
+```text
+No existing reimage.env.
+```
+
+→ [[#Required and Default Values|Required and Default Values]] — the common case; nothing to reconcile, continue below.
+
+If instead it prints values under a `reimage.env already exists:` header, for example:
 
 ```text
 reimage.env already exists:
@@ -574,14 +644,15 @@ This Mac:      example-mac-01
 Chosen volume: /Volumes/Data
 ```
 
-- **`No existing reimage.env.`** -- the common case. Nothing to reconcile; continue to [[#Required and Default Values|Required and Default Values]] below.
-- **Values printed** -- compare them against the ground truth, then go to [[#Handle Existing Reimage Environment|Handle Existing Reimage Environment]] in Supplemental Reference to resume, archive, or repair it before continuing here.
+→ compare them against the ground truth, then go to [[#Handle Existing Reimage Environment|Handle Existing Reimage Environment]] to resume, archive, or repair it before continuing here.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 #### Required and Default Values
 
 Before creating `reimage.env`, confirm you have the required environment variables, and decide whether to accept the computed defaults below or override them.
-
-Required, exported earlier in [[#Choose the External Data Volume|Choose the External Data Volume]]:
 
 | Variable | Required? | Source |
 |---|---|---|
@@ -597,13 +668,94 @@ Required, exported earlier in [[#Choose the External Data Volume|Choose the Exte
 | `REIMAGE_ARTIFACT_ROOT` * | `$EXTERNAL_DATA_VOLUME/reimage-$ASSET_OR_HOST-$REIMAGE_START_DATE-open` | Not set directly -- always built from the two values above. |
 | `ONEDRIVE_FOLDER_NAME` | Unset -- OneDrive is skipped | You want the optional OneDrive secondary copy. Export it to the CloudStorage OneDrive folder name (for example `OneDrive-AcmeGroup`); `setup-reimage-env.sh` then resolves `ONEDRIVE_ROOT` and pre-creates the per-reimage OneDrive destination. |
 
-\* See [[#Artifact Root Naming Convention|Artifact Root Naming Convention]] for the full naming pattern this interpolation follows.
+This interpolation follows naming convention previously mentioned.
 
 To override a default, export before running the script:
 
 ```bash
 export ASSET_OR_HOST="my-custom-tag"
 ```
+
+[[#Optional Values (Set in Their Own Phase)|⮕ Continue to Optional Values (Set in Their Own Phase)]]
+
+---
+
+#### Handle Existing Reimage Environment
+
+This only matters if an earlier, unfinished reimage attempt already left a file behind -- most runs never reach this section. The usual signs:
+
+```text
+bin/setup-reimage-env.sh refuses immediately with a message that reimage.env already exists, and you don't remember creating one
+Backups or evidence captures appear to be landing under a REIMAGE_ARTIFACT_ROOT dated days/weeks ago, or naming a Mac you don't recognize
+REIMAGE_ARTIFACT_ROOT, once loaded, points at an external volume that isn't the one currently mounted
+```
+
+It almost always means `reimage.env` was created during an earlier reimage effort on this Mac and never cleaned up. Neither direnv nor a manual `source` distinguishes an old file from a fresh one -- both load whatever is on disk, silently.
+
+This must be resolved before running `bin/setup-reimage-env.sh`, since that script refuses to run at all once `reimage.env` exists. A file left in place unresolved is what every later backup, evidence-capture, and restore script will resolve `REIMAGE_ARTIFACT_ROOT` from -- resolved or stale, with no error either way.
+
+If the file is stale rather than resumable, you'll either archive it or delete it. **Archiving** (renaming it aside) keeps the old values readable in case you still need them; **deleting** is fine when you're certain nothing about the old file matters, such as a leftover from a different Mac with nothing generated against its root. When unsure, archive -- it's the reversible choice. One thing to capture either way: if backup or evidence scripts already ran before you caught this, they wrote into the *old* `REIMAGE_ARTIFACT_ROOT`. Note that path before you archive or delete the file, so you can find and deal with what was written there instead of losing track of it once the file is gone.
+
+Route based on how the values `bin/check-reimage-env.sh` printed compare to the ground truth it printed alongside them:
+
+If `ASSET_OR_HOST` matches this Mac's hostname and `EXTERNAL_DATA_VOLUME` matches the volume you chose:
+
+→ [[#Resuming|Resuming]] (`REIMAGE_START_DATE` need not be today — a reimage often spans several days).
+
+If `ASSET_OR_HOST` or `EXTERNAL_DATA_VOLUME` doesn't match:
+
+→ [[#Archiving|Archiving]] — the file is from a different Mac or drive, the most reliable signs it's stale.
+
+If the `reimage.env already exists:` header printed with no `export` lines after it:
+
+→ [[#Empty / Unrecognized|Empty / Unrecognized]]
+
+[[#Check for an Existing Profile First|⬆ Back to Check for an Existing Profile First]]
+
+---
+
+##### Resuming
+
+`ASSET_OR_HOST` matches this Mac's hostname (or you know you set a deliberate custom tag) and `EXTERNAL_DATA_VOLUME` matches the volume you just chose. That pair is what identifies this file as the effort you're on right now. Do not gate the decision on `REIMAGE_START_DATE`: a reimage commonly runs across multiple days, so a start date earlier than today is normal and does not make the file stale -- the date only records when this effort began.
+
+[[#Set Up direnv|⮕ Continue to Set Up direnv]]
+
+---
+
+##### Archiving
+
+Archive the file when its identity no longer matches this effort: `ASSET_OR_HOST` doesn't match this Mac's hostname (and you don't recall setting a deliberate custom tag), or `EXTERNAL_DATA_VOLUME` doesn't match the volume you just chose. A hostname mismatch is the strongest signal -- it usually means the file was carried over from a different or older Mac. An earlier `REIMAGE_START_DATE` is *not*, on its own, a reason to archive: a multi-day reimage legitimately keeps its original start date, so treat an old date as a cue to confirm you're still on that same effort, not as proof it's stale. Left in place, a mismatched file would silently point every later step at the wrong artifact root, with no error to warn you. Archive it -- don't edit it in place or delete it outright, the old values may still be needed for reference:
+
+```bash
+mv reimage.env "reimage.env.stale-$(date +%Y%m%d-%H%M%S)"
+```
+
+Confirm the archived file is actually ignored by Git, not just untracked-but-visible -- a `.gitignore` from an earlier pass through this guide may only have the bare `reimage.env` line and not yet a `reimage.env.stale-*` entry. Add `reimage.env.stale-*` to `.gitignore` if it isn't there already:
+
+```bash
+git status --short | grep 'reimage.env.stale' && echo "WARNING: archived file is untracked and not ignored -- update .gitignore before committing anything" || echo "OK: archived file is ignored or already clean"
+```
+
+**Moving the file is not enough on its own.** If this repo checkout was previously `cd`ed into with direnv active, the old file's values were already loaded into shell variables, not just left sitting in the file -- and a moved/renamed file doesn't retroactively unset variables already exported into the current shell. What happens next depends on how those values got loaded:
+
+- **direnv is active**: it re-evaluates `.envrc` on every prompt, so the very next command you run should trigger a `direnv: export ...` line unloading the old values -- watch for that, don't assume it happened.
+- **direnv is not active yet**, or the values reached this shell via a manual `source reimage.env`: nothing auto-unloads them. They remain exported until you clear them or open a new terminal.
+
+Clear those old values and confirm the shell is actually clean before continuing. The block below unsets every variable the old file could have exported, then prints `REIMAGE_ARTIFACT_ROOT` so you can confirm it's gone:
+
+```bash
+unset REIMAGE_ARTIFACT_ROOT ASSET_OR_HOST REIMAGE_START_DATE REIMAGE_WORKSPACE_ROOT
+
+printf 'REIMAGE_ARTIFACT_ROOT=%s\n' "${REIMAGE_ARTIFACT_ROOT:-<unset, good>}"
+```
+
+(Deliberately not unsetting `EXTERNAL_DATA_VOLUME`/`EXTERNAL_APPLE_BACKUPS_VOLUME` here -- those describe the drive you're using for this effort, not the old one, so they're still correct; only values that could have come from the *old* file need clearing.)
+
+If that still prints an old path instead of `<unset, good>`, something is re-exporting it (a leftover `.envrc` in a parent directory, a sourced profile script, etc.) -- track that down before continuing.
+
+[[#Required and Default Values|⮕ Continue to Required and Default Values]]
+
+---
 
 #### Optional Values (Set in Their Own Phase)
 
@@ -626,7 +778,7 @@ This file is local-only and should not be committed. Neither should any archived
 |---|---:|---|
 | `reimage.env.example` | Yes | Template showing required variables and naming conventions. |
 | `reimage.env` | No | Local machine-specific config used by your terminal and scripts. |
-| `reimage.env.stale-*` | No | Archived copies created while [[#Handle Existing Reimage Environment\|handling an existing reimage.env]] -- same machine-specific/sensitive content as `reimage.env` itself, just renamed, not sanitized. |
+| `reimage.env.stale-*` | No | Archived copies created -- same machine-specific/sensitive content as `reimage.env` itself, just renamed, not sanitized. |
 
 Recommended `.gitignore` entry -- list both patterns explicitly rather than a single glob like `reimage.env*`, which would also match (and needlessly warn about) the intentionally-tracked `reimage.env.example`:
 
@@ -671,14 +823,15 @@ Review these values -- they should already be correct, since they came from conf
 | `ONEDRIVE_ROOT`              | Auto-resolved to `$HOME/Library/CloudStorage/$ONEDRIVE_FOLDER_NAME` when that override is set; blank otherwise. Stored as a resolved absolute path, never a literal `$HOME/...` string.                                                                                 |
 | `ONEDRIVE_DEST_SUBDIR`       | Already defaulted to the artifact root folder name by `setup-reimage-env.sh`.                                                                                            |
 
-There's no environment variable to set for the repository's own path. `prepare-artifact-root.py` self-locates from its own position in the repo -- wherever this checkout lives, the script finds `bin/` and `.internal/` relative to itself, so nothing needs to be told where the repo is. See [[#Repo Path Variables and Self-Locating Scripts|Repo Path Variables and Self-Locating Scripts]] in Supplemental Reference for what that does and doesn't cover. Stay in `FRACTOGENESIS_HOME` for this and every remaining step.
+There's no environment variable to set for the repository's own path. `prepare-artifact-root.py` self-locates from its own position in the repo -- wherever this checkout lives, the script finds `bin/` and `.internal/` relative to itself, so nothing needs to be told where the repo is.  Stay in `FRACTOGENESIS_HOME` for this and every remaining step.
 
 `reimage.env` should contain resolved values only:
 
 - Never a helper-variable reference.
 - Never a literal `$HOME/...`-style path.
 
-If a script reports an unbound variable while sourcing `reimage.env`, or a verification step prints a path such as `$HOME/Desktop/...`, jump to [[#reimage.env Contains Helper Variables or Literal Paths|reimage.env Contains Helper Variables or Literal Paths]].
+> [!bug] Troubleshooting
+> If a script reports an unbound variable while sourcing `reimage.env`, or a verification step prints a path such as `$HOME/Desktop/...`, see [[#Literal Paths in reimage.env|Literal Paths in reimage.env]].
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -702,10 +855,23 @@ fi
 
 Route based on what printed:
 
-- [[#First-Time direnv Setup|First-Time direnv Setup]]
-- [[#direnv Already Set Up From a Previous Effort|direnv Already Set Up From a Previous Effort]]
+If it prints:
 
-Then confirm your shell has `reimage.env` loaded correctly
+```text
+direnv is not fully set up yet on this Mac -- this looks like the first time.
+```
+
+→ [[#First-Time Setup|First-Time Setup]]
+
+If it prints:
+
+```text
+direnv already appears installed and hooked into this Mac -- likely set up during a previous reimage effort.
+```
+
+→ [[#Already Set Up|Already Set Up]]
+
+Then confirm your shell has `reimage.env` loaded correctly:
 
 - [[#Confirm reimage.env Is Loaded|Confirm reimage.env Is Loaded]]
 
@@ -713,7 +879,7 @@ Then confirm your shell has `reimage.env` loaded correctly
 
 ---
 
-#### First-Time direnv Setup
+#### First-Time Setup
 
 ```bash
 brew install direnv
@@ -760,13 +926,13 @@ printf 'REIMAGE_ARTIFACT_ROOT=%s\n' "$REIMAGE_ARTIFACT_ROOT"
 
 Both should print resolved values with no further action. `cd` out of the repo and both should be unset; `cd` back in and both should reappear — that round trip is the actual proof direnv is doing its job, not just that the file exists.
 
-The `if [[ -f reimage.env ]]; then dotenv reimage.env; fi` line in `.envrc` is why a stale `reimage.env` matters even though `.envrc` itself doesn't go stale: direnv will happily `dotenv` whatever `reimage.env` currently exists, old or new, with no distinction. That's the scenario [[#Handle Existing Reimage Environment|Handle Existing Reimage Environment]] exists to catch earlier in this guide -- if you skipped it, go back and run it before trusting what `REIMAGE_ARTIFACT_ROOT` just printed above.
+The `if [[ -f reimage.env ]]; then dotenv reimage.env; fi` line in `.envrc` is why a stale `reimage.env` matters even though `.envrc` itself doesn't go stale: direnv will happily `dotenv` whatever `reimage.env` currently exists, old or new, with no distinction. 
 
 [[#Set Up direnv|⬆ Back to Set Up direnv]]
 
 ---
 
-#### direnv Already Set Up From a Previous Effort
+#### Already Set Up
 
 direnv and the shell hook are already in place, so most of first-time setup is unnecessary here. Two things from a previous pass through this guide *can* still bite you, though -- both idempotency-shaped rather than staleness-shaped:
 
@@ -794,7 +960,7 @@ printf 'REIMAGE_ARTIFACT_ROOT=%s\n' "$REIMAGE_ARTIFACT_ROOT"
 
 Both should print resolved values with no further action. `cd` out of the repo and both should be unset; `cd` back in and both should reappear — that round trip is the actual proof direnv is doing its job, not just that the file exists.
 
-The `if [[ -f reimage.env ]]; then dotenv reimage.env; fi` line in `.envrc` is why a stale `reimage.env` matters even though `.envrc` itself doesn't go stale: direnv will happily `dotenv` whatever `reimage.env` currently exists, old or new, with no distinction. That's the scenario [[#Check for an Existing reimage.env|Check for an Existing reimage.env]] exists to catch earlier in this guide -- if you skipped it, go back and run it before trusting what `REIMAGE_ARTIFACT_ROOT` just printed above.
+The `if [[ -f reimage.env ]]; then dotenv reimage.env; fi` line in `.envrc` is why a stale `reimage.env` matters even though `.envrc` itself doesn't go stale: direnv will happily `dotenv` whatever `reimage.env` currently exists, old or new, with no distinction. 
 
 [[#Set Up direnv|⬆ Back to Set Up direnv]]
 
@@ -822,9 +988,9 @@ unset REIMAGE_ENV
 cd "$(dirname "$REIMAGE_ENV")"
 ```
 
-A resolved, non-blank `REIMAGE_ARTIFACT_ROOT` here only proves *a* value loaded -- not that it's *this* effort's value. If you skipped [[#Handle Existing Reimage Environment|Handle Existing Reimage Environment]] or arrived here after a break of days or weeks, double-check the printed path actually matches the effort you're working on today; see [[#Existing reimage.env Has Stale Values From a Previous Reimage|Existing reimage.env Has Stale Values From a Previous Reimage]] if it doesn't.
+A resolved, non-blank `REIMAGE_ARTIFACT_ROOT` here only proves *a* value loaded -- not that it's *this* effort's value. If you arrived here after a break of days or weeks, double-check the printed path actually matches the effort you're working on today.
 
-[[#Set Up direnv|⬆ Back to Set Up direnv]]
+[[#Create the Artifact Root|⮕ Continue to Create the Artifact Root]]
 
 ---
 
@@ -849,34 +1015,28 @@ OK: backup root exists
 
 Route based on what it actually prints:
 
-- **Both `OK:` lines above** -- continue to [[#Load and Confirm the Environment|Load and Confirm the Environment]] (or [[#Rename after final post-image capture|Rename after final post-image capture]], but only once the effort is actually done).
-- **`Permission denied`** → [[#External Data Volume Is Writable but Current User Cannot Write|External Data Volume Is Writable but Current User Cannot Write]].
-- **`Operation not permitted`** → [[#Terminal Privacy Access Is Blocking External Volume Access|Terminal Privacy Access Is Blocking External Volume Access]].
-- **Literal variable text in `REIMAGE_ARTIFACT_ROOT`** (e.g. it still contains `$EXTERNAL_DATA_VOLUME`), or an empty value → [[#reimage.env Contains Helper Variables or Literal Paths|reimage.env Contains Helper Variables or Literal Paths]].
-- **You previously ran a manual `sudo mkdir` repair and suspect it created a folder under this repo checkout instead of the real external path** → [[#Accidental Literal-Named Folder Under the Repo Checkout|Accidental Literal-Named Folder Under the Repo Checkout]].
+> [!check] Both `OK:` lines printed → [[#Load and Confirm the Environment|Load and Confirm the Environment]]
+> ```text
+> OK: REIMAGE_ARTIFACT_ROOT is under EXTERNAL_DATA_VOLUME
+> OK: backup root exists
+> ```
 
-#### Rename after final post-image capture
+> [!fail] `Permission denied` → [[#Confirm External Data Volume Readiness|⬆ Back to Confirm External Data Volume Readiness]]
+> ```text
+> Permission denied while creating REIMAGE_ARTIFACT_ROOT.
+> ```
 
-After the final post-image capture is complete, rename the root if the effort spanned multiple days:
+> [!fail] `Operation not permitted` → [[#Confirm External Data Volume Readiness|⬆ Back to Confirm External Data Volume Readiness]]
+> ```text
+> Operation not permitted while creating REIMAGE_ARTIFACT_ROOT.
+> ```
 
-```bash
-set -a
-source ./reimage.env
-set +a
+> [!fail] Literal variable text, or an empty `REIMAGE_ARTIFACT_ROOT` → [[#Literal Paths in reimage.env|Literal Paths in reimage.env]]
+> ```text
+> REIMAGE_ARTIFACT_ROOT contains literal variable text instead of a resolved path.
+> ```
 
-FINAL_POSTIMAGE_CAPTURE_DATE="<final-postimage-capture-date>"
-FINAL_REIMAGE_ARTIFACT_ROOT="${EXTERNAL_DATA_VOLUME%/}/reimage-${ASSET_OR_HOST}-${REIMAGE_START_DATE}-to-${FINAL_POSTIMAGE_CAPTURE_DATE}"
-
-mv "$REIMAGE_ARTIFACT_ROOT" "$FINAL_REIMAGE_ARTIFACT_ROOT"
-export REIMAGE_ARTIFACT_ROOT="$FINAL_REIMAGE_ARTIFACT_ROOT"
-
-python3 bin/prepare-artifact-root.py \
-  upsert-env \
-  --env-file reimage.env \
-  "REIMAGE_ARTIFACT_ROOT=$REIMAGE_ARTIFACT_ROOT"
-```
-
-If you rename the root later, update `REIMAGE_ARTIFACT_ROOT` in `reimage.env` before running more scripts.
+> [!warning] You ran a manual `sudo mkdir` repair and suspect it landed under the repo checkout → [[#Folder Under the Repo|Folder Under the Repo]]
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -903,69 +1063,18 @@ python3 bin/prepare-artifact-root.py \
 
 If the helper reports a `REIMAGE_ARTIFACT_ROOT` or literal-path error, stop here and use the relevant troubleshooting section before continuing.
 
-If you set up direnv earlier, this already persists automatically across terminal sessions -- no manual `.zshrc` block needed. See [[#Set Up direnv (.envrc)|Set Up direnv (.envrc)]] if you haven't yet.
-
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
 ---
 
-### Understand artifact-config.sh
+### Set Up the artifact-config Fragments
 
-`artifact-config.sh` is the single source of truth for local-file backup targets, excludes, descriptions, and expected top-level folders used by the backup scripts.
-
-The arrays and flags are now stored in reusable shell config fragments instead of being hard-coded inline in the loader. Shell fragments were chosen instead of YAML so the existing bash scripts can source them directly while keeping the annotation comments intact.
-
-It is sourced by scripts such as:
-
-```text
-bin/backup-home.sh
-bin/capture-size-audit.sh
-bin/capture-workflow-snapshot.sh
-bin/create-secrets-dmg.sh
-```
-
-Do not run it directly.
-
-Important behavior:
-
-| Behavior | Meaning |
-|---|---|
-| It self-locates `REPO_ROOT` from its own script path (parent of `.internal/`). | Sourcing scripts must reference it by its actual path relative to the repo root, e.g. `bin/backup-home-files-backup.sh` — there's no `REIMAGE_ROOT` variable to fall back on. |
-| It loads `reimage.env` if present. | Your local `REIMAGE_ARTIFACT_ROOT` plus optional `OFFICE_WATCH`, `ONEDRIVE_FOLDER_NAME`, `ONEDRIVE_ROOT`, and related paths are shared with scripts. |
-| It defines `EXTERNAL_APPLE_BACKUPS_VOLUME`. | Time Machine scripts use this as the backup destination mount path instead of assuming the destination volume is named `AppleBackups`. |
-| It exits if `REIMAGE_ARTIFACT_ROOT` is empty. | Create and source `reimage.env` before running scripts that depend on the backup root. |
-| It prefers workspace-backed config fragments when they exist. | `REIMAGE_WORKSPACE_ROOT/artifact-config/` becomes the reusable local copy for reruns; otherwise the loader falls back to `.internal/templates/artifact-config/`. |
-| It defines `EXTERNAL_TARGETS`. | These become subfolders under `$REIMAGE_ARTIFACT_ROOT/home-files-backup/`. |
-| It defines OneDrive handling. | `ONEDRIVE_ROOT` should be a full path, or `ONEDRIVE_FOLDER_NAME` can be used to resolve a folder under `~/Library/CloudStorage/`. Do not use a bare OneDrive folder name relative to the current directory. |
-| It defines `SECRETS_TARGETS`. | These become file or directory entries under `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/`. Use `certs/` for certificate/keystore material and `certs/java-security/` for Java `jssecacerts`. |
-| It defines `EXTERNAL_EXCLUDES` and `ONEDRIVE_EXTRA_EXCLUDES`. | Add backup exclusions in config, not in each script. |
-| It defines `EXPECTED_ARTIFACT_FOLDERS`. | Keep this aligned with the stable top-level folders created by this guide. Optional evidence roots are created later by capture guides. |
-
-Current expected top-level folders from `artifact-config.sh`:
-
-```text
-app-settings-backup
-gitignore-superset
-home-files-backup
-managed-inventory
-public-certs
-reimage-confirmation
-reimage-prep-checks
-reimaged-system
-repo-audit-reports
-secrets-encrypted
-size-audit-reports
-staged-ignored-files
-time-machine
-workflow-snapshot
-```
-
-The layout created in [[#Create the Standard Directory Layout|Create the Standard Directory Layout]] includes only the stable top-level folders. Child folders for setup notes, secrets staging, optional evidence captures, and other workflow-owned artifacts are created later by their owning runbooks or scripts.
+`artifact-config.sh` reads its backup targets, excludes, and expected folders from reusable shell config fragments. Set those fragments up before the local-file backup phases run.
 
 Route based on whether you already have real config fragments:
 
-- **You already have real `*.conf.sh` fragments** -- from a previous setup, a `fractogenesis-toolkit` checkout, or anywhere else → [[#If You Already Have Real Config Fragments|If You Already Have Real Config Fragments]].
-- **You don't have them yet** and need to start from this repo's placeholder templates → [[#Initialize the Fragments From Scratch|Initialize the Fragments From Scratch]].
+- [[#Already Have Fragments|Already Have Fragments]] — from a previous setup or checkout.
+- [[#Initialize From Scratch|Initialize From Scratch]] — start from this repo's placeholder templates.
 
 Either way, before running local-file backup scripts, confirm the loader can still be parsed:
 
@@ -973,25 +1082,20 @@ Either way, before running local-file backup scripts, confirm the loader can sti
 bash -n .internal/artifact-config.sh
 ```
 
-If a script reports that `REIMAGE_ARTIFACT_ROOT` is not set, jump to [[#REIMAGE_ARTIFACT_ROOT Is Empty in Scripts|REIMAGE_ARTIFACT_ROOT Is Empty in Scripts]].
+> [!bug] Troubleshooting
+> If a script reports that `REIMAGE_ARTIFACT_ROOT` is not set, see [[#REIMAGE_ARTIFACT_ROOT Is Empty in Scripts|REIMAGE_ARTIFACT_ROOT Is Empty in Scripts]].
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
 ---
 
-### If You Already Have Real Config Fragments
+### Already Have Fragments
 
 If you already have real `*.conf.sh` fragments -- from a previous setup, copied out of a `fractogenesis-toolkit` checkout, or anywhere else -- **you don't need to copy them anywhere**. Place (or confirm they already exist) at:
 
-`artifact-config.sh` checks this path first, automatically, every time it's sourced -- see the "prefers workspace-backed config fragments" row in [[#Understand artifact-config.sh|Understand artifact-config.sh]]. There's no manual copy step, no flag to set; the presence of real files at this exact path is the entire mechanism. Confirm it's actually picking them up:
+`artifact-config.sh` checks this path first, automatically, every time it's sourced. There's no manual copy step, no flag to set; the presence of real files at this exact path is the entire mechanism.
 
-```bash
-bash -c 'source .internal/artifact-config.sh && printf "%s\n" "${EXPECTED_ARTIFACT_FOLDERS[@]}"'
-```
-
-The printed list should match the stable top-level folders shown in [[#Understand artifact-config.sh|Understand artifact-config.sh]], plus any optional folders your fragments add for the situational phases you intend to run -- see [Master Directory Reference](./references/master-directory-reference.md) for the complete set of folder names the workflow recognizes. These aren't names you choose: later runbook and script steps check for them by exact match, so anything printed here that isn't in that reference means either the fragment has a typo or the workspace copy at `$REIMAGE_WORKSPACE_ROOT/artifact-config/` isn't the one actually being sourced.
-
-`EXPECTED_ARTIFACT_FOLDERS` is required to be the same fixed list everywhere, though, so a match there only proves sourcing succeeded -- not which copy actually won. To confirm the *workspace* copy specifically is the one being used (rather than silently falling back to the repo's own template), check a fragment that's genuinely supposed to differ per machine, such as `EXTERNAL_TARGETS`:
+To confirm the *workspace* copy specifically is the one being used (rather than silently falling back to the repo's own template), check a fragment that's genuinely supposed to differ per machine, such as `EXTERNAL_TARGETS`:
 
 ```bash
 bash -c 'source .internal/artifact-config.sh && printf "%s\n" "${EXTERNAL_TARGETS[@]}"'
@@ -999,13 +1103,13 @@ bash -c 'source .internal/artifact-config.sh && printf "%s\n" "${EXTERNAL_TARGET
 
 This should print your real backup targets -- actual paths and folder names specific to this Mac -- not the repo's placeholder example values. If it prints placeholders instead, the fragment precedence fell through to the committed template rather than picking up your workspace copy; double check the files actually exist at `$REIMAGE_WORKSPACE_ROOT/artifact-config/external-targets.conf.sh`.
 
-[[#Table of Contents|⬆ Back to Table of Contents]]
+[[#Create the Standard Directory Layout|⮕ Continue to Create the Standard Directory Layout]]
 
 ---
 
-### Initialize the Fragments From Scratch
+### Initialize From Scratch
 
-Use this path if you don't already have real config fragments -- see [[#If You Already Have Real Config Fragments|If You Already Have Real Config Fragments]] if you do.
+Use this path if you don't already have real config fragments.
 
 ```bash
 python3 bin/prepare-artifact-root.py \
@@ -1017,13 +1121,13 @@ This copies this repo's committed template fragments into `$REIMAGE_WORKSPACE_RO
 
 Use the workspace copy going forward when you rerun backups later and most of the target/exclude config has not changed. You can adjust only the files that actually changed instead of rebuilding the full artifact-config setup from scratch.
 
-[[#Table of Contents|⬆ Back to Table of Contents]]
+[[#Create the Standard Directory Layout|⮕ Continue to Create the Standard Directory Layout]]
 
 ---
 
 ### Create the Standard Directory Layout
 
-Create only the stable top-level generated-artifact directories owned by this preparation guide. Optional evidence-capture roots are created later by the capture guides that actually use them. Child directories belong to the runbook or script that creates them.
+Creates only the stable top-level generated-artifact directories owned by this preparation guide. Optional evidence-capture roots are created later by the capture guides that actually use them. Child directories belong to the runbook or script that creates them.
 
 For example:
 
@@ -1080,7 +1184,6 @@ Folder purpose:
 | `system-inventory/`         | Developer-tool version and workstation inventory captured before erase, to speed up rebuilding the environment afterward.                                                                                                                   |
 | `time-machine/`             | Time Machine status capture bundles only. Actual Time Machine backups live on the Time Machine volume.                                                                                                                                       |
 | `workflow-snapshot/`        | Workflow snapshot captures and workflow documentation snapshots.                                                                                                                                                                              |
-                                                                                                                                                                            |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -1152,6 +1255,26 @@ write test succeeds without sudo
 artifact-config.sh can be parsed with bash -n
 ```
 
+If instead it reports missing top-level folders:
+
+```text
+MISSING: app-settings-backup
+MISSING: home-files-backup
+MISSING: secrets-encrypted
+```
+
+> [!bug] Troubleshooting
+> If verification reports `MISSING:` folders, see [[#Directory Verification Is Missing Folders|Directory Verification Is Missing Folders]].
+
+If the parent write test fails on permissions or ownership:
+
+```text
+WRITE TEST FAILED: [Errno 13] Permission denied: '.../write-test'
+```
+
+> [!bug] Troubleshooting
+> If the write test fails with a permission or ownership error, see [[#Permission Issues Restoring Files|Permission Issues Restoring Files]].
+
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
 ---
@@ -1162,9 +1285,9 @@ Background material that earlier steps link to but don't require you to read to 
 
 ### Repo Path Variables and Self-Locating Scripts
 
-"Self-locate" only means the scripts find their own code (`bin/`, `.internal/`) from `bin/prepare-artifact-root.py`'s own file path, no matter how it's invoked. It does **not** mean the commands in this guide can be run from any directory. Every command in this guide that references `reimage.env`, `reimage.env.example`, or `--env-file reimage.env` uses a path relative to the repo root, so the current working directory still has to *be* the repo root (or you have to pass an absolute path) for those relative references to resolve. `export` commands themselves attach to the shell session, not to a directory, so they survive a `cd` -- but this guide keeps you in the repo root the whole time anyway, since that's also where the relative `reimage.env` lives. See [[#Confirm the Repo Is Cloned|Confirm the Repo Is Cloned]] for where that working directory gets established.
+"Self-locate" only means the scripts find their own code (`bin/`, `.internal/`) from `bin/prepare-artifact-root.py`'s own file path, no matter how it's invoked. It does **not** mean the commands in this guide can be run from any directory. Every command in this guide that references `reimage.env`, `reimage.env.example`, or `--env-file reimage.env` uses a path relative to the repo root, so the current working directory still has to *be* the repo root (or you have to pass an absolute path) for those relative references to resolve. `export` commands themselves attach to the shell session, not to a directory, so they survive a `cd` -- but this guide keeps you in the repo root the whole time anyway, since that's also where the relative `reimage.env` lives. 
 
-`bin/setup-reimage-env.sh` is a concrete example of this boundary: it explicitly checks that `reimage.env.example` exists in the current directory before doing anything else, precisely because it expects to be run from the repo root -- run it from anywhere else and it refuses to proceed rather than silently failing later. See [[#Create Local Reimage Environment Profile|Create Local Reimage Environment Profile]] for the rest of what that script does.
+`bin/setup-reimage-env.sh` is a concrete example of this boundary: it explicitly checks that `reimage.env.example` exists in the current directory before doing anything else, precisely because it expects to be run from the repo root -- run it from anywhere else and it refuses to proceed rather than silently failing later. 
 
 #### Path variable definitions
 
@@ -1182,75 +1305,12 @@ In short: `FRACTOGENESIS_PARENT` is where you clone *into*; `FRACTOGENESIS_HOME`
 
 Neither `bin/prepare-artifact-root.py` nor `.internal/artifact-config.sh` ever reads `FRACTOGENESIS_PARENT` or `FRACTOGENESIS_HOME`. Both self-locate from their own file path, so neither variable is required for the core tooling in this guide to work correctly. They exist for two different, narrower reasons -- neither of which is "the script needs it":
 
-- `FRACTOGENESIS_PARENT` is scratch, throwaway convenience -- it exists only to make the three-line `mkdir`/`cd`/`git clone` sequence in [[#Confirm the Repo Is Cloned|Confirm the Repo Is Cloned]] easier to read and re-run. Nothing reads it afterward, and it is never written to any file. You could skip setting it entirely and just `cd` to wherever you want and run `git clone ...` directly, with the same result.
+- `FRACTOGENESIS_PARENT` is scratch, throwaway convenience -- it exists only to make the three-line `mkdir`/`cd`/`git clone` sequence easier to read and re-run. Nothing reads it afterward, and it is never written to any file. You could skip setting it entirely and just `cd` to wherever you want and run `git clone ...` directly, with the same result.
 - `FRACTOGENESIS_HOME` is set automatically by `.envrc` once direnv is active, purely as a human-facing "where am I right now" reference -- nothing documented in this guide consumes it. Treat it as informational output, not an input you need to set or override.
 
-In practice: you only ever *set* `FRACTOGENESIS_PARENT` yourself, and only if cloning manually; you never set `FRACTOGENESIS_HOME` yourself, since direnv derives it from `pwd`; and you never set `$HOME` at all, since macOS does. What actually matters for every command in this guide is simply having your current working directory be the repo root -- see [[#Confirm the Repo Is Cloned|Confirm the Repo Is Cloned]].
+In practice: you only ever *set* `FRACTOGENESIS_PARENT` yourself, and only if cloning manually; you never set `FRACTOGENESIS_HOME` yourself, since direnv derives it from `pwd`; and you never set `$HOME` at all, since macOS does. What actually matters for every command in this guide is simply having your current working directory be the repo root.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
-
----
-
-### Handle Existing Reimage Environment
-
-Reached from [[#Create Local Reimage Environment Profile|Create Local Reimage Environment Profile]] when `bin/check-reimage-env.sh` reports an existing `reimage.env`. This only matters if an earlier, unfinished reimage attempt already left a file behind -- most runs never reach this section.
-
-This must be resolved before running `bin/setup-reimage-env.sh`, since that script refuses to run at all once `reimage.env` exists. A file left in place unresolved is what every later backup, evidence-capture, and restore script will resolve `REIMAGE_ARTIFACT_ROOT` from -- resolved or stale, with no error either way.
-
-Route based on what `bin/check-reimage-env.sh` printed:
-
-- **Values printed, and `ASSET_OR_HOST` matches this Mac's hostname and `EXTERNAL_DATA_VOLUME` matches the volume you chose** -- see [[#Resuming an Existing reimage.env|Resuming an Existing reimage.env]] below. `REIMAGE_START_DATE` need not be today; a reimage often spans several days, so an earlier start date is expected, not a problem.
-- **Values printed, but `ASSET_OR_HOST` doesn't match this Mac's hostname, or `EXTERNAL_DATA_VOLUME` doesn't match the volume you chose** -- see [[#Archiving a Stale reimage.env|Archiving a Stale reimage.env]] below. A hostname or volume mismatch means the file came from a different Mac or points at a different drive -- the most reliable signs it is stale.
-- **`reimage.env already exists:` printed, but no variable lines after it** -- see [[#Empty or Unrecognized reimage.env|Empty or Unrecognized reimage.env]] in Troubleshooting.
-
-[[#Table of Contents|⬆ Back to Table of Contents]]
-
----
-
-#### Resuming an Existing reimage.env
-
-`ASSET_OR_HOST` matches this Mac's hostname (or you know you set a deliberate custom tag) and `EXTERNAL_DATA_VOLUME` matches the volume you just chose in [[#Choose the External Data Volume|Choose the External Data Volume]]. That pair is what identifies this file as the effort you're on right now. Do not gate the decision on `REIMAGE_START_DATE`: a reimage commonly runs across multiple days, so a start date earlier than today is normal and does not make the file stale -- the date only records when this effort began.
-
-Skip [[#Create Local Reimage Environment Profile|Create Local Reimage Environment Profile]] entirely; there's nothing to recompute or rewrite. Jump straight to [[#Confirm reimage.env Is Loaded|Confirm reimage.env Is Loaded]].
-
-[[#Handle Existing Reimage Environment|⬆ Back to Handle Existing Reimage Environment]]
-
----
-
-#### Archiving a Stale reimage.env
-
-Archive the file when its identity no longer matches this effort: `ASSET_OR_HOST` doesn't match this Mac's hostname (and you don't recall setting a deliberate custom tag), or `EXTERNAL_DATA_VOLUME` doesn't match the volume you just chose. A hostname mismatch is the strongest signal -- it usually means the file was carried over from a different or older Mac. An earlier `REIMAGE_START_DATE` is *not*, on its own, a reason to archive: a multi-day reimage legitimately keeps its original start date, so treat an old date as a cue to confirm you're still on that same effort, not as proof it's stale. Left in place, a mismatched file would silently point every later step at the wrong artifact root, with no error to warn you. Archive it -- don't edit it in place or delete it outright, the old values may still be needed for reference:
-
-```bash
-mv reimage.env "reimage.env.stale-$(date +%Y%m%d-%H%M%S)"
-```
-
-Confirm the archived file is actually ignored by Git, not just untracked-but-visible -- a `.gitignore` from an earlier pass through this guide may only have the bare `reimage.env` line and not yet the `reimage.env.stale-*` pattern (see [[#Create Local Reimage Environment Profile|Create Local Reimage Environment Profile]] for the recommended entry):
-
-```bash
-git status --short | grep 'reimage.env.stale' && echo "WARNING: archived file is untracked and not ignored -- update .gitignore before committing anything" || echo "OK: archived file is ignored or already clean"
-```
-
-**Moving the file is not enough on its own.** If this repo checkout was previously `cd`ed into with direnv active, the old file's values were already loaded into shell variables, not just left sitting in the file -- and a moved/renamed file doesn't retroactively unset variables already exported into the current shell. What happens next depends on how those values got loaded:
-
-- **direnv is active**: it re-evaluates `.envrc` on every prompt, so the very next command you run should trigger a `direnv: export ...` line unloading the old values -- watch for that, don't assume it happened.
-- **direnv is not active yet**, or the values reached this shell via a manual `source reimage.env`: nothing auto-unloads them. They remain exported until you clear them or open a new terminal.
-
-Clear and re-verify explicitly, then continue to [[#Create Local Reimage Environment Profile|Create Local Reimage Environment Profile]] with a genuinely clean shell:
-
-```bash
-unset REIMAGE_ARTIFACT_ROOT ASSET_OR_HOST REIMAGE_START_DATE REIMAGE_WORKSPACE_ROOT
-
-printf 'REIMAGE_ARTIFACT_ROOT=%s\n' "${REIMAGE_ARTIFACT_ROOT:-<unset, good>}"
-```
-
-(Deliberately not unsetting `EXTERNAL_DATA_VOLUME`/`EXTERNAL_APPLE_BACKUPS_VOLUME` here -- those are still correct from [[#Choose the External Data Volume|Choose the External Data Volume]]; only values that could have come from the *old* file need clearing.)
-
-If that still prints an old path instead of `<unset, good>`, something is re-exporting it (a leftover `.envrc` in a parent directory, a sourced profile script, etc.) -- track that down before continuing.
-
-If you're not sure the old effort is actually finished, check whether its `REIMAGE_ARTIFACT_ROOT` folder still exists and looks incomplete (see [[#Verify the Prepared Root|Verify the Prepared Root]] for what "complete" looks like) before archiving. If backup or evidence scripts already ran against the stale root, that generated data needs to be dealt with rather than silently abandoned.
-
-[[#Handle Existing Reimage Environment|⬆ Back to Handle Existing Reimage Environment]]
 
 ---
 
@@ -1267,8 +1327,6 @@ Specifically, never store any of these in `reimage.env`:
 Optional paths should either be left blank or written as absolute resolved paths -- never as an unresolved template.
 
 Why this matters: `reimage.env` gets `source`d with `set -a`/`set +a` by multiple scripts across this guide, sometimes under `set -u` (nounset). An unresolved reference like `$ASSET_OR_HOST` sourced before that variable exists in the same shell throws an "unbound variable" error; a literal `$HOME/...` string just silently fails to expand into a real path, since `reimage.env` is sourced as data, not re-evaluated as a template each time. Both failure modes are avoided entirely by only ever writing fully resolved values into the file in the first place.
-
-If you already have a `reimage.env` with this problem, see [[#reimage.env Contains Helper Variables or Literal Paths|reimage.env Contains Helper Variables or Literal Paths]] in Troubleshooting for symptoms and a repair command.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -1312,9 +1370,7 @@ mount the expected external volume manually
 
 Do not erase, repair, repartition, or reformat the external drive until you are certain which disk and volume you are looking at.
 
-Return to: [[#Choose the External Data Volume|Choose the External Data Volume]]
-
-[[#Table of Contents|⬆ Back to Table of Contents]]
+[[#Confirm External Data Volume Readiness|⮕ Continue to Confirm External Data Volume Readiness]]
 
 ---
 
@@ -1346,13 +1402,11 @@ Media Read-Only: No
 
 If the volume is mounted read-only, stop and inspect the drive in Disk Utility. Do not force repair or erase during the reimage workflow unless you have already confirmed the disk identity and have another known-good backup.
 
-Return to: [[#Confirm External Data Volume Readiness|Confirm External Data Volume Readiness]]
-
-[[#Table of Contents|⬆ Back to Table of Contents]]
+[[#Create Local Reimage Environment Profile|⮕ Continue to Create Local Reimage Environment Profile]]
 
 ---
 
-### External Data Volume Is Writable but Current User Cannot Write
+### Can't Write to the Volume
 
 Symptoms:
 
@@ -1398,13 +1452,13 @@ sudo diskutil disableOwnership ...
 
 Those broader changes can affect Time Machine-adjacent data, other folders, or future restore behavior. Prefer repairing only the dedicated `$REIMAGE_ARTIFACT_ROOT`.
 
-After the repair succeeds, return to [[#Create the Artifact Root|Create the Artifact Root]] and rerun the create helper, then continue with [[#Load and Confirm the Environment|Load and Confirm the Environment]].
+After the repair succeeds, rerun the create helper.
 
-[[#Table of Contents|⬆ Back to Table of Contents]]
+[[#Create Local Reimage Environment Profile|⮕ Continue to Create Local Reimage Environment Profile]]
 
 ---
 
-### Terminal Privacy Access Is Blocking External Volume Access
+### Terminal Privacy Block
 
 Symptoms:
 
@@ -1413,7 +1467,7 @@ mkdir: cannot create directory '/Volumes/<external-data-volume-name>/reimage-<as
 touch: ... Operation not permitted
 ```
 
-Use this section for `Operation not permitted`. If the error says `Permission denied`, use [[#External Data Volume Is Writable but Current User Cannot Write|External Data Volume Is Writable but Current User Cannot Write]] first.
+Use this section for `Operation not permitted`.
 
 The likely fix is to grant the terminal app external-volume access or Full Disk Access, then rerun directory creation without relying on `sudo`.
 
@@ -1455,11 +1509,9 @@ python3 bin/prepare-artifact-root.py \
   --env-file reimage.env
 ```
 
-If this still fails, confirm the drive is not mounted read-only and inspect ownership with [[#External Data Volume Is Writable but Current User Cannot Write|External Data Volume Is Writable but Current User Cannot Write]]. Do not erase, repair, or repartition the external drive until you are certain which disk and volume you are looking at.
+Do not erase, repair, or repartition the external drive until you are certain which disk and volume you are looking at.
 
-Return to: [[#Create the Artifact Root|Create the Artifact Root]]
-
-[[#Table of Contents|⬆ Back to Table of Contents]]
+[[#Create Local Reimage Environment Profile|⮕ Continue to Create Local Reimage Environment Profile]]
 
 ---
 
@@ -1505,37 +1557,13 @@ source ./reimage.env
 set +a
 ```
 
-Or add the optional zsh persistence block from [[#Load and Confirm the Environment|Load and Confirm the Environment]].
+Or add the optional zsh persistence block from Load and Confirm the Environment.
 
-Return to: [[#Understand artifact-config.sh|Understand artifact-config.sh]]
-
-[[#Table of Contents|⬆ Back to Table of Contents]]
+[[#Create the Standard Directory Layout|⮕ Continue to Create the Standard Directory Layout]]
 
 ---
 
-### Pasted Code Breaks in Interactive zsh
-
-Symptoms:
-
-```text
-command not found: #
-```
-
-Cause: zsh (the default macOS shell) does not treat a trailing `#` as a comment character in interactive mode the way bash does. A line like `VALUE="..."  # some note` fails with `command not found: #` -- and worse, silently drops the assignment, because zsh parses it as a temporary variable assignment scoped only to that failed command, not a persistent shell variable. This guide avoids trailing same-line comments in its code blocks for exactly this reason; if you still hit this, you're likely pasting from a modified or partially-copied block.
-
-If you see `command not found: #` after pasting any block in this guide, don't assume the lines around it ran cleanly -- check whether an assignment just above it actually stuck:
-
-```bash
-printf 'VAR=%s\n' "$VAR"
-```
-
-Fix: rerun the block cleanly -- retype it, or save it as a `.sh` file and run that instead of pasting -- rather than continuing with a value you haven't confirmed.
-
-[[#Table of Contents|⬆ Back to Table of Contents]]
-
----
-
-### reimage.env Contains Helper Variables or Literal Paths
+### Literal Paths in reimage.env
 
 Symptoms:
 
@@ -1546,7 +1574,7 @@ OFFICE_WATCH=$HOME/Desktop/ms-office-stability-watch
 REIMAGE_ARTIFACT_ROOT or an optional path contains literal variable text instead of a resolved path
 ```
 
-This means `reimage.env` contains helper-variable references or quoted literal paths instead of resolved values -- see [[#reimage.env Must Contain Resolved Values, Not Literal References|reimage.env Must Contain Resolved Values, Not Literal References]] in Supplemental Reference for what belongs in the file instead.
+This means `reimage.env` contains helper-variable references or quoted literal paths instead of resolved values.
 
 Inspect the file:
 
@@ -1583,15 +1611,11 @@ set +u
 
 That prompt error means shell nounset mode was enabled while the prompt/theme expected optional variables such as `VIRTUAL_ENV` to be unset sometimes. It is not a artifact-root failure.
 
-Then return to [[#Load and Confirm the Environment|Load and Confirm the Environment]].
-
-Return to: [[#Load and Confirm the Environment|Load and Confirm the Environment]]
-
-[[#Table of Contents|⬆ Back to Table of Contents]]
+[[#Set Up direnv|⮕ Continue to Set Up direnv]]
 
 ---
 
-### Accidental Literal-Named Folder Under the Repo Checkout
+### Folder Under the Repo
 
 Symptoms:
 
@@ -1621,41 +1645,13 @@ If that confirms it's the accidental folder, remove it manually rather than as p
 rm -rf './$EXTERNAL_DATA_VOLUME'
 ```
 
-Then confirm `REIMAGE_ARTIFACT_ROOT` prints as an absolute `/Volumes/...` path -- see [[#reimage.env Contains Helper Variables or Literal Paths|reimage.env Contains Helper Variables or Literal Paths]] if it still doesn't -- before rerunning [[#Create the Artifact Root|Create the Artifact Root]].
+Then confirm `REIMAGE_ARTIFACT_ROOT` prints as an absolute `/Volumes/...` path before rerunning the create helper.
 
-Return to: [[#Create the Artifact Root|Create the Artifact Root]]
-
-[[#Table of Contents|⬆ Back to Table of Contents]]
+[[#Load and Confirm the Environment|⮕ Continue to Load and Confirm the Environment]]
 
 ---
 
-### Existing reimage.env Has Stale Values From a Previous Reimage
-
-Symptoms:
-
-```text
-bin/setup-reimage-env.sh refuses immediately with a message that reimage.env already exists, and you don't remember creating one
-Backups or evidence captures appear to be landing under a REIMAGE_ARTIFACT_ROOT dated days/weeks ago, or naming a Mac you don't recognize
-REIMAGE_ARTIFACT_ROOT, once loaded, points at an external volume that isn't the one currently mounted
-```
-
-This almost always means `reimage.env` was created during an earlier reimage effort on this Mac and never cleaned up. Neither direnv nor a manual `source` distinguishes an old file from a fresh one -- both load whatever is on disk, silently.
-
-Confirm and resolve it using [[#Handle Existing Reimage Environment|Handle Existing Reimage Environment]], which walks through comparing the file's values against the current effort and archiving it if it's genuinely stale:
-
-```bash
-grep -E '^(export[[:space:]]+)?(REIMAGE_ARTIFACT_ROOT|ASSET_OR_HOST|REIMAGE_START_DATE|EXTERNAL_DATA_VOLUME)=' reimage.env
-```
-
-If backup or evidence scripts already ran before you caught this, they wrote into the *old* `REIMAGE_ARTIFACT_ROOT`, not a new one. Before archiving the stale `reimage.env`, note that old path -- you'll need it to find and deal with anything already written there, rather than losing track of it once the file is renamed out of the way.
-
-Return to: [[#Handle Existing Reimage Environment|Handle Existing Reimage Environment]]
-
-[[#Table of Contents|⬆ Back to Table of Contents]]
-
----
-
-### Empty or Unrecognized reimage.env
+### Empty / Unrecognized
 
 The file exists, but `bin/check-reimage-env.sh` found none of the expected variables -- usually because an earlier run was interrupted before writing anything, or the file predates this guide's current variable names.
 
@@ -1665,11 +1661,9 @@ Inspect it directly before deciding anything:
 cat reimage.env
 ```
 
-If it's genuinely empty or clearly unusable, treat it exactly like [[#Archiving a Stale reimage.env|Archiving a Stale reimage.env]] and continue from there. If it has content under different/older variable names, same treatment -- archive it rather than trying to reconcile the old names by hand.
+If it's genuinely empty or clearly unusable, delete it and continue from there. If it has content under different/older variable names, same treatment -- archive it rather than trying to reconcile the old names by hand.
 
-Return to: [[#Handle Existing Reimage Environment|Handle Existing Reimage Environment]]
-
-[[#Table of Contents|⬆ Back to Table of Contents]]
+[[#Required and Default Values|⮕ Continue to Required and Default Values]]
 
 ---
 
@@ -1693,99 +1687,7 @@ python3 bin/prepare-artifact-root.py \
 
 This rerun creates only the stable top-level folders. It must not create any child folders under optional capture roots. If a missing folder is a workflow-owned child folder such as `secrets-encrypted/certs/keychain-manual-exports/`, `secrets-encrypted/extra-secrets-certs-review/`, `system-inventory/`, `performance-audit/`, or `office-stability/`, go back to the owning runbook or script instead of adding it here.
 
-Then rerun [[#Verify the Prepared Root|Verify the Prepared Root]].
-
-Return to: [[#Verify the Prepared Root|Verify the Prepared Root]]
-
-[[#Table of Contents|⬆ Back to Table of Contents]]
-
----
-
-### OneDrive Backup Wrote Under the Repo Checkout
-
-Symptoms:
-
-```text
-<repo checkout>/<OneDrive-folder-name>/ exists
-OneDrive backup output is under the repo checkout instead of ~/Library/CloudStorage
-The script printed OneDrive dest as a relative path
-```
-
-The cause is usually a local config value like this:
-
-```bash
-ONEDRIVE_ROOT="<OneDrive-folder-name>"
-```
-
-That bare folder name can be interpreted relative to the current working directory by older script versions. The correct root is the full CloudStorage-backed OneDrive folder path:
-
-```bash
-ONEDRIVE_FOLDER_NAME="<OneDrive-folder-name>"
-export ONEDRIVE_ROOT="$HOME/Library/CloudStorage/$ONEDRIVE_FOLDER_NAME"
-export ONEDRIVE_DEST_SUBDIR="$(basename "${REIMAGE_ARTIFACT_ROOT%/}")"
-```
-
-After updating `reimage.env`, reload it and run a dry run:
-
-```bash
-set -a
-source ./reimage.env
-set +a
-
-printf 'ONEDRIVE_ROOT=%s\n' "$ONEDRIVE_ROOT"
-./bin/backup-home-files-backup.sh --dry-run --onedrive-only
-```
-
-If a previous run already created the wrong folder, copy it into the real OneDrive root before removing anything (run this from inside the repo checkout, since `$(pwd)` below assumes that):
-
-```bash
-ONEDRIVE_FOLDER_NAME="<OneDrive-folder-name>"
-WRONG_ONEDRIVE_ROOT="$(pwd)/$ONEDRIVE_FOLDER_NAME"
-RIGHT_ONEDRIVE_ROOT="$HOME/Library/CloudStorage/$ONEDRIVE_FOLDER_NAME"
-BACKUP_BASENAME="$(basename "${REIMAGE_ARTIFACT_ROOT%/}")"
-
-if [[ -d "$WRONG_ONEDRIVE_ROOT/$BACKUP_BASENAME" ]]; then
-  mkdir -p "$RIGHT_ONEDRIVE_ROOT/$BACKUP_BASENAME"
-  rsync -a "$WRONG_ONEDRIVE_ROOT/$BACKUP_BASENAME/" "$RIGHT_ONEDRIVE_ROOT/$BACKUP_BASENAME/"
-  mv "$WRONG_ONEDRIVE_ROOT" "$WRONG_ONEDRIVE_ROOT.migrated-$(date +%Y%m%d-%H%M%S)"
-fi
-```
-
-Do not delete the migrated folder until the OneDrive menu bar shows no sync errors and a OneDrive web spot-check confirms the expected backup folder and files are visible.
-
-Return to: [[#Understand artifact-config.sh|Understand artifact-config.sh]]
-
-[[#Table of Contents|⬆ Back to Table of Contents]]
-
----
-
-### Manual Export-Only Fallback
-
-Use this only for a temporary shell session when you intentionally do not want to create `reimage.env`. The normal workflow is still [[#Create Local Reimage Environment Profile|Create Local Reimage Environment Profile]].
-
-```bash
-export REIMAGE_WORKSPACE_ROOT="$HOME/Documents/reimage-workspace"
-export EXTERNAL_DATA_VOLUME="/Volumes/<external-data-volume-name>"
-export EXTERNAL_APPLE_BACKUPS_VOLUME="/Volumes/<time-machine-volume-name>"
-export ASSET_OR_HOST="<asset-or-host>"
-export REIMAGE_START_DATE="$(date +%Y%m%d)"
-export REIMAGE_ARTIFACT_ROOT="$EXTERNAL_DATA_VOLUME/reimage-$ASSET_OR_HOST-$REIMAGE_START_DATE-open"
-```
-
-Optional -- leave these blank unless these workflows are used:
-
-```bash
-export OFFICE_WATCH=""
-export ONEDRIVE_FOLDER_NAME=""
-export ONEDRIVE_ROOT=""
-export ONEDRIVE_DEST_SUBDIR="$(basename "${REIMAGE_ARTIFACT_ROOT%/}")"
-```
-
-For repeatable reimage work, write those values to `reimage.env` instead of relying on terminal history.
-
-Return to: [[#Create Local Reimage Environment Profile|Create Local Reimage Environment Profile]]
-
-[[#Table of Contents|⬆ Back to Table of Contents]]
+[[#Verify the Prepared Root|⬆ Back to Verify the Prepared Root]]
 
 ---
 
@@ -1817,6 +1719,4 @@ chmod 644 ~/.ssh/*.pub
 
 Do not broadly `chmod -R` the whole backup root or home directory.
 
-Return to: [[#Verify the Prepared Root|Verify the Prepared Root]]
-
-[[#Table of Contents|⬆ Back to Table of Contents]]
+[[#Verify the Prepared Root|⬆ Back to Verify the Prepared Root]]

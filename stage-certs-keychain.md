@@ -339,7 +339,7 @@ Use `.cer`/`.pem` for public certificate material only, and `.p12`/`.pfx` for a 
 > [!bug] Troubleshooting
 > A dimmed Export item, or "Unable to export," is the same signal: the key cannot leave the device. Do not try to bypass it. Set the identity to `Status: DOCUMENT`, `Exportable: No`, record the exact error and date under `Export attempt`, and continue to step 5 to capture the restore path.
 
-**5. Trace how the certificate is delivered (this fills the restore fields).** A non-exportable identity is installed by a configuration profile, and that profile tells you how it comes back. The full reference — payload types, Intune-native vs internal-PKI, and a restore decision tree — is in [[certificatetypesguide#Managed Identity Decision Tree|Certificate Types Guide → Managed Identity Decision Tree]].
+**5. Trace how the certificate is delivered (this fills the restore fields).** A non-exportable identity is installed by a configuration profile, and that profile tells you how it comes back. The full reference — payload types, Intune-native vs internal-PKI, and a restore decision tree — is in [[certificate-types-guide#Managed Identity Decision Tree|Certificate Types Guide → Managed Identity Decision Tree]].
 
 - GUI: System Settings → General → **Device Management**. Open each profile and read its payloads. Match a profile to your identity by **Subject/CN + Issuer + Expiry** against the Keychain item.
 - Read the payload type: a **Trusted/CA certificate** payload installs a CA for trust; a **SCEP Enrollment** payload shows the enrollment **server URL** and issuer (the device generates the key locally, so it is non-exportable); a **PKCS/Credential** payload is connector-delivered.
@@ -472,7 +472,7 @@ The scripts inventory, categorize, and stage; these judgment calls stay with you
 
 ## Supplemental Reference
 
-Longer material most runs will not need, kept out of the main flow. For the underlying certificate concepts — types, chains, formats, truststores vs keystores, and how managed/Intune identities are delivered, inspected, and traced — see [[certificatetypesguide|Certificate Types Guide]].
+Longer material most runs will not need, kept out of the main flow. For the underlying certificate concepts — types, chains, formats, truststores vs keystores, and how managed/Intune identities are delivered, inspected, and traced — see [[certificate-types-guide|Certificate Types Guide]].
 
 ### What to Keep and What Phase 2F Already Covers
 
