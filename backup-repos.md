@@ -8,8 +8,6 @@ This runbook preserves repository state and intentionally chosen local files bef
 
 Git remotes protect what you have committed and pushed. They do not protect local-only commits, uncommitted changes, stashes, untracked files, or the ignored local files — env files, IDE settings, certificates, local scripts — that never leave your machine. This runbook captures that gap.
 
-It does not turn `repo-audit-reports/` into a full source backup. Credential-shaped ignored files it routes are staged into `secrets-encrypted/repos-gitignored/` for the consolidated DMG workflow to encrypt; it does not build or replace that DMG.
-
 ---
 
 ## Table of Contents
@@ -54,16 +52,35 @@ It does not turn `repo-audit-reports/` into a full source backup. Credential-sha
 
 > In Obsidian, these are internal heading links. Click in Reading View, or Cmd-click in Live Preview/editing mode.
 
+> This runbook uses Obsidian callouts so each type reads distinctly: `[!note]` an easily-missed fact · `[!warning]` Pitfall, a mistake you are likely to make here · `[!bug]` Troubleshooting, what to do when a step misbehaves.
+
 ---
 
 ## Purpose
 
-Use this workflow to carry forward, through a reimage, the two things Git remotes leave behind:
+`backup-repos` (Phase 2A) carries forward, through a reimage, the two things Git remotes leave behind — repository state and the intentionally-kept local files Git ignores — so that afterward you restore a clean, reviewed set instead of an unfiltered dump of everything Git was ignoring.
 
-1. Repository state — local branches, uncommitted work, stashes, and local-only commits.
-2. Chosen local files — the ignored files you actually want back, kept apart from the ones you don't.
+**What it sets up**
 
-The reward for doing this deliberately is that after the reimage you restore a clean, reviewed set of local files instead of a full unfiltered dump of everything Git was ignoring.
+- **A repository audit** — a per-repo inventory of what remotes don't protect: uncommitted changes, local-only commits, stashes, untracked non-ignored files, and repos with no remote or on a temporary branch.
+- **A reviewed backup of ignored local files** — the gitignore superset plus the three review files (select, exclude, route) that turn everything your repos ignore into a small, deliberate set staged under `staged-ignored-files/`.
+- **Segregated secret candidates** — credential-shaped kept files routed into `secrets-encrypted/repos-gitignored/` so they never sit beside cloud-synced output.
+
+**What the rest of the workflow relies on it for**
+
+- A trustworthy inventory so nothing local-only is lost before the machine is wiped.
+- A staged, reviewed set of ignored files ready to restore after the reimage.
+- Secret candidates parked where the Phase 2F consolidated DMG will encrypt them.
+
+**Ownership**
+
+| This runbook owns | Owned elsewhere |
+|---|---|
+| the repository audit and its reports (`repo-audit-reports/`) | encrypting the routed secrets — `create-secrets-dmg` (Phase 2F) |
+| the gitignore superset and the three review files (select / exclude / route) | IntelliJ HTTP Client env files — `backup-intellij` |
+| staging kept ignored files into `staged-ignored-files/`, and routing secret-shaped files into `secrets-encrypted/repos-gitignored/` | the size-audit implementation — `capture-size-audit` |
+
+It does not turn `repo-audit-reports/` into a full source backup, and it routes secret candidates without building or replacing the consolidated DMG.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -93,7 +110,8 @@ scanned repos   the template                              └─▶ [ backup can
 - **Exclude** — drop generated, cache, and build noise from the selected set. What survives is the **filtered set** — the files that will actually be backed up.
 - **Route** — sort the filtered set by shape: credential-shaped files go to `secrets-encrypted/repos-gitignored/` so the Phase 2F DMG sweeps them, everything else to ordinary staging.
 
-> **Note —** Both routing destinations are files you are keeping. Routing decides *where a kept file lands*, never *whether* it is kept.
+> [!note]
+> Both routing destinations are files you are keeping. Routing decides *where a kept file lands*, never *whether* it is kept.
 
 ### Terminology
 
@@ -108,7 +126,8 @@ The word "ignored" is doing double duty in Git, so this runbook fixes precise te
 | Secret candidates | Filtered files whose pattern matches the secrets list; staged into `secrets-encrypted/repos-gitignored/` and listed in `secrets-candidates.tsv`. |
 | Backup candidates | Filtered files that are not secret-shaped; staged normally. |
 
-> **Note —** "Selected" means *chosen to keep*, not *chosen to discard*. Checking a pattern preserves its files.
+> [!note]
+> "Selected" means *chosen to keep*, not *chosen to discard*. Checking a pattern preserves its files.
 
 ### Files, Stages, and Modes
 
@@ -131,9 +150,11 @@ Three files you maintain drive the three review stages:
 | `--direct-ignored-dry-run` | Broad dump of every ignored file, no review | No |
 | `--direct-ignored-copy` | Broad dump of every ignored file, no review | Yes |
 
-> **Note —** Route is always on whenever `secrets-patterns.txt` exists — it is not named in the flag. `--selected` adds Select; `--selected-filtered` adds Exclude; Route rides along in both when the file is present. The run that exercises all three files is therefore `--selected-filtered-dry-run` with all three sitting in `gitignore-superset/`. The `Secrets patterns:` line in `summary.txt` confirms Route fired.
+> [!note]
+> Route is always on whenever `secrets-patterns.txt` exists — it is not named in the flag. `--selected` adds Select; `--selected-filtered` adds Exclude; Route rides along in both when the file is present. The run that exercises all three files is therefore `--selected-filtered-dry-run` with all three sitting in `gitignore-superset/`. The `Secrets patterns:` line in `summary.txt` confirms Route fired.
 
-> **Pitfall —** The `--direct-ignored-*` modes read none of the three files. Anything you selected, excluded, or flagged as a secret is ignored by them. They are an off-ramp, covered in [[#Selected Path vs Direct Path|Selected Path vs Direct Path]].
+> [!warning] Pitfall
+> The `--direct-ignored-*` modes read none of the three files. Anything you selected, excluded, or flagged as a secret is ignored by them. They are an off-ramp, covered in [[#Selected Path vs Direct Path|Selected Path vs Direct Path]].
 
 This is the preferred workflow because every file that reaches cloud storage passed through an explicit select-then-exclude-then-route review, rather than being copied wholesale.
 
@@ -166,15 +187,18 @@ Generated Git artifacts live under `$REIMAGE_ARTIFACT_ROOT` in the standard shar
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/
+├── ...
 ├── gitignore-superset/
 ├── repo-audit-reports/
 ├── size-audit-reports/
-└── staged-ignored-files/
+├── staged-ignored-files/
+└── ...
 ```
 
 `prepare-artifact-root.md` creates these top-level containers. `bin/backup-repos.sh` checks for `gitignore-superset/`, `repo-audit-reports/`, and `staged-ignored-files/` on startup and exits with a pointer back to that runbook if any is missing, rather than creating them silently.
 
-> **Note —** The `dryrun/`, `dryrun-filtered/`, and `live/` children under `staged-ignored-files/` are owned by this runbook's own scripts, so `bin/backup-repos.sh` creates those itself on startup.
+> [!note]
+> The `dryrun/`, `dryrun-filtered/`, and `live/` children under `staged-ignored-files/` are owned by this runbook's own scripts, so `bin/backup-repos.sh` creates those itself on startup.
 
 | Container | Holds |
 |---|---|
@@ -188,10 +212,13 @@ $REIMAGE_ARTIFACT_ROOT/
 Your three review files can also be kept under `$REIMAGE_WORKSPACE_ROOT`, so a reviewed set survives between backup reruns without the only copy living on the external drive:
 
 ```text
-$REIMAGE_WORKSPACE_ROOT/gitignore-superset/
-├── backup-exclude-list.txt
-├── gitignore-review-template.txt
-└── secrets-patterns.txt
+$REIMAGE_WORKSPACE_ROOT/
+├── ...
+├── gitignore-superset/
+│   ├── backup-exclude-list.txt
+│   ├── gitignore-review-template.txt
+│   └── secrets-patterns.txt
+└── ...
 ```
 
 The Sequential Steps copy these in from the workspace at the start and back out to it at the end.
@@ -269,8 +296,11 @@ staged-ignored-files/
 The routed secret files themselves land under the encrypted-secrets root, where `create-secrets-dmg` sweeps them:
 
 ```text
-secrets-encrypted/repos-gitignored/
-└── <repo-label>/<relative-path>
+secrets-encrypted/
+├── ...
+├── repos-gitignored/
+│   └── <repo-label>/<relative-path>
+└── ...
 ```
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -292,7 +322,8 @@ This runbook assumes the external artifact volume, `$REIMAGE_ARTIFACT_ROOT`, the
 | Local machine-specific values | `$FRACTOGENESIS_HOME/reimage.env` |
 | Git repository roots | `GIT_WORK_REPO_ROOT`, `GIT_PERSONAL_REPO_ROOT` |
 
-> **Troubleshooting —** If a root path does not exist, fix `reimage.env` before continuing. The entrypoint refuses to run against a missing root rather than silently skipping it.
+> [!bug] Troubleshooting
+> If a root path does not exist, fix `reimage.env` before continuing. The entrypoint refuses to run against a missing root rather than silently skipping it.
 
 ### Why the Size Audit
 
@@ -325,7 +356,8 @@ The **Selected path** is the default and the one the Sequential Steps walk end t
 
 The **Direct path** is an off-ramp: a broad dump of every file Git reports as ignored, with no review. Use it only for a quick look at the full ignored surface, or when you knowingly want everything.
 
-> **Pitfall —** The Direct path reads none of your three review files and performs no secrets routing. Reach for it only when an unreviewed dump is genuinely what you want; otherwise stay on the Selected path.
+> [!warning] Pitfall
+> The Direct path reads none of your three review files and performs no secrets routing. Reach for it only when an unreviewed dump is genuinely what you want; otherwise stay on the Selected path.
 
 ### Why Secrets Are Routed Separately
 
@@ -438,6 +470,10 @@ done
 
 If the validation prints no Git repositories, confirm the variables are loaded and point to parent folders that actually contain Git checkouts.
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Load Shared Configuration
 
 Source the local environment before running any command below, and re-source it after any edit to `reimage.env` in the same shell:
@@ -456,6 +492,10 @@ printf 'GIT_WORK_REPO_ROOT=%s\n' "${GIT_WORK_REPO_ROOT:-}"
 printf 'GIT_PERSONAL_REPO_ROOT=%s\n' "${GIT_PERSONAL_REPO_ROOT:-}"
 ```
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Run the Size Audit
 
 Check destination capacity first:
@@ -466,7 +506,12 @@ Check destination capacity first:
 
 Look for `✓ External drive: enough space` (or the `✗ NOT ENOUGH SPACE` counterpart) and the available-space line.
 
-> **Troubleshooting —** The saved report keeps ANSI color codes on purpose; view it in a terminal, not an editor. `less -R "$REIMAGE_ARTIFACT_ROOT/size-audit-reports/runs/<run>/size-audit-report.txt"`.
+> [!bug] Troubleshooting
+> The saved report keeps ANSI color codes on purpose; view it in a terminal, not an editor. `less -R "$REIMAGE_ARTIFACT_ROOT/size-audit-reports/runs/<run>/size-audit-report.txt"`.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Run the Repository Audit
 
@@ -484,7 +529,12 @@ open "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/$(cat "$REIMAGE_ARTIFACT_ROOT/re
 
 Act on what the audit surfaces — push feature branches, preserve uncommitted work or stashes on a `reimage/YYYYMMDD/…` branch, and decide what to do with untracked non-ignored files — before moving on. The ignored files it lists are handled by the path you choose next.
 
-> **Note —** A repo can have many modified files and still show `Untracked non-ignored files: 0`; that is expected when all local work is on files Git already tracks. Review `tracked-changes.tsv` for those.
+> [!note]
+> A repo can have many modified files and still show `Untracked non-ignored files: 0`; that is expected when all local work is on files Git already tracks. Review `tracked-changes.tsv` for those.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Review the Gitignore Superset
 
@@ -503,18 +553,28 @@ open "$REIMAGE_ARTIFACT_ROOT/gitignore-superset/gitignore-review-template.txt"
 open "$REIMAGE_ARTIFACT_ROOT/gitignore-superset/summary.txt"
 ```
 
-> **Note —** Even a copied-in template must be re-reviewed against this run's superset. New repos or changed ignore rules can mean last time's selection is no longer complete. See [[#Gitignore Superset Generated Files|Gitignore Superset Generated Files]] for how to read the evidence files.
+> [!note]
+> Even a copied-in template must be re-reviewed against this run's superset. New repos or changed ignore rules can mean last time's selection is no longer complete. See [[#Gitignore Superset Generated Files|Gitignore Superset Generated Files]] for how to read the evidence files.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Choose Your Path
 
-Common setup is done. Pick one:
+Common setup is done — route by how much review you want:
 
-- **Selected path (preferred).** Reviewed, reads all three files. Continue to [[#Choose Which Ignored Files to Keep|Choose Which Ignored Files to Keep]].
-- **Direct path (off-ramp).** Unreviewed broad dump. Jump to [[#Run the Direct Dry Run|Run the Direct Dry Run]].
+- [[#Choose Which Ignored Files to Keep|Choose Which Ignored Files to Keep]] — the **Selected path** (preferred): reviewed, reads all three files.
+- [[#Run the Direct Dry Run|Run the Direct Dry Run]] — the **Direct path** (off-ramp): an unreviewed broad dump.
 
-Both paths end at [[#Review Output Files|Review Output Files]].
+Both chains rejoin at the Review Output Files step.
 
-> **Pitfall —** If you want the template, exclude list, or secrets routing to apply, take the Selected path. The Direct commands ignore all three.
+> [!warning] Pitfall
+> If you want the template, exclude list, or secrets routing to apply, take the Selected path. The Direct commands ignore all three.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Choose Which Ignored Files to Keep
 
@@ -528,7 +588,8 @@ Checking a pattern *keeps* its files; leaving it unchecked means they are not ba
 
 Give credential-shaped patterns particular attention — `.env`, `*.pem`, `*.key`, `*.p12`, `*.jks`, `*.keystore`, `credentials.json`, `.idea/dataSources.local.xml`, `*.http`, and similar:
 
-> **Note —** Do not skip a secret you need just because it is a secret. Checking is what *captures* a file; the next-but-one step ([[#Set Up the Secrets-Patterns List|Set Up the Secrets-Patterns List]]) is what keeps it segregated. Capture here, segregate there.
+> [!note]
+> Do not skip a secret you need just because it is a secret. Checking is what *captures* a file; the next-but-one step ([[#Set Up the Secrets-Patterns List|Set Up the Secrets-Patterns List]]) is what keeps it segregated. Capture here, segregate there.
 
 Save your edited template back to the workspace so you can reuse it later:
 
@@ -538,6 +599,10 @@ cp -p \
   "$REIMAGE_WORKSPACE_ROOT/gitignore-superset/gitignore-review-template.txt"
 ```
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Create or Update the Exclude List
 
 This is the **Exclude** stage. `backup-exclude-list.txt` drops generated, cache, dependency, and build-output noise back out of the selected set. Create or edit it under the backup root:
@@ -546,9 +611,11 @@ This is the **Exclude** stage. `backup-exclude-list.txt` drops generated, cache,
 open "$REIMAGE_ARTIFACT_ROOT/gitignore-superset/backup-exclude-list.txt"
 ```
 
-> **Note —** The exclude list can only trim what the template already selected; it cannot remove anything you did not check. Patterns aimed at folders you never selected have no effect, and heavy directories like `node_modules/` are pruned during the scan regardless.
+> [!note]
+> The exclude list can only trim what the template already selected; it cannot remove anything you did not check. Patterns aimed at folders you never selected have no effect, and heavy directories like `node_modules/` are pruned during the scan regardless.
 
-> **Pitfall —** Do not use the exclude list to hide secrets. It drops files entirely. Secrets you want to keep belong in the Route stage, not here.
+> [!warning] Pitfall
+> Do not use the exclude list to hide secrets. It drops files entirely. Secrets you want to keep belong in the Route stage, not here.
 
 Save it back to the workspace for reuse:
 
@@ -557,6 +624,10 @@ cp -p \
   "$REIMAGE_ARTIFACT_ROOT/gitignore-superset/backup-exclude-list.txt" \
   "$REIMAGE_WORKSPACE_ROOT/gitignore-superset/backup-exclude-list.txt"
 ```
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Set Up the Secrets-Patterns List
 
@@ -584,9 +655,11 @@ credentials*.json
 *.secrets.json
 ```
 
-> **Note —** Routing is not staging. A file must be checked `[x]` in the template to be captured at all; this list only decides *where* a captured, matching file lands. See [[#Why Secrets Are Routed Separately|Why Secrets Are Routed Separately]].
+> [!note]
+> Routing is not staging. A file must be checked `[x]` in the template to be captured at all; this list only decides *where* a captured, matching file lands. See [[#Why Secrets Are Routed Separately|Why Secrets Are Routed Separately]].
 
-> **Note —** IntelliJ HTTP Client env files (`http-client.env.json`, `http-client.private.env.json`) are owned by `backup-intellij`, which stages them into `secrets-encrypted/intellij/`. Do not list them here — routing them again would stage the same file twice.
+> [!note]
+> IntelliJ HTTP Client env files (`http-client.env.json`, `http-client.private.env.json`) are owned by `backup-intellij`, which stages them into `secrets-encrypted/intellij/`. Do not list them here — routing them again would stage the same file twice.
 
 Save it back to the workspace for reuse:
 
@@ -595,6 +668,10 @@ cp -p \
   "$REIMAGE_ARTIFACT_ROOT/gitignore-superset/secrets-patterns.txt" \
   "$REIMAGE_WORKSPACE_ROOT/gitignore-superset/secrets-patterns.txt"
 ```
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Run the Selected Dry Run
 
@@ -606,6 +683,10 @@ First pass — Select only, before the exclude list applies:
 
 Review `staged-ignored-files/dryrun/candidates.tsv`. If `secrets-patterns.txt` exists, confirm the credential-shaped files landed in `secrets-candidates.tsv` rather than `candidates.tsv`, and that `parsed-secrets-patterns.txt` shows the list was read.
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Run the Filtered Dry Run
 
 Second pass — Select + Exclude, with all three files in play. This is the run that exercises the whole pipeline before any copy:
@@ -615,6 +696,10 @@ Second pass — Select + Exclude, with all three files in play. This is the run 
 ```
 
 Confirm excluded files moved into `dryrun-filtered/excluded.tsv`, and that the `secrets-candidates.tsv` output matches what the first pass showed.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Run the Selected Copy
 
@@ -626,17 +711,24 @@ Only after both dry runs look right. This copies the filtered, routed set into `
 
 Secret candidates are copied out to `secrets-encrypted/repos-gitignored/`, with `secrets-copied.tsv` and `secrets-copy-failed.tsv` recorded under `live/` alongside the ordinary `copied.tsv`.
 
-> **Return —** Selected path done. Continue to [[#Review Output Files|Review Output Files]].
+[[#Review Output Files|⮕ Continue to Review Output Files]]
+
+---
 
 ### Run the Direct Dry Run
 
-> **Pitfall —** This is the Direct off-ramp. It reads none of your three review files and does no secrets routing. If you meant to use them, go back to [[#Choose Your Path|↩ Choose Your Path]].
+> [!warning] Pitfall
+> This is the Direct off-ramp. It reads none of your three review files and does no secrets routing. If you meant to use them, go back to [[#Choose Your Path|Choose Your Path]].
 
 Broad dump of every ignored file, no review:
 
 ```bash
 ./bin/backup-repos.sh --artifact-root "$REIMAGE_ARTIFACT_ROOT" --direct-ignored-dry-run
 ```
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Run the Direct Copy
 
@@ -646,9 +738,12 @@ Only after reviewing the direct dry run:
 ./bin/backup-repos.sh --artifact-root "$REIMAGE_ARTIFACT_ROOT" --direct-ignored-copy
 ```
 
-> **Pitfall —** Because the Direct path does no routing, this can copy `.env` files, keys, certificates, and keystores straight into ordinary output. Do not treat it as a shortcut around secret review — handle those through `secrets-encrypted/` and the consolidated DMG workflow.
+> [!warning] Pitfall
+> Because the Direct path does no routing, this can copy `.env` files, keys, certificates, and keystores straight into ordinary output. Do not treat it as a shortcut around secret review — handle those through `secrets-encrypted/` and the consolidated DMG workflow.
 
-> **Return —** Direct path done. Continue to [[#Review Output Files|Review Output Files]].
+[[#Review Output Files|⮕ Continue to Review Output Files]]
+
+---
 
 ### Review Output Files
 
@@ -665,7 +760,8 @@ summary.txt              counts and the paths above
 
 Watch for: copy failures, credential-shaped files that landed in `candidates.tsv` instead of `secrets-candidates.tsv`, and large generated folders that should have been excluded.
 
-> **Note —** Routed secrets are already segregated under `secrets-encrypted/repos-gitignored/` for exactly this review. Before syncing anything to cloud storage, confirm no credential-bearing file remains in the ordinary output.
+> [!note]
+> Routed secrets are already segregated under `secrets-encrypted/repos-gitignored/` for exactly this review. Before syncing anything to cloud storage, confirm no credential-bearing file remains in the ordinary output.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -799,7 +895,8 @@ Recommended reading order after a refresh:
 | `backup-exclude-list.txt` | Operator-maintained exclusions; not regenerated. |
 | `secrets-patterns.txt` | Operator-maintained secret routing patterns; not regenerated. |
 
-> **Troubleshooting —** The `.tsv` files are true tab-delimited data. View them formatted only at display time, e.g. `column -s $'\t' -t <file> | less -S`, and never save the padded output back over the file.
+> [!bug] Troubleshooting
+> The `.tsv` files are true tab-delimited data. View them formatted only at display time, e.g. `column -s $'\t' -t <file> | less -S`, and never save the padded output back over the file.
 
 ### Known Gaps and Future Considerations
 
