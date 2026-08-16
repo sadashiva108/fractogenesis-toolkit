@@ -206,7 +206,7 @@ supported_apps_registry() {
     "yes" "Optional" "backup-apps.md" "Quick Links or settings/data export matter." "/Applications/Raycast.app;$HOME/Applications/Raycast.app" "$HOME/Library/Application Support/com.raycast.macos;$HOME/Library/Preferences/com.raycast.macos.plist" \
     "-" "-"
   printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
-    "Obsidian" "Optional" "Manual" "$r/app-settings-backup/obsidian/" "usually none from this runbook" \
+    "Obsidian" "Optional" "Both" "$r/app-settings-backup/obsidian/" "usually none from this runbook" \
     "yes" "Optional" "backup-apps.md" "Vault content, vault-local config, or restore-source choice matters." "/Applications/Obsidian.app;$HOME/Applications/Obsidian.app" "$HOME/Library/Application Support/obsidian" \
     "-" "-"
   printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
@@ -604,6 +604,38 @@ elif [[ -d "/Applications/Docker.app" ]] || [[ -d "$HOME/Library/Group Container
   fi
 else
   DOCKER_STATUS="Skipped; Docker Desktop state not detected on this Mac"
+fi
+
+# Obsidian's cross-vault state is scriptable even though the app is "Both": the
+# vault registry lives outside every vault, so no vault backup can hold it, and
+# whether each vault's .obsidian/ is in git is a per-repo fact worth checking
+# rather than assuming. The helper makes no network calls, so it cannot hang or
+# prompt for credentials on a repo whose remote is unreachable.
+OBSIDIAN_HELPER="$(dirname "$SCRIPT_DIR")/.internal/apps/backup-obsidian-vaults.py"
+if [[ "$INTELLIJ_ONLY" == true ]]; then
+  OBSIDIAN_STATUS="Skipped by --intellij-only"
+elif [[ "$DOCKER_ONLY" == true ]]; then
+  OBSIDIAN_STATUS="Skipped by --docker-only"
+elif [[ "$VSCODE_ONLY" == true ]]; then
+  OBSIDIAN_STATUS="Skipped by --vscode-only"
+elif [[ "$RUN_CANDIDATE_REVIEW" == true ]]; then
+  OBSIDIAN_STATUS="Skipped; candidate-review is scan-only"
+elif [[ ! -f "$OBSIDIAN_HELPER" ]]; then
+  OBSIDIAN_STATUS="Skipped; .internal/apps/backup-obsidian-vaults.py not found"
+elif ! command -v python3 >/dev/null 2>&1; then
+  OBSIDIAN_STATUS="Skipped; python3 not available"
+elif ! is_selected_supported "Obsidian"; then
+  OBSIDIAN_STATUS="Skipped; Obsidian not selected in the app-backup checklist"
+elif [[ -f "$HOME/Library/Application Support/obsidian/obsidian.json" ]]; then
+  if python3 "$OBSIDIAN_HELPER" --artifact-root "$REIMAGE_ARTIFACT_ROOT"; then
+    OBSIDIAN_STATUS="Vault registry, inventory, and any gitignored .obsidian/ captured"
+  else
+    _helper_rc=$?
+    OBSIDIAN_STATUS="FAILED -- backup-obsidian-vaults.py exited $_helper_rc; review the output above"
+    HELPER_FAILURES=$((HELPER_FAILURES + 1))
+  fi
+else
+  OBSIDIAN_STATUS="Skipped; no Obsidian vault registry found on this Mac"
 fi
 
 INTELLIJ_HELPER="$(dirname "$SCRIPT_DIR")/.internal/apps/backup-intellij-state.sh"
@@ -1487,6 +1519,7 @@ Artifact root: $REIMAGE_ARTIFACT_ROOT
 | App-backup selection | $SELECTION_STATUS |
 | Standard app-backup directories prepared | Complete |
 | Docker helper | $DOCKER_STATUS |
+| Obsidian helper | $OBSIDIAN_STATUS |
 | IntelliJ helper | $INTELLIJ_STATUS |
 | VS Code local fallback capture | $VSCODE_STATUS |
 | Registry-driven app configs | $APP_CONFIG_STATUS |
@@ -1544,6 +1577,7 @@ else
   echo "Wrote manifest: $APP_ROOT/MANIFEST.md"
   echo "App-backup selection: $SELECTION_STATUS"
   echo "Docker helper: $DOCKER_STATUS"
+  echo "Obsidian helper: $OBSIDIAN_STATUS"
   echo "IntelliJ helper: $INTELLIJ_STATUS"
   echo "VS Code capture: $VSCODE_STATUS"
   echo "App configs: $APP_CONFIG_STATUS"

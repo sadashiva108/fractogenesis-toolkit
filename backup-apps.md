@@ -136,7 +136,7 @@ The table lists every covered app, how it is backed up, and whether it is in the
 | Mos | Script — preferences plist (scroll settings, per-app exceptions) | Optional |
 | Wireshark | Script — profiles, capture/display filters, coloring rules | Optional |
 | Raycast | Manual — Quick Links and settings/data export | Optional |
-| Obsidian | Manual — restore-source decision; optional vault copy | Optional |
+| Obsidian | Script — vault registry, inventory, and gitignored `.obsidian/`; **manual** restore-source decision | Optional |
 | TNAS PC | Manual — reconnect / re-auth; saved credentials secret-bearing | Optional |
 | iMovie | Manual — confirm libraries (user files) are backed up via Phase 2B | Optional |
 | 4K Live Wallpaper | Note only — no meaningful local state; reconfigure after reimage | Optional |
@@ -424,8 +424,8 @@ $REIMAGE_ARTIFACT_ROOT/app-settings-backup/app-backup-selection.md
 It has four selectable sections, each listing only apps detected on *this* Mac. The three supported sections are split by backup mechanism, derived from each app's registry coverage (not a hand-maintained list), so they stay accurate as apps change:
 
 - **Automatic backup (supported)** — the script fully backs these up; no manual step. They start **checked**; uncheck any you do not want.
-- **Both automatic and manual backup (supported)** — the script captures part of these **and** each also has a manual export step (an app lands here only when it is both script-backed *and* has a manual section under Step 5 or its companion runbook — currently IntelliJ IDEA). They start **checked** for the automatic capture; the manual half is still yours to do.
-- **Manual backup (supported)** — the toolkit supports these but the backup is entirely manual (Chrome, Postman, Fiddler Everywhere, Terminal, Raycast, Obsidian, TNAS PC, iMovie). Step 4 makes a ready folder for the ones you keep; you perform the export from the app's UI. They start **checked**.
+- **Both automatic and manual backup (supported)** — the script captures part of these **and** each also has a manual export step (an app lands here only when it is both script-backed *and* has a manual section under Step 5 or its companion runbook — currently IntelliJ IDEA and Obsidian). They start **checked** for the automatic capture; the manual half is still yours to do.
+- **Manual backup (supported)** — the toolkit supports these but the backup is entirely manual (Chrome, Postman, Fiddler Everywhere, Terminal, Raycast, TNAS PC, iMovie). Step 4 makes a ready folder for the ones you keep; you perform the export from the app's UI. They start **checked**.
 - **Unsupported apps on this Mac (manual backup)** — installed apps the toolkit does not cover, **excluding company-managed apps** (a strong managed verdict means IT restores the app, so it is not a manual-backup candidate). Check the ones you will back up by hand; Step 4 creates a drop-folder under `app-settings-backup/manual-unsupported/<app>/` and lists them as manual TODOs in the manifest. The excluded managed apps are recorded in the candidate review's `raw/unsupported-managed-excluded.txt`.
 
 > [!note]
@@ -473,7 +473,8 @@ This captures the script-class apps and prepares folders for the manual-class on
 - **Docker** — `settings-store.json`, `daemon.json`, `contexts/`, and image/container/compose inventories to `app-settings-backup/docker/`; `config.json` staged to `secrets-encrypted/docker/`. `Docker.raw`, image layers, and volumes are intentionally not backed up.
 - **VS Code** — extension list, `settings.json`, `keybindings.json`, `snippets/`, and `profiles/` to `app-settings-backup/vscode/`. Caches, logs, and workspace history are intentionally excluded.
 - **BBEdit, Claude, draw.io, Zoom, Mos, Wireshark** — registry-driven config capture to `app-settings-backup/<app>/` for each selected app detected. Claude's MCP config (`claude_desktop_config.json`) is staged separately to `secrets-encrypted/claude/`, and its account comes back by signing in — its `Application Support` folder is Electron cache and is deliberately not copied.
-- **Chrome, Postman, Fiddler Everywhere, Raycast, Obsidian, Terminal, TNAS PC, iMovie** — a ready folder at `app-settings-backup/<app>/` containing a README that names what to export there. Nothing is captured automatically for these; the folder is the drop target for Step 5.
+- **Chrome, Postman, Fiddler Everywhere, Raycast, Terminal, TNAS PC, iMovie** — a ready folder at `app-settings-backup/<app>/` containing a README that names what to export there. Nothing is captured automatically for these; the folder is the drop target for Step 5.
+- **Obsidian** — the vault registry, a generated vault inventory, and `.obsidian/` for any vault whose repository excludes it, to `app-settings-backup/obsidian/`. The Electron profile around the registry is deliberately not copied; the manual half is the restore-source decision in Step 6.
 - **selected unsupported apps** — a drop-folder with a README under `app-settings-backup/manual-unsupported/<app>/`, for you to fill by hand.
 - **IntelliJ IDEA** — deferred, not captured; see the note before the command above.
 - the stable summary at `app-settings-backup/MANIFEST.md`, with the selection used and the manual TODOs that remain.
@@ -489,7 +490,7 @@ Rerun a single script-class portion through the same entrypoint when needed — 
 `--intellij-only` is not a rerun convenience like these — it is the only way IntelliJ is ever captured, and [[backup-intellij|Backup IntelliJ]] covers what to set up first.
 
 > [!warning] Pitfall
-> A successful run here is **not** a completed phase. It backs up only the selected script-class apps. IntelliJ has not run at all. Any selected Chrome, Postman, Fiddler Everywhere, Terminal, and (if you use them) Raycast, Obsidian, TNAS PC, and iMovie still need their manual exports, and your selected unsupported apps still need filling in. Each has a folder with a README naming what belongs there — a folder containing only a README means the export was not done.
+> A successful run here is **not** a completed phase. It backs up only the selected script-class apps. IntelliJ has not run at all. Any selected Chrome, Postman, Fiddler Everywhere, Terminal, and (if you use them) Raycast, TNAS PC, and iMovie still need their manual exports, Obsidian still needs its restore-source decision, and your selected unsupported apps still need filling in. Each has a folder with a README naming what belongs there — a folder containing only a README means the export was not done.
 
 ### Step 5 — Complete Manual Exports
 
@@ -860,7 +861,7 @@ Phase 3C picks the folder up through its catch-all sweep of `secrets-encrypted/*
 These apps are manual and belong to the optional group, so their full steps live under Supplemental Reference to keep the main flow lean. Complete any you checked in Step 3 — this index just points to each one's full steps. The scripted optional apps (Mos, Wireshark) are captured automatically in Step 4 and are not listed here.
 
 - [[#Raycast|Raycast]] — Quick Links or settings/data export matter.
-- [[#Obsidian|Obsidian]] — vault content, vault-local config, or a restore-source choice matters.
+- [[#Obsidian|Obsidian]] — review the generated vault inventory and record each vault's restore source.
 - [[#TNAS PC|TNAS PC]] — saved TNAS connections or credentials matter.
 - [[#iMovie|iMovie]] — you keep iMovie projects or libraries and must confirm they are backed up.
 
@@ -917,7 +918,7 @@ Detection runs only while the script runs, so a newly installed app has no folde
 ./bin/backup-apps.sh
 ```
 
-For a single script-class app, use `--docker-only`, `--intellij-only`, or `--apps-only` (these bypass the checklist). For a manual-class app (Chrome, Postman, Fiddler Everywhere, Terminal, Raycast, Obsidian, TNAS PC), create the folders by hand from that app's export section.
+For a single script-class app, use `--docker-only`, `--intellij-only`, or `--apps-only` (these bypass the checklist). For a manual-class app (Chrome, Postman, Fiddler Everywhere, Terminal, Raycast, TNAS PC), create the folders by hand from that app's export section.
 
 [[#Step 7 — Verify Outputs|⮕ Continue to Step 7 — Verify Outputs]]
 
@@ -929,7 +930,7 @@ Longer material most runs will not need, kept out of the main flow.
 
 ### Optional App Exports
 
-Raycast, Obsidian, TNAS PC, and iMovie are manual-class apps in the optional group. Their folders are created in Step 4 when detected and selected; complete these exports only if you checked them in Step 3.
+Raycast, TNAS PC, and iMovie are manual-class apps in the optional group, and Obsidian is both — Step 4 captures its vault state, leaving only the restore-source decision. Their folders are created in Step 4 when detected and selected; complete these exports only if you checked them in Step 3.
 
 #### Raycast
 
@@ -1093,47 +1094,105 @@ EOF
 
 #### Obsidian
 
-`backup-apps.sh` prepares the Obsidian folder but does not choose your restore source. The decision here is **which restore source you are using**, and what to record about it.
+Step 4 now captures Obsidian's cross-vault state automatically. What is left for
+you here is the one judgment a script cannot make: **which restore source each
+vault actually uses.**
 
-| Restore source | What to capture |
-|---|---|
-| Obsidian Sync | Record that the vault is signed in, sync is enabled, and no pending sync or errors show. |
-| Git-backed vault | Record Git status, remotes, and whether local commits are pushed or intentionally preserved. |
-| OneDrive- or iCloud-backed vault | Record which cloud is the restore source for this vault. |
-| External manual copy | Record the copied-vault destination and the notes you spot-checked. |
+##### What the script captures, and why only this
 
-For a Git-backed vault, capture status without duplicating the vault:
+`.internal/apps/backup-obsidian-vaults.py` runs during Step 4 whenever Obsidian
+is selected. It writes:
 
-```bash
-VAULT="/path/to/obsidian-vault"
-cd "$VAULT"
-git status -sb
-git remote -v
-git log --oneline -5
+```text
+app-settings-backup/obsidian/
+├── global-settings/
+│   ├── obsidian.json                 # the vault registry
+│   └── <vault-id>.json               # per-vault window geometry
+├── vault-config/<vault>/             # only for vaults whose .obsidian/ is not in git
+└── obsidian-vault-inventory.md       # generated report — regenerated every run
 ```
 
-For a free manual copy outside Git or cloud sync:
+**The registry is the point.** `~/Library/Application Support/obsidian/obsidian.json`
+lists which folders Obsidian treats as vaults. It sits **outside every vault**, so
+no vault backup can contain it — not git, not Obsidian Sync, not a cloud folder.
+Lose it and Obsidian opens to an empty picker after reimage; re-adding folders by
+hand mints a **new vault ID** for each, orphaning any state keyed to the old one.
+
+> [!warning] Pitfall
+> Do not back up that directory wholesale. It is an Electron profile: most of its
+> bulk is the app binary and Chromium caches that reinstalling regenerates, and
+> `Cookies`, `Local Storage`, `Session Storage`, and `IndexedDB` hold Obsidian
+> Sync and Publish **session state**. An `rsync -a` of it puts an auth token into
+> `app-settings-backup/`, which Phase 3C never encrypts. The helper takes the
+> registry and geometry files and nothing else, and the generated report lists
+> every exclusion with its reason.
+
+##### Why it checks each vault against every remote
+
+"My vaults are git repos, so they are backed up" is the assumption this replaces.
+Two ways it fails, both of which the helper detects:
+
+- **`.obsidian/` may not be in git.** Coverage is a per-repository fact, and
+  repositories in the same set routinely disagree — one tracks its config, the
+  next gitignores it. A vault whose `.obsidian/` is excluded has its config in
+  neither git nor any vault backup, so the helper copies it into `vault-config/`.
+- **`git status` can call a repo clean while another remote is stale.** Status
+  compares against *one* upstream. A vault with both a work and a personal remote
+  can be in sync with its upstream and several commits ahead of the other — and
+  cloning the stale one after reimage silently drops that work. The helper
+  computes ahead/behind against **every** remote and names which one to clone
+  from.
+
+It also reports local-only branches and stashes, which no remote holds by
+definition, and flags `.obsidian/plugins/<id>/data.json` files — community-plugin
+settings that routinely carry API tokens and belong in `secrets-encrypted/`, not
+in the plaintext copy.
+
+> [!note]
+> The helper makes **no network calls**. Ahead/behind comes from existing
+> remote-tracking refs, so the run cannot hang or prompt for credentials on an
+> unreachable remote — at the cost of the counts being as of your last fetch. Run
+> `git fetch --all` in each vault first if you need them authoritative. The
+> generated report says so too.
+
+##### Read the report, then decide your restore source
 
 ```bash
-VAULT="/path/to/obsidian-vault"
+open "$REIMAGE_ARTIFACT_ROOT/app-settings-backup/obsidian/obsidian-vault-inventory.md"
+```
+
+Its **Findings** section is the part to act on — it lists only conditions that
+would cost data or time at restore. An empty Findings section means every vault
+is a git repo with a current remote, no local-only work, and `.obsidian/` covered.
+
+For anything it flags, or for a vault that is not git-backed, record the restore
+source:
+
+| Restore source | What to record |
+|---|---|
+| Git-backed vault | Nothing to copy — the report already captured branch, remotes, and sync state. |
+| Obsidian Sync | That the vault is signed in, sync is enabled, and no pending items or errors show. |
+| OneDrive- or iCloud-backed vault | Which cloud is the restore source for this vault. |
+| External manual copy | The copied-vault destination and what you spot-checked. |
+
+For a vault outside both git and cloud sync, copy it:
+
+```bash
+VAULT="/path/to/vault"
 DEST="$REIMAGE_ARTIFACT_ROOT/app-settings-backup/obsidian/vault-copy"
 mkdir -p "$DEST"
 rsync -a "$VAULT/" "$DEST/$(basename "$VAULT")/"
 ```
 
-To preserve app-global Obsidian settings separately from any vault:
+Add anything the report cannot know — a policy reason a remote is deliberately
+stale, or a vault you are choosing not to preserve — to
+`app-settings-backup/obsidian/restore-notes.md`. Keep it out of the generated
+inventory; every run replaces that file.
 
-```bash
-GLOBAL_OBSIDIAN="$HOME/Library/Application Support/obsidian"
-GLOBAL_DEST="$REIMAGE_ARTIFACT_ROOT/app-settings-backup/obsidian/global-settings"
-if [[ -d "$GLOBAL_OBSIDIAN" ]]; then
-  mkdir -p "$GLOBAL_DEST"
-  rsync -a "$GLOBAL_OBSIDIAN/" "$GLOBAL_DEST/"
-fi
-```
-
-> [!note]
-> `.obsidian/` at the vault root holds themes, hotkeys, and community-plugin config. Confirm your chosen restore source actually includes it, or copy it with the vault.
+> [!bug] Troubleshooting
+> If the helper reports `Skipped; no Obsidian vault registry found on this Mac`,
+> Obsidian is installed but has never been launched, so it has not written a
+> registry yet. Launch it once, quit, and rerun `./bin/backup-apps.sh`.
 
 [[#Step 6 — Optional Apps|⬆ Back to Optional Apps]]
 
