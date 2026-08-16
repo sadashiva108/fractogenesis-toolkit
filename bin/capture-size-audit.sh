@@ -4,15 +4,27 @@
 #
 # Audits the configured local backup targets, the OneDrive destination, the
 # external drive's capacity, and the structure of the artifact root, then
-# reports whether the planned backup fits. Run before any copying phase so a
-# full or unmounted drive is caught while it is still cheap to fix. Invoked by
-# Phase 2A (backup-repos.md) and Phase 2B (backup-home.md); see those runbooks
-# for how the output is read.
+# reports whether the planned backup fits. Run it at the START of a phase that
+# copies a meaningful amount, so a full or unmounted drive is caught while it is
+# still cheap to fix rather than partway through a long copy — backup-repos.md
+# (2A), backup-home.md (2B), backup-apps.md (2D), and run-time-machine.md (5),
+# which points it at the Apple backups volume instead of the artifact drive.
+# See those runbooks for how the output is read.
+#
+# capture-managed-inventory.md (2C) and capture-system-inventory.md (4B) also
+# call it, but conditionally and for a different reason. Those phases write a
+# small text capture rather than a backup; they run it only when no audit has
+# been done for the artifact root yet, to confirm the volume is mounted and has
+# room. Do not read those two as capacity-gated phases.
 #
 # Loose plaintext secrets are NOT checked here: that is a security concern with
-# different timing (Phase 3C/6B, after the DMG exists) and it lives in
-# bin/check-loose-secrets.sh. This script is a pre-copy capacity and structure
-# audit.
+# different timing and a different shape. This audit runs many times, ahead of
+# each copying phase. The loose-secret sweep runs once, at Phase 3B — after the
+# phases that stage secret-bearing material and before the DMG is built — and it
+# lives in bin/report-loose-secrets.sh and bin/stage-loose-secrets.sh. Later
+# phases do keep writing to the artifact root, but they write inventories and
+# reports rather than credentials. This script is a pre-copy capacity and
+# structure audit.
 #
 # This file is intended for bin/. All targets, dotfiles, secrets, excludes, and
 # expected artifact folders are read from the artifact-config fragments loaded
@@ -734,7 +746,7 @@ if [[ -d "$EXTERNAL_MOUNT" ]]; then
           # No secret-shape test here. This listing is maxdepth 1 and would
           # catch only a loose file at the very top of the artifact root, with
           # a weaker pattern list than the real check and the same advice.
-          # bin/check-loose-secrets.sh owns that question for the whole tree.
+          # bin/report-loose-secrets.sh owns that question for the whole tree.
           printf "  ${YEL}      %-38s  %s${RST}\n" "$name" "$sz"
         fi
       done < <(
@@ -765,7 +777,7 @@ if [[ -d "$EXTERNAL_MOUNT" ]]; then
 
       if (( loose > 0 )); then
         echo -e "  ${YEL}  ⚠ ${loose} loose file(s) at backup root — organize into subfolders${RST}"
-        echo -e "  ${DIM}    Credential-shaped files anywhere in the tree: ./bin/check-loose-secrets.sh${RST}"
+        echo -e "  ${DIM}    Credential-shaped files anywhere in the tree: ./bin/report-loose-secrets.sh${RST}"
       fi
       if (( metadata_ignored > 0 )); then
         echo -e "  ${DIM}  Ignored ${metadata_ignored} routine macOS metadata item(s).${RST}"

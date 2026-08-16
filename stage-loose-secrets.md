@@ -76,7 +76,7 @@ This phase is safe to re-run at any time and is idempotent — a file already st
 
 ## How the Workflow Works
 
-Read this before running anything. Two scripts do the work and they deliberately split responsibility: `check-loose-secrets.sh` reports and never writes to what it scans, `stage-loose-secrets.sh` acts and is dry-run by default. Both read the same shape list from shared config, so they cannot disagree about what a credential looks like.
+Read this before running anything. Two scripts do the work and they deliberately split responsibility: `report-loose-secrets.sh` reports and never writes to what it scans, `stage-loose-secrets.sh` acts and is dry-run by default. Both read the same shape list from shared config, so they cannot disagree about what a credential looks like.
 
 The sweep works on the *destination* — the artifact root — rather than filtering at each source. That is what makes it phase-agnostic: material left behind by Phase 2A, 2B, 2D, or 3A is caught by one pass, and no artifact-config exclude list has to change to make it work.
 
@@ -108,7 +108,7 @@ Being aggressive about shapes is safe here precisely because a match is *staged*
 | Encryption boundary | The edge of `secrets-encrypted/`. Inside it, Phase 3C encrypts; outside it, nothing does. |
 | Shape | A filename glob such as `*.p12` or `.netrc`. Never a path, never file contents. |
 | Staging | Moving a loose secret into `secrets-encrypted/staged-loose/`, keeping its original relative path. |
-| OUTSIDE / INSIDE / STAGED | The three states `check-loose-secrets.sh` reports. See [[#Reading the Rolling Reports\|Reading the Rolling Reports]]. |
+| OUTSIDE / INSIDE / STAGED | The three states `report-loose-secrets.sh` reports. See [[#Reading the Rolling Reports\|Reading the Rolling Reports]]. |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -117,7 +117,7 @@ Being aggressive about shapes is safe here precisely because a match is *staged*
 ## Artifact and Script Locations
 
 ```text
-$FRACTOGENESIS_HOME/bin/check-loose-secrets.sh    # entrypoint — reports, never writes to what it scans
+$FRACTOGENESIS_HOME/bin/report-loose-secrets.sh    # entrypoint — reports, never writes to what it scans
 $FRACTOGENESIS_HOME/bin/stage-loose-secrets.sh    # entrypoint — moves, dry-run by default
 $FRACTOGENESIS_HOME/.internal/artifact-config.sh  # SECRET_SHAPES_FLOOR and the predicate builder
 ```
@@ -183,7 +183,7 @@ That is the intended outcome. `MANIFEST.tsv` is what makes it reversible.
 ### Step 1 — Find What Is Loose
 
 ```bash
-./bin/check-loose-secrets.sh --context pre-image-stage-loose-secrets
+./bin/report-loose-secrets.sh --context pre-image-stage-loose-secrets
 ```
 
 Read the `OUTSIDE` list. That is the finding that matters: credential-shaped files that Phase 3C will never encrypt.
@@ -222,7 +222,7 @@ Nothing is ever overwritten. A destination that already exists is reported as `E
 ### Step 4 — Confirm the Tree Is Clean
 
 ```bash
-./bin/check-loose-secrets.sh --context pre-image-stage-loose-secrets-after
+./bin/report-loose-secrets.sh --context pre-image-stage-loose-secrets-after
 ```
 
 `OUTSIDE` must be `0` before Phase 3C. A nonzero count here means something was kept, collided, or failed to move — resolve it now rather than at the sign-off, because once the DMG is built the plaintext you missed is still plaintext.
@@ -266,7 +266,7 @@ Leaving it staged is usually the cheaper outcome — it rides in the DMG and not
 ./bin/stage-loose-secrets.sh --apply --keep 'public-certs/*'
 ```
 
-`--keep` is repeatable and matches the artifact-root-relative path shown in the output. Note that `check-loose-secrets.sh` will keep reporting it — that is the intended trade, and the reason to record the decision in [[#Decisions|Decisions]].
+`--keep` is repeatable and matches the artifact-root-relative path shown in the output. Note that `report-loose-secrets.sh` will keep reporting it — that is the intended trade, and the reason to record the decision in [[#Decisions|Decisions]].
 
 ### A File Is Already Staged and the Source Remains
 
@@ -279,7 +279,7 @@ diff "$REIMAGE_ARTIFACT_ROOT/<path>" \
      "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/staged-loose/<path>"
 ```
 
-Identical: delete the plaintext source. Source is newer: delete the staged copy and re-run `--apply`. Until one of them is gone, `check-loose-secrets.sh` keeps reporting it, and it is right to.
+Identical: delete the plaintext source. Source is newer: delete the staged copy and re-run `--apply`. Until one of them is gone, `report-loose-secrets.sh` keeps reporting it, and it is right to.
 
 ### The Same Finding Keeps Coming Back
 

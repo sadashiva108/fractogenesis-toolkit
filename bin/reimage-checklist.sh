@@ -532,6 +532,13 @@ if [[ "$PHASE" == "pre" ]]; then
   # -------------------------------------------------------------------------
   record_section "Backup Root Subdirectories"
   # -------------------------------------------------------------------------
+  # This list is intentionally separate from EXPECTED_ARTIFACT_FOLDERS and must
+  # not be replaced by it. That fragment is the CREATION list — what Phase 1
+  # makes, empty. This is the COMPLETENESS list — what must hold content before
+  # the erase. The two differ in both directions: office-stability and
+  # performance-audit are checked here but never scaffolded (optional captures,
+  # created by their runbooks only when relevant), while folders Phase 1 always
+  # creates can legitimately still be empty here and are checked elsewhere.
   for subdir in app-settings-backup repo-audit-reports gitignore-superset managed-inventory office-stability performance-audit secrets-encrypted system-inventory toolkit-snapshot; do
     if dir_nonempty "$REIMAGE_ARTIFACT_ROOT/$subdir"; then
       SIZE="$(du -sh "$REIMAGE_ARTIFACT_ROOT/$subdir" 2>/dev/null | cut -f1)"
@@ -656,6 +663,58 @@ if [[ "$PHASE" == "pre" ]]; then
   fi
 
   # -------------------------------------------------------------------------
+  record_section "Loose Secret Sweep"
+  # -------------------------------------------------------------------------
+  # Existence alone would be a weak check: re-runs are expected, so what matters
+  # is ORDER. The chain is backups -> sweep -> DMG, and each link has to be newer
+  # than the one before it. A backup re-run after the sweep means credentials may
+  # have been re-copied into the clear; a sweep after the DMG means the DMG does
+  # not contain what was staged.
+  LOOSE_REPORTS_DIR="$REIMAGE_ARTIFACT_ROOT/loose-secrets-reports"
+  LOOSE_MANIFEST="$LOOSE_REPORTS_DIR/MANIFEST.md"
+
+  if [[ -f "$LOOSE_MANIFEST" ]]; then
+    LOOSE_RUNS="$(grep -c '^| 20' "$LOOSE_MANIFEST" 2>/dev/null)"
+    record_check PASS "Loose secret sweep ran" "${LOOSE_RUNS:-0} recorded run(s)"
+
+    # Each backup tree stamps a completion file on every real run, so staleness
+    # is three stat comparisons rather than three tree walks. Walking a full
+    # artifact root here would add minutes to the sign-off that runs last.
+    #   home-files-backup/MANIFEST.md          end of backup-home
+    #   app-settings-backup/MANIFEST.md        end of backup-apps (candidate
+    #                                          review deliberately does not write it)
+    #   staged-ignored-files/live/summary.txt  end of the live staging copy
+    STALE_SINCE_SWEEP=""
+    for _lsflag in \
+      "home-files-backup/MANIFEST.md" \
+      "app-settings-backup/MANIFEST.md" \
+      "staged-ignored-files/live/summary.txt"; do
+      _lspath="$REIMAGE_ARTIFACT_ROOT/$_lsflag"
+      [[ -f "$_lspath" ]] || continue
+      if [[ "$_lspath" -nt "$LOOSE_MANIFEST" ]]; then
+        STALE_SINCE_SWEEP="$STALE_SINCE_SWEEP ${_lsflag%%/*}"
+      fi
+    done
+
+    if [[ -n "${OPEN_FINDINGS:=$LOOSE_REPORTS_DIR/open-findings.md}" && -f "$OPEN_FINDINGS" ]]; then
+      OPEN_COUNT="$(grep -cE '^\| (OUTSIDE|INSIDE) ' "$OPEN_FINDINGS" 2>/dev/null)"
+      if [[ "${OPEN_COUNT:-0}" -gt 0 ]]; then
+        record_check FAIL "Open loose-secret findings" \
+          "${OPEN_COUNT} unresolved in open-findings.md -- stage them, or record each as an exception with a reason in loose-secret-exceptions.conf.sh"
+      else
+        record_check PASS "Open loose-secret findings" "None open"
+      fi
+    else
+      record_check SKIP "Open loose-secret findings" "open-findings.md not present"
+    fi
+  else
+    record_check FAIL "Loose secret sweep ran" \
+      "No MANIFEST.md under loose-secrets-reports/ -- Phase 3B has never completed a saved run"
+    record_check SKIP "Sweep is current with backups" "Skipped -- no sweep recorded"
+    record_check SKIP "Open loose-secret findings" "Skipped -- no sweep recorded"
+  fi
+
+  # -------------------------------------------------------------------------
   record_section "Secrets and Encrypted DMG"
   # -------------------------------------------------------------------------
   SECRETS_DIR="$REIMAGE_ARTIFACT_ROOT/secrets-encrypted"
@@ -668,6 +727,19 @@ if [[ "$PHASE" == "pre" ]]; then
       record_check PASS "DMG manifest" "$(basename "${DMG_BASE}-manifest.txt")"
     else
       record_check WARN "DMG manifest" "No manifest found next to DMG"
+    fi
+
+    # Third link in the backups -> sweep -> DMG chain. A DMG older than the last
+    # sweep does not contain what the sweep moved into staged-loose/.
+    if [[ -f "$LOOSE_MANIFEST" ]]; then
+      if [[ "$LOOSE_MANIFEST" -nt "$SECRETS_DMG" ]]; then
+        record_check FAIL "DMG is current with the sweep" \
+          "Phase 3B ran after this DMG was built -- rebuild it so staged-loose/ is included"
+      else
+        record_check PASS "DMG is current with the sweep" "DMG is newer than the last sweep"
+      fi
+    else
+      record_check SKIP "DMG is current with the sweep" "Skipped -- no sweep recorded"
     fi
   else
     record_check FAIL "Consolidated secrets DMG" "No all-secrets-*.dmg under $SECRETS_DIR"

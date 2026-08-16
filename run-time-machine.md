@@ -3,10 +3,17 @@
 <!--
 Migrated from reference-vault/workflows/mac/reimage/backup-time-machine.md.
 Renaming considerations:
-- backup-time-machine.md → run-time-machine.md; backup-time-machine.sh → bin/run-time-machine.sh.
+- backup-time-machine.md → run-time-machine.md; run-time-machine.sh → bin/run-time-machine.sh.
   "backup-time-machine" is redundant (Time Machine is Apple's backup system); "run-" names the
-  runtime driver and pairs with the read-only capture-time-machine.sh helper.
-- capture-time-machine.sh keeps its name.
+  runtime driver and pairs with the read-only record-time-machine-evidence.sh helper.
+- capture-time-machine.sh → record-time-machine-evidence.sh. "capture-" was overused and
+  had stopped distinguishing anything. It now marks one group only: paired pre-image /
+  post-image state inventories that are re-run after the reimage and compared — every
+  capture-* script but one has a Phase 13 sibling. "record-" marks the other group:
+  one-time evidence that a specific operation succeeded, with nothing to compare it
+  against later. That is what this is, alongside record-enrollment.sh and
+  record-reimaged-system.sh. "-evidence" names the output. run-time-machine.md owns
+  both scripts.
 -->
 
 # Run Time Machine
@@ -68,7 +75,7 @@ This runbook owns:
 
 ```text
 running, monitoring, and completing the pre-image Time Machine backup — bin/run-time-machine.sh
-read-only Time Machine evidence capture — bin/capture-time-machine.sh
+read-only Time Machine evidence capture — bin/record-time-machine-evidence.sh
 Time Machine verification, comparison, and the final eject before erase
 the $REIMAGE_ARTIFACT_ROOT/time-machine/ evidence layout
 ```
@@ -93,7 +100,7 @@ This runbook can be rerun independently: rerunning the backup produces a fresh i
 
 Read this before running anything. The flow is: exclude the wrong volumes and confirm the right destination, capture lightweight pre-run evidence, start the backup and watch it to completion, verify the completed snapshot, capture post-run evidence and compare against the previous backup, then eject cleanly before the erase. The order matters because a backup pointed at the wrong destination, or one that swept in the manual artifact root, wastes hours and produces confusing validation evidence — so destination and exclusions are settled first, before anything is written.
 
-The preferred path is the scripted one: drive every runtime action through `bin/run-time-machine.sh` and capture evidence through `bin/capture-time-machine.sh`, falling back to the raw `tmutil`/`diskutil` commands in [[#Raw Command Equivalents|Raw Command Equivalents]] only when a script is unavailable or you are debugging it.
+The preferred path is the scripted one: drive every runtime action through `bin/run-time-machine.sh` and capture evidence through `bin/record-time-machine-evidence.sh`, falling back to the raw `tmutil`/`diskutil` commands in [[#Raw Command Equivalents|Raw Command Equivalents]] only when a script is unavailable or you are debugging it.
 
 ### The Two Scripts
 
@@ -102,7 +109,7 @@ Two scripts split runtime control from evidence capture, so read-only capture ne
 | Script | Role | Use it for |
 |---|---|---|
 | `bin/run-time-machine.sh` | Runtime driver | start, monitor, complete, verify-latest, compare, mount/unmount snapshots, logs, diagnose, eject |
-| `bin/capture-time-machine.sh` | Read-only evidence capture | pre-run snapshot, focused `verify-volume`, and the final checklist bundle — it never starts, stops, or mounts a backup |
+| `bin/record-time-machine-evidence.sh` | Read-only evidence capture | pre-run snapshot, focused `verify-volume`, and the final checklist bundle — it never starts, stops, or mounts a backup |
 
 The full per-subcommand tables are in [[#Subcommand Reference|Subcommand Reference]].
 
@@ -139,7 +146,7 @@ Primary and related scripts (alphabetical; each classified):
 
 ```text
 $FRACTOGENESIS_HOME/bin/capture-size-audit.sh      # entrypoint — capacity check for the Time Machine destination
-$FRACTOGENESIS_HOME/bin/capture-time-machine.sh    # entrypoint — read-only evidence capture
+$FRACTOGENESIS_HOME/bin/record-time-machine-evidence.sh    # entrypoint — read-only evidence capture
 $FRACTOGENESIS_HOME/bin/run-time-machine.sh        # entrypoint — Time Machine runtime driver
 ```
 
@@ -274,7 +281,7 @@ Record the starting state and prevent sleep before a potentially multi-hour run.
 Capture the lightweight pre-run snapshot (destination, latest backup, backup list, exclusions):
 
 ```bash
-./bin/capture-time-machine.sh pre-run --open
+./bin/record-time-machine-evidence.sh pre-run --open
 ```
 
 > [!note]
@@ -348,8 +355,8 @@ Record the verified end state and confirm what changed since the previous backup
 Capture APFS volume verification, then the final read-only checklist bundle:
 
 ```bash
-./bin/capture-time-machine.sh verify-volume --open
-./bin/capture-time-machine.sh final --open
+./bin/record-time-machine-evidence.sh verify-volume --open
+./bin/record-time-machine-evidence.sh final --open
 ```
 
 Compare the latest backup to the previous one:
@@ -526,13 +533,13 @@ Longer material most runs will not need, kept out of the main flow.
 | Capture diagnostics | `./bin/run-time-machine.sh diagnose --open` |
 | Eject selected volumes | `./bin/run-time-machine.sh eject` |
 
-`bin/capture-time-machine.sh` — read-only evidence capture:
+`bin/record-time-machine-evidence.sh` — read-only evidence capture:
 
 | Task | Command |
 |---|---|
-| Capture lightweight pre-run evidence | `./bin/capture-time-machine.sh pre-run --open` |
-| Capture focused APFS destination verification | `./bin/capture-time-machine.sh verify-volume --open` |
-| Capture the final read-only checklist bundle | `./bin/capture-time-machine.sh final --open` |
+| Capture lightweight pre-run evidence | `./bin/record-time-machine-evidence.sh pre-run --open` |
+| Capture focused APFS destination verification | `./bin/record-time-machine-evidence.sh verify-volume --open` |
+| Capture the final read-only checklist bundle | `./bin/record-time-machine-evidence.sh final --open` |
 
 ### Raw Command Equivalents
 
@@ -595,10 +602,10 @@ PY
 
 ### Verify the Installed Capture Script Version
 
-`capture-time-machine.sh` splits evidence across `pre-run`, `verify-volume`, and `final` (there is no `status` subcommand). Confirm the installed script before relying on the capture commands:
+`record-time-machine-evidence.sh` splits evidence across `pre-run`, `verify-volume`, and `final` (there is no `status` subcommand). Confirm the installed script before relying on the capture commands:
 
 ```bash
-./bin/capture-time-machine.sh version
+./bin/record-time-machine-evidence.sh version
 ```
 
 If this prints an older version string, or `verify-volume` / `final` print `Unknown command` or fall through to `run-time-machine.sh` usage, the local capture script is stale — replace it. None of the generated bundles should include a `## Resolved Paths` / `## Selected Paths` table listing environment-variable names; if one appears, the installed script is stale.

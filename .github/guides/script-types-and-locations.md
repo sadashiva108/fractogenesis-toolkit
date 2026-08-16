@@ -64,7 +64,7 @@ when a runbook tells the reader to run it directly. Until then it stays in
 
 **A runbook may own more than one `bin/` script.** The name pairing identifies
 the *primary* entrypoint, not the complete set. `stage-loose-secrets.md` owns
-both `stage-loose-secrets.sh` and `check-loose-secrets.sh` — one acts, one
+both `stage-loose-secrets.sh` and `report-loose-secrets.sh` — one acts, one
 reports read-only, and splitting them is what keeps the reporting side safe to
 run at any time. `backup-home.md` likewise owns `verify-artifact-config.sh`.
 A second script belongs to the runbook that tells the reader to run it.
@@ -72,7 +72,7 @@ A second script belongs to the runbook that tells the reader to run it.
 **Cross-cutting utilities have no owning runbook at all** and are the deliberate
 exception to the pairing — `capture-size-audit.sh` and `verify-doc-paths.sh` are
 the current ones. The test is how many runbooks *call* it, not how much ground
-it covers: `check-loose-secrets.sh` examines material produced by six earlier
+it covers: `report-loose-secrets.sh` examines material produced by six earlier
 phases but is invoked from exactly one runbook, so it is owned, not
 cross-cutting.
 

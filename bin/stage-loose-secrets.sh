@@ -12,7 +12,7 @@
 # material is swept across the encryption boundary before the DMG is built.
 #
 # Runbook: stage-loose-secrets.md (Phase 3B). Paired with
-# bin/check-loose-secrets.sh, which reports the same findings read-only; this
+# bin/report-loose-secrets.sh, which reports the same findings read-only; this
 # one acts on them. Both read the same SECRET_SHAPES from shared config, so
 # they can never disagree about what a credential looks like.
 #
@@ -43,16 +43,25 @@
 # Options:
 #   --artifact-root PATH  Override REIMAGE_ARTIFACT_ROOT from shared config.
 #   --apply               Perform the moves. Without it, nothing is written.
-#   --keep GLOB           Leave matching paths where they are. Repeatable.
-#                         Matched against the artifact-root-relative path.
-#   --verbose             Also list paths that were skipped by --keep.
+#   --keep GLOB           Leave matching paths alone FOR THIS RUN ONLY.
+#                         Repeatable. Matched against the artifact-root-relative
+#                         path. Records nothing and is invisible to
+#                         report-loose-secrets.sh, so the file keeps being
+#                         reported — use it while you are still deciding.
+#   --verbose             Also list paths skipped by --keep or by an exception.
 #   -h, --help            Show this message and exit.
 #
 # What it moves:
 #   Any file whose NAME matches SECRET_SHAPES (the floor in
 #   .internal/artifact-config.sh plus anything secret-shapes.conf.sh adds),
 #   located anywhere under the artifact root except secrets-encrypted/ and
-#   loose-secrets-reports/.
+#   loose-secrets-reports/ — minus anything listed in
+#   loose-secret-exceptions.conf.sh.
+#
+#   That fragment is the DURABLE way to except a path: it carries a required
+#   reason, survives re-runs and the erase, and report-loose-secrets.sh reads
+#   the same list, so an accepted path drops out of the OUTSIDE count instead
+#   of being ignored forever.
 #
 #   Destination preserves the original relative path:
 #     home-files-backup/proj/id_rsa
@@ -201,6 +210,12 @@ if ! declare -f build_secret_shape_predicate >/dev/null 2>&1; then
   exit 2
 fi
 
+if ! declare -f loose_secret_exception_reason >/dev/null 2>&1; then
+  echo "ERROR: shared config did not provide loose_secret_exception_reason." >&2
+  echo "Update .internal/artifact-config.sh." >&2
+  exit 2
+fi
+
 build_secret_shape_predicate SECRET_SHAPE_PRED
 
 if (( ${#SECRET_SHAPE_PRED[@]} == 0 )); then
@@ -223,6 +238,7 @@ echo ""
 moved=0
 would_move=0
 kept=0
+excepted=0
 collisions=0
 failures=0
 
@@ -238,6 +254,20 @@ keep_matches() {
 while IFS= read -r -d '' src; do
   rel="${src#"$REIMAGE_ARTIFACT_ROOT"/}"
 
+  # Durable exception, recorded with a reason in loose-secret-exceptions.conf.sh.
+  # report-loose-secrets.sh reads the same list, so the two can never disagree
+  # about what has been accepted.
+  if accept_reason="$(loose_secret_exception_reason "$rel")"; then
+    excepted=$(( excepted + 1 ))
+    if $VERBOSE; then
+      printf "    ${DIM}ACCEPTED %s${RST}\n" "$rel"
+      printf "             ${DIM}%s${RST}\n" "$accept_reason"
+    fi
+    continue
+  fi
+
+  # One-off override for this invocation only. Deliberately records nothing and
+  # is invisible to the reporter — an undecided file should keep showing up.
   if keep_matches "$rel"; then
     kept=$(( kept + 1 ))
     if $VERBOSE; then
@@ -305,6 +335,7 @@ else
   printf "  %-22s %s\n" "would stage:" "$would_move"
 fi
 (( collisions > 0 )) && printf "  %-22s %s\n" "already staged:" "$collisions"
+(( excepted > 0 ))   && printf "  %-22s %s\n" "accepted (fragment):" "$excepted"
 (( kept > 0 ))       && printf "  %-22s %s\n" "kept by --keep:" "$kept"
 (( failures > 0 ))   && printf "  %-22s %s\n" "failed:" "$failures"
 echo ""
@@ -325,7 +356,7 @@ if (( collisions > 0 )); then
   echo -e "  ${DIM}  diff \"\$REIMAGE_ARTIFACT_ROOT/<path>\" \\\\${RST}"
   echo -e "  ${DIM}       \"\$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/staged-loose/<path>\"${RST}"
   echo -e "  ${DIM}Identical: delete the plaintext source. Source is newer: delete the staged${RST}"
-  echo -e "  ${DIM}copy and re-run this script. Either way check-loose-secrets.sh still${RST}"
+  echo -e "  ${DIM}copy and re-run this script. Either way report-loose-secrets.sh still${RST}"
   echo -e "  ${DIM}reports the source until one of them is gone.${RST}"
   echo ""
 fi
@@ -334,7 +365,7 @@ if $APPLY; then
   if (( moved > 0 )); then
     echo -e "  ${GRN}${BLD}✓ $moved file(s) staged for encryption.${RST}"
     echo -e "  ${DIM}Manifest: $MANIFEST${RST}"
-    echo -e "  ${DIM}Confirm the tree is clean:  ./bin/check-loose-secrets.sh${RST}"
+    echo -e "  ${DIM}Confirm the tree is clean:  ./bin/report-loose-secrets.sh${RST}"
   else
     echo -e "  ${GRN}${BLD}✓ Nothing to stage — no loose credential-shaped files found.${RST}"
   fi

@@ -552,8 +552,9 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 > │   └── vault-if-export-allowed/           # if exported
 > ├── RESTORE-README.md                      # created by create-secrets-dmg (Phase 3C, not yet run)
 > ├── ssh/
-> └── staged-loose/                          # manual: files moved here during loose-secret triage,
->     └── <original-relative-path>           # keeping their original path under the artifact root
+> └── staged-loose/                          # written by stage-loose-secrets.sh (Phase 3B)
+>     ├── MANIFEST.tsv                       # when, source path, staged path — restore reads this
+>     └── <original-relative-path>           # e.g. home-files-backup/proj/id_rsa
 > ```
 
 > [!example]- `$REIMAGE_ARTIFACT_ROOT/size-audit-reports/`
@@ -672,7 +673,7 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 >
 > ```text
 > bin/run-time-machine.sh   runtime operations: start, monitor, complete, logs, compare, verify, mount/unmount, diagnose, eject
-> bin/capture-time-machine.sh  read-only captures: pre-run bundle, verify-volume, final checklist
+> bin/record-time-machine-evidence.sh  read-only captures: pre-run bundle, verify-volume, final checklist
 > ```
 
 > [!example]- `$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/`

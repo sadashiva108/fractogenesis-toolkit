@@ -15,7 +15,7 @@
 #     of the plaintext backup", not "this file is gone".
 #
 # Patterns are shell globs matched against the FILENAME only, never the path.
-# They are consumed by bin/check-loose-secrets.sh (reports) and
+# They are consumed by bin/report-loose-secrets.sh (reports) and
 # bin/stage-loose-secrets.sh (moves), so one line here changes both.
 #
 # Add shapes specific to this machine or employer, for example:

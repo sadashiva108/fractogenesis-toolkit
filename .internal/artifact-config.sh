@@ -282,7 +282,7 @@ _artifact_config_main() {
 
   # ── Secret shapes ──────────────────────────────────────────────────────────
   # The single definition of "this filename looks like a credential", shared by
-  # bin/check-loose-secrets.sh and bin/stage-loose-secrets.sh. Before this
+  # bin/report-loose-secrets.sh and bin/stage-loose-secrets.sh. Before this
   # existed the answer was spelled out separately in onedrive-extra-excludes
   # (22 shapes), external-excludes (none at all), the IntelliJ helper, and the
   # repo backup — and they disagreed, which is how credential-shaped files
@@ -308,16 +308,17 @@ _artifact_config_main() {
     'settings.xml'       'gradle.properties'
   )
 
-  # Optional fragment: sourced only when present, so an existing workspace copy
-  # created before this fragment shipped keeps loading without error.
-  config_path="$ARTIFACT_CONFIG_SOURCE_DIR/secret-shapes.conf.sh"
-  if [[ -f "$config_path" ]]; then
+  # Optional fragments: sourced only when present, so an existing workspace copy
+  # created before one of them shipped keeps loading without error.
+  for fragment in secret-shapes.conf.sh loose-secret-exceptions.conf.sh; do
+    config_path="$ARTIFACT_CONFIG_SOURCE_DIR/$fragment"
+    [[ -f "$config_path" ]] || continue
     # shellcheck disable=SC1090
     if ! source "$config_path"; then
       echo "ERROR: failed to source artifact-config fragment: $config_path" >&2
       return 2
     fi
-  fi
+  done
 
   # Effective set = floor plus whatever the fragment added. Guarded because the
   # fragment may be absent, or present with an empty array — on Bash 3.2,
@@ -329,6 +330,30 @@ _artifact_config_main() {
   fi
 
   return 0
+}
+
+# Public helper: is this artifact-root-relative path an accepted exception?
+# Prints the recorded reason on stdout and returns 0 when it matches, else
+# returns 1. Both bin/report-loose-secrets.sh and bin/stage-loose-secrets.sh
+# call this, so an exception can never mean one thing to one of them and
+# something else to the other.
+#
+# Usage: if reason="$(loose_secret_exception_reason "$rel")"; then ... fi
+loose_secret_exception_reason() {
+  local rel="$1" entry glob reason
+
+  for entry in ${LOOSE_SECRET_EXCEPTIONS[@]+"${LOOSE_SECRET_EXCEPTIONS[@]}"}; do
+    [[ -n "$entry" ]] || continue
+    glob="$(config_field "$entry" 1)"
+    reason="$(config_field "$entry" 2)"
+    [[ -n "$glob" ]] || continue
+    # shellcheck disable=SC2053
+    if [[ "$rel" == $glob ]]; then
+      printf '%s' "${reason:-no reason recorded}"
+      return 0
+    fi
+  done
+  return 1
 }
 
 # Public helper: turn SECRET_SHAPES into a find(1) predicate group in the array

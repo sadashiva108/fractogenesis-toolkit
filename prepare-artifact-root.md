@@ -93,6 +93,7 @@ $REIMAGE_ARTIFACT_ROOT/
 ├── app-settings-backup/
 ├── gitignore-superset/
 ├── home-files-backup/
+├── loose-secrets-reports/
 ├── managed-inventory/
 ├── public-certs/
 ├── reimage-confirmation/
@@ -330,6 +331,7 @@ Current expected top-level folders from `artifact-config.sh`:
 app-settings-backup
 gitignore-superset
 home-files-backup
+loose-secrets-reports
 managed-inventory
 public-certs
 reimage-confirmation
@@ -1239,6 +1241,7 @@ $REIMAGE_ARTIFACT_ROOT/
 ├── app-settings-backup/
 ├── gitignore-superset/
 ├── home-files-backup/
+├── loose-secrets-reports/
 ├── managed-inventory/
 ├── public-certs/
 ├── reimage-confirmation/
@@ -1262,6 +1265,7 @@ Folder purpose:
 | `app-settings-backup/`      | App-specific exported settings, inventories, notes, and app-owned restore artifacts such as Chrome bookmarks, Docker settings, Postman exports, Raycast exports, Obsidian copies, VS Code fallback state, and IntelliJ backup material.    |
 | `gitignore-superset/`       | Reviewable superset of ignored patterns across repos.                                                                                                                                                                                        |
 | `home-files-backup/`        | Home folders, dotfiles, and selected local files copied by `backup-home.sh`.                                                                                                                                                                 |
+| `loose-secrets-reports/`    | Loose-plaintext-secret check history from `report-loose-secrets.sh` (Phase 3B) — rolling `open-findings.md`, the `findings-ledger.tsv` behind it, an append-only manifest, and timestamped run directories. Names candidate paths, never file contents.                          |
 | `managed-inventory/`        | Company-managed component inventory before erase — MDM/Intune enrollment status, installed profiles, managed app bundles and package receipts, background managed services, and managed preference payloads.                              |
 | `public-certs/`             | Non-secret certificate material — sanitized notes, inventories, decision logs, and public-only convenience certificate copies. Secret-bearing or uncertain certificate material goes under `secrets-encrypted/certs/` instead.              |
 | `reimage-confirmation/`     | Filled copy of the Phase 0 IT reimage confirmation kept with the external backup root from the start of the reimage effort.                                                                                                                 |

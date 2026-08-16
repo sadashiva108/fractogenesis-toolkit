@@ -104,6 +104,7 @@ $REIMAGE_ARTIFACT_ROOT/
 │   ├── home/
 │   ├── dotfiles/
 │   └── MANIFEST.md
+├── loose-secrets-reports/
 ├── managed-inventory/
 │   ├── pre-image-YYYYMMDD-HHMMSS/
 │   └── post-image-YYYYMMDD-HHMMSS/

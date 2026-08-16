@@ -145,6 +145,7 @@ REQUIRED_FRAGMENTS=(
 # clean, so absence is reported as a note, never as a failure.
 # ---------------------------------------------------------------------------
 OPTIONAL_FRAGMENTS=(
+  loose-secret-exceptions.conf.sh
   secret-shapes.conf.sh
 )
 
@@ -277,7 +278,7 @@ if [[ "$SCAN_REFERENCES" == true ]]; then
     echo -e "  ${DIM}Every match, including self-references:${RST}"
     (
       cd "$REPO_ROOT" 2>/dev/null && grep -RInE \
-        'expected-artifact-folders|external-dotfiles|external-excludes|external-targets|onedrive-extra-excludes|onedrive-targets|secret-flags|secret-shapes|secrets-targets|skip-entries' \
+        'expected-artifact-folders|external-dotfiles|external-excludes|external-targets|onedrive-extra-excludes|loose-secret-exceptions|onedrive-targets|secret-flags|secret-shapes|secrets-targets|skip-entries' \
         bin .internal 2>/dev/null
     ) | sed 's/^/    /'
   fi

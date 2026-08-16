@@ -76,7 +76,7 @@ It complements the broader workflow docs:
 | Certificate and Keychain staging                  | `stage-certs-keychain.md`                                                                                               |
 | Encrypted secret staging, validation, and cleanup | `backup-dmg-secrets.md`                                                                                                 |
 | IntelliJ-specific backup artifacts                | `backup-intellij.md`                                                                                                    |
-| Time Machine Snapshot and status evidence         | `run-time-machine.md`; runtime script `bin/run-time-machine.sh`; read-only capture script `bin/capture-time-machine.sh` |
+| Time Machine Snapshot and status evidence         | `run-time-machine.md`; runtime script `bin/run-time-machine.sh`; read-only capture script `bin/record-time-machine-evidence.sh` |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -85,7 +85,7 @@ Time Machine command ownership:
 | Script                        | Role |
 |-------------------------------|---|
 | `bin/run-time-machine.sh`     | Runtime Time Machine operations: start, monitor, completion evidence, logs, mount/unmount, targeted verification, compare, diagnostics, and eject. |
-| `bin/capture-time-machine.sh` | Read-only Time Machine captures: `pre-run` full evidence bundle, optional `verify-volume` APFS destination-volume verification, and `final` auto-filled Time Machine checklist. |
+| `bin/record-time-machine-evidence.sh` | Read-only Time Machine captures: `pre-run` full evidence bundle, optional `verify-volume` APFS destination-volume verification, and `final` auto-filled Time Machine checklist. |
 
 
 ---

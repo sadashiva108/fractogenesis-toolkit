@@ -15,6 +15,7 @@ This is the canonical top-level guide for the Mac reimage workflow.
     - [[#Post-Image|Post-Image]]
 - [[#Backup Strategy|Backup Strategy]]
 - [[#Restore Strategy|Restore Strategy]]
+- [[#Staleness and Re-Runs|Staleness and Re-Runs]]
 - [[#Phase 0 — Confirm the Reimage Plan with IT|Phase 0 — Confirm the Reimage Plan with IT]]
 - [[#Phase 1 — Prepare the External Artifact Root|Phase 1 — Prepare the External Artifact Root]]
 - [[#Phase 2 — Pre-Image Data Backups|Phase 2 — Pre-Image Data Backups]]
@@ -167,6 +168,58 @@ If you plan to collect optional performance evidence for several days or weeks b
 This repository, Obsidian, and Git/SSH access are all gone right after the reimage — but Phase 8 onward assumes you can read this guide and its linked runbooks. This repo is fetchable without any of those (see the README Quickstart) precisely so this dependency doesn't block early restore phases. The repository can't be cloned until Phase 11 restores Git/SSH properly — nothing before that needs it.
 
 The restore strategy has a solution for guide access as well as a backup refer to [Restore Strategy Guide](./references/restore-strategy-guide.md).
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+## Staleness and Re-Runs
+
+Pre-image prep often spans weeks. Work keeps happening on the machine while it does, so the backups you took first are the ones most likely to be stale by the time you erase. This section is about deciding what to redo — and, more importantly, what has to follow it.
+
+Nothing here is automatic. You know what changed on your machine; the workflow does not.
+
+### What Usually Needs Redoing
+
+The three Phase 2 backups are the ones that go stale, because they capture work in progress:
+
+```text
+backup-repos.md   commits, stashes, and ignored files that moved since the last run
+backup-home.md    dotfiles, documents, and anything under the configured home targets
+backup-apps.md    app settings, and any app installed or reconfigured since
+```
+
+Re-run whichever of the three actually changed. All are safe to re-run and refresh in place.
+
+### What Usually Does Not
+
+| Phase | Redo it only if |
+|---|---|
+| Phase 0 — Confirm the Reimage Plan with IT | The plan itself changed. Rare. |
+| Phase 1 — Prepare the Artifact Root | You are starting over with a new `reimage.env` and a new artifact root. It is a one-time setup, not a refresh. |
+| Phase 2C — Managed Inventory | Your MDM enrollment or managed app set changed. |
+| Phase 3A — Certificate and Keychain Staging | You know of a cert, key, or Keychain change. It does not drift on its own. |
+| Phase 4 — Pre-Image Captures | Something you would notice changed. At one or two weeks, usually not. |
+| Phase 5 — Time Machine | Your comfort level says so. It is the last resort if the reimage goes badly, not a restore path you plan to use — a one-to-two-week-old snapshot is normally fine. |
+| Toolkit snapshot and jump drive | The documentation changed materially since you built it. A few weeks with few pushes is fine. |
+
+### The Order That Matters
+
+> [!warning] Pitfall
+> Re-running a backup is the easy part. Skipping what has to follow it is how a credential ends up in the clear on the drive, or how the DMG ends up missing what you just backed up.
+
+For each backup runbook you re-run:
+
+1. **Size audit first** — `./bin/capture-size-audit.sh --context pre-image-<phase>`. A drive that had room a month ago may not now.
+2. **Re-run the backup runbook.**
+3. **If you are re-running more than one, do all of them before continuing.** Steps 4 and 5 are expensive and only the last run counts.
+4. **Phase 3B — [[stage-loose-secrets|Stage Loose Secrets]].** A re-run copies files again, so credential-shaped material can land back outside `secrets-encrypted/`.
+5. **Phase 3C — [[create-secrets-dmg|Create Secrets DMG]].** The existing DMG predates the re-run and no longer matches what is staged.
+
+The Phase 6B checks enforce this chain rather than trusting it: they fail if backup content is newer than the last loose-secret sweep, and if the DMG is older than that sweep.
+
+### Re-Checking Before the Erase
+
+Phase 6B needs another pass, but not an equally careful one everywhere. Focus on what you re-ran and what depends on it — the backup you refreshed, the sweep, the DMG. The rest you have already verified once and can review at a glance, unless the re-run touched it.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -486,6 +539,12 @@ The Time Machine status workflow automates the status table as much as possible.
 ---
 
 ## Phase 6 — Reimage Preparation
+
+> [!note]
+> If pre-image prep has run long and any Phase 2 backup is stale, redo it before these
+> checks rather than after — and follow the required order in
+> [[#Staleness and Re-Runs|Staleness and Re-Runs]]. The 6B checks fail when backup content
+> is newer than the last loose-secret sweep, or the DMG is older than it.
 
 **Reimage Preparation** is the final pre-erase stage, split into two parts. First, confirming the escape hatch itself works — that `fractogenesis-toolkit` can actually be fetched onto a bare Mac via curl or jump drive, since every phase from 8 onward depends on that assumption holding. Second, the traditional final gate — confirming the backup, capture, and staging work from the earlier pre-image phases is complete enough to proceed safely. Both checks happen while the original system is still available and easy to fix problems on, before anything destructive starts.
 

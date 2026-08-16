@@ -105,12 +105,12 @@ export ONEDRIVE_DEST_SUBDIR="reimage-<asset-or-host>-<start-date>-open"
 | Phase 2D detail | IntelliJ companion flow | `backup-intellij.md` | `backup-apps.sh` (public IntelliJ path), `helpers/apps/backup-intellij-scratches-consoles.sh` (internal helper) | `$REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/` |
 | Phase 3A | Certificate and Keychain staging | `stage-certs-keychain.md` | `stage-certs-keychain.sh` | `$REIMAGE_ARTIFACT_ROOT/public-certs/`, `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/certs/`, `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/extra-secrets-certs-review/` |
 | Phase 3C | Encrypted secrets backup | `backup-dmg-secrets.md` | `create-secrets-dmg.sh` | `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/all-secrets-*.dmg` |
-| Phase 5 | Time Machine backup/status | `run-time-machine.md` | `run-time-machine.sh`, `capture-time-machine.sh` | `/Volumes/AppleBackups`, `$REIMAGE_ARTIFACT_ROOT/time-machine/`, `final-time-machine-checklist-*.md` |
+| Phase 5 | Time Machine backup/status | `run-time-machine.md` | `run-time-machine.sh`, `record-time-machine-evidence.sh` | `/Volumes/AppleBackups`, `$REIMAGE_ARTIFACT_ROOT/time-machine/`, `final-time-machine-checklist-*.md` |
 | Phase 4A | Toolkit snapshot capture | `capture-toolkit-snapshot.md` | `capture-toolkit-snapshot.sh` | `$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/pre-image-toolkit-snapshot-*/`, `$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/latest-docs/` |
 | Phase 4B | Pre-image system inventory evidence | `reimaging-guide.md` (Phase 4) | `capture-system-inventory.sh` | `$REIMAGE_ARTIFACT_ROOT/system-inventory/` |
 | Phase 2C | Pre-image company-managed inventory evidence | `reimaging-guide.md` (Phase 4), `capture-managed-inventory.md` | `capture-managed-inventory.sh` | `$REIMAGE_ARTIFACT_ROOT/managed-inventory/` |
 | Phase 4C | Pre-image performance evidence | `reimaging-guide.md` (Phase 4), `capture-performance-audit.md` | `capture-performance-audit.sh` | `$REIMAGE_ARTIFACT_ROOT/performance-audit/pre-image-*` |
-| Phase 4D | Pre-image Office stability evidence | `reimaging-guide.md` (Phase 4), `capture-office-stability.md` | `watch-office-today.sh `, `capture-workload-snapshot.sh`, `capture-office-stability-baseline.sh`, `office-stability-checklist.sh --phase pre-reimage` | `$REIMAGE_ARTIFACT_ROOT/office-stability/`, `$REIMAGE_ARTIFACT_ROOT/office-stability/checklists/` |
+| Phase 4D | Pre-image Office stability evidence | `reimaging-guide.md` (Phase 4), `capture-office-stability.md` | `watch-office-today.sh `, `capture-workload-snapshot.sh`, `capture-office-stability.sh`, `office-stability-checklist.sh --phase pre-reimage` | `$REIMAGE_ARTIFACT_ROOT/office-stability/`, `$REIMAGE_ARTIFACT_ROOT/office-stability/checklists/` |
 | Phase 6A | Guide access validation (curl/jump drive) | `reimaging-guide.md`, `reimage-guide-access.md` | `bootstrap.sh`, `bin/build-jump-drive-payload.sh` | throwaway test installs only -- no `$REIMAGE_ARTIFACT_ROOT` output |
 | Phase 6B | Final pre-image validation | `reimaging-guide.md`, `reimage-prep-checks.md` | `bin/reimage-checklist.sh --phase pre --artifact-root ...` | `$REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/` |
 | Phase 8 | Enrollment/stabilization record | `enroll-and-stabilize.md` | `record-enrollment.sh` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/enrollment/*` when mounted, otherwise `$REIMAGE_WORKSPACE_ROOT/enrollment/*` or `~/Desktop/reimaged-system-artifacts/enrollment/*` |
@@ -122,7 +122,7 @@ export ONEDRIVE_DEST_SUBDIR="reimage-<asset-or-host>-<start-date>-open"
 | Phase 13 | Post-image system inventory evidence | `capture-system-inventory.md` | `capture-system-inventory.sh` | `$REIMAGE_ARTIFACT_ROOT/system-inventory/post-image-*` |
 | Phase 13 | Post-image company-managed inventory evidence | `capture-managed-inventory.md` | `capture-managed-inventory.sh --phase post-image` | `$REIMAGE_ARTIFACT_ROOT/managed-inventory/post-image-*` |
 | Phase 13 | Post-image performance evidence | `capture-performance-audit.md` | `capture-performance-audit.sh` | `$REIMAGE_ARTIFACT_ROOT/performance-audit/post-image-*` |
-| Phase 13 | Post-image Office stability evidence | `capture-office-stability.md` | `capture-office-stability-baseline.sh`, `office-stability-checklist.sh --phase post-reimage` | `$REIMAGE_ARTIFACT_ROOT/office-stability/post-reimage-*`, `$REIMAGE_ARTIFACT_ROOT/office-stability/checklists/` |
+| Phase 13 | Post-image Office stability evidence | `capture-office-stability.md` | `capture-office-stability.sh`, `office-stability-checklist.sh --phase post-reimage` | `$REIMAGE_ARTIFACT_ROOT/office-stability/post-reimage-*`, `$REIMAGE_ARTIFACT_ROOT/office-stability/checklists/` |
 | Phase 14 | Final post-image validation | `reimaged-system-checks.md` | `bin/reimage-checklist.sh --phase post` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/checklists/` |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -157,7 +157,7 @@ Current preferred script layout:
 │   │   │   └── mac/
 │   │   │       └── reimage/
 │   │   │           └── scripts/
-│   │   │               ├── capture-office-stability-baseline.sh
+│   │   │               ├── capture-office-stability.sh
 │   │   │               ├── prepare-artifact-root.py
 │   │   │               ├── record-reimaged-system.sh
 │   │   │               ├── record-enrollment.sh
@@ -173,7 +173,7 @@ Current preferred script layout:
 └── bin/
     ├── capture-toolkit-snapshot.sh
     ├── run-time-machine.sh
-    ├── capture-time-machine.sh
+    ├── record-time-machine-evidence.sh
     ├── capture-performance-audit.sh
     ├── capture-system-inventory.sh
     ├── capture-workload-snapshot.sh
@@ -210,7 +210,7 @@ This helper does not replace Phase 1. The drive checks, shell validation, root c
 Run pre-image backup scripts from:
 
 ```bash
-chmod +x scripts/*.sh scripts/*.py
+chmod +x bin/*.sh bin/*.py
 ```
 
 ### Size Audit
@@ -218,7 +218,7 @@ chmod +x scripts/*.sh scripts/*.py
 Run before copying large folders:
 
 ```bash
-./scripts/capture-size-audit.sh
+./bin/capture-size-audit.sh
 ```
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -226,10 +226,10 @@ Run before copying large folders:
 ### Phase 2A Git Repository Backups
 
 ```bash
-./scripts/backup-git-repository.sh --backup-root "$REIMAGE_ARTIFACT_ROOT"
-./scripts/backup-git-repository.sh --backup-root "$REIMAGE_ARTIFACT_ROOT" --selected-dry-run
-./scripts/backup-git-repository.sh --backup-root "$REIMAGE_ARTIFACT_ROOT" --selected-filtered-dry-run
-./scripts/backup-git-repository.sh --backup-root "$REIMAGE_ARTIFACT_ROOT" --selected-copy
+./bin/backup-repos.sh --artifact-root "$REIMAGE_ARTIFACT_ROOT"
+./bin/backup-repos.sh --artifact-root "$REIMAGE_ARTIFACT_ROOT" --selected-dry-run
+./bin/backup-repos.sh --artifact-root "$REIMAGE_ARTIFACT_ROOT" --selected-filtered-dry-run
+./bin/backup-repos.sh --artifact-root "$REIMAGE_ARTIFACT_ROOT" --selected-copy
 ```
 
 Then review the generated Git audit report, mark selected ignored-file patterns, update the exclude list, and use the later entrypoint modes from `backup-repos.md`.
@@ -239,9 +239,9 @@ Then review the generated Git audit report, mark selected ignored-file patterns,
 ### Phase 2B Local Files Backup
 
 ```bash
-./scripts/backup-local-files.sh --external-only
+./bin/backup-home.sh --external-only
 # Optional OneDrive copy after confirming ONEDRIVE_ROOT points at ~/Library/CloudStorage/OneDrive-AcmeGroup:
-# ./scripts/backup-local-files.sh --onedrive-only
+# ./bin/backup-home.sh --onedrive-only
 ```
 
 Primary output:
@@ -261,13 +261,13 @@ The OneDrive copy, when used, still requires manual sync verification later in P
 Preferred Phase 2D run:
 
 ```bash
-./scripts/backup-apps.sh --backup-root "$REIMAGE_ARTIFACT_ROOT" --open
+./bin/backup-apps.sh --artifact-root "$REIMAGE_ARTIFACT_ROOT" --open
 ```
 
 Optional candidate-review pass in the same script:
 
 ```bash
-./scripts/backup-apps.sh --backup-root "$REIMAGE_ARTIFACT_ROOT" --candidate-review --open
+./bin/backup-apps.sh --artifact-root "$REIMAGE_ARTIFACT_ROOT" --candidate-review --open
 ```
 
 Common destinations:
@@ -292,7 +292,7 @@ If Docker `config.json`, Chrome password CSVs, secret-bearing Postman exports, o
 Docker-only rerun through the main Phase 2D entrypoint:
 
 ```bash
-./scripts/backup-apps.sh --backup-root "$REIMAGE_ARTIFACT_ROOT" --docker-only
+./bin/backup-apps.sh --artifact-root "$REIMAGE_ARTIFACT_ROOT" --docker-only
 ```
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -300,9 +300,9 @@ Docker-only rerun through the main Phase 2D entrypoint:
 ### Phase 2D IntelliJ Detail
 
 ```bash
-./scripts/backup-apps.sh \
-  --backup-root "$REIMAGE_ARTIFACT_ROOT" \
-  --intellij-workspace-root ~/path/to/projects
+./bin/backup-apps.sh \
+  --artifact-root "$REIMAGE_ARTIFACT_ROOT" \
+  --intellij-projects-root ~/path/to/projects
 ```
 
 Manual sign-off still required: export IntelliJ settings ZIP through the IntelliJ UI.
@@ -314,7 +314,7 @@ Manual sign-off still required: export IntelliJ settings ZIP through the Intelli
 The certificate/Keychain staging workflow is manual, but it now has its own public entrypoint:
 
 ```bash
-./scripts/stage-cert-keychain.sh
+./bin/stage-certs-keychain.sh
 ```
 
 Manual staging destinations:
@@ -330,7 +330,7 @@ $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/extra-secrets-certs-review/
 ### Phase 3C Encrypted DMG Secrets Backup
 
 ```bash
-./scripts/create-secrets-dmg.sh
+./bin/create-secrets-dmg.sh
 ```
 
 Manual sign-off still required: save password in LastPass, mount and verify the DMG, confirm manual Chrome/Postman secret exports are included if staged, then remove temporary loose plaintext copies only after validation succeeds. For Postman cleanup, do not remove the whole `secrets-encrypted/postman/` folder when `postman/environments/` and `postman/README.md` were not included in the DMG.
@@ -352,17 +352,17 @@ fi
 
 ### Phase 5 Time Machine Backup and Status Capture
 
-Use `capture-time-machine.sh` for read-only Time Machine captures:
+Use `record-time-machine-evidence.sh` for read-only Time Machine captures:
 
 ```bash
 # Full pre-backup evidence bundle.
-./scripts/capture-time-machine.sh pre-run --open
+./bin/record-time-machine-evidence.sh pre-run --open
 
 # Optional focused APFS destination-volume verification after Time Machine is stopped.
-./scripts/capture-time-machine.sh verify-volume --open
+./bin/record-time-machine-evidence.sh verify-volume --open
 
 # Final Time Machine checklist after the backup and any optional verification are complete.
-./scripts/capture-time-machine.sh final --open
+./bin/record-time-machine-evidence.sh final --open
 ```
 
 `pre-run` writes the timestamped bundle under:
@@ -398,16 +398,16 @@ The final checklist auto-fills Time Machine completion, targeted latest backup v
 Use `run-time-machine.sh` only for runtime Time Machine operations:
 
 ```bash
-./scripts/backup-time-machine.sh start
-./scripts/backup-time-machine.sh monitor --interval 300
-./scripts/backup-time-machine.sh complete --open
+./bin/run-time-machine.sh start
+./bin/run-time-machine.sh monitor --interval 300
+./bin/run-time-machine.sh complete --open
 
 # Optional runtime checks after completion.
-./scripts/backup-time-machine.sh verify-latest --mount-if-needed --open
-./scripts/backup-time-machine.sh unmount-latest
-./scripts/backup-time-machine.sh compare --open
-./scripts/backup-time-machine.sh compare --compare-path /Users/$(whoami)/Development/documentation/reference-vault --open
-./scripts/backup-time-machine.sh logs --start "YYYY-MM-DD HH:MM:SS" --end "YYYY-MM-DD HH:MM:SS" --open
+./bin/run-time-machine.sh verify-latest --mount-if-needed --open
+./bin/run-time-machine.sh unmount-latest
+./bin/run-time-machine.sh compare --open
+./bin/run-time-machine.sh compare --compare-path /Users/$(whoami)/Development/documentation/reference-vault --open
+./bin/run-time-machine.sh logs --start "YYYY-MM-DD HH:MM:SS" --end "YYYY-MM-DD HH:MM:SS" --open
 ```
 
 The completion artifact intentionally does not embed noisy Time Machine logs. It prints a recommended `logs` command when log evidence is needed.
@@ -415,7 +415,7 @@ The completion artifact intentionally does not embed noisy Time Machine logs. It
 The runtime script can eject the volumes after validation:
 
 ```bash
-./scripts/backup-time-machine.sh eject --physical-disk disk4
+./bin/run-time-machine.sh eject --physical-disk disk4
 ```
 
 Replace `disk4` with the current physical disk identifier from `diskutil list external`.
@@ -456,8 +456,8 @@ All pre-image captures are optional. Phase 4A is the lightweight toolkit snapsho
 ### Phase 4A Capture Toolkit Snapshot
 
 ```bash
-./scripts/capture-toolkit-snapshot.sh \
-  --backup-root "$REIMAGE_ARTIFACT_ROOT" \
+./bin/capture-toolkit-snapshot.sh \
+  --artifact-root "$REIMAGE_ARTIFACT_ROOT" \
   --open
 ```
 
@@ -484,7 +484,7 @@ test -d "$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/latest-docs" && echo "PASS: wor
 ### Phase 4B Pre-Image System Inventory Capture
 
 ```bash
-./scripts/capture-system-inventory.sh
+./bin/capture-system-inventory.sh
 ```
 
 This is the active capture home for:
@@ -498,7 +498,7 @@ shell state
 Post-image comparison:
 
 ```bash
-./scripts/capture-system-inventory.sh
+./bin/capture-system-inventory.sh
 ```
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -506,7 +506,7 @@ Post-image comparison:
 ### Phase 2C Pre-Image Company-Managed Inventory Capture
 
 ```bash
-./scripts/capture-managed-inventory.sh
+./bin/capture-managed-inventory.sh
 ```
 
 This writes a timestamped bundle under:
@@ -518,7 +518,7 @@ $REIMAGE_ARTIFACT_ROOT/managed-inventory/pre-image-YYYYMMDD-HHMMSS/
 If you want a matching post-image comparison bundle later, rerun it with a different phase label:
 
 ```bash
-./scripts/capture-managed-inventory.sh --phase post-image
+./bin/capture-managed-inventory.sh --phase post-image
 ```
 
 Use it when you want a more precise record of company-managed apps, package receipts, MDM profiles, launch agents/daemons, system extensions, and managed preference payloads before erase or after reimage. See `capture-managed-inventory.md` (not yet migrated) for the individual commands and interpretation notes.
@@ -530,7 +530,7 @@ Use it when you want a more precise record of company-managed apps, package rece
 Clean-boot / quiet baseline:
 
 ```bash
-./scripts/capture-performance-audit.sh \
+./bin/capture-performance-audit.sh \
   --output "$REIMAGE_ARTIFACT_ROOT/performance-audit" \
   --phase pre-image \
   --scenario clean-boot \
@@ -543,7 +543,7 @@ For this scenario, Docker Desktop may be intentionally stopped. The script recor
 Normal workload pre-image:
 
 ```bash
-./scripts/capture-performance-audit.sh \
+./bin/capture-performance-audit.sh \
   --output "$REIMAGE_ARTIFACT_ROOT/performance-audit" \
   --phase pre-image \
   --scenario normal-workload \
@@ -554,7 +554,7 @@ Normal workload pre-image:
 Post-image, use the same scenario name as the matching pre-image bundle:
 
 ```bash
-./scripts/capture-performance-audit.sh \
+./bin/capture-performance-audit.sh \
   --output "$REIMAGE_ARTIFACT_ROOT/performance-audit" \
   --phase post-image \
   --scenario normal-workload \
@@ -575,25 +575,25 @@ caffeinate -dimsu scripts/watch-office-today.sh
 Pre-image Office baseline and checklist:
 
 ```bash
-./scripts/capture-office-stability-baseline.sh \
+./bin/capture-office-stability.sh \
   --phase pre-reimage \
-  --backup-root "$REIMAGE_ARTIFACT_ROOT"
+  --artifact-root "$REIMAGE_ARTIFACT_ROOT"
 
-./scripts/office-stability-checklist.sh \
+./bin/office-stability-checklist.sh \
   --phase pre-reimage \
-  --backup-root "$REIMAGE_ARTIFACT_ROOT"
+  --artifact-root "$REIMAGE_ARTIFACT_ROOT"
 ```
 
 Post-image Office comparison, or symptom recurrence:
 
 ```bash
-./scripts/capture-office-stability-baseline.sh \
+./bin/capture-office-stability.sh \
   --phase post-reimage \
-  --backup-root "$REIMAGE_ARTIFACT_ROOT"
+  --artifact-root "$REIMAGE_ARTIFACT_ROOT"
 
-./scripts/office-stability-checklist.sh \
+./bin/office-stability-checklist.sh \
   --phase post-reimage \
-  --backup-root "$REIMAGE_ARTIFACT_ROOT"
+  --artifact-root "$REIMAGE_ARTIFACT_ROOT"
 ```
 
 Office stability details belong in `capture-office-stability.md`.
@@ -609,18 +609,18 @@ Post-image evidence captures are documented in Phase 13 of `reimaging-guide.md`.
 Common command set:
 
 ```bash
-./scripts/capture-system-inventory.sh
+./bin/capture-system-inventory.sh
 
-./scripts/capture-performance-audit.sh \
+./bin/capture-performance-audit.sh \
   --output "$REIMAGE_ARTIFACT_ROOT/performance-audit" \
   --phase post-image \
   --scenario normal-workload \
   --sample-count 6 \
   --sample-interval 30
 
-./scripts/capture-office-stability-baseline.sh \
+./bin/capture-office-stability.sh \
   --phase post-reimage \
-  --backup-root "$REIMAGE_ARTIFACT_ROOT"
+  --artifact-root "$REIMAGE_ARTIFACT_ROOT"
 ```
 
 For post-image clean-boot comparisons, keep Docker stopped only if the matching pre-image clean-boot capture also kept Docker stopped. For Docker/container comparisons, run a separate `normal-workload` or `active-dev` scenario with Docker Desktop started.
@@ -787,47 +787,47 @@ Use the manual tables in the owning phase guides and save completed copies besid
 
 ```bash
 cd "$FRACTOGENESIS_HOME"   # REIMAGE_ROOT is retired -- see reimaging-scripts-guide.md Script Source and Artifact Rules
-chmod +x scripts/*.sh scripts/*.py
+chmod +x bin/*.sh bin/*.py
 
 # Phase 1 — preparation
 # Follow prepare-artifact-root.md first. That guide uses prepare-artifact-root.py
 # when reimage.env needs resolved values written back to disk.
 
 # Phase 2 — backups
-./scripts/capture-size-audit.sh
-./scripts/backup-git-repository.sh --backup-root "$REIMAGE_ARTIFACT_ROOT" --root ~/path/to/projects --root ~/path/to/docs
-./scripts/backup-local-files.sh --external-only
+./bin/capture-size-audit.sh
+./bin/backup-repos.sh --artifact-root "$REIMAGE_ARTIFACT_ROOT" --root ~/path/to/projects --root ~/path/to/docs
+./bin/backup-home.sh --external-only
 # Optional: run the OneDrive copy only after ONEDRIVE_ROOT resolves to ~/Library/CloudStorage/OneDrive-AcmeGroup.
-# ./scripts/backup-local-files.sh --onedrive-only
-./scripts/backup-apps.sh --backup-root "$REIMAGE_ARTIFACT_ROOT" --open
-./scripts/backup-apps.sh --backup-root "$REIMAGE_ARTIFACT_ROOT" --intellij-workspace-root ~/path/to/projects
+# ./bin/backup-home.sh --onedrive-only
+./bin/backup-apps.sh --artifact-root "$REIMAGE_ARTIFACT_ROOT" --open
+./bin/backup-apps.sh --artifact-root "$REIMAGE_ARTIFACT_ROOT" --intellij-projects-root ~/path/to/projects
 # Manual/app-controlled follow-up: Chrome, Postman, Raycast, Obsidian, and any other app exports that backup-apps.sh cannot complete.
 # Phase 3A certificate/Keychain staging:
-# ./scripts/stage-cert-keychain.sh
+# ./bin/stage-certs-keychain.sh
 # Phase 3C final DMG after all manual secret staging:
 # If Chrome password CSVs, secret-bearing Postman exports, optional app secret exports,
 # IntelliJ HTTP Client env files, or cert/Keychain material were staged, run secrets DMG after that.
-./scripts/create-secrets-dmg.sh
+./bin/create-secrets-dmg.sh
 
 # Phase 5 — Time Machine last before validation
-./scripts/capture-time-machine.sh pre-run --open
-./scripts/backup-time-machine.sh start
-./scripts/backup-time-machine.sh monitor --interval 300
-./scripts/backup-time-machine.sh complete --open
+./bin/record-time-machine-evidence.sh pre-run --open
+./bin/run-time-machine.sh start
+./bin/run-time-machine.sh monitor --interval 300
+./bin/run-time-machine.sh complete --open
 # Optional:
-# ./scripts/capture-time-machine.sh verify-volume --open
-# ./scripts/backup-time-machine.sh verify-latest --mount-if-needed --open
-# ./scripts/backup-time-machine.sh unmount-latest
-# ./scripts/backup-time-machine.sh compare --open
-./scripts/capture-time-machine.sh final --open
+# ./bin/record-time-machine-evidence.sh verify-volume --open
+# ./bin/run-time-machine.sh verify-latest --mount-if-needed --open
+# ./bin/run-time-machine.sh unmount-latest
+# ./bin/run-time-machine.sh compare --open
+./bin/record-time-machine-evidence.sh final --open
 
 # Phase 4 — captures and reference snapshots
-./scripts/capture-toolkit-snapshot.sh --backup-root "$REIMAGE_ARTIFACT_ROOT" --open
-./scripts/capture-system-inventory.sh
-./scripts/capture-performance-audit.sh --output "$REIMAGE_ARTIFACT_ROOT/performance-audit" --phase pre-image --scenario clean-boot --sample-count 6 --sample-interval 30
-./scripts/capture-performance-audit.sh --output "$REIMAGE_ARTIFACT_ROOT/performance-audit" --phase pre-image --scenario normal-workload --sample-count 6 --sample-interval 30
-./scripts/capture-office-stability-baseline.sh --phase pre-reimage --backup-root "$REIMAGE_ARTIFACT_ROOT"
-./scripts/office-stability-checklist.sh --phase pre-reimage --backup-root "$REIMAGE_ARTIFACT_ROOT"
+./bin/capture-toolkit-snapshot.sh --artifact-root "$REIMAGE_ARTIFACT_ROOT" --open
+./bin/capture-system-inventory.sh
+./bin/capture-performance-audit.sh --output "$REIMAGE_ARTIFACT_ROOT/performance-audit" --phase pre-image --scenario clean-boot --sample-count 6 --sample-interval 30
+./bin/capture-performance-audit.sh --output "$REIMAGE_ARTIFACT_ROOT/performance-audit" --phase pre-image --scenario normal-workload --sample-count 6 --sample-interval 30
+./bin/capture-office-stability.sh --phase pre-reimage --artifact-root "$REIMAGE_ARTIFACT_ROOT"
+./bin/office-stability-checklist.sh --phase pre-reimage --artifact-root "$REIMAGE_ARTIFACT_ROOT"
 
 # Phase 6 — final pre-image validation
 # Manual sign-off reference for the remaining rows in this phase: reimage-prep-checks.md
@@ -855,10 +855,10 @@ Post-image (Phases 8–14):
 ./bin/restore-docker.sh --open
 
 # Phase 13 — post-image evidence captures
-./scripts/capture-system-inventory.sh
-./scripts/capture-performance-audit.sh --output "$REIMAGE_ARTIFACT_ROOT/performance-audit" --phase post-image --scenario normal-workload --sample-count 6 --sample-interval 30
-./scripts/capture-office-stability-baseline.sh --phase post-reimage --backup-root "$REIMAGE_ARTIFACT_ROOT"
-./scripts/office-stability-checklist.sh --phase post-reimage --backup-root "$REIMAGE_ARTIFACT_ROOT"
+./bin/capture-system-inventory.sh
+./bin/capture-performance-audit.sh --output "$REIMAGE_ARTIFACT_ROOT/performance-audit" --phase post-image --scenario normal-workload --sample-count 6 --sample-interval 30
+./bin/capture-office-stability.sh --phase post-reimage --artifact-root "$REIMAGE_ARTIFACT_ROOT"
+./bin/office-stability-checklist.sh --phase post-reimage --artifact-root "$REIMAGE_ARTIFACT_ROOT"
 
 # Phase 14 — final post-image validation
 ./bin/reimage-checklist.sh \

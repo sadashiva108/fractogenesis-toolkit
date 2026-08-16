@@ -146,7 +146,7 @@ Script-generated evidence:
 cd "$REIMAGE_ROOT"
 chmod +x scripts/capture-toolkit-snapshot.sh
 
-./scripts/capture-toolkit-snapshot.sh   --backup-root "$BACKUP_ROOT"   --open
+./bin/capture-toolkit-snapshot.sh   --artifact-root "$BACKUP_ROOT"   --open
 ```
 
 Destinations:
@@ -189,7 +189,7 @@ set +a
 mkdir -p "$BACKUP_ROOT/system-inventory"
 chmod +x scripts/capture-system-inventory.sh
 
-./scripts/capture-system-inventory.sh   --output "$BACKUP_ROOT/system-inventory/pre-image-$(date +%Y%m%d-%H%M%S)"
+./bin/capture-system-inventory.sh   --output "$BACKUP_ROOT/system-inventory/pre-image-$(date +%Y%m%d-%H%M%S)"
 ```
 
 Destination:
@@ -238,7 +238,7 @@ set +a
 mkdir -p "$BACKUP_ROOT/managed-inventory"
 chmod +x scripts/capture-managed-inventory.sh
 
-./scripts/capture-managed-inventory.sh
+./bin/capture-managed-inventory.sh
 ```
 
 Destination:
@@ -288,7 +288,7 @@ chmod +x scripts/capture-performance-audit.sh
 export PERF_AUDIT_OUTPUT_ROOT="$BACKUP_ROOT/performance-audit"
 mkdir -p "$PERF_AUDIT_OUTPUT_ROOT"
 
-./scripts/capture-performance-audit.sh   --output "$PERF_AUDIT_OUTPUT_ROOT"   --phase pre-image   --scenario normal-workload   --sample-count 6   --sample-interval 30
+./bin/capture-performance-audit.sh   --output "$PERF_AUDIT_OUTPUT_ROOT"   --phase pre-image   --scenario normal-workload   --sample-count 6   --sample-interval 30
 ```
 
 Destination root:
@@ -354,9 +354,9 @@ cd "$REIMAGE_ROOT"
 source ./reimage.env
 chmod +x scripts/capture-office-stability-baseline.sh scripts/office-stability-checklist.sh
 
-./scripts/capture-office-stability-baseline.sh   --phase pre-reimage   --backup-root "$BACKUP_ROOT"
+./bin/capture-office-stability-baseline.sh   --phase pre-reimage   --artifact-root "$BACKUP_ROOT"
 
-./scripts/office-stability-checklist.sh   --phase pre-reimage   --backup-root "$BACKUP_ROOT"   --open
+./bin/office-stability-checklist.sh   --phase pre-reimage   --artifact-root "$BACKUP_ROOT"   --open
 ```
 
 Destination root:
@@ -418,7 +418,7 @@ source ./reimage.env
 set +a
 chmod +x scripts/reimage-checklist.sh
 
-./scripts/reimage-checklist.sh   --phase pre   --backup-root "$BACKUP_ROOT"   --open
+./bin/reimage-checklist.sh   --phase pre   --artifact-root "$BACKUP_ROOT"   --open
 ```
 
 Generated output:
@@ -437,7 +437,7 @@ Common manual rows still requiring human confirmation:
 | IT confirmed approved reimage method                                                    | generated Phase 6 report and/or `$REIMAGE_ARTIFACT_ROOT/reimage-confirmation/it-reimage-confirmation-YYYYMMDD.md` |
 | Loose private-key / keystore / certificate candidates reviewed                          | generated Phase 6 report manual rows |
 | `.p12` / `.pfx` export passwords saved only in approved password manager, if applicable | generated Phase 6 report manual rows |
-| Time Machine Snapshot completed and latest backup confirmed                             | generated Phase 6 report; `run-time-machine.sh complete` output and `capture-time-machine.sh final --open` final checklist under `$REIMAGE_ARTIFACT_ROOT/time-machine/`; optional `capture-time-machine.sh verify-volume --open` focused APFS volume evidence |
+| Time Machine Snapshot completed and latest backup confirmed                             | generated Phase 6 report; `run-time-machine.sh complete` output and `record-time-machine-evidence.sh final --open` final checklist under `$REIMAGE_ARTIFACT_ROOT/time-machine/`; optional `record-time-machine-evidence.sh verify-volume --open` focused APFS volume evidence |
 | LastPass vault verified accessible                                                      | generated Phase 6 report manual rows |
 | DMG password saved and DMG verified                                                     | generated Phase 6 report manual rows |
 | VS Code Settings Sync state confirmed                                                   | generated Phase 6 report manual rows |
@@ -480,29 +480,29 @@ Time Machine is a Phase 2 backup, but its completion evidence is reviewed during
 Use the current command model:
 
 ```bash
-./scripts/capture-time-machine.sh pre-run --open
-./scripts/backup-time-machine.sh start
-./scripts/backup-time-machine.sh monitor --interval 300
-./scripts/backup-time-machine.sh complete --open
-./scripts/capture-time-machine.sh final --open
+./bin/record-time-machine-evidence.sh pre-run --open
+./bin/run-time-machine.sh start
+./bin/run-time-machine.sh monitor --interval 300
+./bin/run-time-machine.sh complete --open
+./bin/record-time-machine-evidence.sh final --open
 ```
 
 Optional evidence and integrity spot checks:
 
 ```bash
-./scripts/capture-time-machine.sh verify-volume --open
-./scripts/backup-time-machine.sh verify-latest --mount-if-needed --open
-./scripts/backup-time-machine.sh compare --open
-./scripts/backup-time-machine.sh logs --start "YYYY-MM-DD HH:MM:SS" --end "YYYY-MM-DD HH:MM:SS" --open
+./bin/record-time-machine-evidence.sh verify-volume --open
+./bin/run-time-machine.sh verify-latest --mount-if-needed --open
+./bin/run-time-machine.sh compare --open
+./bin/run-time-machine.sh logs --start "YYYY-MM-DD HH:MM:SS" --end "YYYY-MM-DD HH:MM:SS" --open
 ```
 
 Notes:
 
-- `capture-time-machine.sh pre-run --open` creates the pre-backup evidence bundle under `$REIMAGE_ARTIFACT_ROOT/time-machine/pre-image-time-machine-status-YYYYMMDD-HHMMSS/`.
+- `record-time-machine-evidence.sh pre-run --open` creates the pre-backup evidence bundle under `$REIMAGE_ARTIFACT_ROOT/time-machine/pre-image-time-machine-status-YYYYMMDD-HHMMSS/`.
 - `time-machine-pre-run.md` intentionally keeps the older minimal layout: Destination, Latest Backup, Backup List, and Exclusions.
 - The pre-run bundle does not include a manual sign-off template.
-- `capture-time-machine.sh final --open` writes `$REIMAGE_ARTIFACT_ROOT/time-machine/final-time-machine-checklist-YYYYMMDD-HHMMSS.md`, auto-filling Time Machine checks that the script can prove.
-- `capture-time-machine.sh verify-volume --open` creates a standalone focused APFS destination-volume verification file.
+- `record-time-machine-evidence.sh final --open` writes `$REIMAGE_ARTIFACT_ROOT/time-machine/final-time-machine-checklist-YYYYMMDD-HHMMSS.md`, auto-filling Time Machine checks that the script can prove.
+- `record-time-machine-evidence.sh verify-volume --open` creates a standalone focused APFS destination-volume verification file.
 - `run-time-machine.sh complete` records the latest backup timestamp and recommends a separate log command instead of embedding noisy logs.
 - `run-time-machine.sh compare --compare-path /Users/...` resolves APFS Time Machine `Data/Users/...` paths and treats explicit compare paths strictly.
 
