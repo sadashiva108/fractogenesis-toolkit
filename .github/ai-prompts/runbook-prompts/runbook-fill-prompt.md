@@ -294,6 +294,13 @@ existing runbook violates them, reflow it to match rather than copying its shape
   Environment). That Continue link is the section's *only* link: strip return links and
   cross-references to other sections. Fall back to a back-link to the `## Troubleshooting`
   index only for a section with no single resume step.
+- The `## Troubleshooting` parent itself still carries a
+  `[[#Table of Contents|⬆ Back to Table of Contents]]` link, placed directly under its intro
+  and *before* the first `###` symptom subsection — not at the end of the section. A reader
+  who opened Troubleshooting from the Table of Contents needs a way back without scrolling
+  through every symptom, while a reader who lands mid-section from a `> [!bug]` callout
+  should still flow forward to their resume step. This is the one place a back-link sits at
+  the top of a section rather than at its end; there is no `---` divider after it.
 
 ### Commands
 
@@ -387,6 +394,7 @@ Validation checklist (run after generating the filled runbook)
 - [ ] TOC links resolve to headings present in the file, using Obsidian wiki-link form.
 - [ ] The "In Obsidian, these are internal heading links" note and the callout legend are present under the TOC.
 - [ ] Callouts use the Obsidian `> [!type]` forms; any Troubleshooting fix lives inline OR in the Troubleshooting section, never both.
+- [ ] The `## Troubleshooting` parent carries a Table-of-Contents back-link under its intro, above the first symptom subsection.
 - [ ] Section and step intros are link-free; only links that earn their place remain.
 - [ ] Routing-index forks follow the layout house rule — console-first when there is output to match, a short bullet when there is not, callouts for error/fail outcomes, never a table — and each option's link label matches its destination heading.
 - [ ] PRIMARY_SCRIPT path exists in the repo or a TODO notes creation.

@@ -2,9 +2,11 @@
 
 # Backup Home
 
-**Last updated:** 2026-07-31
+**Last updated:** 2026-08-16
 
-This runbook copies the home-directory files, dotfiles, and secret-bearing targets that a reimage would otherwise erase into `$REIMAGE_ARTIFACT_ROOT`, driven by `bin/backup-home.sh`. The external artifact root is the authoritative copy; an optional OneDrive secondary copy carries only the work-safe subset.
+This runbook copies the home-directory files, dotfiles, and secret-bearing targets that a reimage would otherwise erase into `$REIMAGE_ARTIFACT_ROOT`, driven by `bin/backup-home.sh`.
+
+The external artifact root is the authoritative copy. An optional OneDrive secondary copy carries only the work-safe subset, and credential-shaped material never travels to it.
 
 ---
 
@@ -23,46 +25,52 @@ This runbook copies the home-directory files, dotfiles, and secret-bearing targe
 - [[#Sequential Steps|Sequential Steps]]
     - [[#Load the Shared Reimage Environment|Load the Shared Reimage Environment]]
     - [[#Confirm the Artifact-Config Fragments|Confirm the Artifact-Config Fragments]]
-    - [[#Run the Size Audit First|Run the Size Audit First]]
+    - [[#Run the Size Audit|Run the Size Audit]]
     - [[#Choose the Backup Mode|Choose the Backup Mode]]
     - [[#Run the Backup|Run the Backup]]
     - [[#Review Output|Review Output]]
     - [[#Confirm the OneDrive Sync|Confirm the OneDrive Sync]]
-- [[#Re-running This Phase|Re-running This Phase]]
 - [[#Decisions|Decisions]]
 - [[#Troubleshooting|Troubleshooting]]
 - [[#Supplemental Reference|Supplemental Reference]]
+    - [[#Customizing the Artifact-Config Fragments|Customizing the Artifact-Config Fragments]]
+    - [[#Re-running This Phase|Re-running This Phase]]
+    - [[#SSH Agent Socket Exclusion in Detail|SSH Agent Socket Exclusion in Detail]]
 
 > In Obsidian, these are internal heading links. Click in Reading View, or Cmd-click in Live Preview/editing mode.
 
-> [!info] Callout legend
-> `[!note]` an easily-missed fact · `[!warning]` Pitfall, a mistake you are likely to make here · `[!bug]` Troubleshooting, what to do when a step misbehaves · `[!info] Return` how to get back after an out-of-sequence detour.
+> This runbook uses Obsidian callouts so each type reads distinctly: `[!note]` an easily-missed fact · `[!warning]` Pitfall, a mistake you are likely to make here · `[!bug]` Troubleshooting, what to do when a step misbehaves.
 
 ---
 
 ## Purpose
 
-Copy home-directory files and secret-bearing targets into `$REIMAGE_ARTIFACT_ROOT` before the Mac is erased, so a reviewed set of local configuration can be restored afterward. This phase can be rerun independently whenever the copy needs refreshing.
+`backup-home` (Phase 2B) carries the local files a reimage erases — home-directory content, shell dotfiles, and credential-shaped material — onto the external artifact drive, with the credential-shaped material staged apart so it never syncs to the cloud in the clear.
 
-This runbook owns:
+**What it sets up**
 
-```text
-home-directory targets selected by external-targets.conf.sh
-dotfiles selected by external-dotfiles.conf.sh
-secrets-encrypted targets selected by secrets-targets.conf.sh and secret-flags.conf.sh
-Java jssecacerts collected directly by backup-home.sh
-optional OneDrive secondary copy of approved work-safe targets from onedrive-targets.conf.sh
-```
+- **A reviewed home-directory copy** — the directory targets and individual dotfiles named in the artifact-config fragments, synced under `home-files-backup/` with a `MANIFEST.md` recording what was taken and where it came from.
+- **Staged secret material** — the credential-shaped sources named in `secrets-targets.conf.sh`, plus any corporate Java `jssecacerts`, copied into `secrets-encrypted/` with restrictive permissions.
+- **An optional OneDrive secondary copy** — the narrower, work-safe target list from `onedrive-targets.conf.sh`, mirrored into the per-reimage OneDrive subfolder.
 
-It does not own:
+**What the rest of the workflow relies on it for**
 
-```text
-automated toolkit snapshot capture — capture-toolkit-snapshot.md
-app-specific backup work, including Docker settings/contexts/inventories — backup-apps.md
-developer-tool version inventory — capture-system-inventory.md
-cloud sync and final manual sign-off during Phase 6B — reimage-prep-checks.md
-OneDrive root configuration and folder creation — prepare-artifact-root.md
-```
+- A restorable set of dotfiles and home content for the post-image phases to draw from selectively.
+- Secret material parked where the Phase 3B consolidated DMG will encrypt it.
+- A `home-files-backup/` directory the Phase 6B sign-off checks for before the erase.
+
+**Ownership**
+
+| This runbook owns | Owned elsewhere |
+|---|---|
+| the `home-files-backup/` copy and its `MANIFEST.md` | app-specific backups, including Docker settings, contexts, and inventories — `backup-apps` (Phase 2C) |
+| staging `secrets-targets.conf.sh` sources and Java `jssecacerts` into `secrets-encrypted/` | encrypting the staged secrets — `create-secrets-dmg` (Phase 3B) |
+| the optional OneDrive secondary copy of work-safe targets | OneDrive root configuration and folder creation — `prepare-artifact-root` |
+| | the developer-tool version inventory — `capture-system-inventory` (Phase 4B) |
+| | the automated toolkit snapshot — `capture-toolkit-snapshot` |
+| | cloud-sync and final manual sign-off — `reimage-prep-checks` (Phase 6B) |
+
+This phase is safe to re-run at any point before the erase; the only precondition is that a re-run touching a secret target invalidates an already-built Phase 3B DMG.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -70,9 +78,11 @@ OneDrive root configuration and folder creation — prepare-artifact-root.md
 
 ## How the Workflow Works
 
-Read this before running anything; the steps assume it. The flow carries the local files a reimage would erase — home-directory content, shell dotfiles, and credential-shaped material — onto the external artifact drive, keeping the credential-shaped material staged apart so it never syncs to the cloud in the clear. A single entrypoint, `bin/backup-home.sh`, does this; a run mode decides which destinations it writes to.
+Read this before running anything. It is short, and every later step assumes it.
 
-The size audit and the fragment check run before any copy for one reason: they catch a full or unmounted drive, or a missing config fragment, while it is cheap to fix — before a long copy commits to the wrong scope.
+The goal is to get everything a wipe would destroy onto the external drive, while keeping credential-shaped material on a separate track from anything that touches corporate cloud storage. A single entrypoint, `bin/backup-home.sh`, does the copying; a run mode decides which destinations it writes to.
+
+Two checks run before any copy, for one reason: they catch a full or unmounted drive, or a missing config fragment, while it is still cheap to fix — before a long copy commits to the wrong scope.
 
 ### The Two Destinations
 
@@ -80,24 +90,25 @@ The backup has one authoritative destination and one optional secondary destinat
 
 | Destination | What it receives | Status |
 |---|---|---|
-| External artifact root (`$REIMAGE_ARTIFACT_ROOT`) | The full selected set: home targets, dotfiles, and the secrets-encrypted staging (including Java `jssecacerts`). | Authoritative — the copy the restore phases trust. |
+| External artifact root (`$REIMAGE_ARTIFACT_ROOT`) | The full selected set: home targets, dotfiles, and the secrets-encrypted staging, including Java `jssecacerts`. | Authoritative — the copy the restore phases trust. |
 | OneDrive secondary (`$ONEDRIVE_ROOT/$ONEDRIVE_DEST_SUBDIR`) | Only the narrower, work-safe targets from `onedrive-targets.conf.sh`. | Secondary and optional — not proven until the Phase 6B checks confirm the upload. |
 
 > [!note]
-> The secrets-encrypted targets never travel to OneDrive. Only the external artifact root holds them, and only the encrypted DMG (built later) is intended to leave the drive. The OneDrive copy is a convenience mirror of work-safe documents, not a secrets backup.
+> The secrets-encrypted targets never travel to OneDrive. Only the external artifact root holds them, and only the encrypted DMG built later is intended to leave the drive. The OneDrive copy is a convenience mirror of work-safe documents, not a secrets backup.
 
 ### Terminology
 
 | Term | Meaning |
 |---|---|
 | External artifact root | `$REIMAGE_ARTIFACT_ROOT` on the external drive — the authoritative backup destination. |
-| Secrets-encrypted target | A credential-shaped source (ssh, gnupg, `docker/config.json`, Java `jssecacerts`, and others) routed into `secrets-encrypted/`, not into `home-files-backup/`. |
+| Secrets-encrypted target | A credential-shaped source (SSH, GnuPG, `docker/config.json`, package-manager credentials, Java `jssecacerts`, and the rest) routed into `secrets-encrypted/` rather than `home-files-backup/`. |
 | Work-safe target | A non-sensitive target approved for the optional OneDrive copy, listed in `onedrive-targets.conf.sh`. |
 | Secondary copy | The optional OneDrive mirror of work-safe targets. It supplements the external root; it never replaces it. |
+| Active fragment directory | The artifact-config directory a run actually reads — the per-machine workspace copy when one exists, otherwise the committed templates. |
 
 ### Configuration Fragments and Run Modes
 
-The artifact-config fragments (sourced from the active `ARTIFACT_CONFIG_DIR`) are the single definition of what is backed up, what is excluded, what routes to secrets, and how OneDrive behaves. Their names and roles are the reference table in [[#Confirm the Artifact-Config Fragments|Confirm the Artifact-Config Fragments]].
+The artifact-config fragments sourced from the active fragment directory are the single definition of what is backed up, what is excluded, what routes to secrets, and how OneDrive behaves. Nothing in the scripts hardcodes a target; changing scope means editing a fragment.
 
 The mode flag on `bin/backup-home.sh` decides which destinations a run touches:
 
@@ -106,7 +117,7 @@ The mode flag on `bin/backup-home.sh` decides which destinations a run touches:
 | External only (preferred) | `./bin/backup-home.sh --external-only` | External artifact root only. |
 | External plus OneDrive (default) | `./bin/backup-home.sh` | External artifact root, then the OneDrive secondary of work-safe targets. |
 | OneDrive only | `./bin/backup-home.sh --onedrive-only` | OneDrive secondary only — refreshes it after the external copy already ran. |
-| Dry run | add `--dry-run` to any mode above | Nothing; previews the copy the chosen scope would make. |
+| Dry run | add `--dry-run` to any mode above | Nothing. It previews the copy the chosen scope would make and leaves the artifact root untouched. |
 
 External-only is the preferred first run because it fills the authoritative destination without waiting on cloud sync. The SSH target is copied with socket-skipping options so live agent sockets are left behind; the mechanics are in [[#SSH Agent Socket Exclusion in Detail|SSH Agent Socket Exclusion in Detail]].
 
@@ -118,12 +129,21 @@ External-only is the preferred first run because it fills the authoritative dest
 
 Every path and directory tree this runbook uses is defined here, once. Later sections refer back to these names instead of redrawing them.
 
-Primary scripts (alphabetical):
+Primary scripts, alphabetical:
 
 ```text
 $FRACTOGENESIS_HOME/bin/backup-home.sh              # entrypoint
 $FRACTOGENESIS_HOME/bin/capture-size-audit.sh       # entrypoint
-$FRACTOGENESIS_HOME/bin/verify-artifact-config.sh   # entrypoint
+$FRACTOGENESIS_HOME/bin/verify-artifact-config.sh   # entrypoint (aggregate validator)
+```
+
+Artifact locations:
+
+```text
+$REIMAGE_ARTIFACT_ROOT/home-files-backup/
+$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/
+$REIMAGE_ARTIFACT_ROOT/size-audit-reports/
+$ONEDRIVE_ROOT/$ONEDRIVE_DEST_SUBDIR/
 ```
 
 Subdirectories under `$REIMAGE_ARTIFACT_ROOT` this runbook's steps touch:
@@ -133,60 +153,47 @@ $REIMAGE_ARTIFACT_ROOT/
 ├── ...
 ├── home-files-backup/
 │   ├── dotfiles/
-│   │   ├── ...
-│   │   ├── .bash_profile
-│   │   ├── .bashrc
-│   │   ├── .shell_common.sh
-│   │   ├── .shell_local.sh
-│   │   ├── .zprofile
-│   │   ├── .zshrc
-│   │   └── ...
+│   ├── home/
 │   └── MANIFEST.md
 ├── secrets-encrypted/
-│   └── certs/java-security/       # Java jssecacerts, staged for create-secrets-dmg.sh
+│   ├── ...
+│   ├── certs/
+│   │   └── java-security/
+│   ├── cli-credentials/
+│   ├── cloud/
+│   ├── docker/
+│   ├── git/
+│   ├── gnupg/
+│   ├── kube/
+│   ├── package-managers/
+│   ├── postman/
+│   └── ssh/
 └── ...
 ```
 
-The dotfiles shown are representative; the authoritative list is `external-dotfiles.conf.sh`.
+The `secrets-encrypted/` subdirectories shown are the destinations `secrets-targets.conf.sh` routes to; that fragment is the authoritative list. The dotfiles that land in `home-files-backup/dotfiles/` are named in `external-dotfiles.conf.sh`.
 
-The complete `home-files-backup/` layout (including the `home/` subtree) is defined once in the Master Directory Reference:
+The complete layout of both trees, including the `home/` subtree and the `secrets-encrypted/` entries other phases add, is defined once in the Master Directory Reference:
 
 [[master-directory-reference|Master Directory Reference]]
 
-Secret-bearing targets routed to `secrets-encrypted/` (not reproduced here):
-
-```text
-ssh
-gnupg
-docker/config.json
-chrome
-postman
-raycast
-```
-
-Owned by `secrets-targets.conf.sh` and `secret-flags.conf.sh` — see [[#Confirm the Artifact-Config Fragments|Confirm the Artifact-Config Fragments]].
-
-Optional OneDrive secondary copy:
-
-```text
-$ONEDRIVE_ROOT/$ONEDRIVE_DEST_SUBDIR/
-```
-
-Docker settings land under `app-settings-backup/docker/` via `backup-apps.md` (Phase 2C); the developer-tool version inventory lands under `system-inventory/` via `capture-system-inventory.md` (Phase 4B). Neither is written by this runbook.
-
 ### Environment Variables
 
-These `reimage.env` values drive this runbook. `REIMAGE_ARTIFACT_ROOT` and the OneDrive values are resolved and written during `prepare-artifact-root.md`; secret toggles live in the artifact-config fragments.
+The values these scripts read. `REIMAGE_ARTIFACT_ROOT`, the volume paths, and the OneDrive values are resolved and written into `reimage.env` during `prepare-artifact-root.md`; the derived and fragment-supplied values are noted as such.
 
 | Variable | Meaning |
 |---|---|
+| `ARTIFACT_CONFIG_DIR` | Optional explicit override for the active fragment directory. Derived by `artifact-config.sh` when unset. |
+| `BACKUP_*` | Per-target secret toggles from `secret-flags.conf.sh`, one per `secrets-targets.conf.sh` key (for example `BACKUP_GNUPG`, `BACKUP_JAVA_JSSECACERTS`). Unset means enabled. |
+| `EXTERNAL_DATA_VOLUME` | The mounted external volume. `capture-size-audit.sh` reads its capacity and treats it as the default `--drive`. |
+| `FRACTOGENESIS_HOME` | The toolkit checkout holding the scripts and this runbook. A shell-startup or `.envrc` value, not a `reimage.env` key. |
+| `ONEDRIVE_DEST_SUBDIR` | The per-reimage OneDrive subfolder. Defaults to the basename of `$REIMAGE_ARTIFACT_ROOT`. |
+| `ONEDRIVE_FOLDER_NAME` | The OneDrive sync folder name. Combined with `ONEDRIVE_PARENT_DIR` to build the root. |
+| `ONEDRIVE_PARENT_DIR` | Directory the OneDrive sync folder lives under. Blank uses `$HOME/Library/CloudStorage`. |
+| `ONEDRIVE_PREFERRED_ROOT` | Derived by `artifact-config.sh` from the two values above; the root the scripts try first. |
+| `ONEDRIVE_ROOT` | The resolved OneDrive account root. Must be absolute — a bare folder name is rejected. |
 | `REIMAGE_ARTIFACT_ROOT` | The external artifact root — authoritative backup destination. |
-| `FRACTOGENESIS_HOME` | The toolkit checkout that holds the scripts and this runbook. |
-| `ARTIFACT_CONFIG_DIR` | Active directory the artifact-config fragments are sourced from. |
-| `ONEDRIVE_FOLDER_NAME` | The CloudStorage OneDrive folder name; feeds `ONEDRIVE_ROOT`. |
-| `ONEDRIVE_ROOT` | `$HOME/Library/CloudStorage/$ONEDRIVE_FOLDER_NAME` — the OneDrive account root. |
-| `ONEDRIVE_DEST_SUBDIR` | The per-reimage OneDrive subfolder — the basename of `$REIMAGE_ARTIFACT_ROOT`. |
-| `BACKUP_*` (secret flags) | Per-target secret toggles from `secret-flags.conf.sh` (e.g. `BACKUP_JAVA_JSSECACERTS`). |
+| `REIMAGE_WORKSPACE_ROOT` | Holds the per-machine `artifact-config/` copy. When it has no such copy, runs fall back to the committed templates. |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -194,14 +201,15 @@ These `reimage.env` values drive this runbook. `REIMAGE_ARTIFACT_ROOT` and the O
 
 ## Before You Run Anything
 
-A short pre-flight. Confirm you are set up, then confirm what you intend this run to do. The conceptual background is in [[#How the Workflow Works|How the Workflow Works]]; this is the checklist.
+A short pre-flight. Confirm you are set up, then confirm what you intend this run to do.
 
 ### Prerequisites
 
-- The external artifact volume is mounted and `$REIMAGE_ARTIFACT_ROOT` resolves (not empty, and the directory exists).
+- Your shell is at the repository root — `cd "$FRACTOGENESIS_HOME"` once for the session. Per the guide's [[reimaging-guide#Core Assumptions|Core Assumptions]], the commands below assume this and don't repeat it.
+- The external artifact volume is mounted and `$REIMAGE_ARTIFACT_ROOT` resolves to an existing directory.
 - `reimage.env` holds resolved absolute values, produced by `prepare-artifact-root.md`.
-- If you will use OneDrive, `ONEDRIVE_FOLDER_NAME` and `ONEDRIVE_ROOT` are already configured and the OneDrive folder was created during `prepare-artifact-root.md`.
-- `bash` and `rsync` are available.
+- `rsync` is installed and on `PATH`. Every directory copy in this phase is an rsync sync, and `backup-home.sh` refuses to start without it.
+- If you will use OneDrive, `ONEDRIVE_FOLDER_NAME` and `ONEDRIVE_ROOT` are configured and the OneDrive folder was created during `prepare-artifact-root.md`.
 
 > [!bug] Troubleshooting
 > If `REIMAGE_ARTIFACT_ROOT` resolves empty, either fix `reimage.env` or pass `--artifact-root PATH` explicitly on every command below.
@@ -210,7 +218,7 @@ A short pre-flight. Confirm you are set up, then confirm what you intend this ru
 
 - Which mode you want: external-only (preferred first run), external plus OneDrive (default), or OneDrive-only (refresh an existing copy).
 - Whether this run should touch OneDrive at all. If not, use `--external-only`.
-- Whether to preview first with `--dry-run` before copying.
+- Whether to preview first with `--dry-run`. A dry run writes nothing at all, including no `home-files-backup/` directory.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -218,24 +226,45 @@ A short pre-flight. Confirm you are set up, then confirm what you intend this ru
 
 ## Sequential Steps
 
-Run these in order. The first three are shared setup; you then choose the backup mode, and the final OneDrive check applies only if you ran a OneDrive mode.
+Run these in order. The first three are shared setup; you then choose the backup mode, run it, and review what landed. The final OneDrive check applies only to a run that included OneDrive.
 
 ### Load the Shared Reimage Environment
 
-`backup-home.sh` and `capture-size-audit.sh` self-locate and load shared config through `.internal/load-reimage-config.sh` automatically — you do not source `reimage.env` by hand. `verify-artifact-config.sh` resolves the fragment directory on its own and does not load the shared config, so a broken fragment gets reported instead of aborting the load.
+`backup-home.sh` and `capture-size-audit.sh` self-locate and load shared config through `.internal/load-reimage-config.sh` — you never source `reimage.env` by hand. `verify-artifact-config.sh` resolves the fragment directory on its own without sourcing the fragments, so a broken fragment gets reported instead of aborting the load.
 
 Confirm the scripts parse:
 
 ```bash
 bash -n bin/backup-home.sh
+```
+
+```bash
 bash -n bin/capture-size-audit.sh
 ```
 
-Confirm the artifact root that will be used:
+Confirm every destination a run would write to, without writing anything:
 
 ```bash
-./bin/backup-home.sh --dry-run --external-only 2>&1 | head -5
+./bin/backup-home.sh --dry-run | head -16
 ```
+
+The header block names each one before any copying starts:
+
+```text
+  Config       : <active artifact-config directory>
+  Artifact root: <$REIMAGE_ARTIFACT_ROOT>
+  OneDrive root: <resolved $ONEDRIVE_ROOT>
+  OneDrive dest: <$ONEDRIVE_ROOT/$ONEDRIVE_DEST_SUBDIR>
+  External     : yes | skipped
+  OneDrive     : yes | skipped | unavailable
+```
+
+> [!note]
+> The two OneDrive lines appear only when that run resolves a usable root. `skipped` means you asked to skip it with `--external-only`; `unavailable` means the run wanted OneDrive and could not resolve it, and the reason prints directly underneath. If any of these is not what you expect, stop here rather than at the copy.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Confirm the Artifact-Config Fragments
 
@@ -255,18 +284,22 @@ The fragments it verifies, and what each defines:
 | `external-targets.conf.sh` | Home-directory targets copied under `home-files-backup/`. |
 | `onedrive-extra-excludes.conf.sh` | Extra excludes applied only to OneDrive syncs. |
 | `onedrive-targets.conf.sh` | The narrower, document-only OneDrive sync target list. |
-| `secret-flags.conf.sh` | Optional secret backup toggles (SSH, GPG, Docker, Postman, Raycast, Java `jssecacerts`). |
+| `secret-flags.conf.sh` | Optional secret backup toggles, one per secrets target. |
 | `secrets-targets.conf.sh` | Sensitive targets routed to `secrets-encrypted/` instead of `home-files-backup/`. |
 | `skip-entries.conf.sh` | Intentionally skipped paths and the reason each is skipped. |
 
 To change what gets backed up, excluded, or routed to secrets, edit these fragments — see [[#Customizing the Artifact-Config Fragments|Customizing the Artifact-Config Fragments]].
 
 > [!warning] Pitfall
-> A missing fragment means the backup runs with different scope than you expect. Resolve every missing fragment before continuing.
+> Read the `Selected by:` line, not just the fragment results. A run that reports `committed templates (no workspace copy found)` verified the generic fragment set, not this Mac's — and `backup-home.sh` will back up that same generic set.
 
-### Run the Size Audit First
+[[#Table of Contents|⬆ Back to Table of Contents]]
 
-Run the size audit before copying, so a full or unmounted drive is caught early. Use the **`backup-home`** context label so this capture is distinguishable from other same-day audits in the manifest:
+---
+
+### Run the Size Audit
+
+Run the size audit before copying, so a full or unmounted drive is caught early. Give it a sub-label so this capture stays distinguishable from other same-day audits in `size-audit-reports/MANIFEST.md`:
 
 ```bash
 ./bin/capture-size-audit.sh --context pre-image-backup-home
@@ -276,8 +309,8 @@ Review these lines in the output:
 
 - `Estimated external backup size`
 - `Target backup root`
-- `Target local-files destination`
-- `Available on <drive>`
+- `Target home-files destination`
+- `Available on <volume>`
 - `✓ External drive: enough space` or `✗ External drive: NOT ENOUGH SPACE`
 - `Planned OneDrive sync size`, `Target OneDrive destination`, `Available on OneDrive local volume` — when OneDrive applies
 
@@ -287,12 +320,20 @@ Review these lines in the output:
 > [!bug] Troubleshooting
 > The saved report keeps ANSI color codes on purpose; view it in a terminal, not an editor: `less -R "$REIMAGE_ARTIFACT_ROOT/size-audit-reports/runs/<run>/size-audit-report.txt"`.
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Choose the Backup Mode
 
-Pick the mode intentionally — the full mode table is in [[#Configuration Fragments and Run Modes|Configuration Fragments and Run Modes]]. External-only fills the authoritative destination first; the default adds the OneDrive secondary; OneDrive-only refreshes just the secondary. Preview with `--dry-run` when unsure.
+Pick the mode intentionally before running it. External-only fills the authoritative destination first and does not wait on cloud sync; the default adds the OneDrive secondary in the same run; OneDrive-only refreshes just the secondary after the external copy already succeeded. Add `--dry-run` to any of them when you want to see the scope before committing to it.
 
 > [!warning] Pitfall
-> Any mode that includes OneDrive still leaves the OneDrive copy unproven until [[#Confirm the OneDrive Sync|Confirm the OneDrive Sync]]. Writing to the local OneDrive folder is not the same as OneDrive uploading it.
+> Any mode that includes OneDrive still leaves the OneDrive copy unproven. Writing to the local OneDrive folder is not the same as OneDrive uploading it, which is why the last step of this runbook exists.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Run the Backup
 
@@ -319,29 +360,50 @@ OneDrive-only rerun:
 Override the artifact root for a one-off run instead of editing `reimage.env`:
 
 ```bash
-./bin/backup-home.sh --artifact-root "$REIMAGE_ARTIFACT_ROOT" --external-only
+./bin/backup-home.sh --artifact-root /Volumes/<volume>/<artifact-root> --external-only
 ```
+
+The run exits `0` on success, `2` for a usage or prerequisite problem, and `1` when a copy fails — the failing target, its source and destination, and the underlying rsync exit code are printed. Warnings for rsync exit `23` and `24` are counted and summarized at the end without failing the run.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Review Output
 
-Review the external-drive manifest before final validation:
-
-```bash
-open "$REIMAGE_ARTIFACT_ROOT/home-files-backup"
-```
+Confirm what landed before moving on:
 
 ```bash
 find "$REIMAGE_ARTIFACT_ROOT/home-files-backup" -maxdepth 3 -type f | sort | head -100
 ```
 
+Open the manifest and the copy for a visual pass:
+
+```bash
+open "$REIMAGE_ARTIFACT_ROOT/home-files-backup"
+```
+
+Confirm the secret staging landed with the directory targets you expect:
+
+```bash
+find "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted" -maxdepth 2 | sort
+```
+
 > [!warning] Pitfall
 > Do not use this output as a bulk restore source without review. Some dotfiles and local configs may be obsolete or unsafe to copy directly onto the post-image system.
 
+> [!bug] Troubleshooting
+> If a directory you listed in `external-targets.conf.sh` is missing from the copy, see [[#Directory Target Not Backed Up|Directory Target Not Backed Up]].
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Confirm the OneDrive Sync
 
-This step applies only when `backup-home.sh` ran with OneDrive enabled (the default mode, or `--onedrive-only`). The local folder check proves the files were *written* to the local OneDrive-synced folder; it does not prove OneDrive *uploaded* them.
+This step applies only when `backup-home.sh` ran with OneDrive enabled. Checking the local folder proves the files were *written* to the local OneDrive-synced folder; it does not prove OneDrive *uploaded* them.
 
-Drop a current-run marker so a later check (including the Phase 6B script) can confirm this specific run's copy:
+Drop a current-run marker so a later check, including the Phase 6B script, can confirm this specific run's copy:
 
 ```bash
 ARTIFACT_BASENAME="$(basename "${REIMAGE_ARTIFACT_ROOT%/}")"
@@ -367,7 +429,7 @@ find "$ONEDRIVE_DEST" -type f -print0 2>/dev/null \
 
 Treat the OneDrive copy as confirmed only when all of these are true:
 
-- OneDrive menu bar icon shows fully synced, with no pending uploads or errors
+- the OneDrive menu bar icon shows fully synced, with no pending uploads or errors
 - the expected folder (`$ONEDRIVE_DEST_SUBDIR`) is visible in OneDrive web
 - the current-run `onedrive-upload-marker-YYYYMMDD-HHMMSS.txt` file is visible in OneDrive web
 - at least one recently changed file opens or previews correctly from OneDrive web
@@ -375,33 +437,6 @@ Treat the OneDrive copy as confirmed only when all of these are true:
 
 > [!bug] Troubleshooting
 > If a run wrote to a relative `OneDrive-…/` folder inside the repo checkout instead of the real CloudStorage-mounted folder, that folder is not syncing. See [[#Accidental Relative OneDrive Folder|Accidental Relative OneDrive Folder]].
-
-The single pass/fail checkbox for OneDrive sync in the Phase 6B sign-off lives in `reimage-prep-checks.md` — come back here if that checkbox needs troubleshooting.
-
-[[#Table of Contents|⬆ Back to Table of Contents]]
-
----
-
-## Re-running This Phase
-
-This phase is safe to re-run at any point before the erase — including right after a later pre-image phase like Backup Apps (Phase 2D). A re-run refreshes the home copy to match your disk as it is now; nothing about the earlier run has to be undone first, and you do **not** need to re-run Backup Apps.
-
-It does not disturb other phases' output. `backup-home.sh` writes only to `home-files-backup/` and its own `secrets-encrypted/` targets (ssh, gnupg, `certs/java-security/`, and the others named in the artifact-config fragments). It never touches `app-settings-backup/`, so a re-run leaves your Backup Apps artifacts intact.
-
-What a re-run changes: the external home targets are synced with `rsync -a --delete`, so the backup is brought into line with your current home directory — new and changed files are copied in, and files you have since deleted are pruned from the backup. Secret-bearing targets are refreshed additively (no delete). Preview first with `--dry-run`:
-
-```bash
-./bin/backup-home.sh --dry-run --external-only
-```
-
-For a mid-phase refresh, use `--external-only` to update just the authoritative external copy and skip re-writing the OneDrive secondary. Use the default (no flag) only if you also want the OneDrive work-safe subset refreshed, then re-confirm it in [[#Confirm the OneDrive Sync|Confirm the OneDrive Sync]].
-
-```bash
-./bin/backup-home.sh --external-only
-```
-
-> [!warning] Pitfall
-> If you have already built the Phase 3B secrets DMG, a re-run that changes any secret-bearing target means that DMG no longer covers the full staged secret set — rebuild it in Phase 3B after this refresh. While you are still staging and have not built the DMG yet (the normal case here), there is nothing extra to do.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -415,12 +450,17 @@ The scripts copy and inventory; these judgment calls stay with you.
 |---|---|
 | Whether a dotfile or local config is safe to restore later | Some are obsolete or machine-specific and should not be copied back blindly. |
 | Whether a flagged file is truly a secret | Content review, not filename, decides what must stay in `secrets-encrypted/`. |
+| Whether to widen `onedrive-targets.conf.sh` | Every added target is corporate-cloud exposure that no exclude pattern fully guarantees against. |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
 ---
 
 ## Troubleshooting
+
+Two failures span more than one step and have fixes long enough to break a step's flow. Each step that can hit one links in from a callout.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
 
 ### Accidental Relative OneDrive Folder
 
@@ -438,9 +478,9 @@ export ONEDRIVE_ROOT="$HOME/Library/CloudStorage/$ONEDRIVE_FOLDER_NAME"
 export ONEDRIVE_DEST_SUBDIR="$(basename "${REIMAGE_ARTIFACT_ROOT%/}")"
 ```
 
-`backup-home.sh` now refuses to write under the repo checkout and errors instead. To recover: move any stray contents into the real OneDrive root, quarantine the stray folder until the move shows in OneDrive web, then correct `reimage.env` (via `prepare-artifact-root.md`) before rerunning.
+`backup-home.sh` refuses to write under the repo checkout and errors instead. To recover: move any stray contents into the real OneDrive root, quarantine the stray folder until the move shows in OneDrive web, then correct `reimage.env` through `prepare-artifact-root.md` before rerunning.
 
-[[#Table of Contents|⬆ Back to Table of Contents]]
+[[#Confirm the OneDrive Sync|⮕ Continue to Confirm the OneDrive Sync]]
 
 ---
 
@@ -452,34 +492,36 @@ The target's label prints with `– <label>  not found, skipping`. The entry is 
 
 - a misspelled or wrong-plurality folder name — `ai-contexts` when the folder is `ai-context`;
 - a path pointing at a **file or script instead of its directory** — `…/elastic-start-local.sh` instead of the `…/elastic-start-local/` directory that contains it;
-- a path pointing at a **single loose file** rather than a directory. `EXTERNAL_TARGETS` entries are directory targets; capture a one-off file through its parent directory, or route it via a dotfile/secret fragment instead.
+- a path pointing at a **single loose file** rather than a directory. `EXTERNAL_TARGETS` entries are directory targets; capture a one-off file through its parent directory, or route it via a dotfile or secret fragment instead.
 
 The label does not appear at all. The entry is not active: it starts with `#` (commented out), is malformed (not five `|`-delimited fields), or sits outside the `EXTERNAL_TARGETS=( … )` parentheses.
 
-A third case hides even a valid, existing target: a pattern in `external-excludes.conf.sh` filters it out. If a directory that exists and is correctly listed still comes back empty or missing, check the excludes fragment before anything else — an exclude you added earlier quietly wins over a later include.
+A third case hides even a valid, existing target: a pattern in `external-excludes.conf.sh` filters it out. If a directory that exists and is correctly listed still comes back empty or missing, check the excludes fragment before anything else — an exclude added earlier quietly wins over a later include.
 
 > [!note]
 > `SOURCE` uses trailing-slash semantics: `…/dir/` syncs the directory's contents into `DEST`, while `…/dir` syncs the directory itself. Before assuming the script is at fault, confirm the source resolves to a directory exactly as written: `ls -d "$HOME/path/you/entered"`.
 
-[[#Table of Contents|⬆ Back to Table of Contents]]
+[[#Run the Backup|⮕ Continue to Run the Backup]]
 
 ---
 
 ## Supplemental Reference
 
+Longer material most runs will not need, kept out of the main flow.
+
 ### Customizing the Artifact-Config Fragments
 
-The fragments are ordinary Bash files: an array (or, for `secret-flags.conf.sh`, a set of variables) with one commented format line at the top. Edit the *active* copy — the directory `verify-artifact-config.sh` reports — which is a workspace copy under `$REIMAGE_WORKSPACE_ROOT/artifact-config` when present, otherwise the committed templates in `.internal/templates/artifact-config`. After any edit, re-run `./bin/verify-artifact-config.sh` and a `--dry-run` before copying.
+The fragments are ordinary Bash files: an array — or, for `secret-flags.conf.sh`, a set of variables — with one commented format line at the top. Edit the *active* copy, which is the directory `verify-artifact-config.sh` reports on its `Directory:` line: a workspace copy under `$REIMAGE_WORKSPACE_ROOT/artifact-config` when present, otherwise the committed templates in `.internal/templates/artifact-config`. After any edit, re-run `./bin/verify-artifact-config.sh` and a `--dry-run` before copying.
 
 **`external-targets.conf.sh`** — directories copied into `home-files-backup/`. Pipe-delimited: `LABEL | SOURCE | DEST | CATEGORY | DESCRIPTION`. A trailing slash on `SOURCE` copies the directory's *contents*; no slash copies the directory itself. Comment a line out to drop that target; copy a line and repoint `SOURCE` to add one.
 
-**`external-dotfiles.conf.sh`** — individual `~/` dotfiles. `FILENAME | CATEGORY | DESCRIPTION`; missing files are skipped silently. A dotfile marked `CATEGORY = secrets` is *not* copied here — it is expected in `secrets-targets.conf.sh` instead, so it lands encrypted rather than in the clear. Keep credential-shaped dotfiles out of this list unless their category is `secrets`.
+**`external-dotfiles.conf.sh`** — individual `~/` dotfiles. `FILENAME | CATEGORY | DESCRIPTION`; missing files are skipped silently. A dotfile marked `CATEGORY = secrets` is *not* copied here — it is expected in `secrets-targets.conf.sh` instead, so it lands staged for encryption rather than in the clear. Keep credential-shaped dotfiles out of this list unless their category is `secrets`.
 
 **`external-excludes.conf.sh`** — rsync filter patterns applied to *every* external sync. Add a pattern here rather than editing a script, to drop noise (caches, installers, `.DS_Store`) from otherwise-wanted targets.
 
 **`secrets-targets.conf.sh`** — credential-shaped sources copied to `secrets-encrypted/` for the later DMG. `KEY | SOURCE | DEST | DESCRIPTION`, with `DEST` relative to `secrets-encrypted/`. Each `KEY` is gated by a `BACKUP_<KEY>` flag. Add a secret by giving it a `KEY` and a `secrets-encrypted/`-relative `DEST`; never route a secret through `external-targets.conf.sh`.
 
-**`secret-flags.conf.sh`** — `BACKUP_<KEY>=true|false` toggles for the secrets targets (and Java `jssecacerts`). An unset flag defaults to `true`; set one to `false` to skip a secret this run, e.g. `BACKUP_GNUPG=false`.
+**`secret-flags.conf.sh`** — `BACKUP_<KEY>=true|false` toggles for the secrets targets, and for Java `jssecacerts`. An unset flag defaults to `true`; set one to `false` to skip a secret this run, for example `BACKUP_GNUPG=false`.
 
 **`onedrive-targets.conf.sh`** — the work-safe subset mirrored to OneDrive. Same format as `external-targets.conf.sh`, `DEST` relative to the OneDrive destination. Keep it narrow — documents only, never dotfiles or secrets. Comment lines in or out to widen or narrow the mirror.
 
@@ -488,6 +530,31 @@ The fragments are ordinary Bash files: an array (or, for `secret-flags.conf.sh`,
 **`skip-entries.conf.sh`** — `PATH | REASON`, informational only. It does *not* cause anything to be skipped; it documents intentional omissions so the size audit can explain them. To actually exclude something, add a pattern to `external-excludes.conf.sh` or leave it out of the targets — then, optionally, record why here.
 
 **`expected-artifact-folders.conf.sh`** — the top-level folder names expected under `$REIMAGE_ARTIFACT_ROOT`, checked by the size audit and the Phase 6B checklist. This tracks the standard artifact-root layout from `prepare-artifact-root.md`; change it only when that layout changes, and keep it alphabetized.
+
+### Re-running This Phase
+
+This phase is safe to re-run at any point before the erase — including right after a later pre-image phase. A re-run refreshes the home copy to match your disk as it is now; nothing about the earlier run has to be undone first, and no later phase has to be re-run because of it.
+
+It does not disturb other phases' output. `backup-home.sh` writes only to `home-files-backup/` and its own `secrets-encrypted/` destinations. It never touches `app-settings-backup/`, so a re-run leaves the Backup Apps artifacts intact.
+
+What a re-run changes: the external home targets are synced with `rsync -a --delete`, so the backup is brought into line with your current home directory — new and changed files are copied in, and files you have since deleted are pruned from the backup. Secret-bearing targets are refreshed additively, with no delete.
+
+Preview first:
+
+```bash
+./bin/backup-home.sh --dry-run --external-only
+```
+
+Then refresh just the authoritative external copy:
+
+```bash
+./bin/backup-home.sh --external-only
+```
+
+Use the default mode instead only when you also want the OneDrive work-safe subset refreshed — that run needs the OneDrive confirmation done again.
+
+> [!warning] Pitfall
+> If you have already built the Phase 3B secrets DMG, a re-run that changes any secret-bearing target means that DMG no longer covers the full staged secret set — rebuild it in Phase 3B after this refresh. While you are still staging and have not built the DMG yet, which is the normal case here, there is nothing extra to do.
 
 ### SSH Agent Socket Exclusion in Detail
 
@@ -501,8 +568,18 @@ This matters because `~/.ssh/agent/` can contain live SSH agent Unix domain sock
 
 These are runtime-only control sockets created by the running SSH agent process. They are not restorable secrets — a copied socket file cannot be reconnected to an agent after a reimage. Copying them with a socket-preserving rsync also fails outright (`rsync: mkstempsock: Invalid argument`, rsync exit `23`), which is what originally broke this step.
 
-`--no-specials --no-devices` tells rsync to skip sockets, FIFOs, and device files instead of trying to recreate them. Regular SSH key material (`id_ed25519`, `id_rsa`, `known_hosts`, `config`, etc.) under `~/.ssh/` is unaffected and still copies normally. A new SSH agent creates fresh sockets on its own, so there is nothing to restore here.
+`--no-specials --no-devices` tells rsync to skip sockets, FIFOs, and device files instead of trying to recreate them. Regular SSH key material (`id_ed25519`, `id_rsa`, `known_hosts`, `config`, and the rest) under `~/.ssh/` is unaffected and still copies normally. A new SSH agent creates fresh sockets on its own, so there is nothing to restore here.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
 ---
+
+<!--
+TOC verification performed before publishing:
+- every Table of Contents entry resolves to a heading present in this file;
+- the two routed Troubleshooting destinations are deliberately absent from the
+  Table of Contents — their inline `> [!bug]` callouts are the only entry point,
+  and each ends with a single Continue link to the step it resumes at;
+- each remaining section ends with one "Back to Table of Contents" link
+  followed by a `---` divider.
+-->

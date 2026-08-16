@@ -271,11 +271,30 @@ here, the step carries a one-line callout linking in:
 Delete this section if every troubleshooting note is better placed inline.
 -->
 
+{{One or two link-free sentences naming what lives here and how a reader arrives.}}
+
+<!--
+The Table-of-Contents back-link sits HERE, under the intro and above the first
+symptom — the one place in a runbook a back-link opens a section instead of
+closing it. A reader who opened Troubleshooting from the Table of Contents gets
+a way straight back; a reader who landed on one symptom from a `> [!bug]`
+callout still flows forward to their resume step. No `---` divider follows it.
+-->
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
 ### {{Symptom, stated as the reader would see it}}
 
 {{What is happening and the fix, or the safe recovery steps.}}
 
-[[#Table of Contents|⬆ Back to Table of Contents]]
+<!--
+Each symptom subsection ends with a single `⮕ Continue to <resume step>` link —
+the step the reader proceeds to once the fix succeeds — and that Continue link is
+the subsection's only link. Fall back to `[[#Troubleshooting|⬆ Back to Troubleshooting]]`
+only for a symptom with no single resume step.
+-->
+
+[[#{{RESUME_STEP}}|⮕ Continue to {{RESUME_STEP}}]]
 
 ---
 

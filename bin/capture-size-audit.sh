@@ -1,27 +1,62 @@
 #!/usr/bin/env bash
+# =============================================================================
 # capture-size-audit.sh
-# Audits local backup targets, OneDrive, external drive capacity, and the
-# backup root structure. All targets and excludes are read from artifact-config.sh.
 #
+# Audits the configured local backup targets, the OneDrive destination, the
+# external drive's capacity, and the structure of the artifact root, then
+# reports whether the planned backup fits. Run before any copying phase so a
+# full or unmounted drive is caught while it is still cheap to fix. Invoked by
+# Phase 2A (backup-repos.md) and Phase 2B (backup-home.md); see those runbooks
+# for how the output is read.
+#
+# This file is intended for bin/. All targets, dotfiles, secrets, excludes, and
+# expected artifact folders are read from the artifact-config fragments loaded
+# by .internal/load-reimage-config.sh — edit fragments there, not this script.
+# The audit observes and reports; it copies nothing and deletes nothing.
+#
+# --- BEGIN USAGE ---
 # Usage:
-#   ./capture-size-audit.sh [options]
+#   cd <repo-root>
+#   chmod +x bin/capture-size-audit.sh
+#
+#   # Default run
+#   ./bin/capture-size-audit.sh
+#
+#   # Label the run so same-day captures stay distinguishable in MANIFEST.md
+#   ./bin/capture-size-audit.sh --context pre-image-backup-home
+#
+#   # Local target inventory only (skips OneDrive AND the external fit check)
+#   ./bin/capture-size-audit.sh --local-only
+#
+#   # Audit a specific artifact root
+#   ./bin/capture-size-audit.sh --backup-root "$REIMAGE_ARTIFACT_ROOT"
+#
+#   # Point at a different external volume by name or by mount path
+#   ./bin/capture-size-audit.sh --drive Data
+#   ./bin/capture-size-audit.sh --drive /Volumes/Data
+#
+#   # Read-only lingering-plaintext-secret check, after the secrets phase
+#   ./bin/capture-size-audit.sh --check-loose-secrets
 #
 # Options:
-#   --drive NAME        External drive partition name (default: Data)
-#   --backup-root DIR   Specific backup/capture root to audit (default: BACKUP_ROOT env var or newest reimage-*)
-#   --local-only          Skip OneDrive and external drive sections
-#   --check-loose-secrets Run a read-only lingering-secret candidate check.
-#   --dest DIR           Size-audit-reports root directory.
+#   --drive NAME|PATH     External volume name or /Volumes/... mount path.
+#                         Default: $EXTERNAL_DATA_VOLUME from shared config.
+#   --backup-root DIR     Artifact root to audit.
+#                         Default: $REIMAGE_ARTIFACT_ROOT, else the newest
+#                         reimage-* directory found on the external volume.
+#   --dest DIR            Size-audit-reports root directory.
 #                         Default: $REIMAGE_ARTIFACT_ROOT/size-audit-reports.
 #                         When neither is available, the report is not saved.
-#   --context pre-image|post-image|pre-image-<label>|post-image-<label>
-#                         Context prefix for the timestamped run directory.
-#                         Default: pre-image. Use a sub-label (e.g.
-#                         pre-image-backup-repos) to distinguish multiple
-#                         pre-image captures on the same day in
-#                         MANIFEST.md; the run directory still starts with
-#                         pre-image- or post-image- either way.
-#   --help
+#   --context LABEL       Context prefix for the timestamped run directory.
+#                         Must be pre-image, post-image, or start with
+#                         pre-image- / post-image- (e.g. pre-image-backup-home).
+#                         Default: pre-image.
+#   --local-only          Local target inventory only. Skips both the OneDrive
+#                         section and the external-drive capacity/fit check.
+#   --check-loose-secrets Read-only heuristic scan for plaintext secret
+#                         candidates outside secrets-encrypted/ and loose
+#                         payload files still inside it.
+#   -h, --help            Show this message and exit.
 #
 # Output (written beneath --dest, when a destination is available):
 #   MANIFEST.md
@@ -31,8 +66,26 @@
 #   runs/<context>-YYYYMMDD-HHMMSS/size-audit-report.txt
 #       Full terminal output of the run, ANSI color codes intact. View with
 #       `less -R` or `cat` in a terminal so the severity colors still render.
+#
+# Configuration precedence:
+#   1. Explicit command-line options for this invocation.
+#   2. Environment values already exported by the caller or optional .envrc.
+#   3. Values loaded from reimage.env.
+#   4. Defaults and reusable fragments loaded by artifact-config.sh.
+#
+# Exit status:
+#   0  Audit completed. A capacity shortfall is reported in the output, not in
+#      the exit status — this script observes and does not gate the workflow.
+#   1  The audit could not complete (report destination collision).
+#   2  Usage, configuration, prerequisite, or dependency error.
+# --- END USAGE ---
+# =============================================================================
 
-set -euo pipefail
+set -Eeuo pipefail
+trap 'status=$?; echo "" >&2; \
+  echo "ERROR: capture-size-audit.sh failed near line ${LINENO}: ${BASH_COMMAND}" >&2; \
+  echo "       the in-progress run directory was discarded; no report was saved." >&2; \
+  exit "$status"' ERR
 
 # ── Locate and source shared reimage config ──────────────────────────────────
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -42,6 +95,11 @@ if [[ ! -f "$CONFIG_LOADER" ]]; then
   echo "ERROR: shared config loader not found: $CONFIG_LOADER" >&2
   exit 2
 fi
+
+# This script reports on whatever roots it can resolve and never requires an
+# artifact root, so keep loading permissive.
+ARTIFACT_CONFIG_REQUIRE_REIMAGE_ARTIFACT_ROOT=false
+
 # shellcheck source=../.internal/load-reimage-config.sh
 source "$CONFIG_LOADER"
 
@@ -49,47 +107,76 @@ source "$CONFIG_LOADER"
 # variable; show the effective artifact-config source when available.
 CONFIG="${CONFIG:-${ARTIFACT_CONFIG_SOURCE_DIR:-$CONFIG_LOADER}}"
 
-# ── Argument parsing ──────────────────────────────────────────────────────────
-DRIVE_NAME="$DEFAULT_DRIVE_NAME"
-AUDIT_BACKUP_ROOT="${BACKUP_ROOT:-}"
+# Stock macOS Bash 3.2 errors on "${arr[@]}" for an empty array under `set -u`.
+# Config-fragment arrays are therefore iterated only inside a
+# `declare -p NAME >/dev/null 2>&1 && (( ${#NAME[@]} > 0 ))` guard, because a
+# fragment may legitimately define no entries.
+
+# ── Defaults and command-line state ──────────────────────────────────────────
+DRIVE_NAME=""
+AUDIT_BACKUP_ROOT=""
 LOCAL_ONLY=false
 CHECK_LOOSE_SECRETS=false
 REPORT_DEST="${REIMAGE_ARTIFACT_ROOT:+${REIMAGE_ARTIFACT_ROOT}/size-audit-reports}"
 REPORT_CONTEXT="pre-image"
 
-for arg in "$@"; do
-  case "$arg" in
-    --local-only)          LOCAL_ONLY=true ;;
-    --check-loose-secrets) CHECK_LOOSE_SECRETS=true ;;
-    --help|-h)
-      cat <<'USAGE'
-Usage: ./capture-size-audit.sh [--drive NAME_OR_MOUNT_PATH] [--backup-root DIR] [--local-only] [--check-loose-secrets] [--dest DIR] [--context pre-image|post-image|pre-image-<label>|post-image-<label>]
+usage() {
+  sed -n '/^# --- BEGIN USAGE ---$/,/^# --- END USAGE ---$/p' "$0" \
+    | sed '1d;$d;s/^# //;s/^#$//'
+}
 
-  --drive NAME_OR_MOUNT_PATH
-                       External drive partition name or /Volumes/... mount path
-                       (default: Data)
-  --backup-root DIR   Backup/capture root to audit (default: BACKUP_ROOT env var or newest reimage-* on drive)
-  --local-only          Show local targets only — skip OneDrive and external drive
-  --check-loose-secrets Run after the secrets phase to identify plaintext secret candidates outside secrets-encrypted/ and loose payloads still under secrets-encrypted/.
-  --dest DIR           Size-audit-reports root directory (default: $REIMAGE_ARTIFACT_ROOT/size-audit-reports)
-  --context pre-image|post-image|pre-image-<label>|post-image-<label>
-                       Context prefix for the timestamped run directory (default: pre-image).
-                       A sub-label such as pre-image-backup-repos distinguishes multiple
-                       pre-image captures the same day; must start with pre-image- or post-image-.
-USAGE
-      exit 0 ;;
-    --drive)        : ;;   # handled below
-    --backup-root)  : ;;
-    --dest)         : ;;   # handled below
-    --context)      : ;;   # handled below
+require_option_value() {
+  local option="$1"
+  local value="${2:-}"
+
+  if [[ -z "$value" || "$value" == --* ]]; then
+    echo "ERROR: $option requires a non-empty value." >&2
+    usage >&2
+    exit 2
+  fi
+}
+
+# ── Parse command-line options ───────────────────────────────────────────────
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --drive)
+      require_option_value "$1" "${2:-}"
+      DRIVE_NAME="$2"
+      shift 2
+      ;;
+    --backup-root)
+      require_option_value "$1" "${2:-}"
+      AUDIT_BACKUP_ROOT="$2"
+      shift 2
+      ;;
+    --dest)
+      require_option_value "$1" "${2:-}"
+      REPORT_DEST="$2"
+      shift 2
+      ;;
+    --context)
+      require_option_value "$1" "${2:-}"
+      REPORT_CONTEXT="$2"
+      shift 2
+      ;;
+    --local-only)
+      LOCAL_ONLY=true
+      shift
+      ;;
+    --check-loose-secrets)
+      CHECK_LOOSE_SECRETS=true
+      shift
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
     *)
-      if [[ "${PREV_ARG:-}" == "--drive" ]];         then DRIVE_NAME="$arg"
-      elif [[ "${PREV_ARG:-}" == "--backup-root" ]]; then AUDIT_BACKUP_ROOT="$arg"
-      elif [[ "${PREV_ARG:-}" == "--dest" ]];        then REPORT_DEST="$arg"
-      elif [[ "${PREV_ARG:-}" == "--context" ]];     then REPORT_CONTEXT="$arg"
-      fi ;;
+      echo "ERROR: unknown option: $1" >&2
+      usage >&2
+      exit 2
+      ;;
   esac
-  PREV_ARG="$arg"
 done
 
 case "$REPORT_CONTEXT" in
@@ -107,15 +194,21 @@ case "$REPORT_CONTEXT" in
     ;;
 esac
 
-if [[ "$DRIVE_NAME" == /* ]]; then
+# Resolve the external volume. With no --drive, use the configured
+# EXTERNAL_DATA_VOLUME directly rather than rebuilding a /Volumes path from a
+# bare name, so a volume mounted elsewhere still resolves.
+if [[ -z "$DRIVE_NAME" ]]; then
+  EXTERNAL_MOUNT="${EXTERNAL_DATA_VOLUME%/}"
+elif [[ "$DRIVE_NAME" == /* ]]; then
   EXTERNAL_MOUNT="${DRIVE_NAME%/}"
-  DRIVE_DISPLAY="$(basename "$EXTERNAL_MOUNT")"
 else
-  EXTERNAL_MOUNT="/Volumes/${DRIVE_NAME}"
-  DRIVE_DISPLAY="$DRIVE_NAME"
+  EXTERNAL_MOUNT="$(dirname "${EXTERNAL_DATA_VOLUME%/}")/${DRIVE_NAME}"
 fi
-ACTIVE_BACKUP_ROOT="${AUDIT_BACKUP_ROOT:-${BACKUP_ROOT:-}}"
-EXTERNAL_LOCAL_FILES_DEST=""
+
+# The artifact root this run reports on. --backup-root wins; otherwise the
+# shared REIMAGE_ARTIFACT_ROOT, which is what every other entrypoint writes to.
+ACTIVE_BACKUP_ROOT="${AUDIT_BACKUP_ROOT:-${REIMAGE_ARTIFACT_ROOT:-}}"
+EXTERNAL_HOME_FILES_DEST=""
 ONEDRIVE_DEST_PATH=""
 
 # ── Colors ────────────────────────────────────────────────────────────────────
@@ -234,7 +327,7 @@ list_dir_contents() {
   local count=0
   local items=()
 
-  [[ -d "$path" ]] || return
+  [[ -d "$path" ]] || return 0
 
   while IFS= read -r item; do
     name="${item##*/}"
@@ -244,6 +337,10 @@ list_dir_contents() {
     find "$path" -maxdepth 1 -mindepth 1 -type d  2>/dev/null | sort
     find "$path" -maxdepth 1 -mindepth 1 ! -type d 2>/dev/null | sort
   )
+
+  # Explicit 0: a bare `return` would propagate the failed (( )) status and,
+  # under `set -e`, abort the entire audit on the first empty directory.
+  (( ${#items[@]} > 0 )) || return 0
 
   for item in "${items[@]}"; do
     count=$((count + 1))
@@ -386,70 +483,79 @@ echo -e "  ${DIM}Sources defined in artifact-config.sh EXTERNAL_TARGETS${RST}"
 
 current_category=""
 
-for entry in "${EXTERNAL_TARGETS[@]}"; do
-  label=$(config_field "$entry" 1)
-  src=$(config_field "$entry" 2)
-  category=$(config_field "$entry" 4)
-  desc=$(config_field "$entry" 5)
+if declare -p EXTERNAL_TARGETS >/dev/null 2>&1 && (( ${#EXTERNAL_TARGETS[@]} > 0 )); then
+  for entry in "${EXTERNAL_TARGETS[@]}"; do
+    label=$(config_field "$entry" 1)
+    src=$(config_field "$entry" 2)
+    category=$(config_field "$entry" 4)
+    desc=$(config_field "$entry" 5)
 
-  # Print category header when it changes
-  if [[ "$category" != "$current_category" ]]; then
-    echo ""
-    echo -e "  ${BLD}── ${category^^} ──────────────────────────────────────────────${RST}"
-    current_category="$category"
-  fi
+    # Print category header when it changes. `tr` rather than ${var^^}:
+    # uppercase parameter expansion is Bash 4 only.
+    if [[ "$category" != "$current_category" ]]; then
+      echo ""
+      echo -e "  ${BLD}── $(printf '%s' "$category" | tr '[:lower:]' '[:upper:]') ──────────────────────────────────────────────${RST}"
+      current_category="$category"
+    fi
 
-  rb=$(raw_bytes "$src"); sz=$(bytes_to_human "$rb")
-  total_bytes=$(( total_bytes + rb ))
+    rb=$(raw_bytes "$src"); sz=$(bytes_to_human "$rb")
+    total_bytes=$(( total_bytes + rb ))
 
-  if [[ ! -e "$src" ]]; then
-    printf "  ${DIM}▸ %-28s  not found, skipping${RST}\n" "$label"
-    continue
-  fi
+    if [[ ! -e "$src" ]]; then
+      printf "  ${DIM}▸ %-28s  not found, skipping${RST}\n" "$label"
+      continue
+    fi
 
-  if (( rb > 10737418240 )); then
-    printf "  ${YEL}▸ %-28s  %-10s  %s${RST}\n" "$label" "$sz ⚠" "$desc"
-  else
-    printf "  ${GRN}▸ %-28s  ${BLD}%-10s${RST}  ${DIM}%s${RST}\n" "$label" "$sz" "$desc"
-  fi
-  list_dir_contents "$src" 30
-done
+    if (( rb > 10737418240 )); then
+      printf "  ${YEL}▸ %-28s  %-10s  %s${RST}\n" "$label" "$sz ⚠" "$desc"
+    else
+      printf "  ${GRN}▸ %-28s  ${BLD}%-10s${RST}  ${DIM}%s${RST}\n" "$label" "$sz" "$desc"
+    fi
+    list_dir_contents "$src" 30
+  done
+else
+  echo -e "  ${YEL}  EXTERNAL_TARGETS is empty or undefined — nothing to size.${RST}"
+fi
 
 # ── Dotfiles ──────────────────────────────────────────────────────────────────
 echo ""
 echo -e "  ${BLD}── DOTFILES (individual files at ~/) ──────────────────────${RST}"
 
-for entry in "${EXTERNAL_DOTFILES[@]}"; do
-  df=$(config_field "$entry" 1)
-  desc=$(config_field "$entry" 3)
-  fp="$HOME/$df"
-  [[ -e "$fp" ]] || continue
-  rb=$(raw_bytes "$fp"); sz=$(bytes_to_human "$rb")
-  total_bytes=$(( total_bytes + rb ))
-  if echo "$df" | grep -qiE 'netrc|secret|token|key|password'; then
-    printf "  ${YEL}  %-28s  %-10s  %s ⚠ sensitive${RST}\n" "$df" "$sz" "$desc"
-  else
-    printf "  ${GRN}  %-28s  ${BLD}%-10s${RST}  ${DIM}%s${RST}\n" "$df" "$sz" "$desc"
-  fi
-done
+if declare -p EXTERNAL_DOTFILES >/dev/null 2>&1 && (( ${#EXTERNAL_DOTFILES[@]} > 0 )); then
+  for entry in "${EXTERNAL_DOTFILES[@]}"; do
+    df=$(config_field "$entry" 1)
+    desc=$(config_field "$entry" 3)
+    fp="$HOME/$df"
+    [[ -e "$fp" ]] || continue
+    rb=$(raw_bytes "$fp"); sz=$(bytes_to_human "$rb")
+    total_bytes=$(( total_bytes + rb ))
+    if echo "$df" | grep -qiE 'netrc|secret|token|key|password'; then
+      printf "  ${YEL}  %-28s  %-10s  %s ⚠ sensitive${RST}\n" "$df" "$sz" "$desc"
+    else
+      printf "  ${GRN}  %-28s  ${BLD}%-10s${RST}  ${DIM}%s${RST}\n" "$df" "$sz" "$desc"
+    fi
+  done
+fi
 
 # ── Secrets ───────────────────────────────────────────────────────────────────
 echo ""
 echo -e "  ${BLD}── SECRETS (→ secrets-encrypted/ LATER PHASE) ────────────${RST}"
 echo -e "  ${DIM}Inventory only: presence here is expected before the secrets phase; source files should not be deleted by this audit.${RST}"
 
-for entry in "${SECRETS_TARGETS[@]}"; do
-  key=$(config_field "$entry" 1)
-  src=$(config_field "$entry" 2)
-  desc=$(config_field "$entry" 4)
-  rb=$(raw_bytes "$src"); sz=$(bytes_to_human "$rb")
-  total_bytes=$(( total_bytes + rb ))
-  if [[ -e "$src" ]]; then
-    printf "  ${CYN}  %-28s  %-10s  %s${RST}\n" "$key" "$sz" "$desc"
-  else
-    printf "  ${DIM}  %-28s  not found${RST}\n" "$key"
-  fi
-done
+if declare -p SECRETS_TARGETS >/dev/null 2>&1 && (( ${#SECRETS_TARGETS[@]} > 0 )); then
+  for entry in "${SECRETS_TARGETS[@]}"; do
+    key=$(config_field "$entry" 1)
+    src=$(config_field "$entry" 2)
+    desc=$(config_field "$entry" 4)
+    rb=$(raw_bytes "$src"); sz=$(bytes_to_human "$rb")
+    total_bytes=$(( total_bytes + rb ))
+    if [[ -e "$src" ]]; then
+      printf "  ${CYN}  %-28s  %-10s  %s${RST}\n" "$key" "$sz" "$desc"
+    else
+      printf "  ${DIM}  %-28s  not found${RST}\n" "$key"
+    fi
+  done
+fi
 
 echo ""
 hr
@@ -462,24 +568,26 @@ echo -e "  ${DIM}Defined in artifact-config.sh SKIP_ENTRIES${RST}"
 echo ""
 
 skip_bytes=0
-for entry in "${SKIP_ENTRIES[@]}"; do
-  path_raw=$(config_field "$entry" 1)
-  reason=$(config_field "$entry" 2)
-  # Expand ~ to check actual size
-  actual_path="${path_raw/\~/$HOME}"
-  # Only check paths without wildcards
-  if [[ "$actual_path" != *"*"* ]] && [[ -e "$actual_path" ]]; then
-    rb=$(raw_bytes "$actual_path"); sz=$(bytes_to_human "$rb")
-    skip_bytes=$(( skip_bytes + rb ))
-    if (( rb > 1073741824 )); then
-      printf "  ${DIM}✗  %-42s  ${YEL}%-10s${RST}  ${DIM}%s${RST}\n" "$path_raw" "$sz" "$reason"
+if declare -p SKIP_ENTRIES >/dev/null 2>&1 && (( ${#SKIP_ENTRIES[@]} > 0 )); then
+  for entry in "${SKIP_ENTRIES[@]}"; do
+    path_raw=$(config_field "$entry" 1)
+    reason=$(config_field "$entry" 2)
+    # Expand ~ to check actual size
+    actual_path="${path_raw/\~/$HOME}"
+    # Only check paths without wildcards
+    if [[ "$actual_path" != *"*"* ]] && [[ -e "$actual_path" ]]; then
+      rb=$(raw_bytes "$actual_path"); sz=$(bytes_to_human "$rb")
+      skip_bytes=$(( skip_bytes + rb ))
+      if (( rb > 1073741824 )); then
+        printf "  ${DIM}✗  %-42s  ${YEL}%-10s${RST}  ${DIM}%s${RST}\n" "$path_raw" "$sz" "$reason"
+      else
+        printf "  ${DIM}✗  %-42s  %-10s  %s${RST}\n" "$path_raw" "$sz" "$reason"
+      fi
     else
-      printf "  ${DIM}✗  %-42s  %-10s  %s${RST}\n" "$path_raw" "$sz" "$reason"
+      printf "  ${DIM}✗  %-42s             %s${RST}\n" "$path_raw" "$reason"
     fi
-  else
-    printf "  ${DIM}✗  %-42s             %s${RST}\n" "$path_raw" "$reason"
-  fi
-done
+  done
+fi
 
 echo ""
 echo -e "  ${DIM}Skipped total (not backed up):  $(bytes_to_human $skip_bytes)${RST}"
@@ -502,11 +610,13 @@ echo -e "${BLD}${CYN}━━  ONEDRIVE  ━━━━━━━━━━━━━�
 echo -e "  ${DIM}Targets defined in artifact-config.sh ONEDRIVE_TARGETS${RST}"
 echo ""
 
-# Auto-detect OneDrive
+# Auto-detect OneDrive. artifact-config.sh derives ONEDRIVE_PREFERRED_ROOT from
+# ONEDRIVE_PARENT_DIR and ONEDRIVE_FOLDER_NAME, so no folder name is hardcoded
+# here; the CloudStorage scan is the fallback when neither is configured.
 if [[ -z "$ONEDRIVE_ROOT" ]]; then
-  CLOUD="$HOME/Library/CloudStorage"
-  if [[ -d "$CLOUD/OneDrive-AcmeGroup" ]]; then
-    ONEDRIVE_ROOT="$CLOUD/OneDrive-AcmeGroup"
+  CLOUD="${ONEDRIVE_PARENT_DIR:-$HOME/Library/CloudStorage}"
+  if [[ -n "${ONEDRIVE_PREFERRED_ROOT:-}" && -d "${ONEDRIVE_PREFERRED_ROOT:-}" ]]; then
+    ONEDRIVE_ROOT="$ONEDRIVE_PREFERRED_ROOT"
   elif [[ -d "$CLOUD" ]]; then
     ONEDRIVE_ROOT=$(find "$CLOUD" -maxdepth 1 -name 'OneDrive*' -type d 2>/dev/null | head -1)
   fi
@@ -538,18 +648,22 @@ if [[ -n "$ONEDRIVE_ROOT" ]] && [[ -d "$ONEDRIVE_ROOT" ]]; then
 
   # Show what WOULD be synced per config
   echo -e "  ${BLD}Planned OneDrive sync targets:${RST}"
-  for entry in "${ONEDRIVE_TARGETS[@]}"; do
-    label=$(config_field "$entry" 1)
-    src=$(config_field "$entry" 2)
-    desc=$(config_field "$entry" 5)
-    rb=$(raw_bytes "$src"); sz=$(bytes_to_human "$rb")
-    od_total=$(( od_total + rb ))
-    if [[ -e "$src" ]]; then
-      printf "  ${GRN}  ▸ %-20s  ${BLD}%-10s${RST}  ${DIM}%s${RST}\n" "$label" "$sz" "$desc"
-    else
-      printf "  ${DIM}  ▸ %-20s  not found${RST}\n" "$label"
-    fi
-  done
+  if declare -p ONEDRIVE_TARGETS >/dev/null 2>&1 && (( ${#ONEDRIVE_TARGETS[@]} > 0 )); then
+    for entry in "${ONEDRIVE_TARGETS[@]}"; do
+      label=$(config_field "$entry" 1)
+      src=$(config_field "$entry" 2)
+      desc=$(config_field "$entry" 5)
+      rb=$(raw_bytes "$src"); sz=$(bytes_to_human "$rb")
+      od_total=$(( od_total + rb ))
+      if [[ -e "$src" ]]; then
+        printf "  ${GRN}  ▸ %-20s  ${BLD}%-10s${RST}  ${DIM}%s${RST}\n" "$label" "$sz" "$desc"
+      else
+        printf "  ${DIM}  ▸ %-20s  not found${RST}\n" "$label"
+      fi
+    done
+  else
+    echo -e "  ${YEL}  ONEDRIVE_TARGETS is empty or undefined — nothing would sync.${RST}"
+  fi
   echo ""
   echo -e "  ${BLD}Planned OneDrive sync size: $(bytes_to_human $od_total)${RST}"
   echo -e "  ${DIM}(After OneDrive extra excludes are applied — actual upload will be smaller)${RST}"
@@ -647,9 +761,11 @@ if [[ -d "$EXTERNAL_MOUNT" ]]; then
         rb=$(raw_bytes "$item"); sz=$(bytes_to_human "$rb")
         if [[ -d "$item" ]]; then
           is_expected=0
-          for ef in "${EXPECTED_ARTIFACT_FOLDERS[@]}"; do
-            [[ "$name" == "$ef" ]] && is_expected=1 && break
-          done
+          if declare -p EXPECTED_ARTIFACT_FOLDERS >/dev/null 2>&1 && (( ${#EXPECTED_ARTIFACT_FOLDERS[@]} > 0 )); then
+            for ef in "${EXPECTED_ARTIFACT_FOLDERS[@]}"; do
+              [[ "$name" == "$ef" ]] && is_expected=1 && break
+            done
+          fi
           (( is_expected )) \
             && printf "  ${GRN}  📁  %-38s  %s ✓${RST}\n" "$name" "$sz" \
             || printf "  ${DIM}  📁  %-38s  %s${RST}\n"   "$name" "$sz"
@@ -666,9 +782,11 @@ if [[ -d "$EXTERNAL_MOUNT" ]]; then
 
       echo ""
       missing=()
-      for ef in "${EXPECTED_ARTIFACT_FOLDERS[@]}"; do
-        [[ -d "$backup_root/$ef" ]] || missing+=("$ef")
-      done
+      if declare -p EXPECTED_ARTIFACT_FOLDERS >/dev/null 2>&1 && (( ${#EXPECTED_ARTIFACT_FOLDERS[@]} > 0 )); then
+        for ef in "${EXPECTED_ARTIFACT_FOLDERS[@]}"; do
+          [[ -d "$backup_root/$ef" ]] || missing+=("$ef")
+        done
+      fi
       if (( ${#missing[@]} > 0 )); then
         echo -e "  ${YEL}  Missing expected folders:${RST}"
         for mf in "${missing[@]}"; do printf "  ${YEL}    ✗ %s${RST}\n" "$mf"; done
@@ -761,18 +879,18 @@ thin_hr
 echo ""
 
 if [[ -n "$ACTIVE_BACKUP_ROOT" ]]; then
-  EXTERNAL_LOCAL_FILES_DEST="${ACTIVE_BACKUP_ROOT%/}/local-files"
+  EXTERNAL_HOME_FILES_DEST="${ACTIVE_BACKUP_ROOT%/}/home-files-backup"
 fi
 
 # External drive fit
 printf "  %-38s  %s\n" "Estimated external backup size:"  "$(bytes_to_human $total_bytes)"
 if [[ -n "$ACTIVE_BACKUP_ROOT" ]]; then
   printf "  %-38s  %s\n" "Target backup root:" "$ACTIVE_BACKUP_ROOT"
-  printf "  %-38s  %s\n" "Target local-files destination:" "$EXTERNAL_LOCAL_FILES_DEST"
-  if [[ -e "$EXTERNAL_LOCAL_FILES_DEST" ]]; then
-    printf "  %-38s  %s\n" "Current local-files destination size:" "$(dir_size_human "$EXTERNAL_LOCAL_FILES_DEST")"
+  printf "  %-38s  %s\n" "Target home-files destination:" "$EXTERNAL_HOME_FILES_DEST"
+  if [[ -e "$EXTERNAL_HOME_FILES_DEST" ]]; then
+    printf "  %-38s  %s\n" "Current home-files destination size:" "$(dir_size_human "$EXTERNAL_HOME_FILES_DEST")"
   else
-    printf "  %-38s  %s\n" "Current local-files destination size:" "not created yet"
+    printf "  %-38s  %s\n" "Current home-files destination size:" "not created yet"
   fi
 fi
 if (( avail_bytes > 0 )); then

@@ -1,37 +1,63 @@
-Script types and recommended locations
+# Script types and locations
 
-This file maps the script classifications used in the authoring prompts to where such files should live in the repository and how they should behave.
+Where a new script belongs, by what kind of script it is.
 
-1) Foundation / config loader
-- Location: .internal/loaders/ or .internal/config/
-- Behavior: source-only files meant to be `source`d by other scripts. Must not call `exit` or change caller shell options. Use `return` on error and include a detailed header (usage, outputs, variables set). Example: .internal/load-reimage-config.sh
+This guide answers placement only. The behavior each class must follow —
+strict-mode choice, loader contract, option handling, output conventions — lives
+in `.github/ai-prompts/script-prompts/bash-script-authoring-and-review.md`, and
+the repository-wide conventions live in `.github/copilot-instructions.md`. Read
+those for the rules; read this to decide which directory a file goes in.
 
-2) bin/ entrypoint (user-facing)
-- Location: bin/
-- Behavior: executable entrypoints that coordinate workflows. Use verb-first filenames and `set -euo pipefail`. Self-locate using BASH_SOURCE, load shared config loader, parse options, validate prerequisites, and print concise summaries and exit codes.
+## The mapping
 
-3) .internal/ pure helper
-- Location: .internal/<domain>/ (e.g., .internal/helpers/ or .internal/git/)
-- Behavior: focused implementation, accept explicit --root/--dest args, avoid loading shared config by default.
+| Kind | Goes in | Example |
+|---|---|---|
+| User-facing entrypoint | `bin/<verb-first-name>.sh` | `bin/backup-home.sh` |
+| Aggregate validator / checklist | `bin/` | `bin/verify-artifact-config.sh` |
+| Foundation / config loader | `.internal/` root | `.internal/load-reimage-config.sh` |
+| Domain helper | `.internal/<domain>/` | `.internal/git/stage-selected-patterns.py` |
+| Environment creator | `bin/`, or repo root when it must run pre-clone | `bin/setup-reimage-env.sh`, `bootstrap.sh` |
+| Config fragment or generated-file template | `.internal/templates/<set>/` | `.internal/templates/artifact-config/` |
+| Sign-off / document template | `templates/` | `templates/it-reimage-confirmation-template.md` |
+| Authoring template for new scripts | `.github/ai-templates/script-templates/` | `bash-entrypoint.sh.tmpl` |
+| Genuinely cross-repo script | `.share/` | *(empty — nothing has earned it yet)* |
 
-4) Aggregate validator / checklist
-- Location: bin/ (user-invoked validators) or .internal/validators/ (helper pieces)
-- Behavior: use `set -uo pipefail` (intentionally omit `-e`), convert failures into PASS/WARN/FAIL/SKIP records rather than aborting. Should not create the artifacts it verifies.
+## Notes on the less obvious rows
 
-5) Bootstrap / environment creator
-- Location (if runnable): bin/ (e.g., bin/setup-reimage-env.sh)
-- Location (if sourced-only): .internal/bootstrap/
-- Behavior: clearly document whether it is executable or source-only. If it's source-only, follow loader rules (return on error, do not change caller shell options). If executable, document usage and safe defaults; may create reimage.env.
+**Entrypoints and validators share `bin/`.** A validator is user-invoked, so it
+belongs beside the other entrypoints; what distinguishes it is behavior, not
+location. The current validators are `check-reimage-env.sh`,
+`reimage-checklist.sh`, `verify-artifact-config.sh`, and `verify-doc-paths.sh`.
 
-6) Misc / helpers that may become entrypoints
-- Placement: prefer .internal/ for helpers; migrate to bin/ only when intended to be user-facing.
+**Loaders sit at the `.internal/` root, not in a `loaders/` subdirectory.**
+There are two — `load-reimage-config.sh` and `artifact-config.sh` — and a
+directory for two files that everything sources buys nothing. They resolve each
+other relative to `BASH_SOURCE`, so moving one means editing the other.
 
-Notes
-- Prompts and templates: .github/ai-prompts/ and .github/ai-templates/ (discoverable to contributors). Script templates are templates (not executables) and belong in .github/ai-templates/script-templates/.
-- Migration mappings: use /tmp/mappings/ for ephemeral per-migration files. Move long-lived mappings to .github/ai-templates/mappings/ if you decide to keep them.
+**Helpers are grouped by domain, not by the word "helper".** The existing
+domains are `ai-scripts/`, `apps/`, `certs/`, `git/`, and `performance/`. Add a
+new domain directory when a second helper in that area appears; a lone helper
+can wait for a sibling before earning a directory of its own.
 
-If you'd like, the next steps I can take now:
-- Move any remaining prompt/template files into .github as agreed, and update references in .github/copilot-instructions.md
-- Create a short contributor checklist that enforces these placements when creating new scripts/runbooks
+**A helper graduates to `bin/` only when it becomes user-facing** — that is,
+when a runbook tells the reader to run it directly. Until then it stays in
+`.internal/` and is invoked with explicit arguments by an entrypoint.
 
-Which of those (if any) should I do next?
+**Runbook and executable share a name.** `bin/backup-home.sh` pairs with
+`backup-home.md` at the repo root. Cross-cutting utilities that several runbooks
+call are the deliberate exception and have no runbook of their own —
+`capture-size-audit.sh` and `verify-doc-paths.sh` are the current ones.
+
+**Migration mappings are ephemeral.** Keep them in `/tmp/` for the duration of a
+migration. Nothing has needed to outlive one so far, so there is no committed
+location for them; add one when something actually does.
+
+## Before adding a directory
+
+Every directory here exists because files are in it. Do not create a directory
+in anticipation of files — an empty or single-file directory that a document
+promised is worse than no directory, because the next session trusts the
+document and puts things somewhere the tooling does not look.
+
+Run `./bin/verify-doc-paths.sh` after moving or renaming anything this guide
+names. It fails when a documented path no longer resolves.

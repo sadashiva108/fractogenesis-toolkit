@@ -20,8 +20,8 @@ Before proposing or making changes, inspect the target script, its calling runbo
 - `.internal/artifact-config.sh`
 - `reimage.env.example`
 - `.envrc`
-- `.internal/templates/scripts/bash-entrypoint.sh.tmpl`
-- `.internal/templates/scripts/bash-helper.sh.tmpl`
+- `.github/ai-templates/script-templates/bash-entrypoint.sh.tmpl`
+- `.github/ai-templates/script-templates/bash-helper.sh.tmpl`
 
 Also inspect any config fragments, manifests, checklists, or sibling scripts that define the same paths or outputs. Do not infer their behavior from filenames alone.
 
@@ -78,7 +78,7 @@ For a source-only file such as `.internal/load-reimage-config.sh`:
 For a normal `bin/*.sh` entrypoint:
 
 - Start with a complete header comment containing purpose, runbook/phase context, usage examples, options, configuration precedence, and exit status.
-- Use marker-based usage extraction with the `# --- BEGIN USAGE ---` / `# --- END USAGE ---` delimiters and a `usage()` that `sed`-prints between them; do not use fragile `head -40` or similar line counts. Standardize new and edited scripts on this marker form. (An older awk header-block variant exists in `backup-repos.sh`; reflow it to the marker form when that script is next touched, not as a drive-by change.)
+- Use marker-based usage extraction with the `# --- BEGIN USAGE ---` / `# --- END USAGE ---` delimiters and a `usage()` that `sed`-prints between them; do not use fragile `head -40` or similar line counts. Every `bin/` entrypoint is on this marker form — keep it that way rather than reintroducing an awk header-block or line-count variant.
 - Use `set -euo pipefail` unless the script is an aggregate validator. For a user-facing entrypoint, `set -Eeuo pipefail` (note the `E`) plus an `ERR` trap that echoes the failing `${LINENO}` and `${BASH_COMMAND}` before re-exiting is an accepted enhancement — see `backup-home.sh`. Use one or the other consistently; do not mix.
 - Self-locate `SCRIPT_DIR` and `REPO_ROOT`.
 - Load `.internal/load-reimage-config.sh` and validate that it exists.

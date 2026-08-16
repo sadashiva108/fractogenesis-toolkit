@@ -30,8 +30,13 @@
 #
 # Options:
 #   --config-dir PATH   Verify fragments in PATH instead of the resolved dir.
-#   --no-references     Skip the informational "where referenced" scan.
+#   --no-references     Skip the informational consumer scan entirely.
+#   --references-detail Print every matching file:line instead of the summary.
 #   -h, --help          Show this message and exit.
+#
+# The consumer scan is informational and never affects exit status. It answers
+# "if I edit this fragment, what reads it?" — the validator's own source and the
+# fragments' own header comments are excluded, since neither is a consumer.
 #
 # Active-directory resolution (mirrors artifact-config.sh precedence):
 #   1. --config-dir, or ARTIFACT_CONFIG_DIR from the environment / reimage.env.
@@ -57,13 +62,20 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # ── Colors ──────────────────────────────────────────────────────────────────
-RED='\033[0;31m'; YEL='\033[1;33m'; GRN='\033[0;32m'; DIM='\033[2m'; BLD='\033[1m'; RST='\033[0m'
+# Same palette and section helpers as backup-home.sh and capture-size-audit.sh
+# so severity colors mean the same thing across the workflow.
+RED='\033[0;31m'; YEL='\033[1;33m'; GRN='\033[0;32m'; CYN='\033[0;36m'
+BLD='\033[1m'; DIM='\033[2m'; RST='\033[0m'
+
+thin_hr()     { printf '%s\n' "  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄"; }
+log_section() { echo ""; echo -e "${BLD}${CYN}▸ $1${RST}"; thin_hr; }
 
 # ---------------------------------------------------------------------------
 # Defaults and command-line state
 # ---------------------------------------------------------------------------
 CONFIG_DIR_OVERRIDE=""
 SCAN_REFERENCES=true
+REFERENCES_DETAIL=false
 
 usage() {
   sed -n '/^# --- BEGIN USAGE ---$/,/^# --- END USAGE ---$/p' "$0" \
@@ -93,6 +105,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --no-references)
       SCAN_REFERENCES=false
+      shift
+      ;;
+    --references-detail)
+      REFERENCES_DETAIL=true
       shift
       ;;
     -h|--help)
@@ -144,14 +160,21 @@ fi
 TEMPLATE_DIR="$REPO_ROOT/.internal/templates/artifact-config"
 WORKSPACE_DIR="${REIMAGE_WORKSPACE_ROOT:+$REIMAGE_WORKSPACE_ROOT/artifact-config}"
 
+# Record which rule won as well as the path. Knowing a run fell back to the
+# committed templates is the difference between verifying this Mac's fragment
+# set and verifying the generic one.
 if [[ -n "$CONFIG_DIR_OVERRIDE" ]]; then
   ACTIVE_DIR="$CONFIG_DIR_OVERRIDE"
+  ACTIVE_SOURCE="--config-dir override"
 elif [[ -n "${ARTIFACT_CONFIG_DIR:-}" ]]; then
   ACTIVE_DIR="$ARTIFACT_CONFIG_DIR"
+  ACTIVE_SOURCE="ARTIFACT_CONFIG_DIR from the environment or reimage.env"
 elif [[ -n "$WORKSPACE_DIR" && -d "$WORKSPACE_DIR" ]]; then
   ACTIVE_DIR="$WORKSPACE_DIR"
+  ACTIVE_SOURCE="workspace copy under REIMAGE_WORKSPACE_ROOT"
 else
   ACTIVE_DIR="$TEMPLATE_DIR"
+  ACTIVE_SOURCE="committed templates (no workspace copy found)"
 fi
 
 if [[ ! -d "$ACTIVE_DIR" ]]; then
@@ -162,9 +185,13 @@ fi
 # ---------------------------------------------------------------------------
 # Verify presence + syntax
 # ---------------------------------------------------------------------------
-echo ""
-echo -e "${BLD}Artifact-config fragment check${RST}"
+log_section "Artifact-config fragment check"
 echo -e "  ${DIM}Directory: $ACTIVE_DIR${RST}"
+echo -e "  ${DIM}Selected by: $ACTIVE_SOURCE${RST}"
+if [[ "$ACTIVE_DIR" == "$TEMPLATE_DIR" ]]; then
+  echo -e "  ${YEL}⚠  Verifying the committed templates, not a per-machine copy.${RST}"
+  echo -e "  ${DIM}   Create one with: python3 bin/prepare-artifact-root.py init-artifact-config${RST}"
+fi
 echo ""
 
 fail_count=0
@@ -186,17 +213,39 @@ done
 # Informational: where the fragments are referenced
 # ---------------------------------------------------------------------------
 if [[ "$SCAN_REFERENCES" == true ]]; then
-  echo ""
-  echo -e "${BLD}Fragment references${RST}  ${DIM}(informational)${RST}"
-  references="$(
-    cd "$REPO_ROOT" && grep -RInE \
-      'expected-artifact-folders|external-dotfiles|external-excludes|external-targets|onedrive-extra-excludes|onedrive-targets|secret-flags|secrets-targets|skip-entries' \
-      bin .internal 2>/dev/null
-  )"
-  if [[ -n "$references" ]]; then
-    printf '%s\n' "$references" | sed 's/^/  /'
-  else
-    echo -e "  ${DIM}none found${RST}"
+  log_section "Fragment consumers  (informational — does not affect the result)"
+
+  for fragment in "${REQUIRED_FRAGMENTS[@]}"; do
+    # A fragment's own header comment and this validator's own source both
+    # mention the filename without consuming it. Excluding them is what turns
+    # this from a wall of grep output into an answer.
+    consumers="$(
+      cd "$REPO_ROOT" 2>/dev/null \
+        && grep -rlF --exclude-dir=__pycache__ "$fragment" bin .internal 2>/dev/null \
+        | grep -v '^bin/verify-artifact-config\.sh$' \
+        | grep -v '^\.internal/templates/artifact-config/' \
+        | sort
+    )"
+
+    consumer_count=$(printf '%s' "$consumers" | grep -c . )
+
+    if (( consumer_count == 0 )); then
+      printf "  ${YEL}%-38s  %2s  no consumer found${RST}\n" "$fragment" "0"
+      continue
+    fi
+
+    consumer_list="$(printf '%s' "$consumers" | tr '\n' '@' | sed 's/@$//;s/@/, /g')"
+    printf "  ${DIM}%-38s  %2s  %s${RST}\n" "$fragment" "$consumer_count" "$consumer_list"
+  done
+
+  if [[ "$REFERENCES_DETAIL" == true ]]; then
+    echo ""
+    echo -e "  ${DIM}Every match, including self-references:${RST}"
+    (
+      cd "$REPO_ROOT" 2>/dev/null && grep -RInE \
+        'expected-artifact-folders|external-dotfiles|external-excludes|external-targets|onedrive-extra-excludes|onedrive-targets|secret-flags|secrets-targets|skip-entries' \
+        bin .internal 2>/dev/null
+    ) | sed 's/^/    /'
   fi
 fi
 

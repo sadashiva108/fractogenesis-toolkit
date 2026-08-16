@@ -477,6 +477,8 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 > │   └── claude_desktop_config.json
 > ├── cli-credentials/
 > │   └── gh/
+> ├── cloud/                                      # staged by backup-home (Phase 2B); excluded from the DMG — AWS re-auth after reimage
+> │   └── aws/
 > ├── docker/
 > │   └── config.json
 > ├── extra-secrets-certs-review/           # cert/Keychain review area (Phase 3A)

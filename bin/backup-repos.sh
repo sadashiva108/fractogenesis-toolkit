@@ -6,6 +6,7 @@
 # superset reports, then (once reviewed) stages ignored/gitignored files for
 # backup before a reimage.
 #
+# --- BEGIN USAGE ---
 # Usage:
 #   cd <repo-root>
 #   chmod +x bin/backup-repos.sh
@@ -35,7 +36,7 @@
 #   --direct-ignored-copy         Run the broad ignored-file copy.
 #   --selected-dry-run            Run the reviewed selected-pattern dry run.
 #   --selected-filtered-dry-run   Run the reviewed selected-pattern dry run with exclude list.
-#   --selected-copy                Run the reviewed selected-pattern final copy.
+#   --selected-copy               Run the reviewed selected-pattern final copy.
 #   --stale-ignore-scan           Report .gitignore entries naming one literal file
 #                                 that no longer matches anything on disk.
 #
@@ -89,6 +90,19 @@
 #   --preserve-selections, which carries checked patterns forward. The exclude
 #   list, secrets-patterns list, and direct-nonsecret template are inputs you
 #   maintain and are never overwritten.
+#
+# Configuration precedence:
+#   1. Explicit command-line options for this invocation.
+#   2. Environment values already exported by the caller or optional .envrc.
+#   3. Values loaded from reimage.env.
+#   4. Defaults and reusable fragments loaded by artifact-config.sh.
+#
+# Exit status:
+#   0  Run completed successfully.
+#   1  Run started but a workflow step failed (a helper returned nonzero, or a
+#      required input file was missing when the selected mode needed it).
+#   2  Usage, configuration, prerequisite, or dependency error.
+# --- END USAGE ---
 # =============================================================================
 
 set -euo pipefail
@@ -107,11 +121,19 @@ source "$CONFIG_LOADER"
 # ─────────────────────────────────────────────────────────────────────────────
 
 usage() {
-  awk '
-    NR == 2 { in_header = 1; next }
-    in_header && /^# =+$/ { exit }
-    in_header { sub(/^# ?/, ""); print }
-  ' "$0"
+  sed -n '/^# --- BEGIN USAGE ---$/,/^# --- END USAGE ---$/p' "$0" \
+    | sed '1d;$d;s/^# //;s/^#$//'
+}
+
+require_option_value() {
+  local option="$1"
+  local value="${2:-}"
+
+  if [[ -z "$value" || "$value" == --* ]]; then
+    echo "ERROR: $option requires a non-empty value." >&2
+    usage >&2
+    exit 2
+  fi
 }
 
 OPEN_AFTER=false
@@ -126,14 +148,12 @@ ROOTS=()
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --artifact-root)
-      REIMAGE_ARTIFACT_ROOT="${2:-}"
+      require_option_value "$1" "${2:-}"
+      REIMAGE_ARTIFACT_ROOT="$2"
       shift 2
       ;;
     --root)
-      if [[ $# -lt 2 || -z "${2:-}" || "${2:-}" == --* ]]; then
-        echo "ERROR: --root requires a non-empty directory path." >&2
-        exit 2
-      fi
+      require_option_value "$1" "${2:-}"
       ROOTS+=("$2")
       shift 2
       ;;
@@ -146,20 +166,23 @@ while [[ $# -gt 0 ]]; do
     --include-heavy) INCLUDE_HEAVY=true; shift ;;
     --preserve-selections) PRESERVE_SELECTIONS=true; shift ;;
     --status-interval)
-      if [[ $# -lt 2 || -z "${2:-}" || "${2:-}" == --* ]]; then
-        echo "ERROR: --status-interval requires a positive integer." >&2
+      require_option_value "$1" "${2:-}"
+      if [[ "$2" != *[!0-9]* && -n "$2" ]]; then
+        STATUS_INTERVAL="$2"
+      else
+        echo "ERROR: --status-interval requires a positive integer, got: $2" >&2
+        usage >&2
         exit 2
       fi
-      STATUS_INTERVAL="$2"
       shift 2
       ;;
     --no-status) STATUS_ENABLED=false; shift ;;
     --open) OPEN_AFTER=true; shift ;;
     -h|--help) usage; exit 0 ;;
     *)
-      echo "Unknown argument: $1" >&2
+      echo "ERROR: unknown option: $1" >&2
       usage >&2
-      exit 1
+      exit 2
       ;;
   esac
 done

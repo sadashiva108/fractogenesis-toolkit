@@ -15,6 +15,7 @@ Purpose
   - Run `shellcheck` when available (recommended but avoid making it a declared runtime dependency):
     - shellcheck -x bin/*.sh .internal/**/*.sh
   - For Python, use your usual project linter (e.g., ruff/flake8) if desired; none are enforced here.
+  - Documentation lint: ./bin/verify-doc-paths.sh checks that the repository paths named in the governance docs still exist. Run it after moving or renaming any file that the docs point at, and after editing the docs themselves — a stale path silently misdirects the next session.
 
 2) High-level architecture (big picture)
 - Runbook-driven workflow: Markdown runbooks (top-level .md files) sequence the reimage phases and document the rationale and manual steps.
@@ -38,18 +39,25 @@ Purpose
   - Helpers in .internal/ should prefer explicit CLI args (--root, --dest) and be safe to run standalone when arguments are supplied.
 - Portability: remain compatible with macOS stock Bash 3.2 unless a script explicitly opts into newer Bash; avoid associative arrays, mapfile, GNU-only options; prefer NUL-delimited traversal for file lists.
 - Safety: Do not introduce hardcoded personal or company paths, secrets, or live placeholder paths. Preserve existing behavior unless a change request explicitly asks to alter workflow-level artifact naming or retention.
+- Version control (applies to every AI session):
+  - The repository owner reviews and commits every change. Leave your work uncommitted in the working tree.
+  - Do not run `git commit`, `git push`, `git add`, or any history-rewriting command. Write the files, report what changed and what you validated, and stop there.
+  - Because the owner always commits, the working-tree diff is the review surface. Keep it clean: edit files in place rather than leaving `.bak` copies, timestamped duplicates, `.incoming` staging files, or parallel "new" versions beside the originals.
+  - Do not change file modes as a side effect of an edit. When a write drops the executable bit on a `bin/` script, restore it (`chmod 755`) so the diff carries content changes only.
 
 4) Files and docs to read first (AI sessions)
 - README.md
 - reimaging-guide.md and matching runbook <phase>.md for the area being changed
 - bin/<target>.sh and its matching <target>.md
 - .internal/load-reimage-config.sh
-- .internal/artifact-config.sh and .internal/templates/scripts/*.tmpl
+- .internal/artifact-config.sh and the fragments under .internal/templates/artifact-config/
+- .github/ai-templates/script-templates/*.tmpl (bash-entrypoint.sh.tmpl, bash-helper.sh.tmpl)
 - reimage.env.example
 - .github/ai-prompts/script-prompts/bash-script-authoring-and-review.md (authoring/review rules)
 
-5) Other AI assistant configs found
-- None of the listed AI assistant config files (CLAUDE.md, AGENTS.md, .cursorrules, .windsurfrules, etc.) were found in the repository.
+5) Other AI assistant configs
+- .claude/CLAUDE.md — pointer only; it routes Claude sessions to this file and to the .github/ai-prompts and .github/ai-templates sets. Keep guidance here, not there.
+- No AGENTS.md, .cursorrules, or .windsurfrules. If one is added, make it a pointer to this file rather than a second copy of these rules.
 
 Notes on edits and automation
 - Small, surgical changes preferred. When asked to refactor or edit Bash scripts, follow the classification and loader/entrypoint/helper requirements documented in .github/ai-prompts/script-prompts/bash-script-authoring-and-review.md.
