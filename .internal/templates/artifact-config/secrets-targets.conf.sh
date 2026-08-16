@@ -12,7 +12,7 @@ SECRETS_TARGETS=(
   "ssh               | $HOME/.ssh/                         | ssh                          | SSH private keys and config — chmod 700/600 preserved"
   "gnupg             | $HOME/.gnupg/                       | gnupg                        | GPG private keys — permanent loss without backup; random_seed excluded"
   "docker            | $HOME/.docker/config.json           | docker/config.json           | Docker auth config — credential helpers, auth tokens, and registry login state"
-  "keystore          | $HOME/.keystore                     | certs/.keystore              | Java KeyStore — signing keys and TLS certs; store password and key alias in LastPass"
+  "keystore          | $HOME/.keystore                     | certs/.keystore              | Java KeyStore — signing keys and TLS certs; record store password and key alias in your password manager"
   "netrc             | $HOME/.netrc                        | cli-credentials/.netrc       | FTP/HTTP credentials used by command-line tools"
   "git_credentials   | $HOME/.git-credentials              | git/.git-credentials         | Git credential helper plaintext credential cache, if present"
   "npmrc             | $HOME/.npmrc                        | package-managers/.npmrc      | npm registry configuration; may contain auth tokens"

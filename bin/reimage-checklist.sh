@@ -532,7 +532,7 @@ if [[ "$PHASE" == "pre" ]]; then
   # -------------------------------------------------------------------------
   record_section "Backup Root Subdirectories"
   # -------------------------------------------------------------------------
-  for subdir in app-settings-backup repo-audit-reports gitignore-superset managed-inventory office-stability performance-audit secrets-encrypted system-inventory workflow-snapshot; do
+  for subdir in app-settings-backup repo-audit-reports gitignore-superset managed-inventory office-stability performance-audit secrets-encrypted system-inventory toolkit-snapshot; do
     if dir_nonempty "$REIMAGE_ARTIFACT_ROOT/$subdir"; then
       SIZE="$(du -sh "$REIMAGE_ARTIFACT_ROOT/$subdir" 2>/dev/null | cut -f1)"
       record_check PASS "Subdir: $subdir" "$SIZE on disk"
@@ -786,35 +786,41 @@ if [[ "$PHASE" == "pre" ]]; then
   fi
 
   # -------------------------------------------------------------------------
-  record_section "Workflow Snapshot and Manual Notes"
+  record_section "Toolkit Snapshot and Manual Notes"
   # -------------------------------------------------------------------------
-  WORKFLOW_SNAPSHOT_ROOT="$REIMAGE_ARTIFACT_ROOT/workflow-snapshot"
+  TOOLKIT_SNAPSHOT_ROOT="$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot"
   APP_SETTINGS_BACKUP_ROOT="$REIMAGE_ARTIFACT_ROOT/app-settings-backup"
   HOME_FILES_BACKUP_DIR="$REIMAGE_ARTIFACT_ROOT/home-files-backup"
 
   LATEST_WORKFLOW_CAPTURE="$(
-    find "$WORKFLOW_SNAPSHOT_ROOT" -maxdepth 1 -type d -name 'pre-image-workflow-snapshot-*' -print 2>/dev/null \
+    find "$TOOLKIT_SNAPSHOT_ROOT" -maxdepth 1 -type d -name 'pre-image-toolkit-snapshot-*' -print 2>/dev/null \
       | sort \
       | tail -1
   )"
 
   if [[ -n "$LATEST_WORKFLOW_CAPTURE" && -d "$LATEST_WORKFLOW_CAPTURE" ]]; then
-    record_check PASS "Latest workflow snapshot" "$(basename "$LATEST_WORKFLOW_CAPTURE")"
+    record_check PASS "Latest toolkit snapshot" "$(basename "$LATEST_WORKFLOW_CAPTURE")"
   else
-    record_check WARN "Latest workflow snapshot" "No pre-image-workflow-snapshot-* bundle found under $WORKFLOW_SNAPSHOT_ROOT"
+    record_check WARN "Latest toolkit snapshot" "No pre-image-toolkit-snapshot-* bundle found under $TOOLKIT_SNAPSHOT_ROOT"
   fi
 
-  # Automated workflow snapshot material lives directly inside the newest timestamped
+  # Automated toolkit snapshot material lives directly inside the newest timestamped
   # capture bundle:
   #
-  #   $REIMAGE_ARTIFACT_ROOT/workflow-snapshot/pre-image-workflow-snapshot-YYYYMMDD-HHMMSS/{logs,...}
+  #   $REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/pre-image-toolkit-snapshot-YYYYMMDD-HHMMSS/{logs,...}
   #
   # Stable hand-maintained/export folders stay directly under
   # app-settings-backup/ and are checked separately.
-  if dir_nonempty "$WORKFLOW_SNAPSHOT_ROOT/reimage-workflow-docs"; then
-    record_check PASS "workflow-snapshot/reimage-workflow-docs" "$(du -sh "$WORKFLOW_SNAPSHOT_ROOT/reimage-workflow-docs" 2>/dev/null | cut -f1)"
+  if dir_nonempty "$TOOLKIT_SNAPSHOT_ROOT/latest-docs"; then
+    record_check PASS "toolkit-snapshot/latest-docs" "$(du -sh "$TOOLKIT_SNAPSHOT_ROOT/latest-docs/" 2>/dev/null | cut -f1)"
   else
-    record_check WARN "workflow-snapshot/reimage-workflow-docs" "Empty or missing"
+    record_check WARN "toolkit-snapshot/latest-docs" "Empty or missing"
+  fi
+
+  if dir_nonempty "$TOOLKIT_SNAPSHOT_ROOT/latest-pre-image-toolkit-snapshot/config"; then
+    record_check PASS "toolkit-snapshot/latest .../config" "$(du -sh "$TOOLKIT_SNAPSHOT_ROOT/latest-pre-image-toolkit-snapshot/config/" 2>/dev/null | cut -f1)"
+  else
+    record_check WARN "toolkit-snapshot/latest .../config" "Empty or missing"
   fi
 
   REIMAGE_CONFIRMATION_DIR="$REIMAGE_ARTIFACT_ROOT/reimage-confirmation"

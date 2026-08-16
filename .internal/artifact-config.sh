@@ -43,6 +43,14 @@
 #   2. $REIMAGE_WORKSPACE_ROOT/artifact-config when that directory exists.
 #   3. Committed templates under .internal/templates/artifact-config.
 #
+# Staged-certs fragment precedence (same shape, resolved here so the cert
+# staging entrypoint and the toolkit snapshot agree on which copy a run reads):
+#   1. $REIMAGE_WORKSPACE_ROOT/staged-certs when that directory exists.
+#   2. Committed templates under .internal/templates/staged-certs.
+# Resolution only -- this file does not source staged-certs fragments, and
+# deliberately does not warn about the fallback, because most callers never read
+# them. bin/stage-certs-keychain.sh warns when the fallback actually matters.
+#
 # Public outputs include:
 #   REIMAGE_ENV
 #   REIMAGE_WORKSPACE_ROOT
@@ -52,6 +60,7 @@
 #   OFFICE_WATCH
 #   ONEDRIVE_*
 #   ARTIFACT_CONFIG_*
+#   STAGED_CERTS_*
 #   MANUAL_POSTMAN_STAGE
 #   MANUAL_RAYCAST_STAGE
 #   Arrays and values declared by the required config fragments
@@ -88,7 +97,7 @@ _artifact_config_main() {
   local preset_external_apple_backups_volume
   local preset_external_data_volume
   local preset_office_watch
-  local preset_onedrive_cloud_storage_root
+  local preset_onedrive_parent_dir
   local preset_onedrive_dest_subdir
   local preset_onedrive_folder_name
   local preset_onedrive_preferred_root
@@ -121,7 +130,7 @@ _artifact_config_main() {
   preset_external_apple_backups_volume="${EXTERNAL_APPLE_BACKUPS_VOLUME:-}"
   preset_reimage_artifact_root="${REIMAGE_ARTIFACT_ROOT:-}"
   preset_office_watch="${OFFICE_WATCH:-}"
-  preset_onedrive_cloud_storage_root="${ONEDRIVE_CLOUD_STORAGE_ROOT:-}"
+  preset_onedrive_parent_dir="${ONEDRIVE_PARENT_DIR:-}"
   preset_onedrive_folder_name="${ONEDRIVE_FOLDER_NAME:-}"
   preset_onedrive_preferred_root="${ONEDRIVE_PREFERRED_ROOT:-}"
   preset_onedrive_root="${ONEDRIVE_ROOT:-}"
@@ -168,7 +177,7 @@ _artifact_config_main() {
   # configured external volume instead of hardcoding a separate volume name.
   DEFAULT_DRIVE_NAME="$(basename "${EXTERNAL_DATA_VOLUME%/}")"
 
-  ONEDRIVE_CLOUD_STORAGE_ROOT="${preset_onedrive_cloud_storage_root:-${ONEDRIVE_CLOUD_STORAGE_ROOT:-$HOME/Library/CloudStorage}}"
+  ONEDRIVE_PARENT_DIR="${preset_onedrive_parent_dir:-${ONEDRIVE_PARENT_DIR:-$HOME/Library/CloudStorage}}"
   ONEDRIVE_FOLDER_NAME="${preset_onedrive_folder_name:-${ONEDRIVE_FOLDER_NAME:-}}"
 
   if [[ -n "$preset_onedrive_preferred_root" ]]; then
@@ -176,7 +185,7 @@ _artifact_config_main() {
   elif [[ -n "${ONEDRIVE_PREFERRED_ROOT:-}" ]]; then
     ONEDRIVE_PREFERRED_ROOT="$ONEDRIVE_PREFERRED_ROOT"
   elif [[ -n "$ONEDRIVE_FOLDER_NAME" ]]; then
-    ONEDRIVE_PREFERRED_ROOT="$ONEDRIVE_CLOUD_STORAGE_ROOT/$ONEDRIVE_FOLDER_NAME"
+    ONEDRIVE_PREFERRED_ROOT="$ONEDRIVE_PARENT_DIR/$ONEDRIVE_FOLDER_NAME"
   else
     ONEDRIVE_PREFERRED_ROOT=""
   fi
@@ -186,7 +195,7 @@ _artifact_config_main() {
   elif [[ -n "${ONEDRIVE_ROOT:-}" ]]; then
     ONEDRIVE_ROOT="$ONEDRIVE_ROOT"
   elif [[ -n "$ONEDRIVE_FOLDER_NAME" ]]; then
-    ONEDRIVE_ROOT="$ONEDRIVE_CLOUD_STORAGE_ROOT/$ONEDRIVE_FOLDER_NAME"
+    ONEDRIVE_ROOT="$ONEDRIVE_PARENT_DIR/$ONEDRIVE_FOLDER_NAME"
   else
     ONEDRIVE_ROOT=""
   fi
@@ -214,11 +223,26 @@ _artifact_config_main() {
   elif [[ -n "$ARTIFACT_CONFIG_WORKSPACE_DIR" && -d "$ARTIFACT_CONFIG_WORKSPACE_DIR" ]]; then
     config_dir="$ARTIFACT_CONFIG_WORKSPACE_DIR"
   else
+    # REIMAGE_WORKSPACE_ROOT is set but carries no artifact-config directory. The
+    # committed templates still load, so every caller runs with generic targets
+    # instead of this Mac's. Say so rather than falling through silently.
+    if [[ -n "$ARTIFACT_CONFIG_WORKSPACE_DIR" ]]; then
+      echo "WARNING: REIMAGE_WORKSPACE_ROOT is set but $ARTIFACT_CONFIG_WORKSPACE_DIR does not exist —" >&2
+      echo "         falling back to committed templates. Run: python3 bin/prepare-artifact-root.py init-artifact-config" >&2
+    fi
     config_dir="$ARTIFACT_CONFIG_TEMPLATE_DIR"
   fi
 
   ARTIFACT_CONFIG_DIR="$config_dir"
   ARTIFACT_CONFIG_SOURCE_DIR="$config_dir"
+
+  STAGED_CERTS_TEMPLATE_DIR="$this_dir/templates/staged-certs"
+  STAGED_CERTS_WORKSPACE_DIR="${REIMAGE_WORKSPACE_ROOT:+$REIMAGE_WORKSPACE_ROOT/staged-certs}"
+  if [[ -n "$STAGED_CERTS_WORKSPACE_DIR" && -d "$STAGED_CERTS_WORKSPACE_DIR" ]]; then
+    STAGED_CERTS_SOURCE_DIR="$STAGED_CERTS_WORKSPACE_DIR"
+  else
+    STAGED_CERTS_SOURCE_DIR="$STAGED_CERTS_TEMPLATE_DIR"
+  fi
 
   if [[ ! -d "$ARTIFACT_CONFIG_SOURCE_DIR" ]]; then
     echo "ERROR: artifact-config directory not found: $ARTIFACT_CONFIG_SOURCE_DIR" >&2

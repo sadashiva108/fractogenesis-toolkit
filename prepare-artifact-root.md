@@ -104,7 +104,7 @@ $REIMAGE_ARTIFACT_ROOT/
 ├── staged-ignored-files/
 ├── system-inventory/
 ├── time-machine/
-└── workflow-snapshot/
+└── toolkit-snapshot/
 ```
 See [Master Directory Reference](./references/master-directory-reference.md) for the full tree with per-folder descriptions.
 
@@ -178,10 +178,10 @@ Stores active source files: runbooks, `bin/` entrypoint scripts, `.internal/` he
 
 The local workspace is outside this repo and outside the external artifact root. Use it for staging and reusable local config that may survive more than one backup attempt.
 
-Recommended default:
+Pick a path and export it as `REIMAGE_WORKSPACE_ROOT`; there is no default, and nothing guesses one for you. Any location outside this repo and outside the external artifact root works — a directory directly under `$HOME` keeps it clear of whatever the backup targets already sweep:
 
 ```text
-$HOME/Documents/reimage-workspace/
+$HOME/<workspace-dir>/
 ```
 
 Typical uses:
@@ -303,7 +303,7 @@ It is sourced by scripts such as:
 ```text
 bin/backup-home.sh
 bin/capture-size-audit.sh
-bin/capture-workflow-snapshot.sh
+bin/capture-toolkit-snapshot.sh
 bin/create-secrets-dmg.sh
 ```
 
@@ -341,7 +341,7 @@ size-audit-reports
 staged-ignored-files
 system-inventory
 time-machine
-workflow-snapshot
+toolkit-snapshot
 ```
 
 These are the stable top-level folders the Create the Standard Directory Layout step produces. Child folders for setup notes, secrets staging, optional evidence captures, and other workflow-owned artifacts are created later by their owning runbooks or scripts.
@@ -657,7 +657,36 @@ Before creating `reimage.env`, confirm you have the required environment variabl
 | Variable | Required? | Source |
 |---|---|---|
 | `EXTERNAL_DATA_VOLUME` | Required | [[#Choose the External Data Volume\|Choose the External Data Volume]] |
+| `REIMAGE_WORKSPACE_ROOT` | Required | [[#Local workspace\|Local workspace]] |
 | `EXTERNAL_APPLE_BACKUPS_VOLUME` | Optional | Same step, if a Time Machine destination is in use |
+| `ONEDRIVE_FOLDER_NAME` | Required *for OneDrive* | The sync folder's name, e.g. `OneDrive-AcmeGroup`. Leave unset to skip OneDrive entirely |
+
+Export them before running the script:
+
+```bash
+export EXTERNAL_DATA_VOLUME="/Volumes/<data-volume>"
+export REIMAGE_WORKSPACE_ROOT="$HOME/<workspace-dir>"
+export EXTERNAL_APPLE_BACKUPS_VOLUME="/Volumes/<time-machine-volume>"   # only if one is in use
+```
+
+Then confirm each landed, because an unset value here is the failure that costs the most later:
+
+```bash
+printf '%-32s %s\n' \
+  EXTERNAL_DATA_VOLUME "${EXTERNAL_DATA_VOLUME:-<unset>}" \
+  REIMAGE_WORKSPACE_ROOT "${REIMAGE_WORKSPACE_ROOT:-<unset>}" \
+  EXTERNAL_APPLE_BACKUPS_VOLUME "${EXTERNAL_APPLE_BACKUPS_VOLUME:-<unset>}"
+```
+
+> [!warning] Pitfall
+> `REIMAGE_WORKSPACE_ROOT` is required because the workspace holds the artifact-config and staged-certs fragments every later script reads. Point it at a directory that does not exist and those loaders fall back to the repository's generic templates — the run continues, against placeholder targets. `setup-reimage-env.sh` and `prepare-artifact-root.py` both refuse to run without it, and `artifact-config.sh` warns when the value is set but the directory is missing.
+
+If you intend to use the optional OneDrive secondary copy, also export the folder name — and its parent directory when the sync folder is not a macOS file-provider mount under `~/Library/CloudStorage`:
+
+```bash
+export ONEDRIVE_FOLDER_NAME="OneDrive-<OrgName>"
+export ONEDRIVE_PARENT_DIR="/path/to/<sync-parent>"   # only when overriding the default
+```
 
 `bin/setup-reimage-env.sh` computes the rest for you -- you rarely need to type anything, but each can be overridden by exporting your own value beforehand:
 
@@ -667,6 +696,7 @@ Before creating `reimage.env`, confirm you have the required environment variabl
 | `REIMAGE_START_DATE` | Today's date (`YYYYMMDD`) | The reimage effort actually started on an earlier date than when you're running this command. |
 | `REIMAGE_ARTIFACT_ROOT` * | `$EXTERNAL_DATA_VOLUME/reimage-$ASSET_OR_HOST-$REIMAGE_START_DATE-open` | Not set directly -- always built from the two values above. |
 | `ONEDRIVE_FOLDER_NAME` | Unset -- OneDrive is skipped | You want the optional OneDrive secondary copy. Export it to the CloudStorage OneDrive folder name (for example `OneDrive-AcmeGroup`); `setup-reimage-env.sh` then resolves `ONEDRIVE_ROOT` and pre-creates the per-reimage OneDrive destination. |
+| `ONEDRIVE_PARENT_DIR` | `~/Library/CloudStorage` | The OneDrive folder is not a macOS file-provider mount -- a legacy sync client, a relocated folder, or a non-standard setup. `ONEDRIVE_ROOT` is always built as `$ONEDRIVE_PARENT_DIR/$ONEDRIVE_FOLDER_NAME`, so overriding the parent is how you point at a folder outside CloudStorage. |
 
 This interpolation follows naming convention previously mentioned.
 
@@ -795,9 +825,9 @@ Run `bin/setup-reimage-env.sh` to create the file. It does the following, in ord
 
 1. Confirms `reimage.env.example` exists in the current directory (i.e., you're actually in the repo).
 2. Confirms `reimage.env` doesn't already exist -- refuses otherwise, and points you at `bin/check-reimage-env.sh` rather than overwriting anything.
-3. Confirms `EXTERNAL_DATA_VOLUME` is exported -- refuses to run otherwise, rather than silently writing a blank/placeholder value you'd have to fix later.
+3. Confirms `EXTERNAL_DATA_VOLUME` and `REIMAGE_WORKSPACE_ROOT` are exported -- refuses to run otherwise, rather than silently writing a blank/placeholder value you'd have to fix later. `EXTERNAL_APPLE_BACKUPS_VOLUME` stays optional and is written through as-is, blank when no Time Machine destination is in use.
 4. Copies the template to `reimage.env`.
-5. Runs `prepare-artifact-root.py init-reimage-env`, which resolves `ASSET_OR_HOST` and `REIMAGE_START_DATE` (your exported override, or its own default if unset), builds `REIMAGE_ARTIFACT_ROOT` from them, and writes all three into `reimage.env` in the same step -- along with the remaining resolved starter values (default workspace paths, confirmed volume paths). When `ONEDRIVE_FOLDER_NAME` is exported, it also resolves `ONEDRIVE_ROOT` under `~/Library/CloudStorage/` and pre-creates the per-reimage OneDrive destination -- but only when the CloudStorage root already exists (OneDrive signed in); otherwise it notes that the backup run will create it.
+5. Runs `prepare-artifact-root.py init-reimage-env`, which resolves `ASSET_OR_HOST` and `REIMAGE_START_DATE` (your exported override, or its own default if unset), builds `REIMAGE_ARTIFACT_ROOT` from them, and writes all three into `reimage.env` in the same step -- along with the remaining resolved starter values (default workspace paths, confirmed volume paths). When `ONEDRIVE_FOLDER_NAME` is exported, it also resolves `ONEDRIVE_ROOT` as `$ONEDRIVE_PARENT_DIR/$ONEDRIVE_FOLDER_NAME` -- using `~/Library/CloudStorage` unless you exported `ONEDRIVE_PARENT_DIR` -- and pre-creates the per-reimage OneDrive destination, but only when that parent already exists (OneDrive signed in); otherwise it notes that the backup run will create it.
 6. Locks the file down to `chmod 600`.
 7. Prints the result for review.
 
@@ -813,14 +843,15 @@ Review these values -- they should already be correct, since they came from conf
 
 | Variable                     | Review rule                                                                                                                                                                                                                                                        |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `REIMAGE_WORKSPACE_ROOT`     | Must point to a local workspace outside this repo. Recommended default: the same planning folder used for the IT reimage confirmation.                                                                                                                     |
+| `REIMAGE_WORKSPACE_ROOT`     | Should match the path you exported, and must be an existing directory outside this repo and outside the external root. It is where the artifact-config and staged-certs fragments live, so a wrong value silently degrades every later script to the committed templates. |
 | `EXTERNAL_DATA_VOLUME`         | Should already match the volume confirmed a few steps ago.                                                                                                                                                                                      |
 | `EXTERNAL_APPLE_BACKUPS_VOLUME`    | Should already match the Time Machine destination volume, if one was set.                                                                                                 |
 | `ASSET_OR_HOST`              | Resolved once by `bin/setup-reimage-env.sh` and reused for both this field and `REIMAGE_ARTIFACT_ROOT` -- no separate detection to drift out of sync with. |
 | `REIMAGE_START_DATE`         | Resolved once, the same way. |
 | `REIMAGE_ARTIFACT_ROOT`                | Should already be the resolved absolute path -- not blank.                                                                                                                             |
 | `ONEDRIVE_FOLDER_NAME`       | Optional. Set it by exporting `ONEDRIVE_FOLDER_NAME` before running `setup-reimage-env.sh`; blank means OneDrive is skipped.                                                                                                                     |
-| `ONEDRIVE_ROOT`              | Auto-resolved to `$HOME/Library/CloudStorage/$ONEDRIVE_FOLDER_NAME` when that override is set; blank otherwise. Stored as a resolved absolute path, never a literal `$HOME/...` string.                                                                                 |
+| `ONEDRIVE_PARENT_DIR`        | Optional. The directory the sync folder lives under; blank means the `$HOME/Library/CloudStorage` default was used. Override only when the OneDrive folder is not a macOS file-provider mount. |
+| `ONEDRIVE_ROOT`              | Auto-resolved to `$ONEDRIVE_PARENT_DIR/$ONEDRIVE_FOLDER_NAME` when the folder name is set; blank otherwise. Stored as a resolved absolute path, never a literal `$HOME/...` string. |
 | `ONEDRIVE_DEST_SUBDIR`       | Already defaulted to the artifact root folder name by `setup-reimage-env.sh`.                                                                                            |
 
 There's no environment variable to set for the repository's own path. `prepare-artifact-root.py` self-locates from its own position in the repo -- wherever this checkout lives, the script finds `bin/` and `.internal/` relative to itself, so nothing needs to be told where the repo is.  Stay in `FRACTOGENESIS_HOME` for this and every remaining step.
@@ -920,8 +951,10 @@ direnv allow
 Confirm it worked:
 
 ```bash
-printf 'FRACTOGENESIS_HOME=%s\n' "$FRACTOGENESIS_HOME"
-printf 'REIMAGE_ARTIFACT_ROOT=%s\n' "$REIMAGE_ARTIFACT_ROOT"
+printf '%-32s %s\n' \
+  EXTERNAL_DATA_VOLUME "${EXTERNAL_DATA_VOLUME:-<unset>}" \
+  REIMAGE_WORKSPACE_ROOT "${REIMAGE_WORKSPACE_ROOT:-<unset>}" \
+  EXTERNAL_APPLE_BACKUPS_VOLUME "${EXTERNAL_APPLE_BACKUPS_VOLUME:-<unset>}"
 ```
 
 Both should print resolved values with no further action. `cd` out of the repo and both should be unset; `cd` back in and both should reappear — that round trip is the actual proof direnv is doing its job, not just that the file exists.
@@ -954,8 +987,10 @@ direnv allow
 Confirm it worked:
 
 ```bash
-printf 'FRACTOGENESIS_HOME=%s\n' "$FRACTOGENESIS_HOME"
-printf 'REIMAGE_ARTIFACT_ROOT=%s\n' "$REIMAGE_ARTIFACT_ROOT"
+printf '%-32s %s\n' \
+  EXTERNAL_DATA_VOLUME "${EXTERNAL_DATA_VOLUME:-<unset>}" \
+  REIMAGE_WORKSPACE_ROOT "${REIMAGE_WORKSPACE_ROOT:-<unset>}" \
+  EXTERNAL_APPLE_BACKUPS_VOLUME "${EXTERNAL_APPLE_BACKUPS_VOLUME:-<unset>}"
 ```
 
 Both should print resolved values with no further action. `cd` out of the repo and both should be unset; `cd` back in and both should reappear — that round trip is the actual proof direnv is doing its job, not just that the file exists.
@@ -1010,7 +1045,7 @@ On success it prints:
 
 ```text
 OK: REIMAGE_ARTIFACT_ROOT is under EXTERNAL_DATA_VOLUME
-OK: backup root exists
+OK: artifact root exists
 ```
 
 Route based on what it actually prints:
@@ -1018,7 +1053,7 @@ Route based on what it actually prints:
 > [!check] Both `OK:` lines printed → [[#Load and Confirm the Environment|Load and Confirm the Environment]]
 > ```text
 > OK: REIMAGE_ARTIFACT_ROOT is under EXTERNAL_DATA_VOLUME
-> OK: backup root exists
+> OK: artifact root exists
 > ```
 
 > [!fail] `Permission denied` → [[#Confirm External Data Volume Readiness|⬆ Back to Confirm External Data Volume Readiness]]
@@ -1091,17 +1126,72 @@ bash -n .internal/artifact-config.sh
 
 ### Already Have Fragments
 
-If you already have real `*.conf.sh` fragments -- from a previous setup, copied out of a `fractogenesis-toolkit` checkout, or anywhere else -- **you don't need to copy them anywhere**. Place (or confirm they already exist) at:
+If you already have real `*.conf.sh` fragments -- from a previous setup, copied out of a `fractogenesis-toolkit` checkout, or anywhere else -- **you don't need to copy them anywhere**. They belong at exactly one path, and it is under the workspace, never the artifact root:
 
-`artifact-config.sh` checks this path first, automatically, every time it's sourced. There's no manual copy step, no flag to set; the presence of real files at this exact path is the entire mechanism.
+```text
+$REIMAGE_WORKSPACE_ROOT/artifact-config/
+```
 
-To confirm the *workspace* copy specifically is the one being used (rather than silently falling back to the repo's own template), check a fragment that's genuinely supposed to differ per machine, such as `EXTERNAL_TARGETS`:
+`artifact-config.sh` checks that path automatically every time it is sourced, ahead of the repo's committed templates. There is no manual copy step and no flag to set -- real files sitting at that exact path *are* the mechanism.
+
+Confirm they are actually there. The loader requires all nine fragments and aborts if one is missing, so list them and count:
+
+```bash
+ls -l "$REIMAGE_WORKSPACE_ROOT/artifact-config/"*.conf.sh
+```
+
+```bash
+find "$REIMAGE_WORKSPACE_ROOT/artifact-config" -maxdepth 1 -name '*.conf.sh' | wc -l
+```
+
+Nine is the expected count:
+
+- `external-targets.conf.sh`
+- `external-dotfiles.conf.sh`
+- `secrets-targets.conf.sh`
+- `secret-flags.conf.sh`
+- `external-excludes.conf.sh`
+- `onedrive-targets.conf.sh`
+- `onedrive-extra-excludes.conf.sh`
+- `skip-entries.conf.sh`
+- `expected-artifact-folders.conf.sh`
+
+Then read the two that must differ per machine. These hold this Mac's real paths; if they read like generic examples, they are the shipped templates rather than your own:
+
+```bash
+head -40 "$REIMAGE_WORKSPACE_ROOT/artifact-config/external-targets.conf.sh"
+```
+
+```bash
+head -20 "$REIMAGE_WORKSPACE_ROOT/artifact-config/secrets-targets.conf.sh"
+```
+
+#### Confirm the Loader Resolved to the Workspace
+
+Files existing is not the same as the loader using them. Ask the loader which directory it chose -- it exports the answer, so this is a direct reading rather than an inference from values:
+
+```bash
+bash -c 'source .internal/artifact-config.sh && echo "$ARTIFACT_CONFIG_SOURCE_DIR"'
+```
+
+That must print `$REIMAGE_WORKSPACE_ROOT/artifact-config`. A path ending in `.internal/templates/artifact-config` means the fragment precedence fell through to the committed templates -- either the workspace directory is missing, or `REIMAGE_WORKSPACE_ROOT` points somewhere that does not exist. The loader also prints a `WARNING:` on stderr in that case, naming the directory it looked for.
+
+> [!warning] Pitfall
+> The fallback does not fail. Scripts keep running against the repo's generic example targets, and most of those resolve to `not found, skipping` -- so a run against the wrong config looks like a thin but successful backup rather than an error. Check the source directory before the backup phases, not after.
+
+As a second, value-level confirmation, print a fragment whose contents are unmistakably yours:
 
 ```bash
 bash -c 'source .internal/artifact-config.sh && printf "%s\n" "${EXTERNAL_TARGETS[@]}"'
 ```
 
-This should print your real backup targets -- actual paths and folder names specific to this Mac -- not the repo's placeholder example values. If it prints placeholders instead, the fragment precedence fell through to the committed template rather than picking up your workspace copy; double check the files actually exist at `$REIMAGE_WORKSPACE_ROOT/artifact-config/external-targets.conf.sh`.
+This should list your real backup targets -- actual paths and folder names specific to this Mac -- not the repo's placeholder example values.
+
+Or run the aggregate validator, which resolves the same directory, reports it, and syntax-checks every fragment in one pass:
+
+```bash
+./bin/verify-artifact-config.sh
+```
 
 [[#Create the Standard Directory Layout|⮕ Continue to Create the Standard Directory Layout]]
 
@@ -1134,7 +1224,7 @@ For example:
 - `secrets-encrypted/` is created here only as a top-level container.
 - nested secrets folders are created later by the secrets runbook, manual staging steps, `backup-home-files-backup.sh`, or `create-secrets-dmg.sh`.
 - `reimage-confirmation/` is created here so the filled Phase 0 IT confirmation can be copied into the external root during Phase 1.
-- workflow snapshot child folders are created later by `capture-workflow-snapshot.md`.
+- toolkit snapshot child folders are created later by `capture-toolkit-snapshot.md`.
 
 ```bash
 python3 bin/prepare-artifact-root.py \
@@ -1160,7 +1250,7 @@ $REIMAGE_ARTIFACT_ROOT/
 ├── staged-ignored-files/
 ├── system-inventory/
 ├── time-machine/
-└── workflow-snapshot/
+└── toolkit-snapshot/
 ```
 
 For child-directory details, use the guide that owns that workflow. For example, `backup-dmg-secrets.md` owns the expected `secrets-encrypted/` staging, DMG, validation, and cleanup layout.
@@ -1183,7 +1273,7 @@ Folder purpose:
 | `staged-ignored-files/`     | Ignored/local file staging output from the Git-repo backup selected-pattern workflow — dry run, filtered dry run, and final live copies.                                                                                                    |
 | `system-inventory/`         | Developer-tool version and workstation inventory captured before erase, to speed up rebuilding the environment afterward.                                                                                                                   |
 | `time-machine/`             | Time Machine status capture bundles only. Actual Time Machine backups live on the Time Machine volume.                                                                                                                                       |
-| `workflow-snapshot/`        | Workflow snapshot captures and workflow documentation snapshots.                                                                                                                                                                              |
+| `toolkit-snapshot/`        | Toolkit snapshot captures and workflow documentation snapshots.                                                                                                                                                                              |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 

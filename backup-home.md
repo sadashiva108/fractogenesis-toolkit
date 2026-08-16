@@ -57,7 +57,7 @@ optional OneDrive secondary copy of approved work-safe targets from onedrive-tar
 It does not own:
 
 ```text
-automated workflow snapshot capture — capture-workflow-snapshot.md
+automated toolkit snapshot capture — capture-toolkit-snapshot.md
 app-specific backup work, including Docker settings/contexts/inventories — backup-apps.md
 developer-tool version inventory — capture-system-inventory.md
 cloud sync and final manual sign-off during Phase 6B — reimage-prep-checks.md

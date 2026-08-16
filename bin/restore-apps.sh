@@ -153,7 +153,7 @@ PLAN_FILE="$OUTPUT_ROOT/restore-apps-plan-$STAMP.md"
 # ---------------------------------------------------------------------------
 APP_BACKUP_ROOT="$REIMAGE_ARTIFACT_ROOT/app-settings-backup"
 SECRETS_ROOT="$REIMAGE_ARTIFACT_ROOT/secrets-encrypted"
-WORKFLOW_SNAPSHOT_ROOT="$REIMAGE_ARTIFACT_ROOT/workflow-snapshot"
+TOOLKIT_SNAPSHOT_ROOT="$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot"
 
 status_row() {
   local label="$1"
@@ -166,7 +166,7 @@ status_row() {
 }
 
 # Prefer the Phase 2C app-settings capture for VS Code; fall back to the
-# lightweight workflow-snapshot copy only when the dedicated backup is absent.
+# lightweight toolkit-snapshot copy only when the dedicated backup is absent.
 resolve_vscode_source() {
   local dedicated="$APP_BACKUP_ROOT/vscode"
   if [[ -d "$dedicated" ]]; then
@@ -174,7 +174,7 @@ resolve_vscode_source() {
     return
   fi
   local latest=""
-  latest="$(find "$WORKFLOW_SNAPSHOT_ROOT" -maxdepth 1 -type d -name 'pre-image-workflow-snapshot-*' 2>/dev/null | sort | tail -1)"
+  latest="$(find "$TOOLKIT_SNAPSHOT_ROOT" -maxdepth 1 -type d -name 'pre-image-toolkit-snapshot-*' 2>/dev/null | sort | tail -1)"
   if [[ -n "$latest" && -d "$latest/vscode" ]]; then
     printf '%s\n' "$latest/vscode"
     return

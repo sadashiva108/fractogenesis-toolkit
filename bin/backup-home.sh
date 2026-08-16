@@ -128,7 +128,7 @@ ONEDRIVE_DEST_SUBDIR="${ONEDRIVE_DEST_SUBDIR:-$(basename "${REIMAGE_ARTIFACT_ROO
 
 resolve_onedrive_root() {
   local configured="${ONEDRIVE_ROOT:-}"
-  local cloud="${ONEDRIVE_CLOUD_STORAGE_ROOT:-$HOME/Library/CloudStorage}"
+  local cloud="${ONEDRIVE_PARENT_DIR:-$HOME/Library/CloudStorage}"
   local preferred="${ONEDRIVE_PREFERRED_ROOT:-$cloud/OneDrive-AcmeGroup}"
   local resolved=""
 
@@ -283,7 +283,52 @@ run_rsync() {
   local dry_flag=()
   $dry && dry_flag=( "--dry-run" )
 
-  rsync -a --delete "${dry_flag[@]}" "${extra[@]}" "$src" "$dst" 2>/dev/null
+  local rsync_err err_trap rsync_rc
+  rsync_err="$(mktemp)"
+  err_trap="$(trap -p ERR || true)"
+
+  trap - ERR
+  set +e
+  rsync -a --delete --no-specials --no-devices "${dry_flag[@]}" "${extra[@]}" "$src" "$dst" 2>"$rsync_err"
+  rsync_rc=$?
+  set -e
+
+  if [[ -n "$err_trap" ]]; then
+    eval "$err_trap"
+  else
+    trap - ERR
+  fi
+
+  case "$rsync_rc" in
+    0) ;;
+    24)
+      # Source changed under us: OneDrive rehydrating, editors saving, caches
+      # rotating. The copy is otherwise complete.
+      RSYNC_WARNINGS=$(( ${RSYNC_WARNINGS:-0} + 1 ))
+      printf "  ${YEL}⚠  %-44s  files vanished during copy (rsync 24)${RST}\n" "$label"
+      sed 's/^/       /' "$rsync_err" >&2
+      ;;
+    23)
+      # Partial transfer — usually unreadable sources (TCC, permissions, sockets).
+      RSYNC_WARNINGS=$(( ${RSYNC_WARNINGS:-0} + 1 ))
+      printf "  ${YEL}⚠  %-44s  partial transfer (rsync 23) — review stderr${RST}\n" "$label"
+      sed 's/^/       /' "$rsync_err" >&2
+      ;;
+    *)
+      echo "" >&2
+      echo "ERROR: rsync failed for a home-files target" >&2
+      echo "  label: $label" >&2
+      echo "  src:   $src" >&2
+      echo "  dst:   $dst" >&2
+      echo "  rsync exit: $rsync_rc" >&2
+      echo "  rsync stderr:" >&2
+      sed 's/^/    /' "$rsync_err" >&2
+      rm -f "$rsync_err"
+      exit "$rsync_rc"
+      ;;
+  esac
+
+  rm -f "$rsync_err"
 
   if $dry; then
     printf "  ${YEL}~  %-44s  (dry run)${RST}\n" "$label"

@@ -33,6 +33,7 @@ Git remotes protect what you have committed and pushed. They do not protect loca
     - [[#Load Shared Configuration|Load Shared Configuration]]
     - [[#Run the Size Audit|Run the Size Audit]]
     - [[#Run the Repository Audit|Run the Repository Audit]]
+    - [[#Review the Repository Audit|Review the Repository Audit]]
     - [[#Review the Gitignore Superset|Review the Gitignore Superset]]
     - [[#Choose Your Path|Choose Your Path]]
     - [[#Choose Which Ignored Files to Keep|Choose Which Ignored Files to Keep]]
@@ -313,7 +314,7 @@ Each part below answers *why* a step exists before the Sequential Steps show *ho
 
 ### Prerequisites
 
-This runbook assumes the external artifact volume, `$REIMAGE_ARTIFACT_ROOT`, the standard generated-artifact folders, and `reimage.env` are already in place. The Git repository roots (`GIT_WORK_REPO_ROOT`, `GIT_PERSONAL_REPO_ROOT`) are set by this runbook's first step, [[#Define Git Repository Roots|Define Git Repository Roots]].
+This runbook assumes the external artifact volume, `$REIMAGE_ARTIFACT_ROOT`, the standard generated-artifact folders, and `reimage.env` are already in place. The Git repository roots (`GIT_WORK_REPO_ROOT`, `GIT_PERSONAL_REPO_ROOT`) are set by this runbook's first step.
 
 | Item | Location |
 |---|---|
@@ -369,7 +370,7 @@ Some files you need for development are also credential-shaped — env files, ke
 
 ## Sequential Steps
 
-Run these in order. The first four — [[#Load Shared Configuration|Load Shared Configuration]] through [[#Review the Gitignore Superset|Review the Gitignore Superset]] — are common setup for both paths. [[#Choose Your Path|Choose Your Path]] then sends you down either the Selected chain or the Direct off-ramp, and both rejoin at [[#Review Output Files|Review Output Files]].
+Run these in order. The steps up to Choose Your Path are common setup: they define the repository roots, load shared configuration, and produce the audits and superset every later step reads. Choose Your Path then forks into the Selected chain or the Direct off-ramp, and the two rejoin at the final review of output files.
 
 ### Define Git Repository Roots
 
@@ -515,11 +516,69 @@ Look for `✓ External drive: enough space` (or the `✗ NOT ENOUGH SPACE` count
 
 ### Run the Repository Audit
 
-The default entrypoint refreshes both the repo audit and the gitignore superset in one run:
+This step refreshes both the repo audit and the gitignore superset in one run. The refresh regenerates `gitignore-review-template.txt`, so route by whether you have selections to carry into it — running first and deciding after costs you either your previous marks or this run's newly discovered patterns.
+
+- [[#Fresh Superset|Fresh Superset]] — first run against a new artifact root, nothing to carry forward.
+- [[#Carry Selections Forward|Carry Selections Forward]] — you kept a reviewed template from a previous backup.
+
+> [!warning] Pitfall
+> Restoring a previous template *after* the refresh overwrites the freshly generated file and silently drops every pattern this run discovered — new repos, changed ignore rules. The copy belongs before the refresh, and `--preserve-selections` is what carries your marks across.
+
+> [!note]
+> The script reads `gitignore-review-template.txt`, `backup-exclude-list.txt`, and `secrets-patterns.txt` from `$REIMAGE_ARTIFACT_ROOT/gitignore-superset/` only. The workspace copies are a manual stash so your decisions survive a new artifact root — nothing reads them directly.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
+### Fresh Superset
+
+The superset is generated from scratch and `gitignore-review-template.txt` arrives with every box `[ ]`:
 
 ```bash
 ./bin/backup-repos.sh --artifact-root "$REIMAGE_ARTIFACT_ROOT" --open
 ```
+
+[[#Review the Repository Audit|⮕ Continue to Review the Repository Audit]]
+
+---
+
+### Carry Selections Forward
+
+Restore all three operator-maintained files into the artifact root first. `gitignore-superset/` already exists — `prepare-artifact-root.md` creates it as one of the expected artifact folders:
+
+```bash
+for f in \
+  gitignore-review-template.txt \
+  backup-exclude-list.txt \
+  secrets-patterns.txt
+do
+  if [ -f "$REIMAGE_WORKSPACE_ROOT/gitignore-superset/$f" ]; then
+    cp -p "$REIMAGE_WORKSPACE_ROOT/gitignore-superset/$f" \
+          "$REIMAGE_ARTIFACT_ROOT/gitignore-superset/$f"
+    echo "restored  $f"
+  else
+    echo "no copy   $f"
+  fi
+done
+```
+
+Anything you have no workspace copy of is left alone here and seeded from the committed template by the refresh below, so a partial carry-forward is fine.
+
+Then refresh with `--preserve-selections`, so the regenerated superset inherits your `[x]` marks instead of resetting to all `[ ]`. Any `[x]` pattern no longer present in the new superset is reported as a warning rather than kept:
+
+```bash
+./bin/backup-repos.sh --artifact-root "$REIMAGE_ARTIFACT_ROOT" --preserve-selections --open
+```
+
+> [!note]
+> Only the review template needs the flag. It is the one file the refresh regenerates, so without `--preserve-selections` your marks are reset. `backup-exclude-list.txt` and `secrets-patterns.txt` are never regenerated — the refresh seeds them only when absent and reports `kept existing` otherwise, so restoring them is the whole job.
+
+[[#Review the Repository Audit|⮕ Continue to Review the Repository Audit]]
+
+---
+
+### Review the Repository Audit
 
 Open the newest summary to review it:
 
@@ -538,13 +597,7 @@ Act on what the audit surfaces — push feature branches, preserve uncommitted w
 
 ### Review the Gitignore Superset
 
-The audit run above already generated the superset. Review it here — do not re-collect it. If you kept a reviewed template from a previous backup, copy it in before editing so you start from your last decisions:
-
-```bash
-cp -p \
-  "$REIMAGE_WORKSPACE_ROOT/gitignore-superset/gitignore-review-template.txt" \
-  "$REIMAGE_ARTIFACT_ROOT/gitignore-superset/gitignore-review-template.txt"
-```
+The audit run above already generated the superset, with your previous selections carried forward if you restored a template and passed `--preserve-selections`. Review it here — do not re-collect it.
 
 Open the template and the summary:
 
@@ -554,7 +607,7 @@ open "$REIMAGE_ARTIFACT_ROOT/gitignore-superset/summary.txt"
 ```
 
 > [!note]
-> Even a copied-in template must be re-reviewed against this run's superset. New repos or changed ignore rules can mean last time's selection is no longer complete. See [[#Gitignore Superset Generated Files|Gitignore Superset Generated Files]] for how to read the evidence files.
+> Carried-forward marks still need re-reviewing against this run's superset. New repos or changed ignore rules can mean last time's selection is no longer complete, and any previously checked pattern that has since disappeared was dropped with a warning. See [[#Gitignore Superset Generated Files|Gitignore Superset Generated Files]] for how to read the evidence files.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -605,7 +658,14 @@ cp -p \
 
 ### Create or Update the Exclude List
 
-This is the **Exclude** stage. `backup-exclude-list.txt` drops generated, cache, dependency, and build-output noise back out of the selected set. Create or edit it under the backup root:
+This is the **Exclude** stage. `backup-exclude-list.txt` drops generated, cache, dependency, and build-output noise back out of the selected set.
+
+> [!note]
+> `backup-exclude-list.txt` is operator-maintained, not regenerated. The audit run seeds it from the
+> committed template on first use and never overwrites it afterwards, so your edits
+> survive every rerun. Review the seeded entries before trusting them.
+
+Open it under the backup root to review and edit:
 
 ```bash
 open "$REIMAGE_ARTIFACT_ROOT/gitignore-superset/backup-exclude-list.txt"
@@ -633,13 +693,18 @@ cp -p \
 
 This is the **Route** stage. `secrets-patterns.txt` diverts kept, credential-shaped files into `secrets-encrypted/repos-gitignored/` so they never sit beside the ordinary staged files that sync to cloud storage, and so the Phase 3B DMG sweeps them. It uses the same one-pattern-per-line format and matching engine as the exclude list, and `bin/backup-repos.sh` picks it up automatically whenever it exists — no flag.
 
-Create or edit it under the backup root:
+> [!note]
+> `secrets-patterns.txt` is operator-maintained, not regenerated. The audit run seeds it from the
+> committed template on first use and never overwrites it afterwards, so your edits
+> survive every rerun. Review the seeded entries before trusting them.
+
+Open it under the backup root to review and edit:
 
 ```bash
 open "$REIMAGE_ARTIFACT_ROOT/gitignore-superset/secrets-patterns.txt"
 ```
 
-A starter list based on the credential-shaped patterns from [[#Choose Which Ignored Files to Keep|Choose Which Ignored Files to Keep]] is the expected starting point, adjusted for your repos:
+The seeded file already carries the credential-shaped patterns below. Adjust them for your repos:
 
 ```text
 .env

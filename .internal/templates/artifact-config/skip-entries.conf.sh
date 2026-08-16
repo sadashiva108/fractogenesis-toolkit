@@ -3,10 +3,10 @@
 # Format: "PATH | REASON"
 
 SKIP_ENTRIES=(
-  "~/Documents/DockerDesktop        | Docker.raw virtual disk — 13.9 GB; rebuild images from registries post-reimage"
-  "~/Documents/github-copilot-intellij | IntelliJ Copilot plugin cache — 384 MB; reinstall post-reimage"
-  "~/.gradle                        | Gradle dependency cache — 18 GB; re-downloads on first build"
-  "~/.m2                            | Maven dependency cache — 100 MB; re-downloads on first build"
+  "<docker-data-dir>/DockerDesktop  | Docker.raw virtual disk — large; rebuild images from registries post-reimage"
+  "<ide-plugin-cache>/github-copilot-intellij | IDE Copilot plugin cache — reinstall post-reimage"
+  "~/.gradle                        | Gradle dependency cache — large; re-downloads on first build"
+  "~/.m2                            | Maven dependency cache — re-downloads on first build"
   "~/.cache                         | Assorted tool caches (gh, npm, copilot, pluginVerifier)"
   "~/.npm                           | npm download cache"
   "~/.nvm                           | Node Version Manager install — reinstall nvm then: nvm install <version>"
@@ -19,7 +19,7 @@ SKIP_ENTRIES=(
   "~/.gem                           | Ruby gem cache — reinstall via Gemfile"
   "~/.local                         | Mostly generated state and bin symlinks"
   "~/.parallel                      | GNU parallel temp files"
-  "~/.config/github-copilot         | GitHub Copilot cache — 54 MB"
+  "~/.config/github-copilot         | GitHub Copilot cache"
   "~/.azure/logs                    | Azure CLI logs"
   "~/.azure/telemetry               | Azure CLI telemetry"
   "~/.copilot/logs                  | Copilot session logs"

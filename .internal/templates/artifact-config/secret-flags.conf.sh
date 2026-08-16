@@ -4,7 +4,7 @@
 
 BACKUP_SSH=true
 BACKUP_GNUPG=true
-BACKUP_DOCKER=true    # Docker settings -> app-backups/docker/
+BACKUP_DOCKER=true    # Docker settings -> app-settings-backup/docker/
                       # Docker config.json -> secrets-encrypted/docker/config.json via SECRETS_TARGETS
 BACKUP_POSTMAN=true   # Manual Postman secret staging folder -> secrets-encrypted/postman/
 BACKUP_JAVA_JSSECACERTS=true  # Corporate Java trust override -> secrets-encrypted/certs/java-security/

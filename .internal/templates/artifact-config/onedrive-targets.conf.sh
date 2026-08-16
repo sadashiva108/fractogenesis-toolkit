@@ -4,6 +4,9 @@
 #
 # Same format as EXTERNAL_TARGETS. DEST is relative to $ONEDRIVE_DEST/.
 # Comment out lines to disable.
+#
+# This destination is corporate cloud storage. Never add a path holding raw
+# secrets; see the sensitive-file-type patterns in onedrive-extra-excludes.conf.sh.
 
 ONEDRIVE_TARGETS=(
   "Documents | $HOME/Documents/ | Documents | home | Work documents synced to corporate OneDrive"

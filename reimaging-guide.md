@@ -26,7 +26,7 @@ This is the canonical top-level guide for the Mac reimage workflow.
     - [[#Phase 3A — Certificate and Keychain Staging|Phase 3A — Certificate and Keychain Staging]]
     - [[#Phase 3B — Create Secrets DMG|Phase 3B — Create Secrets DMG]]
 - [[#Phase 4 — Pre-Image Captures|Phase 4 — Pre-Image Captures]]
-    - [[#Phase 4A — Capture Workflow Snapshot|Phase 4A — Capture Workflow Snapshot]]
+    - [[#Phase 4A — Capture Toolkit Snapshot|Phase 4A — Capture Toolkit Snapshot]]
     - [[#Phase 4B — System Inventory Capture|Phase 4B — System Inventory Capture]]
     - [[#Phase 4C — Performance Audit Capture|Phase 4C — Performance Audit Capture]]
     - [[#Phase 4D — Office Stability Capture|Phase 4D — Office Stability Capture]]
@@ -45,7 +45,7 @@ This is the canonical top-level guide for the Mac reimage workflow.
     - [[#Phase 11B — Restore Repositories|Phase 11B — Restore Repositories]]
 - [[#Phase 12 — Restore Apps|Phase 12 — Restore Apps]]
 - [[#Phase 13 — Post-Image Captures|Phase 13 — Post-Image Captures]]
-    - [[#Phase 13A — Capture Workflow Snapshot|Phase 13A — Capture Workflow Snapshot]]
+    - [[#Phase 13A — Capture Toolkit Snapshot|Phase 13A — Capture Toolkit Snapshot]]
     - [[#Phase 13B — System Inventory Capture|Phase 13B —System Inventory Capture]]
     - [[#Phase 13C — Company Managed Inventory Capture|Phase 13C — Company Managed Inventory Capture]]
     - [[#Phase 13D —  Performance Audit Capture|Phase 13D — Performance Audit Capture]]
@@ -349,7 +349,7 @@ This section owns the **phase order**. The linked capture runbooks explain comma
 
 Reference link: [Reimage Preparation Evidence](./references/reimage-prep-evidence.md)
 
-All Phase 4 captures are optional. **Phase 4A** is the lightweight workflow snapshot capture; run it when you want the current reimage workflow docs and lightweight restore reference bundle preserved on the external root. If you run only one **system-state** capture, run **Phase 4B system inventory** because it preserves the broadest rebuild context.
+All Phase 4 captures are optional. **Phase 4A** is the lightweight toolkit snapshot capture; run it when you want the current reimage workflow docs and lightweight restore reference bundle preserved on the external root. If you run only one **system-state** capture, run **Phase 4B system inventory** because it preserves the broadest rebuild context.
 
 The company-managed inventory capture is **not** part of this phase — it runs as Phase 2C, where it feeds the app-backup decision.
 
@@ -357,14 +357,14 @@ If a capture needs to run for days or weeks before the broader backup phase, sta
 
 Use the others when they answer a specific need:
 
-- **Phase 4A workflow snapshot** — when you want the current reimage workflow docs and lightweight restore reference bundle preserved on the external root.
+- **Phase 4A toolkit snapshot** — when you want the current reimage workflow docs and lightweight restore reference bundle preserved on the external root.
 - **Phase 4C performance audit** — when you want before/after evidence for slowness, resource pressure, or workload-specific regressions.
 - **Phase 4D Office stability** — when Outlook or OneNote instability, update churn, or unexpected closures are part of the reason for the reimage.
 
 ### Recommended Pre-Image Capture Order
 
 1. Confirm `$REIMAGE_ARTIFACT_ROOT` exists and matches your current `reimage.env`.
-2. Run Phase 4A workflow snapshot capture.
+2. Run Phase 4A toolkit snapshot capture.
 3. Run Phase 4B system inventory.
 4. Run Phase 4C performance audit under one or more named scenarios if performance comparison will be useful.
 5. Start or continue the Office watcher if Office stability evidence is still needed.
@@ -376,7 +376,7 @@ Do not reset the Office marker after an incident until the incident evidence has
 
 | Subphase | Evidence | Destination | Supporting reference | Manual notes or checklist section |
 |---|---|---|---|---|
-| Phase 4A | Workflow snapshot | `$REIMAGE_ARTIFACT_ROOT/workflow-snapshot/pre-image-workflow-snapshot-*`, `$REIMAGE_ARTIFACT_ROOT/workflow-snapshot/reimage-workflow-docs/` | capture-workflow-snapshot.md | — |
+| Phase 4A | Toolkit snapshot | `$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/pre-image-toolkit-snapshot-*`, `$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/latest-docs/` | capture-toolkit-snapshot.md | — |
 | Phase 4B | System inventory | `$REIMAGE_ARTIFACT_ROOT/system-inventory/pre-image-*` | capture-system-inventory.md | `capture-system-inventory.md` — Manual context note only when needed |
 | Phase 4C | Performance audit | `$REIMAGE_ARTIFACT_ROOT/performance-audit/pre-image-*` | capture-performance-audit.md | `capture-performance-audit.md` — Manual Observations |
 | Phase 4D | Office stability | `$REIMAGE_ARTIFACT_ROOT/office-stability/pre-reimage-*` | capture-office-stability.md | `capture-office-stability.md` — Final Pre-Reimage Checklist |
@@ -386,11 +386,11 @@ Do not reset the Office marker after an incident until the incident evidence has
 
 ---
 
-### Phase 4A — Capture Workflow Snapshot
+### Phase 4A — Capture Toolkit Snapshot
 
 Use this capture to preserve the current reimage workflow docs and the lightweight snapshot bundle that helps you follow the restore workflow later.
 
-Follow this capture runbook: [capture-workflow-snapshot.md](capture-workflow-snapshot.md).
+Follow this capture runbook: [capture-toolkit-snapshot.md](capture-toolkit-snapshot.md).
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -720,7 +720,7 @@ If a particular capture from Phase 4 was run, run the corresponding Phase 13 cap
 ### Recommended Post-Image Capture Order
 
 1. Confirm `$REIMAGE_ARTIFACT_ROOT` exists and matches your current `reimage.env`.
-2. Run Phase 13A workflow snapshot capture if you want a refreshed workflow-doc bundle on the external root.
+2. Run Phase 13A toolkit snapshot capture if you want a refreshed workflow-doc bundle on the external root.
 3. Run Phase 13B post-image system inventory.
 4. Run Phase 13C post-image company-managed inventory if you want a precise record of IT-managed state after rebuild.
 5. Run Phase 13D post-image performance audit under the same named scenarios used pre-image if performance comparison will be useful.
@@ -733,7 +733,7 @@ Do not reset the Office marker after an incident until the incident evidence has
 
 | Subphase | Evidence | Destination | Supporting reference | Manual notes or checklist section |
 |---|---|---|---|---|
-| Phase 13A | Workflow snapshot | `$REIMAGE_ARTIFACT_ROOT/workflow-snapshot/pre-image-workflow-snapshot-*`, `$REIMAGE_ARTIFACT_ROOT/workflow-snapshot/reimage-workflow-docs/` | capture-workflow-snapshot.md | — |
+| Phase 13A | Toolkit snapshot | `$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/pre-image-toolkit-snapshot-*`, `$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/latest-docs/` | capture-toolkit-snapshot.md | — |
 | Phase 13B | System inventory | `$REIMAGE_ARTIFACT_ROOT/system-inventory/post-image-*` | capture-system-inventory.md | `capture-system-inventory.md` — Manual context note only when needed |
 | Phase 13C | Company-managed inventory | `$REIMAGE_ARTIFACT_ROOT/managed-inventory/post-image-*` | capture-managed-inventory.md | — |
 | Phase 13D | Performance audit | `$REIMAGE_ARTIFACT_ROOT/performance-audit/post-image-*` | capture-performance-audit.md | `capture-performance-audit.md` — Manual Observations |
@@ -744,11 +744,11 @@ Do not reset the Office marker after an incident until the incident evidence has
 
 ---
 
-### Phase 13A — Capture Workflow Snapshot
+### Phase 13A — Capture Toolkit Snapshot
 
 Use this capture to preserve the **final post-image version** of the workflow docs, scripts, and lightweight restore reference bundle that actually reflect the rebuilt system. Unlike Phase 4A, which freezes the workflow you planned to use before erase, Phase 13A records the workflow state you ended up using after the rebuild, including any runbook or script refinements made during restoration.
 
-Follow this capture runbook: [capture-workflow-snapshot.md](capture-workflow-snapshot.md).
+Follow this capture runbook: [capture-toolkit-snapshot.md](capture-toolkit-snapshot.md).
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 

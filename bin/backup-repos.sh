@@ -58,7 +58,7 @@
 #         Exclude list required by --selected-filtered-dry-run and --selected-copy.
 #     gitignore-superset/secrets-patterns.txt
 #         Optional; when present, diverts secret-shaped candidates in selected modes.
-#     REIMAGE_WORKSPACE_ROOT/gitignore-superset/gitignore-review-template.direct-nonsecret-recommended.txt
+#     REIMAGE_ARTIFACT_ROOT/gitignore-superset/gitignore-review-template.direct-nonsecret-recommended.txt
 #         The one workspace read: read-only, drives the selected-nonsecret ignored
 #         -file feed. Lives with your curated config, like the artifact-config
 #         fragments; never written.
@@ -273,8 +273,7 @@ EXCLUDE_LIST_PATH="$GITIGNORE_DIR/backup-exclude-list.txt"
 SECRETS_PATTERNS_PATH="$GITIGNORE_DIR/secrets-patterns.txt"
 # The direct-nonsecret template is a read-only curated input that lives in the
 # workspace (like artifact-config fragments); this workflow never writes it.
-GITIGNORE_WORKSPACE_DIR="${REIMAGE_WORKSPACE_ROOT:+$REIMAGE_WORKSPACE_ROOT/gitignore-superset}"
-NONSECRET_TEMPLATE_PATH="$GITIGNORE_WORKSPACE_DIR/gitignore-review-template.direct-nonsecret-recommended.txt"
+NONSECRET_TEMPLATE_PATH="$GITIGNORE_DIR/gitignore-review-template.direct-nonsecret-recommended.txt"
 # Ignored-candidate review feeds are generated per-run and stay on the artifact
 # drive (consumed later by the Phase 3B cert/Keychain plan).
 IGNORED_REVIEW_DIR="$GITIGNORE_DIR/gitignore-review"

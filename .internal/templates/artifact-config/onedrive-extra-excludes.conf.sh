@@ -8,11 +8,9 @@ ONEDRIVE_EXTRA_EXCLUDES=(
   "Personal/"
 
   # -- Dev folders — fine on external drive, not needed in OneDrive ------------
+  # Add the tool/vendor folder names this Mac actually has under the synced dirs.
   "DockerDesktop/"
   "github-copilot-intellij/"
-  "Kubernetes/"
-  "Falcon/"
-  "Dynatrace/"
 
   # -- Sensitive file types — keep off corporate cloud -------------------------
   "*.pem"

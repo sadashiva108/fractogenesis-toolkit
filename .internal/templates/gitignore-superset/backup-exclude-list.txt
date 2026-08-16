@@ -1,0 +1,47 @@
+# backup-exclude-list.txt
+#
+# Applied ONLY by:
+#   backup-repos.sh --selected-filtered-dry-run   (-> staged-ignored-files/dryrun-filtered/)
+#   backup-repos.sh --selected-copy               (-> staged-ignored-files/live/)
+# via stage-selected-patterns.py --exclude-list. It trims files that were
+# already matched by checked [x] patterns in gitignore-review-template.txt.
+# It is NOT used by --direct-ignored-* modes.
+#
+# Format: gitignore-style, one pattern per line. '#' comments and blank lines
+# ignored. A bare name with no slash matches by basename anywhere. A 'repo:path'
+# entry scopes to one backup label. Same engine as secrets-patterns.txt.
+#
+# This file DROPS files entirely. Never use it to hide secrets — credential-shaped
+# files you want to keep belong in secrets-patterns.txt, which diverts instead of
+# dropping. Everything below except .DS_Store ships commented out on purpose:
+# uncomment only what you have confirmed you do not need back.
+
+# ── macOS / editor junk (always safe) ────────────────────────────────────
+.DS_Store
+
+# ── Generated console and log output ─────────────────────────────────────
+#*console_output.txt
+#*.log
+
+# ── Generated metrics and benchmark CSVs ─────────────────────────────────
+#*_metrics.csv
+
+# ── Build output and dependency trees that regenerate ────────────────────
+#target/
+#build/
+#dist/
+#out/
+#__pycache__/
+
+# ── Coverage and test output ─────────────────────────────────────────────
+#coverage/
+#.nyc_output/
+#*.lcov
+
+# ── IDE window/session state (regenerates on next project open) ──────────
+#.idea/workspace.xml
+
+# ── Project-specific noise ───────────────────────────────────────────────
+# Add entries for the generated directories your own repos produce, e.g.
+#   data/scratch
+#   scripts/outputs

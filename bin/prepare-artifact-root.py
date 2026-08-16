@@ -6,7 +6,7 @@ This script keeps the longer environment rewrite, artifact-root creation,
 verification, and workspace-config copy logic out of the Markdown guide.
 It writes resolved export values back into reimage.env while preserving
 unrelated comments and lines in the file, and it reads artifact-config.sh
-when Phase 1 needs the shared expected backup-folder layout.
+when Phase 1 needs the shared expected artifact-folder layout.
 
 REIMAGE_ROOT was retired as an env var. This script self-locates instead
 (REPO_ROOT below), matching artifact-config.sh's existing SCRIPT_DIR pattern.
@@ -57,6 +57,7 @@ ENV_KEYS = [
     "REIMAGE_ARTIFACT_ROOT",
     "OFFICE_WATCH",
     "ONEDRIVE_FOLDER_NAME",
+    "ONEDRIVE_PARENT_DIR",
     "ONEDRIVE_ROOT",
     "ONEDRIVE_DEST_SUBDIR",
     "GIT_WORK_REPO_ROOT",
@@ -98,8 +99,20 @@ def detect_asset_or_host() -> str:
     return "<asset-or-host>"
 
 
-def default_workspace_root() -> str:
-    return str(Path.home() / "Documents" / "reimage-workspace")
+def require_workspace_root(workspace_root: str, origin: str) -> str:
+    # There is no sensible default here. The workspace holds the artifact-config
+    # and staged-certs fragments every later script reads, so guessing a path
+    # that does not exist makes those loaders fall back to the repository's
+    # generic templates and the run continues against placeholder targets.
+    # Fail loudly instead; REIMAGE_WORKSPACE_ROOT is a required export.
+    value = (workspace_root or "").strip()
+    if not value:
+        raise SystemExit(
+            "ERROR: REIMAGE_WORKSPACE_ROOT is not set.\n"
+            f"       Expected from {origin}.\n"
+            "       Export it before running, e.g. export REIMAGE_WORKSPACE_ROOT=\"$HOME/<workspace-dir>\""
+        )
+    return value
 
 
 def normalize_value(key: str, value: str) -> str:
@@ -175,7 +188,7 @@ def load_env_values(env_file: Path) -> Dict[str, str]:
     return values
 
 
-def load_expected_backup_folders(env_file: Path, repo_root: str) -> List[str]:
+def load_expected_artifact_folders(env_file: Path, repo_root: str) -> List[str]:
     config_path = Path(repo_root) / ".internal" / "artifact-config.sh"
     script = "\n".join(
         [
@@ -229,18 +242,18 @@ def ensure_absolute_path(name: str, value: str, *, allow_empty: bool = False) ->
 
 def ensure_artifact_root_under_external(external_data_volume: str, artifact_root: str) -> None:
     external = external_data_volume.rstrip("/")
-    backup = artifact_root.rstrip("/")
-    if backup == "":
+    artifact = artifact_root.rstrip("/")
+    if artifact == "":
         raise SystemExit("REIMAGE_ARTIFACT_ROOT is empty. Recheck reimage.env.")
-    if contains_literal_path(backup):
+    if contains_literal_path(artifact):
         raise SystemExit(
             "REIMAGE_ARTIFACT_ROOT contains literal variable text instead of a resolved path. Rewrite it in reimage.env first."
         )
-    if not backup.startswith(external + "/"):
+    if not artifact.startswith(external + "/"):
         raise SystemExit(
             "REIMAGE_ARTIFACT_ROOT is not under EXTERNAL_DATA_VOLUME.\n"
             f"Expected prefix: {external}/\n"
-            f"Actual REIMAGE_ARTIFACT_ROOT: {backup}"
+            f"Actual REIMAGE_ARTIFACT_ROOT: {artifact}"
         )
 
 
@@ -281,16 +294,24 @@ def ensure_workspace_dirs(*paths: str) -> None:
             Path(path).mkdir(parents=True, exist_ok=True)
 
 
-def resolve_onedrive_root(onedrive_folder_name: str) -> str:
+DEFAULT_ONEDRIVE_PARENT_DIR = str(Path.home() / "Library" / "CloudStorage")
+
+
+def resolve_onedrive_root(onedrive_folder_name: str, onedrive_parent_dir: str = "") -> str:
     # OneDrive is optional. When a folder name is supplied, resolve the full
-    # CloudStorage-backed path the same way REIMAGE_ARTIFACT_ROOT is built from
-    # parts, so reimage.env stores a resolved absolute path — never a bare
-    # folder name (which older scripts could treat as relative to the cwd) or a
-    # literal "$HOME/..." string. Return "" to leave OneDrive unconfigured.
+    # path the same way REIMAGE_ARTIFACT_ROOT is built from parts, so
+    # reimage.env stores a resolved absolute path — never a bare folder name
+    # (which older scripts could treat as relative to the cwd) or a literal
+    # "$HOME/..." string. Return "" to leave OneDrive unconfigured.
+    #
+    # macOS puts file-provider mounts under ~/Library/CloudStorage, which is the
+    # default parent. It is a default and not an assumption: an unmanaged or
+    # relocated sync folder lives elsewhere, so onedrive_parent_dir overrides it.
     name = onedrive_folder_name.strip()
     if not name:
         return ""
-    return str(Path.home() / "Library" / "CloudStorage" / name)
+    parent = (onedrive_parent_dir or "").strip() or DEFAULT_ONEDRIVE_PARENT_DIR
+    return str(Path(parent).expanduser() / name)
 
 
 def create_onedrive_destination(onedrive_root: str, onedrive_dest_subdir: str) -> None:
@@ -320,7 +341,10 @@ def resolve_it_plan_source(explicit_source: str, values: Dict[str, str], workspa
         return source
 
     # Locate the filled note under REIMAGE_WORKSPACE_ROOT/reimage-confirmation.
-    workspace_root = workspace_root_override or values.get("REIMAGE_WORKSPACE_ROOT") or default_workspace_root()
+    workspace_root = require_workspace_root(
+        workspace_root_override or values.get("REIMAGE_WORKSPACE_ROOT", ""),
+        "--workspace-root or REIMAGE_WORKSPACE_ROOT in reimage.env",
+    )
     search_root = str(Path(workspace_root) / "reimage-confirmation")
     search_path = Path(search_root).expanduser()
     if not search_path.is_dir():
@@ -343,7 +367,7 @@ def resolve_it_plan_source(explicit_source: str, values: Dict[str, str], workspa
 
 
 def cmd_init_reimage_env(args: argparse.Namespace) -> int:
-    workspace_root = args.workspace_root or default_workspace_root()
+    workspace_root = require_workspace_root(args.workspace_root, "--workspace-root")
     confirmation_dir = str(Path(workspace_root) / "reimage-confirmation")
     asset_or_host = args.asset_or_host or detect_asset_or_host()
     reimage_start_date = args.reimage_start_date or dt.datetime.now().strftime("%Y%m%d")
@@ -351,7 +375,10 @@ def cmd_init_reimage_env(args: argparse.Namespace) -> int:
     reimage_artifact_root = f"{external_data_volume}/reimage-{asset_or_host}-{reimage_start_date}-open"
     onedrive_dest_subdir = Path(reimage_artifact_root).name
     onedrive_folder_name = args.onedrive_folder_name.strip()
-    onedrive_root = resolve_onedrive_root(onedrive_folder_name)
+    onedrive_parent_dir = (
+        args.onedrive_parent_dir.strip() or DEFAULT_ONEDRIVE_PARENT_DIR
+    )
+    onedrive_root = resolve_onedrive_root(onedrive_folder_name, onedrive_parent_dir)
 
     updates = {
         "REIMAGE_WORKSPACE_ROOT": workspace_root,
@@ -363,6 +390,7 @@ def cmd_init_reimage_env(args: argparse.Namespace) -> int:
         "REIMAGE_ARTIFACT_ROOT": reimage_artifact_root,
         "OFFICE_WATCH": "",
         "ONEDRIVE_FOLDER_NAME": onedrive_folder_name,
+        "ONEDRIVE_PARENT_DIR": onedrive_parent_dir,
         "ONEDRIVE_ROOT": onedrive_root,
         "ONEDRIVE_DEST_SUBDIR": onedrive_dest_subdir,
     }
@@ -414,7 +442,7 @@ def cmd_create_artifact_root(args: argparse.Namespace) -> int:
         raise
 
     print("OK: REIMAGE_ARTIFACT_ROOT is under EXTERNAL_DATA_VOLUME")
-    print(f"OK: backup root exists: {artifact_root}")
+    print(f"OK: artifact root exists: {artifact_root}")
     write_test_file(Path(artifact_root), "write-test")
     print_ls(Path(artifact_root))
     return 0
@@ -517,7 +545,7 @@ def cmd_confirm_env(args: argparse.Namespace) -> int:
     else:
         raise SystemExit(
             f"REIMAGE_ARTIFACT_ROOT does not exist yet: {values['REIMAGE_ARTIFACT_ROOT']}\n"
-            "Return to Step 6, create the backup/capture root, then rerun this helper."
+            "Return to Step 6, create the artifact root, then rerun this helper."
         )
     return 0
 
@@ -526,7 +554,7 @@ def cmd_create_standard_layout(args: argparse.Namespace) -> int:
     values = load_env_values(args.env_file)
     ensure_absolute_path("REIMAGE_ARTIFACT_ROOT", values["REIMAGE_ARTIFACT_ROOT"])
     ensure_artifact_root_under_external(values["EXTERNAL_DATA_VOLUME"], values["REIMAGE_ARTIFACT_ROOT"])
-    expected = load_expected_backup_folders(args.env_file, str(REPO_ROOT))
+    expected = load_expected_artifact_folders(args.env_file, str(REPO_ROOT))
     for folder in expected:
         path = Path(values["REIMAGE_ARTIFACT_ROOT"]) / folder
         path.mkdir(parents=True, exist_ok=True)
@@ -588,7 +616,7 @@ def cmd_init_artifact_config(args: argparse.Namespace) -> int:
 
 def cmd_verify_prepared_root(args: argparse.Namespace) -> int:
     values = load_env_values(args.env_file)
-    expected = load_expected_backup_folders(args.env_file, str(REPO_ROOT))
+    expected = load_expected_artifact_folders(args.env_file, str(REPO_ROOT))
     config_source_dir = load_artifact_config_source_dir(args.env_file, str(REPO_ROOT))
 
     print_env_summary(values)
@@ -646,7 +674,7 @@ def cmd_verify_prepared_root(args: argparse.Namespace) -> int:
 
     if missing:
         raise SystemExit(
-            "Expected backup folders are missing.\n"
+            "Expected artifact folders are missing.\n"
             "Create the standard directory layout, then rerun this helper."
         )
 
@@ -715,12 +743,21 @@ def build_parser() -> argparse.ArgumentParser:
     init_parser.add_argument("--asset-or-host", default="")
     init_parser.add_argument("--reimage-start-date", default="")
     init_parser.add_argument(
+        "--onedrive-parent-dir",
+        default="",
+        help=(
+            "Directory the OneDrive sync folder lives under. Defaults to "
+            "$HOME/Library/CloudStorage. Override when the sync folder is not a "
+            "macOS file-provider mount."
+        ),
+    )
+    init_parser.add_argument(
         "--onedrive-folder-name",
         default="",
         help=(
-            "Optional CloudStorage OneDrive folder name (e.g. OneDrive-AcmeGroup). When set, "
-            "ONEDRIVE_ROOT is resolved to $HOME/Library/CloudStorage/<name> and the per-reimage "
-            "OneDrive destination is created when the CloudStorage root exists. Leave empty to "
+            "Optional OneDrive sync folder name (e.g. OneDrive-AcmeGroup). When set, "
+            "ONEDRIVE_ROOT is resolved to <onedrive-parent-dir>/<name> and the per-reimage "
+            "OneDrive destination is created when that parent already exists. Leave empty to "
             "skip OneDrive."
         ),
     )

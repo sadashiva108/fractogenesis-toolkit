@@ -27,7 +27,7 @@ Use this as the script index for the Mac reimage workflow. The Markdown runbooks
     - [[#Phase 5 Time Machine Backup and Status Capture|Phase 5 Time Machine Backup and Status Capture]]
 - [[#Separate Capture Script Reference|Separate Capture Script Reference]]
 - [[#Pre-Image Capture Automation|Pre-Image Capture Automation]]
-    - [[#Phase 4A Capture Workflow Snapshot|Phase 4A Capture Workflow Snapshot]]
+    - [[#Phase 4A Capture Toolkit Snapshot|Phase 4A Capture Toolkit Snapshot]]
     - [[#Phase 4B Pre-Image System Inventory Capture|Phase 4B Pre-Image System Inventory Capture]]
     - [[#Phase 2C Pre-Image Company-Managed Inventory Capture|Phase 2C Pre-Image Company-Managed Inventory Capture]]
     - [[#Phase 4C Pre-Image Performance Audit Capture|Phase 4C Pre-Image Performance Audit Capture]]
@@ -106,7 +106,7 @@ export ONEDRIVE_DEST_SUBDIR="reimage-<asset-or-host>-<start-date>-open"
 | Phase 3A | Certificate and Keychain staging | `stage-certs-keychain.md` | `stage-certs-keychain.sh` | `$REIMAGE_ARTIFACT_ROOT/public-certs/`, `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/certs/`, `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/extra-secrets-certs-review/` |
 | Phase 3B | Encrypted secrets backup | `backup-dmg-secrets.md` | `create-secrets-dmg.sh` | `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/all-secrets-*.dmg` |
 | Phase 5 | Time Machine backup/status | `run-time-machine.md` | `run-time-machine.sh`, `capture-time-machine.sh` | `/Volumes/AppleBackups`, `$REIMAGE_ARTIFACT_ROOT/time-machine/`, `final-time-machine-checklist-*.md` |
-| Phase 4A | Workflow snapshot capture | `capture-workflow-snapshot.md` | `capture-workflow-snapshot.sh` | `$REIMAGE_ARTIFACT_ROOT/workflow-snapshot/pre-image-workflow-snapshot-*/`, `$REIMAGE_ARTIFACT_ROOT/workflow-snapshot/reimage-workflow-docs/` |
+| Phase 4A | Toolkit snapshot capture | `capture-toolkit-snapshot.md` | `capture-toolkit-snapshot.sh` | `$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/pre-image-toolkit-snapshot-*/`, `$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/latest-docs/` |
 | Phase 4B | Pre-image system inventory evidence | `reimaging-guide.md` (Phase 4) | `capture-system-inventory.sh` | `$REIMAGE_ARTIFACT_ROOT/system-inventory/` |
 | Phase 2C | Pre-image company-managed inventory evidence | `reimaging-guide.md` (Phase 4), `capture-managed-inventory.md` | `capture-managed-inventory.sh` | `$REIMAGE_ARTIFACT_ROOT/managed-inventory/` |
 | Phase 4C | Pre-image performance evidence | `reimaging-guide.md` (Phase 4), `capture-performance-audit.md` | `capture-performance-audit.sh` | `$REIMAGE_ARTIFACT_ROOT/performance-audit/pre-image-*` |
@@ -171,7 +171,7 @@ Current preferred script layout:
 │       ├── create-secrets-dmg.sh
 │       └── stage-certs-keychain.sh
 └── bin/
-    ├── capture-workflow-snapshot.sh
+    ├── capture-toolkit-snapshot.sh
     ├── run-time-machine.sh
     ├── capture-time-machine.sh
     ├── capture-performance-audit.sh
@@ -451,20 +451,20 @@ This scripts guide remains the broader map for all backup, evidence, validation,
 
 Phase 4 captures can be run before or after the backup sub-phases. Any captures you choose to run must be completed before Phase 6 final pre-image validation and should be repeated post-image where comparison is useful.
 
-All pre-image captures are optional. Phase 4A is the lightweight workflow snapshot capture; run it when you want the current reimage workflow docs and restore reference bundle preserved on the external root. If you run only one system-state capture, run the system inventory capture. Installed apps, Homebrew, and shell-state ownership now belong with the system inventory capture rather than the workflow snapshot capture. Add the others when you need performance comparison evidence, Office stability evidence, or a precise inventory of company-managed software and policy.
+All pre-image captures are optional. Phase 4A is the lightweight toolkit snapshot capture; run it when you want the current reimage workflow docs and restore reference bundle preserved on the external root. If you run only one system-state capture, run the system inventory capture. Installed apps, Homebrew, and shell-state ownership now belong with the system inventory capture rather than the toolkit snapshot capture. Add the others when you need performance comparison evidence, Office stability evidence, or a precise inventory of company-managed software and policy.
 
-### Phase 4A Capture Workflow Snapshot
+### Phase 4A Capture Toolkit Snapshot
 
 ```bash
-./scripts/capture-workflow-snapshot.sh \
+./scripts/capture-toolkit-snapshot.sh \
   --backup-root "$REIMAGE_ARTIFACT_ROOT" \
   --open
 ```
 
-The workflow snapshot capture writes one timestamped workflow snapshot bundle per run:
+The toolkit snapshot capture writes one timestamped toolkit snapshot bundle per run:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/workflow-snapshot/pre-image-workflow-snapshot-YYYYMMDD-HHMMSS/
+$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/pre-image-toolkit-snapshot-YYYYMMDD-HHMMSS/
 ```
 
 It is safe to rerun. Existing filled IT confirmation copies are preserved under the stable manual area.
@@ -472,11 +472,11 @@ It is safe to rerun. Existing filled IT confirmation copies are preserved under 
 Quick validation:
 
 ```bash
-WORKFLOW_SNAPSHOT_CAPTURE="$(find "$REIMAGE_ARTIFACT_ROOT/workflow-snapshot" -maxdepth 1 -type d -name 'pre-image-workflow-snapshot-*' -print 2>/dev/null | sort | tail -1)"
+TOOLKIT_SNAPSHOT_CAPTURE="$(find "$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot" -maxdepth 1 -type d -name 'pre-image-toolkit-snapshot-*' -print 2>/dev/null | sort | tail -1)"
 
-printf 'Using workflow snapshot capture: %s\n' "$WORKFLOW_SNAPSHOT_CAPTURE"
-test -f "$WORKFLOW_SNAPSHOT_CAPTURE/README.md" && echo "PASS: workflow snapshot README captured"
-test -d "$REIMAGE_ARTIFACT_ROOT/workflow-snapshot/reimage-workflow-docs" && echo "PASS: workflow docs snapshot captured"
+printf 'Using toolkit snapshot capture: %s\n' "$TOOLKIT_SNAPSHOT_CAPTURE"
+test -f "$TOOLKIT_SNAPSHOT_CAPTURE/README.md" && echo "PASS: toolkit snapshot README captured"
+test -d "$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/latest-docs" && echo "PASS: workflow docs snapshot captured"
 ```
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -651,7 +651,7 @@ $REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/latest-reimage-checklist.txt
 
 Use the generated report as the primary Phase 6B checklist. Do not proceed to Phase 7 until `FAIL` items are resolved. Then use `reimage-prep-checks.md` only for the remaining manual sign-off rows.
 
-For workflow-snapshot checks, the validator should discover the newest timestamped bundle directly from `workflow-snapshot/pre-image-workflow-snapshot-*`. VS Code local fallback state is validated from `app-settings-backup/vscode/`.
+For toolkit-snapshot checks, the validator should discover the newest timestamped bundle directly from `toolkit-snapshot/pre-image-toolkit-snapshot-*`. VS Code local fallback state is validated from `app-settings-backup/vscode/`.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -822,7 +822,7 @@ chmod +x scripts/*.sh scripts/*.py
 ./scripts/capture-time-machine.sh final --open
 
 # Phase 4 — captures and reference snapshots
-./scripts/capture-workflow-snapshot.sh --backup-root "$REIMAGE_ARTIFACT_ROOT" --open
+./scripts/capture-toolkit-snapshot.sh --backup-root "$REIMAGE_ARTIFACT_ROOT" --open
 ./scripts/capture-system-inventory.sh
 ./scripts/capture-performance-audit.sh --output "$REIMAGE_ARTIFACT_ROOT/performance-audit" --phase pre-image --scenario clean-boot --sample-count 6 --sample-interval 30
 ./scripts/capture-performance-audit.sh --output "$REIMAGE_ARTIFACT_ROOT/performance-audit" --phase pre-image --scenario normal-workload --sample-count 6 --sample-interval 30

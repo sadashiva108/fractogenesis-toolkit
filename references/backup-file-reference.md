@@ -47,7 +47,7 @@ Single source of truth for the phase guides used across the pre-image stage (Pha
 | `backup-dmg-secrets.md` | Consolidated encrypted secrets DMG staging, validation, cleanup, and restore notes. |
 | `run-time-machine.md` | Time Machine setup, status capture, monitoring, and pre-reimage completion checks. |
 | `reimage-prep-evidence.md` | Comprehensive pre-image evidence reference for Phase 4 capture artifacts plus Phase 6 manual sign-off rows and templates under `$REIMAGE_ARTIFACT_ROOT`. |
-| `capture-workflow-snapshot.md` | Automated workflow snapshot capture and workflow-doc snapshots. |
+| `capture-toolkit-snapshot.md` | Automated toolkit snapshot capture and workflow-doc snapshots. |
 | `capture-system-inventory.md` | System inventory and workstation rebuild reference capture. |
 | `capture-managed-inventory.md` | Company-managed app/profile inventory capture guide and interpretation notes. |
 | `capture-performance-audit.md` | Performance baseline capture methodology for before/after comparison. |
@@ -240,9 +240,9 @@ $REIMAGE_ARTIFACT_ROOT/
 │           ├── tmutil-listbackups.txt
 │           ├── tmutil-status.txt
 │           └── volumes.txt
-├── workflow-snapshot/
-│   ├── reimage-workflow-docs/
-│   └── pre-image-workflow-snapshot-YYYYMMDD-HHMMSS/
+├── toolkit-snapshot/
+│   ├── latest-docs/
+│   └── pre-image-toolkit-snapshot-YYYYMMDD-HHMMSS/
 └── ...
 ```
 

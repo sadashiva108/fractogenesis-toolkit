@@ -2,6 +2,11 @@
 # Individual files at ~/. Missing files are silently skipped.
 #
 # Format: "FILENAME | CATEGORY | DESCRIPTION"
+#
+# These files are copied in the clear alongside home-files-backup/. Entries
+# marked `secrets` are ALSO routed to secrets-encrypted/ by secrets-targets.conf.sh;
+# the category here is a label, not a routing decision. Do not add a file that is
+# purely credential material — add it to secrets-targets.conf.sh instead.
 
 EXTERNAL_DOTFILES=(
 

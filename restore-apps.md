@@ -294,20 +294,20 @@ After import: select each environment, confirm every variable is present, confir
 
 ### Step 6 — VS Code
 
-Install VS Code from the approved source. Prefer the Phase 2C `app-settings-backup/vscode/` copy; fall back to the workflow-snapshot capture only if no dedicated VS Code backup exists (the plan-note already picked the right source in Step 1):
+Install VS Code from the approved source. Prefer the Phase 2C `app-settings-backup/vscode/` copy; fall back to the toolkit-snapshot capture only if no dedicated VS Code backup exists (the plan-note already picked the right source in Step 1):
 
 ```bash
 VSCODE_BACKUP_DIR="$REIMAGE_ARTIFACT_ROOT/app-settings-backup/vscode"
 
 if [[ ! -d "$VSCODE_BACKUP_DIR" ]]; then
-  WORKFLOW_SNAPSHOT_CAPTURE="$(find "$REIMAGE_ARTIFACT_ROOT/workflow-snapshot" -maxdepth 1 -type d -name 'pre-image-workflow-snapshot-*' -print 2>/dev/null | sort | tail -1)"
-  if [[ -n "$WORKFLOW_SNAPSHOT_CAPTURE" && -d "$WORKFLOW_SNAPSHOT_CAPTURE/vscode" ]]; then
-    VSCODE_BACKUP_DIR="$WORKFLOW_SNAPSHOT_CAPTURE/vscode"
+  TOOLKIT_SNAPSHOT_CAPTURE="$(find "$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot" -maxdepth 1 -type d -name 'pre-image-toolkit-snapshot-*' -print 2>/dev/null | sort | tail -1)"
+  if [[ -n "$TOOLKIT_SNAPSHOT_CAPTURE" && -d "$TOOLKIT_SNAPSHOT_CAPTURE/vscode" ]]; then
+    VSCODE_BACKUP_DIR="$TOOLKIT_SNAPSHOT_CAPTURE/vscode"
   fi
 fi
 
 [[ -d "$VSCODE_BACKUP_DIR" ]] || {
-  echo "ERROR: no VS Code backup directory found under app-settings-backup/ or workflow-snapshot/" >&2
+  echo "ERROR: no VS Code backup directory found under app-settings-backup/ or toolkit-snapshot/" >&2
   exit 2
 }
 
@@ -546,6 +546,6 @@ The plan-note file (`restore-apps-plan-YYYYMMDD-HHMMSS.md`) is the operator-faci
 
 ### Why VS Code has a fallback backup source
 
-Phase 2C `backup-apps.md` treats VS Code as an optional dedicated capture; some operators skip it because Settings Sync already covers extensions and settings. The workflow-snapshot capture (`workflow-snapshot/pre-image-workflow-snapshot-*/vscode/`) is a lighter fallback that always exists, so Step 6 and the plan-note both prefer the dedicated backup when present but degrade gracefully when it is not.
+Phase 2C `backup-apps.md` treats VS Code as an optional dedicated capture; some operators skip it because Settings Sync already covers extensions and settings. The toolkit-snapshot capture (`toolkit-snapshot/pre-image-toolkit-snapshot-*/vscode/`) is a lighter fallback that always exists, so Step 6 and the plan-note both prefer the dedicated backup when present but degrade gracefully when it is not.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]

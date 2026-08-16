@@ -939,13 +939,13 @@ STAMP="$(date +%Y%m%d-%H%M%S)"
 PUBLIC_CERTS_DIR="$REIMAGE_ARTIFACT_ROOT/public-certs"
 SECRETS_DIR="$REIMAGE_ARTIFACT_ROOT/secrets-encrypted"
 EXTRA_CERTS_REVIEW_DIR="$SECRETS_DIR/extra-secrets-certs-review"
-STAGED_CERTS_TEMPLATE_DIR="$REPO_ROOT/.internal/templates/staged-certs"
-STAGED_CERTS_WORKSPACE_DIR="${REIMAGE_WORKSPACE_ROOT:+$REIMAGE_WORKSPACE_ROOT/staged-certs}"
-
-if [[ -n "$STAGED_CERTS_WORKSPACE_DIR" && -d "$STAGED_CERTS_WORKSPACE_DIR" ]]; then
-  STAGED_CERTS_SOURCE_DIR="$STAGED_CERTS_WORKSPACE_DIR"
-else
-  STAGED_CERTS_SOURCE_DIR="$STAGED_CERTS_TEMPLATE_DIR"
+# STAGED_CERTS_TEMPLATE_DIR, STAGED_CERTS_WORKSPACE_DIR, and
+# STAGED_CERTS_SOURCE_DIR are resolved by .internal/artifact-config.sh. This
+# entrypoint is where the fallback actually costs something, so it is the one
+# that warns about it.
+if [[ "$STAGED_CERTS_SOURCE_DIR" == "$STAGED_CERTS_TEMPLATE_DIR" && -n "${STAGED_CERTS_WORKSPACE_DIR:-}" ]]; then
+  echo "WARNING: REIMAGE_WORKSPACE_ROOT is set but $STAGED_CERTS_WORKSPACE_DIR does not exist —" >&2
+  echo "         falling back to committed templates. Run: ./bin/stage-certs-keychain.sh init-staged-certs-config" >&2
 fi
 
 if [[ -z "$REIMAGE_ARTIFACT_ROOT" ]]; then

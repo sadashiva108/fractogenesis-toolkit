@@ -211,6 +211,26 @@ PATTERN_SOURCES_TSV="$DEST/gitignore-pattern-sources.tsv"
 PATTERN_SOURCES_REVIEW="$DEST/gitignore-pattern-sources-review.txt"
 CONCAT_TXT="$DEST/gitignore-concatenated-with-sources.txt"
 REVIEW_TEMPLATE="$REVIEW_DIR/gitignore-review-template.txt"
+
+# Operator-maintained files. Unlike every generated report above, these are
+# edited by hand and must survive reruns, so they are seeded from the committed
+# templates once and never overwritten. backup-repos.sh reads all three from
+# $DEST.
+OPERATOR_TEMPLATE_DIR="$(dirname "$SCRIPT_DIR")/templates/gitignore-superset"
+for _operator_file in \
+  backup-exclude-list.txt \
+  secrets-patterns.txt \
+  gitignore-review-template.direct-nonsecret-recommended.txt
+do
+  if [[ -f "$DEST/$_operator_file" ]]; then
+    echo "  kept existing  $_operator_file"
+  elif [[ -f "$OPERATOR_TEMPLATE_DIR/$_operator_file" ]]; then
+    cp -p "$OPERATOR_TEMPLATE_DIR/$_operator_file" "$DEST/$_operator_file"
+    echo "  seeded         $_operator_file"
+  else
+    echo "  WARNING: no template for $_operator_file at $OPERATOR_TEMPLATE_DIR" >&2
+  fi
+done
 SUMMARY_TXT="$DEST/summary.txt"
 
 tmp_sources="$(mktemp)"
@@ -540,6 +560,16 @@ if [[ "$PRESERVE_SELECTIONS" == "true" && -f "$REVIEW_TEMPLATE" ]]; then
   sed -n 's/^\[[xX]\] //p' "$REVIEW_TEMPLATE" > "$_checked_patterns"
 fi
 
+# Emit one review line, carrying a previous [x] forward when asked.
+_emit_review_line() {
+  local pattern="$1"
+  if [[ -n "$_checked_patterns" ]] && grep -Fxq -- "$pattern" "$_checked_patterns"; then
+    printf "[x] %s\n" "$pattern"
+  else
+    printf "[ ] %s\n" "$pattern"
+  fi
+}
+
 {
   echo "# Gitignore Superset Review Template"
   echo
@@ -555,12 +585,32 @@ fi
   fi
   echo
   while IFS= read -r pattern; do
-    if [[ -n "$_checked_patterns" ]] && grep -Fxq -- "$pattern" "$_checked_patterns"; then
-      printf "[x] %s\n" "$pattern"
-    else
-      printf "[ ] %s\n" "$pattern"
-    fi
+    case "$pattern" in
+      '!'*) continue ;;
+    esac
+    _emit_review_line "$pattern"
   done < "$PATTERNS_SUPERSET_TXT"
+
+  # Negations are listed separately, and last, because checking one is never the
+  # right answer and mixing them into the main list invites exactly that mistake.
+  if grep -q '^!' "$PATTERNS_SUPERSET_TXT"; then
+    echo
+    echo "# ── Negations — already tracked by Git ──────────────────────────────────"
+    echo "#"
+    echo "# A leading ! in a .gitignore is a re-include: these paths are NOT ignored,"
+    echo "# so Git already protects them and a clone restores them. This workflow"
+    echo "# preserves what Git does not protect, so leave every line below unchecked."
+    echo "#"
+    echo "# Checking one is a no-op: stage-selected-patterns.py skips negations"
+    echo "# rather than staging the tracked file. They are listed only so the"
+    echo "# superset stays a complete record of the patterns found."
+    echo
+    while IFS= read -r pattern; do
+      case "$pattern" in
+        '!'*) _emit_review_line "$pattern" ;;
+      esac
+    done < "$PATTERNS_SUPERSET_TXT"
+  fi
 } > "$REVIEW_TEMPLATE"
 
 if [[ -n "$_checked_patterns" ]]; then

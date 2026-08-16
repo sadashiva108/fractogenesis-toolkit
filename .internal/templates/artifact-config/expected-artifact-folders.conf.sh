@@ -21,5 +21,5 @@ EXPECTED_ARTIFACT_FOLDERS=(
   "staged-ignored-files"
   "system-inventory"
   "time-machine"
-  "workflow-snapshot"
+  "toolkit-snapshot"
 )

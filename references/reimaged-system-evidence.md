@@ -21,7 +21,7 @@ This file complements [[reimaging-guide|./restore-file-reference.md]] for restor
 - [[#Reimaged-System Artifact Layout|Reimaged-System Artifact Layout]]
 - [[#Phase 8 — Enroll and Stabilize|Phase 8 — Enroll and Stabilize]]
 - [[#Phase 9 — Initial Captures and Sanity Checks|Phase 9 — Initial Captures and Sanity Checks]]
-- [[#Phase 13A — Capture Workflow Snapshot|Phase 13A — Capture Workflow Snapshot]]
+- [[#Phase 13A — Capture Toolkit Snapshot|Phase 13A — Capture Toolkit Snapshot]]
 - [[#Phase 13B — Post-Image System Inventory Capture|Phase 13B — Post-Image System Inventory Capture]]
 - [[#Phase 13C — Post-Image Company-Managed Inventory Capture|Phase 13C — Post-Image Company-Managed Inventory Capture]]
 - [[#Phase 13D — Post-Image Performance Audit Capture|Phase 13D — Post-Image Performance Audit Capture]]
@@ -69,7 +69,7 @@ Do not manually duplicate the final validation report when reimage-checklist.sh 
 |---|---|---|---|
 | Phase 8 | Enrollment and stabilization | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/enrollment/record-enrollment-*` | Managed enrollment, profiles, security tools, macOS update state, and first stabilization review. |
 | Phase 9 | Initial captures and sanity checks | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/initial-reimaged-system-*` | First post-image evidence bundle before deeper restore work, including restart and Time Machine planning notes. |
-| Phase 13A | Workflow snapshot | `$REIMAGE_ARTIFACT_ROOT/workflow-snapshot/pre-image-workflow-snapshot-*`, `$REIMAGE_ARTIFACT_ROOT/workflow-snapshot/reimage-workflow-docs/` | Final workflow-doc snapshot showing the workflow state actually used after rebuild. |
+| Phase 13A | Toolkit snapshot | `$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/pre-image-toolkit-snapshot-*`, `$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/latest-docs/` | Final workflow-doc snapshot showing the workflow state actually used after rebuild. |
 | Phase 13B | System inventory | `$REIMAGE_ARTIFACT_ROOT/system-inventory/post-image-*` | Broad rebuilt-system snapshot for comparison against Phase 4B. |
 | Phase 13C | Company-managed inventory | `$REIMAGE_ARTIFACT_ROOT/managed-inventory/post-image-*` | Managed apps, profiles, launch items, extensions, receipts, and managed preferences after enrollment. |
 | Phase 13D | Performance audit | `$REIMAGE_ARTIFACT_ROOT/performance-audit/post-image-*` | Scenario-based after-state performance bundles that match the pre-image scenarios. |
@@ -102,9 +102,9 @@ $REIMAGE_ARTIFACT_ROOT/
 │   ├── post-reimage-office-baseline-YYYYMMDD-HHMMSS/
 │   └── checklists/
 │       └── post-image-office-stability-checklist-YYYYMMDD-HHMMSS/
-├── workflow-snapshot/
-│   ├── pre-image-workflow-snapshot-YYYYMMDD-HHMMSS/
-│   └── reimage-workflow-docs/
+├── toolkit-snapshot/
+│   ├── pre-image-toolkit-snapshot-YYYYMMDD-HHMMSS/
+│   └── latest-docs/
 ├── system-inventory/
 │   └── post-image-YYYYMMDD-HHMMSS/
 ├── managed-inventory/
@@ -221,31 +221,31 @@ Manual / fallback notes:
 
 ---
 
-## Phase 13A — Capture Workflow Snapshot
+## Phase 13A — Capture Toolkit Snapshot
 
-Workflow: [[reimaging-guide#Phase 13A — Capture Workflow Snapshot|reimaging-guide.md — Phase 13A]].
+Workflow: [[reimaging-guide#Phase 13A — Capture Toolkit Snapshot|reimaging-guide.md — Phase 13A]].
 
-Detailed capture runbook: [capture-workflow-snapshot.md](../capture-workflow-snapshot.md)
+Detailed capture runbook: [capture-toolkit-snapshot.md](../capture-toolkit-snapshot.md)
 
 Script-generated evidence:
 
 ```bash
 cd "$REIMAGE_ROOT"
-chmod +x scripts/capture-workflow-snapshot.sh
+chmod +x scripts/capture-toolkit-snapshot.sh
 
-./scripts/capture-workflow-snapshot.sh   --backup-root "$BACKUP_ROOT"   --open
+./scripts/capture-toolkit-snapshot.sh   --backup-root "$BACKUP_ROOT"   --open
 ```
 
 Destinations:
 
 ```text
-$BACKUP_ROOT/workflow-snapshot/pre-image-workflow-snapshot-YYYYMMDD-HHMMSS/
-$BACKUP_ROOT/workflow-snapshot/reimage-workflow-docs/
+$BACKUP_ROOT/toolkit-snapshot/pre-image-toolkit-snapshot-YYYYMMDD-HHMMSS/
+$BACKUP_ROOT/toolkit-snapshot/latest-docs/
 ```
 
 Manual / fallback notes:
 
-- Phase 13A uses the same current destination family as the workflow snapshot runbook: a fresh timestamped `pre-image-workflow-snapshot-*` bundle plus a refreshed `reimage-workflow-docs/` copy.
+- Phase 13A uses the same current destination family as the toolkit snapshot runbook: a fresh timestamped `pre-image-toolkit-snapshot-*` bundle plus a refreshed `docs/` copy.
 - Use this phase when you want the final workflow-doc state that actually reflects the rebuilt system and any runbook refinements made during restore.
 - Manual notes are rarely needed unless you want to explain why the post-image workflow-doc snapshot differs from the pre-image one.
 

@@ -31,6 +31,7 @@
 set -euo pipefail
 
 : "${EXTERNAL_DATA_VOLUME:?Set EXTERNAL_DATA_VOLUME first -- see Choose/Confirm External Data Volume steps}"
+: "${REIMAGE_WORKSPACE_ROOT:?Set REIMAGE_WORKSPACE_ROOT first -- the workspace holds artifact-config and staged-certs fragments, and a wrong value silently falls back to the repo templates}"
 EXTERNAL_APPLE_BACKUPS_VOLUME="${EXTERNAL_APPLE_BACKUPS_VOLUME:-}"
 
 if [[ ! -f reimage.env.example ]]; then
@@ -55,6 +56,7 @@ python3 bin/prepare-artifact-root.py \
   --asset-or-host "${ASSET_OR_HOST:-}" \
   --reimage-start-date "${REIMAGE_START_DATE:-}" \
   --onedrive-folder-name "${ONEDRIVE_FOLDER_NAME:-}" \
+  --onedrive-parent-dir "${ONEDRIVE_PARENT_DIR:-}" \
   --workspace-root "${REIMAGE_WORKSPACE_ROOT:-}" \
   --performance-history-source "${PERFORMANCE_HISTORY_SOURCE:-}"
 

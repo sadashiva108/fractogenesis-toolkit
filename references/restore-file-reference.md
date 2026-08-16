@@ -158,11 +158,11 @@ $REIMAGE_ARTIFACT_ROOT/
 ├── system-inventory/
 │   ├── pre-image-YYYYMMDD-HHMMSS/
 │   └── post-image-YYYYMMDD-HHMMSS/
-├── workflow-snapshot/
-│   ├── latest-pre-image-workflow-snapshot -> pre-image-workflow-snapshot-YYYYMMDD-HHMMSS/
-│   ├── latest-pre-image-workflow-snapshot.txt
-│   ├── pre-image-workflow-snapshot-YYYYMMDD-HHMMSS/
-│   └── reimage-workflow-docs/
+├── toolkit-snapshot/
+│   ├── latest-pre-image-toolkit-snapshot -> pre-image-toolkit-snapshot-YYYYMMDD-HHMMSS/
+│   ├── latest-pre-image-toolkit-snapshot.txt
+│   ├── pre-image-toolkit-snapshot-YYYYMMDD-HHMMSS/
+│   └── latest-docs/
 └── public-certs/
 ```
 
@@ -180,10 +180,10 @@ Not every restore uses every category. Treat this as the full restore/capture ma
 | Phase 9 — Initial Captures and Sanity Checks | prepared external root, optional `reimaged-system/restore-notes/` | `reimaged-system/initial-reimaged-system-*/`, `reimaged-system/latest-initial-reimaged-system-bundle.txt`, `reimaged-system/restore-notes/`, `reimaged-system/restarts/`, `reimaged-system/time-machine/` |
 | Phase 10A — Restore Runtime Libraries | `system-inventory/pre-image-*/`, `system-inventory/post-image-*/`, `home-files-backup/dotfiles/` | usually notes only; later validated under `reimaged-system/` |
 | Phase 10B — Restore Access | `secrets-encrypted/`, `public-certs/`, `home-files-backup/dotfiles/` | `reimaged-system/restore-notes/` |
-| Phase 11A — Restore Git | `secrets-encrypted/ssh/`, `secrets-encrypted/git/`, `workflow-snapshot/reimage-workflow-docs/` | dual `~/.gitconfig` + `~/.ssh/config` in place; validated end-to-end for work and personal identities |
+| Phase 11A — Restore Git | `secrets-encrypted/ssh/`, `secrets-encrypted/git/`, `toolkit-snapshot/latest-docs/` | dual `~/.gitconfig` + `~/.ssh/config` in place; validated end-to-end for work and personal identities |
 | Phase 11B — Restore Repositories | `repo-audit-reports/runs/pre-image-*/repos.tsv`, `repo-audit-reports/staged-ignored-files/live/<label>/` | `repo-audit-reports/runs/post-image-restore-*/`, `repo-audit-reports/latest-post-image-restore.txt`, working repo checkouts |
 | Phase 12 — Restore Apps | `app-settings-backup/`, `secrets-encrypted/`, `reimaged-system/restore-notes/` | app-specific notes and later validation evidence |
-| Phase 13 — Post-Image Captures | matching Phase 4 capture outputs for comparison | `workflow-snapshot/reimage-workflow-docs/`, `workflow-snapshot/pre-image-workflow-snapshot-*/`, `workflow-snapshot/latest-pre-image-workflow-snapshot.txt`, `system-inventory/post-image-*/`, `managed-inventory/post-image-*/`, `performance-audit/post-image-performance-audit-*/`, `office-stability/post-reimage-*/` |
+| Phase 13 — Post-Image Captures | matching Phase 4 capture outputs for comparison | `toolkit-snapshot/latest-docs/`, `toolkit-snapshot/pre-image-toolkit-snapshot-*/`, `toolkit-snapshot/latest-pre-image-toolkit-snapshot.txt`, `system-inventory/post-image-*/`, `managed-inventory/post-image-*/`, `performance-audit/post-image-performance-audit-*/`, `office-stability/post-reimage-*/` |
 | Phase 14 — Reimaged System Checks | everything needed for final validation context | `reimaged-system/checklists/reimage-checklist-*.md`, `reimaged-system/checklists/latest-reimage-checklist.txt`, optional manual follow-up in `reimaged-system/restore-notes/` |
 | Phase 15 — Restore Home | `home-files-backup/home/`, `home-files-backup/dotfiles/`, optionally `staged-ignored-files/live/` | optional final notes under `reimaged-system/restore-notes/` |
 
@@ -248,7 +248,7 @@ Use these during [[restore-git|restore-git.md]] and later repository reconstruct
 | `gitignore-superset/` | Context for what was intentionally excluded or handled separately |
 | `secrets-encrypted/ssh/` | Work/personal SSH keys and config inputs |
 | `secrets-encrypted/git/` | Private Git config or credential-bearing Git material |
-| `workflow-snapshot/reimage-workflow-docs/` | Fallback copy of the workflow docs so `fractogenesis-toolkit` can be restored first |
+| `toolkit-snapshot/latest-docs/` | Fallback copy of the workflow docs so `fractogenesis-toolkit` can be restored first |
 
 Restore `fractogenesis-toolkit` early so the active runbooks are available locally for the remaining phases.
 
@@ -297,7 +297,7 @@ These are the Phase 13 comparison outputs created after the rebuilt Mac is subst
 
 | Capture | Destination |
 |---|---|
-| Workflow snapshot | `workflow-snapshot/reimage-workflow-docs/`, `workflow-snapshot/pre-image-workflow-snapshot-YYYYMMDD-HHMMSS/`, and `workflow-snapshot/latest-pre-image-workflow-snapshot.txt` |
+| Toolkit snapshot | `toolkit-snapshot/latest-docs/`, `toolkit-snapshot/pre-image-toolkit-snapshot-YYYYMMDD-HHMMSS/`, and `toolkit-snapshot/latest-pre-image-toolkit-snapshot.txt` |
 | System inventory | `system-inventory/post-image-YYYYMMDD-HHMMSS/` |
 | Company-managed inventory | `managed-inventory/post-image-YYYYMMDD-HHMMSS/` |
 | Performance audit | `performance-audit/post-image-performance-audit-<scenario>-YYYYMMDD-HHMMSS/` |

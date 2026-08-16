@@ -136,12 +136,16 @@ def normalize_template_pattern(raw: str) -> str:
     if not p or p.startswith("#"):
         return ""
 
-    # A checked gitignore negation means "include files matching the unignored pattern".
-    if p.startswith("!"):
-        p = p[1:].strip()
-
+    # An escaped \! is a literal filename beginning with "!", not a negation.
     if p.startswith(r"\!"):
         p = "!" + p[2:]
+    elif p.startswith("!"):
+        # A leading ! in a .gitignore is a re-include: the path is NOT ignored, so
+        # Git already tracks it and a clone restores it. This workflow preserves
+        # what Git does not protect, so staging a second copy adds nothing.
+        # Skipping (rather than stripping the ! and staging the tracked file)
+        # matches scan-gitignored-candidates.py and makes a mis-check a no-op.
+        return ""
 
     if p.startswith("./"):
         p = p[2:]

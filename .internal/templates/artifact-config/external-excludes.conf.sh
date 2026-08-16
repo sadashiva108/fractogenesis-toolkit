@@ -10,7 +10,7 @@ EXTERNAL_EXCLUDES=(
   ".localized"
 
   # -- Office lock/temp files --------------------------------------------------
-  "~$*"
+  "~\$*"
 
   # -- Dev artifacts safe to skip ----------------------------------------------
   "DockerDesktop/"              # Docker.raw virtual disk — rebuild from registries
@@ -23,7 +23,7 @@ EXTERNAL_EXCLUDES=(
   "\$RECYCLE.BIN/"
 
   # -- Tool caches (large, regenerated) ----------------------------------------
-  "github-copilot/"             # Inside ~/.config — 54 MB cache
+  "github-copilot/"             # Inside ~/.config — regenerated cache
 
   # -- Azure noise -------------------------------------------------------------
   "logs/"

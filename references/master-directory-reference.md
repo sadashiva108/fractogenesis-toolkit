@@ -18,7 +18,7 @@ It combines the currently documented backup, capture, validation, and post-image
 - `capture-office-stability.md`
 - `capture-performance-audit.md`
 - `capture-system-inventory.md`
-- `capture-workflow-snapshot.md`
+- `capture-toolkit-snapshot.md`
 - `enroll-and-stabilize.md`
 - `prepare-artifact-root.md`
 - `reimage-prep-evidence.md`
@@ -37,9 +37,64 @@ Use this file when you want one place to see the intended artifact layout withou
 
 ## Table of Contents
 
+- [[#Where Files Are Read From|Where Files Are Read From]]
 - [[#Master Root Layout|Master Root Layout]]
 - [[#Collapsible Directory Sections|Collapsible Directory Sections]]
 - [[#License Keys and Activation Material|License Keys and Activation Material]]
+
+---
+
+## Where Files Are Read From
+
+Some files exist in both `$REIMAGE_WORKSPACE_ROOT` and `$REIMAGE_ARTIFACT_ROOT`.
+Which copy a script actually reads is not arbitrary — it follows from when the
+file has to be readable and who owns its content. There are three categories.
+
+**Machine-customized config — read from the workspace, never written to the
+artifact root.**
+
+| Directory | Template shipped at | Read from | Seeded by |
+|---|---|---|---|
+| `artifact-config/` | `.internal/templates/artifact-config/` | `$REIMAGE_WORKSPACE_ROOT/artifact-config/` | `prepare-artifact-root.py init-artifact-config` |
+| `staged-certs/` | `.internal/templates/staged-certs/` | `$REIMAGE_WORKSPACE_ROOT/staged-certs/` | `stage-certs-keychain.sh init-staged-certs-config` |
+
+These ship as generic templates with example paths, get copied into the workspace
+once, and are edited for this Mac. They cannot live on the artifact root because
+they are read *before it exists* — `EXPECTED_ARTIFACT_FOLDERS` is what Phase 1
+uses to create it. Both resolvers prefer the workspace copy and fall back to the
+committed templates, and both warn when `REIMAGE_WORKSPACE_ROOT` is set but the
+directory is missing, because a silent fallback means running against generic
+example targets.
+
+**Per-run generated files — written to and read from the artifact root.**
+
+`gitignore-superset/` is the current example. `backup-repos.sh` resolves all of
+its inputs from `$REIMAGE_ARTIFACT_ROOT/gitignore-superset/`. Three of those files
+are operator-maintained rather than regenerated — `backup-exclude-list.txt`,
+`secrets-patterns.txt`, and `gitignore-review-template.direct-nonsecret-recommended.txt`
+— so the audit run seeds them from `.internal/templates/gitignore-superset/` on
+first use and never overwrites them afterwards.
+
+Workspace copies of these files are a **manual stash**, moved only by the `cp -p`
+pairs in the runbook, so decisions survive a new artifact root. Nothing reads them
+directly. Restore a stashed copy *before* the audit run and pass
+`--preserve-selections`; restoring afterwards overwrites freshly generated content.
+
+**Pre-root staging — workspace until the artifact root exists, then promoted.**
+
+The filled IT confirmation is written to `$REIMAGE_WORKSPACE_ROOT/reimage-confirmation/`
+and copied into the artifact root by Phase 1. Long-running performance and Office
+evidence stages locally the same way. `record-enrollment.sh` falls back to
+`$REIMAGE_WORKSPACE_ROOT/enrollment/` when the drive is not mounted. In every case
+the workspace is authoritative only until the artifact root is available; after
+that the artifact root is.
+
+**Adding a new file?** Ask when it must first be readable. Before the artifact root
+exists, or hand-edited per machine → category one. Produced by a run and belonging
+with that run's evidence → category two. Staged early and promoted once → category
+three.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
 
 ---
 
@@ -72,7 +127,7 @@ $REIMAGE_ARTIFACT_ROOT/
 ├── staged-ignored-files/
 ├── system-inventory/
 ├── time-machine/
-└── workflow-snapshot/
+└── toolkit-snapshot/
 ```
 
 Not every run creates every folder immediately. Some folders are phase-specific, optional, or only appear when a related script or manual step is used.
@@ -598,16 +653,16 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 > bin/capture-time-machine.sh  read-only captures: pre-run bundle, verify-volume, final checklist
 > ```
 
-> [!example]- `$REIMAGE_ARTIFACT_ROOT/workflow-snapshot/`
+> [!example]- `$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/`
 > ```text
-> $REIMAGE_ARTIFACT_ROOT/workflow-snapshot/
+> $REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/
 > ├── README.md
-> ├── reimage-workflow-docs/
+> ├── latest-docs/
 > │   ├── *.md
 > │   └── templates/
-> ├── latest-pre-image-workflow-snapshot.txt
-> ├── latest-pre-image-workflow-snapshot -> pre-image-workflow-snapshot-YYYYMMDD-HHMMSS
-> └── pre-image-workflow-snapshot-YYYYMMDD-HHMMSS/
+> ├── latest-pre-image-toolkit-snapshot.txt
+> ├── latest-pre-image-toolkit-snapshot -> pre-image-toolkit-snapshot-YYYYMMDD-HHMMSS
+> └── pre-image-toolkit-snapshot-YYYYMMDD-HHMMSS/
 >     ├── README.md
 >     └── logs/
 >         └── latest-aliases.txt

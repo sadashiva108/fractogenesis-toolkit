@@ -19,7 +19,7 @@ The phase order lives in [[reimaging-guide|reimaging-guide.md]]. The detailed co
 - [[#When This File Is Not Necessary|When This File Is Not Necessary]]
 - [[#How the Pre-Image Captures Are Organized|How the Pre-Image Captures Are Organized]]
 - [[#External Backup and Capture Root Layout|External Backup and Capture Root Layout]]
-- [[#Phase 4A — Capture Workflow Snapshot|Phase 4A — Capture Workflow Snapshot]]
+- [[#Phase 4A — Capture Toolkit Snapshot|Phase 4A — Capture Toolkit Snapshot]]
 - [[#Phase 4B — Pre-Image System Inventory Capture|Phase 4B — Pre-Image System Inventory Capture]]
 - [[#Phase 2C — Pre-Image Company-Managed Inventory Capture|Phase 2C — Pre-Image Company-Managed Inventory Capture]]
 - [[#Phase 4C — Pre-Image Performance Audit Capture|Phase 4C — Pre-Image Performance Audit Capture]]
@@ -66,7 +66,7 @@ Do not manually recreate the Phase 6 checklist when reimage-checklist.sh already
 
 | Phase | Capture | Primary destination | Purpose |
 |---|---|---|---|
-| Phase 4A | Workflow snapshot | `$REIMAGE_ARTIFACT_ROOT/workflow-snapshot/pre-image-workflow-snapshot-*`, `$REIMAGE_ARTIFACT_ROOT/workflow-snapshot/reimage-workflow-docs/` | Current reimage workflow docs and lightweight workflow snapshot context that should travel with the capture set. |
+| Phase 4A | Toolkit snapshot | `$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/pre-image-toolkit-snapshot-*`, `$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/latest-docs/` | Current reimage workflow docs and lightweight toolkit snapshot context that should travel with the capture set. |
 | Phase 4B | System inventory | `$REIMAGE_ARTIFACT_ROOT/system-inventory/pre-image-*` | Broad workstation rebuild context: hardware, macOS, apps, toolchains, shell, Git, network, cloud, and certificates. |
 | Phase 2C | Company-managed inventory | `$REIMAGE_ARTIFACT_ROOT/managed-inventory/pre-image-*` | Managed apps, profiles, background services, system extensions, package receipts, and managed preferences. |
 | Phase 4C | Performance audit | `$REIMAGE_ARTIFACT_ROOT/performance-audit/pre-image-*` | Scenario-based performance baselines and optional historical trend summaries/charts. |
@@ -119,9 +119,9 @@ $REIMAGE_ARTIFACT_ROOT/
 ├── reimage-prep-checks/
 │   ├── reimage-checklist-YYYYMMDD-HHMMSS.md
 │   └── latest-reimage-checklist.txt
-├── workflow-snapshot/
-│   ├── pre-image-workflow-snapshot-YYYYMMDD-HHMMSS/
-│   └── reimage-workflow-docs/
+├── toolkit-snapshot/
+│   ├── pre-image-toolkit-snapshot-YYYYMMDD-HHMMSS/
+│   └── latest-docs/
 ├── system-inventory/
 │   ├── pre-image-YYYYMMDD-HHMMSS/
 │   └── post-image-YYYYMMDD-HHMMSS/
@@ -134,40 +134,40 @@ $REIMAGE_ARTIFACT_ROOT/
 
 ---
 
-## Phase 4A — Capture Workflow Snapshot
+## Phase 4A — Capture Toolkit Snapshot
 
-Workflow: [[reimaging-guide#Phase 4A — Capture Workflow Snapshot|reimaging-guide.md — Phase 4A]].
+Workflow: [[reimaging-guide#Phase 4A — Capture Toolkit Snapshot|reimaging-guide.md — Phase 4A]].
 
-Detailed capture runbook: [capture-workflow-snapshot.md](../capture-workflow-snapshot.md)
+Detailed capture runbook: [capture-toolkit-snapshot.md](../capture-toolkit-snapshot.md)
 
 Script-generated evidence:
 
 ```bash
 cd "$REIMAGE_ROOT"
-chmod +x scripts/capture-workflow-snapshot.sh
+chmod +x scripts/capture-toolkit-snapshot.sh
 
-./scripts/capture-workflow-snapshot.sh   --backup-root "$BACKUP_ROOT"   --open
+./scripts/capture-toolkit-snapshot.sh   --backup-root "$BACKUP_ROOT"   --open
 ```
 
 Destinations:
 
 ```text
-$BACKUP_ROOT/workflow-snapshot/pre-image-workflow-snapshot-YYYYMMDD-HHMMSS/
-$BACKUP_ROOT/workflow-snapshot/reimage-workflow-docs/
+$BACKUP_ROOT/toolkit-snapshot/pre-image-toolkit-snapshot-YYYYMMDD-HHMMSS/
+$BACKUP_ROOT/toolkit-snapshot/latest-docs/
 ```
 
 Typical contents:
 
 | Category | Typical files or folders |
 |---|---|
-| Workflow snapshot bundle | `README.md`, `logs/`, and workflow-snapshot reference files |
-| Workflow documentation copy | `reimage-workflow-docs/` |
+| Toolkit snapshot bundle | `README.md`, `logs/`, and toolkit-snapshot reference files |
+| Workflow documentation copy | `docs/` |
 
 Manual / fallback notes:
 
 - This capture is normally script-complete; manual notes are rarely needed.
-- If the runbooks changed after the main capture, rerun the doc-copy step from `capture-workflow-snapshot.md` so `reimage-workflow-docs/` matches the workflow you actually used.
-- Use the timestamped `pre-image-workflow-snapshot-*` folder as the source of truth for the automated capture.
+- If the runbooks changed after the main capture, rerun the doc-copy step from `capture-toolkit-snapshot.md` so `docs/` matches the workflow you actually used.
+- Use the timestamped `pre-image-toolkit-snapshot-*` folder as the source of truth for the automated capture.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
