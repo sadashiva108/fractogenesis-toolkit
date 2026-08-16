@@ -4,8 +4,6 @@
 
 **Last updated:** 2026-08-13
 
-> **Migration note:** this guide describes the full pre-split script layout and is only *partially* updated. Confirmed migrated into `fractogenesis-toolkit` so far: `prepare-artifact-root.py`/`.md`, `.internal/artifact-config.sh` (renamed from `artifact-config.sh`), `bin/reimage-checklist.sh`, `.internal/load-reimage-config-snippet.sh`, and `reimage-prep-checks.md` (renamed from `capture-validated-reimage-prep.md`) — these have updated paths, names, and the `$REIMAGE_ARTIFACT_ROOT`/`REIMAGE_ROOT`-retirement changes applied and cross-checked against the real migrated files. Every other script referenced below (`backup-apps.sh`, `backup-repos.sh`, the `capture-*.sh`/`restore-*.sh` family, etc.) still reflects the **old** `scripts/`-prefixed, `--backup-root`-flagged reference-vault layout, since those haven't been migrated yet — don't assume their paths or flag names below are current until they get their own migration pass.
-
 Use this as the script index for the Mac reimage workflow. The Markdown runbooks explain the workflow; this guide maps each phase to the scripts that generate backups, evidence captures, and validation checklists.
 
 ---
@@ -107,12 +105,12 @@ export ONEDRIVE_DEST_SUBDIR="reimage-<asset-or-host>-<start-date>-open"
 | Phase 2D detail | IntelliJ companion flow | `backup-intellij.md` | `backup-apps.sh` (public IntelliJ path), `helpers/apps/backup-intellij-scratches-consoles.sh` (internal helper) | `$REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/` |
 | Phase 3A | Certificate and Keychain staging | `stage-certs-keychain.md` | `stage-certs-keychain.sh` | `$REIMAGE_ARTIFACT_ROOT/public-certs/`, `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/certs/`, `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/extra-secrets-certs-review/` |
 | Phase 3B | Encrypted secrets backup | `backup-dmg-secrets.md` | `create-secrets-dmg.sh` | `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/all-secrets-*.dmg` |
-| Phase 5 | Time Machine backup/status | `backup-time-machine.md` | `backup-time-machine.sh`, `capture-time-machine.sh` | `/Volumes/AppleBackups`, `$REIMAGE_ARTIFACT_ROOT/time-machine/`, `final-time-machine-checklist-*.md` |
+| Phase 5 | Time Machine backup/status | `run-time-machine.md` | `run-time-machine.sh`, `capture-time-machine.sh` | `/Volumes/AppleBackups`, `$REIMAGE_ARTIFACT_ROOT/time-machine/`, `final-time-machine-checklist-*.md` |
 | Phase 4A | Workflow snapshot capture | `capture-workflow-snapshot.md` | `capture-workflow-snapshot.sh` | `$REIMAGE_ARTIFACT_ROOT/workflow-snapshot/pre-image-workflow-snapshot-*/`, `$REIMAGE_ARTIFACT_ROOT/workflow-snapshot/reimage-workflow-docs/` |
 | Phase 4B | Pre-image system inventory evidence | `reimaging-guide.md` (Phase 4) | `capture-system-inventory.sh` | `$REIMAGE_ARTIFACT_ROOT/system-inventory/` |
 | Phase 2C | Pre-image company-managed inventory evidence | `reimaging-guide.md` (Phase 4), `capture-managed-inventory.md` | `capture-managed-inventory.sh` | `$REIMAGE_ARTIFACT_ROOT/managed-inventory/` |
 | Phase 4C | Pre-image performance evidence | `reimaging-guide.md` (Phase 4), `capture-performance-audit.md` | `capture-performance-audit.sh` | `$REIMAGE_ARTIFACT_ROOT/performance-audit/pre-image-*` |
-| Phase 4D | Pre-image Office stability evidence | `reimaging-guide.md` (Phase 4), `capture-office-stability-audit.md` | `watch-office-today.sh`, `capture-workload-snapshot.sh`, `capture-office-stability-baseline.sh`, `office-stability-checklist.sh --phase pre-reimage` | `$REIMAGE_ARTIFACT_ROOT/office-stability/`, `$REIMAGE_ARTIFACT_ROOT/office-stability/checklists/` |
+| Phase 4D | Pre-image Office stability evidence | `reimaging-guide.md` (Phase 4), `capture-office-stability.md` | `watch-office-today.sh `, `capture-workload-snapshot.sh`, `capture-office-stability-baseline.sh`, `office-stability-checklist.sh --phase pre-reimage` | `$REIMAGE_ARTIFACT_ROOT/office-stability/`, `$REIMAGE_ARTIFACT_ROOT/office-stability/checklists/` |
 | Phase 6A | Guide access validation (curl/jump drive) | `reimaging-guide.md`, `reimage-guide-access.md` | `bootstrap.sh`, `bin/build-jump-drive-payload.sh` | throwaway test installs only -- no `$REIMAGE_ARTIFACT_ROOT` output |
 | Phase 6B | Final pre-image validation | `reimaging-guide.md`, `reimage-prep-checks.md` | `bin/reimage-checklist.sh --phase pre --artifact-root ...` | `$REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/` |
 | Phase 8 | Enrollment/stabilization record | `enroll-and-stabilize.md` | `record-enrollment.sh` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/enrollment/*` when mounted, otherwise `$REIMAGE_WORKSPACE_ROOT/enrollment/*` or `~/Desktop/reimaged-system-artifacts/enrollment/*` |
@@ -124,7 +122,7 @@ export ONEDRIVE_DEST_SUBDIR="reimage-<asset-or-host>-<start-date>-open"
 | Phase 13 | Post-image system inventory evidence | `capture-system-inventory.md` | `capture-system-inventory.sh` | `$REIMAGE_ARTIFACT_ROOT/system-inventory/post-image-*` |
 | Phase 13 | Post-image company-managed inventory evidence | `capture-managed-inventory.md` | `capture-managed-inventory.sh --phase post-image` | `$REIMAGE_ARTIFACT_ROOT/managed-inventory/post-image-*` |
 | Phase 13 | Post-image performance evidence | `capture-performance-audit.md` | `capture-performance-audit.sh` | `$REIMAGE_ARTIFACT_ROOT/performance-audit/post-image-*` |
-| Phase 13 | Post-image Office stability evidence | `capture-office-stability-audit.md` | `capture-office-stability-baseline.sh`, `office-stability-checklist.sh --phase post-reimage` | `$REIMAGE_ARTIFACT_ROOT/office-stability/post-reimage-*`, `$REIMAGE_ARTIFACT_ROOT/office-stability/checklists/` |
+| Phase 13 | Post-image Office stability evidence | `capture-office-stability.md` | `capture-office-stability-baseline.sh`, `office-stability-checklist.sh --phase post-reimage` | `$REIMAGE_ARTIFACT_ROOT/office-stability/post-reimage-*`, `$REIMAGE_ARTIFACT_ROOT/office-stability/checklists/` |
 | Phase 14 | Final post-image validation | `reimaged-system-checks.md` | `bin/reimage-checklist.sh --phase post` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/checklists/` |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -138,50 +136,52 @@ Current preferred script layout:
 ```text
 <repo-root>/
 ├── <repo-root>/
-│   ├── .internal/
-│   │   ├── artifact-config.sh
-│   │   ├── git/
-│   │   │   ├── stage-ignored-files.sh
-│   │   │   ├── stage-selected-patterns.py
-│   │   │   ├── capture-repo-audit.sh
-│   │   │   └── collect-gitignore-superset.sh
-│   │   └── load-reimage-config.sh
-│   ├── bin/
-│   │   ├── backup-apps.sh
-│   │   ├── backup-repos.sh
-│   │   ├── backup-home.sh
-│   │   ├── backup-docker-settings.sh
-│   │   ├── backup-intellij-scratches-consoles.sh
-│   │   ├── reimage-checklist.sh
-│   │   └── capture-size-audit.sh
-│   ├── workflows/
-│   │   └── mac/
-│   │       └── reimage/
-│   │           └── scripts/
-│   │               ├── capture-office-stability-baseline.sh
-│   │               ├── capture-workflow-snapshot.sh
-│   │               ├── backup-time-machine.sh
-│   │               ├── capture-time-machine.sh
-│   │               ├── capture-performance-audit.sh
-│   │               ├── capture-system-inventory.sh
-│   │               ├── capture-workload-snapshot.sh
-│   │               ├── prepare-artifact-root.py
-│   │               ├── office-stability-checklist.sh
-│   │               ├── record-reimaged-system.sh
-│   │               ├── record-enrollment.sh
-│   │               ├── restore-apps.sh
-│   │               ├── restore-docker.sh
-│   │               ├── restore-intellij.sh
-│   │               ├── restore-repos.sh
-│   │               ├── watch-office-today.sh
-│   │               └── helpers/
-│   │                   ├── apps/
-│   │                   └── git/
-│   └── reimaging-scripts-guide.md
+│   ├── <repo-root>/
+│   │   ├── .internal/
+│   │   │   ├── artifact-config.sh
+│   │   │   ├── git/
+│   │   │   │   ├── stage-ignored-files.sh
+│   │   │   │   ├── stage-selected-patterns.py
+│   │   │   │   ├── capture-repo-audit.sh
+│   │   │   │   └── collect-gitignore-superset.sh
+│   │   │   └── load-reimage-config.sh
+│   │   ├── bin/
+│   │   │   ├── backup-apps.sh
+│   │   │   ├── backup-repos.sh
+│   │   │   ├── backup-home.sh
+│   │   │   ├── backup-docker-settings.sh
+│   │   │   ├── backup-intellij-scratches-consoles.sh
+│   │   │   ├── reimage-checklist.sh
+│   │   │   └── capture-size-audit.sh
+│   │   ├── workflows/
+│   │   │   └── mac/
+│   │   │       └── reimage/
+│   │   │           └── scripts/
+│   │   │               ├── capture-office-stability-baseline.sh
+│   │   │               ├── prepare-artifact-root.py
+│   │   │               ├── record-reimaged-system.sh
+│   │   │               ├── record-enrollment.sh
+│   │   │               ├── restore-repos.sh
+│   │   │               └── helpers/
+│   │   │                   ├── apps/
+│   │   │                   └── git/
+│   │   └── reimaging-scripts-guide.md
+│   └── bin/
+│       ├── capture-managed-inventory.sh
+│       ├── create-secrets-dmg.sh
+│       └── stage-certs-keychain.sh
 └── bin/
-    ├── capture-managed-inventory.sh
-    ├── create-secrets-dmg.sh
-    └── stage-certs-keychain.sh
+    ├── capture-workflow-snapshot.sh
+    ├── run-time-machine.sh
+    ├── capture-time-machine.sh
+    ├── capture-performance-audit.sh
+    ├── capture-system-inventory.sh
+    ├── capture-workload-snapshot.sh
+    ├── office-stability-checklist.sh
+    ├── restore-apps.sh
+    ├── restore-docker.sh
+    ├── restore-intellij.sh
+    └── watch-office-today.sh 
 ```
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -395,7 +395,7 @@ $REIMAGE_ARTIFACT_ROOT/time-machine/final-time-machine-checklist-YYYYMMDD-HHMMSS
 
 The final checklist auto-fills Time Machine completion, targeted latest backup visibility, selected external data-volume exclusion, pre-run bundle presence, completion evidence presence, optional destination-volume verification, and optional targeted checksum evidence when present. It leaves human-only rows such as UI spot-check and final evidence review as `TODO`.
 
-Use `backup-time-machine.sh` only for runtime Time Machine operations:
+Use `run-time-machine.sh` only for runtime Time Machine operations:
 
 ```bash
 ./scripts/backup-time-machine.sh start
@@ -596,7 +596,7 @@ Post-image Office comparison, or symptom recurrence:
   --backup-root "$REIMAGE_ARTIFACT_ROOT"
 ```
 
-Office stability details belong in `capture-office-stability-audit.md`.
+Office stability details belong in `capture-office-stability.md`.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 

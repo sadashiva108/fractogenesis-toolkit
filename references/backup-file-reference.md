@@ -45,13 +45,13 @@ Single source of truth for the phase guides used across the pre-image stage (Pha
 | `backup-intellij.md` | Pre-image IntelliJ Scratches, Consoles, IDE settings, plugins, run configs, and project metadata backup. |
 | `stage-certs-keychain.md` | Certificate and Keychain review, export, and staging workflow before DMG encryption. |
 | `backup-dmg-secrets.md` | Consolidated encrypted secrets DMG staging, validation, cleanup, and restore notes. |
-| `backup-time-machine.md` | Time Machine setup, status capture, monitoring, and pre-reimage completion checks. |
+| `run-time-machine.md` | Time Machine setup, status capture, monitoring, and pre-reimage completion checks. |
 | `reimage-prep-evidence.md` | Comprehensive pre-image evidence reference for Phase 4 capture artifacts plus Phase 6 manual sign-off rows and templates under `$REIMAGE_ARTIFACT_ROOT`. |
 | `capture-workflow-snapshot.md` | Automated workflow snapshot capture and workflow-doc snapshots. |
 | `capture-system-inventory.md` | System inventory and workstation rebuild reference capture. |
 | `capture-managed-inventory.md` | Company-managed app/profile inventory capture guide and interpretation notes. |
 | `capture-performance-audit.md` | Performance baseline capture methodology for before/after comparison. |
-| `capture-office-stability-audit.md` | Outlook / OneNote stability evidence, watcher/marker usage, and comparison workflow. |
+| `capture-office-stability.md` | Outlook / OneNote stability evidence, watcher/marker usage, and comparison workflow. |
 | `reimage-prep-checks.md` | Phase 6 final pre-image validation: go / no-go checklist, cloud sync checks, and manual sign-off reference. |
 | `templates/it-reimage-confirmation-template.md` | Copyable Phase 0 IT reimage confirmation template. |
 | `templates/app-backup-and-cloud-sync-signoff-template.md` | Manual sign-off template for app backup status, certificate/Keychain staging, VS Code Settings Sync, and cloud sync. |
@@ -67,24 +67,24 @@ This file focuses on the **backup artifacts themselves**: what categories are pr
 
 It complements the broader workflow docs:
 
-| Need                                              | Use |
-|---------------------------------------------------|---|
-| Backup phase order and decisions                  | `reimaging-guide.md` Phase 2 |
-| Home files backup workflow                        | `backup-home.md` |
-| App backups                                       | `backup-apps.md` |
-| Phase 6 cloud sync and manual sign-off reference  | `reimage-prep-checks.md` |
-| Certificate and Keychain staging                  | `stage-certs-keychain.md` |
-| Encrypted secret staging, validation, and cleanup | `backup-dmg-secrets.md` |
-| IntelliJ-specific backup artifacts                | `backup-intellij.md` |
-| Time Machine backup and status evidence           | `backup-time-machine.md`; runtime script `bin/backup-time-machine.sh`; read-only capture script `bin/capture-time-machine.sh` |
+| Need                                              | Use                                                                                                                     |
+|---------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------|
+| Backup phase order and decisions                  | `reimaging-guide.md` Phase 2                                                                                            |
+| Home files backup workflow                        | `backup-home.md`                                                                                                        |
+| App backups                                       | `backup-apps.md`                                                                                                        |
+| Phase 6 cloud sync and manual sign-off reference  | `reimage-prep-checks.md`                                                                                                |
+| Certificate and Keychain staging                  | `stage-certs-keychain.md`                                                                                               |
+| Encrypted secret staging, validation, and cleanup | `backup-dmg-secrets.md`                                                                                                 |
+| IntelliJ-specific backup artifacts                | `backup-intellij.md`                                                                                                    |
+| Time Machine Snapshot and status evidence         | `run-time-machine.md`; runtime script `bin/run-time-machine.sh`; read-only capture script `bin/capture-time-machine.sh` |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
 Time Machine command ownership:
 
-| Script | Role |
-|---|---|
-| `bin/backup-time-machine.sh` | Runtime Time Machine operations: start, monitor, completion evidence, logs, mount/unmount, targeted verification, compare, diagnostics, and eject. |
+| Script                        | Role |
+|-------------------------------|---|
+| `bin/run-time-machine.sh`     | Runtime Time Machine operations: start, monitor, completion evidence, logs, mount/unmount, targeted verification, compare, diagnostics, and eject. |
 | `bin/capture-time-machine.sh` | Read-only Time Machine captures: `pre-run` full evidence bundle, optional `verify-volume` APFS destination-volume verification, and `final` auto-filled Time Machine checklist. |
 
 

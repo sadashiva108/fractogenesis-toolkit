@@ -407,7 +407,7 @@ Manual / fallback notes:
 
 Workflow: [[reimaging-guide#Phase 6 — Reimage Preparation Checks|reimaging-guide.md — Phase 6]].
 
-Detailed capture runbook: [capture-validated-reimage-prep.md](../capture-validated-reimage-prep.md)
+Detailed capture runbook: [reimage-prep-checks.md](../reimage-prep-checks.md)
 
 Script-generated evidence:
 
@@ -432,17 +432,17 @@ Use the generated report as the actual Phase 6 evidence. This reference exists f
 
 Common manual rows still requiring human confirmation:
 
-| Manual item | Where to record |
-|---|---|
-| IT confirmed approved reimage method | generated Phase 6 report and/or `$REIMAGE_ARTIFACT_ROOT/reimage-confirmation/it-reimage-confirmation-YYYYMMDD.md` |
-| Loose private-key / keystore / certificate candidates reviewed | generated Phase 6 report manual rows |
+| Manual item                                                                             | Where to record |
+|-----------------------------------------------------------------------------------------|---|
+| IT confirmed approved reimage method                                                    | generated Phase 6 report and/or `$REIMAGE_ARTIFACT_ROOT/reimage-confirmation/it-reimage-confirmation-YYYYMMDD.md` |
+| Loose private-key / keystore / certificate candidates reviewed                          | generated Phase 6 report manual rows |
 | `.p12` / `.pfx` export passwords saved only in approved password manager, if applicable | generated Phase 6 report manual rows |
-| Time Machine backup completed and latest backup confirmed | generated Phase 6 report; `backup-time-machine.sh complete` output and `capture-time-machine.sh final --open` final checklist under `$REIMAGE_ARTIFACT_ROOT/time-machine/`; optional `capture-time-machine.sh verify-volume --open` focused APFS volume evidence |
-| LastPass vault verified accessible | generated Phase 6 report manual rows |
-| DMG password saved and DMG verified | generated Phase 6 report manual rows |
-| VS Code Settings Sync state confirmed | generated Phase 6 report manual rows |
-| OneDrive / iCloud / Obsidian sync confirmed | generated Phase 6 report manual rows |
-| External drive ejected before reimage | generated Phase 6 report manual rows |
+| Time Machine Snapshot completed and latest backup confirmed                             | generated Phase 6 report; `run-time-machine.sh complete` output and `capture-time-machine.sh final --open` final checklist under `$REIMAGE_ARTIFACT_ROOT/time-machine/`; optional `capture-time-machine.sh verify-volume --open` focused APFS volume evidence |
+| LastPass vault verified accessible                                                      | generated Phase 6 report manual rows |
+| DMG password saved and DMG verified                                                     | generated Phase 6 report manual rows |
+| VS Code Settings Sync state confirmed                                                   | generated Phase 6 report manual rows |
+| OneDrive / iCloud / Obsidian sync confirmed                                             | generated Phase 6 report manual rows |
+| External drive ejected before reimage                                                   | generated Phase 6 report manual rows |
 
 Automated rows worth noting -- these were previously manual but `reimage-checklist.sh` now checks them directly:
 
@@ -503,8 +503,8 @@ Notes:
 - The pre-run bundle does not include a manual sign-off template.
 - `capture-time-machine.sh final --open` writes `$REIMAGE_ARTIFACT_ROOT/time-machine/final-time-machine-checklist-YYYYMMDD-HHMMSS.md`, auto-filling Time Machine checks that the script can prove.
 - `capture-time-machine.sh verify-volume --open` creates a standalone focused APFS destination-volume verification file.
-- `backup-time-machine.sh complete` records the latest backup timestamp and recommends a separate log command instead of embedding noisy logs.
-- `backup-time-machine.sh compare --compare-path /Users/...` resolves APFS Time Machine `Data/Users/...` paths and treats explicit compare paths strictly.
+- `run-time-machine.sh complete` records the latest backup timestamp and recommends a separate log command instead of embedding noisy logs.
+- `run-time-machine.sh compare --compare-path /Users/...` resolves APFS Time Machine `Data/Users/...` paths and treats explicit compare paths strictly.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 

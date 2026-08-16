@@ -594,8 +594,8 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 > Script ownership:
 >
 > ```text
-> scripts/backup-time-machine.sh   runtime operations: start, monitor, complete, logs, compare, verify, mount/unmount, diagnose, eject
-> scripts/capture-time-machine.sh  read-only captures: pre-run bundle, verify-volume, final checklist
+> bin/run-time-machine.sh   runtime operations: start, monitor, complete, logs, compare, verify, mount/unmount, diagnose, eject
+> bin/capture-time-machine.sh  read-only captures: pre-run bundle, verify-volume, final checklist
 > ```
 
 > [!example]- `$REIMAGE_ARTIFACT_ROOT/workflow-snapshot/`

@@ -800,7 +800,7 @@ If Outlook or OneNote closes unexpectedly, do not reopen either app first. Captu
 
 Follow this capture runbook: [capture-office-stability.md](capture-office-stability.md).
 
-Generated checklist, when needed: `scripts/office-stability-checklist.sh --phase post-reimage --backup-root "$REIMAGE_ARTIFACT_ROOT"`.
+Generated checklist, when needed: `bin/office-stability-checklist.sh --phase post-reimage --backup-root "$REIMAGE_ARTIFACT_ROOT"`.
 
 > **Naming TODO:** the `--backup-root` flag name itself belongs to `office-stability-checklist.sh`, which isn't migrated to this repo yet (Phase 13E). Only its *value* was updated above (`$REIMAGE_ARTIFACT_ROOT` → `$REIMAGE_ARTIFACT_ROOT`) — revisit whether the flag itself should become `--artifact-root` or similar once that script actually lands here.
 

@@ -44,7 +44,7 @@ Single source of truth for the phase guides used across the post-image stage (Ph
 | `capture-system-inventory.md` | Post-image system inventory comparison capture. |
 | `capture-managed-inventory.md` | Optional post-image managed-app/profile comparison capture. |
 | `capture-performance-audit.md` | Post-image performance audit and before/after comparison workflow. |
-| `capture-office-stability-audit.md` | Post-image Office stability comparison and symptom follow-up. |
+| `capture-office-stability.md` | Post-image Office stability comparison and symptom follow-up. |
 | `reimaged-system-checks.md` | Final post-image validation workflow and generated sign-off artifacts. |
 | `restore-home.md` | Late, selective home-file restore after the clean rebuild is already validated. |
 | `reimaging-scripts-guide.md` | Supporting command reference for automation used during restore, post-image capture, and validation. |
