@@ -145,7 +145,7 @@ Every path and directory tree this runbook uses is defined here, once. Later sec
 Primary and related scripts (alphabetical; each classified):
 
 ```text
-$FRACTOGENESIS_HOME/bin/capture-size-audit.sh      # entrypoint — capacity check for the Time Machine destination
+$FRACTOGENESIS_HOME/bin/report-size-audit.sh      # entrypoint — capacity check for the Time Machine destination
 $FRACTOGENESIS_HOME/bin/record-time-machine-evidence.sh    # entrypoint — read-only evidence capture
 $FRACTOGENESIS_HOME/bin/run-time-machine.sh        # entrypoint — Time Machine runtime driver
 ```
@@ -271,7 +271,7 @@ tmutil destinationinfo
 Optionally sanity-check destination capacity before a long run:
 
 ```bash
-./bin/capture-size-audit.sh --context pre-image-time-machine --drive "$EXTERNAL_APPLE_BACKUPS_VOLUME"
+./bin/report-size-audit.sh --context pre-image-time-machine --drive "$EXTERNAL_APPLE_BACKUPS_VOLUME"
 ```
 
 ### Step 2 — Capture Pre-Run Evidence and Keep the Mac Awake

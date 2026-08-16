@@ -25,7 +25,7 @@ Before proposing or making changes, inspect the target script, its calling runbo
 
 Also inspect any config fragments, manifests, checklists, or sibling scripts that define the same paths or outputs. Do not infer their behavior from filenames alone.
 
-The current best reference implementations to model new entrypoints on are `bin/backup-home.sh`, `bin/backup-repos.sh`, and `bin/capture-size-audit.sh`. Prefer their concrete patterns over generic Bash advice.
+The current best reference implementations to model new entrypoints on are `bin/backup-home.sh`, `bin/backup-repos.sh`, and `bin/report-size-audit.sh`. Prefer their concrete patterns over generic Bash advice.
 
 ## Classify the script before editing
 
@@ -113,7 +113,7 @@ For a normal `.internal/` helper:
 
 For entrypoints that print reviewable output:
 
-- Colorized, section-structured output is the house style. Reuse the same palette (`RED`/`YEL`/`GRN`/`CYN`/`BLD`/`DIM`/`RST`) and the `hr`/`thin_hr`/`log_section` helpers used by `backup-home.sh` and `capture-size-audit.sh` rather than inventing new ones, so runs read consistently and the severity colors mean the same thing everywhere.
+- Colorized, section-structured output is the house style. Reuse the same palette (`RED`/`YEL`/`GRN`/`CYN`/`BLD`/`DIM`/`RST`) and the `hr`/`thin_hr`/`log_section` helpers used by `backup-home.sh` and `report-size-audit.sh` rather than inventing new ones, so runs read consistently and the severity colors mean the same thing everywhere.
 - Print a short config/artifact-root header and a concise final summary with sizes and primary output paths.
 - Capturing that colored output into a saved report (ANSI codes intact, `tee` to a run file viewed with `less -R`) is a manifest/retention decision, not a default. Do not add report capture just because a script prints colors — see the timestamped-outputs section below.
 - Pure `.internal/` helpers should stay quiet and deterministic; leave colorized presentation to the entrypoint.

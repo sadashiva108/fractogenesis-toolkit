@@ -131,7 +131,7 @@ Related scripts:
 
 ```text
 $FRACTOGENESIS_HOME/.internal/apps/backup-intellij-state.sh   # helper — invoked by backup-apps.sh
-$FRACTOGENESIS_HOME/bin/capture-size-audit.sh                 # entrypoint — capacity check for the backup root
+$FRACTOGENESIS_HOME/bin/report-size-audit.sh                 # entrypoint — capacity check for the backup root
 ```
 
 Artifact roots:
@@ -158,7 +158,6 @@ The clear-text copy:
 $REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/
 ├── IntelliJIdeaYYYY.N/
 │   ├── config-copy/
-│   ├── manifests/
 │   └── scratches-and-consoles/
 ├── logs/
 │   ├── IntelliJIdeaYYYY.N/
@@ -258,8 +257,26 @@ Confirm the artifact root and (optionally) the active config directory. `backup-
 Confirm IntelliJ is not running:
 
 ```bash
-pgrep -afil 'IntelliJ|idea' || echo "OK: IntelliJ does not appear to be running"
+pgrep -xl "idea" || echo "OK: IntelliJ does not appear to be running"
 ```
+
+IntelliJ's executable is `Contents/MacOS/idea`, so the process to look for is named `idea`, not `IntelliJ`. Step 2 runs the same check and warns if it fires — but it does not stop, so a capture taken with the IDE open still lands. When that happens it writes `manifests/ide-was-running-during-capture.txt`, and quitting IntelliJ then rerunning `--intellij-only` clears both the marker and the doubt.
+
+Now check the two files that decide what this capture keeps and what it treats as a secret. Both are seeded on first use and then reused, so on a second reimage — or a re-run after editing them — the ones already in your workspace are what the run will obey:
+
+```text
+secret-review/intellij-secret-review-template.txt   which credential-shaped files get staged
+secret-review/backup-exclude-list.txt               noise dropped from the clear-text copy
+```
+
+```bash
+ls -la "$REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/secret-review/"
+```
+
+If they already exist, read them before running — they carry the decisions you made last time, not defaults. If they do not, Step 2 seeds them and **nothing is staged as a secret on that first run**, because nothing is checked yet. That is why the capture is normally two passes: run it, review the template, run it again.
+
+> [!warning] Pitfall
+> An empty `secrets-encrypted/intellij/` after a run does not mean no secrets were found. It usually means the review template exists but nothing in it is checked. Confirm against `manifests/intellij-secret-candidates.txt` — candidates listed there with an empty staging directory means the review is still outstanding.
 
 You can cross-check the active config path inside IntelliJ under `Help → Diagnostic Tools → Special Files and Folders`, then compare it with the capture's `manifests/intellij-config-dirs.tsv`.
 

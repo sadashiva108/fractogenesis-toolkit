@@ -129,7 +129,7 @@ $FRACTOGENESIS_HOME/bin/capture-system-inventory.sh    # entrypoint
 Related scripts:
 
 ```text
-$FRACTOGENESIS_HOME/bin/capture-size-audit.sh          # entrypoint — capacity check for the artifact root
+$FRACTOGENESIS_HOME/bin/report-size-audit.sh          # entrypoint — capacity check for the artifact root
 ```
 
 Artifact root:
@@ -221,7 +221,7 @@ Confirm the artifact root resolves and the destination volume is mounted. `captu
 Confirm the destination has room if you have not already run the size audit for this artifact root:
 
 ```bash
-./bin/capture-size-audit.sh --context pre-image-system-inventory
+./bin/report-size-audit.sh --context pre-image-system-inventory
 ```
 
 > [!note]

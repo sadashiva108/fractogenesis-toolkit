@@ -303,7 +303,7 @@ It is sourced by scripts such as:
 
 ```text
 bin/backup-home.sh
-bin/capture-size-audit.sh
+bin/report-size-audit.sh
 bin/capture-toolkit-snapshot.sh
 bin/create-secrets-dmg.sh
 ```
@@ -1273,7 +1273,7 @@ Folder purpose:
 | `reimaged-system/`          | Initial enrollment captures and checks, reimaged system evidence, restart notes, restore notes, Time Machine notes, and final validation artifacts.                                                                                         |
 | `repo-audit-reports/`       | Repository state reports; not a full source backup.                                                                                                                                                                                          |
 | `secrets-encrypted/`        | Top-level container for the secrets workflow. Nested secret staging folders, final DMG artifacts, Java inventory, certificate review reports, and restore README are created later by the owning secrets steps.                            |
-| `size-audit-reports/`       | Backup-size-audit run history from `capture-size-audit.sh` — append-only manifest, latest-run pointer, and self-contained timestamped run directories with the full colorized report; not a copy of backup content itself.                 |
+| `size-audit-reports/`       | Backup-size-audit run history from `report-size-audit.sh` — append-only manifest, latest-run pointer, and self-contained timestamped run directories with the full colorized report; not a copy of backup content itself.                 |
 | `staged-ignored-files/`     | Ignored/local file staging output from the Git-repo backup selected-pattern workflow — dry run, filtered dry run, and final live copies.                                                                                                    |
 | `system-inventory/`         | Developer-tool version and workstation inventory captured before erase, to speed up rebuilding the environment afterward.                                                                                                                   |
 | `time-machine/`             | Time Machine status capture bundles only. Actual Time Machine backups live on the Time Machine volume.                                                                                                                                       |

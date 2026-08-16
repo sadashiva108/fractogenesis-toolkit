@@ -38,33 +38,37 @@ Discover, review, and stage the certificate and macOS Keychain material worth pr
 
 > In Obsidian, these are internal heading links. Click in Reading View, or Cmd-click in Live Preview/editing mode.
 
-> [!info] Callout legend
-> This runbook uses Obsidian callouts so each type reads distinctly: `[!note]` an easily-missed fact · `[!warning]` Pitfall, a mistake you are likely to make here · `[!bug]` Troubleshooting, what to do when a step misbehaves · `[!info] Return` how to get back after an out-of-sequence detour.
+> This runbook uses Obsidian callouts so each type reads distinctly: `[!note]` an easily-missed fact · `[!warning]` Pitfall, a mistake you are likely to make here · `[!bug]` Troubleshooting, what to do when a step misbehaves.
 
 ---
 
 ## Purpose
 
-Prepare the certificate and macOS Keychain material that should survive the reimage: create the staging folders, generate review artifacts from an automated scan, make the manual Keychain Access export decisions, stage only the loose cert/key/truststore files you intentionally keep, and record the inventory and restore notes. Everything staged here feeds the single encrypted secrets DMG built in Phase 3C. This phase can be rerun independently; if you stage anything new after a DMG build, Phase 3C must run again.
+`stage-certs-keychain` (Phase 3A) decides which certificate and Keychain material survives the reimage, and puts it where Phase 3C can encrypt it. An automated scan does the inventory and the categorising; what is left for you is the judgment — what to keep, what to export by hand, and how each item comes back.
 
-This runbook owns:
+**What it sets up**
 
-```text
-certificate staging directory creation
-certificate and Keychain review artifact generation
-manual Keychain Access export decisions
-selected loose cert/key/truststore staging
-certificate inventory and restore notes
-```
+- **A reviewed staging area** — `secrets-encrypted/certs/`, holding only the loose cert, key, and truststore files you intentionally selected, split into `loose-candidates-selected/`, `project-local/`, and `tool-local/`.
+- **Manual Keychain exports** — the identities that cannot be copied off disk, exported through Keychain Access into `certs/keychain-manual-exports/`, with a summary recording what succeeded and what could not be exported.
+- **A review and decision record** — the discovery inventories, normalized plan, proposed fragments, and restore notes under `secrets-encrypted/extra-secrets-certs-review/`, plus the non-secret material in `public-certs/`.
 
-It does not own:
+**What the rest of the workflow relies on it for**
 
-```text
-encrypted DMG creation, mounted-DMG validation, and plaintext cleanup — create-secrets-dmg.md (Phase 3C)
-Java jssecacerts auto-capture into secrets-encrypted/certs/java-security/ — backup-home.md
-byproduct secret routing (ssh, gnupg, docker, app exports) into secrets-encrypted/ — backup-apps.md, backup-home.md, backup-repos.md
-macOS Passwords app / login-keychain saved web & app passwords (browser and account credentials) — backup-apps.md (this phase owns certificates and identities, not saved passwords)
-```
+- Phase 3C encrypts everything staged here into the consolidated secrets DMG.
+- The post-image restore phases read the restore notes to know how each identity comes back — reinstalled by a configuration profile, re-enrolled, or restored from the DMG.
+- The Phase 6B sign-off checks the staging and export records exist.
+
+**Ownership**
+
+| This runbook owns | Owned elsewhere |
+|---|---|
+| creating the certificate staging directories | building, validating, and cleaning up after the encrypted DMG — `create-secrets-dmg` (Phase 3C) |
+| generating the certificate and Keychain review artifacts | sweeping credential-shaped files the earlier phases left loose — `stage-loose-secrets` (Phase 3B) |
+| the manual Keychain Access export decisions | Java `jssecacerts` auto-capture into `secrets-encrypted/certs/java-security/` — `backup-home` (Phase 2B) |
+| staging the loose cert, key, and truststore files you select | byproduct secret routing for ssh, gnupg, docker, and app exports — `backup-home` (2B), `backup-apps` (2D), `backup-repos` (2A) |
+| the certificate inventory and restore notes | saved web and app passwords from the Passwords app and login keychain — `backup-apps` (2D); this phase owns certificates and identities, not passwords |
+
+This phase can be rerun independently. Staging anything new after a DMG has been built invalidates it — rerun Phase 3B and then Phase 3C so the newest DMG contains the complete set.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -218,7 +222,7 @@ The `reimage.env` values this runbook depends on. Values are resolved and writte
 
 ## Before You Run Anything
 
-A short pre-flight: confirm you are set up, then confirm what you intend this run to do. The conceptual background is in [[#How the Workflow Works|How the Workflow Works]].
+A short pre-flight: confirm you are set up, then confirm what you intend this run to do.
 
 ### Prerequisites
 
@@ -227,7 +231,7 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 - macOS with Keychain Access and the `security` CLI available; `python3` for the planning helper. Stock Bash 3.2 is fine.
 
 > [!bug] Troubleshooting
-> If `REIMAGE_ARTIFACT_ROOT` is empty, `reimage.env` is not loaded (or the artifact root was never resolved). Source it — see [[#Load Shared Configuration|Load Shared Configuration]] — or run `prepare-artifact-root.md` first.
+> If `REIMAGE_ARTIFACT_ROOT` is empty, `reimage.env` is not loaded, or the artifact root was never resolved. The first step below sources it; if that does not resolve it, run `prepare-artifact-root.md` first.
 
 ### Confirm Your Intent
 
@@ -271,7 +275,7 @@ First run or new workspace only — copy the reusable fragments into your worksp
 This writes `loose-candidates-selected.conf.sh`, `project-local.conf.sh`, and `tool-local.conf.sh` into `$REIMAGE_WORKSPACE_ROOT/staged-certs/`.
 
 > [!note]
-> Init skips files that already exist and will not overwrite reviewed selections unless you pass `--force`. If the workspace fragments are already there from a prior reimage, skip this step and edit them in [[#Stage Selected Loose Files|Stage Selected Loose Files]].
+> Init skips files that already exist and will not overwrite reviewed selections unless you pass `--force`. If the workspace fragments are already there from a prior reimage, skip this step — the staging step later edits them in place.
 
 ### Run the Scan
 
@@ -356,7 +360,7 @@ Then search for your issuer or subject, e.g. `grep -i -B2 -A6 'scep\|<issuer-CA-
 
 - Decide the restore source: in an Intune-signed profile → re-enroll via Intune (note if the SCEP server is an **internal** host — reissue needs the corporate network/VPN); an internal-only CA with no matching profile → corporate PKI/IT; a native Intune device/agent identity → re-provisions automatically on re-enrollment.
 
-**6. Record each decision.** Run `./bin/stage-certs-keychain.sh keychain-detail` to generate the checklist, export summary, and public inventory in one pass — all pre-filled from your Keychain and profiles, and accurate to the real export state (it scans the exports dir). Then confirm each block by hand — fill the flagged `Enrollment server`, record any export failure, and tick the sign-off — as covered in [[#Record Decisions and Restore Notes|Record Decisions and Restore Notes]].
+**6. Record each decision.** Run `./bin/stage-certs-keychain.sh keychain-detail` to generate the checklist, export summary, and public inventory in one pass — all pre-filled from your Keychain and profiles, and accurate to the real export state (it scans the exports dir). Then confirm each block by hand — fill the flagged `Enrollment server`, record any export failure, and tick the sign-off.
 
 > [!warning] Pitfall
 > Internal hostnames (for example a SCEP/NDES server) belong only in this checklist and the export summary — both live under `secrets-encrypted/` and ride into the encrypted DMG. Keep them **out** of the public `public-certs/` export inventory; describe the source generically there.
@@ -442,7 +446,7 @@ Before you consider this phase complete, confirm by hand — these roll up to th
 2. `loose-candidates-selected/`, `project-local/`, and `tool-local/` contain only intentional keeps.
 3. Notes explain any non-exportable or managed identities.
 4. The latest normalized primary plan was reviewed, or the plan was intentionally skipped with a reason.
-5. If `phase2f-rerun-required-*.md` exists under `extra-secrets-certs-review/state/`, or you staged anything new after a prior DMG build, Phase 3C must run again.
+5. If `phase2f-rerun-required-*.md` exists under `extra-secrets-certs-review/state/`, or you staged anything new after a prior DMG build, Phase 3B and then Phase 3C must run again.
 
 Then hand off to Phase 3B:
 
@@ -546,12 +550,3 @@ Export password stored in approved password manager entry: TODO_ENTRY_NAME
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
 ---
-
-<!--
-TOC verification performed before publishing:
-- every Table of Contents entry resolves to a heading present in this file;
-- deleted optional sections (How the Workflow Works run-mode aside, Troubleshooting)
-  were also removed from the Table of Contents (Troubleshooting handled inline);
-- each top-level section ends with a single "Back to Table of Contents" link,
-  and out-of-sequence Supplemental subsections end with a plain back-link.
--->

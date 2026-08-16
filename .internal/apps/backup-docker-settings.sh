@@ -263,7 +263,7 @@ if [[ -n "$SECRET_DEST" && -f "$SECRET_DEST/config.json" ]]; then
 fi
 echo ""
 if [[ -n "$SECRET_DEST" ]]; then
-  echo -e "${YEL}Next step: rerun the consolidated secrets DMG workflow (Phase 3C) after reviewing staged Docker credentials.${RST}"
+  echo -e "${YEL}Next steps: review the staged Docker credentials, then rerun Phase 3B (stage-loose-secrets) and Phase 3C (create-secrets-dmg) so the sweep and the DMG both cover this run.${RST}"
 else
   echo -e "${YEL}Next step: move config.json into secrets-encrypted/docker/ on your external drive.${RST}"
 fi

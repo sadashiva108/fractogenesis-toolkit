@@ -29,7 +29,7 @@ Purpose
 - .share/: reserved for genuinely cross-repo shared scripts (empty until needed).
 
 3) Key conventions and patterns
-- Naming: runbooks and their executable share the same name (backup-apps.md ↔ bin/backup-apps.sh). Runbook filenames are verb-first: prepare-, backup-, capture-, restore-, stage-, enroll-, validate-.
+- Naming: runbooks and their executable share the same name (backup-apps.md ↔ bin/backup-apps.sh). Runbook and script filenames are verb-first: prepare-, backup-, capture-, record-, report-, restore-, run-, stage-, enroll-, validate-. Three are easily confused: capture- is a paired pre-image/post-image state inventory with a Phase 13 sibling, record- is one-time evidence of an operation, report- leaves a durable *-reports/ directory the workflow reads back. See .github/guides/script-types-and-locations.md.
 - Execution semantics:
   - Always run scripts from the repository root unless a script documents explicit absolute-path invocation.
   - Runbook command examples assume this repo-root working directory — stated once in reimaging-guide.md → Core Assumptions and each runbook's Prerequisites. Do not prefix command blocks with `cd "$FRACTOGENESIS_HOME"`; command blocks start at the command.

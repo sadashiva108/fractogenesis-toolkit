@@ -209,7 +209,7 @@ Re-run whichever of the three actually changed. All are safe to re-run and refre
 
 For each backup runbook you re-run:
 
-1. **Size audit first** — `./bin/capture-size-audit.sh --context pre-image-<phase>`. A drive that had room a month ago may not now.
+1. **Size audit first** — `./bin/report-size-audit.sh --context pre-image-<phase>`. A drive that had room a month ago may not now.
 2. **Re-run the backup runbook.**
 3. **If you are re-running more than one, do all of them before continuing.** Steps 4 and 5 are expensive and only the last run counts.
 4. **Phase 3B — [[stage-loose-secrets|Stage Loose Secrets]].** A re-run copies files again, so credential-shaped material can land back outside `secrets-encrypted/`.

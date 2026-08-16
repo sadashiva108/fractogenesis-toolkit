@@ -623,7 +623,62 @@ build_rsync_exclude_args() {
   fi
 }
 
+# A running IDE flushes and rewrites config while the copy is in progress, so a
+# capture taken then can be partial in ways nothing downstream can detect. The
+# runbook has always said to quit IntelliJ first; this makes the script say it
+# too, and — more importantly — records it in the artifact so a partial capture
+# cannot later be mistaken for a complete one.
+INTELLIJ_WAS_RUNNING=false
+# Match the process NAME exactly. IntelliJ's executable is Contents/MacOS/idea,
+# so a name match is both reliable and immune to the false positives a
+# command-line match invites — this script's own path contains "intellij", and
+# the capture writes an IntelliJIdea<version>/ directory.
+# Same form as the OneDrive check in backup-home.sh.
+if pgrep -qx "idea" 2>/dev/null; then
+  INTELLIJ_WAS_RUNNING=true
+  echo "" >&2
+  echo "WARNING: IntelliJ appears to be RUNNING." >&2
+  echo "         A live IDE rewrites config mid-copy, so this capture may be" >&2
+  echo "         partial — and a partial config-copy looks exactly like a" >&2
+  echo "         complete one on disk." >&2
+  echo "         Quit IntelliJ and rerun: ./bin/backup-apps.sh --intellij-only" >&2
+  echo "         Continuing anyway; the capture will be marked as taken with the" >&2
+  echo "         IDE running." >&2
+  echo "" >&2
+fi
+
 mkdir -p "$DEST" "$DEST/manual-settings-export" "$DEST/restore-notes"
+
+# These two are drop targets for material this script cannot produce: the
+# settings ZIP you export from IntelliJ's UI, and the restore notes you write.
+# They are created empty, and backup-apps.sh prunes empty directories at the end
+# of a full run — which deleted both before this README existed. A README keeps
+# them alive and says what belongs in them.
+if [[ ! -f "$DEST/manual-settings-export/README.txt" ]]; then
+  {
+    echo "Manual IntelliJ settings export"
+    echo ""
+    echo "Export from IntelliJ: File > Manage IDE Settings > Export Settings."
+    echo "Save the ZIP here as IntelliJ-settings-YYYYMMDD-HHMMSS.zip."
+    echo ""
+    echo "This is a second restore path, independent of the scripted capture in"
+    echo "config-copy/. It is usually the easier one to import after a reimage."
+    echo "The scripted capture does not produce it — see backup-intellij.md."
+  } > "$DEST/manual-settings-export/README.txt"
+fi
+
+if [[ ! -f "$DEST/restore-notes/README.txt" ]]; then
+  {
+    echo "IntelliJ restore notes"
+    echo ""
+    echo "Write down anything the captured files will not tell you after the"
+    echo "reimage: licence/account sign-in details, plugins that need manual"
+    echo "reinstall, per-project SDK or JDK paths to re-point, and any setting"
+    echo "you deliberately chose not to carry forward."
+    echo ""
+    echo "Nothing here is generated. An empty folder means no notes were taken."
+  } > "$DEST/restore-notes/README.txt"
+fi
 mkdir -p "$ARTIFACT_ROOT/secrets-encrypted/intellij"
 
 rm -rf "$DEST/project-metadata" "$DEST/manifests" "$DEST/logs"
@@ -635,6 +690,23 @@ fi
 shopt -u nullglob
 
 mkdir -p "$DEST/manifests" "$DEST/logs" "$DEST/project-metadata"
+
+if [[ "$INTELLIJ_WAS_RUNNING" == true ]]; then
+  {
+    echo "IntelliJ was RUNNING when this capture was taken."
+    echo ""
+    echo "Captured at: $(date '+%Y-%m-%d %H:%M:%S')"
+    echo ""
+    echo "A live IDE flushes and rewrites files under its config directory while"
+    echo "the copy runs, so config-copy/ may hold a partial or inconsistent"
+    echo "snapshot. Nothing downstream can detect that from the files alone,"
+    echo "which is why this marker exists."
+    echo ""
+    echo "To resolve: quit IntelliJ and rerun"
+    echo "  ./bin/backup-apps.sh --intellij-only"
+    echo "The rerun refreshes the generated content and removes this file."
+  } > "$DEST/manifests/ide-was-running-during-capture.txt"
+fi
 
 README="$DEST/README.md"
 cat > "$README" <<EOF_README
@@ -673,10 +745,12 @@ Script version: $SCRIPT_VERSION
 $ARTIFACT_ROOT/app-settings-backup/intellij/
 ├── $IDE_PRODUCT/
 │   ├── config-copy/
-│   ├── scratches-and-consoles/
-│   └── manifests/
-├── project-metadata/
+│   └── scratches-and-consoles/
 ├── manifests/
+├── manual-settings-export/
+├── project-metadata/
+├── restore-notes/
+├── secret-review/
 ├── logs/
 └── README.md
 \`\`\`

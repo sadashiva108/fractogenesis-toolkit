@@ -70,7 +70,7 @@ The external artifact root is the authoritative copy. An optional OneDrive secon
 | | the automated toolkit snapshot — `capture-toolkit-snapshot` |
 | | cloud-sync and final manual sign-off — `reimage-prep-checks` (Phase 6B) |
 
-This phase is safe to re-run at any point before the erase; the only precondition is that a re-run touching a secret target invalidates an already-built Phase 3C DMG.
+This phase is safe to re-run at any point before the erase; the only precondition is that a re-run touching a secret target invalidates an already-built Phase 3C DMG — rerun Phase 3B and then Phase 3C after it.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -133,7 +133,7 @@ Primary scripts, alphabetical:
 
 ```text
 $FRACTOGENESIS_HOME/bin/backup-home.sh              # entrypoint
-$FRACTOGENESIS_HOME/bin/capture-size-audit.sh       # entrypoint
+$FRACTOGENESIS_HOME/bin/report-size-audit.sh       # entrypoint
 $FRACTOGENESIS_HOME/bin/verify-artifact-config.sh   # entrypoint (aggregate validator)
 ```
 
@@ -185,7 +185,7 @@ The values these scripts read. `REIMAGE_ARTIFACT_ROOT`, the volume paths, and th
 |---|---|
 | `ARTIFACT_CONFIG_DIR` | Optional explicit override for the active fragment directory. Derived by `artifact-config.sh` when unset. |
 | `BACKUP_*` | Per-target secret toggles from `secret-flags.conf.sh`, one per `secrets-targets.conf.sh` key (for example `BACKUP_GNUPG`, `BACKUP_JAVA_JSSECACERTS`). Unset means enabled. |
-| `EXTERNAL_DATA_VOLUME` | The mounted external volume. `capture-size-audit.sh` reads its capacity and treats it as the default `--drive`. |
+| `EXTERNAL_DATA_VOLUME` | The mounted external volume. `report-size-audit.sh` reads its capacity and treats it as the default `--drive`. |
 | `FRACTOGENESIS_HOME` | The toolkit checkout holding the scripts and this runbook. A shell-startup or `.envrc` value, not a `reimage.env` key. |
 | `ONEDRIVE_DEST_SUBDIR` | The per-reimage OneDrive subfolder. Defaults to the basename of `$REIMAGE_ARTIFACT_ROOT`. |
 | `ONEDRIVE_FOLDER_NAME` | The OneDrive sync folder name. Combined with `ONEDRIVE_PARENT_DIR` to build the root. |
@@ -230,7 +230,7 @@ Run these in order. The first three are shared setup; you then choose the backup
 
 ### Load the Shared Reimage Environment
 
-`backup-home.sh` and `capture-size-audit.sh` self-locate and load shared config through `.internal/load-reimage-config.sh` — you never source `reimage.env` by hand. `verify-artifact-config.sh` resolves the fragment directory on its own without sourcing the fragments, so a broken fragment gets reported instead of aborting the load.
+`backup-home.sh` and `report-size-audit.sh` self-locate and load shared config through `.internal/load-reimage-config.sh` — you never source `reimage.env` by hand. `verify-artifact-config.sh` resolves the fragment directory on its own without sourcing the fragments, so a broken fragment gets reported instead of aborting the load.
 
 Confirm the scripts parse:
 
@@ -239,7 +239,7 @@ bash -n bin/backup-home.sh
 ```
 
 ```bash
-bash -n bin/capture-size-audit.sh
+bash -n bin/report-size-audit.sh
 ```
 
 Confirm every destination a run would write to, without writing anything:
@@ -294,7 +294,7 @@ To change what gets backed up, excluded, or routed to secrets, edit these fragme
 Run the size audit before copying, so a full or unmounted drive is caught early. Give it a sub-label so this capture stays distinguishable from other same-day audits in `size-audit-reports/MANIFEST.md`:
 
 ```bash
-./bin/capture-size-audit.sh --context pre-image-backup-home
+./bin/report-size-audit.sh --context pre-image-backup-home
 ```
 
 Review these lines in the output:
@@ -530,7 +530,7 @@ Then refresh just the authoritative external copy:
 Use the default mode instead only when you also want the OneDrive work-safe subset refreshed — that run needs the OneDrive confirmation done again.
 
 > [!warning] Pitfall
-> If you have already built the Phase 3C secrets DMG, a re-run that changes any secret-bearing target means that DMG no longer covers the full staged secret set — rebuild it in Phase 3C after this refresh. While you are still staging and have not built the DMG yet, which is the normal case here, there is nothing extra to do.
+> If you have already built the Phase 3C secrets DMG, a re-run that changes any secret-bearing target means that DMG no longer covers the full staged secret set — rerun Phase 3B and rebuild it in Phase 3C after this refresh. While you are still staging and have not built the DMG yet, which is the normal case here, there is nothing extra to do.
 
 ### SSH Agent Socket Exclusion in Detail
 

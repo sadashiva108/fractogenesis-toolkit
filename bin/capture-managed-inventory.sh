@@ -114,7 +114,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-# Validate the run-directory context, consistent with capture-size-audit.sh.
+# Validate the run-directory context, consistent with report-size-audit.sh.
 case "$CONTEXT" in
   pre-image|post-image|pre-image-?*|post-image-?*)
     case "$CONTEXT" in

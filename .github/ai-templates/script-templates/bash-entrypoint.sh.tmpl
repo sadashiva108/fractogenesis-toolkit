@@ -87,7 +87,7 @@ source "$CONFIG_LOADER"
 
 SCRIPT_NAME="${REIMAGE_SCRIPT_DISPLAY_NAME:-TODO-script-name.sh}"
 
-# Display-only fallback, matching backup-home.sh and capture-size-audit.sh: the
+# Display-only fallback, matching backup-home.sh and report-size-audit.sh: the
 # shared loader does not define a generic CONFIG variable, so surface the
 # effective fragment source when this entrypoint prints a config line.
 # CONFIG="${CONFIG:-${ARTIFACT_CONFIG_SOURCE_DIR:-$CONFIG_LOADER}}"
@@ -97,7 +97,7 @@ SCRIPT_NAME="${REIMAGE_SCRIPT_DISPLAY_NAME:-TODO-script-name.sh}"
 # ---------------------------------------------------------------------------
 # Delete this block if the entrypoint does not print colorized, sectioned
 # output. When kept, reuse the same palette and helpers as backup-home.sh /
-# capture-size-audit.sh so runs read consistently.
+# report-size-audit.sh so runs read consistently.
 #
 # Note: capturing this colored output into a saved report (ANSI codes intact,
 # viewed with `less -R`) is a per-workflow manifest/retention decision — do not

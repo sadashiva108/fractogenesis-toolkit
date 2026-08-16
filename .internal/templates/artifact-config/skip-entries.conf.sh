@@ -1,5 +1,5 @@
 # SKIP CATEGORIES
-# Used by capture-size-audit.sh to explain what is intentionally skipped.
+# Used by report-size-audit.sh to explain what is intentionally skipped.
 # Format: "PATH | REASON"
 
 SKIP_ENTRIES=(

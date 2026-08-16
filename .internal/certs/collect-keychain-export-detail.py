@@ -327,7 +327,7 @@ def render(identities, certs, profiles, mdm_server) -> str:
         "- [ ] Public-only `.cer`/`.pem` exports were staged intentionally and contain no private keys.",
         "- [ ] Non-exportable identities were documented with their delivery + restore source.",
         "- [ ] Export passwords were saved only in the approved password manager (failed-export passwords discarded).",
-        "- [ ] Phase 3C will be rerun after any new manual export is added.",
+        "- [ ] Phase 3B and then Phase 3C will be rerun after any new manual export is added.",
         "",
     ]
     return "\n".join(lines)

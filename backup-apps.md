@@ -197,7 +197,7 @@ $FRACTOGENESIS_HOME/.internal/apps/backup-docker-settings.sh              # help
 $FRACTOGENESIS_HOME/.internal/apps/backup-intellij-scratches-consoles.sh  # helper — invoked by backup-apps.sh
 $FRACTOGENESIS_HOME/.internal/apps/backup-app-config.sh                   # helper — registry-driven config capture (Claude, draw.io, Zoom, Mos, Wireshark)
 $FRACTOGENESIS_HOME/.internal/apps/app-selection.sh                       # helper — generates and reads the app-backup selection checklist
-$FRACTOGENESIS_HOME/bin/capture-size-audit.sh                            # entrypoint — capacity check for the backup root
+$FRACTOGENESIS_HOME/bin/report-size-audit.sh                            # entrypoint — capacity check for the backup root
 ```
 
 Artifact roots:
@@ -283,10 +283,10 @@ The values these scripts read. `REIMAGE_ARTIFACT_ROOT` and `REIMAGE_WORKSPACE_RO
 | `REIMAGE_ARTIFACT_ROOT` | The artifact root where `app-settings-backup/` and `secrets-encrypted/` are written. `--artifact-root PATH` overrides it for one invocation. |
 | `REIMAGE_WORKSPACE_ROOT` | Local planning area outside the artifact root, used only for optional temporary working notes. |
 
-`backup-apps.sh` reads no artifact-config fragments and no OneDrive settings; `capture-size-audit.sh`, invoked in Step 2, reads both.
+`backup-apps.sh` reads no artifact-config fragments and no OneDrive settings; `report-size-audit.sh`, invoked in Step 2, reads both.
 
 > [!note]
-> `capture-size-audit.sh` also checks the external destination volume configured in `reimage.env`. If that volume is not mounted, resolve it in `prepare-artifact-root.md` before running the audit.
+> `report-size-audit.sh` also checks the external destination volume configured in `reimage.env`. If that volume is not mounted, resolve it in `prepare-artifact-root.md` before running the audit.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -369,7 +369,7 @@ Artifact root: <$REIMAGE_ARTIFACT_ROOT>
 Run the size audit before writing app artifacts, to confirm the destination has room. The `--context` label keeps this phase's audit distinct from the ones `backup-home` and `backup-repos` run against the same backup root.
 
 ```bash
-./bin/capture-size-audit.sh --context pre-image-backup-apps
+./bin/report-size-audit.sh --context pre-image-backup-apps
 ```
 
 Review these lines in the output:
@@ -464,23 +464,24 @@ This captures the script-class apps and prepares folders for the manual-class on
 
 - **Docker** — `settings-store.json`, `daemon.json`, `contexts/`, and image/container/compose inventories to `app-settings-backup/docker/`; `config.json` staged to `secrets-encrypted/docker/`. `Docker.raw`, image layers, and volumes are intentionally not backed up.
 - **VS Code** — extension list, `settings.json`, `keybindings.json`, `snippets/`, and `profiles/` to `app-settings-backup/vscode/`. Caches, logs, and workspace history are intentionally excluded.
-- **IntelliJ IDEA** — Scratches, Consoles, and config to `app-settings-backup/intellij/`. The settings ZIP is manual and is covered in Step 5.
 - **BBEdit, Claude, draw.io, Zoom, Mos, Wireshark** — registry-driven config capture to `app-settings-backup/<app>/` for each selected app detected; Claude's MCP config (`claude_desktop_config.json`) is staged to `secrets-encrypted/claude/`.
-- **Chrome, Postman, Fiddler Everywhere, Raycast, Obsidian, TNAS PC, iMovie** — an empty, ready folder only (when selected), for the manual exports below.
+- **Chrome, Postman, Fiddler Everywhere, Raycast, Obsidian, Terminal, TNAS PC, iMovie** — a ready folder at `app-settings-backup/<app>/` containing a README that names what to export there. Nothing is captured automatically for these; the folder is the drop target for Step 5.
 - **selected unsupported apps** — a drop-folder with a README under `app-settings-backup/manual-unsupported/<app>/`, for you to fill by hand.
+- **IntelliJ IDEA** — deferred, not captured. See the callout above.
 - the stable summary at `app-settings-backup/MANIFEST.md`, with the selection used and the manual TODOs that remain.
 
 Rerun a single script-class portion through the same entrypoint when needed — for example after starting Docker Desktop, or to refresh one app. These `--*-only` reruns bypass the checklist and act on their portion for every detected app:
 
 ```bash
 ./bin/backup-apps.sh --docker-only --open
-./bin/backup-apps.sh --intellij-only --open
 ./bin/backup-apps.sh --vscode-only --open
 ./bin/backup-apps.sh --apps-only --open   # Claude, draw.io, Zoom, Mos, Wireshark
 ```
 
+`--intellij-only` is not a rerun convenience like these — it is the only way IntelliJ is ever captured, and [[backup-intellij|Backup IntelliJ]] covers what to set up first.
+
 > [!warning] Pitfall
-> A successful run here is **not** a completed phase. It backs up only the selected script-class apps; any selected Chrome, Postman, Fiddler Everywhere, Terminal, the IntelliJ settings ZIP, and (if you use them) Raycast, Obsidian, TNAS PC, and iMovie still need their manual exports, and your selected unsupported apps still need to be filled into their drop-folders.
+> A successful run here is **not** a completed phase. It backs up only the selected script-class apps. IntelliJ has not run at all. Any selected Chrome, Postman, Fiddler Everywhere, Terminal, and (if you use them) Raycast, Obsidian, TNAS PC, and iMovie still need their manual exports, and your selected unsupported apps still need filling in. Each has a folder with a README naming what belongs there — a folder containing only a README means the export was not done.
 
 > [!note]
 > BBEdit's support folder can live in different places: the direct-download build uses `~/Library/Application Support/BBEdit/`, the Mac App Store build is sandboxed under `~/Library/Containers/com.barebones.bbedit/`, and recent versions can sync it to iCloud Drive. The capture copies whichever local paths exist; if your support folder is in iCloud, it already syncs and restores through your Apple ID.
@@ -1184,7 +1185,7 @@ Use app-local notes sparingly; you do not need one for every app. A missing or u
 
 The main forward dependency is the secret-staging sequence that ends at the consolidated secrets DMG. Stage secret-bearing app exports under `secrets-encrypted/` as you work through this phase. Phase 3A then handles certificate and Keychain staging. Phase 3C builds the encrypted DMG **once**, after both this phase's app-secret staging and Phase 3A's certificate/Keychain staging are complete, so the DMG covers the full staged secret set in a single build.
 
-If you add any Docker `config.json`, Chrome password CSV, secret-bearing Postman export, Claude MCP config, Fiddler Everywhere session export, TNAS PC credential, or Raycast secret export later, rerun Phase 3C so the DMG includes the complete final secret set before final validation.
+If you add any Docker `config.json`, Chrome password CSV, secret-bearing Postman export, Claude MCP config, Fiddler Everywhere session export, TNAS PC credential, or Raycast secret export later, rerun Phase 3B and then Phase 3C, so the loose-secret sweep and the DMG both cover the complete final secret set before final validation.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 

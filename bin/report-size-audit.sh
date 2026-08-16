@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# capture-size-audit.sh
+# report-size-audit.sh
 #
 # Audits the configured local backup targets, the OneDrive destination, the
 # external drive's capacity, and the structure of the artifact root, then
@@ -34,23 +34,23 @@
 # --- BEGIN USAGE ---
 # Usage:
 #   cd <repo-root>
-#   chmod +x bin/capture-size-audit.sh
+#   chmod +x bin/report-size-audit.sh
 #
 #   # Default run
-#   ./bin/capture-size-audit.sh
+#   ./bin/report-size-audit.sh
 #
 #   # Label the run so same-day captures stay distinguishable in MANIFEST.md
-#   ./bin/capture-size-audit.sh --context pre-image-backup-home
+#   ./bin/report-size-audit.sh --context pre-image-backup-home
 #
 #   # Local target inventory only (skips OneDrive AND the external fit check)
-#   ./bin/capture-size-audit.sh --local-only
+#   ./bin/report-size-audit.sh --local-only
 #
 #   # Audit a specific artifact root
-#   ./bin/capture-size-audit.sh --backup-root "$REIMAGE_ARTIFACT_ROOT"
+#   ./bin/report-size-audit.sh --backup-root "$REIMAGE_ARTIFACT_ROOT"
 #
 #   # Point at a different external volume by name or by mount path
-#   ./bin/capture-size-audit.sh --drive Data
-#   ./bin/capture-size-audit.sh --drive /Volumes/Data
+#   ./bin/report-size-audit.sh --drive Data
+#   ./bin/report-size-audit.sh --drive /Volumes/Data
 #
 # Options:
 #   --drive NAME|PATH     External volume name or /Volumes/... mount path.
@@ -94,7 +94,7 @@
 
 set -Eeuo pipefail
 trap 'status=$?; echo "" >&2; \
-  echo "ERROR: capture-size-audit.sh failed near line ${LINENO}: ${BASH_COMMAND}" >&2; \
+  echo "ERROR: report-size-audit.sh failed near line ${LINENO}: ${BASH_COMMAND}" >&2; \
   echo "       the in-progress run directory was discarded; no report was saved." >&2; \
   exit "$status"' ERR
 

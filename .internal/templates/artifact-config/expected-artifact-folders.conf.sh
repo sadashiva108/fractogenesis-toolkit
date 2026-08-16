@@ -1,7 +1,7 @@
 # expected-artifact-folders.conf.sh
 # Sourced by artifact-config.sh. This is the CREATION list: the top-level
 # folders prepare-artifact-root creates under $REIMAGE_ARTIFACT_ROOT in Phase 1,
-# and the set backup-apps.sh --preflight and capture-size-audit.sh count against
+# and the set backup-apps.sh --preflight and report-size-audit.sh count against
 # to tell you whether Phase 1 has run.
 #
 # It is deliberately NOT the same as reimage-checklist.sh's "Backup Root

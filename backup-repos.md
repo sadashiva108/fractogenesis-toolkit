@@ -81,7 +81,7 @@ Git remotes protect what you have committed and pushed. They do not protect loca
 |---|---|
 | the repository audit and its reports (`repo-audit-reports/`) | encrypting the routed secrets — `create-secrets-dmg` (Phase 3C) |
 | the gitignore superset and the three review files (select / exclude / route) | IntelliJ HTTP Client env files — `backup-intellij` |
-| staging kept ignored files into `staged-ignored-files/`, and routing secret-shaped files into `secrets-encrypted/repos-gitignored/` | the size-audit implementation — `capture-size-audit` |
+| staging kept ignored files into `staged-ignored-files/`, and routing secret-shaped files into `secrets-encrypted/repos-gitignored/` | the size-audit implementation — `report-size-audit` |
 
 It does not turn `repo-audit-reports/` into a full source backup, and it routes secret candidates without building or replacing the consolidated DMG.
 
@@ -504,7 +504,7 @@ printf 'GIT_PERSONAL_REPO_ROOT=%s\n' "${GIT_PERSONAL_REPO_ROOT:-}"
 Check destination capacity first:
 
 ```bash
-./bin/capture-size-audit.sh --context pre-image-backup-repos
+./bin/report-size-audit.sh --context pre-image-backup-repos
 ```
 
 Look for `✓ External drive: enough space` (or the `✗ NOT ENOUGH SPACE` counterpart) and the available-space line.

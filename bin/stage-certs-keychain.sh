@@ -44,6 +44,11 @@
 #   # or call the helper directly:
 #   python3 .internal/certs/prepare-certs-keychain-staging.py init-staged-certs-config \
 #     --env-file "$REPO_ROOT/reimage.env"
+#
+# Exit status:
+#   0  The requested mode completed.
+#   1  The requested mode ran but could not complete its work.
+#   2  Usage, configuration, or prerequisite error.
 # --- END USAGE ---
 # =============================================================================
 
@@ -390,9 +395,9 @@ if not changes:
     raise SystemExit(0)
 
 with flag_file.open("w", encoding="utf-8") as f:
-    f.write("# Phase 3C Rerun Required\n\n")
+    f.write("# Phase 3B and 3C Rerun Required\n\n")
     f.write(f"Generated: {dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
-    f.write("New or changed files were detected under `secrets-encrypted/certs/`. Rerun Phase 3C so the newest consolidated encrypted `all-secrets-*.dmg` includes this certificate/Keychain material before final validation or plaintext cleanup.\n\n")
+    f.write("New or changed files were detected under `secrets-encrypted/certs/`. Rerun Phase 3B, then Phase 3C, so the loose-secret sweep runs against the new material and the newest consolidated encrypted `all-secrets-*.dmg` includes it before final validation or plaintext cleanup.\n\n")
     f.write("Tracked files intentionally ignore generated README files and prior rerun-flag notes so this flag is about staged cert material, not documentation churn.\n\n")
     f.write("## New or changed cert-staging files\n\n")
     f.write("| Change | Relative path under `secrets-encrypted/certs/` | SHA-256 | Size bytes | Modified |\n")
@@ -408,7 +413,7 @@ with flag_file.open("w", encoding="utf-8") as f:
 PY_CERT_STATE
 
   if [[ -f "$flag_file" ]]; then
-    printf 'Phase 3C rerun flag written: %s\n' "$flag_file"
+    printf 'Phase 3B/3C rerun flag written: %s\n' "$flag_file"
   fi
 }
 
@@ -421,9 +426,16 @@ stage_configured_cert_entries() {
 
   mkdir -p "$dest_dir"
 
-  # shellcheck disable=SC2178,SC1087
-  local -n entries_ref="$array_name"
-  for src in "${entries_ref[@]}"; do
+  # Stock macOS Bash 3.2 has no namerefs — `local -n` fails outright there, and
+  # `"${arr[@]}"` on an empty array errors under `set -u` even where they work.
+  # Expand the named array by index instead, after confirming it has entries:
+  # a staged-certs fragment may legitimately select nothing.
+  local entry_count entry_index
+  eval "entry_count=\${#${array_name}[@]}"
+  (( entry_count > 0 )) || return 0
+
+  for (( entry_index = 0; entry_index < entry_count; entry_index++ )); do
+    eval "src=\${${array_name}[\$entry_index]}"
     [[ -n "$src" ]] || continue
 
     if [[ ! -e "$src" ]]; then
@@ -850,6 +862,17 @@ ENV_FILE_OVERRIDE=""
 FORCE_INIT=false
 MODE="scan"
 
+require_option_value() {
+  local option="$1"
+  local value="${2:-}"
+
+  if [[ -z "$value" || "$value" == --* ]]; then
+    echo "ERROR: $option requires a non-empty value." >&2
+    usage >&2
+    exit 2
+  fi
+}
+
 while [[ $# -gt 0 ]]; do
   case "$1" in
     scan)
@@ -869,20 +892,12 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     --artifact-root)
-      if [[ $# -lt 2 || -z "${2:-}" ]]; then
-        echo "ERROR: --artifact-root requires a path" >&2
-        usage
-        exit 1
-      fi
+      require_option_value "$1" "${2:-}"
       ARTIFACT_ROOT_OVERRIDE="${2:-}"
       shift 2
       ;;
     --env-file)
-      if [[ $# -lt 2 || -z "${2:-}" ]]; then
-        echo "ERROR: --env-file requires a path" >&2
-        usage
-        exit 1
-      fi
+      require_option_value "$1" "${2:-}"
       ENV_FILE_OVERRIDE="${2:-}"
       shift 2
       ;;
@@ -905,12 +920,12 @@ while [[ $# -gt 0 ]]; do
     -*)
       echo "Unknown argument: $1" >&2
       usage
-      exit 1
+      exit 2
       ;;
     *)
       echo "Unexpected extra argument: $1" >&2
       usage
-      exit 1
+      exit 2
       ;;
   esac
 done
@@ -950,12 +965,12 @@ fi
 
 if [[ -z "$REIMAGE_ARTIFACT_ROOT" ]]; then
   echo "ERROR: REIMAGE_ARTIFACT_ROOT is not set. Source reimage.env or pass --artifact-root PATH." >&2
-  exit 1
+  exit 2
 fi
 
 if [[ ! -d "$REIMAGE_ARTIFACT_ROOT" ]]; then
   echo "ERROR: artifact root not found: $REIMAGE_ARTIFACT_ROOT" >&2
-  exit 1
+  exit 2
 fi
 
 ensure_cert_keychain_stage_dirs "$REIMAGE_ARTIFACT_ROOT"

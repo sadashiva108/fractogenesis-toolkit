@@ -218,7 +218,7 @@ fi
 
 REIMAGE_ARTIFACT_ROOT="${REIMAGE_ARTIFACT_ROOT%/}"
 
-# Same context grammar as capture-size-audit.sh so both checks label their runs
+# Same context grammar as report-size-audit.sh so both checks label their runs
 # identically and sort the same way in their manifests.
 case "$REPORT_CONTEXT" in
   pre-image|post-image|pre-image-?*|post-image-?*)

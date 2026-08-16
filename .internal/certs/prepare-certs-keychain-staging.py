@@ -873,7 +873,7 @@ def restore_plan_for_record(rec: Dict[str, str]) -> str:
     if category == "public-certificate":
         return "Use as public trust/reference material only; import manually if an internal endpoint/tool still requires it after rebuild."
     if decision == "propose-project-local-stage":
-        return "After review, copy approved path into the project-local staged-certs fragment, rerun Phase 3A scan, rerun Phase 3C, and restore only to that project if still required."
+        return "After review, copy approved path into the project-local staged-certs fragment, rerun Phase 3A scan, then Phase 3B and Phase 3C, and restore only to that project if still required."
     return "Review the normalized plan row before restoring; do not copy blindly."
 
 
@@ -911,7 +911,7 @@ def write_manual_keychain_export_checklist(review_dir: Path, stamp: str, records
         f.write("- [ ] Public-only `.cer` / `.pem` exports were staged intentionally and do not contain private keys.\n")
         f.write("- [ ] Non-exportable managed identities were documented with their restore/re-enrollment source.\n")
         f.write("- [ ] Export passwords were saved only in the approved password manager.\n")
-        f.write("- [ ] Phase 3C will be rerun after any new manual export is added.\n")
+        f.write("- [ ] Phase 3B and then Phase 3C will be rerun after any new manual export is added.\n")
     stats.manual_keychain_export_checklist_rows = len(rows)
     stats.derived_files_written.append(str(out))
     return out

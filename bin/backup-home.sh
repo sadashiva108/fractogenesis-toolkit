@@ -79,7 +79,7 @@ ARTIFACT_CONFIG_REQUIRE_REIMAGE_ARTIFACT_ROOT=false
 # shellcheck source=../.internal/load-reimage-config.sh
 source "$CONFIG_LOADER"
 
-# Display-only fallback, matching capture-size-audit.sh: the shared loader does
+# Display-only fallback, matching report-size-audit.sh: the shared loader does
 # not define a generic CONFIG variable, so show the effective fragment source.
 CONFIG="${CONFIG:-${ARTIFACT_CONFIG_SOURCE_DIR:-$CONFIG_LOADER}}"
 

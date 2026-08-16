@@ -241,7 +241,7 @@ supported_apps_registry() {
 
 print_supported_apps() {
   # Info only: writes nothing and computes no sizes (sizing is the sole
-  # responsibility of capture-size-audit.sh).
+  # responsibility of report-size-audit.sh).
   echo "Apps this toolkit can back up (Phase 2D):"
   echo ""
   printf '  %-20s  %-9s  %s\n' "App" "Group" "How backed up"
@@ -481,6 +481,10 @@ fi
 SELECTED_AUTOMATIC=""
 SELECTED_BOTH=""
 SELECTED_MANUAL=""
+# Set by prune_empty_app_dirs, which only runs on a full run. Declared here
+# because the summary reads it unconditionally and `set -u` would abort a
+# candidate-review or --*-only run otherwise.
+PRUNED_APP_DIRS=""
 SELECTED_UNSUPPORTED=""
 if [[ "$SELECTION_ACTIVE" == true ]]; then
   SELECTED_AUTOMATIC="$(bash "$SELECTION_HELPER" --list-selected --selection "$SELECTION_FILE" --section automatic || true)"
@@ -603,7 +607,15 @@ if [[ "$INTELLIJ_INCLUDE_SYSTEM_CACHE" == true ]]; then
   INTELLIJ_HELPER_ARGS+=(--include-system-cache)
 fi
 
-if [[ "$DOCKER_ONLY" == true ]]; then
+if [[ "$INTELLIJ_ONLY" != true ]]; then
+  # IntelliJ is deliberately NOT part of the default Phase 2D run. It has
+  # prerequisites the umbrella run cannot present in time: a secret-review
+  # template and an exclude list that are seeded on first use and may already
+  # exist in your workspace from a prior reimage. Capturing it here produced a
+  # half-reviewed result with no signal that review had been skipped, so it is
+  # opt-in via --intellij-only and owned by backup-intellij.md.
+  INTELLIJ_STATUS="Deferred to backup-intellij.md — run ./bin/backup-apps.sh --intellij-only"
+elif [[ "$DOCKER_ONLY" == true ]]; then
   INTELLIJ_STATUS="Skipped by --docker-only"
 elif [[ "$VSCODE_ONLY" == true ]]; then
   INTELLIJ_STATUS="Skipped by --vscode-only"
@@ -1289,21 +1301,95 @@ create_selected_app_dirs() {
   done <<< "$SELECTED_UNSUPPORTED"
 }
 
+# ensure_manual_drop_folders — a toolkit-supported app whose only mechanism is a
+# manual export got nothing at all: no folder, no note. That made it strictly
+# less visible than an *unsupported* app, which has had a drop folder and a
+# README all along. Same treatment now, and the README keeps the folder out of
+# the prune so it is still there when you come to do the export.
+ensure_manual_drop_folders() {
+  local mname slug dropdir
+  while IFS= read -r mname; do
+    [[ -n "$mname" ]] || continue
+    slug="$(app_slug "$mname")"
+    [[ -n "$slug" ]] || continue
+    dropdir="$APP_ROOT/$slug"
+    mkdir -p "$dropdir"
+    if [[ ! -f "$dropdir/README.txt" ]]; then
+      {
+        echo "$mname — manual export"
+        echo ""
+        echo "This app is supported by the toolkit, but its state cannot be copied"
+        echo "by script. Nothing was captured automatically."
+        echo ""
+        echo "Export it into this folder before the erase. backup-apps.md, Step 5"
+        echo "(Complete Manual Exports) names what to export and where each piece"
+        echo "goes — some apps split non-secret material here and secret-bearing"
+        echo "material into secrets-encrypted/."
+        echo ""
+        echo "An empty folder with only this README means the export was not done."
+      } > "$dropdir/README.txt"
+    fi
+  done <<< "$SELECTED_MANUAL"
+
+  # A "both" app produces script output, so its folder exists and looks handled.
+  # It is not: a manual piece is still owed, and a non-empty folder is exactly
+  # the signal that hides that. Name the outstanding half.
+  local bname bslug bdir
+  while IFS= read -r bname; do
+    [[ -n "$bname" ]] || continue
+    bslug="$(app_slug "$bname")"
+    [[ -n "$bslug" ]] || continue
+    bdir="$APP_ROOT/$bslug"
+    [[ -d "$bdir" ]] || continue
+    if [[ ! -f "$bdir/MANUAL-STEP-STILL-REQUIRED.txt" ]]; then
+      {
+        echo "$bname — scripted capture done, manual step still required"
+        echo ""
+        echo "The files beside this note were captured automatically. They are not"
+        echo "the whole backup: this app also has a manual export that no script"
+        echo "can produce."
+        echo ""
+        echo "backup-apps.md, Step 5 (Complete Manual Exports) names the missing"
+        echo "piece. A folder with content in it does not mean this app is done."
+      } > "$bdir/MANUAL-STEP-STILL-REQUIRED.txt"
+    fi
+  done <<< "$SELECTED_BOTH"
+}
+
 # prune_empty_app_dirs — after all captures, remove directories left empty:
 # rsync-mirrored app support subfolders that held no user content (e.g. the
 # BBEdit "Language Modules", "Scripts", ... subtree), a VS Code user/snippets
 # with nothing in it, or a dest folder for an app that matched nothing. The
-# manual export steps in backup-apps.md each `mkdir -p` their own folder, so
-# nothing here is a required pre-existing drop target. Scoped to APP_ROOT
+# A deliberate drop target must carry a README.txt so it is never empty and so
+# this prune cannot reach it — that is the invariant, and both the manual-app
+# folders here and the IntelliJ helper's manual-settings-export/ and
+# restore-notes/ rely on it. The previous premise, that no folder here is a
+# required pre-existing drop target, was false and cost exactly those folders. Scoped to APP_ROOT
 # (app-settings-backup); secrets-encrypted drop-folders are left untouched.
 # -mindepth 1 keeps APP_ROOT itself; -depth removes nested empties bottom-up.
 prune_empty_app_dirs() {
+  PRUNED_APP_DIRS=""
   [[ -d "$APP_ROOT" ]] || return 0
+
+  # Snapshot the top-level app folders around the prune. Without this an app
+  # that WAS detected and processed, but whose sources held nothing, vanishes
+  # without trace — indistinguishable from one that was never selected. That
+  # ambiguity is the whole reason "I selected it and got no folder" is hard to
+  # diagnose. Compare before/after rather than pre-scanning for empties: a
+  # parent only becomes empty once its children are pruned.
+  local before after
+  before="$(find "$APP_ROOT" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | sort)"
   find "$APP_ROOT" -mindepth 1 -depth -type d -empty -exec rmdir {} \; 2>/dev/null || true
+  after="$(find "$APP_ROOT" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | sort)"
+
+  PRUNED_APP_DIRS="$(comm -23 <(printf '%s\n' "$before") <(printf '%s\n' "$after") \
+    | sed 's|.*/||' | tr '\n' ' ')"
+  return 0
 }
 
 if [[ "$FULL_RUN" == true ]]; then
   create_selected_app_dirs
+  ensure_manual_drop_folders
 fi
 
 if [[ "$DOCKER_ONLY" == true || "$INTELLIJ_ONLY" == true || "$VSCODE_ONLY" == true ]]; then
@@ -1340,6 +1426,19 @@ if [[ "$SELECTION_ACTIVE" == true ]]; then
   [[ -n "$_unsup_md" ]] && UNSUPPORTED_TODO_MD="$_unsup_md"
 fi
 
+# Manual-only supported apps belong in the manifest for the same reason the
+# unsupported ones do: MANIFEST.md is where you look to find out whether an app
+# was handled, and "absent" previously meant both "not selected" and "selected
+# but yours to export".
+MANUAL_TODO_MD="- none selected"
+if [[ "$SELECTION_ACTIVE" == true ]]; then
+  _man_md="$(while IFS= read -r m; do
+    [[ -n "$m" ]] || continue
+    printf -- '- %s  (drop-folder: app-settings-backup/%s/)\n' "$m" "$(app_slug "$m")"
+  done <<< "$SELECTED_MANUAL")"
+  [[ -n "$_man_md" ]] && MANUAL_TODO_MD="$_man_md"
+fi
+
 # The scan-only candidate review writes no MANIFEST.md — it only produces the
 # review bundle and refreshes the selection checklist.
 if [[ "$RUN_CANDIDATE_REVIEW" != true ]]; then
@@ -1367,6 +1466,10 @@ Artifact root: $REIMAGE_ARTIFACT_ROOT
 $REIMAGE_ARTIFACT_ROOT/app-settings-backup/
 $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/
 \`\`\`
+
+## Manual backup — supported apps with no scripted capture
+
+$MANUAL_TODO_MD
 
 ## Manual backup — unsupported apps you selected
 
@@ -1412,6 +1515,31 @@ else
   echo "IntelliJ helper: $INTELLIJ_STATUS"
   echo "VS Code capture: $VSCODE_STATUS"
   echo "App configs: $APP_CONFIG_STATUS"
+
+  # Manual-only apps produce no folder by design. Saying so is the difference
+  # between "the script skipped my selection" and "this one is yours to export".
+  # Unsupported apps already get a folder and a README; supported-but-manual
+  # apps got neither, which made them the least visible of the three.
+  if [[ -n "${SELECTED_MANUAL//[[:space:]]/}" ]]; then
+    echo ""
+    echo "Manual-only apps you selected — no folder is created for these:"
+    while IFS= read -r _m; do
+      [[ -n "$_m" ]] && echo "  - $_m"
+    done <<< "$SELECTED_MANUAL"
+    echo "  Complete their exports in backup-apps.md -> Step 5 (Complete Manual Exports)."
+    echo "  That step names the destination for each; create it as you export."
+  fi
+
+  # An app processed with nothing to copy leaves no folder either, for a very
+  # different reason. Distinguish the two so neither reads as a silent skip.
+  if [[ -n "${PRUNED_APP_DIRS//[[:space:]]/}" ]]; then
+    echo ""
+    echo "Removed as empty — detected and processed, but the sources held nothing:"
+    for _p in $PRUNED_APP_DIRS; do
+      echo "  - $_p"
+    done
+    echo "  If you expected content, confirm the app is installed and its state exists."
+  fi
 fi
 
 if $OPEN_AFTER; then

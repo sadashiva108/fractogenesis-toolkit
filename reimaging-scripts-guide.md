@@ -152,7 +152,7 @@ Current preferred script layout:
 │   │   │   ├── backup-docker-settings.sh
 │   │   │   ├── backup-intellij-scratches-consoles.sh
 │   │   │   ├── reimage-checklist.sh
-│   │   │   └── capture-size-audit.sh
+│   │   │   └── report-size-audit.sh
 │   │   ├── workflows/
 │   │   │   └── mac/
 │   │   │       └── reimage/
@@ -218,7 +218,7 @@ chmod +x bin/*.sh bin/*.py
 Run before copying large folders:
 
 ```bash
-./bin/capture-size-audit.sh
+./bin/report-size-audit.sh
 ```
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -287,7 +287,7 @@ $REIMAGE_ARTIFACT_ROOT/app-backups/raycast/, if used
 $REIMAGE_ARTIFACT_ROOT/app-backups/obsidian/, if used
 ```
 
-If Docker `config.json`, Chrome password CSVs, secret-bearing Postman exports, or Raycast secret exports are staged, rerun Phase 3C before final validation.
+If Docker `config.json`, Chrome password CSVs, secret-bearing Postman exports, or Raycast secret exports are staged, rerun Phase 3B and then Phase 3C before final validation.
 
 Docker-only rerun through the main Phase 2D entrypoint:
 
@@ -794,7 +794,7 @@ chmod +x bin/*.sh bin/*.py
 # when reimage.env needs resolved values written back to disk.
 
 # Phase 2 — backups
-./bin/capture-size-audit.sh
+./bin/report-size-audit.sh
 ./bin/backup-repos.sh --artifact-root "$REIMAGE_ARTIFACT_ROOT" --root ~/path/to/projects --root ~/path/to/docs
 ./bin/backup-home.sh --external-only
 # Optional: run the OneDrive copy only after ONEDRIVE_ROOT resolves to ~/Library/CloudStorage/OneDrive-AcmeGroup.

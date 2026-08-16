@@ -62,7 +62,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # ── Colors ──────────────────────────────────────────────────────────────────
-# Same palette and section helpers as backup-home.sh and capture-size-audit.sh
+# Same palette and section helpers as backup-home.sh and report-size-audit.sh
 # so severity colors mean the same thing across the workflow.
 RED='\033[0;31m'; YEL='\033[1;33m'; GRN='\033[0;32m'; CYN='\033[0;36m'
 BLD='\033[1m'; DIM='\033[2m'; RST='\033[0m'

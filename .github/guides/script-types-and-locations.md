@@ -62,6 +62,26 @@ when a runbook tells the reader to run it directly. Until then it stays in
 **Runbook and executable share a name.** `bin/backup-home.sh` pairs with
 `backup-home.md` at the repo root.
 
+**`capture-`, `record-` and `report-` are not synonyms.** All three write
+evidence, and the prefix is the only thing that says which kind:
+
+- `capture-` — a paired pre-image / post-image inventory of *system state*, re-run
+  after the reimage so the two can be compared. Every `capture-*` script has a
+  Phase 13 sibling; there are no exceptions.
+- `record-` — one-time evidence that a specific *operation* succeeded, with no
+  later counterpart to compare against: `record-enrollment.sh`,
+  `record-reimaged-system.sh`, `record-time-machine-evidence.sh`.
+- `report-` — leaves a durable, timestamped `*-reports/` directory under the
+  artifact root that later steps and the Phase 6B sign-off read back:
+  `report-size-audit.sh` → `size-audit-reports/`, `report-loose-secrets.sh` →
+  `loose-secrets-reports/`. The prefix names the output, not the caller count —
+  one of these is cross-cutting and the other is owned by a single runbook.
+- `verify-` / `check-` — validators that produce no artifact at all.
+
+Reach for `capture-` only when a post-image run of the same script is part of the
+workflow. If there is nothing to compare against, it is a `record-`. If it leaves
+a reports directory behind, it is a `report-`.
+
 **A runbook may own more than one `bin/` script.** The name pairing identifies
 the *primary* entrypoint, not the complete set. `stage-loose-secrets.md` owns
 both `stage-loose-secrets.sh` and `report-loose-secrets.sh` — one acts, one
@@ -70,8 +90,8 @@ run at any time. `backup-home.md` likewise owns `verify-artifact-config.sh`.
 A second script belongs to the runbook that tells the reader to run it.
 
 **Cross-cutting utilities have no owning runbook at all** and are the deliberate
-exception to the pairing — `capture-size-audit.sh` and `verify-doc-paths.sh` are
-the current ones. The test is how many runbooks *call* it, not how much ground
+exception to the pairing — `report-size-audit.sh` (called by six runbooks) and
+`verify-doc-paths.sh` are the current ones. The test is how many runbooks *call* it, not how much ground
 it covers: `report-loose-secrets.sh` examines material produced by six earlier
 phases but is invoked from exactly one runbook, so it is owned, not
 cross-cutting.
