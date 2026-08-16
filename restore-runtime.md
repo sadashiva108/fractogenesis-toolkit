@@ -1,10 +1,10 @@
-[[reimaging-guide#Phase 8A — Restore Runtime Libraries|← Back to Mac Reimaging Guide]]
+[[reimaging-guide#Phase 10A — Restore Runtime Libraries|← Back to Mac Reimaging Guide]]
 
 # Restore Runtime
 
 **Last updated:** 2026-08-04
 
-Rebuild the non-secret runtime and toolchain layer on the reimaged Mac — Xcode Command Line Tools, Homebrew, Java and the JVM build tools, Node via `nvm`, and the platform CLIs — before any secret material or repository work begins. This runbook is manual by design; every install is `xcode-select`, `brew`, or `nvm` and there is no fractogenesis-toolkit entrypoint to drive it. The captured pre-image and post-image system inventories from Phases 2A and 11B are the reference for what "restored" means here.
+Rebuild the non-secret runtime and toolchain layer on the reimaged Mac — Xcode Command Line Tools, Homebrew, Java and the JVM build tools, Node via `nvm`, and the platform CLIs — before any secret material or repository work begins. This runbook is manual by design; every install is `xcode-select`, `brew`, or `nvm` and there is no fractogenesis-toolkit entrypoint to drive it. The captured pre-image and post-image system inventories from Phases 2A and 13B are the reference for what "restored" means here.
 
 ---
 
@@ -55,10 +55,10 @@ version comparison against the captured pre-image and post-image system inventor
 It does not own:
 
 ```text
-SSH keys, certificates, Java trust overrides (jssecacerts), shell/CLI credentials, licenses — Phase 8B (restore-access)
-managed enrollment, MDM baseline, and stabilization restarts — Phase 6 (enroll-and-stabilize)
-day-one usability sign-off and first Time Machine backup post-image — Phase 7 (verify-reimaged-system)
-Git identity plumbing, SSH host aliases, and the clone template for re-cloning repositories — Phase 9 (restore-git)
+SSH keys, certificates, Java trust overrides (jssecacerts), shell/CLI credentials, licenses — Phase 10B (restore-access)
+managed enrollment, MDM baseline, and stabilization restarts — Phase 8 (enroll-and-stabilize)
+day-one usability sign-off and first Time Machine backup post-image — Phase 9 (verify-reimaged-system)
+Git identity plumbing, SSH host aliases, and the clone template for re-cloning repositories — Phase 11 (restore-git)
 ```
 
 This runbook can be rerun. Every step is idempotent (Homebrew and `nvm` skip anything already installed at the requested version), so a partial run can be resumed without a special mode.
@@ -72,7 +72,7 @@ This runbook can be rerun. Every step is idempotent (Homebrew and `nvm` skip any
 
 ## How the Workflow Works
 
-Read this before running anything. The order is a hard bootstrap chain, not a preference: Xcode Command Line Tools have to be present before Homebrew installs cleanly, Homebrew has to be present before the JVM and Node stacks, and the JVM has to be in place before Phase 8B tries to restore the `jssecacerts` Java trust override — that override has to match the JDK that is actually installed. Node stays out of the Homebrew chain intentionally: it is installed via `nvm` so a project can switch versions per repo without a PATH collision with a `brew install node`.
+Read this before running anything. The order is a hard bootstrap chain, not a preference: Xcode Command Line Tools have to be present before Homebrew installs cleanly, Homebrew has to be present before the JVM and Node stacks, and the JVM has to be in place before Phase 10B tries to restore the `jssecacerts` Java trust override — that override has to match the JDK that is actually installed. Node stays out of the Homebrew chain intentionally: it is installed via `nvm` so a project can switch versions per repo without a PATH collision with a `brew install node`.
 
 The runbook is script-free by design. Every step is a small, standard installer command that either succeeds cleanly or fails in a way the reader will investigate; automating around Homebrew and `nvm` here would obscure the diagnostic surface those tools already print. The captured pre-image system inventory under `$REIMAGE_ARTIFACT_ROOT/system-inventory/pre-image-*/` and its post-image sibling are the reference for what "restored" looks like — the final step compares the fresh install against them.
 
@@ -82,7 +82,7 @@ The runbook is script-free by design. Every step is a small, standard installer 
 |---|---|
 | Runtime layer | The non-secret toolchain (CLT, Homebrew, JDK, Node, build tools, platform CLIs). Not shell profiles or credentials. |
 | Pre-image inventory | The `system-inventory/pre-image-YYYYMMDD-HHMMSS/` bundle captured in Phase 2A. |
-| Post-image inventory | The `system-inventory/post-image-YYYYMMDD-HHMMSS/` bundle captured in Phase 11B after restore completes. Not available yet during this phase; used later for the audit. |
+| Post-image inventory | The `system-inventory/post-image-YYYYMMDD-HHMMSS/` bundle captured in Phase 13B after restore completes. Not available yet during this phase; used later for the audit. |
 | Approved-newer version | A newer tool version than the pre-image had, chosen intentionally because the older one is unsupported or has a known issue. Not a drift. |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -103,7 +103,7 @@ Input evidence used for comparison in Step 7:
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/system-inventory/pre-image-YYYYMMDD-HHMMSS/
-$REIMAGE_ARTIFACT_ROOT/system-inventory/post-image-YYYYMMDD-HHMMSS/    # only present after Phase 11B
+$REIMAGE_ARTIFACT_ROOT/system-inventory/post-image-YYYYMMDD-HHMMSS/    # only present after Phase 13B
 ```
 
 The complete `system-inventory/` layout is defined once in the Master Directory Reference:
@@ -130,7 +130,7 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 ### Prerequisites
 
 - Your shell is at the repository root — `cd "$FRACTOGENESIS_HOME"` once for the session. Per the guide's [[reimaging-guide#Core Assumptions|Core Assumptions]], the commands below assume this and don't repeat it.
-- Phase 6 ([[enroll-and-stabilize|enroll-and-stabilize.md]]) closed out with a clean managed baseline, and Phase 7 ([[verify-reimaged-system|verify-reimaged-system.md]]) signed off day-one usability. If either is still open, close it first.
+- Phase 8 ([[enroll-and-stabilize|enroll-and-stabilize.md]]) closed out with a clean managed baseline, and Phase 9 ([[verify-reimaged-system|verify-reimaged-system.md]]) signed off day-one usability. If either is still open, close it first.
 - The reimaged Mac has internet access. Homebrew, `nvm`, JDK downloads, and every platform CLI install below hit the network.
 - The external artifact volume is mounted and `reimage.env` resolves so Step 7 can read the pre-image inventory. If it isn't mounted yet, do Steps 1–6 anyway and reconnect the drive before Step 7.
 
@@ -148,7 +148,7 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 
 ## Sequential Steps
 
-Run these in order. Every step is a dependency for at least one later step: CLT before Homebrew, Homebrew before the JVM and CLIs, JVM before Phase 8B's Java trust override work.
+Run these in order. Every step is a dependency for at least one later step: CLT before Homebrew, Homebrew before the JVM and CLIs, JVM before Phase 10B's Java trust override work.
 
 ### Step 1 — Install Xcode Command Line Tools
 
@@ -368,7 +368,7 @@ Confirm the runtime layer meets its exit criteria before starting [[restore-acce
 | Platform CLIs | Cloud Foundry CLI, `fly`, `jq`, `yq`, and the other utilities from Step 6 run. |
 | Version comparison | Every drift versus the pre-image inventory is either an approved-newer version or an intentional decision. |
 
-Once every row above is a yes, move to [[restore-access|restore-access.md]] to restore the identity, trust, and credential layer. Completing that runbook is what actually unlocks Git, IDE, and application restore in Phases 9 onward.
+Once every row above is a yes, move to [[restore-access|restore-access.md]] to restore the identity, trust, and credential layer. Completing that runbook is what actually unlocks Git, IDE, and application restore in Phases 11 onward.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 

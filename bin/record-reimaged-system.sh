@@ -2,7 +2,7 @@
 # =============================================================================
 # record-reimaged-system.sh
 #
-# Phase 7 — Verify Reimaged System evidence recorder. Runs read-only day-one
+# Phase 9 — Verify Reimaged System evidence recorder. Runs read-only day-one
 # health checks (identity, MDM/profiles, FileVault, expected managed and
 # personal apps, running managed processes, volumes, Time Machine destination,
 # software updates, brew/git/xcode presence, optional network reachability),
@@ -10,7 +10,7 @@
 # evidence bundle plus companion planning documents (initial checklist,
 # restart checkpoints, Time Machine plan, manual captures).
 #
-# Meant to run twice: once after Phase 6 completes and the external artifact
+# Meant to run twice: once after Phase 8 completes and the external artifact
 # drive is reconnected, and once again after the second stabilization restart
 # so the two bundles can be compared for regressions. See
 # verify-reimaged-system.md for the full runbook.
@@ -167,7 +167,7 @@ fi
 STAMP="$(date +%Y%m%d-%H%M%S)"
 # Bundle prefix kept as initial-reimaged-system-* to match the artifact tree
 # documented in references/master-directory-reference.md and the pattern that
-# bin/reimage-checklist.sh looks for when validating Phase 7 evidence.
+# bin/reimage-checklist.sh looks for when validating Phase 9 evidence.
 OUT="$OUTPUT_ROOT/initial-reimaged-system-$STAMP"
 mkdir -p "$OUT/logs" "$OUT/raw" "$OUT/checks"
 
@@ -374,7 +374,7 @@ Use restarts as deliberate stabilization points, not as random troubleshooting.
 | After Homebrew, shell, Git, Java, Node, Python, Gradle, Maven, Docker CLI basics | Restart once before heavy repo restore | `TODO` | Helps catch path, shell, Rosetta, Java, and developer-tool setup issues. |
 | After Docker Desktop, VPN/Zscaler, certificates, and corporate network access are restored | Restart once before project validation | `TODO` | Helps stabilize network extensions, Docker helpers, and cert trust. |
 | After Office, OneDrive, Teams, Chrome, Obsidian, Postman, VS Code, Raycast are installed/configured | Restart once before reimaged-system validation | `TODO` | Helps confirm login items, background services, and managed app registration. |
-| After Phase 10 validation passes | Final restart, then capture reimaged-system performance/Office baseline | `TODO` | Produces a cleaner comparison point against the pre-image baseline. |
+| After Phase 12 validation passes | Final restart, then capture reimaged-system performance/Office baseline | `TODO` | Produces a cleaner comparison point against the pre-image baseline. |
 
 If Outlook or OneNote closes unexpectedly, capture evidence before restarting or reopening the app.
 EOF_RESTART
@@ -386,8 +386,8 @@ Keep Time Machine backups on the dedicated Apple backups partition ($EXTERNAL_AP
 
 Recommended reimaged-system Time Machine checkpoints:
 
-1. **Clean managed baseline backup** — after Phase 6 completes, after initial Intune / Company Portal enrollment is stable, after required security tools are installed or clearly installing, after macOS updates, and after one restart.
-2. **Working development baseline backup** — after Phases 7 through 9 are substantially restored and Phase 10 validation passes.
+1. **Clean managed baseline backup** — after Phase 8 completes, after initial Intune / Company Portal enrollment is stable, after required security tools are installed or clearly installing, after macOS updates, and after one restart.
+2. **Working development baseline backup** — after Phases 9 through 11 are substantially restored and Phase 12 validation passes.
 3. **Normal ongoing backups** — after the machine is back to daily use.
 
 Before starting reimaged-system Time Machine, confirm the artifact volume is excluded so the manual backup directory is not backed up into the Time Machine partition:
@@ -497,7 +497,7 @@ Keep active scripts in the toolkit checkout. Store generated evidence, checklist
 | Chrome baseline settings restored | `TODO` |  |
 | Terminal baseline settings restored | `TODO` |  |
 | Display/keyboard/mouse basics restored | `TODO` |  |
-| Ready to move to Phase 8 runtime environment restore | `TODO` |  |
+| Ready to move to Phase 10 runtime environment restore | `TODO` |  |
 
 ## Recommended Next Actions
 
@@ -505,7 +505,7 @@ Keep active scripts in the toolkit checkout. Store generated evidence, checklist
 2. Complete the manual checklist above.
 3. Restart once after managed enrollment and security tools are stable.
 4. Rerun this script after the restart and compare results.
-5. Take the first reimaged-system Time Machine backup after Phase 6 is stable, macOS updates are complete, and the first restart has completed.
+5. Take the first reimaged-system Time Machine backup after Phase 8 is stable, macOS updates are complete, and the first restart has completed.
 
 EOF_CHECKLIST
 

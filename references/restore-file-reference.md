@@ -27,7 +27,7 @@ This document assumes the standard artifact model: workflow source files stay in
 
 ## Phase Guide Reference
 
-Single source of truth for the phase guides used across the post-image stage (Phase 6 through Phase 13), in the order they are typically reached. Linked from [[reimaging-guide#Post-Image|Post-Image]] in Workflow Map and Reference Guides — update this table, not a copy in the guide, when a post-image runbook is added, renamed, or retired.
+Single source of truth for the phase guides used across the post-image stage (Phase 8 through Phase 15), in the order they are typically reached. Linked from [[reimaging-guide#Post-Image|Post-Image]] in Workflow Map and Reference Guides — update this table, not a copy in the guide, when a post-image runbook is added, renamed, or retired.
 
 | File | Purpose |
 |---|---|
@@ -61,7 +61,7 @@ It complements the broader workflow docs:
 
 | Need | Use |
 |---|---|
-| Full post-image phase order | `reimaging-guide.md` Phases 6–13 |
+| Full post-image phase order | `reimaging-guide.md` Phases 8–15 |
 | Managed enrollment baseline | `enroll-and-stabilize.md` |
 | Early post-image checklist and sanity checks | `verify-reimaged-system.md` |
 | Runtime restore | `restore-runtime.md` |
@@ -80,7 +80,7 @@ It complements the broader workflow docs:
 
 ## External Restore Root Layout
 
-The restore-side layout relevant to Phases 6–13 is:
+The restore-side layout relevant to Phases 8–15 is:
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/
@@ -176,16 +176,16 @@ Not every restore uses every category. Treat this as the full restore/capture ma
 
 | Phase | Main sources under `$REIMAGE_ARTIFACT_ROOT` | Main outputs under `$REIMAGE_ARTIFACT_ROOT` |
 |---|---|---|
-| Phase 6 — Enroll and Stabilize | none required beyond `reimage.env`; optional mounted artifact root | `reimaged-system/enrollment/record-enrollment-*/`, `reimaged-system/enrollment/latest-enrollment-record.txt` |
-| Phase 7 — Initial Captures and Sanity Checks | prepared external root, optional `reimaged-system/restore-notes/` | `reimaged-system/initial-reimaged-system-*/`, `reimaged-system/latest-initial-reimaged-system-bundle.txt`, `reimaged-system/restore-notes/`, `reimaged-system/restarts/`, `reimaged-system/time-machine/` |
-| Phase 8A — Restore Runtime Libraries | `system-inventory/pre-image-*/`, `system-inventory/post-image-*/`, `home-files-backup/dotfiles/` | usually notes only; later validated under `reimaged-system/` |
-| Phase 8B — Restore Access | `secrets-encrypted/`, `public-certs/`, `home-files-backup/dotfiles/` | `reimaged-system/restore-notes/` |
-| Phase 9A — Restore Git | `secrets-encrypted/ssh/`, `secrets-encrypted/git/`, `workflow-snapshot/reimage-workflow-docs/` | dual `~/.gitconfig` + `~/.ssh/config` in place; validated end-to-end for work and personal identities |
-| Phase 9B — Restore Repositories | `repo-audit-reports/runs/pre-image-*/repos.tsv`, `repo-audit-reports/staged-ignored-files/live/<label>/` | `repo-audit-reports/runs/post-image-restore-*/`, `repo-audit-reports/latest-post-image-restore.txt`, working repo checkouts |
-| Phase 10 — Restore Apps | `app-settings-backup/`, `secrets-encrypted/`, `reimaged-system/restore-notes/` | app-specific notes and later validation evidence |
-| Phase 11 — Post-Image Captures | matching Phase 3 capture outputs for comparison | `workflow-snapshot/reimage-workflow-docs/`, `workflow-snapshot/pre-image-workflow-snapshot-*/`, `workflow-snapshot/latest-pre-image-workflow-snapshot.txt`, `system-inventory/post-image-*/`, `managed-inventory/post-image-*/`, `performance-audit/post-image-performance-audit-*/`, `office-stability/post-reimage-*/` |
-| Phase 12 — Reimaged System Checks | everything needed for final validation context | `reimaged-system/checklists/reimage-checklist-*.md`, `reimaged-system/checklists/latest-reimage-checklist.txt`, optional manual follow-up in `reimaged-system/restore-notes/` |
-| Phase 13 — Restore Home | `home-files-backup/home/`, `home-files-backup/dotfiles/`, optionally `staged-ignored-files/live/` | optional final notes under `reimaged-system/restore-notes/` |
+| Phase 8 — Enroll and Stabilize | none required beyond `reimage.env`; optional mounted artifact root | `reimaged-system/enrollment/record-enrollment-*/`, `reimaged-system/enrollment/latest-enrollment-record.txt` |
+| Phase 9 — Initial Captures and Sanity Checks | prepared external root, optional `reimaged-system/restore-notes/` | `reimaged-system/initial-reimaged-system-*/`, `reimaged-system/latest-initial-reimaged-system-bundle.txt`, `reimaged-system/restore-notes/`, `reimaged-system/restarts/`, `reimaged-system/time-machine/` |
+| Phase 10A — Restore Runtime Libraries | `system-inventory/pre-image-*/`, `system-inventory/post-image-*/`, `home-files-backup/dotfiles/` | usually notes only; later validated under `reimaged-system/` |
+| Phase 10B — Restore Access | `secrets-encrypted/`, `public-certs/`, `home-files-backup/dotfiles/` | `reimaged-system/restore-notes/` |
+| Phase 11A — Restore Git | `secrets-encrypted/ssh/`, `secrets-encrypted/git/`, `workflow-snapshot/reimage-workflow-docs/` | dual `~/.gitconfig` + `~/.ssh/config` in place; validated end-to-end for work and personal identities |
+| Phase 11B — Restore Repositories | `repo-audit-reports/runs/pre-image-*/repos.tsv`, `repo-audit-reports/staged-ignored-files/live/<label>/` | `repo-audit-reports/runs/post-image-restore-*/`, `repo-audit-reports/latest-post-image-restore.txt`, working repo checkouts |
+| Phase 12 — Restore Apps | `app-settings-backup/`, `secrets-encrypted/`, `reimaged-system/restore-notes/` | app-specific notes and later validation evidence |
+| Phase 13 — Post-Image Captures | matching Phase 4 capture outputs for comparison | `workflow-snapshot/reimage-workflow-docs/`, `workflow-snapshot/pre-image-workflow-snapshot-*/`, `workflow-snapshot/latest-pre-image-workflow-snapshot.txt`, `system-inventory/post-image-*/`, `managed-inventory/post-image-*/`, `performance-audit/post-image-performance-audit-*/`, `office-stability/post-reimage-*/` |
+| Phase 14 — Reimaged System Checks | everything needed for final validation context | `reimaged-system/checklists/reimage-checklist-*.md`, `reimaged-system/checklists/latest-reimage-checklist.txt`, optional manual follow-up in `reimaged-system/restore-notes/` |
+| Phase 15 — Restore Home | `home-files-backup/home/`, `home-files-backup/dotfiles/`, optionally `staged-ignored-files/live/` | optional final notes under `reimaged-system/restore-notes/` |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -208,7 +208,7 @@ These paths are used before deeper restore work begins.
 | Restart notes or checkpoints | `reimaged-system/restarts/` |
 | First post-image backup notes | `reimaged-system/time-machine/` |
 
-Phase 6 can also stage locally under `REIMAGE_WORKSPACE_ROOT/enrollment/` when the external drive is not mounted yet, then copy the bundle back into `$REIMAGE_ARTIFACT_ROOT/reimaged-system/enrollment/` later.
+Phase 8 can also stage locally under `REIMAGE_WORKSPACE_ROOT/enrollment/` when the external drive is not mounted yet, then copy the bundle back into `$REIMAGE_ARTIFACT_ROOT/reimaged-system/enrollment/` later.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -293,7 +293,7 @@ Keep secret-bearing app state separate from plain exports whenever both exist.
 
 ## Post-Image Comparison Captures
 
-These are the Phase 11 comparison outputs created after the rebuilt Mac is substantially restored:
+These are the Phase 13 comparison outputs created after the rebuilt Mac is substantially restored:
 
 | Capture | Destination |
 |---|---|
@@ -303,7 +303,7 @@ These are the Phase 11 comparison outputs created after the rebuilt Mac is subst
 | Performance audit | `performance-audit/post-image-performance-audit-<scenario>-YYYYMMDD-HHMMSS/` |
 | Office stability | `office-stability/post-reimage-office-baseline-YYYYMMDD-HHMMSS/` and `office-stability/checklists/` |
 
-Use these as the **after** side of the comparison against Phase 3, not as replacements for the original pre-image evidence.
+Use these as the **after** side of the comparison against Phase 4, not as replacements for the original pre-image evidence.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -311,14 +311,14 @@ Use these as the **after** side of the comparison against Phase 3, not as replac
 
 ## Final Validation and Manual Notes
 
-Phase 12 writes the final rebuilt-system sign-off artifacts under:
+Phase 14 writes the final rebuilt-system sign-off artifacts under:
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/reimaged-system/checklists/reimage-checklist-YYYYMMDD-HHMMSS.md
 $REIMAGE_ARTIFACT_ROOT/reimaged-system/checklists/latest-reimage-checklist.txt
 ```
 
-Unlike the initial checklist bundle, Phase 12 does not currently generate a separate root-level `manual-captures-required.md`. Keep unresolved manual follow-up in `reimaged-system/restore-notes/` or `reimaged-system-evidence.md`.
+Unlike the initial checklist bundle, Phase 14 does not currently generate a separate root-level `manual-captures-required.md`. Keep unresolved manual follow-up in `reimaged-system/restore-notes/` or `reimaged-system-evidence.md`.
 
 Related manual-note locations:
 

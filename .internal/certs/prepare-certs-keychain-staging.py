@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Prepare Phase 2E certificate/Keychain staging support artifacts.
+"""Prepare Phase 3A certificate/Keychain staging support artifacts.
 
 Location: .internal/certs/prepare-certs-keychain-staging.py
 
@@ -516,7 +516,7 @@ def normalize_ten_col(path: Path, source_feed: str, backup_root: str) -> List[Di
             plan_scope=plan_scope,
             proposed_decision=proposed,
             requires_human=requires_human,
-            reason="Normalized from Phase 2E certificate/Keychain TSV feed.",
+            reason="Normalized from Phase 3A certificate/Keychain TSV feed.",
             notes=notes,
         ))
     return records
@@ -600,7 +600,7 @@ def normalize_gitignored(path: Path, feed_name: str, backup_root: str = "") -> T
     records: List[Dict[str, str]] = []
     filtered_noise: List[Dict[str, str]] = []
     cert_project_destination = "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/certs/project-local/" if backup_root else "secrets-encrypted/certs/project-local/"
-    out_of_scope_destination = "Phase 2F consolidated secrets DMG or selected ignored-file backup; not Phase 2E cert staging"
+    out_of_scope_destination = "Phase 3B consolidated secrets DMG or selected ignored-file backup; not Phase 3A cert staging"
 
     for row in rows:
         if len(row) != 3:
@@ -807,7 +807,7 @@ def write_proposed_staged_certs(review_dir: Path, stamp: str, records: List[Dict
     proposed_dir.mkdir(parents=True, exist_ok=True)
     fragment = proposed_dir / "project-local.conf.sh.proposed"
     with fragment.open("w", encoding="utf-8") as f:
-        f.write("# Proposed Phase 2E project-local staged-certs fragment\n")
+        f.write("# Proposed Phase 3A project-local staged-certs fragment\n")
         f.write(f"# Generated: {dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
         f.write("# Source: prepare-certs-keychain-staging.py normalize/plan\n")
         f.write("#\n")
@@ -873,7 +873,7 @@ def restore_plan_for_record(rec: Dict[str, str]) -> str:
     if category == "public-certificate":
         return "Use as public trust/reference material only; import manually if an internal endpoint/tool still requires it after rebuild."
     if decision == "propose-project-local-stage":
-        return "After review, copy approved path into the project-local staged-certs fragment, rerun Phase 2E scan, rerun Phase 2F, and restore only to that project if still required."
+        return "After review, copy approved path into the project-local staged-certs fragment, rerun Phase 3A scan, rerun Phase 3B, and restore only to that project if still required."
     return "Review the normalized plan row before restoring; do not copy blindly."
 
 
@@ -890,7 +890,7 @@ def write_manual_keychain_export_checklist(review_dir: Path, stamp: str, records
     with out.open("w", encoding="utf-8") as f:
         f.write("# Proposed Keychain Manual Export Checklist\n\n")
         f.write(f"Generated: {dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
-        f.write("This is a proposed review checklist generated from primary `keychain-identity` rows in the normalized Phase 2E plan. It is not proof that anything was exported. Review each identity in Keychain Access and export only what is still required.\n\n")
+        f.write("This is a proposed review checklist generated from primary `keychain-identity` rows in the normalized Phase 3A plan. It is not proof that anything was exported. Review each identity in Keychain Access and export only what is still required.\n\n")
         f.write("Save any `.p12` / `.pfx` export password only in the approved password manager. Do not put passwords in this file, filenames, scripts, OneDrive, iCloud, or the backup folder.\n\n")
         f.write("| Status | Fingerprint | Scope | Identity | Proposed action | Export target | Password-manager entry | Restore source / notes |\n")
         f.write("|---|---|---|---|---|---|---|---|\n")
@@ -911,7 +911,7 @@ def write_manual_keychain_export_checklist(review_dir: Path, stamp: str, records
         f.write("- [ ] Public-only `.cer` / `.pem` exports were staged intentionally and do not contain private keys.\n")
         f.write("- [ ] Non-exportable managed identities were documented with their restore/re-enrollment source.\n")
         f.write("- [ ] Export passwords were saved only in the approved password manager.\n")
-        f.write("- [ ] Phase 2F will be rerun after any new manual export is added.\n")
+        f.write("- [ ] Phase 3B will be rerun after any new manual export is added.\n")
     stats.manual_keychain_export_checklist_rows = len(rows)
     stats.derived_files_written.append(str(out))
     return out
@@ -924,7 +924,7 @@ def write_cert_restore_notes(review_dir: Path, stamp: str, records: List[Dict[st
     with out.open("w", encoding="utf-8") as f:
         f.write("# Proposed Certificate and Keychain Restore Notes\n\n")
         f.write(f"Generated: {dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
-        f.write("These notes are generated from the primary rows of the normalized Phase 2E plan. They are proposed restore notes only; review them before copying any text into a final restore note or before restoring any certificate material.\n\n")
+        f.write("These notes are generated from the primary rows of the normalized Phase 3A plan. They are proposed restore notes only; review them before copying any text into a final restore note or before restoring any certificate material.\n\n")
         f.write("## Restore principles\n\n")
         f.write("1. Restore from the newest validated `all-secrets-*.dmg`, not from loose plaintext staging.\n")
         f.write("2. Restore cert/key material only when a tool, project, Java runtime, VPN/client-auth flow, or internal TLS endpoint still requires it after rebuild.\n")
@@ -952,7 +952,7 @@ def write_cert_restore_notes(review_dir: Path, stamp: str, records: List[Dict[st
         f.write("\n## Finalize after review\n\n")
         f.write("- [ ] Remove rows that were intentionally skipped.\n")
         f.write("- [ ] Replace generic guidance with exact restore targets where known.\n")
-        f.write("- [ ] Confirm the newest Phase 2F DMG contains any manually exported or staged files referenced here.\n")
+        f.write("- [ ] Confirm the newest Phase 3B DMG contains any manually exported or staged files referenced here.\n")
         f.write("- [ ] Keep this as a proposed note until the cert/keychain plan is reviewed.\n")
     stats.cert_restore_note_rows = len(rows)
     stats.derived_files_written.append(str(out))
@@ -1099,13 +1099,13 @@ def write_summary(path: Path, full_plan: Path, primary_plan: Path, records: List
 
 def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Prepare Phase 2E cert/Keychain staging config and normalized planning artifacts."
+        description="Prepare Phase 3A cert/Keychain staging config and normalized planning artifacts."
     )
     sub = parser.add_subparsers(dest="command")
 
     init = sub.add_parser(
         "init-staged-certs-config",
-        help="Copy staged-certs template fragments into REIMAGE_WORKSPACE_ROOT for Phase 2E reuse.",
+        help="Copy staged-certs template fragments into REIMAGE_WORKSPACE_ROOT for Phase 3A reuse.",
     )
     init.add_argument("--env-file", required=True, help="Path to reimage.env.")
     init.add_argument("--force", action="store_true", help="Overwrite existing workspace staged-certs fragments.")

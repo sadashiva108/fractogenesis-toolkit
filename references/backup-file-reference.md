@@ -32,7 +32,7 @@ This document assumes the standard artifact model: workflow source files stay in
 
 ## Phase Guide Reference
 
-Single source of truth for the phase guides used across the pre-image stage (Phase 0 through Phase 4), in the order they are typically reached. Linked from [[reimaging-guide#Pre-Image|Pre-Image]] in Workflow Map and Reference Guides — update this table, not a copy in the guide, when a pre-image runbook is added, renamed, or retired.
+Single source of truth for the phase guides used across the pre-image stage (Phase 0 through Phase 6), in the order they are typically reached. Linked from [[reimaging-guide#Pre-Image|Pre-Image]] in Workflow Map and Reference Guides — update this table, not a copy in the guide, when a pre-image runbook is added, renamed, or retired.
 
 | File | Purpose |
 |---|---|
@@ -46,13 +46,13 @@ Single source of truth for the phase guides used across the pre-image stage (Pha
 | `stage-certs-keychain.md` | Certificate and Keychain review, export, and staging workflow before DMG encryption. |
 | `backup-dmg-secrets.md` | Consolidated encrypted secrets DMG staging, validation, cleanup, and restore notes. |
 | `backup-time-machine.md` | Time Machine setup, status capture, monitoring, and pre-reimage completion checks. |
-| `reimage-prep-evidence.md` | Comprehensive pre-image evidence reference for Phase 3 capture artifacts plus Phase 4 manual sign-off rows and templates under `$REIMAGE_ARTIFACT_ROOT`. |
+| `reimage-prep-evidence.md` | Comprehensive pre-image evidence reference for Phase 4 capture artifacts plus Phase 6 manual sign-off rows and templates under `$REIMAGE_ARTIFACT_ROOT`. |
 | `capture-workflow-snapshot.md` | Automated workflow snapshot capture and workflow-doc snapshots. |
 | `capture-system-inventory.md` | System inventory and workstation rebuild reference capture. |
 | `capture-managed-inventory.md` | Company-managed app/profile inventory capture guide and interpretation notes. |
 | `capture-performance-audit.md` | Performance baseline capture methodology for before/after comparison. |
 | `capture-office-stability-audit.md` | Outlook / OneNote stability evidence, watcher/marker usage, and comparison workflow. |
-| `reimage-prep-checks.md` | Phase 4 final pre-image validation: go / no-go checklist, cloud sync checks, and manual sign-off reference. |
+| `reimage-prep-checks.md` | Phase 6 final pre-image validation: go / no-go checklist, cloud sync checks, and manual sign-off reference. |
 | `templates/it-reimage-confirmation-template.md` | Copyable Phase 0 IT reimage confirmation template. |
 | `templates/app-backup-and-cloud-sync-signoff-template.md` | Manual sign-off template for app backup status, certificate/Keychain staging, VS Code Settings Sync, and cloud sync. |
 | `reimaging-scripts-guide.md` | Supporting command reference for automation used across the pre-image workflow. |
@@ -72,7 +72,7 @@ It complements the broader workflow docs:
 | Backup phase order and decisions                  | `reimaging-guide.md` Phase 2 |
 | Home files backup workflow                        | `backup-home.md` |
 | App backups                                       | `backup-apps.md` |
-| Phase 4 cloud sync and manual sign-off reference  | `reimage-prep-checks.md` |
+| Phase 6 cloud sync and manual sign-off reference  | `reimage-prep-checks.md` |
 | Certificate and Keychain staging                  | `stage-certs-keychain.md` |
 | Encrypted secret staging, validation, and cleanup | `backup-dmg-secrets.md` |
 | IntelliJ-specific backup artifacts                | `backup-intellij.md` |

@@ -2,7 +2,7 @@
 # =============================================================================
 # capture-workload-snapshot.sh
 #
-# Point-in-time Office workload snapshot (Phase 3D pre-image / Phase 11E
+# Point-in-time Office workload snapshot (Phase 4D pre-image / Phase 13E
 # post-image). Writes one timestamped text file capturing visible apps, main
 # workload processes, top CPU/memory users, installer/update/management
 # processes, Office app bundle status, crash reports newer than the current

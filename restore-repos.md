@@ -1,10 +1,10 @@
-[[reimaging-guide#Phase 9B — Restore Repositories|← Back to Mac Reimaging Guide]]
+[[reimaging-guide#Phase 11B — Restore Repositories|← Back to Mac Reimaging Guide]]
 
 # Restore Repositories
 
 **Last updated:** 2026-08-05
 
-Consume the pre-image repository audit produced by Phase 2C ([[backup-repos|backup-repos.md]]) to re-clone the tracked repositories onto the reimaged Mac, rsync the reviewed kept ignored files back into each working tree, and reconcile every pre-image carry-forward row (local-only commits, stashes, tracked changes) against the state of the freshly cloned repos. Runs after Phase 9A ([[restore-git|restore-git.md]]) has wired up the dual-identity `~/.gitconfig` and `~/.ssh/config`, so every clone command emitted here already routes through the correct SSH key.
+Consume the pre-image repository audit produced by Phase 2C ([[backup-repos|backup-repos.md]]) to re-clone the tracked repositories onto the reimaged Mac, rsync the reviewed kept ignored files back into each working tree, and reconcile every pre-image carry-forward row (local-only commits, stashes, tracked changes) against the state of the freshly cloned repos. Runs after Phase 11A ([[restore-git|restore-git.md]]) has wired up the dual-identity `~/.gitconfig` and `~/.ssh/config`, so every clone command emitted here already routes through the correct SSH key.
 
 ---
 
@@ -43,7 +43,7 @@ Consume the pre-image repository audit produced by Phase 2C ([[backup-repos|back
 
 ## Purpose
 
-Restore the *content* side of the Git story: get every repository that existed on the pre-image machine back onto the reimaged Mac with its kept ignored files in place and its pre-image carry-forward material (rescue branches, stashes, uncommitted work) either merged in or explicitly discarded with a note. Phase 9A restored the identity plumbing; this phase uses that plumbing to bring the repositories themselves back.
+Restore the *content* side of the Git story: get every repository that existed on the pre-image machine back onto the reimaged Mac with its kept ignored files in place and its pre-image carry-forward material (rescue branches, stashes, uncommitted work) either merged in or explicitly discarded with a note. Phase 11A restored the identity plumbing; this phase uses that plumbing to bring the repositories themselves back.
 
 This runbook owns:
 
@@ -52,17 +52,17 @@ reading the pre-image repo-audit-reports/runs/pre-image-*/repos.tsv inventory
 per-repo status classification (present | needs clone | ignored bundle available | carry-forward pending)
 emitting `git clone` commands that route through the correct dual-identity host alias
 rsyncing $REIMAGE_ARTIFACT_ROOT/staged-ignored-files/live/<label>/ back into each cloned working tree
-the exit-criteria table for Phase 9B and its sign-off
+the exit-criteria table for Phase 11B and its sign-off
 generating a timestamped restore-status bundle under repo-audit-reports/runs/post-image-restore-*/
 ```
 
 It does not own:
 
 ```text
-dual-identity ~/.gitconfig, ~/.ssh/config, and the clone command template itself — Phase 9A (restore-git)
+dual-identity ~/.gitconfig, ~/.ssh/config, and the clone command template itself — Phase 11A (restore-git)
 the pre-image push of rescue branches, stash preservation, and the reviewed kept ignored files — Phase 2C (backup-repos)
-the encrypted secret ignored files under secrets-encrypted/repos-gitignored/ — Phase 8B (restore-access) via the DMG
-IDE-specific repo state (IntelliJ project files, VS Code workspace) — Phase 10 (restore-intellij.md, restore-apps.md)
+the encrypted secret ignored files under secrets-encrypted/repos-gitignored/ — Phase 10B (restore-access) via the DMG
+IDE-specific repo state (IntelliJ project files, VS Code workspace) — Phase 12 (restore-intellij.md, restore-apps.md)
 ```
 
 This runbook can be rerun. Each run writes a fresh timestamped bundle under `repo-audit-reports/runs/post-image-restore-*/`; earlier runs stay untouched, so an early "before any clones" run and a later "everything cloned" run can be diffed to prove progress.
@@ -88,7 +88,7 @@ The script writes those results into a `restore-status.md` report plus a machine
 
 The pre-image machine has three things that can be lost across a reimage that plain `git clone` won't recover: (a) commits that were only on a local branch and never pushed, (b) stashes, and (c) modifications to tracked files that were neither committed nor stashed. `backup-repos.md` handles this by asking the operator, *before the reimage*, to push a `reimage/YYYYMMDD/*` rescue branch that includes those changes.
 
-Restoring is then a two-step reconciliation: `git clone` gets the mainline back, and `git fetch origin 'reimage/*'` picks up the rescue branch. This runbook's Step 5 walks that reconciliation per repo. If a pre-image row shows carry-forward count > 0 but no matching rescue branch exists on the remote, that is a real gap in Phase 2C's execution, not something Phase 9B can silently fix.
+Restoring is then a two-step reconciliation: `git clone` gets the mainline back, and `git fetch origin 'reimage/*'` picks up the rescue branch. This runbook's Step 5 walks that reconciliation per repo. If a pre-image row shows carry-forward count > 0 but no matching rescue branch exists on the remote, that is a real gap in Phase 2C's execution, not something Phase 11B can silently fix.
 
 ### Terminology
 
@@ -161,7 +161,7 @@ post-image-restore-YYYYMMDD-HHMMSS/
 
 ### Environment Variables
 
-The `reimage.env` values this runbook depends on. Values are resolved and written during `prepare-artifact-root.md` (paths and roots) and set by the operator (identity keys) before Phase 9A.
+The `reimage.env` values this runbook depends on. Values are resolved and written during `prepare-artifact-root.md` (paths and roots) and set by the operator (identity keys) before Phase 11A.
 
 | Variable | Meaning |
 |---|---|
@@ -183,7 +183,7 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 ### Prerequisites
 
 - Your shell is at the repository root — `cd "$FRACTOGENESIS_HOME"` once for the session. Per the guide's [[reimaging-guide#Core Assumptions|Core Assumptions]], the commands below assume this and don't repeat it.
-- Phase 9A ([[restore-git|restore-git.md]]) closed out with both `ssh -T` identity checks passing. Repositories need the dual-identity `~/.gitconfig` and `~/.ssh/config` in place before any clone command from Step 3 will authenticate correctly.
+- Phase 11A ([[restore-git|restore-git.md]]) closed out with both `ssh -T` identity checks passing. Repositories need the dual-identity `~/.gitconfig` and `~/.ssh/config` in place before any clone command from Step 3 will authenticate correctly.
 - The external artifact volume is mounted and `reimage.env` resolves. `ls "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/latest-run.txt"` should print the pointer file.
 - The pre-image `repos.tsv` has non-empty rows — this runbook cannot restore repositories that were never inventoried.
 
@@ -288,7 +288,7 @@ bash "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/$LATEST_RUN/rsync-ignored-files.
 ```
 
 > [!note]
-> Kept ignored files that were routed to `secrets-encrypted/repos-gitignored/` by Phase 2C are *not* under `staged-ignored-files/live/` — they come back with the DMG mount in Phase 8B ([[restore-access|restore-access.md]]) and are outside the scope of this runbook.
+> Kept ignored files that were routed to `secrets-encrypted/repos-gitignored/` by Phase 2C are *not* under `staged-ignored-files/live/` — they come back with the DMG mount in Phase 10B ([[restore-access|restore-access.md]]) and are outside the scope of this runbook.
 
 ### Step 5 — Reconcile Rescue Branches
 
@@ -347,7 +347,7 @@ Open the new report and confirm the exit criteria:
 | Rescue branches accounted for | Manual | Step 5 outcome recorded per repo | Every repo with carry-forward > 0 closed as merged / cherry-picked / intentionally discarded |
 | Personal repos route via personal SSH host alias | Manual | `git remote -v` in each personal clone | Remote uses `$GIT_PERSONAL_GITHUB_HOST` |
 
-Once every row is closed, Phase 9B is complete. Proceed to Phase 10 ([[restore-apps|restore-apps.md]]).
+Once every row is closed, Phase 11B is complete. Proceed to Phase 12 ([[restore-apps|restore-apps.md]]).
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -361,7 +361,7 @@ The script does X; these judgment calls stay with you.
 |---|---|
 | Which repositories in the pre-image inventory are still needed. | The script trusts the inventory verbatim; only you know which repos are archived, stale, or moved elsewhere. |
 | Whether a rescue branch should be merged, cherry-picked, or left as a branch. | Depends on how much of the pre-image work is still relevant on the target branch — a call this runbook cannot make. |
-| Whether a kept ignored file from the pre-image is still safe on the reimaged Mac. | Machine-specific paths, IDE settings, and env files may reference tooling that changed in Phase 8A. Review before blindly rsyncing every bundle. |
+| Whether a kept ignored file from the pre-image is still safe on the reimaged Mac. | Machine-specific paths, IDE settings, and env files may reference tooling that changed in Phase 10A. Review before blindly rsyncing every bundle. |
 | Whether a carry-forward row with no matching rescue branch is a real loss or an intentional discard. | Only the operator knows which pre-image work was worth preserving; the script only reports the gap. |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -412,7 +412,7 @@ Longer material most runs will not need, kept out of the main flow.
 
 Each pre-image TSV serves a different reconciliation step. The columns come from `.internal/git/capture-repo-audit.sh` and are stable across runs.
 
-| File | Purpose in Phase 9B |
+| File | Purpose in Phase 11B |
 |---|---|
 | `repos.tsv` | Master inventory. One row per repo; drives the classification loop. |
 | `local-only-commits.tsv` | One row per unpushed commit. Cross-check after fetching rescue branches — every row should now be reachable from a `reimage/*` ref. |

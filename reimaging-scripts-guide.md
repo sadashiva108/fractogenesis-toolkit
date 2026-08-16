@@ -22,27 +22,27 @@ Use this as the script index for the Mac reimage workflow. The Markdown runbooks
     - [[#Size Audit|Size Audit]]
     - [[#Phase 2A Git Repository Backups|Phase 2A Git Repository Backups]]
     - [[#Phase 2B Local Files Backup|Phase 2B Local Files Backup]]
-    - [[#Phase 2C Backup Apps|Phase 2C Backup Apps]]
-    - [[#Phase 2C IntelliJ Detail|Phase 2C IntelliJ Detail]]
-    - [[#Phase 2D Certificate and Keychain Staging|Phase 2D Certificate and Keychain Staging]]
-    - [[#Phase 2E Encrypted DMG Secrets Backup|Phase 2E Encrypted DMG Secrets Backup]]
-    - [[#Phase 2F Time Machine Backup and Status Capture|Phase 2F Time Machine Backup and Status Capture]]
+    - [[#Phase 2D Backup Apps|Phase 2D Backup Apps]]
+    - [[#Phase 2D IntelliJ Detail|Phase 2D IntelliJ Detail]]
+    - [[#Phase 3A Certificate and Keychain Staging|Phase 3A Certificate and Keychain Staging]]
+    - [[#Phase 3B Encrypted DMG Secrets Backup|Phase 3B Encrypted DMG Secrets Backup]]
+    - [[#Phase 5 Time Machine Backup and Status Capture|Phase 5 Time Machine Backup and Status Capture]]
 - [[#Separate Capture Script Reference|Separate Capture Script Reference]]
 - [[#Pre-Image Capture Automation|Pre-Image Capture Automation]]
-    - [[#Phase 3A Capture Workflow Snapshot|Phase 3A Capture Workflow Snapshot]]
-    - [[#Phase 3B Pre-Image System Inventory Capture|Phase 3B Pre-Image System Inventory Capture]]
-    - [[#Phase 3C Pre-Image Company-Managed Inventory Capture|Phase 3C Pre-Image Company-Managed Inventory Capture]]
-    - [[#Phase 3D Pre-Image Performance Audit Capture|Phase 3D Pre-Image Performance Audit Capture]]
-    - [[#Phase 3E Pre-Image Office Stability Capture|Phase 3E Pre-Image Office Stability Capture]]
+    - [[#Phase 4A Capture Workflow Snapshot|Phase 4A Capture Workflow Snapshot]]
+    - [[#Phase 4B Pre-Image System Inventory Capture|Phase 4B Pre-Image System Inventory Capture]]
+    - [[#Phase 2C Pre-Image Company-Managed Inventory Capture|Phase 2C Pre-Image Company-Managed Inventory Capture]]
+    - [[#Phase 4C Pre-Image Performance Audit Capture|Phase 4C Pre-Image Performance Audit Capture]]
+    - [[#Phase 4D Pre-Image Office Stability Capture|Phase 4D Pre-Image Office Stability Capture]]
 - [[#Post-Image Evidence Capture Automation|Post-Image Evidence Capture Automation]]
 - [[#Validation Automation|Validation Automation]]
-    - [[#Phase 4B Final Pre-Image Validation|Phase 4B Final Pre-Image Validation]]
-    - [[#Phase 7 Initial Reimaged System Checklist|Phase 7 Initial Reimaged System Checklist]]
-    - [[#Phase 9B Repository Restore|Phase 9B Repository Restore]]
-    - [[#Phase 10 Restore-Apps Plan-Note|Phase 10 Restore-Apps Plan-Note]]
-    - [[#Phase 10 Restore-IntelliJ Plan-Note|Phase 10 Restore-IntelliJ Plan-Note]]
-    - [[#Phase 10 Restore-Docker Plan-Note|Phase 10 Restore-Docker Plan-Note]]
-    - [[#Phase 12 Post-Image Final Validation|Phase 12 Post-Image Final Validation]]
+    - [[#Phase 6B Final Pre-Image Validation|Phase 6B Final Pre-Image Validation]]
+    - [[#Phase 9 Initial Reimaged System Checklist|Phase 9 Initial Reimaged System Checklist]]
+    - [[#Phase 11B Repository Restore|Phase 11B Repository Restore]]
+    - [[#Phase 12 Restore-Apps Plan-Note|Phase 12 Restore-Apps Plan-Note]]
+    - [[#Phase 12 Restore-IntelliJ Plan-Note|Phase 12 Restore-IntelliJ Plan-Note]]
+    - [[#Phase 12 Restore-Docker Plan-Note|Phase 12 Restore-Docker Plan-Note]]
+    - [[#Phase 14 Post-Image Final Validation|Phase 14 Post-Image Final Validation]]
 - [[#Manual Captures That Remain Manual|Manual Captures That Remain Manual]]
 - [[#Common Run Order|Common Run Order]]
 
@@ -57,10 +57,10 @@ The workflow separates three different kinds of work:
 | Kind | Meaning | Where it belongs |
 |---|---|---|
 | Backup | Files or state needed to restore the machine. | Phase 2 subphases and `$REIMAGE_ARTIFACT_ROOT/<backup-topic>/`. |
-| Capture | Read-only snapshots and reference bundles used for comparison, troubleshooting, or workflow recovery. | Phase 3 subphases and `$REIMAGE_ARTIFACT_ROOT/system-inventory`, `performance-audit`, `office-stability`. |
-| Validation | Generated checklist that proves prior steps were completed as much as a script can prove. | Phase 4 pre-image validation, Phase 7 initial post-image validation, and Phase 12 final post-image validation. |
+| Capture | Read-only snapshots and reference bundles used for comparison, troubleshooting, or workflow recovery. | Phase 4 subphases and `$REIMAGE_ARTIFACT_ROOT/system-inventory`, `performance-audit`, `office-stability`. |
+| Validation | Generated checklist that proves prior steps were completed as much as a script can prove. | Phase 6 pre-image validation, Phase 9 initial post-image validation, and Phase 14 final post-image validation. |
 
-This matters because Phase 3 captures are stored on the backup drive, but they are not restore backups. They can be run any time before the reimage as long as they are complete before the final pre-image validation.
+This matters because Phase 4 captures are stored on the backup drive, but they are not restore backups. They can be run any time before the reimage as long as they are complete before the final pre-image validation.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -103,29 +103,29 @@ export ONEDRIVE_DEST_SUBDIR="reimage-<asset-or-host>-<start-date>-open"
 | Phase 1 | Prepare external artifact root | `reimaging-guide.md`, `prepare-artifact-root.md` | `prepare-artifact-root.py` plus guide-owned shell checks and directory creation | `reimage.env`, `$REIMAGE_ARTIFACT_ROOT/` structure, `$REIMAGE_ARTIFACT_ROOT/reimage-confirmation/it-reimage-confirmation-*.md` |
 | Phase 2A | Git repository backups | `backup-repos.md` | `backup-repos.sh` (public entrypoint), Git helpers under `scripts/helpers/git/` | `$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/`, `$REIMAGE_ARTIFACT_ROOT/gitignore-superset/`, `$REIMAGE_ARTIFACT_ROOT/staged-ignored-files/live/*` |
 | Phase 2B | Local files backup | `backup-home.md` | `backup-home.sh` | `$REIMAGE_ARTIFACT_ROOT/home-files-backup/` |
-| Phase 2C | Backup apps | `backup-apps.md` | `backup-apps.sh` (public entrypoint), `helpers/apps/backup-docker-settings.sh` and `helpers/apps/backup-intellij-scratches-consoles.sh` (internal helpers), plus app-controlled/manual exports for other apps | `$REIMAGE_ARTIFACT_ROOT/app-settings-backup/` plus matching `secrets-encrypted/` folders |
-| Phase 2C detail | IntelliJ companion flow | `backup-intellij.md` | `backup-apps.sh` (public IntelliJ path), `helpers/apps/backup-intellij-scratches-consoles.sh` (internal helper) | `$REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/` |
-| Phase 2D | Certificate and Keychain staging | `stage-certs-keychain.md` | `stage-certs-keychain.sh` | `$REIMAGE_ARTIFACT_ROOT/public-certs/`, `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/certs/`, `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/extra-secrets-certs-review/` |
-| Phase 2E | Encrypted secrets backup | `backup-dmg-secrets.md` | `create-secrets-dmg.sh` | `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/all-secrets-*.dmg` |
-| Phase 2F | Time Machine backup/status | `backup-time-machine.md` | `backup-time-machine.sh`, `capture-time-machine.sh` | `/Volumes/AppleBackups`, `$REIMAGE_ARTIFACT_ROOT/time-machine/`, `final-time-machine-checklist-*.md` |
-| Phase 3A | Workflow snapshot capture | `capture-workflow-snapshot.md` | `capture-workflow-snapshot.sh` | `$REIMAGE_ARTIFACT_ROOT/workflow-snapshot/pre-image-workflow-snapshot-*/`, `$REIMAGE_ARTIFACT_ROOT/workflow-snapshot/reimage-workflow-docs/` |
-| Phase 3B | Pre-image system inventory evidence | `reimaging-guide.md` (Phase 3) | `capture-system-inventory.sh` | `$REIMAGE_ARTIFACT_ROOT/system-inventory/` |
-| Phase 3C | Pre-image company-managed inventory evidence | `reimaging-guide.md` (Phase 3), `capture-managed-inventory.md` | `capture-managed-inventory.sh` | `$REIMAGE_ARTIFACT_ROOT/managed-inventory/` |
-| Phase 3D | Pre-image performance evidence | `reimaging-guide.md` (Phase 3), `capture-performance-audit.md` | `capture-performance-audit.sh` | `$REIMAGE_ARTIFACT_ROOT/performance-audit/pre-image-*` |
-| Phase 3E | Pre-image Office stability evidence | `reimaging-guide.md` (Phase 3), `capture-office-stability-audit.md` | `watch-office-today.sh`, `capture-workload-snapshot.sh`, `capture-office-stability-baseline.sh`, `office-stability-checklist.sh --phase pre-reimage` | `$REIMAGE_ARTIFACT_ROOT/office-stability/`, `$REIMAGE_ARTIFACT_ROOT/office-stability/checklists/` |
-| Phase 4A | Guide access validation (curl/jump drive) | `reimaging-guide.md`, `reimage-guide-access.md` | `bootstrap.sh`, `bin/build-jump-drive-payload.sh` | throwaway test installs only -- no `$REIMAGE_ARTIFACT_ROOT` output |
-| Phase 4B | Final pre-image validation | `reimaging-guide.md`, `reimage-prep-checks.md` | `bin/reimage-checklist.sh --phase pre --artifact-root ...` | `$REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/` |
-| Phase 6 | Enrollment/stabilization record | `enroll-and-stabilize.md` | `record-enrollment.sh` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/enrollment/*` when mounted, otherwise `$REIMAGE_WORKSPACE_ROOT/enrollment/*` or `~/Desktop/reimaged-system-artifacts/enrollment/*` |
-| Phase 7 | First-boot record twice around a stabilization restart | `verify-reimaged-system.md` | `record-reimaged-system.sh` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/initial-reimaged-system-YYYYMMDD-HHMMSS/` |
-| Phase 8 | Runtime/access restore helpers | `restore-runtime.md`, `restore-access.md` | targeted manual checks; no single public restore script | selective restore from `home-files-backup/` and `secrets-encrypted/` |
-| Phase 9A | Git identity restore | `restore-git.md` | targeted manual writes to `~/.gitconfig`, `~/.ssh/config`, and the personal-root override; no toolkit script | consumes `secrets-encrypted/ssh/` and `secrets-encrypted/git/` restored in Phase 8B |
-| Phase 9B | Repository restore | `restore-repos.md` | `restore-repos.sh` | `$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/runs/post-image-restore-YYYYMMDD-HHMMSS/`; consumes pre-image `repo-audit-reports/runs/pre-image-*/repos.tsv` and `staged-ignored-files/live/<label>/` |
-| Phase 10 | App restore | `restore-apps.md`, `restore-intellij.md`, `restore-docker.md` | `restore-apps.sh`, `restore-intellij.sh`, `restore-docker.sh` | restore-planning notes under `$REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/` plus app restore from `app-settings-backup/` and `secrets-encrypted/` |
-| Phase 11 | Post-image system inventory evidence | `capture-system-inventory.md` | `capture-system-inventory.sh` | `$REIMAGE_ARTIFACT_ROOT/system-inventory/post-image-*` |
-| Phase 11 | Post-image company-managed inventory evidence | `capture-managed-inventory.md` | `capture-managed-inventory.sh --phase post-image` | `$REIMAGE_ARTIFACT_ROOT/managed-inventory/post-image-*` |
-| Phase 11 | Post-image performance evidence | `capture-performance-audit.md` | `capture-performance-audit.sh` | `$REIMAGE_ARTIFACT_ROOT/performance-audit/post-image-*` |
-| Phase 11 | Post-image Office stability evidence | `capture-office-stability-audit.md` | `capture-office-stability-baseline.sh`, `office-stability-checklist.sh --phase post-reimage` | `$REIMAGE_ARTIFACT_ROOT/office-stability/post-reimage-*`, `$REIMAGE_ARTIFACT_ROOT/office-stability/checklists/` |
-| Phase 12 | Final post-image validation | `reimaged-system-checks.md` | `bin/reimage-checklist.sh --phase post` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/checklists/` |
+| Phase 2D | Backup apps | `backup-apps.md` | `backup-apps.sh` (public entrypoint), `helpers/apps/backup-docker-settings.sh` and `helpers/apps/backup-intellij-scratches-consoles.sh` (internal helpers), plus app-controlled/manual exports for other apps | `$REIMAGE_ARTIFACT_ROOT/app-settings-backup/` plus matching `secrets-encrypted/` folders |
+| Phase 2D detail | IntelliJ companion flow | `backup-intellij.md` | `backup-apps.sh` (public IntelliJ path), `helpers/apps/backup-intellij-scratches-consoles.sh` (internal helper) | `$REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/` |
+| Phase 3A | Certificate and Keychain staging | `stage-certs-keychain.md` | `stage-certs-keychain.sh` | `$REIMAGE_ARTIFACT_ROOT/public-certs/`, `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/certs/`, `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/extra-secrets-certs-review/` |
+| Phase 3B | Encrypted secrets backup | `backup-dmg-secrets.md` | `create-secrets-dmg.sh` | `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/all-secrets-*.dmg` |
+| Phase 5 | Time Machine backup/status | `backup-time-machine.md` | `backup-time-machine.sh`, `capture-time-machine.sh` | `/Volumes/AppleBackups`, `$REIMAGE_ARTIFACT_ROOT/time-machine/`, `final-time-machine-checklist-*.md` |
+| Phase 4A | Workflow snapshot capture | `capture-workflow-snapshot.md` | `capture-workflow-snapshot.sh` | `$REIMAGE_ARTIFACT_ROOT/workflow-snapshot/pre-image-workflow-snapshot-*/`, `$REIMAGE_ARTIFACT_ROOT/workflow-snapshot/reimage-workflow-docs/` |
+| Phase 4B | Pre-image system inventory evidence | `reimaging-guide.md` (Phase 4) | `capture-system-inventory.sh` | `$REIMAGE_ARTIFACT_ROOT/system-inventory/` |
+| Phase 2C | Pre-image company-managed inventory evidence | `reimaging-guide.md` (Phase 4), `capture-managed-inventory.md` | `capture-managed-inventory.sh` | `$REIMAGE_ARTIFACT_ROOT/managed-inventory/` |
+| Phase 4C | Pre-image performance evidence | `reimaging-guide.md` (Phase 4), `capture-performance-audit.md` | `capture-performance-audit.sh` | `$REIMAGE_ARTIFACT_ROOT/performance-audit/pre-image-*` |
+| Phase 4D | Pre-image Office stability evidence | `reimaging-guide.md` (Phase 4), `capture-office-stability-audit.md` | `watch-office-today.sh`, `capture-workload-snapshot.sh`, `capture-office-stability-baseline.sh`, `office-stability-checklist.sh --phase pre-reimage` | `$REIMAGE_ARTIFACT_ROOT/office-stability/`, `$REIMAGE_ARTIFACT_ROOT/office-stability/checklists/` |
+| Phase 6A | Guide access validation (curl/jump drive) | `reimaging-guide.md`, `reimage-guide-access.md` | `bootstrap.sh`, `bin/build-jump-drive-payload.sh` | throwaway test installs only -- no `$REIMAGE_ARTIFACT_ROOT` output |
+| Phase 6B | Final pre-image validation | `reimaging-guide.md`, `reimage-prep-checks.md` | `bin/reimage-checklist.sh --phase pre --artifact-root ...` | `$REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/` |
+| Phase 8 | Enrollment/stabilization record | `enroll-and-stabilize.md` | `record-enrollment.sh` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/enrollment/*` when mounted, otherwise `$REIMAGE_WORKSPACE_ROOT/enrollment/*` or `~/Desktop/reimaged-system-artifacts/enrollment/*` |
+| Phase 9 | First-boot record twice around a stabilization restart | `verify-reimaged-system.md` | `record-reimaged-system.sh` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/initial-reimaged-system-YYYYMMDD-HHMMSS/` |
+| Phase 10 | Runtime/access restore helpers | `restore-runtime.md`, `restore-access.md` | targeted manual checks; no single public restore script | selective restore from `home-files-backup/` and `secrets-encrypted/` |
+| Phase 11A | Git identity restore | `restore-git.md` | targeted manual writes to `~/.gitconfig`, `~/.ssh/config`, and the personal-root override; no toolkit script | consumes `secrets-encrypted/ssh/` and `secrets-encrypted/git/` restored in Phase 10B |
+| Phase 11B | Repository restore | `restore-repos.md` | `restore-repos.sh` | `$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/runs/post-image-restore-YYYYMMDD-HHMMSS/`; consumes pre-image `repo-audit-reports/runs/pre-image-*/repos.tsv` and `staged-ignored-files/live/<label>/` |
+| Phase 12 | App restore | `restore-apps.md`, `restore-intellij.md`, `restore-docker.md` | `restore-apps.sh`, `restore-intellij.sh`, `restore-docker.sh` | restore-planning notes under `$REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/` plus app restore from `app-settings-backup/` and `secrets-encrypted/` |
+| Phase 13 | Post-image system inventory evidence | `capture-system-inventory.md` | `capture-system-inventory.sh` | `$REIMAGE_ARTIFACT_ROOT/system-inventory/post-image-*` |
+| Phase 13 | Post-image company-managed inventory evidence | `capture-managed-inventory.md` | `capture-managed-inventory.sh --phase post-image` | `$REIMAGE_ARTIFACT_ROOT/managed-inventory/post-image-*` |
+| Phase 13 | Post-image performance evidence | `capture-performance-audit.md` | `capture-performance-audit.sh` | `$REIMAGE_ARTIFACT_ROOT/performance-audit/post-image-*` |
+| Phase 13 | Post-image Office stability evidence | `capture-office-stability-audit.md` | `capture-office-stability-baseline.sh`, `office-stability-checklist.sh --phase post-reimage` | `$REIMAGE_ARTIFACT_ROOT/office-stability/post-reimage-*`, `$REIMAGE_ARTIFACT_ROOT/office-stability/checklists/` |
+| Phase 14 | Final post-image validation | `reimaged-system-checks.md` | `bin/reimage-checklist.sh --phase post` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/checklists/` |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -250,15 +250,15 @@ Primary output:
 $REIMAGE_ARTIFACT_ROOT/local-files/
 ```
 
-The OneDrive copy, when used, still requires manual sync verification later in Phase 4B using `reimage-prep-checks.md`.
+The OneDrive copy, when used, still requires manual sync verification later in Phase 6B using `reimage-prep-checks.md`.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
-### Phase 2C Backup Apps
+### Phase 2D Backup Apps
 
-`backup-apps.md` owns the Phase 2C app backup flow. `backup-apps.sh` is the single-script path; it prepares the standard app folders, runs the Docker helper when applicable, captures the local VS Code fallback, writes `app-settings-backup/MANIFEST.md`, and can also generate the optional candidate-review bundle when you add `--candidate-review`.
+`backup-apps.md` owns the Phase 2D app backup flow. `backup-apps.sh` is the single-script path; it prepares the standard app folders, runs the Docker helper when applicable, captures the local VS Code fallback, writes `app-settings-backup/MANIFEST.md`, and can also generate the optional candidate-review bundle when you add `--candidate-review`.
 
-Preferred Phase 2C run:
+Preferred Phase 2D run:
 
 ```bash
 ./scripts/backup-apps.sh --backup-root "$REIMAGE_ARTIFACT_ROOT" --open
@@ -287,9 +287,9 @@ $REIMAGE_ARTIFACT_ROOT/app-backups/raycast/, if used
 $REIMAGE_ARTIFACT_ROOT/app-backups/obsidian/, if used
 ```
 
-If Docker `config.json`, Chrome password CSVs, secret-bearing Postman exports, or Raycast secret exports are staged, rerun Phase 2E before final validation.
+If Docker `config.json`, Chrome password CSVs, secret-bearing Postman exports, or Raycast secret exports are staged, rerun Phase 3B before final validation.
 
-Docker-only rerun through the main Phase 2C entrypoint:
+Docker-only rerun through the main Phase 2D entrypoint:
 
 ```bash
 ./scripts/backup-apps.sh --backup-root "$REIMAGE_ARTIFACT_ROOT" --docker-only
@@ -297,7 +297,7 @@ Docker-only rerun through the main Phase 2C entrypoint:
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
-### Phase 2C IntelliJ Detail
+### Phase 2D IntelliJ Detail
 
 ```bash
 ./scripts/backup-apps.sh \
@@ -309,7 +309,7 @@ Manual sign-off still required: export IntelliJ settings ZIP through the Intelli
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
-### Phase 2D Certificate and Keychain Staging
+### Phase 3A Certificate and Keychain Staging
 
 The certificate/Keychain staging workflow is manual, but it now has its own public entrypoint:
 
@@ -327,7 +327,7 @@ $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/extra-secrets-certs-review/
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
-### Phase 2E Encrypted DMG Secrets Backup
+### Phase 3B Encrypted DMG Secrets Backup
 
 ```bash
 ./scripts/create-secrets-dmg.sh
@@ -350,7 +350,7 @@ fi
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
-### Phase 2F Time Machine Backup and Status Capture
+### Phase 5 Time Machine Backup and Status Capture
 
 Use `capture-time-machine.sh` for read-only Time Machine captures:
 
@@ -449,11 +449,11 @@ This scripts guide remains the broader map for all backup, evidence, validation,
 
 ## Pre-Image Capture Automation
 
-Phase 3 captures can be run before or after the backup sub-phases. Any captures you choose to run must be completed before Phase 4 final pre-image validation and should be repeated post-image where comparison is useful.
+Phase 4 captures can be run before or after the backup sub-phases. Any captures you choose to run must be completed before Phase 6 final pre-image validation and should be repeated post-image where comparison is useful.
 
-All pre-image captures are optional. Phase 3A is the lightweight workflow snapshot capture; run it when you want the current reimage workflow docs and restore reference bundle preserved on the external root. If you run only one system-state capture, run the system inventory capture. Installed apps, Homebrew, and shell-state ownership now belong with the system inventory capture rather than the workflow snapshot capture. Add the others when you need performance comparison evidence, Office stability evidence, or a precise inventory of company-managed software and policy.
+All pre-image captures are optional. Phase 4A is the lightweight workflow snapshot capture; run it when you want the current reimage workflow docs and restore reference bundle preserved on the external root. If you run only one system-state capture, run the system inventory capture. Installed apps, Homebrew, and shell-state ownership now belong with the system inventory capture rather than the workflow snapshot capture. Add the others when you need performance comparison evidence, Office stability evidence, or a precise inventory of company-managed software and policy.
 
-### Phase 3A Capture Workflow Snapshot
+### Phase 4A Capture Workflow Snapshot
 
 ```bash
 ./scripts/capture-workflow-snapshot.sh \
@@ -481,7 +481,7 @@ test -d "$REIMAGE_ARTIFACT_ROOT/workflow-snapshot/reimage-workflow-docs" && echo
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
-### Phase 3B Pre-Image System Inventory Capture
+### Phase 4B Pre-Image System Inventory Capture
 
 ```bash
 ./scripts/capture-system-inventory.sh
@@ -503,7 +503,7 @@ Post-image comparison:
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
-### Phase 3C Pre-Image Company-Managed Inventory Capture
+### Phase 2C Pre-Image Company-Managed Inventory Capture
 
 ```bash
 ./scripts/capture-managed-inventory.sh
@@ -525,7 +525,7 @@ Use it when you want a more precise record of company-managed apps, package rece
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
-### Phase 3D Pre-Image Performance Audit Capture
+### Phase 4C Pre-Image Performance Audit Capture
 
 Clean-boot / quiet baseline:
 
@@ -564,7 +564,7 @@ Post-image, use the same scenario name as the matching pre-image bundle:
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
-### Phase 3E Pre-Image Office Stability Capture
+### Phase 4D Pre-Image Office Stability Capture
 
 Start or continue the watcher:
 
@@ -604,7 +604,7 @@ Office stability details belong in `capture-office-stability-audit.md`.
 
 ## Post-Image Evidence Capture Automation
 
-Post-image evidence captures are documented in Phase 11 of `reimaging-guide.md`. Use the same scripts as Phase 3 — run under the same approximate workload as the matching pre-image scenario.
+Post-image evidence captures are documented in Phase 13 of `reimaging-guide.md`. Use the same scripts as Phase 4 — run under the same approximate workload as the matching pre-image scenario.
 
 Common command set:
 
@@ -631,9 +631,9 @@ For post-image clean-boot comparisons, keep Docker stopped only if the matching 
 
 ## Validation Automation
 
-Phase 4B uses the unified pre-image validator. The post-image flow now has a dedicated initial-checklist entrypoint for Phase 7 and a dedicated final-validation entrypoint for Phase 12.
+Phase 6B uses the unified pre-image validator. The post-image flow now has a dedicated initial-checklist entrypoint for Phase 9 and a dedicated final-validation entrypoint for Phase 14.
 
-### Phase 4B Final Pre-Image Validation
+### Phase 6B Final Pre-Image Validation
 
 ```bash
 ./bin/reimage-checklist.sh \
@@ -649,13 +649,13 @@ $REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/reimage-checklist-YYYYMMDD-HHMMSS.md
 $REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/latest-reimage-checklist.txt
 ```
 
-Use the generated report as the primary Phase 4B checklist. Do not proceed to Phase 5 until `FAIL` items are resolved. Then use `reimage-prep-checks.md` only for the remaining manual sign-off rows.
+Use the generated report as the primary Phase 6B checklist. Do not proceed to Phase 7 until `FAIL` items are resolved. Then use `reimage-prep-checks.md` only for the remaining manual sign-off rows.
 
 For workflow-snapshot checks, the validator should discover the newest timestamped bundle directly from `workflow-snapshot/pre-image-workflow-snapshot-*`. VS Code local fallback state is validated from `app-settings-backup/vscode/`.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
-### Phase 7 First-Boot Record
+### Phase 9 First-Boot Record
 
 ```bash
 ./bin/record-reimaged-system.sh --open
@@ -669,7 +669,7 @@ $REIMAGE_ARTIFACT_ROOT/reimaged-system/initial-reimaged-system-YYYYMMDD-HHMMSS/
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
-### Phase 9B Repository Restore
+### Phase 11B Repository Restore
 
 ```bash
 ./bin/restore-repos.sh --open
@@ -686,13 +686,13 @@ $REIMAGE_ARTIFACT_ROOT/repo-audit-reports/latest-post-image-restore.txt
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
-### Phase 10 Restore-Apps Plan-Note
+### Phase 12 Restore-Apps Plan-Note
 
 ```bash
 ./bin/restore-apps.sh --open
 ```
 
-Surveys the Phase 2C `app-settings-backup/` subtree plus the encrypted-secrets sources that feed Postman, IntelliJ, Docker, and licenses, marks each as `PRESENT` / `MISSING`, and emits a plan-note with the ordered restore sequence and sign-off checklist. Install nothing on its own; the operator ticks the checklist by hand while following [[restore-apps|restore-apps.md]].
+Surveys the Phase 2D `app-settings-backup/` subtree plus the encrypted-secrets sources that feed Postman, IntelliJ, Docker, and licenses, marks each as `PRESENT` / `MISSING`, and emits a plan-note with the ordered restore sequence and sign-off checklist. Install nothing on its own; the operator ticks the checklist by hand while following [[restore-apps|restore-apps.md]].
 
 The generated plan-note is written under:
 
@@ -702,13 +702,13 @@ $REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/restore-apps-plan-YYYYMMDD-
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
-### Phase 10 Restore-IntelliJ Plan-Note
+### Phase 12 Restore-IntelliJ Plan-Note
 
 ```bash
 ./bin/restore-intellij.sh --open
 ```
 
-Surveys the Phase 2C `app-settings-backup/intellij/` subtree (per-version `config-copy/`, `scratches-and-consoles/`, `manifests/`, plus `manual-settings-export/IntelliJ-settings-*.zip` and `project-metadata/`) and the encrypted-secrets sources that hold HTTP Client `*.env.json` files. Marks each as `PRESENT` / `MISSING`, points at the most recent settings ZIP for `File → Manage IDE Settings → Import Settings`, and emits an IntelliJ-specific sign-off checklist. Install nothing on its own; the operator ticks the checklist by hand while following [[restore-intellij|restore-intellij.md]].
+Surveys the Phase 2D `app-settings-backup/intellij/` subtree (per-version `config-copy/`, `scratches-and-consoles/`, `manifests/`, plus `manual-settings-export/IntelliJ-settings-*.zip` and `project-metadata/`) and the encrypted-secrets sources that hold HTTP Client `*.env.json` files. Marks each as `PRESENT` / `MISSING`, points at the most recent settings ZIP for `File → Manage IDE Settings → Import Settings`, and emits an IntelliJ-specific sign-off checklist. Install nothing on its own; the operator ticks the checklist by hand while following [[restore-intellij|restore-intellij.md]].
 
 The generated plan-note is written under:
 
@@ -718,13 +718,13 @@ $REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/restore-intellij-plan-YYYYM
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
-### Phase 10 Restore-Docker Plan-Note
+### Phase 12 Restore-Docker Plan-Note
 
 ```bash
 ./bin/restore-docker.sh --open
 ```
 
-Surveys the Phase 2C `app-settings-backup/docker/` subtree (settings-store, daemon.json, contexts/, image/container/compose inventories) plus the encrypted `secrets-encrypted/docker/config.json`, checks whether Docker Desktop is installed and whether the daemon is currently reachable on the reimaged Mac, and emits a Docker-specific sign-off checklist that covers Desktop install, resource settings, registry credentials, and the local container fleet (Redis, RabbitMQ, Elasticsearch + Kibana, MarkLogic).
+Surveys the Phase 2D `app-settings-backup/docker/` subtree (settings-store, daemon.json, contexts/, image/container/compose inventories) plus the encrypted `secrets-encrypted/docker/config.json`, checks whether Docker Desktop is installed and whether the daemon is currently reachable on the reimaged Mac, and emits a Docker-specific sign-off checklist that covers Desktop install, resource settings, registry credentials, and the local container fleet (Redis, RabbitMQ, Elasticsearch + Kibana, MarkLogic).
 
 The generated plan-note is written under:
 
@@ -734,7 +734,7 @@ $REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/restore-docker-plan-YYYYMMD
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
-### Phase 12 Post-Image Final Validation
+### Phase 14 Post-Image Final Validation
 
 ```bash
 ./bin/reimage-checklist.sh \
@@ -802,14 +802,14 @@ chmod +x scripts/*.sh scripts/*.py
 ./scripts/backup-apps.sh --backup-root "$REIMAGE_ARTIFACT_ROOT" --open
 ./scripts/backup-apps.sh --backup-root "$REIMAGE_ARTIFACT_ROOT" --intellij-workspace-root ~/path/to/projects
 # Manual/app-controlled follow-up: Chrome, Postman, Raycast, Obsidian, and any other app exports that backup-apps.sh cannot complete.
-# Phase 2D certificate/Keychain staging:
+# Phase 3A certificate/Keychain staging:
 # ./scripts/stage-cert-keychain.sh
-# Phase 2E final DMG after all manual secret staging:
+# Phase 3B final DMG after all manual secret staging:
 # If Chrome password CSVs, secret-bearing Postman exports, optional app secret exports,
 # IntelliJ HTTP Client env files, or cert/Keychain material were staged, run secrets DMG after that.
 ./scripts/create-secrets-dmg.sh
 
-# Phase 2F — Time Machine last before validation
+# Phase 5 — Time Machine last before validation
 ./scripts/capture-time-machine.sh pre-run --open
 ./scripts/backup-time-machine.sh start
 ./scripts/backup-time-machine.sh monitor --interval 300
@@ -821,7 +821,7 @@ chmod +x scripts/*.sh scripts/*.py
 # ./scripts/backup-time-machine.sh compare --open
 ./scripts/capture-time-machine.sh final --open
 
-# Phase 3 — captures and reference snapshots
+# Phase 4 — captures and reference snapshots
 ./scripts/capture-workflow-snapshot.sh --backup-root "$REIMAGE_ARTIFACT_ROOT" --open
 ./scripts/capture-system-inventory.sh
 ./scripts/capture-performance-audit.sh --output "$REIMAGE_ARTIFACT_ROOT/performance-audit" --phase pre-image --scenario clean-boot --sample-count 6 --sample-interval 30
@@ -829,38 +829,38 @@ chmod +x scripts/*.sh scripts/*.py
 ./scripts/capture-office-stability-baseline.sh --phase pre-reimage --backup-root "$REIMAGE_ARTIFACT_ROOT"
 ./scripts/office-stability-checklist.sh --phase pre-reimage --backup-root "$REIMAGE_ARTIFACT_ROOT"
 
-# Phase 4 — final pre-image validation
+# Phase 6 — final pre-image validation
 # Manual sign-off reference for the remaining rows in this phase: reimage-prep-checks.md
 ./bin/reimage-checklist.sh --phase pre --artifact-root "$REIMAGE_ARTIFACT_ROOT" --open
 ```
 
-Post-image (Phases 6–12):
+Post-image (Phases 8–14):
 
 ```bash
 
-# Phase 6 — enroll and stabilize; record enrollment evidence
+# Phase 8 — enroll and stabilize; record enrollment evidence
 ./bin/record-enrollment.sh --open
 
-# Phase 7 — first-boot record (pre-restart and post-restart)
+# Phase 9 — first-boot record (pre-restart and post-restart)
 ./bin/record-reimaged-system.sh --open
 
-# Phase 9B — repository restore (after Phase 9A Git identity plumbing)
+# Phase 11B — repository restore (after Phase 11A Git identity plumbing)
 ./bin/restore-repos.sh --open
 # Optional: interactively rsync reviewed kept ignored files into each cloned repo
 # ./bin/restore-repos.sh --apply-ignored-files --open
 
-# Phase 10 — restore helpers
+# Phase 12 — restore helpers
 ./bin/restore-apps.sh --open
 ./bin/restore-intellij.sh --open
 ./bin/restore-docker.sh --open
 
-# Phase 11 — post-image evidence captures
+# Phase 13 — post-image evidence captures
 ./scripts/capture-system-inventory.sh
 ./scripts/capture-performance-audit.sh --output "$REIMAGE_ARTIFACT_ROOT/performance-audit" --phase post-image --scenario normal-workload --sample-count 6 --sample-interval 30
 ./scripts/capture-office-stability-baseline.sh --phase post-reimage --backup-root "$REIMAGE_ARTIFACT_ROOT"
 ./scripts/office-stability-checklist.sh --phase post-reimage --backup-root "$REIMAGE_ARTIFACT_ROOT"
 
-# Phase 12 — final post-image validation
+# Phase 14 — final post-image validation
 ./bin/reimage-checklist.sh \
   --phase post \
   --artifact-root "$REIMAGE_ARTIFACT_ROOT" \

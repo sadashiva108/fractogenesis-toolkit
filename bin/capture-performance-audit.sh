@@ -2,8 +2,8 @@
 # =============================================================================
 # capture-performance-audit.sh
 #
-# Read-only general performance audit for macOS (Phase 3C pre-image /
-# Phase 11D post-image). Captures short-duration, per-scenario bundles under a
+# Read-only general performance audit for macOS (Phase 4C pre-image /
+# Phase 13D post-image). Captures short-duration, per-scenario bundles under a
 # named workload so general workstation performance can be compared like-for-
 # like across a reimage: memory pressure, swap, compressed memory, top
 # memory/CPU processes, Docker resource settings, IntelliJ heap settings,
@@ -18,13 +18,13 @@
 #   cd <repo-root>
 #   chmod +x bin/capture-performance-audit.sh
 #
-#   # Pre-image normal-workload baseline (Phase 3C)
+#   # Pre-image normal-workload baseline (Phase 4C)
 #   ./bin/capture-performance-audit.sh --phase pre-image --scenario normal-workload
 #
 #   # Longer baseline with more samples
 #   ./bin/capture-performance-audit.sh --phase pre-image --scenario normal-workload --sample-count 6 --sample-interval 30
 #
-#   # Post-image comparison run (Phase 11D), same scenario name
+#   # Post-image comparison run (Phase 13D), same scenario name
 #   ./bin/capture-performance-audit.sh --phase post-image --scenario normal-workload --sample-count 6 --sample-interval 30
 #
 #   # Override the artifact root for this invocation
@@ -41,8 +41,8 @@
 #   --sample-count N       Number of repeated baseline samples. Default: 3
 #   --sample-interval SEC  Seconds between repeated samples. Default: 10
 #   --top N                Number of top memory/CPU processes to capture. Default: 40
-#   --phase NAME           Capture phase label, e.g. pre-image (Phase 3C) or
-#                          post-image (Phase 11D). Default: pre-image
+#   --phase NAME           Capture phase label, e.g. pre-image (Phase 4C) or
+#                          post-image (Phase 13D). Default: pre-image
 #   --scenario NAME        Workload label, e.g. clean-boot, normal-workload,
 #                          active-dev, symptom-capture. Default: normal-workload
 #   --note TEXT            Optional note copied into README and manual-observations.md.

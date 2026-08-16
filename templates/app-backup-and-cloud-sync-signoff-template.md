@@ -32,7 +32,7 @@ Fill it in only for the manual rows that `reimage-checklist.sh` cannot prove aut
 - [ ] Cloud sync state is known and recorded.
 - [ ] Any cloud copy being relied on has been spot-checked outside the local folder.
 - [ ] No secret-bearing files, certificate private keys, `.p12` / `.pfx` files, keystores, Chrome password CSVs, or unreviewed exports were placed loose in OneDrive or iCloud.
-- [ ] This note has been reviewed before Phase 4B final validation.
+- [ ] This note has been reviewed before Phase 6B final validation.
 
 ## Evidence
 

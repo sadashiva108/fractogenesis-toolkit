@@ -3,7 +3,7 @@
 # reimage-checklist.sh
 #
 # Unified validation checklist for both the pre-image reimage-prep-checks
-# (Phase 4B) and post-image reimaged-system (Phase 12) Mac reimage workflow
+# (Phase 6B) and post-image reimaged-system (Phase 14) Mac reimage workflow
 # stages.
 #
 # BEGIN USAGE
@@ -11,10 +11,10 @@
 #   cd <repo-root>
 #   chmod +x bin/reimage-checklist.sh
 #
-#   # Phase 4B -- final reimage-prep-checks validation
+#   # Phase 6B -- final reimage-prep-checks validation
 #   ./bin/reimage-checklist.sh --phase pre
 #
-#   # Phase 12 -- final reimaged-system validation
+#   # Phase 14 -- final reimaged-system validation
 #   ./bin/reimage-checklist.sh --phase post
 #
 #   # Override config-backed paths
@@ -422,8 +422,8 @@ run_with_timeout() {
 # =============================================================================
 # HEADER
 # =============================================================================
-PHASE_LABEL="Phase 4B — Reimage Preparation Checks"
-[[ "$PHASE" == "post" ]] && PHASE_LABEL="Phase 12 — Reimaged System Checks"
+PHASE_LABEL="Phase 6B — Reimage Preparation Checks"
+[[ "$PHASE" == "post" ]] && PHASE_LABEL="Phase 14 — Reimaged System Checks"
 
 printf "\n"
 printf "%b+--------------------------------------------------------------+%b\n" "$BOLD" "$RESET"
@@ -782,7 +782,7 @@ if [[ "$PHASE" == "pre" ]]; then
   if dir_nonempty "$TM_DIR"; then
     record_check PASS "Time Machine status bundle" "$(du -sh "$TM_DIR" 2>/dev/null | cut -f1)"
   else
-    record_check WARN "Time Machine status bundle" "Empty -- run the Phase 3 Time Machine status capture (see run-time-machine.md)"
+    record_check WARN "Time Machine status bundle" "Empty -- run the Phase 4 Time Machine status capture (see run-time-machine.md)"
   fi
 
   # -------------------------------------------------------------------------
@@ -1267,13 +1267,13 @@ printf "  SKIP : %d\n" "$SKIP"
 printf "\n"
 
 if [[ $FAIL -gt 0 ]]; then
-  NEXT_PHASE="Phase 5"
+  NEXT_PHASE="Phase 7"
   [[ "$PHASE" == "post" ]] && NEXT_PHASE="sign-off"
   printf "  %b[STOP] %d critical failure(s) -- do NOT proceed to %s.%b\n" "$RED" "$FAIL" "$NEXT_PHASE" "$RESET"
 elif [[ $WARN -gt 0 ]]; then
   printf "  %b[WARN] %d warning(s) -- review before proceeding.%b\n" "$YELLOW" "$WARN" "$RESET"
 else
-  NEXT="Phase 5 -- Reimage"
+  NEXT="Phase 7 -- Reimage"
   [[ "$PHASE" == "post" ]] && NEXT="manual sign-off"
   printf "  %b[OK] All checks passed. Proceed to %s.%b\n" "$GREEN" "$NEXT" "$RESET"
 fi
@@ -1284,9 +1284,9 @@ printf "\n"
 # =============================================================================
 {
   if [[ "$PHASE" == "pre" ]]; then
-    printf "# Phase 4B -- Final Pre-Image Validation Checklist\n\n"
+    printf "# Phase 6B -- Final Pre-Image Validation Checklist\n\n"
   else
-    printf "# Phase 12 -- Final Post-Image Validation Checklist\n\n"
+    printf "# Phase 14 -- Final Post-Image Validation Checklist\n\n"
   fi
 
   printf "Generated: \`%s\`\n\n" "$TIMESTAMP"
@@ -1313,7 +1313,7 @@ printf "\n"
 
   if [[ "$PHASE" == "pre" ]]; then
     printf "## Manual Sign-Off (Pre-Image)\n\n"
-    printf "Complete these items manually before proceeding to Phase 5:\n\n"
+    printf "Complete these items manually before proceeding to Phase 7:\n\n"
     printf "| Item | Confirmed |\n| --- | --- |\n"
     printf "| IT confirmed approved reimage method in writing | TODO |\n"
     printf "| LastPass vault verified accessible at lastpass.com | TODO |\n"

@@ -1,10 +1,10 @@
-[[reimaging-guide#Phase 10 — Restore Apps|← Back to Mac Reimaging Guide]]
+[[reimaging-guide#Phase 12 — Restore Apps|← Back to Mac Reimaging Guide]]
 
 # Restore Apps
 
 **Last updated:** 2026-08-05
 
-Restore the day-to-day application layer on the reimaged Mac after the managed baseline, runtime, access, Git, and repository foundations are in place. This is the umbrella runbook for Phase 10: it walks the operator through the ordered install-and-restore sequence for Office, OneDrive, Chrome, Obsidian, Postman, VS Code, Raycast, Terminal, and the remaining daily tools, and hands off to dedicated runbooks for IntelliJ, Docker, and the late local-file restore. `bin/restore-apps.sh` writes a per-run plan-note that surveys the available pre-image backup sources and provides the sign-off checklist the operator ticks through by hand.
+Restore the day-to-day application layer on the reimaged Mac after the managed baseline, runtime, access, Git, and repository foundations are in place. This is the umbrella runbook for Phase 12: it walks the operator through the ordered install-and-restore sequence for Office, OneDrive, Chrome, Obsidian, Postman, VS Code, Raycast, Terminal, and the remaining daily tools, and hands off to dedicated runbooks for IntelliJ, Docker, and the late local-file restore. `bin/restore-apps.sh` writes a per-run plan-note that surveys the available pre-image backup sources and provides the sign-off checklist the operator ticks through by hand.
 
 ---
 
@@ -45,12 +45,12 @@ Restore the day-to-day application layer on the reimaged Mac after the managed b
 
 ## Purpose
 
-Bring the day-to-day applications back online in a deliberate order so the reimaged Mac is usable for normal work without dragging forward stale state, broken authentication material, or unreviewed secrets. Each app either syncs from an approved cloud account (Chrome, OneDrive, Obsidian remote-vault sync), imports a small reviewed export (Postman collections, VS Code settings, Raycast Quicklinks), or hands off to a dedicated companion runbook (IntelliJ, Docker). The Phase 10 goal is that Office, Teams, OneDrive, Chrome, Obsidian, Postman, VS Code, Raycast, IntelliJ, Docker, and the priority daily tools all pass their sign-off checklist before Phase 11 post-image evidence captures start.
+Bring the day-to-day applications back online in a deliberate order so the reimaged Mac is usable for normal work without dragging forward stale state, broken authentication material, or unreviewed secrets. Each app either syncs from an approved cloud account (Chrome, OneDrive, Obsidian remote-vault sync), imports a small reviewed export (Postman collections, VS Code settings, Raycast Quicklinks), or hands off to a dedicated companion runbook (IntelliJ, Docker). The Phase 12 goal is that Office, Teams, OneDrive, Chrome, Obsidian, Postman, VS Code, Raycast, IntelliJ, Docker, and the priority daily tools all pass their sign-off checklist before Phase 13 post-image evidence captures start.
 
 This runbook owns:
 
 ```text
-generating the Phase 10 restore-plan note that surveys backup sources and drives sign-off
+generating the Phase 12 restore-plan note that surveys backup sources and drives sign-off
 Microsoft Office, Teams, and OneDrive install and sign-in ordering
 Chrome default browser, extensions, and bookmark restore
 Obsidian install and reference-vault open
@@ -68,11 +68,11 @@ It does not own:
 ```text
 IntelliJ IDEA settings, scratches, project metadata, or HTTP Client secrets — restore-intellij.md
 Docker Desktop settings, daemon state, or local container rebuild — restore-docker.md
-repository re-clone and staged ignored files — Phase 9B (restore-repos)
-Git identity and SSH routing — Phase 9A (restore-git)
-SSH keys, certificates, Java trust, shell/CLI config, and license material — Phase 8B (restore-access)
-runtime toolchain install (Xcode CLT, Homebrew, JDK, Node, platform CLIs) — Phase 8A (restore-runtime)
-late selective local-file restore — Phase 13 (restore-home)
+repository re-clone and staged ignored files — Phase 11B (restore-repos)
+Git identity and SSH routing — Phase 11A (restore-git)
+SSH keys, certificates, Java trust, shell/CLI config, and license material — Phase 10B (restore-access)
+runtime toolchain install (Xcode CLT, Homebrew, JDK, Node, platform CLIs) — Phase 10A (restore-runtime)
+late selective local-file restore — Phase 15 (restore-home)
 ```
 
 This runbook can be rerun. Regenerating the plan-note produces a fresh timestamped file under `reimaged-system/restore-notes/`; prior plan-notes are preserved so you can compare a partial re-run against the last full pass.
@@ -83,11 +83,11 @@ This runbook can be rerun. Regenerating the plan-note produces a fresh timestamp
 
 ## How the Workflow Works
 
-Read this before running anything. Phase 10 is intentionally not a single "restore-everything" script — Mac application state is a mix of cloud-synced accounts, per-app import UIs, and secret-bearing material that must not be bulk-copied. `bin/restore-apps.sh` writes a plan-note that catalogs which pre-image backups are present, names the sibling runbooks that own IntelliJ and Docker, and provides the sign-off checklist; the operator then follows the ordered steps below by hand, ticking rows in the plan-note as each app comes up.
+Read this before running anything. Phase 12 is intentionally not a single "restore-everything" script — Mac application state is a mix of cloud-synced accounts, per-app import UIs, and secret-bearing material that must not be bulk-copied. `bin/restore-apps.sh` writes a plan-note that catalogs which pre-image backups are present, names the sibling runbooks that own IntelliJ and Docker, and provides the sign-off checklist; the operator then follows the ordered steps below by hand, ticking rows in the plan-note as each app comes up.
 
 The order matters: Office and Teams install from the managed channel first because the same channel drives updates, licenses, and stability posture for the whole session. Chrome comes next because most subsequent app installs pass through a browser (downloads, OAuth logins, Obsidian remote-vault URLs). Obsidian is early so the vault (this runbook included) is available while the rest of the phase runs. Postman, VS Code, and Raycast are ordered from lightest-touch to highest-touch on local state. IntelliJ and Docker sit late in the phase because each has its own multi-step runbook and does not benefit from being sandwiched between short tasks. Terminal, Oracle SQL Developer, and the Office stability follow-up are trailing tasks that are easy to forget once the "main" apps look ready.
 
-Secrets never enter this runbook directly. Any app that needs an environment token, a license key, or a keyring password reaches into `secrets-encrypted/` via the mounted DMG (Phase 8B territory); this runbook only points at the source path and expects the operator to unlock and import selectively.
+Secrets never enter this runbook directly. Any app that needs an environment token, a license key, or a keyring password reaches into `secrets-encrypted/` via the mounted DMG (Phase 10B territory); this runbook only points at the source path and expects the operator to unlock and import selectively.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -109,7 +109,7 @@ Artifact locations:
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/app-settings-backup/                                # Phase 2C outputs (per-app backups)
-$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/                                  # Phase 2E/2F outputs (mount before use)
+$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/                                  # Phase 3A/3B outputs (mount before use)
 $REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/restore-apps-plan-*.md
 $REIMAGE_ARTIFACT_ROOT/office-stability/post-reimage-*/                    # produced in Step 13
 ```
@@ -163,7 +163,7 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 ### Prerequisites
 
 - Your shell is at the repository root — `cd "$FRACTOGENESIS_HOME"` once for the session. Per the guide's [[reimaging-guide#Core Assumptions|Core Assumptions]], the commands below assume this and don't repeat it.
-- Phases 6, 7, 8A, 8B, 9A, and 9B are complete. In particular, `~/.gitconfig`, `~/.ssh/config`, the encrypted secrets DMG contents (SSH keys, certificates, Java trust), and the repository checkouts must already be restored — several Phase 10 steps rely on GitHub sign-ins, Postman vault decryption, or IntelliJ project paths that only work once those layers are in place.
+- Phases 8, 9, 10A, 10B, 11A, and 9B are complete. In particular, `~/.gitconfig`, `~/.ssh/config`, the encrypted secrets DMG contents (SSH keys, certificates, Java trust), and the repository checkouts must already be restored — several Phase 12 steps rely on GitHub sign-ins, Postman vault decryption, or IntelliJ project paths that only work once those layers are in place.
 - The external artifact volume is mounted and `$REIMAGE_ARTIFACT_ROOT` resolves; the pre-image `app-settings-backup/` subtree is reachable.
 - The encrypted secrets DMG is mounted (or ready to mount) for the Postman, IntelliJ, Docker, and licenses steps. Mount only when the corresponding step asks for it, and eject when done.
 
@@ -172,8 +172,8 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 
 ### Confirm Your Intent
 
-- Are you running the full Phase 10 sweep, or resuming mid-phase after a partial pass? A resumed run should still regenerate the plan-note so `PRESENT`/`MISSING` reflect current disk state, but the sign-off checklist you carry forward is the same one — copy the outstanding `TODO` rows into the new file so nothing is lost.
-- Do you want the plan-note under the default `reimaged-system/restore-notes/`, or a scratch location (`--output-root ~/Desktop/…`)? The default is what Phase 11 post-image captures and Phase 12 sign-off expect.
+- Are you running the full Phase 12 sweep, or resuming mid-phase after a partial pass? A resumed run should still regenerate the plan-note so `PRESENT`/`MISSING` reflect current disk state, but the sign-off checklist you carry forward is the same one — copy the outstanding `TODO` rows into the new file so nothing is lost.
+- Do you want the plan-note under the default `reimaged-system/restore-notes/`, or a scratch location (`--output-root ~/Desktop/…`)? The default is what Phase 13 post-image captures and Phase 14 sign-off expect.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -254,7 +254,7 @@ Manual import path in Chrome (per profile): `Bookmark Manager → Organize → I
 
 ### Step 4 — Obsidian and Reference Vault
 
-Install Obsidian from the approved source. Open the restored (or freshly cloned in Phase 9B) reference vault:
+Install Obsidian from the approved source. Open the restored (or freshly cloned in Phase 11B) reference vault:
 
 ```text
 ~/Development/documentation/reference-vault
@@ -443,7 +443,7 @@ Install Oracle SQL Developer only if it is still approved and needed:
 
 ```text
 Install from the approved Oracle / company source.
-Confirm required JDK compatibility against the JDK installed in Phase 8A.
+Confirm required JDK compatibility against the JDK installed in Phase 10A.
 Restore database connection definitions only from approved backup locations.
 Do not restore connection passwords loose; use the approved secret store.
 ```
@@ -481,9 +481,9 @@ Update [[capture-office-stability|capture-office-stability.md]] with the post-im
 
 ### Step 14 — Close the Plan-Note Sign-Off
 
-Reopen the plan-note and flip every row that is now complete from `TODO` to `Done`. Leave any row still open with a short note explaining why (e.g. `deferred to Phase 13 restore-home`). Phase 12 (`reimaged-system-checks.md`) reads these plan-notes and will flag outstanding rows.
+Reopen the plan-note and flip every row that is now complete from `TODO` to `Done`. Leave any row still open with a short note explaining why (e.g. `deferred to Phase 15 restore-home`). Phase 14 (`reimaged-system-checks.md`) reads these plan-notes and will flag outstanding rows.
 
-Confirm the summary matrix before leaving Phase 10:
+Confirm the summary matrix before leaving Phase 12:
 
 | Area | Expected result |
 |---|---|
@@ -499,7 +499,7 @@ Confirm the summary matrix before leaving Phase 10:
 | Terminal | Custom profile restored (if one was exported). |
 | Office stability | Post-image baseline captured and compared. |
 
-Continue to the Phase 11 capture runbooks (`capture-system-inventory.md`, `capture-managed-inventory.md`, `capture-performance-audit.md`, `capture-office-stability.md`), then to Phase 12 `reimaged-system-checks.md`.
+Continue to the Phase 13 capture runbooks (`capture-system-inventory.md`, `capture-managed-inventory.md`, `capture-performance-audit.md`, `capture-office-stability.md`), then to Phase 14 `reimaged-system-checks.md`.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -540,9 +540,9 @@ The collection or environment was imported from `app-settings-backup/postman/` (
 
 ## Supplemental Reference
 
-### How the plan-note relates to the Phase 12 sign-off
+### How the plan-note relates to the Phase 14 sign-off
 
-The plan-note file (`restore-apps-plan-YYYYMMDD-HHMMSS.md`) is the operator-facing checklist for Phase 10, but it is also an input to Phase 12 `reimaged-system-checks.md`. The Phase 12 validator scans `reimaged-system/restore-notes/` for the most recent `restore-apps-plan-*.md`, reads the sign-off checklist, and reports any row still on `TODO`. That is why leaving a note next to a `TODO` row (e.g. `deferred to Phase 13`) matters — the validator has no other way to distinguish "forgotten" from "intentionally deferred."
+The plan-note file (`restore-apps-plan-YYYYMMDD-HHMMSS.md`) is the operator-facing checklist for Phase 12, but it is also an input to Phase 14 `reimaged-system-checks.md`. The Phase 14 validator scans `reimaged-system/restore-notes/` for the most recent `restore-apps-plan-*.md`, reads the sign-off checklist, and reports any row still on `TODO`. That is why leaving a note next to a `TODO` row (e.g. `deferred to Phase 15`) matters — the validator has no other way to distinguish "forgotten" from "intentionally deferred."
 
 ### Why VS Code has a fallback backup source
 

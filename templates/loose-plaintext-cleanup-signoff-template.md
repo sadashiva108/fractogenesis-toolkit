@@ -11,7 +11,7 @@ $REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/manual/loose-plaintext-cleanup-signof
 The automated "what was removed / kept" record is in the generated `cleanup-*.md`
 report, and DMG contents are verified in `dmg-validation-*.md` (see the runbook's
 Verification Reports). This note records only the human decisions. Fill it in
-before running `cleanup --force`. These rows roll up to the Phase 4B sign-off in
+before running `cleanup --force`. These rows roll up to the Phase 6B sign-off in
 `reimage-prep-checks.md`.
 
 ## Manual judgment

@@ -2,7 +2,7 @@
 # =============================================================================
 # watch-office-today.sh
 #
-# Long-running Office stability watcher (Phase 3D pre-image / Phase 11E
+# Long-running Office stability watcher (Phase 4D pre-image / Phase 13E
 # post-image). Every 15 seconds it appends a timestamped block to a
 # bundle-watch-*.log recording Outlook/OneNote bundle status, key Outlook
 # frameworks, running Office/dev/management processes, new crash reports newer

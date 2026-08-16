@@ -5,7 +5,7 @@
 # Format: one absolute path per entry — files or directories.
 #
 # For repo-adjacent or workspace-local certificate material not already
-# auto-captured by Phase 2F and still required after reimage.
+# auto-captured by Phase 3B and still required after reimage.
 
 STAGED_CERTS_PROJECT_LOCAL=(
   # "$HOME/Development/example-project/local-dev-certs/dev-client-cert.pem"

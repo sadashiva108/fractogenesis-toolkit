@@ -2,7 +2,7 @@
 # =============================================================================
 # capture-office-stability.sh
 #
-# Office stability baseline collector (Phase 3D pre-image / Phase 11E
+# Office stability baseline collector (Phase 4D pre-image / Phase 13E
 # post-image). At the end of a clean test window it gathers everything the
 # Office watcher recorded that is newer than bundle-watch-start.marker into one
 # timestamped, self-contained evidence bundle: numbered section files

@@ -8,7 +8,7 @@
 # app's resolved source paths and destinations explicitly; this helper only
 # copies what it is told to copy. Non-secret sources land under the app's
 # app-settings-backup/<app>/ folder; secret-bearing sources land under
-# secrets-encrypted/<app>/ for the later Phase 2F encrypted DMG.
+# secrets-encrypted/<app>/ for the later Phase 3B encrypted DMG.
 #
 # This is the one authoritative capture path for the simple "copy these files"
 # apps (Claude, draw.io, Zoom, Mos, Wireshark, ...). Apps whose backup is a

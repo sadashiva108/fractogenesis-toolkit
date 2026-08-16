@@ -1,10 +1,10 @@
-[[reimaging-guide#Phase 10 — Restore Apps|← Back to Mac Reimaging Guide]]
+[[reimaging-guide#Phase 12 — Restore Apps|← Back to Mac Reimaging Guide]]
 
 # Restore IntelliJ
 
 **Last updated:** 2026-08-05
 
-Restore IntelliJ IDEA and per-project state on the reimaged Mac in a controlled sequence so imported settings, Scratches, project metadata, and HTTP Client environments end up in the right places without dragging stale machine-specific paths forward or leaking secret material into unencrypted storage. This runbook is the dedicated Phase 10 IntelliJ handoff that [[restore-apps|restore-apps.md]] hands to; the companion script `bin/restore-intellij.sh` writes a per-run plan-note that surveys the available pre-image sources and provides the sign-off checklist.
+Restore IntelliJ IDEA and per-project state on the reimaged Mac in a controlled sequence so imported settings, Scratches, project metadata, and HTTP Client environments end up in the right places without dragging stale machine-specific paths forward or leaking secret material into unencrypted storage. This runbook is the dedicated Phase 12 IntelliJ handoff that [[restore-apps|restore-apps.md]] hands to; the companion script `bin/restore-intellij.sh` writes a per-run plan-note that surveys the available pre-image sources and provides the sign-off checklist.
 
 ---
 
@@ -60,11 +60,11 @@ validating project SDK, Gradle JVM, run configurations, and test builds
 It does not own:
 
 ```text
-JetBrains license activation as a secret — Phase 8B (restore-access), secrets-encrypted/licenses/
-SSH, GPG, kube, docker, general credential restore — Phase 8B (restore-access)
-Java trust overrides pinned to a JDK — Phase 8B (restore-access, jssecacerts)
-repository re-clone and staged ignored files — Phase 9B (restore-repos)
-Git identity and remote routing — Phase 9A (restore-git)
+JetBrains license activation as a secret — Phase 10B (restore-access), secrets-encrypted/licenses/
+SSH, GPG, kube, docker, general credential restore — Phase 10B (restore-access)
+Java trust overrides pinned to a JDK — Phase 10B (restore-access, jssecacerts)
+repository re-clone and staged ignored files — Phase 11B (restore-repos)
+Git identity and remote routing — Phase 11A (restore-git)
 Docker Desktop, daemon state, and container rebuild — restore-docker.md
 umbrella daily-apps ordering and Office / Chrome / VS Code / Raycast steps — restore-apps.md
 ```
@@ -85,7 +85,7 @@ The second kind is IDE-level ephemera worth preserving — Scratches, Consoles, 
 
 The third kind is project-level metadata under each repo's `.idea/`. Some of it is safe and useful (run configurations, code styles); some of it is machine-specific (workspace.xml paths, local data source URLs); and some of it embeds credentials (`dataSources.local.xml`, HTTP Client `*.env.json`). The runbook restores this selectively, and treats the credential-embedding files as encrypted-DMG material — they never touch the ordinary `app-settings-backup/` path.
 
-The Phase 10 order is deliberate: install first, launch once so IntelliJ creates its own paths, import the settings ZIP before restoring per-version content, then per-project metadata, then non-secret HTTP request files, then encrypted HTTP env files, then validate SDK / Gradle JVM / tests. Skipping the "launch once and quit" step is the most common source of import failures because IntelliJ silently ignores an import into a config directory it did not create itself.
+The Phase 12 order is deliberate: install first, launch once so IntelliJ creates its own paths, import the settings ZIP before restoring per-version content, then per-project metadata, then non-secret HTTP request files, then encrypted HTTP env files, then validate SDK / Gradle JVM / tests. Skipping the "launch once and quit" step is the most common source of import failures because IntelliJ silently ignores an import into a config directory it did not create itself.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -166,9 +166,9 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 ### Prerequisites
 
 - Your shell is at the repository root — `cd "$FRACTOGENESIS_HOME"` once for the session. Per the guide's [[reimaging-guide#Core Assumptions|Core Assumptions]], the commands below assume this and don't repeat it.
-- Phases 6, 7, 8A, 8B, 9A, and 9B are complete. In particular, the JDK targeted as Project SDK is installed (Phase 8A), the encrypted secrets DMG is available and its passphrase is known (Phase 2E/8B), and the repositories whose `.idea/` metadata you plan to restore have already been re-cloned (Phase 9B).
+- Phases 8, 9, 10A, 10B, 11A, and 9B are complete. In particular, the JDK targeted as Project SDK is installed (Phase 10A), the encrypted secrets DMG is available and its passphrase is known (Phase 3A/10B), and the repositories whose `.idea/` metadata you plan to restore have already been re-cloned (Phase 11B).
 - The external artifact volume is mounted and `$REIMAGE_ARTIFACT_ROOT` resolves; the pre-image `app-settings-backup/intellij/` subtree is reachable.
-- You have already generated the Phase 10 umbrella plan-note via [[restore-apps|restore-apps.md]] Step 1. Restarting the umbrella plan-note is not required — this dedicated runbook writes its own plan-note — but running IntelliJ restore in isolation is unusual.
+- You have already generated the Phase 12 umbrella plan-note via [[restore-apps|restore-apps.md]] Step 1. Restarting the umbrella plan-note is not required — this dedicated runbook writes its own plan-note — but running IntelliJ restore in isolation is unusual.
 
 > [!bug] Troubleshooting
 > If `$REIMAGE_ARTIFACT_ROOT` is unset or unreachable, either mount the artifact volume and re-source `reimage.env`, or pass `--artifact-root PATH` explicitly to `bin/restore-intellij.sh`.
@@ -177,7 +177,7 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 
 - Are you restoring every project that was open pre-image, or a smaller set? Restoring `.idea/` metadata for a project you no longer need drags stale run configurations forward for no benefit.
 - Which IntelliJ version are you installing? The scratches / config-copy restore in Step 5 must land in the matching Application Support subtree; a version bump means falling back to the settings ZIP alone.
-- Do you want the plan-note under the default `reimaged-system/restore-notes/`, or a scratch location (`--output-root ~/Desktop/…`)? Phase 12 `reimaged-system-checks.md` reads from the default path.
+- Do you want the plan-note under the default `reimaged-system/restore-notes/`, or a scratch location (`--output-root ~/Desktop/…`)? Phase 14 `reimaged-system-checks.md` reads from the default path.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -317,7 +317,7 @@ Per-project procedure:
 
 ```text
 1. Open the pre-image project metadata folder under app-settings-backup/intellij/project-metadata/<repo>/.
-2. Open the freshly-cloned repo's own .idea/ folder from Phase 9B.
+2. Open the freshly-cloned repo's own .idea/ folder from Phase 11B.
 3. Copy only the categories you decided to restore.
 4. Reopen the IntelliJ project.
 5. Check Project Structure, Gradle settings, and run configurations before running anything.
@@ -381,7 +381,7 @@ git status --ignored -s
 For each important project, open it in IntelliJ and confirm:
 
 ```text
-Project SDK is set to the JDK installed in Phase 8A
+Project SDK is set to the JDK installed in Phase 10A
 Gradle JVM matches the Project SDK
 run configurations are present and their paths resolve
 HTTP Client environments load without missing-variable errors
@@ -413,7 +413,7 @@ Record per-project state in the plan-note:
 
 ### Step 10 — Close the Plan-Note Sign-Off
 
-Reopen the plan-note and flip every completed row from `TODO` to `Done`. Leave any row still open with a short note explaining why (e.g. `plugin deferred to next sprint`). Phase 12 `reimaged-system-checks.md` reads these plan-notes and will flag outstanding rows.
+Reopen the plan-note and flip every completed row from `TODO` to `Done`. Leave any row still open with a short note explaining why (e.g. `plugin deferred to next sprint`). Phase 14 `reimaged-system-checks.md` reads these plan-notes and will flag outstanding rows.
 
 Return to [[restore-apps|restore-apps.md]] Step 8 and mark the `IntelliJ dedicated restore completed` row in the umbrella plan-note before continuing to Docker.
 
@@ -460,7 +460,7 @@ Settings → Build Tools → Gradle → Gradle JVM
 
 For Gradle projects, both `Project SDK` and `Gradle JVM` must be set to the intended installed JDK. If the expected JDK is not listed, add it from `Project Structure → SDKs` using the path shown by `/usr/libexec/java_home -V`.
 
-If internal Gradle or Maven downloads still fail after the JDK is set correctly, also confirm the Java trust override (`jssecacerts`) was restored in Phase 8B:
+If internal Gradle or Maven downloads still fail after the JDK is set correctly, also confirm the Java trust override (`jssecacerts`) was restored in Phase 10B:
 
 ```bash
 /usr/libexec/java_home -v 17
@@ -488,9 +488,9 @@ The file landed inside the working tree of a repo whose `.gitignore` does not co
 
 ## Supplemental Reference
 
-### How the plan-note relates to the Phase 12 sign-off
+### How the plan-note relates to the Phase 14 sign-off
 
-The plan-note file (`restore-intellij-plan-YYYYMMDD-HHMMSS.md`) is the operator-facing checklist for IntelliJ, but it is also an input to Phase 12 `reimaged-system-checks.md`. The Phase 12 validator scans `reimaged-system/restore-notes/` for the most recent `restore-intellij-plan-*.md`, reads the sign-off checklist, and reports any row still on `TODO`. That is why leaving a note next to a `TODO` row (e.g. `plugin deferred`) matters — the validator has no other way to distinguish "forgotten" from "intentionally deferred."
+The plan-note file (`restore-intellij-plan-YYYYMMDD-HHMMSS.md`) is the operator-facing checklist for IntelliJ, but it is also an input to Phase 14 `reimaged-system-checks.md`. The Phase 14 validator scans `reimaged-system/restore-notes/` for the most recent `restore-intellij-plan-*.md`, reads the sign-off checklist, and reports any row still on `TODO`. That is why leaving a note next to a `TODO` row (e.g. `plugin deferred`) matters — the validator has no other way to distinguish "forgotten" from "intentionally deferred."
 
 ### Why the manual settings ZIP is preferred over `options/` overlays
 

@@ -8,7 +8,7 @@
 # an approved work-safe subset to OneDrive. Invoked by Phase 2B in
 # reimaging-guide.md; see backup-home.md for the full
 # runbook. Docker settings/contexts/inventories are owned by Phase 2C
-# (backup-apps.sh); dev-tool version inventory is owned by Phase 3B
+# (backup-apps.sh); dev-tool version inventory is owned by Phase 4B
 # (capture-system-inventory.sh) — neither is duplicated here.
 #
 # This file is intended for bin/. All targets, dotfiles, secrets, and excludes
@@ -657,7 +657,7 @@ if $RUN_EXTERNAL; then
   fi
 
   # Docker settings/contexts/inventories are owned by Phase 2C (backup-apps.sh);
-  # dev-tool version inventory is owned by Phase 3B (capture-system-inventory.sh).
+  # dev-tool version inventory is owned by Phase 4B (capture-system-inventory.sh).
   # Neither is duplicated here.
 
 fi  # end RUN_EXTERNAL

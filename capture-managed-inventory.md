@@ -1,10 +1,10 @@
-[[reimaging-guide#Phase 2C — Company-Managed Inventory Capture|← Back to Mac Reimaging Guide]]
+[[reimaging-guide#Phase 2C — Company Managed Inventory Capture|← Back to Mac Reimaging Guide]]
 
 # Capture Managed Inventory
 
 **Last updated:** 2026-07-21
 
-A read-only record of what a company-managed Mac has under management — MDM enrollment, configuration profiles, installed apps and package receipts, background agents and daemons, system extensions, and managed preferences. It observes and records only; it never modifies managed state. Run it pre-image (Phase 2C) to preserve a before-reimage picture, and again post-image (Phase 11C) to compare the freshly re-enrolled machine against that record.
+A read-only record of what a company-managed Mac has under management — MDM enrollment, configuration profiles, installed apps and package receipts, background agents and daemons, system extensions, and managed preferences. It observes and records only; it never modifies managed state. Run it pre-image (Phase 2C) to preserve a before-reimage picture, and again post-image (Phase 13C) to compare the freshly re-enrolled machine against that record.
 
 ---
 
@@ -48,7 +48,7 @@ This runbook owns:
 ```text
 the managed-inventory capture and its timestamped bundle
 interpretation of MDM, profile, package, agent/daemon, extension, and managed-preference evidence
-the pre-image (Phase 2C) and post-image (Phase 11C) comparison workflow
+the pre-image (Phase 2C) and post-image (Phase 13C) comparison workflow
 the full managed-inventory/ layout
 ```
 
@@ -57,9 +57,9 @@ It does not own:
 ```text
 backing up your own app settings — backup-apps.md (Phase 2D)
 the managed apps and profiles themselves — they are IT-owned and are never modified here
-certificate and Keychain staging — Phase 2E
-final encrypted DMG packaging — create-secrets-dmg.md (Phase 2F)
-cross-phase readiness sign-off — reimage-prep-checks.md (Phase 4B)
+certificate and Keychain staging — Phase 3A
+final encrypted DMG packaging — create-secrets-dmg.md (Phase 3B)
+cross-phase readiness sign-off — reimage-prep-checks.md (Phase 6B)
 ```
 
 This capture can be rerun at any time and on any managed Mac: each run writes a fresh timestamped bundle and leaves earlier runs untouched.
@@ -183,7 +183,7 @@ A short pre-flight: confirm you are set up, then confirm what this run is for. T
 
 ### Confirm Your Intent
 
-- Whether this is the **pre-image** run (Phase 2C, before wiping) or the **post-image** run (Phase 11C, after re-enrollment) — this sets `--context` and the bundle prefix.
+- Whether this is the **pre-image** run (Phase 2C, before wiping) or the **post-image** run (Phase 13C, after re-enrollment) — this sets `--context` and the bundle prefix.
 - That you want a full managed picture, not just your own app settings — those are [[backup-apps|Backup Apps]] (Phase 2D), a separate phase.
 - Whether you will compare this bundle against an earlier one; if so, keep the pre-image bundle so the post-image run has something to diff against (see [[#Pre-Image vs Post-Image Comparison|Pre-Image vs Post-Image Comparison]]).
 
@@ -217,7 +217,7 @@ Run the full capture. For the pre-image run, the default context is correct, so 
 ./bin/capture-managed-inventory.sh
 ```
 
-For the post-image run (Phase 11C, after the Mac is re-enrolled), set the context so the bundle is labelled distinctly:
+For the post-image run (Phase 13C, after the Mac is re-enrolled), set the context so the bundle is labelled distinctly:
 
 ```bash
 ./bin/capture-managed-inventory.sh --context post-image
@@ -262,7 +262,7 @@ The script captures uniformly; interpreting what management owns is the judgment
 |---|---|
 | Which components are actually IT-owned vs personal? | The filter pass flags likely corporate tooling, but only you know which apps and agents you installed yourself. |
 | Is a managed difference between pre- and post-image expected? | Re-enrollment legitimately changes some managed state; deciding whether a delta is normal or worth raising with IT is yours to make. |
-| Do you need the post-image run at all? | If you are not verifying re-enrollment, the pre-image bundle alone may be enough — the Phase 11C run is for comparison. |
+| Do you need the post-image run at all? | If you are not verifying re-enrollment, the pre-image bundle alone may be enough — the Phase 13C run is for comparison. |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -343,7 +343,7 @@ The bundle is the evidence. Do not retype app, profile, package, agent, daemon, 
 
 ### Pre-Image vs Post-Image Comparison
 
-The pre-image bundle (Phase 2C) and the post-image bundle (Phase 11C) share the same seven-section shape, so they diff cleanly. After re-enrollment, compare matching section files to see what management restored, added, or dropped:
+The pre-image bundle (Phase 2C) and the post-image bundle (Phase 13C) share the same seven-section shape, so they diff cleanly. After re-enrollment, compare matching section files to see what management restored, added, or dropped:
 
 ```bash
 PRE="$REIMAGE_ARTIFACT_ROOT/managed-inventory/pre-image-YYYYMMDD-HHMMSS"

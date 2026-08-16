@@ -1,10 +1,10 @@
-[[reimaging-guide#Phase 10 — Restore Apps|← Back to Mac Reimaging Guide]]
+[[reimaging-guide#Phase 12 — Restore Apps|← Back to Mac Reimaging Guide]]
 
 # Restore Docker
 
 **Last updated:** 2026-08-05
 
-Restore Docker Desktop, resource tuning, registry credentials, and the local development container fleet on the reimaged Mac — Redis, RabbitMQ, Elasticsearch (+ Kibana), and MarkLogic (single-node with ml-gradle deployment). This runbook is the dedicated Phase 10 Docker handoff that [[restore-apps|restore-apps.md]] hands to; the companion script `bin/restore-docker.sh` writes a per-run plan-note that surveys the available pre-image sources, checks whether Docker Desktop and the daemon are up on the reimaged Mac, and provides the sign-off checklist.
+Restore Docker Desktop, resource tuning, registry credentials, and the local development container fleet on the reimaged Mac — Redis, RabbitMQ, Elasticsearch (+ Kibana), and MarkLogic (single-node with ml-gradle deployment). This runbook is the dedicated Phase 12 Docker handoff that [[restore-apps|restore-apps.md]] hands to; the companion script `bin/restore-docker.sh` writes a per-run plan-note that surveys the available pre-image sources, checks whether Docker Desktop and the daemon are up on the reimaged Mac, and provides the sign-off checklist.
 
 ---
 
@@ -63,9 +63,9 @@ It does not own:
 ```text
 generic app restore (Office, Chrome, Obsidian, Postman, VS Code, Raycast) — restore-apps.md
 IntelliJ IDE state and HTTP Client env files — restore-intellij.md
-JDK/Node/Gradle runtime install — Phase 8A (restore-runtime)
-secret restore beyond ~/.docker/config.json (SSH, GPG, certs, licenses) — Phase 8B (restore-access)
-repository re-clone (needed for the MarkLogic compose files and Gradle deploys) — Phase 9B (restore-repos)
+JDK/Node/Gradle runtime install — Phase 10A (restore-runtime)
+secret restore beyond ~/.docker/config.json (SSH, GPG, certs, licenses) — Phase 10B (restore-access)
+repository re-clone (needed for the MarkLogic compose files and Gradle deploys) — Phase 11B (restore-repos)
 MarkLogic multi-node cluster steady-state operation — noted here as reference only; see the carrier-services-storage project README
 ```
 
@@ -130,7 +130,7 @@ $REIMAGE_ARTIFACT_ROOT/
         └── config.json
 ```
 
-Project checkouts (post Phase 9B) referenced by the compose steps:
+Project checkouts (post Phase 11B) referenced by the compose steps:
 
 ```text
 <workspace>/carrier-services-storage/src/main/docker/elastic/
@@ -157,9 +157,9 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 ### Prerequisites
 
 - Your shell is at the repository root — `cd "$FRACTOGENESIS_HOME"` once for the session. Per the guide's [[reimaging-guide#Core Assumptions|Core Assumptions]], the commands below assume this and don't repeat it.
-- Phases 6, 7, 8A, 8B, 9A, and 9B are complete. In particular, the JDK required for `./gradlew` is installed (Phase 8A), the encrypted secrets DMG is available (Phase 8B), and `carrier-services-storage` (or the equivalent project holding the Elasticsearch and MarkLogic compose files) has been re-cloned (Phase 9B).
+- Phases 8, 9, 10A, 10B, 11A, and 9B are complete. In particular, the JDK required for `./gradlew` is installed (Phase 10A), the encrypted secrets DMG is available (Phase 10B), and `carrier-services-storage` (or the equivalent project holding the Elasticsearch and MarkLogic compose files) has been re-cloned (Phase 11B).
 - The external artifact volume is mounted and `$REIMAGE_ARTIFACT_ROOT` resolves; the pre-image `app-settings-backup/docker/` subtree is reachable.
-- You have generated the Phase 10 umbrella plan-note via [[restore-apps|restore-apps.md]] Step 1.
+- You have generated the Phase 12 umbrella plan-note via [[restore-apps|restore-apps.md]] Step 1.
 
 > [!bug] Troubleshooting
 > If `$REIMAGE_ARTIFACT_ROOT` is unset or unreachable, either mount the artifact volume and re-source `reimage.env`, or pass `--artifact-root PATH` explicitly to `bin/restore-docker.sh`.
@@ -168,7 +168,7 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 
 - Are you restoring every container the pre-image system ran, or only the ones you actively need this week? The pre-image inventory records what was installed, not what still matters — reinstall is a chance to prune.
 - Do you want persisted MarkLogic and Elasticsearch data volumes carried forward if they exist in the Docker VM, or a clean slate (`docker compose down -v`)? A clean slate means re-running `mlDeploySecurity` and `mlDeploy`.
-- Do you want the plan-note under the default `reimaged-system/restore-notes/`, or a scratch location (`--output-root ~/Desktop/…`)? Phase 12 `reimaged-system-checks.md` reads from the default path.
+- Do you want the plan-note under the default `reimaged-system/restore-notes/`, or a scratch location (`--output-root ~/Desktop/…`)? Phase 14 `reimaged-system-checks.md` reads from the default path.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -532,7 +532,7 @@ docker compose -f docker-compose.marklogic.yml down -v
 
 ### Step 11 — Close the Plan-Note Sign-Off
 
-Reopen the plan-note and flip every completed row from `TODO` to `Done`. Leave any row still open with a short note explaining why (e.g. `MarkLogic deferred — not needed this week`). Phase 12 `reimaged-system-checks.md` reads these plan-notes and will flag outstanding rows.
+Reopen the plan-note and flip every completed row from `TODO` to `Done`. Leave any row still open with a short note explaining why (e.g. `MarkLogic deferred — not needed this week`). Phase 14 `reimaged-system-checks.md` reads these plan-notes and will flag outstanding rows.
 
 Return to [[restore-apps|restore-apps.md]] Step 9 and mark the `Docker dedicated restore completed` row in the umbrella plan-note before continuing to Step 10 of that runbook.
 

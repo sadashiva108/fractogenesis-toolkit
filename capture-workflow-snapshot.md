@@ -1,10 +1,10 @@
-[[reimaging-guide#Phase 3A — Capture Workflow Snapshot|← Back to Mac Reimaging Guide]]
+[[reimaging-guide#Phase 4A — Capture Workflow Snapshot|← Back to Mac Reimaging Guide]]
 
 # Capture Workflow Snapshot
 
 **Last updated:** 2026-08-04
 
-A lightweight capture that preserves the reimage workflow's own documentation and templates alongside a timestamped snapshot bundle, so the state of the runbooks that drove this reimage travels with the backup drive. Run it pre-image (Phase 3A) to record the workflow as it stands before the rebuild, and again post-image (Phase 11A) to record the final workflow state after any runbook or script refinements made during the effort.
+A lightweight capture that preserves the reimage workflow's own documentation and templates alongside a timestamped snapshot bundle, so the state of the runbooks that drove this reimage travels with the backup drive. Run it pre-image (Phase 4A) to record the workflow as it stands before the rebuild, and again post-image (Phase 13A) to record the final workflow state after any runbook or script refinements made during the effort.
 
 ---
 
@@ -45,7 +45,7 @@ It does not own:
 
 ```text
 broad local-file and home-directory backup — backup-home.md (Phase 2B)
-system-state and tooling inventory — capture-system-inventory.md (Phase 3B)
+system-state and tooling inventory — capture-system-inventory.md (Phase 4B)
 the full $REIMAGE_ARTIFACT_ROOT/workflow-snapshot/ tree layout — master-directory-reference.md
 ```
 
@@ -59,7 +59,7 @@ This capture can be rerun at any time: each run writes a fresh timestamped bundl
 
 Read this before running anything. The capture produces two distinct things under `workflow-snapshot/`, and they behave differently on purpose. The **timestamped bundle** (`pre-image-workflow-snapshot-*`) is point-in-time evidence: each run creates a new dated directory, and old ones are never overwritten, so you always have the workflow as it stood at a given moment. The **documentation copy** (`reimage-workflow-docs/`) is a single refreshable folder that holds the latest runbooks and templates, so the backup drive can carry a current, readable copy of the instructions without the repository present.
 
-Ordering follows the reimage timeline. The pre-image run (Phase 3A) records the workflow before the machine is wiped. The post-image run (Phase 11A) records the final workflow state after the rebuild, capturing any runbook or script refinements you made while working through the effort — so the two bundles together show how the workflow itself evolved across the reimage.
+Ordering follows the reimage timeline. The pre-image run (Phase 4A) records the workflow before the machine is wiped. The post-image run (Phase 13A) records the final workflow state after the rebuild, capturing any runbook or script refinements you made while working through the effort — so the two bundles together show how the workflow itself evolved across the reimage.
 
 The preferred path is the scripted capture: one entrypoint writes the bundle and refreshes the documentation copy in a single pass. Until that entrypoint is migrated into `bin/` (see the note below), the documentation copy is produced by running the doc-copy block directly.
 
@@ -134,7 +134,7 @@ A short pre-flight: confirm you are set up, then confirm what this run is for. T
 
 ### Confirm Your Intent
 
-- Whether this is the **pre-image** run (Phase 3A, before wiping) or the **post-image** run (Phase 11A, after the rebuild) — this sets the bundle's `context` prefix and which side of the reimage it records.
+- Whether this is the **pre-image** run (Phase 4A, before wiping) or the **post-image** run (Phase 13A, after the rebuild) — this sets the bundle's `context` prefix and which side of the reimage it records.
 - Whether you are producing a new timestamped bundle, refreshing the documentation copy, or both — the bundle is fresh every run, the doc copy changes only when you rerun the doc-copy step.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -170,7 +170,7 @@ Run the scripted capture. It writes a fresh timestamped bundle and refreshes the
 ./bin/capture-workflow-snapshot.sh --open
 ```
 
-For the post-image run (Phase 11A, after the rebuild), set the context so the bundle is labelled distinctly and sits beside the pre-image bundle rather than overwriting it:
+For the post-image run (Phase 13A, after the rebuild), set the context so the bundle is labelled distinctly and sits beside the pre-image bundle rather than overwriting it:
 
 ```bash
 ./bin/capture-workflow-snapshot.sh --context post-image --open
@@ -190,7 +190,7 @@ cp "$FRACTOGENESIS_HOME/templates/"*.md "$DOC_DEST/templates/" 2>/dev/null || tr
 
 ### Step 3 — Verify Outputs
 
-Confirm the newest bundle landed and its README is present. Adjust the `pre-image` prefix to `post-image` when verifying the Phase 11A run:
+Confirm the newest bundle landed and its README is present. Adjust the `pre-image` prefix to `post-image` when verifying the Phase 13A run:
 
 ```bash
 WORKFLOW_SNAPSHOT_ROOT="$REIMAGE_ARTIFACT_ROOT/workflow-snapshot"

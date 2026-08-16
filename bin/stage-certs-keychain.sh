@@ -2,7 +2,7 @@
 # =============================================================================
 # stage-certs-keychain.sh
 #
-# Phase 2E certificate/Keychain staging entrypoint: creates the staging
+# Phase 3A certificate/Keychain staging entrypoint: creates the staging
 # directories and refreshes the review artifacts, plans/normalizes the discovery
 # feeds, or initializes reusable staged-certs config fragments.
 #
@@ -28,7 +28,7 @@
 #              pass helper flags after `--` (e.g. `-- --fingerprint <SHA1>` or
 #              `-- --profiles-file <dump>`). Live capture may prompt for sudo.
 #
-# Creates the standard Phase 2E certificate/Keychain staging directories and
+# Creates the standard Phase 3A certificate/Keychain staging directories and
 # refreshes the review artifacts under:
 #   $REIMAGE_ARTIFACT_ROOT/public-certs/
 #   $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/certs/
@@ -37,7 +37,7 @@
 # Options:
 #   --artifact-root PATH  Use PATH as REIMAGE_ARTIFACT_ROOT. A sourced reimage.env
 #                         or exported REIMAGE_ARTIFACT_ROOT also works.
-#   --open                Open the main Phase 2E staging folders after the run.
+#   --open                Open the main Phase 3A staging folders after the run.
 #
 # Initialize reusable staged-certs fragments with:
 #   ./bin/stage-certs-keychain.sh init-staged-certs-config
@@ -200,7 +200,7 @@ cert_keychain_classify_file() {
       type="jssecacerts"
       action="review-truststore"
       destination="$SECRETS_DIR/certs/$bucket/"
-      note="Review whether this is a local Java trust override that is not already auto-captured in Phase 2F."
+      note="Review whether this is a local Java trust override that is not already auto-captured in Phase 3B."
       ;;
     cacerts)
       category="java-truststore"
@@ -264,17 +264,17 @@ cert_keychain_classify_file() {
     "$HOME/.ssh/"*|"$HOME/.gnupg/"*|"$HOME/.docker/"*|"$HOME/.kube/"*|"$HOME/.aws/"*|"$HOME/.azure/"*|"$HOME/.config/gcloud/"*|"$HOME/.config/gh/"*|"$HOME/.m2/"*|"$HOME/.gradle/"*|"$HOME/.npmrc"|"$HOME/.netrc"|"$HOME/.pypirc"|"$HOME/.git-credentials")
       action="captured-in-phase2f"
       destination="-"
-      note="Phase 2F already captures this credential-bearing path in the consolidated secrets DMG."
+      note="Phase 3B already captures this credential-bearing path in the consolidated secrets DMG."
       ;;
     "$HOME/.keystore"|"$HOME"/*.jks)
       action="captured-in-phase2f"
       destination="-"
-      note="Phase 2F already captures ~/.keystore and home-root .jks files."
+      note="Phase 3B already captures ~/.keystore and home-root .jks files."
       ;;
     "$HOME/Desktop/"*|"$HOME/Downloads/"*)
       action="captured-in-phase2f"
       destination="-"
-      note="Phase 2F already captures matching cert and keystore files from Desktop and Downloads."
+      note="Phase 3B already captures matching cert and keystore files from Desktop and Downloads."
       ;;
   esac
 
@@ -283,7 +283,7 @@ cert_keychain_classify_file() {
       "${JAVA_HOME:-__unset__}"/lib/security/jssecacerts|/Library/Java/JavaVirtualMachines/*/Contents/Home/lib/security/jssecacerts|/Applications/*.app/Contents/jbr/Contents/Home/lib/security/jssecacerts|/Applications/*.app/Contents/jbr/lib/security/jssecacerts)
         action="captured-in-phase2f"
         destination="-"
-        note="Phase 2F already captures Java jssecacerts from JAVA_HOME, installed JDKs, and IntelliJ JBR locations."
+        note="Phase 3B already captures Java jssecacerts from JAVA_HOME, installed JDKs, and IntelliJ JBR locations."
         ;;
     esac
   fi
@@ -390,9 +390,9 @@ if not changes:
     raise SystemExit(0)
 
 with flag_file.open("w", encoding="utf-8") as f:
-    f.write("# Phase 2F Rerun Required\n\n")
+    f.write("# Phase 3B Rerun Required\n\n")
     f.write(f"Generated: {dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
-    f.write("New or changed files were detected under `secrets-encrypted/certs/`. Rerun Phase 2F so the newest consolidated encrypted `all-secrets-*.dmg` includes this certificate/Keychain material before final validation or plaintext cleanup.\n\n")
+    f.write("New or changed files were detected under `secrets-encrypted/certs/`. Rerun Phase 3B so the newest consolidated encrypted `all-secrets-*.dmg` includes this certificate/Keychain material before final validation or plaintext cleanup.\n\n")
     f.write("Tracked files intentionally ignore generated README files and prior rerun-flag notes so this flag is about staged cert material, not documentation churn.\n\n")
     f.write("## New or changed cert-staging files\n\n")
     f.write("| Change | Relative path under `secrets-encrypted/certs/` | SHA-256 | Size bytes | Modified |\n")
@@ -408,7 +408,7 @@ with flag_file.open("w", encoding="utf-8") as f:
 PY_CERT_STATE
 
   if [[ -f "$flag_file" ]]; then
-    printf 'Phase 2F rerun flag written: %s\n' "$flag_file"
+    printf 'Phase 3B rerun flag written: %s\n' "$flag_file"
   fi
 }
 
@@ -551,7 +551,7 @@ write_review_manifest() {
     echo ""
     echo "The script inventories macOS Keychain items plus certificate-bearing files in your home directory, installed JDKs, and common application locations. It then writes categorized discovery and staging-candidate reports so you can make faster keep/skip decisions."
     echo ""
-    echo "Items that Phase 2F already auto-captures in the consolidated secrets DMG are still visible in discovery reports when useful, but they are excluded from the Phase 2E staging-candidate shortlist."
+    echo "Items that Phase 3B already auto-captures in the consolidated secrets DMG are still visible in discovery reports when useful, but they are excluded from the Phase 3A staging-candidate shortlist."
     echo ""
     echo "Most files here are inventories, not source secrets. If Keychain Access exports a .p12/.pfx/.cer/.pem file, save it under:"
     echo ""
@@ -807,7 +807,7 @@ write_extra_certs_review() {
 - `review-public-cert`: usually public certificate material; stage only if it is useful local trust or restore evidence.
 - `review-truststore`: keep only when it is a local or project-specific truststore, not a stock bundle.
 - `stage-if-needed`: likely secret-bearing or difficult to recreate; preserve if still required.
-- `captured-in-phase2f`: already picked up by the consolidated secrets DMG workflow; do not manually re-stage it in Phase 2E.
+- `captured-in-phase2f`: already picked up by the consolidated secrets DMG workflow; do not manually re-stage it in Phase 3A.
 - `likely-skip`: usually regenerated by reinstalling the tool, JDK, or application.
 CATEGORY_RULES
 
@@ -963,7 +963,7 @@ ensure_cert_keychain_stage_dirs "$REIMAGE_ARTIFACT_ROOT"
 case "$MODE" in
   scan)
     write_extra_certs_review
-    echo "Prepared Phase 2E certificate/Keychain staging folders:"
+    echo "Prepared Phase 3A certificate/Keychain staging folders:"
     printf '  %s\n' \
       "$REIMAGE_ARTIFACT_ROOT/public-certs" \
       "$SECRETS_DIR/certs" \

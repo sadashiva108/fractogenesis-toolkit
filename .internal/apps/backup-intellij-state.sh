@@ -84,7 +84,7 @@
 #     secrets-encrypted/intellij/by-source/. Nothing is staged unless checked.
 #
 # Security note:
-#   Run create-secrets-dmg.sh (Phase 2F) after this script to encrypt the staged
+#   Run create-secrets-dmg.sh (Phase 3B) after this script to encrypt the staged
 #   IntelliJ secrets (secrets-encrypted/intellij/) into the consolidated DMG.
 #
 # Exit status:
@@ -388,7 +388,7 @@ write_intellij_secret_template() {
     echo "#   [x] pattern"
     echo "#"
     echo "# Files matching a checked pattern under the JetBrains config dirs and the"
-    echo "# workspace root are copied into the encrypted-secrets tree so Phase 2F"
+    echo "# workspace root are copied into the encrypted-secrets tree so Phase 3B"
     echo "# sweeps them. Nothing is staged unless you check it."
     echo "#"
     echo "# Generated: $(date '+%Y-%m-%d %H:%M:%S')"
@@ -923,7 +923,7 @@ Project BasePath note:
 Next step:
   Review ${INTELLIJ_SECRETS_TEMPLATE:-the IntelliJ secret review template} and check the patterns
   you want staged, then rerun to stage the matches into secrets-encrypted/intellij/.
-  Run create-secrets-dmg.sh (Phase 2F) afterward to encrypt them into the DMG.
+  Run create-secrets-dmg.sh (Phase 3B) afterward to encrypt them into the DMG.
 
 Manual step:
   Export IntelliJ settings ZIP from IntelliJ IDEA -> File -> Manage IDE Settings -> Export Settings

@@ -2,7 +2,7 @@
 # =============================================================================
 # create-secrets-dmg.sh
 #
-# Phase 2F entrypoint for the consolidated encrypted secrets DMG. One script
+# Phase 3B entrypoint for the consolidated encrypted secrets DMG. One script
 # owns the whole lifecycle through four subcommands:
 #
 #   build (default)  Stage every credential-bearing category that should survive
@@ -676,7 +676,7 @@ cmd_verify_staging() {
   # phase2f rerun marker
   echo ""
   if find "$EXTRA_CERTS_REVIEW_DIR/state" -maxdepth 1 -type f -name 'phase2f-rerun-required-*.md' 2>/dev/null | grep -q .; then
-    status INFO "phase2f-rerun-required marker present" "Phase 2E staged new cert material — a go signal for this build"
+    status INFO "phase2f-rerun-required marker present" "Phase 3A staged new cert material — a go signal for this build"
   fi
 
   echo ""

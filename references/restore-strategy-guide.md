@@ -30,7 +30,7 @@ This document supports `reimaging-guide.md` by keeping the bootstrap problem —
 
 ## Purpose
 
-Once the Mac is wiped, more than just your data is gone — Obsidian, the repository cloning, and Git/SSH access all disappear too. Phase 6 onward assumes you can read `reimaging-guide.md` and follow linked runbooks. This guide covers how that's actually possible with nothing restored yet, and why the answer is different depending on which repo you mean.
+Once the Mac is wiped, more than just your data is gone — Obsidian, the repository cloning, and Git/SSH access all disappear too. Phase 8 onward assumes you can read `reimaging-guide.md` and follow linked runbooks. This guide covers how that's actually possible with nothing restored yet, and why the answer is different depending on which repo you mean.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -61,7 +61,7 @@ That circularity is exactly why the reimage workflow was moved into toolkit shap
 | `fractogenesis-toolkit` | Public | No | `bootstrap.sh` via curl, or the jump drive fallback — see below |
 | `reference-vault` | Private | Yes | SSH key restoration + `git clone` — see [[#Getting reference-vault (Still Needs SSH)|Getting reference-vault (Still Needs SSH)]] |
 
-This matters because it changes what's actually on the critical path. **You do not need `reference-vault`, SSH, or Git to read `reimaging-guide.md` and follow it through Phase 9.** Restoring `reference-vault` is a separate, non-blocking task for getting your personal notes back — it can happen any time after Phase 6, in parallel with the rest of the reimage, not as a prerequisite to it.
+This matters because it changes what's actually on the critical path. **You do not need `reference-vault`, SSH, or Git to read `reimaging-guide.md` and follow it through Phase 11.** Restoring `reference-vault` is a separate, non-blocking task for getting your personal notes back — it can happen any time after Phase 8, in parallel with the rest of the reimage, not as a prerequisite to it.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -77,11 +77,11 @@ The first time `git` runs on a fresh macOS install, it triggers a GUI popup to i
 
 ### Why the Repo Is Public
 
-A public repo needs zero authentication to fetch — which matters because SSH keys and Git credentials are literally what Phase 8B/9 are in the process of restoring. Relying on auth to fetch the tool that restores auth is circular, the same problem described above, just for a different repo. The trade-off: nothing in `fractogenesis-toolkit` can contain secrets or company-identifying details, since anyone can read it. Machine-specific and sensitive values belong in a local, untracked `reimage.env`, never in a committed file.
+A public repo needs zero authentication to fetch — which matters because SSH keys and Git credentials are literally what Phase 10B/11 are in the process of restoring. Relying on auth to fetch the tool that restores auth is circular, the same problem described above, just for a different repo. The trade-off: nothing in `fractogenesis-toolkit` can contain secrets or company-identifying details, since anyone can read it. Machine-specific and sensitive values belong in a local, untracked `reimage.env`, never in a committed file.
 
 ### Why There's a Jump Drive Fallback at All
 
-Curl still requires network access, and Phase 6's Wi-Fi/Intune enrollment step isn't instant — there can be a real window with no network at all (captive portal, delayed profile push). The jump drive exists specifically for that window: a small, dedicated USB stick (separate from the large encrypted backup drive, which stays disconnected until enrollment settles) carrying `bootstrap.sh` plus a prebuilt tarball of the repo.
+Curl still requires network access, and Phase 8's Wi-Fi/Intune enrollment step isn't instant — there can be a real window with no network at all (captive portal, delayed profile push). The jump drive exists specifically for that window: a small, dedicated USB stick (separate from the large encrypted backup drive, which stays disconnected until enrollment settles) carrying `bootstrap.sh` plus a prebuilt tarball of the repo.
 
 ### Why the Jump Drive Payload Is Checksummed and Versioned
 
@@ -94,7 +94,7 @@ Two failure modes a jump drive introduces that curl doesn't:
 
 ### Validating This Actually Works
 
-None of the above is worth anything unassumed. `test-guide-access.md` (Phase 4B) is the runbook that proves both paths actually work — using only tools guaranteed present on a bare Mac, extracting into a throwaway location so a test never risks a real checkout, with explicit pass/fail criteria rather than an eyeballed "looks fine." Run it before trusting either mechanism for a real reimage, and again any time `bootstrap.sh` changes or a new phase is migrated.
+None of the above is worth anything unassumed. `test-guide-access.md` (Phase 6B) is the runbook that proves both paths actually work — using only tools guaranteed present on a bare Mac, extracting into a throwaway location so a test never risks a real checkout, with explicit pass/fail criteria rather than an eyeballed "looks fine." Run it before trusting either mechanism for a real reimage, and again any time `bootstrap.sh` changes or a new phase is migrated.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 

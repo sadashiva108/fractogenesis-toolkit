@@ -1,10 +1,10 @@
-[[reimaging-guide#Phase 3D — Office Stability Capture|← Back to Mac Reimaging Guide]]
+[[reimaging-guide#Phase 4D — Office Stability Capture|← Back to Mac Reimaging Guide]]
 
 # Capture Office Stability
 
 **Last updated:** 2026-08-13
 
-Capture the evidence behind Outlook / OneNote instability when Office update churn or unexpected app closures are part of the reason this Mac is being reimaged. A continuous watcher logs the apps, their bundles, crash reports, and Microsoft update/management activity over days or weeks; a baseline collector then summarizes everything newer than a timestamp marker into a self-contained bundle. Run it pre-image (Phase 3D) to record the before picture, and again post-image (Phase 11E) to show whether the rebuilt Mac stayed stable.
+Capture the evidence behind Outlook / OneNote instability when Office update churn or unexpected app closures are part of the reason this Mac is being reimaged. A continuous watcher logs the apps, their bundles, crash reports, and Microsoft update/management activity over days or weeks; a baseline collector then summarizes everything newer than a timestamp marker into a self-contained bundle. Run it pre-image (Phase 4D) to record the before picture, and again post-image (Phase 13E) to show whether the rebuilt Mac stayed stable.
 
 ---
 
@@ -35,7 +35,7 @@ Capture the evidence behind Outlook / OneNote instability when Office update chu
     - [[#Per-Section Baseline Files|Per-Section Baseline Files]]
     - [[#Baseline and Incident Queries|Baseline and Incident Queries]]
     - [[#Interpreting the Evidence|Interpreting the Evidence]]
-    - [[#Post-Image Run (Phase 11E)|Post-Image Run (Phase 11E)]]
+    - [[#Post-Image Run (Phase 13E)|Post-Image Run (Phase 13E)]]
     - [[#Suggested IT Ticket|Suggested IT Ticket]]
     - [[#Local Mitigations While Managed|Local Mitigations While Managed]]
     - [[#Final Pre-Reimage Checklist|Final Pre-Reimage Checklist]]
@@ -57,7 +57,7 @@ This runbook owns:
 ```text
 the Office stability capture (Outlook / OneNote) and its timestamped baseline bundles
 the Office watcher and the bundle-watch-start.marker workflow
-the pre-image (Phase 3D) and post-image (Phase 11E) Office comparison
+the pre-image (Phase 4D) and post-image (Phase 13E) Office comparison
 the Office stability checklists (pre-image and post-image)
 the full office-stability/ layout
 ```
@@ -65,9 +65,9 @@ the full office-stability/ layout
 It does not own:
 
 ```text
-general system performance and workload evidence — capture-performance-audit.md (Phase 3C)
-the managed-app footprint (Office as a managed install) — capture-managed-inventory.md (Phase 2C / 11C)
-cross-phase readiness sign-off — reimage-prep-checks.md (Phase 4B)
+general system performance and workload evidence — capture-performance-audit.md (Phase 4C)
+the managed-app footprint (Office as a managed install) — capture-managed-inventory.md (Phase 2C / 13C)
+cross-phase readiness sign-off — reimage-prep-checks.md (Phase 6B)
 the Office/Outlook/OneNote caches, containers, and profiles themselves — these are IT-owned managed data and are never deleted here
 ```
 
@@ -201,7 +201,7 @@ A short pre-flight: confirm you are set up, then confirm what this run is for. T
 
 ### Confirm Your Intent
 
-- Which phase this is — **pre-image** (Phase 3D, before wiping) or **post-image** (Phase 11E, after re-enrollment). This sets `--phase` and the bundle prefix.
+- Which phase this is — **pre-image** (Phase 4D, before wiping) or **post-image** (Phase 13E, after re-enrollment). This sets `--phase` and the bundle prefix.
 - Whether this is a scheduled **full baseline** or a **fast incident baseline** (`--skip-unified-log`) — see [[#Run Modes|Run Modes]].
 - Whether you can reproduce the same Docker workload later; if pre/post comparison matters, record the exact containers now so the post-image run matches.
 
@@ -287,7 +287,7 @@ Turn the bundle into a readable sign-off report under `office-stability/checklis
 ./bin/office-stability-checklist.sh --phase pre-reimage --artifact-root "$REIMAGE_ARTIFACT_ROOT" --open
 ```
 
-This is Office-specific and runs separately from the general Phase 4B checklist. Its findings roll up to the [[reimaging-guide#Core Assumptions|Phase 4B]] sign-off. The manual equivalents are in [[#Final Pre-Reimage Checklist|Final Pre-Reimage Checklist]].
+This is Office-specific and runs separately from the general Phase 6B checklist. Its findings roll up to the [[reimaging-guide#Core Assumptions|Phase 6B]] sign-off. The manual equivalents are in [[#Final Pre-Reimage Checklist|Final Pre-Reimage Checklist]].
 
 ### Step 5 — Verify Outputs
 
@@ -462,7 +462,7 @@ No single section is authoritative alone; a managed Office event typically shows
 | AutoUpdate log mentions preinstall / "forcibly closing" | Strong evidence apps were closed by the update/install process. |
 | `installd` / `appstored` / Intune / mdmclient active in the window | Confirms update/management context was present (context, not proof of causality). |
 
-### Post-Image Run (Phase 11E)
+### Post-Image Run (Phase 13E)
 
 The post-image window repeats every step above; only two things change:
 
@@ -556,5 +556,5 @@ TOC verification performed before publishing:
 - deleted optional sections were also removed from the Table of Contents;
 - each top-level section ends with a single "Back to Table of Contents" link.
 - anchors #final-pre-reimage-checklist and #post-image-office-stability-checklist-template
-  are preserved for inbound links from reimaging-guide.md (Phase 3D / Phase 11E).
+  are preserved for inbound links from reimaging-guide.md (Phase 4D / Phase 13E).
 -->

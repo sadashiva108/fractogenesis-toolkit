@@ -1,10 +1,10 @@
-[[reimaging-guide#Phase 8B — Restore Access|← Back to Mac Reimaging Guide]]
+[[reimaging-guide#Phase 10B — Restore Access|← Back to Mac Reimaging Guide]]
 
 # Restore Access
 
 **Last updated:** 2026-08-04
 
-Restore the identity, trust, and credential layer on the reimaged Mac after the runtime toolchain is in place — SSH keys and Git access, certificates and keychains, Java trust overrides pinned to the JDK from Phase 8A, shell and CLI configuration, and license or activation material. Everything here comes out of the encrypted secrets DMG and the reviewed dotfiles bundle built during the pre-image phases; this runbook is manual and does not run a fractogenesis-toolkit entrypoint.
+Restore the identity, trust, and credential layer on the reimaged Mac after the runtime toolchain is in place — SSH keys and Git access, certificates and keychains, Java trust overrides pinned to the JDK from Phase 10A, shell and CLI configuration, and license or activation material. Everything here comes out of the encrypted secrets DMG and the reviewed dotfiles bundle built during the pre-image phases; this runbook is manual and does not run a fractogenesis-toolkit entrypoint.
 
 ---
 
@@ -39,7 +39,7 @@ Restore the identity, trust, and credential layer on the reimaged Mac after the 
 
 ## Purpose
 
-Restore the access layer that later repo, IDE, application, and project work depend on: SSH identity, TLS trust, JVM trust, shell environment, and credential and license material. Get the Mac to the point where it can authenticate to internal systems and reach services through the expected trust chain before Git restore (Phase 9) and application restore (Phase 10) start.
+Restore the access layer that later repo, IDE, application, and project work depend on: SSH identity, TLS trust, JVM trust, shell environment, and credential and license material. Get the Mac to the point where it can authenticate to internal systems and reach services through the expected trust chain before Git restore (Phase 11) and application restore (Phase 12) start.
 
 This runbook owns:
 
@@ -55,11 +55,11 @@ credentials, license keys, and activation material
 It does not own:
 
 ```text
-runtime tooling install (Xcode CLT, Homebrew, JDK, Node, platform CLIs) — Phase 8A (restore-runtime)
-building or validating the encrypted secrets DMG — create-secrets-dmg.md (Phase 2F)
-certificate and Keychain discovery, review, and staging — stage-certs-keychain.md (Phase 2E)
-Git identity configuration and remote routing — Phase 9 (restore-git)
-IntelliJ, Docker, and per-app secret restore — restore-intellij.md, restore-docker.md, and app-specific runbooks (Phase 10+)
+runtime tooling install (Xcode CLT, Homebrew, JDK, Node, platform CLIs) — Phase 10A (restore-runtime)
+building or validating the encrypted secrets DMG — create-secrets-dmg.md (Phase 3B)
+certificate and Keychain discovery, review, and staging — stage-certs-keychain.md (Phase 3A)
+Git identity configuration and remote routing — Phase 11 (restore-git)
+IntelliJ, Docker, and per-app secret restore — restore-intellij.md, restore-docker.md, and app-specific runbooks (Phase 12+)
 ```
 
 This runbook can be rerun. Each step is either idempotent (SSH file copies, chmod, `security` imports) or a manual UI action; rerunning is the intended recovery path when a step misbehaves.
@@ -70,15 +70,15 @@ This runbook can be rerun. Each step is either idempotent (SSH file copies, chmo
 
 ## How the Workflow Works
 
-Read this before running anything. The order in this phase is not preference — it enforces a trust chain. SSH has to be in place before anything tries to reach GitHub. Certificates in the login and system keychains have to be trusted before non-Java tools (curl, git, browsers) can reach internal endpoints. The `jssecacerts` Java trust override has to be dropped into the *actual* installed JDK from Phase 8A, not a JDK that isn't there yet, which is why runtime restore precedes access restore at the phase level. Shell and CLI configuration is restored last of the identity-adjacent material because it can reference paths (`JAVA_HOME`, `NVM_DIR`) that the earlier phases just put in place; restoring dotfiles before that would risk sourcing profile files that reference tools not yet installed.
+Read this before running anything. The order in this phase is not preference — it enforces a trust chain. SSH has to be in place before anything tries to reach GitHub. Certificates in the login and system keychains have to be trusted before non-Java tools (curl, git, browsers) can reach internal endpoints. The `jssecacerts` Java trust override has to be dropped into the *actual* installed JDK from Phase 10A, not a JDK that isn't there yet, which is why runtime restore precedes access restore at the phase level. Shell and CLI configuration is restored last of the identity-adjacent material because it can reference paths (`JAVA_HOME`, `NVM_DIR`) that the earlier phases just put in place; restoring dotfiles before that would risk sourcing profile files that reference tools not yet installed.
 
-The runbook is script-free by design. Every restore is a small manual copy, `security` command, or Keychain Access GUI action, and each one carries a judgment call — is this key still the current one, should this cert really be Always Trust, does this dotfile still match how the machine is used — that a script cannot make. The encrypted DMG built in Phase 2F is the single source of truth for the secret-bearing material; the reviewed dotfiles bundle from Phase 2B is the single source of truth for shell and CLI config.
+The runbook is script-free by design. Every restore is a small manual copy, `security` command, or Keychain Access GUI action, and each one carries a judgment call — is this key still the current one, should this cert really be Always Trust, does this dotfile still match how the machine is used — that a script cannot make. The encrypted DMG built in Phase 3B is the single source of truth for the secret-bearing material; the reviewed dotfiles bundle from Phase 2B is the single source of truth for shell and CLI config.
 
 ### Terminology
 
 | Term | Meaning |
 |---|---|
-| Secrets DMG | The consolidated encrypted disk image built by `create-secrets-dmg.md` in Phase 2F. Named `all-secrets-*.dmg` and stored under `secrets-encrypted/`. |
+| Secrets DMG | The consolidated encrypted disk image built by `create-secrets-dmg.md` in Phase 3B. Named `all-secrets-*.dmg` and stored under `secrets-encrypted/`. |
 | Dotfiles bundle | The reviewed shell and CLI config subset captured by `backup-home.md` and stored under `home-files-backup/dotfiles/`. Not encrypted; contains no secrets by design. |
 | `jssecacerts` | A per-JDK Java trust override file. Copied into `$JAVA_HOME/lib/security/` and read by the JVM in addition to the default trust store. Must match the installed JDK. |
 | Always Trust | A macOS Keychain trust setting that marks a certificate as valid for every use case. Correct only for genuine internal root or issuing CAs; a mistake for anything else. |
@@ -100,7 +100,7 @@ $FRACTOGENESIS_HOME/bin/    # no primary script — this runbook is executed by 
 Input evidence built by earlier phases:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/all-secrets-*.dmg              # Phase 2F output — mounted read-only
+$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/all-secrets-*.dmg              # Phase 3B output — mounted read-only
 $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/certs/                         # certificate staging, mirrored inside the DMG
 $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/certs/java-security/           # jssecacerts and related JDK trust files
 $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/certs/keychain-manual-exports/ # manual .cer/.p12 exports for Keychain Access
@@ -135,7 +135,7 @@ The `reimage.env` values this runbook depends on. Values are resolved and writte
 | Variable | Meaning |
 |---|---|
 | `REIMAGE_ARTIFACT_ROOT` | Artifact root for this reimage event; the mounted DMG, the dotfiles bundle, and `public-certs/` all resolve under it. |
-| `JAVA_HOME` | Set explicitly in Step 5 to the JDK installed in Phase 8A before dropping in `jssecacerts`. |
+| `JAVA_HOME` | Set explicitly in Step 5 to the JDK installed in Phase 10A before dropping in `jssecacerts`. |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -148,9 +148,9 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 ### Prerequisites
 
 - Your shell is at the repository root — `cd "$FRACTOGENESIS_HOME"` once for the session. Per the guide's [[reimaging-guide#Core Assumptions|Core Assumptions]], the commands below assume this and don't repeat it.
-- Phase 8A ([[restore-runtime|restore-runtime.md]]) is complete: JDK 17 (or the intended baseline) is installed and `java -version` prints it.
+- Phase 10A ([[restore-runtime|restore-runtime.md]]) is complete: JDK 17 (or the intended baseline) is installed and `java -version` prints it.
 - The external artifact volume is mounted and `reimage.env` resolves. `ls "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted"` should list at least one `all-secrets-*.dmg`.
-- You have the DMG password from your password manager or wherever it was stored in Phase 2F. Do not proceed without it.
+- You have the DMG password from your password manager or wherever it was stored in Phase 3B. Do not proceed without it.
 
 > [!bug] Troubleshooting
 > `hdiutil attach` failing with "authentication error" almost always means the wrong password. If the password is correct, verify the DMG isn't already mounted (`hdiutil info | grep all-secrets`) — a leftover mount from an earlier attempt will refuse a second attach.
@@ -213,7 +213,7 @@ ssh -T git@github.com || true
 ```
 
 > [!note]
-> The full Git identity workflow (work vs personal routing, per-repo `.gitconfig`, dual-identity `~/.gitconfig`) belongs to [[restore-git|restore-git.md]] in Phase 9. This step is only about SSH reachability.
+> The full Git identity workflow (work vs personal routing, per-repo `.gitconfig`, dual-identity `~/.gitconfig`) belongs to [[restore-git|restore-git.md]] in Phase 11. This step is only about SSH reachability.
 
 ### Step 3 — Restore Certificates and Keychain Material
 
@@ -251,7 +251,7 @@ security add-trusted-cert -d -r trustRoot -k "$HOME/Library/Keychains/login.keyc
 
 ### Step 5 — Restore Java Trust Overrides
 
-Only restore `jssecacerts` after confirming the target JDK is the one installed in Phase 8A — the file lives inside a specific JDK's `lib/security/` directory and does nothing if it lands next to a different JDK.
+Only restore `jssecacerts` after confirming the target JDK is the one installed in Phase 10A — the file lives inside a specific JDK's `lib/security/` directory and does nothing if it lands next to a different JDK.
 
 Pin `JAVA_HOME` explicitly:
 
@@ -296,7 +296,7 @@ Common selective restores:
 .azure/
 ```
 
-Prefer selective merge over blind copy for machine-specific files — the `.zprofile` on this Mac already has the Homebrew and `nvm` bootstrap added in Phase 8A, and overwriting it would remove those.
+Prefer selective merge over blind copy for machine-specific files — the `.zprofile` on this Mac already has the Homebrew and `nvm` bootstrap added in Phase 10A, and overwriting it would remove those.
 
 ### Step 7 — Restore Credentials and License Material
 
@@ -338,7 +338,7 @@ Confirm the exit criteria before moving on to [[restore-git|restore-git.md]]:
 | Git config | `git config --global user.email` returns the intended identity. |
 | Keychain trust | Internal root and issuing CAs are marked Always Trust in the login keychain. |
 | Java trust | `jssecacerts` is present under `$JAVA_HOME/lib/security/`, and an internal TLS smoke test succeeds. |
-| Shell config | `.zprofile` retains the Homebrew and `nvm` bootstrap from Phase 8A; adopted files were reviewed, not blindly copied. |
+| Shell config | `.zprofile` retains the Homebrew and `nvm` bootstrap from Phase 10A; adopted files were reviewed, not blindly copied. |
 | Credentials and licenses | Each application in scope is activated through its supported flow; no plaintext activation files remain on disk outside the DMG. |
 | DMG | Detached from `/Volumes/`. |
 
@@ -354,7 +354,7 @@ The commands do X; these judgment calls stay with you.
 |---|---|
 | Whether a certificate imported in Step 3 should be marked Always Trust. | Requires knowing whether it is a genuine internal root/issuing CA; incorrect trust weakens the whole TLS story. |
 | Whether the SSH keys on the DMG are the current identity or a rotated-out prior identity. | Depends on rotation history that the DMG does not carry. If unsure, generate a new key and register it upstream rather than restoring an old one. |
-| Which lines of a captured `.zshrc` or `.zprofile` should be adopted verbatim versus merged with the fresh file. | The fresh file already has Phase 8A's Homebrew and `nvm` bootstrap; the captured file may have machine-specific tweaks that no longer apply. |
+| Which lines of a captured `.zshrc` or `.zprofile` should be adopted verbatim versus merged with the fresh file. | The fresh file already has Phase 10A's Homebrew and `nvm` bootstrap; the captured file may have machine-specific tweaks that no longer apply. |
 | Whether an activation file should be reused, or the vendor's normal sign-in and reactivation flow used instead. | Some vendors invalidate copied activation files on new hardware; only you know per-app policy. |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]

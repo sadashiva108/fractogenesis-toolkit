@@ -1,4 +1,4 @@
-[[reimaging-guide#Phase 2G — Backup Time Machine|← Back to Mac Reimaging Guide]]
+[[reimaging-guide#Phase 5 — Run Time Machine|← Back to Mac Reimaging Guide]]
 
 <!--
 Migrated from reference-vault/workflows/mac/reimage/backup-time-machine.md.
@@ -79,8 +79,8 @@ It does not own:
 source-code state — backup-repos.md (Phase 2A)
 broad local-file copy — backup-home.md (Phase 2B)
 application settings and IntelliJ state — backup-apps.md / backup-intellij.md (Phase 2D)
-certificate and Keychain staging, and encrypted secrets packaging — stage-certs-keychain.md (Phase 2E) / create-secrets-dmg.md (Phase 2F)
-cross-phase readiness sign-off — reimage-prep-checks.md (Phase 4B)
+certificate and Keychain staging, and encrypted secrets packaging — stage-certs-keychain.md (Phase 3A) / create-secrets-dmg.md (Phase 3B)
+cross-phase readiness sign-off — reimage-prep-checks.md (Phase 6B)
 ```
 
 This runbook can be rerun independently: rerunning the backup produces a fresh incremental snapshot and new timestamped evidence without disturbing earlier runs.

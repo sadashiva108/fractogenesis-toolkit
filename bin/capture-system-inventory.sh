@@ -2,7 +2,7 @@
 # =============================================================================
 # capture-system-inventory.sh
 #
-# Read-only system inventory capture (Phase 3B pre-image / Phase 11B
+# Read-only system inventory capture (Phase 4B pre-image / Phase 13B
 # post-image): a one-pass record of how this Mac is configured — hardware and
 # macOS, disk and display, installed apps, Homebrew (with a Brewfile dump),
 # shell and dotfiles, Git, the language runtimes (Python, Java, Node), Docker,
@@ -20,7 +20,7 @@
 #   # Default -- pre-image bundle under system-inventory/pre-image-<stamp>/
 #   ./bin/capture-system-inventory.sh
 #
-#   # Post-image bundle (Phase 11B)
+#   # Post-image bundle (Phase 13B)
 #   ./bin/capture-system-inventory.sh --context post-image
 #
 #   # Override the artifact root for this invocation

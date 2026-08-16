@@ -327,7 +327,7 @@ def render(identities, certs, profiles, mdm_server) -> str:
         "- [ ] Public-only `.cer`/`.pem` exports were staged intentionally and contain no private keys.",
         "- [ ] Non-exportable identities were documented with their delivery + restore source.",
         "- [ ] Export passwords were saved only in the approved password manager (failed-export passwords discarded).",
-        "- [ ] Phase 2F will be rerun after any new manual export is added.",
+        "- [ ] Phase 3B will be rerun after any new manual export is added.",
         "",
     ]
     return "\n".join(lines)
@@ -417,7 +417,7 @@ def render_summary(rows, exported, staged_loose, checklist_name):
         "- [x] Keychain identities inventoried (see checklist above).",
         "- [ ] Private-key export failure documented, if applicable.",
         "- [x] Duplicate-looking certificates reviewed by fingerprint (deduped by SHA-1).",
-        "- [ ] These files stay staged until the Phase 2F DMG is created, mounted, and verified.",
+        "- [ ] These files stay staged until the Phase 3B DMG is created, mounted, and verified.",
         "",
     ]
     return "\n".join(L)

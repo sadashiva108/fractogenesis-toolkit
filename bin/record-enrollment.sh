@@ -2,11 +2,11 @@
 # =============================================================================
 # record-enrollment.sh
 #
-# Phase 6 — Enroll and Stabilize evidence recorder. Runs read-only managed-
+# Phase 8 — Enroll and Stabilize evidence recorder. Runs read-only managed-
 # baseline queries (MDM enrollment, configuration profiles, FileVault, expected
 # managed apps and processes, macOS version, pending software updates), writes
 # each result to a raw/NN-*.txt file, then generates a Markdown record with the
-# Phase 6 exit-criteria table prefilled for the command-verifiable rows.
+# Phase 8 exit-criteria table prefilled for the command-verifiable rows.
 #
 # This script records evidence and applies small heuristic PASS/WARN verdicts
 # on the command-verifiable rows only. The truly human-judgment rows (Company
@@ -57,7 +57,7 @@
 #   2. $REIMAGE_WORKSPACE_ROOT/enrollment/
 #        when the artifact root is not yet available and a workspace is set.
 #   3. ~/Desktop/reimaged-system-artifacts/enrollment/
-#        as a final fallback so Phase 6 can complete on a bare Mac before the
+#        as a final fallback so Phase 8 can complete on a bare Mac before the
 #        external artifact volume is reconnected.
 #
 # Exit status:
@@ -80,7 +80,7 @@ if [[ ! -f "$CONFIG_LOADER" ]]; then
   exit 2
 fi
 
-# Phase 6 typically runs on a freshly reimaged Mac where the external artifact
+# Phase 8 typically runs on a freshly reimaged Mac where the external artifact
 # volume may not be mounted yet. Keep loading permissive so the local fallback
 # path can still succeed.
 ARTIFACT_CONFIG_REQUIRE_REIMAGE_ARTIFACT_ROOT=false
@@ -278,7 +278,7 @@ if [[ "$ENROLLMENT_OK" == "true" && "$PROFILES_OK" == "true" && "$SECURITY_OK" =
 fi
 
 # ---------------------------------------------------------------------------
-# Generate the Markdown record with the Phase 6 exit-criteria table prefilled
+# Generate the Markdown record with the Phase 8 exit-criteria table prefilled
 # ---------------------------------------------------------------------------
 REPORT_FILE="$OUT/enrollment-record.md"
 
@@ -289,7 +289,7 @@ Generated: $(date)
 Script: $(basename "$0")
 Output directory: $OUT
 
-Use this record as the Phase 6 command-evidence bundle. The command-verifiable rows are prefilled below with a heuristic PASS/WARN verdict. Complete the remaining manual or mixed-review rows after the UI review and the first stabilization restart. See \`enroll-and-stabilize.md\` for the full runbook.
+Use this record as the Phase 8 command-evidence bundle. The command-verifiable rows are prefilled below with a heuristic PASS/WARN verdict. Complete the remaining manual or mixed-review rows after the UI review and the first stabilization restart. See \`enroll-and-stabilize.md\` for the full runbook.
 
 ## Exit Criteria
 

@@ -1,10 +1,10 @@
-[[reimaging-guide#Phase 3B — System Inventory Capture|← Back to Mac Reimaging Guide]]
+[[reimaging-guide#Phase 4B — System Inventory Capture|← Back to Mac Reimaging Guide]]
 
 # Capture System Inventory
 
 **Last updated:** 2026-08-04
 
-A script-first, one-pass record of how this Mac is configured — hardware and macOS, disk and display, installed apps, Homebrew, shell and dotfiles, Git, the language runtimes (Python, Java, Node), Docker, network and SSH, cloud paths, redacted environment clues, and certificate pointers. It observes and records; the only things it writes are into the bundle. Run it pre-image (Phase 3B) to preserve a before-reimage picture, and again post-image (Phase 11B) to compare the rebuilt machine against that record.
+A script-first, one-pass record of how this Mac is configured — hardware and macOS, disk and display, installed apps, Homebrew, shell and dotfiles, Git, the language runtimes (Python, Java, Node), Docker, network and SSH, cloud paths, redacted environment clues, and certificate pointers. It observes and records; the only things it writes are into the bundle. Run it pre-image (Phase 4B) to preserve a before-reimage picture, and again post-image (Phase 13B) to compare the rebuilt machine against that record.
 
 ---
 
@@ -48,7 +48,7 @@ This runbook owns:
 ```text
 the system-inventory capture and its timestamped bundle
 the 16 numbered section files, MANIFEST.txt, the Brewfile, and the inventory-reference dotfiles/ snapshot
-the pre-image (Phase 3B) and post-image (Phase 11B) comparison workflow
+the pre-image (Phase 4B) and post-image (Phase 13B) comparison workflow
 the full system-inventory/ layout
 ```
 
@@ -58,9 +58,9 @@ It does not own:
 verifying every repo is pushed to GitHub — backup-repos.md (Phase 2A)
 the authoritative home and dotfiles copy — backup-home.md (Phase 2B)
 IntelliJ settings and application config export — backup-apps.md / backup-intellij.md (Phase 2D)
-certificate and Keychain staging — Phase 2E
-license keys and secret material — create-secrets-dmg.md (Phase 2F)
-cross-phase readiness sign-off — reimage-prep-checks.md (Phase 4B)
+certificate and Keychain staging — Phase 3A
+license keys and secret material — create-secrets-dmg.md (Phase 3B)
+cross-phase readiness sign-off — reimage-prep-checks.md (Phase 6B)
 ```
 
 This capture can be rerun at any time: each run writes a fresh timestamped bundle and leaves earlier runs untouched.
@@ -198,8 +198,8 @@ A short pre-flight: confirm you are set up, then confirm what this run is for. T
 
 ### Confirm Your Intent
 
-- Whether this is the **pre-image** run (Phase 3B, before wiping) or the **post-image** run (Phase 11B, after rebuild) — this sets `--context` and the bundle prefix.
-- That you want a full system picture here, not app-settings or secret material — those belong to [[backup-apps|Backup Apps]] (Phase 2D) and the Phase 2E/2F secret staging, which are separate phases.
+- Whether this is the **pre-image** run (Phase 4B, before wiping) or the **post-image** run (Phase 13B, after rebuild) — this sets `--context` and the bundle prefix.
+- That you want a full system picture here, not app-settings or secret material — those belong to [[backup-apps|Backup Apps]] (Phase 2D) and the Phase 3A/3B secret staging, which are separate phases.
 - Whether you will compare this bundle against an earlier one; if so, keep the pre-image bundle so the post-image run has something to diff against (see [[#Pre-Image vs Post-Image Comparison|Pre-Image vs Post-Image Comparison]]).
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -237,7 +237,7 @@ Run the full capture. For the pre-image run, the default context is correct, so 
 ./bin/capture-system-inventory.sh
 ```
 
-For the post-image run (Phase 11B, after the Mac is rebuilt), set the context so the bundle is labelled distinctly:
+For the post-image run (Phase 13B, after the Mac is rebuilt), set the context so the bundle is labelled distinctly:
 
 ```bash
 ./bin/capture-system-inventory.sh --context post-image
@@ -268,7 +268,7 @@ sed -n '1,40p' "$LATEST/01-hardware.txt"
 ```
 
 > [!note]
-> A few settings cannot be captured by `system_profiler` and stay a hand-verified item that rolls up to the Phase 4B sign-off: take screenshots of **System Settings → Displays** (arrangement and scaling), **Keyboard → Shortcuts**, **Trackpad**, **Accessibility**, and the **Privacy & Security** panes. See [[#Manual context note only when needed|Manual context note only when needed]] for where to save them.
+> A few settings cannot be captured by `system_profiler` and stay a hand-verified item that rolls up to the Phase 6B sign-off: take screenshots of **System Settings → Displays** (arrangement and scaling), **Keyboard → Shortcuts**, **Trackpad**, **Accessibility**, and the **Privacy & Security** panes. See [[#Manual context note only when needed|Manual context note only when needed]] for where to save them.
 
 > [!bug] Troubleshooting
 > Empty or permission-limited sections are covered in [[#Troubleshooting|Troubleshooting]]. Fewer than 16 section files means the run was interrupted — rerun the capture rather than trusting a partial bundle.
@@ -285,7 +285,7 @@ The script captures uniformly; deciding what is worth preserving beyond the bund
 |---|---|
 | Which locally-built Docker images or custom volumes are worth saving? | Official images re-pull from a registry; only you know which images and volumes you built locally and cannot recreate. |
 | Is a pre- vs post-image difference expected? | A rebuilt machine legitimately differs (newer versions, reset defaults); deciding whether a delta is normal or worth acting on is yours to make. |
-| Do you need the post-image run at all? | If you are not verifying the rebuild against the old machine, the pre-image bundle alone may be enough — the Phase 11B run is for comparison. |
+| Do you need the post-image run at all? | If you are not verifying the rebuild against the old machine, the pre-image bundle alone may be enough — the Phase 13B run is for comparison. |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -409,7 +409,7 @@ docker ps -a 2>/dev/null
 docker volume ls 2>/dev/null
 ```
 
-**`13` — Network and SSH.** Computer name, interfaces, and the SSH client config. SSH keys are secret material — they belong to Phase 2E/2F staging, not this bundle.
+**`13` — Network and SSH.** Computer name, interfaces, and the SSH client config. SSH keys are secret material — they belong to Phase 3A/3B staging, not this bundle.
 
 ```bash
 scutil --get ComputerName
@@ -430,7 +430,7 @@ ls ~/Library/Mobile\ Documents/com~apple~CloudDocs/ 2>/dev/null
 env | grep -Ev 'SECRET|TOKEN|KEY|PASS|PWD|AWS|CREDENTIAL' | sort
 ```
 
-**`16` — Certificates and keychains.** Pointers only — keychain list and `.env` file locations, no contents. Actual certificate and Keychain export is Phase 2E staging.
+**`16` — Certificates and keychains.** Pointers only — keychain list and `.env` file locations, no contents. Actual certificate and Keychain export is Phase 3A staging.
 
 ```bash
 security list-keychains
@@ -444,10 +444,10 @@ Run the script first, review the output under `$REIMAGE_ARTIFACT_ROOT/system-inv
 Add a short manual note only when a missing detail still matters, such as:
 
 - a **System Settings** screenshot the script cannot capture — Displays arrangement and scaling, Keyboard shortcuts, Trackpad, Accessibility, and the Privacy & Security panes (Full Disk Access, Developer Tools);
-- a restore constraint for a licensed app or installer (the license material itself is staged in Phase 2E/2F, not here);
+- a restore constraint for a licensed app or installer (the license material itself is staged in Phase 3A/3B, not here);
 - a one-off environment quirk that would not be obvious from the generated bundle alone.
 
-Save that note and any screenshots beside the generated bundle under `$REIMAGE_ARTIFACT_ROOT/system-inventory/<context>-<stamp>/`. These hand-verified items roll up to the Phase 4B [[reimage-prep-checks|reimage-prep-checks]] sign-off.
+Save that note and any screenshots beside the generated bundle under `$REIMAGE_ARTIFACT_ROOT/system-inventory/<context>-<stamp>/`. These hand-verified items roll up to the Phase 6B [[reimage-prep-checks|reimage-prep-checks]] sign-off.
 
 ### Interpretation Notes
 
@@ -455,7 +455,7 @@ Read each section for what it is best at: `01`/`02` for the machine and OS basel
 
 ### Pre-Image vs Post-Image Comparison
 
-The pre-image bundle (Phase 3B) and the post-image bundle (Phase 11B) share the same section shape, so they diff cleanly. After the rebuild, compare matching section files to see what came back, what is missing, and what changed:
+The pre-image bundle (Phase 4B) and the post-image bundle (Phase 13B) share the same section shape, so they diff cleanly. After the rebuild, compare matching section files to see what came back, what is missing, and what changed:
 
 ```bash
 PRE="$REIMAGE_ARTIFACT_ROOT/system-inventory/pre-image-YYYYMMDD-HHMMSS"

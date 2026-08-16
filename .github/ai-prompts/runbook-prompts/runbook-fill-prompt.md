@@ -99,7 +99,7 @@ that someone in a hurry still reads it.
 do not attach to a single step (e.g. whether a kept file is really a secret). Two
 things that look similar do NOT belong here: a fact the reader verifies by hand is
 a *verification* — put it in the relevant Sequential Steps verify action, where it
-also rolls up to the Phase 4B `reimage-prep-checks` sign-off; and a choice of
+also rolls up to the Phase 6B `reimage-prep-checks` sign-off; and a choice of
 mode/path is *intent* — put it in Confirm Your Intent. Delete the section when the
 runbook has no standing judgment calls.
 
@@ -353,7 +353,7 @@ Auto-detection rules (attempt before asking clarifying questions)
 Sequential Steps guidance
 - Break the runbook into small numbered steps that map to the script's phases: prepare -> execute -> verify.
 - Order steps so every dependency is produced before the step that consumes it; state the reason for any branching choice before the command that acts on it (see "Why before how" and "Sequencing" above).
-- Put manual verification (a fact a person must confirm by hand) in the verify action of the step it belongs to, not in the Decisions section; it rolls up to the Phase 4B sign-off.
+- Put manual verification (a fact a person must confirm by hand) in the verify action of the step it belongs to, not in the Decisions section; it rolls up to the Phase 6B sign-off.
 - When updating a runbook, prefer to reflow existing prose into the template's sections instead of verbatim copying; preserve essential implementation details, commands, and example output.
 - When a runbook contains more than one logical action, consider creating multiple runbooks or documenting sub-commands and mapping them to specific scripts/helpers.
 

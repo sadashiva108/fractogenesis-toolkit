@@ -1247,7 +1247,7 @@ $UNSUPPORTED_TODO_MD
 - Treat this manifest as the stable Phase 2D summary.
 - Only the apps checked in \`app-backup-selection.md\` were acted on (unless run with --all-detected).
 - Use \`backup-apps.md\` for the manual or app-controlled steps that the script cannot complete.
-- Use \`reimage-prep-checks.md\` later in Phase 4 only for the manual rows that remain after reviewing the generated \`reimage-checklist.sh --phase pre\` report.
+- Use \`reimage-prep-checks.md\` later in Phase 6 only for the manual rows that remain after reviewing the generated \`reimage-checklist.sh --phase pre\` report.
 EOF
 fi
 

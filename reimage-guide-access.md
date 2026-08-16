@@ -19,7 +19,7 @@
 
 ## Purpose
 
-This validates the two ways `fractogenesis-toolkit` gets onto a Mac with no Git, no SSH keys, and no prior checkout — the exact situation Phase 6 onward depends on. Every command below uses only what stock macOS already has, deliberately — the whole point is proving this works *before* trusting it during a real reimage.
+This validates the two ways `fractogenesis-toolkit` gets onto a Mac with no Git, no SSH keys, and no prior checkout — the exact situation Phase 8 onward depends on. Every command below uses only what stock macOS already has, deliberately — the whole point is proving this works *before* trusting it during a real reimage.
 
 Both tests extract into a throwaway location, never a real dev checkout.
 

@@ -1,4 +1,4 @@
-[[reimaging-guide#Phase 3 — Pre-Image Captures|← Back to Mac Reimaging Guide]]
+[[reimaging-guide#Phase 4 — Pre-Image Captures|← Back to Mac Reimaging Guide]]
 
 # Reimage Preparation Captures and Checklists Evidence
 
@@ -6,7 +6,7 @@ This is the single comprehensive **pre-image** evidence reference for the Mac re
 
 Use it to understand both:
 
-- what Phase 3 and Phase 4 commands generate under `$REIMAGE_ARTIFACT_ROOT`
+- what Phase 4 and Phase 6 commands generate under `$REIMAGE_ARTIFACT_ROOT`
 - which manual sign-off rows, fallback notes, and templates still matter after the generated evidence exists
 
 The phase order lives in [[reimaging-guide|reimaging-guide.md]]. The detailed command behavior lives in the phase runbooks and `scripts/`.
@@ -19,12 +19,12 @@ The phase order lives in [[reimaging-guide|reimaging-guide.md]]. The detailed co
 - [[#When This File Is Not Necessary|When This File Is Not Necessary]]
 - [[#How the Pre-Image Captures Are Organized|How the Pre-Image Captures Are Organized]]
 - [[#External Backup and Capture Root Layout|External Backup and Capture Root Layout]]
-- [[#Phase 3A — Capture Workflow Snapshot|Phase 3A — Capture Workflow Snapshot]]
-- [[#Phase 3B — Pre-Image System Inventory Capture|Phase 3B — Pre-Image System Inventory Capture]]
-- [[#Phase 3C — Pre-Image Company-Managed Inventory Capture|Phase 3C — Pre-Image Company-Managed Inventory Capture]]
-- [[#Phase 3D — Pre-Image Performance Audit Capture|Phase 3D — Pre-Image Performance Audit Capture]]
-- [[#Phase 3E — Pre-Image Office Stability Capture|Phase 3E — Pre-Image Office Stability Capture]]
-- [[#Phase 4 — Reimage Preparation Checks|Phase 4 — Reimage Preparation Checks]]
+- [[#Phase 4A — Capture Workflow Snapshot|Phase 4A — Capture Workflow Snapshot]]
+- [[#Phase 4B — Pre-Image System Inventory Capture|Phase 4B — Pre-Image System Inventory Capture]]
+- [[#Phase 2C — Pre-Image Company-Managed Inventory Capture|Phase 2C — Pre-Image Company-Managed Inventory Capture]]
+- [[#Phase 4C — Pre-Image Performance Audit Capture|Phase 4C — Pre-Image Performance Audit Capture]]
+- [[#Phase 4D — Pre-Image Office Stability Capture|Phase 4D — Pre-Image Office Stability Capture]]
+- [[#Phase 6 — Reimage Preparation Checks|Phase 6 — Reimage Preparation Checks]]
 - [[#Templates|Templates]]
 
 ---
@@ -55,7 +55,7 @@ Do not manually retype system inventory if capture-system-inventory.sh generated
 Do not manually recreate managed-app/profile evidence if capture-managed-inventory.sh generated the bundle.
 Do not manually recreate performance summaries if capture-performance-audit.sh generated the scenario bundle.
 Do not manually recreate Office watcher/baseline evidence if capture-office-stability-baseline.sh and office-stability-checklist.sh --phase pre-reimage generated the reports.
-Do not manually recreate the Phase 4 checklist when reimage-checklist.sh already generated the final report.
+Do not manually recreate the Phase 6 checklist when reimage-checklist.sh already generated the final report.
 ```
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -66,12 +66,12 @@ Do not manually recreate the Phase 4 checklist when reimage-checklist.sh already
 
 | Phase | Capture | Primary destination | Purpose |
 |---|---|---|---|
-| Phase 3A | Workflow snapshot | `$REIMAGE_ARTIFACT_ROOT/workflow-snapshot/pre-image-workflow-snapshot-*`, `$REIMAGE_ARTIFACT_ROOT/workflow-snapshot/reimage-workflow-docs/` | Current reimage workflow docs and lightweight workflow snapshot context that should travel with the capture set. |
-| Phase 3B | System inventory | `$REIMAGE_ARTIFACT_ROOT/system-inventory/pre-image-*` | Broad workstation rebuild context: hardware, macOS, apps, toolchains, shell, Git, network, cloud, and certificates. |
-| Phase 3C | Company-managed inventory | `$REIMAGE_ARTIFACT_ROOT/managed-inventory/pre-image-*` | Managed apps, profiles, background services, system extensions, package receipts, and managed preferences. |
-| Phase 3D | Performance audit | `$REIMAGE_ARTIFACT_ROOT/performance-audit/pre-image-*` | Scenario-based performance baselines and optional historical trend summaries/charts. |
-| Phase 3E | Office stability | `$REIMAGE_ARTIFACT_ROOT/office-stability/` | Office-specific baseline bundles, watcher-derived evidence, incident captures, and Office checklist output. |
-| Phase 4 | Reimage preparation checks | `$REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/` | Final go / no-go validation, readable checklist output, and remaining manual sign-off rows before erase. |
+| Phase 4A | Workflow snapshot | `$REIMAGE_ARTIFACT_ROOT/workflow-snapshot/pre-image-workflow-snapshot-*`, `$REIMAGE_ARTIFACT_ROOT/workflow-snapshot/reimage-workflow-docs/` | Current reimage workflow docs and lightweight workflow snapshot context that should travel with the capture set. |
+| Phase 4B | System inventory | `$REIMAGE_ARTIFACT_ROOT/system-inventory/pre-image-*` | Broad workstation rebuild context: hardware, macOS, apps, toolchains, shell, Git, network, cloud, and certificates. |
+| Phase 2C | Company-managed inventory | `$REIMAGE_ARTIFACT_ROOT/managed-inventory/pre-image-*` | Managed apps, profiles, background services, system extensions, package receipts, and managed preferences. |
+| Phase 4C | Performance audit | `$REIMAGE_ARTIFACT_ROOT/performance-audit/pre-image-*` | Scenario-based performance baselines and optional historical trend summaries/charts. |
+| Phase 4D | Office stability | `$REIMAGE_ARTIFACT_ROOT/office-stability/` | Office-specific baseline bundles, watcher-derived evidence, incident captures, and Office checklist output. |
+| Phase 6 | Reimage preparation checks | `$REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/` | Final go / no-go validation, readable checklist output, and remaining manual sign-off rows before erase. |
 
 These captures are **reference snapshots and read-only evidence**, not restore backups.
 
@@ -134,9 +134,9 @@ $REIMAGE_ARTIFACT_ROOT/
 
 ---
 
-## Phase 3A — Capture Workflow Snapshot
+## Phase 4A — Capture Workflow Snapshot
 
-Workflow: [[reimaging-guide#Phase 3A — Capture Workflow Snapshot|reimaging-guide.md — Phase 3A]].
+Workflow: [[reimaging-guide#Phase 4A — Capture Workflow Snapshot|reimaging-guide.md — Phase 4A]].
 
 Detailed capture runbook: [capture-workflow-snapshot.md](../capture-workflow-snapshot.md)
 
@@ -173,9 +173,9 @@ Manual / fallback notes:
 
 ---
 
-## Phase 3B — Pre-Image System Inventory Capture
+## Phase 4B — Pre-Image System Inventory Capture
 
-Workflow: [[reimaging-guide#Phase 3B — Pre-Image System Inventory Capture|reimaging-guide.md — Phase 3B]].
+Workflow: [[reimaging-guide#Phase 4B — Pre-Image System Inventory Capture|reimaging-guide.md — Phase 4B]].
 
 Detailed capture runbook: [capture-system-inventory.md](../capture-system-inventory.md)
 
@@ -222,9 +222,9 @@ Manual / fallback notes:
 
 ---
 
-## Phase 3C — Pre-Image Company-Managed Inventory Capture
+## Phase 2C — Pre-Image Company-Managed Inventory Capture
 
-Workflow: [[reimaging-guide#Phase 3C — Pre-Image Company-Managed Inventory Capture|reimaging-guide.md — Phase 3C]].
+Workflow: [[reimaging-guide#Phase 2C — Pre-Image Company-Managed Inventory Capture|reimaging-guide.md — Phase 2C]].
 
 Detailed capture runbook: [capture-managed-inventory.md](../capture-managed-inventory.md)
 
@@ -272,9 +272,9 @@ Manual / fallback notes:
 
 ---
 
-## Phase 3D — Pre-Image Performance Audit Capture
+## Phase 4C — Pre-Image Performance Audit Capture
 
-Workflow: [[reimaging-guide#Phase 3D — Pre-Image Performance Audit Capture|reimaging-guide.md — Phase 3D]].
+Workflow: [[reimaging-guide#Phase 4C — Pre-Image Performance Audit Capture|reimaging-guide.md — Phase 4C]].
 
 Detailed capture runbook: [capture-performance-audit.md](../capture-performance-audit.md)
 
@@ -335,15 +335,15 @@ Manual / fallback notes:
 - `manual-observations.md` and `workload-reproduction-config.md` are generated automatically; review them instead of creating a separate manual checklist first.
 - `manual-observations.md` is the place to record workload context the script cannot prove, especially how closely the capture matched normal work.
 - For a `clean-boot` scenario, it is acceptable for Docker Desktop to be stopped. The performance script records that state in `docker/docker-daemon-state.txt` and skips daemon-dependent Docker commands when the daemon is unavailable. Record in `manual-observations.md` whether Docker was intentionally stopped, so the post-image clean-boot comparison uses the same assumption.
-- If the external drive was unavailable, stage results locally under `$REIMAGE_WORKSPACE_ROOT/performance-audit/` and copy the completed folders into `$REIMAGE_ARTIFACT_ROOT/performance-audit/` before Phase 4 final validation.
+- If the external drive was unavailable, stage results locally under `$REIMAGE_WORKSPACE_ROOT/performance-audit/` and copy the completed folders into `$REIMAGE_ARTIFACT_ROOT/performance-audit/` before Phase 6 final validation.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
 ---
 
-## Phase 3E — Pre-Image Office Stability Capture
+## Phase 4D — Pre-Image Office Stability Capture
 
-Workflow: [[reimaging-guide#Phase 3E — Pre-Image Office Stability Capture|reimaging-guide.md — Phase 3E]].
+Workflow: [[reimaging-guide#Phase 4D — Pre-Image Office Stability Capture|reimaging-guide.md — Phase 4D]].
 
 Detailed capture runbook: [capture-office-stability.md](../capture-office-stability.md)
 
@@ -403,9 +403,9 @@ Manual / fallback notes:
 
 ---
 
-## Phase 4 — Reimage Preparation Checks
+## Phase 6 — Reimage Preparation Checks
 
-Workflow: [[reimaging-guide#Phase 4 — Reimage Preparation Checks|reimaging-guide.md — Phase 4]].
+Workflow: [[reimaging-guide#Phase 6 — Reimage Preparation Checks|reimaging-guide.md — Phase 6]].
 
 Detailed capture runbook: [capture-validated-reimage-prep.md](../capture-validated-reimage-prep.md)
 
@@ -428,21 +428,21 @@ $BACKUP_ROOT/reimage-prep-checks/reimage-checklist-YYYYMMDD-HHMMSS.md
 $BACKUP_ROOT/reimage-prep-checks/latest-reimage-checklist.txt
 ```
 
-Use the generated report as the actual Phase 4 evidence. This reference exists for the manual sign-off rows and fallback interpretation that remain after reviewing that report.
+Use the generated report as the actual Phase 6 evidence. This reference exists for the manual sign-off rows and fallback interpretation that remain after reviewing that report.
 
 Common manual rows still requiring human confirmation:
 
 | Manual item | Where to record |
 |---|---|
-| IT confirmed approved reimage method | generated Phase 4 report and/or `$REIMAGE_ARTIFACT_ROOT/reimage-confirmation/it-reimage-confirmation-YYYYMMDD.md` |
-| Loose private-key / keystore / certificate candidates reviewed | generated Phase 4 report manual rows |
-| `.p12` / `.pfx` export passwords saved only in approved password manager, if applicable | generated Phase 4 report manual rows |
-| Time Machine backup completed and latest backup confirmed | generated Phase 4 report; `backup-time-machine.sh complete` output and `capture-time-machine.sh final --open` final checklist under `$REIMAGE_ARTIFACT_ROOT/time-machine/`; optional `capture-time-machine.sh verify-volume --open` focused APFS volume evidence |
-| LastPass vault verified accessible | generated Phase 4 report manual rows |
-| DMG password saved and DMG verified | generated Phase 4 report manual rows |
-| VS Code Settings Sync state confirmed | generated Phase 4 report manual rows |
-| OneDrive / iCloud / Obsidian sync confirmed | generated Phase 4 report manual rows |
-| External drive ejected before reimage | generated Phase 4 report manual rows |
+| IT confirmed approved reimage method | generated Phase 6 report and/or `$REIMAGE_ARTIFACT_ROOT/reimage-confirmation/it-reimage-confirmation-YYYYMMDD.md` |
+| Loose private-key / keystore / certificate candidates reviewed | generated Phase 6 report manual rows |
+| `.p12` / `.pfx` export passwords saved only in approved password manager, if applicable | generated Phase 6 report manual rows |
+| Time Machine backup completed and latest backup confirmed | generated Phase 6 report; `backup-time-machine.sh complete` output and `capture-time-machine.sh final --open` final checklist under `$REIMAGE_ARTIFACT_ROOT/time-machine/`; optional `capture-time-machine.sh verify-volume --open` focused APFS volume evidence |
+| LastPass vault verified accessible | generated Phase 6 report manual rows |
+| DMG password saved and DMG verified | generated Phase 6 report manual rows |
+| VS Code Settings Sync state confirmed | generated Phase 6 report manual rows |
+| OneDrive / iCloud / Obsidian sync confirmed | generated Phase 6 report manual rows |
+| External drive ejected before reimage | generated Phase 6 report manual rows |
 
 Automated rows worth noting -- these were previously manual but `reimage-checklist.sh` now checks them directly:
 
@@ -475,7 +475,7 @@ Readable checklist map for the final manual review:
 
 ### Time Machine Evidence Commands
 
-Time Machine is a Phase 2 backup, but its completion evidence is reviewed during Phase 4 final pre-image validation.
+Time Machine is a Phase 2 backup, but its completion evidence is reviewed during Phase 6 final pre-image validation.
 
 Use the current command model:
 

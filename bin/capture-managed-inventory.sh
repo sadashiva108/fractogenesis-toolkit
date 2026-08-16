@@ -2,7 +2,7 @@
 # =============================================================================
 # capture-managed-inventory.sh
 #
-# Company-managed inventory capture (Phase 2C pre-image / Phase 11C post-image):
+# Company-managed inventory capture (Phase 2C pre-image / Phase 13C post-image):
 # a read-only record of company-managed apps, configuration profiles, launch
 # agents/daemons, system extensions, and managed preferences. Writes a
 # timestamped bundle under managed-inventory/. It observes and records only —

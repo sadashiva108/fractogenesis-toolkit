@@ -1,10 +1,10 @@
-[[reimaging-guide#Phase 9 — Restore Git|← Back to Mac Reimaging Guide]]
+[[reimaging-guide#Phase 11 — Restore Git|← Back to Mac Reimaging Guide]]
 
 # Restore Git
 
 **Last updated:** 2026-08-13
 
-Restore the Git identity plumbing on the reimaged Mac so both work and personal GitHub accounts route automatically based on where a repository lives on disk. This runbook wires up the dual-identity `~/.gitconfig` (work as default, `includeIf` override under the personal repo root), lays down the matching `~/.ssh/config` host aliases, validates both identities, and leaves you with a `git clone` template that Phase 9B ([[restore-repos|restore-repos.md]]) then applies at scale against the pre-image repository audit. It does not enumerate a repo list, drive a clone loop, or restore preserved local branches or stashes — that carry-forward work belongs to [[restore-repos|restore-repos.md]].
+Restore the Git identity plumbing on the reimaged Mac so both work and personal GitHub accounts route automatically based on where a repository lives on disk. This runbook wires up the dual-identity `~/.gitconfig` (work as default, `includeIf` override under the personal repo root), lays down the matching `~/.ssh/config` host aliases, validates both identities, and leaves you with a `git clone` template that Phase 11B ([[restore-repos|restore-repos.md]]) then applies at scale against the pre-image repository audit. It does not enumerate a repo list, drive a clone loop, or restore preserved local branches or stashes — that carry-forward work belongs to [[restore-repos|restore-repos.md]].
 
 ---
 
@@ -60,13 +60,13 @@ the git clone command template used for re-cloning repositories
 It does not own:
 
 ```text
-restoring SSH key files from the encrypted secrets DMG — Phase 8B (restore-access)
+restoring SSH key files from the encrypted secrets DMG — Phase 10B (restore-access)
 capturing branches, uncommitted work, stashes, local-only commits, and chosen kept ignored files pre-image — Phase 2C (backup-repos)
-laying that carry-forward material back into re-cloned repos post-image — Phase 9B (restore-repos)
-enumerating which repositories to re-clone or driving a clone loop — Phase 9B (restore-repos)
-the fractogenesis-toolkit checkout itself — already installed in Phase 5 by bootstrap.sh, not re-cloned here
-IDE-specific repo state (IntelliJ project files, VS Code workspace) — Phase 10 (restore-intellij.md, restore-apps.md)
-Docker container/image restore — Phase 10 (restore-docker.md)
+laying that carry-forward material back into re-cloned repos post-image — Phase 11B (restore-repos)
+enumerating which repositories to re-clone or driving a clone loop — Phase 11B (restore-repos)
+the fractogenesis-toolkit checkout itself — already installed in Phase 7 by bootstrap.sh, not re-cloned here
+IDE-specific repo state (IntelliJ project files, VS Code workspace) — Phase 12 (restore-intellij.md, restore-apps.md)
+Docker container/image restore — Phase 12 (restore-docker.md)
 ```
 
 This runbook can be rerun. Every write is a file replacement or `chmod`, so re-running is the intended way to recover from a mis-typed identity or a stale `~/.ssh/config`. Nothing here builds on prior local state.
@@ -115,7 +115,7 @@ This runbook is manual and does not run a fractogenesis-toolkit entrypoint:
 $FRACTOGENESIS_HOME/bin/    # no primary script — this runbook is executed by hand
 ```
 
-Input material laid down by earlier phases (Phase 8B):
+Input material laid down by earlier phases (Phase 10B):
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/ssh/    # SSH keys, mounted from all-secrets-*.dmg during restore-access
@@ -130,7 +130,7 @@ Live targets this runbook writes on the reimaged Mac:
 $GIT_PERSONAL_REPO_ROOT/.gitconfig        # personal identity override + core.sshCommand
 ~/.config/git/config                      # optional: XDG include that loads config.local
 ~/.config/git/config.local                # optional: XDG local overrides
-$GIT_WORK_SSH_KEY, $GIT_PERSONAL_SSH_KEY  # permission-fixed, not restored here (Phase 8B owns restore)
+$GIT_WORK_SSH_KEY, $GIT_PERSONAL_SSH_KEY  # permission-fixed, not restored here (Phase 10B owns restore)
 ```
 
 Machine-local values consumed from `reimage.env`:
@@ -155,8 +155,8 @@ The `reimage.env` values this runbook depends on. Paths and roots are resolved d
 | `GIT_PERSONAL_REPO_ROOT` | Directory holding personal repos. `includeIf` fires only for repos under this path. |
 | `GIT_WORK_GITHUB_HOST` | SSH host alias for work clones (typically `github.com`). |
 | `GIT_PERSONAL_GITHUB_HOST` | SSH host alias for personal clones (typically `github-personal` or similar). |
-| `GIT_WORK_SSH_KEY` | Absolute path to the work private key on disk (already restored in Phase 8B). |
-| `GIT_PERSONAL_SSH_KEY` | Absolute path to the personal private key on disk (already restored in Phase 8B). |
+| `GIT_WORK_SSH_KEY` | Absolute path to the work private key on disk (already restored in Phase 10B). |
+| `GIT_PERSONAL_SSH_KEY` | Absolute path to the personal private key on disk (already restored in Phase 10B). |
 | `GIT_DEFAULT_BRANCH` | Default branch name for `git init` (defaults to `master` when unset). |
 | `GIT_INTERNAL_TLS_SKIP_HOST` | Optional. Internal Enterprise Server host (e.g. `github.internal.example`) whose TLS cert this Mac doesn't trust; scopes `sslVerify=false` to that host only. Unset = verification stays on everywhere. |
 
@@ -171,7 +171,7 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 ### Prerequisites
 
 - Your shell is at the repository root — `cd "$FRACTOGENESIS_HOME"` once for the session. Per the guide's [[reimaging-guide#Core Assumptions|Core Assumptions]], the commands below assume this and don't repeat it.
-- Phase 8B ([[restore-access|restore-access.md]]) is complete: the SSH keys referenced by `$GIT_WORK_SSH_KEY` and `$GIT_PERSONAL_SSH_KEY` exist on disk, the internal-CA trust is in the login keychain, and `hdiutil detach` cleaned up any mounted DMG.
+- Phase 10B ([[restore-access|restore-access.md]]) is complete: the SSH keys referenced by `$GIT_WORK_SSH_KEY` and `$GIT_PERSONAL_SSH_KEY` exist on disk, the internal-CA trust is in the login keychain, and `hdiutil detach` cleaned up any mounted DMG.
 - `reimage.env` is present, and you know your Git identity values (name, email, SSH key paths, host aliases). Step 1 records them into `reimage.env`; don't leave an identity value blank — a blank email silently produces a `.gitconfig` with an empty email.
 - You know the SSH key fingerprints registered on GitHub for both accounts, or can look them up in a password manager. You will compare them in Step 2.
 
@@ -199,7 +199,7 @@ Every step begins with `source ./reimage.env` — Git config files do not reliab
 
 ### Step 1 — Install Git and Confirm the Environment
 
-Homebrew from Phase 8A is the install path. Confirm Git is available and no stale config is in the way:
+Homebrew from Phase 10A is the install path. Confirm Git is available and no stale config is in the way:
 
 ```bash
 brew install git
@@ -251,7 +251,7 @@ If any of the four fields prints blank, fill in `reimage.env` before continuing.
 
 ### Step 2 — Set Correct Permissions on Restored SSH Keys
 
-The keys themselves were laid down by [[restore-access|restore-access.md]] in Phase 8B; this step only fixes permissions and verifies fingerprints. The SSH client refuses to use loose private keys.
+The keys themselves were laid down by [[restore-access|restore-access.md]] in Phase 10B; this step only fixes permissions and verifies fingerprints. The SSH client refuses to use loose private keys.
 
 ```bash
 source ./reimage.env
@@ -477,7 +477,7 @@ Do not move on until every spot-check prints the expected value. A silent mismat
 
 ### Step 8 — Apply the Clone Pattern to Re-Clone Repositories
 
-Use the templates below to re-clone repositories one at a time as you need them, or hand the completed identity plumbing off to [[restore-repos|restore-repos.md]] (Phase 9B) which reads the pre-image repository audit and emits ready-to-run `git clone` commands at scale.
+Use the templates below to re-clone repositories one at a time as you need them, or hand the completed identity plumbing off to [[restore-repos|restore-repos.md]] (Phase 11B) which reads the pre-image repository audit and emits ready-to-run `git clone` commands at scale.
 
 **Work repos** — use the work GitHub host directly and clone into `$GIT_WORK_REPO_ROOT`:
 
@@ -506,7 +506,7 @@ Once cloned in the right directory, identity and key selection are automatic for
 > ```
 
 > [!note]
-> Preserved local-only material from Phase 2C ([[backup-repos|backup-repos.md]]) — stashes, local-only branches, chosen kept ignored files — is restored by Phase 9B ([[restore-repos|restore-repos.md]]), which reads the pre-image `repos.tsv` and staged ignored files and emits reviewable clone + rsync commands. Do not chase that reconciliation manually here.
+> Preserved local-only material from Phase 2C ([[backup-repos|backup-repos.md]]) — stashes, local-only branches, chosen kept ignored files — is restored by Phase 11B ([[restore-repos|restore-repos.md]]), which reads the pre-image `repos.tsv` and staged ignored files and emits reviewable clone + rsync commands. Do not chase that reconciliation manually here.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 

@@ -11,7 +11,7 @@ $REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/manual/manual-export-pass-criteria-YY
 The automated presence, PEM-balance, and manifest checks are in the generated
 `dmg-validation-*.md` report (see the runbook's Verification Reports). This note
 records only what a script cannot judge. Fill it in after running `validate`,
-before `cleanup --force`. These rows roll up to the Phase 4B sign-off in
+before `cleanup --force`. These rows roll up to the Phase 6B sign-off in
 `reimage-prep-checks.md`.
 
 ## Mounted DMG (from the validation report)

@@ -1,10 +1,10 @@
-[[reimaging-guide#Phase 6 — Enroll and Stabilize|← Back to Mac Reimaging Guide]]
+[[reimaging-guide#Phase 8 — Enroll and Stabilize|← Back to Mac Reimaging Guide]]
 
 # Enroll and Stabilize
 
 **Last updated:** 2026-08-04
 
-Bring the freshly reimaged Mac to a clean, trusted managed baseline before any restore work begins. This phase covers the human-driven work — completing MDM enrollment, letting required managed apps and security tools install, applying required macOS updates, taking the first stabilization restart, and reconfirming afterward — and pairs it with `record-enrollment.sh`, which records read-only command evidence for each managed subsystem and prefills the Phase 6 exit-criteria table for the command-verifiable rows.
+Bring the freshly reimaged Mac to a clean, trusted managed baseline before any restore work begins. This phase covers the human-driven work — completing MDM enrollment, letting required managed apps and security tools install, applying required macOS updates, taking the first stabilization restart, and reconfirming afterward — and pairs it with `record-enrollment.sh`, which records read-only command evidence for each managed subsystem and prefills the Phase 8 exit-criteria table for the command-verifiable rows.
 
 ---
 
@@ -44,23 +44,23 @@ Bring the freshly reimaged Mac to a clean, trusted managed baseline before any r
 
 ## Purpose
 
-Establish a clean, managed, and stable macOS baseline before restoring runtime tools, access material, repositories, apps, or local files, and leave behind a timestamped record of the evidence that supports each Phase 6 exit-criteria row. The record is diagnostic evidence, not a backup you restore from — nothing here re-applies to the machine.
+Establish a clean, managed, and stable macOS baseline before restoring runtime tools, access material, repositories, apps, or local files, and leave behind a timestamped record of the evidence that supports each Phase 8 exit-criteria row. The record is diagnostic evidence, not a backup you restore from — nothing here re-applies to the machine.
 
 This runbook owns:
 
 ```text
-Phase 6 managed-baseline enrollment, stabilization, and evidence recording
+Phase 8 managed-baseline enrollment, stabilization, and evidence recording
 the record-enrollment.sh run and its timestamped bundle
-the Phase 6 exit-criteria table and its sign-off
+the Phase 8 exit-criteria table and its sign-off
 ```
 
 It does not own:
 
 ```text
-the encrypted secrets DMG or any restore of secrets — Phase 8B (restore-access)
-runtime tooling restore (Xcode CLT, Homebrew, Java, Node) — Phase 8A (restore-runtime)
-the first post-enrollment usability sanity check — Phase 7 (verify-reimaged-system)
-company-managed inventory comparison across pre-image and post-image — capture-managed-inventory.md (Phases 2C / 11C)
+the encrypted secrets DMG or any restore of secrets — Phase 10B (restore-access)
+runtime tooling restore (Xcode CLT, Homebrew, Java, Node) — Phase 10A (restore-runtime)
+the first post-enrollment usability sanity check — Phase 9 (verify-reimaged-system)
+company-managed inventory comparison across pre-image and post-image — capture-managed-inventory.md (Phases 2C / 13C)
 ```
 
 This runbook can be rerun. Each run writes a fresh timestamped bundle and leaves earlier runs untouched, so an early pre-restart record and a later post-restart record can coexist and be compared.
@@ -93,7 +93,7 @@ Every command reads state; nothing writes to managed state. You can run this on 
 
 ### Command-Verifiable vs Mixed vs Manual Rows
 
-The Phase 6 exit-criteria table groups checks by how they can be proven. The script only prefills rows in the first two groups:
+The Phase 8 exit-criteria table groups checks by how they can be proven. The script only prefills rows in the first two groups:
 
 | Row group | What the script does | What you do |
 |---|---|---|
@@ -106,11 +106,11 @@ The Phase 6 exit-criteria table groups checks by how they can be proven. The scr
 
 | Term | Meaning |
 |---|---|
-| Managed baseline | The enrolled, profile-controlled, security-tooled state IT expects on a compliant Mac after Phase 6. |
+| Managed baseline | The enrolled, profile-controlled, security-tooled state IT expects on a compliant Mac after Phase 8. |
 | Configuration profile | A `.mobileconfig` payload pushed by MDM to enforce settings; listed by `profiles list`. |
 | Stabilization restart | The first reboot taken after enrollment and required tool install, before restore work begins. |
-| Pre-restart record | The Phase 6 record captured before the stabilization restart. |
-| Post-restart record | The Phase 6 record captured after the stabilization restart; used as the sign-off record. |
+| Pre-restart record | The Phase 8 record captured before the stabilization restart. |
+| Post-restart record | The Phase 8 record captured after the stabilization restart; used as the sign-off record. |
 | Record bundle | One timestamped run directory holding the seven raw files, `enrollment-record.md`, and `MANIFEST.txt`. |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -124,13 +124,13 @@ Every path and directory tree this runbook uses is defined here, once. Later sec
 Primary script:
 
 ```text
-$FRACTOGENESIS_HOME/bin/record-enrollment.sh    # entrypoint — records Phase 6 evidence and prefills the exit-criteria table
+$FRACTOGENESIS_HOME/bin/record-enrollment.sh    # entrypoint — records Phase 8 evidence and prefills the exit-criteria table
 ```
 
 Artifact root:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/reimaged-system/enrollment/    # all Phase 6 record bundles land here
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/enrollment/    # all Phase 8 record bundles land here
 ```
 
 ### Record Bundle Layout
@@ -179,13 +179,13 @@ A short pre-flight: confirm you are set up, then confirm what this run is for. T
 
 ### Prerequisites
 
-- The reimage/erase in [[reimaging-guide#Phase 5 — Reimage / Erase Procedure|Phase 5]] is complete and the Mac has restarted into Setup Assistant or the first login session.
+- The reimage/erase in [[reimaging-guide#Phase 7 — Reimage / Erase Procedure|Phase 7]] is complete and the Mac has restarted into Setup Assistant or the first login session.
 - You have signed into the company Microsoft 365 / O365 account when prompted and network (Wi-Fi or Ethernet) is connected.
-- The toolkit is present on the Mac. If not, install it first via the bootstrap step in the [[reimaging-guide#Phase 6 — Enroll and Stabilize|Phase 6 bootstrap callout]] (`curl` primary, jump drive fallback).
+- The toolkit is present on the Mac. If not, install it first via the bootstrap step in the [[reimaging-guide#Phase 8 — Enroll and Stabilize|Phase 8 bootstrap callout]] (`curl` primary, jump drive fallback).
 - You are running commands from `$FRACTOGENESIS_HOME`.
 
 > [!note]
-> `REIMAGE_ARTIFACT_ROOT` and the external artifact volume are *not* required at this point. `record-enrollment.sh` falls back to `$REIMAGE_WORKSPACE_ROOT/enrollment/` and then to `~/Desktop/reimaged-system-artifacts/enrollment/` so Phase 6 can complete before the external drive is reconnected in Phase 7.
+> `REIMAGE_ARTIFACT_ROOT` and the external artifact volume are *not* required at this point. `record-enrollment.sh` falls back to `$REIMAGE_WORKSPACE_ROOT/enrollment/` and then to `~/Desktop/reimaged-system-artifacts/enrollment/` so Phase 8 can complete before the external drive is reconnected in Phase 9.
 
 > [!bug] Troubleshooting
 > If the script errors with "shared config loader not found", the toolkit was placed in the wrong location or is a partial extract — re-run bootstrap and confirm `$FRACTOGENESIS_HOME/.internal/load-reimage-config.sh` exists before continuing.
@@ -207,7 +207,7 @@ Run these in order. The human-driven steps (enrollment, tool install, updates, t
 
 Complete the managed enrollment flow driven by the OS and Company Portal:
 
-1. Restart the Mac if it has not already restarted after Phase 5.
+1. Restart the Mac if it has not already restarted after Phase 7.
 2. Connect to Wi-Fi or Ethernet.
 3. Sign in with the company Microsoft 365 / O365 account when prompted.
 4. Confirm Intune / MDM enrollment starts and let the required profiles and base software begin installing.
@@ -317,7 +317,7 @@ LATEST_RECORD="$(cat "$REIMAGE_ARTIFACT_ROOT/reimaged-system/enrollment/latest-e
 echo "$LATEST_RECORD"
 ```
 
-Confirm every row is effectively `yes` before proceeding to [[reimaging-guide#Phase 7 — Initial Captures and Sanity Checks|Phase 7]]:
+Confirm every row is effectively `yes` before proceeding to [[reimaging-guide#Phase 9 — Initial Captures and Sanity Checks|Phase 9]]:
 
 | Check | Verification mode | How to verify |
 |---|---|---|
@@ -363,7 +363,7 @@ Confirm the app or process name in `raw/04-managed-apps.txt` / `raw/05-managed-p
 
 ### The record landed on the Desktop instead of the artifact root
 
-That is the intended final fallback when neither `REIMAGE_ARTIFACT_ROOT` nor `REIMAGE_WORKSPACE_ROOT` resolves to a mounted directory. Once the external artifact volume is reconnected in Phase 7, either move the bundle into `reimaged-system/enrollment/` or rerun the script with `--artifact-root "$REIMAGE_ARTIFACT_ROOT"` so the sign-off record lives with the other Phase 6+ evidence.
+That is the intended final fallback when neither `REIMAGE_ARTIFACT_ROOT` nor `REIMAGE_WORKSPACE_ROOT` resolves to a mounted directory. Once the external artifact volume is reconnected in Phase 9, either move the bundle into `reimaged-system/enrollment/` or rerun the script with `--artifact-root "$REIMAGE_ARTIFACT_ROOT"` so the sign-off record lives with the other Phase 8+ evidence.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -421,7 +421,7 @@ softwareupdate --list 2>/dev/null || true
 
 ### Output Location Fallback Chain
 
-`record-enrollment.sh` picks its output directory in this order when `--output` is not supplied. The chain exists because Phase 6 typically runs before the external artifact volume is reconnected.
+`record-enrollment.sh` picks its output directory in this order when `--output` is not supplied. The chain exists because Phase 8 typically runs before the external artifact volume is reconnected.
 
 | Order | Condition | Path |
 |---|---|---|

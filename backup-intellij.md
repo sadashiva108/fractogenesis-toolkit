@@ -59,9 +59,9 @@ It does not own:
 ```text
 the umbrella app-backup phase and every other app — backup-apps.md (Phase 2D)
 general local-file copy — backup-home.md (Phase 2B)
-certificate and Keychain staging — Phase 2E
-final encrypted DMG packaging — create-secrets-dmg.md (Phase 2F)
-cross-phase readiness sign-off — reimage-prep-checks.md (Phase 4B)
+certificate and Keychain staging — Phase 3A
+final encrypted DMG packaging — create-secrets-dmg.md (Phase 3B)
+cross-phase readiness sign-off — reimage-prep-checks.md (Phase 6B)
 ```
 
 This runbook can be rerun independently: `backup-apps.sh --intellij-only` re-detects the active config and refreshes the generated IntelliJ content in place, preserving `manual-settings-export/` and `restore-notes/`.
@@ -96,7 +96,7 @@ It deliberately excludes HTTP Client environment files and other secret-like mat
 
 ### Why HTTP Client Files Are Handled Separately
 
-IntelliJ HTTP Client environment files (`http-client.env.json`, `http-client.private.env.json`) and other credential-like files can hold working tokens, passwords, and client secrets. The capture keeps them out of the plaintext `app-settings-backup/intellij/` copy, and stages the ones matching your reviewed patterns into `secrets-encrypted/intellij/by-source/` for the Phase 2F encrypted DMG. Which patterns count as secrets is yours to choose in a review template that follows the same `[x]`/`[ ]` model as `gitignore-review-template.txt` — nothing is staged unless you check it. They belong in the encrypted DMG, never loose in the IntelliJ backup or in cloud storage. The selection files and the recommended split-env pattern are in [[#HTTP Client Credential Handling|HTTP Client Credential Handling]].
+IntelliJ HTTP Client environment files (`http-client.env.json`, `http-client.private.env.json`) and other credential-like files can hold working tokens, passwords, and client secrets. The capture keeps them out of the plaintext `app-settings-backup/intellij/` copy, and stages the ones matching your reviewed patterns into `secrets-encrypted/intellij/by-source/` for the Phase 3B encrypted DMG. Which patterns count as secrets is yours to choose in a review template that follows the same `[x]`/`[ ]` model as `gitignore-review-template.txt` — nothing is staged unless you check it. They belong in the encrypted DMG, never loose in the IntelliJ backup or in cloud storage. The selection files and the recommended split-env pattern are in [[#HTTP Client Credential Handling|HTTP Client Credential Handling]].
 
 ### Terminology
 
@@ -135,7 +135,7 @@ Artifact roots:
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/               # non-secret IDE state
-$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/intellij/by-source/       # staged secrets, packaged in Phase 2F
+$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/intellij/by-source/       # staged secrets, packaged in Phase 3B
 ```
 
 Your reviewed secret selections are written to the external artifact root, the same way the gitignore superset writes its review template:
@@ -179,7 +179,7 @@ Where each kind of IntelliJ artifact goes.
 | Non-secret IDE state | `app-settings-backup/intellij/` | Scratches, Consoles, config copy, project `.idea` metadata, logs, manifests, README. Safe to inspect locally on the external drive. |
 | Manual settings ZIP | `app-settings-backup/intellij/manual-settings-export/` | Exported from the IntelliJ UI; a clean second restore path. |
 | Restore notes | `app-settings-backup/intellij/restore-notes/` | Sanitized notes only — no secret values. |
-| Credential-like files matching your reviewed patterns | staged under `secrets-encrypted/intellij/by-source/`, packaged into the Phase 2F DMG | Staged only when checked in the review template. Never left loose in `intellij/` or in cloud storage. |
+| Credential-like files matching your reviewed patterns | staged under `secrets-encrypted/intellij/by-source/`, packaged into the Phase 3B DMG | Staged only when checked in the review template. Never left loose in `intellij/` or in cloud storage. |
 
 ### Environment Variables
 
@@ -254,7 +254,7 @@ Run the scriptable capture through the Phase 2D entrypoint. `--intellij-only` sk
 
 The entrypoint defaults the workspace root to `GIT_WORK_REPO_ROOT` from `reimage.env`, and the helper auto-detects the active IntelliJ config directory (the most recently modified one under the JetBrains root) — so neither is passed here. Override the workspace root with `--intellij-workspace-root PATH` if you need a different tree.
 
-This refreshes the generated IntelliJ content in place under `app-settings-backup/intellij/` (preserving `manual-settings-export/` and `restore-notes/`) and stages the secrets matching your reviewed patterns into `secrets-encrypted/intellij/by-source/` for the Phase 2F packaging.
+This refreshes the generated IntelliJ content in place under `app-settings-backup/intellij/` (preserving `manual-settings-export/` and `restore-notes/`) and stages the secrets matching your reviewed patterns into `secrets-encrypted/intellij/by-source/` for the Phase 3B packaging.
 
 > [!note]
 > On the first capture, `intellij-secret-review-template.txt` and `backup-exclude-list.txt` are written to `$REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/secret-review/` with every pattern unchecked, and nothing is staged. Check the patterns you want staged (for example `http-client.private.env.json`), then rerun `--intellij-only` to stage the matches. Credential-shaped files are kept out of the plaintext copy on every run regardless.
@@ -289,7 +289,7 @@ Include at least code style schemes, color schemes/themes, keymaps, inspection p
 
 ### Step 4 — Verify Outputs
 
-Confirm the capture landed and that no credential files leaked into the plaintext backup. This runbook owns artifact-local validation only; the cross-phase readiness sign-off happens later in `reimage-prep-checks.md` (Phase 4B).
+Confirm the capture landed and that no credential files leaked into the plaintext backup. This runbook owns artifact-local validation only; the cross-phase readiness sign-off happens later in `reimage-prep-checks.md` (Phase 6B).
 
 Count files and confirm the generated shape:
 
@@ -317,7 +317,7 @@ find "$REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij" -type f \
 ```
 
 > [!warning] Pitfall
-> The command above must print **nothing**. If it lists files, remove them from `app-settings-backup/intellij/` and make sure they are captured by the Phase 2F encrypted secrets workflow instead.
+> The command above must print **nothing**. If it lists files, remove them from `app-settings-backup/intellij/` and make sure they are captured by the Phase 3B encrypted secrets workflow instead.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -367,7 +367,7 @@ The scriptable capture's targets and where each lands under `app-settings-backup
 | `options/` | IDE options and appearance | `.../<product>/config-copy/options/` |
 | `plugins/` and plugin manifest | Plugin list and state | `.../<product>/config-copy/plugins/` and manifests |
 | Project-level `.idea` | Run configs, code style, inspections, selected project settings | `.../project-metadata/` |
-| `http-client.env.json`, `http-client.private.env.json` | May hold working credentials | staged to `secrets-encrypted/intellij/by-source/` when checked → Phase 2F encrypted DMG |
+| `http-client.env.json`, `http-client.private.env.json` | May hold working credentials | staged to `secrets-encrypted/intellij/by-source/` when checked → Phase 3B encrypted DMG |
 
 ### HTTP Client Credential Handling
 
@@ -391,7 +391,7 @@ dataSourcesLocal.xml
 *secret*
 ```
 
-Credential-shaped files are kept out of the clear-text copy on every run — a fixed safety floor covers `http-client*.env.json`, `*.env.json`, and `dataSources.local.xml` even before you review anything. Files matching a checked pattern are copied into `secrets-encrypted/intellij/by-source/` and recorded in `manifests/intellij-secrets-staged.tsv`, so Phase 2F encrypts them into `all-secrets-YYYYMMDD-HHMMSS.dmg`. Store the DMG password in your approved password manager.
+Credential-shaped files are kept out of the clear-text copy on every run — a fixed safety floor covers `http-client*.env.json`, `*.env.json`, and `dataSources.local.xml` even before you review anything. Files matching a checked pattern are copied into `secrets-encrypted/intellij/by-source/` and recorded in `manifests/intellij-secrets-staged.tsv`, so Phase 3B encrypts them into `all-secrets-YYYYMMDD-HHMMSS.dmg`. Store the DMG password in your approved password manager.
 
 The preferred HTTP Client layout after restore splits secret from non-secret:
 

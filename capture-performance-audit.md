@@ -1,10 +1,10 @@
-[[reimaging-guide#Phase 3C — Performance Audit Capture|← Back to Mac Reimaging Guide]]
+[[reimaging-guide#Phase 4C — Performance Audit Capture|← Back to Mac Reimaging Guide]]
 
 # Capture Performance Audit
 
 **Last updated:** 2026-08-13
 
-A repeatable, read-only performance baseline. It captures short-duration scenario bundles under named workloads so general workstation performance can be compared like-for-like across a reimage. Run it pre-image (Phase 3C) under one or more named scenarios, then run the same scenarios post-image (Phase 11D) so the two sets compare cleanly.
+A repeatable, read-only performance baseline. It captures short-duration scenario bundles under named workloads so general workstation performance can be compared like-for-like across a reimage. Run it pre-image (Phase 4C) under one or more named scenarios, then run the same scenarios post-image (Phase 13D) so the two sets compare cleanly.
 
 ---
 
@@ -49,15 +49,15 @@ This runbook owns:
 the performance-audit capture and its per-scenario timestamped bundles
 the optional quantitative rollup summary
 interpretation of the captured performance metrics
-the pre-image (Phase 3C) and post-image (Phase 11D) comparison workflow
+the pre-image (Phase 4C) and post-image (Phase 13D) comparison workflow
 ```
 
 It does not own:
 
 ```text
-broad system inventory — capture-system-inventory.md (Phase 3B)
-Office-specific stability evidence — capture-office-stability.md (Phase 3D)
-cross-phase readiness sign-off — reimage-prep-checks.md (Phase 4B)
+broad system inventory — capture-system-inventory.md (Phase 4B)
+Office-specific stability evidence — capture-office-stability.md (Phase 4D)
+cross-phase readiness sign-off — reimage-prep-checks.md (Phase 6B)
 ```
 
 This capture can be rerun at any time: each run writes a fresh timestamped bundle under its scenario name and leaves earlier runs untouched.
@@ -76,7 +76,7 @@ The preferred path is: capture at least the `normal-workload` scenario pre-image
 
 ### Scenarios
 
-A scenario is a run mode: a named workload the capture samples under. Every run sets `--phase pre-image` (Phase 3C) or `--phase post-image` (Phase 11D) so the pre/post pair is labelled distinctly, and reuses the **same scenario name** on both sides so the folders line up.
+A scenario is a run mode: a named workload the capture samples under. Every run sets `--phase pre-image` (Phase 4C) or `--phase post-image` (Phase 13D) so the pre/post pair is labelled distinctly, and reuses the **same scenario name** on both sides so the folders line up.
 
 | Scenario | Flags | What it captures |
 |---|---|---|
@@ -189,7 +189,7 @@ A short pre-flight: confirm you are set up, then confirm what this run is for. T
 
 ### Confirm Your Intent
 
-- Which **phase** this is: `pre-image` (Phase 3C, before wiping) or `post-image` (Phase 11D, after setup settles) — sets `--phase` and the bundle prefix.
+- Which **phase** this is: `pre-image` (Phase 4C, before wiping) or `post-image` (Phase 13D, after setup settles) — sets `--phase` and the bundle prefix.
 - Which **scenario(s)** to capture. `normal-workload` is the minimum; add `clean-boot`, `active-dev`, or `symptom-capture` when they add resolution (see [[#Scenarios|Scenarios]]). Post-image, reuse the same scenario names you captured pre-image.
 - Where the bundle lands: the default `REIMAGE_ARTIFACT_ROOT/performance-audit/`, or a local stage under `REIMAGE_WORKSPACE_ROOT/performance-audit/` when the backup drive is not mounted yet.
 
@@ -229,7 +229,7 @@ Run one invocation per scenario. For the pre-image `normal-workload` baseline:
 
 Add scenarios as needed, reusing the flags from the [[#Scenarios|Scenarios]] table (for example `--scenario active-dev --sample-count 10 --sample-interval 30`).
 
-For the post-image run (Phase 11D, after the new image settles), keep the same scenario name and switch the phase:
+For the post-image run (Phase 13D, after the new image settles), keep the same scenario name and switch the phase:
 
 ```bash
 ./bin/capture-performance-audit.sh --phase post-image --scenario normal-workload --sample-count 6 --sample-interval 30
@@ -237,7 +237,7 @@ For the post-image run (Phase 11D, after the new image settles), keep the same s
 
 The script prints each area as it runs and finishes with the bundle path. It writes the samples, `manifest.txt`, and the auto-filled `manual-observations.md` / `workload-reproduction-config.md` under `performance-audit/<phase>-performance-audit-<scenario>-<stamp>/`.
 
-If you staged a bundle under `REIMAGE_WORKSPACE_ROOT`, copy it into the artifact root before the Phase 4B (pre-image) or Phase 11 (post-image) sign-off:
+If you staged a bundle under `REIMAGE_WORKSPACE_ROOT`, copy it into the artifact root before the Phase 6B (pre-image) or Phase 13 (post-image) sign-off:
 
 ```bash
 cp -R "$REIMAGE_WORKSPACE_ROOT/performance-audit/." "$REIMAGE_ARTIFACT_ROOT/performance-audit/"
@@ -253,7 +253,7 @@ echo "$LATEST"
 ls -1 "$LATEST"
 ```
 
-Review the auto-filled manual-context files so the post-image run can reproduce this workload — this is a hand check that rolls up to the Phase 4B sign-off. Confirm `manual-observations.md` records the workload context and any remaining TODOs, and that `workload-reproduction-config.md` reflects the apps and Docker state you actually had open; see [[#Manual Observations|Manual Observations]] for what to fill in:
+Review the auto-filled manual-context files so the post-image run can reproduce this workload — this is a hand check that rolls up to the Phase 6B sign-off. Confirm `manual-observations.md` records the workload context and any remaining TODOs, and that `workload-reproduction-config.md` reflects the apps and Docker state you actually had open; see [[#Manual Observations|Manual Observations]] for what to fill in:
 
 ```bash
 sed -n '1,40p' "$LATEST/manual-observations.md"

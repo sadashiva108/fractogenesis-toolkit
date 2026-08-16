@@ -1,10 +1,10 @@
-[[reimaging-guide#Phase 7 — Initial Captures and Sanity Checks|← Back to Mac Reimaging Guide]]
+[[reimaging-guide#Phase 9 — Initial Captures and Sanity Checks|← Back to Mac Reimaging Guide]]
 
 # Verify Reimaged System
 
 **Last updated:** 2026-08-04
 
-Reconnect the external artifact drive, prove the freshly reimaged Mac is basically usable, and record the first-boot evidence twice around a stabilization restart before deeper restore work begins. This phase pairs the human-driven day-one checks — network, browser, terminal, displays, peripherals, audio — with `record-reimaged-system.sh`, which recorded the same 14 read-only signals into two comparable evidence bundles, and closes with the first post-image Time Machine backup so the machine has a safety net before Phase 8 begins.
+Reconnect the external artifact drive, prove the freshly reimaged Mac is basically usable, and record the first-boot evidence twice around a stabilization restart before deeper restore work begins. This phase pairs the human-driven day-one checks — network, browser, terminal, displays, peripherals, audio — with `record-reimaged-system.sh`, which recorded the same 14 read-only signals into two comparable evidence bundles, and closes with the first post-image Time Machine backup so the machine has a safety net before Phase 10 begins.
 
 ---
 
@@ -47,7 +47,7 @@ Reconnect the external artifact drive, prove the freshly reimaged Mac is basical
 
 ## Purpose
 
-Confirm that the rebuilt Mac is basically usable after Phase 6 — enrolled, connected, with browser, network, terminal, displays, and peripherals in working shape — and leave behind two timestamped first-boot evidence bundles that prove the managed baseline survived the second restart. Close the phase with the first post-image Time Machine backup so a fallback exists before restore work begins.
+Confirm that the rebuilt Mac is basically usable after Phase 8 — enrolled, connected, with browser, network, terminal, displays, and peripherals in working shape — and leave behind two timestamped first-boot evidence bundles that prove the managed baseline survived the second restart. Close the phase with the first post-image Time Machine backup so a fallback exists before restore work begins.
 
 This runbook owns:
 
@@ -62,11 +62,11 @@ the reimaged-system/ subfolders used by later phases (restore-notes, restarts, t
 It does not own:
 
 ```text
-managed enrollment and the first stabilization restart — enroll-and-stabilize.md (Phase 6)
-runtime tooling restore (Xcode CLT, Homebrew, Java, Node) — Phase 8A (restore-runtime)
-access material and secrets restore — Phase 8B (restore-access)
-post-image managed-inventory comparison — capture-managed-inventory.md (Phase 11C)
-final validated sign-off — reimaged-system-checks.md (Phase 12)
+managed enrollment and the first stabilization restart — enroll-and-stabilize.md (Phase 8)
+runtime tooling restore (Xcode CLT, Homebrew, Java, Node) — Phase 10A (restore-runtime)
+access material and secrets restore — Phase 10B (restore-access)
+post-image managed-inventory comparison — capture-managed-inventory.md (Phase 13C)
+final validated sign-off — reimaged-system-checks.md (Phase 14)
 ```
 
 This runbook can be rerun. Each run of `record-reimaged-system.sh` writes a fresh timestamped bundle and updates the `latest-initial-reimaged-system-bundle.txt` pointer, so a later run does not overwrite the pre-restart bundle you use for comparison.
@@ -77,7 +77,7 @@ This runbook can be rerun. Each run of `record-reimaged-system.sh` writes a fres
 
 ## How the Workflow Works
 
-Read this before running anything. Phase 6 established the managed baseline; Phase 7 asks the different question, "Is the Mac actually usable?" — a question no single command can answer. The runbook interleaves human checks (browser, terminal, displays, peripherals) with two runs of the same script, and uses the pair of resulting bundles to decide whether anything regressed across the second restart. Only after the pair looks clean does the first post-image Time Machine backup happen — a Time Machine snapshot of a broken baseline is worse than none.
+Read this before running anything. Phase 8 established the managed baseline; Phase 9 asks the different question, "Is the Mac actually usable?" — a question no single command can answer. The runbook interleaves human checks (browser, terminal, displays, peripherals) with two runs of the same script, and uses the pair of resulting bundles to decide whether anything regressed across the second restart. Only after the pair looks clean does the first post-image Time Machine backup happen — a Time Machine snapshot of a broken baseline is worse than none.
 
 The preferred path is script-first: run the script before the restart, do the human checks, take the restart, run the script again, compare, then start Time Machine. There is no individual-command alternative for this phase — the point is a consistent bundle-to-bundle comparison, and 14 different single commands are hard to compare by eye.
 
@@ -101,7 +101,7 @@ The 14 automated rows cover: identity (`whoami`, hostname), managed baseline (`p
 
 ### Two Runs Around One Restart
 
-The workflow is deliberately a pair. The pre-restart run proves what the machine looks like when Phase 6 finished; the post-restart run proves the same signals survived a reboot. Anything that flipped from `PASS` to `WARN`/`TODO` across the pair is a regression worth investigating before restore work — a login item that stopped launching, a managed process that no longer runs, network reachability that broke because a profile did not reload. Two separate bundles matter because a single run cannot tell "installed but not yet started" apart from "started, then stopped after reboot".
+The workflow is deliberately a pair. The pre-restart run proves what the machine looks like when Phase 8 finished; the post-restart run proves the same signals survived a reboot. Anything that flipped from `PASS` to `WARN`/`TODO` across the pair is a regression worth investigating before restore work — a login item that stopped launching, a managed process that no longer runs, network reachability that broke because a profile did not reload. Two separate bundles matter because a single run cannot tell "installed but not yet started" apart from "started, then stopped after reboot".
 
 ### Automated vs Manual Rows
 
@@ -121,7 +121,7 @@ The script asserts fixed verdicts on what a command can prove; the rest stays a 
 | First-boot bundle | One timestamped `initial-reimaged-system-YYYYMMDD-HHMMSS/` directory produced by `record-reimaged-system.sh`. |
 | Pre-restart bundle | The first-boot bundle written before the second stabilization restart. |
 | Post-restart bundle | The first-boot bundle written after the second stabilization restart; the sign-off bundle. |
-| Second stabilization restart | The Phase 7 restart taken after the pre-restart bundle, distinct from the Phase 6 first stabilization restart. |
+| Second stabilization restart | The Phase 9 restart taken after the pre-restart bundle, distinct from the Phase 8 first stabilization restart. |
 | Companion documents | The four Markdown files (`restart-checkpoints.md`, `time-machine-reimaged-system-plan.md`, `manual-captures-required.md`, `README.md`) written alongside `initial-checklist.md` in each bundle. |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -141,7 +141,7 @@ $FRACTOGENESIS_HOME/bin/record-reimaged-system.sh    # entrypoint — records on
 Related script:
 
 ```text
-$FRACTOGENESIS_HOME/bin/record-enrollment.sh    # entrypoint — Phase 6 enrollment record; run before this phase
+$FRACTOGENESIS_HOME/bin/record-enrollment.sh    # entrypoint — Phase 8 enrollment record; run before this phase
 ```
 
 Artifact root:
@@ -152,7 +152,7 @@ $REIMAGE_ARTIFACT_ROOT/reimaged-system/    # first-boot bundles, restart notes, 
 
 ### Bundle Layout
 
-The bundle prefix is kept as `initial-reimaged-system-*` to match the artifact tree documented in the Master Directory Reference and the pattern `bin/reimage-checklist.sh` looks for when validating Phase 7 evidence.
+The bundle prefix is kept as `initial-reimaged-system-*` to match the artifact tree documented in the Master Directory Reference and the pattern `bin/reimage-checklist.sh` looks for when validating Phase 9 evidence.
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/reimaged-system/
@@ -225,9 +225,9 @@ A short pre-flight: confirm you are set up, then confirm what this run is for. T
 
 ### Prerequisites
 
-- Phase 6 ([[enroll-and-stabilize|Enroll and Stabilize]]) is complete: enrollment finished, required managed apps and security tools installed or clearly installing, and the first stabilization restart taken.
-- You have signed back in after the Phase 6 restart and network is connected.
-- The external artifact drive is available to reconnect. On a bare Mac the Phase 6 record may have landed on `~/Desktop/reimaged-system-artifacts/`; that is fine — Phase 7 owns the reconnection.
+- Phase 8 ([[enroll-and-stabilize|Enroll and Stabilize]]) is complete: enrollment finished, required managed apps and security tools installed or clearly installing, and the first stabilization restart taken.
+- You have signed back in after the Phase 8 restart and network is connected.
+- The external artifact drive is available to reconnect. On a bare Mac the Phase 8 record may have landed on `~/Desktop/reimaged-system-artifacts/`; that is fine — Phase 9 owns the reconnection.
 - You are running commands from `$FRACTOGENESIS_HOME`.
 
 > [!note]
@@ -261,7 +261,7 @@ ls -la "$REIMAGE_ARTIFACT_ROOT" 2>/dev/null || echo "artifact root not visible"
 find "$REIMAGE_ARTIFACT_ROOT/reimaged-system" -maxdepth 2 -type d 2>/dev/null | sort
 ```
 
-If a Phase 6 record landed on the Desktop fallback, copy it under `reimaged-system/enrollment/` now so all Phase 6+ evidence lives together.
+If a Phase 8 record landed on the Desktop fallback, copy it under `reimaged-system/enrollment/` now so all Phase 8+ evidence lives together.
 
 > [!warning] Pitfall
 > Do not run heavy restore work before this step lands cleanly. Later phases assume `reimaged-system/` is the sink for restore notes and comparison bundles; a missing artifact root means those writes silently miss their intended home.
@@ -307,11 +307,11 @@ Focus on what the checklist cannot prove. The companion `manual-captures-require
 | Chrome baseline | Default browser set, JSON Formatter / other essential extensions present? |
 | Terminal baseline | Preferred profile / window size restored? |
 
-Restore only low-risk UI defaults needed to keep working. Anything that requires secrets, certificates, or repos waits for Phase 8+.
+Restore only low-risk UI defaults needed to keep working. Anything that requires secrets, certificates, or repos waits for Phase 10+.
 
 ### Step 4 — Take the Second Stabilization Restart
 
-Restart the Mac. This is the Phase 7 restart, distinct from the Phase 6 first stabilization restart.
+Restart the Mac. This is the Phase 9 restart, distinct from the Phase 8 first stabilization restart.
 
 Before restarting, confirm:
 
@@ -367,7 +367,7 @@ Avoid starting the backup while OneDrive is still doing a large initial sync, wh
 
 ### Step 8 — Close Out the Exit Criteria
 
-Open the post-restart `initial-checklist.md` and complete the manual rows. Every row must be effectively `yes` before proceeding to [[reimaging-guide#Phase 8 — Restore Runtime Environment|Phase 8]]:
+Open the post-restart `initial-checklist.md` and complete the manual rows. Every row must be effectively `yes` before proceeding to [[reimaging-guide#Phase 10 — Restore Runtime Environment|Phase 10]]:
 
 | Check | Verification mode | How to verify |
 |---|---|---|

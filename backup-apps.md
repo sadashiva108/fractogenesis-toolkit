@@ -77,9 +77,9 @@ It does not own:
 general local-file copy — backup-home.md (Phase 2B)
 the managed-inventory capture — capture-managed-inventory.md (its own phase, run before this one)
 IntelliJ settings ZIP export, review, and restore detail — backup-intellij.md
-certificate and Keychain staging — Phase 2E
-final encrypted DMG packaging — Phase 2F
-cross-phase cloud-sync and final pre-image readiness sign-off — reimage-prep-checks.md (Phase 4B)
+certificate and Keychain staging — Phase 3A
+final encrypted DMG packaging — Phase 3B
+cross-phase cloud-sync and final pre-image readiness sign-off — reimage-prep-checks.md (Phase 6B)
 ```
 
 This runbook can be rerun independently and incrementally. Rerunning the script re-detects installed apps and refreshes the manifest; manual exports can be redone one app at a time.
@@ -202,7 +202,7 @@ Artifact roots:
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/app-settings-backup/     # non-secret app artifacts
-$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/       # secret-bearing app exports, staged for Phase 2F
+$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/       # secret-bearing app exports, staged for Phase 3B
 ```
 
 Directories this runbook's steps touch, alphabetized at every level. Omitted siblings are shown as `...`:
@@ -269,7 +269,7 @@ Where each kind of artifact goes. Every per-app export sorts its outputs by thes
 |---|---|---|
 | Non-secret app exports | `$REIMAGE_ARTIFACT_ROOT/app-settings-backup/<app>/` | Default home for app artifacts that are safe in plaintext. |
 | Redacted examples and inventories | `$REIMAGE_ARTIFACT_ROOT/app-settings-backup/<app>/` | Keep with the owning app unless they are secret-bearing. |
-| Secret-bearing app exports | `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/<app>/` | Stage here; the consolidated secrets DMG is built later in Phase 2F. |
+| Secret-bearing app exports | `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/<app>/` | Stage here; the consolidated secrets DMG is built later in Phase 3B. |
 
 ### Environment Variables
 
@@ -541,7 +541,7 @@ $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/chrome/Chrome Passwords <profile> YYYYM
 
 #### macOS Passwords (Keychain-backed)
 
-The macOS **Passwords app** stores credentials in the login / Data Protection keychain. With **iCloud Keychain off** (Local Items mode), those entries are **device-bound and not synced** — lost on reimage unless captured. This covers saved *passwords*; certificates and identities are Phase 2E ([[stage-certs-keychain]]).
+The macOS **Passwords app** stores credentials in the login / Data Protection keychain. With **iCloud Keychain off** (Local Items mode), those entries are **device-bound and not synced** — lost on reimage unless captured. This covers saved *passwords*; certificates and identities are Phase 3A ([[stage-certs-keychain]]).
 
 Restore source, best to worst:
 
@@ -813,7 +813,7 @@ The scriptable IntelliJ capture ran in [[#Step 4 — Run the Automated Backup|St
 [[backup-intellij|Backup IntelliJ]]
 
 > [!warning] Pitfall
-> IntelliJ HTTP Client environment files can contain working credentials. Route them to Phase 2E encrypted secrets, not the normal IntelliJ backup.
+> IntelliJ HTTP Client environment files can contain working credentials. Route them to Phase 3A encrypted secrets, not the normal IntelliJ backup.
 
 ### Step 6 — Optional Apps
 
@@ -828,7 +828,7 @@ These apps are manual and belong to the optional group, so their full steps live
 
 ### Step 7 — Verify Outputs
 
-Confirm the exports landed in the right places before moving on. This runbook owns artifact-local validation only — did the file get created, and is it in the correct `app-settings-backup/` or `secrets-encrypted/` location. The cross-phase readiness sign-off happens later in `reimage-prep-checks.md` (Phase 4B).
+Confirm the exports landed in the right places before moving on. This runbook owns artifact-local validation only — did the file get created, and is it in the correct `app-settings-backup/` or `secrets-encrypted/` location. The cross-phase readiness sign-off happens later in `reimage-prep-checks.md` (Phase 6B).
 
 Confirm the manifest and review what landed:
 
@@ -1100,7 +1100,7 @@ fi
 | What to capture | Destination | Rule |
 |---|---|---|
 | Redacted list of TNAS connections (host/IP, share names, account — no passwords) | `app-settings-backup/tnas-pc/` | Safe inventory that speeds re-adding connections. |
-| Any exported or stored credential file you locate | `secrets-encrypted/tnas-pc/` | Secret-bearing; stage for the Phase 2F encrypted DMG. |
+| Any exported or stored credential file you locate | `secrets-encrypted/tnas-pc/` | Secret-bearing; stage for the Phase 3B encrypted DMG. |
 
 Most people just re-add their TNAS in the app after reimage. If you want a reminder of what to re-add, record a redacted note:
 
@@ -1150,7 +1150,7 @@ Per-app notes, mini checklists, and inventories are optional. Use them only when
 
 | Option | Where | Use when |
 |---|---|---|
-| Central final-validation note | later Phase 4 / final-checks workflow | You want one place for restore-source decisions and notable exceptions. |
+| Central final-validation note | later Phase 6 / final-checks workflow | You want one place for restore-source decisions and notable exceptions. |
 | Temporary working note | `$REIMAGE_WORKSPACE_ROOT` or another local area outside `$REIMAGE_ARTIFACT_ROOT` | You need short-lived prep notes while working through the backup. |
 | App-local note | `$REIMAGE_ARTIFACT_ROOT/app-settings-backup/<app>/` | The note is tightly coupled to a specific app artifact and worth keeping with it. |
 
@@ -1158,9 +1158,9 @@ Use app-local notes sparingly; you do not need one for every app. A missing or u
 
 ### Relationship to Later Phases
 
-The main forward dependency is the secret-staging sequence that ends at the consolidated secrets DMG. Stage secret-bearing app exports under `secrets-encrypted/` as you work through this phase. Phase 2E then handles certificate and Keychain staging. Phase 2F builds the encrypted DMG **once**, after both this phase's app-secret staging and Phase 2E's certificate/Keychain staging are complete, so the DMG covers the full staged secret set in a single build.
+The main forward dependency is the secret-staging sequence that ends at the consolidated secrets DMG. Stage secret-bearing app exports under `secrets-encrypted/` as you work through this phase. Phase 3A then handles certificate and Keychain staging. Phase 3B builds the encrypted DMG **once**, after both this phase's app-secret staging and Phase 3A's certificate/Keychain staging are complete, so the DMG covers the full staged secret set in a single build.
 
-If you add any Docker `config.json`, Chrome password CSV, secret-bearing Postman export, Claude MCP config, Fiddler Everywhere session export, TNAS PC credential, or Raycast secret export later, rerun Phase 2F so the DMG includes the complete final secret set before final validation.
+If you add any Docker `config.json`, Chrome password CSV, secret-bearing Postman export, Claude MCP config, Fiddler Everywhere session export, TNAS PC credential, or Raycast secret export later, rerun Phase 3B so the DMG includes the complete final secret set before final validation.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 

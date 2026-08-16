@@ -423,7 +423,7 @@ cd "$FRACTOGENESIS_PARENT/fractogenesis-toolkit"
 pwd
 ```
 
-**On a freshly reimaged Mac** (no Git/SSH yet — this is the actual scenario Phase 6 onward depends on): use the bootstrap mechanism instead of `git clone` — no auth needed, no Xcode Command Line Tools popup:
+**On a freshly reimaged Mac** (no Git/SSH yet — this is the actual scenario Phase 8 onward depends on): use the bootstrap mechanism instead of `git clone` — no auth needed, no Xcode Command Line Tools popup:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/<your-github-account>/fractogenesis-toolkit/main/bootstrap.sh | bash
@@ -436,7 +436,7 @@ cd "$HOME/fractogenesis-toolkit"
 pwd
 ```
 
-If there's no network yet, use the prepared jump drive fallback instead — see the repo README or Phase 6 of `reimaging-guide.md` for the exact command.
+If there's no network yet, use the prepared jump drive fallback instead — see the repo README or Phase 8 of `reimaging-guide.md` for the exact command.
 
 The repo is public, so no access request is needed either way.
 
@@ -764,11 +764,11 @@ These optional variables have no computed default and are **not** set here. Foll
 | Variable | Set in |
 |---|---|
 | `GIT_WORK_REPO_ROOT`, `GIT_PERSONAL_REPO_ROOT` | [[backup-repos\|backup-repos.md]] (Phase 2A) |
-| `PERFORMANCE_HISTORY_SOURCE` | [[capture-performance-audit\|capture-performance-audit.md]] (Phase 3C) |
-| `OFFICE_WATCH` | [[capture-office-stability\|capture-office-stability.md]] (Phase 3D) |
-| Git identity / SSH / host / branch values | [[restore-git\|restore-git.md]] (Phase 9A) |
+| `PERFORMANCE_HISTORY_SOURCE` | [[capture-performance-audit\|capture-performance-audit.md]] (Phase 4C) |
+| `OFFICE_WATCH` | [[capture-office-stability\|capture-office-stability.md]] (Phase 4D) |
+| Git identity / SSH / host / branch values | [[restore-git\|restore-git.md]] (Phase 11A) |
 
-`JUMP_DRIVE_VOLUME` is reference-only -- the no-network bootstrap jump drive path, not read by `prepare-artifact-root.py` (see the Phase 4A jump-drive fallback).
+`JUMP_DRIVE_VOLUME` is reference-only -- the no-network bootstrap jump drive path, not read by `prepare-artifact-root.py` (see the Phase 6A jump-drive fallback).
 
 #### Files and .gitignore
 

@@ -6,7 +6,7 @@ This is the single comprehensive **post-image** evidence reference for the Mac r
 
 Use it to understand both:
 
-- what Phase 6, Phase 7, Phase 11, and Phase 12 commands generate under `$REIMAGE_ARTIFACT_ROOT`
+- what Phase 8, Phase 9, Phase 13, and Phase 14 commands generate under `$REIMAGE_ARTIFACT_ROOT`
 - which manual sign-off rows, fallback notes, and templates still matter after the generated evidence exists
 
 This file complements [[reimaging-guide|./restore-file-reference.md]] for restore-source mapping.
@@ -19,14 +19,14 @@ This file complements [[reimaging-guide|./restore-file-reference.md]] for restor
 - [[#When This File Is Not Necessary|When This File Is Not Necessary]]
 - [[#How the Post-Image Evidence Is Organized|How the Post-Image Evidence Is Organized]]
 - [[#Reimaged-System Artifact Layout|Reimaged-System Artifact Layout]]
-- [[#Phase 6 — Enroll and Stabilize|Phase 6 — Enroll and Stabilize]]
-- [[#Phase 7 — Initial Captures and Sanity Checks|Phase 7 — Initial Captures and Sanity Checks]]
-- [[#Phase 11A — Capture Workflow Snapshot|Phase 11A — Capture Workflow Snapshot]]
-- [[#Phase 11B — Post-Image System Inventory Capture|Phase 11B — Post-Image System Inventory Capture]]
-- [[#Phase 11C — Post-Image Company-Managed Inventory Capture|Phase 11C — Post-Image Company-Managed Inventory Capture]]
-- [[#Phase 11D — Post-Image Performance Audit Capture|Phase 11D — Post-Image Performance Audit Capture]]
-- [[#Phase 11E — Post-Image Office Stability Capture|Phase 11E — Post-Image Office Stability Capture]]
-- [[#Phase 12 — Reimaged System Checks|Phase 12 — Reimaged System Checks]]
+- [[#Phase 8 — Enroll and Stabilize|Phase 8 — Enroll and Stabilize]]
+- [[#Phase 9 — Initial Captures and Sanity Checks|Phase 9 — Initial Captures and Sanity Checks]]
+- [[#Phase 13A — Capture Workflow Snapshot|Phase 13A — Capture Workflow Snapshot]]
+- [[#Phase 13B — Post-Image System Inventory Capture|Phase 13B — Post-Image System Inventory Capture]]
+- [[#Phase 13C — Post-Image Company-Managed Inventory Capture|Phase 13C — Post-Image Company-Managed Inventory Capture]]
+- [[#Phase 13D — Post-Image Performance Audit Capture|Phase 13D — Post-Image Performance Audit Capture]]
+- [[#Phase 13E — Post-Image Office Stability Capture|Phase 13E — Post-Image Office Stability Capture]]
+- [[#Phase 14 — Reimaged System Checks|Phase 14 — Reimaged System Checks]]
 - [[#Templates|Templates]]
 
 ---
@@ -55,7 +55,7 @@ Examples:
 ```text
 Do not manually recreate enrollment command output if record-enrollment.sh generated the bundle.
 Do not manually rewrite the initial first-boot checklist if record-reimaged-system.sh generated it twice around the restart.
-Do not manually rebuild system/managed/performance/Office comparison bundles if the Phase 11 scripts generated them.
+Do not manually rebuild system/managed/performance/Office comparison bundles if the Phase 13 scripts generated them.
 Do not manually duplicate the final validation report when reimage-checklist.sh --phase post already generated the final checklist.
 ```
 
@@ -67,14 +67,14 @@ Do not manually duplicate the final validation report when reimage-checklist.sh 
 
 | Phase | Capture | Primary destination | Purpose |
 |---|---|---|---|
-| Phase 6 | Enrollment and stabilization | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/enrollment/record-enrollment-*` | Managed enrollment, profiles, security tools, macOS update state, and first stabilization review. |
-| Phase 7 | Initial captures and sanity checks | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/initial-reimaged-system-*` | First post-image evidence bundle before deeper restore work, including restart and Time Machine planning notes. |
-| Phase 11A | Workflow snapshot | `$REIMAGE_ARTIFACT_ROOT/workflow-snapshot/pre-image-workflow-snapshot-*`, `$REIMAGE_ARTIFACT_ROOT/workflow-snapshot/reimage-workflow-docs/` | Final workflow-doc snapshot showing the workflow state actually used after rebuild. |
-| Phase 11B | System inventory | `$REIMAGE_ARTIFACT_ROOT/system-inventory/post-image-*` | Broad rebuilt-system snapshot for comparison against Phase 3B. |
-| Phase 11C | Company-managed inventory | `$REIMAGE_ARTIFACT_ROOT/managed-inventory/post-image-*` | Managed apps, profiles, launch items, extensions, receipts, and managed preferences after enrollment. |
-| Phase 11D | Performance audit | `$REIMAGE_ARTIFACT_ROOT/performance-audit/post-image-*` | Scenario-based after-state performance bundles that match the pre-image scenarios. |
-| Phase 11E | Office stability | `$REIMAGE_ARTIFACT_ROOT/office-stability/post-reimage-*`, `checklists/post-image-office-stability-checklist-*` | Office stability baseline, watcher-derived evidence, and post-image comparison checklist output. |
-| Phase 12 | Reimaged system checks | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/checklists/reimage-checklist-*.md` | Final validation report plus the remaining manual sign-off rows before the rebuilt Mac is considered trusted. |
+| Phase 8 | Enrollment and stabilization | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/enrollment/record-enrollment-*` | Managed enrollment, profiles, security tools, macOS update state, and first stabilization review. |
+| Phase 9 | Initial captures and sanity checks | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/initial-reimaged-system-*` | First post-image evidence bundle before deeper restore work, including restart and Time Machine planning notes. |
+| Phase 13A | Workflow snapshot | `$REIMAGE_ARTIFACT_ROOT/workflow-snapshot/pre-image-workflow-snapshot-*`, `$REIMAGE_ARTIFACT_ROOT/workflow-snapshot/reimage-workflow-docs/` | Final workflow-doc snapshot showing the workflow state actually used after rebuild. |
+| Phase 13B | System inventory | `$REIMAGE_ARTIFACT_ROOT/system-inventory/post-image-*` | Broad rebuilt-system snapshot for comparison against Phase 4B. |
+| Phase 13C | Company-managed inventory | `$REIMAGE_ARTIFACT_ROOT/managed-inventory/post-image-*` | Managed apps, profiles, launch items, extensions, receipts, and managed preferences after enrollment. |
+| Phase 13D | Performance audit | `$REIMAGE_ARTIFACT_ROOT/performance-audit/post-image-*` | Scenario-based after-state performance bundles that match the pre-image scenarios. |
+| Phase 13E | Office stability | `$REIMAGE_ARTIFACT_ROOT/office-stability/post-reimage-*`, `checklists/post-image-office-stability-checklist-*` | Office stability baseline, watcher-derived evidence, and post-image comparison checklist output. |
+| Phase 14 | Reimaged system checks | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/checklists/reimage-checklist-*.md` | Final validation report plus the remaining manual sign-off rows before the rebuilt Mac is considered trusted. |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -119,9 +119,9 @@ $REIMAGE_ARTIFACT_ROOT/
 
 ---
 
-## Phase 6 — Enroll and Stabilize
+## Phase 8 — Enroll and Stabilize
 
-Workflow: [[reimaging-guide#Phase 6 — Enroll and Stabilize|reimaging-guide.md — Phase 6]].
+Workflow: [[reimaging-guide#Phase 8 — Enroll and Stabilize|reimaging-guide.md — Phase 8]].
 
 Detailed capture runbook: [enroll-and-stabilize.md](../enroll-and-stabilize.md)
 
@@ -164,15 +164,15 @@ Manual / fallback notes:
 
 - The generated `enrollment-record.md` prefills the command-verifiable rows and leaves the mixed/manual rows for you.
 - Manual confirmation is still needed for Company Portal UI state, whether the required managed app set looks normal, whether macOS updates were intentionally deferred, and whether the first stabilization restart completed cleanly.
-- If `$REIMAGE_ARTIFACT_ROOT` is not available yet, capture Phase 6 locally first, then keep the output path available so it can be copied into the main artifact tree later.
+- If `$REIMAGE_ARTIFACT_ROOT` is not available yet, capture Phase 8 locally first, then keep the output path available so it can be copied into the main artifact tree later.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
 ---
 
-## Phase 7 — Initial Captures and Sanity Checks
+## Phase 9 — Initial Captures and Sanity Checks
 
-Workflow: [[reimaging-guide#Phase 7 — Initial Captures and Sanity Checks|reimaging-guide.md — Phase 7]].
+Workflow: [[reimaging-guide#Phase 9 — Initial Captures and Sanity Checks|reimaging-guide.md — Phase 9]].
 
 Detailed capture runbook: [verify-reimaged-system.md](../verify-reimaged-system.md)
 
@@ -221,9 +221,9 @@ Manual / fallback notes:
 
 ---
 
-## Phase 11A — Capture Workflow Snapshot
+## Phase 13A — Capture Workflow Snapshot
 
-Workflow: [[reimaging-guide#Phase 11A — Capture Workflow Snapshot|reimaging-guide.md — Phase 11A]].
+Workflow: [[reimaging-guide#Phase 13A — Capture Workflow Snapshot|reimaging-guide.md — Phase 13A]].
 
 Detailed capture runbook: [capture-workflow-snapshot.md](../capture-workflow-snapshot.md)
 
@@ -245,7 +245,7 @@ $BACKUP_ROOT/workflow-snapshot/reimage-workflow-docs/
 
 Manual / fallback notes:
 
-- Phase 11A uses the same current destination family as the workflow snapshot runbook: a fresh timestamped `pre-image-workflow-snapshot-*` bundle plus a refreshed `reimage-workflow-docs/` copy.
+- Phase 13A uses the same current destination family as the workflow snapshot runbook: a fresh timestamped `pre-image-workflow-snapshot-*` bundle plus a refreshed `reimage-workflow-docs/` copy.
 - Use this phase when you want the final workflow-doc state that actually reflects the rebuilt system and any runbook refinements made during restore.
 - Manual notes are rarely needed unless you want to explain why the post-image workflow-doc snapshot differs from the pre-image one.
 
@@ -253,9 +253,9 @@ Manual / fallback notes:
 
 ---
 
-## Phase 11B — Post-Image System Inventory Capture
+## Phase 13B — Post-Image System Inventory Capture
 
-Workflow: [[reimaging-guide#Phase 11B — Post-Image System Inventory Capture|reimaging-guide.md — Phase 11B]].
+Workflow: [[reimaging-guide#Phase 13B — Post-Image System Inventory Capture|reimaging-guide.md — Phase 13B]].
 
 Detailed capture runbook: [capture-system-inventory.md](../capture-system-inventory.md)
 
@@ -297,9 +297,9 @@ Manual / fallback notes:
 
 ---
 
-## Phase 11C — Post-Image Company-Managed Inventory Capture
+## Phase 13C — Post-Image Company-Managed Inventory Capture
 
-Workflow: [[reimaging-guide#Phase 11C — Post-Image Company-Managed Inventory Capture|reimaging-guide.md — Phase 11C]].
+Workflow: [[reimaging-guide#Phase 13C — Post-Image Company-Managed Inventory Capture|reimaging-guide.md — Phase 13C]].
 
 Detailed capture runbook: [capture-managed-inventory.md](../capture-managed-inventory.md)
 
@@ -345,9 +345,9 @@ Manual / fallback notes:
 
 ---
 
-## Phase 11D — Post-Image Performance Audit Capture
+## Phase 13D — Post-Image Performance Audit Capture
 
-Workflow: [[reimaging-guide#Phase 11D — Post-Image Performance Audit Capture|reimaging-guide.md — Phase 11D]].
+Workflow: [[reimaging-guide#Phase 13D — Post-Image Performance Audit Capture|reimaging-guide.md — Phase 13D]].
 
 Detailed capture runbook: [capture-performance-audit.md](../capture-performance-audit.md)
 
@@ -401,15 +401,15 @@ Manual / fallback notes:
 - Use the same scenario names as the pre-image run so the before/after comparison stays meaningful.
 - Review the generated `manual-observations.md` and `workload-reproduction-config.md` instead of creating separate duplicate notes first.
 - The post-image comparison checklist still needs a human decision about workload match, memory/process deltas, responsiveness, and Docker/IntelliJ resource comparability.
-- If you staged results locally, copy the completed audit folders into `$REIMAGE_ARTIFACT_ROOT/performance-audit/` before Phase 12 final validation.
+- If you staged results locally, copy the completed audit folders into `$REIMAGE_ARTIFACT_ROOT/performance-audit/` before Phase 14 final validation.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
 ---
 
-## Phase 11E — Post-Image Office Stability Capture
+## Phase 13E — Post-Image Office Stability Capture
 
-Workflow: [[reimaging-guide#Phase 11E — Post-Image Office Stability Capture|reimaging-guide.md — Phase 11E]].
+Workflow: [[reimaging-guide#Phase 13E — Post-Image Office Stability Capture|reimaging-guide.md — Phase 13E]].
 
 Detailed capture runbook: [capture-office-stability.md](../capture-office-stability.md)
 
@@ -462,9 +462,9 @@ Manual / fallback notes:
 
 ---
 
-## Phase 12 — Reimaged System Checks
+## Phase 14 — Reimaged System Checks
 
-Workflow: [[reimaging-guide#Phase 12 — Reimaged System Checks|reimaging-guide.md — Phase 12]].
+Workflow: [[reimaging-guide#Phase 14 — Reimaged System Checks|reimaging-guide.md — Phase 14]].
 
 Detailed capture runbooks: [reimaged-system-checks.md](../reimaged-system-checks.md) and [bin/reimage-checklist.sh](../bin/reimage-checklist.sh)
 
@@ -525,8 +525,8 @@ Manual / fallback notes:
 Post-Image Final Manual Sign-Off — YYYY-MM-DD
 
 Managed baseline and restart checkpoints:
-  [ ] Phase 6 enrollment capture reviewed
-  [ ] Phase 7 initial checklist rerun after restart
+  [ ] Phase 8 enrollment capture reviewed
+  [ ] Phase 9 initial checklist rerun after restart
   [ ] Required managed apps/security tools remained stable after restart
   Notes:
 

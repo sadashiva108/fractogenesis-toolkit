@@ -30,7 +30,7 @@ If you're picking this up mid-reimage on a freshly erased Mac with no local chec
 ├── README.md
 ├── bootstrap.sh                  # the one file fetched before anything else exists
 ├── reimaging-guide.md            # start here — sequences every phase
-├── reimage-guide-access.md       # Phase 4A — validate curl/jump-drive access before erasing
+├── reimage-guide-access.md       # Phase 6A — validate curl/jump-drive access before erasing
 ├── <phase-runbooks>.md           # one runbook per phase, verb-first names
 ├── references/
 │   └── restore-strategy-guide.md # includes why the guide-access mechanism exists

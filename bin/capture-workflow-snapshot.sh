@@ -2,7 +2,7 @@
 # =============================================================================
 # capture-workflow-snapshot.sh
 #
-# Workflow snapshot capture (Phase 3A pre-image / Phase 11A post-image): a
+# Workflow snapshot capture (Phase 4A pre-image / Phase 13A post-image): a
 # lightweight, non-secret capture that preserves the reimage workflow's own
 # documentation and templates alongside a timestamped snapshot bundle, so the
 # state of the runbooks that drove this reimage travels with the artifact drive.
@@ -21,7 +21,7 @@
 #   #   workflow-snapshot/pre-image-workflow-snapshot-<stamp>/
 #   ./bin/capture-workflow-snapshot.sh
 #
-#   # Post-image bundle (Phase 11A)
+#   # Post-image bundle (Phase 13A)
 #   ./bin/capture-workflow-snapshot.sh --context post-image
 #
 #   # Override the artifact root for this invocation

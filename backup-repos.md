@@ -70,13 +70,13 @@ Git remotes protect what you have committed and pushed. They do not protect loca
 
 - A trustworthy inventory so nothing local-only is lost before the machine is wiped.
 - A staged, reviewed set of ignored files ready to restore after the reimage.
-- Secret candidates parked where the Phase 2F consolidated DMG will encrypt them.
+- Secret candidates parked where the Phase 3B consolidated DMG will encrypt them.
 
 **Ownership**
 
 | This runbook owns | Owned elsewhere |
 |---|---|
-| the repository audit and its reports (`repo-audit-reports/`) | encrypting the routed secrets — `create-secrets-dmg` (Phase 2F) |
+| the repository audit and its reports (`repo-audit-reports/`) | encrypting the routed secrets — `create-secrets-dmg` (Phase 3B) |
 | the gitignore superset and the three review files (select / exclude / route) | IntelliJ HTTP Client env files — `backup-intellij` |
 | staging kept ignored files into `staged-ignored-files/`, and routing secret-shaped files into `secrets-encrypted/repos-gitignored/` | the size-audit implementation — `capture-size-audit` |
 
@@ -108,7 +108,7 @@ scanned repos   the template                              └─▶ [ backup can
 - **Collect** — scan every repo under your configured roots and gather all their `.gitignore` patterns into one **superset**. Nothing is staged yet; this is only the catalog of what *could* be kept.
 - **Select** — check `[x]` the patterns whose files you want. Matched against disk, they become the **selected set**.
 - **Exclude** — drop generated, cache, and build noise from the selected set. What survives is the **filtered set** — the files that will actually be backed up.
-- **Route** — sort the filtered set by shape: credential-shaped files go to `secrets-encrypted/repos-gitignored/` so the Phase 2F DMG sweeps them, everything else to ordinary staging.
+- **Route** — sort the filtered set by shape: credential-shaped files go to `secrets-encrypted/repos-gitignored/` so the Phase 3B DMG sweeps them, everything else to ordinary staging.
 
 > [!note]
 > Both routing destinations are files you are keeping. Routing decides *where a kept file lands*, never *whether* it is kept.
@@ -274,7 +274,7 @@ gitignore-superset/
 └── secrets-patterns.txt            # you edit this (Route)
 ```
 
-Staged ignored files. Each stage directory has the same shape; the `secrets-*.tsv` files appear only when `secrets-patterns.txt` is in use, and the `copied`/`copy-failed` files only under `--selected-copy`. Routed secret files are copied out to `secrets-encrypted/repos-gitignored/` (so the Phase 2F DMG sweeps them), not kept beside the ordinary staged files:
+Staged ignored files. Each stage directory has the same shape; the `secrets-*.tsv` files appear only when `secrets-patterns.txt` is in use, and the `copied`/`copy-failed` files only under `--selected-copy`. Routed secret files are copied out to `secrets-encrypted/repos-gitignored/` (so the Phase 3B DMG sweeps them), not kept beside the ordinary staged files:
 
 ```text
 staged-ignored-files/
@@ -361,7 +361,7 @@ The **Direct path** is an off-ramp: a broad dump of every file Git reports as ig
 
 ### Why Secrets Are Routed Separately
 
-Some files you need for development are also credential-shaped — env files, keys, keystores, IDE data sources. You still want them after the reimage, so you keep them; you just must not let them sync in the clear. `secrets-patterns.txt` diverts kept, credential-shaped files into `secrets-encrypted/repos-gitignored/`, where the Phase 2F DMG encrypts them. See [[#Set Up the Secrets-Patterns List|Set Up the Secrets-Patterns List]] for how to configure it, and the [[#Worked Example|Worked Example]] to see it in action.
+Some files you need for development are also credential-shaped — env files, keys, keystores, IDE data sources. You still want them after the reimage, so you keep them; you just must not let them sync in the clear. `secrets-patterns.txt` diverts kept, credential-shaped files into `secrets-encrypted/repos-gitignored/`, where the Phase 3B DMG encrypts them. See [[#Set Up the Secrets-Patterns List|Set Up the Secrets-Patterns List]] for how to configure it, and the [[#Worked Example|Worked Example]] to see it in action.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -631,7 +631,7 @@ cp -p \
 
 ### Set Up the Secrets-Patterns List
 
-This is the **Route** stage. `secrets-patterns.txt` diverts kept, credential-shaped files into `secrets-encrypted/repos-gitignored/` so they never sit beside the ordinary staged files that sync to cloud storage, and so the Phase 2F DMG sweeps them. It uses the same one-pattern-per-line format and matching engine as the exclude list, and `bin/backup-repos.sh` picks it up automatically whenever it exists — no flag.
+This is the **Route** stage. `secrets-patterns.txt` diverts kept, credential-shaped files into `secrets-encrypted/repos-gitignored/` so they never sit beside the ordinary staged files that sync to cloud storage, and so the Phase 3B DMG sweeps them. It uses the same one-pattern-per-line format and matching engine as the exclude list, and `bin/backup-repos.sh` picks it up automatically whenever it exists — no flag.
 
 Create or edit it under the backup root:
 

@@ -1,4 +1,4 @@
-[[reimaging-guide#Phase 2F — Create Secrets DMG|← Back to Mac Reimaging Guide]]
+[[reimaging-guide#Phase 3B — Create Secrets DMG|← Back to Mac Reimaging Guide]]
 
 # Create Secrets DMG
 
@@ -57,10 +57,10 @@ generated manifest, jssecacerts inventory, and RESTORE-README
 It does not own:
 
 ```text
-certificate/Keychain discovery, review, and manual export staging into public-certs/ and secrets-encrypted/certs/ — stage-certs-keychain.md (Phase 2E)
+certificate/Keychain discovery, review, and manual export staging into public-certs/ and secrets-encrypted/certs/ — stage-certs-keychain.md (Phase 3A)
 routing of ssh/gnupg/docker/kube, IntelliJ HTTP Client env files, and app-secret byproducts into secrets-encrypted/ — backup-home.md, backup-apps.md, backup-intellij.md, backup-repos.md
 artifact root and reimage.env preparation — prepare-artifact-root.md
-the Phase 4B pre-image sign-off these verifications roll up to — reimage-prep-checks.md
+the Phase 6B pre-image sign-off these verifications roll up to — reimage-prep-checks.md
 ```
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -69,12 +69,12 @@ the Phase 4B pre-image sign-off these verifications roll up to — reimage-prep-
 
 ## How the Workflow Works
 
-Read this before running anything. Phase 2F is the *consolidation and validation* pass. The earlier phases already routed most credential-shaped files into `secrets-encrypted/` — SSH, GPG, Docker, kube, and app-secret exports as a byproduct of backing up home and apps (Phases 2B/2D), and reviewed certificate/Keychain material through the Phase 2E staging runbook. This phase collects all of it, plus a few things it captures live (Java `jssecacerts` from installed JDKs, and loose cert bundles on Desktop/Downloads), into one encrypted image so restore depends on a single password and a single artifact.
+Read this before running anything. Phase 3B is the *consolidation and validation* pass. The earlier phases already routed most credential-shaped files into `secrets-encrypted/` — SSH, GPG, Docker, kube, and app-secret exports as a byproduct of backing up home and apps (Phases 2B/2D), and reviewed certificate/Keychain material through the Phase 3A staging runbook. This phase collects all of it, plus a few things it captures live (Java `jssecacerts` from installed JDKs, and loose cert bundles on Desktop/Downloads), into one encrypted image so restore depends on a single password and a single artifact.
 
 The reason for the strict order is that the cleanup step deletes plaintext secrets. That is only safe once the encrypted copy is proven readable, so the flow never lets validation and cleanup swap places:
 
 ```text
-stage secret material        (Phases 2B–2E, plus this run's live captures)
+stage secret material        (Phases 2B–2D and 3A, plus this run's live captures)
 build the encrypted DMG      (this phase)
 save the DMG password        (approved password manager — immediately)
 mount and validate           (prove the restore copy is inside)
@@ -83,7 +83,7 @@ clean up loose plaintext     (only after validation)
 
 The preferred path is a single consolidated `all-secrets-*.dmg` built once after all manual secret exports are staged. Building one image — rather than several partial DMGs — means one password to store, one artifact to validate, and one restore source. Rerun the build only when you add secret material after a prior build.
 
-By default the build first reruns the Phase 2E review scan so the certificate/Keychain review artifacts in the DMG are current; `--skip-cert-review` turns that refresh off when you intentionally want the existing review files frozen.
+By default the build first reruns the Phase 3A review scan so the certificate/Keychain review artifacts in the DMG are current; `--skip-cert-review` turns that refresh off when you intentionally want the existing review files frozen.
 
 The phase runs as four subcommands of the same entrypoint. Each check reads what actually exists (on disk and inside the DMG), so it never drifts as the app set grows, and `verify-staging` / `validate` / `cleanup` each write a timestamped report to the drive:
 
@@ -118,7 +118,7 @@ Primary script (entrypoint):
 $FRACTOGENESIS_HOME/bin/create-secrets-dmg.sh
 ```
 
-Related script (entrypoint; rerun by the build for the Phase 2E review refresh unless `--skip-cert-review`):
+Related script (entrypoint; rerun by the build for the Phase 3A review refresh unless `--skip-cert-review`):
 
 ```text
 $FRACTOGENESIS_HOME/bin/stage-certs-keychain.sh
@@ -174,7 +174,7 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 
 - Your shell is at the repository root — `cd "$FRACTOGENESIS_HOME"` once for the session. Per the guide's [[reimaging-guide#Core Assumptions|Core Assumptions]], the commands below assume this and don't repeat it.
 - `reimage.env` is produced and loaded, with `REIMAGE_ARTIFACT_ROOT` resolved (from `prepare-artifact-root.md`), and the external artifact volume mounted.
-- Phase 2E certificate/Keychain staging (`stage-certs-keychain.md`) and any manual app secret exports (Chrome, Postman, Raycast, licenses) are already staged under `secrets-encrypted/`.
+- Phase 3A certificate/Keychain staging (`stage-certs-keychain.md`) and any manual app secret exports (Chrome, Postman, Raycast, licenses) are already staged under `secrets-encrypted/`.
 - macOS with `hdiutil`; `python3` and the `security` CLI only if the review refresh runs. Stock Bash 3.2 is fine.
 
 > [!bug] Troubleshooting
@@ -183,8 +183,8 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 ### Confirm Your Intent
 
 - **Is all manual secret staging done?** Build once, after Chrome, Postman, Raycast, licenses, and Keychain exports are in place — not once per export. Adding a secret later means building again.
-- **Refresh the certificate review or freeze it?** The default build reruns the Phase 2E scan to refresh the review artifacts; pass `--skip-cert-review` to leave the existing review files untouched.
-- **Was a rebuild flagged?** Phase 2E writes `secrets-encrypted/extra-secrets-certs-review/state/phase2f-rerun-required-*.md` when certificate/Keychain material changed since its last run. If that marker is present — or you staged anything new after a prior DMG — this phase must run again so the newest DMG includes it. This build supersedes the marker.
+- **Refresh the certificate review or freeze it?** The default build reruns the Phase 3A scan to refresh the review artifacts; pass `--skip-cert-review` to leave the existing review files untouched.
+- **Was a rebuild flagged?** Phase 3A writes `secrets-encrypted/extra-secrets-certs-review/state/phase2f-rerun-required-*.md` when certificate/Keychain material changed since its last run. If that marker is present — or you staged anything new after a prior DMG — this phase must run again so the newest DMG includes it. This build supersedes the marker.
 - **Not cleaning up yet.** Cleanup is a separate, later step. Do not delete any loose staging until the DMG is built, mounted, and verified.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -228,13 +228,13 @@ Act on the report: if an export you intended shows EMPTY, stage it into the matc
 
 ### Build the Encrypted DMG
 
-Build the consolidated DMG. The default run first reruns the Phase 2E review scan so the certificate/Keychain review artifacts are current, then stages and encrypts every category found:
+Build the consolidated DMG. The default run first reruns the Phase 3A review scan so the certificate/Keychain review artifacts are current, then stages and encrypts every category found:
 
 ```bash
 ./bin/create-secrets-dmg.sh
 ```
 
-To build without refreshing the Phase 2E review artifacts:
+To build without refreshing the Phase 3A review artifacts:
 
 ```bash
 ./bin/create-secrets-dmg.sh --skip-cert-review
@@ -263,7 +263,7 @@ Enter the DMG password when prompted. `validate` cross-checks **every** category
 
 A FAIL means a category is staged on disk but missing from the image. Do **not** clean up — move the file into the correct `secrets-encrypted/` folder and rerun [[#Build the Encrypted DMG|Build the Encrypted DMG]] so the newest DMG includes it.
 
-Then confirm the few things a script cannot (these roll up to the Phase 4B sign-off in `reimage-prep-checks.md` and appear as the report's manual checklist):
+Then confirm the few things a script cannot (these roll up to the Phase 6B sign-off in `reimage-prep-checks.md` and appear as the report's manual checklist):
 
 1. The DMG password is saved in an approved password manager.
 2. Every category you *intended* to export is present — only you know your intent.
@@ -331,13 +331,13 @@ The build stages and encrypts these categories when present. Each is skipped sil
 | `certs/java-security/` | `jssecacerts` from `JAVA_HOME`, installed JDKs, IntelliJ bundled JBR, and prior staging | Captured broadly pre-image; restore selectively. Inventoried in `java-jssecacerts-inventory-*.md`. |
 | `chrome/` | `Chrome Passwords*.csv` from `secrets-encrypted/chrome/`, Downloads, or Desktop | Manual export; delete the plaintext CSV after validation. |
 | `claude/`, `intellij/`, `licenses/`, `postman/`, `raycast/`, and any future category | Whatever is pre-staged under `secrets-encrypted/<category>/` | Swept generically (see below): `claude/` (e.g. `claude_desktop_config.json`), `intellij/` (HTTP Client env files routed in by `backup-intellij` after its shared-vs-private split), `licenses/`, and app-secret exports are packaged as-is. |
-| `extra-secrets-certs-review/` | `secrets-encrypted/extra-secrets-certs-review/` — `discovery/`, `plan/`, `decisions/` | Phase 2E review reports, normalized plans, and decision drafts. Staged recursively; `state/` excluded. |
+| `extra-secrets-certs-review/` | `secrets-encrypted/extra-secrets-certs-review/` — `discovery/`, `plan/`, `decisions/` | Phase 3A review reports, normalized plans, and decision drafts. Staged recursively; `state/` excluded. |
 
 Distinction to keep clear: `certs/` is certificate and keystore material in general; `certs/java-security/` is Java-specific `jssecacerts` trust overrides only.
 
 The categories owned by the live-source captures above (`ssh/`, `gnupg/`, `docker/`, `kube/`, `certs/`, `chrome/`, `cli-credentials/`, `git/`, `package-managers/`) are staged explicitly. **Every other** subfolder already present under `secrets-encrypted/` is then swept generically and packaged as-is, so a category added by a later phase is captured without editing this script. Two things are deliberately excluded: **`cloud/` (AWS)** — cloud CLIs are re-authenticated after reimage rather than restored — and the review dir's **`state/`** control folder.
 
-Phase 2E organizes these under by-function subfolders — `discovery/` (scan reports), `plan/` (the normalized plan, filtered feeds, and `plan/proposed-staged-certs/`), and `decisions/` (`keychain-manual-export-checklist-*.md.proposed`, `cert-restore-notes-*.md.proposed`) — alongside a `MANIFEST.md`. The full catalog is maintained in [[stage-certs-keychain#Generated Review Artifacts|Stage Certificates and Keychain → Generated Review Artifacts]]; this phase stages the whole tree recursively rather than re-listing it, so that layout can change without touching this runbook.
+Phase 3A organizes these under by-function subfolders — `discovery/` (scan reports), `plan/` (the normalized plan, filtered feeds, and `plan/proposed-staged-certs/`), and `decisions/` (`keychain-manual-export-checklist-*.md.proposed`, `cert-restore-notes-*.md.proposed`) — alongside a `MANIFEST.md`. The full catalog is maintained in [[stage-certs-keychain#Generated Review Artifacts|Stage Certificates and Keychain → Generated Review Artifacts]]; this phase stages the whole tree recursively rather than re-listing it, so that layout can change without touching this runbook.
 
 The `state/` subfolder is regenerable workflow control — a cross-run staging-state pointer plus the `phase2f-rerun-required-*.md` marker — and is deliberately **not** staged into the DMG; the rerun check reads that marker off the live drive, not the image, so leaving it out is safe. The public decision log `public-certs/certs/keychain-cert-export-inventory-*.md` is also left out: `public-certs/` is reference material, and only `secrets-encrypted/` rides into the encrypted image.
 
@@ -351,7 +351,7 @@ $REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/secrets-dmg/
 
 Each report has automated PASS / WARN / FAIL rows and a short "manual — you confirm" checklist for the items a script cannot judge. Between them they replace the manual manifest-grep, per-category mounted-DMG spot-checks, and PEM balance checks that used to live here: `validate` cross-checks every on-disk category against the mounted image, counts private-key-bearing files inside it, and balances public PEM blocks; `verify-staging` reports the pre-build staging surface; `cleanup` records exactly what was removed or kept.
 
-These reports are the automated sign-off evidence for the Phase 4B pre-image checks. The fillable templates in [[#Sign-Off Templates|Sign-Off Templates]] carry only the human-judgment items.
+These reports are the automated sign-off evidence for the Phase 6B pre-image checks. The fillable templates in [[#Sign-Off Templates|Sign-Off Templates]] carry only the human-judgment items.
 
 ### Expected Final Layout
 
@@ -379,7 +379,7 @@ Use the newest `all-secrets-*.dmg` as the primary restore source after the Mac i
 
 ### Manual Items That Remain Manual
 
-These still require human review or app/Keychain interaction even with the Phase 2E and 2F scripts:
+These still require human review or app/Keychain interaction even with the Phase 3A and 3B scripts:
 
 | Manual item | Why it stays manual |
 |---|---|
@@ -399,7 +399,7 @@ $FRACTOGENESIS_HOME/templates/manual-export-pass-criteria-template.md
 $FRACTOGENESIS_HOME/templates/loose-plaintext-cleanup-signoff-template.md
 ```
 
-Create a working copy under the Phase 4B manual sign-off folder and tick the manual items after `validate` and before `cleanup --force`:
+Create a working copy under the Phase 6B manual sign-off folder and tick the manual items after `validate` and before `cleanup --force`:
 
 ```bash
 mkdir -p "$REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/manual"
@@ -409,7 +409,7 @@ cp "$FRACTOGENESIS_HOME/templates/loose-plaintext-cleanup-signoff-template.md" \
   "$REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/manual/loose-plaintext-cleanup-signoff-$(date +%Y%m%d).md"
 ```
 
-Both notes are consumed by the Phase 4B sign-off in `reimage-prep-checks.md`.
+Both notes are consumed by the Phase 6B sign-off in `reimage-prep-checks.md`.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 

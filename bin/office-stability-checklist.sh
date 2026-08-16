@@ -2,13 +2,13 @@
 # =============================================================================
 # office-stability-checklist.sh
 #
-# Office Stability Checklist generator (Phase 3D/3E pre-image / Phase 11E
+# Office Stability Checklist generator (Phase 4D pre-image / Phase 13E
 # post-image). Aggregate validator: it inspects the watcher directory, marker,
 # baseline bundles, and live Office/management state, and records every result
 # as a PASS / WARN / FAIL / SKIP check into a timestamped checklist bundle under
 # office-stability/checklists/ (report .md, README, and per-check evidence
 # files). It observes and reports only; it does not create the artifacts it is
-# meant to verify. Its findings roll up to the Phase 4B sign-off. See
+# meant to verify. Its findings roll up to the Phase 6B sign-off. See
 # capture-office-stability.md, Step 4.
 #
 # --- BEGIN USAGE ---
@@ -167,14 +167,14 @@ fi
 
 TS="$(date +%Y%m%d-%H%M%S)"
 if [[ "$PHASE" == "pre-reimage" ]]; then
-  BANNER_TITLE="Phase 3E -- Office Stability Pre-Image Checklist"
+  BANNER_TITLE="Phase 4D -- Office Stability Pre-Image Checklist"
   RUN_SLUG="pre-image-office-stability-checklist"
   REPORT_FILENAME="pre-image-office-stability-checklist.md"
   REPORT_TITLE="Pre-Image Office Stability Checklist Report"
   README_TITLE="Pre-Image Office Stability Checklist Bundle"
   LATEST_POINTER="$OUTPUT_ROOT/latest-pre-image-office-stability-checklist.txt"
 else
-  BANNER_TITLE="Phase 11E -- Office Stability Post-Image Checklist"
+  BANNER_TITLE="Phase 13E -- Office Stability Post-Image Checklist"
   RUN_SLUG="post-image-office-stability-checklist"
   REPORT_FILENAME="post-image-office-stability-checklist.md"
   REPORT_TITLE="Post-Image Office Stability Checklist Report"

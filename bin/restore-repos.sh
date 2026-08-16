@@ -2,7 +2,7 @@
 # =============================================================================
 # restore-repos.sh
 #
-# Phase 9B — Restore Repositories status recorder and action emitter.
+# Phase 11B — Restore Repositories status recorder and action emitter.
 #
 # Reads the most recent pre-image repository audit produced by Phase 2C
 # (backup-repos.md), classifies every tracked repo against the current state
@@ -79,7 +79,7 @@ if [[ ! -f "$CONFIG_LOADER" ]]; then
   exit 2
 fi
 
-# Phase 9B requires the artifact drive to be mounted so the pre-image repo
+# Phase 11B requires the artifact drive to be mounted so the pre-image repo
 # audit produced by Phase 2C is reachable. Load strictly.
 # shellcheck source=../.internal/load-reimage-config.sh
 source "$CONFIG_LOADER"
@@ -162,7 +162,7 @@ LATEST_POINTER="$AUDIT_ROOT/latest-run.txt"
 if [[ -z "$INPUT_RUN" ]]; then
   if [[ ! -f "$LATEST_POINTER" ]]; then
     echo "ERROR: latest-run pointer not found: $LATEST_POINTER" >&2
-    echo "Phase 2C (backup-repos.md) must produce a pre-image audit before Phase 9B can restore from it." >&2
+    echo "Phase 2C (backup-repos.md) must produce a pre-image audit before Phase 11B can restore from it." >&2
     exit 2
   fi
   INPUT_RUN="$(cat "$LATEST_POINTER" 2>/dev/null | tr -d '[:space:]')"
@@ -427,7 +427,7 @@ do
 done < "$REPOS_TSV"
 
 # ---------------------------------------------------------------------------
-# Heuristic verdicts for the Phase 9B exit-criteria rows
+# Heuristic verdicts for the Phase 11B exit-criteria rows
 # ---------------------------------------------------------------------------
 status_pass_warn() {
   if [[ "$1" == "true" ]]; then
@@ -462,7 +462,7 @@ Output directory: $OUT
 Source pre-image audit run: $INPUT_RUN
 Repositories in inventory: $TOTAL
 
-Use this report as the Phase 9B evidence bundle. The command-verifiable rows
+Use this report as the Phase 11B evidence bundle. The command-verifiable rows
 are prefilled with a heuristic PASS/WARN verdict. Complete the remaining
 rescue-branch and carry-forward rows by hand after cloning the repos and
 verifying each pre-image \`reimage/YYYYMMDD/*\` rescue branch reached its

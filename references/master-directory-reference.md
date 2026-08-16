@@ -403,8 +403,8 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 > [!example]- `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/`
 > ```text
 > $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/
-> ├── all-secrets-YYYYMMDD-HHMMSS-manifest.txt   # created by create-secrets-dmg (Phase 2F, not yet run)
-> ├── all-secrets-YYYYMMDD-HHMMSS.dmg            # created by create-secrets-dmg (Phase 2F, not yet run)
+> ├── all-secrets-YYYYMMDD-HHMMSS-manifest.txt   # created by create-secrets-dmg (Phase 3B, not yet run)
+> ├── all-secrets-YYYYMMDD-HHMMSS.dmg            # created by create-secrets-dmg (Phase 3B, not yet run)
 > ├── certs/
 > │   ├── .keystore
 > │   ├── java-security/                          # Java jssecacerts overrides + per-JDK dirs
@@ -424,7 +424,7 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 > │   └── gh/
 > ├── docker/
 > │   └── config.json
-> ├── extra-secrets-certs-review/           # cert/Keychain review area (Phase 2E)
+> ├── extra-secrets-certs-review/           # cert/Keychain review area (Phase 3A)
 > │   ├── decisions/                         # plan + keychain-detail write here
 > │   │   ├── cert-restore-notes-YYYYMMDD-HHMMSS.md.proposed
 > │   │   └── keychain-manual-export-checklist-YYYYMMDD-HHMMSS.md.proposed
@@ -464,18 +464,18 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 > │   └── state/                             # scan writes here
 > │       ├── certs-staging-state-latest.tsv
 > │       └── phase2f-rerun-required-YYYYMMDD-HHMMSS.md
-> ├── git/                                   # created by create-secrets-dmg (Phase 2F); ~/.git-credentials if present
+> ├── git/                                   # created by create-secrets-dmg (Phase 3B); ~/.git-credentials if present
 > ├── gnupg/
 > ├── intellij/
 > ├── kube/
 > │   └── config
-> ├── licenses/                              # created by create-secrets-dmg (Phase 2F); manual freeform staging
-> ├── package-managers/                      # created by create-secrets-dmg (Phase 2F); .npmrc/.pypirc/etc.
+> ├── licenses/                              # created by create-secrets-dmg (Phase 3B); manual freeform staging
+> ├── package-managers/                      # created by create-secrets-dmg (Phase 3B); .npmrc/.pypirc/etc.
 > ├── postman/
 > │   ├── environments/                      # if exported
 > │   ├── README.md
 > │   └── vault-if-export-allowed/           # if exported
-> ├── RESTORE-README.md                      # created by create-secrets-dmg (Phase 2F, not yet run)
+> ├── RESTORE-README.md                      # created by create-secrets-dmg (Phase 3B, not yet run)
 > └── ssh/
 > ```
 

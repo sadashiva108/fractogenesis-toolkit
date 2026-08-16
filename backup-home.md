@@ -60,7 +60,7 @@ It does not own:
 automated workflow snapshot capture — capture-workflow-snapshot.md
 app-specific backup work, including Docker settings/contexts/inventories — backup-apps.md
 developer-tool version inventory — capture-system-inventory.md
-cloud sync and final manual sign-off during Phase 4B — reimage-prep-checks.md
+cloud sync and final manual sign-off during Phase 6B — reimage-prep-checks.md
 OneDrive root configuration and folder creation — prepare-artifact-root.md
 ```
 
@@ -81,7 +81,7 @@ The backup has one authoritative destination and one optional secondary destinat
 | Destination | What it receives | Status |
 |---|---|---|
 | External artifact root (`$REIMAGE_ARTIFACT_ROOT`) | The full selected set: home targets, dotfiles, and the secrets-encrypted staging (including Java `jssecacerts`). | Authoritative — the copy the restore phases trust. |
-| OneDrive secondary (`$ONEDRIVE_ROOT/$ONEDRIVE_DEST_SUBDIR`) | Only the narrower, work-safe targets from `onedrive-targets.conf.sh`. | Secondary and optional — not proven until the Phase 4B checks confirm the upload. |
+| OneDrive secondary (`$ONEDRIVE_ROOT/$ONEDRIVE_DEST_SUBDIR`) | Only the narrower, work-safe targets from `onedrive-targets.conf.sh`. | Secondary and optional — not proven until the Phase 6B checks confirm the upload. |
 
 > [!note]
 > The secrets-encrypted targets never travel to OneDrive. Only the external artifact root holds them, and only the encrypted DMG (built later) is intended to leave the drive. The OneDrive copy is a convenience mirror of work-safe documents, not a secrets backup.
@@ -172,7 +172,7 @@ Optional OneDrive secondary copy:
 $ONEDRIVE_ROOT/$ONEDRIVE_DEST_SUBDIR/
 ```
 
-Docker settings land under `app-settings-backup/docker/` via `backup-apps.md` (Phase 2C); the developer-tool version inventory lands under `system-inventory/` via `capture-system-inventory.md` (Phase 3B). Neither is written by this runbook.
+Docker settings land under `app-settings-backup/docker/` via `backup-apps.md` (Phase 2C); the developer-tool version inventory lands under `system-inventory/` via `capture-system-inventory.md` (Phase 4B). Neither is written by this runbook.
 
 ### Environment Variables
 
@@ -341,7 +341,7 @@ find "$REIMAGE_ARTIFACT_ROOT/home-files-backup" -maxdepth 3 -type f | sort | hea
 
 This step applies only when `backup-home.sh` ran with OneDrive enabled (the default mode, or `--onedrive-only`). The local folder check proves the files were *written* to the local OneDrive-synced folder; it does not prove OneDrive *uploaded* them.
 
-Drop a current-run marker so a later check (including the Phase 4B script) can confirm this specific run's copy:
+Drop a current-run marker so a later check (including the Phase 6B script) can confirm this specific run's copy:
 
 ```bash
 ARTIFACT_BASENAME="$(basename "${REIMAGE_ARTIFACT_ROOT%/}")"
@@ -376,7 +376,7 @@ Treat the OneDrive copy as confirmed only when all of these are true:
 > [!bug] Troubleshooting
 > If a run wrote to a relative `OneDrive-…/` folder inside the repo checkout instead of the real CloudStorage-mounted folder, that folder is not syncing. See [[#Accidental Relative OneDrive Folder|Accidental Relative OneDrive Folder]].
 
-The single pass/fail checkbox for OneDrive sync in the Phase 4B sign-off lives in `reimage-prep-checks.md` — come back here if that checkbox needs troubleshooting.
+The single pass/fail checkbox for OneDrive sync in the Phase 6B sign-off lives in `reimage-prep-checks.md` — come back here if that checkbox needs troubleshooting.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -401,7 +401,7 @@ For a mid-phase refresh, use `--external-only` to update just the authoritative 
 ```
 
 > [!warning] Pitfall
-> If you have already built the Phase 2F secrets DMG, a re-run that changes any secret-bearing target means that DMG no longer covers the full staged secret set — rebuild it in Phase 2F after this refresh. While you are still staging and have not built the DMG yet (the normal case here), there is nothing extra to do.
+> If you have already built the Phase 3B secrets DMG, a re-run that changes any secret-bearing target means that DMG no longer covers the full staged secret set — rebuild it in Phase 3B after this refresh. While you are still staging and have not built the DMG yet (the normal case here), there is nothing extra to do.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -487,7 +487,7 @@ The fragments are ordinary Bash files: an array (or, for `secret-flags.conf.sh`,
 
 **`skip-entries.conf.sh`** — `PATH | REASON`, informational only. It does *not* cause anything to be skipped; it documents intentional omissions so the size audit can explain them. To actually exclude something, add a pattern to `external-excludes.conf.sh` or leave it out of the targets — then, optionally, record why here.
 
-**`expected-artifact-folders.conf.sh`** — the top-level folder names expected under `$REIMAGE_ARTIFACT_ROOT`, checked by the size audit and the Phase 4B checklist. This tracks the standard artifact-root layout from `prepare-artifact-root.md`; change it only when that layout changes, and keep it alphabetized.
+**`expected-artifact-folders.conf.sh`** — the top-level folder names expected under `$REIMAGE_ARTIFACT_ROOT`, checked by the size audit and the Phase 6B checklist. This tracks the standard artifact-root layout from `prepare-artifact-root.md`; change it only when that layout changes, and keep it alphabetized.
 
 ### SSH Agent Socket Exclusion in Detail
 
