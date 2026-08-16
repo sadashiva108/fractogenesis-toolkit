@@ -172,6 +172,9 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 > │   │   └── IntelliJ-settings-YYYYMMDD-HHMMSS.zip
 > │   ├── project-metadata/
 > │   ├── restore-notes/
+> │   ├── secret-review/
+> │   │   ├── intellij-secret-review-template.txt
+> │   │   └── backup-exclude-list.txt
 > │   └── README.md
 > ├── obsidian/
 > │   ├── global-settings/
@@ -262,7 +265,7 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 > │   ├── 04-installed-package-receipts.txt
 > │   ├── 05-background-managed-components.txt
 > │   ├── 06-managed-preference-payloads.txt
-> │   ├── 07-gaig-filter-pass.txt
+> │   ├── 07-company-filter-pass.txt
 > │   └── MANIFEST.txt
 > └── post-image-YYYYMMDD-HHMMSS/
 >     ├── 01-enrollment-status.txt
@@ -271,7 +274,7 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 >     ├── 04-installed-package-receipts.txt
 >     ├── 05-background-managed-components.txt
 >     ├── 06-managed-preference-payloads.txt
->     ├── 07-gaig-filter-pass.txt
+>     ├── 07-company-filter-pass.txt
 >     └── MANIFEST.txt
 > ```
 
@@ -523,7 +526,9 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 > │       └── phase2f-rerun-required-YYYYMMDD-HHMMSS.md
 > ├── git/                                   # created by create-secrets-dmg (Phase 3B); ~/.git-credentials if present
 > ├── gnupg/
-> ├── intellij/
+> ├── intellij/                                # staged by backup-intellij (Phase 2D); buckets named for the root each file came from
+> │   ├── ide-config/                          # relative to ~/Library/Application Support/JetBrains/
+> │   └── projects/                            # relative to $GIT_WORK_REPO_ROOT
 > ├── kube/
 > │   └── config
 > ├── licenses/                              # created by create-secrets-dmg (Phase 3B); manual freeform staging

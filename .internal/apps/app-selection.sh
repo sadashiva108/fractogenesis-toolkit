@@ -184,6 +184,18 @@ if [[ "$MODE" == "generate" ]]; then
     echo "ERROR: --generate requires --automatic-list, --both-list, --manual-list, and --unsupported-list." >&2
     exit 2
   fi
+
+  # The flags being present is not the same as the files existing. emit_section
+  # treats a missing list as an empty list and returns 0, so a stale or mistyped
+  # path silently empties that section of the checklist -- and --generate then
+  # REPLACES the operator's edited checklist with it, discarding their marks.
+  for _list in "$AUTOMATIC_LIST" "$BOTH_LIST" "$MANUAL_LIST" "$UNSUPPORTED_LIST"; do
+    if [[ ! -f "$_list" ]]; then
+      echo "ERROR: candidate list file not found: $_list" >&2
+      echo "Re-run the candidate review to regenerate the list files." >&2
+      exit 2
+    fi
+  done
   hint="${RUN_HINT:-./bin/backup-apps.sh}"
   dest_dir="$(dirname "$SELECTION")"
   mkdir -p "$dest_dir"

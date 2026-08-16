@@ -8,15 +8,30 @@ in `.github/ai-prompts/script-prompts/bash-script-authoring-and-review.md`, and
 the repository-wide conventions live in `.github/copilot-instructions.md`. Read
 those for the rules; read this to decide which directory a file goes in.
 
-## The mapping
+## Scripts
+
+The six script classes, named exactly as
+`.github/ai-prompts/script-prompts/bash-script-authoring-and-review.md` names
+them. That prompt says how each class must behave; this table says only where it
+goes. Classify once, using its names, and both questions are answered.
+
+| Class | Goes in | Example |
+|---|---|---|
+| `bin/` entrypoint | `bin/<verb-first-name>.sh` | `bin/backup-home.sh` |
+| `.internal/` pure helper | `.internal/<domain>/` | `.internal/git/stage-selected-patterns.py` |
+| `.internal/` standalone-capable helper | `.internal/<domain>/` | `.internal/apps/app-selection.sh` |
+| Foundation/config loader | `.internal/` root | `.internal/load-reimage-config.sh` |
+| Aggregate validator/checklist | `bin/` | `bin/verify-artifact-config.sh` |
+| Bootstrap/environment creator | `bin/`, or repo root when it must run pre-clone | `bin/setup-reimage-env.sh`, `bootstrap.sh` |
+
+The two helper classes share a directory on purpose: what separates them is
+whether they load shared config, which is a behavior question, not a placement
+one. Both live under the domain they serve.
+
+## Everything that is not a script
 
 | Kind | Goes in | Example |
 |---|---|---|
-| User-facing entrypoint | `bin/<verb-first-name>.sh` | `bin/backup-home.sh` |
-| Aggregate validator / checklist | `bin/` | `bin/verify-artifact-config.sh` |
-| Foundation / config loader | `.internal/` root | `.internal/load-reimage-config.sh` |
-| Domain helper | `.internal/<domain>/` | `.internal/git/stage-selected-patterns.py` |
-| Environment creator | `bin/`, or repo root when it must run pre-clone | `bin/setup-reimage-env.sh`, `bootstrap.sh` |
 | Config fragment or generated-file template | `.internal/templates/<set>/` | `.internal/templates/artifact-config/` |
 | Sign-off / document template | `templates/` | `templates/it-reimage-confirmation-template.md` |
 | Authoring template for new scripts | `.github/ai-templates/script-templates/` | `bash-entrypoint.sh.tmpl` |
@@ -25,8 +40,8 @@ those for the rules; read this to decide which directory a file goes in.
 ## Notes on the less obvious rows
 
 **Entrypoints and validators share `bin/`.** A validator is user-invoked, so it
-belongs beside the other entrypoints; what distinguishes it is behavior, not
-location. The current validators are `check-reimage-env.sh`,
+belongs beside the other entrypoints; what distinguishes it is behavior — it
+records PASS/WARN/FAIL/SKIP rather than aborting, so it may omit `set -e`. The current validators are `check-reimage-env.sh`,
 `reimage-checklist.sh`, `verify-artifact-config.sh`, and `verify-doc-paths.sh`.
 
 **Loaders sit at the `.internal/` root, not in a `loaders/` subdirectory.**
@@ -37,7 +52,8 @@ other relative to `BASH_SOURCE`, so moving one means editing the other.
 **Helpers are grouped by domain, not by the word "helper".** The existing
 domains are `ai-scripts/`, `apps/`, `certs/`, `git/`, and `performance/`. Add a
 new domain directory when a second helper in that area appears; a lone helper
-can wait for a sibling before earning a directory of its own.
+can wait for a sibling before earning a directory of its own. This holds for
+both helper classes — pure and standalone-capable helpers sit side by side.
 
 **A helper graduates to `bin/` only when it becomes user-facing** — that is,
 when a runbook tells the reader to run it directly. Until then it stays in

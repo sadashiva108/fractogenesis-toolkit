@@ -262,10 +262,6 @@ The header block names each one before any copying starts:
 > [!note]
 > The two OneDrive lines appear only when that run resolves a usable root. `skipped` means you asked to skip it with `--external-only`; `unavailable` means the run wanted OneDrive and could not resolve it, and the reason prints directly underneath. If any of these is not what you expect, stop here rather than at the copy.
 
-[[#Table of Contents|⬆ Back to Table of Contents]]
-
----
-
 ### Confirm the Artifact-Config Fragments
 
 The fragments are the entire definition of what gets backed up, what is excluded, what routes to secrets, and how OneDrive behaves. Confirm they are present and parse before the backup runs:
@@ -293,10 +289,6 @@ To change what gets backed up, excluded, or routed to secrets, edit these fragme
 > [!warning] Pitfall
 > Read the `Selected by:` line, not just the fragment results. A run that reports `committed templates (no workspace copy found)` verified the generic fragment set, not this Mac's — and `backup-home.sh` will back up that same generic set.
 
-[[#Table of Contents|⬆ Back to Table of Contents]]
-
----
-
 ### Run the Size Audit
 
 Run the size audit before copying, so a full or unmounted drive is caught early. Give it a sub-label so this capture stays distinguishable from other same-day audits in `size-audit-reports/MANIFEST.md`:
@@ -320,20 +312,12 @@ Review these lines in the output:
 > [!bug] Troubleshooting
 > The saved report keeps ANSI color codes on purpose; view it in a terminal, not an editor: `less -R "$REIMAGE_ARTIFACT_ROOT/size-audit-reports/runs/<run>/size-audit-report.txt"`.
 
-[[#Table of Contents|⬆ Back to Table of Contents]]
-
----
-
 ### Choose the Backup Mode
 
 Pick the mode intentionally before running it. External-only fills the authoritative destination first and does not wait on cloud sync; the default adds the OneDrive secondary in the same run; OneDrive-only refreshes just the secondary after the external copy already succeeded. Add `--dry-run` to any of them when you want to see the scope before committing to it.
 
 > [!warning] Pitfall
 > Any mode that includes OneDrive still leaves the OneDrive copy unproven. Writing to the local OneDrive folder is not the same as OneDrive uploading it, which is why the last step of this runbook exists.
-
-[[#Table of Contents|⬆ Back to Table of Contents]]
-
----
 
 ### Run the Backup
 
@@ -365,10 +349,6 @@ Override the artifact root for a one-off run instead of editing `reimage.env`:
 
 The run exits `0` on success, `2` for a usage or prerequisite problem, and `1` when a copy fails — the failing target, its source and destination, and the underlying rsync exit code are printed. Warnings for rsync exit `23` and `24` are counted and summarized at the end without failing the run.
 
-[[#Table of Contents|⬆ Back to Table of Contents]]
-
----
-
 ### Review Output
 
 Confirm what landed before moving on:
@@ -394,10 +374,6 @@ find "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted" -maxdepth 2 | sort
 
 > [!bug] Troubleshooting
 > If a directory you listed in `external-targets.conf.sh` is missing from the copy, see [[#Directory Target Not Backed Up|Directory Target Not Backed Up]].
-
-[[#Table of Contents|⬆ Back to Table of Contents]]
-
----
 
 ### Confirm the OneDrive Sync
 

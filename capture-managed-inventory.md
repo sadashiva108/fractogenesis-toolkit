@@ -2,7 +2,7 @@
 
 # Capture Managed Inventory
 
-**Last updated:** 2026-07-21
+**Last updated:** 2026-08-16
 
 A read-only record of what a company-managed Mac has under management — MDM enrollment, configuration profiles, installed apps and package receipts, background agents and daemons, system extensions, and managed preferences. It observes and records only; it never modifies managed state. Run it pre-image (Phase 2C) to preserve a before-reimage picture, and again post-image (Phase 13C) to compare the freshly re-enrolled machine against that record.
 
@@ -34,33 +34,35 @@ A read-only record of what a company-managed Mac has under management — MDM en
 
 > In Obsidian, these are internal heading links. Click in Reading View, or Cmd-click in Live Preview/editing mode.
 
-> [!info] Callout legend
-> This runbook uses Obsidian callouts so each type reads distinctly: `[!note]` an easily-missed fact · `[!warning]` Pitfall, a mistake you are likely to make here · `[!bug]` Troubleshooting, what to do when a step misbehaves · `[!info] Return` how to get back after an out-of-sequence detour.
+> This runbook uses Obsidian callouts so each type reads distinctly: `[!note]` an easily-missed fact · `[!warning]` Pitfall, a mistake you are likely to make here · `[!bug]` Troubleshooting, what to do when a step misbehaves.
 
 ---
 
 ## Purpose
 
-Preserve a precise, timestamped inventory of what management controls on this Mac before it is wiped, and produce the same inventory afterward so the two can be compared. The capture is diagnostic evidence, not a backup you restore from — nothing here is re-applied to the machine. It exists so that, after reimage and re-enrollment, you can tell what management put back, what is missing, and what changed.
+`capture-managed-inventory` (Phase 2C) preserves a precise, timestamped record of what management controls on this Mac before it is wiped, so the same record taken after re-enrollment can be compared against it. The capture is diagnostic evidence, not a backup you restore from — nothing here is re-applied to the machine.
 
-This runbook owns:
+**What it sets up**
 
-```text
-the managed-inventory capture and its timestamped bundle
-interpretation of MDM, profile, package, agent/daemon, extension, and managed-preference evidence
-the pre-image (Phase 2C) and post-image (Phase 13C) comparison workflow
-the full managed-inventory/ layout
-```
+- **A timestamped managed-state bundle** — seven section files covering enrollment, configuration profiles, installed apps, package receipts, background agents and extensions, managed preferences, and a corporate-tooling filter pass, plus a `MANIFEST.txt`.
+- **A per-app managed verdict** — section 03 tags every installed app `[managed: …]`, `[likely: receipt]`, or `[-]`, and is the single authoritative per-app call for the whole workflow.
+- **A comparable baseline** — the post-image run produces the same seven-section shape, so the two bundles diff cleanly.
 
-It does not own:
+**What the rest of the workflow relies on it for**
 
-```text
-backing up your own app settings — backup-apps.md (Phase 2D)
-the managed apps and profiles themselves — they are IT-owned and are never modified here
-certificate and Keychain staging — Phase 3A
-final encrypted DMG packaging — create-secrets-dmg.md (Phase 3B)
-cross-phase readiness sign-off — reimage-prep-checks.md (Phase 6B)
-```
+- Phase 2D reads section 03's verdicts to decide which installed apps are MDM-restored and can be skipped, which is why this phase runs before the app pass rather than after it.
+- Phase 13C diffs its bundle against this one to confirm re-enrollment restored what it should have.
+- The Phase 6B readiness sign-off checks that a pre-image bundle exists.
+
+**Ownership**
+
+| This runbook owns | Owned elsewhere |
+|---|---|
+| the managed-inventory capture and its timestamped bundles | your own app settings and installers — `backup-apps` (Phase 2D) |
+| interpretation of MDM, profile, package, agent/daemon, extension, and managed-preference evidence | the managed apps and profiles themselves — IT-owned, and never modified here |
+| the pre-image (Phase 2C) and post-image (Phase 13C) comparison workflow | certificate and Keychain staging — `stage-certs-keychain` (Phase 3A) |
+| the full `managed-inventory/` layout | encrypted DMG packaging — `create-secrets-dmg` (Phase 3B) |
+| | cross-phase readiness sign-off — `reimage-prep-checks` (Phase 6B) |
 
 This capture can be rerun at any time and on any managed Mac: each run writes a fresh timestamped bundle and leaves earlier runs untouched.
 
@@ -147,7 +149,7 @@ $REIMAGE_ARTIFACT_ROOT/managed-inventory/
     ├── 04-installed-package-receipts.txt
     ├── 05-background-managed-components.txt
     ├── 06-managed-preference-payloads.txt
-    ├── 07-gaig-filter-pass.txt
+    ├── 07-company-filter-pass.txt
     └── MANIFEST.txt
 ```
 
@@ -157,12 +159,14 @@ The complete `$REIMAGE_ARTIFACT_ROOT` map is defined once in the Master Director
 
 ### Environment Variables
 
-The `reimage.env` values this runbook depends on. Values are resolved and written during `prepare-artifact-root.md`.
+The values this script reads. `REIMAGE_ARTIFACT_ROOT` is resolved and written into `reimage.env` during `prepare-artifact-root.md`.
 
 | Variable | Meaning |
 |---|---|
-| `REIMAGE_ARTIFACT_ROOT` | Absolute path to the Phase 2 artifact root where `managed-inventory/` lives. |
-| `FRACTOGENESIS_HOME` | Absolute path to the toolkit repository root; entrypoints are run from here. |
+| `FRACTOGENESIS_HOME` | The toolkit checkout holding the scripts and this runbook. A shell-startup or `.envrc` value, not a `reimage.env` key. |
+| `REIMAGE_ARTIFACT_ROOT` | The artifact root where `managed-inventory/` lives. `--artifact-root PATH` overrides it for one invocation. |
+
+`capture-managed-inventory.sh` reads no other configured values — it takes no artifact-config fragments and no OneDrive settings.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -170,12 +174,12 @@ The `reimage.env` values this runbook depends on. Values are resolved and writte
 
 ## Before You Run Anything
 
-A short pre-flight: confirm you are set up, then confirm what this run is for. The concepts and the *why* are in [[#How the Workflow Works|How the Workflow Works]]; this is just the checklist.
+A short pre-flight: confirm you are set up, then confirm what this run is for.
 
 ### Prerequisites
 
 - `REIMAGE_ARTIFACT_ROOT` resolves and its destination volume is mounted (`reimage.env` produced by `prepare-artifact-root.md`).
-- You are running commands from `$FRACTOGENESIS_HOME`.
+- Your shell is at the repository root — `cd "$FRACTOGENESIS_HOME"` once for the session. Per the guide's [[reimaging-guide#Core Assumptions|Core Assumptions]], the commands below assume this and don't repeat it.
 - You are on the company-managed Mac itself (not a personal machine) — the capture reports on the host it runs on.
 
 > [!note]
@@ -184,7 +188,7 @@ A short pre-flight: confirm you are set up, then confirm what this run is for. T
 ### Confirm Your Intent
 
 - Whether this is the **pre-image** run (Phase 2C, before wiping) or the **post-image** run (Phase 13C, after re-enrollment) — this sets `--context` and the bundle prefix.
-- That you want a full managed picture, not just your own app settings — those are [[backup-apps|Backup Apps]] (Phase 2D), a separate phase.
+- That you want a full managed picture, not just your own app settings — those belong to Phase 2D and are captured separately.
 - Whether you will compare this bundle against an earlier one; if so, keep the pre-image bundle so the post-image run has something to diff against (see [[#Pre-Image vs Post-Image Comparison|Pre-Image vs Post-Image Comparison]]).
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -248,7 +252,7 @@ sed -n '1,40p' "$LATEST/02-profiles-configuration.txt"
 ```
 
 > [!bug] Troubleshooting
-> Empty or permission-limited sections are covered in [[#Troubleshooting|Troubleshooting]]. A missing section file (fewer than seven) means the run was interrupted — rerun the capture rather than trusting a partial bundle.
+> If a section file is empty or thinner than expected, see [[#A section is empty or shows fewer results than expected|A section is empty or shows fewer results than expected]]. If the bundle holds fewer than seven section files, see [[#Fewer than seven section files in the bundle|Fewer than seven section files in the bundle]].
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -270,19 +274,31 @@ The script captures uniformly; interpreting what management owns is the judgment
 
 ## Troubleshooting
 
+Three things look like failures but usually are not. Each step that can hit one links in from a callout.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
 ### A section is empty or shows fewer results than expected
 
 Some queries return less without elevated rights, and a genuinely lightly-managed Mac will have empty sections (for example no third-party system extensions). An empty section file with its header intact means the command ran and found nothing — that is a valid result, not an error.
+
+[[#Step 3 — Verify Outputs|⮕ Continue to Step 3 — Verify Outputs]]
+
+---
 
 ### `profiles` reports nothing on an enrolled machine
 
 `profiles status`/`profiles show` can be restricted by management on some configurations. Record what it returns; the package-receipt, app-bundle, and Managed Preferences sections still provide corroborating evidence of what is deployed.
 
+[[#Step 3 — Verify Outputs|⮕ Continue to Step 3 — Verify Outputs]]
+
+---
+
 ### Fewer than seven section files in the bundle
 
-The run was interrupted before completing. Delete or ignore the partial bundle and rerun `capture-managed-inventory.sh` — each run writes a fresh timestamped directory, so a rerun does not overwrite anything.
+The run was interrupted before completing. Delete or ignore the partial bundle and rerun the capture — each run writes a fresh timestamped directory, so a rerun does not overwrite anything.
 
-[[#Table of Contents|⬆ Back to Table of Contents]]
+[[#Step 2 — Run the Capture|⮕ Continue to Step 2 — Run the Capture]]
 
 ---
 
@@ -301,7 +317,7 @@ profiles status -type enrollment
 profiles show -type configuration
 ```
 
-**`03` — Installed app bundles.** The full list of apps present, without the slow `system_profiler` enumeration. In the script's output each line carries a managed verdict — and this is the single authoritative per-app call the [[backup-apps|Backup Apps]] candidate review reads for its managed partition, rather than deriving its own. A **strong** signal prints `[managed: …]`: a configuration profile (02), a managed preference (06), or the corporate-tooling filter (07). A receipt-only match prints `[likely: receipt]` — weak, because a package receipt means pkg-installed, which can be self-installed. Neither prints `[-]`. Bundle-identifier matches use the app's real `CFBundleIdentifier` (read via `PlistBuddy`) for precision. The list stays complete on purpose, so 03 remains the installed-apps baseline for pre-image/post-image comparison; the verdict is a heuristic hint, not proof (an MDM or App Store install may leave no receipt, so `[-]` does not prove an app is unmanaged). The raw, unannotated equivalent:
+**`03` — Installed app bundles.** The full list of apps present, without the slow `system_profiler` enumeration. In the script's output each line carries a managed verdict — and this is the single authoritative per-app call the Phase 2D candidate review reads for its managed partition, rather than deriving its own. A **strong** signal prints `[managed: …]`: a configuration profile (02), a managed preference (06), or the corporate-tooling filter (07). A receipt-only match prints `[likely: receipt]` — weak, because a package receipt means pkg-installed, which can be self-installed. Neither prints `[-]`. Bundle-identifier matches use the app's real `CFBundleIdentifier` (read via `PlistBuddy`) for precision. The list stays complete on purpose, so 03 remains the installed-apps baseline for pre-image/post-image comparison; the verdict is a heuristic hint, not proof (an MDM or App Store install may leave no receipt, so `[-]` does not prove an app is unmanaged). The raw, unannotated equivalent:
 
 ```bash
 find /Applications /System/Applications "$HOME/Applications" -maxdepth 2 -name "*.app" -type d 2>/dev/null | sort
@@ -326,7 +342,7 @@ systemextensionsctl list
 find /Library/Managed\ Preferences -maxdepth 2 -type f 2>/dev/null
 ```
 
-**`07` — Company-focused filter pass.** The earlier queries narrowed to likely corporate tooling, across the GAIG managed fleet (Microsoft/Intune/Company Portal, CrowdStrike/Falcon, Zscaler, Defender, Checkpoint, Absolute, Proofpoint, Jamf, Flexera/ManageSoft). The script runs these directly — not through a login shell — so your shell profile's output (SDKMAN completions, etc.) can't leak into the capture, and it reuses the already-collected package receipts.
+**`07` — Company-focused filter pass.** The earlier queries narrowed to likely corporate tooling across the managed fleet (Microsoft/Intune/Company Portal, CrowdStrike/Falcon, Zscaler, Defender, Checkpoint, Absolute, Proofpoint, Jamf, Flexera/ManageSoft). The script runs these directly — not through a login shell — so your shell profile's output (SDKMAN completions, etc.) can't leak into the capture, and it reuses the already-collected package receipts.
 
 ```bash
 printf '%s\n' "$ALL_RECEIPTS" | grep -Ei 'microsoft|intune|companyportal|crowdstrike|falcon|zscaler|defender|wdav|checkpoint|absolute|proofpoint|jamf|flexera|managesoft'
@@ -361,6 +377,11 @@ Timestamps and generation dates in the file headers will always differ; focus on
 <!--
 TOC verification performed before publishing:
 - every Table of Contents entry resolves to a heading present in this file;
-- deleted optional sections were also removed from the Table of Contents;
-- each top-level section ends with a single "Back to Table of Contents" link.
+- the three routed Troubleshooting symptoms are deliberately absent from the
+  Table of Contents — their inline `> [!bug]` callout is the only entry point,
+  and each ends with a single Continue link to the step it resumes at;
+- the Troubleshooting parent carries its Table-of-Contents back-link under the
+  intro, above the first symptom;
+- each remaining section ends with one "Back to Table of Contents" link
+  followed by a `---` divider.
 -->

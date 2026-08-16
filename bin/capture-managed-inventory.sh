@@ -173,7 +173,7 @@ h() { echo "$1" >> "$_SECTION_FILE"; }
 # Shared managed-signal helpers (used by sections 03, 04, and 07)
 # ---------------------------------------------------------------------------
 
-# Corporate-tooling filters for the GAIG managed fleet. Two forms, because they
+# Corporate-tooling filters for the corporate managed fleet. Two forms, because they
 # match different text:
 #   MANAGED_APP_FILTER — app display names/paths (mixed case, spaces). Shared by
 #     the section 03 per-app annotation and the section 07 app-bundle pass, so
@@ -274,7 +274,7 @@ section "Managed preference payloads" "06-managed-preference-payloads.txt"
   printf '%s\n' "$ALL_MANAGED_PREFS" >> "$_SECTION_FILE"
 end_section
 
-section "GAIG-focused filter pass" "07-gaig-filter-pass.txt"
+section "Company-focused filter pass" "07-company-filter-pass.txt"
   # Direct commands (no `bash -lc`), so the login shell's profile output
   # (SDKMAN completions, etc.) can no longer leak into the capture. Package
   # receipts reuse the already-captured ALL_RECEIPTS.
@@ -305,7 +305,7 @@ Files:
 - 04-installed-package-receipts.txt
 - 05-background-managed-components.txt
 - 06-managed-preference-payloads.txt
-- 07-gaig-filter-pass.txt
+- 07-company-filter-pass.txt
 EOF
 
 echo ""

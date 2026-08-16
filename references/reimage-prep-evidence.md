@@ -256,7 +256,7 @@ Expected outputs:
 04-installed-package-receipts.txt
 05-background-managed-components.txt
 06-managed-preference-payloads.txt
-07-gaig-filter-pass.txt
+07-company-filter-pass.txt
 MANIFEST.txt
 ```
 

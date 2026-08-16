@@ -2,7 +2,7 @@
 
 # Backup Apps
 
-**Last updated:** 2026-07-30
+**Last updated:** 2026-08-16
 
 Collect and stage application state — settings, exports, inventories, and profiles — for apps whose restore source is defined by the app itself, not by copying known local files. Some of this is automated by a script; much of it is manual, because the app's own UI owns the export, secret handling needs judgment, or the backup decision is really about app state, sync, or restore semantics. Not every app is covered, and not every covered app applies to your Mac — you decide which ones to back up.
 
@@ -58,31 +58,32 @@ Collect and stage application state — settings, exports, inventories, and prof
 
 ## Purpose
 
-Back up application state where the app itself controls export, sync, or restore semantics, and stage any secret-bearing exports for the later consolidated secrets workflow. Producing this backup means the app-specific state you cannot recreate cheaply survives the erase.
+`backup-apps` (Phase 2D) backs up application state where the app itself controls export, sync, or restore semantics, and stages any secret-bearing exports for the later consolidated secrets workflow. It is deliberately part automated and part manual: a script can capture what lives predictably on disk, but not what only the app's own UI can produce.
 
-This runbook owns:
+**What it sets up**
 
-```text
-app-controlled backups for BBEdit, Chrome, Claude, Docker, draw.io, Fiddler Everywhere, iMovie, IntelliJ IDEA, Mos, Obsidian, Postman, Raycast, TNAS PC, Terminal, VS Code, Wireshark, and Zoom
-the app-backup selection checklist that decides which detected apps are backed up
-non-secret app backup artifacts under app-settings-backup/
-secret-bearing app export staging under secrets-encrypted/
-drop-folders and manual TODOs for selected unsupported apps under app-settings-backup/manual-unsupported/
-app-local notes and artifact-local validation of those exports
-```
+- **Scripted app captures** — Docker, VS Code, IntelliJ config, and the registry-driven set (BBEdit, Claude, draw.io, Zoom, Mos, Wireshark) written under `app-settings-backup/`.
+- **Staged manual exports** — the folders and TODOs for the app-owned export flows you perform by hand, with credential-bearing output routed to `secrets-encrypted/` rather than left in plaintext.
+- **The app-backup selection checklist** — the reviewed decision of which detected apps are actually backed up, partitioned against the managed inventory so MDM-restored apps are not re-backed-up needlessly.
 
-It does not own:
+**What the rest of the workflow relies on it for**
 
-```text
-general local-file copy — backup-home.md (Phase 2B)
-the managed-inventory capture — capture-managed-inventory.md (its own phase, run before this one)
-IntelliJ settings ZIP export, review, and restore detail — backup-intellij.md
-certificate and Keychain staging — Phase 3A
-final encrypted DMG packaging — Phase 3B
-cross-phase cloud-sync and final pre-image readiness sign-off — reimage-prep-checks.md (Phase 6B)
-```
+- Phase 3B encrypts the secret-bearing app exports staged here into the consolidated DMG.
+- The post-image restore reads `app-settings-backup/` to bring app state back.
+- The Phase 6B readiness sign-off checks that this phase's manifest and exports exist.
 
-This runbook can be rerun independently and incrementally. Rerunning the script re-detects installed apps and refreshes the manifest; manual exports can be redone one app at a time.
+**Ownership**
+
+| This runbook owns | Owned elsewhere |
+|---|---|
+| app-controlled backups for the covered app set | general local-file copy — `backup-home` (Phase 2B) |
+| the app-backup selection checklist that decides which detected apps are backed up | the managed-inventory capture it reads — `capture-managed-inventory` (Phase 2C, run before this one) |
+| non-secret artifacts under `app-settings-backup/`, including drop-folders and TODOs under `manual-unsupported/` | IntelliJ settings ZIP export, review, and restore detail — `backup-intellij` |
+| secret-bearing app export staging under `secrets-encrypted/` | certificate and Keychain staging — `stage-certs-keychain` (Phase 3A) |
+| app-local notes and artifact-local validation of those exports | encrypted DMG packaging — `create-secrets-dmg` (Phase 3B) |
+| | cross-phase cloud-sync and final pre-image readiness sign-off — `reimage-prep-checks` (Phase 6B) |
+
+This runbook can be rerun independently and incrementally: rerunning the script re-detects installed apps and refreshes the manifest, and manual exports can be redone one app at a time.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -110,13 +111,13 @@ A step is manual whenever a script cannot safely perform it, or cannot prove it 
 
 ### What Gets Backed Up, and How
 
-Coverage falls into three classes. The first two are the apps this runbook documents; the third is everything else (see [[#Apps Not Covered Here|Apps Not Covered Here]]).
+Coverage falls into three classes. The first two are the apps this runbook documents; the third is everything else.
 
 1. **Backed up by the script** — `backup-apps.sh` captures the state directly, fully or in part.
 2. **Backed up manually** — the script may prepare a folder, but you perform the actual export from the app's UI.
 3. **Not covered** — no backup support here; the app is your responsibility.
 
-The table lists every covered app, how it is backed up, and whether it is in the common or optional group. The grouping is a hint for deciding, not a rule — the [[#Confirm Your Intent|app you actually use]] is the one that matters. Destinations follow the [[#Destination Rules|Destination Rules]] and are not repeated per app.
+The table lists every covered app, how it is backed up, and whether it is in the common or optional group. The grouping is a hint for deciding, not a rule — the app you actually use is the one that matters. Destinations follow the [[#Destination Rules|Destination Rules]] and are not repeated per app.
 
 | App | How it is backed up | Group |
 |---|---|---|
@@ -141,10 +142,10 @@ The table lists every covered app, how it is backed up, and whether it is in the
 | 4K Live Wallpaper | Note only — no meaningful local state; reconfigure after reimage | Optional |
 | NexiGo Webcam Settings | Note only — no meaningful local state; reconfigure after reimage | Optional |
 
-Optional-group apps with manual steps (Raycast, Obsidian, TNAS PC, iMovie) keep those steps in [[#Optional App Exports|Supplemental Reference]], indexed from [[#Step 6 — Optional Apps|Step 6 — Optional Apps]] in Sequential Steps, so the main flow stays focused on what most Macs have. Scripted optional apps (Mos, Wireshark) are captured automatically in Step 4 and need no manual steps; the note-only apps need nothing at all.
+Optional-group apps with manual steps (Raycast, Obsidian, TNAS PC, iMovie) keep those steps in [[#Optional App Exports|Optional App Exports]], reached from Step 6, so the main flow stays focused on what most Macs have. Scripted optional apps (Mos, Wireshark) are captured automatically in Step 4 and need no manual steps; the note-only apps need nothing at all.
 
 > [!note]
-> The script only acts on apps it detects **and** that you check in the selection checklist (see [[#Step 3 — Determine Which Apps to Back Up|Step 3]]). For an app you do not have, it creates no folder and the manifest marks it "Not detected on this Mac" — so a clean run on a Mac without Docker is correct, not a failure.
+> The script only acts on apps it detects **and** that you check in the selection checklist. For an app you do not have, it creates no folder and the manifest marks it "Not detected on this Mac" — so a clean run on a Mac without Docker is correct, not a failure.
 
 > [!note]
 > Two Zoom entries were reconciled into one. "Join for Zoom Meetings" is a third-party App Store launcher that only opens meeting links and holds no state to back up; only the full **zoom.us** client is covered (detected in both `/Applications` and `~/Applications`). Recordings under `~/Documents/Zoom` belong to Phase 2B.
@@ -159,9 +160,10 @@ It is not possible to maintain an exhaustive backup strategy for every app. If y
 
 | Mode | Command | What it does |
 |---|---|---|
-| Candidate review | `./bin/backup-apps.sh --candidate-review` | Scan-only. Detects installed apps, folds in the managed-inventory bundle, writes a review that partitions managed apps out of the candidate list, and generates/refreshes the [[#Step 3 — Determine Which Apps to Back Up\|app-backup selection checklist]]. Creates no app folders, runs no captures, writes no `MANIFEST.md`. |
+| Candidate review | `./bin/backup-apps.sh --candidate-review` | Detects installed apps, folds in the managed-inventory bundle, and **writes** a review bundle under `candidate-review/` plus the app-backup selection checklist. It captures no app state: no per-app folders, no captures, no `MANIFEST.md`. Not a pre-flight check — it writes. |
 | Real backup | `./bin/backup-apps.sh` | Reads the selection checklist and backs up only the apps you checked: runs the Docker/IntelliJ/VS Code and registry-driven captures for selected supported apps, creates drop-folders for selected unsupported apps, and writes `MANIFEST.md`. Requires the checklist (errors if missing). |
 | Real backup, no checklist | `./bin/backup-apps.sh --all-detected` | Same as above but bypasses the checklist and backs up every detected supported app. |
+| Pre-flight | `./bin/backup-apps.sh --preflight` | Reports the resolved config, artifact root, and whether the checklist and managed inventory exist, then exits. Creates nothing. |
 
 ### Terminology
 
@@ -273,13 +275,15 @@ Where each kind of artifact goes. Every per-app export sorts its outputs by thes
 
 ### Environment Variables
 
-The `reimage.env` values these scripts depend on. Values are resolved and written during `prepare-artifact-root.md`.
+The values these scripts read. `REIMAGE_ARTIFACT_ROOT` and `REIMAGE_WORKSPACE_ROOT` are resolved and written into `reimage.env` during `prepare-artifact-root.md`.
 
 | Variable | Meaning |
 |---|---|
-| `REIMAGE_ARTIFACT_ROOT` | Absolute path to the Phase 2 artifact root where `app-settings-backup/` and `secrets-encrypted/` are written. |
-| `FRACTOGENESIS_HOME` | Absolute path to the toolkit repository root; entrypoints are run from here. |
+| `FRACTOGENESIS_HOME` | The toolkit checkout holding the scripts and this runbook. A shell-startup or `.envrc` value, not a `reimage.env` key. |
+| `REIMAGE_ARTIFACT_ROOT` | The artifact root where `app-settings-backup/` and `secrets-encrypted/` are written. `--artifact-root PATH` overrides it for one invocation. |
 | `REIMAGE_WORKSPACE_ROOT` | Local planning area outside the artifact root, used only for optional temporary working notes. |
+
+`backup-apps.sh` reads no artifact-config fragments and no OneDrive settings; `capture-size-audit.sh`, invoked in Step 2, reads both.
 
 > [!note]
 > `capture-size-audit.sh` also checks the external destination volume configured in `reimage.env`. If that volume is not mounted, resolve it in `prepare-artifact-root.md` before running the audit.
@@ -290,7 +294,7 @@ The `reimage.env` values these scripts depend on. Values are resolved and writte
 
 ## Before You Run Anything
 
-A short pre-flight: confirm you are set up, then decide what this run is for. The concepts and the *why* are in [[#How the Workflow Works|How the Workflow Works]]; this is just the checklist.
+A short pre-flight: confirm you are set up, then decide what this run is for.
 
 ### Prerequisites
 
@@ -340,11 +344,25 @@ List what this toolkit can back up, and confirm the script runs:
 > [!note]
 > `--supported-apps` is info only — it lists coverage and exits without writing anything or computing sizes. The same coverage is in the table under [[#What Gets Backed Up, and How|What Gets Backed Up, and How]].
 
-Confirm the artifact root that will be used (scan-only, creates nothing):
+Confirm the artifact root and state this run will use:
 
 ```bash
-./bin/backup-apps.sh --candidate-review 2>&1 | head -5
+./bin/backup-apps.sh --preflight
 ```
+
+```text
+Config       : <active artifact-config directory>
+Artifact root: <$REIMAGE_ARTIFACT_ROOT>
+  exists              : yes
+  prepared (Phase 1)  : yes — 15 of 15 expected folders present
+  candidate review    : none — Step 3 generates it
+  selection checklist : none — Step 3 generates it
+  app backup manifest : none — Step 4 writes it
+  managed inventory   : present — Phase 2C has run
+```
+
+> [!warning] Pitfall
+> `--supported-apps` and `--preflight` are the only two modes that create nothing — both exit before any `mkdir`. Every other mode, `--candidate-review` included, creates `app-settings-backup/` as its first act, so none of them is safe for inspecting an artifact root you have not committed to. `--preflight` exits `2` when the root is unset, the volume is not mounted, or `prepare-artifact-root` has not created the expected top-level folders — fix that here rather than at Step 3.
 
 ### Step 2 — Check Backup-Root Capacity
 
@@ -406,7 +424,7 @@ $REIMAGE_ARTIFACT_ROOT/app-settings-backup/app-backup-selection.md
 It has four selectable sections, each listing only apps detected on *this* Mac. The three supported sections are split by backup mechanism, derived from each app's registry coverage (not a hand-maintained list), so they stay accurate as apps change:
 
 - **Automatic backup (supported)** — the script fully backs these up; no manual step. They start **checked**; uncheck any you do not want.
-- **Both automatic and manual backup (supported)** — the script captures part of these **and** each also has a manual export step (an app lands here only when it is both script-backed *and* has a manual section under [[#Step 5 — Complete Manual Exports|Step 5]] or its companion runbook — currently IntelliJ IDEA). They start **checked** for the automatic capture; the manual half is still yours to do.
+- **Both automatic and manual backup (supported)** — the script captures part of these **and** each also has a manual export step (an app lands here only when it is both script-backed *and* has a manual section under Step 5 or its companion runbook — currently IntelliJ IDEA). They start **checked** for the automatic capture; the manual half is still yours to do.
 - **Manual backup (supported)** — the toolkit supports these but the backup is entirely manual (Chrome, Postman, Fiddler Everywhere, Terminal, Raycast, Obsidian, TNAS PC, iMovie). Step 4 makes a ready folder for the ones you keep; you perform the export from the app's UI. They start **checked**.
 - **Unsupported apps on this Mac (manual backup)** — installed apps the toolkit does not cover, **excluding company-managed apps** (a strong managed verdict means IT restores the app, so it is not a manual-backup candidate). Check the ones you will back up by hand; Step 4 creates a drop-folder under `app-settings-backup/manual-unsupported/<app>/` and lists them as manual TODOs in the manifest. The excluded managed apps are recorded in the candidate review's `raw/unsupported-managed-excluded.txt`.
 
@@ -433,7 +451,7 @@ Re-running candidate review is safe — it **preserves the choices you have made
 
 ### Step 4 — Run the Automated Backup
 
-Run the real backup. It reads your selection checklist from [[#Select the apps to back up|Step 3]] and acts only on the apps you checked — running the scripted captures for selected supported apps, creating drop-folders for selected unsupported apps, and skipping everything else. Apps you do not have are silently skipped even when checked.
+Run the real backup. It reads the selection checklist you completed in Step 3 and acts only on the apps you checked — running the scripted captures for selected supported apps, creating drop-folders for selected unsupported apps, and skipping everything else. Apps you do not have are silently skipped even when checked.
 
 ```bash
 ./bin/backup-apps.sh --open
@@ -446,7 +464,7 @@ This captures the script-class apps and prepares folders for the manual-class on
 
 - **Docker** — `settings-store.json`, `daemon.json`, `contexts/`, and image/container/compose inventories to `app-settings-backup/docker/`; `config.json` staged to `secrets-encrypted/docker/`. `Docker.raw`, image layers, and volumes are intentionally not backed up.
 - **VS Code** — extension list, `settings.json`, `keybindings.json`, `snippets/`, and `profiles/` to `app-settings-backup/vscode/`. Caches, logs, and workspace history are intentionally excluded.
-- **IntelliJ IDEA** — Scratches, Consoles, and config to `app-settings-backup/intellij/`. The settings ZIP is manual — see [[#IntelliJ Settings Export|Step 5]].
+- **IntelliJ IDEA** — Scratches, Consoles, and config to `app-settings-backup/intellij/`. The settings ZIP is manual and is covered in Step 5.
 - **BBEdit, Claude, draw.io, Zoom, Mos, Wireshark** — registry-driven config capture to `app-settings-backup/<app>/` for each selected app detected; Claude's MCP config (`claude_desktop_config.json`) is staged to `secrets-encrypted/claude/`.
 - **Chrome, Postman, Fiddler Everywhere, Raycast, Obsidian, TNAS PC, iMovie** — an empty, ready folder only (when selected), for the manual exports below.
 - **selected unsupported apps** — a drop-folder with a README under `app-settings-backup/manual-unsupported/<app>/`, for you to fill by hand.
@@ -472,7 +490,7 @@ Rerun a single script-class portion through the same entrypoint when needed — 
 
 ### Step 5 — Complete Manual Exports
 
-These exports must be triggered from each app's own UI — the script cannot perform them or prove they are complete. Do the ones you checked in Step 3; skip the rest. For the optional apps (Raycast, Obsidian, TNAS PC, iMovie), the full steps are in [[#Optional App Exports|Supplemental Reference]], indexed at [[#Step 6 — Optional Apps|Step 6 — Optional Apps]].
+These exports must be triggered from each app's own UI — the script cannot perform them or prove they are complete. Do the ones you checked in Step 3; skip the rest. For the optional apps (Raycast, Obsidian, TNAS PC, iMovie), the full steps are in [[#Optional App Exports|Optional App Exports]], reached from Step 6.
 
 Each export sorts its outputs by the [[#Destination Rules|Destination Rules]]: reviewed non-secret material under `app-settings-backup/<app>/`, anything secret-bearing under `secrets-encrypted/<app>/`.
 
@@ -808,7 +826,7 @@ EOF
 
 #### IntelliJ Settings Export
 
-The scriptable IntelliJ capture ran in [[#Step 4 — Run the Automated Backup|Step 4]]; the settings ZIP is the manual, app-controlled piece. Export it from IntelliJ IDEA and follow the review, validation, and restore detail in its companion runbook:
+The scriptable IntelliJ capture ran in Step 4; the settings ZIP is the manual, app-controlled piece. Export it from IntelliJ IDEA and follow the review, validation, and restore detail in its companion runbook:
 
 [[backup-intellij|Backup IntelliJ]]
 
@@ -819,12 +837,10 @@ The scriptable IntelliJ capture ran in [[#Step 4 — Run the Automated Backup|St
 
 These apps are manual and belong to the optional group, so their full steps live under Supplemental Reference to keep the main flow lean. Complete any you checked in Step 3 — this index just points to each one's full steps. The scripted optional apps (Mos, Wireshark) are captured automatically in Step 4 and are not listed here.
 
-| App | Use when | Steps |
-|---|---|---|
-| Raycast | Quick Links or settings/data export matter | [[#Raycast\|Optional App Exports → Raycast]] |
-| Obsidian | Vault content, vault-local config, or a restore-source choice matters | [[#Obsidian\|Optional App Exports → Obsidian]] |
-| TNAS PC | Saved TNAS connections or credentials matter | [[#TNAS PC\|Optional App Exports → TNAS PC]] |
-| iMovie | You keep iMovie projects/libraries and must confirm they are backed up | [[#iMovie\|Optional App Exports → iMovie]] |
+- [[#Raycast|Raycast]] — Quick Links or settings/data export matter.
+- [[#Obsidian|Obsidian]] — vault content, vault-local config, or a restore-source choice matters.
+- [[#TNAS PC|TNAS PC]] — saved TNAS connections or credentials matter.
+- [[#iMovie|iMovie]] — you keep iMovie projects or libraries and must confirm they are backed up.
 
 ### Step 7 — Verify Outputs
 
@@ -840,6 +856,9 @@ find "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted" -maxdepth 3 -type f | sort 2>/de
 
 > [!warning] Pitfall
 > Do not treat a missing optional note or unfilled template as a failure. Optional notes are not required backup artifacts; at most, a note you intended to capture and forgot is worth a warning, not a blocked phase.
+
+> [!bug] Troubleshooting
+> If an app you expected is missing a folder entirely, see [[#An app was installed after your last backup run and has no folder|An app was installed after your last backup run and has no folder]].
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -861,6 +880,10 @@ The scripts sort artifacts by rule and detect installed apps; these judgment cal
 
 ## Troubleshooting
 
+One failure spans more than one step and has a fix long enough to break a step's flow. The step that finds it links in from a callout.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
 ### An app was installed after your last backup run and has no folder
 
 Detection runs only while the script runs, so a newly installed app has no folder yet. Rerun Step 3 first so the app is added to the selection checklist, check it, then rerun the entrypoint so it is detected and its folders are created:
@@ -873,7 +896,7 @@ Detection runs only while the script runs, so a newly installed app has no folde
 
 For a single script-class app, use `--docker-only`, `--intellij-only`, or `--apps-only` (these bypass the checklist). For a manual-class app (Chrome, Postman, Fiddler Everywhere, Terminal, Raycast, Obsidian, TNAS PC), create the folders by hand from that app's export section.
 
-[[#Table of Contents|⬆ Back to Table of Contents]]
+[[#Step 7 — Verify Outputs|⮕ Continue to Step 7 — Verify Outputs]]
 
 ---
 
@@ -883,7 +906,7 @@ Longer material most runs will not need, kept out of the main flow.
 
 ### Optional App Exports
 
-Raycast, Obsidian, TNAS PC, and iMovie are manual-class apps in the optional group. Their folders are created by [[#Step 4 — Run the Automated Backup|Step 4]] when detected and selected; complete these exports only if you checked them in Step 3.
+Raycast, Obsidian, TNAS PC, and iMovie are manual-class apps in the optional group. Their folders are created in Step 4 when detected and selected; complete these exports only if you checked them in Step 3.
 
 #### Raycast
 

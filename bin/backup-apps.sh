@@ -56,6 +56,11 @@
 #                           --candidate-review.
 #   --supported-apps        List the supported apps (app, group, how backed up) and exit.
 #                           Info only; writes nothing and computes no sizes.
+#   --preflight             Report the resolved config, the artifact root, and
+#                           whether the checklist and managed inventory exist,
+#                           then exit. Creates nothing — not the artifact root,
+#                           not app-settings-backup/. The only mode safe to run
+#                           against a root you have not committed to.
 #   --docker-only            Rerun only the Docker portion through this entrypoint.
 #   --intellij-only          Rerun only the IntelliJ portion through this entrypoint.
 #   --vscode-only            Rerun only the VS Code fallback capture through this entrypoint.
@@ -75,10 +80,10 @@
 #   act on, then run a full backup. Single-app reruns and --all-detected bypass it.
 #
 # IntelliJ options passed through to the internal helper:
-#   --intellij-workspace-root PATH
-#   --intellij-workspace-max-depth N
+#   --intellij-projects-root PATH
+#   --intellij-projects-max-depth N
 #   --intellij-all-config-dirs
-#   --intellij-skip-workspaces
+#   --intellij-skip-project-scan
 #   --intellij-include-shelf
 #   --intellij-include-system-cache
 #
@@ -97,7 +102,8 @@
 #
 # Exit status:
 #   0  Completed successfully.
-#   1  Ran but a helper/copy step failed.
+#   1  Ran to completion but a helper or copy step failed. The failing helper
+#      and its own exit code are named in the summary and in MANIFEST.md.
 #   2  Usage, configuration, or prerequisite error.
 # --- END USAGE ---
 # =============================================================================
@@ -256,12 +262,23 @@ VSCODE_ONLY=false
 APPS_ONLY=false
 ALL_DETECTED=false
 SHOW_SUPPORTED=false
+SHOW_PREFLIGHT=false
 INTELLIJ_ALL_CONFIG_DIRS=false
 INTELLIJ_INCLUDE_SYSTEM_CACHE=false
 INTELLIJ_SKIP_WORKSPACES=false
 INTELLIJ_INCLUDE_SHELF=false
-INTELLIJ_WORKSPACE_ROOT=""
+INTELLIJ_PROJECTS_ROOT=""
 INTELLIJ_WORKSPACE_MAX_DEPTH=""
+
+require_option_value() {
+  local option="$1"
+  local value="${2:-}"
+
+  if [[ -z "$value" || "$value" == --* ]]; then
+    echo "ERROR: $option requires a non-empty value." >&2
+    exit 2
+  fi
+}
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -290,10 +307,15 @@ while [[ $# -gt 0 ]]; do
     --apps-only) APPS_ONLY=true; shift ;;
     --all-detected) ALL_DETECTED=true; shift ;;
     --supported-apps) SHOW_SUPPORTED=true; shift ;;
-    --intellij-workspace-root) INTELLIJ_WORKSPACE_ROOT="${2:-}"; shift 2 ;;
-    --intellij-workspace-max-depth) INTELLIJ_WORKSPACE_MAX_DEPTH="${2:-}"; shift 2 ;;
+    --preflight) SHOW_PREFLIGHT=true; shift ;;
+    --intellij-projects-root)
+      require_option_value "$1" "${2:-}"
+      INTELLIJ_PROJECTS_ROOT="$2"; shift 2 ;;
+    --intellij-projects-max-depth)
+      require_option_value "$1" "${2:-}"
+      INTELLIJ_WORKSPACE_MAX_DEPTH="$2"; shift 2 ;;
     --intellij-all-config-dirs) INTELLIJ_ALL_CONFIG_DIRS=true; shift ;;
-    --intellij-skip-workspaces) INTELLIJ_SKIP_WORKSPACES=true; shift ;;
+    --intellij-skip-project-scan) INTELLIJ_SKIP_WORKSPACES=true; shift ;;
     --intellij-include-shelf) INTELLIJ_INCLUDE_SHELF=true; shift ;;
     --intellij-include-system-cache) INTELLIJ_INCLUDE_SYSTEM_CACHE=true; shift ;;
     --open) OPEN_AFTER=true; shift ;;
@@ -310,6 +332,82 @@ done
 if [[ "$SHOW_SUPPORTED" == true ]]; then
   print_supported_apps
   exit 0
+fi
+
+# --preflight reports what a real run would resolve and use, and creates
+# nothing -- not the artifact root, not app-settings-backup/, not
+# candidate-review/. It runs before every other mode's mkdir for that reason.
+# Every other mode, --candidate-review included, creates app-settings-backup/
+# as its first act, so this is the only safe way to inspect an artifact root
+# you have not committed to yet.
+if [[ "$SHOW_PREFLIGHT" == true ]]; then
+  preflight_rc=0
+  printf 'Config       : %s\n' "${ARTIFACT_CONFIG_SOURCE_DIR:-<not resolved>}"
+
+  if [[ -z "${REIMAGE_ARTIFACT_ROOT:-}" ]]; then
+    printf 'Artifact root: %s\n' "<not set>"
+    printf '\nERROR: REIMAGE_ARTIFACT_ROOT is not set.\n' >&2
+    printf 'Create/source reimage.env or pass --artifact-root PATH.\n' >&2
+    exit 2
+  fi
+
+  printf 'Artifact root: %s\n' "$REIMAGE_ARTIFACT_ROOT"
+  if [[ -d "$REIMAGE_ARTIFACT_ROOT" ]]; then
+    printf '  exists              : yes\n'
+  else
+    printf '  exists              : NO — mount the volume or correct reimage.env\n'
+    preflight_rc=2
+  fi
+
+  # app-settings-backup/ is created by prepare-artifact-root (Phase 1) along
+  # with every other expected top-level folder, so its existence says nothing
+  # about whether this phase has run. Report on artifacts THIS phase produces.
+  if declare -p EXPECTED_ARTIFACT_FOLDERS >/dev/null 2>&1 && (( ${#EXPECTED_ARTIFACT_FOLDERS[@]} > 0 )); then
+    _pf_have=0
+    for _pf_folder in "${EXPECTED_ARTIFACT_FOLDERS[@]}"; do
+      [[ -d "$REIMAGE_ARTIFACT_ROOT/$_pf_folder" ]] && _pf_have=$((_pf_have + 1))
+    done
+    if (( _pf_have == ${#EXPECTED_ARTIFACT_FOLDERS[@]} )); then
+      printf '  prepared (Phase 1)  : yes — %s of %s expected folders present\n' \
+        "$_pf_have" "${#EXPECTED_ARTIFACT_FOLDERS[@]}"
+    else
+      printf '  prepared (Phase 1)  : INCOMPLETE — %s of %s expected folders present\n' \
+        "$_pf_have" "${#EXPECTED_ARTIFACT_FOLDERS[@]}"
+      printf '                        run prepare-artifact-root before this phase\n'
+      preflight_rc=2
+    fi
+  fi
+
+  _pf_app_root="$REIMAGE_ARTIFACT_ROOT/app-settings-backup"
+
+  if [[ -d "$_pf_app_root/candidate-review" ]] \
+     && [[ -n "$(ls -A "$_pf_app_root/candidate-review" 2>/dev/null)" ]]; then
+    printf '  candidate review    : present — Step 3 has run\n'
+  else
+    printf '  candidate review    : none — Step 3 generates it\n'
+  fi
+
+  if [[ -f "$_pf_app_root/app-backup-selection.md" ]]; then
+    printf '  selection checklist : present\n'
+  else
+    printf '  selection checklist : none — Step 3 generates it\n'
+  fi
+
+  if [[ -f "$_pf_app_root/MANIFEST.md" ]]; then
+    printf '  app backup manifest : present — a full run has completed\n'
+  else
+    printf '  app backup manifest : none — Step 4 writes it\n'
+  fi
+
+  if [[ -d "$REIMAGE_ARTIFACT_ROOT/managed-inventory" ]] \
+     && [[ -n "$(ls -A "$REIMAGE_ARTIFACT_ROOT/managed-inventory" 2>/dev/null)" ]]; then
+    printf '  managed inventory   : present — Phase 2C has run\n'
+  else
+    printf '  managed inventory   : empty — run Phase 2C first for managed-app partitioning\n'
+  fi
+
+  printf '\nNothing was created by this check.\n'
+  exit "$preflight_rc"
 fi
 
 if [[ -z "${REIMAGE_ARTIFACT_ROOT:-}" ]]; then
@@ -433,8 +531,18 @@ app_slug() {
 
 # Always-present roots. Per-app folders are created only for what a run will
 # actually back up (see create_selected_app_dirs and the per-app helpers).
-mkdir -p "$APP_ROOT" "$APP_ROOT/candidate-review"
+mkdir -p "$APP_ROOT"
+# candidate-review/ belongs to the candidate review alone. Creating it on every
+# invocation left an empty directory behind after --docker-only / --intellij-only
+# / --vscode-only / --apps-only runs.
+if [[ "$RUN_CANDIDATE_REVIEW" == true ]]; then
+  mkdir -p "$APP_ROOT/candidate-review"
+fi
 
+# Counts helper invocations that failed, so a run that lost a source can exit 1
+# instead of reporting success. Declared here: it is read in the Docker and
+# IntelliJ blocks well before the registry captures.
+HELPER_FAILURES=0
 DOCKER_STATUS="Not run"
 INTELLIJ_STATUS="Not run"
 VSCODE_STATUS="Not run"
@@ -454,31 +562,39 @@ elif [[ ! -f "$DOCKER_HELPER" ]]; then
 elif ! is_selected_supported "Docker Desktop"; then
   DOCKER_STATUS="Skipped; Docker Desktop not selected in the app-backup checklist"
 elif [[ -d "/Applications/Docker.app" ]] || [[ -d "$HOME/Library/Group Containers/group.com.docker" ]] || [[ -f "$HOME/.docker/config.json" ]] || command -v docker >/dev/null 2>&1; then
-  bash "$DOCKER_HELPER" --artifact-root "$REIMAGE_ARTIFACT_ROOT"
-  DOCKER_STATUS="Captured to app-settings-backup/docker/ and secrets-encrypted/docker/ when available"
+  # A bare invocation under `set -e` aborted the whole run with the HELPER's
+  # exit code, so a Docker prerequisite error (2) surfaced as this script's
+  # documented usage error -- and MANIFEST.md was never written.
+  if bash "$DOCKER_HELPER" --artifact-root "$REIMAGE_ARTIFACT_ROOT"; then
+    DOCKER_STATUS="Captured to app-settings-backup/docker/ and secrets-encrypted/docker/ when available"
+  else
+    _helper_rc=$?
+    DOCKER_STATUS="FAILED -- backup-docker-settings.sh exited $_helper_rc; review the output above"
+    HELPER_FAILURES=$((HELPER_FAILURES + 1))
+  fi
 else
   DOCKER_STATUS="Skipped; Docker Desktop state not detected on this Mac"
 fi
 
 INTELLIJ_HELPER="$(dirname "$SCRIPT_DIR")/.internal/apps/backup-intellij-state.sh"
 INTELLIJ_HELPER_ARGS=(--artifact-root "$REIMAGE_ARTIFACT_ROOT")
-# Default the IntelliJ workspace root to the configured work-repo root when the
-# caller did not pass --intellij-workspace-root, mirroring how backup-repos.sh
+# Default the IntelliJ projects root to the configured work-repo root when the
+# caller did not pass --intellij-projects-root, mirroring how backup-repos.sh
 # defaults --root to GIT_WORK_REPO_ROOT.
-if [[ -z "$INTELLIJ_WORKSPACE_ROOT" && -n "${GIT_WORK_REPO_ROOT:-}" ]]; then
-  INTELLIJ_WORKSPACE_ROOT="$GIT_WORK_REPO_ROOT"
+if [[ -z "$INTELLIJ_PROJECTS_ROOT" && -n "${GIT_WORK_REPO_ROOT:-}" ]]; then
+  INTELLIJ_PROJECTS_ROOT="$GIT_WORK_REPO_ROOT"
 fi
-if [[ -n "$INTELLIJ_WORKSPACE_ROOT" ]]; then
-  INTELLIJ_HELPER_ARGS+=(--workspace-root "$INTELLIJ_WORKSPACE_ROOT")
+if [[ -n "$INTELLIJ_PROJECTS_ROOT" ]]; then
+  INTELLIJ_HELPER_ARGS+=(--projects-root "$INTELLIJ_PROJECTS_ROOT")
 fi
 if [[ -n "$INTELLIJ_WORKSPACE_MAX_DEPTH" ]]; then
-  INTELLIJ_HELPER_ARGS+=(--workspace-max-depth "$INTELLIJ_WORKSPACE_MAX_DEPTH")
+  INTELLIJ_HELPER_ARGS+=(--projects-max-depth "$INTELLIJ_WORKSPACE_MAX_DEPTH")
 fi
 if [[ "$INTELLIJ_ALL_CONFIG_DIRS" == true ]]; then
   INTELLIJ_HELPER_ARGS+=(--all-config-dirs)
 fi
 if [[ "$INTELLIJ_SKIP_WORKSPACES" == true ]]; then
-  INTELLIJ_HELPER_ARGS+=(--skip-workspaces)
+  INTELLIJ_HELPER_ARGS+=(--skip-project-scan)
 fi
 if [[ "$INTELLIJ_INCLUDE_SHELF" == true ]]; then
   INTELLIJ_HELPER_ARGS+=(--include-shelf)
@@ -500,8 +616,13 @@ elif [[ ! -f "$INTELLIJ_HELPER" ]]; then
 elif ! is_selected_supported "IntelliJ IDEA"; then
   INTELLIJ_STATUS="Skipped; IntelliJ IDEA not selected in the app-backup checklist"
 elif [[ -d "/Applications/IntelliJ IDEA.app" ]] || [[ -d "$HOME/Applications/IntelliJ IDEA.app" ]] || [[ -d "$HOME/Library/Application Support/JetBrains" ]]; then
-  bash "$INTELLIJ_HELPER" "${INTELLIJ_HELPER_ARGS[@]}"
-  INTELLIJ_STATUS="Captured under app-settings-backup/intellij/ when IntelliJ state was found"
+  if bash "$INTELLIJ_HELPER" "${INTELLIJ_HELPER_ARGS[@]}"; then
+    INTELLIJ_STATUS="Captured under app-settings-backup/intellij/ when IntelliJ state was found"
+  else
+    _helper_rc=$?
+    INTELLIJ_STATUS="FAILED -- backup-intellij-state.sh exited $_helper_rc; review the output above"
+    HELPER_FAILURES=$((HELPER_FAILURES + 1))
+  fi
 else
   INTELLIJ_STATUS="Skipped; IntelliJ IDEA state not detected on this Mac"
 fi
@@ -594,6 +715,11 @@ fi
 first_existing_path() {
   local list="$1"
   local item
+  local -a items=()
+  # A registry row may carry the "-" sentinel for this field, normalised to "".
+  # On stock macOS Bash 3.2 "${items[@]}" on an empty array errors under set -u.
+  # An empty list means "none found", which this function signals with 1.
+  [[ -n "$list" ]] || return 1
   IFS=';' read -r -a items <<< "$list"
   for item in "${items[@]}"; do
     if [[ -e "$item" ]]; then
@@ -608,6 +734,14 @@ existing_paths_markdown() {
   local list="$1"
   local item
   local found=()
+  local -a items=()
+  # A registry row may carry the "-" sentinel for this field, normalised to "".
+  # On stock macOS Bash 3.2 "${items[@]}" on an empty array errors under set -u.
+  # An empty list renders the same as "listed, but nothing exists on disk".
+  if [[ -z "$list" ]]; then
+    printf '%s' 'none found'
+    return 0
+  fi
   IFS=';' read -r -a items <<< "$list"
   for item in "${items[@]}"; do
     [[ -e "$item" ]] && found+=("$item")
@@ -627,6 +761,14 @@ existing_paths_inline() {
   local list="$1"
   local item
   local found=()
+  local -a items=()
+  # A registry row may carry the "-" sentinel for this field, normalised to "".
+  # On stock macOS Bash 3.2 "${items[@]}" on an empty array errors under set -u.
+  # An empty list renders the same as "listed, but nothing exists on disk".
+  if [[ -z "$list" ]]; then
+    printf '%s' 'none found'
+    return 0
+  fi
   IFS=';' read -r -a items <<< "$list"
   for item in "${items[@]}"; do
     [[ -e "$item" ]] && found+=("$item")
@@ -1276,4 +1418,15 @@ if $OPEN_AFTER; then
   [[ -n "$CANDIDATE_REVIEW_DIR" ]] && open "$CANDIDATE_REVIEW_DIR" 2>/dev/null || true
   [[ "$RUN_CANDIDATE_REVIEW" == true && -f "$SELECTION_FILE" ]] && open "$SELECTION_FILE" 2>/dev/null || true
   open "$APP_ROOT" 2>/dev/null || true
+fi
+
+
+# A backup that lost a source is not a success. Both counters are reported in
+# the summary above and recorded in MANIFEST.md; this makes the documented
+# exit 1 reachable so a caller, or a later phase, can tell the difference.
+if (( HELPER_FAILURES + APP_CONFIG_FAILURES > 0 )); then
+  echo ""
+  echo "INCOMPLETE: $HELPER_FAILURES helper failure(s), $APP_CONFIG_FAILURES config-source failure(s)." >&2
+  echo "Review the output above and re-run before treating this phase as done." >&2
+  exit 1
 fi

@@ -4,7 +4,7 @@
 
 **Last updated:** 2026-08-03
 
-The IntelliJ-specific companion to [[backup-apps|Backup Apps]] (Phase 2D). It preserves IDE state that Git remotes and project backups miss — Scratches, Consoles, global IDE config, plugins, and project-level `.idea` metadata across every workspace — while keeping credential-bearing files out of the plaintext backup and staging the ones you select into the encrypted secrets DMG instead.
+The IntelliJ-specific companion to Backup Apps (Phase 2D). It preserves IDE state that Git remotes and project backups miss — Scratches, Consoles, global IDE config, plugins, and project-level `.idea` metadata across every project — while keeping credential-bearing files out of the plaintext backup and staging the ones you select into the encrypted secrets DMG instead.
 
 ---
 
@@ -36,8 +36,7 @@ The IntelliJ-specific companion to [[backup-apps|Backup Apps]] (Phase 2D). It pr
 
 > In Obsidian, these are internal heading links. Click in Reading View, or Cmd-click in Live Preview/editing mode.
 
-> [!info] Callout legend
-> This runbook uses Obsidian callouts so each type reads distinctly: `[!note]` an easily-missed fact · `[!warning]` Pitfall, a mistake you are likely to make here · `[!bug]` Troubleshooting, what to do when a step misbehaves · `[!info] Return` how to get back after an out-of-sequence detour.
+> This runbook uses Obsidian callouts so each type reads distinctly: `[!note]` an easily-missed fact · `[!warning]` Pitfall, a mistake you are likely to make here · `[!bug]` Troubleshooting, what to do when a step misbehaves.
 
 ---
 
@@ -45,24 +44,28 @@ The IntelliJ-specific companion to [[backup-apps|Backup Apps]] (Phase 2D). It pr
 
 Preserve IntelliJ IDE state that is not covered by Git remotes or project-level backups, and stage the credential-bearing material you select into the encrypted secrets workflow rather than leaving it loose. IntelliJ earns a dedicated runbook because its backup scope is broader than the lighter app sections in Backup Apps: it mixes global IDE state, Scratches, Consoles, plugins, settings, and per-project metadata.
 
-This runbook owns:
+**What it sets up**
 
-```text
-the IntelliJ scriptable capture detail (run through backup-apps.sh --intellij-only)
-the manual IntelliJ settings ZIP export
-IntelliJ backup validation and restore notes
-the full app-settings-backup/intellij/ layout
-```
+- **A clear-text IDE state copy** — Scratches, Consoles, selected global config, per-project `.idea` metadata, and diagnostic logs under `app-settings-backup/intellij/`, safe to inspect on the external drive.
+- **A reviewed secret staging area** — credential-shaped files matching patterns you check are copied into `secrets-encrypted/intellij/`, split by the root they came from, and recorded in a manifest.
+- **A second restore path** — the manual settings ZIP, exported from the IntelliJ UI, independent of the scripted copy.
 
-It does not own:
+**What the rest of the workflow relies on it for**
 
-```text
-the umbrella app-backup phase and every other app — backup-apps.md (Phase 2D)
-general local-file copy — backup-home.md (Phase 2B)
-certificate and Keychain staging — Phase 3A
-final encrypted DMG packaging — create-secrets-dmg.md (Phase 3B)
-cross-phase readiness sign-off — reimage-prep-checks.md (Phase 6B)
-```
+- Phase 3B encrypts the staged IntelliJ secrets into the consolidated DMG.
+- The post-image `restore-intellij` phase reads this layout to bring IDE state back.
+- The Phase 6B readiness sign-off checks the capture and the settings ZIP exist.
+
+**Ownership**
+
+| This runbook owns | Owned elsewhere |
+|---|---|
+| the IntelliJ scriptable capture detail, run through `backup-apps.sh --intellij-only` | the umbrella app-backup phase and every other app — `backup-apps` (Phase 2D) |
+| the manual IntelliJ settings ZIP export | general local-file copy — `backup-home` (Phase 2B) |
+| IntelliJ backup validation and restore notes | repo-local files a project happens to contain — `backup-repos` (Phase 2A) |
+| the full `app-settings-backup/intellij/` and `secrets-encrypted/intellij/` layouts | certificate and Keychain staging — `stage-certs-keychain` (Phase 3A) |
+| | encrypted DMG packaging — `create-secrets-dmg` (Phase 3B) |
+| | cross-phase readiness sign-off — `reimage-prep-checks` (Phase 6B) |
 
 This runbook can be rerun independently: `backup-apps.sh --intellij-only` re-detects the active config and refreshes the generated IntelliJ content in place, preserving `manual-settings-export/` and `restore-notes/`.
 
@@ -72,31 +75,31 @@ This runbook can be rerun independently: `backup-apps.sh --intellij-only` re-det
 
 ## How the Workflow Works
 
-Read this before running anything. IntelliJ keeps state in two very different places: a global config directory under `~/Library/Application Support/JetBrains/<product>` (Scratches, Consoles, code styles, keymaps, inspections, plugins, options) and per-project `.idea` folders scattered across your workspaces. The capture pulls both, plus diagnostic logs, into `app-settings-backup/intellij/`.
+Read this before running anything. IntelliJ keeps state in two very different places: a global config directory under `~/Library/Application Support/JetBrains/<product>` (Scratches, Consoles, code styles, keymaps, inspections, plugins, options) and per-project `.idea` folders scattered across your projects. The capture pulls both, plus diagnostic logs, into `app-settings-backup/intellij/`.
 
 The work is part automated and part manual. `backup-apps.sh --intellij-only` runs the scriptable capture; a manual settings ZIP export from IntelliJ's own UI is a second, cleaner restore path that is usually easier to import after reimage than hand-restoring individual config files. Do both — the ZIP is not a substitute for the scripted capture, and the scripted capture does not produce the ZIP.
 
-The preferred path is the entrypoint: `backup-apps.sh --intellij-only`. It self-locates, loads shared config, and invokes the internal helper — which auto-detects the active IntelliJ config directory (the most recently modified one) and receives the workspace root from `GIT_WORK_REPO_ROOT`. Running the helper directly is possible but reserved for standalone or troubleshooting use (see [[#Run the Helper Standalone|Run the Helper Standalone]]).
+The preferred path is the entrypoint: `backup-apps.sh --intellij-only`. It self-locates, loads shared config, and invokes the internal helper — which auto-detects the active IntelliJ config directory (the most recently modified one) and receives the projects root from `GIT_WORK_REPO_ROOT`. Running the helper directly is possible but reserved for standalone or troubleshooting use (see [[#Run the Helper Standalone|Run the Helper Standalone]]).
 
 ### What Gets Backed Up
 
-The scripted capture collects, from the active config directory and every project under the workspace root:
+The scripted capture collects, from the active config directory and every project under the projects root:
 
 ```text
 Scratches and Consoles
 global IDE config — codestyles, colors, keymaps, inspections, templates, options, tools, plugins, and more
-project-level .idea metadata for every workspace, not just the one currently open
+project-level .idea metadata for every project, not just the one currently open
 diagnostic logs
 ```
 
 It deliberately excludes HTTP Client environment files and other secret-like material from the plaintext copy (see below). The full target-to-destination map is in [[#Backup Target Reference|Backup Target Reference]].
 
 > [!note]
-> The capture scans a broad **workspace root** (all your projects), not IntelliJ's single active-project BasePath. That is why it covers projects you do not currently have open — see [[#Terminology|Terminology]].
+> The capture scans a broad **projects root** (all your projects), not IntelliJ's single active-project BasePath. That is why it covers projects you do not currently have open — see [[#Terminology|Terminology]].
 
 ### Why HTTP Client Files Are Handled Separately
 
-IntelliJ HTTP Client environment files (`http-client.env.json`, `http-client.private.env.json`) and other credential-like files can hold working tokens, passwords, and client secrets. The capture keeps them out of the plaintext `app-settings-backup/intellij/` copy, and stages the ones matching your reviewed patterns into `secrets-encrypted/intellij/by-source/` for the Phase 3B encrypted DMG. Which patterns count as secrets is yours to choose in a review template that follows the same `[x]`/`[ ]` model as `gitignore-review-template.txt` — nothing is staged unless you check it. They belong in the encrypted DMG, never loose in the IntelliJ backup or in cloud storage. The selection files and the recommended split-env pattern are in [[#HTTP Client Credential Handling|HTTP Client Credential Handling]].
+IntelliJ HTTP Client environment files (`http-client.env.json`, `http-client.private.env.json`) and other credential-like files can hold working tokens, passwords, and client secrets. The capture keeps them out of the plaintext `app-settings-backup/intellij/` copy, and stages the ones matching your reviewed patterns into `secrets-encrypted/intellij/` for the Phase 3B encrypted DMG. Which patterns count as secrets is yours to choose in a review template that follows the same `[x]`/`[ ]` model as `gitignore-review-template.txt` — nothing is staged unless you check it. They belong in the encrypted DMG, never loose in the IntelliJ backup or in cloud storage. The selection files and the recommended split-env pattern are in [[#HTTP Client Credential Handling|HTTP Client Credential Handling]].
 
 ### Terminology
 
@@ -105,7 +108,7 @@ IntelliJ HTTP Client environment files (`http-client.env.json`, `http-client.pri
 | Active config directory | The JetBrains config dir for the running IDE version, e.g. `~/Library/Application Support/JetBrains/IntelliJIdea2026.1`. Auto-detected as the most recently modified `IntelliJIdea*`/`IdeaIC*` directory (override with `IDE_PRODUCT`). |
 | Special Files and Folders | IntelliJ's `Help → Diagnostic Tools → Special Files and Folders` screen, which reports the active config, logs, plugins, and Project BasePath. |
 | Project BasePath | The path of the *currently open* project/window. It changes with focus, so it is not what the backup scans. |
-| Workspace root | The broader directory tree the capture scans for project-level `.idea` metadata (default from `GIT_WORK_REPO_ROOT`), covering all projects. |
+| Projects root | The broader directory tree the capture scans for project-level `.idea` metadata (default from `GIT_WORK_REPO_ROOT`), covering all projects. |
 | HTTP Client env files | `http-client.env.json` / `http-client.private.env.json` — credential-bearing, routed to the encrypted secrets flow. |
 | Secret review template | `intellij-secret-review-template.txt` under `$REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/secret-review/`. `[x]`-checked patterns are staged into the encrypted secrets tree; nothing is preselected. |
 | Plaintext exclude list | `backup-exclude-list.txt` in the same folder. One pattern per line; drops noise (e.g. `httpRequests/`, `shelf/`) from the clear-text copy. Mirrors `gitignore-superset/backup-exclude-list.txt`. |
@@ -135,7 +138,7 @@ Artifact roots:
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/               # non-secret IDE state
-$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/intellij/by-source/       # staged secrets, packaged in Phase 3B
+$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/intellij/                 # staged secrets, packaged in Phase 3B
 ```
 
 Your reviewed secret selections are written to the external artifact root, the same way the gitignore superset writes its review template:
@@ -147,7 +150,9 @@ $REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/secret-review/backup-exclude
 
 Both are seeded on the first capture (every pattern unchecked) and edited in place afterward. To keep a reviewed set across reimages, copy them into `$REIMAGE_WORKSPACE_ROOT/intellij-secrets/` by hand, and copy them back to the artifact root before a later run — the same manual persistence pattern the gitignore review template uses.
 
-This runbook owns the full `intellij/` layout; it is drawn here once and referenced elsewhere:
+This runbook owns both `intellij/` layouts; they are drawn here once and referenced elsewhere.
+
+The clear-text copy:
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/
@@ -163,8 +168,24 @@ $REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/
 │   └── IntelliJ-settings-YYYYMMDD-HHMMSS.zip
 ├── project-metadata/
 ├── restore-notes/
+├── secret-review/
 └── README.md
 ```
+
+The staged secrets, split by the root each file came from. Paths under each
+bucket are relative to *that* root, so a restore is one substitution:
+
+```text
+$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/intellij/
+├── ide-config/                 # relative to ~/Library/Application Support/JetBrains/
+│   └── IntelliJIdeaYYYY.N/
+│       └── options/
+└── projects/                   # relative to $GIT_WORK_REPO_ROOT
+    └── <project>/
+        └── .idea/
+```
+
+An `other/` bucket appears only if a staged file came from neither root — it should stay empty.
 
 The complete `$REIMAGE_ARTIFACT_ROOT` map is defined once in the Master Directory Reference:
 
@@ -179,7 +200,7 @@ Where each kind of IntelliJ artifact goes.
 | Non-secret IDE state | `app-settings-backup/intellij/` | Scratches, Consoles, config copy, project `.idea` metadata, logs, manifests, README. Safe to inspect locally on the external drive. |
 | Manual settings ZIP | `app-settings-backup/intellij/manual-settings-export/` | Exported from the IntelliJ UI; a clean second restore path. |
 | Restore notes | `app-settings-backup/intellij/restore-notes/` | Sanitized notes only — no secret values. |
-| Credential-like files matching your reviewed patterns | staged under `secrets-encrypted/intellij/by-source/`, packaged into the Phase 3B DMG | Staged only when checked in the review template. Never left loose in `intellij/` or in cloud storage. |
+| Credential-like files matching your reviewed patterns | `secrets-encrypted/intellij/ide-config/` or `.../projects/`, by which root the file came from; packaged into the Phase 3B DMG | Staged only when checked in the review template. Never left loose in `intellij/` or in cloud storage. |
 
 ### Environment Variables
 
@@ -189,7 +210,7 @@ The `reimage.env` values this runbook depends on. Values are resolved and writte
 |---|---|
 | `REIMAGE_ARTIFACT_ROOT` | Absolute path to the Phase 2 artifact root where `app-settings-backup/` and `secrets-encrypted/` live. |
 | `FRACTOGENESIS_HOME` | Absolute path to the toolkit repository root; entrypoints are run from here. |
-| `GIT_WORK_REPO_ROOT` | Work repository root. Also the default IntelliJ **workspace root** scanned for project-level `.idea` metadata — the same value used by the Git repo backup, so set it once (e.g. `/Users/<user>/Development/IdeaProjects`). |
+| `GIT_WORK_REPO_ROOT` | Work repository root. Also the default IntelliJ **projects root** scanned for project-level `.idea` metadata — the same value used by the Git repo backup, so set it once (e.g. `/Users/<user>/Development/IdeaProjects`). |
 | `REIMAGE_WORKSPACE_ROOT` | Optional. Local workspace where you can keep a persisted copy of your IntelliJ secret selections (`intellij-secrets/`) between reimages. Not required for the capture — the selections live on the artifact root. Resolved by `prepare-artifact-root.md`. |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -198,7 +219,7 @@ The `reimage.env` values this runbook depends on. Values are resolved and writte
 
 ## Before You Run Anything
 
-A short pre-flight: confirm you are set up, then confirm what this run is for. The concepts and the *why* are in [[#How the Workflow Works|How the Workflow Works]]; this is just the checklist.
+A short pre-flight: confirm you are set up, then confirm what this run is for.
 
 ### Prerequisites
 
@@ -207,12 +228,13 @@ A short pre-flight: confirm you are set up, then confirm what this run is for. T
 - **IntelliJ is quit before the capture.** A running IDE can flush or overwrite config mid-copy, so close it first (the manual settings ZIP export in Step 3 is the one time you reopen it).
 
 > [!bug] Troubleshooting
-> If the active config directory is not found, the helper falls back to every `IntelliJIdea*` / `IdeaIC*` directory under the JetBrains root — see [[#Troubleshooting|Troubleshooting]].
+> [!bug] Troubleshooting
+> If the capture exits with a prerequisite error naming the JetBrains root, see [[#No IntelliJ config directory was found|No IntelliJ config directory was found]].
 
 ### Confirm Your Intent
 
-- Whether IntelliJ applies to this Mac and you want to preserve IDE state (it is a common developer app, but the [[backup-apps#Confirm Your Intent|Backup Apps intent criteria]] still apply — skip it if Settings Sync or another source already covers it).
-- Which **workspace root** to scan for project `.idea` metadata — normally `GIT_WORK_REPO_ROOT`.
+- Whether IntelliJ applies to this Mac and you want to preserve IDE state — skip it if Settings Sync or another source already covers it.
+- Which **projects root** to scan for project `.idea` metadata — normally `GIT_WORK_REPO_ROOT`.
 - Whether to also export the settings ZIP (recommended — it is the easiest restore path) and whether you need the optional captures (all config dirs, shelves, or the system cache).
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -242,7 +264,7 @@ pgrep -afil 'IntelliJ|idea' || echo "OK: IntelliJ does not appear to be running"
 You can cross-check the active config path inside IntelliJ under `Help → Diagnostic Tools → Special Files and Folders`, then compare it with the capture's `manifests/intellij-config-dirs.tsv`.
 
 > [!note]
-> That same screen reports a **PROJECT BasePath** for whatever project is focused. It is expected that it does not match what the backup scans — the capture uses the broader workspace root on purpose, so all projects are covered.
+> That same screen reports a **PROJECT BasePath** for whatever project is focused. It is expected that it does not match what the backup scans — the capture uses the broader projects root on purpose, so all projects are covered.
 
 ### Step 2 — Run the IntelliJ Capture
 
@@ -252,9 +274,9 @@ Run the scriptable capture through the Phase 2D entrypoint. `--intellij-only` sk
 ./bin/backup-apps.sh --intellij-only --artifact-root "$REIMAGE_ARTIFACT_ROOT" --open
 ```
 
-The entrypoint defaults the workspace root to `GIT_WORK_REPO_ROOT` from `reimage.env`, and the helper auto-detects the active IntelliJ config directory (the most recently modified one under the JetBrains root) — so neither is passed here. Override the workspace root with `--intellij-workspace-root PATH` if you need a different tree.
+The entrypoint defaults the projects root to `GIT_WORK_REPO_ROOT` from `reimage.env`, and the helper auto-detects the active IntelliJ config directory (the most recently modified one under the JetBrains root) — so neither is passed here. Override the projects root with `--intellij-projects-root PATH` if you need a different tree.
 
-This refreshes the generated IntelliJ content in place under `app-settings-backup/intellij/` (preserving `manual-settings-export/` and `restore-notes/`) and stages the secrets matching your reviewed patterns into `secrets-encrypted/intellij/by-source/` for the Phase 3B packaging.
+This refreshes the generated IntelliJ content in place under `app-settings-backup/intellij/` (preserving `manual-settings-export/` and `restore-notes/`) and stages the secrets matching your reviewed patterns into `secrets-encrypted/intellij/` for the Phase 3B packaging.
 
 > [!note]
 > On the first capture, `intellij-secret-review-template.txt` and `backup-exclude-list.txt` are written to `$REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/secret-review/` with every pattern unchecked, and nothing is staged. Check the patterns you want staged (for example `http-client.private.env.json`), then rerun `--intellij-only` to stage the matches. Credential-shaped files are kept out of the plaintext copy on every run regardless.
@@ -263,8 +285,8 @@ Optional passthrough flags, when they apply:
 
 ```text
 --intellij-all-config-dirs        back up every IntelliJIdea*/IdeaIC* config dir, not just the active one
---intellij-workspace-max-depth N  change the .idea scan depth (default 6)
---intellij-skip-workspaces        skip the project-level .idea scan
+--intellij-projects-max-depth N  change the .idea scan depth (default 6)
+--intellij-skip-project-scan        skip the project-level .idea scan
 --intellij-include-shelf          include .idea/shelf folders (skipped by default)
 --intellij-include-system-cache   copy the IntelliJ system/cache dir (large; off by default)
 ```
@@ -305,7 +327,7 @@ $REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/manifests/intellij-config-di
 $REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/manifests/files-backed-up.txt
 $REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/manifests/intellij-secret-candidates.txt
 $REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/manifests/intellij-secrets-staged.tsv
-$REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/manifests/workspace-projects.tsv
+$REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/manifests/projects.tsv
 ```
 
 Confirm there are **no** loose HTTP Client or secret-like files in the plaintext backup:
@@ -339,11 +361,15 @@ The script sorts artifacts and detects config directories; these judgment calls 
 
 ## Troubleshooting
 
+One prerequisite failure has a fix long enough to break a step's flow. The step that hits it links in from a callout.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
 ### No IntelliJ config directory was found
 
 The capture auto-detects the active config directory as the most recently modified `IntelliJIdea*` / `IdeaIC*` directory under `~/Library/Application Support/JetBrains/`. If none exist, it exits with a prerequisite error. If your config lives under a non-standard directory name, set `IDE_PRODUCT` explicitly and rerun. An explicit `IDE_PRODUCT` that points to a missing directory prints a warning and falls back to backing up every `IntelliJIdea*` / `IdeaIC*` directory.
 
-[[#Table of Contents|⬆ Back to Table of Contents]]
+[[#Step 2 — Run the IntelliJ Capture|⮕ Continue to Step 2 — Run the IntelliJ Capture]]
 
 ---
 
@@ -367,7 +393,7 @@ The scriptable capture's targets and where each lands under `app-settings-backup
 | `options/` | IDE options and appearance | `.../<product>/config-copy/options/` |
 | `plugins/` and plugin manifest | Plugin list and state | `.../<product>/config-copy/plugins/` and manifests |
 | Project-level `.idea` | Run configs, code style, inspections, selected project settings | `.../project-metadata/` |
-| `http-client.env.json`, `http-client.private.env.json` | May hold working credentials | staged to `secrets-encrypted/intellij/by-source/` when checked → Phase 3B encrypted DMG |
+| `http-client.env.json`, `http-client.private.env.json` | May hold working credentials | staged to `secrets-encrypted/intellij/` when checked → Phase 3B encrypted DMG |
 
 ### HTTP Client Credential Handling
 
@@ -391,7 +417,7 @@ dataSourcesLocal.xml
 *secret*
 ```
 
-Credential-shaped files are kept out of the clear-text copy on every run — a fixed safety floor covers `http-client*.env.json`, `*.env.json`, and `dataSources.local.xml` even before you review anything. Files matching a checked pattern are copied into `secrets-encrypted/intellij/by-source/` and recorded in `manifests/intellij-secrets-staged.tsv`, so Phase 3B encrypts them into `all-secrets-YYYYMMDD-HHMMSS.dmg`. Store the DMG password in your approved password manager.
+Credential-shaped files are kept out of the clear-text copy on every run — a fixed safety floor covers every seeded secret pattern — including `*.pem`, `*.key`, `*credential*` and `*secret*` — even before you review anything. Files matching a checked pattern are copied into `secrets-encrypted/intellij/` and recorded in `manifests/intellij-secrets-staged.tsv`, so Phase 3B encrypts them into `all-secrets-YYYYMMDD-HHMMSS.dmg`. Store the DMG password in your approved password manager.
 
 The preferred HTTP Client layout after restore splits secret from non-secret:
 
@@ -409,13 +435,12 @@ The single source for the capture logic is the helper; running it directly is th
 ```bash
 .internal/apps/backup-intellij-state.sh \
   --artifact-root "$REIMAGE_ARTIFACT_ROOT" \
-  --workspace-root "$GIT_WORK_REPO_ROOT"
+  --projects-root "$GIT_WORK_REPO_ROOT"
 ```
 
-Run standalone, the helper has no baked-in workspace default, so pass `--workspace-root` (or export `INTELLIJ_WORKSPACE_ROOT`) for the project-level scan; the active config directory is still auto-detected. The secret review files are written under the artifact root, so no extra flag is needed to enable staging.
+Run standalone, the helper has no baked-in projects-root default, so pass `--projects-root` (or export `INTELLIJ_PROJECTS_ROOT`) for the project-level scan; the active config directory is still auto-detected. The secret review files are written under the artifact root, so no extra flag is needed to enable staging.
 
-> [!info] Return
-> This is the same capture `backup-apps.sh --intellij-only` runs. Prefer the entrypoint in [[#Step 2 — Run the IntelliJ Capture|Step 2]] unless you specifically need to bypass it.
+This is the same capture `backup-apps.sh --intellij-only` runs — prefer the entrypoint unless you specifically need to bypass it.
 
 ### OneDrive Guidance
 

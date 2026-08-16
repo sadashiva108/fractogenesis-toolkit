@@ -223,6 +223,15 @@ existing runbook violates them, reflow it to match rather than copying its shape
       status (`> [!check]` pass, `> [!fail]` error, `> [!warning]` caution, `> [!note]`
       neutral), each ending in `→ [[#Heading|Heading]]` with any sample inside the callout.
     - Never a table: it can't hold multi-line console output and forces link-pipe escaping.
+- **Sequential Steps takes one of two forms; pick by whether the flow forks.**
+    - **Default — one back-link at the end of the whole section.** A straight-through
+      flow is read top to bottom, so its steps need no individual escape hatch. This
+      holds however many steps it has: length alone does not justify the other form.
+    - **Per-step back-links, when the flow forks into routed paths.** A fork means
+      readers arrive in the middle of the section from a path index or a
+      troubleshooting Continue link, with no idea where the section ends, so each
+      step ends with its own back-link and `---`. `backup-repos.md` is the reference
+      for this form; every other runbook uses the default.
 - Every section ends with a back-link, then a `---` divider on the next line — no exceptions:
     - A **parent/main section** links back to the Table of Contents:
       `[[#Table of Contents|⬆ Back to Table of Contents]]`.
@@ -395,6 +404,7 @@ Validation checklist (run after generating the filled runbook)
 - [ ] The "In Obsidian, these are internal heading links" note and the callout legend are present under the TOC.
 - [ ] Callouts use the Obsidian `> [!type]` forms; any Troubleshooting fix lives inline OR in the Troubleshooting section, never both.
 - [ ] The `## Troubleshooting` parent carries a Table-of-Contents back-link under its intro, above the first symptom subsection.
+- [ ] Sequential Steps uses the default single back-link, unless the flow forks into routed paths — in which case every step carries its own.
 - [ ] Section and step intros are link-free; only links that earn their place remain.
 - [ ] Routing-index forks follow the layout house rule — console-first when there is output to match, a short bullet when there is not, callouts for error/fail outcomes, never a table — and each option's link label matches its destination heading.
 - [ ] PRIMARY_SCRIPT path exists in the repo or a TODO notes creation.

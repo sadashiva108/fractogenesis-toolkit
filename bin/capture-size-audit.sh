@@ -239,6 +239,28 @@ is_macos_metadata_name() {
   esac
 }
 
+# find(1) predicates built from the same pattern sets the name helpers below
+# test. The helpers remain the readable definition and are still used for
+# single-name checks; these drive the bulk scan without forking per file.
+LOOSE_SECRET_FIND_PRED=(
+  -iname '.env'            -o -iname '.env.*'        -o -iname '.netrc'
+  -o -iname '.npmrc'       -o -iname '.pypirc'       -o -iname 'credentials'
+  -o -iname 'credentials.json'
+  -o -iname 'id_rsa'       -o -iname 'id_dsa'        -o -iname 'id_ecdsa'
+  -o -iname 'id_ed25519'
+  -o -iname '*.pem'        -o -iname '*.key'         -o -iname '*.p12'
+  -o -iname '*.pfx'        -o -iname '*.jks'         -o -iname '*.keystore'
+  -o -iname '*.kubeconfig'
+  -o -iname '*credential*.json' -o -iname '*token*.json'
+  -o -iname '*password*.csv'    -o -iname '*password*.json'
+)
+
+ALLOWED_EVIDENCE_FIND_PRED=(
+  -iname '*.dmg'    -o -iname '*.sha256' -o -iname '*.sha256sum'
+  -o -iname '*.txt' -o -iname '*.tsv'    -o -iname '*.md'
+  -o -iname '*.log'
+)
+
 # Heuristic only: identifies filenames commonly used for plaintext credentials,
 # private keys, keystores, and environment-secret files. It deliberately does
 # not inspect file contents or delete anything.
@@ -840,24 +862,33 @@ if [[ "$CHECK_LOOSE_SECRETS" == true ]]; then
       echo ""
       echo -e "  ${BLD}Root: $check_root${RST}"
 
-      while IFS= read -r candidate; do
-        candidate_name="${candidate##*/}"
-        is_macos_metadata_name "$candidate_name" && continue
-        if is_loose_secret_candidate_name "$candidate_name"; then
-          outside_count=$((outside_count + 1))
-          printf "  ${YEL}  ⚠ outside secrets-encrypted/: %s${RST}\n" "${candidate#"$check_root/"}"
-        fi
-      done < <(find "$check_root" -type f ! -path "$check_root/secrets-encrypted/*" 2>/dev/null | sort)
+      # Matching happens inside find, not in the shell. Calling the name
+      # helpers per file forked two subshells each, which over a full
+      # home-directory backup (hundreds of thousands of files) took many
+      # minutes and looked like a hang. LOOSE_SECRET_FIND_PRED and
+      # ALLOWED_EVIDENCE_FIND_PRED hold the same patterns the helpers test.
+      while IFS= read -r -d '' candidate; do
+        outside_count=$((outside_count + 1))
+        printf "  ${YEL}  ⚠ outside secrets-encrypted/: %s${RST}\n" "${candidate#"$check_root/"}"
+      done < <(
+        find "$check_root" -type f \
+          ! -path "$check_root/secrets-encrypted/*" \
+          ! -name '.DS_Store' ! -name '._*' \
+          \( "${LOOSE_SECRET_FIND_PRED[@]}" \) \
+          -print0 2>/dev/null | sort -z
+      )
 
       secrets_root="$check_root/secrets-encrypted"
       if [[ -d "$secrets_root" ]]; then
-        while IFS= read -r candidate; do
-          candidate_name="${candidate##*/}"
-          is_macos_metadata_name "$candidate_name" && continue
-          is_allowed_secrets_evidence_name "$candidate_name" && continue
+        while IFS= read -r -d '' candidate; do
           staging_count=$((staging_count + 1))
           printf "  ${YEL}  ⚠ loose payload under secrets-encrypted/: %s${RST}\n" "${candidate#"$secrets_root/"}"
-        done < <(find "$secrets_root" -type f 2>/dev/null | sort)
+        done < <(
+          find "$secrets_root" -type f \
+            ! -name '.DS_Store' ! -name '._*' \
+            ! \( "${ALLOWED_EVIDENCE_FIND_PRED[@]}" \) \
+            -print0 2>/dev/null | sort -z
+        )
       fi
 
       if (( outside_count == 0 && staging_count == 0 )); then

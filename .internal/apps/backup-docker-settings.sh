@@ -100,7 +100,7 @@ RST='\033[0m'
 
 ok()   { printf "  ${GRN}✓  %-45s${RST}\n" "$1" ; }
 skip() { printf "  ${YEL}–  %-45s  (not found, skipping)${RST}\n" "$1" ; }
-fail() { printf "  ${RED}✗  %-45s  $2${RST}\n" "$1" ; }
+fail() { printf "  ${RED}✗  %-45s  %s${RST}\n" "$1" "${2:-}" ; }
 info() { printf "  ${DIM}   %s${RST}\n" "$1" ; }
 
 # ── Setup ─────────────────────────────────────────────────────────────────────
@@ -171,6 +171,9 @@ echo -e "${BLD}Docker Contexts${RST}"
 
 CONTEXTS_DIR="$HOME/.docker/contexts"
 if [[ -d "$CONTEXTS_DIR" ]]; then
+  # `cp -r SRC DST` copies INTO DST when DST exists, so a re-run would produce
+  # contexts/contexts/. Replace the destination outright instead.
+  rm -rf "$DEST/contexts"
   cp -r "$CONTEXTS_DIR" "$DEST/contexts"
   ctx_count=$(find "$DEST/contexts" -name '*.json' 2>/dev/null | wc -l | tr -d ' ')
   ok "contexts/  (${ctx_count} context file(s))"
@@ -220,9 +223,16 @@ echo -e "${BLD}Writing manifest…${RST}"
   fi
   echo ""
   echo "## Files"
-  find "$DEST" -maxdepth 2 ! -name 'MANIFEST.md' | sort | while read -r f; do
-    [[ -f "$f" ]] && echo "- $(basename "$f")  ($(du -sh "$f" 2>/dev/null | cut -f1))"
-  done
+  # `[[ -f ]] && echo` as the loop's last command makes the while loop return 1
+  # whenever the final entry is a directory -- and under `set -e` that killed
+  # the script mid-MANIFEST, leaving no manifest and a bare exit 1. Use an if,
+  # and NUL-delimited traversal per the authoring rules, since $DEST derives
+  # from a user-supplied artifact root.
+  while IFS= read -r -d '' f; do
+    if [[ -f "$f" ]]; then
+      echo "- $(basename "$f")  ($(du -sh "$f" 2>/dev/null | cut -f1))"
+    fi
+  done < <(find "$DEST" -maxdepth 2 ! -name 'MANIFEST.md' -print0 | sort -z)
   echo ""
   echo "## Restore Notes"
   echo "1. Install Docker Desktop via Company Portal or docker.com"

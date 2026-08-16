@@ -137,13 +137,53 @@ fi
 # basename. Idempotent for directories (mirror) and files (cp -p). Missing
 # source is a caller-recorded skip, handled before this is called. Returns
 # nonzero only on a real copy failure.
+# Two sources in one invocation can share a basename -- the BBEdit row lists
+# both ~/Library/Application Support/BBEdit and the sandboxed
+# ~/Library/Containers/com.barebones.bbedit/Data/Library/Application Support/BBEdit.
+# Placed flat, the second silently overwrites the first and the summary still
+# reports both as copied.
+#
+# macOS redirects a sandboxed app's writes into ~/Library/Containers/<id>/Data/,
+# so that copy takes a "-container" suffix. The name comes from the path segment
+# itself, not from an inference about which build you installed.
+collides() {
+  local target n=0 other
+  target="$(basename "${1%/}")"
+  for other in ${PATHS[@]+"${PATHS[@]}"}; do
+    [[ "$(basename "${other%/}")" == "$target" ]] && n=$((n + 1))
+  done
+  (( n > 1 ))
+}
+
+dest_name_for() {
+  local src="${1%/}" base
+  base="$(basename "$src")"
+
+  if ! collides "$src"; then
+    printf '%s' "$base"
+    return 0
+  fi
+
+  case "$src" in
+    "$HOME"/Library/Containers/*) printf '%s-container' "$base" ;;
+    */Library/Containers/*)       printf '%s-container' "$base" ;;
+    *)                            printf '%s' "$base" ;;
+  esac
+}
+
 copy_one() {
   local src="$1"
   local dest_dir="$2"
+  # Optional third argument: the name to use under dest_dir. The caller passes
+  # a disambiguated name when two sources in the same invocation share a
+  # basename; without it, two sources named e.g. "BBEdit" silently merge into
+  # one directory and the later one overwrites the earlier.
   local base target
-  base="$(basename "$src")"
+  base="${3:-$(basename "$src")}"
   [[ -n "$base" ]] || { echo "ERROR: refusing to copy empty basename from: $src" >&2; return 1; }
-  mkdir -p "$dest_dir"
+  # base may carry a disambiguating suffix when the caller resolved a
+  # basename collision, so create the target's parent, not just dest_dir.
+  mkdir -p "$(dirname "$dest_dir/$base")"
   if [[ -d "$src" ]]; then
     target="$dest_dir/$base"
     # Prefer rsync (present on stock macOS) for a clean metadata-preserving
@@ -177,7 +217,8 @@ echo "App config capture — $APP  ($(date '+%Y-%m-%d %H:%M:%S'))"
 if (( ${#PATHS[@]} > 0 )); then
   for src in "${PATHS[@]}"; do
     if [[ -e "$src" ]]; then
-      if copy_one "$src" "$DEST"; then
+      dest_name="$(dest_name_for "$src")"
+    if copy_one "$src" "$DEST" "$dest_name"; then
         echo "  copied   $src"
         COPIED=$((COPIED + 1))
       else

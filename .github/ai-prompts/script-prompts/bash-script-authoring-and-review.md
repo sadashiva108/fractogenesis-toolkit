@@ -40,6 +40,10 @@ Classify each target as one of the following and explain the classification brie
 
 Do not force every file into the same loading or strict-mode pattern.
 
+These six classes are the repository's single script taxonomy. This prompt owns
+what each class must *do*; `.github/guides/script-types-and-locations.md` owns
+where each one *goes*, using these same six names. Classify once and read both.
+
 ## Configuration model
 
 Preserve this architecture unless the task explicitly changes it:

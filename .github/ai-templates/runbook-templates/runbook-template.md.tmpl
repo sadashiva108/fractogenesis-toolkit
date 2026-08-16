@@ -53,8 +53,7 @@ Runbook template for fractogenesis-toolkit.
 
 > In Obsidian, these are internal heading links. Click in Reading View, or Cmd-click in Live Preview/editing mode.
 
-> [!info] Callout legend
-> This runbook uses Obsidian callouts so each type reads distinctly: `[!note]` an easily-missed fact · `[!warning]` Pitfall, a mistake you are likely to make here · `[!bug]` Troubleshooting, what to do when a step misbehaves · `[!info] Return` how to get back after an out-of-sequence detour.
+> This runbook uses Obsidian callouts so each type reads distinctly: `[!note]` an easily-missed fact · `[!warning]` Pitfall, a mistake you are likely to make here · `[!bug]` Troubleshooting, what to do when a step misbehaves.
 
 ---
 
@@ -163,7 +162,7 @@ scripts for `REIMAGE_*`, `EXTERNAL_DATA_VOLUME`, `ONEDRIVE*`, and
 
 ## Before You Run Anything
 
-A short pre-flight: confirm you are set up, then confirm what you intend this run to do. The conceptual background is in [[#How the Workflow Works|How the Workflow Works]]; this is the checklist, kept brief enough that a hurried reader still reads it.
+A short pre-flight: confirm you are set up, then confirm what you intend this run to do. Keep it brief enough that a hurried reader still reads it, and link-free — the conceptual background belongs in How the Workflow Works.
 
 ### Prerequisites
 
@@ -191,8 +190,8 @@ Run these in order; every dependency must be produced before the step that consu
 If the flow forks into a preferred path and an alternate/off-ramp:
 - put the shared steps first as common setup;
 - add a short path-index that names each path, says which is preferred and why;
-- at each divergence point use a `> [!info] Return` callout linking back to the
-  path index (not to the Table of Contents).
+- at each divergence point add a plain back-link to the path index (not to the
+  Table of Contents) — a back-link, never a callout.
 Map the steps to the script's phases: prepare -> execute -> verify. Verification
 that a person must do by hand belongs in the relevant verify step (and rolls up
 to the Phase 6B sign-off), not in the Decisions section.
@@ -241,6 +240,14 @@ find "$REIMAGE_ARTIFACT_ROOT/{{ARTIFACT_PATHS}}" -maxdepth 2 -type f | sort | he
 
 > [!warning] Pitfall
 > {{a mistake a reader is likely to make when verifying}}.
+
+<!--
+One back-link for the whole section is the default, and it goes here — a
+straight-through flow is read top to bottom, however many steps it has. Give
+each step its own back-link and `---` only when the flow forks into routed
+paths, because then readers land mid-section from a path index or a
+troubleshooting Continue link. See backup-repos.md for that form.
+-->
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -323,5 +330,5 @@ TOC verification performed before publishing:
 - every Table of Contents entry resolves to a heading present in this file;
 - deleted optional sections were also removed from the Table of Contents;
 - each top-level section ends with a single "Back to Table of Contents" link,
-  except where a `> [!info] Return` callout intentionally links to a path index.
+  except where a routed sub-section intentionally links back to its path index.
 -->

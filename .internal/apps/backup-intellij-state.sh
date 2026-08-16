@@ -4,13 +4,13 @@
 #
 # Internal helper for backup-apps.sh (Phase 2D). Backs up IntelliJ IDEA state:
 # Scratches and Consoles, selected global IDE config, project-level .idea
-# metadata across the workspace root, and diagnostic logs. Keeps secret-shaped
+# metadata across the projects root, and diagnostic logs. Keeps secret-shaped
 # material out of the clear-text copy and stages the files matching your reviewed
 # patterns into secrets-encrypted/intellij/ for the encrypted secrets workflow.
 #
 # This file lives in .internal/apps/ and is normally invoked by
 # bin/backup-apps.sh. Shared reimage config is intentionally NOT loaded here;
-# the caller passes --artifact-root (and, from the entrypoint, --workspace-root)
+# the caller passes --artifact-root (and, from the entrypoint, --projects-root)
 # explicitly. It is safe to run standalone when --artifact-root PATH (or an
 # exported REIMAGE_ARTIFACT_ROOT) is supplied.
 #
@@ -25,7 +25,7 @@
 #   ./bin/backup-apps.sh --intellij-only
 #
 #   # Standalone
-#   .internal/apps/backup-intellij-state.sh --artifact-root /path/to/reimage-artifact-root --workspace-root /path/to/projects
+#   .internal/apps/backup-intellij-state.sh --artifact-root /path/to/reimage-artifact-root --projects-root /path/to/projects
 #   .internal/apps/backup-intellij-state.sh --artifact-root <root> --all-config-dirs
 #   .internal/apps/backup-intellij-state.sh --artifact-root <root> --include-system-cache
 #
@@ -42,21 +42,21 @@
 #                              all dirs only if an explicit IDE_PRODUCT is not
 #                              found.
 #
-#   --workspace-root PATH      Root containing all IntelliJ workspaces/projects
+#   --projects-root PATH      Root containing all IntelliJ projects
 #                              to scan for project-level .idea metadata. No
 #                              baked-in default: the entrypoint supplies it from
 #                              GIT_WORK_REPO_ROOT; for standalone use, pass this
-#                              flag (or export INTELLIJ_WORKSPACE_ROOT). When
+#                              flag (or export INTELLIJ_PROJECTS_ROOT). When
 #                              unset, the project-level scan is skipped.
 #                              This is intentionally broader than IntelliJ's
 #                              PROJECT BasePath, which only reflects the
 #                              currently open project/window.
 #
-#   --workspace-max-depth N    Max depth used when finding .idea directories
-#                              under --workspace-root. Default: 6
+#   --projects-max-depth N    Max depth used when finding .idea directories
+#                              under --projects-root. Default: 6
 #
-#   --skip-workspaces          Do not scan/copy project-level .idea metadata
-#                              from the workspace root.
+#   --skip-project-scan          Do not scan/copy project-level .idea metadata
+#                              from the projects root.
 #
 #   --include-shelf            Include .idea/shelf folders when copying
 #                              project-level .idea metadata. Default is to skip
@@ -74,14 +74,14 @@
 #   - Copies Scratches and Consoles from the active IntelliJ config directory.
 #   - Copies selected global IDE config folders such as codestyles, keymaps, inspections,
 #     colors, templates, options, tools, settingsSync, plugins, jdbc-drivers, and tasks.
-#   - Scans the workspace root and copies project-level .idea metadata for every
-#     workspace/project it finds, not just the one currently open in IntelliJ.
+#   - Scans the projects root and copies project-level .idea metadata for every
+#     project it finds, not just the one currently open in IntelliJ.
 #   - Copies IntelliJ logs for diagnostics.
 #   - Records app bundle, runtime, lib, preinstalled plugins, system/cache, temp, current
-#     Project BasePath concept, and workspace root in manifests.
+#     Project BasePath concept, and projects root in manifests.
 #   - Keeps secret-shaped files out of the clear-text copy, and stages the files
 #     matching your reviewed patterns (intellij-secret-review-template.txt) into
-#     secrets-encrypted/intellij/by-source/. Nothing is staged unless checked.
+#     secrets-encrypted/intellij/{ide-config,projects}/. Nothing is staged unless checked.
 #
 # Security note:
 #   Run create-secrets-dmg.sh (Phase 3B) after this script to encrypt the staged
@@ -109,13 +109,23 @@ usage() {
 ARTIFACT_ROOT="${REIMAGE_ARTIFACT_ROOT:-}"
 ALL_CONFIG_DIRS=0
 INCLUDE_SYSTEM_CACHE=0
-SKIP_WORKSPACES=0
+SKIP_PROJECT_SCAN=0
 INCLUDE_SHELF=0
-WORKSPACE_MAX_DEPTH=6
-# No baked-in default: the entrypoint passes --workspace-root from
+PROJECTS_MAX_DEPTH=6
+# No baked-in default: the entrypoint passes --projects-root from
 # GIT_WORK_REPO_ROOT, and standalone callers pass it (or export
-# INTELLIJ_WORKSPACE_ROOT). When empty, the project-level scan is skipped.
-WORKSPACE_ROOT="${INTELLIJ_WORKSPACE_ROOT:-}"
+# INTELLIJ_PROJECTS_ROOT). When empty, the project-level scan is skipped.
+PROJECTS_ROOT="${INTELLIJ_PROJECTS_ROOT:-}"
+
+require_option_value() {
+  local option="$1"
+  local value="${2:-}"
+
+  if [[ -z "$value" || "$value" == --* ]]; then
+    echo "ERROR: $option requires a non-empty value." >&2
+    exit 2
+  fi
+}
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -124,10 +134,7 @@ while [[ $# -gt 0 ]]; do
       exit 0
       ;;
     --artifact-root)
-      if [[ $# -lt 2 ]]; then
-        echo "ERROR: --artifact-root requires a path" >&2
-        exit 2
-      fi
+      require_option_value "$1" "${2:-}"
       ARTIFACT_ROOT="$2"
       shift 2
       ;;
@@ -143,36 +150,36 @@ while [[ $# -gt 0 ]]; do
       INCLUDE_SYSTEM_CACHE=1
       shift
       ;;
-    --skip-workspaces)
-      SKIP_WORKSPACES=1
+    --skip-project-scan)
+      SKIP_PROJECT_SCAN=1
       shift
       ;;
     --include-shelf)
       INCLUDE_SHELF=1
       shift
       ;;
-    --workspace-root)
+    --projects-root)
       if [[ $# -lt 2 ]]; then
-        echo "ERROR: --workspace-root requires a path" >&2
+        echo "ERROR: --projects-root requires a path" >&2
         exit 2
       fi
-      WORKSPACE_ROOT="$2"
+      PROJECTS_ROOT="$2"
       shift 2
       ;;
-    --workspace-root=*)
-      WORKSPACE_ROOT="${1#*=}"
+    --projects-root=*)
+      PROJECTS_ROOT="${1#*=}"
       shift
       ;;
-    --workspace-max-depth)
+    --projects-max-depth)
       if [[ $# -lt 2 ]]; then
-        echo "ERROR: --workspace-max-depth requires a number" >&2
+        echo "ERROR: --projects-max-depth requires a number" >&2
         exit 2
       fi
-      WORKSPACE_MAX_DEPTH="$2"
+      PROJECTS_MAX_DEPTH="$2"
       shift 2
       ;;
-    --workspace-max-depth=*)
-      WORKSPACE_MAX_DEPTH="${1#*=}"
+    --projects-max-depth=*)
+      PROJECTS_MAX_DEPTH="${1#*=}"
       shift
       ;;
     --*)
@@ -193,9 +200,9 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-case "$WORKSPACE_MAX_DEPTH" in
+case "$PROJECTS_MAX_DEPTH" in
   ''|*[!0-9]*)
-    echo "ERROR: --workspace-max-depth must be a positive integer" >&2
+    echo "ERROR: --projects-max-depth must be a positive integer" >&2
     exit 2
     ;;
 esac
@@ -252,7 +259,14 @@ detect_newest_config_dir() {
     fi
   done
   shopt -u nullglob
-  [[ -n "$newest" ]] && basename "$newest"
+  # Explicit `return 0`: a trailing `[[ ... ]] && basename` returns 1 when no
+  # directory was found, which under `set -e` kills the caller at the
+  # IDE_PRODUCT assignment below and makes its "no config dir" error handler
+  # unreachable. Printing nothing IS the "none found" signal.
+  if [[ -n "$newest" ]]; then
+    basename "$newest"
+  fi
+  return 0
 }
 
 # Active paths from IntelliJ IDEA -> Help -> Diagnostic Tools -> Special Files and Folders.
@@ -280,8 +294,8 @@ IDE_PLUGINS_MAIN_DIR="${IDE_PLUGINS_MAIN_DIR:-$IDE_CONFIG_DIR/plugins}"
 IDE_PLUGINS_PREINSTALLED_DIR="${IDE_PLUGINS_PREINSTALLED_DIR:-$IDE_APP/Contents/plugins}"
 
 # IntelliJ's PROJECT BasePath in Special Files and Folders is only the currently open project.
-# For backup coverage, use the broader workspace root by default.
-IDE_PROJECT_BASEPATH="${IDE_PROJECT_BASEPATH:-$WORKSPACE_ROOT}"
+# For backup coverage, use the broader projects root by default.
+IDE_PROJECT_BASEPATH="${IDE_PROJECT_BASEPATH:-$PROJECTS_ROOT}"
 IDE_SYSTEM_DIR="${IDE_SYSTEM_DIR:-$HOME/Library/Caches/JetBrains/$IDE_PRODUCT}"
 
 path_type() {
@@ -324,12 +338,12 @@ safe_find_one_level() {
   } >> "$out"
 }
 
-make_relative_to_workspace_root() {
+make_relative_to_projects_root() {
   local path="$1"
-  if [[ "$path" == "$WORKSPACE_ROOT" ]]; then
+  if [[ "$path" == "$PROJECTS_ROOT" ]]; then
     printf '.'
-  elif [[ "$path" == "$WORKSPACE_ROOT"/* ]]; then
-    printf '%s' "${path#"$WORKSPACE_ROOT"/}"
+  elif [[ "$path" == "$PROJECTS_ROOT"/* ]]; then
+    printf '%s' "${path#"$PROJECTS_ROOT"/}"
   else
     basename "$path"
   fi
@@ -339,7 +353,7 @@ sanitize_for_manifest_label() {
   # Keep the real relative path in manifests. This helper is only used where a label cannot be empty.
   local value="$1"
   if [[ -z "$value" || "$value" == "." ]]; then
-    basename "$WORKSPACE_ROOT"
+    basename "$PROJECTS_ROOT"
   else
     printf '%s' "$value"
   fi
@@ -388,7 +402,7 @@ write_intellij_secret_template() {
     echo "#   [x] pattern"
     echo "#"
     echo "# Files matching a checked pattern under the JetBrains config dirs and the"
-    echo "# workspace root are copied into the encrypted-secrets tree so Phase 3B"
+    echo "# projects root are copied into the encrypted-secrets tree so Phase 3B"
     echo "# sweeps them. Nothing is staged unless you check it."
     echo "#"
     echo "# Generated: $(date '+%Y-%m-%d %H:%M:%S')"
@@ -429,6 +443,51 @@ load_intellij_secret_patterns() {
 
 # Build a find name/path predicate (FIND_PRED) from SELECTED_PATTERNS. A pattern
 # containing "/" is matched as a path suffix; everything else as a basename.
+# The patterns that describe IntelliJ's OWN files. Used for the project scan,
+# which walks $PROJECTS_ROOT -- the same tree backup-repos.sh walks, since the
+# entrypoint defaults it to $GIT_WORK_REPO_ROOT.
+#
+# The generic half of the seed list (*credential*, *secret*, *.pem, *.key, ...)
+# matches ordinary repo files. Those are gitignored, so Phase 2A stages them
+# into secrets-encrypted/repos-gitignored/ after a review this scan does not
+# perform -- capturing them here put the same file in the Phase 3B DMG twice,
+# from two staging areas, only one of them reviewed. Inside the JetBrains config
+# directory the generic patterns still apply in full: everything there is
+# IntelliJ's.
+INTELLIJ_OWNED_PATTERNS=(
+  'http-client.env.json'
+  'http-client.private.env.json'
+  '*.env.json'
+  '*.private.env.json'
+  'dataSources.local.xml'
+  'dataSourcesLocal.xml'
+)
+
+FIND_PRED_IDE=()
+
+# Build FIND_PRED_IDE from the reviewed selections, intersected with the
+# IDE-owned set. The operator still opts in per pattern; this only bounds which
+# of their selections reach outside IntelliJ's own directories.
+build_find_predicate_ide_owned() {
+  local p owned first=true
+  FIND_PRED_IDE=()
+  (( ${#SELECTED_PATTERNS[@]} > 0 )) || return 0
+  for p in "${SELECTED_PATTERNS[@]}"; do
+    for owned in "${INTELLIJ_OWNED_PATTERNS[@]}"; do
+      if [[ "$p" == "$owned" ]]; then
+        if [[ "$first" == true ]]; then
+          FIND_PRED_IDE+=(-name "$p"); first=false
+        else
+          FIND_PRED_IDE+=(-o -name "$p")
+        fi
+        break
+      fi
+    done
+  done
+  return 0
+}
+
+
 build_find_predicate() {
   FIND_PRED=()
   local first=1 p flag
@@ -449,15 +508,42 @@ build_find_predicate() {
 
 # Record and copy one matched secret file into the encrypted-secrets tree.
 # Identical filenames recur across products/modules, so each file is placed under
-# by-source/<path-below-home> to stay unique and keep provenance.
+# a bucket named for the root it came from, keeping provenance and uniqueness.
+# $1 = source file, $2 = bucket ("ide-config" or "projects").
+#
+# Each bucket is named for the root it mirrors, and the path under it is
+# relative to THAT root, not to $HOME. A JetBrains options file lands at
+# ide-config/<product>/options/... rather than
+# the old flat by-root mirror rooted at $HOME.
+#
+# Path mirroring itself is load-bearing: one credentials.yml per repo would
+# collapse into a single file if these were keyed by basename.
 stage_one_intellij_secret() {
   local src="$1"
-  local rel dst
+  local bucket="${2:-projects}"
+  local rel dst root=""
   [[ -f "$src" ]] || return 0
+
+  # Finder metadata is not a secret and has no business in the encrypted DMG.
+  [[ "$(basename "$src")" == ".DS_Store" ]] && return 0
+
   printf '%s\n' "$src" >> "$INTELLIJ_SECRET_CANDIDATES"
-  rel="${src#"$HOME"/}"
+
+  case "$bucket" in
+    ide-config) root="$JETBRAINS_ROOT" ;;
+    projects)   root="$PROJECTS_ROOT" ;;
+  esac
+
+  if [[ -n "$root" && "$src" == "$root"/* ]]; then
+    rel="${src#"$root"/}"
+  else
+    # Neither root matched: keep the file, but somewhere obviously unusual
+    # rather than silently misfiled under a bucket it did not come from.
+    bucket="other"
+    rel="${src#"$HOME"/}"
+  fi
   rel="${rel#/}"
-  dst="$INTELLIJ_SECRETS_DEST/by-source/$rel"
+  dst="$INTELLIJ_SECRETS_DEST/$bucket/$rel"
   mkdir -p "$(dirname "$dst")"
   if cp -p "$src" "$dst" 2>/dev/null; then
     printf '%s\t%s\n' "$src" "$dst" >> "$INTELLIJ_SECRET_STAGED"
@@ -481,13 +567,13 @@ INTELLIJ_EXCLUDE_SEED=(
 
 # Secret-shape floor: always excluded from the clear-text copy even when no
 # review template exists, so credential-shaped files never leak into plaintext.
-INTELLIJ_SECRET_EXCLUDE_FLOOR=(
-  'http-client.env.json'
-  'http-client.private.env.json'
-  '*.env.json'
-  'dataSources.local.xml'
-  'dataSourcesLocal.xml'
-)
+#
+# This is the SEED LIST ITSELF, not a subset of it. The floor only applies on a
+# first run, before a review template exists to populate ALL_PATTERNS — which is
+# exactly the run that has had no human review, so it is the run that most needs
+# the full set. A narrower floor silently copied *.pem, *.key, *credential* and
+# the rest into app-settings-backup/, which Phase 3B never encrypts.
+INTELLIJ_SECRET_EXCLUDE_FLOOR=( "${INTELLIJ_SECRET_SEED_PATTERNS[@]}" )
 
 RSYNC_EXCLUDE_ARGS=()
 
@@ -572,10 +658,10 @@ Active IDE product (auto-detected as the most recently modified config directory
 $IDE_PRODUCT
 \`\`\`
 
-Workspace root scanned for project-level IntelliJ metadata:
+Projects root scanned for project-level IntelliJ metadata:
 
 \`\`\`text
-$WORKSPACE_ROOT
+$PROJECTS_ROOT
 \`\`\`
 
 Generated: $(date '+%Y-%m-%d %H:%M:%S')
@@ -599,27 +685,27 @@ $ARTIFACT_ROOT/app-settings-backup/intellij/
 
 - Project-level .idea metadata is copied under project-metadata/.
 - IntelliJ diagnostic logs are copied under logs/.
-- Secret files matching your reviewed patterns are staged into secrets-encrypted/intellij/by-source/ and listed in manifests/intellij-secrets-staged.tsv; the consolidated secrets DMG workflow encrypts them.
+- Secret files matching your reviewed patterns are staged into secrets-encrypted/intellij/{ide-config,projects}/ and listed in manifests/intellij-secrets-staged.tsv; the consolidated secrets DMG workflow encrypts them.
 EOF_README
 
 CONFIG_DIRS_FILE="$DEST/manifests/intellij-config-dirs.tsv"
 SPECIAL_PATHS_FILE="$DEST/manifests/special-files-and-folders.tsv"
 SPECIAL_STATUS_FILE="$DEST/manifests/special-paths-status.tsv"
 SPECIAL_LISTING_FILE="$DEST/manifests/special-paths-listing.txt"
-WORKSPACE_DIRS_FILE="$DEST/manifests/workspace-projects.tsv"
-WORKSPACE_STATUS_FILE="$DEST/manifests/workspace-root-status.tsv"
+PROJECTS_DIRS_FILE="$DEST/manifests/projects.tsv"
+PROJECTS_STATUS_FILE="$DEST/manifests/projects-root-status.tsv"
 INTELLIJ_SECRET_CANDIDATES="$DEST/manifests/intellij-secret-candidates.txt"
 INTELLIJ_SECRET_STAGED="$DEST/manifests/intellij-secrets-staged.tsv"
 FILES_FILE="$DEST/manifests/files-backed-up.txt"
 SUMMARY_FILE="$DEST/manifests/summary.txt"
 SORT_FILE="$DEST/manifests/intellij-config-dirs-sort.tmp"
-WORKSPACE_SORT_FILE="$DEST/manifests/workspace-projects-sort.tmp"
+PROJECTS_SORT_FILE="$DEST/manifests/projects-sort.tmp"
 
 : > "$CONFIG_DIRS_FILE"
 : > "$INTELLIJ_SECRET_CANDIDATES"
 printf 'source_path\tstaged_path\n' > "$INTELLIJ_SECRET_STAGED"
 : > "$SORT_FILE"
-: > "$WORKSPACE_SORT_FILE"
+: > "$PROJECTS_SORT_FILE"
 : > "$SPECIAL_LISTING_FILE"
 
 cat > "$SPECIAL_PATHS_FILE" <<EOF_SPECIAL
@@ -637,7 +723,7 @@ Options directory	$IDE_OPTIONS_DIR
 PLUGINS Main directory	$IDE_PLUGINS_MAIN_DIR
 PLUGINS PreInstalled directory	$IDE_PLUGINS_PREINSTALLED_DIR
 PROJECT BasePath used for backup	$IDE_PROJECT_BASEPATH
-Workspace root scanned for all projects	$WORKSPACE_ROOT
+Projects root scanned for all projects	$PROJECTS_ROOT
 System directory	$IDE_SYSTEM_DIR
 EOF_SPECIAL
 
@@ -647,11 +733,11 @@ while IFS=$'\t' read -r desc path; do
   printf '%s\t%s\t%s\t%s\n' "$desc" "$path" "$(path_type "$path")" "$(path_size "$path")" >> "$SPECIAL_STATUS_FILE"
 done < "$SPECIAL_PATHS_FILE"
 
-printf 'Workspace root\t%s\n' "$WORKSPACE_ROOT" > "$WORKSPACE_STATUS_FILE"
-printf 'Workspace root type\t%s\n' "$(path_type "$WORKSPACE_ROOT")" >> "$WORKSPACE_STATUS_FILE"
-printf 'Workspace root size\t%s\n' "$(path_size "$WORKSPACE_ROOT")" >> "$WORKSPACE_STATUS_FILE"
-printf 'Workspace max depth\t%s\n' "$WORKSPACE_MAX_DEPTH" >> "$WORKSPACE_STATUS_FILE"
-printf 'Skip workspaces\t%s\n' "$SKIP_WORKSPACES" >> "$WORKSPACE_STATUS_FILE"
+printf 'Projects root\t%s\n' "$PROJECTS_ROOT" > "$PROJECTS_STATUS_FILE"
+printf 'Projects root type\t%s\n' "$(path_type "$PROJECTS_ROOT")" >> "$PROJECTS_STATUS_FILE"
+printf 'Projects root size\t%s\n' "$(path_size "$PROJECTS_ROOT")" >> "$PROJECTS_STATUS_FILE"
+printf 'Workspace max depth\t%s\n' "$PROJECTS_MAX_DEPTH" >> "$PROJECTS_STATUS_FILE"
+printf 'Skip project scan\t%s\n' "$SKIP_PROJECT_SCAN" >> "$PROJECTS_STATUS_FILE"
 
 safe_find_one_level "$IDE_BIN_DIR" "Bin directory" "$SPECIAL_LISTING_FILE"
 safe_find_one_level "$IDE_CONFIG_DIR" "Config directory" "$SPECIAL_LISTING_FILE"
@@ -661,7 +747,7 @@ safe_find_one_level "$IDE_OPTIONS_DIR" "Options directory" "$SPECIAL_LISTING_FIL
 safe_find_one_level "$IDE_PLUGINS_MAIN_DIR" "PLUGINS Main directory" "$SPECIAL_LISTING_FILE"
 safe_find_one_level "$IDE_PLUGINS_PREINSTALLED_DIR" "PLUGINS PreInstalled directory" "$SPECIAL_LISTING_FILE"
 safe_find_one_level "$IDE_PROJECT_BASEPATH" "PROJECT BasePath used for backup" "$SPECIAL_LISTING_FILE"
-safe_find_one_level "$WORKSPACE_ROOT" "Workspace root scanned for all projects" "$SPECIAL_LISTING_FILE"
+safe_find_one_level "$PROJECTS_ROOT" "Projects root scanned for all projects" "$SPECIAL_LISTING_FILE"
 safe_find_one_level "$IDE_SYSTEM_DIR" "System directory" "$SPECIAL_LISTING_FILE"
 
 # Choose config directories to back up.
@@ -740,7 +826,7 @@ copy_project_idea_if_exists() {
   local project_dest
 
   project_dir="$(dirname "$idea_dir")"
-  rel="$(make_relative_to_workspace_root "$project_dir")"
+  rel="$(make_relative_to_projects_root "$project_dir")"
   label="$(sanitize_for_manifest_label "$rel")"
   project_dest="$DEST/project-metadata/$rel"
 
@@ -749,7 +835,7 @@ copy_project_idea_if_exists() {
 
   rsync -aE ${RSYNC_EXCLUDE_ARGS[@]+"${RSYNC_EXCLUDE_ARGS[@]}"} "$idea_dir/" "$project_dest/.idea/"
 
-  printf '%s\t%s\t%s\n' "$rel" "$project_dir" "$idea_dir" >> "$WORKSPACE_DIRS_FILE"
+  printf '%s\t%s\t%s\n' "$rel" "$project_dir" "$idea_dir" >> "$PROJECTS_DIRS_FILE"
 }
 
 # Resolve the reviewed IntelliJ secret patterns before scanning. Mirrors
@@ -795,26 +881,26 @@ while IFS=$'\t' read -r _mtime config_dir; do
 
   if [[ ${#FIND_PRED[@]} -gt 0 ]]; then
     while IFS= read -r secret_file; do
-      stage_one_intellij_secret "$secret_file"
+      stage_one_intellij_secret "$secret_file" ide-config
     done < <(find "$config_dir" -type f \( "${FIND_PRED[@]}" \) -print 2>/dev/null)
   fi
 
 done < <(sort -rn "$SORT_FILE")
 
-# Copy project-level IntelliJ metadata for every workspace/project under the workspace root.
+# Copy project-level IntelliJ metadata for every project under the projects root.
 # IntelliJ's Special Files and Folders PROJECT BasePath only reflects the currently open project,
-# so this separate scan is what ensures all workspaces are represented.
-printf 'relative_project_path\tproject_path\tidea_dir\n' > "$WORKSPACE_DIRS_FILE"
-WORKSPACE_COUNT=0
-if [[ "$SKIP_WORKSPACES" -eq 0 ]]; then
-  if [[ -n "$WORKSPACE_ROOT" && -d "$WORKSPACE_ROOT" ]]; then
+# so this separate scan is what ensures all projects are represented.
+printf 'relative_project_path\tproject_path\tidea_dir\n' > "$PROJECTS_DIRS_FILE"
+PROJECTS_COUNT=0
+if [[ "$SKIP_PROJECT_SCAN" -eq 0 ]]; then
+  if [[ -n "$PROJECTS_ROOT" && -d "$PROJECTS_ROOT" ]]; then
     while IFS= read -r idea_dir; do
       [[ -d "$idea_dir" ]] || continue
       project_dir="$(dirname "$idea_dir")"
-      printf '%s\t%s\n' "$(mtime_epoch "$project_dir")" "$idea_dir" >> "$WORKSPACE_SORT_FILE"
+      printf '%s\t%s\n' "$(mtime_epoch "$project_dir")" "$idea_dir" >> "$PROJECTS_SORT_FILE"
     done < <(
-      find "$WORKSPACE_ROOT" \
-        -maxdepth "$WORKSPACE_MAX_DEPTH" \
+      find "$PROJECTS_ROOT" \
+        -maxdepth "$PROJECTS_MAX_DEPTH" \
         -type d \
         -name '.idea' \
         -not -path '*/.git/*' \
@@ -829,22 +915,23 @@ if [[ "$SKIP_WORKSPACES" -eq 0 ]]; then
         -print 2>/dev/null
     )
 
-    if [[ -s "$WORKSPACE_SORT_FILE" ]]; then
+    if [[ -s "$PROJECTS_SORT_FILE" ]]; then
       while IFS=$'\t' read -r _mtime idea_dir; do
         [[ -d "$idea_dir" ]] || continue
         copy_project_idea_if_exists "$idea_dir"
-        WORKSPACE_COUNT=$((WORKSPACE_COUNT + 1))
-      done < <(sort -rn "$WORKSPACE_SORT_FILE")
+        PROJECTS_COUNT=$((PROJECTS_COUNT + 1))
+      done < <(sort -rn "$PROJECTS_SORT_FILE")
     fi
 
-    # Stage project-level secrets matching the reviewed patterns under workspaces.
-    if [[ ${#FIND_PRED[@]} -gt 0 ]]; then
+    # Stage project-level secrets found under the projects root.
+      build_find_predicate_ide_owned
+    if [[ ${#FIND_PRED_IDE[@]} -gt 0 ]]; then
       while IFS= read -r secret_file; do
-        stage_one_intellij_secret "$secret_file"
+        stage_one_intellij_secret "$secret_file" projects
       done < <(
-        find "$WORKSPACE_ROOT" \
-          -maxdepth "$WORKSPACE_MAX_DEPTH" \
-          -type f \( "${FIND_PRED[@]}" \) \
+        find "$PROJECTS_ROOT" \
+          -maxdepth "$PROJECTS_MAX_DEPTH" \
+          -type f \( "${FIND_PRED_IDE[@]}" \) \
           -not -path '*/.git/*' \
           -not -path '*/node_modules/*' \
           -not -path '*/.gradle/*' \
@@ -857,10 +944,10 @@ if [[ "$SKIP_WORKSPACES" -eq 0 ]]; then
           -print 2>/dev/null
       )
     fi
-  elif [[ -z "$WORKSPACE_ROOT" ]]; then
-    echo "NOTE: No workspace root set, skipping project-level workspace scan. Pass --workspace-root or export INTELLIJ_WORKSPACE_ROOT." >&2
+  elif [[ -z "$PROJECTS_ROOT" ]]; then
+    echo "NOTE: No projects root set, skipping the project-level scan. Pass --projects-root or export INTELLIJ_PROJECTS_ROOT." >&2
   else
-    echo "WARNING: Workspace root not found, skipping project-level workspace scan: $WORKSPACE_ROOT" >&2
+    echo "WARNING: Projects root not found, skipping the project-level scan: $PROJECTS_ROOT" >&2
   fi
 fi
 
@@ -880,7 +967,7 @@ else
   } > "$DEST/logs/system-cache-not-copied.txt"
 fi
 
-rm -f "$SORT_FILE" "$WORKSPACE_SORT_FILE"
+rm -f "$SORT_FILE" "$PROJECTS_SORT_FILE"
 sort -u "$INTELLIJ_SECRET_CANDIDATES" -o "$INTELLIJ_SECRET_CANDIDATES"
 find "$DEST" -type f | sort > "$FILES_FILE"
 
@@ -892,9 +979,9 @@ JetBrains root: $JETBRAINS_ROOT
 Active IDE product (auto-detected): $IDE_PRODUCT
 Active config directory: $IDE_CONFIG_DIR
 Config directories backed up: $SORTED_COUNT
-Workspace root scanned: $WORKSPACE_ROOT
-Workspace max depth: $WORKSPACE_MAX_DEPTH
-Project-level .idea workspaces backed up: $WORKSPACE_COUNT
+Projects root scanned: $PROJECTS_ROOT
+Workspace max depth: $PROJECTS_MAX_DEPTH
+Project-level .idea directories backed up: $PROJECTS_COUNT
 Include .idea/shelf: $INCLUDE_SHELF
 Files copied: $(wc -l < "$FILES_FILE" | tr -d ' ')
 IntelliJ secret candidates matched: $(wc -l < "$INTELLIJ_SECRET_CANDIDATES" | tr -d ' ')
@@ -909,16 +996,16 @@ Special Files and Folders manifests:
   $SPECIAL_LISTING_FILE
 
 Project metadata manifests:
-  $WORKSPACE_STATUS_FILE
-  $WORKSPACE_DIRS_FILE
+  $PROJECTS_STATUS_FILE
+  $PROJECTS_DIRS_FILE
 
 Coverage check:
-  awk -F '\t' 'FNR > 1 {print \$1}' "$WORKSPACE_DIRS_FILE" | sort
+  awk -F '\t' 'FNR > 1 {print \$1}' "$PROJECTS_DIRS_FILE" | sort
 
 Project BasePath note:
   IntelliJ's Special Files and Folders PROJECT BasePath changes depending on which project/window
-  is active. This script uses the broader workspace root for coverage by default:
-    $WORKSPACE_ROOT
+  is active. This script uses the broader projects root for coverage by default:
+    $PROJECTS_ROOT
 
 Next step:
   Review ${INTELLIJ_SECRETS_TEMPLATE:-the IntelliJ secret review template} and check the patterns
@@ -936,7 +1023,7 @@ cat "$SUMMARY_FILE"
 if [[ "$INTELLIJ_STAGED_COUNT" -gt 0 ]]; then
   echo
   echo "Staged $INTELLIJ_STAGED_COUNT IntelliJ secret file(s) into:"
-  echo "  $INTELLIJ_SECRETS_DEST/by-source/"
+  echo "  $INTELLIJ_SECRETS_DEST/{ide-config,projects}/"
   echo "Manifest: $INTELLIJ_SECRET_STAGED"
 elif [[ -n "$INTELLIJ_SECRETS_TEMPLATE" && -f "$INTELLIJ_SECRETS_TEMPLATE" ]]; then
   echo
