@@ -184,7 +184,7 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 
 - **Is all manual secret staging done?** Build once, after Chrome, Postman, Raycast, licenses, and Keychain exports are in place — not once per export. Adding a secret later means building again.
 - **Refresh the certificate review or freeze it?** The default build reruns the Phase 3A scan to refresh the review artifacts; pass `--skip-cert-review` to leave the existing review files untouched.
-- **Was a rebuild flagged?** Phase 3A writes `secrets-encrypted/extra-secrets-certs-review/state/phase2f-rerun-required-*.md` when certificate/Keychain material changed since its last run. If that marker is present — or you staged anything new after a prior DMG — this phase must run again so the newest DMG includes it. This build supersedes the marker.
+- **Was a rebuild flagged?** Phase 3A writes `secrets-encrypted/extra-secrets-certs-review/state/secrets-dmg-rebuild-required-*.md` when certificate/Keychain material changed since its last run. If that marker is present — or you staged anything new after a prior DMG — this phase must run again so the newest DMG includes it. This build supersedes the marker.
 - **Not cleaning up yet.** Cleanup is a separate, later step. Do not delete any loose staging until the DMG is built, mounted, and verified.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -219,7 +219,7 @@ Before building, confirm the manual exports you meant to include are actually st
 ./bin/create-secrets-dmg.sh verify-staging
 ```
 
-It enumerates **every** folder under `secrets-encrypted/` and reports each as STAGED or EMPTY, flags the `cloud/` exclusion and the `phase2f-rerun-required` marker, and writes a timestamped report under `reimage-prep-checks/secrets-dmg/`. Because it reads what is actually on disk, it never drifts as the app set grows.
+It enumerates **every** folder under `secrets-encrypted/` and reports each as STAGED or EMPTY, flags the `cloud/` exclusion and the `secrets-dmg-rebuild-required` marker, and writes a timestamped report under `reimage-prep-checks/secrets-dmg/`. Because it reads what is actually on disk, it never drifts as the app set grows.
 
 Act on the report: if an export you intended shows EMPTY, stage it into the matching `secrets-encrypted/<category>/` folder before building. An intentionally skipped category is fine — the report's manual checklist is where you confirm that. Anything you staged **outside** `secrets-encrypted/` (a custom app) is not visible to the script; verify it by hand.
 
@@ -339,7 +339,7 @@ The categories owned by the live-source captures above (`ssh/`, `gnupg/`, `docke
 
 Phase 3A organizes these under by-function subfolders — `discovery/` (scan reports), `plan/` (the normalized plan, filtered feeds, and `plan/proposed-staged-certs/`), and `decisions/` (`keychain-manual-export-checklist-*.md.proposed`, `cert-restore-notes-*.md.proposed`) — alongside a `MANIFEST.md`. The full catalog is maintained in [[stage-certs-keychain#Generated Review Artifacts|Stage Certificates and Keychain → Generated Review Artifacts]]; this phase stages the whole tree recursively rather than re-listing it, so that layout can change without touching this runbook.
 
-The `state/` subfolder is regenerable workflow control — a cross-run staging-state pointer plus the `phase2f-rerun-required-*.md` marker — and is deliberately **not** staged into the DMG; the rerun check reads that marker off the live drive, not the image, so leaving it out is safe. The public decision log `public-certs/certs/keychain-cert-export-inventory-*.md` is also left out: `public-certs/` is reference material, and only `secrets-encrypted/` rides into the encrypted image.
+The `state/` subfolder is regenerable workflow control — a cross-run staging-state pointer plus the `secrets-dmg-rebuild-required-*.md` marker — and is deliberately **not** staged into the DMG; the rerun check reads that marker off the live drive, not the image, so leaving it out is safe. The public decision log `public-certs/certs/keychain-cert-export-inventory-*.md` is also left out: `public-certs/` is reference material, and only `secrets-encrypted/` rides into the encrypted image.
 
 ### Verification Reports
 

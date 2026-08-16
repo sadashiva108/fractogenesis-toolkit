@@ -142,7 +142,7 @@ cert_keychain_stage_bucket_for_path() {
   esac
 }
 
-cert_keychain_is_phase2f_auto_captured_path() {
+cert_keychain_is_secrets_dmg_captured_path() {
   local f="$1"
 
   case "$f" in
@@ -267,17 +267,17 @@ cert_keychain_classify_file() {
 
   case "$f" in
     "$HOME/.ssh/"*|"$HOME/.gnupg/"*|"$HOME/.docker/"*|"$HOME/.kube/"*|"$HOME/.aws/"*|"$HOME/.azure/"*|"$HOME/.config/gcloud/"*|"$HOME/.config/gh/"*|"$HOME/.m2/"*|"$HOME/.gradle/"*|"$HOME/.npmrc"|"$HOME/.netrc"|"$HOME/.pypirc"|"$HOME/.git-credentials")
-      action="captured-in-phase2f"
+      action="captured-by-secrets-dmg"
       destination="-"
       note="Phase 3C already captures this credential-bearing path in the consolidated secrets DMG."
       ;;
     "$HOME/.keystore"|"$HOME"/*.jks)
-      action="captured-in-phase2f"
+      action="captured-by-secrets-dmg"
       destination="-"
       note="Phase 3C already captures ~/.keystore and home-root .jks files."
       ;;
     "$HOME/Desktop/"*|"$HOME/Downloads/"*)
-      action="captured-in-phase2f"
+      action="captured-by-secrets-dmg"
       destination="-"
       note="Phase 3C already captures matching cert and keystore files from Desktop and Downloads."
       ;;
@@ -286,7 +286,7 @@ cert_keychain_classify_file() {
   if [[ "$base" == "jssecacerts" ]]; then
     case "$f" in
       "${JAVA_HOME:-__unset__}"/lib/security/jssecacerts|/Library/Java/JavaVirtualMachines/*/Contents/Home/lib/security/jssecacerts|/Applications/*.app/Contents/jbr/Contents/Home/lib/security/jssecacerts|/Applications/*.app/Contents/jbr/lib/security/jssecacerts)
-        action="captured-in-phase2f"
+        action="captured-by-secrets-dmg"
         destination="-"
         note="Phase 3C already captures Java jssecacerts from JAVA_HOME, installed JDKs, and IntelliJ JBR locations."
         ;;
@@ -303,10 +303,10 @@ cert_keychain_append_tsv_row() {
 }
 
 
-cert_keychain_update_phase2f_rerun_flag() {
+cert_keychain_update_secrets_dmg_rebuild_flag() {
   mkdir -p "$EXTRA_CERTS_REVIEW_DIR/state"
   local state_file="$EXTRA_CERTS_REVIEW_DIR/state/certs-staging-state-latest.tsv"
-  local flag_file="$EXTRA_CERTS_REVIEW_DIR/state/phase2f-rerun-required-$STAMP.md"
+  local flag_file="$EXTRA_CERTS_REVIEW_DIR/state/secrets-dmg-rebuild-required-$STAMP.md"
 
   python3 - "$SECRETS_DIR/certs" "$state_file" "$flag_file" <<'PY_CERT_STATE'
 import datetime as dt
@@ -319,7 +319,7 @@ state_file = Path(sys.argv[2])
 flag_file = Path(sys.argv[3])
 
 IGNORE_NAMES = {".DS_Store", "README.md"}
-IGNORE_PREFIXES = ("phase2f-rerun-required-",)
+IGNORE_PREFIXES = ("secrets-dmg-rebuild-required-",)
 
 
 def should_track(path: Path) -> bool:
@@ -729,7 +729,7 @@ write_extra_certs_review() {
           -iname '*.key' \
         \) -print0 2>/dev/null || true; } |
       while IFS= read -r -d '' f; do
-        if cert_keychain_is_phase2f_auto_captured_path "$f"; then
+        if cert_keychain_is_secrets_dmg_captured_path "$f"; then
           continue
         fi
         cert_keychain_write_stat_row "$f"
@@ -746,7 +746,7 @@ write_extra_certs_review() {
   } > "$out/filesystem-cert-material-$STAMP.tsv"
 
   tail -n +2 "$out/filesystem-cert-material-$STAMP.tsv" >> "$discovered_catalog"
-  awk -F $'\t' 'NR > 1 && $6 != "likely-skip" && $6 != "captured-in-phase2f" { print }' "$out/filesystem-cert-material-$STAMP.tsv" >> "$stage_candidates"
+  awk -F $'\t' 'NR > 1 && $6 != "likely-skip" && $6 != "captured-by-secrets-dmg" { print }' "$out/filesystem-cert-material-$STAMP.tsv" >> "$stage_candidates"
 
   {
     echo "# Java Truststore Candidates"
@@ -769,7 +769,7 @@ write_extra_certs_review() {
       -path "$HOME/Library/Developer/Xcode/DerivedData" -prune -o \
       -type f \( -name 'cacerts' -o -name 'jssecacerts' -o -name '*.jks' -o -name '*.p12' -o -name '*.pfx' \) \
       -print 2>/dev/null | while IFS= read -r f; do
-        if cert_keychain_is_phase2f_auto_captured_path "$f"; then
+        if cert_keychain_is_secrets_dmg_captured_path "$f"; then
           continue
         fi
         printf '%s\n' "$f"
@@ -802,7 +802,7 @@ write_extra_certs_review() {
         "$SECRETS_DIR/package-managers" \
         "$SECRETS_DIR/cloud"; do
           if [[ -e "$f" ]]; then
-            if cert_keychain_is_phase2f_auto_captured_path "$f"; then
+            if cert_keychain_is_secrets_dmg_captured_path "$f"; then
               continue
             fi
             cert_keychain_write_stat_row "$f"
@@ -819,7 +819,7 @@ write_extra_certs_review() {
 - `review-public-cert`: usually public certificate material; stage only if it is useful local trust or restore evidence.
 - `review-truststore`: keep only when it is a local or project-specific truststore, not a stock bundle.
 - `stage-if-needed`: likely secret-bearing or difficult to recreate; preserve if still required.
-- `captured-in-phase2f`: already picked up by the consolidated secrets DMG workflow; do not manually re-stage it in Phase 3A.
+- `captured-by-secrets-dmg`: already picked up by the consolidated secrets DMG workflow; do not manually re-stage it in Phase 3A.
 - `likely-skip`: usually regenerated by reinstalling the tool, JDK, or application.
 CATEGORY_RULES
 
@@ -845,7 +845,7 @@ Use `.p12` or `.pfx` when the export includes a private key. Use `.cer` or `.pem
 Do not store the export password in this folder. Save it in LastPass or another approved password manager.
 KEYCHAIN_EXPORT_README
 
-  cert_keychain_update_phase2f_rerun_flag
+  cert_keychain_update_secrets_dmg_rebuild_flag
 
   write_review_manifest
 

@@ -153,6 +153,8 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 > │   ├── bookmarks_YYYYMMDD-HHMMSS.html
 > │   ├── chrome-export-inventory-YYYYMMDD-HHMMSS.md
 > │   └── README.md
+> ├── claude/
+> │   └── com.anthropic.claudefordesktop.plist
 > ├── docker/
 > │   ├── settings-store.json
 > │   ├── daemon.json
@@ -163,8 +165,7 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 > ├── intellij/
 > │   ├── IntelliJIdeaYYYY.N/
 > │   │   ├── config-copy/
-> │   │   ├── scratches-and-consoles/
-> │   │   └── manifests/
+> │   │   └── scratches-and-consoles/
 > │   ├── logs/
 > │   │   ├── IntelliJIdeaYYYY.N/
 > │   │   └── system-cache-not-copied.txt
@@ -223,6 +224,8 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 > ```text
 > $REIMAGE_ARTIFACT_ROOT/home-files-backup/
 > ├── home/
+> │   ├── claude-artifacts/
+> │   ├── claude-code/
 > │   ├── Desktop/
 > │   ├── Documents/
 > │   ├── Movies/
@@ -491,6 +494,9 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 > │   └── Chrome Passwords.csv                    # if exported
 > ├── claude/
 > │   └── claude_desktop_config.json
+> ├── claude-code/
+> │   ├── .claude.json                       # MCP server definitions, account + org identifiers
+> │   └── .claude.json.bak-rally
 > ├── cli-credentials/
 > │   └── gh/
 > ├── cloud/                                      # staged by backup-home (Phase 2B); excluded from the DMG — AWS re-auth after reimage
@@ -536,7 +542,7 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 > │   │       └── proposed-staged-certs-summary-YYYYMMDD-HHMMSS.md.proposed
 > │   └── state/                             # scan writes here
 > │       ├── certs-staging-state-latest.tsv
-> │       └── phase2f-rerun-required-YYYYMMDD-HHMMSS.md
+> │       └── secrets-dmg-rebuild-required-YYYYMMDD-HHMMSS.md
 > ├── git/                                   # created by create-secrets-dmg (Phase 3C); ~/.git-credentials if present
 > ├── gnupg/
 > ├── intellij/                                # staged by backup-intellij (Phase 2D); buckets named for the root each file came from

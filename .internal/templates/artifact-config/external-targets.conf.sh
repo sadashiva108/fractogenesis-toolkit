@@ -18,6 +18,9 @@
 # secrets-encrypted/ for the DMG to encrypt.
 
 EXTERNAL_TARGETS=(
+  "Copilot Global Cfg  | $HOME/.config/github-copilot/intellij/ | dotfiles/copilot-global  | dotfiles  | Hand-authored global Copilot instructions and mcp.json — the github-copilot/ exclude drops the rest as cache"
+  "Claude Artifacts    | $HOME/Claude/                        | home/claude-artifacts    | home      | Claude Desktop artifact exports — authored content, not regenerable"
+  "Claude Code        | $HOME/.claude/                       | home/claude-code         | home      | Claude Code CLI state — per-project transcripts and memory, plugins, settings"
 
   # -- Home dirs ---------------------------------------------------------------
   "Documents           | $HOME/Documents/                     | home/Documents           | home      | Work documents, project notes, architecture docs, and personal files"

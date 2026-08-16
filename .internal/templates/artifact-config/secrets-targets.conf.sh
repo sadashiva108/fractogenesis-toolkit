@@ -9,6 +9,8 @@
 # by BACKUP_JAVA_JSSECACERTS below instead of this static array.
 
 SECRETS_TARGETS=(
+  "claude-code       | $HOME/.claude.json                  | claude-code/.claude.json     | Claude Code CLI config — MCP server definitions, account and org identifiers, MCP OAuth client IDs"
+  "claude-code-bak   | $HOME/.claude.json.bak-rally        | claude-code/.claude.json.bak-rally | Pre-rally-MCP backup of the Claude Code config"
   "ssh               | $HOME/.ssh/                         | ssh                          | SSH private keys and config — chmod 700/600 preserved"
   "gnupg             | $HOME/.gnupg/                       | gnupg                        | GPG private keys — permanent loss without backup; random_seed excluded"
   "docker            | $HOME/.docker/config.json           | docker/config.json           | Docker auth config — credential helpers, auth tokens, and registry login state"

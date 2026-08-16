@@ -178,9 +178,9 @@ supported_apps_registry() {
     "yes" "Common" "backup-apps.md" "Collections, environments, or Vault state matter." "/Applications/Postman.app;$HOME/Applications/Postman.app" "$HOME/Library/Application Support/Postman;$HOME/Library/Preferences/com.postmanlabs.mac.plist" \
     "-" "-"
   printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
-    "Claude" "Common" "Script — MCP config staged as secret; account via sign-in" "$r/app-settings-backup/claude/" "$r/secrets-encrypted/claude/" \
+    "Claude" "Common" "Script — preferences plist; MCP config staged as secret; account via sign-in" "$r/app-settings-backup/claude/" "$r/secrets-encrypted/claude/" \
     "yes" "Common" "backup-apps.md" "MCP server config or Claude Desktop developer settings matter." "/Applications/Claude.app;$HOME/Applications/Claude.app" "$HOME/Library/Application Support/Claude;$HOME/Library/Preferences/com.anthropic.claudefordesktop.plist" \
-    "-" "$HOME/Library/Application Support/Claude/claude_desktop_config.json"
+    "$HOME/Library/Preferences/com.anthropic.claudefordesktop.plist" "$HOME/Library/Application Support/Claude/claude_desktop_config.json"
   printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
     "draw.io" "Common" "Script — app config; diagrams restored as files" "$r/app-settings-backup/drawio/" "usually none from this runbook" \
     "yes" "Common" "backup-apps.md" "App config or custom shape libraries matter; diagrams themselves come back via Phase 2B / Git." "/Applications/draw.io.app;$HOME/Applications/draw.io.app" "$HOME/Library/Application Support/draw.io;$HOME/Library/Preferences/com.jgraph.drawio.desktop.plist" \

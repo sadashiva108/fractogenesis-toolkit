@@ -14,7 +14,7 @@ Use this as the script index for the Mac reimage workflow. The Markdown runbooks
 - [[#Script Source and Artifact Rules|Script Source and Artifact Rules]]
 - [[#Phase-to-Script Map|Phase-to-Script Map]]
 - [[#Reference-Vault Script Layout|Reference-Vault Script Layout]]
-- [[#External Backup Artifact Layout|External Backup Artifact Layout]]
+- [[#Reference-Vault Script Layout|Reference-Vault Script Layout]]
 - [[#Phase 1 Preparation Entrypoint|Phase 1 Preparation Entrypoint]]
 - [[#Pre-Image Backup Automation|Pre-Image Backup Automation]]
     - [[#Size Audit|Size Audit]]
@@ -23,6 +23,7 @@ Use this as the script index for the Mac reimage workflow. The Markdown runbooks
     - [[#Phase 2D Backup Apps|Phase 2D Backup Apps]]
     - [[#Phase 2D IntelliJ Detail|Phase 2D IntelliJ Detail]]
     - [[#Phase 3A Certificate and Keychain Staging|Phase 3A Certificate and Keychain Staging]]
+    - [[#Phase 3B Loose Secret Sweep|Phase 3B Loose Secret Sweep]]
     - [[#Phase 3C Encrypted DMG Secrets Backup|Phase 3C Encrypted DMG Secrets Backup]]
     - [[#Phase 5 Time Machine Backup and Status Capture|Phase 5 Time Machine Backup and Status Capture]]
 - [[#Separate Capture Script Reference|Separate Capture Script Reference]]
@@ -35,12 +36,13 @@ Use this as the script index for the Mac reimage workflow. The Markdown runbooks
 - [[#Post-Image Evidence Capture Automation|Post-Image Evidence Capture Automation]]
 - [[#Validation Automation|Validation Automation]]
     - [[#Phase 6B Final Pre-Image Validation|Phase 6B Final Pre-Image Validation]]
-    - [[#Phase 9 Initial Reimaged System Checklist|Phase 9 Initial Reimaged System Checklist]]
+    - [[#Phase 9 First-Boot Record|Phase 9 First-Boot Record]]
     - [[#Phase 11B Repository Restore|Phase 11B Repository Restore]]
     - [[#Phase 12 Restore-Apps Plan-Note|Phase 12 Restore-Apps Plan-Note]]
     - [[#Phase 12 Restore-IntelliJ Plan-Note|Phase 12 Restore-IntelliJ Plan-Note]]
     - [[#Phase 12 Restore-Docker Plan-Note|Phase 12 Restore-Docker Plan-Note]]
     - [[#Phase 14 Post-Image Final Validation|Phase 14 Post-Image Final Validation]]
+- [[#Environment and Repository Utilities|Environment and Repository Utilities]]
 - [[#Manual Captures That Remain Manual|Manual Captures That Remain Manual]]
 - [[#Common Run Order|Common Run Order]]
 
@@ -327,6 +329,28 @@ $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/extra-secrets-certs-review/
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
+### Phase 3B Loose Secret Sweep
+
+Two entrypoints, split so the reporting side is always safe to run. Both read the same `SECRET_SHAPES` from shared config.
+
+```bash
+./bin/report-loose-secrets.sh                    # report only; never writes to what it scans
+./bin/stage-loose-secrets.sh                     # dry run by default
+./bin/stage-loose-secrets.sh --apply             # move into the encryption boundary
+./bin/report-loose-secrets.sh --context pre-image-stage-loose-secrets-after
+```
+
+Outputs:
+
+```text
+$REIMAGE_ARTIFACT_ROOT/loose-secrets-reports/
+$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/staged-loose/
+```
+
+Run after Phase 3A and before Phase 3C: 3A can leave candidates of its own, and 3C encrypts only what is already inside `secrets-encrypted/`.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
 ### Phase 3C Encrypted DMG Secrets Backup
 
 ```bash
@@ -564,6 +588,16 @@ Post-image, use the same scenario name as the matching pre-image bundle:
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
+Quantitative rollups are produced separately from the capture itself, by a Python helper that reads the mac-memory-health output the capture leaves behind:
+
+```bash
+python3 ./bin/generate-performance-rollup-summary.py --input <performance-audit-run-dir>
+```
+
+It is owned by `capture-performance-audit.md`; run it after a capture, and again post-image so the two rollups can be compared.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
 ### Phase 4D Pre-Image Office Stability Capture
 
 Start or continue the watcher:
@@ -756,6 +790,23 @@ $REIMAGE_ARTIFACT_ROOT/reimaged-system/checklists/latest-reimage-checklist.txt
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
 ---
+
+## Environment and Repository Utilities
+
+Not phase steps. These check the setup the phases depend on, and none of them writes workflow artifacts.
+
+```bash
+./bin/setup-reimage-env.sh          # bootstrap: create reimage.env before anything else exists
+./bin/check-reimage-env.sh          # diagnostic: does reimage.env match this effort, or is it left over?
+./bin/verify-artifact-config.sh     # are the artifact-config fragments present and syntactically valid?
+./bin/verify-doc-paths.sh           # do the repository paths named in the governance docs still exist?
+```
+
+`verify-artifact-config.sh` prints a `Selected by:` line naming which fragment directory actually won — the per-machine workspace copy or the committed templates. A run that says "committed templates" verified the generic set, not yours.
+
+`verify-doc-paths.sh` is repository maintenance rather than reimage work: run it after moving or renaming anything the docs point at.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
 
 ## Manual Captures That Remain Manual
 

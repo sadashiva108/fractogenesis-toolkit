@@ -30,11 +30,11 @@ Collect and stage application state — settings, exports, inventories, and prof
     - [[#Step 4 — Run the Automated Backup|Step 4 — Run the Automated Backup]]
     - [[#Step 5 — Complete Manual Exports|Step 5 — Complete Manual Exports]]
         - [[#Chrome|Chrome]]
-        - [[#macOS Passwords (Keychain-backed)|macOS Passwords (Keychain-backed)]]
         - [[#Postman|Postman]]
         - [[#Fiddler Everywhere|Fiddler Everywhere]]
         - [[#Terminal|Terminal]]
         - [[#IntelliJ Settings Export|IntelliJ Settings Export]]
+        - [[#macOS Passwords (Keychain-backed)|macOS Passwords (Keychain-backed)]]
     - [[#Step 6 — Optional Apps|Step 6 — Optional Apps]]
     - [[#Step 7 — Verify Outputs|Step 7 — Verify Outputs]]
 - [[#Decisions|Decisions]]
@@ -46,6 +46,7 @@ Collect and stage application state — settings, exports, inventories, and prof
         - [[#TNAS PC|TNAS PC]]
         - [[#iMovie|iMovie]]
         - [[#Note-Only Apps|Note-Only Apps]]
+    - [[#BBEdit Support Folder Locations|BBEdit Support Folder Locations]]
     - [[#Optional Note Capture|Optional Note Capture]]
     - [[#Relationship to Later Phases|Relationship to Later Phases]]
 
@@ -354,7 +355,7 @@ Confirm the artifact root and state this run will use:
 Config       : <active artifact-config directory>
 Artifact root: <$REIMAGE_ARTIFACT_ROOT>
   exists              : yes
-  prepared (Phase 1)  : yes — 15 of 15 expected folders present
+  prepared (Phase 1)  : yes — 16 of 16 expected folders present
   candidate review    : none — Step 3 generates it
   selection checklist : none — Step 3 generates it
   app backup manifest : none — Step 4 writes it
@@ -451,7 +452,15 @@ Re-running candidate review is safe — it **preserves the choices you have made
 
 ### Step 4 — Run the Automated Backup
 
-Run the real backup. It reads the selection checklist you completed in Step 3 and acts only on the apps you checked — running the scripted captures for selected supported apps, creating drop-folders for selected unsupported apps, and skipping everything else. Apps you do not have are silently skipped even when checked.
+Run the real backup. It reads the selection checklist you completed in Step 3 and acts only on the apps you checked — running the scripted captures for selected supported apps, and creating a ready folder with a README for every selected app whose backup is manual or unsupported. Apps you do not have are silently skipped even when checked.
+
+**Before you run it, two things this run does not do for you.**
+
+**Start Docker Desktop and wait for the daemon.** This one is the opposite of what you might expect. `settings-store.json`, `daemon.json`, and `contexts/` are copied from disk either way, but `image-inventory.txt` and `container-inventory.txt` are produced by querying the running daemon — with Docker stopped they are silently skipped and the run still reports success. If you find out afterwards, start Docker, wait for the daemon, and rerun `./bin/backup-apps.sh --docker-only --open`.
+
+Whether an app should be *running* or *quit* is per-app, not a blanket rule: Docker has to be up, IntelliJ has to be down. Where a requirement exists it is stated with that app; where none is stated, none is known.
+
+**IntelliJ is not captured by this run.** It has prerequisites this step cannot present in time — a secret-review template and an exclude list that decide what gets kept and what is treated as a secret. Running it blind produces a capture with the secret review skipped and no sign that it was skipped. IntelliJ is owned by [[backup-intellij|Backup IntelliJ]]; complete it before Step 7, and this run will report it as deferred.
 
 ```bash
 ./bin/backup-apps.sh --open
@@ -464,10 +473,10 @@ This captures the script-class apps and prepares folders for the manual-class on
 
 - **Docker** — `settings-store.json`, `daemon.json`, `contexts/`, and image/container/compose inventories to `app-settings-backup/docker/`; `config.json` staged to `secrets-encrypted/docker/`. `Docker.raw`, image layers, and volumes are intentionally not backed up.
 - **VS Code** — extension list, `settings.json`, `keybindings.json`, `snippets/`, and `profiles/` to `app-settings-backup/vscode/`. Caches, logs, and workspace history are intentionally excluded.
-- **BBEdit, Claude, draw.io, Zoom, Mos, Wireshark** — registry-driven config capture to `app-settings-backup/<app>/` for each selected app detected; Claude's MCP config (`claude_desktop_config.json`) is staged to `secrets-encrypted/claude/`.
+- **BBEdit, Claude, draw.io, Zoom, Mos, Wireshark** — registry-driven config capture to `app-settings-backup/<app>/` for each selected app detected. Claude's MCP config (`claude_desktop_config.json`) is staged separately to `secrets-encrypted/claude/`, and its account comes back by signing in — its `Application Support` folder is Electron cache and is deliberately not copied.
 - **Chrome, Postman, Fiddler Everywhere, Raycast, Obsidian, Terminal, TNAS PC, iMovie** — a ready folder at `app-settings-backup/<app>/` containing a README that names what to export there. Nothing is captured automatically for these; the folder is the drop target for Step 5.
 - **selected unsupported apps** — a drop-folder with a README under `app-settings-backup/manual-unsupported/<app>/`, for you to fill by hand.
-- **IntelliJ IDEA** — deferred, not captured. See the callout above.
+- **IntelliJ IDEA** — deferred, not captured; see the note before the command above.
 - the stable summary at `app-settings-backup/MANIFEST.md`, with the selection used and the manual TODOs that remain.
 
 Rerun a single script-class portion through the same entrypoint when needed — for example after starting Docker Desktop, or to refresh one app. These `--*-only` reruns bypass the checklist and act on their portion for every detected app:
@@ -482,12 +491,6 @@ Rerun a single script-class portion through the same entrypoint when needed — 
 
 > [!warning] Pitfall
 > A successful run here is **not** a completed phase. It backs up only the selected script-class apps. IntelliJ has not run at all. Any selected Chrome, Postman, Fiddler Everywhere, Terminal, and (if you use them) Raycast, Obsidian, TNAS PC, and iMovie still need their manual exports, and your selected unsupported apps still need filling in. Each has a folder with a README naming what belongs there — a folder containing only a README means the export was not done.
-
-> [!note]
-> BBEdit's support folder can live in different places: the direct-download build uses `~/Library/Application Support/BBEdit/`, the Mac App Store build is sandboxed under `~/Library/Containers/com.barebones.bbedit/`, and recent versions can sync it to iCloud Drive. The capture copies whichever local paths exist; if your support folder is in iCloud, it already syncs and restores through your Apple ID.
-
-> [!bug] Troubleshooting
-> If Docker Desktop is not running, `settings-store.json`, `daemon.json`, and `contexts/` are still captured, but `image-inventory.txt` and `container-inventory.txt` are skipped. Start Docker Desktop, wait for the daemon, then rerun `--docker-only`.
 
 ### Step 5 — Complete Manual Exports
 
@@ -557,23 +560,6 @@ $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/chrome/Chrome Passwords <profile> YYYYM
 
 > [!note]
 > On a company-managed Mac, Chrome may be enrolled in browser management ("Managed by <company>"). Its enterprise policies and force-installed extensions are re-applied by MDM after reimage — don't back those up; they return with management. You're only backing up *your* per-profile bookmarks, settings, and passwords.
-
-#### macOS Passwords (Keychain-backed)
-
-The macOS **Passwords app** stores credentials in the login / Data Protection keychain. With **iCloud Keychain off** (Local Items mode), those entries are **device-bound and not synced** — lost on reimage unless captured. This covers saved *passwords*; certificates and identities are Phase 3A ([[stage-certs-keychain]]).
-
-Restore source, best to worst:
-
-1. **Approved password manager (preferred).** Re-enter each credential you care about into your approved manager; that becomes the restore source and nothing secret rides the DMG. A browser profile's account password (for a profile with password sync off) is a common case.
-2. **Account recovery.** For a single web account, the recovery email/phone resets it after reimage — fine for low-stakes logins.
-3. **Export (last resort, secret-bearing).** `Passwords app > File > Export All Passwords…` writes a **plaintext CSV**:
-
-```text
-$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/macos-passwords/passwords_YYYYMMDD-HHMMSS.csv
-```
-
-> [!warning] Pitfall
-> The Passwords export is plaintext. Never place it under `app-settings-backup/`, OneDrive, iCloud, email, Desktop, Downloads, or a repo — only `secrets-encrypted/macos-passwords/`. Prefer the password manager over exporting at all.
 
 #### Postman
 
@@ -833,6 +819,23 @@ The scriptable IntelliJ capture ran in Step 4; the settings ZIP is the manual, a
 
 > [!warning] Pitfall
 > IntelliJ HTTP Client environment files can contain working credentials. Route them to Phase 3A encrypted secrets, not the normal IntelliJ backup.
+
+#### macOS Passwords (Keychain-backed)
+
+The macOS **Passwords app** stores credentials in the login / Data Protection keychain. With **iCloud Keychain off** (Local Items mode), those entries are **device-bound and not synced** — lost on reimage unless captured. This covers saved *passwords*; certificates and identities are Phase 3A ([[stage-certs-keychain]]).
+
+Restore source, best to worst:
+
+1. **Approved password manager (preferred).** Re-enter each credential you care about into your approved manager; that becomes the restore source and nothing secret rides the DMG. A browser profile's account password (for a profile with password sync off) is a common case.
+2. **Account recovery.** For a single web account, the recovery email/phone resets it after reimage — fine for low-stakes logins.
+3. **Export (last resort, secret-bearing).** `Passwords app > File > Export All Passwords…` writes a **plaintext CSV**:
+
+```text
+$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/macos-passwords/passwords_YYYYMMDD-HHMMSS.csv
+```
+
+> [!warning] Pitfall
+> The Passwords export is plaintext. Never place it under `app-settings-backup/`, OneDrive, iCloud, email, Desktop, Downloads, or a repo — only `secrets-encrypted/macos-passwords/`. Prefer the password manager over exporting at all.
 
 ### Step 6 — Optional Apps
 
@@ -1168,6 +1171,23 @@ EOF
 **4K Live Wallpaper** and **NexiGo Webcam Settings** are registered so they appear in the candidate review and selection checklist, but they have no meaningful local state worth backing up — wallpaper choices and webcam presets are cosmetic and quick to redo. The toolkit captures nothing and stages nothing for them; reconfigure both from their app UI after reimage. If you have another app like this, leave it unchecked in the supported section, or check it in the **unsupported** section to get a drop-folder for a manual copy.
 
 [[#Step 6 — Optional Apps|⬆ Back to Optional Apps]]
+
+### BBEdit Support Folder Locations
+
+BBEdit's support folder can live in more than one place, and the scripted capture takes whichever exist locally:
+
+```text
+~/Library/Application Support/BBEdit/          direct-download build
+~/Library/Containers/com.barebones.bbedit/     Mac App Store build (sandboxed)
+```
+
+When both exist the sandboxed copy is stored as `bbedit-container/`, so the two never collide in `app-settings-backup/`.
+
+Recent versions can also sync the support folder to iCloud Drive. If yours is there it already syncs and restores through your Apple ID, and the local capture may legitimately be empty.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Optional Note Capture
 

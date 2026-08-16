@@ -3,6 +3,17 @@
 # Add a pattern here instead of editing individual rsync calls.
 
 EXTERNAL_EXCLUDES=(
+  # Claude Code CLI (~/.claude/). Only two entries, both deliberate:
+  # shell-snapshots/ and session-env/ capture the shell environment at
+  # invocation time, so exported secrets can land there in plaintext. Excluded
+  # for that reason, not for size. Transcripts, memory, plugins and settings are
+  # all kept. telemetry/ and logs/ are already excluded further down.
+  #
+  # NOTE: every pattern in this list applies to EVERY target, at any depth — a
+  # generic name like "cache/" would silently drop cache directories out of
+  # Documents too. Keep new entries distinctive.
+  "shell-snapshots/"
+  "session-env/"
 
   # -- macOS noise -------------------------------------------------------------
   ".DS_Store"
@@ -23,7 +34,14 @@ EXTERNAL_EXCLUDES=(
   "\$RECYCLE.BIN/"
 
   # -- Tool caches (large, regenerated) ----------------------------------------
-  "github-copilot/"             # Inside ~/.config — regenerated cache
+  "github-copilot/"             # Inside ~/.config — caches, plugins, session DBs.
+                                # NOT cache: intellij/*.md and intellij/mcp.json are
+                                # hand-authored and re-captured by the Copilot Global
+                                # Cfg target above.
+  "auth.db"                     # Copilot OAuth store — machine-bound; re-auth after reimage
+  "auth.db-shm"
+  "auth.db-wal"
+  "oauth.json"                  # Copilot OAuth tokens — re-auth rather than restore
 
   # -- Azure noise -------------------------------------------------------------
   "logs/"

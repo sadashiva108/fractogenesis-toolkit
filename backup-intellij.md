@@ -23,7 +23,7 @@ The IntelliJ-specific companion to Backup Apps (Phase 2D). It preserves IDE stat
     - [[#Confirm Your Intent|Confirm Your Intent]]
 - [[#Sequential Steps|Sequential Steps]]
     - [[#Step 1 — Prepare and Validate|Step 1 — Prepare and Validate]]
-    - [[#Step 2 — Run the IntelliJ Capture|Step 2 — Run the IntelliJ Capture]]
+    - [[#Step 2 — Run the IntelliJ Backup|Step 2 — Run the IntelliJ Backup]]
     - [[#Step 3 — Export the Settings ZIP|Step 3 — Export the Settings ZIP]]
     - [[#Step 4 — Verify Outputs|Step 4 — Verify Outputs]]
 - [[#Decisions|Decisions]]
@@ -248,11 +248,7 @@ Run these in order: prepare, run the scripted capture, export the settings ZIP b
 
 Confirm the environment resolves and IntelliJ is closed before anything writes.
 
-Confirm the artifact root and (optionally) the active config directory. `backup-apps.sh` self-locates and loads shared config through `.internal/load-reimage-config.sh`, so you do not source `reimage.env` by hand:
-
-```bash
-./bin/backup-apps.sh --supported-apps
-```
+`backup-apps.sh` self-locates and loads shared config through `.internal/load-reimage-config.sh`, so you do not source `reimage.env` by hand — the artifact root was already confirmed in Phase 2D and nothing here changes it.
 
 Confirm IntelliJ is not running:
 
@@ -262,54 +258,99 @@ pgrep -xl "idea" || echo "OK: IntelliJ does not appear to be running"
 
 IntelliJ's executable is `Contents/MacOS/idea`, so the process to look for is named `idea`, not `IntelliJ`. Step 2 runs the same check and warns if it fires — but it does not stop, so a capture taken with the IDE open still lands. When that happens it writes `manifests/ide-was-running-during-capture.txt`, and quitting IntelliJ then rerunning `--intellij-only` clears both the marker and the doubt.
 
-Now check the two files that decide what this capture keeps and what it treats as a secret. Both are seeded on first use and then reused, so on a second reimage — or a re-run after editing them — the ones already in your workspace are what the run will obey:
-
-```text
-secret-review/intellij-secret-review-template.txt   which credential-shaped files get staged
-secret-review/backup-exclude-list.txt               noise dropped from the clear-text copy
-```
-
-```bash
-ls -la "$REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/secret-review/"
-```
-
-If they already exist, read them before running — they carry the decisions you made last time, not defaults. If they do not, Step 2 seeds them and **nothing is staged as a secret on that first run**, because nothing is checked yet. That is why the capture is normally two passes: run it, review the template, run it again.
-
-> [!warning] Pitfall
-> An empty `secrets-encrypted/intellij/` after a run does not mean no secrets were found. It usually means the review template exists but nothing in it is checked. Confirm against `manifests/intellij-secret-candidates.txt` — candidates listed there with an empty staging directory means the review is still outstanding.
-
 You can cross-check the active config path inside IntelliJ under `Help → Diagnostic Tools → Special Files and Folders`, then compare it with the capture's `manifests/intellij-config-dirs.tsv`.
 
 > [!note]
 > That same screen reports a **PROJECT BasePath** for whatever project is focused. It is expected that it does not match what the backup scans — the capture uses the broader projects root on purpose, so all projects are covered.
 
-### Step 2 — Run the IntelliJ Capture
+### Step 2 — Run the IntelliJ Backup
 
-Run the scriptable capture through the Phase 2D entrypoint. `--intellij-only` skips the Docker and VS Code captures and runs just the IntelliJ helper:
+Three things decide what this run produces, and all three are settled before the command.
+
+**IntelliJ must be quit.** The Step 1 check is the same one the script runs. If the script finds it running it warns, writes `manifests/ide-was-running-during-capture.txt`, and carries on — so an open IDE does not stop you, it just makes the result untrustworthy. Quit it now rather than rerunning later.
+
+**Which review files this run will obey.** Two files under `secret-review/` decide what is treated as a secret and what is dropped as noise. They live in the artifact root, not the workspace, so a new artifact root starts with neither:
+
+```bash
+ls -la "$REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/secret-review/"
+```
+
+- [[#Neither File Exists Yet|Neither File Exists Yet]] — the listing is empty or the directory is missing.
+- [[#The Review Files Are Already There|The Review Files Are Already There]] — both files are listed.
+
+**Which projects get scanned.** The entrypoint defaults the projects root to `GIT_WORK_REPO_ROOT` and the helper auto-detects the active IntelliJ config directory, so neither is passed below.
+
+- [[#Work Repositories Only|Work Repositories Only]] — every IntelliJ project lives under `GIT_WORK_REPO_ROOT`.
+- [[#Projects Outside the Work Root|Projects Outside the Work Root]] — you also keep personal or other projects elsewhere.
+
+#### Neither File Exists Yet
+
+This run seeds both files with every pattern **unchecked**, which means **nothing is staged as a secret on this pass**. That is expected, not a failure — the point of the first pass is to produce the candidate list for you to review.
+
+Credential-shaped files are kept out of the plaintext copy on every run regardless, so nothing leaks while you decide.
+
+After this run, review `intellij-secret-review-template.txt`, check the patterns you want staged (for example `http-client.private.env.json`), then run Step 2 again. The capture is normally two passes.
+
+[[#Step 2 — Run the IntelliJ Backup|⬆ Back to Step 2 — Run the IntelliJ Backup]]
+
+#### The Review Files Are Already There
+
+They carry the decisions from an earlier run or an earlier reimage — not defaults. Read them before running, because this pass will obey them exactly:
+
+```bash
+grep -c '^\[x\]' "$REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/secret-review/intellij-secret-review-template.txt"
+```
+
+A count of `0` means nothing is checked, and this run will stage no secrets — the same outcome as a first pass.
+
+> [!note]
+> To carry decisions across to a **new** artifact root, copy the two files from the previous drive into the new `secret-review/` before running. They are not in the workspace, so nothing carries them forward automatically.
+
+[[#Step 2 — Run the IntelliJ Backup|⬆ Back to Step 2 — Run the IntelliJ Backup]]
+
+#### Work Repositories Only
+
+Nothing to do — the default is correct. Continue to the command below.
+
+[[#Step 2 — Run the IntelliJ Backup|⬆ Back to Step 2 — Run the IntelliJ Backup]]
+
+#### Projects Outside the Work Root
+
+`--intellij-projects-root` takes a **single** path, and a rerun replaces `project-metadata/` rather than adding to it — so running once per root does not accumulate. Point it at a common parent that contains every tree you want scanned:
+
+```bash
+./bin/backup-apps.sh --intellij-only --artifact-root "$REIMAGE_ARTIFACT_ROOT" \
+  --intellij-projects-root ~/Development --open
+```
+
+Raise `--intellij-projects-max-depth` if the projects sit deeper than 6 levels under that parent.
+
+> [!warning] Pitfall
+> A common parent widens the scan. Confirm afterwards in `manifests/projects.tsv` that only the projects you expected were picked up — a parent like `$HOME` would sweep far more than intended.
+
+[[#Step 2 — Run the IntelliJ Backup|⬆ Back to Step 2 — Run the IntelliJ Backup]]
+
+#### Run It
 
 ```bash
 ./bin/backup-apps.sh --intellij-only --artifact-root "$REIMAGE_ARTIFACT_ROOT" --open
 ```
 
-The entrypoint defaults the projects root to `GIT_WORK_REPO_ROOT` from `reimage.env`, and the helper auto-detects the active IntelliJ config directory (the most recently modified one under the JetBrains root) — so neither is passed here. Override the projects root with `--intellij-projects-root PATH` if you need a different tree.
-
-This refreshes the generated IntelliJ content in place under `app-settings-backup/intellij/` (preserving `manual-settings-export/` and `restore-notes/`) and stages the secrets matching your reviewed patterns into `secrets-encrypted/intellij/` for the Phase 3C packaging.
-
-> [!note]
-> On the first capture, `intellij-secret-review-template.txt` and `backup-exclude-list.txt` are written to `$REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/secret-review/` with every pattern unchecked, and nothing is staged. Check the patterns you want staged (for example `http-client.private.env.json`), then rerun `--intellij-only` to stage the matches. Credential-shaped files are kept out of the plaintext copy on every run regardless.
+This refreshes the generated IntelliJ content in place under `app-settings-backup/intellij/` — preserving `manual-settings-export/` and `restore-notes/` — and stages the secrets matching your reviewed patterns into `secrets-encrypted/intellij/` for the Phase 3C packaging.
 
 Optional passthrough flags, when they apply:
 
 ```text
 --intellij-all-config-dirs        back up every IntelliJIdea*/IdeaIC* config dir, not just the active one
---intellij-projects-max-depth N  change the .idea scan depth (default 6)
---intellij-skip-project-scan        skip the project-level .idea scan
+--intellij-projects-max-depth N   change the .idea scan depth (default 6)
+--intellij-skip-project-scan      skip the project-level .idea scan
 --intellij-include-shelf          include .idea/shelf folders (skipped by default)
 --intellij-include-system-cache   copy the IntelliJ system/cache dir (large; off by default)
 ```
 
-> [!warning] Pitfall
-> Do not treat a running-IDE warning lightly: if IntelliJ was open during the copy, config files may be partial. Quit IntelliJ and rerun `--intellij-only` rather than trusting a capture taken while it was running.
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 3 — Export the Settings ZIP
 
@@ -387,7 +428,7 @@ One prerequisite failure has a fix long enough to break a step's flow. The step 
 
 The capture auto-detects the active config directory as the most recently modified `IntelliJIdea*` / `IdeaIC*` directory under `~/Library/Application Support/JetBrains/`. If none exist, it exits with a prerequisite error. If your config lives under a non-standard directory name, set `IDE_PRODUCT` explicitly and rerun. An explicit `IDE_PRODUCT` that points to a missing directory prints a warning and falls back to backing up every `IntelliJIdea*` / `IdeaIC*` directory.
 
-[[#Step 2 — Run the IntelliJ Capture|⮕ Continue to Step 2 — Run the IntelliJ Capture]]
+[[#Step 2 — Run the IntelliJ Backup|⮕ Continue to Step 2 — Run the IntelliJ Backup]]
 
 ---
 

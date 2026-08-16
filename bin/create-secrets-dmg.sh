@@ -673,10 +673,10 @@ cmd_verify_staging() {
     fi
   done < <(list_categories)
 
-  # phase2f rerun marker
+  # secrets-DMG rebuild marker
   echo ""
-  if find "$EXTRA_CERTS_REVIEW_DIR/state" -maxdepth 1 -type f -name 'phase2f-rerun-required-*.md' 2>/dev/null | grep -q .; then
-    status INFO "phase2f-rerun-required marker present" "Phase 3A staged new cert material — a go signal for this build"
+  if find "$EXTRA_CERTS_REVIEW_DIR/state" -maxdepth 1 -type f -name 'secrets-dmg-rebuild-required-*.md' 2>/dev/null | grep -q .; then
+    status INFO "secrets-dmg-rebuild-required marker present" "Phase 3A staged new cert material — a go signal for this build"
   fi
 
   echo ""

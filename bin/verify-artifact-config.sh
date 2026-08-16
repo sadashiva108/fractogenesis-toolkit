@@ -289,7 +289,16 @@ fi
 # ---------------------------------------------------------------------------
 echo ""
 if (( fail_count == 0 )); then
-  echo -e "  ${GRN}${BLD}✓ All ${#REQUIRED_FRAGMENTS[@]} fragments present and valid.${RST}"
+  # Count what was actually verified. Reporting only the required set read as
+  # though the optional fragments had been skipped, when they were checked and
+  # passed — and whether they are present is exactly what the reader is looking
+  # for after copying one into the workspace.
+  _optional_present=$(( ${#OPTIONAL_FRAGMENTS[@]} - optional_absent ))
+  if (( _optional_present > 0 )); then
+    echo -e "  ${GRN}${BLD}✓ All ${#REQUIRED_FRAGMENTS[@]} required fragments present and valid, plus ${_optional_present} optional.${RST}"
+  else
+    echo -e "  ${GRN}${BLD}✓ All ${#REQUIRED_FRAGMENTS[@]} required fragments present and valid.${RST}"
+  fi
   echo ""
   exit 0
 fi
