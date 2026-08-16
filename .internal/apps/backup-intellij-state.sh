@@ -42,6 +42,16 @@
 #                              all dirs only if an explicit IDE_PRODUCT is not
 #                              found.
 #
+#   --review-dir PATH         Directory holding the two review-selection files
+#                              (intellij-secret-review-template.txt and
+#                              intellij-plaintext-exclude-list.txt). Read AND
+#                              seeded here, so selections survive a reimage.
+#                              Also honored from an exported
+#                              INTELLIJ_REVIEW_SOURCE_DIR. When unset, the
+#                              artifact root's own secret-review/ is used for
+#                              both. A copy of whatever was used is always
+#                              written into the artifact root as evidence.
+#
 #   --projects-root PATH      Root containing all IntelliJ projects
 #                              to scan for project-level .idea metadata. No
 #                              baked-in default: the entrypoint supplies it from
@@ -116,6 +126,11 @@ PROJECTS_MAX_DEPTH=6
 # GIT_WORK_REPO_ROOT, and standalone callers pass it (or export
 # INTELLIJ_PROJECTS_ROOT). When empty, the project-level scan is skipped.
 PROJECTS_ROOT="${INTELLIJ_PROJECTS_ROOT:-}"
+# Durable review-selection directory. The entrypoint passes --review-dir from
+# INTELLIJ_REVIEW_SOURCE_DIR (workspace-first, resolved in artifact-config.sh).
+# Empty means "read and seed inside the artifact root", the historical behavior.
+REVIEW_SOURCE_DIR="${INTELLIJ_REVIEW_SOURCE_DIR:-}"
+INIT_REVIEW_ONLY=0
 
 require_option_value() {
   local option="$1"
@@ -156,6 +171,19 @@ while [[ $# -gt 0 ]]; do
       ;;
     --include-shelf)
       INCLUDE_SHELF=1
+      shift
+      ;;
+    --init-review-only)
+      INIT_REVIEW_ONLY=1
+      shift
+      ;;
+    --review-dir)
+      require_option_value "$1" "${2:-}"
+      REVIEW_SOURCE_DIR="$2"
+      shift 2
+      ;;
+    --review-dir=*)
+      REVIEW_SOURCE_DIR="${1#*=}"
       shift
       ;;
     --projects-root)
@@ -207,7 +235,15 @@ case "$PROJECTS_MAX_DEPTH" in
     ;;
 esac
 
-if [[ -z "$ARTIFACT_ROOT" ]]; then
+if [[ "$INIT_REVIEW_ONLY" -eq 1 ]]; then
+  # Seeding the durable review copy touches no artifact root and reads no
+  # JetBrains state, so it must not demand either. It runs before a drive is
+  # even mounted.
+  if [[ -z "$REVIEW_SOURCE_DIR" ]]; then
+    echo "ERROR: --init-review-only requires --review-dir PATH." >&2
+    exit 2
+  fi
+elif [[ -z "$ARTIFACT_ROOT" ]]; then
   echo "ERROR: artifact root not set. Pass --artifact-root PATH (or export REIMAGE_ARTIFACT_ROOT)." >&2
   exit 2
 fi
@@ -216,19 +252,30 @@ INTELLIJ_ROOT="$ARTIFACT_ROOT/app-settings-backup/intellij"
 DEST="$INTELLIJ_ROOT"
 JETBRAINS_ROOT="$HOME/Library/Application Support/JetBrains"
 
-if [[ ! -d "$JETBRAINS_ROOT" ]]; then
+if [[ ! -d "$JETBRAINS_ROOT" && "$INIT_REVIEW_ONLY" -ne 1 ]]; then
   echo "ERROR: JetBrains config root not found: $JETBRAINS_ROOT" >&2
   exit 2
 fi
 
 # Encrypted-secrets destination for staged IntelliJ secrets, and the review
-# selection files. Like gitignore-superset, these are written to the external
-# artifact root; persist them to your local workspace by hand if you want the
-# selections to survive between reimages, and copy them back before a rerun.
+# selection files.
+#
+# Two directories, deliberately:
+#   REVIEW_SOURCE_DIR   durable, survives the artifact root. Read AND seeded
+#                       here when set, so your selections outlive a reimage.
+#   ..._REVIEW_EVIDENCE the artifact root's own secret-review/. Always written,
+#                       so the capture carries a copy of exactly what it obeyed.
+# When REVIEW_SOURCE_DIR is empty the two collapse into one — the artifact root
+# is both, which is the historical behavior.
 INTELLIJ_SECRETS_DEST="$ARTIFACT_ROOT/secrets-encrypted/intellij"
-INTELLIJ_SECRETS_REVIEW_DIR="$ARTIFACT_ROOT/app-settings-backup/intellij/secret-review"
+INTELLIJ_SECRETS_REVIEW_EVIDENCE_DIR="$ARTIFACT_ROOT/app-settings-backup/intellij/secret-review"
+if [[ -n "$REVIEW_SOURCE_DIR" ]]; then
+  INTELLIJ_SECRETS_REVIEW_DIR="$REVIEW_SOURCE_DIR"
+else
+  INTELLIJ_SECRETS_REVIEW_DIR="$INTELLIJ_SECRETS_REVIEW_EVIDENCE_DIR"
+fi
 INTELLIJ_SECRETS_TEMPLATE="$INTELLIJ_SECRETS_REVIEW_DIR/intellij-secret-review-template.txt"
-INTELLIJ_EXCLUDE_LIST="$INTELLIJ_SECRETS_REVIEW_DIR/backup-exclude-list.txt"
+INTELLIJ_EXCLUDE_LIST="$INTELLIJ_SECRETS_REVIEW_DIR/intellij-plaintext-exclude-list.txt"
 INTELLIJ_STAGED_COUNT=0
 
 # Prefer macOS/BSD stat even if GNU coreutils stat appears earlier in PATH.
@@ -273,7 +320,7 @@ detect_newest_config_dir() {
 # Override any of these with environment variables if the active IDE version/path changes.
 # IDE_PRODUCT defaults to the auto-detected active (most recently modified) config directory.
 IDE_PRODUCT="${IDE_PRODUCT:-$(detect_newest_config_dir)}"
-if [[ -z "$IDE_PRODUCT" ]]; then
+if [[ -z "$IDE_PRODUCT" && "$INIT_REVIEW_ONLY" -ne 1 ]]; then
   echo "ERROR: No IntelliJIdea* or IdeaIC* config directory found under: $JETBRAINS_ROOT" >&2
   echo "Set IDE_PRODUCT explicitly if the config directory uses a non-standard name." >&2
   exit 2
@@ -554,9 +601,10 @@ stage_one_intellij_secret() {
 }
 
 # Operator-maintained noise excludes for the clear-text IntelliJ copy, seeded on
-# first use. Mirrors gitignore-superset/backup-exclude-list.txt: one pattern per
-# line, '#' comments and blank lines ignored. Secrets are handled by the review
-# template, not here.
+# first use. Same file format as gitignore-superset/backup-exclude-list.txt — one
+# pattern per line, '#' comments and blank lines ignored — but a separate file
+# with a separate purpose, hence the distinct name. Secrets are handled by the
+# review template, not here.
 INTELLIJ_EXCLUDE_SEED=(
   'httpRequests/'
   'httpRequests/**'
@@ -581,7 +629,7 @@ write_intellij_exclude_list() {
   local dest="$1" p
   mkdir -p "$(dirname "$dest")"
   {
-    echo "# backup-exclude-list.txt  (Exclude — drop noise from the clear-text IntelliJ copy)"
+    echo "# intellij-plaintext-exclude-list.txt  (Exclude — drop noise from the clear-text IntelliJ copy)"
     echo "#"
     echo "# One pattern per line; '#' comments and blank lines are ignored."
     echo "# Secret handling lives in intellij-secret-review-template.txt, not here."
@@ -593,6 +641,36 @@ write_intellij_exclude_list() {
     done
   } > "$dest"
 }
+
+# Seed the durable review directory and stop. Placed here because it is the
+# first point where BOTH writers exist; putting it next to the argument parser
+# would mean duplicating the seed lists, which is the whole thing this file is
+# the single source of.
+if [[ "$INIT_REVIEW_ONLY" -eq 1 ]]; then
+  mkdir -p "$INTELLIJ_SECRETS_REVIEW_DIR"
+  init_wrote=0
+  if [[ -f "$INTELLIJ_SECRETS_TEMPLATE" ]]; then
+    echo "Kept existing: $INTELLIJ_SECRETS_TEMPLATE"
+  else
+    write_intellij_secret_template "$INTELLIJ_SECRETS_TEMPLATE"
+    echo "Wrote: $INTELLIJ_SECRETS_TEMPLATE"
+    init_wrote=$((init_wrote + 1))
+  fi
+  if [[ -f "$INTELLIJ_EXCLUDE_LIST" ]]; then
+    echo "Kept existing: $INTELLIJ_EXCLUDE_LIST"
+  else
+    write_intellij_exclude_list "$INTELLIJ_EXCLUDE_LIST"
+    echo "Wrote: $INTELLIJ_EXCLUDE_LIST"
+    init_wrote=$((init_wrote + 1))
+  fi
+  echo ""
+  if [[ "$init_wrote" -gt 0 ]]; then
+    echo "Every pattern is UNCHECKED. Nothing is staged as a secret until you"
+    echo "change '[ ]' to '[x]' in the review template above."
+  fi
+  echo "These files now survive the artifact root. Future runs read them from here."
+  exit 0
+fi
 
 # Build the effective rsync exclude set for the clear-text copy: secret-shape
 # floor + every review-template pattern (checked or not) + the operator exclude
@@ -936,6 +1014,31 @@ if [[ -n "$INTELLIJ_EXCLUDE_LIST" && ! -f "$INTELLIJ_EXCLUDE_LIST" ]]; then
   echo "  $INTELLIJ_EXCLUDE_LIST" >&2
 fi
 build_rsync_exclude_args
+
+# Record what this capture actually obeyed. When the selections live in the
+# workspace the artifact root would otherwise carry no evidence of them, and a
+# restore six months from now cannot tell which patterns were checked. Copying
+# rather than symlinking is deliberate: the artifact root must stay readable on
+# its own, detached from the machine that produced it.
+if [[ "$INTELLIJ_SECRETS_REVIEW_DIR" != "$INTELLIJ_SECRETS_REVIEW_EVIDENCE_DIR" ]]; then
+  mkdir -p "$INTELLIJ_SECRETS_REVIEW_EVIDENCE_DIR"
+  for review_file in "$INTELLIJ_SECRETS_TEMPLATE" "$INTELLIJ_EXCLUDE_LIST"; do
+    [[ -f "$review_file" ]] || continue
+    cp -p "$review_file" "$INTELLIJ_SECRETS_REVIEW_EVIDENCE_DIR/" 2>/dev/null || true
+  done
+  {
+    echo "# Review selections used by this capture"
+    echo "#"
+    echo "# These are COPIES. The editable originals live in:"
+    echo "#   $INTELLIJ_SECRETS_REVIEW_DIR"
+    echo "# Editing the copies here changes nothing — the next run rereads the"
+    echo "# originals and overwrites these again."
+    echo "#"
+    echo "# Captured: $(date '+%Y-%m-%d %H:%M:%S')"
+  } > "$INTELLIJ_SECRETS_REVIEW_EVIDENCE_DIR/README.md"
+  echo "Review selections read from: $INTELLIJ_SECRETS_REVIEW_DIR"
+  echo "  Copy recorded in artifact root: $INTELLIJ_SECRETS_REVIEW_EVIDENCE_DIR"
+fi
 
 while IFS=$'\t' read -r _mtime config_dir; do
   [[ -n "${config_dir:-}" && -d "$config_dir" ]] || continue

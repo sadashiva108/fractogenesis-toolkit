@@ -51,6 +51,14 @@
 # deliberately does not warn about the fallback, because most callers never read
 # them. bin/stage-certs-keychain.sh warns when the fallback actually matters.
 #
+# IntelliJ review-file precedence (same shape, one difference — there is no
+# committed template tier, because both files are generated from the seed lists
+# in .internal/apps/backup-intellij-state.sh):
+#   1. $REIMAGE_WORKSPACE_ROOT/intellij-review when that directory exists.
+#   2. Empty, meaning the artifact root's own secret-review/ directory is both
+#      the read source and the seed target.
+# Seed the durable copy with: ./bin/backup-apps.sh --init-intellij-review
+#
 # Public outputs include:
 #   REIMAGE_ENV
 #   REIMAGE_WORKSPACE_ROOT
@@ -61,6 +69,8 @@
 #   ONEDRIVE_*
 #   ARTIFACT_CONFIG_*
 #   STAGED_CERTS_*
+#   INTELLIJ_REVIEW_WORKSPACE_DIR
+#   INTELLIJ_REVIEW_SOURCE_DIR
 #   MANUAL_POSTMAN_STAGE
 #   MANUAL_RAYCAST_STAGE
 #   Arrays and values declared by the required config fragments
@@ -242,6 +252,20 @@ _artifact_config_main() {
     STAGED_CERTS_SOURCE_DIR="$STAGED_CERTS_WORKSPACE_DIR"
   else
     STAGED_CERTS_SOURCE_DIR="$STAGED_CERTS_TEMPLATE_DIR"
+  fi
+
+  # IntelliJ review selections. Unlike staged-certs there is no committed
+  # template to fall back to: both files are GENERATED from the seed lists in
+  # .internal/apps/backup-intellij-state.sh, so the script stays the single
+  # source of the patterns. An empty INTELLIJ_REVIEW_SOURCE_DIR therefore means
+  # "no durable copy — read and seed inside the artifact root", which is the
+  # historical behavior. Seed the workspace copy with:
+  #   ./bin/backup-apps.sh --init-intellij-review
+  INTELLIJ_REVIEW_WORKSPACE_DIR="${REIMAGE_WORKSPACE_ROOT:+$REIMAGE_WORKSPACE_ROOT/intellij-review}"
+  if [[ -n "$INTELLIJ_REVIEW_WORKSPACE_DIR" && -d "$INTELLIJ_REVIEW_WORKSPACE_DIR" ]]; then
+    INTELLIJ_REVIEW_SOURCE_DIR="$INTELLIJ_REVIEW_WORKSPACE_DIR"
+  else
+    INTELLIJ_REVIEW_SOURCE_DIR=""
   fi
 
   if [[ ! -d "$ARTIFACT_CONFIG_SOURCE_DIR" ]]; then

@@ -62,6 +62,10 @@
 #                           not app-settings-backup/. The only mode safe to run
 #                           against a root you have not committed to.
 #   --docker-only            Rerun only the Docker portion through this entrypoint.
+#   --init-intellij-review   Seed the durable IntelliJ review files under
+#                            $REIMAGE_WORKSPACE_ROOT/intellij-review/ so your
+#                            selections survive the artifact root, then exit.
+#                            Never overwrites an existing file.
 #   --intellij-only          Rerun only the IntelliJ portion through this entrypoint.
 #   --vscode-only            Rerun only the VS Code fallback capture through this entrypoint.
 #   --apps-only              Rerun only the registry-driven app-config captures
@@ -263,6 +267,7 @@ APPS_ONLY=false
 ALL_DETECTED=false
 SHOW_SUPPORTED=false
 SHOW_PREFLIGHT=false
+INIT_INTELLIJ_REVIEW=false
 INTELLIJ_ALL_CONFIG_DIRS=false
 INTELLIJ_INCLUDE_SYSTEM_CACHE=false
 INTELLIJ_SKIP_WORKSPACES=false
@@ -306,6 +311,7 @@ while [[ $# -gt 0 ]]; do
     --vscode-only) VSCODE_ONLY=true; shift ;;
     --apps-only) APPS_ONLY=true; shift ;;
     --all-detected) ALL_DETECTED=true; shift ;;
+    --init-intellij-review) INIT_INTELLIJ_REVIEW=true; shift ;;
     --supported-apps) SHOW_SUPPORTED=true; shift ;;
     --preflight) SHOW_PREFLIGHT=true; shift ;;
     --intellij-projects-root)
@@ -332,6 +338,26 @@ done
 if [[ "$SHOW_SUPPORTED" == true ]]; then
   print_supported_apps
   exit 0
+fi
+
+# --init-intellij-review seeds the durable review copy in the workspace. It
+# needs REIMAGE_WORKSPACE_ROOT and nothing else -- no artifact root, no mounted
+# drive, no IntelliJ installed -- so it runs before every other mode's checks.
+# The seed lists themselves stay in the helper; this only chooses the location.
+if [[ "$INIT_INTELLIJ_REVIEW" == true ]]; then
+  if [[ -z "${REIMAGE_WORKSPACE_ROOT:-}" ]]; then
+    echo "ERROR: REIMAGE_WORKSPACE_ROOT is not set, so there is nowhere durable to seed." >&2
+    echo "       Set it in reimage.env, then rerun." >&2
+    exit 2
+  fi
+  INTELLIJ_HELPER="$(dirname "$SCRIPT_DIR")/.internal/apps/backup-intellij-state.sh"
+  if [[ ! -f "$INTELLIJ_HELPER" ]]; then
+    echo "ERROR: helper not found: $INTELLIJ_HELPER" >&2
+    exit 2
+  fi
+  bash "$INTELLIJ_HELPER" --init-review-only \
+    --review-dir "$REIMAGE_WORKSPACE_ROOT/intellij-review"
+  exit $?
 fi
 
 # --preflight reports what a real run would resolve and use, and creates
@@ -590,6 +616,12 @@ if [[ -z "$INTELLIJ_PROJECTS_ROOT" && -n "${GIT_WORK_REPO_ROOT:-}" ]]; then
 fi
 if [[ -n "$INTELLIJ_PROJECTS_ROOT" ]]; then
   INTELLIJ_HELPER_ARGS+=(--projects-root "$INTELLIJ_PROJECTS_ROOT")
+fi
+# Workspace-first review selections. artifact-config.sh leaves
+# INTELLIJ_REVIEW_SOURCE_DIR empty when no workspace copy exists, which the
+# helper reads as "use the artifact root for both" — the historical behavior.
+if [[ -n "${INTELLIJ_REVIEW_SOURCE_DIR:-}" ]]; then
+  INTELLIJ_HELPER_ARGS+=(--review-dir "$INTELLIJ_REVIEW_SOURCE_DIR")
 fi
 if [[ -n "$INTELLIJ_WORKSPACE_MAX_DEPTH" ]]; then
   INTELLIJ_HELPER_ARGS+=(--projects-max-depth "$INTELLIJ_WORKSPACE_MAX_DEPTH")

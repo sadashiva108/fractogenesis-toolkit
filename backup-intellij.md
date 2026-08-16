@@ -110,8 +110,9 @@ IntelliJ HTTP Client environment files (`http-client.env.json`, `http-client.pri
 | Project BasePath | The path of the *currently open* project/window. It changes with focus, so it is not what the backup scans. |
 | Projects root | The broader directory tree the capture scans for project-level `.idea` metadata (default from `GIT_WORK_REPO_ROOT`), covering all projects. |
 | HTTP Client env files | `http-client.env.json` / `http-client.private.env.json` — credential-bearing, routed to the encrypted secrets flow. |
-| Secret review template | `intellij-secret-review-template.txt` under `$REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/secret-review/`. `[x]`-checked patterns are staged into the encrypted secrets tree; nothing is preselected. |
-| Plaintext exclude list | `backup-exclude-list.txt` in the same folder. One pattern per line; drops noise (e.g. `httpRequests/`, `shelf/`) from the clear-text copy. Mirrors `gitignore-superset/backup-exclude-list.txt`. |
+| Secret review template | `intellij-secret-review-template.txt` under `$REIMAGE_WORKSPACE_ROOT/intellij-review/`. `[x]`-checked patterns are staged into the encrypted secrets tree; nothing is preselected. |
+| Plaintext exclude list | `intellij-plaintext-exclude-list.txt` in the same folder. One pattern per line; drops noise (e.g. `httpRequests/`, `shelf/`) from the clear-text copy. Same file format as `gitignore-superset/backup-exclude-list.txt`, but a separate file with a separate purpose. |
+| Review evidence copy | The copy of both files written into `app-settings-backup/intellij/secret-review/` on every run. Read-only in practice: it records what the capture obeyed, and the next run overwrites it from the workspace originals. |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -141,14 +142,25 @@ $REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/               # non-secret 
 $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/intellij/                 # staged secrets, packaged in Phase 3C
 ```
 
-Your reviewed secret selections are written to the external artifact root, the same way the gitignore superset writes its review template:
+Your reviewed selections live in the workspace, so they survive the artifact root and carry across reimages:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/secret-review/intellij-secret-review-template.txt   # [x] = stage into the DMG
-$REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/secret-review/backup-exclude-list.txt               # noise dropped from the clear-text copy
+$REIMAGE_WORKSPACE_ROOT/intellij-review/intellij-secret-review-template.txt      # [x] = stage into the DMG
+$REIMAGE_WORKSPACE_ROOT/intellij-review/intellij-plaintext-exclude-list.txt      # noise dropped from the clear-text copy
 ```
 
-Both are seeded on the first capture (every pattern unchecked) and edited in place afterward. To keep a reviewed set across reimages, copy them into `$REIMAGE_WORKSPACE_ROOT/intellij-secrets/` by hand, and copy them back to the artifact root before a later run — the same manual persistence pattern the gitignore review template uses.
+Seed them with `./bin/backup-apps.sh --init-intellij-review`, edit them in place, and every later run reads them from there — nothing to copy back before a rerun. This resolves the same way the staged-certs fragments do: the workspace copy wins when `$REIMAGE_WORKSPACE_ROOT/intellij-review/` exists.
+
+Each run also writes a copy of both files into the artifact root:
+
+```text
+$REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/secret-review/
+```
+
+That copy is evidence, not a control surface — it records which patterns the capture obeyed so a restore months later can tell. Editing it changes nothing; the next run overwrites it from the workspace originals.
+
+> [!note]
+> With no `REIMAGE_WORKSPACE_ROOT` set, both files fall back to living in the artifact root and are seeded there on first capture. Everything still works, but the selections die with the drive.
 
 This runbook owns both `intellij/` layouts; they are drawn here once and referenced elsewhere.
 
@@ -223,10 +235,10 @@ A short pre-flight: confirm you are set up, then confirm what this run is for.
 ### Prerequisites
 
 - `REIMAGE_ARTIFACT_ROOT` resolves and its destination volume is mounted (`reimage.env` produced by `prepare-artifact-root.md`).
+- `REIMAGE_WORKSPACE_ROOT` is set in `reimage.env`. Your review selections live there so they outlast the artifact root; without it they can only be written to the drive.
 - You are running commands from `$FRACTOGENESIS_HOME`.
 - **IntelliJ is quit before the capture.** A running IDE can flush or overwrite config mid-copy, so close it first (the manual settings ZIP export in Step 3 is the one time you reopen it).
 
-> [!bug] Troubleshooting
 > [!bug] Troubleshooting
 > If the capture exits with a prerequisite error naming the JetBrains root, see [[#No IntelliJ config directory was found|No IntelliJ config directory was found]].
 
@@ -263,72 +275,89 @@ You can cross-check the active config path inside IntelliJ under `Help → Diagn
 > [!note]
 > That same screen reports a **PROJECT BasePath** for whatever project is focused. It is expected that it does not match what the backup scans — the capture uses the broader projects root on purpose, so all projects are covered.
 
-### Step 2 — Run the IntelliJ Backup
+Two files decide what the capture treats as a secret and what it drops as noise. Settle them here, before anything writes:
 
-Three things decide what this run produces, and all three are settled before the command.
+| File | Decides |
+|---|---|
+| `intellij-secret-review-template.txt` | Which patterns are **staged** into `secrets-encrypted/intellij/` for the Phase 3C DMG. Nothing is staged unless you check it. |
+| `intellij-plaintext-exclude-list.txt` | Which patterns are **dropped** from the clear-text copy as noise — `httpRequests/`, `shelf/`, `.DS_Store`. Never put secrets here; this only omits, it does not protect. |
 
-**IntelliJ must be quit.** The Step 1 check is the same one the script runs. If the script finds it running it warns, writes `manifests/ide-was-running-during-capture.txt`, and carries on — so an open IDE does not stop you, it just makes the result untrustworthy. Quit it now rather than rerunning later.
-
-**Which review files this run will obey.** Two files under `secret-review/` decide what is treated as a secret and what is dropped as noise. They live in the artifact root, not the workspace, so a new artifact root starts with neither:
+Both live in your workspace, not the artifact root, so your decisions outlive any single drive. Check whether you already have them:
 
 ```bash
-ls -la "$REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/secret-review/"
+ls -la "$REIMAGE_WORKSPACE_ROOT/intellij-review/"
 ```
 
-- [[#Neither File Exists Yet|Neither File Exists Yet]] — the listing is empty or the directory is missing.
-- [[#The Review Files Are Already There|The Review Files Are Already There]] — both files are listed.
+- [[#No Durable Copy Yet|No Durable Copy Yet]] — the listing is empty or the directory is missing.
+- [[#A Durable Copy Already Exists|A Durable Copy Already Exists]] — both files are listed.
+
+#### No Durable Copy Yet
+
+Seed it. This needs no artifact root and no mounted drive, and it never overwrites a file that already exists:
+
+```bash
+./bin/backup-apps.sh --init-intellij-review
+```
+
+Both files are written with **every pattern unchecked**. Open the review template and check what you want staged:
+
+```bash
+open -e "$REIMAGE_WORKSPACE_ROOT/intellij-review/intellij-secret-review-template.txt"
+```
+
+Change `[ ]` to `[x]` for each pattern whose matching files belong in the encrypted secrets DMG. `http-client.private.env.json` is the usual one.
+
+> [!warning] Pitfall
+> Leaving everything unchecked is not the safe default it looks like. Credential-shaped files are excluded from the plaintext copy on **every** run, and only checked patterns are staged into `secrets-encrypted/intellij/`. A pattern you leave unchecked is therefore backed up **nowhere at all** — unchecked means discarded, not "kept in the clear". Skip this and the capture is a two-pass job: review, then run again.
+
+[[#Step 2 — Run the IntelliJ Backup|⮕ Continue to Step 2 — Run the IntelliJ Backup]]
+
+#### A Durable Copy Already Exists
+
+It carries decisions from an earlier run or an earlier reimage — not defaults. The capture will obey it exactly, so read it first:
+
+```bash
+grep -c '^\[x\]' "$REIMAGE_WORKSPACE_ROOT/intellij-review/intellij-secret-review-template.txt"
+```
+
+A count of `0` means nothing is checked. That is not a neutral outcome: credential-shaped files are excluded from the plaintext copy on every run, so patterns you leave unchecked are backed up nowhere at all. Check the ones you need before continuing.
+
+> [!note]
+> Each run copies both files into `app-settings-backup/intellij/secret-review/` in the artifact root, alongside a README pointing back here. That copy is evidence of what the capture obeyed — editing it changes nothing, because the next run rereads the workspace originals.
+
+[[#Step 2 — Run the IntelliJ Backup|⮕ Continue to Step 2 — Run the IntelliJ Backup]]
+
+### Step 2 — Run the IntelliJ Backup
+
+Two things decide what this run produces, and both are settled before the command.
+
+**IntelliJ must be quit.** The Step 1 check is the same one the script runs. If the script finds it running it warns, writes `manifests/ide-was-running-during-capture.txt`, and carries on — so an open IDE does not stop you, it just makes the result untrustworthy. Quit it now rather than rerunning later.
 
 **Which projects get scanned.** The entrypoint defaults the projects root to `GIT_WORK_REPO_ROOT` and the helper auto-detects the active IntelliJ config directory, so neither is passed below.
 
 - [[#Work Repositories Only|Work Repositories Only]] — every IntelliJ project lives under `GIT_WORK_REPO_ROOT`.
 - [[#Projects Outside the Work Root|Projects Outside the Work Root]] — you also keep personal or other projects elsewhere.
 
-#### Neither File Exists Yet
-
-This run seeds both files with every pattern **unchecked**, which means **nothing is staged as a secret on this pass**. That is expected, not a failure — the point of the first pass is to produce the candidate list for you to review.
-
-Credential-shaped files are kept out of the plaintext copy on every run regardless, so nothing leaks while you decide.
-
-After this run, review `intellij-secret-review-template.txt`, check the patterns you want staged (for example `http-client.private.env.json`), then run Step 2 again. The capture is normally two passes.
-
-[[#Step 2 — Run the IntelliJ Backup|⬆ Back to Step 2 — Run the IntelliJ Backup]]
-
-#### The Review Files Are Already There
-
-They carry the decisions from an earlier run or an earlier reimage — not defaults. Read them before running, because this pass will obey them exactly:
-
-```bash
-grep -c '^\[x\]' "$REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/secret-review/intellij-secret-review-template.txt"
-```
-
-A count of `0` means nothing is checked, and this run will stage no secrets — the same outcome as a first pass.
-
-> [!note]
-> To carry decisions across to a **new** artifact root, copy the two files from the previous drive into the new `secret-review/` before running. They are not in the workspace, so nothing carries them forward automatically.
-
-[[#Step 2 — Run the IntelliJ Backup|⬆ Back to Step 2 — Run the IntelliJ Backup]]
-
 #### Work Repositories Only
 
-Nothing to do — the default is correct. Continue to the command below.
+Nothing to do — the default is correct.
 
-[[#Step 2 — Run the IntelliJ Backup|⬆ Back to Step 2 — Run the IntelliJ Backup]]
+[[#Run It|⮕ Continue to Run It]]
 
 #### Projects Outside the Work Root
 
-`--intellij-projects-root` takes a **single** path, and a rerun replaces `project-metadata/` rather than adding to it — so running once per root does not accumulate. Point it at a common parent that contains every tree you want scanned:
+Add `--intellij-projects-root PATH` to the command in the next section, pointing at a common parent that contains every tree you want scanned:
 
-```bash
-./bin/backup-apps.sh --intellij-only --artifact-root "$REIMAGE_ARTIFACT_ROOT" \
-  --intellij-projects-root ~/Development --open
+```text
+--intellij-projects-root ~/Development
 ```
 
-Raise `--intellij-projects-max-depth` if the projects sit deeper than 6 levels under that parent.
+The flag takes a **single** path, and a rerun replaces `project-metadata/` rather than adding to it — so running it once per root does not accumulate. Raise `--intellij-projects-max-depth` if the projects sit deeper than 6 levels under that parent.
 
 > [!warning] Pitfall
 > A common parent widens the scan. Confirm afterwards in `manifests/projects.tsv` that only the projects you expected were picked up — a parent like `$HOME` would sweep far more than intended.
 
-[[#Step 2 — Run the IntelliJ Backup|⬆ Back to Step 2 — Run the IntelliJ Backup]]
+[[#Run It|⮕ Continue to Run It]]
 
 #### Run It
 
@@ -342,6 +371,7 @@ Optional passthrough flags, when they apply:
 
 ```text
 --intellij-all-config-dirs        back up every IntelliJIdea*/IdeaIC* config dir, not just the active one
+--intellij-projects-root PATH     scan a different projects root (default: GIT_WORK_REPO_ROOT)
 --intellij-projects-max-depth N   change the .idea scan depth (default 6)
 --intellij-skip-project-scan      skip the project-level .idea scan
 --intellij-include-shelf          include .idea/shelf folders (skipped by default)
@@ -456,7 +486,7 @@ The scriptable capture's targets and where each lands under `app-settings-backup
 
 ### HTTP Client Credential Handling
 
-Secret handling is driven by two files under `$REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/secret-review/`: `intellij-secret-review-template.txt` (which patterns to stage) and `backup-exclude-list.txt` (noise to drop from the clear-text copy). The review template is seeded with these patterns, every one unchecked — change `[ ]` to `[x]` on the ones whose files you want staged:
+Secret handling is driven by two files under `$REIMAGE_WORKSPACE_ROOT/intellij-review/`: `intellij-secret-review-template.txt` (which patterns to stage) and `intellij-plaintext-exclude-list.txt` (noise to drop from the clear-text copy). The review template is seeded with these patterns, every one unchecked — change `[ ]` to `[x]` on the ones whose files you want staged:
 
 ```text
 http-client.env.json

@@ -54,6 +54,26 @@
 
 set -euo pipefail
 
+# ── Colors ────────────────────────────────────────────────────────────────────
+RED='\033[0;31m'
+YEL='\033[1;33m'
+GRN='\033[0;32m'
+CYN='\033[0;36m'
+BLD='\033[1m'
+DIM='\033[2m'
+RST='\033[0m'
+
+thin_hr() { printf '%s\n' "  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄" ; }
+log_section() { echo ""; printf "${BLD}${CYN}▸ %s${RST}\n" "$1"; thin_hr; }
+
+# printf, not `echo -e`: these carry filesystem paths, and echo -e would eat a
+# backslash in one. The palette itself contains no % so it is format-safe.
+err()  { printf "${RED}✗  %s${RST}\n"  "$*" >&2; }
+hint() { printf "${DIM}   %s${RST}\n"  "$*" >&2; }
+warn() { printf "${YEL}⚠  %s${RST}\n"  "$*" >&2; }
+ok()   { printf "  ${GRN}✓  %s${RST}\n" "$*"; }
+note() { printf "  ${DIM}%s${RST}\n"   "$*"; }
+
 usage() {
   sed -n '/^# --- BEGIN USAGE ---$/,/^# --- END USAGE ---$/{
     /^# --- BEGIN USAGE ---$/d
@@ -67,7 +87,7 @@ ensure_cert_keychain_stage_dirs() {
   local artifact_root="${1:-${REIMAGE_ARTIFACT_ROOT:-}}"
 
   if [[ -z "$artifact_root" ]]; then
-    echo "ERROR: REIMAGE_ARTIFACT_ROOT is not set for certificate/Keychain staging." >&2
+    err "REIMAGE_ARTIFACT_ROOT is not set for certificate/Keychain staging."
     exit 2
   fi
 
@@ -106,7 +126,7 @@ source_staged_certs_fragment() {
   local fragment="$1"
   local path="$STAGED_CERTS_SOURCE_DIR/$fragment"
   if [[ ! -f "$path" ]]; then
-    echo "Missing staged-certs fragment: $path" >&2
+    err "Missing staged-certs fragment: $path"
     exit 2
   fi
   # shellcheck disable=SC1090
@@ -413,7 +433,7 @@ with flag_file.open("w", encoding="utf-8") as f:
 PY_CERT_STATE
 
   if [[ -f "$flag_file" ]]; then
-    printf 'Phase 3B/3C rerun flag written: %s\n' "$flag_file"
+    printf "  ${YEL}⚠  Phase 3B/3C rerun flag written: %s${RST}\n" "$flag_file"
   fi
 }
 
@@ -464,13 +484,13 @@ run_cert_keychain_plan() {
   local planner="$REPO_ROOT/.internal/certs/prepare-certs-keychain-staging.py"
 
   if [[ ! -f "$planner" ]]; then
-    echo "ERROR: cert/Keychain planner not found: $planner" >&2
-    echo "Place prepare-certs-keychain-staging.py under .internal/certs/ next to bin/stage-certs-keychain.sh." >&2
+    err "cert/Keychain planner not found: $planner"
+    hint "Place prepare-certs-keychain-staging.py under .internal/certs/ next to bin/stage-certs-keychain.sh."
     exit 2
   fi
 
   if ! command -v python3 >/dev/null 2>&1; then
-    echo "ERROR: python3 is required for cert/Keychain planning." >&2
+    err "python3 is required for cert/Keychain planning."
     exit 2
   fi
 
@@ -486,13 +506,13 @@ run_keychain_detail() {
   local helper="$REPO_ROOT/.internal/certs/collect-keychain-export-detail.py"
 
   if [[ ! -f "$helper" ]]; then
-    echo "ERROR: keychain-detail helper not found: $helper" >&2
-    echo "Place collect-keychain-export-detail.py under .internal/certs/ next to bin/stage-certs-keychain.sh." >&2
+    err "keychain-detail helper not found: $helper"
+    hint "Place collect-keychain-export-detail.py under .internal/certs/ next to bin/stage-certs-keychain.sh."
     exit 2
   fi
 
   if ! command -v python3 >/dev/null 2>&1; then
-    echo "ERROR: python3 is required for keychain-detail." >&2
+    err "python3 is required for keychain-detail."
     exit 2
   fi
 
@@ -515,8 +535,11 @@ run_keychain_detail() {
     --exports-dir "$SECRETS_DIR/certs/keychain-manual-exports" \
     --staged-loose-dir "$SECRETS_DIR/certs" \
     "$@"
-  echo "Wrote:"
-  printf '  %s\n' "$checklist" "$summary" "$inventory"
+  echo ""
+  note "Wrote:"
+  ok "$checklist"
+  ok "$summary"
+  ok "$inventory"
 
   write_review_manifest
 }
@@ -527,13 +550,13 @@ run_init_staged_certs_config() {
   local args=("init-staged-certs-config" "--env-file" "$env_file")
 
   if [[ ! -f "$helper" ]]; then
-    echo "ERROR: cert/Keychain staging helper not found: $helper" >&2
-    echo "Place prepare-certs-keychain-staging.py under .internal/certs/ next to bin/stage-certs-keychain.sh." >&2
+    err "cert/Keychain staging helper not found: $helper"
+    hint "Place prepare-certs-keychain-staging.py under .internal/certs/ next to bin/stage-certs-keychain.sh."
     exit 2
   fi
 
   if ! command -v python3 >/dev/null 2>&1; then
-    echo "ERROR: python3 is required for cert/Keychain staging preparation." >&2
+    err "python3 is required for cert/Keychain staging preparation."
     exit 2
   fi
 
@@ -849,7 +872,8 @@ KEYCHAIN_EXPORT_README
 
   write_review_manifest
 
-  printf 'Refreshed certificate/Keychain review artifacts: %s\n' "$out"
+  echo ""
+  ok "Refreshed certificate/Keychain review artifacts: $out"
 }
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -867,7 +891,7 @@ require_option_value() {
   local value="${2:-}"
 
   if [[ -z "$value" || "$value" == --* ]]; then
-    echo "ERROR: $option requires a non-empty value." >&2
+    err "$option requires a non-empty value."
     usage >&2
     exit 2
   fi
@@ -918,12 +942,12 @@ while [[ $# -gt 0 ]]; do
       break
       ;;
     -*)
-      echo "Unknown argument: $1" >&2
+      err "Unknown argument: $1"
       usage
       exit 2
       ;;
     *)
-      echo "Unexpected extra argument: $1" >&2
+      err "Unexpected extra argument: $1"
       usage
       exit 2
       ;;
@@ -931,6 +955,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ "$MODE" == "init-staged-certs-config" ]]; then
+  log_section "Initialize staged-certs workspace config"
   run_init_staged_certs_config
   exit 0
 fi
@@ -941,7 +966,7 @@ fi
 ARTIFACT_CONFIG_REQUIRE_REIMAGE_ARTIFACT_ROOT=false
 CONFIG_LOADER="$REPO_ROOT/.internal/load-reimage-config.sh"
 if [[ ! -f "$CONFIG_LOADER" ]]; then
-  echo "ERROR: shared config loader not found: $CONFIG_LOADER" >&2
+  err "shared config loader not found: $CONFIG_LOADER"
   exit 2
 fi
 # shellcheck source=../.internal/load-reimage-config.sh
@@ -959,39 +984,51 @@ EXTRA_CERTS_REVIEW_DIR="$SECRETS_DIR/extra-secrets-certs-review"
 # entrypoint is where the fallback actually costs something, so it is the one
 # that warns about it.
 if [[ "$STAGED_CERTS_SOURCE_DIR" == "$STAGED_CERTS_TEMPLATE_DIR" && -n "${STAGED_CERTS_WORKSPACE_DIR:-}" ]]; then
-  echo "WARNING: REIMAGE_WORKSPACE_ROOT is set but $STAGED_CERTS_WORKSPACE_DIR does not exist —" >&2
-  echo "         falling back to committed templates. Run: ./bin/stage-certs-keychain.sh init-staged-certs-config" >&2
+  warn "REIMAGE_WORKSPACE_ROOT is set but $STAGED_CERTS_WORKSPACE_DIR does not exist —"
+  hint "falling back to committed templates. Run: ./bin/stage-certs-keychain.sh init-staged-certs-config"
 fi
 
 if [[ -z "$REIMAGE_ARTIFACT_ROOT" ]]; then
-  echo "ERROR: REIMAGE_ARTIFACT_ROOT is not set. Source reimage.env or pass --artifact-root PATH." >&2
+  err "REIMAGE_ARTIFACT_ROOT is not set. Source reimage.env or pass --artifact-root PATH."
   exit 2
 fi
 
 if [[ ! -d "$REIMAGE_ARTIFACT_ROOT" ]]; then
-  echo "ERROR: artifact root not found: $REIMAGE_ARTIFACT_ROOT" >&2
+  err "artifact root not found: $REIMAGE_ARTIFACT_ROOT"
   exit 2
 fi
 
 ensure_cert_keychain_stage_dirs "$REIMAGE_ARTIFACT_ROOT"
 
+printf "${BLD}${CYN}╔══════════════════════════════════════════════════════╗${RST}\n"
+printf "${BLD}${CYN}║        Certificate / Keychain Staging                ║${RST}\n"
+printf "${BLD}${CYN}║        %-46s║${RST}\n" "$(date '+%Y-%m-%d %H:%M:%S')"
+printf "${BLD}${CYN}╚══════════════════════════════════════════════════════╝${RST}\n"
+printf "  Mode         : ${BLD}%s${RST}\n" "$MODE"
+printf "  Artifact root: ${BLD}%s${RST}\n" "$REIMAGE_ARTIFACT_ROOT"
+printf "  Staged-certs : ${DIM}%s${RST}\n" "$STAGED_CERTS_SOURCE_DIR"
+
 case "$MODE" in
   scan)
+    log_section "Discovery scan — certificate and credential material"
     write_extra_certs_review
-    echo "Prepared Phase 3A certificate/Keychain staging folders:"
-    printf '  %s\n' \
+    log_section "Staging folders ready"
+    note "Phase 3A certificate/Keychain staging folders:"
+    printf "  ${GRN}✓  %s${RST}\n" \
       "$REIMAGE_ARTIFACT_ROOT/public-certs" \
       "$SECRETS_DIR/certs" \
       "$EXTRA_CERTS_REVIEW_DIR"
     ;;
   plan)
+    log_section "Plan — normalize review decisions"
     run_cert_keychain_plan
     ;;
   keychain-detail)
+    log_section "Keychain detail — export checklist and inventory"
     run_keychain_detail "$@"
     ;;
   *)
-    echo "ERROR: unsupported mode: $MODE" >&2
+    err "unsupported mode: $MODE"
     exit 2
     ;;
 esac
@@ -1001,3 +1038,6 @@ if [[ "$OPEN_AFTER" == true ]]; then
   open "$SECRETS_DIR/certs/keychain-manual-exports" 2>/dev/null || true
   open "$EXTRA_CERTS_REVIEW_DIR" 2>/dev/null || true
 fi
+
+echo ""
+printf "${BLD}${GRN}Done — mode '%s' completed.${RST}\n" "$MODE"
