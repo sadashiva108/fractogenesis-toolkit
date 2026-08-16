@@ -130,7 +130,6 @@ The table lists every covered app, how it is backed up, and whether it is in the
 | draw.io | Script — app config and custom libraries; diagrams themselves restored as files (Phase 2B / Git) | Common |
 | Zoom | Script — local settings plist; account and most settings restored by sign-in | Common |
 | Chrome | Manual — per-profile bookmarks export; optional password CSV | Common |
-| macOS Passwords | Manual — prefer password-manager restore; optional plaintext CSV export (secret-bearing) | Common |
 | Postman | Manual — collections, environments, optional vault export | Common |
 | Fiddler Everywhere | Manual — session / AutoResponder export; captures are secret-bearing | Common |
 | Terminal | Manual — custom profile export (no script folder) | Common |
@@ -496,6 +495,8 @@ Rerun a single script-class portion through the same entrypoint when needed — 
 
 These exports must be triggered from each app's own UI — the script cannot perform them or prove they are complete. Do the ones you checked in Step 3; skip the rest. For the optional apps (Raycast, Obsidian, TNAS PC, iMovie), the full steps are in [[#Optional App Exports|Optional App Exports]], reached from Step 6.
 
+[[#macOS Passwords (Keychain-backed)|macOS Passwords]] is the exception: it is a system credential store, not an installed app, so it has no registry row, no Step 3 checklist entry, and no folder created for it. Nothing will remind you — decide it here or not at all.
+
 Each export sorts its outputs by the [[#Destination Rules|Destination Rules]]: reviewed non-secret material under `app-settings-backup/<app>/`, anything secret-bearing under `secrets-encrypted/<app>/`.
 
 > [!bug] Troubleshooting
@@ -516,14 +517,6 @@ Save that table so future-you knows what each profile holds:
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/app-settings-backup/chrome/profiles-inventory.md
-```
-
-If Step 4 detected Chrome, its folders already exist; otherwise create them:
-
-```bash
-mkdir -p \
-  "$REIMAGE_ARTIFACT_ROOT/app-settings-backup/chrome" \
-  "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/chrome"
 ```
 
 **Bookmarks — per profile.** Switch to each profile, then:
@@ -575,7 +568,7 @@ Postman exports are manual because the app UI owns the export flow. Treat Postma
 
 Use `app-settings-backup/postman/` only for non-secret collection exports, redacted environment examples, variable inventories, and restore notes. Use `secrets-encrypted/postman/` for anything that may contain tokens, passwords, API keys, client secrets, cookies, bearer tokens, or unreviewed environment exports.
 
-If Step 4 detected Postman, its folders already exist; otherwise create them:
+Step 4 already created `app-settings-backup/postman/` and `secrets-encrypted/postman/`. Create the subdirectories it does not:
 
 ```bash
 mkdir -p \
@@ -584,7 +577,22 @@ mkdir -p \
   "$REIMAGE_ARTIFACT_ROOT/app-settings-backup/postman/inventory" \
   "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/postman/environments" \
   "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/postman/vault-if-export-allowed"
+
+# An empty directory under app-settings-backup/ is deleted by the next full
+# backup-apps.sh run. A drop target survives only by not being empty, so give
+# the three above the README.txt that every other drop folder here carries.
+for d in collections environments-redacted inventory; do
+  printf '%s\n' \
+    "Postman drop folder: $d" \
+    "" \
+    "Empty means the export was not done. This file also keeps the folder from" \
+    "being pruned by the next full ./bin/backup-apps.sh run." \
+    > "$REIMAGE_ARTIFACT_ROOT/app-settings-backup/postman/$d/README.txt"
+done
 ```
+
+> [!warning] Pitfall
+> The prune is scoped to `app-settings-backup/`, so the two `secrets-encrypted/postman/` subdirectories above are safe while empty. The three under `app-settings-backup/` are not — without the README they are gone the next time you run the full capture, and nothing reports it as a loss.
 
 Create the starter READMEs so each area documents its own rules. These use an unquoted heredoc (`<<EOF`) so `$REIMAGE_ARTIFACT_ROOT` expands to the resolved path in the written file:
 
@@ -822,17 +830,27 @@ The scriptable IntelliJ capture ran in Step 4; the settings ZIP is the manual, a
 
 #### macOS Passwords (Keychain-backed)
 
+Not an app backup — a **system credential store**. The other entries in this step come from the Step 3 checklist; this one does not appear there, because the toolkit has no registry row for it and creates no folder. It is here so the decision gets made.
+
 The macOS **Passwords app** stores credentials in the login / Data Protection keychain. With **iCloud Keychain off** (Local Items mode), those entries are **device-bound and not synced** — lost on reimage unless captured. This covers saved *passwords*; certificates and identities are Phase 3A ([[stage-certs-keychain]]).
 
 Restore source, best to worst:
 
 1. **Approved password manager (preferred).** Re-enter each credential you care about into your approved manager; that becomes the restore source and nothing secret rides the DMG. A browser profile's account password (for a profile with password sync off) is a common case.
 2. **Account recovery.** For a single web account, the recovery email/phone resets it after reimage — fine for low-stakes logins.
-3. **Export (last resort, secret-bearing).** `Passwords app > File > Export All Passwords…` writes a **plaintext CSV**:
+3. **Export (last resort, secret-bearing).** Nothing creates this directory, so make it first:
+
+```bash
+mkdir -p "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/macos-passwords"
+```
+
+Then `Passwords app > File > Export All Passwords…`, saving the **plaintext CSV** as:
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/macos-passwords/passwords_YYYYMMDD-HHMMSS.csv
 ```
+
+Phase 3C picks the folder up through its catch-all sweep of `secrets-encrypted/*/`, so the CSV is encrypted into the DMG without needing a dedicated rule. Phase 3B counts it as `STAGED` rather than an open finding, because `*password*.csv` is a tracked secret shape and the file is already inside `secrets-encrypted/` — put it anywhere else and the same filename reports as `OUTSIDE`.
 
 > [!warning] Pitfall
 > The Passwords export is plaintext. Never place it under `app-settings-backup/`, OneDrive, iCloud, email, Desktop, Downloads, or a repo — only `secrets-encrypted/macos-passwords/`. Prefer the password manager over exporting at all.
@@ -926,12 +944,10 @@ Raycast export is manual because the app owns the export flow and the settings e
 
 ##### Directories and starter notes
 
-If Step 4 detected Raycast, its folders already exist; otherwise create them:
+Step 4 already created `app-settings-backup/raycast/` and `secrets-encrypted/raycast/`. Create the subdirectory it does not:
 
 ```bash
-mkdir -p \
-  "$REIMAGE_ARTIFACT_ROOT/app-settings-backup/raycast" \
-  "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/raycast/quicklinks-if-sensitive"
+mkdir -p "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/raycast/quicklinks-if-sensitive"
 ```
 
 Create the starter READMEs so each area documents its own rules. These use an unquoted heredoc (`<<EOF`) so `$REIMAGE_ARTIFACT_ROOT` expands to the resolved path in the written file:
