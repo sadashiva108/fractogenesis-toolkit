@@ -34,6 +34,7 @@ Git remotes protect what you have committed and pushed. They do not protect loca
     - [[#Run the Size Audit|Run the Size Audit]]
     - [[#Run the Repository Audit|Run the Repository Audit]]
     - [[#Review the Repository Audit|Review the Repository Audit]]
+    - [[#Scan for Stale Ignore Entries|Scan for Stale Ignore Entries]]
     - [[#Review the Gitignore Superset|Review the Gitignore Superset]]
     - [[#Choose Your Path|Choose Your Path]]
     - [[#Choose Which Ignored Files to Keep|Choose Which Ignored Files to Keep]]
@@ -49,6 +50,7 @@ Git remotes protect what you have committed and pushed. They do not protect loca
 - [[#Supplemental Reference|Supplemental Reference]]
     - [[#Worked Example|Worked Example]]
     - [[#Gitignore Superset Generated Files|Gitignore Superset Generated Files]]
+    - [[#Verifying Branch and Remote State|Verifying Branch and Remote State]]
     - [[#Known Gaps and Future Considerations|Known Gaps and Future Considerations]]
 
 > In Obsidian, these are internal heading links. Click in Reading View, or Cmd-click in Live Preview/editing mode.
@@ -595,6 +597,39 @@ Act on what the audit surfaces — push feature branches, preserve uncommitted w
 
 ---
 
+### Scan for Stale Ignore Entries
+
+Optional, and worth running when repos have been renamed or restructured since the last backup.
+
+A `.gitignore` line naming one literal file — `src/test/http_tests/elastic.http` rather than `src/test/http_tests/*.http` — stops working the moment that file is renamed or moved. Git does not warn. The rule covers nothing, the file quietly stops being ignored, and this runbook stops backing it up, because everything here only ever sees ignored files. When the guarded file held credentials, the same rename makes the secret tracked on the next commit.
+
+The scan reads the pattern/source map the refresh already wrote, so it costs no second walk over your repositories:
+
+```bash
+./bin/backup-repos.sh --artifact-root "$REIMAGE_ARTIFACT_ROOT" --stale-ignore-scan --open
+```
+
+It writes `gitignore-superset/stale-ignore-entries.tsv`, one row per entry that matches nothing in the repo that declares it, highest signal first.
+
+| Column | Meaning |
+|---|---|
+| `pattern` | The `.gitignore` line, exactly as written. |
+| `kind` | `anchored` — the pattern contains a path, so it is fixed to one location; both a rename and a *move* break it. `bare` — a filename only, matched anywhere in the repo, so it survives a move but still breaks on a rename. |
+| `guards_secret` | `yes` when the filename reads as credential-bearing — env files, credentials, tokens, keys, vaults. These are the rows where a stale rule stops being a backup gap and becomes an exposure. |
+| `declared_in` | How many repositories declare this same line. |
+| `repo` / `repo_path` | Which checkout this row is about. |
+
+**Read `declared_in` before anything else.** An entry matching nothing is not automatically stale — most are *preventive*, ignoring a file if it ever appears. `Thumbs.db` on a Mac, the JetBrains `.idea/*` boilerplate, Spring's `HELP.md`: copied into many repos at once, expected to match nothing, nothing to fix. A line declared in **exactly one** repo is the opposite — somebody added it for a file that was really there. Those are the rows the console prints.
+
+A review-worthy row is one of two things: a file you deleted, in which case delete the rule too, or a file you renamed — in which case find where the new name went before assuming it is safe.
+
+> [!warning] Pitfall
+> A renamed secret file is the case that matters. Confirm whether the new name is tracked before doing anything else — `git ls-files --error-unmatch <path>` — because adding it to `.gitignore` does not untrack an already-tracked file, and a committed credential needs rotating rather than ignoring.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Review the Gitignore Superset
 
 The audit run above already generated the superset, with your previous selections carried forward if you restored a template and passed `--preserve-selections`. Review it here — do not re-collect it.
@@ -761,6 +796,8 @@ Second pass — Select + Exclude, with all three files in play. This is the run 
 ```
 
 Confirm excluded files moved into `dryrun-filtered/excluded.tsv`, and that the `secrets-candidates.tsv` output matches what the first pass showed.
+
+The summary reports two exclusion numbers because `excluded.tsv` holds one row per include pattern that selected a file, not one row per file. `Excluded files` is the distinct count and is the one that balances: `Candidate files` plus `Excluded files` equals the candidate total from the unfiltered dry run. `Excluded match rows` is the raw row count of the TSV, always the larger of the two.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -962,6 +999,25 @@ Recommended reading order after a refresh:
 
 > [!bug] Troubleshooting
 > The `.tsv` files are true tab-delimited data. View them formatted only at display time, e.g. `column -s $'\t' -t <file> | less -S`, and never save the padded output back over the file.
+
+### Verifying Branch and Remote State
+
+The audit answers "is anything here local-only" for every repo at once. `capture-repo-audit.sh` populates `local-only-commits.tsv` from:
+
+```bash
+git -C "$repo" log --branches --not --remotes --oneline --decorate
+```
+
+Commits reachable from any local branch, minus everything reachable from any remote-tracking ref — reachability across every remote at once. When the audit reports zero local-only commits for a repo, that answer is complete. In particular it is not fooled by a branch that shows no upstream in `git branch -vv`: a missing bracket means no tracking configured, not never pushed, and chasing those per repo produces false alarms the audit does not have.
+
+General branch, upstream, and multi-remote inspection commands live in the Git and GitHub daily cheatsheets, not here.
+
+> [!warning] Pitfall
+> Run the audit from the branch you actually work on. `git ls-files --others --ignored` lists files that are ignored *and untracked*, so on a stale branch that predates files tracked on master, real source appears as ignored and gets staged as though Git were not protecting it. Confirm `git status` shows the expected branch before trusting a run.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Known Gaps and Future Considerations
 

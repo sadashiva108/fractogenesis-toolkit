@@ -878,6 +878,11 @@ def main() -> int:
                 ],
                 )
 
+    excluded_file_count = len({
+        (row.get("backup_label", ""), row.get("backup_rel_path", ""))
+        for row in excluded_rows
+    })
+
     summary = [
         "Selected Gitignore Staging Summary",
         "===================================",
@@ -896,7 +901,8 @@ def main() -> int:
         f"Include patterns:      {len(include_patterns)}",
         f"Exclude patterns:      {len(exclude_patterns)}",
         f"Candidate files:       {len(candidate_rows)}",
-        f"Excluded files:        {len(excluded_rows)}",
+        f"Excluded files:        {excluded_file_count}",
+        f"Excluded match rows:   {len(excluded_rows)}",
         f"Skipped files:         {len(skipped_rows)}",
     ]
 

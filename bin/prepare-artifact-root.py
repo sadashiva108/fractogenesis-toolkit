@@ -202,7 +202,11 @@ def load_expected_artifact_folders(env_file: Path, repo_root: str) -> List[str]:
         ]
     )
     raw = bash_output(script)
-    return [item.decode("utf-8", errors="ignore") for item in raw.split(b"\0") if item]
+    folders = [item.decode("utf-8", errors="ignore") for item in raw.split(b"\0") if item]
+    # Create in alphabetical order regardless of how the fragment lists them, so
+    # the directory reads predictably and a reordered fragment cannot change the
+    # on-disk creation order.
+    return sorted(set(folders))
 
 
 def load_artifact_config_source_dir(env_file: Path, repo_root: str) -> str:

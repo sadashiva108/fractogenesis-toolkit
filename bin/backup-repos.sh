@@ -36,6 +36,8 @@
 #   --selected-dry-run            Run the reviewed selected-pattern dry run.
 #   --selected-filtered-dry-run   Run the reviewed selected-pattern dry run with exclude list.
 #   --selected-copy                Run the reviewed selected-pattern final copy.
+#   --stale-ignore-scan           Report .gitignore entries naming one literal file
+#                                 that no longer matches anything on disk.
 #
 # Options:
 #   --artifact-root PATH   Override REIMAGE_ARTIFACT_ROOT from reimage.env.
@@ -140,6 +142,7 @@ while [[ $# -gt 0 ]]; do
     --selected-dry-run) MODE="selected-dry-run"; MODE_SET_COUNT=$((MODE_SET_COUNT + 1)); shift ;;
     --selected-filtered-dry-run) MODE="selected-filtered-dry-run"; MODE_SET_COUNT=$((MODE_SET_COUNT + 1)); shift ;;
     --selected-copy) MODE="selected-copy"; MODE_SET_COUNT=$((MODE_SET_COUNT + 1)); shift ;;
+    --stale-ignore-scan) MODE="stale-ignore-scan"; MODE_SET_COUNT=$((MODE_SET_COUNT + 1)); shift ;;
     --include-heavy) INCLUDE_HEAVY=true; shift ;;
     --preserve-selections) PRESERVE_SELECTIONS=true; shift ;;
     --status-interval)
@@ -193,7 +196,9 @@ if [[ ${#ROOTS[@]} -eq 0 ]]; then
 fi
 
 
-if [[ ${#ROOTS[@]} -eq 0 ]]; then
+# stale-ignore-scan reads the pattern/source map written by an earlier refresh
+# and never walks a repository, so it does not need the roots.
+if [[ ${#ROOTS[@]} -eq 0 && "$MODE" != "stale-ignore-scan" ]]; then
   echo "ERROR: No Git repository roots found." >&2
   echo "Set GIT_WORK_REPO_ROOT and/or GIT_PERSONAL_REPO_ROOT in reimage.env, or pass --root <dir>." >&2
   exit 2
@@ -255,6 +260,7 @@ DIRECT_IGNORED_HELPER="$HELPERS_DIR/stage-ignored-files.sh"
 SUPERSET_HELPER="$HELPERS_DIR/collect-gitignore-superset.sh"
 SELECTED_HELPER="$HELPERS_DIR/stage-selected-patterns.py"
 IGNORED_SCAN_HELPER="$HELPERS_DIR/scan-gitignored-candidates.py"
+STALE_IGNORE_HELPER="$HELPERS_DIR/scan-stale-ignore-entries.py"
 
 for helper in "$AUDIT_HELPER" "$DIRECT_IGNORED_HELPER" "$SUPERSET_HELPER" "$SELECTED_HELPER" "$IGNORED_SCAN_HELPER"; do
   if [[ ! -f "$helper" ]]; then
@@ -458,6 +464,23 @@ case "$MODE" in
     fi
     run_selected "$SELECTED_FINAL_DIR" --exclude-list "$EXCLUDE_LIST_PATH" --copy
     MODE_SUMMARY="Ran selected-pattern final copy"
+    ;;
+  stale-ignore-scan)
+    # Reads the pattern/source map the default refresh already wrote, so this
+    # costs no second repository walk and can be rerun on its own.
+    STALE_IGNORE_SOURCES="$GITIGNORE_DIR/gitignore-pattern-sources.tsv"
+    if [[ ! -f "$STALE_IGNORE_SOURCES" ]]; then
+      echo "ERROR: pattern sources not found: $STALE_IGNORE_SOURCES" >&2
+      echo "Run the default refresh first so the gitignore superset exists." >&2
+      exit 2
+    fi
+    STALE_IGNORE_REPORT="$GITIGNORE_DIR/stale-ignore-entries.tsv"
+    run_with_status "Stale ignore-entry scan" \
+      python3 "$STALE_IGNORE_HELPER" \
+        --sources-tsv "$STALE_IGNORE_SOURCES" \
+        --out "$STALE_IGNORE_REPORT"
+    OPEN_TARGET="$STALE_IGNORE_REPORT"
+    MODE_SUMMARY="Scanned for stale single-file ignore entries"
     ;;
 esac
 
