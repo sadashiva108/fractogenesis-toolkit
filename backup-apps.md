@@ -918,7 +918,7 @@ Detection runs only while the script runs, so a newly installed app has no folde
 ./bin/backup-apps.sh
 ```
 
-For a single script-class app, use `--docker-only`, `--intellij-only`, or `--apps-only` (these bypass the checklist). For a manual-class app (Chrome, Postman, Fiddler Everywhere, Terminal, Raycast, TNAS PC), create the folders by hand from that app's export section.
+For a single script-class app, use `--docker-only`, `--intellij-only`, `--obsidian-only`, or `--apps-only` (these bypass the checklist). For a manual-class app (Chrome, Postman, Fiddler Everywhere, Terminal, Raycast, TNAS PC), create the folders by hand from that app's export section.
 
 [[#Step 7 — Verify Outputs|⮕ Continue to Step 7 — Verify Outputs]]
 
@@ -1154,6 +1154,19 @@ in the plaintext copy.
 > unreachable remote — at the cost of the counts being as of your last fetch. Run
 > `git fetch --all` in each vault first if you need them authoritative. The
 > generated report says so too.
+
+##### Rerunning it alone
+
+The capture is cheap and makes no network calls, so rerun it whenever your vault
+set changes — a vault added, moved, or newly pushed — without redoing Phase 2D:
+
+```bash
+./bin/backup-apps.sh --obsidian-only
+```
+
+Like the other single-app rerun modes it bypasses the Step 3 checklist, skips
+every other helper, and does not create or prune app folders. The report is
+regenerated from scratch each time.
 
 ##### Read the report, then decide your restore source
 

@@ -68,6 +68,8 @@
 #                            Never overwrites an existing file.
 #   --intellij-only          Rerun only the IntelliJ portion through this entrypoint.
 #   --vscode-only            Rerun only the VS Code fallback capture through this entrypoint.
+#   --obsidian-only          Rerun only the Obsidian vault capture through this
+#                            entrypoint. Makes no network calls.
 #   --apps-only              Rerun only the registry-driven app-config captures
 #                            (Claude, draw.io, Zoom, Mos, Wireshark, ...) through
 #                            this entrypoint.
@@ -264,6 +266,7 @@ DOCKER_ONLY=false
 INTELLIJ_ONLY=false
 VSCODE_ONLY=false
 APPS_ONLY=false
+OBSIDIAN_ONLY=false
 ALL_DETECTED=false
 SHOW_SUPPORTED=false
 SHOW_PREFLIGHT=false
@@ -310,6 +313,7 @@ while [[ $# -gt 0 ]]; do
     --intellij-only) INTELLIJ_ONLY=true; shift ;;
     --vscode-only) VSCODE_ONLY=true; shift ;;
     --apps-only) APPS_ONLY=true; shift ;;
+    --obsidian-only) OBSIDIAN_ONLY=true; shift ;;
     --all-detected) ALL_DETECTED=true; shift ;;
     --init-intellij-review) INIT_INTELLIJ_REVIEW=true; shift ;;
     --supported-apps) SHOW_SUPPORTED=true; shift ;;
@@ -454,14 +458,15 @@ ONLY_COUNT=0
 [[ "$INTELLIJ_ONLY" == true ]] && ONLY_COUNT=$((ONLY_COUNT + 1))
 [[ "$VSCODE_ONLY" == true ]] && ONLY_COUNT=$((ONLY_COUNT + 1))
 [[ "$APPS_ONLY" == true ]] && ONLY_COUNT=$((ONLY_COUNT + 1))
+[[ "$OBSIDIAN_ONLY" == true ]] && ONLY_COUNT=$((ONLY_COUNT + 1))
 
 if (( ONLY_COUNT > 1 )); then
-  echo "ERROR: choose only one of --docker-only, --intellij-only, --vscode-only, or --apps-only" >&2
+  echo "ERROR: choose only one of --docker-only, --intellij-only, --vscode-only, --obsidian-only, or --apps-only" >&2
   exit 2
 fi
 
 if (( ONLY_COUNT > 0 )) && [[ "$RUN_CANDIDATE_REVIEW" == true ]]; then
-  echo "ERROR: --candidate-review cannot be combined with --docker-only, --intellij-only, --vscode-only, or --apps-only" >&2
+  echo "ERROR: --candidate-review cannot be combined with --docker-only, --intellij-only, --vscode-only, --obsidian-only, or --apps-only" >&2
   exit 2
 fi
 
@@ -480,7 +485,8 @@ SELECTION_FILE="$APP_ROOT/app-backup-selection.md"
 # on a full run unless --all-detected explicitly bypasses the checklist.
 FULL_RUN=false
 if [[ "$RUN_CANDIDATE_REVIEW" != true && "$DOCKER_ONLY" != true \
-      && "$INTELLIJ_ONLY" != true && "$VSCODE_ONLY" != true && "$APPS_ONLY" != true ]]; then
+      && "$INTELLIJ_ONLY" != true && "$VSCODE_ONLY" != true && "$APPS_ONLY" != true \
+      && "$OBSIDIAN_ONLY" != true ]]; then
   FULL_RUN=true
 fi
 SELECTION_ACTIVE=false
@@ -581,6 +587,8 @@ CANDIDATE_REVIEW_STATUS="Not run"
 DOCKER_HELPER="$(dirname "$SCRIPT_DIR")/.internal/apps/backup-docker-settings.sh"
 if [[ "$INTELLIJ_ONLY" == true ]]; then
   DOCKER_STATUS="Skipped by --intellij-only"
+elif [[ "$OBSIDIAN_ONLY" == true ]]; then
+  DOCKER_STATUS="Skipped by --obsidian-only"
 elif [[ "$VSCODE_ONLY" == true ]]; then
   DOCKER_STATUS="Skipped by --vscode-only"
 elif [[ "$APPS_ONLY" == true ]]; then
@@ -618,13 +626,15 @@ elif [[ "$DOCKER_ONLY" == true ]]; then
   OBSIDIAN_STATUS="Skipped by --docker-only"
 elif [[ "$VSCODE_ONLY" == true ]]; then
   OBSIDIAN_STATUS="Skipped by --vscode-only"
+elif [[ "$APPS_ONLY" == true ]]; then
+  OBSIDIAN_STATUS="Skipped by --apps-only"
 elif [[ "$RUN_CANDIDATE_REVIEW" == true ]]; then
   OBSIDIAN_STATUS="Skipped; candidate-review is scan-only"
 elif [[ ! -f "$OBSIDIAN_HELPER" ]]; then
   OBSIDIAN_STATUS="Skipped; .internal/apps/backup-obsidian-vaults.py not found"
 elif ! command -v python3 >/dev/null 2>&1; then
   OBSIDIAN_STATUS="Skipped; python3 not available"
-elif ! is_selected_supported "Obsidian"; then
+elif [[ "$OBSIDIAN_ONLY" != true ]] && ! is_selected_supported "Obsidian"; then
   OBSIDIAN_STATUS="Skipped; Obsidian not selected in the app-backup checklist"
 elif [[ -f "$HOME/Library/Application Support/obsidian/obsidian.json" ]]; then
   if python3 "$OBSIDIAN_HELPER" --artifact-root "$REIMAGE_ARTIFACT_ROOT"; then
@@ -685,6 +695,8 @@ elif [[ "$VSCODE_ONLY" == true ]]; then
   INTELLIJ_STATUS="Skipped by --vscode-only"
 elif [[ "$APPS_ONLY" == true ]]; then
   INTELLIJ_STATUS="Skipped by --apps-only"
+elif [[ "$OBSIDIAN_ONLY" == true ]]; then
+  INTELLIJ_STATUS="Skipped by --obsidian-only"
 elif [[ "$RUN_CANDIDATE_REVIEW" == true ]]; then
   INTELLIJ_STATUS="Skipped; candidate-review is scan-only"
 elif [[ ! -f "$INTELLIJ_HELPER" ]]; then
@@ -703,7 +715,7 @@ else
   INTELLIJ_STATUS="Skipped; IntelliJ IDEA state not detected on this Mac"
 fi
 
-if [[ "$DOCKER_ONLY" == true || "$INTELLIJ_ONLY" == true || "$APPS_ONLY" == true ]]; then
+if [[ "$DOCKER_ONLY" == true || "$INTELLIJ_ONLY" == true || "$APPS_ONLY" == true || "$OBSIDIAN_ONLY" == true ]]; then
   VSCODE_STATUS="Skipped by single-app rerun mode"
 elif [[ "$RUN_CANDIDATE_REVIEW" == true ]]; then
   VSCODE_STATUS="Skipped; candidate-review is scan-only"
@@ -1269,7 +1281,7 @@ EOF
   rm -f "$known_md_tmp" "$managed_md_tmp" "$related_md_tmp"
 }
 
-if [[ "$DOCKER_ONLY" == true || "$INTELLIJ_ONLY" == true || "$VSCODE_ONLY" == true || "$APPS_ONLY" == true ]]; then
+if [[ "$DOCKER_ONLY" == true || "$INTELLIJ_ONLY" == true || "$VSCODE_ONLY" == true || "$APPS_ONLY" == true || "$OBSIDIAN_ONLY" == true ]]; then
   CANDIDATE_REVIEW_STATUS="Skipped by single-app rerun mode"
 elif [[ "$RUN_CANDIDATE_REVIEW" == true ]]; then
   generate_candidate_review
@@ -1456,7 +1468,7 @@ if [[ "$FULL_RUN" == true ]]; then
   ensure_manual_drop_folders
 fi
 
-if [[ "$DOCKER_ONLY" == true || "$INTELLIJ_ONLY" == true || "$VSCODE_ONLY" == true ]]; then
+if [[ "$DOCKER_ONLY" == true || "$INTELLIJ_ONLY" == true || "$VSCODE_ONLY" == true || "$OBSIDIAN_ONLY" == true ]]; then
   APP_CONFIG_STATUS="Skipped by single-app rerun mode"
 elif [[ "$RUN_CANDIDATE_REVIEW" == true ]]; then
   APP_CONFIG_STATUS="Skipped; candidate-review is scan-only"
