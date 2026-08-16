@@ -280,6 +280,93 @@ _artifact_config_main() {
     fi
   done
 
+  # ── Secret shapes ──────────────────────────────────────────────────────────
+  # The single definition of "this filename looks like a credential", shared by
+  # bin/check-loose-secrets.sh and bin/stage-loose-secrets.sh. Before this
+  # existed the answer was spelled out separately in onedrive-extra-excludes
+  # (22 shapes), external-excludes (none at all), the IntelliJ helper, and the
+  # repo backup — and they disagreed, which is how credential-shaped files
+  # reached home-files-backup/ in the clear.
+  #
+  # The floor lives here rather than in a fragment so it cannot go missing from
+  # a workspace copy. secret-shapes.conf.sh is optional and can only ADD.
+  #
+  # Public certificate formats (.cer, .crt, .der) are deliberately NOT here.
+  # They carry no private key, and including them would report every trusted
+  # root on the drive. .p12/.pfx are present because PKCS#12 bundles a key by
+  # definition.
+  SECRET_SHAPES_FLOOR=(
+    '.env'        '.env.*'      '.netrc'      '.npmrc'
+    '.pypirc'     '.yarnrc'     '.yarnrc.yml' '.git-credentials'
+    'credentials' 'credentials.json'
+    'id_rsa'      'id_dsa'      'id_ecdsa'    'id_ed25519'
+    '*.pem'       '*.key'       '*.p12'       '*.pfx'
+    '*.jks'       '*.keystore'  '*.kubeconfig' '*.p8'
+    '*credential*.json'  '*token*.json'
+    '*password*.csv'     '*password*.json'
+    'http-client.private.env.json'
+    'settings.xml'       'gradle.properties'
+  )
+
+  # Optional fragment: sourced only when present, so an existing workspace copy
+  # created before this fragment shipped keeps loading without error.
+  config_path="$ARTIFACT_CONFIG_SOURCE_DIR/secret-shapes.conf.sh"
+  if [[ -f "$config_path" ]]; then
+    # shellcheck disable=SC1090
+    if ! source "$config_path"; then
+      echo "ERROR: failed to source artifact-config fragment: $config_path" >&2
+      return 2
+    fi
+  fi
+
+  # Effective set = floor plus whatever the fragment added. Guarded because the
+  # fragment may be absent, or present with an empty array — on Bash 3.2,
+  # expanding an empty array under `set -u` is an error.
+  SECRET_SHAPES=( "${SECRET_SHAPES_FLOOR[@]}" )
+  if declare -p SECRET_SHAPES_EXTRA >/dev/null 2>&1 \
+    && (( ${#SECRET_SHAPES_EXTRA[@]} > 0 )); then
+    SECRET_SHAPES=( "${SECRET_SHAPES[@]}" "${SECRET_SHAPES_EXTRA[@]}" )
+  fi
+
+  return 0
+}
+
+# Public helper: turn SECRET_SHAPES into a find(1) predicate group in the array
+# named by $1, as `-iname A -o -iname B ...`. Matching belongs inside find:
+# testing each filename in the shell forks two subshells per file, which over a
+# full home-directory backup takes minutes and reads as a hang.
+#
+# Usage: build_secret_shape_predicate MY_PRED   # then: find . \( "${MY_PRED[@]}" \)
+build_secret_shape_predicate() {
+  local target="$1" shape first=1
+  local build=""
+
+  for shape in ${SECRET_SHAPES[@]+"${SECRET_SHAPES[@]}"}; do
+    [[ -n "$shape" ]] || continue
+    if (( first )); then
+      build="-iname|$shape"
+      first=0
+    else
+      build="$build|-o|-iname|$shape"
+    fi
+  done
+
+  # Bash 3.2 has no namerefs, so publish through eval with IFS-split on a
+  # character that cannot appear in a glob shape. Pathname expansion must be
+  # off for the duration: the shapes ARE globs, and an unquoted expansion run
+  # in a directory that happens to contain a match would replace '*.p12' with
+  # that filename and silently narrow the predicate to one file.
+  local IFS='|' reset_glob=0
+  case "$-" in
+    *f*) ;;
+    *)   reset_glob=1; set -f ;;
+  esac
+
+  eval "$target=( \$build )"
+
+  if (( reset_glob )); then
+    set +f
+  fi
   return 0
 }
 

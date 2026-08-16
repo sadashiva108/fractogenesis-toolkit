@@ -60,9 +60,21 @@ when a runbook tells the reader to run it directly. Until then it stays in
 `.internal/` and is invoked with explicit arguments by an entrypoint.
 
 **Runbook and executable share a name.** `bin/backup-home.sh` pairs with
-`backup-home.md` at the repo root. Cross-cutting utilities that several runbooks
-call are the deliberate exception and have no runbook of their own —
-`capture-size-audit.sh` and `verify-doc-paths.sh` are the current ones.
+`backup-home.md` at the repo root.
+
+**A runbook may own more than one `bin/` script.** The name pairing identifies
+the *primary* entrypoint, not the complete set. `stage-loose-secrets.md` owns
+both `stage-loose-secrets.sh` and `check-loose-secrets.sh` — one acts, one
+reports read-only, and splitting them is what keeps the reporting side safe to
+run at any time. `backup-home.md` likewise owns `verify-artifact-config.sh`.
+A second script belongs to the runbook that tells the reader to run it.
+
+**Cross-cutting utilities have no owning runbook at all** and are the deliberate
+exception to the pairing — `capture-size-audit.sh` and `verify-doc-paths.sh` are
+the current ones. The test is how many runbooks *call* it, not how much ground
+it covers: `check-loose-secrets.sh` examines material produced by six earlier
+phases but is invoked from exactly one runbook, so it is owned, not
+cross-cutting.
 
 **Migration mappings are ephemeral.** Keep them in `/tmp/` for the duration of a
 migration. Nothing has needed to outlive one so far, so there is no committed

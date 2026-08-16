@@ -4,7 +4,7 @@
 #
 # Format: one absolute path per entry — files or directories.
 #
-# Leave out anything Phase 3B already auto-captures, such as ~/.keystore,
+# Leave out anything Phase 3C already auto-captures, such as ~/.keystore,
 # home-root *.jks, Desktop/Downloads cert bundles found by create-secrets-dmg.sh,
 # and jssecacerts from JAVA_HOME, installed JDKs, or IntelliJ JBR.
 

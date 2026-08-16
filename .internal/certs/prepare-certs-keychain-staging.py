@@ -600,7 +600,7 @@ def normalize_gitignored(path: Path, feed_name: str, backup_root: str = "") -> T
     records: List[Dict[str, str]] = []
     filtered_noise: List[Dict[str, str]] = []
     cert_project_destination = "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/certs/project-local/" if backup_root else "secrets-encrypted/certs/project-local/"
-    out_of_scope_destination = "Phase 3B consolidated secrets DMG or selected ignored-file backup; not Phase 3A cert staging"
+    out_of_scope_destination = "Phase 3C consolidated secrets DMG or selected ignored-file backup; not Phase 3A cert staging"
 
     for row in rows:
         if len(row) != 3:
@@ -873,7 +873,7 @@ def restore_plan_for_record(rec: Dict[str, str]) -> str:
     if category == "public-certificate":
         return "Use as public trust/reference material only; import manually if an internal endpoint/tool still requires it after rebuild."
     if decision == "propose-project-local-stage":
-        return "After review, copy approved path into the project-local staged-certs fragment, rerun Phase 3A scan, rerun Phase 3B, and restore only to that project if still required."
+        return "After review, copy approved path into the project-local staged-certs fragment, rerun Phase 3A scan, rerun Phase 3C, and restore only to that project if still required."
     return "Review the normalized plan row before restoring; do not copy blindly."
 
 
@@ -911,7 +911,7 @@ def write_manual_keychain_export_checklist(review_dir: Path, stamp: str, records
         f.write("- [ ] Public-only `.cer` / `.pem` exports were staged intentionally and do not contain private keys.\n")
         f.write("- [ ] Non-exportable managed identities were documented with their restore/re-enrollment source.\n")
         f.write("- [ ] Export passwords were saved only in the approved password manager.\n")
-        f.write("- [ ] Phase 3B will be rerun after any new manual export is added.\n")
+        f.write("- [ ] Phase 3C will be rerun after any new manual export is added.\n")
     stats.manual_keychain_export_checklist_rows = len(rows)
     stats.derived_files_written.append(str(out))
     return out
@@ -952,7 +952,7 @@ def write_cert_restore_notes(review_dir: Path, stamp: str, records: List[Dict[st
         f.write("\n## Finalize after review\n\n")
         f.write("- [ ] Remove rows that were intentionally skipped.\n")
         f.write("- [ ] Replace generic guidance with exact restore targets where known.\n")
-        f.write("- [ ] Confirm the newest Phase 3B DMG contains any manually exported or staged files referenced here.\n")
+        f.write("- [ ] Confirm the newest Phase 3C DMG contains any manually exported or staged files referenced here.\n")
         f.write("- [ ] Keep this as a proposed note until the cert/keychain plan is reviewed.\n")
     stats.cert_restore_note_rows = len(rows)
     stats.derived_files_written.append(str(out))

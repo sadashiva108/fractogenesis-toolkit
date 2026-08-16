@@ -525,7 +525,7 @@ def main() -> int:
     parser.add_argument("--include-template", required=True, help="Path to gitignore-review-template.txt.")
     parser.add_argument("--exclude-list", help="Optional list of patterns/paths to exclude after dry run review.")
     parser.add_argument("--secrets-patterns", help="Optional list of credential-shaped patterns. Matching files are routed to the secrets destination instead of the ordinary output tree.")
-    parser.add_argument("--secrets-dest", help="Destination root for secret-shaped candidates. Defaults to <dest>/secrets-candidates. Point at secrets-encrypted/repos-gitignored/ so the Phase 3B DMG sweeps them.")
+    parser.add_argument("--secrets-dest", help="Destination root for secret-shaped candidates. Defaults to <dest>/secrets-candidates. Point at secrets-encrypted/repos-gitignored/ so the Phase 3C DMG sweeps them.")
     parser.add_argument("--root", action="append", required=True, help="Root directory to crawl. Can be passed multiple times.")
     parser.add_argument("--dest", required=True, help="Destination directory for dry-run reports or copied backup files.")
     parser.add_argument("--copy", action="store_true", help="Actually copy files. Without this, dry run only.")

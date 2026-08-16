@@ -2,7 +2,7 @@
 # =============================================================================
 # create-secrets-dmg.sh
 #
-# Phase 3B entrypoint for the consolidated encrypted secrets DMG. One script
+# Phase 3C entrypoint for the consolidated encrypted secrets DMG. One script
 # owns the whole lifecycle through four subcommands:
 #
 #   build (default)  Stage every credential-bearing category that should survive

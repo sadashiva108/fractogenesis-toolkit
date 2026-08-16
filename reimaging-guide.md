@@ -24,7 +24,8 @@ This is the canonical top-level guide for the Mac reimage workflow.
     - [[#Phase 2D — Backup Apps|Phase 2D — Backup Apps]]
 - [[#Phase 3 — Pre-Image Secrets Staging and Encryption|Phase 3 — Pre-Image Secrets Staging and Encryption]]
     - [[#Phase 3A — Certificate and Keychain Staging|Phase 3A — Certificate and Keychain Staging]]
-    - [[#Phase 3B — Create Secrets DMG|Phase 3B — Create Secrets DMG]]
+    - [[#Phase 3B — Stage Loose Secrets|Phase 3B — Stage Loose Secrets]]
+    - [[#Phase 3C — Create Secrets DMG|Phase 3C — Create Secrets DMG]]
 - [[#Phase 4 — Pre-Image Captures|Phase 4 — Pre-Image Captures]]
     - [[#Phase 4A — Capture Toolkit Snapshot|Phase 4A — Capture Toolkit Snapshot]]
     - [[#Phase 4B — System Inventory Capture|Phase 4B — System Inventory Capture]]
@@ -302,9 +303,11 @@ $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/raycast/, if used
 ---
 ## Phase 3 — Pre-Image Secrets Staging and Encryption
 
-This phase is a pipeline rather than a set of independent steps. Reviewed certificate and Keychain material is staged into temporary folders (3A), then packaged into the encrypted `all-secrets-*.dmg`, validated inside the mounted image, and only then is the loose plaintext staging cleaned up (3B).
+This phase is a pipeline rather than a set of independent steps. Reviewed certificate and Keychain material is staged into temporary folders (3A), the artifact root is then swept for credential-shaped files that earlier phases left in the clear (3B), and only then is everything packaged into the encrypted `all-secrets-*.dmg`, validated inside the mounted image, and the loose plaintext staging cleaned up (3C).
 
-**Ordering rule for the whole phase:** if you add any new Keychain export, `.p12` / `.pfx`, keystore, private key, or selected certificate/key candidate — at any point, including after you believe this phase is finished — rerun the 3A scan/plan pass and then rerun 3B, so the newest consolidated secrets DMG includes those files before final validation.
+The order matters in one direction: 3B has to run after 3A, because cert staging writes into `secrets-encrypted/` and can leave candidates of its own behind, and before 3C, because 3C encrypts `secrets-encrypted/` and nothing else. Anything still outside that directory when the DMG is built leaves on the drive in the clear.
+
+**Ordering rule for the whole phase:** if you add any new Keychain export, `.p12` / `.pfx`, keystore, private key, or selected certificate/key candidate — at any point, including after you believe this phase is finished — rerun the 3A scan/plan pass, then 3B, then 3C, so the newest consolidated secrets DMG includes those files before final validation.
 
 This phase is complete once every secret that will be preserved is inside the mounted DMG, verified there, and the loose plaintext staging has been cleaned up.
 
@@ -315,7 +318,7 @@ This phase is complete once every secret that will be preserved is inside the mo
 
 Follow this phase guide: [Stage Certificates and Keychain](stage-certs-keychain.md).
 
-This phase owns the certificate and Keychain review/export/staging workflow before encryption. In this context, **staging** means placing reviewed files, manual Keychain exports, notes, and generated review artifacts into the correct temporary backup folders so Phase 3B can package them into the encrypted secrets DMG. The planning pass also produces normalized/deduped review tables, proposed staged-certs fragments, out-of-cert-scope secret crosswalks, and generated-noise filter evidence before anything is copied.
+This phase owns the certificate and Keychain review/export/staging workflow before encryption. In this context, **staging** means placing reviewed files, manual Keychain exports, notes, and generated review artifacts into the correct temporary backup folders so Phase 3C can package them into the encrypted secrets DMG. The planning pass also produces normalized/deduped review tables, proposed staged-certs fragments, out-of-cert-scope secret crosswalks, and generated-noise filter evidence before anything is copied.
 
 Primary outputs:
 
@@ -328,11 +331,29 @@ $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/extra-secrets-certs-review/
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
 ---
-### Phase 3B — Create Secrets DMG
+### Phase 3B — Stage Loose Secrets
+
+Follow this phase guide: [Stage Loose Secrets](stage-loose-secrets.md).
+
+Phases 2A through 3A each copy material onto the artifact drive, and each can leave a credential-shaped file outside `secrets-encrypted/` — a `.p12` beside a project's build config, an `id_rsa` inside a captured home directory, a `credentials.yml` pulled in with `.idea` metadata. Phase 3C encrypts `secrets-encrypted/` and cleans up `secrets-encrypted/`; a file anywhere else is neither encrypted nor removed, and leaves with the drive in the clear.
+
+This phase sweeps the artifact root for those files and moves them inside the encryption boundary, preserving each file's original relative path so a restore phase can put it back.
+
+Primary outputs:
+
+```text
+$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/staged-loose/
+$REIMAGE_ARTIFACT_ROOT/loose-secrets-reports/
+```
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+### Phase 3C — Create Secrets DMG
 
 Follow this phase guide: [Create Secrets DMG](create-secrets-dmg.md).
 
-By Phase 3B, the expectation is that all secret material that needs to be preserved has already been intentionally staged.
+By Phase 3C, the expectation is that all secret material that needs to be preserved has already been intentionally staged.
 
 A **DMG** is a macOS disk image file. In this workflow, `all-secrets-*.dmg` is the encrypted restore container that packages the reviewed secret staging folders from earlier phases.
 

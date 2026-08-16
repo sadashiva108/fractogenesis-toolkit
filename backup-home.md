@@ -56,7 +56,7 @@ The external artifact root is the authoritative copy. An optional OneDrive secon
 **What the rest of the workflow relies on it for**
 
 - A restorable set of dotfiles and home content for the post-image phases to draw from selectively.
-- Secret material parked where the Phase 3B consolidated DMG will encrypt it.
+- Secret material parked where the Phase 3C consolidated DMG will encrypt it.
 - A `home-files-backup/` directory the Phase 6B sign-off checks for before the erase.
 
 **Ownership**
@@ -64,13 +64,13 @@ The external artifact root is the authoritative copy. An optional OneDrive secon
 | This runbook owns | Owned elsewhere |
 |---|---|
 | the `home-files-backup/` copy and its `MANIFEST.md` | app-specific backups, including Docker settings, contexts, and inventories — `backup-apps` (Phase 2C) |
-| staging `secrets-targets.conf.sh` sources and Java `jssecacerts` into `secrets-encrypted/` | encrypting the staged secrets — `create-secrets-dmg` (Phase 3B) |
+| staging `secrets-targets.conf.sh` sources and Java `jssecacerts` into `secrets-encrypted/` | encrypting the staged secrets — `create-secrets-dmg` (Phase 3C) |
 | the optional OneDrive secondary copy of work-safe targets | OneDrive root configuration and folder creation — `prepare-artifact-root` |
 | | the developer-tool version inventory — `capture-system-inventory` (Phase 4B) |
 | | the automated toolkit snapshot — `capture-toolkit-snapshot` |
 | | cloud-sync and final manual sign-off — `reimage-prep-checks` (Phase 6B) |
 
-This phase is safe to re-run at any point before the erase; the only precondition is that a re-run touching a secret target invalidates an already-built Phase 3B DMG.
+This phase is safe to re-run at any point before the erase; the only precondition is that a re-run touching a secret target invalidates an already-built Phase 3C DMG.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -530,7 +530,7 @@ Then refresh just the authoritative external copy:
 Use the default mode instead only when you also want the OneDrive work-safe subset refreshed — that run needs the OneDrive confirmation done again.
 
 > [!warning] Pitfall
-> If you have already built the Phase 3B secrets DMG, a re-run that changes any secret-bearing target means that DMG no longer covers the full staged secret set — rebuild it in Phase 3B after this refresh. While you are still staging and have not built the DMG yet, which is the normal case here, there is nothing extra to do.
+> If you have already built the Phase 3C secrets DMG, a re-run that changes any secret-bearing target means that DMG no longer covers the full staged secret set — rebuild it in Phase 3C after this refresh. While you are still staging and have not built the DMG yet, which is the normal case here, there is nothing extra to do.
 
 ### SSH Agent Socket Exclusion in Detail
 

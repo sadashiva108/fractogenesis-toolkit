@@ -1,4 +1,4 @@
-[[reimaging-guide#Phase 3B — Create Secrets DMG|← Back to Mac Reimaging Guide]]
+[[reimaging-guide#Phase 3C — Create Secrets DMG|← Back to Mac Reimaging Guide]]
 
 # Create Secrets DMG
 
@@ -69,7 +69,7 @@ the Phase 6B pre-image sign-off these verifications roll up to — reimage-prep-
 
 ## How the Workflow Works
 
-Read this before running anything. Phase 3B is the *consolidation and validation* pass. The earlier phases already routed most credential-shaped files into `secrets-encrypted/` — SSH, GPG, Docker, kube, and app-secret exports as a byproduct of backing up home and apps (Phases 2B/2D), and reviewed certificate/Keychain material through the Phase 3A staging runbook. This phase collects all of it, plus a few things it captures live (Java `jssecacerts` from installed JDKs, and loose cert bundles on Desktop/Downloads), into one encrypted image so restore depends on a single password and a single artifact.
+Read this before running anything. Phase 3C is the *consolidation and validation* pass. The earlier phases already routed most credential-shaped files into `secrets-encrypted/` — SSH, GPG, Docker, kube, and app-secret exports as a byproduct of backing up home and apps (Phases 2B/2D), and reviewed certificate/Keychain material through the Phase 3A staging runbook. This phase collects all of it, plus a few things it captures live (Java `jssecacerts` from installed JDKs, and loose cert bundles on Desktop/Downloads), into one encrypted image so restore depends on a single password and a single artifact.
 
 The reason for the strict order is that the cleanup step deletes plaintext secrets. That is only safe once the encrypted copy is proven readable, so the flow never lets validation and cleanup swap places:
 
@@ -379,7 +379,7 @@ Use the newest `all-secrets-*.dmg` as the primary restore source after the Mac i
 
 ### Manual Items That Remain Manual
 
-These still require human review or app/Keychain interaction even with the Phase 3A and 3B scripts:
+These still require human review or app/Keychain interaction even with the Phase 3A and 3C scripts:
 
 | Manual item | Why it stays manual |
 |---|---|

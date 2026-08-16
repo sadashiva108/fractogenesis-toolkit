@@ -9,6 +9,11 @@
 # Phase 2A (backup-repos.md) and Phase 2B (backup-home.md); see those runbooks
 # for how the output is read.
 #
+# Loose plaintext secrets are NOT checked here: that is a security concern with
+# different timing (Phase 3C/6B, after the DMG exists) and it lives in
+# bin/check-loose-secrets.sh. This script is a pre-copy capacity and structure
+# audit.
+#
 # This file is intended for bin/. All targets, dotfiles, secrets, excludes, and
 # expected artifact folders are read from the artifact-config fragments loaded
 # by .internal/load-reimage-config.sh — edit fragments there, not this script.
@@ -35,9 +40,6 @@
 #   ./bin/capture-size-audit.sh --drive Data
 #   ./bin/capture-size-audit.sh --drive /Volumes/Data
 #
-#   # Read-only lingering-plaintext-secret check, after the secrets phase
-#   ./bin/capture-size-audit.sh --check-loose-secrets
-#
 # Options:
 #   --drive NAME|PATH     External volume name or /Volumes/... mount path.
 #                         Default: $EXTERNAL_DATA_VOLUME from shared config.
@@ -53,9 +55,6 @@
 #                         Default: pre-image.
 #   --local-only          Local target inventory only. Skips both the OneDrive
 #                         section and the external-drive capacity/fit check.
-#   --check-loose-secrets Read-only heuristic scan for plaintext secret
-#                         candidates outside secrets-encrypted/ and loose
-#                         payload files still inside it.
 #   -h, --help            Show this message and exit.
 #
 # Output (written beneath --dest, when a destination is available):
@@ -116,7 +115,6 @@ CONFIG="${CONFIG:-${ARTIFACT_CONFIG_SOURCE_DIR:-$CONFIG_LOADER}}"
 DRIVE_NAME=""
 AUDIT_BACKUP_ROOT=""
 LOCAL_ONLY=false
-CHECK_LOOSE_SECRETS=false
 REPORT_DEST="${REIMAGE_ARTIFACT_ROOT:+${REIMAGE_ARTIFACT_ROOT}/size-audit-reports}"
 REPORT_CONTEXT="pre-image"
 
@@ -161,10 +159,6 @@ while [[ $# -gt 0 ]]; do
       ;;
     --local-only)
       LOCAL_ONLY=true
-      shift
-      ;;
-    --check-loose-secrets)
-      CHECK_LOOSE_SECRETS=true
       shift
       ;;
     -h|--help)
@@ -231,61 +225,6 @@ is_macos_metadata_name() {
   case "$name" in
     .DS_Store|._*|.AppleDouble|.LSOverride|.localized|.VolumeIcon.icns|\
     .DocumentRevisions-V100|.fseventsd|.Spotlight-V100|.TemporaryItems|.Trashes)
-      return 0
-      ;;
-    *)
-      return 1
-      ;;
-  esac
-}
-
-# find(1) predicates built from the same pattern sets the name helpers below
-# test. The helpers remain the readable definition and are still used for
-# single-name checks; these drive the bulk scan without forking per file.
-LOOSE_SECRET_FIND_PRED=(
-  -iname '.env'            -o -iname '.env.*'        -o -iname '.netrc'
-  -o -iname '.npmrc'       -o -iname '.pypirc'       -o -iname 'credentials'
-  -o -iname 'credentials.json'
-  -o -iname 'id_rsa'       -o -iname 'id_dsa'        -o -iname 'id_ecdsa'
-  -o -iname 'id_ed25519'
-  -o -iname '*.pem'        -o -iname '*.key'         -o -iname '*.p12'
-  -o -iname '*.pfx'        -o -iname '*.jks'         -o -iname '*.keystore'
-  -o -iname '*.kubeconfig'
-  -o -iname '*credential*.json' -o -iname '*token*.json'
-  -o -iname '*password*.csv'    -o -iname '*password*.json'
-)
-
-ALLOWED_EVIDENCE_FIND_PRED=(
-  -iname '*.dmg'    -o -iname '*.sha256' -o -iname '*.sha256sum'
-  -o -iname '*.txt' -o -iname '*.tsv'    -o -iname '*.md'
-  -o -iname '*.log'
-)
-
-# Heuristic only: identifies filenames commonly used for plaintext credentials,
-# private keys, keystores, and environment-secret files. It deliberately does
-# not inspect file contents or delete anything.
-is_loose_secret_candidate_name() {
-  local name lower
-  name="$1"
-  lower="$(printf '%s' "$name" | tr '[:upper:]' '[:lower:]')"
-
-  case "$lower" in
-    .env|.env.*|.netrc|.npmrc|.pypirc|credentials|credentials.json|id_rsa|id_dsa|id_ecdsa|id_ed25519|*.pem|*.key|*.p12|*.pfx|*.jks|*.keystore|*.kubeconfig|*credential*.json|*token*.json|*password*.csv|*password*.json)
-      return 0
-      ;;
-    *)
-      return 1
-      ;;
-  esac
-}
-
-is_allowed_secrets_evidence_name() {
-  local name lower
-  name="$1"
-  lower="$(printf '%s' "$name" | tr '[:upper:]' '[:lower:]')"
-
-  case "$lower" in
-    *.dmg|*.sha256|*.sha256sum|*.txt|*.tsv|*.md|*.log)
       return 0
       ;;
     *)
@@ -792,10 +731,11 @@ if [[ -d "$EXTERNAL_MOUNT" ]]; then
             && printf "  ${GRN}  📁  %-38s  %s ✓${RST}\n" "$name" "$sz" \
             || printf "  ${DIM}  📁  %-38s  %s${RST}\n"   "$name" "$sz"
         else
-          local_flag=""
-          echo "$name" | grep -qiE 'password|passwd|secret|credential|token|\.csv$|\.pem$|\.p12$' \
-            && local_flag=" ${RED}⚠ sensitive — move to secrets-encrypted/${RST}"
-          printf "  ${YEL}      %-38s  %s${RST}%b\n" "$name" "$sz" "$local_flag"
+          # No secret-shape test here. This listing is maxdepth 1 and would
+          # catch only a loose file at the very top of the artifact root, with
+          # a weaker pattern list than the real check and the same advice.
+          # bin/check-loose-secrets.sh owns that question for the whole tree.
+          printf "  ${YEL}      %-38s  %s${RST}\n" "$name" "$sz"
         fi
       done < <(
         find "$backup_root" -maxdepth 1 -mindepth 1 -type d  2>/dev/null | sort
@@ -825,76 +765,10 @@ if [[ -d "$EXTERNAL_MOUNT" ]]; then
 
       if (( loose > 0 )); then
         echo -e "  ${YEL}  ⚠ ${loose} loose file(s) at backup root — organize into subfolders${RST}"
+        echo -e "  ${DIM}    Credential-shaped files anywhere in the tree: ./bin/check-loose-secrets.sh${RST}"
       fi
       if (( metadata_ignored > 0 )); then
         echo -e "  ${DIM}  Ignored ${metadata_ignored} routine macOS metadata item(s).${RST}"
-      fi
-    done
-  fi
-fi
-
-# ══════════════════════════════════════════════════════════════════════════════
-# OPTIONAL — POST-SECRETS LINGERING CANDIDATE CHECK
-# ══════════════════════════════════════════════════════════════════════════════
-if [[ "$CHECK_LOOSE_SECRETS" == true ]]; then
-  echo ""
-  echo ""
-  echo -e "${BLD}${CYN}━━  POST-SECRETS LINGERING CANDIDATE CHECK  ━━━━━━━━━━━${RST}"
-  echo -e "  ${DIM}Read-only heuristic. It does not inspect contents or delete files.${RST}"
-  echo -e "  ${DIM}Run after the encrypted secrets artifact has been created and loose staging has been cleaned up.${RST}"
-
-  roots_to_check=()
-  if [[ -n "$AUDIT_BACKUP_ROOT" ]]; then
-    roots_to_check+=("$AUDIT_BACKUP_ROOT")
-  elif (( ${#BACKUP_ROOTS[@]} > 0 )); then
-    roots_to_check=("${BACKUP_ROOTS[@]}")
-  elif [[ -n "$ACTIVE_BACKUP_ROOT" ]]; then
-    roots_to_check+=("$ACTIVE_BACKUP_ROOT")
-  fi
-
-  if (( ${#roots_to_check[@]} == 0 )); then
-    echo -e "  ${YEL}No backup root was available for the lingering-secret check.${RST}"
-  else
-    for check_root in "${roots_to_check[@]}"; do
-      [[ -d "$check_root" ]] || continue
-      outside_count=0
-      staging_count=0
-      echo ""
-      echo -e "  ${BLD}Root: $check_root${RST}"
-
-      # Matching happens inside find, not in the shell. Calling the name
-      # helpers per file forked two subshells each, which over a full
-      # home-directory backup (hundreds of thousands of files) took many
-      # minutes and looked like a hang. LOOSE_SECRET_FIND_PRED and
-      # ALLOWED_EVIDENCE_FIND_PRED hold the same patterns the helpers test.
-      while IFS= read -r -d '' candidate; do
-        outside_count=$((outside_count + 1))
-        printf "  ${YEL}  ⚠ outside secrets-encrypted/: %s${RST}\n" "${candidate#"$check_root/"}"
-      done < <(
-        find "$check_root" -type f \
-          ! -path "$check_root/secrets-encrypted/*" \
-          ! -name '.DS_Store' ! -name '._*' \
-          \( "${LOOSE_SECRET_FIND_PRED[@]}" \) \
-          -print0 2>/dev/null | sort -z
-      )
-
-      secrets_root="$check_root/secrets-encrypted"
-      if [[ -d "$secrets_root" ]]; then
-        while IFS= read -r -d '' candidate; do
-          staging_count=$((staging_count + 1))
-          printf "  ${YEL}  ⚠ loose payload under secrets-encrypted/: %s${RST}\n" "${candidate#"$secrets_root/"}"
-        done < <(
-          find "$secrets_root" -type f \
-            ! -name '.DS_Store' ! -name '._*' \
-            ! \( "${ALLOWED_EVIDENCE_FIND_PRED[@]}" \) \
-            -print0 2>/dev/null | sort -z
-        )
-      fi
-
-      if (( outside_count == 0 && staging_count == 0 )); then
-        echo -e "  ${GRN}  ✓ No lingering plaintext secret candidates found.${RST}"
-      else
-        echo -e "  ${YEL}  Review: ${outside_count} candidate(s) outside secrets-encrypted/; ${staging_count} loose payload file(s) inside secrets-encrypted/.${RST}"
       fi
     done
   fi

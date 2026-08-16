@@ -10,7 +10,7 @@ and buckets every ignored path using the SAME SECRET_RE / GENERATED_RE rules the
 rest of this workflow uses (lifted from split-gitignore-review-template.py), then
 writes the feed TSVs.
 
-The Phase 3B cert/Keychain plan (prepare-certs-keychain-staging.py) consumes three
+The Phase 3C cert/Keychain plan (prepare-certs-keychain-staging.py) consumes three
 of these:
     gitignored-secret-candidates.tsv
     gitignored-secret-candidates-refined.tsv

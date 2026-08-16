@@ -114,6 +114,7 @@ $REIMAGE_ARTIFACT_ROOT/
 ├── app-settings-backup/
 ├── gitignore-superset/
 ├── home-files-backup/
+├── loose-secrets-reports/
 ├── managed-inventory/
 ├── office-stability/
 ├── performance-audit/
@@ -253,6 +254,18 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 > │   ├── fiddler/
 > │   └── kube/
 > └── MANIFEST.md
+> ```
+
+> [!example]- `$REIMAGE_ARTIFACT_ROOT/loose-secrets-reports/`
+> ```text
+> $REIMAGE_ARTIFACT_ROOT/loose-secrets-reports/
+> ├── MANIFEST.md
+> ├── latest-run.txt
+> └── runs/
+>     ├── pre-image-YYYYMMDD-HHMMSS/
+>     │   └── loose-secrets-report.txt
+>     └── post-image-YYYYMMDD-HHMMSS/
+>         └── ...
 > ```
 
 > [!example]- `$REIMAGE_ARTIFACT_ROOT/managed-inventory/`
@@ -461,8 +474,8 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 > [!example]- `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/`
 > ```text
 > $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/
-> ├── all-secrets-YYYYMMDD-HHMMSS-manifest.txt   # created by create-secrets-dmg (Phase 3B, not yet run)
-> ├── all-secrets-YYYYMMDD-HHMMSS.dmg            # created by create-secrets-dmg (Phase 3B, not yet run)
+> ├── all-secrets-YYYYMMDD-HHMMSS-manifest.txt   # created by create-secrets-dmg (Phase 3C, not yet run)
+> ├── all-secrets-YYYYMMDD-HHMMSS.dmg            # created by create-secrets-dmg (Phase 3C, not yet run)
 > ├── certs/
 > │   ├── .keystore
 > │   ├── java-security/                          # Java jssecacerts overrides + per-JDK dirs
@@ -524,21 +537,23 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 > │   └── state/                             # scan writes here
 > │       ├── certs-staging-state-latest.tsv
 > │       └── phase2f-rerun-required-YYYYMMDD-HHMMSS.md
-> ├── git/                                   # created by create-secrets-dmg (Phase 3B); ~/.git-credentials if present
+> ├── git/                                   # created by create-secrets-dmg (Phase 3C); ~/.git-credentials if present
 > ├── gnupg/
 > ├── intellij/                                # staged by backup-intellij (Phase 2D); buckets named for the root each file came from
 > │   ├── ide-config/                          # relative to ~/Library/Application Support/JetBrains/
 > │   └── projects/                            # relative to $GIT_WORK_REPO_ROOT
 > ├── kube/
 > │   └── config
-> ├── licenses/                              # created by create-secrets-dmg (Phase 3B); manual freeform staging
-> ├── package-managers/                      # created by create-secrets-dmg (Phase 3B); .npmrc/.pypirc/etc.
+> ├── licenses/                              # created by create-secrets-dmg (Phase 3C); manual freeform staging
+> ├── package-managers/                      # created by create-secrets-dmg (Phase 3C); .npmrc/.pypirc/etc.
 > ├── postman/
 > │   ├── environments/                      # if exported
 > │   ├── README.md
 > │   └── vault-if-export-allowed/           # if exported
-> ├── RESTORE-README.md                      # created by create-secrets-dmg (Phase 3B, not yet run)
-> └── ssh/
+> ├── RESTORE-README.md                      # created by create-secrets-dmg (Phase 3C, not yet run)
+> ├── ssh/
+> └── staged-loose/                          # manual: files moved here during loose-secret triage,
+>     └── <original-relative-path>           # keeping their original path under the artifact root
 > ```
 
 > [!example]- `$REIMAGE_ARTIFACT_ROOT/size-audit-reports/`

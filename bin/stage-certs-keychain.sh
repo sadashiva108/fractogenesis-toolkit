@@ -200,7 +200,7 @@ cert_keychain_classify_file() {
       type="jssecacerts"
       action="review-truststore"
       destination="$SECRETS_DIR/certs/$bucket/"
-      note="Review whether this is a local Java trust override that is not already auto-captured in Phase 3B."
+      note="Review whether this is a local Java trust override that is not already auto-captured in Phase 3C."
       ;;
     cacerts)
       category="java-truststore"
@@ -264,17 +264,17 @@ cert_keychain_classify_file() {
     "$HOME/.ssh/"*|"$HOME/.gnupg/"*|"$HOME/.docker/"*|"$HOME/.kube/"*|"$HOME/.aws/"*|"$HOME/.azure/"*|"$HOME/.config/gcloud/"*|"$HOME/.config/gh/"*|"$HOME/.m2/"*|"$HOME/.gradle/"*|"$HOME/.npmrc"|"$HOME/.netrc"|"$HOME/.pypirc"|"$HOME/.git-credentials")
       action="captured-in-phase2f"
       destination="-"
-      note="Phase 3B already captures this credential-bearing path in the consolidated secrets DMG."
+      note="Phase 3C already captures this credential-bearing path in the consolidated secrets DMG."
       ;;
     "$HOME/.keystore"|"$HOME"/*.jks)
       action="captured-in-phase2f"
       destination="-"
-      note="Phase 3B already captures ~/.keystore and home-root .jks files."
+      note="Phase 3C already captures ~/.keystore and home-root .jks files."
       ;;
     "$HOME/Desktop/"*|"$HOME/Downloads/"*)
       action="captured-in-phase2f"
       destination="-"
-      note="Phase 3B already captures matching cert and keystore files from Desktop and Downloads."
+      note="Phase 3C already captures matching cert and keystore files from Desktop and Downloads."
       ;;
   esac
 
@@ -283,7 +283,7 @@ cert_keychain_classify_file() {
       "${JAVA_HOME:-__unset__}"/lib/security/jssecacerts|/Library/Java/JavaVirtualMachines/*/Contents/Home/lib/security/jssecacerts|/Applications/*.app/Contents/jbr/Contents/Home/lib/security/jssecacerts|/Applications/*.app/Contents/jbr/lib/security/jssecacerts)
         action="captured-in-phase2f"
         destination="-"
-        note="Phase 3B already captures Java jssecacerts from JAVA_HOME, installed JDKs, and IntelliJ JBR locations."
+        note="Phase 3C already captures Java jssecacerts from JAVA_HOME, installed JDKs, and IntelliJ JBR locations."
         ;;
     esac
   fi
@@ -390,9 +390,9 @@ if not changes:
     raise SystemExit(0)
 
 with flag_file.open("w", encoding="utf-8") as f:
-    f.write("# Phase 3B Rerun Required\n\n")
+    f.write("# Phase 3C Rerun Required\n\n")
     f.write(f"Generated: {dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
-    f.write("New or changed files were detected under `secrets-encrypted/certs/`. Rerun Phase 3B so the newest consolidated encrypted `all-secrets-*.dmg` includes this certificate/Keychain material before final validation or plaintext cleanup.\n\n")
+    f.write("New or changed files were detected under `secrets-encrypted/certs/`. Rerun Phase 3C so the newest consolidated encrypted `all-secrets-*.dmg` includes this certificate/Keychain material before final validation or plaintext cleanup.\n\n")
     f.write("Tracked files intentionally ignore generated README files and prior rerun-flag notes so this flag is about staged cert material, not documentation churn.\n\n")
     f.write("## New or changed cert-staging files\n\n")
     f.write("| Change | Relative path under `secrets-encrypted/certs/` | SHA-256 | Size bytes | Modified |\n")
@@ -408,7 +408,7 @@ with flag_file.open("w", encoding="utf-8") as f:
 PY_CERT_STATE
 
   if [[ -f "$flag_file" ]]; then
-    printf 'Phase 3B rerun flag written: %s\n' "$flag_file"
+    printf 'Phase 3C rerun flag written: %s\n' "$flag_file"
   fi
 }
 
@@ -551,7 +551,7 @@ write_review_manifest() {
     echo ""
     echo "The script inventories macOS Keychain items plus certificate-bearing files in your home directory, installed JDKs, and common application locations. It then writes categorized discovery and staging-candidate reports so you can make faster keep/skip decisions."
     echo ""
-    echo "Items that Phase 3B already auto-captures in the consolidated secrets DMG are still visible in discovery reports when useful, but they are excluded from the Phase 3A staging-candidate shortlist."
+    echo "Items that Phase 3C already auto-captures in the consolidated secrets DMG are still visible in discovery reports when useful, but they are excluded from the Phase 3A staging-candidate shortlist."
     echo ""
     echo "Most files here are inventories, not source secrets. If Keychain Access exports a .p12/.pfx/.cer/.pem file, save it under:"
     echo ""

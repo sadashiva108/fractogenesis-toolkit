@@ -61,7 +61,7 @@ A read-only record of what a company-managed Mac has under management — MDM en
 | the managed-inventory capture and its timestamped bundles | your own app settings and installers — `backup-apps` (Phase 2D) |
 | interpretation of MDM, profile, package, agent/daemon, extension, and managed-preference evidence | the managed apps and profiles themselves — IT-owned, and never modified here |
 | the pre-image (Phase 2C) and post-image (Phase 13C) comparison workflow | certificate and Keychain staging — `stage-certs-keychain` (Phase 3A) |
-| the full `managed-inventory/` layout | encrypted DMG packaging — `create-secrets-dmg` (Phase 3B) |
+| the full `managed-inventory/` layout | encrypted DMG packaging — `create-secrets-dmg` (Phase 3C) |
 | | cross-phase readiness sign-off — `reimage-prep-checks` (Phase 6B) |
 
 This capture can be rerun at any time and on any managed Mac: each run writes a fresh timestamped bundle and leaves earlier runs untouched.

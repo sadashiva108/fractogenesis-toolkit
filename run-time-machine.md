@@ -79,7 +79,7 @@ It does not own:
 source-code state — backup-repos.md (Phase 2A)
 broad local-file copy — backup-home.md (Phase 2B)
 application settings and IntelliJ state — backup-apps.md / backup-intellij.md (Phase 2D)
-certificate and Keychain staging, and encrypted secrets packaging — stage-certs-keychain.md (Phase 3A) / create-secrets-dmg.md (Phase 3B)
+certificate and Keychain staging, and encrypted secrets packaging — stage-certs-keychain.md (Phase 3A) / create-secrets-dmg.md (Phase 3C)
 cross-phase readiness sign-off — reimage-prep-checks.md (Phase 6B)
 ```
 

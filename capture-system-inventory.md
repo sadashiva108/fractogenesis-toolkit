@@ -59,7 +59,7 @@ verifying every repo is pushed to GitHub — backup-repos.md (Phase 2A)
 the authoritative home and dotfiles copy — backup-home.md (Phase 2B)
 IntelliJ settings and application config export — backup-apps.md / backup-intellij.md (Phase 2D)
 certificate and Keychain staging — Phase 3A
-license keys and secret material — create-secrets-dmg.md (Phase 3B)
+license keys and secret material — create-secrets-dmg.md (Phase 3C)
 cross-phase readiness sign-off — reimage-prep-checks.md (Phase 6B)
 ```
 
@@ -199,7 +199,7 @@ A short pre-flight: confirm you are set up, then confirm what this run is for. T
 ### Confirm Your Intent
 
 - Whether this is the **pre-image** run (Phase 4B, before wiping) or the **post-image** run (Phase 13B, after rebuild) — this sets `--context` and the bundle prefix.
-- That you want a full system picture here, not app-settings or secret material — those belong to [[backup-apps|Backup Apps]] (Phase 2D) and the Phase 3A/3B secret staging, which are separate phases.
+- That you want a full system picture here, not app-settings or secret material — those belong to [[backup-apps|Backup Apps]] (Phase 2D) and the Phase 3A/3C secret staging, which are separate phases.
 - Whether you will compare this bundle against an earlier one; if so, keep the pre-image bundle so the post-image run has something to diff against (see [[#Pre-Image vs Post-Image Comparison|Pre-Image vs Post-Image Comparison]]).
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -409,7 +409,7 @@ docker ps -a 2>/dev/null
 docker volume ls 2>/dev/null
 ```
 
-**`13` — Network and SSH.** Computer name, interfaces, and the SSH client config. SSH keys are secret material — they belong to Phase 3A/3B staging, not this bundle.
+**`13` — Network and SSH.** Computer name, interfaces, and the SSH client config. SSH keys are secret material — they belong to Phase 3A/3C staging, not this bundle.
 
 ```bash
 scutil --get ComputerName
@@ -444,7 +444,7 @@ Run the script first, review the output under `$REIMAGE_ARTIFACT_ROOT/system-inv
 Add a short manual note only when a missing detail still matters, such as:
 
 - a **System Settings** screenshot the script cannot capture — Displays arrangement and scaling, Keyboard shortcuts, Trackpad, Accessibility, and the Privacy & Security panes (Full Disk Access, Developer Tools);
-- a restore constraint for a licensed app or installer (the license material itself is staged in Phase 3A/3B, not here);
+- a restore constraint for a licensed app or installer (the license material itself is staged in Phase 3A/3C, not here);
 - a one-off environment quirk that would not be obvious from the generated bundle alone.
 
 Save that note and any screenshots beside the generated bundle under `$REIMAGE_ARTIFACT_ROOT/system-inventory/<context>-<stamp>/`. These hand-verified items roll up to the Phase 6B [[reimage-prep-checks|reimage-prep-checks]] sign-off.

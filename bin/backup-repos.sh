@@ -76,7 +76,7 @@
 #     gitignore-superset/         Superset inventories and pattern reports.
 #     gitignore-superset/gitignore-review/
 #                                 Ignored-candidate feeds consumed later by the
-#                                 Phase 3B cert/Keychain plan.
+#                                 Phase 3C cert/Keychain plan.
 #
 #   Written only by the staging modes (not the default refresh):
 #     staged-ignored-files/dryrun/           --selected-dry-run, --direct-ignored-dry-run.
@@ -304,7 +304,7 @@ SECRETS_PATTERNS_PATH="$GITIGNORE_DIR/secrets-patterns.txt"
 # workspace (like artifact-config fragments); this workflow never writes it.
 NONSECRET_TEMPLATE_PATH="$GITIGNORE_DIR/gitignore-review-template.direct-nonsecret-recommended.txt"
 # Ignored-candidate review feeds are generated per-run and stay on the artifact
-# drive (consumed later by the Phase 3B cert/Keychain plan).
+# drive (consumed later by the Phase 3C cert/Keychain plan).
 IGNORED_REVIEW_DIR="$GITIGNORE_DIR/gitignore-review"
 LATEST_AUDIT_REPORT=""
 OPEN_TARGET=""
@@ -434,7 +434,7 @@ run_selected() {
     exit 2
   fi
   # secrets-patterns.txt is opt-in: if present, route credential-shaped
-  # candidates into secrets-encrypted/repos-gitignored/ so the Phase 3B DMG
+  # candidates into secrets-encrypted/repos-gitignored/ so the Phase 3C DMG
   # sweeps them, instead of leaving them in a holding tree the DMG never reads.
   # Its absence is not an error -- unlike EXCLUDE_LIST_PATH below, this
   # capability works whether or not the file has been created yet.

@@ -5,7 +5,7 @@
 # Format: one absolute path per entry — files or directories.
 #
 # For local proxy, SDK, CLI, or tool-specific certificate material not already
-# auto-captured by Phase 3B and still required after reimage.
+# auto-captured by Phase 3C and still required after reimage.
 
 STAGED_CERTS_TOOL_LOCAL=(
   # "$HOME/.tool/Certificates/internal-root.pem"

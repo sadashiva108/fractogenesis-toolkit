@@ -23,7 +23,7 @@ Use this as the script index for the Mac reimage workflow. The Markdown runbooks
     - [[#Phase 2D Backup Apps|Phase 2D Backup Apps]]
     - [[#Phase 2D IntelliJ Detail|Phase 2D IntelliJ Detail]]
     - [[#Phase 3A Certificate and Keychain Staging|Phase 3A Certificate and Keychain Staging]]
-    - [[#Phase 3B Encrypted DMG Secrets Backup|Phase 3B Encrypted DMG Secrets Backup]]
+    - [[#Phase 3C Encrypted DMG Secrets Backup|Phase 3C Encrypted DMG Secrets Backup]]
     - [[#Phase 5 Time Machine Backup and Status Capture|Phase 5 Time Machine Backup and Status Capture]]
 - [[#Separate Capture Script Reference|Separate Capture Script Reference]]
 - [[#Pre-Image Capture Automation|Pre-Image Capture Automation]]
@@ -104,7 +104,7 @@ export ONEDRIVE_DEST_SUBDIR="reimage-<asset-or-host>-<start-date>-open"
 | Phase 2D | Backup apps | `backup-apps.md` | `backup-apps.sh` (public entrypoint), `helpers/apps/backup-docker-settings.sh` and `helpers/apps/backup-intellij-scratches-consoles.sh` (internal helpers), plus app-controlled/manual exports for other apps | `$REIMAGE_ARTIFACT_ROOT/app-settings-backup/` plus matching `secrets-encrypted/` folders |
 | Phase 2D detail | IntelliJ companion flow | `backup-intellij.md` | `backup-apps.sh` (public IntelliJ path), `helpers/apps/backup-intellij-scratches-consoles.sh` (internal helper) | `$REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/` |
 | Phase 3A | Certificate and Keychain staging | `stage-certs-keychain.md` | `stage-certs-keychain.sh` | `$REIMAGE_ARTIFACT_ROOT/public-certs/`, `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/certs/`, `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/extra-secrets-certs-review/` |
-| Phase 3B | Encrypted secrets backup | `backup-dmg-secrets.md` | `create-secrets-dmg.sh` | `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/all-secrets-*.dmg` |
+| Phase 3C | Encrypted secrets backup | `backup-dmg-secrets.md` | `create-secrets-dmg.sh` | `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/all-secrets-*.dmg` |
 | Phase 5 | Time Machine backup/status | `run-time-machine.md` | `run-time-machine.sh`, `capture-time-machine.sh` | `/Volumes/AppleBackups`, `$REIMAGE_ARTIFACT_ROOT/time-machine/`, `final-time-machine-checklist-*.md` |
 | Phase 4A | Toolkit snapshot capture | `capture-toolkit-snapshot.md` | `capture-toolkit-snapshot.sh` | `$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/pre-image-toolkit-snapshot-*/`, `$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/latest-docs/` |
 | Phase 4B | Pre-image system inventory evidence | `reimaging-guide.md` (Phase 4) | `capture-system-inventory.sh` | `$REIMAGE_ARTIFACT_ROOT/system-inventory/` |
@@ -287,7 +287,7 @@ $REIMAGE_ARTIFACT_ROOT/app-backups/raycast/, if used
 $REIMAGE_ARTIFACT_ROOT/app-backups/obsidian/, if used
 ```
 
-If Docker `config.json`, Chrome password CSVs, secret-bearing Postman exports, or Raycast secret exports are staged, rerun Phase 3B before final validation.
+If Docker `config.json`, Chrome password CSVs, secret-bearing Postman exports, or Raycast secret exports are staged, rerun Phase 3C before final validation.
 
 Docker-only rerun through the main Phase 2D entrypoint:
 
@@ -327,7 +327,7 @@ $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/extra-secrets-certs-review/
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
-### Phase 3B Encrypted DMG Secrets Backup
+### Phase 3C Encrypted DMG Secrets Backup
 
 ```bash
 ./scripts/create-secrets-dmg.sh
@@ -804,7 +804,7 @@ chmod +x scripts/*.sh scripts/*.py
 # Manual/app-controlled follow-up: Chrome, Postman, Raycast, Obsidian, and any other app exports that backup-apps.sh cannot complete.
 # Phase 3A certificate/Keychain staging:
 # ./scripts/stage-cert-keychain.sh
-# Phase 3B final DMG after all manual secret staging:
+# Phase 3C final DMG after all manual secret staging:
 # If Chrome password CSVs, secret-bearing Postman exports, optional app secret exports,
 # IntelliJ HTTP Client env files, or cert/Keychain material were staged, run secrets DMG after that.
 ./scripts/create-secrets-dmg.sh

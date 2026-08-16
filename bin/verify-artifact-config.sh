@@ -139,6 +139,16 @@ REQUIRED_FRAGMENTS=(
 )
 
 # ---------------------------------------------------------------------------
+# Optional fragments — sourced by artifact-config.sh only when present.
+#
+# A workspace copy created before one of these shipped must keep validating
+# clean, so absence is reported as a note, never as a failure.
+# ---------------------------------------------------------------------------
+OPTIONAL_FRAGMENTS=(
+  secret-shapes.conf.sh
+)
+
+# ---------------------------------------------------------------------------
 # Resolve the active fragment directory
 #
 # Mirrors artifact-config.sh precedence WITHOUT sourcing the fragments, so a
@@ -209,6 +219,30 @@ for fragment in "${REQUIRED_FRAGMENTS[@]}"; do
   fi
 done
 
+# Optional fragments are syntax-checked when present and merely noted when not.
+# A missing one is not a failure: the loader supplies a built-in floor, so an
+# older workspace copy stays valid.
+optional_absent=0
+for fragment in "${OPTIONAL_FRAGMENTS[@]}"; do
+  path="$ACTIVE_DIR/$fragment"
+  if [[ ! -f "$path" ]]; then
+    optional_absent=$((optional_absent + 1))
+    printf "  ${DIM}ABSENT ${RST}  %s  ${DIM}(optional — built-in defaults apply)${RST}\n" "$fragment"
+  elif bash -n "$path" 2>/dev/null; then
+    printf "  ${GRN}OK     ${RST}  %s  ${DIM}(optional)${RST}\n" "$fragment"
+  else
+    printf "  ${RED}SYNTAX ${RST}  %s  ${DIM}(optional)${RST}\n" "$fragment"
+    bash -n "$path" 2>&1 | sed 's/^/           /' >&2
+    fail_count=$((fail_count + 1))
+  fi
+done
+
+if (( optional_absent > 0 )); then
+  echo ""
+  echo -e "  ${DIM}Copy an absent optional fragment in with:${RST}"
+  echo -e "  ${DIM}  cp .internal/templates/artifact-config/<fragment> \"\$ACTIVE_DIR\"/${RST}"
+fi
+
 # ---------------------------------------------------------------------------
 # Informational: where the fragments are referenced
 # ---------------------------------------------------------------------------
@@ -243,7 +277,7 @@ if [[ "$SCAN_REFERENCES" == true ]]; then
     echo -e "  ${DIM}Every match, including self-references:${RST}"
     (
       cd "$REPO_ROOT" 2>/dev/null && grep -RInE \
-        'expected-artifact-folders|external-dotfiles|external-excludes|external-targets|onedrive-extra-excludes|onedrive-targets|secret-flags|secrets-targets|skip-entries' \
+        'expected-artifact-folders|external-dotfiles|external-excludes|external-targets|onedrive-extra-excludes|onedrive-targets|secret-flags|secret-shapes|secrets-targets|skip-entries' \
         bin .internal 2>/dev/null
     ) | sed 's/^/    /'
   fi

@@ -59,7 +59,7 @@ producing the artifacts it checks — each owning runbook creates them:
   home and dotfiles copy, and the OneDrive sync procedure — backup-home.md (Phase 2B)
   app settings, VS Code, Chrome, Docker, Postman, Obsidian — backup-apps.md / backup-intellij.md (Phase 2C/2D)
   certificate and Keychain staging — stage-certs-keychain.md (Phase 3A)
-  consolidated secrets DMG — create-secrets-dmg.md (Phase 3B)
+  consolidated secrets DMG — create-secrets-dmg.md (Phase 3C)
   system, performance, and Office captures — the capture-*.md runbooks (Phase 4)
 the post-image Phase 14 validation — the same script under --phase post, driven by reimaged-system-checks.md
 ```

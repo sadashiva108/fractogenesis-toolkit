@@ -109,7 +109,7 @@ Artifact locations:
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/app-settings-backup/                                # Phase 2C outputs (per-app backups)
-$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/                                  # Phase 3A/3B outputs (mount before use)
+$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/                                  # Phase 3A/3C outputs (mount before use)
 $REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/restore-apps-plan-*.md
 $REIMAGE_ARTIFACT_ROOT/office-stability/post-reimage-*/                    # produced in Step 13
 ```

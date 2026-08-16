@@ -84,7 +84,7 @@
 #     secrets-encrypted/intellij/{ide-config,projects}/. Nothing is staged unless checked.
 #
 # Security note:
-#   Run create-secrets-dmg.sh (Phase 3B) after this script to encrypt the staged
+#   Run create-secrets-dmg.sh (Phase 3C) after this script to encrypt the staged
 #   IntelliJ secrets (secrets-encrypted/intellij/) into the consolidated DMG.
 #
 # Exit status:
@@ -402,7 +402,7 @@ write_intellij_secret_template() {
     echo "#   [x] pattern"
     echo "#"
     echo "# Files matching a checked pattern under the JetBrains config dirs and the"
-    echo "# projects root are copied into the encrypted-secrets tree so Phase 3B"
+    echo "# projects root are copied into the encrypted-secrets tree so Phase 3C"
     echo "# sweeps them. Nothing is staged unless you check it."
     echo "#"
     echo "# Generated: $(date '+%Y-%m-%d %H:%M:%S')"
@@ -450,7 +450,7 @@ load_intellij_secret_patterns() {
 # The generic half of the seed list (*credential*, *secret*, *.pem, *.key, ...)
 # matches ordinary repo files. Those are gitignored, so Phase 2A stages them
 # into secrets-encrypted/repos-gitignored/ after a review this scan does not
-# perform -- capturing them here put the same file in the Phase 3B DMG twice,
+# perform -- capturing them here put the same file in the Phase 3C DMG twice,
 # from two staging areas, only one of them reviewed. Inside the JetBrains config
 # directory the generic patterns still apply in full: everything there is
 # IntelliJ's.
@@ -572,7 +572,7 @@ INTELLIJ_EXCLUDE_SEED=(
 # first run, before a review template exists to populate ALL_PATTERNS — which is
 # exactly the run that has had no human review, so it is the run that most needs
 # the full set. A narrower floor silently copied *.pem, *.key, *credential* and
-# the rest into app-settings-backup/, which Phase 3B never encrypts.
+# the rest into app-settings-backup/, which Phase 3C never encrypts.
 INTELLIJ_SECRET_EXCLUDE_FLOOR=( "${INTELLIJ_SECRET_SEED_PATTERNS[@]}" )
 
 RSYNC_EXCLUDE_ARGS=()
@@ -1010,7 +1010,7 @@ Project BasePath note:
 Next step:
   Review ${INTELLIJ_SECRETS_TEMPLATE:-the IntelliJ secret review template} and check the patterns
   you want staged, then rerun to stage the matches into secrets-encrypted/intellij/.
-  Run create-secrets-dmg.sh (Phase 3B) afterward to encrypt them into the DMG.
+  Run create-secrets-dmg.sh (Phase 3C) afterward to encrypt them into the DMG.
 
 Manual step:
   Export IntelliJ settings ZIP from IntelliJ IDEA -> File -> Manage IDE Settings -> Export Settings

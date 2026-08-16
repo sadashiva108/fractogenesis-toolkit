@@ -56,7 +56,7 @@ It does not own:
 
 ```text
 runtime tooling install (Xcode CLT, Homebrew, JDK, Node, platform CLIs) — Phase 10A (restore-runtime)
-building or validating the encrypted secrets DMG — create-secrets-dmg.md (Phase 3B)
+building or validating the encrypted secrets DMG — create-secrets-dmg.md (Phase 3C)
 certificate and Keychain discovery, review, and staging — stage-certs-keychain.md (Phase 3A)
 Git identity configuration and remote routing — Phase 11 (restore-git)
 IntelliJ, Docker, and per-app secret restore — restore-intellij.md, restore-docker.md, and app-specific runbooks (Phase 12+)
@@ -72,13 +72,13 @@ This runbook can be rerun. Each step is either idempotent (SSH file copies, chmo
 
 Read this before running anything. The order in this phase is not preference — it enforces a trust chain. SSH has to be in place before anything tries to reach GitHub. Certificates in the login and system keychains have to be trusted before non-Java tools (curl, git, browsers) can reach internal endpoints. The `jssecacerts` Java trust override has to be dropped into the *actual* installed JDK from Phase 10A, not a JDK that isn't there yet, which is why runtime restore precedes access restore at the phase level. Shell and CLI configuration is restored last of the identity-adjacent material because it can reference paths (`JAVA_HOME`, `NVM_DIR`) that the earlier phases just put in place; restoring dotfiles before that would risk sourcing profile files that reference tools not yet installed.
 
-The runbook is script-free by design. Every restore is a small manual copy, `security` command, or Keychain Access GUI action, and each one carries a judgment call — is this key still the current one, should this cert really be Always Trust, does this dotfile still match how the machine is used — that a script cannot make. The encrypted DMG built in Phase 3B is the single source of truth for the secret-bearing material; the reviewed dotfiles bundle from Phase 2B is the single source of truth for shell and CLI config.
+The runbook is script-free by design. Every restore is a small manual copy, `security` command, or Keychain Access GUI action, and each one carries a judgment call — is this key still the current one, should this cert really be Always Trust, does this dotfile still match how the machine is used — that a script cannot make. The encrypted DMG built in Phase 3C is the single source of truth for the secret-bearing material; the reviewed dotfiles bundle from Phase 2B is the single source of truth for shell and CLI config.
 
 ### Terminology
 
 | Term | Meaning |
 |---|---|
-| Secrets DMG | The consolidated encrypted disk image built by `create-secrets-dmg.md` in Phase 3B. Named `all-secrets-*.dmg` and stored under `secrets-encrypted/`. |
+| Secrets DMG | The consolidated encrypted disk image built by `create-secrets-dmg.md` in Phase 3C. Named `all-secrets-*.dmg` and stored under `secrets-encrypted/`. |
 | Dotfiles bundle | The reviewed shell and CLI config subset captured by `backup-home.md` and stored under `home-files-backup/dotfiles/`. Not encrypted; contains no secrets by design. |
 | `jssecacerts` | A per-JDK Java trust override file. Copied into `$JAVA_HOME/lib/security/` and read by the JVM in addition to the default trust store. Must match the installed JDK. |
 | Always Trust | A macOS Keychain trust setting that marks a certificate as valid for every use case. Correct only for genuine internal root or issuing CAs; a mistake for anything else. |
@@ -100,7 +100,7 @@ $FRACTOGENESIS_HOME/bin/    # no primary script — this runbook is executed by 
 Input evidence built by earlier phases:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/all-secrets-*.dmg              # Phase 3B output — mounted read-only
+$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/all-secrets-*.dmg              # Phase 3C output — mounted read-only
 $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/certs/                         # certificate staging, mirrored inside the DMG
 $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/certs/java-security/           # jssecacerts and related JDK trust files
 $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/certs/keychain-manual-exports/ # manual .cer/.p12 exports for Keychain Access
@@ -150,7 +150,7 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 - Your shell is at the repository root — `cd "$FRACTOGENESIS_HOME"` once for the session. Per the guide's [[reimaging-guide#Core Assumptions|Core Assumptions]], the commands below assume this and don't repeat it.
 - Phase 10A ([[restore-runtime|restore-runtime.md]]) is complete: JDK 17 (or the intended baseline) is installed and `java -version` prints it.
 - The external artifact volume is mounted and `reimage.env` resolves. `ls "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted"` should list at least one `all-secrets-*.dmg`.
-- You have the DMG password from your password manager or wherever it was stored in Phase 3B. Do not proceed without it.
+- You have the DMG password from your password manager or wherever it was stored in Phase 3C. Do not proceed without it.
 
 > [!bug] Troubleshooting
 > `hdiutil attach` failing with "authentication error" almost always means the wrong password. If the password is correct, verify the DMG isn't already mounted (`hdiutil info | grep all-secrets`) — a leftover mount from an earlier attempt will refuse a second attach.
