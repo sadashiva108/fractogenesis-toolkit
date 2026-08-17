@@ -1,35 +1,138 @@
+[[reimaging-guide#Phase 6A — Guide Access on a Freshly Reimaged Mac|← Back to Mac Reimaging Guide]]
+
 # Guide Access on a Freshly Reimaged Mac
 
-**Last updated:** 2026-08-13
+**Last updated:** 2026-08-17
 
-> [[reimaging-guide|← Back to Mac Reimaging Guide]]
+Prove, before the Mac is erased, that `fractogenesis-toolkit` can actually be fetched onto a Mac with no Git, no SSH keys, and no prior checkout — once over the network with `curl` and `bootstrap.sh`, once from the jump drive with no network at all.
+
+---
 
 ## Table of Contents
 
 - [[#Purpose|Purpose]]
-- [[#Prerequisite Check — What a Bare Mac Actually Has|Prerequisite Check — What a Bare Mac Actually Has]]
-- [[#Validate Bootstrapped fractogenesis-toolkit (curl)|Validate Bootstrapped fractogenesis-toolkit (curl)]]
-- [[#Validate Jump Drive fractogenesis-toolkit|Validate Jump Drive fractogenesis-toolkit]]
-- [[#Clean Up|Clean Up]]
-- [[#When to Rerun This|When to Rerun This]]
+- [[#How the Workflow Works|How the Workflow Works]]
+- [[#Artifact and Script Locations|Artifact and Script Locations]]
+    - [[#Environment Variables|Environment Variables]]
+- [[#Before You Run Anything|Before You Run Anything]]
+    - [[#Prerequisites|Prerequisites]]
+    - [[#Confirm Your Intent|Confirm Your Intent]]
+- [[#Sequential Steps|Sequential Steps]]
+    - [[#Step 1 — Confirm What a Bare Mac Actually Has|Step 1 — Confirm What a Bare Mac Actually Has]]
+    - [[#Step 2 — Validate Bootstrapped fractogenesis-toolkit (curl)|Step 2 — Validate Bootstrapped fractogenesis-toolkit (curl)]]
+    - [[#Step 3 — Validate Jump Drive fractogenesis-toolkit|Step 3 — Validate Jump Drive fractogenesis-toolkit]]
+    - [[#Step 4 — Clean Up|Step 4 — Clean Up]]
+- [[#Supplemental Reference|Supplemental Reference]]
+    - [[#When to Rerun This|When to Rerun This]]
 
 > In Obsidian, these are internal heading links. Click in Reading View, or Cmd-click in Live Preview/editing mode.
+
+> [!info] Callout legend
+> This runbook uses Obsidian callouts so each type reads distinctly: `[!note]` an easily-missed fact · `[!warning]` Pitfall, a mistake you are likely to make here · `[!bug]` Troubleshooting, what to do when a step misbehaves.
 
 ---
 
 ## Purpose
 
-This validates the two ways `fractogenesis-toolkit` gets onto a Mac with no Git, no SSH keys, and no prior checkout — the exact situation Phase 8 onward depends on. Every command below uses only what stock macOS already has, deliberately — the whole point is proving this works *before* trusting it during a real reimage.
+This validates the two ways `fractogenesis-toolkit` gets onto a Mac with no Git, no SSH keys, and no prior checkout — the exact situation Phase 8 onward depends on. It runs while the original system is still available and easy to fix problems on, so a broken escape hatch is found before the erase rather than after it. Nothing here is a backup: the only output is proof that one of the two fetch paths works.
 
-Both tests extract into a throwaway location, never a real dev checkout.
+**What it sets up**
 
-One thing you'll likely see while running these: paths may print as `/tmp/...` in one place and `/private/tmp/...` in another. That's not a bug or a duplicate copy — on macOS, `/tmp` is a symlink to `/private/tmp` (confirm with `ls -ld /tmp`), so both spellings point at the exact same file.
+- **A proven curl path** — `bootstrap.sh` fetched over the network and extracted into a throwaway location, with the `bin/` scripts arriving executable.
+- **A proven jump drive path** — a freshly built payload tarball plus `bootstrap.sh` on the drive itself, installed without referencing your real checkout.
+- **A recorded `python3` finding** — evidence of whether a bare Mac can run the toolkit's Python entrypoints without triggering the Command Line Developer Tools prompt.
+
+**What the rest of the workflow relies on it for**
+
+- Phase 6B's final pre-erase gate proceeds on the assumption that the recovery path is real rather than theoretical.
+- Phase 8 onward fetches the toolkit onto the reimaged Mac by whichever of these two paths this phase proved.
+
+**Ownership**
+
+| This runbook owns | Owned elsewhere |
+|---|---|
+| validating the curl / `bootstrap.sh` fetch path on a bare Mac | the final pre-erase readiness gate — `reimage-prep-checks` (Phase 6B) |
+| validating the jump drive fallback, including building the payload used for the test | the reasoning for why this repo must be independently fetchable — `restore-strategy-guide` (reference) |
+| the throwaway test locations and their cleanup | the real fetch onto the reimaged Mac — `reimaging-guide` (Phase 8) |
+
+This validation is safe to rerun at any time: both tests extract into a throwaway location and delete it when they finish, so no real checkout and no artifact root is touched.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
 ---
 
-## Prerequisite Check — What a Bare Mac Actually Has
+## How the Workflow Works
+
+Read this before running anything. The goal is proof, not preparation: by the time the Mac is erased you should have watched the toolkit arrive twice, by two independent routes, on a machine that has nothing. Every command below uses only what stock macOS already has, deliberately — the whole point is proving this works *before* trusting it during a real reimage.
+
+The two routes are tested in that order because the first is the one you would reach for. `bootstrap.sh` over `curl` needs a working network and a reachable GitHub; the jump drive needs neither, and exists for the reimage that leaves you without either. Both tests extract into a throwaway location, never a real dev checkout, and each ends by deleting what it created.
+
+> [!note]
+> Paths may print as `/tmp/...` in one place and `/private/tmp/...` in another. That is not a bug or a duplicate copy — on macOS, `/tmp` is a symlink to `/private/tmp` (confirm with `ls -ld /tmp`), so both spellings point at the exact same file.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
+## Artifact and Script Locations
+
+Every path and directory tree this runbook uses is defined here, once. Later sections refer back to these names instead of redrawing them.
+
+Scripts exercised, alphabetical:
+
+```text
+$FRACTOGENESIS_HOME/bin/build-jump-drive-payload.sh   # entrypoint — builds the jump drive payload tarball
+$FRACTOGENESIS_HOME/bin/prepare-artifact-root.py      # entrypoint — run with --help only, as an execution smoke test
+$FRACTOGENESIS_HOME/bootstrap.sh                      # entrypoint — fetches and extracts the toolkit, from curl or from the jump drive
+```
+
+This runbook writes nothing under `$REIMAGE_ARTIFACT_ROOT`. Its only outputs are throwaway, and the last step deletes them:
+
+```text
+/tmp/fractogenesis-toolkit-access-test/curl-kit           # curl test destination (FRACTOGENESIS_HOME override)
+/tmp/fractogenesis-toolkit-access-test/jump-drive-kit     # jump drive test destination (FRACTOGENESIS_HOME override)
+$JUMP_DRIVE_VOLUME/bootstrap.sh                           # installer copied onto the drive itself
+$JUMP_DRIVE_VOLUME/tarball/fractogenesis-toolkit.tar.gz   # payload built for the test
+```
+
+### Environment Variables
+
+The values this runbook sets or reads. `JUMP_DRIVE_VOLUME` is a `reimage.env` key resolved and written during `prepare-artifact-root.md`; the other two are set by hand for the duration of a test.
+
+| Variable | Meaning |
+|---|---|
+| `FRACTOGENESIS_HOME` | Where the toolkit is checked out. Both tests deliberately override it to a throwaway path so nothing lands in your real checkout. Set by your shell startup / `.envrc`, not stored in `reimage.env`. |
+| `FRACTOGENESIS_PARENT` | Set for the jump drive test only: the directory holding your real `fractogenesis-toolkit` checkout, from which a fresh payload is built. Not a `reimage.env` key. |
+| `JUMP_DRIVE_VOLUME` | Mount path of the small dedicated jump drive used as the no-network bootstrap fallback, for example `/Volumes/REIMAGEKIT`. |
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
+## Before You Run Anything
+
+A short pre-flight: confirm you are set up, then confirm what you intend this run to do.
+
+### Prerequisites
+
+- Your shell is at the repository root — `cd "$FRACTOGENESIS_HOME"` once for the session. Per the guide's [[reimaging-guide#Core Assumptions|Core Assumptions]], the commands below assume this and don't repeat it.
+- The original system is still intact — this phase runs before the erase, while problems are still easy to fix.
+- For the jump drive test: the jump drive is mounted, and your real checkout is committed and pushed if you want the tarball to reflect your latest state.
+
+### Confirm Your Intent
+
+- Which path you are validating this run: the curl / `bootstrap.sh` fetch, the jump drive fallback, or both. Before trusting either mechanism for a real reimage, prove both.
+- Whether `$JUMP_DRIVE_VOLUME` points at the actual physical jump drive or at a local-tarball stand-in. The commands are identical either way; only the mount path differs.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
+## Sequential Steps
+
+Run these in order: confirm the bare-Mac toolchain is really there, validate the curl path, validate the jump drive path, then clear anything either test left behind.
+
+### Step 1 — Confirm What a Bare Mac Actually Has
 
 Run each of these before either test below. They confirm the tools this whole mechanism depends on are actually present and working — not assumed.
 
@@ -51,13 +154,12 @@ curl --version
 python3 --version
 ```
 
-⚠️ **Worth testing deliberately, not assuming.** On several past macOS versions, running `python3` for the very first time — before Xcode Command Line Tools are installed — triggers the *same* "requires the Command Line Developer Tools" popup and download that `git` does. If that happens, it's a real finding: `prepare-artifact-root.py` (and every other Python script in `bin/`) would be blocked by the exact popup this whole toolkit was designed to avoid. If the popup appears, note it, decline/cancel it, and flag it in the reimage's own migration log. If `python3 --version` prints a version cleanly with no popup, you're clear.
+This one is worth testing deliberately, not assuming. On several past macOS versions, running `python3` for the very first time — before Xcode Command Line Tools are installed — triggers the *same* "requires the Command Line Developer Tools" popup and download that `git` does. If `python3 --version` prints a version cleanly with no popup, you're clear.
 
-[[#Table of Contents|⬆ Back to Table of Contents]]
+> [!bug] Troubleshooting
+> If the popup appears, it's a real finding: `prepare-artifact-root.py` (and every other Python script in `bin/`) would be blocked by the exact popup this whole toolkit was designed to avoid. Note it, decline/cancel it, and flag it in the reimage's own migration log.
 
----
-
-## Validate Bootstrapped fractogenesis-toolkit (curl)
+### Step 2 — Validate Bootstrapped fractogenesis-toolkit (curl)
 
 **1. Create a throwaway toolkit directory:**
 
@@ -157,11 +259,7 @@ rm -rf /tmp/fractogenesis-toolkit-access-test
 unset FRACTOGENESIS_HOME
 ```
 
-[[#Table of Contents|⬆ Back to Table of Contents]]
-
----
-
-## Validate Jump Drive fractogenesis-toolkit
+### Step 3 — Validate Jump Drive fractogenesis-toolkit
 
 **1. Set the jump drive's mount path** — adjust the volume name if yours differs:
 
@@ -277,13 +375,10 @@ unset JUMP_DRIVE_VOLUME
 unset FRACTOGENESIS_PARENT
 ```
 
-If this is the actual physical jump drive rather than a local-tarball test, the same commands work as written — just make sure `$JUMP_DRIVE_VOLUME` points at the drive's real mount path.
+> [!note]
+> If this is the actual physical jump drive rather than a local-tarball test, the same commands work as written — just make sure `$JUMP_DRIVE_VOLUME` points at the drive's real mount path.
 
-[[#Table of Contents|⬆ Back to Table of Contents]]
-
----
-
-## Clean Up
+### Step 4 — Clean Up
 
 If either test was interrupted partway and left stray directories behind, this clears everything both tests could have created:
 
@@ -296,13 +391,26 @@ unset FRACTOGENESIS_HOME JUMP_DRIVE_VOLUME FRACTOGENESIS_PARENT
 
 ---
 
-## When to Rerun This
+## Supplemental Reference
+
+Longer material most runs will not need, kept out of the main flow.
+
+### When to Rerun This
 
 - Before trusting either mechanism for a real reimage, the first time.
 - Any time `bootstrap.sh` is edited.
 - Any time a new phase is migrated into this repo (the file list changes — worth reconfirming the pass criteria still hold).
-- Any time the jump drive's tarball is rebuilt (step 4 of the jump drive test above).
+- Any time the jump drive's tarball is rebuilt.
 
 For the reasoning behind why this repo needs to be independently fetchable at all — no Git, no SSH — see the Guide Access Solutions section of `references/restore-strategy-guide.md`.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
+<!--
+TOC verification performed before publishing:
+- every Table of Contents entry resolves to a heading present in this file;
+- deleted optional sections were also removed from the Table of Contents;
+- each top-level section ends with a single "Back to Table of Contents" link.
+-->

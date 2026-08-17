@@ -2,9 +2,9 @@
 
 # Verify Reimaged System
 
-**Last updated:** 2026-08-04
+**Last updated:** 2026-08-17
 
-Reconnect the external artifact drive, prove the freshly reimaged Mac is basically usable, and record the first-boot evidence twice around a stabilization restart before deeper restore work begins. This phase pairs the human-driven day-one checks — network, browser, terminal, displays, peripherals, audio — with `record-reimaged-system.sh`, which recorded the same 14 read-only signals into two comparable evidence bundles, and closes with the first post-image Time Machine backup so the machine has a safety net before Phase 10 begins.
+Reconnect the external artifact drive, prove the freshly reimaged Mac is basically usable, and record the first-boot evidence twice around a stabilization restart before deeper restore work begins. This phase pairs the human-driven day-one checks — network, browser, terminal, displays, peripherals, audio — with `record-reimaged-system.sh`, which records the same 14 read-only signals into two comparable evidence bundles, and closes with the first post-image Time Machine backup so the machine has a safety net before Phase 10 begins.
 
 ---
 
@@ -41,7 +41,7 @@ Reconnect the external artifact drive, prove the freshly reimaged Mac is basical
 > In Obsidian, these are internal heading links. Click in Reading View, or Cmd-click in Live Preview/editing mode.
 
 > [!info] Callout legend
-> This runbook uses Obsidian callouts so each type reads distinctly: `[!note]` an easily-missed fact · `[!warning]` Pitfall, a mistake you are likely to make here · `[!bug]` Troubleshooting, what to do when a step misbehaves · `[!info] Return` how to get back after an out-of-sequence detour.
+> This runbook uses Obsidian callouts so each type reads distinctly: `[!note]` an easily-missed fact · `[!warning]` Pitfall, a mistake you are likely to make here · `[!bug]` Troubleshooting, what to do when a step misbehaves.
 
 ---
 
@@ -49,25 +49,29 @@ Reconnect the external artifact drive, prove the freshly reimaged Mac is basical
 
 Confirm that the rebuilt Mac is basically usable after Phase 8 — enrolled, connected, with browser, network, terminal, displays, and peripherals in working shape — and leave behind two timestamped first-boot evidence bundles that prove the managed baseline survived the second restart. Close the phase with the first post-image Time Machine backup so a fallback exists before restore work begins.
 
-This runbook owns:
+**What it sets up**
 
-```text
-external-artifact-drive reconnection and the sanity check that follows it
-the two first-boot evidence bundles and the pre/post-restart comparison
-the second stabilization restart and its exit criteria
-the first post-image Time Machine backup timing
-the reimaged-system/ subfolders used by later phases (restore-notes, restarts, time-machine)
-```
+- **The reconnected artifact root** — the external artifact drive brought back online and spot-checked, so Phase 9 and later evidence lands under `reimaged-system/` instead of the Desktop fallback.
+- **Two first-boot evidence bundles** — a pre-restart and a post-restart `initial-reimaged-system-*` bundle, each holding `initial-checklist.md`, the companion planning documents, `raw/`, and `logs/`.
+- **The pre/post-restart comparison** — the row-by-row read across the second stabilization restart that names anything which regressed.
+- **The `reimaged-system/` working subfolders** — `restore-notes/`, `restarts/`, and `time-machine/`, written into by later phases.
+- **The first post-image Time Machine backup** — taken only once the bundle pair looks clean.
 
-It does not own:
+**What the rest of the workflow relies on it for**
 
-```text
-managed enrollment and the first stabilization restart — enroll-and-stabilize.md (Phase 8)
-runtime tooling restore (Xcode CLT, Homebrew, Java, Node) — Phase 10A (restore-runtime)
-access material and secrets restore — Phase 10B (restore-access)
-post-image managed-inventory comparison — capture-managed-inventory.md (Phase 13C)
-final validated sign-off — reimaged-system-checks.md (Phase 14)
-```
+- Phase 10 onward assumes `reimaged-system/` is mounted and readable; it is the sink for restore notes and later comparison bundles.
+- Phase 14 reads the post-restart bundle's `manual-captures-required.md` as its pre-flight list of manual rows still open.
+- The first post-image Time Machine backup is the fallback the restore phases lean on if a later phase goes wrong.
+
+**Ownership**
+
+| This runbook owns | Owned elsewhere |
+|---|---|
+| external-artifact-drive reconnection and the sanity check that follows it | managed enrollment and the first stabilization restart — `enroll-and-stabilize` (Phase 8) |
+| the two first-boot evidence bundles and the pre/post-restart comparison | runtime tooling restore (Xcode CLT, Homebrew, Java, Node) — `restore-runtime` (Phase 10A) |
+| the second stabilization restart and its exit criteria | access material and secrets restore — `restore-access` (Phase 10B) |
+| the first post-image Time Machine backup timing | post-image managed-inventory comparison — `capture-managed-inventory` (Phase 13C) |
+| the `reimaged-system/` subfolders used by later phases (`restore-notes`, `restarts`, `time-machine`) | the final validated sign-off — its `reimage-checklist.sh --phase post` bundle, the resolution of the manual rows this phase only enumerates, and the closing post-image Time Machine backup — `reimaged-system-checks` (Phase 14) |
 
 This runbook can be rerun. Each run of `record-reimaged-system.sh` writes a fresh timestamped bundle and updates the `latest-initial-reimaged-system-bundle.txt` pointer, so a later run does not overwrite the pre-restart bundle you use for comparison.
 
@@ -202,7 +206,7 @@ The complete `$REIMAGE_ARTIFACT_ROOT/reimaged-system/` layout is defined once in
 
 [[master-directory-reference|Master Directory Reference]]
 
-When the artifact volume is not yet mounted, the script falls back to a Desktop path. That fallback is documented in [[#Output Location Fallback|Output Location Fallback]].
+When the artifact volume is not yet mounted, the script falls back to a Desktop path instead; the full precedence order is under Supplemental Reference.
 
 ### Environment Variables
 
@@ -213,7 +217,7 @@ The `reimage.env` values this runbook depends on. Values are resolved and writte
 | `REIMAGE_ARTIFACT_ROOT` | Absolute path to the artifact root where `reimaged-system/` lives. Optional here — the script falls back if unset or unmounted. |
 | `EXTERNAL_DATA_VOLUME` | Physical volume that hosts the artifact root; referenced by the generated Time Machine plan. |
 | `EXTERNAL_APPLE_BACKUPS_VOLUME` | Dedicated Time Machine destination volume when defined, used in Step 7. |
-| `FRACTOGENESIS_HOME` | Absolute path to the toolkit repository root; entrypoints are run from here. |
+| `FRACTOGENESIS_HOME` | Absolute path to the toolkit repository root; entrypoints are run from here. Set by your shell startup / `.envrc`, not stored in `reimage.env`. |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -221,14 +225,14 @@ The `reimage.env` values this runbook depends on. Values are resolved and writte
 
 ## Before You Run Anything
 
-A short pre-flight: confirm you are set up, then confirm what this run is for. The concepts and the *why* are in [[#How the Workflow Works|How the Workflow Works]]; this is just the checklist.
+A short pre-flight: confirm you are set up, then confirm what you intend this run to do.
 
 ### Prerequisites
 
-- Phase 8 ([[enroll-and-stabilize|Enroll and Stabilize]]) is complete: enrollment finished, required managed apps and security tools installed or clearly installing, and the first stabilization restart taken.
+- Your shell is at the repository root — `cd "$FRACTOGENESIS_HOME"` once for the session. Per the guide's [[reimaging-guide#Core Assumptions|Core Assumptions]], the commands below assume this and don't repeat it.
+- Phase 8 (`enroll-and-stabilize`) is complete: enrollment finished, required managed apps and security tools installed or clearly installing, and the first stabilization restart taken.
 - You have signed back in after the Phase 8 restart and network is connected.
 - The external artifact drive is available to reconnect. On a bare Mac the Phase 8 record may have landed on `~/Desktop/reimaged-system-artifacts/`; that is fine — Phase 9 owns the reconnection.
-- You are running commands from `$FRACTOGENESIS_HOME`.
 
 > [!note]
 > `REIMAGE_ARTIFACT_ROOT` becomes relevant in Step 1 (when you reconnect the drive). The script itself does not require it — a run without a mounted artifact root lands on the Desktop fallback and can be copied into place later.
@@ -274,7 +278,7 @@ Run the first-boot record before the second stabilization restart. Preview the f
 ./bin/record-reimaged-system.sh --help
 ```
 
-Run it. The default output location follows the fallback described in [[#Output Location Fallback|Output Location Fallback]]:
+Run it. With no `--output-root`, the script picks its output root by the fallback precedence — the artifact root when it is set and mounted, otherwise a Desktop path:
 
 ```bash
 ./bin/record-reimaged-system.sh
@@ -293,6 +297,12 @@ If Step 1 could not bring the artifact root online (network-only workspace, VPN 
 ```
 
 The script emits `initial-checklist.md` with automated rows prefilled, three companion planning documents, a `raw/` directory of read-only command captures, and a `logs/` directory. It also updates `latest-initial-reimaged-system-bundle.txt` at the parent level.
+
+> [!bug] Troubleshooting
+> If the bundle landed on the Desktop when you expected the artifact root, see [[#The bundle landed on the Desktop instead of the artifact root|The bundle landed on the Desktop instead of the artifact root]].
+
+> [!bug] Troubleshooting
+> If the network row is stamped `WARN` on a Mac that clearly has internet, see [[#Network row is WARN on a machine that clearly has internet|Network row is WARN on a machine that clearly has internet]].
 
 ### Step 3 — Review Manual First-Boot Areas
 
@@ -337,6 +347,9 @@ Rerun the record. This is the sign-off bundle — it is the one you cite in Step
 
 Each run writes a fresh timestamped bundle, so the pre-restart bundle from Step 2 stays in place for the comparison in Step 6.
 
+> [!bug] Troubleshooting
+> If `latest-initial-reimaged-system-bundle.txt` still names the pre-restart bundle after this run, see [[#latest-initial-reimaged-system-bundle.txt points at the pre-restart bundle after a Step 5 run|latest-initial-reimaged-system-bundle.txt points at the pre-restart bundle after a Step 5 run]].
+
 ### Step 6 — Compare the Two Bundles
 
 Read the two `initial-checklist.md` files side by side and look for rows that flipped from `PASS` to `WARN` or `TODO`:
@@ -351,6 +364,9 @@ Focus on rows that regressed. A managed process the pre-restart run saw and the 
 
 > [!bug] Troubleshooting
 > If a key row regressed after the restart (managed process gone, network reachability lost, enrollment reporting unenrolled), stop and resolve that with IT before Step 7. Do not run Time Machine on a broken baseline.
+
+> [!bug] Troubleshooting
+> If a row disagrees across the pair that should have been stable, see [[#The two bundles disagree on a row that should be stable|The two bundles disagree on a row that should be stable]].
 
 ### Step 7 — Take the First Post-Image Time Machine Backup
 
@@ -367,7 +383,7 @@ Avoid starting the backup while OneDrive is still doing a large initial sync, wh
 
 ### Step 8 — Close Out the Exit Criteria
 
-Open the post-restart `initial-checklist.md` and complete the manual rows. Every row must be effectively `yes` before proceeding to [[reimaging-guide#Phase 10 — Restore Runtime Environment|Phase 10]]:
+Open the post-restart `initial-checklist.md` and complete the manual rows. Every row must be effectively `yes` before proceeding to Phase 10:
 
 | Check | Verification mode | How to verify |
 |---|---|---|
@@ -398,23 +414,33 @@ The script records uniformly and applies fixed heuristics; interpreting whether 
 
 ## Troubleshooting
 
+Four first-boot outcomes look like failures but usually are not, and each has a fix long enough to break the flow of the step that surfaces it. Each step links in from a callout.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
 ### The two bundles disagree on a row that should be stable
 
 Confirm you did not switch networks or unlock a captive portal between runs — several rows (network reachability, managed processes waiting on the network) can flip legitimately when the network changes. If the disagreement is not network-related, open the two raw files and compare their command output directly; the row verdict is a heuristic and the raw evidence is authoritative.
 
-### `latest-initial-reimaged-system-bundle.txt` points at the pre-restart bundle after a Step 5 run
+[[#Step 7 — Take the First Post-Image Time Machine Backup|⮕ Continue to Step 7 — Take the First Post-Image Time Machine Backup]]
 
-The pointer is rewritten on every successful run. If it still points at the pre-restart bundle, Step 5 did not complete successfully — check the tail of `logs/errors.log` inside the older bundle for the failure and rerun Step 5.
+### latest-initial-reimaged-system-bundle.txt points at the pre-restart bundle after a Step 5 run
 
-### Network row is `WARN` on a machine that clearly has internet
+The pointer is rewritten on every successful run. If it still points at the pre-restart bundle, Step 5 did not complete successfully — check the tail of `logs/errors.log` inside the older bundle for the failure and rerun the post-restart record.
+
+[[#Step 6 — Compare the Two Bundles|⮕ Continue to Step 6 — Compare the Two Bundles]]
+
+### Network row is WARN on a machine that clearly has internet
 
 `curl -I https://github.com` is intercepted by many captive portals and by some corporate proxies. Retry after signing in to the portal, or rerun with `--no-network` and confirm reachability by hand.
 
+[[#Step 3 — Review Manual First-Boot Areas|⮕ Continue to Step 3 — Review Manual First-Boot Areas]]
+
 ### The bundle landed on the Desktop instead of the artifact root
 
-Expected fallback when `REIMAGE_ARTIFACT_ROOT` was unset or the volume was not mounted at run time. Once Step 1 succeeds, copy the Desktop bundle under `reimaged-system/` and rerun subsequent recordings with the artifact root in scope so `latest-initial-reimaged-system-bundle.txt` points at the right place.
+Expected fallback when `REIMAGE_ARTIFACT_ROOT` was unset or the volume was not mounted at run time. Once the artifact root is mounted and resolving, copy the Desktop bundle under `reimaged-system/` and rerun subsequent recordings with the artifact root in scope so `latest-initial-reimaged-system-bundle.txt` points at the right place.
 
-[[#Table of Contents|⬆ Back to Table of Contents]]
+[[#Step 3 — Review Manual First-Boot Areas|⮕ Continue to Step 3 — Review Manual First-Boot Areas]]
 
 ---
 
@@ -460,3 +486,14 @@ The script refuses to write output under the toolkit repo checkout as a safety i
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
 ---
+
+<!--
+TOC verification performed before publishing:
+- every Table of Contents entry resolves to a heading present in this file;
+- deleted optional sections were also removed from the Table of Contents;
+- the `initial-reimaged-system-*` bundle prefix and the anchors other files link
+  to are preserved as-is;
+- each top-level section ends with a single "Back to Table of Contents" link,
+  except Troubleshooting, whose back-link sits under its intro and whose routed
+  symptom subsections stay out of the Table of Contents.
+-->

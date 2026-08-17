@@ -18,7 +18,7 @@ Renaming considerations:
 
 # Run Time Machine
 
-**Last updated:** 2026-08-04
+**Last updated:** 2026-08-17
 
 Run and validate a Time Machine backup before a Mac reimage — the broad, whole-home safety net that sits alongside, and never replaces, the targeted `$REIMAGE_ARTIFACT_ROOT` artifacts produced by the earlier Phase 2 backups.
 
@@ -54,7 +54,7 @@ Run and validate a Time Machine backup before a Mac reimage — the broad, whole
 > In Obsidian, these are internal heading links. Click in Reading View, or Cmd-click in Live Preview/editing mode.
 
 > [!info] Callout legend
-> This runbook uses Obsidian callouts so each type reads distinctly: `[!note]` an easily-missed fact · `[!warning]` Pitfall, a mistake you are likely to make here · `[!bug]` Troubleshooting, what to do when a step misbehaves · `[!info] Return` how to get back after an out-of-sequence detour.
+> This runbook uses Obsidian callouts so each type reads distinctly: `[!note]` an easily-missed fact · `[!warning]` Pitfall, a mistake you are likely to make here · `[!bug]` Troubleshooting, what to do when a step misbehaves.
 
 ---
 
@@ -62,33 +62,29 @@ Run and validate a Time Machine backup before a Mac reimage — the broad, whole
 
 Produce a completed, verified Time Machine backup before the Mac is erased, so the home directory is recoverable from a known-good snapshot even if something is missed in the manual backup workflow. Time Machine is a broad safety net; it does not replace the targeted restore/evidence layer, so both must be complete before the reimage.
 
-Proceed to the reimage only once all of these hold:
+**What it sets up**
 
-```text
-latest completed Time Machine backup exists and is newer than the major pre-reimage manual backup work
-Time Machine destination is the intended backup volume, not the manual data volume
-the external data volume and the artifact root remain excluded from Time Machine
-verification and spot checks show no corruption or destination confusion
-```
+- **A completed, verified snapshot** — the pre-image backup run to completion on the dedicated Time Machine destination volume, confirmed by the latest-backup record and targeted checksum verification.
+- **Settled exclusions and destination** — the external data volume and the artifact root excluded from Time Machine, and the configured destination confirmed as the Apple backups volume rather than the manual data volume.
+- **The `time-machine/` evidence layer** — the timestamped preflight, pre-run, completion, verification, compare, and log artifacts written under `$REIMAGE_ARTIFACT_ROOT/time-machine/`.
+- **A cleanly ejected drive** — both volumes detached, with no volume mid-write when the erase begins.
 
-This runbook owns:
+**What the rest of the workflow relies on it for**
 
-```text
-running, monitoring, and completing the pre-image Time Machine backup — bin/run-time-machine.sh
-read-only Time Machine evidence capture — bin/record-time-machine-evidence.sh
-Time Machine verification, comparison, and the final eject before erase
-the $REIMAGE_ARTIFACT_ROOT/time-machine/ evidence layout
-```
+- The Phase 6B readiness sign-off checks that a completed Time Machine backup exists and post-dates the major pre-reimage manual backup work.
+- The Phase 7 erase proceeds only once this evidence is captured and the drive is ejected.
+- After reimage, this snapshot is the fallback restore source for anything the targeted Phase 2 artifacts missed.
 
-It does not own:
+**Ownership**
 
-```text
-source-code state — backup-repos.md (Phase 2A)
-broad local-file copy — backup-home.md (Phase 2B)
-application settings and IntelliJ state — backup-apps.md / backup-intellij.md (Phase 2D)
-certificate and Keychain staging, and encrypted secrets packaging — stage-certs-keychain.md (Phase 3A) / create-secrets-dmg.md (Phase 3C)
-cross-phase readiness sign-off — reimage-prep-checks.md (Phase 6B)
-```
+| This runbook owns | Owned elsewhere |
+|---|---|
+| running, monitoring, and completing the pre-image Time Machine backup — `bin/run-time-machine.sh` | source-code state — `backup-repos` (Phase 2A) |
+| read-only Time Machine evidence capture — `bin/record-time-machine-evidence.sh` | broad local-file copy — `backup-home` (Phase 2B) |
+| Time Machine verification, comparison, and the final eject before erase | application settings and IntelliJ state — `backup-apps` / `backup-intellij` (Phase 2D) |
+| the `$REIMAGE_ARTIFACT_ROOT/time-machine/` evidence layout | certificate and Keychain staging — `stage-certs-keychain` (Phase 3A) |
+| | encrypted secrets packaging — `create-secrets-dmg` (Phase 3C) |
+| | cross-phase readiness sign-off — `reimage-prep-checks` (Phase 6B) |
 
 This runbook can be rerun independently: rerunning the backup produces a fresh incremental snapshot and new timestamped evidence without disturbing earlier runs.
 
@@ -100,7 +96,16 @@ This runbook can be rerun independently: rerunning the backup produces a fresh i
 
 Read this before running anything. The flow is: exclude the wrong volumes and confirm the right destination, capture lightweight pre-run evidence, start the backup and watch it to completion, verify the completed snapshot, capture post-run evidence and compare against the previous backup, then eject cleanly before the erase. The order matters because a backup pointed at the wrong destination, or one that swept in the manual artifact root, wastes hours and produces confusing validation evidence — so destination and exclusions are settled first, before anything is written.
 
-The preferred path is the scripted one: drive every runtime action through `bin/run-time-machine.sh` and capture evidence through `bin/record-time-machine-evidence.sh`, falling back to the raw `tmutil`/`diskutil` commands in [[#Raw Command Equivalents|Raw Command Equivalents]] only when a script is unavailable or you are debugging it.
+Proceed to the reimage only once all of these hold:
+
+```text
+latest completed Time Machine backup exists and is newer than the major pre-reimage manual backup work
+Time Machine destination is the intended backup volume, not the manual data volume
+the external data volume and the artifact root remain excluded from Time Machine
+verification and spot checks show no corruption or destination confusion
+```
+
+The preferred path is the scripted one: drive every runtime action through `bin/run-time-machine.sh` and capture evidence through `bin/record-time-machine-evidence.sh`, falling back to the raw `tmutil`/`diskutil` commands only when a script is unavailable or you are debugging it.
 
 ### The Two Scripts
 
@@ -111,7 +116,7 @@ Two scripts split runtime control from evidence capture, so read-only capture ne
 | `bin/run-time-machine.sh` | Runtime driver | start, monitor, complete, verify-latest, compare, mount/unmount snapshots, logs, diagnose, eject |
 | `bin/record-time-machine-evidence.sh` | Read-only evidence capture | pre-run snapshot, focused `verify-volume`, and the final checklist bundle — it never starts, stops, or mounts a backup |
 
-The full per-subcommand tables are in [[#Subcommand Reference|Subcommand Reference]].
+The full per-subcommand tables are in Supplemental Reference.
 
 ### Full vs Incremental
 
@@ -122,7 +127,7 @@ Time Machine chooses the backup mode; you do not pass a flag. For this pre-reima
 | First full | First backup to a destination, after it is erased/reformatted, or when prior history is unusable. | Long runtime, large `totalBytes`, high disk activity. |
 | Incremental | A prior completed backup exists for this Mac on the same destination. | Usually faster; copies only new or changed items since the previous backup. |
 
-There is no `tmutil startbackup --full` flag; do not force a full backup just because the current run is incremental. Whether a large incremental or a fresh full is warranted is a judgment call — see [[#Decisions|Decisions]].
+There is no `tmutil startbackup --full` flag; do not force a full backup just because the current run is incremental. Whether a large incremental or a fresh full is warranted is a judgment call that stays with you.
 
 ### Terminology
 
@@ -145,9 +150,9 @@ Every path and directory tree this runbook uses is defined here, once. Later sec
 Primary and related scripts (alphabetical; each classified):
 
 ```text
-$FRACTOGENESIS_HOME/bin/report-size-audit.sh      # entrypoint — capacity check for the Time Machine destination
 $FRACTOGENESIS_HOME/bin/record-time-machine-evidence.sh    # entrypoint — read-only evidence capture
-$FRACTOGENESIS_HOME/bin/run-time-machine.sh        # entrypoint — Time Machine runtime driver
+$FRACTOGENESIS_HOME/bin/report-size-audit.sh               # entrypoint — capacity check for the Time Machine destination
+$FRACTOGENESIS_HOME/bin/run-time-machine.sh                # entrypoint — Time Machine runtime driver
 ```
 
 Evidence is written under the artifact root; this is the layout this runbook owns:
@@ -202,7 +207,7 @@ The `reimage.env` values this runbook depends on. Values are resolved and writte
 | `EXTERNAL_APPLE_BACKUPS_VOLUME` | The dedicated Time Machine destination volume (e.g. `/Volumes/AppleBackups`). |
 
 > [!note]
-> The external data volume and the Time Machine destination may be separate APFS volumes on one physical drive, or on two drives. Ejecting either volume unmounts the whole physical drive when they share one — see [[#Step 6 — Eject Before Reimage|Step 6]].
+> The external data volume and the Time Machine destination may be separate APFS volumes on one physical drive, or on two drives. Ejecting either volume unmounts the whole physical drive when they share one.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -210,7 +215,7 @@ The `reimage.env` values this runbook depends on. Values are resolved and writte
 
 ## Before You Run Anything
 
-A short pre-flight: confirm you are set up, then confirm what you mean this run to do. The conceptual background is in [[#How the Workflow Works|How the Workflow Works]]; this is just the checklist.
+A short pre-flight: confirm you are set up, then confirm what you intend this run to do.
 
 ### Prerequisites
 
@@ -225,7 +230,7 @@ A short pre-flight: confirm you are set up, then confirm what you mean this run 
 ### Confirm Your Intent
 
 - That this run is the pre-image safety net, taken after the manual backups — not a routine backup.
-- Whether an incremental backup is acceptable (it usually is when a healthy full already exists), or whether you have a real reason to establish a fresh full — see [[#Decisions|Decisions]].
+- Whether an incremental backup is acceptable (it usually is when a healthy full already exists), or whether you have a real reason to establish a fresh full.
 - Whether the backup may run for hours; if so, plan to keep the Mac awake with `caffeinate` (Step 2).
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -266,7 +271,7 @@ tmutil destinationinfo
 ```
 
 > [!bug] Troubleshooting
-> If the external data volume appears as a destination, remove it by ID before starting — see [[#Troubleshooting|Troubleshooting]].
+> If the external data volume appears as a destination, remove it by ID before starting — see [[#`tmutil destinationinfo` shows the external data volume as a destination|`tmutil destinationinfo` shows the external data volume as a destination]].
 
 Optionally sanity-check destination capacity before a long run:
 
@@ -276,7 +281,7 @@ Optionally sanity-check destination capacity before a long run:
 
 ### Step 2 — Capture Pre-Run Evidence and Keep the Mac Awake
 
-Record the starting state and prevent sleep before a potentially multi-hour run. Confirm heavy apps are closed (see Prerequisites) first, so the pre-run snapshot reflects a quiet system.
+Record the starting state and prevent sleep before a potentially multi-hour run. Confirm heavy apps are closed first, so the pre-run snapshot reflects a quiet system.
 
 Capture the lightweight pre-run snapshot (destination, latest backup, backup list, exclusions):
 
@@ -292,6 +297,9 @@ Start a keep-awake session in its own Terminal tab; it holds until you stop it w
 ```bash
 caffeinate -dimsu
 ```
+
+> [!bug] Troubleshooting
+> If the Mac still sleeps during a long run, see [[#Verify sleep is actually prevented|Verify sleep is actually prevented]].
 
 ### Step 3 — Start and Monitor the Backup
 
@@ -312,7 +320,16 @@ Monitor progress every five minutes:
 > [!note]
 > `Running = 1` means a session is active; treat that as running even if a value like `Percent = "-1"` appears between phases. Stopping the monitor with `Ctrl+C` stops only the monitor loop, not the backup. Do not start a second `tmutil startbackup` — concurrent runs do not copy in parallel.
 
-While it runs, keep the Mac plugged in and the destination attached, and avoid large file churn (Docker pulls, big `node_modules` installs, Gradle refreshes, large build loops). If it looks stalled, diagnose before restarting — see [[#Troubleshooting|Troubleshooting]].
+While it runs, keep the Mac plugged in and the destination attached, and avoid large file churn (Docker pulls, big `node_modules` installs, Gradle refreshes, large build loops). If it looks stalled, diagnose before restarting.
+
+> [!bug] Troubleshooting
+> If progress looks frozen, see [[#The backup looks stalled|The backup looks stalled]].
+
+> [!bug] Troubleshooting
+> If an incremental run reports a full-backup-sized `totalBytes`, see [[#A large incremental looks like a full backup|A large incremental looks like a full backup]].
+
+> [!bug] Troubleshooting
+> If you need to stop the backup session itself rather than the monitor loop, see [[#Stop a running backup|Stop a running backup]].
 
 ### Step 4 — Confirm Completion and Verify
 
@@ -331,7 +348,7 @@ tmutil latestbackup
 ```
 
 > [!bug] Troubleshooting
-> If generic `latestbackup`/`listbackups` return nothing or error, the backup may still be fine — use the targeted `-d "$EXTERNAL_APPLE_BACKUPS_VOLUME" -t` lookups in [[#Troubleshooting|Troubleshooting]] before treating it as missing.
+> If generic `latestbackup`/`listbackups` return nothing or error, the backup may still be fine — see [[#Generic `latestbackup` / `listbackups` fail, but targeted lookup works|Generic `latestbackup` / `listbackups` fail, but targeted lookup works]].
 
 Run targeted checksum verification (a readable user-data path by default, avoiding restricted system paths):
 
@@ -340,7 +357,13 @@ Run targeted checksum verification (a readable user-data path by default, avoidi
 ```
 
 > [!warning] Pitfall
-> `verifychecksums` walking an APFS snapshot can print `error 257`, `?`-prefixed lines, or `POSIXError Code=22` on restricted paths. These are not corruption by themselves — only `MISMATCH` or `FAILED` lines are. If the summary shows zero of those, corroborate with the completion evidence, targeted lookups, APFS snapshot list, volume verification, logs, and a Time Machine UI spot check ([[#Troubleshooting|Troubleshooting]]).
+> `verifychecksums` walking an APFS snapshot can print `error 257`, `?`-prefixed lines, or `POSIXError Code=22` on restricted paths. These are not corruption by themselves — only `MISMATCH` or `FAILED` lines are. If the summary shows zero of those, corroborate with the completion evidence, targeted lookups, APFS snapshot list, volume verification, logs, and a Time Machine UI spot check.
+
+> [!bug] Troubleshooting
+> If the checksum run prints restricted-path noise, see [[#`verifychecksums` reports `error 257`, `?` entries, or `POSIXError Code=22`|`verifychecksums` reports `error 257`, `?` entries, or `POSIXError Code=22`]].
+
+> [!bug] Troubleshooting
+> If the checksum run fails to open the snapshot path, see [[#`verifychecksums` reports `No such file or directory`|`verifychecksums` reports `No such file or directory`]].
 
 Spot-check user data through the Time Machine UI, confirming recent folders (`~/Documents`, `~/Desktop`, `~/Development`) are browsable:
 
@@ -368,7 +391,7 @@ Compare the latest backup to the previous one:
 The compare helper mounts previous and latest APFS snapshots read-only as needed, picks a useful compare target, writes output under `time-machine/`, and unmounts anything it mounted. Interpret the prefixes: `+` added, `-` removed, `!` changed since the previous backup.
 
 > [!bug] Troubleshooting
-> If compare reports `Must specify at least one item inside a backup`, it compared two snapshot roots instead of items inside them — pass a broader `--compare-path` ([[#Troubleshooting|Troubleshooting]]). This is a usage error, not corruption.
+> If compare reports `Must specify at least one item inside a backup`, that is a usage error rather than corruption — see [[#`tmutil compare` reports "Must specify at least one item inside a backup"|`tmutil compare` reports "Must specify at least one item inside a backup"]].
 
 ### Step 6 — Eject Before Reimage
 
@@ -410,17 +433,23 @@ The scripts drive and verify the backup; these judgment calls stay with you.
 
 ## Troubleshooting
 
+Time Machine failures often look worse than they are: several of these read as corruption but are restricted-path noise, a stale generic lookup, or a usage error. Each step that can surface one links in from a callout.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
 ### `tmutil destinationinfo` shows the external data volume as a destination
 
 The manual data volume is wrongly configured as a Time Machine destination. Capture the current destinations, remove the wrong one by ID, then re-confirm:
 
 ```bash
 tmutil destinationinfo
-sudo tmutil removedestination <destination-id-for-external-data-volume>
+sudo tmutil removedestination "<destination-id-for-external-data-volume>"
 tmutil destinationinfo
 ```
 
 Re-check exclusions afterward with `tmutil isexcluded "$EXTERNAL_DATA_VOLUME" "$EXTERNAL_APPLE_BACKUPS_VOLUME"`.
+
+[[#Step 2 — Capture Pre-Run Evidence and Keep the Mac Awake|⮕ Continue to Step 2 — Capture Pre-Run Evidence and Keep the Mac Awake]]
 
 ### Generic `latestbackup` / `listbackups` fail, but targeted lookup works
 
@@ -435,9 +464,13 @@ tmutil listbackups -d "$EXTERNAL_APPLE_BACKUPS_VOLUME" -t | tail -5
 
 Treat the backup as acceptable for pre-image safety when the destination is correct, both volumes are excluded, `tmutil status` shows `Running = 0`, the snapshot list and `diskutil verifyVolume` are clean, and targeted `latestbackup` returns the expected timestamp.
 
+[[#Step 4 — Confirm Completion and Verify|⮕ Continue to Step 4 — Confirm Completion and Verify]]
+
 ### `verifychecksums` reports `error 257`, `?` entries, or `POSIXError Code=22`
 
 These come from restricted or unreadable system paths while walking the snapshot; they are not mismatches. The helper appends a verification summary to `verifychecksums-YYYYMMDD-HHMMSS.txt`. If it shows zero `MISMATCH`/`FAILED` lines, corroborate with the completion evidence, targeted `latestbackup`/`listbackups`, the APFS snapshot list, `diskutil verifyVolume`, the completion-window logs, and a Time Machine UI spot check. Only `MISMATCH`/`FAILED` are real corruption indicators.
+
+[[#Step 5 — Capture Post-Run Evidence and Compare|⮕ Continue to Step 5 — Capture Post-Run Evidence and Compare]]
 
 ### `verifychecksums` reports `No such file or directory`
 
@@ -448,6 +481,8 @@ Usually `verifychecksums` could not open the APFS snapshot path returned by `lat
 ```
 
 Treat the backup as suspect only if `latestbackup`/`listbackups` lack the expected timestamp, the destination is wrong, `status`/logs show a failure, the UI cannot browse the backup, or `verifychecksums` actually prints `MISMATCH`/`FAILED`.
+
+[[#Step 5 — Capture Post-Run Evidence and Compare|⮕ Continue to Step 5 — Capture Post-Run Evidence and Compare]]
 
 ### The backup looks stalled
 
@@ -465,7 +500,9 @@ Many tiny files incrementing (`files` up, `bytes` flat) is slow but progressing;
 sudo fs_usage -f filesys backupd 2>/dev/null | head -30
 ```
 
-For a real estimate, compare byte samples over time rather than trusting `TimeRemaining` — see [[#Estimate Remaining Time from Real Progress|Estimate Remaining Time from Real Progress]].
+For a real estimate, compare byte samples over time rather than trusting `TimeRemaining`; Supplemental Reference has a snippet that turns two byte readings into a rate.
+
+[[#Step 3 — Start and Monitor the Backup|⮕ Continue to Step 3 — Start and Monitor the Backup]]
 
 ### A large incremental looks like a full backup
 
@@ -477,6 +514,8 @@ tmutil listbackups -d "$EXTERNAL_APPLE_BACKUPS_VOLUME" -t | tail -10
 
 Do not erase the destination just because the estimate is large — let it proceed and watch byte/file progress.
 
+[[#Step 3 — Start and Monitor the Backup|⮕ Continue to Step 3 — Start and Monitor the Backup]]
+
 ### `tmutil compare` reports "Must specify at least one item inside a backup"
 
 `compare` needs an item inside each backup, not two snapshot roots. Use the helper, or pass a broader compare path:
@@ -485,6 +524,8 @@ Do not erase the destination just because the estimate is large — let it proce
 ./bin/run-time-machine.sh compare --open
 ./bin/run-time-machine.sh compare --compare-path "Data/Users/$(whoami)" --open
 ```
+
+[[#Step 6 — Eject Before Reimage|⮕ Continue to Step 6 — Eject Before Reimage]]
 
 ### Verify sleep is actually prevented
 
@@ -496,6 +537,8 @@ pmset -g | grep sleep
 
 If sleep is not prevented, keep the Mac awake with `caffeinate -dimsu`.
 
+[[#Step 3 — Start and Monitor the Backup|⮕ Continue to Step 3 — Start and Monitor the Backup]]
+
 ### Stop a running backup
 
 Stopping the monitor does not stop the backup. Stop the actual session only when necessary, then confirm:
@@ -505,7 +548,7 @@ sudo tmutil stopbackup
 tmutil status
 ```
 
-[[#Table of Contents|⬆ Back to Table of Contents]]
+[[#Step 3 — Start and Monitor the Backup|⮕ Continue to Step 3 — Start and Monitor the Backup]]
 
 ---
 
@@ -618,5 +661,7 @@ If this prints an older version string, or `verify-volume` / `final` print `Unkn
 TOC verification performed before publishing:
 - every Table of Contents entry resolves to a heading present in this file;
 - deleted optional sections were also removed from the Table of Contents;
-- each top-level section ends with a single "Back to Table of Contents" link.
+- each top-level section ends with a single "Back to Table of Contents" link,
+  except Troubleshooting, whose back-link sits under its intro and whose routed
+  symptom subsections stay out of the Table of Contents.
 -->

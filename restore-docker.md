@@ -2,9 +2,9 @@
 
 # Restore Docker
 
-**Last updated:** 2026-08-05
+**Last updated:** 2026-08-17
 
-Restore Docker Desktop, resource tuning, registry credentials, and the local development container fleet on the reimaged Mac — Redis, RabbitMQ, Elasticsearch (+ Kibana), and MarkLogic (single-node with ml-gradle deployment). This runbook is the dedicated Phase 12 Docker handoff that [[restore-apps|restore-apps.md]] hands to; the companion script `bin/restore-docker.sh` writes a per-run plan-note that surveys the available pre-image sources, checks whether Docker Desktop and the daemon are up on the reimaged Mac, and provides the sign-off checklist.
+Restore Docker Desktop, resource tuning, registry credentials, and the local development container fleet on the reimaged Mac — Redis, RabbitMQ, Elasticsearch (+ Kibana), and MarkLogic (single-node with ml-gradle deployment). This is the dedicated Phase 12 Docker handoff; the companion script `bin/restore-docker.sh` writes a per-run plan-note that surveys the available pre-image sources, checks whether Docker Desktop and the daemon are up on the reimaged Mac, and provides the sign-off checklist.
 
 ---
 
@@ -38,7 +38,7 @@ Restore Docker Desktop, resource tuning, registry credentials, and the local dev
 > In Obsidian, these are internal heading links. Click in Reading View, or Cmd-click in Live Preview/editing mode.
 
 > [!info] Callout legend
-> This runbook uses Obsidian callouts so each type reads distinctly: `[!note]` an easily-missed fact · `[!warning]` Pitfall, a mistake you are likely to make here · `[!bug]` Troubleshooting, what to do when a step misbehaves · `[!info] Return` how to get back after an out-of-sequence detour.
+> This runbook uses Obsidian callouts so each type reads distinctly: `[!note]` an easily-missed fact · `[!warning]` Pitfall, a mistake you are likely to make here · `[!bug]` Troubleshooting, what to do when a step misbehaves.
 
 ---
 
@@ -46,28 +46,29 @@ Restore Docker Desktop, resource tuning, registry credentials, and the local dev
 
 Bring Docker Desktop and the local development container fleet back to a working state after the reimage without carrying forward stale registry credentials, stale image cache pressure, or half-initialised MarkLogic volumes. That means installing Docker Desktop from the approved channel, restoring the small set of resource settings that actually affect Mac stability (CPU, Memory, File sharing), restoring the encrypted `~/.docker/config.json` from the DMG rather than typing tokens by hand, restarting the low-touch containers first (Redis, RabbitMQ) so the fast wins are visible before the slow ones, and then reinitialising the stateful services (Elasticsearch, MarkLogic) from their project compose files.
 
-This runbook owns:
+**What it sets up**
 
-```text
-generating the Docker-specific restore plan-note and sign-off checklist
-installing Docker Desktop from the approved channel
-Docker Desktop resource settings (CPUs, Memory, Swap, Disk image, File sharing, Kubernetes off)
-Docker CLI smoke validation (docker version, docker info, docker system df)
-restoring ~/.docker/config.json from the encrypted DMG and validating docker login per registry
-restarting Redis, RabbitMQ, Elasticsearch (+ Kibana), and MarkLogic
-MarkLogic single-node deploy via ml-gradle (mlDeploySecurity, mlDeploy, mlLoadModules)
-```
+- **The Docker plan-note** — a timestamped per-run file under `reimaged-system/restore-notes/` that surveys the pre-image Docker sources, records local Docker Desktop and daemon state, and carries the Docker sign-off checklist.
+- **A working Docker Desktop install** — installed from the approved channel, with the operator-facing Resources settings restored (CPUs, Memory, Swap, Disk image, File sharing, Kubernetes off).
+- **Restored registry authentication** — `~/.docker/config.json` recovered from the encrypted DMG and confirmed with `docker login` per private registry.
+- **The running local container fleet** — Redis, RabbitMQ, Elasticsearch (+ Kibana), and MarkLogic single-node, with MarkLogic security and application resources deployed through ml-gradle.
 
-It does not own:
+**What the rest of the workflow relies on it for**
 
-```text
-generic app restore (Office, Chrome, Obsidian, Postman, VS Code, Raycast) — restore-apps.md
-IntelliJ IDE state and HTTP Client env files — restore-intellij.md
-JDK/Node/Gradle runtime install — Phase 10A (restore-runtime)
-secret restore beyond ~/.docker/config.json (SSH, GPG, certs, licenses) — Phase 10B (restore-access)
-repository re-clone (needed for the MarkLogic compose files and Gradle deploys) — Phase 11B (restore-repos)
-MarkLogic multi-node cluster steady-state operation — noted here as reference only; see the carrier-services-storage project README
-```
+- The Phase 12 umbrella plan-note carries a `Docker dedicated restore completed` row that this runbook closes before the umbrella flow continues.
+- Phase 14 `reimaged-system-checks.md` reads the plan-notes under `reimaged-system/restore-notes/` and flags any row still outstanding.
+- Local development after the reimage depends on the restarted container fleet and on registry credentials that authenticate without a fresh interactive token entry.
+
+**Ownership**
+
+| This runbook owns | Owned elsewhere |
+|---|---|
+| generating the Docker-specific restore plan-note and sign-off checklist | generic app restore (Office, Chrome, Obsidian, Postman, VS Code, Raycast) — `restore-apps` (Phase 12) |
+| installing Docker Desktop from the approved channel and its Resources settings (CPUs, Memory, Swap, Disk image, File sharing, Kubernetes off) | IntelliJ IDE state and HTTP Client env files — `restore-intellij` (Phase 12) |
+| Docker CLI smoke validation (`docker version`, `docker info`, `docker system df`) | JDK / Node / Gradle runtime install — `restore-runtime` (Phase 10A) |
+| restoring `~/.docker/config.json` from the encrypted DMG and validating `docker login` per registry | secret restore beyond `~/.docker/config.json` (SSH, GPG, certs, licenses) — `restore-access` (Phase 10B) |
+| restarting Redis, RabbitMQ, Elasticsearch (+ Kibana), and MarkLogic | repository re-clone, which supplies the Elasticsearch and MarkLogic compose files — `restore-repos` (Phase 11B) |
+| MarkLogic single-node deploy via ml-gradle (`mlDeploySecurity`, `mlDeploy`, `mlLoadModules`) | MarkLogic multi-node cluster steady-state operation — noted here as reference only; the `carrier-services-storage` project README owns it |
 
 This runbook can be rerun. Regenerating the plan-note produces a fresh timestamped file under `reimaged-system/restore-notes/`; container `docker start` operations are idempotent, and compose deploys are structured to re-run cleanly against an existing volume.
 
@@ -139,12 +140,12 @@ Project checkouts (post Phase 11B) referenced by the compose steps:
 
 ### Environment Variables
 
-The `reimage.env` values this runbook depends on. Resolved and written during [[prepare-artifact-root|prepare-artifact-root.md]].
+The `reimage.env` values this runbook depends on. Values are resolved and written during `prepare-artifact-root.md`.
 
 | Variable | Meaning |
 |---|---|
 | `REIMAGE_ARTIFACT_ROOT` | Mounted external artifact volume that holds every pre-image backup and every post-image record. Required for `bin/restore-docker.sh`. |
-| `FRACTOGENESIS_HOME` | Local checkout of `fractogenesis-toolkit`. Set by the shell session; the runbook assumes you are at this directory. |
+| `FRACTOGENESIS_HOME` | Local checkout of `fractogenesis-toolkit`; entrypoints are run from here. Set by your shell startup / `.envrc`, not stored in `reimage.env`. |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -157,7 +158,7 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 ### Prerequisites
 
 - Your shell is at the repository root — `cd "$FRACTOGENESIS_HOME"` once for the session. Per the guide's [[reimaging-guide#Core Assumptions|Core Assumptions]], the commands below assume this and don't repeat it.
-- Phases 8, 9, 10A, 10B, 11A, and 9B are complete. In particular, the JDK required for `./gradlew` is installed (Phase 10A), the encrypted secrets DMG is available (Phase 10B), and `carrier-services-storage` (or the equivalent project holding the Elasticsearch and MarkLogic compose files) has been re-cloned (Phase 11B).
+- Phases 8, 9, 10A, 10B, 11A, and 11B are complete. In particular, the JDK required for `./gradlew` is installed (Phase 10A), the encrypted secrets DMG is available (Phase 10B), and `carrier-services-storage` (or the equivalent project holding the Elasticsearch and MarkLogic compose files) has been re-cloned (Phase 11B).
 - The external artifact volume is mounted and `$REIMAGE_ARTIFACT_ROOT` resolves; the pre-image `app-settings-backup/docker/` subtree is reachable.
 - You have generated the Phase 12 umbrella plan-note via [[restore-apps|restore-apps.md]] Step 1.
 
@@ -216,6 +217,9 @@ docker system df
 > [!note]
 > When Self Service / Company Portal offers Docker Desktop, prefer it over the docker.com installer to avoid managed-app conflicts.
 
+> [!bug] Troubleshooting
+> If `docker version` or `docker info` reports that the daemon is not running, see [[#Docker daemon not running|Docker daemon not running]].
+
 ### Step 3 — Apply Resource Settings
 
 Restore resource settings from the pre-image performance-audit / system-inventory notes rather than copying Docker Desktop internal state blindly.
@@ -260,7 +264,7 @@ chmod 600 ~/.docker/config.json 2>/dev/null || true
 Confirm each private registry the pre-image config referenced:
 
 ```bash
-docker login <registry-host>
+docker login "<registry-host>"
 ```
 
 > [!warning] Pitfall
@@ -302,6 +306,9 @@ brew install redis   # installs CLI only, no daemon
 redis-cli -h localhost -p 6379 ping
 ```
 
+> [!bug] Troubleshooting
+> If a restarted container does not come up, or cannot see a bind-mounted project directory, see [[#Docker containers fail after restore|Docker containers fail after restore]].
+
 ### Step 7 — Restart RabbitMQ
 
 RabbitMQ is the message broker. The `3.12-management` image bundles the web management UI.
@@ -338,6 +345,9 @@ Management UI: [http://localhost:15672](http://localhost:15672) — default cred
 |---|---|
 | `5672` | AMQP (application connections) |
 | `15672` | Management UI / HTTP API |
+
+> [!bug] Troubleshooting
+> If the container is running but the management UI stays unreachable, see [[#RabbitMQ management UI unreachable|RabbitMQ management UI unreachable]].
 
 ### Step 8 — Restart Elasticsearch and Kibana
 
@@ -411,6 +421,11 @@ Key Elasticsearch settings for reference:
 | `xpack.security.http.ssl` | `false` (plain HTTP for local dev) |
 | `ES_JAVA_OPTS` | `-Xms512m -Xmx512m` (in `docker-compose.yml`) |
 
+> [!bug] Troubleshooting
+> If a container refuses to start because its published port is already bound, see [[#Port conflict|Port conflict]].
+> If the health check against `:9200` returns `401`, see [[#Elasticsearch returns 401|Elasticsearch returns 401]].
+> If Kibana comes back up red, see [[#Kibana `Status: Red` after restart|Kibana `Status: Red` after restart]].
+
 ### Step 9 — Restart MarkLogic Single-Node
 
 Project location: `src/main/docker/marklogic/` in `carrier-services-storage`. The single-node compose file is `docker-compose.marklogic.yml`, which pulls `progressofficial/marklogic-db` directly (no custom build for local dev).
@@ -455,6 +470,9 @@ bash scripts/ml-setup-sanity-checks.sh
 
 Non-zero exit means one of `:7997`, `:8001`, `:8002/manage/v2` is failing — fix that before Step 10.
 
+> [!bug] Troubleshooting
+> If the MarkLogic container exits within seconds of `up -d`, see [[#MarkLogic container exits immediately|MarkLogic container exits immediately]].
+
 ### Step 10 — Deploy MarkLogic Security and Application
 
 Deploy security resources first, from the **project root** (`carrier-services-storage/`):
@@ -487,6 +505,9 @@ Users created:
 
 > [!note]
 > The `mlSecurityUsername=admin` / `mlSecurityPassword=admin` values in `gradle.properties` must match the admin credentials set in the Docker secrets files.
+
+> [!bug] Troubleshooting
+> If `mlDeploySecurity` fails with a `401`, see [[#MarkLogic `mlDeploySecurity` fails with 401|MarkLogic `mlDeploySecurity` fails with 401]].
 
 Then deploy the full application:
 
@@ -557,6 +578,10 @@ The scripts do X; these judgment calls stay with you.
 
 ## Troubleshooting
 
+Docker restore fails in a handful of recognisable ways, each with a fix long enough to break the flow of the step that surfaces it. Every step that can hit one links in from a callout.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
 ### Docker daemon not running
 
 ```bash
@@ -564,6 +589,8 @@ open -a Docker   # launch Docker Desktop
 # wait ~10 s, then:
 docker info
 ```
+
+[[#Step 3 — Apply Resource Settings|⮕ Continue to Step 3 — Apply Resource Settings]]
 
 ### Docker containers fail after restore
 
@@ -575,7 +602,9 @@ docker info
 docker system df
 ```
 
-Confirm Docker file sharing includes the project directories the containers bind-mount.
+Confirm Docker file sharing includes the project directories the containers bind-mount. File sharing is set in Docker Desktop under **Settings → Resources**; restart Docker Desktop after changing it.
+
+[[#Step 6 — Restart Redis|⮕ Continue to Step 6 — Restart Redis]]
 
 ### Port conflict
 
@@ -583,6 +612,8 @@ Confirm Docker file sharing includes the project directories the containers bind
 lsof -i :9200                                                                     # example: Elasticsearch
 python3 <workspace>/carrier-services-storage/src/main/docker/marklogic/scripts/port-checker.py   # MarkLogic cluster ports
 ```
+
+[[#Step 8 — Restart Elasticsearch and Kibana|⮕ Continue to Step 8 — Restart Elasticsearch and Kibana]]
 
 ### MarkLogic container exits immediately
 
@@ -593,7 +624,9 @@ docker logs marklogic-server
 Common causes:
 
 - Memory limit too low — increase Docker Desktop memory to ≥4 GB.
-- Stale lock files from a previous unclean shutdown — `docker compose down -v` to remove the volume and start clean.
+- Stale lock files from a previous unclean shutdown — `docker compose down -v` to remove the volume and start clean. The next `up` re-initialises from scratch, so `mlDeploySecurity` and `mlDeploy` must be re-run afterwards.
+
+[[#Step 9 — Restart MarkLogic Single-Node|⮕ Continue to Step 9 — Restart MarkLogic Single-Node]]
 
 ### MarkLogic `mlDeploySecurity` fails with 401
 
@@ -603,6 +636,8 @@ Credentials mismatch. Confirm:
 2. `secrets/mldb_admin_username.txt` contains the same username.
 3. `secrets/mldb_admin_password.txt` contains the matching password.
 4. Run `bash scripts/ml-setup-sanity-checks.sh` to confirm auth works before retrying Gradle.
+
+[[#Step 10 — Deploy MarkLogic Security and Application|⮕ Continue to Step 10 — Deploy MarkLogic Security and Application]]
 
 ### Elasticsearch returns 401
 
@@ -618,6 +653,8 @@ docker compose -f docker-compose.yml down -v
 docker compose -f docker-compose.yml up -d
 ```
 
+[[#Step 8 — Restart Elasticsearch and Kibana|⮕ Continue to Step 8 — Restart Elasticsearch and Kibana]]
+
 ### Kibana `Status: Red` after restart
 
 Kibana's `kibana_system` user password must be reset after the Elasticsearch container is recreated:
@@ -627,6 +664,8 @@ bash start-local-docker-with-kibana.sh
 ```
 
 This resets the password and restarts Kibana automatically.
+
+[[#Step 8 — Restart Elasticsearch and Kibana|⮕ Continue to Step 8 — Restart Elasticsearch and Kibana]]
 
 ### RabbitMQ management UI unreachable
 
@@ -640,11 +679,13 @@ RabbitMQ takes 10–20 seconds to boot. If the container is running but the UI i
 docker restart rabbitmq
 ```
 
-[[#Table of Contents|⬆ Back to Table of Contents]]
+[[#Step 7 — Restart RabbitMQ|⮕ Continue to Step 7 — Restart RabbitMQ]]
 
 ---
 
 ## Supplemental Reference
+
+Longer material most runs will not need, kept out of the main flow.
 
 ### MarkLogic Multi-Node Cluster Reference
 
@@ -684,3 +725,14 @@ docker start rabbitmq
 ```
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
+<!--
+TOC verification performed before publishing:
+- every Table of Contents entry resolves to a heading present in this file;
+- deleted optional sections were also removed from the Table of Contents;
+- each top-level section ends with a single "Back to Table of Contents" link,
+  except Troubleshooting, whose back-link sits under its intro and whose routed
+  symptom subsections stay out of the Table of Contents.
+-->

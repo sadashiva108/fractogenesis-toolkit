@@ -21,7 +21,6 @@ This document supports `reimaging-guide.md` by keeping the bootstrap problem —
   - [[#Validating This Actually Works|Validating This Actually Works]]
 - [[#Getting reference-vault (Still Needs SSH)|Getting reference-vault (Still Needs SSH)]]
   - [[#Recommended Bootstrap Sequence|Recommended Bootstrap Sequence]]
-  - [[#Where to Keep the Cheat Sheet|Where to Keep the Cheat Sheet]]
 - [[#Important Safety Rules|Important Safety Rules]]
 
 > In Obsidian, these are internal heading links. Click in Reading View, or Cmd-click in Live Preview/editing mode.
@@ -127,41 +126,16 @@ Steps 3–4 depend on `reimage.env`'s values (key filenames, host aliases) to fi
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
-### Where to Keep the Cheat Sheet
-
-If you still want a redundant, low-effort artifact for the `reference-vault` sequence above (separate from `fractogenesis-toolkit`, which no longer needs one), keep it as a plain `.md` (or `.txt`) file, not an Obsidian-specific export — readable in TextEdit, `cat`, or any browser before any tooling is restored.
-
-Store it redundantly in at least two of these locations:
-
-```text
-$REIMAGE_ARTIFACT_ROOT/workflow-bootstrap/bootstrap-cheatsheet.md   (external drive, always available, no network needed)
-<OneDrive root>/workflow-bootstrap/bootstrap-cheatsheet.md (needs OneDrive re-signed-in, but survives drive loss/damage)
-```
-
-Do not rely on OneDrive alone — it typically is not usable until you've signed back into the Mac and OneDrive has finished its own setup, which may itself depend on steps later in the cheat sheet. The external drive copy is the one you actually reach for first.
-
-The source of truth for the cheat sheet's content should still be `templates/bootstrap-cheatsheet.md` in the `reference-vault` repo, so future edits flow the same way as other templates. Copy the rendered file out to the external drive and OneDrive as part of Phase 1 (preparing the artifact root), and refresh the copies if the cheat sheet changes before your next reimage.
-
-[[#Table of Contents|⬆ Back to Table of Contents]]
-
 ---
 
 ## Important Safety Rules
-
-### Do not put private key material in the cheat sheet
-
-The cheat sheet should only contain commands and paths, never the actual SSH private key contents, DMG password, or other secrets. Those stay in the encrypted DMG and your password manager.
 
 ### Do not skip the DMG password step
 
 Do not create a copy of the SSH keys unencrypted on the external drive "just in case." The encrypted DMG is the one approved place for private keys on the external drive — see `backup-strategy-guide.md` → Important Safety Rules.
 
-### Keep the cheat sheet in sync with restore-git.md
-
-If SSH key filenames, host aliases, or the clone command shape change in `restore-git.md`, update `templates/bootstrap-cheatsheet.md` at the same time so the redundant copies don't go stale.
-
 ### fractogenesis-toolkit has no equivalent secret to protect
 
-Unlike the `reference-vault` cheat sheet, nothing about `fractogenesis-toolkit`'s bootstrap mechanism involves secrets — the repo is public by design, and `reimage.env` (the one file that does carry machine-specific values) is never committed. There's no DMG-password-equivalent risk to manage for this half of the bootstrap problem.
+Nothing about `fractogenesis-toolkit`'s bootstrap mechanism involves secrets — the repo is public by design, and `reimage.env` (the one file that does carry machine-specific values) is never committed. There's no DMG-password-equivalent risk to manage for this half of the bootstrap problem.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]

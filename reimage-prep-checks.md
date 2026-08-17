@@ -2,7 +2,7 @@
 
 # Reimage Preparation Checks
 
-**Last updated:** 2026-08-04
+**Last updated:** 2026-08-17
 
 The Phase 6B go / no-go gate before you erase the Mac. `reimage-checklist.sh --phase pre` proves as many prep items as automation can — backup roots, Git audit, secrets DMG, captures, cloud-folder evidence — and writes a timestamped report. You then complete the handful of rows automation cannot prove: IT approval, Time Machine, DMG password storage, and whether OneDrive/iCloud uploads have actually settled. Proceed to Phase 7 only when the report has zero FAILs and every manual row is signed off.
 
@@ -39,30 +39,30 @@ The Phase 6B go / no-go gate before you erase the Mac. `reimage-checklist.sh --p
 
 ## Purpose
 
-Give yourself confidence, in one place, that the Mac's reimage preparation will reliably and safely restore the environment afterward. This is the pre-image gate: run the validator, read the report, close out the manual rows, and only then move to erase.
+Give yourself confidence, in one place, that the Mac's reimage preparation will reliably and safely restore the environment afterward. This is the pre-image gate: run the validator, read the report, close out the manual rows, and only then move to erase. `reimage-checklist.sh --phase pre` is the authoritative validation path; the rows that stay manual are the ones automation cannot prove by itself — a UI state, a human decision, or whether a cloud upload has actually finished.
 
-`reimage-checklist.sh --phase pre` is the authoritative validation path. It proves as many items as automation reasonably can and records each as PASS, WARN, FAIL, or SKIP. The rows that stay manual are the ones automation cannot prove by itself — a UI state, a human decision, or whether a cloud upload has actually finished.
+**What it sets up**
 
-This runbook owns:
+- **The go / no-go report** — a timestamped `reimage-checklist-*.md` recording PASS, WARN, FAIL, or SKIP for every prep area automation can reach, plus the `latest-reimage-checklist.txt` pointer to the newest run.
+- **The pre-image manual sign-off note** — the written record of the rows the script leaves as `TODO`: IT approval, Time Machine, DMG password storage, and the cloud-sync confirmations.
+- **The decision itself** — proceed to Phase 7 (erase) or hold, evidenced rather than remembered.
 
-```text
-the Phase 6B pre-image go / no-go validation run and its generated report
-the pre-image manual sign-off note and the manual sync-confirmation checks
-the decision to proceed to Phase 7 (erase) or hold
-```
+**What the rest of the workflow relies on it for**
 
-It does not own:
+- Phase 7 begins only once this report has zero FAILs and every manual row is signed off.
+- The hand-verified items the earlier pre-image runbooks defer are finally accounted for here — this sign-off is where they roll up.
 
-```text
-producing the artifacts it checks — each owning runbook creates them:
-  Git audit and staged ignored files — backup-repos.md (Phase 2A)
-  home and dotfiles copy, and the OneDrive sync procedure — backup-home.md (Phase 2B)
-  app settings, VS Code, Chrome, Docker, Postman, Obsidian — backup-apps.md / backup-intellij.md (Phase 2C/2D)
-  certificate and Keychain staging — stage-certs-keychain.md (Phase 3A)
-  consolidated secrets DMG — create-secrets-dmg.md (Phase 3C)
-  system, performance, and Office captures — the capture-*.md runbooks (Phase 4)
-the post-image Phase 14 validation — the same script under --phase post, driven by reimaged-system-checks.md
-```
+**Ownership**
+
+| This runbook owns | Owned elsewhere |
+|---|---|
+| the Phase 6B pre-image go / no-go validation run and its generated report | Git audit and staged ignored files — `backup-repos` (Phase 2A) |
+| the pre-image manual sign-off note and the manual sync-confirmation checks | home and dotfiles copy, and the OneDrive sync procedure — `backup-home` (Phase 2B) |
+| the decision to proceed to Phase 7 (erase) or hold | app settings, VS Code, Chrome, Docker, Postman, Obsidian — `backup-apps` (Phase 2D) and its companion `backup-intellij` |
+| | certificate and Keychain staging — `stage-certs-keychain` (Phase 3A) |
+| | consolidated secrets DMG — `create-secrets-dmg` (Phase 3C) |
+| | system, performance, and Office captures — the `capture-*` runbooks (Phase 4) |
+| | the post-image validation, the same script under `--phase post` — `reimaged-system-checks` (Phase 14) |
 
 This runbook is a validator: it reports on artifacts but never creates them. Rerun it as often as you like — each run writes a fresh timestamped report and refreshes `latest-reimage-checklist.txt`.
 
@@ -74,7 +74,7 @@ This runbook is a validator: it reports on artifacts but never creates them. Rer
 
 Read this before running anything. Reimage prep is spread across many independent phases — Git, home files, apps, certs, the secrets DMG, and the captures — and no single phase can confirm the others are done. Phase 6B is the one place that inspects all of them at once and turns "I think everything is backed up" into an evidenced go / no-go decision.
 
-The flow is script-first and one-directional. `reimage-checklist.sh --phase pre` walks every prep area, writes a PASS/WARN/FAIL/SKIP row per check into a Markdown report, and exits non-zero if any **FAIL** is present. You read that report, fix any FAIL by rerunning the phase that owns it, then hand-confirm the rows automation cannot reach. The preferred path is the single script run — reach for the individual sync commands in [[#Manual Sync Confirmation Reference|Manual Sync Confirmation Reference]] only for the cloud checks the script can evidence but not prove.
+The flow is script-first and one-directional. `reimage-checklist.sh --phase pre` walks every prep area, writes a PASS/WARN/FAIL/SKIP row per check into a Markdown report, and exits non-zero if any **FAIL** is present. You read that report, fix any FAIL by rerunning the phase that owns it, then hand-confirm the rows automation cannot reach. The preferred path is the single script run; the individual sync commands kept under Supplemental Reference are only for the cloud checks the script can evidence but not prove.
 
 One boundary matters throughout: for cloud folders the script confirms a local folder and an upload marker exist — that is *evidence*, not *proof* that the cloud copy is current. Proof is a manual row.
 
@@ -135,7 +135,7 @@ The `reimage.env` values this run depends on. Values are resolved and written du
 | `ONEDRIVE_ROOT` | Optional. Local CloudStorage OneDrive root; when set, the OneDrive folder/marker evidence check runs, otherwise it SKIPs. |
 | `ONEDRIVE_DEST_SUBDIR` | Optional. OneDrive subfolder name to look under; defaults to the artifact root's basename. |
 | `EXTERNAL_APPLE_BACKUPS_VOLUME` | Optional. Named in the eject-before-reimage sign-off row when a dedicated Time Machine volume is configured. |
-| `FRACTOGENESIS_HOME` | Absolute path to the toolkit repository root; entrypoints are run from here. |
+| `FRACTOGENESIS_HOME` | Absolute path to the toolkit repository root; entrypoints are run from here. Set by your shell startup / `.envrc`, not stored in `reimage.env`. |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -143,7 +143,7 @@ The `reimage.env` values this run depends on. Values are resolved and written du
 
 ## Before You Run Anything
 
-A short pre-flight: confirm you are set up, then confirm what this run is meant to gate. The concepts are in [[#How the Workflow Works|How the Workflow Works]]; this is just the checklist.
+A short pre-flight: confirm you are set up, then confirm what you intend this run to do.
 
 ### Prerequisites
 
@@ -157,7 +157,7 @@ A short pre-flight: confirm you are set up, then confirm what this run is meant 
 ### Confirm Your Intent
 
 - That this is the **pre-image** gate (`--phase pre`), run once your backups and captures are complete — not the post-image Phase 14 run.
-- Which cloud services are part of your restore plan. Only files you will actually restore from OneDrive or iCloud need their uploads to have settled; anything not relied on can be marked not applicable. The evidence table is in [[#Go / No-Go Checklist Map|Go / No-Go Checklist Map]].
+- Which cloud services are part of your restore plan. Only files you will actually restore from OneDrive or iCloud need their uploads to have settled; anything not relied on can be marked not applicable.
 - Whether `ONEDRIVE_ROOT` should be set for this run so the OneDrive evidence check runs instead of SKIPping.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -200,7 +200,7 @@ To point at a different artifact root or volume for one invocation, add `--artif
 > [!warning] Pitfall
 > `--workspace-root`, `--onedrive-root` git-status scanning, and `--internal-url` are post-image (`--phase post`) concerns. For the pre-image gate, the flags above are all you need — don't copy the Phase 14 invocation.
 
-The run writes the report and refreshes the latest-pointer (names defined in [[#Artifact and Script Locations|Artifact and Script Locations]]):
+The run writes the report and refreshes the latest-pointer:
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/reimage-checklist-YYYYMMDD-HHMMSS.md
@@ -211,19 +211,25 @@ It exits `0` with no FAILs, `1` when one or more FAIL rows were recorded, and `2
 
 ### Step 3 — Resolve Findings and Sign Off Manual Rows
 
-Open the report and work it top to bottom. Every **FAIL** is a hard block: fix it by rerunning the phase that owns the artifact (see the ownership map in [[#Purpose|Purpose]]), then rerun this checklist. Review each **WARN** and either resolve it or record why it is acceptable.
+Open the report and work it top to bottom. Every **FAIL** is a hard block: fix it by rerunning the phase that owns the artifact, then rerun this checklist. Review each **WARN** and either resolve it or record why it is acceptable.
+
+> [!bug] Troubleshooting
+> If a FAIL row names an area you deliberately are not backing up, see [[#A FAIL row is for an area you intentionally skipped|A FAIL row is for an area you intentionally skipped]].
 
 Then complete the rows the script leaves as `TODO` — these are the manual verifications this runbook is responsible for, and they roll up to the go / no-go decision:
 
 - IT has confirmed the approved reimage method in writing.
 - Time Machine backup completed and `tmutil latestbackup` confirms it.
 - The secrets DMG password is saved in the approved password manager, and the DMG mounts and verifies.
-- OneDrive and (if relied on) iCloud uploads have actually settled — see [[#Manual Sync Confirmation Reference|Manual Sync Confirmation Reference]].
+- OneDrive and (if relied on) iCloud uploads have actually settled.
 - VS Code Settings Sync state is recorded, or the local `app-settings-backup/vscode/` capture is chosen as the restore source.
 - The Obsidian vault is synced or manually copied, and loose private-key / keystore / certificate candidates have been reviewed.
 - The external drive will be ejected before the erase begins.
 
-Capture these in the sign-off note so the decision is written down, not just remembered — the note template and the copy-from-template command are in [[#Manual Sign-Off Notes|Manual Sign-Off Notes]].
+> [!bug] Troubleshooting
+> If an unexpected OneDrive folder has appeared under `$FRACTOGENESIS_HOME`, see [[#An "accidental OneDrive folder" appeared under `$FRACTOGENESIS_HOME`|An "accidental OneDrive folder" appeared under `$FRACTOGENESIS_HOME`]].
+
+Capture these in the sign-off note so the decision is written down, not just remembered; the note template and the copy-from-template command are kept under Supplemental Reference.
 
 > [!note]
 > Obsidian restore-*source* decisions themselves belong to [[backup-apps|Backup Apps]]; here you only confirm the vault is synced or copied.
@@ -269,15 +275,21 @@ The script reports uniformly; these judgment calls stay with you because there i
 
 ## Troubleshooting
 
+Two findings from the report need more than a rerun to clear, and each would break the flow of the step that surfaces them. Step 3 links in from a callout.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
 ### A FAIL row is for an area you intentionally skipped
 
 The validator does not know your restore plan. If a FAIL is for a subsystem you deliberately are not backing up (for example a toolchain you do not use), that is a decision to record in the sign-off note, not a reason to edit the script — but confirm it is genuinely intentional before overriding a FAIL, since FAIL is reserved for missing artifacts the workflow expects.
 
+[[#Step 3 — Resolve Findings and Sign Off Manual Rows|⮕ Continue to Step 3 — Resolve Findings and Sign Off Manual Rows]]
+
 ### An "accidental OneDrive folder" appeared under `$FRACTOGENESIS_HOME`
 
-If an older run wrote to a relative path under the repo root instead of the real OneDrive CloudStorage folder, see the "Confirm OneDrive Sync" section of [[backup-home|Backup Home]] for the fix; it owns the OneDrive target resolution and cleanup.
+An older run wrote to a relative path under the repo root instead of the real OneDrive CloudStorage folder. The fix is the "Confirm OneDrive Sync" section of `backup-home.md` (Phase 2B), which owns OneDrive target resolution and cleanup: resolve the real CloudStorage target, then remove the stray folder from under the repo root.
 
-[[#Table of Contents|⬆ Back to Table of Contents]]
+[[#Step 3 — Resolve Findings and Sign Off Manual Rows|⮕ Continue to Step 3 — Resolve Findings and Sign Off Manual Rows]]
 
 ---
 
@@ -424,5 +436,7 @@ test -d "$ICLOUD_DRIVE" && open "$ICLOUD_DRIVE"
 TOC verification performed before publishing:
 - every Table of Contents entry resolves to a heading present in this file;
 - deleted optional sections were also removed from the Table of Contents;
-- each top-level section ends with a single "Back to Table of Contents" link.
+- each top-level section ends with a single "Back to Table of Contents" link,
+  except Troubleshooting, whose back-link sits under its intro and whose routed
+  symptom subsections stay out of the Table of Contents.
 -->

@@ -2,7 +2,7 @@
 
 # Restore Access
 
-**Last updated:** 2026-08-04
+**Last updated:** 2026-08-17
 
 Restore the identity, trust, and credential layer on the reimaged Mac after the runtime toolchain is in place — SSH keys and Git access, certificates and keychains, Java trust overrides pinned to the JDK from Phase 10A, shell and CLI configuration, and license or activation material. Everything here comes out of the encrypted secrets DMG and the reviewed dotfiles bundle built during the pre-image phases; this runbook is manual and does not run a fractogenesis-toolkit entrypoint.
 
@@ -33,34 +33,38 @@ Restore the identity, trust, and credential layer on the reimaged Mac after the 
 > In Obsidian, these are internal heading links. Click in Reading View, or Cmd-click in Live Preview/editing mode.
 
 > [!info] Callout legend
-> This runbook uses Obsidian callouts so each type reads distinctly: `[!note]` an easily-missed fact · `[!warning]` Pitfall, a mistake you are likely to make here · `[!bug]` Troubleshooting, what to do when a step misbehaves · `[!info] Return` how to get back after an out-of-sequence detour.
+> This runbook uses Obsidian callouts so each type reads distinctly: `[!note]` an easily-missed fact · `[!warning]` Pitfall, a mistake you are likely to make here · `[!bug]` Troubleshooting, what to do when a step misbehaves.
 
 ---
 
 ## Purpose
 
-Restore the access layer that later repo, IDE, application, and project work depend on: SSH identity, TLS trust, JVM trust, shell environment, and credential and license material. Get the Mac to the point where it can authenticate to internal systems and reach services through the expected trust chain before Git restore (Phase 11) and application restore (Phase 12) start.
+Restore the access layer that later repo, IDE, application, and project work depend on: SSH identity, TLS trust, JVM trust, shell environment, and credential and license material. Get the Mac to the point where it can authenticate to internal systems and reach services through the expected trust chain before Git restore and application restore start.
 
-This runbook owns:
+**What it sets up**
 
-```text
-mounting the encrypted secrets DMG and ejecting it cleanly
-SSH keys, ~/.ssh/config, and permissions
-certificates and keychain material restored from reviewed sources
-Java trust overrides such as jssecacerts, pinned to the installed JDK
-selective shell and CLI configuration restore from the dotfiles bundle
-credentials, license keys, and activation material
-```
+- **SSH identity** — keys, `~/.ssh/config`, and `known_hosts` copied out of the mounted DMG, with the tight permissions the SSH client insists on.
+- **Keychain trust** — certificates imported from the reviewed manual exports, with genuine internal root and issuing CAs explicitly marked Always Trust so non-Java tools reach internal endpoints.
+- **JVM trust** — the `jssecacerts` override dropped into the `lib/security/` directory of the JDK actually installed in Phase 10A.
+- **Shell and CLI configuration** — a reviewed, selectively merged restore from the dotfiles bundle, rather than a blanket overwrite of the fresh files.
+- **Credentials and license material** — per-tool credential exports, package-manager credential stores, and license or activation material brought back through each vendor's supported flow.
 
-It does not own:
+**What the rest of the workflow relies on it for**
 
-```text
-runtime tooling install (Xcode CLT, Homebrew, JDK, Node, platform CLIs) — Phase 10A (restore-runtime)
-building or validating the encrypted secrets DMG — create-secrets-dmg.md (Phase 3C)
-certificate and Keychain discovery, review, and staging — stage-certs-keychain.md (Phase 3A)
-Git identity configuration and remote routing — Phase 11 (restore-git)
-IntelliJ, Docker, and per-app secret restore — restore-intellij.md, restore-docker.md, and app-specific runbooks (Phase 12+)
-```
+- Phase 11A builds the Git identity plumbing on top of the SSH keys and permissions laid down here.
+- Phase 11B and later repo, IDE, and project work reach internal systems through the keychain and JVM trust this phase establishes.
+- Phase 12 application restore assumes the license and activation material is already in hand and the machine can authenticate.
+
+**Ownership**
+
+| This runbook owns | Owned elsewhere |
+|---|---|
+| mounting the encrypted secrets DMG and ejecting it cleanly | building and validating that DMG — `create-secrets-dmg` (Phase 3C) |
+| SSH keys, `~/.ssh/config`, and their permissions | Git identity configuration and remote routing — `restore-git` (Phase 11A) |
+| certificates and keychain material restored from reviewed sources | certificate and Keychain discovery, review, and staging — `stage-certs-keychain` (Phase 3A) |
+| Java trust overrides such as `jssecacerts`, pinned to the installed JDK | runtime tooling install — Xcode CLT, Homebrew, JDK, Node, platform CLIs — `restore-runtime` (Phase 10A) |
+| selective shell and CLI configuration restore from the dotfiles bundle | capturing that reviewed dotfiles bundle — `backup-home` (Phase 2B) |
+| credentials, license keys, and activation material | IntelliJ, Docker, and per-app secret restore — `restore-intellij`, `restore-docker`, and the app-specific runbooks (Phase 12) |
 
 This runbook can be rerun. Each step is either idempotent (SSH file copies, chmod, `security` imports) or a manual UI action; rerunning is the intended recovery path when a step misbehaves.
 
@@ -104,12 +108,12 @@ $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/all-secrets-*.dmg              # Phase 
 $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/certs/                         # certificate staging, mirrored inside the DMG
 $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/certs/java-security/           # jssecacerts and related JDK trust files
 $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/certs/keychain-manual-exports/ # manual .cer/.p12 exports for Keychain Access
-$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/ssh/                           # SSH keys, config, known_hosts
-$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/git/                           # ~/.gitconfig and ~/.config/git/
 $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/cli-credentials/               # per-tool credential exports
-$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/package-managers/              # npm, cargo, and similar credential stores
+$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/git/                           # ~/.gitconfig and ~/.config/git/
 $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/licenses/                      # license keys, offline activation files
-$REIMAGE_ARTIFACT_ROOT/home-files-backup/dotfiles/                            # reviewed shell/CLI config subset
+$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/package-managers/              # npm, cargo, and similar credential stores
+$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/ssh/                           # SSH keys, config, known_hosts
+$REIMAGE_ARTIFACT_ROOT/home-files-backup/dotfiles/                      # reviewed shell/CLI config subset
 $REIMAGE_ARTIFACT_ROOT/public-certs/                                    # reviewed non-secret CA and trust reference material
 ```
 
@@ -148,7 +152,7 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 ### Prerequisites
 
 - Your shell is at the repository root — `cd "$FRACTOGENESIS_HOME"` once for the session. Per the guide's [[reimaging-guide#Core Assumptions|Core Assumptions]], the commands below assume this and don't repeat it.
-- Phase 10A ([[restore-runtime|restore-runtime.md]]) is complete: JDK 17 (or the intended baseline) is installed and `java -version` prints it.
+- Phase 10A (`restore-runtime.md`) is complete: JDK 17 (or the intended baseline) is installed and `java -version` prints it.
 - The external artifact volume is mounted and `reimage.env` resolves. `ls "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted"` should list at least one `all-secrets-*.dmg`.
 - You have the DMG password from your password manager or wherever it was stored in Phase 3C. Do not proceed without it.
 
@@ -187,6 +191,9 @@ ls /Volumes/all-secrets*/
 
 Every subsequent step reads from `/Volumes/all-secrets-*/`; do not copy the DMG's contents wholesale to disk.
 
+> [!bug] Troubleshooting
+> If `hdiutil attach` reports the image as corrupt, see [[#`hdiutil attach` says the DMG is corrupt|`hdiutil attach` says the DMG is corrupt]].
+
 ### Step 2 — Restore SSH and Git Access
 
 SSH first because everything else that talks to GitHub or an internal Git server needs it.
@@ -213,7 +220,10 @@ ssh -T git@github.com || true
 ```
 
 > [!note]
-> The full Git identity workflow (work vs personal routing, per-repo `.gitconfig`, dual-identity `~/.gitconfig`) belongs to [[restore-git|restore-git.md]] in Phase 11. This step is only about SSH reachability.
+> The full Git identity workflow (work vs personal routing, per-repo `.gitconfig`, dual-identity `~/.gitconfig`) belongs to [[restore-git|restore-git.md]] in Phase 11A. This step is only about SSH reachability.
+
+> [!bug] Troubleshooting
+> If SSH prompts for the key passphrase in every new shell, see [[#SSH keeps prompting for a passphrase every session|SSH keeps prompting for a passphrase every session]].
 
 ### Step 3 — Restore Certificates and Keychain Material
 
@@ -248,6 +258,9 @@ security add-trusted-cert -d -r trustRoot -k "$HOME/Library/Keychains/login.keyc
 
 > [!warning] Pitfall
 > Only mark a certificate as **Always Trust** if it is the company's actual internal root or issuing CA. Doing this for an arbitrary or unverified certificate opens the machine to trust attacks. If in doubt, leave the certificate's trust at "Use System Defaults" and revisit.
+
+> [!bug] Troubleshooting
+> If `curl` still fails against an internal endpoint after the trust change, see [[#`curl` still fails against internal endpoints after Step 4|`curl` still fails against internal endpoints after Step 4]].
 
 ### Step 5 — Restore Java Trust Overrides
 
@@ -306,8 +319,8 @@ Typical sources on the mounted volume:
 
 ```text
 /Volumes/all-secrets-*/cli-credentials/    # per-tool credential exports (aws profile files, kube credentials, etc.)
-/Volumes/all-secrets-*/package-managers/   # npm, cargo, and similar credential stores
 /Volumes/all-secrets-*/licenses/           # app license keys, serial numbers, activation files
+/Volumes/all-secrets-*/package-managers/   # npm, cargo, and similar credential stores
 ```
 
 For each application license or activation file:
@@ -330,7 +343,7 @@ hdiutil detach /Volumes/all-secrets-*
 
 Sweep for any temporary plaintext copies you may have made outside the DMG (Downloads, Desktop) and remove them. The DMG is the durable copy; nothing plaintext should remain on disk after this step.
 
-Confirm the exit criteria before moving on to [[restore-git|restore-git.md]]:
+Confirm the exit criteria before moving on to `restore-git.md`:
 
 | Area | Expected result |
 |---|---|
@@ -363,6 +376,10 @@ The commands do X; these judgment calls stay with you.
 
 ## Troubleshooting
 
+Three failures here have fixes long enough to break the flow of the step that surfaces them. Each step links in from a callout.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
 ### `hdiutil attach` says the DMG is corrupt
 
 Verify the DMG on disk before assuming it is unrecoverable:
@@ -371,7 +388,9 @@ Verify the DMG on disk before assuming it is unrecoverable:
 hdiutil verify "$DMG"
 ```
 
-If verification fails, fall back to the previous timestamped `all-secrets-*.dmg` in the same directory. If both fail, rebuild via [[create-secrets-dmg|create-secrets-dmg.md]] on the source machine — this runbook does not repair DMGs.
+If verification fails, fall back to the previous timestamped `all-secrets-*.dmg` in the same directory. If both fail, rebuild the image with `create-secrets-dmg.md` on the source machine — this runbook does not repair DMGs. Attach the working DMG the same way, confirm the mount, then carry on.
+
+[[#Step 2 — Restore SSH and Git Access|⮕ Continue to Step 2 — Restore SSH and Git Access]]
 
 ### SSH keeps prompting for a passphrase every session
 
@@ -381,10 +400,23 @@ The keys are correct but not added to the ssh-agent. Add them once per session:
 ssh-add --apple-use-keychain ~/.ssh/id_ed25519
 ```
 
-For persistence, add an `AddKeysToAgent` directive to `~/.ssh/config`; that is a shell config change, not a Step 2 fix.
+For persistence, add an `AddKeysToAgent` directive to `~/.ssh/config`; that is a shell config change, not an SSH restore fix.
+
+[[#Step 3 — Restore Certificates and Keychain Material|⮕ Continue to Step 3 — Restore Certificates and Keychain Material]]
 
 ### `curl` still fails against internal endpoints after Step 4
 
-The certificate was imported but Always Trust was set on the *end-entity* certificate rather than the root or issuing CA. Only root and issuing CAs earn Always Trust; leaf certs should stay at "Use System Defaults" and rely on the chain.
+The certificate was imported but Always Trust was set on the *end-entity* certificate rather than the root or issuing CA. Only root and issuing CAs earn Always Trust; leaf certs should stay at "Use System Defaults" and rely on the chain. Reopen the certificate in Keychain Access, reset the leaf to "Use System Defaults", and set Always Trust on the internal root or issuing CA instead.
 
-[[#Table of Contents|⬆ Back to Table of Contents]]
+[[#Step 5 — Restore Java Trust Overrides|⮕ Continue to Step 5 — Restore Java Trust Overrides]]
+
+---
+
+<!--
+TOC verification performed before publishing:
+- every Table of Contents entry resolves to a heading present in this file;
+- deleted optional sections were also removed from the Table of Contents;
+- each top-level section ends with a single "Back to Table of Contents" link,
+  except Troubleshooting, whose back-link sits under its intro and whose routed
+  symptom subsections stay out of the Table of Contents.
+-->

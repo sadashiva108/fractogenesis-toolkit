@@ -2,9 +2,9 @@
 
 # Restore Runtime
 
-**Last updated:** 2026-08-04
+**Last updated:** 2026-08-17
 
-Rebuild the non-secret runtime and toolchain layer on the reimaged Mac — Xcode Command Line Tools, Homebrew, Java and the JVM build tools, Node via `nvm`, and the platform CLIs — before any secret material or repository work begins. This runbook is manual by design; every install is `xcode-select`, `brew`, or `nvm` and there is no fractogenesis-toolkit entrypoint to drive it. The captured pre-image and post-image system inventories from Phases 2A and 13B are the reference for what "restored" means here.
+Rebuild the non-secret runtime and toolchain layer on the reimaged Mac — Xcode Command Line Tools, Homebrew, Java and the JVM build tools, Node via `nvm`, and the platform CLIs — before any secret material or repository work begins. This runbook is manual by design; every install is `xcode-select`, `brew`, or `nvm` and there is no fractogenesis-toolkit entrypoint to drive it. The captured pre-image and post-image system inventories from Phases 4B and 13B are the reference for what "restored" means here.
 
 ---
 
@@ -33,7 +33,7 @@ Rebuild the non-secret runtime and toolchain layer on the reimaged Mac — Xcode
 > In Obsidian, these are internal heading links. Click in Reading View, or Cmd-click in Live Preview/editing mode.
 
 > [!info] Callout legend
-> This runbook uses Obsidian callouts so each type reads distinctly: `[!note]` an easily-missed fact · `[!warning]` Pitfall, a mistake you are likely to make here · `[!bug]` Troubleshooting, what to do when a step misbehaves · `[!info] Return` how to get back after an out-of-sequence detour.
+> This runbook uses Obsidian callouts so each type reads distinctly: `[!note]` an easily-missed fact · `[!warning]` Pitfall, a mistake you are likely to make here · `[!bug]` Troubleshooting, what to do when a step misbehaves.
 
 ---
 
@@ -41,25 +41,30 @@ Rebuild the non-secret runtime and toolchain layer on the reimaged Mac — Xcode
 
 Restore the non-secret runtime layer — the compiler and package-manager stack, JVM tooling, Node, and platform CLIs — that every later restore phase depends on. Get the machine to the point where it can build, install packages, and run the expected local tooling without pulling in secrets, credentials, or repository state too early.
 
-This runbook owns:
+**What it sets up**
 
-```text
-Xcode Command Line Tools install and verification
-Homebrew install, update, and diagnostic pass
-Java (JDK), Gradle, Maven, and Groovy install
-Node version management via nvm and per-project Node installs
-Cloud Foundry CLI, fly, jq, kotlin, wget, yq, and similar platform tools
-version comparison against the captured pre-image and post-image system inventories
-```
+- **Xcode Command Line Tools** — installed and verified, so the compiler and linker later build tooling depends on are present.
+- **Homebrew** — installed, brought up to date, and put through a diagnostic pass before packages are added.
+- **The JVM layer** — the JDK baseline plus Gradle, Maven, and Groovy.
+- **Node via `nvm`** — version management and per-project Node installs, kept deliberately outside the Homebrew chain.
+- **Platform CLIs and helper utilities** — Cloud Foundry CLI, `fly`, `jq`, `kotlin`, `wget`, `yq`, and similar tools.
+- **A version comparison** — the rebuilt runtime checked against the captured pre-image and post-image system inventories, so drift is either an approved-newer version or an investigated finding.
 
-It does not own:
+**What the rest of the workflow relies on it for**
 
-```text
-SSH keys, certificates, Java trust overrides (jssecacerts), shell/CLI credentials, licenses — Phase 10B (restore-access)
-managed enrollment, MDM baseline, and stabilization restarts — Phase 8 (enroll-and-stabilize)
-day-one usability sign-off and first Time Machine backup post-image — Phase 9 (verify-reimaged-system)
-Git identity plumbing, SSH host aliases, and the clone template for re-cloning repositories — Phase 11 (restore-git)
-```
+- **The Java trust override** — Phase 10B restores `jssecacerts` into the JDK installed here, and that override has to match the JDK actually present.
+- **Git, IDE, and application restore** — Phase 11 onward assumes the compiler, package-manager, JVM, and Node layers already exist before repository and app work begins.
+- **The post-image inventory comparison** — the Phase 13B capture records this rebuilt runtime layer as the post-image side of the inventory pair.
+
+**Ownership**
+
+| This runbook owns | Owned elsewhere |
+|---|---|
+| Xcode Command Line Tools install and verification, and the Homebrew install, update, and diagnostic pass | SSH keys, certificates, Java trust overrides (`jssecacerts`), shell/CLI credentials, and licenses — `restore-access` (Phase 10B) |
+| the JVM layer — JDK, Gradle, Maven, and Groovy | managed enrollment, MDM baseline, and stabilization restarts — `enroll-and-stabilize` (Phase 8) |
+| Node version management via `nvm` and per-project Node installs | day-one usability sign-off and the first post-image Time Machine backup — `verify-reimaged-system` (Phase 9) |
+| Cloud Foundry CLI, `fly`, `jq`, `kotlin`, `wget`, `yq`, and similar platform tools | Git identity plumbing, SSH host aliases, and the clone template for re-cloning repositories — `restore-git` (Phase 11A) |
+| the version comparison against the captured pre-image and post-image system inventories | the system-inventory captures themselves — `capture-system-inventory` (Phase 4B / 13B) |
 
 This runbook can be rerun. Every step is idempotent (Homebrew and `nvm` skip anything already installed at the requested version), so a partial run can be resumed without a special mode.
 
@@ -81,7 +86,7 @@ The runbook is script-free by design. Every step is a small, standard installer 
 | Term | Meaning |
 |---|---|
 | Runtime layer | The non-secret toolchain (CLT, Homebrew, JDK, Node, build tools, platform CLIs). Not shell profiles or credentials. |
-| Pre-image inventory | The `system-inventory/pre-image-YYYYMMDD-HHMMSS/` bundle captured in Phase 2A. |
+| Pre-image inventory | The `system-inventory/pre-image-YYYYMMDD-HHMMSS/` bundle captured in Phase 4B. |
 | Post-image inventory | The `system-inventory/post-image-YYYYMMDD-HHMMSS/` bundle captured in Phase 13B after restore completes. Not available yet during this phase; used later for the audit. |
 | Approved-newer version | A newer tool version than the pre-image had, chosen intentionally because the older one is unsupported or has a known issue. Not a drift. |
 
@@ -117,7 +122,7 @@ The `reimage.env` values this runbook depends on. Values are resolved and writte
 | Variable | Meaning |
 |---|---|
 | `REIMAGE_ARTIFACT_ROOT` | Artifact root for this reimage event; used to locate the captured system inventory for version comparison. |
-| `FRACTOGENESIS_HOME` | Repository root for this toolkit checkout; used only to keep command examples portable. |
+| `FRACTOGENESIS_HOME` | Repository root for this toolkit checkout; used only to keep command examples portable. Set by your shell startup / `.envrc`, not stored in `reimage.env`. |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -130,7 +135,7 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 ### Prerequisites
 
 - Your shell is at the repository root — `cd "$FRACTOGENESIS_HOME"` once for the session. Per the guide's [[reimaging-guide#Core Assumptions|Core Assumptions]], the commands below assume this and don't repeat it.
-- Phase 8 ([[enroll-and-stabilize|enroll-and-stabilize.md]]) closed out with a clean managed baseline, and Phase 9 ([[verify-reimaged-system|verify-reimaged-system.md]]) signed off day-one usability. If either is still open, close it first.
+- Phase 8 (`enroll-and-stabilize.md`) closed out with a clean managed baseline, and Phase 9 (`verify-reimaged-system.md`) signed off day-one usability. If either is still open, close it first.
 - The reimaged Mac has internet access. Homebrew, `nvm`, JDK downloads, and every platform CLI install below hit the network.
 - The external artifact volume is mounted and `reimage.env` resolves so Step 7 can read the pre-image inventory. If it isn't mounted yet, do Steps 1–6 anyway and reconnect the drive before Step 7.
 
@@ -219,6 +224,9 @@ If you decide to use one, do it only after reviewing:
 brew bundle --file /path/to/Brewfile
 ```
 
+> [!bug] Troubleshooting
+> If `brew doctor` flags a leftover Intel-path Homebrew prefix on Apple silicon, see [[#`brew doctor` reports a stale `/usr/local` on Apple silicon|`brew doctor` reports a stale `/usr/local` on Apple silicon]].
+
 ### Step 4 — Install Java and the JVM Build Tools
 
 Install the base developer runtimes and build tools:
@@ -252,6 +260,9 @@ alias jdk17='export JAVA_HOME=$(/usr/libexec/java_home -v 17)'
 
 JDK 17 is the normal baseline unless a project-specific requirement says otherwise.
 
+> [!bug] Troubleshooting
+> If `java -version` reports something other than the JDK you just installed, see [[#`java -version` prints a version different from `openjdk@17`|`java -version` prints a version different from `openjdk@17`]].
+
 > [!warning] Pitfall
 > Do not `brew install node` here — see the next step for why. Installing both `brew`'s `node` and `nvm`'s `node` creates a PATH collision where it is unclear which binary actually runs.
 
@@ -284,8 +295,8 @@ cat .nvmrc 2>/dev/null || true
 Install and switch versions:
 
 ```bash
-nvm install <version>
-nvm use <version>
+nvm install "<version>"
+nvm use "<version>"
 ```
 
 Confirm the tooling resolves:
@@ -356,7 +367,7 @@ Focus on whether the rebuilt Mac is now ready for the next restore phases, not o
 
 ### Step 8 — Confirm Readiness for Restore Access
 
-Confirm the runtime layer meets its exit criteria before starting [[restore-access|restore-access.md]]:
+Confirm the runtime layer meets its exit criteria before starting `restore-access.md`:
 
 | Area | Expected result |
 |---|---|
@@ -391,6 +402,10 @@ The installers do X; these judgment calls stay with you.
 
 ## Troubleshooting
 
+Two install-time failures have fixes long enough to break the flow of the step that surfaces them. Each of those steps links in from a callout.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
 ### `brew doctor` reports a stale `/usr/local` on Apple silicon
 
 Homebrew was previously installed under `/usr/local` (Intel path) and left behind by the reimage. Remove the stale prefix only after confirming nothing under it is needed:
@@ -400,7 +415,9 @@ ls /usr/local
 sudo rm -rf /usr/local/Homebrew
 ```
 
-Rerun `brew doctor` afterward.
+Rerun `brew doctor` afterward and confirm the stale-prefix warning is gone before installing packages.
+
+[[#Step 4 — Install Java and the JVM Build Tools|⮕ Continue to Step 4 — Install Java and the JVM Build Tools]]
 
 ### `java -version` prints a version different from `openjdk@17`
 
@@ -413,4 +430,15 @@ java -version
 
 Persist that export in `~/.zprofile` only if 17 is your intended default.
 
-[[#Table of Contents|⬆ Back to Table of Contents]]
+[[#Step 5 — Install and Manage Node Versions|⮕ Continue to Step 5 — Install and Manage Node Versions]]
+
+---
+
+<!--
+TOC verification performed before publishing:
+- every Table of Contents entry resolves to a heading present in this file;
+- deleted optional sections were also removed from the Table of Contents;
+- each top-level section ends with a single "Back to Table of Contents" link,
+  except Troubleshooting, whose back-link sits under its intro and whose routed
+  symptom subsections stay out of the Table of Contents.
+-->

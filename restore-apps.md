@@ -2,7 +2,7 @@
 
 # Restore Apps
 
-**Last updated:** 2026-08-05
+**Last updated:** 2026-08-17
 
 Restore the day-to-day application layer on the reimaged Mac after the managed baseline, runtime, access, Git, and repository foundations are in place. This is the umbrella runbook for Phase 12: it walks the operator through the ordered install-and-restore sequence for Office, OneDrive, Chrome, Obsidian, Postman, VS Code, Raycast, Terminal, and the remaining daily tools, and hands off to dedicated runbooks for IntelliJ, Docker, and the late local-file restore. `bin/restore-apps.sh` writes a per-run plan-note that surveys the available pre-image backup sources and provides the sign-off checklist the operator ticks through by hand.
 
@@ -35,45 +35,47 @@ Restore the day-to-day application layer on the reimaged Mac after the managed b
 - [[#Decisions|Decisions]]
 - [[#Troubleshooting|Troubleshooting]]
 - [[#Supplemental Reference|Supplemental Reference]]
+    - [[#How the plan-note relates to the Phase 14 sign-off|How the plan-note relates to the Phase 14 sign-off]]
+    - [[#Why VS Code has a fallback backup source|Why VS Code has a fallback backup source]]
 
 > In Obsidian, these are internal heading links. Click in Reading View, or Cmd-click in Live Preview/editing mode.
 
 > [!info] Callout legend
-> This runbook uses Obsidian callouts so each type reads distinctly: `[!note]` an easily-missed fact · `[!warning]` Pitfall, a mistake you are likely to make here · `[!bug]` Troubleshooting, what to do when a step misbehaves · `[!info] Return` how to get back after an out-of-sequence detour.
+> This runbook uses Obsidian callouts so each type reads distinctly: `[!note]` an easily-missed fact · `[!warning]` Pitfall, a mistake you are likely to make here · `[!bug]` Troubleshooting, what to do when a step misbehaves.
 
 ---
 
 ## Purpose
 
-Bring the day-to-day applications back online in a deliberate order so the reimaged Mac is usable for normal work without dragging forward stale state, broken authentication material, or unreviewed secrets. Each app either syncs from an approved cloud account (Chrome, OneDrive, Obsidian remote-vault sync), imports a small reviewed export (Postman collections, VS Code settings, Raycast Quicklinks), or hands off to a dedicated companion runbook (IntelliJ, Docker). The Phase 12 goal is that Office, Teams, OneDrive, Chrome, Obsidian, Postman, VS Code, Raycast, IntelliJ, Docker, and the priority daily tools all pass their sign-off checklist before Phase 13 post-image evidence captures start.
+`restore-apps` (Phase 12) brings the day-to-day applications back online in a deliberate order so the reimaged Mac is usable for normal work without dragging forward stale state, broken authentication material, or unreviewed secrets. Each app either syncs from an approved cloud account (Chrome, OneDrive, Obsidian remote-vault sync), imports a small reviewed export (Postman collections, VS Code settings, Raycast Quicklinks), or hands off to a dedicated companion runbook (IntelliJ, Docker). The Phase 12 goal is that Office, Teams, OneDrive, Chrome, Obsidian, Postman, VS Code, Raycast, IntelliJ, Docker, and the priority daily tools all pass their sign-off checklist before Phase 13 post-image evidence captures start.
 
-This runbook owns:
+**What it sets up**
 
-```text
-generating the Phase 12 restore-plan note that surveys backup sources and drives sign-off
-Microsoft Office, Teams, and OneDrive install and sign-in ordering
-Chrome default browser, extensions, and bookmark restore
-Obsidian install and reference-vault open
-Postman collection and environment import ordering
-VS Code install, settings diff, and extension restore
-Raycast install and Quicklink recreation
-Terminal.app profile restore from the Phase 2C export
-Oracle SQL Developer install and connection restore decisions
-remaining daily apps that install intentionally rather than by bulk copy
-post-image Office stability follow-up capture and sign-off row rollup
-```
+- **The Phase 12 plan-note** — a timestamped restore-plan under `reimaged-system/restore-notes/` that surveys which pre-image backup and secret-bearing sources are present, names the sibling runbooks that own IntelliJ and Docker, and carries the sign-off checklist.
+- **The ordered app-restore sequence** — Office, Teams, and OneDrive install and sign-in ordering; Chrome default browser and per-profile restore; Obsidian and the reference vault; Postman import ordering; VS Code settings and extensions; Raycast Quicklinks; Terminal.app profile; Oracle SQL Developer; and the remaining daily apps installed intentionally rather than by bulk copy.
+- **The closed sign-off** — every checklist row flipped to `Done` or annotated with why it is still open, with the post-image Office stability follow-up rolled into it.
 
-It does not own:
+**What the rest of the workflow relies on it for**
 
-```text
-IntelliJ IDEA settings, scratches, project metadata, or HTTP Client secrets — restore-intellij.md
-Docker Desktop settings, daemon state, or local container rebuild — restore-docker.md
-repository re-clone and staged ignored files — Phase 11B (restore-repos)
-Git identity and SSH routing — Phase 11A (restore-git)
-SSH keys, certificates, Java trust, shell/CLI config, and license material — Phase 10B (restore-access)
-runtime toolchain install (Xcode CLT, Homebrew, JDK, Node, platform CLIs) — Phase 10A (restore-runtime)
-late selective local-file restore — Phase 15 (restore-home)
-```
+- Phase 13 post-image captures run against a Mac whose daily apps are back in service, so the evidence reflects a working system rather than a half-restored one.
+- Phase 14 `reimaged-system-checks` reads the newest `restore-apps-plan-*.md` and flags any row still on `TODO`.
+- Phase 15 picks up the local-file restore this phase deliberately defers.
+
+**Ownership**
+
+| This runbook owns | Owned elsewhere |
+|---|---|
+| the Phase 12 restore-plan note that surveys backup sources and drives sign-off | IntelliJ IDEA settings, scratches, project metadata, and HTTP Client secrets — `restore-intellij` (Phase 12) |
+| Microsoft Office, Teams, and OneDrive install and sign-in ordering | Docker Desktop settings, daemon state, and local container rebuild — `restore-docker` (Phase 12) |
+| Chrome default browser, per-profile sync, extensions, and bookmark restore | repository re-clone and staged ignored files — `restore-repos` (Phase 11B) |
+| Obsidian install and reference-vault open | Git identity and SSH routing — `restore-git` (Phase 11A) |
+| Postman collection and environment import ordering | SSH keys, certificates, Java trust, shell/CLI config, and license material — `restore-access` (Phase 10B) |
+| VS Code install, settings diff, and extension restore | runtime toolchain install (Xcode CLT, Homebrew, JDK, Node, platform CLIs) — `restore-runtime` (Phase 10A) |
+| Raycast install and Quicklink recreation | late selective local-file restore — `restore-home` (Phase 15) |
+| Terminal.app profile restore from the Phase 2D export | the Office stability baseline capture itself and its evidence bundles — `capture-office-stability` (Phase 4D / 13E) |
+| Oracle SQL Developer install and connection restore decisions | |
+| remaining daily apps that install intentionally rather than by bulk copy | |
+| triggering the post-image Office stability follow-up and rolling its result into the sign-off | |
 
 This runbook can be rerun. Regenerating the plan-note produces a fresh timestamped file under `reimaged-system/restore-notes/`; prior plan-notes are preserved so you can compare a partial re-run against the last full pass.
 
@@ -97,29 +99,36 @@ Secrets never enter this runbook directly. Any app that needs an environment tok
 
 Every path and directory tree this runbook uses is defined here, once. Later steps refer back to these names instead of redrawing them.
 
-Primary script(s):
+Primary script:
 
 ```text
 $FRACTOGENESIS_HOME/bin/restore-apps.sh                # entrypoint
-$FRACTOGENESIS_HOME/bin/capture-office-stability.sh    # helper (used in Step 13)
-$FRACTOGENESIS_HOME/bin/office-stability-checklist.sh  # helper (used in Step 13)
+```
+
+Related scripts, alphabetical:
+
+```text
+$FRACTOGENESIS_HOME/bin/capture-office-stability.sh    # entrypoint — owned by capture-office-stability.md; invoked in Step 13
+$FRACTOGENESIS_HOME/bin/office-stability-checklist.sh  # entrypoint — owned by capture-office-stability.md; invoked in Step 13
+$FRACTOGENESIS_HOME/bin/restore-docker.sh              # entrypoint — owned by restore-docker.md; invoked in Step 9
+$FRACTOGENESIS_HOME/bin/restore-intellij.sh            # entrypoint — owned by restore-intellij.md; invoked in Step 8
 ```
 
 Artifact locations:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/app-settings-backup/                                # Phase 2C outputs (per-app backups)
+$REIMAGE_ARTIFACT_ROOT/app-settings-backup/                                # Phase 2D outputs (per-app backups)
 $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/                                  # Phase 3A/3C outputs (mount before use)
 $REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/restore-apps-plan-*.md
 $REIMAGE_ARTIFACT_ROOT/office-stability/post-reimage-*/                    # produced in Step 13
 ```
 
-Directory shape this runbook reads and writes (the full `app-settings-backup/` layout lives in [[master-directory-reference|Master Directory Reference]]):
+Directories this runbook's steps read and write, alphabetized at every level. Omitted siblings are shown as `...`:
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/
-├── ...
 ├── app-settings-backup/
+│   ├── ...
 │   ├── chrome/
 │   ├── docker/
 │   ├── intellij/
@@ -127,7 +136,8 @@ $REIMAGE_ARTIFACT_ROOT/
 │   ├── postman/
 │   ├── raycast/
 │   ├── terminal/
-│   └── vscode/
+│   ├── vscode/
+│   └── ...
 ├── ...
 ├── office-stability/
 │   └── post-reimage-office-baseline-YYYYMMDD-HHMMSS/
@@ -136,21 +146,28 @@ $REIMAGE_ARTIFACT_ROOT/
 │   └── restore-notes/
 │       └── restore-apps-plan-YYYYMMDD-HHMMSS.md
 ├── ...
-└── secrets-encrypted/
-    ├── docker/
-    ├── intellij/
-    ├── licenses/
-    └── postman/
+├── secrets-encrypted/
+│   ├── ...
+│   ├── docker/
+│   ├── intellij/
+│   ├── licenses/
+│   ├── postman/
+│   └── ...
+└── ...
 ```
+
+The complete `app-settings-backup/` layout and the full artifact-root map are defined once in the Master Directory Reference:
+
+[[master-directory-reference|Master Directory Reference]]
 
 ### Environment Variables
 
-The `reimage.env` values this runbook depends on. Resolved and written during [[prepare-artifact-root|prepare-artifact-root.md]].
+The `reimage.env` values this runbook depends on. Values are resolved and written during `prepare-artifact-root.md`.
 
 | Variable | Meaning |
 |---|---|
-| `REIMAGE_ARTIFACT_ROOT` | Mounted external artifact volume that holds every pre-image backup and every post-image record. Required for `bin/restore-apps.sh`. |
-| `FRACTOGENESIS_HOME` | Local checkout of `fractogenesis-toolkit`. Set by the shell session; the runbook assumes you are at this directory. |
+| `REIMAGE_ARTIFACT_ROOT` | Mounted external artifact volume that holds every pre-image backup and every post-image record. Required for `bin/restore-apps.sh`; `--artifact-root PATH` overrides it for one invocation. |
+| `FRACTOGENESIS_HOME` | Local checkout of the toolkit repository holding the scripts and this runbook. Set by your shell startup / `.envrc`, not stored in `reimage.env`. |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -163,12 +180,12 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 ### Prerequisites
 
 - Your shell is at the repository root — `cd "$FRACTOGENESIS_HOME"` once for the session. Per the guide's [[reimaging-guide#Core Assumptions|Core Assumptions]], the commands below assume this and don't repeat it.
-- Phases 8, 9, 10A, 10B, 11A, and 9B are complete. In particular, `~/.gitconfig`, `~/.ssh/config`, the encrypted secrets DMG contents (SSH keys, certificates, Java trust), and the repository checkouts must already be restored — several Phase 12 steps rely on GitHub sign-ins, Postman vault decryption, or IntelliJ project paths that only work once those layers are in place.
+- Phases 8, 9, 10A, 10B, 11A, and 11B are complete. In particular, `~/.gitconfig`, `~/.ssh/config`, the encrypted secrets DMG contents (SSH keys, certificates, Java trust), and the repository checkouts must already be restored — several Phase 12 steps rely on GitHub sign-ins, Postman vault decryption, or IntelliJ project paths that only work once those layers are in place.
 - The external artifact volume is mounted and `$REIMAGE_ARTIFACT_ROOT` resolves; the pre-image `app-settings-backup/` subtree is reachable.
 - The encrypted secrets DMG is mounted (or ready to mount) for the Postman, IntelliJ, Docker, and licenses steps. Mount only when the corresponding step asks for it, and eject when done.
 
 > [!bug] Troubleshooting
-> If `$REIMAGE_ARTIFACT_ROOT` is unset or unreachable, either mount the artifact volume and re-source `reimage.env`, or pass `--artifact-root PATH` explicitly to `bin/restore-apps.sh` and to any later helper that needs it.
+> If `$REIMAGE_ARTIFACT_ROOT` is unset or unreachable, the plan-note reports every source as missing — see [[#The plan-note reports MISSING for every source|The plan-note reports MISSING for every source]].
 
 ### Confirm Your Intent
 
@@ -201,6 +218,9 @@ Skim the **Backup Sources** and **Secret-Bearing Sources** tables and note any `
 
 > [!note]
 > The script writes no plan-note when `--output-root` points at an unwritable directory. Fix the destination and rerun; nothing was created.
+
+> [!bug] Troubleshooting
+> If every row in both tables reads `MISSING`, see [[#The plan-note reports MISSING for every source|The plan-note reports MISSING for every source]].
 
 ### Step 2 — Microsoft Office and Teams
 
@@ -269,7 +289,8 @@ Cmd-click navigates in Live Preview / editing mode
 external links open in Chrome
 ```
 
-If Obsidian complains about an unrecognized plugin, decline install and check the pre-image `app-settings-backup/obsidian/` inventory before enabling anything.
+> [!bug] Troubleshooting
+> If Obsidian complains about an unrecognized plugin, decline the install and check the pre-image `app-settings-backup/obsidian/` inventory before enabling anything.
 
 ### Step 5 — Postman Collections and Environments
 
@@ -292,9 +313,12 @@ After import: select each environment, confirm every variable is present, confir
 > [!warning] Pitfall
 > Environments imported without their secret values look fine in the UI (variables show as empty strings) but will silently 401/403 against real APIs. Diff `secrets-encrypted/postman/` against what's loaded before you assume the import "worked."
 
+> [!bug] Troubleshooting
+> If imported variables show as empty strings, see [[#Postman variables show as empty strings after import|Postman variables show as empty strings after import]].
+
 ### Step 6 — VS Code
 
-Install VS Code from the approved source. Prefer the Phase 2C `app-settings-backup/vscode/` copy; fall back to the toolkit-snapshot capture only if no dedicated VS Code backup exists (the plan-note already picked the right source in Step 1):
+Install VS Code from the approved source. Prefer the Phase 2D `app-settings-backup/vscode/` copy; fall back to the toolkit-snapshot capture only if no dedicated VS Code backup exists (the plan-note already picked the right source in Step 1):
 
 ```bash
 VSCODE_BACKUP_DIR="$REIMAGE_ARTIFACT_ROOT/app-settings-backup/vscode"
@@ -379,8 +403,7 @@ Then follow: [[restore-intellij|restore-intellij.md]].
 
 The high-level order there remains: install → launch once and quit → import settings ZIP → restore scratches/consoles and selected project metadata → restore secret-bearing HTTP Client environments only from encrypted storage.
 
-> [!info] Return
-> When you finish `restore-intellij.md`, return here and mark the `IntelliJ dedicated restore completed` row in the plan-note before moving on to Docker.
+When that runbook is complete, come back here and mark the `IntelliJ dedicated restore completed` row in the plan-note before moving on to Docker.
 
 ### Step 9 — Docker Desktop Handoff
 
@@ -399,8 +422,7 @@ $REIMAGE_ARTIFACT_ROOT/app-settings-backup/docker/
 $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/docker/config.json
 ```
 
-> [!info] Return
-> When you finish `restore-docker.md`, return here and mark the `Docker dedicated restore completed` row in the plan-note.
+When that runbook is complete, come back here and mark the `Docker dedicated restore completed` row in the plan-note.
 
 ### Step 10 — Additional Daily Apps
 
@@ -428,7 +450,7 @@ For each one:
 
 ### Step 11 — Terminal Profile
 
-If a custom Terminal.app profile was exported in Phase 2C, restore it now:
+If a custom Terminal.app profile was exported in Phase 2D, restore it now:
 
 ```bash
 find "$REIMAGE_ARTIFACT_ROOT/app-settings-backup/terminal" -maxdepth 1 -name '*.terminal' -print 2>/dev/null
@@ -461,15 +483,6 @@ Microsoft AutoUpdate is not actively replacing bundles (if visible)
 OneDrive sign-in is stable
 ```
 
-If Outlook or OneNote closes unexpectedly:
-
-```text
-capture evidence before reopening the app
-check crash reports under ~/Library/Logs/DiagnosticReports/
-check Microsoft AutoUpdate / Intune / installer processes
-compare bundle versions and modified timestamps against the pre-image evidence
-```
-
 Capture the post-image Office stability baseline:
 
 ```bash
@@ -478,6 +491,9 @@ Capture the post-image Office stability baseline:
 ```
 
 Update [[capture-office-stability|capture-office-stability.md]] with the post-image result and mark the plan-note row.
+
+> [!bug] Troubleshooting
+> If Outlook or OneNote closes unexpectedly while you are validating, see [[#Office quits unexpectedly on first launch|Office quits unexpectedly on first launch]].
 
 ### Step 14 — Close the Plan-Note Sign-Off
 
@@ -507,7 +523,7 @@ Continue to the Phase 13 capture runbooks (`capture-system-inventory.md`, `captu
 
 ## Decisions
 
-The scripts do X; these judgment calls stay with you.
+The plan-note reports which sources exist and the steps sequence the installs; these judgment calls stay with you.
 
 | Decision | Why it stays with you |
 |---|---|
@@ -522,23 +538,33 @@ The scripts do X; these judgment calls stay with you.
 
 ## Troubleshooting
 
+Three failures here either span more than one step or have a fix long enough to break a step's flow. Each is reached from a callout in the step that surfaces it.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
 ### Office quits unexpectedly on first launch
 
 Capture evidence before reopening the app: crash reports under `~/Library/Logs/DiagnosticReports/`, the current state of Microsoft AutoUpdate, and any Intune / installer processes still running. Compare Office bundle versions and modified timestamps against the pre-image evidence in `system-inventory/pre-image-*/`. Do not re-launch the app until the update or installer that overlapped the crash has finished.
+
+[[#Step 13 — Office Stability Follow-Up|⮕ Continue to Step 13 — Office Stability Follow-Up]]
 
 ### Postman variables show as empty strings after import
 
 The collection or environment was imported from `app-settings-backup/postman/` (the non-secret path) instead of `secrets-encrypted/postman/`. Delete the imported environment, mount the encrypted DMG, and re-import from the secrets path.
 
-### `bin/restore-apps.sh` reports MISSING for every source
+[[#Step 6 — VS Code|⮕ Continue to Step 6 — VS Code]]
 
-`$REIMAGE_ARTIFACT_ROOT` is either unset or pointing at an unmounted volume path. Mount the artifact volume, re-source `reimage.env`, and rerun; or pass `--artifact-root PATH` explicitly.
+### The plan-note reports MISSING for every source
 
-[[#Table of Contents|⬆ Back to Table of Contents]]
+`$REIMAGE_ARTIFACT_ROOT` is either unset or pointing at an unmounted volume path. Mount the artifact volume, re-source `reimage.env`, and rerun `./bin/restore-apps.sh`; or pass `--artifact-root PATH` explicitly to it and to any later helper that needs it.
+
+[[#Step 2 — Microsoft Office and Teams|⮕ Continue to Step 2 — Microsoft Office and Teams]]
 
 ---
 
 ## Supplemental Reference
+
+Longer material most runs will not need, kept out of the main flow.
 
 ### How the plan-note relates to the Phase 14 sign-off
 
@@ -546,6 +572,17 @@ The plan-note file (`restore-apps-plan-YYYYMMDD-HHMMSS.md`) is the operator-faci
 
 ### Why VS Code has a fallback backup source
 
-Phase 2C `backup-apps.md` treats VS Code as an optional dedicated capture; some operators skip it because Settings Sync already covers extensions and settings. The toolkit-snapshot capture (`toolkit-snapshot/pre-image-toolkit-snapshot-*/vscode/`) is a lighter fallback that always exists, so Step 6 and the plan-note both prefer the dedicated backup when present but degrade gracefully when it is not.
+Phase 2D `backup-apps.md` treats VS Code as an optional dedicated capture; some operators skip it because Settings Sync already covers extensions and settings. The toolkit-snapshot capture (`toolkit-snapshot/pre-image-toolkit-snapshot-*/vscode/`) is a lighter fallback that always exists, so Step 6 and the plan-note both prefer the dedicated backup when present but degrade gracefully when it is not.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
+<!--
+TOC verification performed before publishing:
+- every Table of Contents entry resolves to a heading present in this file;
+- deleted optional sections were also removed from the Table of Contents;
+- each top-level section ends with a single "Back to Table of Contents" link,
+  except Troubleshooting, whose back-link sits under its intro and whose routed
+  symptom subsections stay out of the Table of Contents.
+-->

@@ -303,7 +303,11 @@ record_check() {
 # ---------------------------------------------------------------------------
 dir_nonempty() {
   local dir="$1"
-  [[ -d "$dir" ]] && [[ -n "$(find "$dir" -maxdepth 3 -type f 2>/dev/null | head -1)" ]]
+  # -L so a symlinked directory is followed. The toolkit snapshot publishes
+  # latest-docs and latest-pre-image-toolkit-snapshot as symlinks into the
+  # timestamped bundle; without -L, find refuses to descend and a populated
+  # snapshot reported "Empty or missing".
+  [[ -d "$dir" ]] && [[ -n "$(find -L "$dir" -maxdepth 3 -type f 2>/dev/null | head -1)" ]]
 }
 
 newest_matching() {

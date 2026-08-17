@@ -2,9 +2,9 @@
 
 # Restore Git
 
-**Last updated:** 2026-08-13
+**Last updated:** 2026-08-17
 
-Restore the Git identity plumbing on the reimaged Mac so both work and personal GitHub accounts route automatically based on where a repository lives on disk. This runbook wires up the dual-identity `~/.gitconfig` (work as default, `includeIf` override under the personal repo root), lays down the matching `~/.ssh/config` host aliases, validates both identities, and leaves you with a `git clone` template that Phase 11B ([[restore-repos|restore-repos.md]]) then applies at scale against the pre-image repository audit. It does not enumerate a repo list, drive a clone loop, or restore preserved local branches or stashes — that carry-forward work belongs to [[restore-repos|restore-repos.md]].
+Restore the Git identity plumbing on the reimaged Mac so both work and personal GitHub accounts route automatically based on where a repository lives on disk. This runbook wires up the dual-identity `~/.gitconfig` (work as default, `includeIf` override under the personal repo root), lays down the matching `~/.ssh/config` host aliases, validates both identities, and leaves you with a `git clone` template that Phase 11B then applies at scale against the pre-image repository audit. It does not enumerate a repo list, drive a clone loop, or restore preserved local branches or stashes — that carry-forward work belongs to Phase 11B.
 
 ---
 
@@ -22,8 +22,8 @@ Restore the Git identity plumbing on the reimaged Mac so both work and personal 
 - [[#Sequential Steps|Sequential Steps]]
     - [[#Step 1 — Install Git and Confirm the Environment|Step 1 — Install Git and Confirm the Environment]]
     - [[#Step 2 — Set Correct Permissions on Restored SSH Keys|Step 2 — Set Correct Permissions on Restored SSH Keys]]
-    - [[#Step 3 — Write ~/.ssh/config with Dual Host Aliases|Step 3 — Write ~/.ssh/config with Dual Host Aliases]]
-    - [[#Step 4 — Write the Global ~/.gitconfig|Step 4 — Write the Global ~/.gitconfig]]
+    - [[#Step 3 — Write `~/.ssh/config` with Dual Host Aliases|Step 3 — Write `~/.ssh/config` with Dual Host Aliases]]
+    - [[#Step 4 — Write the Global `~/.gitconfig`|Step 4 — Write the Global `~/.gitconfig`]]
     - [[#Step 5 — Write the Personal-Root .gitconfig Override|Step 5 — Write the Personal-Root .gitconfig Override]]
     - [[#Step 6 — Optionally Wire the XDG Local Config|Step 6 — Optionally Wire the XDG Local Config]]
     - [[#Step 7 — Validate Both Identities|Step 7 — Validate Both Identities]]
@@ -37,7 +37,7 @@ Restore the Git identity plumbing on the reimaged Mac so both work and personal 
 > In Obsidian, these are internal heading links. Click in Reading View, or Cmd-click in Live Preview/editing mode.
 
 > [!info] Callout legend
-> This runbook uses Obsidian callouts so each type reads distinctly: `[!note]` an easily-missed fact · `[!warning]` Pitfall, a mistake you are likely to make here · `[!bug]` Troubleshooting, what to do when a step misbehaves · `[!info] Return` how to get back after an out-of-sequence detour.
+> This runbook uses Obsidian callouts so each type reads distinctly: `[!note]` an easily-missed fact · `[!warning]` Pitfall, a mistake you are likely to make here · `[!bug]` Troubleshooting, what to do when a step misbehaves.
 
 ---
 
@@ -45,29 +45,32 @@ Restore the Git identity plumbing on the reimaged Mac so both work and personal 
 
 Restore the identity and routing plumbing that lets both work and personal Git operations succeed on the reimaged Mac without manual profile switching. Get the machine to the point where a `git clone` command uses the right SSH key and stamps commits with the right author automatically, based only on which directory the clone lands in.
 
-This runbook owns:
+**What it sets up**
 
-```text
-the global ~/.gitconfig with work identity as default and includeIf for the personal repo root
-the personal-root .gitconfig override with core.sshCommand pinning the personal key
-the optional ~/.config/git/config.local XDG include
-~/.ssh/config with dual host aliases (work and personal), IdentitiesOnly yes
-permissions on restored SSH keys and ~/.ssh/config
-validating that both identities route correctly end-to-end
-the git clone command template used for re-cloning repositories
-```
+- **The dual-identity `~/.gitconfig`** — the work identity as the global default, with an `includeIf "gitdir:…"` directive that pulls in the personal override only for repos under the personal repo root.
+- **The personal-root `.gitconfig` override** — the personal name and email plus `core.sshCommand` pinning the personal SSH key, so personal repos send the right key even if `~/.ssh/config` is wrong.
+- **The `~/.ssh/config` host aliases** — one `Host` entry per identity, each forcing its own `IdentityFile` with `IdentitiesOnly yes`, so key selection follows the clone URL.
+- **Correct permissions on the restored SSH keys** — `~/.ssh` at `700`, private keys and `~/.ssh/config` at `600`, public keys at `644`, so the SSH client will actually use them.
+- **The optional XDG local config** — `~/.config/git/config.local` wired in through an `[include]` block, for workflows that make the XDG path canonical instead of `~/.gitconfig`.
+- **The validated clone pattern** — both identities proven end-to-end, plus the `git clone` command template for each side.
 
-It does not own:
+**What the rest of the workflow relies on it for**
 
-```text
-restoring SSH key files from the encrypted secrets DMG — Phase 10B (restore-access)
-capturing branches, uncommitted work, stashes, local-only commits, and chosen kept ignored files pre-image — Phase 2C (backup-repos)
-laying that carry-forward material back into re-cloned repos post-image — Phase 11B (restore-repos)
-enumerating which repositories to re-clone or driving a clone loop — Phase 11B (restore-repos)
-the fractogenesis-toolkit checkout itself — already installed in Phase 7 by bootstrap.sh, not re-cloned here
-IDE-specific repo state (IntelliJ project files, VS Code workspace) — Phase 12 (restore-intellij.md, restore-apps.md)
-Docker container/image restore — Phase 12 (restore-docker.md)
-```
+- Phase 11B reads the pre-image repository audit and emits `git clone` commands that depend on this identity plumbing already routing correctly.
+- The re-cloned working trees that Phase 11B lays preserved branches, stashes, and kept ignored files back into only exist once cloning works with the right key.
+- Every later `git push`, `git pull`, and `git fetch` picks up its author and key from these files, with no manual profile switching.
+
+**Ownership**
+
+| This runbook owns | Owned elsewhere |
+|---|---|
+| the global `~/.gitconfig` with work identity as default and `includeIf` for the personal repo root | restoring SSH key files from the encrypted secrets DMG — `restore-access` (Phase 10B) |
+| the personal-root `.gitconfig` override with `core.sshCommand` pinning the personal key | capturing branches, uncommitted work, stashes, local-only commits, and chosen kept ignored files pre-image — `backup-repos` (Phase 2A) |
+| the optional `~/.config/git/config.local` XDG include | laying that carry-forward material back into re-cloned repos — `restore-repos` (Phase 11B) |
+| `~/.ssh/config` with dual host aliases (work and personal), `IdentitiesOnly yes` | enumerating which repositories to re-clone or driving a clone loop — `restore-repos` (Phase 11B) |
+| permissions on restored SSH keys and `~/.ssh/config` | the fractogenesis-toolkit checkout itself, installed by `bootstrap.sh` and not re-cloned here — `enroll-and-stabilize` (Phase 8) |
+| validating that both identities route correctly end-to-end | IDE-specific repo state (IntelliJ project files, VS Code workspace) — `restore-intellij` / `restore-apps` (Phase 12) |
+| the `git clone` command template used for re-cloning repositories | Docker container and image restore — `restore-docker` (Phase 12) |
 
 This runbook can be rerun. Every write is a file replacement or `chmod`, so re-running is the intended way to recover from a mis-typed identity or a stale `~/.ssh/config`. Nothing here builds on prior local state.
 
@@ -145,7 +148,7 @@ The `reimage.env` values this runbook depends on. Paths and roots are resolved d
 
 | Variable | Meaning |
 |---|---|
-| `FRACTOGENESIS_HOME` | Repository root for this toolkit checkout; where `reimage.env` lives. |
+| `FRACTOGENESIS_HOME` | Repository root for this toolkit checkout; where `reimage.env` lives. Set by your shell startup / `.envrc`, not stored in `reimage.env`. |
 | `REIMAGE_ARTIFACT_ROOT` | Artifact root for this reimage event; used only for the input paths above. |
 | `GIT_WORK_NAME` | Author name for the default work identity. |
 | `GIT_WORK_EMAIL` | Author email for the default work identity. |
@@ -434,6 +437,9 @@ fi
 > [!warning] Pitfall
 > If `~/.gitconfig` and `~/.config/git/config.local` both exist with conflicting settings, Git merges them in load order with later values winning. Keep them consistent or consolidate to one — the XDG path is preferred on a fresh system, `~/.gitconfig` is the legacy path. Do not have them fight each other.
 
+> [!bug] Troubleshooting
+> If values you wrote into `config.local` have no effect on `git config` output, see [[#`config.local` is being silently ignored|`config.local` is being silently ignored]].
+
 ### Step 7 — Validate Both Identities
 
 Test both host aliases directly against GitHub:
@@ -447,6 +453,9 @@ ssh -T "git@${GIT_WORK_GITHUB_HOST}"
 ssh -T "git@${GIT_PERSONAL_GITHUB_HOST}"
 # Expected: authenticated as the personal GitHub account.
 ```
+
+> [!bug] Troubleshooting
+> If one host authenticates and the other returns `Permission denied (publickey)`, see [[#`ssh -T` returns "Permission denied (publickey)" for one host but not the other|`ssh -T` returns "Permission denied (publickey)" for one host but not the other]].
 
 Spot-check from an actual work repo directory:
 
@@ -475,6 +484,9 @@ rm -rf "$GIT_PERSONAL_REPO_ROOT/test"
 
 Do not move on until every spot-check prints the expected value. A silent mismatch here will land in commit history later.
 
+> [!bug] Troubleshooting
+> If the personal spot-check prints the work identity, see [[#`git config user.email` returns the wrong identity inside `$GIT_PERSONAL_REPO_ROOT`|`git config user.email` returns the wrong identity inside `$GIT_PERSONAL_REPO_ROOT`]].
+
 ### Step 8 — Apply the Clone Pattern to Re-Clone Repositories
 
 Use the templates below to re-clone repositories one at a time as you need them, or hand the completed identity plumbing off to [[restore-repos|restore-repos.md]] (Phase 11B) which reads the pre-image repository audit and emits ready-to-run `git clone` commands at scale.
@@ -500,13 +512,13 @@ git clone "git@${GIT_PERSONAL_GITHUB_HOST}:<personal-username>/<repo>.git"
 Once cloned in the right directory, identity and key selection are automatic for every subsequent `git push`, `git pull`, and `git fetch`.
 
 > [!warning] Pitfall
-> If a personal repo was cloned with the default GitHub host by mistake, `includeIf` still sets the personal email, but `~/.ssh/config` may pick the default (work) key — this pushes commits authored as personal but sent over the work key. Fix by updating the remote:
-> ```bash
-> git remote set-url origin "git@${GIT_PERSONAL_GITHUB_HOST}:<personal-username>/<repo>.git"
-> ```
+> If a personal repo was cloned with the default GitHub host by mistake, `includeIf` still sets the personal email, but `~/.ssh/config` may pick the default (work) key — this pushes commits authored as personal but sent over the work key.
+
+> [!bug] Troubleshooting
+> If `git remote -v` on a personal repo shows the default GitHub host, see [[#After a clean run, `git remote -v` on a personal repo points at the default GitHub host|After a clean run, `git remote -v` on a personal repo points at the default GitHub host]].
 
 > [!note]
-> Preserved local-only material from Phase 2C ([[backup-repos|backup-repos.md]]) — stashes, local-only branches, chosen kept ignored files — is restored by Phase 11B ([[restore-repos|restore-repos.md]]), which reads the pre-image `repos.tsv` and staged ignored files and emits reviewable clone + rsync commands. Do not chase that reconciliation manually here.
+> Preserved local-only material from Phase 2A ([[backup-repos|backup-repos.md]]) — stashes, local-only branches, chosen kept ignored files — is restored by Phase 11B ([[restore-repos|restore-repos.md]]), which reads the pre-image `repos.tsv` and staged ignored files and emits reviewable clone + rsync commands. Do not chase that reconciliation manually here.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -529,6 +541,10 @@ The commands do X; these judgment calls stay with you.
 
 ## Troubleshooting
 
+Four failures here either span more than one step or have a fix long enough to break a step's flow. Each is reached from a callout in the step that surfaces it.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
 ### `ssh -T` returns "Permission denied (publickey)" for one host but not the other
 
 The failing side's key is either missing, has the wrong permissions, or the fingerprint no longer matches what GitHub has registered. Check each in order:
@@ -541,7 +557,9 @@ ssh-keygen -lf "$GIT_WORK_SSH_KEY.pub"
 ssh-keygen -lf "$GIT_PERSONAL_SSH_KEY.pub"
 ```
 
-If the file is missing, restore it from the DMG via [[restore-access|restore-access.md]] and rerun Step 2. If the fingerprint no longer matches GitHub, rotate: generate a new key, register it, and update `reimage.env`.
+If the file is missing, restore it from the encrypted secrets DMG the way Phase 10B does, then redo the `chmod` fixes in Step 2. If the fingerprint no longer matches GitHub, rotate: generate a new key, register it, and update `reimage.env`.
+
+[[#Step 7 — Validate Both Identities|⮕ Continue to Step 7 — Validate Both Identities]]
 
 ### `git config user.email` returns the wrong identity inside `$GIT_PERSONAL_REPO_ROOT`
 
@@ -553,9 +571,13 @@ Almost always the `includeIf` path is missing the trailing slash. Re-read `~/.gi
 
 Without the trailing slash, the include may not fire for nested repos. Re-run Step 4.
 
+[[#Step 7 — Validate Both Identities|⮕ Continue to Step 7 — Validate Both Identities]]
+
 ### `config.local` is being silently ignored
 
-Git does not read `config.local` automatically. It must be pulled in from `~/.config/git/config` or `~/.gitconfig` via an `[include]` block. Confirm the include exists; see Step 6.
+Git does not read `config.local` automatically. It must be pulled in from `~/.config/git/config` or `~/.gitconfig` via an `[include]` block. Confirm the include exists; Step 6 writes it.
+
+[[#Step 7 — Validate Both Identities|⮕ Continue to Step 7 — Validate Both Identities]]
 
 ### After a clean run, `git remote -v` on a personal repo points at the default GitHub host
 
@@ -565,7 +587,7 @@ The repo was cloned with the default host instead of `$GIT_PERSONAL_GITHUB_HOST`
 git remote set-url origin "git@${GIT_PERSONAL_GITHUB_HOST}:<personal-username>/<repo>.git"
 ```
 
-[[#Table of Contents|⬆ Back to Table of Contents]]
+[[#Step 8 — Apply the Clone Pattern to Re-Clone Repositories|⮕ Continue to Step 8 — Apply the Clone Pattern to Re-Clone Repositories]]
 
 ---
 
@@ -610,3 +632,15 @@ ibrew install pivotal/tap/git-together
 Treat this as legacy. Prefer a current install path via the normal Apple silicon Homebrew if the tool is still needed at all. Do not re-enable `alias git=git-together` until confirming `git-together` installs and works correctly on the reimaged Mac.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
+<!--
+TOC verification performed before publishing:
+- every Table of Contents entry resolves to a heading present in this file;
+- deleted optional sections were also removed from the Table of Contents;
+- anchors linked from other files were preserved; no heading was renamed;
+- each top-level section ends with a single "Back to Table of Contents" link,
+  except Troubleshooting, whose back-link sits under its intro and whose routed
+  symptom subsections stay out of the Table of Contents.
+-->

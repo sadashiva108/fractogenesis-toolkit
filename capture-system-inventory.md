@@ -2,7 +2,7 @@
 
 # Capture System Inventory
 
-**Last updated:** 2026-08-04
+**Last updated:** 2026-08-17
 
 A script-first, one-pass record of how this Mac is configured — hardware and macOS, disk and display, installed apps, Homebrew, shell and dotfiles, Git, the language runtimes (Python, Java, Node), Docker, network and SSH, cloud paths, redacted environment clues, and certificate pointers. It observes and records; the only things it writes are into the bundle. Run it pre-image (Phase 4B) to preserve a before-reimage picture, and again post-image (Phase 13B) to compare the rebuilt machine against that record.
 
@@ -35,7 +35,7 @@ A script-first, one-pass record of how this Mac is configured — hardware and m
 > In Obsidian, these are internal heading links. Click in Reading View, or Cmd-click in Live Preview/editing mode.
 
 > [!info] Callout legend
-> This runbook uses Obsidian callouts so each type reads distinctly: `[!note]` an easily-missed fact · `[!warning]` Pitfall, a mistake you are likely to make here · `[!bug]` Troubleshooting, what to do when a step misbehaves · `[!info] Return` how to get back after an out-of-sequence detour.
+> This runbook uses Obsidian callouts so each type reads distinctly: `[!note]` an easily-missed fact · `[!warning]` Pitfall, a mistake you are likely to make here · `[!bug]` Troubleshooting, what to do when a step misbehaves.
 
 ---
 
@@ -43,25 +43,29 @@ A script-first, one-pass record of how this Mac is configured — hardware and m
 
 Preserve a precise, timestamped inventory of how this Mac is set up before it is wiped, and produce the same inventory afterward so the two can be compared. The capture is reference evidence you read while rebuilding — it is not a backup you restore from. It exists so that, after reimage, you can tell what came back, what is missing, and what changed, and so the restore runbooks have an authoritative record of versions and configuration to work against.
 
-This runbook owns:
+**What it sets up**
 
-```text
-the system-inventory capture and its timestamped bundle
-the 16 numbered section files, MANIFEST.txt, the Brewfile, and the inventory-reference dotfiles/ snapshot
-the pre-image (Phase 4B) and post-image (Phase 13B) comparison workflow
-the full system-inventory/ layout
-```
+- **The timestamped bundle** — one self-contained run directory under `system-inventory/`, holding the 16 numbered section files and `MANIFEST.txt`.
+- **The Brewfile** — the `brew bundle dump` output written into the bundle, the single most valuable restore artifact for reinstalling formulae and casks.
+- **The inventory-reference dotfiles snapshot** — a copy of the key dotfiles inside the bundle, so versions and shell config read cleanly beside the section files.
+- **The matched pre/post pair** — the same section shape captured at Phase 4B and again at Phase 13B, so the two sides diff cleanly.
 
-It does not own:
+**What the rest of the workflow relies on it for**
 
-```text
-verifying every repo is pushed to GitHub — backup-repos.md (Phase 2A)
-the authoritative home and dotfiles copy — backup-home.md (Phase 2B)
-IntelliJ settings and application config export — backup-apps.md / backup-intellij.md (Phase 2D)
-certificate and Keychain staging — Phase 3A
-license keys and secret material — create-secrets-dmg.md (Phase 3C)
-cross-phase readiness sign-off — reimage-prep-checks.md (Phase 6B)
-```
+- The restore runbooks read the bundle as the authoritative record of the versions and configuration the rebuilt machine must match.
+- Phase 13B recaptures the same sections on the rebuilt Mac and reads this bundle as the baseline to compare against.
+- The Phase 6B readiness sign-off checks the hand-verified items recorded beside the bundle — the System Settings screenshots and any manual context note.
+
+**Ownership**
+
+| This runbook owns | Owned elsewhere |
+|---|---|
+| the system-inventory capture and its timestamped bundle | verifying every repo is pushed to GitHub — `backup-repos` (Phase 2A) |
+| the 16 numbered section files, `MANIFEST.txt`, the `Brewfile`, and the inventory-reference `dotfiles/` snapshot | the authoritative home and dotfiles copy — `backup-home` (Phase 2B) |
+| the pre-image (Phase 4B) and post-image (Phase 13B) comparison workflow | IntelliJ settings and application config export — `backup-apps` / `backup-intellij` (Phase 2D) |
+| the full `system-inventory/` layout | certificate and Keychain staging — `stage-certs-keychain` (Phase 3A) |
+| | license keys and secret material — `create-secrets-dmg` (Phase 3C) |
+| | cross-phase readiness sign-off — `reimage-prep-checks` (Phase 6B) |
 
 This capture can be rerun at any time: each run writes a fresh timestamped bundle and leaves earlier runs untouched.
 
@@ -73,7 +77,7 @@ This capture can be rerun at any time: each run writes a fresh timestamped bundl
 
 Read this before running anything. A Mac's configuration is spread across many independent subsystems — Homebrew, the shell, each language toolchain, Docker, the network stack — and no single command reports all of it. This capture runs one query per subsystem, writes each result to its own numbered file, dumps a `Brewfile` for restore, and copies key dotfiles into the bundle so the inventory is self-contained and readable on the external drive without the machine present.
 
-The workflow is script-first. `capture-system-inventory.sh` runs every section in one pass and writes the bundle plus a `MANIFEST.txt`. The same sections are documented as individual commands in [[#Per-Section Command Reference|Per-Section Command Reference]] for the rare case where you need to rerun or troubleshoot just one — use the script for the standard run, the individual commands only when isolating a single section.
+The workflow is script-first. `capture-system-inventory.sh` runs every section in one pass and writes the bundle plus a `MANIFEST.txt`. The same sections are also documented as individual commands under Supplemental Reference, for the rare case where you need to rerun or troubleshoot just one — use the script for the standard run, the individual commands only when isolating a single section.
 
 ### What Gets Captured
 
@@ -124,7 +128,7 @@ $FRACTOGENESIS_HOME/bin/capture-system-inventory.sh    # entrypoint
 ```
 
 > [!note]
-> The [[#Per-Section Command Reference|Per-Section Command Reference]] is available for rerunning or troubleshooting a single section by hand.
+> The individual commands behind each section file are documented under Supplemental Reference, for rerunning or troubleshooting a single section by hand.
 
 Related scripts:
 
@@ -177,7 +181,7 @@ The `reimage.env` values this runbook depends on. Values are resolved and writte
 | Variable | Meaning |
 |---|---|
 | `REIMAGE_ARTIFACT_ROOT` | Absolute path to the artifact root where `system-inventory/` lives. |
-| `FRACTOGENESIS_HOME` | Absolute path to the toolkit repository root; entrypoints are run from here. |
+| `FRACTOGENESIS_HOME` | Absolute path to the toolkit repository root; entrypoints are run from here. Set by your shell startup / `.envrc`, not stored in `reimage.env`. |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -185,12 +189,12 @@ The `reimage.env` values this runbook depends on. Values are resolved and writte
 
 ## Before You Run Anything
 
-A short pre-flight: confirm you are set up, then confirm what this run is for. The concepts and the *why* are in [[#How the Workflow Works|How the Workflow Works]]; this is just the checklist.
+A short pre-flight: confirm you are set up, then confirm what you intend this run to do.
 
 ### Prerequisites
 
+- Your shell is at the repository root — `cd "$FRACTOGENESIS_HOME"` once for the session. Per the guide's [[reimaging-guide#Core Assumptions|Core Assumptions]], the commands below assume this and don't repeat it.
 - `REIMAGE_ARTIFACT_ROOT` resolves and its destination volume is mounted (`reimage.env` produced by `prepare-artifact-root.md`).
-- You are running commands from `$FRACTOGENESIS_HOME`.
 - You are on the Mac being inventoried itself — the capture reports on the host it runs on.
 
 > [!bug] Troubleshooting
@@ -200,7 +204,7 @@ A short pre-flight: confirm you are set up, then confirm what this run is for. T
 
 - Whether this is the **pre-image** run (Phase 4B, before wiping) or the **post-image** run (Phase 13B, after rebuild) — this sets `--context` and the bundle prefix.
 - That you want a full system picture here, not app-settings or secret material — those belong to [[backup-apps|Backup Apps]] (Phase 2D) and the Phase 3A/3C secret staging, which are separate phases.
-- Whether you will compare this bundle against an earlier one; if so, keep the pre-image bundle so the post-image run has something to diff against (see [[#Pre-Image vs Post-Image Comparison|Pre-Image vs Post-Image Comparison]]).
+- Whether you will compare this bundle against an earlier one; if so, keep the pre-image bundle so the post-image run has something to diff against.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -268,10 +272,16 @@ sed -n '1,40p' "$LATEST/01-hardware.txt"
 ```
 
 > [!note]
-> A few settings cannot be captured by `system_profiler` and stay a hand-verified item that rolls up to the Phase 6B sign-off: take screenshots of **System Settings → Displays** (arrangement and scaling), **Keyboard → Shortcuts**, **Trackpad**, **Accessibility**, and the **Privacy & Security** panes. See [[#Manual context note only when needed|Manual context note only when needed]] for where to save them.
+> A few settings cannot be captured by `system_profiler` and stay a hand-verified item that rolls up to the Phase 6B sign-off: take screenshots of **System Settings → Displays** (arrangement and scaling), **Keyboard → Shortcuts**, **Trackpad**, **Accessibility**, and the **Privacy & Security** panes. Save them beside the generated bundle.
 
 > [!bug] Troubleshooting
-> Empty or permission-limited sections are covered in [[#Troubleshooting|Troubleshooting]]. Fewer than 16 section files means the run was interrupted — rerun the capture rather than trusting a partial bundle.
+> A section file is empty or shows fewer results than you expected — see [[#A section is empty or shows fewer results than expected|A section is empty or shows fewer results than expected]].
+
+> [!bug] Troubleshooting
+> The `Brewfile` is empty or missing formulae you know are installed — see [[#The Brewfile is empty or missing formulae|The Brewfile is empty or missing formulae]].
+
+> [!bug] Troubleshooting
+> The bundle holds fewer than 16 section files — see [[#Fewer than 16 section files in the bundle|Fewer than 16 section files in the bundle]].
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -293,19 +303,27 @@ The script captures uniformly; deciding what is worth preserving beyond the bund
 
 ## Troubleshooting
 
+Three outcomes surface when you verify the bundle; each looks like a failure, and each needs a different response. The verify step links in from a callout.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
 ### A section is empty or shows fewer results than expected
 
 Some queries return less without elevated rights, and a toolchain you do not use will produce an empty section (for example `09-python.txt` with no pyenv or conda). An empty section file with its header intact means the command ran and found nothing — that is a valid result, not an error.
+
+[[#Step 3 — Verify Outputs|⮕ Continue to Step 3 — Verify Outputs]]
 
 ### The Brewfile is empty or missing formulae
 
 `brew bundle dump` only records what Homebrew installed. Formulae or casks installed outside Homebrew will not appear — confirm Homebrew itself is on `PATH` (`06-homebrew.txt` shows `brew doctor` output) and rerun the capture if `brew` was not found on the first pass.
 
+[[#Step 3 — Verify Outputs|⮕ Continue to Step 3 — Verify Outputs]]
+
 ### Fewer than 16 section files in the bundle
 
 The run was interrupted before completing. Delete or ignore the partial bundle and rerun `capture-system-inventory.sh` — each run writes a fresh timestamped directory, so a rerun does not overwrite anything.
 
-[[#Table of Contents|⬆ Back to Table of Contents]]
+[[#Step 3 — Verify Outputs|⮕ Continue to Step 3 — Verify Outputs]]
 
 ---
 
@@ -334,7 +352,7 @@ diskutil apfs list
 df -h
 ```
 
-**`04` — Display setup.** The display profile; arrangement and scaling are not captured here and need a screenshot (see [[#Manual context note only when needed|Manual context note only when needed]]).
+**`04` — Display setup.** The display profile; arrangement and scaling are not captured here and need a screenshot.
 
 ```bash
 system_profiler SPDisplaysDataType
@@ -400,7 +418,7 @@ nvm ls 2>/dev/null
 npm list -g --depth=0 2>/dev/null
 ```
 
-**`12` — Docker.** Engine versions, images, containers, volumes, and networks. Official images re-pull from a registry; save only locally-built images (a judgment call — see [[#Decisions|Decisions]]). Start Docker Desktop first, or these record only daemon-unreachable errors.
+**`12` — Docker.** Engine versions, images, containers, volumes, and networks. Official images re-pull from a registry; save only locally-built images — a judgment call that stays with you. Start Docker Desktop first, or these record only daemon-unreachable errors.
 
 ```bash
 docker version 2>/dev/null
@@ -474,5 +492,7 @@ Timestamps and generation dates in the file headers will always differ; focus on
 TOC verification performed before publishing:
 - every Table of Contents entry resolves to a heading present in this file;
 - deleted optional sections were also removed from the Table of Contents;
-- each top-level section ends with a single "Back to Table of Contents" link.
+- each top-level section ends with a single "Back to Table of Contents" link,
+  except Troubleshooting, whose back-link sits under its intro and whose routed
+  symptom subsections stay out of the Table of Contents.
 -->

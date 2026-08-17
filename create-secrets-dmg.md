@@ -2,7 +2,7 @@
 
 # Create Secrets DMG
 
-**Last updated:** 2026-08-03
+**Last updated:** 2026-08-17
 
 Package every credential-bearing file that must survive the reimage into one AES-256 encrypted DMG, prove the restore copy is inside the mounted image, and only then remove the loose plaintext staging. Build once, at the end of manual secret collection.
 
@@ -25,6 +25,7 @@ Package every credential-bearing file that must survive the reimage into one AES
     - [[#Validate the Mounted DMG|Validate the Mounted DMG]]
     - [[#Clean Up Loose Plaintext After Validation|Clean Up Loose Plaintext After Validation]]
 - [[#Decisions|Decisions]]
+- [[#Troubleshooting|Troubleshooting]]
 - [[#Supplemental Reference|Supplemental Reference]]
     - [[#What Gets Staged|What Gets Staged]]
     - [[#Verification Reports|Verification Reports]]
@@ -36,32 +37,38 @@ Package every credential-bearing file that must survive the reimage into one AES
 > In Obsidian, these are internal heading links. Click in Reading View, or Cmd-click in Live Preview/editing mode.
 
 > [!info] Callout legend
-> This runbook uses Obsidian callouts so each type reads distinctly: `[!note]` an easily-missed fact · `[!warning]` Pitfall, a mistake you are likely to make here · `[!bug]` Troubleshooting, what to do when a step misbehaves · `[!info] Return` how to get back after an out-of-sequence detour.
+> This runbook uses Obsidian callouts so each type reads distinctly: `[!note]` an easily-missed fact · `[!warning]` Pitfall, a mistake you are likely to make here · `[!bug]` Troubleshooting, what to do when a step misbehaves.
 
 ---
 
 ## Purpose
 
-Consolidate the reviewed secret material from the earlier Phase 2 backups into a single encrypted restore container: build `all-secrets-*.dmg`, save its password in an approved password manager, mount and verify the intended material is inside, and remove the loose plaintext staging only after that verification succeeds. The validated DMG is the source of truth for secret restore after reimage. This phase can be rerun; each run writes a fresh timestamped DMG, and any new secret staged after a build means building again.
+Consolidate the reviewed secret material from the earlier Phase 2 backups into a single encrypted restore container: build `all-secrets-*.dmg`, save its password in an approved password manager, mount and verify the intended material is inside, and remove the loose plaintext staging only after that verification succeeds. The validated DMG is the source of truth for secret restore after reimage.
 
-This runbook owns:
+**What it sets up**
 
-```text
-consolidated encrypted secrets DMG creation
-Java jssecacerts capture from live JDK/JBR locations into the DMG
-mounted-DMG validation before any cleanup
-loose plaintext staging cleanup after validation
-generated manifest, jssecacerts inventory, and RESTORE-README
-```
+- **The consolidated encrypted DMG** — `all-secrets-YYYYMMDD-HHMMSS.dmg`, an AES-256 image holding every secret category staged under `secrets-encrypted/`.
+- **The live Java trust capture** — `jssecacerts` collected from live JDK/JBR locations into the DMG, recorded in `java-jssecacerts-inventory-YYYYMMDD-HHMMSS.md`.
+- **The generated restore aids** — the timestamped manifest of included source paths and `RESTORE-README.md`, written beside the DMG.
+- **The verification reports** — timestamped `verify-staging`, `validate`, and `cleanup` reports under `reimage-prep-checks/secrets-dmg/`.
+- **The cleaned staging tree** — loose plaintext under `secrets-encrypted/` removed only after the encrypted copy is proven readable.
 
-It does not own:
+**What the rest of the workflow relies on it for**
 
-```text
-certificate/Keychain discovery, review, and manual export staging into public-certs/ and secrets-encrypted/certs/ — stage-certs-keychain.md (Phase 3A)
-routing of ssh/gnupg/docker/kube, IntelliJ HTTP Client env files, and app-secret byproducts into secrets-encrypted/ — backup-home.md, backup-apps.md, backup-intellij.md, backup-repos.md
-artifact root and reimage.env preparation — prepare-artifact-root.md
-the Phase 6B pre-image sign-off these verifications roll up to — reimage-prep-checks.md
-```
+- The post-image restore mounts the newest `all-secrets-*.dmg` as the single source of truth for secret material.
+- The Phase 6B readiness sign-off reads the generated verification reports as its automated evidence, alongside the fillable manual notes.
+- A build here supersedes the `secrets-dmg-rebuild-required-*` marker Phase 3A writes when certificate or Keychain material changed.
+
+**Ownership**
+
+| This runbook owns | Owned elsewhere |
+|---|---|
+| consolidated encrypted secrets DMG creation, and the Java `jssecacerts` capture from live JDK/JBR locations into it | certificate/Keychain discovery, review, and manual export staging into `public-certs/` and `secrets-encrypted/certs/` — `stage-certs-keychain` (Phase 3A) |
+| mounted-DMG validation before any cleanup, and loose plaintext staging cleanup after it | routing of ssh/gnupg/docker/kube, IntelliJ HTTP Client env files, and app-secret byproducts into `secrets-encrypted/` — `backup-repos` (Phase 2A), `backup-home` (Phase 2B), `backup-apps` (Phase 2D), and `backup-intellij` |
+| the generated manifest, `jssecacerts` inventory, and `RESTORE-README.md` | artifact root and `reimage.env` preparation — `prepare-artifact-root` (Phase 1) |
+| | the pre-image sign-off these verifications roll up to — `reimage-prep-checks` (Phase 6B) |
+
+This phase can be rerun; each run writes a fresh timestamped DMG, and any new secret staged after a build means building again.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -160,7 +167,7 @@ The `reimage.env` values this runbook depends on. Values are resolved and writte
 |---|---|
 | `REIMAGE_ARTIFACT_ROOT` | Artifact root for this reimage event; `secrets-encrypted/` and the DMG are written under it. |
 | `REIMAGE_WORKSPACE_ROOT` | Local reusable workspace; optional home for a kept copy of the sign-off notes. |
-| `FRACTOGENESIS_HOME` | Repo checkout the scripts run from (a shell/`.envrc` concern, not stored in `reimage.env`). |
+| `FRACTOGENESIS_HOME` | Absolute path to the toolkit repository checkout the scripts run from. Set by your shell startup / `.envrc`, not stored in `reimage.env`. |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -168,7 +175,7 @@ The `reimage.env` values this runbook depends on. Values are resolved and writte
 
 ## Before You Run Anything
 
-A short pre-flight: confirm you are set up, then confirm what you intend this run to do. The conceptual background is in [[#How the Workflow Works|How the Workflow Works]].
+A short pre-flight: confirm you are set up, then confirm what you intend this run to do.
 
 ### Prerequisites
 
@@ -178,7 +185,7 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 - macOS with `hdiutil`; `python3` and the `security` CLI only if the review refresh runs. Stock Bash 3.2 is fine.
 
 > [!bug] Troubleshooting
-> If `REIMAGE_ARTIFACT_ROOT` is empty, `reimage.env` is not loaded (or the artifact root was never resolved). Source it — see [[#Load Shared Configuration|Load Shared Configuration]] — or run `prepare-artifact-root.md` first.
+> If `REIMAGE_ARTIFACT_ROOT` is empty, `reimage.env` is not loaded (or the artifact root was never resolved). Source it in the first step below, or run `prepare-artifact-root.md` first.
 
 ### Confirm Your Intent
 
@@ -246,7 +253,7 @@ To target a specific artifact root without sourcing `reimage.env` first:
 ./bin/create-secrets-dmg.sh --artifact-root "$REIMAGE_ARTIFACT_ROOT"
 ```
 
-The script prints a staging summary, then prompts twice for an encryption password. It writes the outputs named in [[#Artifact and Script Locations|Artifact and Script Locations]]. What each category contains is in [[#What Gets Staged|What Gets Staged]].
+The script prints a staging summary, then prompts twice for an encryption password. It writes the outputs named under Artifact and Script Locations; what each category contains is detailed in Supplemental Reference.
 
 > [!warning] Pitfall
 > Save the DMG password in an approved password manager **immediately** after the build. Without it the DMG cannot be opened after the reimage, and the private keys inside (GPG especially) cannot be regenerated.
@@ -261,8 +268,6 @@ Mount the newest DMG, check its contents, and detach — one command:
 
 Enter the DMG password when prompted. `validate` cross-checks **every** category staged on disk against what is actually inside the mounted image (so the check can't drift), confirms foundational GPG/SSH material, counts private-key-bearing files inside the image, checks public-PEM BEGIN/END balance, and confirms the manifest and `RESTORE-README.md` exist. It writes a PASS/WARN/FAIL report under `reimage-prep-checks/secrets-dmg/` and exits non-zero if any check FAILs.
 
-A FAIL means a category is staged on disk but missing from the image. Do **not** clean up — move the file into the correct `secrets-encrypted/` folder and rerun [[#Build the Encrypted DMG|Build the Encrypted DMG]] so the newest DMG includes it.
-
 Then confirm the few things a script cannot (these roll up to the Phase 6B sign-off in `reimage-prep-checks.md` and appear as the report's manual checklist):
 
 1. The DMG password is saved in an approved password manager.
@@ -272,6 +277,9 @@ Then confirm the few things a script cannot (these roll up to the Phase 6B sign-
 
 > [!bug] Troubleshooting
 > If `validate` cannot mount the DMG, the password is wrong or the image is damaged. Re-enter it carefully; if it still fails, rebuild.
+
+> [!bug] Troubleshooting
+> If `validate` reports FAIL for a category that is staged on disk, see [[#Validate reports FAIL for a category staged on disk|Validate reports FAIL for a category staged on disk]].
 
 ### Clean Up Loose Plaintext After Validation
 
@@ -292,7 +300,7 @@ When the preview matches what you verified, execute:
 > [!warning] Pitfall
 > Do not move `.p12`, `.pfx`, `.jks`, `.keystore`, `*.key`, PEM exports, or Keychain identity material into `public-certs/`. Those belong only inside the encrypted DMG. Only a confirmed public-only CA certificate may be *copied* (not moved) into `public-certs/certs/` as a convenience, and only after the encrypted copy is verified.
 
-To keep Postman while dropping everything else, run `cleanup --keep postman`; for a finer split (keep only `environments/`), keep the whole folder and prune the rest by hand. Record the outcome in the [[#Sign-Off Templates|Sign-Off Templates]] if you want a durable note.
+To keep Postman while dropping everything else, run `cleanup --keep postman`; for a finer split (keep only `environments/`), keep the whole folder and prune the rest by hand. Record the outcome in the sign-off templates covered under Supplemental Reference if you want a durable note.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -309,6 +317,22 @@ The scripts stage, encrypt, and (on cleanup) delete; these judgment calls stay w
 | Which license/activation exports actually need local staging | Many restore via sign-in/SSO/managed install; stage only the ones that genuinely need a local secret copy. |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
+## Troubleshooting
+
+One failure spans the build and validate steps, and its fix loops back through the build, so it would break the flow of the step that finds it. That step links in from a callout.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+### Validate reports FAIL for a category staged on disk
+
+A FAIL means a category is staged on disk but missing from the image: the DMG was built before that material was staged, or the file sits somewhere the build does not sweep. Do **not** clean up — cleanup deletes plaintext, and nothing may be deleted while the encrypted copy is incomplete.
+
+Move the file into the correct `secrets-encrypted/<category>/` folder, rerun `./bin/create-secrets-dmg.sh` so the newest DMG includes it, then validate again.
+
+[[#Validate the Mounted DMG|⮕ Continue to Validate the Mounted DMG]]
 
 ---
 
@@ -351,7 +375,7 @@ $REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/secrets-dmg/
 
 Each report has automated PASS / WARN / FAIL rows and a short "manual — you confirm" checklist for the items a script cannot judge. Between them they replace the manual manifest-grep, per-category mounted-DMG spot-checks, and PEM balance checks that used to live here: `validate` cross-checks every on-disk category against the mounted image, counts private-key-bearing files inside it, and balances public PEM blocks; `verify-staging` reports the pre-build staging surface; `cleanup` records exactly what was removed or kept.
 
-These reports are the automated sign-off evidence for the Phase 6B pre-image checks. The fillable templates in [[#Sign-Off Templates|Sign-Off Templates]] carry only the human-judgment items.
+These reports are the automated sign-off evidence for the Phase 6B pre-image checks. The fillable templates below carry only the human-judgment items.
 
 ### Expected Final Layout
 
@@ -392,7 +416,7 @@ These still require human review or app/Keychain interaction even with the Phase
 
 ### Sign-Off Templates
 
-The generated reports (see [[#Verification Reports|Verification Reports]]) carry the automated evidence. Two small fillable templates hold only what a script cannot verify — password custody and human judgment:
+The generated verification reports carry the automated evidence. Two small fillable templates hold only what a script cannot verify — password custody and human judgment:
 
 ```text
 $FRACTOGENESIS_HOME/templates/manual-export-pass-criteria-template.md
@@ -418,7 +442,9 @@ Both notes are consumed by the Phase 6B sign-off in `reimage-prep-checks.md`.
 <!--
 TOC verification performed before publishing:
 - every Table of Contents entry resolves to a heading present in this file;
-- deleted optional sections (Troubleshooting handled inline) were also removed
-  from the Table of Contents;
-- each top-level section ends with a single "Back to Table of Contents" link.
+- deleted optional sections were also removed from the Table of Contents, and
+  preserved anchors (the Sequential Steps action headings) are unchanged;
+- each top-level section ends with a single "Back to Table of Contents" link,
+  except Troubleshooting, whose back-link sits under its intro and whose routed
+  symptom subsections stay out of the Table of Contents.
 -->

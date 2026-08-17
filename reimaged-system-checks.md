@@ -2,7 +2,7 @@
 
 # Reimaged System Checks
 
-**Last updated:** 2026-08-05
+**Last updated:** 2026-08-17
 
 Run the final proof step for the rebuilt Mac: generate the Phase 14 automated checklist with `bin/reimage-checklist.sh --phase post`, resolve the remaining manual sign-off rows, and land the evidence next to the rest of the reimage artifacts. This is the phase where "the rebuild is trusted" transitions from a plan to a recorded fact, and it deliberately runs after every restore that is expected to produce evidence a script can validate.
 
@@ -32,7 +32,7 @@ Run the final proof step for the rebuilt Mac: generate the Phase 14 automated ch
 > In Obsidian, these are internal heading links. Click in Reading View, or Cmd-click in Live Preview/editing mode.
 
 > [!info] Callout legend
-> This runbook uses Obsidian callouts so each type reads distinctly: `[!note]` an easily-missed fact · `[!warning]` Pitfall, a mistake you are likely to make here · `[!bug]` Troubleshooting, what to do when a step misbehaves · `[!info] Return` how to get back after an out-of-sequence detour.
+> This runbook uses Obsidian callouts so each type reads distinctly: `[!note]` an easily-missed fact · `[!warning]` Pitfall, a mistake you are likely to make here · `[!bug]` Troubleshooting, what to do when a step misbehaves.
 
 ---
 
@@ -40,23 +40,27 @@ Run the final proof step for the rebuilt Mac: generate the Phase 14 automated ch
 
 Prove that the rebuilt Mac is usable for daily work and development, keep the final validation bundle beside the rest of the reimage evidence, and close every manual sign-off row that automation cannot reach. This is the phase that turns a stack of successful restore runs into a signed-off rebuild — Phase 15 is allowed to touch bulk home content only after Phase 14 is clean.
 
-This runbook owns:
+**What it sets up**
 
-```text
-running bin/reimage-checklist.sh --phase post to generate the final post-image checklist bundle
-reviewing PASS / WARN / FAIL / SKIP rows and deciding which need action versus record
-closing the manual sign-off areas (Company Portal, internal access, OneDrive sync, Office stability, project readiness, final cleanliness)
-taking the post-image Time Machine backup once the result is stable
-```
+- **The post-image checklist bundle** — a timestamped `reimage-checklist-*.md` under `reimaged-system/checklists/` recording PASS, WARN, FAIL, or SKIP for every area automation can reach, plus the `latest-reimage-checklist.txt` pointer to the newest run.
+- **The closed manual sign-off areas** — Company Portal, internal access, OneDrive sync, Office stability, project readiness, and final cleanliness, each resolved by hand and recorded as a Phase 14 note under `restore-notes/`.
+- **The post-image Time Machine backup** — taken at the end of the phase, once the rerun shows a stable result.
 
-It does not own:
+**What the rest of the workflow relies on it for**
 
-```text
-the individual restore evidence — Phase 8 through Phase 13 runbooks own their own captures
-early post-image sanity checks and the initial "manual captures required" list — Phase 9 (record-first-boot)
-pre-image validation — Phase 6B (reimage-prep-checks) runs the same bin/reimage-checklist.sh entrypoint with --phase pre
-bulk personal-home restore — Phase 15 (restore-home), which runs after Phase 14 sign-off
-```
+- Phase 15 merges bulk personal home content only after this phase's checklist is clean and every manual row is closed.
+- The recorded checklist file is the written evidence that the rebuild was trusted at a point in time, rather than something remembered.
+- The post-image Time Machine backup is the fallback that preserves the trusted rebuild before bulk personal content is merged into it.
+
+**Ownership**
+
+| This runbook owns | Owned elsewhere |
+|---|---|
+| the Phase 14 `--phase post` checklist run and the sign-off bundle it generates | pre-image validation, the same script under `--phase pre` — `reimage-prep-checks` (Phase 6B) |
+| the review of PASS / WARN / FAIL / SKIP rows and the decision to act on each versus record it | early post-image sanity checks and the initial "manual captures required" list this phase reads as pre-flight — `verify-reimaged-system` (Phase 9) |
+| closing the manual sign-off areas (Company Portal, internal access, OneDrive sync, Office stability, project readiness, final cleanliness) | the individual restore evidence — the Phase 10–12 `restore-*` runbooks |
+| the post-image Time Machine backup taken once the result is stable | post-image comparison captures — the Phase 13 `capture-*` runbooks |
+| | bulk personal-home restore, which runs after this sign-off — `restore-home` (Phase 15) |
 
 This runbook is rerunnable: the checklist is meant to run twice (once to see what needs attention, once after fixes) and the final `--phase post` run produces the sign-off artifact.
 
@@ -68,7 +72,9 @@ This runbook is rerunnable: the checklist is meant to run twice (once to see wha
 
 Read this before running anything. Phase 14 is the *proof* phase, not another *capture* phase. The rebuilt Mac has already been through every restore that is going to happen before final sign-off (Phases 8–13); the goal here is to force each of those restores to declare itself with a machine-observable fact — a running daemon, an installed binary, a mounted volume, a Git config with two identities, a Docker CLI that talks to a daemon — and to name the ones that can only be validated by eye so they don't slip through.
 
-The workflow depends on two facts working together: the checklist script covers the categories automation can cover, and the manual sign-off table covers the ones it cannot. Running the script once and stopping there is the most common Phase 14 mistake — the point is to run it, act on what it says, then run it again so the recorded artifact reflects the resolved state. The Phase 9 initial-post-image run wrote a `manual-captures-required.md` inside its own bundle; that file is the pre-flight for this phase, not this phase's output.
+The workflow depends on two facts working together: the checklist script covers the categories automation can cover, and the manual sign-off table covers the ones it cannot. Running the script once and stopping there is the most common Phase 14 mistake — the point is to run it, act on what it says, then run it again so the recorded artifact reflects the resolved state. The Phase 9 initial post-image run wrote a `manual-captures-required.md` inside its own bundle; that file is the pre-flight for this phase, not this phase's output.
+
+The same script serves Phase 6B with `--phase pre`; that run is the pre-image gate and belongs to a different runbook. This runbook is `--phase post` only, and it is the closing sign-off rather than the first post-image bundle Phase 9 produced.
 
 The post-image Time Machine backup lands at the *end* of Phase 14, not the beginning of Phase 15. The backup is what preserves the trusted rebuild before Phase 15 starts merging bulk personal content into it, so its ordering is deliberate.
 
@@ -83,13 +89,13 @@ Every path this runbook uses is defined here, once. Later steps refer back to th
 Primary script:
 
 ```text
-$FRACTOGENESIS_HOME/bin/reimage-checklist.sh
+$FRACTOGENESIS_HOME/bin/reimage-checklist.sh          # entrypoint — aggregate validator (--phase post)
 ```
 
-Related script (Phase 9 first-boot bundle; its `manual-captures-required.md` is the pre-flight for this phase):
+Related script (Phase 9 initial post-image bundle; its `manual-captures-required.md` is the pre-flight for this phase):
 
 ```text
-$FRACTOGENESIS_HOME/bin/record-reimaged-system.sh
+$FRACTOGENESIS_HOME/bin/record-reimaged-system.sh     # entrypoint — owned by Phase 9
 ```
 
 Generated output roots:
@@ -103,32 +109,36 @@ $REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/                # optional 
 Pre-flight file written by Phase 9 (read, not written here):
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/reimaged-system/first-boot-YYYYMMDD-HHMMSS/manual-captures-required.md
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/initial-reimaged-system-YYYYMMDD-HHMMSS/manual-captures-required.md
 ```
 
-Directory shape read and written by this runbook (the complete `reimaged-system/` layout lives once in [[master-directory-reference|Master Directory Reference]]):
+Directory shape read and written by this runbook:
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/
 ├── ...
 ├── reimaged-system/
 │   ├── checklists/
-│   │   ├── reimage-checklist-YYYYMMDD-HHMMSS.md
-│   │   └── latest-reimage-checklist.txt
-│   ├── first-boot-YYYYMMDD-HHMMSS/
+│   │   ├── latest-reimage-checklist.txt
+│   │   └── reimage-checklist-YYYYMMDD-HHMMSS.md
+│   ├── initial-reimaged-system-YYYYMMDD-HHMMSS/
 │   │   └── manual-captures-required.md
 │   └── restore-notes/
 └── ...
 ```
 
+The complete `$REIMAGE_ARTIFACT_ROOT/reimaged-system/` layout is defined once in the Master Directory Reference:
+
+[[master-directory-reference|Master Directory Reference]]
+
 ### Environment Variables
 
-The `reimage.env` values this runbook depends on. Resolved and written during [[prepare-artifact-root|prepare-artifact-root.md]].
+The `reimage.env` values this runbook depends on. Values are resolved and written during `prepare-artifact-root.md`.
 
 | Variable | Meaning |
 |---|---|
 | `REIMAGE_ARTIFACT_ROOT` | Mounted external artifact volume. `bin/reimage-checklist.sh --phase post` writes here under `reimaged-system/checklists/`. |
-| `FRACTOGENESIS_HOME` | Local checkout of `fractogenesis-toolkit`. Shell session is at this directory; runbook commands assume it. |
+| `FRACTOGENESIS_HOME` | Local checkout of `fractogenesis-toolkit`; entrypoints are run from here. Set by your shell startup / `.envrc`, not stored in `reimage.env`. |
 
 Optional script flags:
 
@@ -153,8 +163,8 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 - Your shell is at the repository root — `cd "$FRACTOGENESIS_HOME"` once for the session. Per the guide's [[reimaging-guide#Core Assumptions|Core Assumptions]], the commands below assume this and don't repeat it.
 - Every Phase 8–13 runbook that is expected to run has finished, including any restore-notes plan-notes under `reimaged-system/restore-notes/`.
 - The external artifact volume is mounted and `$REIMAGE_ARTIFACT_ROOT` resolves; `reimaged-system/checklists/` will be created if missing.
-- The Phase 9 first-boot bundle exists under `reimaged-system/first-boot-*/`; its `manual-captures-required.md` is reachable.
-- OneDrive is signed in and sync has settled (the checklist has a row for this, but reaching it faster if you resolve it up front).
+- The Phase 9 initial post-image bundle exists under `reimaged-system/initial-reimaged-system-*/`; its `manual-captures-required.md` is reachable.
+- OneDrive is signed in and sync has settled — the checklist has a row for this, but you reach a clean result faster by resolving it up front.
 
 > [!bug] Troubleshooting
 > If `bin/reimage-checklist.sh` reports "no such directory" for `reimaged-system/checklists/`, either mount the artifact volume and re-source `reimage.env`, or pass `--artifact-root PATH` explicitly.
@@ -163,7 +173,7 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 
 - Are you running the *diagnostic* pass (expect WARN/FAIL rows and plan to act on them) or the *sign-off* pass (rows are expected to resolve or be documented, and the resulting file is the final artifact)? Every Phase 14 typically does both — the diagnostic run first, the sign-off run after fixes.
 - Do you want the checklist opened in Finder on completion (`--open`) or are you running headless?
-- Are there additional internal URLs or workspace roots for this rebuild? Have them ready before Step 2 so a single script invocation covers them.
+- Are there additional internal URLs or workspace roots for this rebuild? Have them ready before the checklist run so a single script invocation covers them.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -178,8 +188,8 @@ Run these in order. The first pass surfaces the issues; the second pass records 
 Before the automated checklist, resolve or acknowledge the manual rows Phase 9 already flagged:
 
 ```bash
-LATEST_FIRST_BOOT=$(ls -1dt "$REIMAGE_ARTIFACT_ROOT/reimaged-system/first-boot-"* 2>/dev/null | head -n1)
-open "$LATEST_FIRST_BOOT/manual-captures-required.md"
+LATEST_INITIAL=$(ls -1dt "$REIMAGE_ARTIFACT_ROOT/reimaged-system/initial-reimaged-system-"* 2>/dev/null | head -n1)
+open "$LATEST_INITIAL/manual-captures-required.md"
 ```
 
 Also scan any plan-notes from the restore phases:
@@ -234,6 +244,9 @@ Read the generated checklist end-to-end. For each row:
 > [!warning] Pitfall
 > A `PASS` row proves the check ran, not that the underlying state is what you want. Read the value the row emitted (the specific version, the specific enrollment state) — a `PASS` on a stale value is still a problem.
 
+> [!bug] Troubleshooting
+> If the checklist reports `FAIL` for Docker although Docker Desktop is installed, see [[#The checklist reports `FAIL` for Docker even though Docker Desktop is installed|The checklist reports `FAIL` for Docker even though Docker Desktop is installed]].
+
 ### Step 4 — Resolve Manual Sign-Off Areas
 
 These rows cannot be proved by a script. Walk them by hand:
@@ -266,6 +279,12 @@ tmutil latestbackup
 
 Phase 14 is complete when the second checklist file exists, the manual sign-off table is fully resolved, and `tmutil latestbackup` points at a fresh post-image backup.
 
+> [!bug] Troubleshooting
+> If a row that was `PASS` on the first run comes back `FAIL` on the rerun, see [[#A row that was `PASS` on the first run went `FAIL` on the rerun|A row that was `PASS` on the first run went `FAIL` on the rerun]].
+
+> [!bug] Troubleshooting
+> If `tmutil latestbackup` still reports a pre-image timestamp after the backup completes, see [[#`tmutil latestbackup` still reports a pre-image timestamp|`tmutil latestbackup` still reports a pre-image timestamp]].
+
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
 ---
@@ -287,23 +306,33 @@ The scripts do X; these judgment calls stay with you.
 
 ## Troubleshooting
 
+Three post-image outcomes need more than a rerun to clear, and each would break the flow of the step that surfaces it. The steps that find them link in from callouts.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
 ### The checklist reports `FAIL` for Docker even though Docker Desktop is installed
 
 The Docker CLI check needs the Docker daemon to be responsive, not just the app installed. Launch Docker Desktop, wait for the whale icon to stabilize, and rerun the checklist.
+
+[[#Step 3 — Review Automated Rows|⮕ Continue to Step 3 — Review Automated Rows]]
 
 ### `tmutil latestbackup` still reports a pre-image timestamp
 
 The requested backup ran on a stale destination (e.g., a Time Machine target that got quarantined during reimage). Re-check the destination with `tmutil destinationinfo`, add the intended destination if missing, and rerun `sudo tmutil startbackup --block`.
 
+[[#Step 5 — Rerun and Take the Post-Image Time Machine Backup|⮕ Continue to Step 5 — Rerun and Take the Post-Image Time Machine Backup]]
+
 ### A row that was `PASS` on the first run went `FAIL` on the rerun
 
 Something between the two runs changed the underlying state (a fix regressed a different check). Read the row values from both files under `reimaged-system/checklists/` and diff — the earlier PASS captures the last known-good state, and the current FAIL captures the regression.
 
-[[#Table of Contents|⬆ Back to Table of Contents]]
+[[#Step 5 — Rerun and Take the Post-Image Time Machine Backup|⮕ Continue to Step 5 — Rerun and Take the Post-Image Time Machine Backup]]
 
 ---
 
 ## Supplemental Reference
+
+Longer material most runs will not need, kept out of the main flow.
 
 ### What the Script Covers
 
@@ -382,3 +411,14 @@ tmutil listexclusions | grep "$(dirname "$REIMAGE_ARTIFACT_ROOT")" || true
 ```
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
+<!--
+TOC verification performed before publishing:
+- every Table of Contents entry resolves to a heading present in this file;
+- deleted optional sections were also removed from the Table of Contents;
+- each top-level section ends with a single "Back to Table of Contents" link,
+  except Troubleshooting, whose back-link sits under its intro and whose routed
+  symptom subsections stay out of the Table of Contents.
+-->

@@ -2,7 +2,7 @@
 
 # Restore Home
 
-**Last updated:** 2026-08-05
+**Last updated:** 2026-08-17
 
 Restore selected personal-home content from the plain-text `home-files-backup/` bundle produced by Phase 2B, after the rebuilt Mac has already proved itself for normal development and daily use. This is the intentionally-latest phase: nothing about the reimaged system's stability, security posture, or clean-baseline claim should depend on any file restored here. The runbook is manual and does not run a fractogenesis-toolkit entrypoint — every restore is a small, deliberate `rsync` or per-file merge that the operator justifies against a specific need.
 
@@ -27,6 +27,8 @@ Restore selected personal-home content from the plain-text `home-files-backup/` 
 - [[#Decisions|Decisions]]
 - [[#Troubleshooting|Troubleshooting]]
 - [[#Supplemental Reference|Supplemental Reference]]
+    - [[#Why This Phase Has No Companion Script|Why This Phase Has No Companion Script]]
+    - [[#Relationship to Phase 11B — Restore Repositories|Relationship to Phase 11B — Restore Repositories]]
 
 > In Obsidian, these are internal heading links. Click in Reading View, or Cmd-click in Live Preview/editing mode.
 
@@ -37,27 +39,30 @@ Restore selected personal-home content from the plain-text `home-files-backup/` 
 
 ## Purpose
 
-Bring back the specific personal-home content — `Documents`, `Desktop`, personal scripts, curated dotfiles, and any narrow config folders the operator has already decided to keep — from the plain `home-files-backup/` bundle. This is the phase that consumes the bulk local-file backup produced by [[backup-home|backup-home.md]] (Phase 2B), and it deliberately runs after Phase 14 sign-off so nothing here can regress the "the rebuild is trusted" baseline.
+Bring back the specific personal-home content — `Documents`, `Desktop`, personal scripts, curated dotfiles, and any narrow config folders the operator has already decided to keep — from the plain `home-files-backup/` bundle. This is the phase that consumes the bulk local-file backup produced by `backup-home` (Phase 2B), and it deliberately runs after Phase 14 sign-off so nothing here can regress the "the rebuild is trusted" baseline.
 
-This runbook owns:
+**What it sets up**
 
-```text
-merging selected home subfolders (Documents, Desktop, scripts, config-files-backups, Movies/Music/Pictures if kept)
-selectively merging dotfiles (~/.zshrc, ~/.aliases, ~/.functions, ~/.gitconfig deltas)
-copying narrow config trees under home-files-backup/dotfiles/config/, azure/, cf/, copilot/, kube/, etc.
-reconnecting OneDrive and waiting for its baseline sync to settle before touching OneDrive-managed paths
-recording each restore decision under reimaged-system/restore-notes/
-```
+- **Merged home subfolders** — `Documents`, `Desktop`, `scripts`, `config-files-backups`, and `Movies` / `Music` / `Pictures` when they are kept, restored one target at a time from `home-files-backup/home/`.
+- **Selectively merged dotfiles** — `~/.zshrc`, `~/.aliases`, `~/.functions`, and the other shell startup files, merged stanza by stanza rather than overwritten, with `~/.gitconfig` deltas reviewed rather than adopted wholesale.
+- **Restored narrow config trees** — the per-tool subtrees under `home-files-backup/dotfiles/` (`config/`, `azure/`, `cf/`, `copilot/`, `kube/`, and siblings), copied per subtree.
+- **A settled OneDrive** — the client reconnected and given a full sync baseline before any OneDrive-managed path is touched.
+- **The restore note** — every restore decision, including each deliberate "not restored", recorded under `reimaged-system/restore-notes/`.
 
-It does not own:
+**What the rest of the workflow relies on it for**
 
-```text
-the backup itself — Phase 2B (backup-home)
-SSH keys, certificates, Java trust, and other credential-bearing dotfiles — Phase 10B (restore-access, via secrets-encrypted/)
-Git identity dotfiles that are part of dual-identity plumbing — Phase 11A (restore-git)
-per-app support folders under ~/Library/Application Support/ — the app-specific runbooks (restore-apps.md, restore-intellij.md, restore-docker.md)
-staged ignored files that live inside a repository — Phase 11B (restore-repos, via staged-ignored-files/live/)
-```
+- The restore note is this phase's only evidence — nothing here is script-validated, so the note is what shows later which content was carried forward and which was left behind on purpose.
+- Closing the Phase 15 validation table, and rerunning any Phase 14 spot-check this phase disturbed, is what marks the whole reimage complete.
+
+**Ownership**
+
+| This runbook owns | Owned elsewhere |
+|---|---|
+| merging selected home subfolders from `home-files-backup/home/` | the backup itself — `backup-home` (Phase 2B) |
+| selective dotfile merges into the reimaged shell startup files | SSH keys, certificates, Java trust, and other credential-bearing dotfiles — `restore-access` (Phase 10B), via `secrets-encrypted/` |
+| per-subtree restore of the `home-files-backup/dotfiles/` config trees | Git identity dotfiles that are part of dual-identity plumbing — `restore-git` (Phase 11A) |
+| reconnecting OneDrive and waiting for its baseline sync to settle | per-app support folders under `~/Library/Application Support/` — `restore-apps`, `restore-docker`, `restore-intellij` (Phase 12) |
+| recording each restore decision under `reimaged-system/restore-notes/` | staged ignored files that live inside a repository — `restore-repos` (Phase 11B), via `staged-ignored-files/live/` |
 
 This runbook is rerunnable in the sense that each `rsync` is idempotent, but it is not meant to be re-run wholesale — a second pass typically reintroduces the same "should I have restored this?" question. Prefer to run it once, carefully, and record the outcome.
 
@@ -69,7 +74,7 @@ This runbook is rerunnable in the sense that each `rsync` is idempotent, but it 
 
 Read this before running anything. Phase 15 is intentionally last because plain-text home-file restore is where a clean rebuild goes to accumulate old clutter: stale preferences, obsolete scripts, machine-specific config, and duplicated OneDrive content. The rebuilt Mac is already useful — Phase 14 says so — and the goal here is to reintroduce the specific personal-home content that still earns its place, not to reconstruct the pre-image `$HOME` byte-for-byte.
 
-The order matters. OneDrive reconnects first, because half of the interesting content is already in the cloud and the sync client is the supported restore path for anything under `~/Library/CloudStorage/OneDrive-*/`. Copying files into a OneDrive path before OneDrive has settled produces conflict copies at best and silent duplication at worst. Personal home subfolders come next, restored one target at a time so the operator can see the diff and stop if something unexpected shows up. Dotfiles are merged, never overwritten wholesale — the reimaged system's shell startup files have already been touched by Phase 7 (`bootstrap.sh`) and Phase 10A/B (runtime + access), and blindly overlaying a pre-image `~/.zshrc` undoes that. Finally, categories with special rules (Downloads, `~/Library/Application Support/`, secrets) get called out separately so they route through the right runbook or get skipped on purpose.
+The order matters. OneDrive reconnects first, because half of the interesting content is already in the cloud and the sync client is the supported restore path for anything under `~/Library/CloudStorage/OneDrive-*/`. Copying files into a OneDrive path before OneDrive has settled produces conflict copies at best and silent duplication at worst. Personal home subfolders come next, restored one target at a time so the operator can see the diff and stop if something unexpected shows up. Dotfiles are merged, never overwritten wholesale — the reimaged system's shell startup files have already been touched by Phase 8 (`bootstrap.sh`) and Phase 10A/10B (runtime + access), and blindly overlaying a pre-image `~/.zshrc` undoes that. Finally, categories with special rules (Downloads, `~/Library/Application Support/`, secrets) get called out separately so they route through the right runbook or get skipped on purpose.
 
 Every restore decision, including "I decided not to restore X," goes into a note under `reimaged-system/restore-notes/`. Phase 15 has no automated evidence — the note is the artifact.
 
@@ -80,6 +85,8 @@ Every restore decision, including "I decided not to restore X," goes into a note
 ## Artifact and Script Locations
 
 Every path this runbook uses is defined here, once. Later steps refer back to these names instead of restating them.
+
+Primary script: none. This phase runs no toolkit entrypoint; every command below is a plain shell command you run by hand.
 
 Primary source bundle:
 
@@ -100,7 +107,7 @@ Restore notes (this runbook writes here):
 $REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/restore-home-YYYYMMDD.md
 ```
 
-Directory shape read by this runbook (the full `home-files-backup/` layout, including the complete dotfiles inventory, lives once in [[master-directory-reference|Master Directory Reference]]):
+Directory shape read by this runbook:
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/
@@ -122,19 +129,24 @@ $REIMAGE_ARTIFACT_ROOT/
 │   └── restore-notes/
 │       └── restore-home-YYYYMMDD.md
 ├── ...
-└── staged-ignored-files/
-    └── live/
-        └── <label>/
+├── staged-ignored-files/
+│   └── live/
+│       └── <label>/
+└── ...
 ```
+
+The complete `home-files-backup/` layout, including the full dotfiles inventory, is defined once in the Master Directory Reference:
+
+[[master-directory-reference|Master Directory Reference]]
 
 ### Environment Variables
 
-The `reimage.env` values this runbook depends on. Resolved and written during [[prepare-artifact-root|prepare-artifact-root.md]].
+The `reimage.env` values this runbook depends on. Values are resolved and written during `prepare-artifact-root.md`.
 
 | Variable | Meaning |
 |---|---|
 | `REIMAGE_ARTIFACT_ROOT` | Mounted external artifact volume that holds the pre-image `home-files-backup/` bundle and the `reimaged-system/restore-notes/` destination. |
-| `FRACTOGENESIS_HOME` | Local checkout of `fractogenesis-toolkit`. Set by the shell session; the runbook assumes you are at this directory. |
+| `FRACTOGENESIS_HOME` | Local checkout of `fractogenesis-toolkit`; the runbook assumes your shell is at this directory. Set by your shell startup / `.envrc`, not stored in `reimage.env`. |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -147,10 +159,10 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 ### Prerequisites
 
 - Your shell is at the repository root — `cd "$FRACTOGENESIS_HOME"` once for the session. Per the guide's [[reimaging-guide#Core Assumptions|Core Assumptions]], the commands below assume this and don't repeat it.
-- Phase 14 [[reimaged-system-checks|reimaged-system-checks.md]] is complete and clean. If Phase 14 raised outstanding rows, resolve them before touching bulk home content — you want to know the reimaged system was trusted before Phase 15 started, not after.
+- Phase 14 (`reimaged-system-checks.md`) is complete and clean. If Phase 14 raised outstanding rows, resolve them before touching bulk home content — you want to know the reimaged system was trusted before Phase 15 started, not after.
 - The external artifact volume is mounted and `$REIMAGE_ARTIFACT_ROOT` resolves; `home-files-backup/home/` and `home-files-backup/dotfiles/` are reachable.
-- Phase 10B ([[restore-access|restore-access.md]]) has already restored credential-bearing dotfiles (SSH keys, certificates, Java trust). Do not re-copy anything from `dotfiles/` that would conflict with those.
-- Phase 11A ([[restore-git|restore-git.md]]) has already written the dual-identity `~/.gitconfig`. Do not restore `home-files-backup/dotfiles/.gitconfig` wholesale on top of it.
+- Phase 10B (`restore-access.md`) has already restored credential-bearing dotfiles (SSH keys, certificates, Java trust). Do not re-copy anything from `dotfiles/` that would conflict with those.
+- Phase 11A (`restore-git.md`) has already written the dual-identity `~/.gitconfig`. Do not restore `home-files-backup/dotfiles/.gitconfig` wholesale on top of it.
 
 > [!bug] Troubleshooting
 > If `$REIMAGE_ARTIFACT_ROOT` is unset or unreachable, either mount the artifact volume and re-source `reimage.env`, or pass `--artifact-root PATH` explicitly to any helper that supports it.
@@ -256,9 +268,12 @@ Update the restore note as you go. Any target *not* on the shortlist stays skipp
 > [!note]
 > `rsync -av` preserves permissions and timestamps but does not delete unmatched files in the target — if the reimaged `~/Desktop/` already has content, the merged result is the union. Add `--delete` only when you actively want the pre-image tree to overwrite the reimaged tree, which is rare here.
 
+> [!bug] Troubleshooting
+> If files show up in a OneDrive-managed folder with a machine-name suffix, see [[#Conflict copies appeared inside a OneDrive path|Conflict copies appeared inside a OneDrive path]].
+
 ### Step 4 — Merge Dotfiles Selectively
 
-Never overlay `home-files-backup/dotfiles/` onto `$HOME` wholesale. The reimaged system's shell startup files have already been touched by Phase 7, 10A, and 8B, and Git identity plumbing has been written by Phase 11A. For each dotfile you plan to merge, diff first and copy only the specific stanzas that still matter:
+Never overlay `home-files-backup/dotfiles/` onto `$HOME` wholesale. The reimaged system's shell startup files have already been touched by Phase 8, 10A, and 10B, and Git identity plumbing has been written by Phase 11A. For each dotfile you plan to merge, diff first and copy only the specific stanzas that still matter:
 
 ```bash
 # Example — .zshrc diff and selective merge
@@ -271,11 +286,17 @@ Categories to consider:
 | Dotfile / subtree | Guidance |
 |---|---|
 | `.zshrc`, `.zprofile`, `.zshenv` | Merge specific stanzas (custom PATH additions, aliases, prompt tweaks). Do not overwrite. |
-| `.bash_profile`, `.bashrc` | Same — merge; overwrite only if you know Phase 7/10 wrote nothing there. |
+| `.bash_profile`, `.bashrc` | Same — merge; overwrite only if you know Phase 8/10 wrote nothing there. |
 | `.aliases`, `.exports`, `.functions` | Usually safe to copy across if you author them from scratch, but review first. |
 | `.shell_common.sh`, `.shell_aliases.sh`, `.shell_local.sh` | Selective merge; `.shell_local.sh` is the machine-specific layer. |
 | `.gitconfig` | Do NOT restore. Phase 11A owns this. |
 | `dotfiles/config/`, `dotfiles/copilot/`, `dotfiles/kube/`, `dotfiles/azure/`, `dotfiles/cf/`, `dotfiles/fiddler/`, `dotfiles/dotfiles.falkor.d/` | Restore per-subtree with `rsync -av --dry-run` first. Kube contexts and CF targets in particular can drift. |
+
+> [!bug] Troubleshooting
+> If a new shell fails to start or floods the terminal with errors after a merge, see [[#Shell startup broke after a dotfile merge|Shell startup broke after a dotfile merge]].
+
+> [!bug] Troubleshooting
+> If `git` starts stamping the wrong author, or work and personal repos share one identity, see [[#Git identity regressed to a single identity|Git identity regressed to a single identity]].
 
 ### Step 5 — Handle Categories with Special Rules
 
@@ -283,7 +304,7 @@ Categories to consider:
 |---|---|
 | OneDrive-managed folders (`~/Library/CloudStorage/OneDrive-*/…`) | Prefer cloud resync over manual copy. Restore into these paths only for content OneDrive definitely does not already have. |
 | `~/Downloads` | Usually skip. Restore individual files by hand if still needed. |
-| `~/Library/Application Support/…` | Routed through the app-specific runbooks (`restore-apps.md`, `restore-intellij.md`, `restore-docker.md`). Never bulk-restore here. |
+| `~/Library/Application Support/…` | Routed through the app-specific runbooks (`restore-apps.md`, `restore-docker.md`, `restore-intellij.md`). Never bulk-restore here. |
 | Anything credential-shaped (`.env`, `.keystore`, keys, tokens) | Restore only from `secrets-encrypted/` (Phase 10B), never from `home-files-backup/`. |
 | Repo-scoped ignored files that never committed | Restored by Phase 11B (`bin/restore-repos.sh --apply-ignored-files`) from `staged-ignored-files/live/`, not here. |
 | Old machine-specific tool state you no longer use | Leave behind on purpose. Record the decision in the restore note. |
@@ -310,7 +331,7 @@ If Phase 15 introduced anything that Phase 14 already signed off on, rerun the r
 
 ## Decisions
 
-The scripts do X; these judgment calls stay with you.
+This phase runs no script, so every call here is yours; these are the ones that recur.
 
 | Decision | Why it stays with you |
 |---|---|
@@ -325,30 +346,51 @@ The scripts do X; these judgment calls stay with you.
 
 ## Troubleshooting
 
-### `rsync` produced conflict copies inside a OneDrive path
+Three failures here either span more than one step or have a fix long enough to break a step's flow. The step that surfaces each one links in from a callout.
 
-OneDrive was still syncing when Step 3 ran. Stop, quarantine the conflict copies (`filename-machinename.ext`), let OneDrive settle, and re-merge by hand.
+[[#Table of Contents|⬆ Back to Table of Contents]]
 
-### Shell startup broke after a `.zshrc` merge
+### Conflict copies appeared inside a OneDrive path
+
+OneDrive was still syncing when Step 3 ran. Stop, quarantine the conflict copies (`filename-machinename.ext`), let OneDrive settle until its menu-bar icon shows "Up to date", and re-merge by hand.
+
+[[#Step 3 — Restore Selected Home Subfolders|⮕ Continue to Step 3 — Restore Selected Home Subfolders]]
+
+### Shell startup broke after a dotfile merge
 
 A stanza copied from the pre-image `.zshrc` references a path or command that no longer exists on the reimaged system (e.g. `. "$HOME/.nvm/nvm.sh"` when `nvm` is not installed). Revert to the pre-merge `.zshrc` (if you kept a copy), or comment out the offending line and rerun `exec zsh -l`.
 
-### `.gitconfig` regressed to a single-identity file
+[[#Step 4 — Merge Dotfiles Selectively|⮕ Continue to Step 4 — Merge Dotfiles Selectively]]
 
-`dotfiles/.gitconfig` was restored on top of Phase 11A's dual-identity file. Re-run Phase 11A's identity plumbing steps; they are idempotent.
+### Git identity regressed to a single identity
 
-[[#Table of Contents|⬆ Back to Table of Contents]]
+`dotfiles/.gitconfig` was restored on top of Phase 11A's dual-identity file. Re-run Phase 11A's identity plumbing steps; they are idempotent. Leave `home-files-backup/dotfiles/.gitconfig` out of the merge from here on.
+
+[[#Step 4 — Merge Dotfiles Selectively|⮕ Continue to Step 4 — Merge Dotfiles Selectively]]
 
 ---
 
 ## Supplemental Reference
 
-### Why this phase does not have a companion script
+Longer material most runs will not need, kept out of the main flow.
+
+### Why This Phase Has No Companion Script
 
 Every earlier restore phase either produces evidence a script can validate (Phase 8, 9, 11B, 12 plan-notes) or writes into paths a script can verify exist (Phase 10A/10B). Phase 15 does neither: the "right answer" for what to restore is a judgment call, and automating the copy step removes the deliberation the phase depends on. The absence of a script is intentional. If a future rebuild wants a `bin/restore-home.sh` that emits a plan-note like Phase 12's, it should still stop short of running any `rsync` on its own.
 
-### How this phase relates to Phase 11B (restore-repos)
+### Relationship to Phase 11B — Restore Repositories
 
 Repo-scoped ignored files (`.env`, local build outputs the operator explicitly kept, IDE-scratch files that are gitignored but valuable) are Phase 11B's problem, not Phase 15's. They flow from `staged-ignored-files/live/<label>/` into the cloned working tree via `bin/restore-repos.sh --apply-ignored-files`. If Phase 15 finds such a file under `home-files-backup/` (misclassified during Phase 2B), route it through Phase 11B by hand rather than copying it into `$HOME` here.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
+<!--
+TOC verification performed before publishing:
+- every Table of Contents entry resolves to a heading present in this file;
+- deleted optional sections were also removed from the Table of Contents;
+- each top-level section ends with a single "Back to Table of Contents" link,
+  except Troubleshooting, whose back-link sits under its intro and whose routed
+  symptom subsections stay out of the Table of Contents.
+-->

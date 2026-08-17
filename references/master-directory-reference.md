@@ -2,31 +2,60 @@
 
 # Master Directory Reference
 
-**Last Updated:** 2026-07-21
+**Last Updated:** 2026-08-17
 
 This is the consolidated `$REIMAGE_ARTIFACT_ROOT` directory map for the Mac reimage workflow.
 
-It combines the currently documented backup, capture, validation, and post-image artifact locations from:
+It consolidates the artifact locations documented across the workflow — preparation, backup and staging, capture, validation, and post-image restore. Every runbook and reference below documents at least one path under `$REIMAGE_ARTIFACT_ROOT`; each group is alphabetical.
+
+**Preparation**
+
+- `prepare-artifact-root.md`
+
+**Backup and staging**
 
 - `backup-apps.md`
-- `backup-file-reference.md`
 - `backup-home.md`
 - `backup-intellij.md`
 - `backup-repos.md`
-- `verify-reimaged-system.md`
+- `create-secrets-dmg.md`
+- `stage-certs-keychain.md`
+- `stage-loose-secrets.md`
+
+**Capture and evidence**
+
 - `capture-managed-inventory.md`
 - `capture-office-stability.md`
 - `capture-performance-audit.md`
 - `capture-system-inventory.md`
 - `capture-toolkit-snapshot.md`
-- `enroll-and-stabilize.md`
-- `prepare-artifact-root.md`
-- `reimage-prep-evidence.md`
+- `run-time-machine.md`
+
+**Validation and sign-off**
+
+- `reimage-prep-checks.md`
 - `reimaged-system-checks.md`
-- `reimaged-system-evidence.md`
+- `verify-reimaged-system.md`
+
+**Post-image restore**
+
+- `enroll-and-stabilize.md`
+- `restore-access.md`
 - `restore-apps.md`
+- `restore-docker.md`
+- `restore-git.md`
+- `restore-home.md`
 - `restore-intellij.md`
-- `stage-certs-keychain.md`
+- `restore-repos.md`
+- `restore-runtime.md`
+
+**Cross-cutting references**
+
+- `references/backup-file-reference.md`
+- `references/reimage-prep-evidence.md`
+- `references/reimaged-system-evidence.md`
+- `reimaging-scripts-guide.md`
+- `references/restore-file-reference.md`
 
 Use this file when you want one place to see the intended artifact layout without jumping between multiple phase guides.
 
@@ -40,7 +69,6 @@ Use this file when you want one place to see the intended artifact layout withou
 - [[#Where Files Are Read From|Where Files Are Read From]]
 - [[#Master Root Layout|Master Root Layout]]
 - [[#Collapsible Directory Sections|Collapsible Directory Sections]]
-- [[#License Keys and Activation Material|License Keys and Activation Material]]
 
 ---
 
