@@ -29,7 +29,7 @@
 #   ~/.pypirc ~/.gradle/gradle.properties ~/.m2/settings.xml (AWS/cloud NOT captured) ·
 #   Certs ~/.keystore, home-root *.jks, Java jssecacerts, Desktop/Downloads cert
 #   bundles, secrets-encrypted/certs/ · Cert review secrets-encrypted/extra-secrets-
-#   certs-review/ (state/ excluded) · Chrome Passwords*.csv · plus a generic sweep of
+#   certs-review/ (state/ excluded) · *Passwords*.csv · plus a generic sweep of
 #   every other pre-staged category under secrets-encrypted/ (claude/, intellij/,
 #   licenses/, postman/, raycast/, …). cloud/ and the review state/ folder are excluded.
 #
@@ -522,14 +522,14 @@ cmd_build() {
   while IFS= read -r -d '' f; do
     stage_file "chrome" "$f" "$SECRETS_DIR/chrome"; ok "$(basename "$f")  (from secrets-encrypted/chrome/)"
     (( staged_count++ )) || true; (( chrome_found++ )) || true
-  done < <(find "$SECRETS_DIR/chrome" -maxdepth 1 -type f -name "Chrome Passwords*.csv" -print0 2>/dev/null)
+  done < <(find "$SECRETS_DIR/chrome" -maxdepth 1 -type f -name "*Passwords*.csv" -print0 2>/dev/null)
   for search_dir in "$HOME/Downloads" "$HOME/Desktop"; do
     while IFS= read -r -d '' f; do
       stage_file "chrome" "$f"; ok "$(basename "$f")  (from $(basename "$search_dir")/)"
       (( staged_count++ )) || true; (( chrome_found++ )) || true
-    done < <(find "$search_dir" -maxdepth 1 -type f -name "Chrome Passwords*.csv" -print0 2>/dev/null)
+    done < <(find "$search_dir" -maxdepth 1 -type f -name "*Passwords*.csv" -print0 2>/dev/null)
   done
-  (( chrome_found == 0 )) && skip "Chrome Passwords*.csv not found"
+  (( chrome_found == 0 )) && skip "*Passwords*.csv not found"
   (( chrome_found > 0 )) && warn "Delete the plaintext CSV from its original location after this DMG is verified"
 
   # 8. Generic sweep of remaining pre-staged categories
@@ -546,6 +546,29 @@ cmd_build() {
     swept=$((staged_count - before_count)); (( swept > 0 )) && (( sweep_found += swept )) || true
   done
   (( sweep_found == 0 )) && skip "No additional pre-staged secret categories found"
+
+  # Pattern-matched categories stage only what their glob matches, so a file
+  # sitting in one of those directories can look staged on disk and never reach
+  # the image. That is how a Chrome export named "Chrome Shiva Passwords.csv"
+  # was silently dropped on 2026-08-16 — the glob assumed the profile name came
+  # last. Compare each pattern-matched category's file count against how many
+  # this run actually staged from it, and say so at BUILD time rather than
+  # leaving it for validate.
+  echo ""; echo -e "${BLD}Unmatched Files in Pattern-Matched Categories${RST}"; thin_hr
+  local unmatched_total=0 pm_cat pm_disk pm_staged
+  for pm_cat in chrome certs; do
+    [[ -d "$SECRETS_DIR/$pm_cat" ]] || continue
+    pm_disk="$(find "$SECRETS_DIR/$pm_cat" -type f ! -name '.DS_Store' 2>/dev/null | wc -l | tr -d ' ')"
+    pm_staged="$(find "$STAGING/$pm_cat" -type f ! -name '.DS_Store' 2>/dev/null | wc -l | tr -d ' ')"
+    (( pm_disk > pm_staged )) || continue
+    warn "$pm_cat/: $(( pm_disk - pm_staged )) file(s) on disk did not match this category's staging pattern"
+    find "$SECRETS_DIR/$pm_cat" -type f ! -name '.DS_Store' 2>/dev/null \
+      | while IFS= read -r pm_f; do
+          [[ -f "$STAGING/$pm_cat/$(basename "$pm_f")" ]] || echo "      ${pm_f#"$SECRETS_DIR"/}"
+        done
+    unmatched_total=$(( unmatched_total + pm_disk - pm_staged ))
+  done
+  (( unmatched_total == 0 )) && skip "Every file in a pattern-matched category was staged"
 
   # Bail if nothing staged
   echo ""; sort -u "$MANIFEST" -o "$MANIFEST"
@@ -746,6 +769,31 @@ cmd_validate() {
       status FAIL "$cat/ staged on disk but NOT in DMG" "$n file(s) on disk, 0 in image — rebuild before cleanup"
     fi
   done < <(list_categories)
+
+  # A category that was configured but never created is invisible to the loop
+  # above, because that loop walks directories that exist. That is exactly how
+  # the 2026-08-16 run shipped two DMGs without claude-code/: the target was
+  # added to secrets-targets.conf.sh after backup-home had already run, so the
+  # directory was never made and validation had nothing to compare. Check the
+  # configured list too, and say so when a configured destination produced
+  # nothing on disk.
+  local tgt tgt_dest tgt_cat
+  for tgt in ${SECRETS_TARGETS[@]+"${SECRETS_TARGETS[@]}"}; do
+    tgt_dest="$(config_field "$tgt" 3)"
+    [[ -n "$tgt_dest" ]] || continue
+    # dest is either "cat/file" or a bare "cat"; both yield the category.
+    tgt_cat="${tgt_dest%%/*}"
+    [[ -n "$tgt_cat" ]] || continue
+    case "$tgt_cat" in cloud) continue ;; esac
+    if [[ -d "$SECRETS_DIR/$tgt_cat" ]] && (( $(category_file_count "$tgt_cat") > 0 )); then
+      continue   # already reported by the loop above
+    fi
+    if [[ -d "$VOL/$tgt_cat" ]] && find "$VOL/$tgt_cat" -type f ! -name '.DS_Store' 2>/dev/null | grep -q .; then
+      continue   # in the image already; nothing loose on disk is expected
+    fi
+    status WARN "$tgt_cat/ configured but nothing staged" \
+      "no files on disk and none in the image — confirm the source path exists"
+  done
 
   # Foundational live-captured secrets (present only if this machine had them).
   if [[ -d "$VOL/gnupg/private-keys-v1.d" ]] && find "$VOL/gnupg/private-keys-v1.d" -type f 2>/dev/null | grep -q .; then

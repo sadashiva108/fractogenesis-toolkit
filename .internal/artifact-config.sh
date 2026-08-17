@@ -330,6 +330,10 @@ _artifact_config_main() {
     '*password*.csv'     '*password*.json'
     'http-client.private.env.json'
     'settings.xml'       'gradle.properties'
+    # Claude Code's live config and its rolling backups. The backups are named
+    # .claude.json.backup.<epoch>, so no generic shape matches them: the 2026-08-16
+    # run had five sitting in the plaintext tree while the sweep reported clean.
+    '.claude.json'       '.claude.json.*'
   )
 
   # Optional fragments: sourced only when present, so an existing workspace copy

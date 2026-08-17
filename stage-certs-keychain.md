@@ -135,8 +135,6 @@ Supporting helper (called by the entrypoint for staged-certs config init, normal
 $FRACTOGENESIS_HOME/.internal/certs/prepare-certs-keychain-staging.py
 ```
 
-**Renaming considerations —** migrated from `reference-vault/workflows/mac/reimage/stage-cert-keychain.md`. Renamed to the plural `stage-certs-keychain.md` so the name reads as two coordinate categories — the filesystem **certs** surface and the macOS **Keychain** — and matches the plural folder vocabulary (`public-certs/`, `secrets-encrypted/certs/`). The paired entrypoint follows suit as `bin/stage-certs-keychain.sh`, and `$REIMAGE_ROOT`/`$BACKUP_ROOT` become `$FRACTOGENESIS_HOME`/`$REIMAGE_ARTIFACT_ROOT`.
-
 ### Artifact Locations
 
 Two destinations, applied consistently:

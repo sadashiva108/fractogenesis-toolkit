@@ -2,7 +2,7 @@
 
 # Capture Office Stability
 
-**Last updated:** 2026-08-13
+**Last updated:** 2026-08-17
 
 Capture the evidence behind Outlook / OneNote instability when Office update churn or unexpected app closures are part of the reason this Mac is being reimaged. A continuous watcher logs the apps, their bundles, crash reports, and Microsoft update/management activity over days or weeks; a baseline collector then summarizes everything newer than a timestamp marker into a self-contained bundle. Run it pre-image (Phase 4D) to record the before picture, and again post-image (Phase 13E) to show whether the rebuilt Mac stayed stable.
 
@@ -28,9 +28,6 @@ Capture the evidence behind Outlook / OneNote instability when Office update chu
     - [[#Step 5 — Verify Outputs|Step 5 — Verify Outputs]]
 - [[#Decisions|Decisions]]
 - [[#Troubleshooting|Troubleshooting]]
-    - [[#Outlook or OneNote Closed Unexpectedly|Outlook or OneNote Closed Unexpectedly]]
-    - [[#The Watcher Is Not Running|The Watcher Is Not Running]]
-    - [[#No Crash Reports but Office Still Closed|No Crash Reports but Office Still Closed]]
 - [[#Supplemental Reference|Supplemental Reference]]
     - [[#Per-Section Baseline Files|Per-Section Baseline Files]]
     - [[#Baseline and Incident Queries|Baseline and Incident Queries]]
@@ -44,7 +41,7 @@ Capture the evidence behind Outlook / OneNote instability when Office update chu
 > In Obsidian, these are internal heading links. Click in Reading View, or Cmd-click in Live Preview/editing mode.
 
 > [!info] Callout legend
-> This runbook uses Obsidian callouts so each type reads distinctly: `[!note]` an easily-missed fact · `[!warning]` Pitfall, a mistake you are likely to make here · `[!bug]` Troubleshooting, what to do when a step misbehaves · `[!info] Return` how to get back after an out-of-sequence detour.
+> This runbook uses Obsidian callouts so each type reads distinctly: `[!note]` an easily-missed fact · `[!warning]` Pitfall, a mistake you are likely to make here · `[!bug]` Troubleshooting, what to do when a step misbehaves.
 
 ---
 
@@ -52,24 +49,26 @@ Capture the evidence behind Outlook / OneNote instability when Office update chu
 
 Preserve timestamped evidence that Outlook and OneNote close during managed Microsoft 365 / Office update, repair, replacement, or re-registration activity — often without generating a normal crash report — so the pattern is documented before the machine is wiped and can be re-checked after reimage. This is diagnostic evidence for IT and for the post-image comparison, not a backup you restore from.
 
-This runbook owns:
+**What it sets up**
 
-```text
-the Office stability capture (Outlook / OneNote) and its timestamped baseline bundles
-the Office watcher and the bundle-watch-start.marker workflow
-the pre-image (Phase 4D) and post-image (Phase 13E) Office comparison
-the Office stability checklists (pre-image and post-image)
-the full office-stability/ layout
-```
+- **Timestamped baseline bundles** — one collector run per window under `office-stability/`, holding the numbered section files `00`–`08`, the run summary, and the evidence ZIP.
+- **The watcher record and its marker** — continuous bundle-watch logs and workload snapshots under `$OFFICE_WATCH`, anchored by `bundle-watch-start.marker` so every check reports only this window's evidence.
+- **The Office stability checklists** — generated pre-image and post-image sign-off reports under `office-stability/checklists/`.
 
-It does not own:
+**What the rest of the workflow relies on it for**
 
-```text
-general system performance and workload evidence — capture-performance-audit.md (Phase 4C)
-the managed-app footprint (Office as a managed install) — capture-managed-inventory.md (Phase 2C / 13C)
-cross-phase readiness sign-off — reimage-prep-checks.md (Phase 6B)
-the Office/Outlook/OneNote caches, containers, and profiles themselves — these are IT-owned managed data and are never deleted here
-```
+- Phase 13E repeats the same window on the rebuilt Mac and compares matching sections against the pre-image bundle.
+- The Phase 6B readiness sign-off checks that pre-image Office evidence exists whenever Office instability is part of this reimage's reason.
+- An IT escalation draws its facts from the collected bundle rather than from recollection.
+
+**Ownership**
+
+| This runbook owns | Owned elsewhere |
+|---|---|
+| the Office stability capture (Outlook / OneNote) and its timestamped baseline bundles | general system performance and workload evidence — `capture-performance-audit` (Phase 4C / 13D) |
+| the Office watcher and the `bundle-watch-start.marker` workflow | the managed-app footprint, Office included — `capture-managed-inventory` (Phase 2C / 13C) |
+| the Office stability checklists, pre-image and post-image | cross-phase readiness sign-off — `reimage-prep-checks` (Phase 6B) |
+| the full `office-stability/` layout | the Office/Outlook/OneNote caches, containers, and profiles themselves — IT-owned managed data, never deleted here |
 
 This capture can be rerun at any time: each baseline collector run writes a fresh timestamped bundle and leaves earlier runs untouched.
 
@@ -83,7 +82,7 @@ Read this before running anything. No single command proves what is closing Outl
 
 The order in the steps is deliberate: start from a known-clean state (Office quit, no installer activity, no stale watcher) so a later bundle change is unambiguous, then layer the workload on in a fixed order (baseline snapshot → Outlook → OneNote → Docker last) so the watcher records clean process transitions.
 
-The single most important behavioral rule: **if Outlook or OneNote closes unexpectedly, do not reopen it first.** Reopening while the Office bundle is mid-replacement is exactly what produces the misleading DYLD missing-framework crashes. Capture a workload snapshot and a fast baseline first — see [[#Outlook or OneNote Closed Unexpectedly|Outlook or OneNote Closed Unexpectedly]].
+The single most important behavioral rule: **if Outlook or OneNote closes unexpectedly, do not reopen it first.** Reopening while the Office bundle is mid-replacement is exactly what produces the misleading DYLD missing-framework crashes, and it destroys the evidence the window was opened to collect.
 
 ### Run Modes
 
@@ -136,6 +135,9 @@ Artifact root:
 $REIMAGE_ARTIFACT_ROOT/office-stability/               # all generated Office evidence, bundles, and checklists land here
 ```
 
+> [!note]
+> `office-stability/` is an optional capture root. `prepare-artifact-root.md` deliberately does not create it, because most reimages never run this capture — this runbook creates it on demand in Step 1.
+
 Local watcher directory (stays on the Mac; not on the backup volume):
 
 ```text
@@ -177,7 +179,7 @@ The `reimage.env` values this runbook depends on. Values are resolved and writte
 | Variable | Meaning |
 |---|---|
 | `REIMAGE_ARTIFACT_ROOT` | Absolute path to the artifact root where `office-stability/` lives. |
-| `FRACTOGENESIS_HOME` | Absolute path to the toolkit repository root; entrypoints are run from here. |
+| `FRACTOGENESIS_HOME` | Absolute path to the toolkit repository root; entrypoints are run from here. Set by your shell startup / `.envrc`, not stored in `reimage.env`. |
 | `OFFICE_WATCH` | Local Office watcher directory holding live watcher logs and `bundle-watch-start.marker`. |
 | `REIMAGE_WORKSPACE_ROOT` | Optional local staging root for evidence gathered over days/weeks, before the backup volume is mounted. |
 
@@ -187,7 +189,7 @@ The `reimage.env` values this runbook depends on. Values are resolved and writte
 
 ## Before You Run Anything
 
-A short pre-flight: confirm you are set up, then confirm what this run is for. The concepts and the *why* are in [[#How the Workflow Works|How the Workflow Works]]; this is just the checklist.
+A short pre-flight: confirm you are set up, then confirm what you intend this run to do.
 
 ### Prerequisites
 
@@ -202,7 +204,7 @@ A short pre-flight: confirm you are set up, then confirm what this run is for. T
 ### Confirm Your Intent
 
 - Which phase this is — **pre-image** (Phase 4D, before wiping) or **post-image** (Phase 13E, after re-enrollment). This sets `--phase` and the bundle prefix.
-- Whether this is a scheduled **full baseline** or a **fast incident baseline** (`--skip-unified-log`) — see [[#Run Modes|Run Modes]].
+- Whether this is a scheduled **full baseline** or a **fast incident baseline** (`--skip-unified-log`).
 - Whether you can reproduce the same Docker workload later; if pre/post comparison matters, record the exact containers now so the post-image run matches.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -215,7 +217,13 @@ Run these in order: open a clean window, exercise Office while the watcher recor
 
 ### Step 1 — Prepare a Clean Test Window
 
-First, make sure the watcher has a home. Point `OFFICE_WATCH` at a local directory (a resolved absolute path), record it in `reimage.env`, then create it:
+Because this is an optional capture, Phase 1 does not scaffold its root. Create it once on this artifact root before the first collector run — this is safe to repeat:
+
+```bash
+mkdir -p "$REIMAGE_ARTIFACT_ROOT/office-stability"
+```
+
+Next, make sure the watcher has a home. Point `OFFICE_WATCH` at a local directory (a resolved absolute path), record it in `reimage.env`, then create it:
 
 ```bash
 export OFFICE_WATCH="$HOME/Desktop/office-watch"
@@ -231,7 +239,13 @@ pgrep -fl "Docker|com\.docker" || echo "Docker is not running"
 pgrep -fl "watch-office-today\.sh|caffeinate .*watch-office-today" || echo "No watcher currently running"
 ```
 
-Also confirm no installer/update/management activity is already in progress; if any is, let it finish first (the query is in [[#Baseline and Incident Queries|Baseline and Incident Queries]]).
+Confirm no installer, update, or management activity is already in progress; if any is, let it finish before opening the window:
+
+```bash
+ps -axo pid,ppid,etime,stat,%cpu,%mem,command \
+  | egrep '(^|/)(installd|system_installd|appstored|appstoreagent)( |$)|Microsoft AutoUpdate|Microsoft Update Assistant|com\.microsoft\.autoupdate|Company Portal|Intune|ManagedClient|mdmclient|jamf|Self Service' \
+  | grep -v egrep || echo "No installer/update/management processes found"
+```
 
 Start the watcher for the window. `caffeinate` keeps the Mac awake so the log has fewer gaps; stop it later with `Control + C`:
 
@@ -263,8 +277,8 @@ Stages, in order:
 3. **Open OneNote**, let it sync, then snapshot.
 4. **Start Docker last** — one representative day-to-day workload, then snapshot. Record the project/compose name and container count so the post-image run can match it.
 
-> [!warning] Pitfall
-> If Outlook or OneNote closes on its own at any point, **do not reopen it.** Reopening mid-replacement is what produces misleading DYLD crashes and destroys the evidence. Capture first — [[#Outlook or OneNote Closed Unexpectedly|Outlook or OneNote Closed Unexpectedly]].
+> [!bug] Troubleshooting
+> If Outlook or OneNote closes on its own at any point, do not reopen it — see [[#Outlook or OneNote Closed Unexpectedly|Outlook or OneNote Closed Unexpectedly]].
 
 ### Step 3 — Run the Baseline Collector
 
@@ -274,10 +288,10 @@ At the end of the window, turn everything the watcher recorded into a structured
 ./bin/capture-office-stability.sh --phase pre-reimage --artifact-root "$REIMAGE_ARTIFACT_ROOT"
 ```
 
-It writes the numbered section files `00`–`08` and `office-stability-summary.md` into the bundle (see [[#Bundle Layout|Bundle Layout]] for the tree and [[#Per-Section Baseline Files|Per-Section Baseline Files]] for what each file holds).
+It writes the numbered section files `00`–`08` and `office-stability-summary.md` into the bundle named under Artifact and Script Locations.
 
 > [!note]
-> If the unified-log pull is slow and you want a faster first pass, add `--skip-unified-log`; file `07-unified-log-office-since-marker.txt` then just records that it was skipped. This is the [[#Run Modes|fast incident baseline]] mode.
+> If the unified-log pull is slow and you want a faster first pass, add `--skip-unified-log`; file `07-unified-log-office-since-marker.txt` then just records that it was skipped.
 
 ### Step 4 — Generate the Checklist Report
 
@@ -287,7 +301,7 @@ Turn the bundle into a readable sign-off report under `office-stability/checklis
 ./bin/office-stability-checklist.sh --phase pre-reimage --artifact-root "$REIMAGE_ARTIFACT_ROOT" --open
 ```
 
-This is Office-specific and runs separately from the general Phase 6B checklist. Its findings roll up to the [[reimaging-guide#Core Assumptions|Phase 6B]] sign-off. The manual equivalents are in [[#Final Pre-Reimage Checklist|Final Pre-Reimage Checklist]].
+This is Office-specific and runs separately from the general Phase 6B checklist; its findings roll up to that Phase 6B sign-off. A hand-tracked equivalent is kept in Supplemental Reference for when you are not generating the report.
 
 ### Step 5 — Verify Outputs
 
@@ -306,8 +320,8 @@ sed -n '1,40p' "$LATEST/01-crash-reports-newer-than-marker.txt"
 sed -n '1,40p' "$LATEST/02-office-bundle-status.txt"
 ```
 
-> [!warning] Pitfall
-> An empty `01-crash-reports-newer-than-marker.txt` does not mean "nothing happened." Office frequently closes with no crash report at all — that absence is itself part of the evidence, so still check `02-office-bundle-status.txt` for bundles modified after the marker.
+> [!bug] Troubleshooting
+> An empty `01-crash-reports-newer-than-marker.txt` does not mean nothing happened — see [[#No Crash Reports but Office Still Closed|No Crash Reports but Office Still Closed]].
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -320,7 +334,7 @@ The scripts capture uniformly; interpreting the managed-update context is the ju
 | Decision | Why it stays with you |
 |---|---|
 | Is an Office bundle change after the marker expected? | Managed channels legitimately update Office; only you know whether a given change lines up with normal activity or is the disruptive pattern under investigation. |
-| Is this ready to escalate to IT? | The evidence supports a ticket ([[#Suggested IT Ticket|Suggested IT Ticket]]), but whether the pattern is strong enough to raise now is yours to weigh. |
+| Is this ready to escalate to IT? | The evidence supports a ticket, but whether the pattern is strong enough to raise now is yours to weigh. |
 | Post-image: is the issue resolved, unchanged, or still open? | Some churn is normal after re-enrollment; deciding whether the post-image bundle shows the problem gone is a human comparison call. |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -328,6 +342,10 @@ The scripts capture uniformly; interpreting the managed-update context is the ju
 ---
 
 ## Troubleshooting
+
+Three problems span more than one step or have fixes long enough to break a step's flow. Each step that can surface one links in from a callout.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
 
 ### Outlook or OneNote Closed Unexpectedly
 
@@ -346,7 +364,7 @@ latest="$(ls -t "$OFFICE_WATCH"/bundle-watch-*.log | head -1)"
 tail -n 800 "$latest" > "$OFFICE_WATCH/latest-watcher-after-close-$(date +%Y%m%d-%H%M%S).txt"
 ```
 
-Check for crash reports newer than the marker (their absence is meaningful — see [[#No Crash Reports but Office Still Closed|No Crash Reports but Office Still Closed]]):
+Check for crash reports newer than the marker — their absence is itself meaningful, not a dead end:
 
 ```bash
 find "$HOME/Library/Logs/DiagnosticReports" "/Library/Logs/DiagnosticReports" \
@@ -362,6 +380,8 @@ Then run the fast incident baseline to snapshot everything before reopening:
 ./bin/capture-office-stability.sh --phase pre-reimage --artifact-root "$REIMAGE_ARTIFACT_ROOT" --skip-unified-log
 ```
 
+[[#Step 3 — Run the Baseline Collector|⮕ Continue to Step 3 — Run the Baseline Collector]]
+
 ### The Watcher Is Not Running
 
 If the collector reports a missing watcher directory or marker, or you are unsure the watcher is live, check for the process and the newest log:
@@ -371,13 +391,15 @@ pgrep -fl "watch-office-today\.sh|caffeinate .*watch-office-today" || echo "Offi
 ls -lt "$OFFICE_WATCH"/bundle-watch-*.log 2>/dev/null | head -5 || echo "No watcher logs found"
 ```
 
-If no process and no recent log exists, start the watcher and set a fresh marker (Step 1) before opening Outlook or OneNote — a bundle collected without a covering watcher log will be missing the process-transition and signal sections.
+If no process and no recent log exists, the window has no covering watcher log, and a bundle collected now would be missing its process-transition and signal sections. Restart the watcher and set a fresh marker before opening Outlook or OneNote.
+
+[[#Step 1 — Prepare a Clean Test Window|⮕ Continue to Step 1 — Prepare a Clean Test Window]]
 
 ### No Crash Reports but Office Still Closed
 
-This is the expected pattern, not a failure. Office closing with no `.ips`/`.crash` file points to a forced close, clean termination, or app-bundle replacement during a managed update — not a resource crash. Do not conclude "nothing happened": check `02-office-bundle-status.txt` for bundles modified after the marker and the AutoUpdate / install.log tails (`05`, `06`) for the update window. Interpretation cues are in [[#Interpreting the Evidence|Interpreting the Evidence]].
+This is the expected pattern, not a failure. Office closing with no `.ips`/`.crash` file points to a forced close, clean termination, or app-bundle replacement during a managed update — not a resource crash. Do not conclude "nothing happened": check `02-office-bundle-status.txt` for bundles modified after the marker, and the `install.log` and AutoUpdate tails (`05`, `06`) for the update window around them.
 
-[[#Table of Contents|⬆ Back to Table of Contents]]
+[[#Step 5 — Verify Outputs|⮕ Continue to Step 5 — Verify Outputs]]
 
 ---
 
@@ -404,15 +426,7 @@ What the collector writes into each baseline bundle:
 
 ### Baseline and Incident Queries
 
-The collector runs every check below automatically. Use these standalone only to isolate one check — for example while triaging live, or to zero in on a narrower window than "since the marker."
-
-Check for installer / update / management activity:
-
-```bash
-ps -axo pid,ppid,etime,stat,%cpu,%mem,command \
-  | egrep '(^|/)(installd|system_installd|appstored|appstoreagent)( |$)|Microsoft AutoUpdate|Microsoft Update Assistant|com\.microsoft\.autoupdate|Company Portal|Intune|ManagedClient|mdmclient|jamf|Self Service' \
-  | grep -v egrep || echo "No installer/update/management processes found"
-```
+The collector runs every marker-relative check automatically. Use these standalone only to isolate one check — for example while triaging live, or to zero in on a narrower window than "since the marker."
 
 Check whether any Office bundle changed after the marker:
 
@@ -490,7 +504,7 @@ Mitigation is limited on a managed Mac, but useful temporary steps: avoid reopen
 
 ### Final Pre-Reimage Checklist
 
-The generated report from `office-stability-checklist.sh --phase pre-reimage` (Step 4) is the preferred sign-off. This is the human-readable equivalent when you are tracking it by hand:
+The generated report from `office-stability-checklist.sh --phase pre-reimage` is the preferred sign-off. This is the human-readable equivalent when you are tracking it by hand:
 
 ```text
 [ ] Watcher ran with an early marker before reimage
@@ -554,7 +568,9 @@ Date: YYYY-MM-DD
 TOC verification performed before publishing:
 - every Table of Contents entry resolves to a heading present in this file;
 - deleted optional sections were also removed from the Table of Contents;
-- each top-level section ends with a single "Back to Table of Contents" link.
+- each top-level section ends with a single "Back to Table of Contents" link,
+  except Troubleshooting, whose back-link sits under its intro and whose routed
+  symptom subsections stay out of the Table of Contents;
 - anchors #final-pre-reimage-checklist and #post-image-office-stability-checklist-template
   are preserved for inbound links from reimaging-guide.md (Phase 4D / Phase 13E).
 -->

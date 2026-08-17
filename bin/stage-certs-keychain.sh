@@ -12,6 +12,9 @@
 #   stage-certs-keychain.sh plan [--artifact-root ARTIFACT_ROOT]
 #   stage-certs-keychain.sh normalize [--artifact-root ARTIFACT_ROOT]
 #   stage-certs-keychain.sh init-staged-certs-config [--env-file REIMAGE_ENV] [--force]
+#
+#   --force also applies to keychain-detail: it overrides the refusal to write a
+#   second checklist beside one whose rows have already been reviewed.
 #   stage-certs-keychain.sh keychain-detail [--open] [-- HELPER_ARGS...]
 #
 # Modes:
@@ -520,6 +523,43 @@ run_keychain_detail() {
   local summary="$SECRETS_DIR/certs/keychain-manual-exports/keychain-export-summary-$STAMP.md"
   local inventory="$PUBLIC_CERTS_DIR/certs/keychain-cert-export-inventory-$STAMP.md"
   mkdir -p "$EXTRA_CERTS_REVIEW_DIR/decisions" "$PUBLIC_CERTS_DIR/certs" "$SECRETS_DIR/certs/keychain-manual-exports"
+
+  # Refuse to write a second, disagreeing checklist beside a reviewed one.
+  #
+  # Every run stamps a new filename, so a rerun after review left the completed
+  # copy stranded under the old stamp and produced a fresh all-TODO_REVIEW file
+  # next to it. Both then rode into the encrypted DMG, and a restore found two
+  # records of the same decisions that disagreed, with nothing marking which was
+  # authoritative. That happened twice on the 2026-08-16/17 run.
+  #
+  # A checklist counts as reviewed once any row has moved off TODO_REVIEW.
+  local reviewed_existing=""
+  local candidate
+  for candidate in "$EXTRA_CERTS_REVIEW_DIR/decisions"/keychain-manual-export-checklist-*.md.proposed; do
+    [[ -f "$candidate" ]] || continue
+    [[ "$candidate" == "$checklist" ]] && continue
+    # Two shapes have existed: keychain-detail writes "- Status: VALUE" blocks,
+    # and older plan output wrote "| VALUE |" table rows. Match either, and
+    # ignore the header's status legend by anchoring on the field prefix.
+    if grep -qE '^-[[:space:]]+Status:[[:space:]]+(DOCUMENT|DOCUMENTED|EXPORT|SKIP)([[:space:]]|$)' "$candidate" 2>/dev/null \
+      || grep -qE '^\|[[:space:]]*(DOCUMENTED|EXPORT|SKIP)[[:space:]]*\|' "$candidate" 2>/dev/null; then
+      reviewed_existing="$candidate"
+    fi
+  done
+
+  if [[ -n "$reviewed_existing" && "$FORCE_INIT" != true ]]; then
+    echo ""
+    warn "A reviewed Keychain checklist already exists:"
+    hint "$reviewed_existing"
+    hint ""
+    hint "Generating another would put two disagreeing records in the DMG. Either:"
+    hint "  - keep the reviewed one and skip this run, or"
+    hint "  - move it aside deliberately, then rerun, or"
+    hint "  - rerun with --force to generate anyway and reconcile by hand."
+    echo ""
+    err "Refusing to write a second checklist beside a reviewed one."
+    return 1
+  fi
   # Live capture reads user-level profiles via `profiles show` and computer-level
   # via `sudo profiles show`, so you may be prompted for your admin password.
   # Pass pre-captured dumps after `--` (e.g. -- --profiles-file DUMP) to skip sudo.

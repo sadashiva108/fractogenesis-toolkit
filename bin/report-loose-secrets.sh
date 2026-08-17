@@ -90,7 +90,7 @@
 #            Phase 3C cleanup never removes them. This is the finding that
 #            matters; bin/stage-loose-secrets.sh is what resolves it.
 #   INSIDE   A file under secrets-encrypted/ that is not recognisable evidence
-#            (a .dmg, checksum, .txt/.tsv/.md/.log) — reported only once a DMG
+#            (a .dmg, checksum, .txt/.tsv/.md/.log/.proposed) — only once a DMG
 #            exists in secrets-encrypted/. Loose payload that should have been
 #            cleaned up after the DMG was verified.
 #   STAGED   The same payload before any DMG exists. Expected: staging is what
@@ -282,10 +282,16 @@ fi
 
 # Files that legitimately live under secrets-encrypted/ without being payload:
 # the DMG itself, its checksum, and the manifests/reports around it.
+#
+# '*.proposed' is here because Phase 3A's review artifacts are named
+# <name>.md.proposed and <name>.conf.sh.proposed. The suffix comes AFTER the
+# real extension, so `-iname '*.md'` does not match them and every regenerated
+# checklist read as un-cleaned payload. They are review records that state in
+# their own header that no password may be written into them.
 ALLOWED_EVIDENCE_PRED=(
   -iname '*.dmg'    -o -iname '*.sha256' -o -iname '*.sha256sum'
   -o -iname '*.txt' -o -iname '*.tsv'    -o -iname '*.md'
-  -o -iname '*.log'
+  -o -iname '*.log' -o -iname '*.proposed'
 )
 
 SECRETS_DIR="$REIMAGE_ARTIFACT_ROOT/secrets-encrypted"

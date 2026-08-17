@@ -886,9 +886,15 @@ def write_manual_keychain_export_checklist(review_dir: Path, stamp: str, records
     if not rows:
         return None
     rows.sort(key=lambda rec: (rec.get("identity_fingerprint", "-"), rec.get("identifier", "-")))
-    out = review_dir / f"keychain-manual-export-checklist-{stamp}.md.proposed"
+    # Distinct from keychain-detail's checklist. Both used to be named
+    # keychain-manual-export-checklist-<stamp>.md.proposed, so a decisions/
+    # listing mixed two different artifacts -- a candidate table from plan rows
+    # and a per-identity checklist with delivery, issuer chain, and exportability
+    # -- that looked like successive versions of one file and were not.
+    out = review_dir / f"keychain-export-candidates-{stamp}.md.proposed"
     with out.open("w", encoding="utf-8") as f:
-        f.write("# Proposed Keychain Manual Export Checklist\n\n")
+        f.write("# Proposed Keychain Export Candidates\n\n")
+        f.write("Candidate list derived from the normalized plan. The authoritative per-identity record is `keychain-manual-export-checklist-*.md.proposed`, written by `stage-certs-keychain.sh keychain-detail`.\n\n")
         f.write(f"Generated: {dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
         f.write("This is a proposed review checklist generated from primary `keychain-identity` rows in the normalized Phase 3A plan. It is not proof that anything was exported. Review each identity in Keychain Access and export only what is still required.\n\n")
         f.write("Save any `.p12` / `.pfx` export password only in the approved password manager. Do not put passwords in this file, filenames, scripts, OneDrive, iCloud, or the backup folder.\n\n")

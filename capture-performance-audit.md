@@ -2,7 +2,7 @@
 
 # Capture Performance Audit
 
-**Last updated:** 2026-08-13
+**Last updated:** 2026-08-17
 
 A repeatable, read-only performance baseline. It captures short-duration scenario bundles under named workloads so general workstation performance can be compared like-for-like across a reimage. Run it pre-image (Phase 4C) under one or more named scenarios, then run the same scenarios post-image (Phase 13D) so the two sets compare cleanly.
 
@@ -35,7 +35,7 @@ A repeatable, read-only performance baseline. It captures short-duration scenari
 > In Obsidian, these are internal heading links. Click in Reading View, or Cmd-click in Live Preview/editing mode.
 
 > [!info] Callout legend
-> This runbook uses Obsidian callouts so each type reads distinctly: `[!note]` an easily-missed fact · `[!warning]` Pitfall, a mistake you are likely to make here · `[!bug]` Troubleshooting, what to do when a step misbehaves · `[!info] Return` how to get back after an out-of-sequence detour.
+> This runbook uses Obsidian callouts so each type reads distinctly: `[!note]` an easily-missed fact · `[!warning]` Pitfall, a mistake you are likely to make here · `[!bug]` Troubleshooting, what to do when a step misbehaves.
 
 ---
 
@@ -43,22 +43,24 @@ A repeatable, read-only performance baseline. It captures short-duration scenari
 
 Capture read-only performance evidence under one or more named workloads before the Mac is wiped, then repeat the same named workloads after reimage so general workstation responsiveness can be compared like-for-like. The bundles are diagnostic evidence, not something you restore from — nothing here is re-applied to the machine. They exist so that, after reimage, you can tell whether the new image is faster, slower, or unchanged under comparable load, and where any regression lives.
 
-This runbook owns:
+**What it sets up**
 
-```text
-the performance-audit capture and its per-scenario timestamped bundles
-the optional quantitative rollup summary
-interpretation of the captured performance metrics
-the pre-image (Phase 4C) and post-image (Phase 13D) comparison workflow
-```
+- **Per-scenario bundles** — one self-contained timestamped run directory per named workload under `performance-audit/`, holding that run's samples, `manifest.txt`, and the auto-filled manual-context files.
+- **The matched pre/post pair** — the same scenario names captured at Phase 4C and again at Phase 13D, so the two sides line up file for file.
+- **The optional rollup summary** — a quantitative CSV package generated from long-running helper history when trend context is worth having.
 
-It does not own:
+**What the rest of the workflow relies on it for**
 
-```text
-broad system inventory — capture-system-inventory.md (Phase 4B)
-Office-specific stability evidence — capture-office-stability.md (Phase 4D)
-cross-phase readiness sign-off — reimage-prep-checks.md (Phase 6B)
-```
+- Phase 13D reruns the same scenarios on the rebuilt Mac and reads these bundles as the baseline to compare against.
+- The Phase 6B readiness sign-off checks that the chosen pre-image scenario bundles exist and that their manual-context files were reviewed while the run was fresh.
+
+**Ownership**
+
+| This runbook owns | Owned elsewhere |
+|---|---|
+| the performance-audit capture and its per-scenario timestamped bundles | broad system inventory — `capture-system-inventory` (Phase 4B / 13B) |
+| the optional quantitative rollup summary, and interpretation of the captured metrics | Office-specific stability evidence — `capture-office-stability` (Phase 4D / 13E) |
+| the pre-image (Phase 4C) and post-image (Phase 13D) comparison workflow | cross-phase readiness sign-off — `reimage-prep-checks` (Phase 6B) |
 
 This capture can be rerun at any time: each run writes a fresh timestamped bundle under its scenario name and leaves earlier runs untouched.
 
@@ -70,7 +72,7 @@ This capture can be rerun at any time: each run writes a fresh timestamped bundl
 
 Read this before running anything. General workstation performance is only meaningful in comparison, so this capture is built around **matched pairs**: the same named workload run once before the reimage and once after. Each run collects repeated samples (memory pressure, top processes, app rollups, responsiveness probes, Docker and IntelliJ state) into one self-contained, timestamped bundle you can read from the external drive without the machine present.
 
-The workflow is script-first. `capture-performance-audit.sh` runs every collection area in one pass and writes the bundle, its `manifest.txt`, and the auto-filled `manual-observations.md` / `workload-reproduction-config.md` files. You choose the `--scenario` (which workload) and `--phase` (`pre-image` or `post-image`); the script does the rest. Longer-running trend history and a quantitative rollup are optional add-ons, covered in [[#Optional Helper History and Rollup Summary|Optional Helper History and Rollup Summary]] — most runs need only the scenario bundle.
+The workflow is script-first. `capture-performance-audit.sh` runs every collection area in one pass and writes the bundle, its `manifest.txt`, and the auto-filled `manual-observations.md` / `workload-reproduction-config.md` files. You choose the `--scenario` (which workload) and `--phase` (`pre-image` or `post-image`); the script does the rest. Longer-running trend history and a quantitative rollup are optional add-ons kept in Supplemental Reference — most runs need only the scenario bundle.
 
 The preferred path is: capture at least the `normal-workload` scenario pre-image, capture the same scenario post-image under the closest matching workload, then compare the pair. Extra scenarios add resolution but are optional.
 
@@ -126,6 +128,9 @@ Artifact root:
 $REIMAGE_ARTIFACT_ROOT/performance-audit/                     # all scenario bundles and the rollup summary land here
 ```
 
+> [!note]
+> `performance-audit/` is an optional capture root. `prepare-artifact-root.md` deliberately does not create it, because most reimages never run this capture — this runbook creates it on demand in Step 1.
+
 ### Bundle Layout
 
 Each run writes one timestamped bundle whose name carries `<phase>` and `<scenario>`; the optional rollup summary writes under `rollup-summary/`:
@@ -166,7 +171,7 @@ The `reimage.env` values this runbook depends on. Values are resolved and writte
 | Variable | Meaning |
 |---|---|
 | `REIMAGE_ARTIFACT_ROOT` | Absolute path to the artifact root where `performance-audit/` lives; the default capture destination. |
-| `FRACTOGENESIS_HOME` | Absolute path to the toolkit repository root; entrypoints are run from here. |
+| `FRACTOGENESIS_HOME` | Absolute path to the toolkit repository root; entrypoints are run from here. Set by your shell startup / `.envrc`, not stored in `reimage.env`. |
 | `REIMAGE_WORKSPACE_ROOT` | Optional local staging root. Use it when captures run for days or weeks before the backup drive is mounted; stage bundles here, then copy them into `REIMAGE_ARTIFACT_ROOT`. |
 | `PERFORMANCE_HISTORY_SOURCE` | Optional. The long-lived `mac_memory_health.sh` output directory read by the rollup summary (typically `~/Library/Logs/mac-memory-health`). |
 
@@ -176,12 +181,12 @@ The `reimage.env` values this runbook depends on. Values are resolved and writte
 
 ## Before You Run Anything
 
-A short pre-flight: confirm you are set up, then confirm what this run is for. The concepts and the *why* are in [[#How the Workflow Works|How the Workflow Works]]; this is just the checklist.
+A short pre-flight: confirm you are set up, then confirm what you intend this run to do.
 
 ### Prerequisites
 
+- Your shell is at the repository root — `cd "$FRACTOGENESIS_HOME"` once for the session. Per the guide's [[reimaging-guide#Core Assumptions|Core Assumptions]], the commands below assume this and don't repeat it.
 - `REIMAGE_ARTIFACT_ROOT` resolves and its destination volume is mounted (`reimage.env` produced by `prepare-artifact-root.md`) — unless you are staging locally under `REIMAGE_WORKSPACE_ROOT` first.
-- You are running commands from `$FRACTOGENESIS_HOME`, per the guide's [[reimaging-guide#Core Assumptions|Core Assumptions]].
 - You are on the Mac being measured — the capture reports on the host it runs on.
 
 > [!note]
@@ -190,7 +195,7 @@ A short pre-flight: confirm you are set up, then confirm what this run is for. T
 ### Confirm Your Intent
 
 - Which **phase** this is: `pre-image` (Phase 4C, before wiping) or `post-image` (Phase 13D, after setup settles) — sets `--phase` and the bundle prefix.
-- Which **scenario(s)** to capture. `normal-workload` is the minimum; add `clean-boot`, `active-dev`, or `symptom-capture` when they add resolution (see [[#Scenarios|Scenarios]]). Post-image, reuse the same scenario names you captured pre-image.
+- Which **scenario(s)** to capture. `normal-workload` is the minimum; add `clean-boot`, `active-dev`, or `symptom-capture` when they add resolution. Post-image, reuse the same scenario names you captured pre-image.
 - Where the bundle lands: the default `REIMAGE_ARTIFACT_ROOT/performance-audit/`, or a local stage under `REIMAGE_WORKSPACE_ROOT/performance-audit/` when the backup drive is not mounted yet.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -199,7 +204,7 @@ A short pre-flight: confirm you are set up, then confirm what this run is for. T
 
 ## Sequential Steps
 
-Run these in order: confirm the environment, run the capture for each chosen scenario, then verify the bundle landed and review the manual-context files. Post-image runs repeat Step 2 with `--phase post-image` and the matching scenario names.
+Run these in order: confirm the environment and create the capture root, run the capture for each chosen scenario, then verify the bundle landed and review the manual-context files. Post-image runs repeat Step 2 with `--phase post-image` and the matching scenario names.
 
 ### Step 1 — Prepare and Validate
 
@@ -207,6 +212,12 @@ Confirm the entrypoint parses and the environment resolves. `capture-performance
 
 ```bash
 ./bin/capture-performance-audit.sh --help
+```
+
+Because this is an optional capture, Phase 1 does not scaffold its root. Create it once on this artifact root before the first run — this is safe to repeat:
+
+```bash
+mkdir -p "$REIMAGE_ARTIFACT_ROOT/performance-audit"
 ```
 
 Optional — for the rollup trend summary, point `PERFORMANCE_HISTORY_SOURCE` at your `mac_memory_health.sh` history directory and record it in `reimage.env`. Skip this if you do not use that helper:
@@ -217,7 +228,7 @@ python3 bin/prepare-artifact-root.py upsert-env --env-file reimage.env "PERFORMA
 ```
 
 > [!note]
-> With no `--output`, the capture defaults to `$REIMAGE_ARTIFACT_ROOT/performance-audit/`. Pass `--output "$REIMAGE_WORKSPACE_ROOT/performance-audit"` only when staging locally before the backup drive is mounted, or `--artifact-root PATH` to point at a different artifact root for one invocation.
+> With no `--output`, the capture defaults to `$REIMAGE_ARTIFACT_ROOT/performance-audit/`. Pass `--output "$REIMAGE_WORKSPACE_ROOT/performance-audit"` only when staging locally before the backup drive is mounted, or `--artifact-root PATH` to point at a different artifact root for one invocation. When you stage locally, create that destination the same way.
 
 ### Step 2 — Run the Capture
 
@@ -227,7 +238,7 @@ Run one invocation per scenario. For the pre-image `normal-workload` baseline:
 ./bin/capture-performance-audit.sh --phase pre-image --scenario normal-workload --sample-count 6 --sample-interval 30
 ```
 
-Add scenarios as needed, reusing the flags from the [[#Scenarios|Scenarios]] table (for example `--scenario active-dev --sample-count 10 --sample-interval 30`).
+Add scenarios as needed, reusing the flags from the Scenarios table (for example `--scenario active-dev --sample-count 10 --sample-interval 30`).
 
 For the post-image run (Phase 13D, after the new image settles), keep the same scenario name and switch the phase:
 
@@ -243,6 +254,9 @@ If you staged a bundle under `REIMAGE_WORKSPACE_ROOT`, copy it into the artifact
 cp -R "$REIMAGE_WORKSPACE_ROOT/performance-audit/." "$REIMAGE_ARTIFACT_ROOT/performance-audit/"
 ```
 
+> [!bug] Troubleshooting
+> If a `clean-boot` run records Docker as stopped, see [[#A clean-boot run shows Docker stopped|A clean-boot run shows Docker stopped]].
+
 ### Step 3 — Verify Outputs
 
 Confirm the newest bundle landed and holds its sample directories and manifest:
@@ -253,14 +267,17 @@ echo "$LATEST"
 ls -1 "$LATEST"
 ```
 
-Review the auto-filled manual-context files so the post-image run can reproduce this workload — this is a hand check that rolls up to the Phase 6B sign-off. Confirm `manual-observations.md` records the workload context and any remaining TODOs, and that `workload-reproduction-config.md` reflects the apps and Docker state you actually had open; see [[#Manual Observations|Manual Observations]] for what to fill in:
+Review the auto-filled manual-context files so the post-image run can reproduce this workload — this is a hand check that rolls up to the Phase 6B sign-off. Confirm `manual-observations.md` records the workload context and any remaining TODOs, and that `workload-reproduction-config.md` reflects the apps and Docker state you actually had open:
 
 ```bash
 sed -n '1,40p' "$LATEST/manual-observations.md"
 ```
 
+> [!warning] Pitfall
+> A bundle missing its sample directories means the run was interrupted. Rerun rather than trusting a partial bundle — each run writes a fresh timestamped directory, so a rerun overwrites nothing.
+
 > [!bug] Troubleshooting
-> Non-fatal stderr entries and missing-history warnings are expected on some Macs; they are covered in [[#Troubleshooting|Troubleshooting]]. A bundle missing its sample directories means the run was interrupted — rerun rather than trusting a partial bundle.
+> If the run finished but `logs/errors.log` holds warnings, see [[#The error log shows warnings but the run succeeded|The error log shows warnings but the run succeeded]].
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -273,7 +290,7 @@ The script captures uniformly; deciding what is worth capturing and what a diffe
 | Decision | Why it stays with you |
 |---|---|
 | Which scenarios are worth capturing? | `normal-workload` is the floor, but only you know whether `clean-boot`, `active-dev`, or `symptom-capture` reflect the slowness you are chasing. |
-| Is a pre/post delta real degradation or just noise? | Sample-to-sample variance and workload mismatch both move the numbers; deciding whether a delta is signal or noise is a judgment call (see [[#Reviewing and Comparing Bundles|Reviewing and Comparing Bundles]]). |
+| Is a pre/post delta real degradation or just noise? | Sample-to-sample variance and workload mismatch both move the numbers; deciding whether a delta is signal or noise is a judgment call. |
 | Do you need the longer helper history at all? | For a straight before/after the scenario bundles may be enough; helper history and the rollup only earn their place when you need chronic-vs-intermittent trend context. |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -282,7 +299,11 @@ The script captures uniformly; deciding what is worth capturing and what a diffe
 
 ## Troubleshooting
 
-### The error log shows warnings but the run "succeeded"
+Two outcomes look like failures but are not, and both would otherwise interrupt the flow of the step that surfaces them. Each step links in from a callout.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+### The error log shows warnings but the run succeeded
 
 The script writes command stderr to `logs/errors.log` inside the bundle. Several entries are evidence, not failures.
 
@@ -293,11 +314,13 @@ The script writes command stderr to `logs/errors.log` inside the bundle. Several
 | Command exited for an unavailable tool | A tool is not present or not applicable on this Mac. | Continue if the main evidence for that area exists. |
 | No historical metrics | The optional hourly helper history was not installed. | Run anyway; live samples are still captured. |
 
-### `clean-boot` shows Docker stopped
+[[#Step 3 — Verify Outputs|⮕ Continue to Step 3 — Verify Outputs]]
 
-For a `clean-boot` scenario it is fine for Docker Desktop to be off. The script records that in `docker/docker-daemon-state.txt` and skips daemon-dependent commands. Note in `manual-observations.md` that Docker was intentionally stopped so the matching post-image `clean-boot` uses the same assumption.
+### A clean-boot run shows Docker stopped
 
-[[#Table of Contents|⬆ Back to Table of Contents]]
+For a `clean-boot` scenario it is fine for Docker Desktop to be off. The script records that in `docker/docker-daemon-state.txt` and skips daemon-dependent commands. Note in `manual-observations.md` that Docker was intentionally stopped, so the matching post-image `clean-boot` uses the same assumption.
+
+[[#Step 3 — Verify Outputs|⮕ Continue to Step 3 — Verify Outputs]]
 
 ---
 
@@ -366,5 +389,7 @@ workload-reproduction-config.md
 TOC verification performed before publishing:
 - every Table of Contents entry resolves to a heading present in this file;
 - deleted optional sections were also removed from the Table of Contents;
-- each top-level section ends with a single "Back to Table of Contents" link.
+- each top-level section ends with a single "Back to Table of Contents" link,
+  except Troubleshooting, whose back-link sits under its intro and whose routed
+  symptom subsections stay out of the Table of Contents.
 -->

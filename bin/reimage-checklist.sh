@@ -539,10 +539,17 @@ if [[ "$PHASE" == "pre" ]]; then
   # performance-audit are checked here but never scaffolded (optional captures,
   # created by their runbooks only when relevant), while folders Phase 1 always
   # creates can legitimately still be empty here and are checked elsewhere.
+  # office-stability and performance-audit are OPTIONAL per reimaging-guide.md
+  # ("All Phase 4 captures are optional"), so their absence must not FAIL — a
+  # machine reimaged for neither an Office nor a performance problem could
+  # otherwise never reach a green Phase 6B. They report SKIP with the reason.
+  OPTIONAL_SUBDIRS=":office-stability:performance-audit:"
   for subdir in app-settings-backup repo-audit-reports gitignore-superset managed-inventory office-stability performance-audit secrets-encrypted system-inventory toolkit-snapshot; do
     if dir_nonempty "$REIMAGE_ARTIFACT_ROOT/$subdir"; then
       SIZE="$(du -sh "$REIMAGE_ARTIFACT_ROOT/$subdir" 2>/dev/null | cut -f1)"
       record_check PASS "Subdir: $subdir" "$SIZE on disk"
+    elif [[ "$OPTIONAL_SUBDIRS" == *":$subdir:"* ]]; then
+      record_check SKIP "Subdir: $subdir" "Optional capture — only needed when it is part of why this Mac is being reimaged"
     elif [[ -d "$REIMAGE_ARTIFACT_ROOT/$subdir" ]]; then
       record_check WARN "Subdir: $subdir" "Exists but empty"
     else
@@ -814,7 +821,7 @@ if [[ "$PHASE" == "pre" ]]; then
   if dir_nonempty "$PERF_DIR"; then
     record_check PASS "Performance audit captured" "$(du -sh "$PERF_DIR" 2>/dev/null | cut -f1)"
   else
-    record_check FAIL "Performance audit captured" "Empty -- run capture-performance-audit.sh"
+    record_check SKIP "Performance audit captured" "Optional -- run capture-performance-audit.sh only when before/after evidence for slowness matters"
   fi
 
   MANUAL_OBS="$(newest_matching "$PERF_DIR" "manual-observations.md")"
@@ -833,7 +840,7 @@ if [[ "$PHASE" == "pre" ]]; then
   if dir_nonempty "$OFFICE_DIR"; then
     record_check PASS "Office stability evidence present" "$(du -sh "$OFFICE_DIR" 2>/dev/null | cut -f1)"
   else
-    record_check WARN "Office stability evidence present" "Empty -- run capture-office-stability.sh"
+    record_check SKIP "Office stability evidence present" "Optional -- run capture-office-stability.sh only when Office instability is part of why this Mac is being reimaged"
   fi
   if [[ -n "$(find "$OFFICE_DIR" \( -name "*.sh" -o -name "*.py" \) 2>/dev/null | head -1)" ]]; then
     record_check WARN "No active scripts in office-stability/" "Scripts found -- remove; keep in Git repo only"
