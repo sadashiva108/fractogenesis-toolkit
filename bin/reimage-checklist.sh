@@ -704,7 +704,16 @@ if [[ "$PHASE" == "pre" ]]; then
     done
 
     if [[ -n "${OPEN_FINDINGS:=$LOOSE_REPORTS_DIR/open-findings.md}" && -f "$OPEN_FINDINGS" ]]; then
-      OPEN_COUNT="$(grep -cE '^\| (OUTSIDE|INSIDE) ' "$OPEN_FINDINGS" 2>/dev/null)"
+      # open-findings.md has an "## Open" section and a "## Resolved" section,
+      # and both use the same row shape. Counting matches across the whole file
+      # reported every resolved candidate as still open -- 37 unresolved on a
+      # drive whose own report said "Open - 0". Count only inside "## Open".
+      OPEN_COUNT="$(awk '
+        /^## Open/      { in_open = 1; next }
+        /^## /          { in_open = 0 }
+        in_open && /^\| (OUTSIDE|INSIDE) / { n++ }
+        END             { print n + 0 }
+      ' "$OPEN_FINDINGS" 2>/dev/null)"
       if [[ "${OPEN_COUNT:-0}" -gt 0 ]]; then
         record_check FAIL "Open loose-secret findings" \
           "${OPEN_COUNT} unresolved in open-findings.md -- stage them, or record each as an exception with a reason in loose-secret-exceptions.conf.sh"
@@ -738,12 +747,26 @@ if [[ "$PHASE" == "pre" ]]; then
 
     # Third link in the backups -> sweep -> DMG chain. A DMG older than the last
     # sweep does not contain what the sweep moved into staged-loose/.
+    #
+    # But "a sweep ran later" is not the same as "the sweep staged something".
+    # A clean sweep -- the normal case once findings are resolved -- moves
+    # nothing, so the DMG is still complete. Comparing mtimes alone reported
+    # FAIL after every clean re-run and told the operator to rebuild.
+    #
+    # That advice is worse than noise after `cleanup`: cleanup removes the
+    # pre-staged trees, so a rebuild then produces a SUBSET of the existing DMG.
+    # Gate on whether staged-loose/ actually holds content newer than the image.
+    STAGED_LOOSE_DIR="$SECRETS_DIR/staged-loose"
     if [[ -f "$LOOSE_MANIFEST" ]]; then
-      if [[ "$LOOSE_MANIFEST" -nt "$SECRETS_DMG" ]]; then
-        record_check FAIL "DMG is current with the sweep" \
-          "Phase 3B ran after this DMG was built -- rebuild it so staged-loose/ is included"
-      else
+      if [[ ! "$LOOSE_MANIFEST" -nt "$SECRETS_DMG" ]]; then
         record_check PASS "DMG is current with the sweep" "DMG is newer than the last sweep"
+      elif [[ -d "$STAGED_LOOSE_DIR" ]] \
+        && find "$STAGED_LOOSE_DIR" -type f ! -name '.DS_Store' -newer "$SECRETS_DMG" 2>/dev/null | grep -q .; then
+        record_check FAIL "DMG is current with the sweep" \
+          "Phase 3B staged new files after this DMG was built -- rebuild so staged-loose/ is included"
+      else
+        record_check PASS "DMG is current with the sweep" \
+          "Sweep ran after the DMG but staged nothing new -- DMG still complete"
       fi
     else
       record_check SKIP "DMG is current with the sweep" "Skipped -- no sweep recorded"

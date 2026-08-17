@@ -51,6 +51,10 @@
 #   --artifact-root PATH  Override REIMAGE_ARTIFACT_ROOT from shared config.
 #   --skip-cert-review    (build) Do not rerun stage-certs-keychain.sh scan first.
 #   --force               (cleanup) Actually delete. Default is a dry-run preview.
+#                         (build) Also permits a build whose category coverage is
+#                         smaller than the previous DMG's. Refused by default,
+#                         because cleanup removes the pre-staged trees and a
+#                         later build would otherwise silently produce a subset.
 #   --keep CATEGORY       (cleanup) Preserve this category even if it is in the DMG.
 #                         Repeatable (e.g. --keep postman).
 #   -h, --help            Show this message and exit.
@@ -588,6 +592,58 @@ cmd_build() {
   done
   echo ""
 
+  # ---------------------------------------------------------------------
+  # Coverage-regression guard
+  #
+  # `cleanup` rm -rf's each category from secrets-encrypted/ once it is
+  # confirmed inside the DMG. But a later build re-reads only SOME categories
+  # from live sources ($HOME): ssh, gnupg, docker, kube, cli-credentials, git,
+  # package-managers, claude-code. The rest — certs, chrome, intellij, raycast,
+  # postman, repos-gitignored, staged-loose, extra-secrets-certs-review — exist
+  # only as pre-staged trees, and cleanup deleted them.
+  #
+  # So building again after a cleanup silently produces a SUBSET of the previous
+  # DMG. Nothing in the old flow noticed, and it bites at exactly the moment the
+  # operator has been told everything is safe. Compare this build against the
+  # sidecar written by the previous one and refuse on any category that
+  # disappeared.
+  local prev_dmg prev_sidecar
+  prev_dmg="$(newest_dmg)"
+  if [[ -n "$prev_dmg" ]]; then
+    prev_sidecar="${prev_dmg%.dmg}-categories.txt"
+    if [[ -f "$prev_sidecar" ]]; then
+      local missing_cats="" pc
+      while IFS= read -r pc; do
+        [[ -n "$pc" ]] || continue
+        [[ -d "$STAGING/$pc" ]] && find "$STAGING/$pc" -type f 2>/dev/null | grep -q . && continue
+        missing_cats="$missing_cats $pc"
+      done < "$prev_sidecar"
+      if [[ -n "$missing_cats" ]]; then
+        echo ""
+        err "Coverage regression: this build is missing categories the previous DMG had."
+        hint "Previous: $(basename "$prev_dmg")"
+        for pc in $missing_cats; do hint "  MISSING  $pc/"; done
+        hint ""
+        hint "This normally means cleanup removed the pre-staged trees and the phases"
+        hint "that produce them have not been re-run. Regenerate them first:"
+        hint "  ./bin/backup-apps.sh            # intellij, raycast, postman"
+        hint "  ./bin/stage-certs-keychain.sh   # certs, extra-secrets-certs-review"
+        hint "  ./bin/backup-repos.sh           # repos-gitignored"
+        hint "  ./bin/stage-loose-secrets.sh --apply"
+        hint ""
+        hint "Keep the previous DMG until the rebuild covers everything it did."
+        hint "Override with --force only if the loss is intended."
+        if [[ "$FORCE" != true ]]; then
+          exit 1
+        fi
+        warn "--force given; continuing with reduced coverage."
+      fi
+    else
+      warn "Previous DMG has no category sidecar; cannot check for coverage regression"
+      hint "$(basename "$prev_dmg") predates the sidecar. Compare validate output by hand."
+    fi
+  fi
+
   # Password prompt
   hr; echo ""
   warn "Store this password in an approved password manager before continuing."
@@ -602,6 +658,21 @@ cmd_build() {
   echo -e "${DIM}Creating AES-256 encrypted DMG…${RST}"; echo ""
   printf '%s' "$PASS1" | hdiutil create -volname "$VOLNAME" -srcfolder "$STAGING" -encryption AES-256 -stdinpass "$DMG_PATH"
   unset PASS1 PASS2
+
+  # Category sidecar: what this image actually contains, in plaintext beside it.
+  # Written only after hdiutil succeeded, so it can never describe a DMG that
+  # does not exist. The next build reads it to refuse a coverage regression,
+  # and a human can read it without the password — which is the only way to
+  # answer "what is in that image?" without unlocking it.
+  local CATEGORIES="${DMG_PATH%.dmg}-categories.txt"
+  {
+    for cat_dir in "$STAGING"/*/; do
+      [[ -d "$cat_dir" ]] || continue
+      find "$cat_dir" -type f 2>/dev/null | grep -q . || continue
+      basename "$cat_dir"
+    done
+  } | sort > "$CATEGORIES"
+  ok "Category sidecar: $(basename "$CATEGORIES")  ($(wc -l < "$CATEGORIES" | tr -d ' ') categories)"
 
   # Restore README
   local README="$SECRETS_DIR/RESTORE-README.md"
