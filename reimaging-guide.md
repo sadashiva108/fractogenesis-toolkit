@@ -680,15 +680,18 @@ This phase brings the rebuilt Mac to a clean, trusted managed baseline before an
 >
 > **Primary — if Wi-Fi is connected (it should be, from Phase 7's sign-in step):**
 > ```bash
-> curl -fsSL https://raw.githubusercontent.com/<your-github-account>/fractogenesis-toolkit/main/bootstrap.sh | bash
+> curl -fL -o /tmp/bootstrap.sh https://raw.githubusercontent.com/sadashiva108/fractogenesis-toolkit/main/bootstrap.sh
+> bash /tmp/bootstrap.sh
 > ```
 > Installs to `$HOME/fractogenesis-toolkit` (or `$FRACTOGENESIS_HOME` if set). No `git` needed — installing `git` on a bare Mac triggers a large Xcode Command Line Tools popup/download, which this deliberately avoids.
 >
+> Download and run as two steps, deliberately. `curl … | bash` hides its own failure: with `-f -s`, a 404 or a captive-portal redirect prints nothing, `bash` reads an empty stdin, and the pipeline exits **0** — no toolkit, no error, and no obvious reason why the next command cannot find `bin/`. Fetching to a file first makes a failed download impossible to miss.
+>
 > **Fallback — if there's no network yet** (captive portal, delayed profile push, etc.), use the prepared jump drive:
 > ```bash
-> bash /Volumes/REIMAGEKIT/bootstrap.sh /Volumes/REIMAGEKIT/fractogenesis-toolkit.tar.gz
+> bash /Volumes/REIMAGEKIT/bootstrap.sh /Volumes/REIMAGEKIT/tarball/fractogenesis-toolkit.tar.gz
 > ```
-> Checksum-verified before installing; refuses to proceed on a corrupted copy rather than installing something broken.
+> Note the `tarball/` path segment — that is where `bin/build-jump-drive-payload.sh` writes the payload and its `.sha256` sidecar. Checksum-verified before installing; refuses to proceed on a corrupted copy rather than installing something broken.
 >
 > Once either succeeds, continue this phase's remaining steps using the local copy — no further network dependency for reading the guide itself.
 

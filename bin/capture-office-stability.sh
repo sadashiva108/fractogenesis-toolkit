@@ -48,10 +48,40 @@
 #   --artifact-root PATH  Override REIMAGE_ARTIFACT_ROOT from shared config. When
 #                         set, evidence outputs are copied to
 #                         PATH/office-stability/. When unset, the run stays local
-#                         to $OFFICE_WATCH.
+#                         to $OFFICE_WATCH. The path must already exist -- the run
+#                         exits 2 rather than creating a stand-in for an
+#                         unmounted volume.
+#   --office-watch-dir PATH
+#                         Local watcher directory for this invocation; overrides
+#                         OFFICE_WATCH. Parity with office-stability-checklist.sh.
 #   --skip-unified-log    Skip the slow `log show` unified-log pull; file 07 then
 #                         records that it was skipped (fast incident baseline).
 #   -h, --help            Show this message and exit.
+#
+# Required configuration:
+#   OFFICE_WATCH          Local watcher directory holding the bundle-watch-*.log
+#                         files and bundle-watch-start.marker. Required; comes
+#                         from reimage.env. The bundle and .zip are written here.
+#                         bundle-watch-start.marker must already exist and be
+#                         readable: it is the start of the evidence window, so
+#                         the run exits 2 rather than creating one and reporting
+#                         an empty window as a clean one.
+#   OFFICE_WATCH_DIR      Optional per-invocation override of OFFICE_WATCH,
+#                         resolved the same way in watch-office-today.sh and
+#                         capture-workload-snapshot.sh. Takes precedence over
+#                         OFFICE_WATCH when set; --office-watch-dir overrides it
+#                         for this invocation.
+#   REIMAGE_ARTIFACT_ROOT Optional. Only consulted for the evidence copy;
+#                         --artifact-root overrides it for this invocation.
+#                         Unset and unsupplied means a local-only run.
+#
+# External commands:
+#   rsync   Required only when an artifact root is in effect; the run exits 2
+#           up front when rsync is missing.
+#   zip     Used best effort for the bundle .zip. When zip is unavailable the
+#           bundle directory is still complete and the run still succeeds; the
+#           summary then reports that no zip was created.
+#   log     macOS unified log; not invoked at all with --skip-unified-log.
 #
 # Configuration precedence:
 #   1. Explicit command-line options for this invocation.
@@ -61,8 +91,10 @@
 #
 # Exit status:
 #   0  Capture completed successfully.
-#   1  Capture ran but a required step (e.g. the artifact-root copy) failed.
-#   2  Usage, configuration, or prerequisite error.
+#   1  Capture ran but a required step (e.g. the artifact-root copy) failed. The
+#      local bundle under $OFFICE_WATCH is still intact.
+#   2  Usage, configuration, or prerequisite error -- including a missing or
+#      unreadable bundle-watch-start.marker and a missing artifact root.
 # --- END USAGE ---
 # =============================================================================
 
@@ -130,6 +162,9 @@ SKIP_UNIFIED=0
 OUTDIR=""
 # Optional: empty means "no copy to the artifact root" (local-only run).
 REIMAGE_ARTIFACT_ROOT="${REIMAGE_ARTIFACT_ROOT:-}"
+# Resolved identically in watch-office-today.sh and capture-workload-snapshot.sh
+# so the watcher writes where this collector reads.
+OFFICE_WATCH_DIR="${OFFICE_WATCH_DIR:-${OFFICE_WATCH:-}}"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -145,6 +180,11 @@ while [[ $# -gt 0 ]]; do
     --artifact-root)
       require_option_value "$1" "${2:-}"
       REIMAGE_ARTIFACT_ROOT="$2"
+      shift 2
+      ;;
+    --office-watch-dir)
+      require_option_value "$1" "${2:-}"
+      OFFICE_WATCH_DIR="$2"
       shift 2
       ;;
     --skip-unified-log)
@@ -183,6 +223,14 @@ if [[ -n "$REIMAGE_ARTIFACT_ROOT" ]]; then
     echo "ERROR: refusing to copy evidence under the repo checkout: $REIMAGE_ARTIFACT_ROOT" >&2
     exit 2
   fi
+  # An unmounted backup volume leaves the mount point absent; mkdir -p would
+  # then quietly recreate it on the boot disk and the "copy" would go nowhere
+  # useful.
+  if [[ ! -d "$REIMAGE_ARTIFACT_ROOT" ]]; then
+    echo "ERROR: artifact root does not exist: $REIMAGE_ARTIFACT_ROOT" >&2
+    echo "Mount the backup volume (or pass a different --artifact-root) before capturing." >&2
+    exit 2
+  fi
   if ! command -v rsync >/dev/null 2>&1; then
     echo "ERROR: rsync is required for --artifact-root copy but was not found on PATH." >&2
     exit 2
@@ -196,17 +244,33 @@ safe_name() {
 PHASE_SAFE="$(safe_name "$PHASE")"
 OUTDIR="$DIR/${PHASE_SAFE}-office-baseline-$TS"
 
-mkdir -p "$OUTDIR"
-
+# The marker is the start of the evidence window: every -newer probe below is
+# relative to it. Creating one here would set the window start to "now", so
+# every probe would match nothing and the bundle would look like a clean window
+# when in fact nothing was observed. Stop instead, as the runbook documents.
 if [[ ! -e "$MARKER" ]]; then
-  echo "Marker missing; creating: $MARKER"
-  mkdir -p "$DIR"
-  touch "$MARKER"
+  echo "ERROR: watcher marker missing: $MARKER" >&2
+  echo "Without it this capture would produce an empty evidence window." >&2
+  echo "Restart the watcher and set a fresh marker (bin/watch-office-today.sh), let the test window run, then capture again." >&2
+  exit 2
 fi
 
-START="$(/usr/bin/stat -f "%Sm" -t "%Y-%m-%d %H:%M:%S" "$MARKER" 2>/dev/null || date '+%Y-%m-%d %H:%M:%S')"
+# Same reasoning for an unreadable marker: falling back to the current time
+# would silently produce a zero-length window.
+if ! START="$(/usr/bin/stat -f "%Sm" -t "%Y-%m-%d %H:%M:%S" "$MARKER" 2>/dev/null)" || [[ -z "$START" ]]; then
+  echo "ERROR: could not read the marker timestamp: $MARKER" >&2
+  echo "The evidence window start is unknown, so this capture would cover nothing." >&2
+  echo "Restart the watcher and set a fresh marker (bin/watch-office-today.sh), then capture again." >&2
+  exit 2
+fi
+
+mkdir -p "$OUTDIR"
+
 END="$(date '+%Y-%m-%d %H:%M:%S')"
-LATEST_WATCH="$(ls -t "$DIR"/bundle-watch-*.log 2>/dev/null | head -1 || true)"
+# `sed -n 1p` rather than `head -1`: head exits after the first line, and the
+# resulting SIGPIPE on `ls` makes the pipeline fail under `set -o pipefail`.
+# shellcheck disable=SC2012
+LATEST_WATCH="$(ls -t "$DIR"/bundle-watch-*.log 2>/dev/null | sed -n '1p' || true)"
 
 {
   echo "=== Office stability baseline capture ==="
@@ -351,8 +415,16 @@ fi
     || echo "Office watcher is not currently running"
   echo
   echo "=== Latest watcher logs ==="
-  ls -lt "$DIR"/bundle-watch-*.log 2>/dev/null | head -5 \
-    || echo "No watcher logs found"
+  # Captured first, then reported: `ls ... | head -5` can die on SIGPIPE and
+  # fail the pipeline under `set -o pipefail`, which printed "No watcher logs
+  # found" directly after successfully listing the logs.
+  # shellcheck disable=SC2012
+  WATCHER_LOG_LIST="$(ls -lt "$DIR"/bundle-watch-*.log 2>/dev/null | sed -n '1,5p')" || WATCHER_LOG_LIST=""
+  if [[ -n "$WATCHER_LOG_LIST" ]]; then
+    printf '%s\n' "$WATCHER_LOG_LIST"
+  else
+    echo "No watcher logs found"
+  fi
 } | tee "$OUTDIR/08-watcher-running-status.txt"
 
 SUMMARY="$OUTDIR/office-stability-summary.md"
@@ -390,14 +462,31 @@ ZIP="$DIR/${PHASE_SAFE}-office-baseline-$TS.zip"
 echo
 
 echo "Evidence directory: $OUTDIR"
-echo "Evidence zip:       $ZIP"
+# The zip is best effort (missing or failing `zip` is not fatal), so report what
+# is actually on disk rather than the path it would have had.
+if [[ -f "$ZIP" ]]; then
+  echo "Evidence zip:       $ZIP"
+else
+  echo "Evidence zip:       not created (zip unavailable or failed); the evidence directory above is complete"
+fi
 
 if [[ -n "$REIMAGE_ARTIFACT_ROOT" ]]; then
   OFFICE_BACKUP="$REIMAGE_ARTIFACT_ROOT/office-stability"
-  mkdir -p "$OFFICE_BACKUP"
-  rsync -a "$OUTDIR/" "$OFFICE_BACKUP/$(basename "$OUTDIR")/"
-  cp "$ZIP" "$OFFICE_BACKUP/" 2>/dev/null || true
-  cp "$SUMMARY" "$OFFICE_BACKUP/office-stability-summary-$TS.md" 2>/dev/null || true
+  # The header documents exit 1 when the artifact-root copy fails, so collect
+  # every failure instead of letting individual copies fail silently.
+  COPY_FAILED=0
+  mkdir -p "$OFFICE_BACKUP" || COPY_FAILED=1
+  if [[ "$COPY_FAILED" -eq 0 ]]; then
+    rsync -a "$OUTDIR/" "$OFFICE_BACKUP/$(basename "$OUTDIR")/" || COPY_FAILED=1
+    if [[ -f "$ZIP" ]]; then
+      cp "$ZIP" "$OFFICE_BACKUP/" || COPY_FAILED=1
+    fi
+    cp "$SUMMARY" "$OFFICE_BACKUP/office-stability-summary-$TS.md" || COPY_FAILED=1
+  fi
+  if [[ "$COPY_FAILED" -ne 0 ]]; then
+    echo "ERROR: copying evidence outputs to $OFFICE_BACKUP failed; the local bundle at $OUTDIR is intact." >&2
+    exit 1
+  fi
   echo "Copied evidence outputs to: $OFFICE_BACKUP"
   echo "Note: scripts were not copied to the artifact root."
 fi

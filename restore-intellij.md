@@ -120,7 +120,6 @@ $REIMAGE_ARTIFACT_ROOT/
 │   └── intellij/
 │       ├── IntelliJIdea20YY.N/
 │       │   ├── config-copy/
-│       │   ├── manifests/
 │       │   └── scratches-and-consoles/
 │       ├── logs/
 │       ├── manifests/

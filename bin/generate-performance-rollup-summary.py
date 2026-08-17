@@ -459,11 +459,20 @@ def build_health_counts(metric_rows: List[Dict[str, Any]]) -> List[Dict[str, Any
 def build_degraded_windows(metric_rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     out_rows: List[Dict[str, Any]] = []
     for row in metric_rows:
-        health = row["health"] or "UNKNOWN"
+        reported_health = (row["health"] or "").strip()
+        health = reported_health or "UNKNOWN"
         degraded = (
-            health != "OK"
+            # A snapshot with no health verdict is unknown, not degraded.
+            # Treating it as degraded put every row of a history whose
+            # memory_metrics.csv predates the health column into
+            # helper_degraded_windows.csv, contradicting the thresholds the
+            # generated Markdown prints.
+            (reported_health != "" and reported_health != "OK")
             or row["swap_used_mb"] >= 1024
-            or (row["memory_pressure_free_pct"] and row["memory_pressure_free_pct"] < 20)
+            # Explicit None test: a genuine 0.0 (worst possible free
+            # percentage) is falsy and was silently skipped by a truthiness
+            # check.
+            or (row["memory_pressure_free_pct"] is not None and row["memory_pressure_free_pct"] < 20)
             or row["delta_swapouts"] > 0
         )
         if not degraded:
@@ -599,8 +608,6 @@ def main(argv: Optional[List[str]] = None) -> int:
     input_root = Path(args.input).expanduser().resolve()
     output_root = Path(args.output).expanduser().resolve()
     summary_dir = output_root / "summary"
-    output_root.mkdir(parents=True, exist_ok=True)
-    summary_dir.mkdir(parents=True, exist_ok=True)
 
     app_rows = discover_app_rollups(input_root)
     process_rows = discover_process_rows(input_root)
@@ -611,6 +618,12 @@ def main(argv: Optional[List[str]] = None) -> int:
     if not any((app_rows, process_rows, metric_rows, memory_report_rows, diagnostics_text_rows)):
         print(f"No supported performance history files found under {input_root}", file=sys.stderr)
         return 2
+
+    # Created only after the emptiness check: a mistyped --input must not leave
+    # behind an empty <output>/summary/ that later reads as a rollup that ran
+    # and found a healthy system.
+    output_root.mkdir(parents=True, exist_ok=True)
+    summary_dir.mkdir(parents=True, exist_ok=True)
 
     process_summary = summarize_processes(process_rows)
     top_apps = top_items(app_rows, "app", "rss_mb", args.top_n)

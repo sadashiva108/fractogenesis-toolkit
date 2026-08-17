@@ -1045,7 +1045,9 @@ while IFS=$'\t' read -r _mtime config_dir; do
 
   product="$(basename "$config_dir")"
   product_dest="$DEST/$product"
-  mkdir -p "$product_dest/config-copy" "$product_dest/scratches-and-consoles" "$product_dest/manifests"
+  # Manifests are written once at the intellij/ root, not per product — do not
+  # create an empty per-product manifests/ here.
+  mkdir -p "$product_dest/config-copy" "$product_dest/scratches-and-consoles"
 
   echo "Backing up IntelliJ config: $config_dir"
 

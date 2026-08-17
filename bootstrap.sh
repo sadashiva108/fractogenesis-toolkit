@@ -1,15 +1,75 @@
 #!/usr/bin/env bash
+# =============================================================================
 # bootstrap.sh
 #
-# Installs the fractogenesis toolkit to $FRACTOGENESIS_HOME (default: $HOME/fractogenesis-toolkit).
+# Installs the fractogenesis toolkit into $FRACTOGENESIS_HOME (default:
+# $HOME/fractogenesis-toolkit), either by fetching it from GitHub over the
+# network or by extracting a pre-built tarball from a jump drive.
 #
+# Runbook/phase context: reimage-guide-access.md (Phase 6A). That runbook
+# proves both routes before the Mac is erased — the curl route in Step 2, the
+# no-network jump-drive route in Step 3 — and its pass criteria include that
+# bin/ scripts arrive executable.
+#
+# CLASSIFICATION: bootstrap/environment creator. This file lives at the REPO
+# ROOT rather than in bin/ because it must run BEFORE a checkout exists — on a
+# bare Mac with no Git, no SSH keys and no toolkit on disk, typically piped
+# straight into bash from curl. It is deliberately NOT an entrypoint:
+#
+#   - It does NOT load .internal/load-reimage-config.sh, and must not. The
+#     loader lives inside the very checkout this script is creating; when the
+#     curl route runs, nothing of the toolkit is on disk yet.
+#   - It does NOT self-locate SCRIPT_DIR/REPO_ROOT from BASH_SOURCE. Under
+#     `curl ... | bash` there is no script file on disk to locate from, and the
+#     install destination comes from FRACTOGENESIS_HOME, not from where this
+#     file happens to sit.
+#   - It has no usage() that sed-prints this header for the same reason: "$0"
+#     is not a readable file when the script arrives on bash's stdin. The
+#     usage block below is documentation only.
+#   - It DOES run `chmod +x` on the extracted bin/ scripts. That is the one
+#     deliberate exception to the repo's no-chmod-during-execution rule: this
+#     script is creating the tree, not running inside an existing checkout, and
+#     reimage-guide-access.md's pass criteria test for the executable bit
+#     directly (`test -x "$FRACTOGENESIS_HOME/bin/build-jump-drive-payload.sh"`).
+#
+# --- BEGIN USAGE ---
 # Usage:
-#   bootstrap.sh                        # fetch from GitHub via curl
-#   bootstrap.sh /path/to/tarball.tar.gz  # install from a local tarball (jump-drive fallback)
+#   # Network route -- fetch and extract from GitHub.
+#   export FRACTOGENESIS_HOME=/absolute/install/path      # optional
+#   curl -fsSL https://raw.githubusercontent.com/<account>/fractogenesis-toolkit/main/bootstrap.sh | bash
+#
+#   # Same thing from an existing copy of this file:
+#   bash bootstrap.sh
+#
+#   # Jump-drive route -- install from a local tarball, no network required.
+#   bash bootstrap.sh "$JUMP_DRIVE_VOLUME/tarball/fractogenesis-toolkit.tar.gz"
+#
+# Arguments:
+#   [TARBALL]   Optional path to a local payload tarball built by
+#               bin/build-jump-drive-payload.sh. When omitted, the toolkit is
+#               fetched from GitHub over the network instead. When a sibling
+#               <TARBALL>.sha256 exists it is verified before extraction; when
+#               it does not, a warning is printed and extraction continues.
+#
+# Configuration:
+#   FRACTOGENESIS_HOME
+#       Install destination. Default: $HOME/fractogenesis-toolkit.
+#       Must be exported on its own line before a piped curl invocation -- a
+#       `VAR=val curl ... | bash` prefix sets the variable for curl only, not
+#       for the bash on the other side of the pipe.
+#
+#   Shared reimage config (reimage.env, .internal/artifact-config.sh) is
+#   intentionally NOT loaded; see the classification note above.
+#
+# Exit status:
+#   0  Toolkit installed at the destination.
+#   1  Local tarball missing, checksum mismatch, or a fetch/extract failure.
+# --- END USAGE ---
 #
 # The local-tarball path is designed to be run from a USB stick when network
 # is unavailable immediately after a Mac reimage. Same install logic either
 # way, so there is only one code path to keep correct.
+# =============================================================================
 
 set -euo pipefail
 
@@ -55,6 +115,9 @@ else
     | tar -xz -C "$DEST" --strip-components=1
 fi
 
+# Deliberate exception to the no-chmod-during-execution rule -- see the
+# classification note in the header. This script creates the checkout; it does
+# not run inside one, and Phase 6A's pass criteria test the executable bit.
 chmod +x "$DEST"/bin/* 2>/dev/null || true
 
 if [[ -f "$DEST/.toolkit-version" ]]; then

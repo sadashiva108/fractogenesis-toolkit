@@ -4,11 +4,15 @@
 #
 # Phase 12 — Restore Docker Desktop and local containers plan-note emitter.
 #
-# Surveys the pre-image Docker artifacts captured by Phase 2C (backup-apps
-# docker subflow) plus the encrypted-secrets Docker config that holds registry
+# Surveys the pre-image Docker artifacts captured by Phase 2D (backup-apps.md,
+# Docker subflow) plus the encrypted-secrets Docker config that holds registry
 # credentials, checks whether Docker Desktop is installed and whether the
 # daemon is currently reachable on the reimaged Mac, and writes a per-run
 # plan-note under the reimaged system's restore-notes/ area.
+#
+# This file is intended for bin/. It coordinates configuration, source
+# enumeration, local Docker state checks, and plan-note generation; it installs
+# nothing, starts no containers, and imports no credentials.
 #
 # This is an aggregate validator. Individual source lookups may report MISSING
 # or Docker daemon checks may fail without aborting the run so the operator
@@ -36,11 +40,18 @@
 # Options:
 #   --artifact-root PATH   Override REIMAGE_ARTIFACT_ROOT from shared config.
 #   --output-root PATH     Override the destination directory for the
-#                          generated plan-note.
+#                          generated plan-note. A relative value is resolved
+#                          against the current directory, and a destination
+#                          inside the repo checkout is refused.
 #                          Default: <artifact-root>/reimaged-system/restore-notes
 #   --open                 Reveal the generated plan-note in Finder on
 #                          completion.
 #   -h, --help             Show this message and exit.
+#
+# Requires:
+#   None. `docker` is optional and checked before use — when it is absent the
+#   daemon row records CLI-MISSING instead of failing the run. `open` is used
+#   only for --open.
 #
 # Configuration precedence:
 #   1. Explicit command-line options for this invocation.
@@ -53,14 +64,17 @@
 #
 # Exit status:
 #   0  Plan-note written; no fatal errors.
-#   2  Usage, configuration, or prerequisite error.
+#   2  Usage, configuration, or prerequisite error — including an artifact root
+#      that is unset or not a mounted directory, and an output root that
+#      resolves inside the repo checkout.
 # --- END USAGE ---
 # =============================================================================
 
-# Aggregate validator: individual source lookups become PRESENT/MISSING rows
-# and the daemon check becomes a REACHABLE/UNREACHABLE row rather than
-# aborting the run. Keep -u and pipefail on.
 set -uo pipefail
+# NOTE: intentionally NOT set -e. This is an aggregate validator: individual
+# source lookups become PRESENT/MISSING rows and the daemon check becomes a
+# REACHABLE/UNREACHABLE row rather than aborting the run, so the operator sees
+# the whole inventory in one pass. -u and pipefail stay on.
 
 # ---------------------------------------------------------------------------
 # Locate repository and load shared reimage config
@@ -74,12 +88,27 @@ if [[ ! -f "$CONFIG_LOADER" ]]; then
   exit 2
 fi
 
+# Keep loading permissive: --artifact-root is applied after parsing, so the
+# resolved value is validated here rather than during config load.
+ARTIFACT_CONFIG_REQUIRE_REIMAGE_ARTIFACT_ROOT=false
+
 # shellcheck source=../.internal/load-reimage-config.sh
 source "$CONFIG_LOADER"
 
 usage() {
   sed -n '/^# --- BEGIN USAGE ---$/,/^# --- END USAGE ---$/p' "$0" \
     | sed '1d;$d;s/^# //;s/^#$//'
+}
+
+require_option_value() {
+  local option="$1"
+  local value="${2:-}"
+
+  if [[ -z "$value" || "$value" == --* ]]; then
+    echo "ERROR: $option requires a non-empty value." >&2
+    usage >&2
+    exit 2
+  fi
 }
 
 # ---------------------------------------------------------------------------
@@ -92,20 +121,12 @@ OPEN_RESULT=false
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --artifact-root)
-      if [[ -z "${2:-}" || "$2" == --* ]]; then
-        echo "ERROR: --artifact-root requires a non-empty value." >&2
-        usage >&2
-        exit 2
-      fi
+      require_option_value "$1" "${2:-}"
       REIMAGE_ARTIFACT_ROOT="$2"
       shift 2
       ;;
     --output-root)
-      if [[ -z "${2:-}" || "$2" == --* ]]; then
-        echo "ERROR: --output-root requires a directory." >&2
-        usage >&2
-        exit 2
-      fi
+      require_option_value "$1" "${2:-}"
       OUTPUT_ROOT="$2"
       shift 2
       ;;
@@ -128,13 +149,56 @@ done
 # ---------------------------------------------------------------------------
 # Resolve output destination
 # ---------------------------------------------------------------------------
-if [[ -z "${REIMAGE_ARTIFACT_ROOT:-}" ]]; then
-  echo "ERROR: REIMAGE_ARTIFACT_ROOT is not set. Reconnect the artifact volume, source reimage.env, or pass --artifact-root PATH." >&2
+absolute_path() {
+  # Lexically resolve a possibly-relative path against $PWD without requiring
+  # it to exist, so the checkout guard below cannot be defeated by relativity.
+  # No symlink resolution; Bash 3.2 safe (no arrays, no word splitting).
+  local input="$1"
+  local resolved=""
+  local rest
+  local segment
+
+  case "$input" in
+    /*) ;;
+    *) input="$PWD/$input" ;;
+  esac
+
+  rest="$input"
+  while [[ -n "$rest" ]]; do
+    segment="${rest%%/*}"
+    if [[ "$segment" == "$rest" ]]; then
+      rest=""
+    else
+      rest="${rest#*/}"
+    fi
+    case "$segment" in
+      ''|.) ;;
+      ..) resolved="${resolved%/*}" ;;
+      *) resolved="$resolved/$segment" ;;
+    esac
+  done
+
+  printf '%s' "${resolved:-/}"
+}
+
+# -d as well as non-empty: with the artifact volume unmounted, mkdir -p below
+# would happily build the whole tree on the boot disk and the plan-note would
+# land where Phase 14 never looks.
+if [[ -z "${REIMAGE_ARTIFACT_ROOT:-}" || ! -d "$REIMAGE_ARTIFACT_ROOT" ]]; then
+  echo "ERROR: REIMAGE_ARTIFACT_ROOT is not set or not a directory. Reconnect the artifact volume, source reimage.env, or pass --artifact-root PATH." >&2
   exit 2
 fi
 
 if [[ -z "$OUTPUT_ROOT" ]]; then
   OUTPUT_ROOT="$REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes"
+fi
+
+OUTPUT_ROOT="$(absolute_path "$OUTPUT_ROOT")"
+
+# Safety invariant: refuse to write generated output under the repo checkout.
+if [[ -n "${REPO_ROOT:-}" && ( "$OUTPUT_ROOT" == "$REPO_ROOT" || "$OUTPUT_ROOT" == "$REPO_ROOT"/* ) ]]; then
+  echo "ERROR: refusing to write output under the repo checkout: $OUTPUT_ROOT" >&2
+  exit 2
 fi
 
 if ! mkdir -p "$OUTPUT_ROOT" 2>/dev/null; then
@@ -173,6 +237,11 @@ docker_daemon_status() {
     printf 'CLI-MISSING'
     return
   fi
+  # `docker info` can block for tens of seconds while Docker Desktop is still
+  # starting — exactly when Phase 12 runs this. macOS ships no `timeout`, so
+  # announce the wait instead of capping it. stderr, because this function's
+  # stdout is the status value itself.
+  echo "Checking Docker daemon (docker info); this can take a while if Docker Desktop is still starting..." >&2
   if docker info >/dev/null 2>&1; then
     printf 'REACHABLE'
   else

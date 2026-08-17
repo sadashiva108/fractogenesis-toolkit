@@ -62,15 +62,19 @@
 #        external artifact volume is reconnected.
 #
 # Exit status:
-#   0  Bundle written successfully.
-#   2  Usage, configuration, or prerequisite error.
+#   0  Bundle written successfully. Individual failed checks are recorded as
+#      WARN/TODO rows rather than changing the exit status; a failed
+#      latest-bundle pointer update prints a WARNING and still exits 0.
+#   2  Usage, configuration, or prerequisite error, including an output root
+#      the bundle directory cannot be created under.
 # --- END USAGE ---
 # =============================================================================
 
-# Aggregate-validator strict mode. `set -e` is intentionally NOT enabled: failed
-# individual checks are converted into PASS/WARN/TODO records rather than
-# aborting the run. Every read-only command below is guarded with `|| true` or
-# a checker function.
+# Aggregate validator/checklist strict mode.
+# NOTE: intentionally NOT set -e. Failed individual checks are converted into
+# PASS/WARN/TODO records rather than aborting the run, so a single unavailable
+# subsystem cannot cost the whole first-boot bundle. Every read-only command
+# below is guarded with `|| true` or a checker function.
 set -uo pipefail
 
 # ---------------------------------------------------------------------------
@@ -105,10 +109,12 @@ usage() {
 OUTPUT_ROOT=""
 OPEN_RESULT=false
 RUN_NETWORK=true
+ARTIFACT_ROOT_EXPLICIT=false
 
-require_value() {
+require_option_value() {
   local option="$1"
   local value="${2:-}"
+
   if [[ -z "$value" || "$value" == --* ]]; then
     echo "ERROR: $option requires a non-empty value." >&2
     usage >&2
@@ -119,12 +125,13 @@ require_value() {
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --artifact-root)
-      require_value "$1" "${2:-}"
+      require_option_value "$1" "${2:-}"
       REIMAGE_ARTIFACT_ROOT="$2"
+      ARTIFACT_ROOT_EXPLICIT=true
       shift 2
       ;;
     --output-root)
-      require_value "$1" "${2:-}"
+      require_option_value "$1" "${2:-}"
       OUTPUT_ROOT="$2"
       shift 2
       ;;
@@ -151,6 +158,15 @@ done
 # ---------------------------------------------------------------------------
 # Resolve output location
 # ---------------------------------------------------------------------------
+# Both runbooks tell the operator to pass --artifact-root "$REIMAGE_ARTIFACT_ROOT"
+# explicitly. If that value does not resolve to a mounted directory the run
+# still completes against the fallback location — say so instead of silently
+# downgrading. The fallback chain itself is unchanged.
+if [[ "$ARTIFACT_ROOT_EXPLICIT" == "true" && ! -d "${REIMAGE_ARTIFACT_ROOT:-}" ]]; then
+  echo "WARNING: --artifact-root does not resolve to an existing directory: ${REIMAGE_ARTIFACT_ROOT:-<unset>}" >&2
+  echo "WARNING: the artifact volume is probably not mounted. This run falls back to the local output location below; reconnect the drive and rerun to file the bundle with the rest of the evidence." >&2
+fi
+
 if [[ -z "$OUTPUT_ROOT" ]]; then
   if [[ -n "${REIMAGE_ARTIFACT_ROOT:-}" && -d "${REIMAGE_ARTIFACT_ROOT:-}" ]]; then
     OUTPUT_ROOT="$REIMAGE_ARTIFACT_ROOT/reimaged-system"
@@ -158,6 +174,16 @@ if [[ -z "$OUTPUT_ROOT" ]]; then
     OUTPUT_ROOT="$HOME/Desktop/reimaged-system-artifacts"
   fi
 fi
+
+# Resolve a relative --output-root against the current directory before the
+# guard below compares it with the repo root; a relative path can never match
+# "$REPO_ROOT"/*, so without this `--output-root subdir` run from the checkout
+# slips past the guard. The directory need not exist yet, so this is a plain
+# textual prefix rather than a realpath() call (also keeps Bash 3.2 support).
+case "$OUTPUT_ROOT" in
+  /*) ;;
+  *) OUTPUT_ROOT="$PWD/$OUTPUT_ROOT" ;;
+esac
 
 if [[ -n "${REPO_ROOT:-}" && ( "$OUTPUT_ROOT" == "$REPO_ROOT" || "$OUTPUT_ROOT" == "$REPO_ROOT"/* ) ]]; then
   echo "ERROR: refusing to write output under the repo checkout: $OUTPUT_ROOT" >&2
@@ -169,7 +195,15 @@ STAMP="$(date +%Y%m%d-%H%M%S)"
 # documented in references/master-directory-reference.md and the pattern that
 # bin/reimage-checklist.sh looks for when validating Phase 9 evidence.
 OUT="$OUTPUT_ROOT/initial-reimaged-system-$STAMP"
-mkdir -p "$OUT/logs" "$OUT/raw" "$OUT/checks"
+# Approved exception to the validator's no-abort rule: this is the validator
+# creating its own report destination, not observing system state. Without the
+# bundle directory every later write fails silently and the run would still
+# claim "First-boot evidence bundle written".
+if ! mkdir -p "$OUT/logs" "$OUT/raw" "$OUT/checks"; then
+  echo "ERROR: cannot create the evidence bundle directory: $OUT" >&2
+  echo "ERROR: no evidence was written. Choose a writable --output-root (or reconnect the artifact volume) and rerun." >&2
+  exit 2
+fi
 
 # Pre-create the sibling reimaged-system subfolders when writing to the
 # artifact tree so later phases (restore notes, restart notes, Time Machine
@@ -215,17 +249,24 @@ capture() {
 capture_shell() {
   # Wrap grep-based filters without invoking a login shell so profile output
   # (SDKMAN, direnv chatter, etc.) cannot leak into the recorded evidence.
+  # Any arguments after the command string are passed to `bash -c` as "$1",
+  # "$2", ... so paths never have to be interpolated into the command text.
   local name="$1"
   local cmd="$2"
+  shift 2
+  local display="$cmd"
+  if [[ $# -gt 0 ]]; then
+    display="$cmd -- $*"
+  fi
   local target="$OUT/raw/$name.txt"
   {
     echo "# $name"
     echo "# captured: $(date)"
-    echo "# command: $cmd"
+    echo "# command: $display"
     echo ""
-    bash -c "$cmd"
+    bash -c "$cmd" "$name" "$@"
   } > "$target" 2>> "$ERROR_LOG" || true
-  log_cmd "$cmd > raw/$name.txt"
+  log_cmd "$display > raw/$name.txt"
 }
 
 write_text() {
@@ -316,8 +357,11 @@ fi
 
 # Optional artifact-root spot check.
 if [[ -n "${REIMAGE_ARTIFACT_ROOT:-}" && -d "${REIMAGE_ARTIFACT_ROOT:-}" ]]; then
+  # Pass the artifact root as a positional argument: interpolating it into the
+  # command string breaks on a path containing an apostrophe.
   capture_shell artifact-root-spotcheck \
-    "find '$REIMAGE_ARTIFACT_ROOT' -maxdepth 2 -type f | sort | head -200"
+    'find "$1" -maxdepth 2 -type f | sort | head -200' \
+    "$REIMAGE_ARTIFACT_ROOT"
 else
   write_text artifact-root-missing \
     "REIMAGE_ARTIFACT_ROOT was not provided or does not exist." \
@@ -342,7 +386,20 @@ if [[ -n "${REIMAGE_ARTIFACT_ROOT:-}" && -d "${REIMAGE_ARTIFACT_ROOT:-}" ]]; the
   ARTIFACT_ROOT_STATUS="PASS"
 fi
 
-TM_DEST_STATUS="$(check_contains_file "$OUT/raw/time-machine-destination.txt" 'AppleBackups|Name')"
+# Time Machine destination. The volume label is taken from the configured
+# EXTERNAL_APPLE_BACKUPS_VOLUME instead of a hardcoded volume name; artifact-
+# config.sh defaults that variable to /Volumes/AppleBackups, so the default
+# configuration evaluates exactly the same 'AppleBackups|Name' union this check
+# has always used, while a Mac whose backup volume is named something else now
+# matches its own volume. The volume name is compared as a fixed string so a
+# label containing regex metacharacters cannot corrupt the pattern.
+TM_DEST_FILE="$OUT/raw/time-machine-destination.txt"
+TM_DEST_STATUS="$(check_contains_file "$TM_DEST_FILE" 'Name')"
+if [[ "$TM_DEST_STATUS" != "PASS" && -n "${EXTERNAL_APPLE_BACKUPS_VOLUME:-}" && -f "$TM_DEST_FILE" ]]; then
+  if grep -Fiq "$(basename "${EXTERNAL_APPLE_BACKUPS_VOLUME%/}")" "$TM_DEST_FILE"; then
+    TM_DEST_STATUS="PASS"
+  fi
+fi
 
 GIT_STATUS="TODO"
 if grep -q "git version" "$OUT/raw/git-version.txt" 2>/dev/null; then
@@ -550,7 +607,14 @@ replace_token "$SUMMARY" "__GENERATED_DATE__" "$(date)"
 
 # Plain-text pointer for shell users so `cat latest-...` reveals the most
 # recent bundle without a `ls -t | head` dance. Written at the parent level.
-echo "$OUT" > "$OUTPUT_ROOT/latest-initial-reimaged-system-bundle.txt" 2>/dev/null || true
+# A failed pointer write is not fatal — the bundle above is still valid — but
+# it must be reported: a silently stale pointer sends the operator to an older
+# bundle, which is exactly the symptom verify-reimaged-system.md troubleshoots.
+LATEST_POINTER="$OUTPUT_ROOT/latest-initial-reimaged-system-bundle.txt"
+if ! echo "$OUT" > "$LATEST_POINTER" 2>/dev/null; then
+  echo "WARNING: could not update the latest-bundle pointer: $LATEST_POINTER" >&2
+  echo "WARNING: it may still name an older bundle. Use the bundle path printed below." >&2
+fi
 
 echo ""
 echo "First-boot evidence bundle written: $OUT"

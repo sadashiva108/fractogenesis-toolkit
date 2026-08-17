@@ -44,7 +44,8 @@
 #   --phase NAME           Capture phase label, e.g. pre-image (Phase 4C) or
 #                          post-image (Phase 13D). Default: pre-image
 #   --scenario NAME        Workload label, e.g. clean-boot, normal-workload,
-#                          active-dev, symptom-capture. Default: normal-workload
+#                          active-dev, symptom-capture. Must contain at least one
+#                          letter, digit, '.', '-', or '_'. Default: normal-workload
 #   --note TEXT            Optional note copied into README and manual-observations.md.
 #   --no-helper            Do not run ~/.local/bin/mac_memory_health.sh even if present.
 #   --no-docker            Skip docker version/info commands.
@@ -114,72 +115,78 @@ usage() {
     | sed '1d;$d;s/^# //;s/^#$//'
 }
 
+require_option_value() {
+  local option="$1"
+  local value="${2:-}"
+
+  if [[ -z "$value" || "$value" == --* ]]; then
+    echo "ERROR: $option requires a non-empty value." >&2
+    usage >&2
+    exit 2
+  fi
+}
+
 # ---------------------------------------------------------------------------
 # Parse command-line options
 # ---------------------------------------------------------------------------
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --artifact-root)
-      if [[ -z "${2:-}" || "$2" == --* ]]; then
-        echo "ERROR: --artifact-root requires a non-empty value." >&2
-        usage >&2
-        exit 2
-      fi
+      require_option_value "$1" "${2:-}"
       REIMAGE_ARTIFACT_ROOT="$2"
       shift 2
       ;;
     --output)
-      if [[ -z "${2:-}" || "$2" == --* ]]; then
-        echo "ERROR: --output requires a directory." >&2
-        usage >&2
-        exit 2
-      fi
+      require_option_value "$1" "${2:-}"
       OUTPUT_ROOT="$2"
       shift 2
       ;;
     --sample-count)
-      SAMPLE_COUNT="${2:-}"
+      require_option_value "$1" "${2:-}"
+      SAMPLE_COUNT="$2"
       if [[ ! "$SAMPLE_COUNT" =~ ^[0-9]+$ || "$SAMPLE_COUNT" -lt 1 ]]; then
-        echo "ERROR: --sample-count requires a positive integer." >&2
+        echo "ERROR: --sample-count requires a positive integer, got: $SAMPLE_COUNT" >&2
+        usage >&2
         exit 2
       fi
       shift 2
       ;;
     --sample-interval)
-      SAMPLE_INTERVAL="${2:-}"
+      require_option_value "$1" "${2:-}"
+      SAMPLE_INTERVAL="$2"
       if [[ ! "$SAMPLE_INTERVAL" =~ ^[0-9]+$ ]]; then
-        echo "ERROR: --sample-interval requires an integer." >&2
+        echo "ERROR: --sample-interval requires an integer, got: $SAMPLE_INTERVAL" >&2
+        usage >&2
         exit 2
       fi
       shift 2
       ;;
     --top)
-      TOP_N="${2:-}"
+      require_option_value "$1" "${2:-}"
+      TOP_N="$2"
       if [[ ! "$TOP_N" =~ ^[0-9]+$ || "$TOP_N" -lt 1 ]]; then
-        echo "ERROR: --top requires a positive integer." >&2
+        echo "ERROR: --top requires a positive integer, got: $TOP_N" >&2
+        usage >&2
         exit 2
       fi
       shift 2
       ;;
     --phase)
-      PHASE_LABEL="${2:-}"
-      if [[ -z "$PHASE_LABEL" || "$PHASE_LABEL" == --* ]]; then
-        echo "ERROR: --phase requires a label." >&2
-        exit 2
-      fi
+      require_option_value "$1" "${2:-}"
+      PHASE_LABEL="$2"
       shift 2
       ;;
     --scenario)
-      SCENARIO_LABEL="${2:-}"
-      if [[ -z "$SCENARIO_LABEL" || "$SCENARIO_LABEL" == --* ]]; then
-        echo "ERROR: --scenario requires a label." >&2
-        exit 2
-      fi
+      require_option_value "$1" "${2:-}"
+      SCENARIO_LABEL="$2"
       shift 2
       ;;
     --note)
+      # Deliberately not require_option_value: an empty note is a valid value,
+      # so this only rejects a missing one.
       if [[ $# -lt 2 ]]; then
         echo "ERROR: --note requires a value." >&2
+        usage >&2
         exit 2
       fi
       NOTE_TEXT="$2"
@@ -246,6 +253,27 @@ if [[ -z "$OUTPUT_ROOT" ]]; then
   OUTPUT_ROOT="$REIMAGE_ARTIFACT_ROOT/performance-audit"
 fi
 
+# Make the destination absolute before the repo-write guard below. A relative
+# --output / --artifact-root would otherwise never match "$REPO_ROOT"/* even
+# when it resolves inside the checkout. The path does not exist yet, so resolve
+# the deepest existing ancestor and re-append the missing components.
+resolve_output_path() {
+  local path="$1"
+  local suffix=""
+
+  if [[ "$path" != /* ]]; then
+    path="$PWD/$path"
+  fi
+  while [[ ! -d "$path" && "$path" != "/" ]]; do
+    suffix="/$(basename "$path")$suffix"
+    path="$(dirname "$path")"
+  done
+  path="$(cd "$path" && pwd)"
+  printf '%s%s' "${path%/}" "$suffix"
+}
+
+OUTPUT_ROOT="$(resolve_output_path "$OUTPUT_ROOT")"
+
 # Safety invariant: never write a bundle inside the repo checkout. A copy under
 # the working tree is not a real artifact and usually signals an unset root.
 if [[ -n "${REPO_ROOT:-}" && ( "$OUTPUT_ROOT" == "$REPO_ROOT" || "$OUTPUT_ROOT" == "$REPO_ROOT"/* ) ]]; then
@@ -259,6 +287,14 @@ sanitize_label() {
 
 PHASE_SAFE="$(sanitize_label "$PHASE_LABEL")"
 SCENARIO_SAFE="$(sanitize_label "$SCENARIO_LABEL")"
+
+# A scenario that sanitizes away entirely (e.g. "///") would silently produce a
+# run directory with an empty scenario component, so reject it like --phase.
+if [[ -z "$SCENARIO_SAFE" ]]; then
+  echo "ERROR: --scenario must contain at least one letter, digit, '.', '-', or '_', got: $SCENARIO_LABEL" >&2
+  exit 2
+fi
+
 RUN_ID="${PHASE_SAFE}-performance-audit-${SCENARIO_SAFE}-$(date +%Y%m%d-%H%M%S)"
 AUDIT_DIR="$OUTPUT_ROOT/$RUN_ID"
 LOG_DIR="$AUDIT_DIR/logs"
@@ -282,10 +318,6 @@ log() {
 
 warn() {
   printf 'WARNING: %s\n' "$*" | tee -a "$ERROR_LOG" >&2
-}
-
-safe_name() {
-  printf '%s' "$1" | tr '/ :()[]{}' '________' | tr -cd '[:alnum:]_.-'
 }
 
 section_file() {
@@ -335,17 +367,6 @@ append_cmd() {
   run_cmd "$outfile" "$title" "$@"
 }
 
-copy_if_exists() {
-  local src="$1"
-  local dest_dir="$2"
-  if [[ -e "$src" ]]; then
-    mkdir -p "$dest_dir"
-    cp -R "$src" "$dest_dir/" 2>> "$ERROR_LOG" || warn "Could not copy $src"
-  fi
-}
-
-bytes_to_mb_awk='function mb(v) { return v / 1024 }'
-
 capture_ps_csv() {
   local outfile="$1"
   local sort_field="$2"
@@ -356,7 +377,7 @@ capture_ps_csv() {
       | sort -k"${sort_field},${sort_field}nr" \
       | head -n "$limit" \
       | awk '
-          function csv(v) { gsub(/"/, """", v); return "\"" v "\"" }
+          function csv(v) { gsub(/"/, "\"\"", v); return "\"" v "\"" }
           {
             pid=$1; ppid=$2; etime=$3; stat=$4; cpu=$5; mem=$6; rss=$7;
             cmd=$8; for (i=9; i<=NF; i++) cmd=cmd " " $i;
@@ -372,7 +393,7 @@ capture_matching_processes() {
     echo 'pid,ppid,elapsed,state,cpu_pct,mem_pct,rss_mb,command'
     ps -axo pid=,ppid=,etime=,stat=,%cpu=,%mem=,rss=,command= 2>> "$ERROR_LOG" \
       | awk -v pat="$pattern" '
-          function csv(v) { gsub(/"/, """", v); return "\"" v "\"" }
+          function csv(v) { gsub(/"/, "\"\"", v); return "\"" v "\"" }
           {
             pid=$1; ppid=$2; etime=$3; stat=$4; cpu=$5; mem=$6; rss=$7;
             cmd=$8; for (i=9; i<=NF; i++) cmd=cmd " " $i;
@@ -407,7 +428,7 @@ capture_app_rollup() {
             if (cmd ~ /Terminal\.app|iTerm|zsh|bash/) return "Shell/Terminal";
             return "Other";
           }
-          function csv(v) { gsub(/"/, """", v); return "\"" v "\"" }
+          function csv(v) { gsub(/"/, "\"\"", v); return "\"" v "\"" }
           {
             pid=$1; rss=$2; cpu=$3; cmd=$4; for (i=5; i<=NF; i++) cmd=cmd " " $i;
             app=classify(cmd); rss_mb=rss/1024;
@@ -966,7 +987,17 @@ Primary focus areas:
 | Command log | \`logs/commands.log\` |
 | Error log | \`logs/errors.log\` |
 | Auto-filled manual notes | \`manual-observations.md\` |
-| Workload reproduction config | \`workload-reproduction-config.md\` |
+SUMMARY_EOF
+
+  # workload-reproduction-config.md is only written by
+  # generate-performance-manual-observations.py. When python3 or the generator
+  # is absent the fallback writes manual-observations.md alone, so listing the
+  # row unconditionally would point at a file that is not in the bundle.
+  if [[ -f "$AUDIT_DIR/workload-reproduction-config.md" ]]; then
+    echo "| Workload reproduction config | \`workload-reproduction-config.md\` |" >> "$SUMMARY"
+  fi
+
+  cat >> "$SUMMARY" <<SUMMARY_EOF
 
 ## Suggested general performance comparison after reimage
 

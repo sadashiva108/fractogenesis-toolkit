@@ -11,8 +11,13 @@
 #
 # Evidence is written under $REIMAGE_ARTIFACT_ROOT/time-machine/.
 #
-# This file is intended for bin/. It is a normal entrypoint: one command per
-# invocation, explicit exit codes, and read-only against Time Machine state.
+# This file is intended for bin/. It is a normal entrypoint, not an aggregate
+# validator, even though `final` emits a PASS/CHECK/TODO table: its job is to
+# produce artifacts under the artifact root, and a validator produces none and
+# does not create the directories it inspects. Every observation command here is
+# already individually neutralized with `|| true` or `2>/dev/null`, so recording
+# a failed probe as a CHECK cell does not require dropping `set -e` — one
+# command per invocation, explicit exit codes, read-only against Time Machine.
 #
 # --- BEGIN USAGE ---
 # Usage:
@@ -36,10 +41,24 @@
 #   --external-data-root PATH  Manual/evidence volume. Default:
 #                              $EXTERNAL_DATA_VOLUME, else the mounted volume
 #                              containing the artifact root.
-#   --time-machine-dest PATH   Time Machine destination mount.
-#                              Default: $EXTERNAL_APPLE_BACKUPS_VOLUME.
+#   --time-machine-dest PATH   Time Machine destination mount. Must be set and
+#                              mounted: pre-run, verify-volume, and final all
+#                              exit 2 otherwise rather than recording empty
+#                              captures. Default: $EXTERNAL_APPLE_BACKUPS_VOLUME.
 #   --open                     Open the generated artifact or bundle.
+#   --version                  Print this script's version stamp and exit.
+#                              Same value as the `version` command.
 #   -h, --help                 Show this message and exit.
+#
+# Outputs:
+#   Written under $REIMAGE_ARTIFACT_ROOT/time-machine/ by the command named:
+#     pre-run        pre-image-time-machine-status-YYYYMMDD-HHMMSS/
+#                      README.md, time-machine-pre-run.md,
+#                      time-machine-status.md, and raw/ command captures.
+#     verify-volume  diskutil-verifyvolume-applebackups-YYYYMMDD-HHMMSS.txt
+#     final          final-time-machine-checklist-YYYYMMDD-HHMMSS.md
+#   Nothing outside the artifact root is written, and no Time Machine state is
+#   changed: every capture is an observation.
 #
 # Examples:
 #   ./bin/record-time-machine-evidence.sh pre-run --open
@@ -125,6 +144,21 @@ resolve_external_data_volume() {
   fi
 }
 
+# Ported from run-time-machine.sh. TIME_MACHINE_DEST has no hardcoded fallback,
+# so an unset EXTERNAL_APPLE_BACKUPS_VOLUME reaches tmutil as -d "" and every
+# `|| true` swallows the error: the bundle looks complete but is full of empty
+# captures, and verify-volume records "not mounted at: " with a blank path.
+require_time_machine_dest() {
+  if [[ -z "${TIME_MACHINE_DEST:-}" ]]; then
+    err "Time Machine destination is not set. Set EXTERNAL_APPLE_BACKUPS_VOLUME in reimage.env or pass --time-machine-dest PATH."
+    exit 2
+  fi
+  if [[ ! -d "$TIME_MACHINE_DEST" ]]; then
+    err "Time Machine destination is not mounted: $TIME_MACHINE_DEST"
+    exit 2
+  fi
+}
+
 require_paths() {
   if [[ -z "${REIMAGE_ARTIFACT_ROOT:-}" ]]; then
     err "REIMAGE_ARTIFACT_ROOT is not set. Source reimage.env or pass --artifact-root PATH."
@@ -143,6 +177,7 @@ require_paths() {
     err "EXTERNAL_DATA_VOLUME not found: $EXTERNAL_DATA_VOLUME"
     exit 2
   fi
+  require_time_machine_dest
   mkdir -p "$REIMAGE_ARTIFACT_ROOT/time-machine"
 }
 
@@ -173,82 +208,6 @@ capture_raw() {
     "$@" 2>&1 || true
   } > "$out_dir/raw/$outfile"
 }
-
-write_resolved_paths_section() {
-  :
-}
-
-write_common_readonly_sections() {
-  cat <<EOF
-## Destination
-
-\`\`\`text
-$(tmutil destinationinfo 2>&1 || true)
-\`\`\`
-
-## Latest Backup
-
-Generic \`tmutil latestbackup\`:
-
-\`\`\`text
-$(tmutil latestbackup 2>&1 || true)
-\`\`\`
-
-Targeted \`tmutil latestbackup -d "$TIME_MACHINE_DEST" -t\`:
-
-\`\`\`text
-$(tmutil latestbackup -d "$TIME_MACHINE_DEST" -t 2>&1 || true)
-\`\`\`
-
-## Backup List
-
-Generic \`tmutil listbackups\`:
-
-\`\`\`text
-$(tmutil listbackups 2>&1 || true)
-\`\`\`
-
-Targeted \`tmutil listbackups -d "$TIME_MACHINE_DEST" -t\`:
-
-\`\`\`text
-$(tmutil listbackups -d "$TIME_MACHINE_DEST" -t 2>&1 || true)
-\`\`\`
-
-## Exclusions
-
-External data root:
-
-\`\`\`text
-$(tmutil isexcluded "$EXTERNAL_DATA_VOLUME" 2>&1 || true)
-\`\`\`
-
-Time Machine destination:
-
-\`\`\`text
-$(tmutil isexcluded "$TIME_MACHINE_DEST" 2>&1 || true)
-\`\`\`
-
-## Current Status
-
-\`\`\`text
-$(tmutil status 2>&1 || true)
-\`\`\`
-
-## Mounted Volumes
-
-\`\`\`text
-$(/bin/ls -la /Volumes 2>&1 || true)
-\`\`\`
-
-## External Disk Layout
-
-\`\`\`text
-$(diskutil list external 2>&1 || true)
-\`\`\`
-
-EOF
-}
-
 
 write_tmutil_destinationinfo_minimal() {
   # tmutil destinationinfo already uses the desired readable layout:
@@ -377,9 +336,9 @@ ${targeted_latest:-No targeted latest backup returned.}
 Start and monitor Time Machine:
 
 \`\`\`bash
-./bin/backup-time-machine.sh start
-./bin/backup-time-machine.sh monitor --interval 300
-./bin/backup-time-machine.sh complete --open
+./bin/run-time-machine.sh start
+./bin/run-time-machine.sh monitor --interval 300
+./bin/run-time-machine.sh complete --open
 \`\`\`
 
 Focused APFS destination verification after Time Machine stops:
@@ -391,7 +350,7 @@ Focused APFS destination verification after Time Machine stops:
 Targeted checksum verification:
 
 \`\`\`bash
-./bin/backup-time-machine.sh verify-latest --mount-if-needed --open
+./bin/run-time-machine.sh verify-latest --mount-if-needed --open
 \`\`\`
 EOF
 }
@@ -462,9 +421,15 @@ capture_time_machine_raw_bundle() {
 }
 
 
+# Takes a filename glob, not a path glob: the old form quoted a full path and then
+# expanded it unquoted through `ls -t`, so an artifact root containing a space
+# split into arguments and every optional-evidence row reported TODO/N-A even when
+# the files existed. Names are timestamped YYYYMMDD-HHMMSS, so a lexicographic
+# sort is chronological — same form used for pre_run_bundle below.
 latest_matching_file() {
-  local pattern="$1"
-  ls -t $pattern 2>/dev/null | head -1 || true
+  local name_pattern="$1"
+  find "$REIMAGE_ARTIFACT_ROOT/time-machine" -maxdepth 1 -type f -name "$name_pattern" -print 2>/dev/null \
+    | sort | tail -1
 }
 
 status_for_text_file() {
@@ -519,16 +484,16 @@ capture_final_checklist() {
     data_excluded_status="CHECK"
   fi
 
-  completion_file="$(latest_matching_file "$REIMAGE_ARTIFACT_ROOT/time-machine/completion-check-*.md")"
+  completion_file="$(latest_matching_file 'completion-check-*.md')"
   completion_status="$(status_for_text_file "$completion_file")"
 
-  verify_volume_file="$(latest_matching_file "$REIMAGE_ARTIFACT_ROOT/time-machine/diskutil-verifyvolume-applebackups-*.txt")"
+  verify_volume_file="$(latest_matching_file 'diskutil-verifyvolume-applebackups-*.txt')"
   verify_volume_status="N/A"
   if [[ -n "$verify_volume_file" ]]; then
     verify_volume_status="$(status_for_text_file "$verify_volume_file")"
   fi
 
-  checksum_file="$(latest_matching_file "$REIMAGE_ARTIFACT_ROOT/time-machine/verifychecksums-*.txt")"
+  checksum_file="$(latest_matching_file 'verifychecksums-*.txt')"
   checksum_status="N/A"
   if [[ -n "$checksum_file" ]]; then
     checksum_status="$(status_for_text_file "$checksum_file")"
@@ -621,7 +586,7 @@ This bundle is generated by:
 ./bin/record-time-machine-evidence.sh pre-run --open
 \`\`\`
 
-Runtime actions such as start, monitor, complete, compare, verify latest, logs, and eject belong to \`backup-time-machine.sh\`.
+Runtime actions such as start, monitor, complete, compare, verify latest, logs, and eject belong to \`run-time-machine.sh\`.
 EOF
 
   say "Created: $out"

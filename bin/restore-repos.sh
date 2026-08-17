@@ -4,10 +4,15 @@
 #
 # Phase 11B — Restore Repositories status recorder and action emitter.
 #
-# Reads the most recent pre-image repository audit produced by Phase 2C
+# Reads the most recent pre-image repository audit produced by Phase 2A
 # (backup-repos.md), classifies every tracked repo against the current state
 # of the reimaged Mac, and emits a per-repo restore-status report along with
 # ready-to-run `git clone` and `rsync` commands the operator executes by hand.
+#
+# This file is intended for bin/. It is the post-image counterpart to
+# bin/backup-repos.sh: that script writes repo-audit-reports/runs/pre-image-*,
+# this one consumes the latest such run and writes
+# repo-audit-reports/runs/post-image-restore-*.
 #
 # This is an aggregate validator: it records evidence and prints action items,
 # it does not autonomously clone repositories or overwrite working trees. The
@@ -42,11 +47,25 @@
 #   --artifact-root PATH   Override REIMAGE_ARTIFACT_ROOT from shared config.
 #   --input-run NAME       Basename of a run under repo-audit-reports/runs/
 #                          to consume instead of the latest-run.txt pointer.
+#                          Must name a pre-image-* or post-image-* run; values
+#                          containing .. or starting with / are rejected. The
+#                          same guards apply to latest-run.txt's contents.
 #   --apply-ignored-files  Rsync staged-ignored-files/live/<label>/ into each
 #                          repo present on disk, prompting Y/n per repo.
 #   --output DIR           Exact output directory for the generated report.
+#                          A relative value is resolved against the current
+#                          directory, and a destination inside the repo
+#                          checkout is refused. Because the run then lives
+#                          outside repo-audit-reports/runs/, the
+#                          latest-post-image-restore.txt pointer is left
+#                          unchanged and Phase 14 keeps reading the previous
+#                          default-located run.
 #   --open                 Reveal the generated report in Finder on completion.
 #   -h, --help             Show this message and exit.
+#
+# Requires:
+#   rsync   Used only by --apply-ignored-files and by the emitted
+#           rsync-ignored-files.sh commands.
 #
 # Configuration precedence:
 #   1. Explicit command-line options for this invocation.
@@ -63,9 +82,11 @@
 # --- END USAGE ---
 # =============================================================================
 
-# Aggregate validator: individual command failures become WARN/TODO rows in
-# the report rather than aborting the run. Keep -u and pipefail on.
 set -uo pipefail
+# NOTE: intentionally NOT set -e. This is an aggregate validator: individual
+# command failures become WARN/TODO rows in the report rather than aborting the
+# run, so one unreachable repo cannot hide the status of the rest. -u and
+# pipefail stay on.
 
 # ---------------------------------------------------------------------------
 # Locate repository and load shared reimage config
@@ -79,14 +100,32 @@ if [[ ! -f "$CONFIG_LOADER" ]]; then
   exit 2
 fi
 
-# Phase 11B requires the artifact drive to be mounted so the pre-image repo
-# audit produced by Phase 2C is reachable. Load strictly.
+# Phase 11B needs the artifact drive mounted so the pre-image repo audit
+# produced by Phase 2A is reachable, but --artifact-root may supply that path
+# after parsing. Keep loading permissive and validate the resolved value below.
+ARTIFACT_CONFIG_REQUIRE_REIMAGE_ARTIFACT_ROOT=false
+
 # shellcheck source=../.internal/load-reimage-config.sh
-source "$CONFIG_LOADER"
+if ! source "$CONFIG_LOADER"; then
+  echo "ERROR: shared reimage configuration could not be loaded." >&2
+  echo "Refusing to continue: REIMAGE_ARTIFACT_ROOT may still hold a stale value exported by a previous run." >&2
+  exit 2
+fi
 
 usage() {
   sed -n '/^# --- BEGIN USAGE ---$/,/^# --- END USAGE ---$/p' "$0" \
     | sed '1d;$d;s/^# //;s/^#$//'
+}
+
+require_option_value() {
+  local option="$1"
+  local value="${2:-}"
+
+  if [[ -z "$value" || "$value" == --* ]]; then
+    echo "ERROR: $option requires a non-empty value." >&2
+    usage >&2
+    exit 2
+  fi
 }
 
 # ---------------------------------------------------------------------------
@@ -101,20 +140,12 @@ OPEN_RESULT=false
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --artifact-root)
-      if [[ -z "${2:-}" || "$2" == --* ]]; then
-        echo "ERROR: --artifact-root requires a non-empty value." >&2
-        usage >&2
-        exit 2
-      fi
+      require_option_value "$1" "${2:-}"
       REIMAGE_ARTIFACT_ROOT="$2"
       shift 2
       ;;
     --input-run)
-      if [[ -z "${2:-}" || "$2" == --* ]]; then
-        echo "ERROR: --input-run requires a run basename." >&2
-        usage >&2
-        exit 2
-      fi
+      require_option_value "$1" "${2:-}"
       INPUT_RUN="$2"
       shift 2
       ;;
@@ -123,11 +154,7 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     --output)
-      if [[ -z "${2:-}" || "$2" == --* ]]; then
-        echo "ERROR: --output requires a directory." >&2
-        usage >&2
-        exit 2
-      fi
+      require_option_value "$1" "${2:-}"
       OUTPUT_DIR="$2"
       shift 2
       ;;
@@ -150,6 +177,61 @@ done
 # ---------------------------------------------------------------------------
 # Resolve inputs (pre-image audit) and outputs
 # ---------------------------------------------------------------------------
+absolute_path() {
+  # Lexically resolve a possibly-relative path against $PWD without requiring
+  # it to exist, so prefix checks below cannot be defeated by relativity.
+  # No symlink resolution; Bash 3.2 safe (no arrays, no word splitting).
+  local input="$1"
+  local resolved=""
+  local rest
+  local segment
+
+  case "$input" in
+    /*) ;;
+    *) input="$PWD/$input" ;;
+  esac
+
+  rest="$input"
+  while [[ -n "$rest" ]]; do
+    segment="${rest%%/*}"
+    if [[ "$segment" == "$rest" ]]; then
+      rest=""
+    else
+      rest="${rest#*/}"
+    fi
+    case "$segment" in
+      ''|.) ;;
+      ..) resolved="${resolved%/*}" ;;
+      *) resolved="$resolved/$segment" ;;
+    esac
+  done
+
+  printf '%s' "${resolved:-/}"
+}
+
+validate_run_reference() {
+  # Reject run references that are not repo-audit run names, and reject path
+  # traversal or absolute paths. Mirrors the guards in
+  # bin/backup-repos.sh -> resolve_latest_audit_report().
+  local source_label="$1"
+  local value="$2"
+
+  case "$value" in
+    runs/pre-image-*|runs/post-image-*|pre-image-*|post-image-*) ;;
+    *)
+      echo "ERROR: invalid $source_label repository-audit run reference: ${value:-<empty>}" >&2
+      return 1
+      ;;
+  esac
+
+  case "$value" in
+    *..*|/*)
+      echo "ERROR: unsafe $source_label repository-audit run reference: $value" >&2
+      return 1
+      ;;
+  esac
+}
+
 if [[ -z "${REIMAGE_ARTIFACT_ROOT:-}" || ! -d "$REIMAGE_ARTIFACT_ROOT" ]]; then
   echo "ERROR: REIMAGE_ARTIFACT_ROOT is not set or not a directory. Reconnect the artifact volume and rerun." >&2
   exit 2
@@ -162,12 +244,16 @@ LATEST_POINTER="$AUDIT_ROOT/latest-run.txt"
 if [[ -z "$INPUT_RUN" ]]; then
   if [[ ! -f "$LATEST_POINTER" ]]; then
     echo "ERROR: latest-run pointer not found: $LATEST_POINTER" >&2
-    echo "Phase 2C (backup-repos.md) must produce a pre-image audit before Phase 11B can restore from it." >&2
+    echo "Phase 2A (backup-repos.md) must produce a pre-image audit before Phase 11B can restore from it." >&2
     exit 2
   fi
-  INPUT_RUN="$(cat "$LATEST_POINTER" 2>/dev/null | tr -d '[:space:]')"
+  INPUT_RUN="$(tr -d '[:space:]' < "$LATEST_POINTER")"
+  validate_run_reference "latest-run pointer" "$INPUT_RUN" || exit 2
   # latest-run.txt stores a path relative to repo-audit-reports/; strip a
   # leading runs/ segment when present so we can join uniformly below.
+  INPUT_RUN="${INPUT_RUN#runs/}"
+else
+  validate_run_reference "--input-run" "$INPUT_RUN" || exit 2
   INPUT_RUN="${INPUT_RUN#runs/}"
 fi
 
@@ -189,9 +275,15 @@ fi
 
 STAGED_LIVE="$REIMAGE_ARTIFACT_ROOT/staged-ignored-files/live"
 
+OUTPUT_DIR_DEFAULTED=false
 if [[ -z "$OUTPUT_DIR" ]]; then
   OUTPUT_DIR="$RUNS_DIR/post-image-restore-$STAMP"
+  OUTPUT_DIR_DEFAULTED=true
 fi
+
+# Resolve before the checkout guard below: a relative --output would otherwise
+# slip past a prefix comparison against the absolute REPO_ROOT.
+OUTPUT_DIR="$(absolute_path "$OUTPUT_DIR")"
 
 # Safety invariant: refuse to write generated output under the repo checkout.
 if [[ -n "${REPO_ROOT:-}" && ( "$OUTPUT_DIR" == "$REPO_ROOT" || "$OUTPUT_DIR" == "$REPO_ROOT"/* ) ]]; then
@@ -329,7 +421,8 @@ RSYNC_CMDS="$OUT/rsync-ignored-files.sh"
   echo "# Review each command before running. This script does NOT autorun."
   echo "set -euo pipefail"
   echo ""
-  echo 'source "$FRACTOGENESIS_HOME/reimage.env"'
+  echo "# Every path and URL below is already resolved, so this script needs no"
+  echo "# reimage.env and runs in a plain shell."
   echo ""
 } > "$CLONE_CMDS"
 {
@@ -346,7 +439,7 @@ first=true
 while IFS=$'\t' read -r repo_path branch head_line remotes status_summary \
   local_commit_count stash_count tracked_change_count untracked_count ignored_count
 do
-  if $first; then
+  if [[ "$first" == true ]]; then
     first=false
     continue
   fi
@@ -498,7 +591,7 @@ EOF
 # Append per-repo rows to the report from status.tsv (skip header).
 skip=true
 while IFS=$'\t' read -r rp lbl present remote_url chost ctarget ign_avail ign_appl carry; do
-  if $skip; then skip=false; continue; fi
+  if [[ "$skip" == true ]]; then skip=false; continue; fi
   printf '| %s | %s | %s | %s | %s | %s |\n' \
     "$lbl" "$rp" "$present" "$ign_avail" "$carry" "$chost" \
     >> "$REPORT_MD"
@@ -511,8 +604,8 @@ cat >> "$REPORT_MD" <<EOF
 - \`clone-commands.sh\` — one \`git clone\` per repo not present. Review, then run selectively.
 - \`rsync-ignored-files.sh\` — one \`rsync\` per repo with staged ignored files available.
 
-Neither file is executable by default. Source \`\$FRACTOGENESIS_HOME/reimage.env\`
-first, then run the commands you want:
+Neither file is executable by default. Both carry fully resolved paths and URLs,
+so they run in a plain shell with no configuration sourced first:
 
 \`\`\`bash
 cat "$OUT/clone-commands.sh"
@@ -561,8 +654,16 @@ Files:
 EOF
 
 # Pointer alongside (not replacing) the pre-image latest-run.txt owned by
-# Phase 2C. Distinct filename keeps ownership clear.
-printf '%s\n' "runs/post-image-restore-$STAMP" > "$AUDIT_ROOT/latest-post-image-restore.txt"
+# Phase 2A. Distinct filename keeps ownership clear.
+# Only stamp it for a default-located run: the pointer is resolved relative to
+# repo-audit-reports/, so recording runs/post-image-restore-$STAMP after an
+# --output run elsewhere would leave Phase 14 pointed at a path that does not
+# exist.
+if [[ "$OUTPUT_DIR_DEFAULTED" == true ]]; then
+  printf '%s\n' "runs/post-image-restore-$STAMP" > "$AUDIT_ROOT/latest-post-image-restore.txt"
+else
+  echo "NOTE: --output was used; latest-post-image-restore.txt left unchanged." >&2
+fi
 
 echo ""
 echo "Restore repositories report complete."
@@ -580,5 +681,7 @@ echo "Clone commands → $OUT/clone-commands.sh"
 echo "Rsync commands → $OUT/rsync-ignored-files.sh"
 
 if [[ "$OPEN_RESULT" == "true" ]]; then
-  open -R "$REPORT_MD"
+  # Never let a Finder reveal decide the run's exit status: over SSH, or on a
+  # host without `open`, a correctly written report would otherwise exit nonzero.
+  open -R "$REPORT_MD" 2>/dev/null || true
 fi

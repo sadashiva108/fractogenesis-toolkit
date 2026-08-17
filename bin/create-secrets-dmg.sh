@@ -2,8 +2,9 @@
 # =============================================================================
 # create-secrets-dmg.sh
 #
-# Phase 3C entrypoint for the consolidated encrypted secrets DMG. One script
-# owns the whole lifecycle through four subcommands:
+# Phase 3C entrypoint for the consolidated encrypted secrets DMG, invoked by the
+# create-secrets-dmg.md runbook (Phase 3C — Create Secrets DMG). One script owns
+# the whole lifecycle through four subcommands:
 #
 #   build (default)  Stage every credential-bearing category that should survive
 #                    the reimage into one temporary tree and encrypt it into
@@ -223,6 +224,21 @@ category_file_count() {
   "${fc[@]}" 2>/dev/null | wc -l | tr -d ' '
 }
 
+# True when a directory holds at least one regular file (optionally ignoring
+# .DS_Store). `find … | grep -q .` cannot be used for this: grep -q exits on the
+# first match and SIGPIPEs find, so on a directory large enough for find to still
+# be writing the pipeline returns 141 under `set -o pipefail` and a populated
+# category reads as empty.
+dir_has_files() {
+  local dir="$1" mode="${2:-}"
+  [[ -d "$dir" ]] || return 1
+  if [[ "$mode" == "--skip-ds-store" ]]; then
+    [[ -n "$(find "$dir" -type f ! -name '.DS_Store' -print -quit 2>/dev/null)" ]]
+  else
+    [[ -n "$(find "$dir" -type f -print -quit 2>/dev/null)" ]]
+  fi
+}
+
 # Track a mounted DMG so an EXIT trap can always detach it, even on early exit.
 MOUNTED_VOL=""
 detach_mounted() {
@@ -278,6 +294,10 @@ status() {
     INFO) info "$label${detail:+  ($detail)}" ;;
   esac
   rpt "| $level | $label | ${detail:-} |"
+  # Never leak rpt's status: callers use `check && status PASS … || status WARN …`,
+  # and a failed report append would otherwise fire the WARN branch too and record
+  # two contradictory rows for the same check.
+  return 0
 }
 
 report_header() {
@@ -559,18 +579,26 @@ cmd_build() {
   # this run actually staged from it, and say so at BUILD time rather than
   # leaving it for validate.
   echo ""; echo -e "${BLD}Unmatched Files in Pattern-Matched Categories${RST}"; thin_hr
-  local unmatched_total=0 pm_cat pm_disk pm_staged
+  # Compare per relative path, not by count: certs/ staging is also fed from
+  # ~/Desktop, ~/Downloads and the JDKs, so staged>disk is normal there and a
+  # count gate skipped the category entirely. Matching on the relative path also
+  # stops a nested file that did stage from being listed as unmatched, since
+  # stage_file preserves the path below secrets-encrypted/<category>/.
+  local unmatched_total=0 pm_cat pm_f pm_rel pm_missing pm_list
   for pm_cat in chrome certs; do
     [[ -d "$SECRETS_DIR/$pm_cat" ]] || continue
-    pm_disk="$(find "$SECRETS_DIR/$pm_cat" -type f ! -name '.DS_Store' 2>/dev/null | wc -l | tr -d ' ')"
-    pm_staged="$(find "$STAGING/$pm_cat" -type f ! -name '.DS_Store' 2>/dev/null | wc -l | tr -d ' ')"
-    (( pm_disk > pm_staged )) || continue
-    warn "$pm_cat/: $(( pm_disk - pm_staged )) file(s) on disk did not match this category's staging pattern"
-    find "$SECRETS_DIR/$pm_cat" -type f ! -name '.DS_Store' 2>/dev/null \
-      | while IFS= read -r pm_f; do
-          [[ -f "$STAGING/$pm_cat/$(basename "$pm_f")" ]] || echo "      ${pm_f#"$SECRETS_DIR"/}"
-        done
-    unmatched_total=$(( unmatched_total + pm_disk - pm_staged ))
+    pm_missing=0
+    pm_list=""
+    while IFS= read -r -d '' pm_f; do
+      pm_rel="${pm_f#"$SECRETS_DIR/$pm_cat"/}"
+      [[ -e "$STAGING/$pm_cat/$pm_rel" ]] && continue
+      pm_missing=$(( pm_missing + 1 ))
+      pm_list="${pm_list}      ${pm_cat}/${pm_rel}"$'\n'
+    done < <(find "$SECRETS_DIR/$pm_cat" -type f ! -name '.DS_Store' -print0 2>/dev/null)
+    (( pm_missing > 0 )) || continue
+    warn "$pm_cat/: $pm_missing file(s) on disk did not match this category's staging pattern"
+    printf '%s' "$pm_list"
+    unmatched_total=$(( unmatched_total + pm_missing ))
   done
   (( unmatched_total == 0 )) && skip "Every file in a pattern-matched category was staged"
 
@@ -615,24 +643,24 @@ cmd_build() {
       local missing_cats="" pc
       while IFS= read -r pc; do
         [[ -n "$pc" ]] || continue
-        [[ -d "$STAGING/$pc" ]] && find "$STAGING/$pc" -type f 2>/dev/null | grep -q . && continue
+        [[ -d "$STAGING/$pc" ]] && dir_has_files "$STAGING/$pc" && continue
         missing_cats="$missing_cats $pc"
       done < "$prev_sidecar"
       if [[ -n "$missing_cats" ]]; then
         echo ""
         err "Coverage regression: this build is missing categories the previous DMG had."
-        hint "Previous: $(basename "$prev_dmg")"
-        for pc in $missing_cats; do hint "  MISSING  $pc/"; done
-        hint ""
-        hint "This normally means cleanup removed the pre-staged trees and the phases"
-        hint "that produce them have not been re-run. Regenerate them first:"
-        hint "  ./bin/backup-apps.sh            # intellij, raycast, postman"
-        hint "  ./bin/stage-certs-keychain.sh   # certs, extra-secrets-certs-review"
-        hint "  ./bin/backup-repos.sh           # repos-gitignored"
-        hint "  ./bin/stage-loose-secrets.sh --apply"
-        hint ""
-        hint "Keep the previous DMG until the rebuild covers everything it did."
-        hint "Override with --force only if the loss is intended."
+        info "Previous: $(basename "$prev_dmg")"
+        for pc in $missing_cats; do info "  MISSING  $pc/"; done
+        info ""
+        info "This normally means cleanup removed the pre-staged trees and the phases"
+        info "that produce them have not been re-run. Regenerate them first:"
+        info "  ./bin/backup-apps.sh            # intellij, raycast, postman"
+        info "  ./bin/stage-certs-keychain.sh   # certs, extra-secrets-certs-review"
+        info "  ./bin/backup-repos.sh           # repos-gitignored"
+        info "  ./bin/stage-loose-secrets.sh --apply"
+        info ""
+        info "Keep the previous DMG until the rebuild covers everything it did."
+        info "Override with --force only if the loss is intended."
         if [[ "$FORCE" != true ]]; then
           exit 1
         fi
@@ -640,7 +668,7 @@ cmd_build() {
       fi
     else
       warn "Previous DMG has no category sidecar; cannot check for coverage regression"
-      hint "$(basename "$prev_dmg") predates the sidecar. Compare validate output by hand."
+      info "$(basename "$prev_dmg") predates the sidecar. Compare validate output by hand."
     fi
   fi
 
@@ -668,7 +696,7 @@ cmd_build() {
   {
     for cat_dir in "$STAGING"/*/; do
       [[ -d "$cat_dir" ]] || continue
-      find "$cat_dir" -type f 2>/dev/null | grep -q . || continue
+      dir_has_files "$cat_dir" || continue
       basename "$cat_dir"
     done
   } | sort > "$CATEGORIES"
@@ -769,7 +797,7 @@ cmd_verify_staging() {
 
   # secrets-DMG rebuild marker
   echo ""
-  if find "$EXTRA_CERTS_REVIEW_DIR/state" -maxdepth 1 -type f -name 'secrets-dmg-rebuild-required-*.md' 2>/dev/null | grep -q .; then
+  if [[ -n "$(find "$EXTRA_CERTS_REVIEW_DIR/state" -maxdepth 1 -type f -name 'secrets-dmg-rebuild-required-*.md' -print -quit 2>/dev/null)" ]]; then
     status INFO "secrets-dmg-rebuild-required marker present" "Phase 3A staged new cert material — a go signal for this build"
   fi
 
@@ -848,31 +876,36 @@ cmd_validate() {
   # directory was never made and validation had nothing to compare. Check the
   # configured list too, and say so when a configured destination produced
   # nothing on disk.
+  # SECRETS_TARGETS is an optional artifact-config fragment array — a fragment may
+  # legitimately not define it, so guard with declare -p before iterating (on
+  # stock Bash 3.2 "${arr[@]}" errors on an empty array under set -u).
   local tgt tgt_dest tgt_cat
-  for tgt in ${SECRETS_TARGETS[@]+"${SECRETS_TARGETS[@]}"}; do
-    tgt_dest="$(config_field "$tgt" 3)"
-    [[ -n "$tgt_dest" ]] || continue
-    # dest is either "cat/file" or a bare "cat"; both yield the category.
-    tgt_cat="${tgt_dest%%/*}"
-    [[ -n "$tgt_cat" ]] || continue
-    case "$tgt_cat" in cloud) continue ;; esac
-    if [[ -d "$SECRETS_DIR/$tgt_cat" ]] && (( $(category_file_count "$tgt_cat") > 0 )); then
-      continue   # already reported by the loop above
-    fi
-    if [[ -d "$VOL/$tgt_cat" ]] && find "$VOL/$tgt_cat" -type f ! -name '.DS_Store' 2>/dev/null | grep -q .; then
-      continue   # in the image already; nothing loose on disk is expected
-    fi
-    status WARN "$tgt_cat/ configured but nothing staged" \
-      "no files on disk and none in the image — confirm the source path exists"
-  done
+  if declare -p SECRETS_TARGETS >/dev/null 2>&1 && (( ${#SECRETS_TARGETS[@]} > 0 )); then
+    for tgt in "${SECRETS_TARGETS[@]}"; do
+      tgt_dest="$(config_field "$tgt" 3)"
+      [[ -n "$tgt_dest" ]] || continue
+      # dest is either "cat/file" or a bare "cat"; both yield the category.
+      tgt_cat="${tgt_dest%%/*}"
+      [[ -n "$tgt_cat" ]] || continue
+      case "$tgt_cat" in cloud) continue ;; esac
+      if [[ -d "$SECRETS_DIR/$tgt_cat" ]] && (( $(category_file_count "$tgt_cat") > 0 )); then
+        continue   # already reported by the loop above
+      fi
+      if [[ -d "$VOL/$tgt_cat" ]] && dir_has_files "$VOL/$tgt_cat" --skip-ds-store; then
+        continue   # in the image already; nothing loose on disk is expected
+      fi
+      status WARN "$tgt_cat/ configured but nothing staged" \
+        "no files on disk and none in the image — confirm the source path exists"
+    done
+  fi
 
   # Foundational live-captured secrets (present only if this machine had them).
-  if [[ -d "$VOL/gnupg/private-keys-v1.d" ]] && find "$VOL/gnupg/private-keys-v1.d" -type f 2>/dev/null | grep -q .; then
+  if [[ -d "$VOL/gnupg/private-keys-v1.d" ]] && dir_has_files "$VOL/gnupg/private-keys-v1.d"; then
     status PASS "GPG private keys present in DMG" "gnupg/private-keys-v1.d/"
   else
     status WARN "No GPG private keys in DMG" "expected only if this machine has none"
   fi
-  if [[ -d "$VOL/ssh" ]] && find "$VOL/ssh" -type f 2>/dev/null | grep -q .; then
+  if [[ -d "$VOL/ssh" ]] && dir_has_files "$VOL/ssh"; then
     status PASS "SSH material present in DMG" "ssh/"
   else
     status WARN "No SSH material in DMG" "expected only if this machine has none"
@@ -961,7 +994,7 @@ cmd_cleanup() {
   dmg_has_category() {
     local cat="$1"
     [[ "$have_dmg_contents" == true ]] || return 1
-    [[ -d "$VOL/$cat" ]] && find "$VOL/$cat" -type f ! -name '.DS_Store' 2>/dev/null | grep -q .
+    [[ -d "$VOL/$cat" ]] && dir_has_files "$VOL/$cat" --skip-ds-store
   }
 
   local cat n removed=0 kept=0

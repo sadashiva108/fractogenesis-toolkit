@@ -32,6 +32,24 @@
 # Options:
 #   -h, --help            Show this message and exit.
 #
+# Required configuration:
+#   OFFICE_WATCH          Local watcher directory the log and marker live in.
+#                         Required; comes from reimage.env. Created if missing.
+#   OFFICE_WATCH_DIR      Optional override of OFFICE_WATCH, resolved the same
+#                         way in capture-office-stability.sh and
+#                         capture-workload-snapshot.sh so the watcher writes
+#                         where those scripts read. Takes precedence over
+#                         OFFICE_WATCH when set. No CLI flag.
+#
+# REIMAGE_ARTIFACT_ROOT is never read; nothing is written to the artifact root.
+#
+# Notes:
+#   - The sample interval is a fixed 15 seconds; there is no flag for it.
+#   - bundle-watch-start.marker is created only when it is absent, so a second
+#     watcher started against the same directory keeps the earlier window's
+#     marker. Reset it deliberately when a new window begins — see
+#     capture-office-stability.md, Step 1.
+#
 # Configuration precedence:
 #   1. Environment values already exported by the caller or optional .envrc.
 #   2. Values loaded from reimage.env.
@@ -87,12 +105,16 @@ esac
 # ---------------------------------------------------------------------------
 # Resolve the local watcher directory
 # ---------------------------------------------------------------------------
-if [[ -z "${OFFICE_WATCH:-}" ]]; then
+# OFFICE_WATCH is a real reimage.env value; OFFICE_WATCH_DIR is an optional
+# override. Resolved exactly as capture-office-stability.sh and
+# capture-workload-snapshot.sh resolve it, so the log and marker written here
+# are the ones those scripts read.
+DIR="${OFFICE_WATCH_DIR:-${OFFICE_WATCH:-}}"
+if [[ -z "$DIR" ]]; then
   echo "ERROR: OFFICE_WATCH is not set." >&2
   echo "Create/source reimage.env so the watcher and marker have a home." >&2
   exit 2
 fi
-DIR="$OFFICE_WATCH"
 mkdir -p "$DIR"
 
 LOG="$DIR/bundle-watch-$(date +%Y%m%d-%H%M%S).log"

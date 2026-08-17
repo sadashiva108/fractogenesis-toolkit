@@ -8,6 +8,10 @@ reimage.env.stale-*
 
 *.local.sh
 
+# Resolved, machine-specific companions to committed docs
+# (e.g. post-reimage-cheatsheet.local.md — real paths, asset tag, DMG filename)
+*.local.md
+
 # Build artifacts from bin/build-jump-drive-payload.sh
 .toolkit-version
 *.tar.gz

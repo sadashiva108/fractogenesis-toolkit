@@ -12,6 +12,8 @@
 # capture-office-stability.md, Step 4.
 #
 # --- BEGIN USAGE ---
+# Generate an Office stability checklist bundle for pre-image or post-image use.
+#
 # Usage:
 #   cd <repo-root>
 #   chmod +x bin/office-stability-checklist.sh
@@ -22,8 +24,6 @@
 #   # Post-image checklist, opened when finished
 #   ./bin/office-stability-checklist.sh --phase post-reimage --artifact-root "$REIMAGE_ARTIFACT_ROOT" --open
 #
-# Generate an Office stability checklist bundle for pre-image or post-image use.
-#
 # Options:
 #   --phase PHASE             One of: pre-reimage, pre-image, post-reimage, post-image.
 #                             Default: pre-reimage.
@@ -32,7 +32,10 @@
 #   --office-watch-dir PATH   Local watcher directory.
 #                             Default: OFFICE_WATCH from shared config.
 #   --output-root PATH        Output root for the generated checklist bundle.
-#                             Default: <artifact-root>/office-stability/checklists.
+#                             Default: <artifact-root>/office-stability/checklists,
+#                             falling back to <office-watch-dir>/checklists when
+#                             no artifact root is set. With neither set and no
+#                             --output-root, the run exits 2.
 #   --max-log-age-minutes N   Freshness threshold for the latest watcher log.
 #                             Default: 30.
 #   --no-color                Disable colored terminal output.
@@ -74,11 +77,20 @@ if [[ ! -f "$CONFIG_LOADER" ]]; then
 fi
 
 # The checklist reports on a missing artifact root rather than failing to load,
-# so keep loading permissive.
+# so keep loading permissive. Read by artifact-config.sh through the sourced
+# loader below, which is why shellcheck cannot see the use from here.
+# shellcheck disable=SC2034
 ARTIFACT_CONFIG_REQUIRE_REIMAGE_ARTIFACT_ROOT=false
 
+# A failed config load leaves the artifact root, watcher directory, and marker
+# unresolved, so every check below would report on paths that were never
+# computed. This is the one place the validator aborts instead of recording a
+# row -- same form as reimage-checklist.sh.
 # shellcheck source=../.internal/load-reimage-config.sh
-source "$CONFIG_LOADER"
+if ! source "$CONFIG_LOADER"; then
+  echo "ERROR: shared reimage configuration could not be loaded." >&2
+  exit 2
+fi
 
 SCRIPT_NAME="${REIMAGE_SCRIPT_DISPLAY_NAME:-office-stability-checklist.sh}"
 PHASE="pre-reimage"
@@ -108,29 +120,45 @@ usage() {
     | sed '1d;$d;s/^# //;s/^#$//'
 }
 
+require_option_value() {
+  local option="$1"
+  local value="${2:-}"
+
+  if [[ -z "$value" || "$value" == --* ]]; then
+    echo "ERROR: $option requires a non-empty value." >&2
+    usage >&2
+    exit 2
+  fi
+}
+
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --phase)
-      if ! PHASE="$(normalize_phase "${2:-}")"; then
+      require_option_value "$1" "${2:-}"
+      if ! PHASE="$(normalize_phase "$2")"; then
         echo "--phase must be one of: pre-reimage, pre-image, post-reimage, post-image" >&2
         exit 2
       fi
       shift 2
       ;;
     --artifact-root)
-      REIMAGE_ARTIFACT_ROOT="${2:-}"
+      require_option_value "$1" "${2:-}"
+      REIMAGE_ARTIFACT_ROOT="$2"
       shift 2
       ;;
     --office-watch-dir)
-      OFFICE_WATCH_DIR="${2:-}"
+      require_option_value "$1" "${2:-}"
+      OFFICE_WATCH_DIR="$2"
       shift 2
       ;;
     --output-root)
-      OUTPUT_ROOT="${2:-}"
+      require_option_value "$1" "${2:-}"
+      OUTPUT_ROOT="$2"
       shift 2
       ;;
     --max-log-age-minutes)
-      MAX_LOG_AGE_MINUTES="${2:-}"
+      require_option_value "$1" "${2:-}"
+      MAX_LOG_AGE_MINUTES="$2"
       if [[ ! "$MAX_LOG_AGE_MINUTES" =~ ^[0-9]+$ ]]; then
         echo "--max-log-age-minutes requires a non-negative integer" >&2
         exit 2
@@ -158,6 +186,14 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ -z "$OUTPUT_ROOT" ]]; then
+  # With neither value set the watcher-dir fallback would resolve to the
+  # absolute path /checklists. Require one of the pair rather than writing the
+  # bundle to the filesystem root.
+  if [[ -z "$REIMAGE_ARTIFACT_ROOT" && -z "$OFFICE_WATCH_DIR" ]]; then
+    echo "ERROR: no output location could be resolved." >&2
+    echo "Set REIMAGE_ARTIFACT_ROOT or OFFICE_WATCH (or pass --artifact-root, --office-watch-dir, or --output-root)." >&2
+    exit 2
+  fi
   if [[ -n "$REIMAGE_ARTIFACT_ROOT" ]]; then
     OUTPUT_ROOT="$REIMAGE_ARTIFACT_ROOT/office-stability/checklists"
   else
@@ -266,20 +302,43 @@ record_check() {
   append_report "| ${md_icon} | ${label} | ${detail} |"
 }
 
+# capture_bash NAME SCRIPT [ARG...]
+#
+# Runs SCRIPT with `bash -c` and records its output as evidence. Values the
+# probe needs are passed as positional arguments ("$1", "$2", ...) instead of
+# being interpolated into the script text: interpolation breaks on any path
+# containing a quote and would let a path influence the command that runs.
+# `-c` rather than `-lc` so captured evidence does not depend on whatever the
+# operator's login profile happens to set.
 capture_bash() {
   local name="$1"
-  shift
-  local script="$*"
+  local script="$2"
+  shift 2
   local target
   target="$(target_file "$name")"
   {
     echo "# $name"
     echo "# captured: $(date)"
-    echo "# command: bash -lc $script"
+    echo "# command: bash -c $script"
+    if [[ "$#" -gt 0 ]]; then
+      echo "# args: $*"
+    fi
     echo
-    bash -lc "$script"
+    bash -c "$script" _ "$@"
   } > "$target" 2>> "$ERROR_LOG" || true
-  printf '%s\n' "bash -lc $script > $(rel_path "$target")" >> "$COMMAND_LOG"
+  if [[ "$#" -gt 0 ]]; then
+    printf '%s\n' "bash -c $script _ $* > $(rel_path "$target")" >> "$COMMAND_LOG"
+  else
+    printf '%s\n' "bash -c $script > $(rel_path "$target")" >> "$COMMAND_LOG"
+  fi
+}
+
+# Evidence body only: every checked evidence file starts with `# name`,
+# `# captured:`, and `# command:` provenance lines, and the command text
+# contains the same sentinels the checks below look for. Strip the comment
+# header so a check reads the probe's output and not its own command line.
+evidence_body() {
+  grep -v '^#' "$1" 2>/dev/null || true
 }
 
 file_age_minutes() {
@@ -288,12 +347,13 @@ file_age_minutes() {
   local now mtime
   now="$(date +%s)"
   mtime="$(stat -f %m "$f" 2>/dev/null || echo 0)"
+  # A non-numeric mtime (unreadable file, non-BSD stat) would make the
+  # arithmetic below fail and print nothing; an empty age then compares as 0
+  # and the log would be recorded "fresh" with a blank age.
+  if [[ ! "$mtime" =~ ^[0-9]+$ ]]; then
+    mtime=0
+  fi
   echo $(( (now - mtime) / 60 ))
-}
-
-newest_file() {
-  local pattern="$1"
-  ls -t $pattern 2>/dev/null | head -1 || true
 }
 
 watcher_running_pids() {
@@ -335,6 +395,13 @@ printf "  Report            : %s\n" "$REPORT_FILE"
 printf "  Timestamp         : %s\n" "$TS"
 printf "\n"
 
+OFFICE_BACKUP="$REIMAGE_ARTIFACT_ROOT/office-stability"
+
+# Counted here, before this run copies its own watcher tail into the watcher
+# directory below: the check that reports on it must describe state that
+# already existed, not the artifact this run just created.
+TAIL_COUNT="$(find "$OFFICE_WATCH_DIR" "$OFFICE_BACKUP" -maxdepth 1 -type f -name 'latest-watcher-after-close-*.txt' 2>/dev/null | wc -l | tr -d ' ')"
+
 record_section "Watcher and Marker"
 
 if [[ -d "$OFFICE_WATCH_DIR" ]]; then
@@ -353,10 +420,10 @@ else
   record_check WARN "Watcher process currently running" "Not running now; acceptable if test window is complete, but verify latest watcher log"
 fi
 
-LATEST_WATCH="$(newest_file "\"$OFFICE_WATCH_DIR\"/bundle-watch-*.log")"
-if [[ -z "$LATEST_WATCH" ]]; then
-  LATEST_WATCH="$(ls -t "$OFFICE_WATCH_DIR"/bundle-watch-*.log 2>/dev/null | head -1 || true)"
-fi
+# `ls -t` for newest-first ordering; watcher log names are script-generated
+# and contain no whitespace or newlines.
+# shellcheck disable=SC2012
+LATEST_WATCH="$(ls -t "$OFFICE_WATCH_DIR"/bundle-watch-*.log 2>/dev/null | head -1 || true)"
 
 if [[ -n "$LATEST_WATCH" && -f "$LATEST_WATCH" ]]; then
   AGE_MIN="$(file_age_minutes "$LATEST_WATCH")"
@@ -394,11 +461,13 @@ else
   record_check FAIL "Marker timestamp confirmed" "Missing: $MARKER"
 fi
 
-capture_bash "marker-and-current-time" "MARKER='$MARKER'; if [[ -e \"\$MARKER\" ]]; then /usr/bin/stat -f 'path=%N modified=%Sm size=%z' -t '%Y-%m-%d %H:%M:%S' \"\$MARKER\"; else echo \"Marker is missing: \$MARKER\"; fi; echo; date '+current=%Y-%m-%d %H:%M:%S'"
+# The single quotes are required: "$1" must reach the child bash, which
+# receives the marker path as a positional argument.
+# shellcheck disable=SC2016
+capture_bash "marker-and-current-time" 'MARKER="$1"; if [[ -e "$MARKER" ]]; then /usr/bin/stat -f "path=%N modified=%Sm size=%z" -t "%Y-%m-%d %H:%M:%S" "$MARKER"; else echo "Marker is missing: $MARKER"; fi; echo; date "+current=%Y-%m-%d %H:%M:%S"' "$MARKER"
 
 record_section "Office Stability Evidence"
 
-OFFICE_BACKUP="$REIMAGE_ARTIFACT_ROOT/office-stability"
 if [[ -d "$OFFICE_BACKUP" ]]; then
   record_check PASS "Office stability backup folder exists" "$OFFICE_BACKUP"
 else
@@ -463,9 +532,8 @@ else
   record_check WARN "Workload snapshots captured" "None found; run bin/capture-workload-snapshot.sh before/after opening Office"
 fi
 
-TAIL_COUNT="$(find "$OFFICE_WATCH_DIR" "$OFFICE_BACKUP" -maxdepth 1 -type f -name 'latest-watcher-after-close-*.txt' 2>/dev/null | wc -l | tr -d ' ')"
 if [[ "$TAIL_COUNT" -gt 0 ]]; then
-  record_check PASS "Latest watcher tail captured" "$TAIL_COUNT tail file(s) found/generated"
+  record_check PASS "Latest watcher tail captured" "$TAIL_COUNT tail file(s) found"
 else
   record_check WARN "Latest watcher tail captured" "None found; this run writes watcher/latest-watcher-tail-800.txt"
 fi
@@ -473,28 +541,34 @@ fi
 record_section "Live Office Checks"
 
 capture_bash "installer-update-management-processes" "ps -axo pid,ppid,etime,stat,%cpu,%mem,command | egrep '(^|/)(installd|system_installd|appstored|appstoreagent)( |$)|Microsoft AutoUpdate|Microsoft Update Assistant|com\\.microsoft\\.autoupdate|Company Portal|Intune|ManagedClient|mdmclient|jamf|Self Service' | grep -v egrep || echo 'No installer/update/management processes found'"
-if grep -q "No installer/update/management processes found" "$(target_file "installer-update-management-processes")" 2>/dev/null; then
+if evidence_body "$(target_file "installer-update-management-processes")" | grep -q "No installer/update/management processes found"; then
   record_check PASS "Installer/update/management process check captured" "No active processes found at capture time"
 else
   record_check WARN "Installer/update/management process check captured" "Active management/update processes found; review processes/installer-update-management-processes.txt"
 fi
 
 capture_bash "outlook-onenote-processes" "pgrep -fl 'Microsoft Outlook|Microsoft OneNote' || echo 'No Outlook/OneNote processes'"
-if grep -q "No Outlook/OneNote processes" "$(target_file "outlook-onenote-processes")" 2>/dev/null; then
+if evidence_body "$(target_file "outlook-onenote-processes")" | grep -q "No Outlook/OneNote processes"; then
   record_check WARN "Outlook/OneNote process state captured" "No Outlook/OneNote processes at capture time"
 else
   record_check PASS "Outlook/OneNote process state captured" "Review processes/outlook-onenote-processes.txt"
 fi
 
-capture_bash "office-crash-reports-after-marker" "MARKER='$MARKER'; if [[ -e \"\$MARKER\" ]]; then find '$HOME/Library/Logs/DiagnosticReports' '/Library/Logs/DiagnosticReports' -maxdepth 1 -type f -newer \"\$MARKER\" \\( -iname '*Outlook*.ips' -o -iname '*Outlook*.crash' -o -iname '*OneNote*.ips' -o -iname '*OneNote*.crash' \\) -print 2>/dev/null | sort; else echo 'Marker missing'; fi"
-if [[ -s "$(target_file "office-crash-reports-after-marker")" ]] && ! grep -q "Marker missing" "$(target_file "office-crash-reports-after-marker")" && grep -Ev '^#|^$' "$(target_file "office-crash-reports-after-marker")" >/dev/null 2>&1; then
+# The single quotes are required: "$1" must reach the child bash, which
+# receives the marker path as a positional argument.
+# shellcheck disable=SC2016
+capture_bash "office-crash-reports-after-marker" 'MARKER="$1"; if [[ -e "$MARKER" ]]; then find "$HOME/Library/Logs/DiagnosticReports" "/Library/Logs/DiagnosticReports" -maxdepth 1 -type f -newer "$MARKER" \( -iname "*Outlook*.ips" -o -iname "*Outlook*.crash" -o -iname "*OneNote*.ips" -o -iname "*OneNote*.crash" \) -print 2>/dev/null | sort; else echo "Marker missing"; fi' "$MARKER"
+if ! evidence_body "$(target_file "office-crash-reports-after-marker")" | grep -q "Marker missing" && grep -Ev '^#|^$' "$(target_file "office-crash-reports-after-marker")" >/dev/null 2>&1; then
   record_check WARN "Crash reports after marker checked" "Crash report(s) found; inspect system/office-crash-reports-after-marker.txt"
 else
   record_check PASS "Crash reports after marker checked" "No new Outlook/OneNote crash reports listed after marker"
 fi
 
-capture_bash "office-bundle-status" "MARKER='$MARKER'; for app in 'Microsoft Outlook' 'Microsoft OneNote' 'Microsoft Word' 'Microsoft Excel' 'Microsoft PowerPoint' 'Microsoft Teams'; do APP=\"/Applications/\$app.app\"; echo; echo \"===== \$app =====\"; if [[ -d \"\$APP\" ]]; then if [[ -e \"\$MARKER\" && \"\$APP\" -nt \"\$MARKER\" ]]; then echo 'CHANGED_AFTER_MARKER: YES'; else echo 'CHANGED_AFTER_MARKER: NO'; fi; /usr/bin/stat -f 'modified=%Sm path=%N' -t '%Y-%m-%d %H:%M:%S' \"\$APP\" 2>&1 || true; /usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' \"\$APP/Contents/Info.plist\" 2>/dev/null || true; /usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' \"\$APP/Contents/Info.plist\" 2>/dev/null || true; else echo \"MISSING: \$APP\"; fi; done"
-if grep -q "CHANGED_AFTER_MARKER: YES" "$(target_file "office-bundle-status")" 2>/dev/null; then
+# The single quotes are required: "$1" must reach the child bash, which
+# receives the marker path as a positional argument.
+# shellcheck disable=SC2016
+capture_bash "office-bundle-status" 'MARKER="$1"; for app in "Microsoft Outlook" "Microsoft OneNote" "Microsoft Word" "Microsoft Excel" "Microsoft PowerPoint" "Microsoft Teams"; do APP="/Applications/$app.app"; echo; echo "===== $app ====="; if [[ -d "$APP" ]]; then if [[ -e "$MARKER" && "$APP" -nt "$MARKER" ]]; then echo "CHANGED_AFTER_MARKER: YES"; else echo "CHANGED_AFTER_MARKER: NO"; fi; /usr/bin/stat -f "modified=%Sm path=%N" -t "%Y-%m-%d %H:%M:%S" "$APP" 2>&1 || true; /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$APP/Contents/Info.plist" 2>/dev/null || true; /usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$APP/Contents/Info.plist" 2>/dev/null || true; else echo "MISSING: $APP"; fi; done' "$MARKER"
+if evidence_body "$(target_file "office-bundle-status")" | grep -q "CHANGED_AFTER_MARKER: YES"; then
   record_check WARN "Office bundle status captured" "At least one Office bundle changed after marker; review system/office-bundle-status.txt"
 else
   record_check PASS "Office bundle status captured" "No Office bundle changes after marker shown at capture time"
@@ -557,7 +631,8 @@ if [[ "$PHASE" == "post-reimage" ]]; then
     record_check WARN "Pre/post baseline folders available for comparison" "One side of the before/after pair is missing"
   fi
 
-  if grep -q "CFBundleShortVersionString" "$(target_file "office-bundle-status")" 2>/dev/null || grep -Eq '^[0-9]+' "$(target_file "office-bundle-status")" 2>/dev/null; then
+  if evidence_body "$(target_file "office-bundle-status")" | grep -q "CFBundleShortVersionString" \
+    || evidence_body "$(target_file "office-bundle-status")" | grep -Eq '^[0-9]+'; then
     record_check PASS "Office app version evidence captured" "Review system/office-bundle-status.txt"
   else
     record_check WARN "Office app version evidence captured" "Bundle status file exists but version evidence may be incomplete"

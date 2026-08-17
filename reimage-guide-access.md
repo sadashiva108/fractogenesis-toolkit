@@ -181,11 +181,17 @@ export FRACTOGENESIS_HOME=/tmp/fractogenesis-toolkit-access-test/curl-kit
 
 Note: a `VAR=val` prefix directly on the curl command (`FRACTOGENESIS_HOME=... curl ... | bash`) does **not** work here — that only sets the variable for `curl`, not for `bash` on the other side of the pipe, which is where `bootstrap.sh` actually runs. It has to be `export`ed on its own line beforehand.
 
-**4. Then run the curl command normally:**
+**4. Then fetch and run `bootstrap.sh` — as two steps, not a pipe:**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/<your-github-account>/fractogenesis-toolkit/main/bootstrap.sh | bash
+curl -fL -o /tmp/bootstrap.sh https://raw.githubusercontent.com/sadashiva108/fractogenesis-toolkit/main/bootstrap.sh
+bash /tmp/bootstrap.sh
 ```
+
+> [!warning] Pitfall
+> Do not use `curl -fsSL … | bash`. With `-f -s`, a 404 — or a captive portal returning its own page — prints nothing, `bash` reads an empty stdin, and the pipeline exits **0**. The test then "passes" while installing nothing, and the failure only surfaces at the pass criteria in step 6, with no indication of the cause. Fetching to a file first turns a failed download into a visible `curl: (22)`.
+>
+> If the fetch 404s, the repository is private and the `curl` route needs a token — which defeats its purpose on a bare Mac. That is a finding worth having now: it makes the jump drive and the artifact root's `toolkit-snapshot/` the only credential-free routes.
 
 **5. Confirm it landed in the throwaway location, not your real checkout:**
 
@@ -227,7 +233,11 @@ cat "$FRACTOGENESIS_HOME/prepare-artifact-root.md" | head -50
 
 Any one of these confirms the file is legible plain text. None of them render Obsidian's `[[#Heading]]`-style links specially — that's expected, and not a requirement for the docs to be usable on a bare Mac. If Obsidian happens to be installed already (not guaranteed on a bare Mac), opening the throwaway folder as a vault gives the fuller experience, but that's a convenience, not a dependency.
 
-**8. Test run the scripts, to confirm they actually execute — not just that the files exist:**
+**8. Test run the scripts, to confirm they actually execute — not just that the files exist.** `cd` into the installed copy first: step 2 left the shell in the *parent* of the install directory, so a bare `bin/…` path would resolve to nothing and report a false failure.
+
+```bash
+cd "$FRACTOGENESIS_HOME"
+```
 
 ```bash
 python3 bin/prepare-artifact-root.py --help
@@ -261,22 +271,23 @@ unset FRACTOGENESIS_HOME
 
 ### Step 3 — Validate Jump Drive fractogenesis-toolkit
 
-**1. Set the jump drive's mount path** — adjust the volume name if yours differs:
+**1. Set the parent directory to where the cloned `fractogenesis-toolkit` lives** on your normal dev machine, and return to the repository root. The `cd` matters: Step 2 deleted the directory the shell was sitting in, and step 4 below invokes `bin/build-jump-drive-payload.sh` by relative path.
+
+```bash
+export FRACTOGENESIS_PARENT="/path/to/wherever/you/actually/cloned/it"
+cd "$FRACTOGENESIS_PARENT/fractogenesis-toolkit"
+```
+
+**2. Set the jump drive's mount path** — adjust the volume name if yours differs:
 
 ```bash
 export JUMP_DRIVE_VOLUME="/Volumes/REIMAGEKIT"
 ```
 
-**2. Create a tarball directory on the jump drive:**
+**3. Create a tarball directory on the jump drive:**
 
 ```bash
 mkdir -p "$JUMP_DRIVE_VOLUME/tarball"
-```
-
-**3. Set the parent directory to where the cloned `fractogenesis-toolkit` lives** on your normal dev machine:
-
-```bash
-export FRACTOGENESIS_PARENT="/path/to/wherever/you/actually/cloned/it"
 ```
 
 **4. Build a fresh payload from that real checkout.** The payload should reflect your actual current repo state. Pass the real path, not `.` — the tarball's name is derived from `basename` of this argument, so `.` would produce a tarball literally named `..tar.gz`:
@@ -292,6 +303,16 @@ If the output includes a line like `WARNING: working tree has uncommitted change
 ```bash
 cp "$FRACTOGENESIS_PARENT/fractogenesis-toolkit/bootstrap.sh" "$JUMP_DRIVE_VOLUME/bootstrap.sh"
 ```
+
+> [!warning] Pitfall
+> While the drive is mounted, put `reimage.env` and the post-reimage cheatsheet on it too. Neither is in the tarball — `reimage.env` and `*.local.md` are gitignored, and `git archive` ships only committed files:
+>
+> ```bash
+> cp "$FRACTOGENESIS_PARENT/fractogenesis-toolkit/reimage.env" "$JUMP_DRIVE_VOLUME/reimage.env"
+> cp "$FRACTOGENESIS_PARENT/fractogenesis-toolkit/post-reimage-cheatsheet.local.md" "$JUMP_DRIVE_VOLUME/"
+> ```
+>
+> A bootstrapped checkout with no `reimage.env` resolves `$REIMAGE_ARTIFACT_ROOT` to nothing, and regenerating it with `bin/setup-reimage-env.sh` after the erase defaults `REIMAGE_START_DATE` to *that* day — silently pointing the whole workflow at an artifact root that does not exist. Restoring the original file is the only correct move.
 
 **6. Create a throwaway install directory for the toolkit:**
 
@@ -349,7 +370,11 @@ less "$FRACTOGENESIS_HOME/reimaging-guide.md"
 cat "$FRACTOGENESIS_HOME/prepare-artifact-root.md" | head -50
 ```
 
-**12. Test run the scripts, to confirm they actually execute:**
+**12. Test run the scripts, to confirm they actually execute.** As in Step 2, `cd` into the installed copy first — the shell is still wherever step 4 left it, which is not the jump-drive install:
+
+```bash
+cd "$FRACTOGENESIS_HOME"
+```
 
 ```bash
 python3 bin/prepare-artifact-root.py --help

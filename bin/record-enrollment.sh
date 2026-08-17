@@ -62,10 +62,14 @@
 #
 # Exit status:
 #   0  Evidence recorded successfully.
+#   1  Evidence capture ran but a generated file could not be written.
 #   2  Usage, configuration, or prerequisite error.
 # --- END USAGE ---
 # =============================================================================
 
+# Normal operational entrypoint, not an aggregate validator: each read-only
+# probe below is individually guarded with `|| true`, so `set -e` only fires on
+# the directory/file writes that must succeed for the record to be usable.
 set -euo pipefail
 
 # ---------------------------------------------------------------------------
@@ -93,6 +97,17 @@ usage() {
     | sed '1d;$d;s/^# //;s/^#$//'
 }
 
+require_option_value() {
+  local option="$1"
+  local value="${2:-}"
+
+  if [[ -z "$value" || "$value" == --* ]]; then
+    echo "ERROR: $option requires a non-empty value." >&2
+    usage >&2
+    exit 2
+  fi
+}
+
 # ---------------------------------------------------------------------------
 # Defaults and command-line parsing
 # ---------------------------------------------------------------------------
@@ -103,29 +118,17 @@ OPEN_RESULT=false
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --artifact-root)
-      if [[ -z "${2:-}" || "$2" == --* ]]; then
-        echo "ERROR: --artifact-root requires a non-empty value." >&2
-        usage >&2
-        exit 2
-      fi
+      require_option_value "$1" "${2:-}"
       REIMAGE_ARTIFACT_ROOT="$2"
       shift 2
       ;;
     --workspace-root)
-      if [[ -z "${2:-}" || "$2" == --* ]]; then
-        echo "ERROR: --workspace-root requires a non-empty value." >&2
-        usage >&2
-        exit 2
-      fi
+      require_option_value "$1" "${2:-}"
       REIMAGE_WORKSPACE_ROOT="$2"
       shift 2
       ;;
     --output)
-      if [[ -z "${2:-}" || "$2" == --* ]]; then
-        echo "ERROR: --output requires a directory." >&2
-        usage >&2
-        exit 2
-      fi
+      require_option_value "$1" "${2:-}"
       OUTPUT_DIR="$2"
       shift 2
       ;;
@@ -157,6 +160,16 @@ if [[ -z "$OUTPUT_DIR" ]]; then
     OUTPUT_DIR="$HOME/Desktop/reimaged-system-artifacts/enrollment/record-enrollment-$STAMP"
   fi
 fi
+
+# Resolve a relative --output against the current directory before the guard
+# below compares it with the repo root. A relative path can never match
+# "$REPO_ROOT"/*, so without this the guard is bypassed by `--output subdir`
+# run from the checkout. The directory need not exist yet, so this is a plain
+# textual prefix rather than a realpath() call (also keeps Bash 3.2 support).
+case "$OUTPUT_DIR" in
+  /*) ;;
+  *) OUTPUT_DIR="$PWD/$OUTPUT_DIR" ;;
+esac
 
 # Safety invariant: refuse to write generated output under the repo checkout.
 # A record landing inside the working tree is almost always an unset or
@@ -241,14 +254,21 @@ status_pass_warn() {
   fi
 }
 
+# Match the affirmative answer, not the label. `profiles status -type
+# enrollment` always prints the literal strings "MDM enrollment:" and
+# "Enrolled via DEP:", including when both answers are No, so a bare
+# 'enrolled|yes|mdm' pattern reports PASS on an unenrolled Mac. Same pattern
+# used by record-reimaged-system.sh.
 ENROLLMENT_OK="false"
-if file_contains "$RAW_DIR/01-enrollment-status.txt" 'enrolled|yes|mdm'; then
+if file_contains "$RAW_DIR/01-enrollment-status.txt" 'MDM enrollment: Yes|Enrolled via DEP: Yes|User Approved'; then
   ENROLLMENT_OK="true"
 fi
 
+# A root-required refusal from `profiles list` is non-empty output that names
+# no profiles; without these patterns it scored as PASS.
 PROFILES_OK="false"
 if [[ -s "$RAW_DIR/02-profiles-list.txt" ]] \
-  && ! file_contains "$RAW_DIR/02-profiles-list.txt" 'there are no configuration profiles installed|no configuration profiles|error'; then
+  && ! file_contains "$RAW_DIR/02-profiles-list.txt" 'there are no configuration profiles installed|no configuration profiles|error|requires root|require root|need to be root|must be root|root privileges|not permitted|permission denied'; then
   PROFILES_OK="true"
 fi
 

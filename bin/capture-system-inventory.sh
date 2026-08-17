@@ -39,7 +39,10 @@
 #   --artifact-root PATH  Override REIMAGE_ARTIFACT_ROOT from shared config.
 #   --context LABEL       pre-image | post-image | pre-image-<label> | post-image-<label>.
 #                         Prefix for the timestamped run directory. Default: pre-image.
-#   --output DIR          Exact output directory for generated files.
+#   --output DIR          Exact output directory for generated files. A --section
+#                         run into a directory that already holds a MANIFEST.txt
+#                         updates that bundle in place and leaves its manifest
+#                         untouched, the same as the default layout.
 #   --section NAME        Capture only one section. One of: hardware, macos, disk,
 #                         display, apps, homebrew, shell, git, python, java, node,
 #                         docker, network, cloud, env, certs. Default: all. By
@@ -58,6 +61,9 @@
 #
 # Exit status:
 #   0  Capture completed successfully.
+#   1  Capture started but a required step failed (for example the bundle
+#      directory could not be created). Individual section commands never fail
+#      the run -- a section a machine cannot answer is written empty.
 #   2  Usage, configuration, or prerequisite error.
 # --- END USAGE ---
 # =============================================================================
@@ -76,6 +82,9 @@ if [[ ! -f "$CONFIG_LOADER" ]]; then
   exit 2
 fi
 
+# Keep loading permissive: --artifact-root and --output are both parsed after
+# the loader returns, and --output makes an artifact root unnecessary entirely.
+# The resolved value is validated below, after option parsing.
 ARTIFACT_CONFIG_REQUIRE_REIMAGE_ARTIFACT_ROOT=false
 
 # shellcheck source=../.internal/load-reimage-config.sh
@@ -84,6 +93,17 @@ source "$CONFIG_LOADER"
 usage() {
   sed -n '/^# --- BEGIN USAGE ---$/,/^# --- END USAGE ---$/p' "$0" \
     | sed '1d;$d;s/^# //;s/^#$//'
+}
+
+require_option_value() {
+  local option="$1"
+  local value="${2:-}"
+
+  if [[ -z "$value" || "$value" == --* ]]; then
+    echo "ERROR: $option requires a non-empty value." >&2
+    usage >&2
+    exit 2
+  fi
 }
 
 STAMP="$(date +%Y%m%d-%H%M%S)"
@@ -100,38 +120,22 @@ want() { [[ -z "$SECTION_FILTER" || "$SECTION_FILTER" == "$1" ]]; }
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --artifact-root)
-      if [[ -z "${2:-}" || "$2" == --* ]]; then
-        echo "ERROR: --artifact-root requires a non-empty value." >&2
-        usage >&2
-        exit 2
-      fi
+      require_option_value "$1" "${2:-}"
       REIMAGE_ARTIFACT_ROOT="$2"
       shift 2
       ;;
     --context)
-      if [[ -z "${2:-}" || "$2" == --* ]]; then
-        echo "ERROR: --context requires a value." >&2
-        usage >&2
-        exit 2
-      fi
+      require_option_value "$1" "${2:-}"
       CONTEXT="$2"
       shift 2
       ;;
     --output)
-      if [[ -z "${2:-}" || "$2" == --* ]]; then
-        echo "ERROR: --output requires a directory." >&2
-        usage >&2
-        exit 2
-      fi
+      require_option_value "$1" "${2:-}"
       OUTPUT_DIR="$2"
       shift 2
       ;;
     --section)
-      if [[ -z "${2:-}" || "$2" == --* ]]; then
-        echo "ERROR: --section requires a value." >&2
-        usage >&2
-        exit 2
-      fi
+      require_option_value "$1" "${2:-}"
       SECTION_FILTER="$2"
       shift 2
       ;;
@@ -194,8 +198,10 @@ if [[ -z "$OUTPUT_DIR" ]]; then
   if [[ -n "$SECTION_FILTER" && "$NEW_BUNDLE" != true ]]; then
     # Default single-section behavior: update the latest bundle of this context
     # rather than spawning a new one. The `|| true` and `head -1` keep the glob
-    # safe under set -euo pipefail when no bundle matches.
-    LATEST_BUNDLE="$(ls -dt "$REIMAGE_ARTIFACT_ROOT/system-inventory/${CONTEXT}-"*/ 2>/dev/null | head -1 || true)"
+    # safe under set -euo pipefail when no bundle matches. The glob is anchored
+    # to the <stamp> shape so context "pre-image" cannot match a longer sibling
+    # context such as "pre-image-cleanboot-<stamp>".
+    LATEST_BUNDLE="$(ls -dt "$REIMAGE_ARTIFACT_ROOT/system-inventory/${CONTEXT}-"[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]-[0-9][0-9][0-9][0-9][0-9][0-9]/ 2>/dev/null | head -1 || true)"
     if [[ -n "$LATEST_BUNDLE" ]]; then
       OUTPUT_DIR="${LATEST_BUNDLE%/}"
       UPDATED_EXISTING=true
@@ -206,6 +212,15 @@ if [[ -z "$OUTPUT_DIR" ]]; then
   else
     OUTPUT_DIR="$REIMAGE_ARTIFACT_ROOT/system-inventory/${CONTEXT}-${STAMP}"
   fi
+fi
+
+# The --output path above skips the latest-bundle branch, so a single-section
+# run into an existing bundle would otherwise replace that bundle's full-run
+# MANIFEST.txt with one stamped for the partial run. Apply the same update
+# semantics whenever the target already looks like a captured bundle.
+if [[ -n "$SECTION_FILTER" && "$NEW_BUNDLE" != true && "$UPDATED_EXISTING" != true \
+      && -f "$OUTPUT_DIR/MANIFEST.txt" ]]; then
+  UPDATED_EXISTING=true
 fi
 
 OUT="$OUTPUT_DIR"
@@ -371,7 +386,9 @@ section "Shell config and PATH" "07-shell.txt"
   echo "$PATH" | tr ':' '\n' >> "$_SECTION_FILE" || true
   h ""
   h "--- Dotfiles in home ---"
-  ls -la "$HOME" | grep '^\.' >> "$_SECTION_FILE" 2>&1 || true
+  # 'ls -la' lines start with permission bits, so filtering that output on '^\.'
+  # never matches and the block came out empty. Glob the dotfile entries instead.
+  ls -lad "$HOME"/.[!.]* >> "$_SECTION_FILE" 2>/dev/null || true
   h ""
   h "--- Aliases ---"
   r alias
@@ -447,7 +464,21 @@ section "Java and Gradle" "10-java.txt"
   r gradle --version
   h ""
   h "--- SDKMAN candidates ---"
-  sdk list 2>/dev/null | head -40 >> "$_SECTION_FILE" || echo "SDKMAN not installed" >> "$_SECTION_FILE"
+  # 'sdk' is a shell function defined by sdkman-init.sh, so it does not exist in
+  # a non-interactive script; the old 'sdk list | head' pipeline reported head's
+  # status, so the "not installed" fallback never ran and this block was blank.
+  SDKMAN_HOME="${SDKMAN_DIR:-$HOME/.sdkman}"
+  if command -v sdk >/dev/null 2>&1; then
+    sdk list 2>/dev/null | head -40 >> "$_SECTION_FILE" || true
+  elif [[ -r "$SDKMAN_HOME/bin/sdkman-init.sh" ]]; then
+    {
+      echo "SDKMAN installed at $SDKMAN_HOME"
+      echo "('sdk' is an interactive shell function and is not callable here; listing the candidates directory instead.)"
+      find "$SDKMAN_HOME/candidates" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | sort | head -40 || true
+    } >> "$_SECTION_FILE"
+  else
+    echo "SDKMAN not installed" >> "$_SECTION_FILE"
+  fi
   h ""
   h "--- Gradle wrapper versions in projects ---"
   find "$HOME" -name 'gradle-wrapper.properties' -not -path '*/\.*' 2>/dev/null \
@@ -559,7 +590,13 @@ fi
 # ---------------------------------------------------------------------------
 if want env; then
 section "Environment variables (redacted)" "15-env.txt"
-  env | grep -Ev 'SECRET|TOKEN|KEY|PASS|PWD|AWS|CREDENTIAL' \
+  # Case-insensitive: lowercase/mixed-case names such as github_token or
+  # npm_config_authToken passed the old case-sensitive filter and landed in
+  # plaintext on the artifact drive. The filter matches the whole NAME=value
+  # line, so this also drops benign entries that merely contain one of these
+  # words (e.g. a PATH holding an ".../aws-cli/..." or ".../keychain/..."
+  # component). Over-redacting an inventory file is the accepted trade.
+  env | grep -Evi 'SECRET|TOKEN|KEY|PASS|PWD|AWS|CREDENTIAL' \
     | sort >> "$_SECTION_FILE" 2>&1 || true
 end_section
 fi

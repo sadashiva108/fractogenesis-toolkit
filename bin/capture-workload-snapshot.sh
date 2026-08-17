@@ -22,11 +22,31 @@
 #   # Capture a snapshot now
 #   ./bin/capture-workload-snapshot.sh
 #
+#   # Capture a snapshot and open it afterwards
+#   ./bin/capture-workload-snapshot.sh --open
+#
 # Writes a point-in-time Office workload snapshot to:
 #   $OFFICE_WATCH/workload-snapshot-YYYYMMDD-HHMMSS.txt
 #
 # Options:
+#   --office-watch-dir PATH
+#                         Local watcher directory for this invocation; overrides
+#                         OFFICE_WATCH. Parity with office-stability-checklist.sh.
+#   --open                Open the snapshot when it is written. Off by default:
+#                         this runs repeatedly during the measured window, and
+#                         opening a window changes what the next snapshot sees.
 #   -h, --help            Show this message and exit.
+#
+# Required configuration:
+#   OFFICE_WATCH          Local watcher directory the snapshot is written to.
+#                         Required; comes from reimage.env. Created if missing.
+#   OFFICE_WATCH_DIR      Optional per-invocation override of OFFICE_WATCH,
+#                         resolved the same way in watch-office-today.sh and
+#                         capture-office-stability.sh. Takes precedence over
+#                         OFFICE_WATCH when set; --office-watch-dir overrides it
+#                         for this invocation.
+#
+# REIMAGE_ARTIFACT_ROOT is never read; nothing is copied to the artifact root.
 #
 # Configuration precedence:
 #   1. Environment values already exported by the caller or optional .envrc.
@@ -35,6 +55,7 @@
 #
 # Exit status:
 #   0  Snapshot written successfully.
+#   1  Snapshot run failed (for example the output file could not be written).
 #   2  Usage, configuration, or prerequisite error.
 # --- END USAGE ---
 # =============================================================================
@@ -65,26 +86,53 @@ usage() {
     | sed '1d;$d;s/^# //;s/^#$//'
 }
 
-case "${1:-}" in
-  --help|-h)
-    usage
-    exit 0
-    ;;
-  "")
-    ;;
-  *)
-    echo "ERROR: unknown option: $1" >&2
+require_option_value() {
+  local option="$1"
+  local value="${2:-}"
+  if [[ -z "$value" || "$value" == --* ]]; then
+    echo "ERROR: $option requires a non-empty value." >&2
     usage >&2
     exit 2
-    ;;
-esac
+  fi
+}
+
+# Opening the snapshot is off by default: this runs at every workload stage and
+# after every unexpected close, and each `open` puts a new window inside the
+# very window being measured.
+OPEN_RESULT=false
+# Resolved identically in watch-office-today.sh and capture-office-stability.sh
+# so the snapshot lands where the collector reads.
+OFFICE_WATCH_DIR="${OFFICE_WATCH_DIR:-${OFFICE_WATCH:-}}"
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --office-watch-dir)
+      require_option_value "$1" "${2:-}"
+      OFFICE_WATCH_DIR="$2"
+      shift 2
+      ;;
+    --open)
+      OPEN_RESULT=true
+      shift
+      ;;
+    --help|-h)
+      usage
+      exit 0
+      ;;
+    *)
+      echo "ERROR: unknown option: $1" >&2
+      usage >&2
+      exit 2
+      ;;
+  esac
+done
 
 # ---------------------------------------------------------------------------
 # Resolve the local watcher directory
 # ---------------------------------------------------------------------------
 # OFFICE_WATCH is a real reimage.env value; OFFICE_WATCH_DIR is an optional
-# per-invocation override kept from the source script.
-DIR="${OFFICE_WATCH_DIR:-${OFFICE_WATCH:-}}"
+# per-invocation override, also settable with --office-watch-dir.
+DIR="$OFFICE_WATCH_DIR"
 if [[ -z "$DIR" ]]; then
   echo "ERROR: OFFICE_WATCH is not set." >&2
   echo "Create/source reimage.env so the snapshot has a home." >&2
@@ -169,4 +217,6 @@ OUT="$DIR/workload-snapshot-$(date +%Y%m%d-%H%M%S).txt"
 } > "$OUT"
 
 echo "Wrote: $OUT"
-open "$OUT" 2>/dev/null || true
+if [[ "$OPEN_RESULT" == "true" ]]; then
+  open "$OUT" 2>/dev/null || true
+fi

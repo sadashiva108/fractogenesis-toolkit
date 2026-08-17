@@ -4,9 +4,15 @@
 #
 # Unified validation checklist for both the pre-image reimage-prep-checks
 # (Phase 6B) and post-image reimaged-system (Phase 14) Mac reimage workflow
-# stages.
+# stages. It backs two runbooks: reimage-prep-checks.md (--phase pre) and
+# reimaged-system-checks.md (--phase post).
 #
-# BEGIN USAGE
+# This file is intended for bin/. It is an AGGREGATE VALIDATOR: it observes and
+# records state, converting every failed command into a PASS/WARN/FAIL/SKIP row
+# instead of aborting. It creates only its own report destination and never
+# creates the artifacts it is supposed to verify.
+#
+# --- BEGIN USAGE ---
 # Usage:
 #   cd <repo-root>
 #   chmod +x bin/reimage-checklist.sh
@@ -55,7 +61,7 @@
 #   0  Checklist completed with no FAIL items.
 #   1  One or more FAIL items were recorded.
 #   2  Invalid arguments or required configuration could not be loaded.
-# END USAGE
+# --- END USAGE ---
 # =============================================================================
 
 set -uo pipefail
@@ -70,6 +76,12 @@ if [[ ! -f "$CONFIG_LOADER" ]]; then
   echo "ERROR: shared config loader not found: $CONFIG_LOADER" >&2
   exit 2
 fi
+
+# Keep loading permissive: --artifact-root is parsed AFTER the loader runs, so
+# an empty REIMAGE_ARTIFACT_ROOT must not fail config load. The resolved value
+# is validated below, once option parsing is complete.
+ARTIFACT_CONFIG_REQUIRE_REIMAGE_ARTIFACT_ROOT=false
+
 # shellcheck source=../.internal/load-reimage-config.sh
 if ! source "$CONFIG_LOADER"; then
   echo "ERROR: shared reimage configuration could not be loaded." >&2
@@ -86,14 +98,8 @@ WORKSPACE_ROOTS=()
 INTERNAL_URL=""
 
 usage() {
-  awk '
-    /^# BEGIN USAGE$/ { show = 1; next }
-    /^# END USAGE$/   { exit }
-    show {
-      sub(/^# ?/, "")
-      print
-    }
-  ' "$0"
+  sed -n '/^# --- BEGIN USAGE ---$/,/^# --- END USAGE ---$/p' "$0" \
+    | sed '1d;$d;s/^# //;s/^#$//'
 }
 
 require_option_value() {
@@ -113,9 +119,14 @@ append_unique_workspace_root() {
 
   [[ -n "$candidate" ]] || return 0
 
-  for existing in "${WORKSPACE_ROOTS[@]}"; do
-    [[ "$existing" == "$candidate" ]] && return 0
-  done
+  # Guard the expansion: on stock macOS Bash 3.2, "${arr[@]}" on an EMPTY array
+  # is an unbound-variable error under `set -u`, which would abort this script
+  # on the very first --workspace-root value.
+  if (( ${#WORKSPACE_ROOTS[@]} > 0 )); then
+    for existing in "${WORKSPACE_ROOTS[@]}"; do
+      [[ "$existing" == "$candidate" ]] && return 0
+    done
+  fi
 
   WORKSPACE_ROOTS+=("$candidate")
 }
@@ -194,7 +205,7 @@ case "$PHASE" in
     ;;
 esac
 
-if [[ -z "$REIMAGE_ARTIFACT_ROOT" ]]; then
+if [[ -z "${REIMAGE_ARTIFACT_ROOT:-}" ]]; then
   echo "ERROR: REIMAGE_ARTIFACT_ROOT is not set. Configure reimage.env or pass --artifact-root PATH." >&2
   exit 2
 fi
@@ -667,8 +678,9 @@ if [[ "$PHASE" == "pre" ]]; then
   else
     record_check WARN "IntelliJ Scratches and Consoles" "Not found"
   fi
-  if [[ -n "$(find "$INTELLIJ_DIR" -name "*.zip" 2>/dev/null | head -1)" ]]; then
-    record_check PASS "IntelliJ settings ZIP" "$(find "$INTELLIJ_DIR" -name "*.zip" 2>/dev/null | head -1 | xargs basename)"
+  INTELLIJ_SETTINGS_ZIP="$(find "$INTELLIJ_DIR" -name "*.zip" 2>/dev/null | head -1)"
+  if [[ -n "$INTELLIJ_SETTINGS_ZIP" ]]; then
+    record_check PASS "IntelliJ settings ZIP" "$(basename "$INTELLIJ_SETTINGS_ZIP")"
   else
     record_check WARN "IntelliJ settings ZIP" "Not found -- File > Export Settings"
   fi
@@ -707,7 +719,15 @@ if [[ "$PHASE" == "pre" ]]; then
       fi
     done
 
-    if [[ -n "${OPEN_FINDINGS:=$LOOSE_REPORTS_DIR/open-findings.md}" && -f "$OPEN_FINDINGS" ]]; then
+    if [[ -n "$STALE_SINCE_SWEEP" ]]; then
+      record_check WARN "Sweep is current with backups" \
+        "Re-run after the last sweep:${STALE_SINCE_SWEEP} -- re-run bin/report-loose-secrets.sh before the erase"
+    else
+      record_check PASS "Sweep is current with backups" "Sweep is newer than every backup tree"
+    fi
+
+    OPEN_FINDINGS="$LOOSE_REPORTS_DIR/open-findings.md"
+    if [[ -n "$OPEN_FINDINGS" && -f "$OPEN_FINDINGS" ]]; then
       # open-findings.md has an "## Open" section and a "## Resolved" section,
       # and both use the same row shape. Counting matches across the whole file
       # reported every resolved candidate as still open -- 37 unresolved on a
@@ -814,11 +834,15 @@ if [[ "$PHASE" == "pre" ]]; then
     record_check SKIP "Chrome password CSV staged" "No secrets-encrypted/chrome/ -- skip if not exported"
   fi
 
+  # Named, well-known plaintext exports only. A literal "<company>-issuing-ca.pem"
+  # placeholder used to sit in this list; it could never match a real file, so it
+  # checked nothing. Certificate/key shapes are covered for real by the Phase 3B
+  # sweep (bin/report-loose-secrets.sh), which reads SECRET_SHAPES_FLOOR in
+  # .internal/artifact-config.sh — *.pem, *.key, *.p12 and the rest are already
+  # in that floor. Do not reintroduce a private pattern list here.
   for danger in \
     "$HOME/Desktop/Chrome Passwords.csv" \
-    "$HOME/Downloads/Chrome Passwords.csv" \
-    "$HOME/Desktop/<company>-issuing-ca.pem" \
-    "$HOME/Downloads/<company>-issuing-ca.pem"; do
+    "$HOME/Downloads/Chrome Passwords.csv"; do
     if [[ -f "$danger" ]]; then
       record_check WARN "Loose plaintext secret" "$danger -- delete after confirming it is in DMG"
     fi
@@ -945,7 +969,7 @@ if [[ "$PHASE" == "pre" ]]; then
 
   DOTFILES_DIR="$HOME_FILES_BACKUP_DIR/dotfiles"
   if dir_nonempty "$DOTFILES_DIR"; then
-    record_check PASS "local-files/dotfiles" "$(du -sh "$DOTFILES_DIR" 2>/dev/null | cut -f1)"
+    record_check PASS "home-files-backup/dotfiles" "$(du -sh "$DOTFILES_DIR" 2>/dev/null | cut -f1)"
   else
     record_check WARN "home-files-backup/dotfiles" "Empty or missing -- run Phase 2B backup-home.sh"
   fi
@@ -1073,7 +1097,7 @@ if [[ "$PHASE" == "post" ]]; then
     fi
   done
 
-  if pgrep -fl "CrowdStrike\|falcon" >/dev/null 2>&1; then
+  if pgrep -fl "CrowdStrike|falcon" >/dev/null 2>&1; then
     record_check PASS "CrowdStrike/Falcon process" "Running"
   else
     record_check WARN "CrowdStrike/Falcon process" "Not detected -- confirm in Activity Monitor"
@@ -1099,7 +1123,7 @@ if [[ "$PHASE" == "post" ]]; then
     record_check WARN "Office crash/diagnostic reports" "$OFFICE_CRASH_COUNT report(s) found -- review ~/Library/Logs/DiagnosticReports"
   fi
 
-  SOFTWAREUPDATE_PENDING="$(softwareupdate --list 2>&1 | grep -c "^\s*\*" || true)"
+  SOFTWAREUPDATE_PENDING="$(softwareupdate --list 2>&1 | grep -c "^[[:space:]]*\*" || true)"
   if [[ "$SOFTWAREUPDATE_PENDING" -eq 0 ]]; then
     record_check PASS "Pending macOS software updates" "None found"
   else
@@ -1291,7 +1315,7 @@ if [[ "$PHASE" == "post" ]]; then
   record_section "Time Machine"
   # -------------------------------------------------------------------------
   TM_DEST="$(tmutil destinationinfo 2>/dev/null || true)"
-  if echo "$TM_DEST" | grep -qi "Name\s*:"; then
+  if echo "$TM_DEST" | grep -qi "^[[:space:]]*Name[[:space:]]*:"; then
     record_check PASS "Time Machine destination configured" "$(echo "$TM_DEST" | grep -i "Name" | head -1 | sed 's/^ *//')"
   else
     record_check WARN "Time Machine destination configured" "No destination configured yet"

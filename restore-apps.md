@@ -36,7 +36,7 @@ Restore the day-to-day application layer on the reimaged Mac after the managed b
 - [[#Troubleshooting|Troubleshooting]]
 - [[#Supplemental Reference|Supplemental Reference]]
     - [[#How the plan-note relates to the Phase 14 sign-off|How the plan-note relates to the Phase 14 sign-off]]
-    - [[#Why VS Code has a fallback backup source|Why VS Code has a fallback backup source]]
+    - [[#Why VS Code Can Be Missing from the Backup|Why VS Code Can Be Missing from the Backup]]
 
 > In Obsidian, these are internal heading links. Click in Reading View, or Cmd-click in Live Preview/editing mode.
 
@@ -318,25 +318,21 @@ After import: select each environment, confirm every variable is present, confir
 
 ### Step 6 — VS Code
 
-Install VS Code from the approved source. Prefer the Phase 2D `app-settings-backup/vscode/` copy; fall back to the toolkit-snapshot capture only if no dedicated VS Code backup exists (the plan-note already picked the right source in Step 1):
+Install VS Code from the approved source. The backup is the Phase 2D capture under `app-settings-backup/vscode/`, holding `extensions.txt` beside a `user/` tree of `settings.json`, `keybindings.json`, `snippets/`, and `profiles/`. Point a shell variable at it and confirm it is there:
 
 ```bash
 VSCODE_BACKUP_DIR="$REIMAGE_ARTIFACT_ROOT/app-settings-backup/vscode"
 
-if [[ ! -d "$VSCODE_BACKUP_DIR" ]]; then
-  TOOLKIT_SNAPSHOT_CAPTURE="$(find "$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot" -maxdepth 1 -type d -name 'pre-image-toolkit-snapshot-*' -print 2>/dev/null | sort | tail -1)"
-  if [[ -n "$TOOLKIT_SNAPSHOT_CAPTURE" && -d "$TOOLKIT_SNAPSHOT_CAPTURE/vscode" ]]; then
-    VSCODE_BACKUP_DIR="$TOOLKIT_SNAPSHOT_CAPTURE/vscode"
-  fi
-fi
-
 [[ -d "$VSCODE_BACKUP_DIR" ]] || {
-  echo "ERROR: no VS Code backup directory found under app-settings-backup/ or toolkit-snapshot/" >&2
+  echo "ERROR: no VS Code backup directory found at $VSCODE_BACKUP_DIR" >&2
   exit 2
 }
 
 printf 'Using VS Code backup directory: %s\n' "$VSCODE_BACKUP_DIR"
 ```
+
+> [!note]
+> If this directory is absent, VS Code was skipped during Phase 2D — some operators skip it because Settings Sync already carries extensions and settings. Sign in to Settings Sync instead of hunting for another copy.
 
 Restore extensions if the `code` CLI is on `PATH` and an extension list was captured:
 
@@ -570,9 +566,9 @@ Longer material most runs will not need, kept out of the main flow.
 
 The plan-note file (`restore-apps-plan-YYYYMMDD-HHMMSS.md`) is the operator-facing checklist for Phase 12, but it is also an input to Phase 14 `reimaged-system-checks.md`. The Phase 14 validator scans `reimaged-system/restore-notes/` for the most recent `restore-apps-plan-*.md`, reads the sign-off checklist, and reports any row still on `TODO`. That is why leaving a note next to a `TODO` row (e.g. `deferred to Phase 15`) matters — the validator has no other way to distinguish "forgotten" from "intentionally deferred."
 
-### Why VS Code has a fallback backup source
+### Why VS Code Can Be Missing from the Backup
 
-Phase 2D `backup-apps.md` treats VS Code as an optional dedicated capture; some operators skip it because Settings Sync already covers extensions and settings. The toolkit-snapshot capture (`toolkit-snapshot/pre-image-toolkit-snapshot-*/vscode/`) is a lighter fallback that always exists, so Step 6 and the plan-note both prefer the dedicated backup when present but degrade gracefully when it is not.
+Phase 2D `backup-apps.md` treats VS Code as an optional dedicated capture; some operators skip it because Settings Sync already covers extensions and settings. There is no second source to fall back to — the toolkit snapshot captures no VS Code state — so an absent `app-settings-backup/vscode/` means the restore path for this app is Settings Sync, not a file copy.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 

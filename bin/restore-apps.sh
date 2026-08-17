@@ -53,7 +53,9 @@
 #   $REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/restore-apps-plan-YYYYMMDD-HHMMSS.md
 #
 # Exit status:
-#   0  Plan-note written; no fatal errors.
+#   0  Plan-note written; no fatal errors. MISSING source rows do not change
+#      the exit status.
+#   1  The plan-note could not be written.
 #   2  Usage, configuration, or prerequisite error.
 # --- END USAGE ---
 # =============================================================================
@@ -61,6 +63,11 @@
 # Aggregate validator: individual source lookups become PRESENT/MISSING rows
 # in the plan-note rather than aborting the run. Keep -u and pipefail on.
 set -uo pipefail
+# NOTE: intentionally NOT set -e. A missing backup source is an expected,
+# reportable outcome here, not a fatal one: the operator needs the complete
+# PRESENT/MISSING inventory in one pass so they can decide whether to remount
+# the artifact volume, rerun an earlier backup, or accept the gap. Aborting on
+# the first missing path would hide every row after it.
 
 # ---------------------------------------------------------------------------
 # Locate repository and load shared reimage config
@@ -76,14 +83,30 @@ fi
 
 # Phase 12 uses the artifact drive when it is mounted, and falls back to the
 # workspace root or ~/Desktop only when the operator has explicitly overridden
-# --output-root. Load shared config in the default (non-strict) mode so an
-# unresolved REIMAGE_ARTIFACT_ROOT doesn't abort the loader.
+# --output-root. Keep loading permissive so --artifact-root can still override
+# the value after parsing; the resolved value is validated below instead.
+ARTIFACT_CONFIG_REQUIRE_REIMAGE_ARTIFACT_ROOT=false
+
 # shellcheck source=../.internal/load-reimage-config.sh
-source "$CONFIG_LOADER"
+if ! source "$CONFIG_LOADER"; then
+  echo "ERROR: shared reimage configuration could not be loaded." >&2
+  exit 2
+fi
 
 usage() {
   sed -n '/^# --- BEGIN USAGE ---$/,/^# --- END USAGE ---$/p' "$0" \
     | sed '1d;$d;s/^# //;s/^#$//'
+}
+
+require_option_value() {
+  local option="$1"
+  local value="${2:-}"
+
+  if [[ -z "$value" || "$value" == --* ]]; then
+    echo "ERROR: $option requires a non-empty value." >&2
+    usage >&2
+    exit 2
+  fi
 }
 
 # ---------------------------------------------------------------------------
@@ -96,20 +119,12 @@ OPEN_RESULT=false
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --artifact-root)
-      if [[ -z "${2:-}" || "$2" == --* ]]; then
-        echo "ERROR: --artifact-root requires a non-empty value." >&2
-        usage >&2
-        exit 2
-      fi
+      require_option_value "$1" "${2:-}"
       REIMAGE_ARTIFACT_ROOT="$2"
       shift 2
       ;;
     --output-root)
-      if [[ -z "${2:-}" || "$2" == --* ]]; then
-        echo "ERROR: --output-root requires a directory." >&2
-        usage >&2
-        exit 2
-      fi
+      require_option_value "$1" "${2:-}"
       OUTPUT_ROOT="$2"
       shift 2
       ;;
@@ -153,7 +168,6 @@ PLAN_FILE="$OUTPUT_ROOT/restore-apps-plan-$STAMP.md"
 # ---------------------------------------------------------------------------
 APP_BACKUP_ROOT="$REIMAGE_ARTIFACT_ROOT/app-settings-backup"
 SECRETS_ROOT="$REIMAGE_ARTIFACT_ROOT/secrets-encrypted"
-TOOLKIT_SNAPSHOT_ROOT="$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot"
 
 status_row() {
   local label="$1"
@@ -167,19 +181,10 @@ status_row() {
 
 # Prefer the Phase 2C app-settings capture for VS Code; fall back to the
 # lightweight toolkit-snapshot copy only when the dedicated backup is absent.
+# VS Code state comes from the Phase 2D dedicated capture only. The
+# toolkit snapshot does not contain a vscode/ directory.
 resolve_vscode_source() {
-  local dedicated="$APP_BACKUP_ROOT/vscode"
-  if [[ -d "$dedicated" ]]; then
-    printf '%s\n' "$dedicated"
-    return
-  fi
-  local latest=""
-  latest="$(find "$TOOLKIT_SNAPSHOT_ROOT" -maxdepth 1 -type d -name 'pre-image-toolkit-snapshot-*' 2>/dev/null | sort | tail -1)"
-  if [[ -n "$latest" && -d "$latest/vscode" ]]; then
-    printf '%s\n' "$latest/vscode"
-    return
-  fi
-  printf '%s\n' "$dedicated"
+  printf '%s\n' "$APP_BACKUP_ROOT/vscode"
 }
 
 VSCODE_SOURCE="$(resolve_vscode_source)"
@@ -253,7 +258,12 @@ VSCODE_SOURCE="$(resolve_vscode_source)"
   printf '| Terminal profile restored (if exported) | TODO |  |\n'
   printf '| Oracle SQL Developer decision recorded | TODO |  |\n'
   printf '| Post-image Office stability baseline captured | TODO |  |\n'
-} > "$PLAN_FILE"
+} > "$PLAN_FILE" || {
+  # Without -e a failed redirect would still fall through to the success line
+  # below, and Phase 14 reads the newest plan-note — a phantom hand-off.
+  echo "ERROR: could not write the plan-note: $PLAN_FILE" >&2
+  exit 1
+}
 
 echo "Plan-note → $PLAN_FILE"
 

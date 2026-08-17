@@ -2,13 +2,19 @@
 """
 Generate auto-filled manual-observations.md and workload-reproduction-config.md
 for a capture-performance-audit.sh bundle.
+
+Internal helper: invoked by capture-performance-audit.sh with explicit CLI
+arguments (--audit-dir/--phase/--scenario/--note) and safe to run standalone
+when those are supplied. It deliberately does NOT load the shared reimage
+config (reimage.env / .internal/artifact-config.sh): every path it touches is
+derived from --audit-dir, so the caller stays the single source of truth for
+which bundle is being annotated.
 """
 
 from __future__ import annotations
 
 import argparse
 import csv
-import re
 from pathlib import Path
 from typing import Dict, List, Tuple
 
@@ -34,9 +40,24 @@ def extract_command_output(text: str, title: str) -> str:
         if line.strip() != title:
             continue
         j = idx + 1
+        # run_cmd emits: ==== / title / ==== / Timestamp: / Command: / blank /
+        # body / blank. When the command produced no output there is no body,
+        # so the skip loop must stop at the banner that opens the NEXT section
+        # instead of walking into it and returning that section's title as this
+        # section's output.
+        seen_command = False
         while j < len(lines):
             current = lines[j]
-            if current.startswith("Timestamp:") or current.startswith("Command:") or current.startswith("="):
+            if current.startswith("="):
+                if seen_command:
+                    return ""
+                j += 1
+                continue
+            if current.startswith("Timestamp:"):
+                j += 1
+                continue
+            if current.startswith("Command:"):
+                seen_command = True
                 j += 1
                 continue
             if not current.strip():
@@ -116,7 +137,7 @@ def generate_manual_observations(
     note: str,
 ) -> None:
     system_text = (audit_dir / "system" / "system-overview.txt").read_text(encoding="utf-8", errors="replace") if (audit_dir / "system" / "system-overview.txt").exists() else ""
-    visible_apps = extract_command_output(system_text, "login items visible apps").replace(", ", ", ").strip()
+    visible_apps = extract_command_output(system_text, "login items visible apps").strip()
     active_network = extract_command_output(system_text, "active network interfaces").strip()
     vpn_services = extract_command_output(system_text, "VPN services").strip()
 
@@ -172,7 +193,7 @@ def generate_manual_observations(
     lines.append("- Top app-group comparison: TODO")
     lines.append("- Docker settings comparison: TODO")
     lines.append("- IntelliJ heap comparison: TODO")
-    lines.append(f"- Workload reproduction reference: see `workload-reproduction-config.md`")
+    lines.append("- Workload reproduction reference: see `workload-reproduction-config.md`")
     (audit_dir / "manual-observations.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 

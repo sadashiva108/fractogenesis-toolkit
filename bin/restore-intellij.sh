@@ -53,7 +53,9 @@
 #   $REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/restore-intellij-plan-YYYYMMDD-HHMMSS.md
 #
 # Exit status:
-#   0  Plan-note written; no fatal errors.
+#   0  Plan-note written; no fatal errors. MISSING source rows do not change
+#      the exit status.
+#   1  The plan-note could not be written.
 #   2  Usage, configuration, or prerequisite error.
 # --- END USAGE ---
 # =============================================================================
@@ -61,6 +63,12 @@
 # Aggregate validator: individual source lookups become PRESENT/MISSING rows
 # in the plan-note rather than aborting the run. Keep -u and pipefail on.
 set -uo pipefail
+# NOTE: intentionally NOT set -e. A missing IntelliJ source is an expected,
+# reportable outcome here, not a fatal one: the operator needs the complete
+# PRESENT/MISSING inventory — version subtrees, settings ZIP, secret material —
+# in one pass before deciding whether to remount the artifact volume, rerun the
+# pre-image IntelliJ backup, or continue with a partial restore. Aborting on the
+# first missing path would hide every row after it.
 
 # ---------------------------------------------------------------------------
 # Locate repository and load shared reimage config
@@ -74,12 +82,31 @@ if [[ ! -f "$CONFIG_LOADER" ]]; then
   exit 2
 fi
 
+# Keep loading permissive so --artifact-root can still override the value after
+# parsing — on the reimaged Mac the artifact volume may not be mounted at the
+# moment the loader runs. The resolved value is validated below instead.
+ARTIFACT_CONFIG_REQUIRE_REIMAGE_ARTIFACT_ROOT=false
+
 # shellcheck source=../.internal/load-reimage-config.sh
-source "$CONFIG_LOADER"
+if ! source "$CONFIG_LOADER"; then
+  echo "ERROR: shared reimage configuration could not be loaded." >&2
+  exit 2
+fi
 
 usage() {
   sed -n '/^# --- BEGIN USAGE ---$/,/^# --- END USAGE ---$/p' "$0" \
     | sed '1d;$d;s/^# //;s/^#$//'
+}
+
+require_option_value() {
+  local option="$1"
+  local value="${2:-}"
+
+  if [[ -z "$value" || "$value" == --* ]]; then
+    echo "ERROR: $option requires a non-empty value." >&2
+    usage >&2
+    exit 2
+  fi
 }
 
 # ---------------------------------------------------------------------------
@@ -92,20 +119,12 @@ OPEN_RESULT=false
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --artifact-root)
-      if [[ -z "${2:-}" || "$2" == --* ]]; then
-        echo "ERROR: --artifact-root requires a non-empty value." >&2
-        usage >&2
-        exit 2
-      fi
+      require_option_value "$1" "${2:-}"
       REIMAGE_ARTIFACT_ROOT="$2"
       shift 2
       ;;
     --output-root)
-      if [[ -z "${2:-}" || "$2" == --* ]]; then
-        echo "ERROR: --output-root requires a directory." >&2
-        usage >&2
-        exit 2
-      fi
+      require_option_value "$1" "${2:-}"
       OUTPUT_ROOT="$2"
       shift 2
       ;;
@@ -149,7 +168,9 @@ PLAN_FILE="$OUTPUT_ROOT/restore-intellij-plan-$STAMP.md"
 # ---------------------------------------------------------------------------
 INTELLIJ_ROOT="$REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij"
 INTELLIJ_SECRETS_ROOT="$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/intellij"
-SECRETS_DMG_GLOB="$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/all-secrets-*.dmg"
+SECRETS_ROOT="$REIMAGE_ARTIFACT_ROOT/secrets-encrypted"
+# Display-only pattern, shown when no DMG is found. Never expanded by the shell.
+SECRETS_DMG_GLOB="$SECRETS_ROOT/all-secrets-*.dmg"
 
 status_row() {
   local label="$1"
@@ -182,10 +203,15 @@ latest_settings_zip() {
     | sort | tail -1
 }
 
-# Find the most recent consolidated encrypted DMG.
+# Find the most recent consolidated encrypted DMG. Uses the same find form as
+# latest_settings_zip above: an unquoted `ls` glob word-splits on an artifact
+# root containing spaces and reports the DMG MISSING when it exists.
 latest_secrets_dmg() {
-  # shellcheck disable=SC2086
-  ls -1 $SECRETS_DMG_GLOB 2>/dev/null | sort | tail -1
+  if [[ ! -d "$SECRETS_ROOT" ]]; then
+    return 0
+  fi
+  find "$SECRETS_ROOT" -maxdepth 1 -type f -name 'all-secrets-*.dmg' 2>/dev/null \
+    | sort | tail -1
 }
 
 SETTINGS_ZIP="$(latest_settings_zip)"
@@ -203,6 +229,7 @@ SECRETS_DMG="$(latest_secrets_dmg)"
   printf '| Area | Path | Status |\n'
   printf '| --- | --- | --- |\n'
   status_row "IntelliJ backup root"      "$INTELLIJ_ROOT"
+  status_row "Manifests directory"       "$INTELLIJ_ROOT/manifests"
   status_row "Manual settings ZIP dir"   "$INTELLIJ_ROOT/manual-settings-export"
   status_row "Project metadata bundle"   "$INTELLIJ_ROOT/project-metadata"
   status_row "Restore-notes directory"   "$INTELLIJ_ROOT/restore-notes"
@@ -214,18 +241,16 @@ SECRETS_DMG="$(latest_secrets_dmg)"
   if [[ -z "$VERSIONS" ]]; then
     printf 'No `IntelliJIdea*/` subdirectories found under `%s`.\n\n' "$INTELLIJ_ROOT"
   else
-    printf '| Version subtree | config-copy | scratches-and-consoles | manifests |\n'
-    printf '| --- | --- | --- | --- |\n'
+    printf '| Version subtree | config-copy | scratches-and-consoles |\n'
+    printf '| --- | --- | --- |\n'
     while IFS= read -r vdir; do
       [[ -z "$vdir" ]] && continue
       vname="$(basename "$vdir")"
       cfg="MISSING"
       sc="MISSING"
-      mf="MISSING"
       [[ -d "$vdir/config-copy" ]] && cfg="PRESENT"
       [[ -d "$vdir/scratches-and-consoles" ]] && sc="PRESENT"
-      [[ -d "$vdir/manifests" ]] && mf="PRESENT"
-      printf '| `%s` | %s | %s | %s |\n' "$vname" "$cfg" "$sc" "$mf"
+      printf '| `%s` | %s | %s |\n' "$vname" "$cfg" "$sc"
     done <<< "$VERSIONS"
     printf '\n'
   fi
@@ -245,7 +270,7 @@ SECRETS_DMG="$(latest_secrets_dmg)"
   if [[ -n "$SECRETS_DMG" ]]; then
     status_row "Consolidated secrets DMG (latest)" "$SECRETS_DMG"
   else
-    printf '| Consolidated secrets DMG (latest) | `%s` | MISSING |\n' "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/all-secrets-*.dmg"
+    printf '| Consolidated secrets DMG (latest) | `%s` | MISSING |\n' "$SECRETS_DMG_GLOB"
   fi
   printf '\n'
 
@@ -275,7 +300,12 @@ SECRETS_DMG="$(latest_secrets_dmg)"
   printf '| HTTP Client env files restored from encrypted source only | TODO |  |\n'
   printf '| Key projects open cleanly and tests build | TODO |  |\n'
   printf '| No secrets committed accidentally (`git status --ignored -s` clean) | TODO |  |\n'
-} > "$PLAN_FILE"
+} > "$PLAN_FILE" || {
+  # Without -e a failed redirect would still fall through to the success line
+  # below, and Phase 14 reads the newest plan-note — a phantom hand-off.
+  echo "ERROR: could not write the plan-note: $PLAN_FILE" >&2
+  exit 1
+}
 
 echo "Plan-note → $PLAN_FILE"
 

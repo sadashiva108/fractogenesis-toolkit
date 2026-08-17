@@ -24,7 +24,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import Dict, Iterable, List, Tuple
+from typing import Dict, List, Tuple
 
 
 # This script lives at <repo>/bin/prepare-artifact-root.py, so the repo root
@@ -96,7 +96,16 @@ def detect_asset_or_host() -> str:
             continue
         if value:
             return value
-    return "<asset-or-host>"
+    # Never return the "<asset-or-host>" placeholder. It used to be returned
+    # here and nothing downstream caught it: LITERAL_PATH_MARKERS carries no
+    # "<...>" entry, so contains_literal_path() passed it through and
+    # REIMAGE_ARTIFACT_ROOT became a real, placeholder-named directory that
+    # both validators accepted.
+    raise SystemExit(
+        "ERROR: Could not detect an asset tag or hostname for this Mac.\n"
+        "       Both `scutil --get LocalHostName` and `hostname -s` failed or returned nothing.\n"
+        "       Rerun with an explicit value, e.g. --asset-or-host MACBOOK-1234"
+    )
 
 
 def require_workspace_root(workspace_root: str, origin: str) -> str:
@@ -166,7 +175,31 @@ def bash_output(script: str) -> bytes:
     # corrupting the parsed values downstream. source/reimage.env loading
     # is done explicitly in the script text passed in, so a login shell
     # was never actually required.
-    return subprocess.check_output(["bash", "-c", script], stderr=subprocess.STDOUT)
+    #
+    # stderr is captured separately and re-emitted to this process's stderr —
+    # never merged into the returned stream. artifact-config.sh writes a
+    # two-line WARNING to stderr whenever REIMAGE_WORKSPACE_ROOT is set but
+    # carries no artifact-config directory; merging it made those lines the
+    # first entry of the NUL-delimited folder list, so create-standard-layout
+    # built a nested junk directory tree from the warning text and never
+    # created the real first folder. The warning still has to reach the user,
+    # so it is forwarded rather than discarded.
+    completed = subprocess.run(
+        ["bash", "-c", script],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    if completed.stderr:
+        sys.stderr.buffer.write(completed.stderr)
+        sys.stderr.flush()
+    if completed.returncode != 0:
+        raise subprocess.CalledProcessError(
+            completed.returncode,
+            completed.args,
+            output=completed.stdout,
+            stderr=completed.stderr,
+        )
+    return completed.stdout
 
 
 def load_env_values(env_file: Path) -> Dict[str, str]:
@@ -537,7 +570,10 @@ def cmd_confirm_env(args: argparse.Namespace) -> int:
 
     ensure_absolute_path("REIMAGE_WORKSPACE_ROOT", values["REIMAGE_WORKSPACE_ROOT"])
     ensure_absolute_path("EXTERNAL_DATA_VOLUME", values["EXTERNAL_DATA_VOLUME"])
-    ensure_absolute_path("EXTERNAL_APPLE_BACKUPS_VOLUME", values["EXTERNAL_APPLE_BACKUPS_VOLUME"])
+    # EXTERNAL_APPLE_BACKUPS_VOLUME is an optional Time Machine destination —
+    # reimage.env.example ships it blank — so an empty value is valid here, the
+    # same as it already is in verify-prepared-root.
+    ensure_absolute_path("EXTERNAL_APPLE_BACKUPS_VOLUME", values["EXTERNAL_APPLE_BACKUPS_VOLUME"], allow_empty=True)
     ensure_absolute_path("REIMAGE_ARTIFACT_ROOT", values["REIMAGE_ARTIFACT_ROOT"])
     ensure_absolute_path("PERFORMANCE_HISTORY_SOURCE", values["PERFORMANCE_HISTORY_SOURCE"], allow_empty=True)
     ensure_absolute_path("OFFICE_WATCH", values["OFFICE_WATCH"], allow_empty=True)
@@ -628,7 +664,8 @@ def cmd_verify_prepared_root(args: argparse.Namespace) -> int:
 
     ensure_absolute_path("REIMAGE_WORKSPACE_ROOT", values["REIMAGE_WORKSPACE_ROOT"])
     ensure_absolute_path("EXTERNAL_DATA_VOLUME", values["EXTERNAL_DATA_VOLUME"])
-    ensure_absolute_path("EXTERNAL_APPLE_BACKUPS_VOLUME", values["EXTERNAL_APPLE_BACKUPS_VOLUME"])
+    # Optional Time Machine destination — blank is valid, matching confirm-env.
+    ensure_absolute_path("EXTERNAL_APPLE_BACKUPS_VOLUME", values["EXTERNAL_APPLE_BACKUPS_VOLUME"], allow_empty=True)
     ensure_absolute_path("REIMAGE_ARTIFACT_ROOT", values["REIMAGE_ARTIFACT_ROOT"])
     ensure_artifact_root_under_external(values["EXTERNAL_DATA_VOLUME"], values["REIMAGE_ARTIFACT_ROOT"])
 
@@ -638,7 +675,12 @@ def cmd_verify_prepared_root(args: argparse.Namespace) -> int:
         raise SystemExit(f"reimage.env does not exist: {args.env_file}")
     if not Path(values["EXTERNAL_DATA_VOLUME"]).is_dir():
         raise SystemExit(f"EXTERNAL_DATA_VOLUME does not exist: {values['EXTERNAL_DATA_VOLUME']}")
-    if not Path(values["EXTERNAL_APPLE_BACKUPS_VOLUME"]).is_dir():
+    if not values["EXTERNAL_APPLE_BACKUPS_VOLUME"]:
+        # Without this branch an empty value fell through to Path("").is_dir(),
+        # which is the current directory and always true, so an unset optional
+        # volume produced no line at all.
+        print("INFO: EXTERNAL_APPLE_BACKUPS_VOLUME is not set; Time Machine destination checks will be skipped unless configured later")
+    elif not Path(values["EXTERNAL_APPLE_BACKUPS_VOLUME"]).is_dir():
         print(f"INFO: EXTERNAL_APPLE_BACKUPS_VOLUME not found yet: {values['EXTERNAL_APPLE_BACKUPS_VOLUME']}")
     if not Path(values["REIMAGE_ARTIFACT_ROOT"]).is_dir():
         raise SystemExit(f"REIMAGE_ARTIFACT_ROOT does not exist: {values['REIMAGE_ARTIFACT_ROOT']}")
@@ -731,6 +773,21 @@ def cmd_diagnose_external_root(args: argparse.Namespace) -> int:
     return 0
 
 
+# --env-file is accepted by every subcommand, so its help text is shared. The
+# two variants differ only in whether the subcommand rewrites the file.
+ENV_FILE_HELP_READ = (
+    "Path to the local reimage.env to read resolved values from. A relative "
+    "path resolves against the current directory, so run this from the "
+    "repository root."
+)
+ENV_FILE_HELP_WRITE = (
+    "Path to the local reimage.env to update in place. Matching export lines "
+    "are rewritten, missing keys are appended, and unrelated lines and "
+    "comments are preserved. A relative path resolves against the current "
+    "directory, so run this from the repository root."
+)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Entrypoint for prepare-artifact-root.md")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -739,13 +796,61 @@ def build_parser() -> argparse.ArgumentParser:
         "init-reimage-env",
         help="Write the starter resolved values into reimage.env after copying the example file.",
     )
-    init_parser.add_argument("--env-file", type=Path, required=True)
-    init_parser.add_argument("--workspace-root", default="")
-    init_parser.add_argument("--performance-history-source", default="")
-    init_parser.add_argument("--external-data-volume", default="/Volumes/Data")
-    init_parser.add_argument("--external-apple-backups-volume", default="/Volumes/AppleBackups")
-    init_parser.add_argument("--asset-or-host", default="")
-    init_parser.add_argument("--reimage-start-date", default="")
+    init_parser.add_argument("--env-file", type=Path, required=True, help=ENV_FILE_HELP_WRITE)
+    init_parser.add_argument(
+        "--workspace-root",
+        default="",
+        help=(
+            "Absolute path written to REIMAGE_WORKSPACE_ROOT: the directory outside this repo "
+            "and outside the external volume that holds the artifact-config and staged-certs "
+            "fragments. Required -- there is no default. Both it and its reimage-confirmation/ "
+            "subdirectory are created if missing."
+        ),
+    )
+    init_parser.add_argument(
+        "--performance-history-source",
+        default="",
+        help=(
+            "Optional absolute path written to PERFORMANCE_HISTORY_SOURCE: the long-lived "
+            "mac_memory_health.sh history directory read by the rollup summary. Leave empty "
+            "when that external helper is not in use."
+        ),
+    )
+    init_parser.add_argument(
+        "--external-data-volume",
+        default="/Volumes/Data",
+        help=(
+            "Mounted external data/artifact volume that REIMAGE_ARTIFACT_ROOT is created "
+            "under -- the volume itself, not the per-reimage folder on it. Any trailing "
+            "slash is stripped. Default: %(default)s."
+        ),
+    )
+    init_parser.add_argument(
+        "--external-apple-backups-volume",
+        default="/Volumes/AppleBackups",
+        help=(
+            "Optional dedicated Time Machine destination volume, written through as-is to "
+            "EXTERNAL_APPLE_BACKUPS_VOLUME. Pass an empty string when no Time Machine volume "
+            "is in use. Default: %(default)s."
+        ),
+    )
+    init_parser.add_argument(
+        "--asset-or-host",
+        default="",
+        help=(
+            "Asset tag or hostname used for ASSET_OR_HOST and in the REIMAGE_ARTIFACT_ROOT "
+            "folder name. Defaults to this Mac's LocalHostName, falling back to the short "
+            "hostname; pass it explicitly when neither can be detected."
+        ),
+    )
+    init_parser.add_argument(
+        "--reimage-start-date",
+        default="",
+        help=(
+            "Date the reimage effort started, in YYYYMMDD format, used for REIMAGE_START_DATE "
+            "and in the REIMAGE_ARTIFACT_ROOT folder name. Defaults to today."
+        ),
+    )
     init_parser.add_argument(
         "--onedrive-parent-dir",
         default="",
@@ -771,51 +876,67 @@ def build_parser() -> argparse.ArgumentParser:
         "upsert-env",
         help="Update one or more export values in reimage.env using KEY=VALUE assignments.",
     )
-    upsert_parser.add_argument("--env-file", type=Path, required=True)
-    upsert_parser.add_argument("assignment", nargs="+")
+    upsert_parser.add_argument("--env-file", type=Path, required=True, help=ENV_FILE_HELP_WRITE)
+    upsert_parser.add_argument(
+        "assignment",
+        nargs="+",
+        help=(
+            "One or more KEY=VALUE assignments to write into reimage.env. Each value is "
+            "shell-quoted; path-valued keys have any trailing slash stripped. An empty value "
+            "(KEY=) clears the key."
+        ),
+    )
     upsert_parser.set_defaults(func=cmd_upsert_env)
 
     create_root_parser = subparsers.add_parser(
         "create-artifact-root",
         help="Create REIMAGE_ARTIFACT_ROOT, validate it, and run a write test.",
     )
-    create_root_parser.add_argument("--env-file", type=Path, required=True)
+    create_root_parser.add_argument("--env-file", type=Path, required=True, help=ENV_FILE_HELP_READ)
     create_root_parser.set_defaults(func=cmd_create_artifact_root)
 
     repair_root_parser = subparsers.add_parser(
         "repair-artifact-root-perms",
         help="Create REIMAGE_ARTIFACT_ROOT with sudo once, then hand it back to the current user.",
     )
-    repair_root_parser.add_argument("--env-file", type=Path, required=True)
+    repair_root_parser.add_argument("--env-file", type=Path, required=True, help=ENV_FILE_HELP_READ)
     repair_root_parser.set_defaults(func=cmd_repair_artifact_root_perms)
 
     repair_literal_parser = subparsers.add_parser(
         "repair-literal-paths",
         help="Recompute REIMAGE_ARTIFACT_ROOT and resolve literal $HOME text in OFFICE_WATCH/ONEDRIVE_ROOT.",
     )
-    repair_literal_parser.add_argument("--env-file", type=Path, required=True)
+    repair_literal_parser.add_argument("--env-file", type=Path, required=True, help=ENV_FILE_HELP_WRITE)
     repair_literal_parser.set_defaults(func=cmd_repair_literal_paths)
 
     confirm_env_parser = subparsers.add_parser(
         "confirm-env",
         help="Print and validate the loaded reimage environment values.",
     )
-    confirm_env_parser.add_argument("--env-file", type=Path, required=True)
+    confirm_env_parser.add_argument("--env-file", type=Path, required=True, help=ENV_FILE_HELP_READ)
     confirm_env_parser.set_defaults(func=cmd_confirm_env)
 
     layout_parser = subparsers.add_parser(
         "create-standard-layout",
         help="Create the stable top-level artifact folders defined by artifact-config.sh.",
     )
-    layout_parser.add_argument("--env-file", type=Path, required=True)
+    layout_parser.add_argument("--env-file", type=Path, required=True, help=ENV_FILE_HELP_READ)
     layout_parser.set_defaults(func=cmd_create_standard_layout)
 
     copy_it_plan_parser = subparsers.add_parser(
         "copy-it-plan",
         help="Copy the filled IT reimage confirmation into REIMAGE_ARTIFACT_ROOT/reimage-confirmation/.",
     )
-    copy_it_plan_parser.add_argument("--env-file", type=Path, required=True)
-    copy_it_plan_parser.add_argument("--source", default="")
+    copy_it_plan_parser.add_argument("--env-file", type=Path, required=True, help=ENV_FILE_HELP_READ)
+    copy_it_plan_parser.add_argument(
+        "--source",
+        default="",
+        help=(
+            "Absolute path to the filled IT reimage confirmation Markdown file to copy. When "
+            "omitted, the most recently modified it-reimage-confirmation-*.md under "
+            "<workspace-root>/reimage-confirmation/ is used."
+        ),
+    )
     copy_it_plan_parser.add_argument(
         "--workspace-root",
         default="",
@@ -831,22 +952,29 @@ def build_parser() -> argparse.ArgumentParser:
         "init-artifact-config",
         help="Copy artifact-config template fragments into REIMAGE_WORKSPACE_ROOT for reuse across reruns.",
     )
-    init_config_parser.add_argument("--env-file", type=Path, required=True)
-    init_config_parser.add_argument("--force", action="store_true")
+    init_config_parser.add_argument("--env-file", type=Path, required=True, help=ENV_FILE_HELP_READ)
+    init_config_parser.add_argument(
+        "--force",
+        action="store_true",
+        help=(
+            "Overwrite workspace artifact-config fragments that already exist. Without it, "
+            "existing fragments are left untouched and reported as skipped."
+        ),
+    )
     init_config_parser.set_defaults(func=cmd_init_artifact_config)
 
     verify_parser = subparsers.add_parser(
         "verify-prepared-root",
         help="Validate the prepared root, top-level layout, and related environment paths.",
     )
-    verify_parser.add_argument("--env-file", type=Path, required=True)
+    verify_parser.add_argument("--env-file", type=Path, required=True, help=ENV_FILE_HELP_READ)
     verify_parser.set_defaults(func=cmd_verify_prepared_root)
 
     diagnose_parser = subparsers.add_parser(
         "diagnose-external-root",
         help="Inspect external-root ownership, disk info, and parent write access for troubleshooting.",
     )
-    diagnose_parser.add_argument("--env-file", type=Path, required=True)
+    diagnose_parser.add_argument("--env-file", type=Path, required=True, help=ENV_FILE_HELP_READ)
     diagnose_parser.set_defaults(func=cmd_diagnose_external_root)
 
     return parser

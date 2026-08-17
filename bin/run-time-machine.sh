@@ -10,7 +10,8 @@
 # it wraps tmutil, diskutil, and log, and writes evidence under
 # $REIMAGE_ARTIFACT_ROOT/time-machine/.
 #
-# Read-only evidence bundles are capture-time-machine.sh's job, not this one.
+# Read-only evidence bundles are record-time-machine-evidence.sh's job, not this
+# one. That script is the other bin/ entrypoint run-time-machine.md owns.
 #
 # This file is intended for bin/. It is a normal entrypoint: one command per
 # invocation, explicit exit codes, and no writes outside the artifact root and
@@ -20,7 +21,11 @@
 # Usage:
 #   cd <repo-root>
 #   chmod +x bin/run-time-machine.sh
-#   ./bin/run-time-machine.sh <command> [options]
+#   ./bin/run-time-machine.sh "<command>" [options]
+#
+#   The placeholder is quoted so a copy-paste of this synopsis line reaches the
+#   script as an unknown-command error instead of being eaten by the shell as an
+#   input redirection.
 #
 # Commands:
 #   start            Start a Time Machine backup.
@@ -42,7 +47,8 @@
 #   --external-data-root PATH  Manual/evidence volume to verify as excluded.
 #                              Default: $EXTERNAL_DATA_VOLUME, else the mounted
 #                              volume containing the artifact root.
-#   --interval SECONDS         Monitor polling interval. Default: 300.
+#   --interval SECONDS         Monitor polling interval, a positive integer
+#                              number of seconds. Default: 300.
 #   --last WINDOW              Relative log window for logs. Default: 2h.
 #   --start DATETIME           Absolute log start, e.g. "2026-07-06 08:30:00".
 #   --end DATETIME             Absolute log end, e.g. "2026-07-06 08:35:00".
@@ -60,7 +66,9 @@
 #   --full-snapshot            For verify-latest, verify the whole snapshot.
 #                              Noisy; may hit restricted system/app paths.
 #   --physical-disk DISK       For eject, eject the whole physical disk, e.g.
-#                              disk4.
+#                              disk4. Skips the destination and data-volume
+#                              checks so it still works as the retry after a
+#                              partially completed eject.
 #   --open                     Open the generated artifact or mount point.
 #   -h, --help                 Show this message and exit.
 #
@@ -72,6 +80,19 @@
 #   ./bin/run-time-machine.sh compare --open
 #   ./bin/run-time-machine.sh eject --physical-disk disk4
 #
+# Outputs:
+#   Written under $REIMAGE_ARTIFACT_ROOT/time-machine/ by the command named:
+#     status         status-YYYYMMDD-HHMMSS.txt
+#     logs           logs-YYYYMMDD-HHMMSS.txt
+#     complete       completion-check-YYYYMMDD-HHMMSS.md
+#     compare        compare-YYYYMMDD-HHMMSS.txt
+#                    (also written by `complete --compare`)
+#     verify-latest  verifychecksums-YYYYMMDD-HHMMSS.txt
+#     diagnose       diagnose-YYYYMMDD-HHMMSS.txt
+#   start, monitor, mount-latest, unmount-latest, and eject write no artifact.
+#   mount-latest and compare additionally create and remove a temporary
+#   read-only mount point under /tmp/tm-<backup-stamp>.
+#
 # Configuration precedence:
 #   1. Explicit command-line options for this invocation.
 #   2. Environment values already exported by the caller or optional .envrc.
@@ -82,6 +103,7 @@
 #   0    Command completed.
 #   1    The requested operation failed.
 #   2    Usage, configuration, or prerequisite error.
+#   3    verify-latest completed but reported MISMATCH/FAILED checksum entries.
 #   127  A required external command is not available.
 # --- END USAGE ---
 # =============================================================================
@@ -172,6 +194,12 @@ require_artifact_root() {
     err "REIMAGE_ARTIFACT_ROOT is not set. Source reimage.env or pass --artifact-root PATH."
     exit 2
   fi
+  # Without this, an unmounted external volume turns the mkdir -p below into a
+  # fresh tree on the boot disk and every artifact silently lands there.
+  if [[ ! -d "$REIMAGE_ARTIFACT_ROOT" ]]; then
+    err "backup root not found: $REIMAGE_ARTIFACT_ROOT"
+    exit 2
+  fi
   mkdir -p "$REIMAGE_ARTIFACT_ROOT/time-machine"
 }
 
@@ -190,12 +218,6 @@ require_external_data_volume() {
   if [[ ! -d "$EXTERNAL_DATA_VOLUME" ]]; then
     err "EXTERNAL_DATA_VOLUME does not exist: $EXTERNAL_DATA_VOLUME"
     exit 2
-  fi
-}
-
-artifact_root_volume() {
-  if [[ -n "${REIMAGE_ARTIFACT_ROOT:-}" && -d "${REIMAGE_ARTIFACT_ROOT:-}" ]]; then
-    df -P "$REIMAGE_ARTIFACT_ROOT" | awk 'NR==2 {print $6}'
   fi
 }
 
@@ -833,6 +855,10 @@ run_compare() {
         print_compare_candidate_report "$previous_root" "$latest_root" "$COMPARE_PATH"
       fi
       echo 'For a broader spot check, run one of these:'
+      # Single-quoted on purpose: $(whoami) must reach the reader's terminal
+      # literally so the suggestion works for whoever pastes it, rather than
+      # baking this run's user name into the evidence file.
+      # shellcheck disable=SC2016
       echo '  ./bin/run-time-machine.sh compare --compare-path Data/Users/$(whoami) --open'
       echo '  ./bin/run-time-machine.sh compare --compare-path Data --open'
     } | tee -a "$out"
@@ -1024,7 +1050,11 @@ verify_latest() {
     exit 2
   fi
 
-  target="$(choose_verify_target "$backup_root_path")"
+  # Plain assignment would inherit choose_verify_target's exit 2 under set -e and
+  # fire the ERR trap, printing a crash message ahead of the intended clean exit.
+  if ! target="$(choose_verify_target "$backup_root_path")"; then
+    exit 2
+  fi
   if [[ -z "$target" || ! -e "$target" ]]; then
     err "No readable verification target is available under latest backup path: $backup_root_path"
     exit 2
@@ -1062,7 +1092,10 @@ verify_latest() {
   status=${PIPESTATUS[0]}
   set -e
 
-  mismatch_failed_count="$(grep -Ec '^(MISMATCH|FAILED)\b' "$out" 2>/dev/null || true)"
+  # BSD grep does not implement the GNU \b word boundary, so '^(MISMATCH|FAILED)\b'
+  # silently matches nothing on macOS and a corrupt backup reports PASS. Anchor on
+  # whitespace or end of line instead, which both BSD and GNU ERE support.
+  mismatch_failed_count="$(grep -Ec '^(MISMATCH|FAILED)([[:space:]]|$)' "$out" 2>/dev/null || true)"
   error257_count="$(grep -c 'error 257 enumerating path' "$out" 2>/dev/null || true)"
   question_count="$(grep -Ec '^\?[[:space:]]+' "$out" 2>/dev/null || true)"
   posix22_count="$(grep -c 'POSIXError.*Code=22' "$out" 2>/dev/null || true)"
@@ -1131,12 +1164,17 @@ capture_diagnose() {
 
 eject_volumes() {
   need_cmd diskutil
-  require_external_data_volume
+  # --physical-disk is the documented recovery path for a partially completed
+  # eject: one volume is already unmounted by then, so requiring the destination
+  # and data volumes here would block the retry it exists for. Both requirements
+  # therefore sit after this branch, not before it.
   if [[ -n "$PHYSICAL_DISK" ]]; then
     say "Ejecting physical disk: $PHYSICAL_DISK"
     diskutil eject "$PHYSICAL_DISK"
     return
   fi
+  require_time_machine_dest
+  require_external_data_volume
   say "Ejecting data volume: $EXTERNAL_DATA_VOLUME"
   diskutil eject "$EXTERNAL_DATA_VOLUME" || true
   say "Ejecting Time Machine volume: $TIME_MACHINE_DEST"
@@ -1163,7 +1201,18 @@ while [[ $# -gt 0 ]]; do
     --external-data-root)
       require_option_value "$1" "${2:-}"; EXTERNAL_DATA_VOLUME="$2"; shift 2 ;;
     --interval)
-      require_option_value "$1" "${2:-}"; INTERVAL="$2"; shift 2 ;;
+      require_option_value "$1" "${2:-}"
+      # `--interval 0` (or any non-numeric value) turns monitor into a busy loop
+      # around tmutil status. Same positive-integer rule as backup-repos.sh
+      # --status-interval.
+      case "$2" in
+        ''|*[!0-9]*|0*)
+          err "--interval requires a positive integer, got: $2"
+          usage >&2
+          exit 2
+          ;;
+      esac
+      INTERVAL="$2"; shift 2 ;;
     --last)
       require_option_value "$1" "${2:-}"; LOG_WINDOW="$2"; shift 2 ;;
     --start)
@@ -1192,7 +1241,8 @@ resolve_external_data_volume
 case "$COMMAND" in
   # start/monitor/logs/diagnose talk to the running Time Machine service and
   # never pass -d, so they work with no destination resolved. Everything else
-  # addresses the destination volume directly and must have it.
+  # addresses the destination volume directly and must have it. eject checks it
+  # internally, after the --physical-disk recovery branch.
   start) start_backup ;;
   monitor) monitor_backup ;;
   logs) capture_logs ;;
@@ -1203,7 +1253,7 @@ case "$COMMAND" in
   mount-latest) require_time_machine_dest; mount_latest_snapshot ;;
   verify-latest) require_time_machine_dest; verify_latest ;;
   unmount-latest) require_time_machine_dest; unmount_latest_snapshot ;;
-  eject) require_time_machine_dest; eject_volumes ;;
+  eject) eject_volumes ;;
   -h|--help|help) usage ;;
   *) err "Unknown command: $COMMAND"; usage; exit 2 ;;
 esac
