@@ -97,10 +97,11 @@ $JUMP_DRIVE_VOLUME/tarball/fractogenesis-toolkit.tar.gz   # payload built for th
 
 ### Environment Variables
 
-The values this runbook sets or reads. `JUMP_DRIVE_VOLUME` is a `reimage.env` key resolved and written during `prepare-artifact-root.md`; the other two are set by hand for the duration of a test.
+The values this runbook sets or reads. `JUMP_DRIVE_VOLUME` and `TOOLKIT_GITHUB_ACCOUNT` are `reimage.env` keys resolved and written during `prepare-artifact-root.md`; the other two are set by hand for the duration of a test.
 
 | Variable | Meaning |
 |---|---|
+| `TOOLKIT_GITHUB_ACCOUNT` | GitHub account the toolkit is fetched from. This runbook runs pre-image, so `reimage.env` is loaded and the variable is available — unlike the Phase 8 cold start, which has no `reimage.env` and takes the account from the emailed cheatsheet instead. |
 | `FRACTOGENESIS_HOME` | Where the toolkit is checked out. Both tests deliberately override it to a throwaway path so nothing lands in your real checkout. Set by your shell startup / `.envrc`, not stored in `reimage.env`. |
 | `FRACTOGENESIS_PARENT` | Set for the jump drive test only: the directory holding your real `fractogenesis-toolkit` checkout, from which a fresh payload is built. Not a `reimage.env` key. |
 | `JUMP_DRIVE_VOLUME` | Mount path of the small dedicated jump drive used as the no-network bootstrap fallback, for example `/Volumes/REIMAGEKIT`. |
@@ -184,7 +185,8 @@ Note: a `VAR=val` prefix directly on the curl command (`FRACTOGENESIS_HOME=... c
 **4. Then fetch and run `bootstrap.sh` — as two steps, not a pipe:**
 
 ```bash
-curl -fL -o /tmp/bootstrap.sh https://raw.githubusercontent.com/sadashiva108/fractogenesis-toolkit/main/bootstrap.sh
+curl -fL -o /tmp/bootstrap.sh \
+  "https://raw.githubusercontent.com/$TOOLKIT_GITHUB_ACCOUNT/fractogenesis-toolkit/main/bootstrap.sh"
 bash /tmp/bootstrap.sh
 ```
 

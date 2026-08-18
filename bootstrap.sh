@@ -34,9 +34,14 @@
 #
 # --- BEGIN USAGE ---
 # Usage:
-#   # Network route -- fetch and extract from GitHub.
+#   # Network route -- fetch and extract from GitHub. Download and run as two
+#   # steps: piped, `-f -s` makes a 404 print nothing, bash reads an empty
+#   # stdin, and the pipeline exits 0 -- installing nothing, silently.
+#   export TOOLKIT_GITHUB_ACCOUNT=<account>               # required, network route only
 #   export FRACTOGENESIS_HOME=/absolute/install/path      # optional
-#   curl -fsSL https://raw.githubusercontent.com/<account>/fractogenesis-toolkit/main/bootstrap.sh | bash
+#   curl -fL -o /tmp/bootstrap.sh \\
+#     "https://raw.githubusercontent.com/$TOOLKIT_GITHUB_ACCOUNT/fractogenesis-toolkit/main/bootstrap.sh"
+#   bash /tmp/bootstrap.sh
 #
 #   # Same thing from an existing copy of this file:
 #   bash bootstrap.sh
@@ -58,8 +63,15 @@
 #       `VAR=val curl ... | bash` prefix sets the variable for curl only, not
 #       for the bash on the other side of the pipe.
 #
+#   TOOLKIT_GITHUB_ACCOUNT
+#       GitHub account hosting the toolkit. Required by the network route,
+#       ignored by the jump-drive route. No default: hardcoding one would send
+#       every other user's bootstrap at the original author's repository.
+#
 #   Shared reimage config (reimage.env, .internal/artifact-config.sh) is
-#   intentionally NOT loaded; see the classification note above.
+#   intentionally NOT loaded; see the classification note above. On a machine
+#   that still has a checkout, TOOLKIT_GITHUB_ACCOUNT comes from reimage.env;
+#   on a bare Mac it is exported by hand from the post-reimage cheatsheet.
 #
 # Exit status:
 #   0  Toolkit installed at the destination.
@@ -110,8 +122,11 @@ if [[ -n "$SRC_TARBALL" ]]; then
   # single-segment files like README.md and .toolkit-version entirely.
   tar -xz -C "$DEST" -f "$SRC_TARBALL"
 else
-  echo "Fetching from GitHub..."
-  curl -fL "https://codeload.github.com/sadashiva108/fractogenesis-toolkit/tar.gz/refs/heads/main" \
+  # Network route only. The jump-drive route above needs no account and no
+  # network, so this is deliberately not checked before the tarball branch.
+  ACCOUNT="${TOOLKIT_GITHUB_ACCOUNT:?TOOLKIT_GITHUB_ACCOUNT is not set. Export the GitHub account that hosts your fractogenesis-toolkit before running the network route, e.g. export TOOLKIT_GITHUB_ACCOUNT=your-account. On a freshly reimaged Mac take it from the post-reimage cheatsheet you emailed yourself.}"
+  echo "Fetching from GitHub (account: $ACCOUNT)..."
+  curl -fL "https://codeload.github.com/$ACCOUNT/fractogenesis-toolkit/tar.gz/refs/heads/main" \
     | tar -xz -C "$DEST" --strip-components=1
 fi
 

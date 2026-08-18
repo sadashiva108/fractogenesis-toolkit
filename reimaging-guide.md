@@ -680,10 +680,14 @@ This phase brings the rebuilt Mac to a clean, trusted managed baseline before an
 >
 > **Primary — if Wi-Fi is connected (it should be, from Phase 7's sign-in step):**
 > ```bash
-> curl -fL -o /tmp/bootstrap.sh https://raw.githubusercontent.com/sadashiva108/fractogenesis-toolkit/main/bootstrap.sh
+> export TOOLKIT_GITHUB_ACCOUNT=<your-github-account>
+> curl -fL -o /tmp/bootstrap.sh \
+>   "https://raw.githubusercontent.com/$TOOLKIT_GITHUB_ACCOUNT/fractogenesis-toolkit/main/bootstrap.sh"
 > bash /tmp/bootstrap.sh
 > ```
 > Installs to `$HOME/fractogenesis-toolkit` (or `$FRACTOGENESIS_HOME` if set). No `git` needed — installing `git` on a bare Mac triggers a large Xcode Command Line Tools popup/download, which this deliberately avoids.
+>
+> This is the one command in the workflow that cannot use `$TOOLKIT_GITHUB_ACCOUNT`. `reimage.env` did not survive the erase, and anything that could hand it to you — the jump drive, the artifact volume — has already handed you the toolkit, making the fetch unnecessary. **Substitute the account from the post-reimage cheatsheet you emailed yourself.**
 >
 > Download and run as two steps, deliberately. `curl … | bash` hides its own failure: with `-f -s`, a 404 or a captive-portal redirect prints nothing, `bash` reads an empty stdin, and the pipeline exits **0** — no toolkit, no error, and no obvious reason why the next command cannot find `bin/`. Fetching to a file first makes a failed download impossible to miss.
 >

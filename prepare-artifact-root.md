@@ -415,7 +415,7 @@ FRACTOGENESIS_PARENT="/path/to/local/repo-parent"
 mkdir -p "$FRACTOGENESIS_PARENT"
 cd "$FRACTOGENESIS_PARENT"
 
-git clone git@github.com:sadashiva108/fractogenesis-toolkit.git
+git clone git@github.com:<your-github-account>/fractogenesis-toolkit.git
 ```
 
 `cd` into the checkout itself -- this directory is what the rest of the guide calls `FRACTOGENESIS_HOME`:
@@ -428,7 +428,9 @@ pwd
 **On a freshly reimaged Mac** (no Git/SSH yet — this is the actual scenario Phase 8 onward depends on): use the bootstrap mechanism instead of `git clone` — no auth needed, no Xcode Command Line Tools popup:
 
 ```bash
-curl -fL -o /tmp/bootstrap.sh https://raw.githubusercontent.com/sadashiva108/fractogenesis-toolkit/main/bootstrap.sh
+export TOOLKIT_GITHUB_ACCOUNT=<your-github-account>
+curl -fL -o /tmp/bootstrap.sh \
+  "https://raw.githubusercontent.com/$TOOLKIT_GITHUB_ACCOUNT/fractogenesis-toolkit/main/bootstrap.sh"
 bash /tmp/bootstrap.sh
 ```
 

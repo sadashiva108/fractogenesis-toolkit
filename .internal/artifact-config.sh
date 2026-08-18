@@ -338,7 +338,7 @@ _artifact_config_main() {
 
   # Optional fragments: sourced only when present, so an existing workspace copy
   # created before one of them shipped keeps loading without error.
-  for fragment in secret-shapes.conf.sh loose-secret-exceptions.conf.sh; do
+  for fragment in secret-shapes.conf.sh loose-secret-exceptions.conf.sh archive-policy.conf.sh; do
     config_path="$ARTIFACT_CONFIG_SOURCE_DIR/$fragment"
     [[ -f "$config_path" ]] || continue
     # shellcheck disable=SC1090

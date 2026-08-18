@@ -230,6 +230,28 @@ build_exclude_flags() {
   done
 }
 
+# Archive policy from archive-policy.conf.sh. rsync applies the FIRST matching
+# filter rule, so every --include is emitted before every --exclude: that
+# ordering is what lets an ARCHIVE_KEEP entry carve an exception out of a broad
+# ARCHIVE_SKIP entry. Kept separate from build_exclude_flags because that one
+# only ever excludes and has no ordering contract.
+build_archive_flags() {
+  local pat
+  ARCHIVE_FLAGS=()
+  if declare -p ARCHIVE_KEEP >/dev/null 2>&1 && (( ${#ARCHIVE_KEEP[@]} > 0 )); then
+    for pat in "${ARCHIVE_KEEP[@]}"; do
+      [[ -n "$pat" ]] || continue
+      ARCHIVE_FLAGS+=( "--include=${pat}" )
+    done
+  fi
+  if declare -p ARCHIVE_SKIP >/dev/null 2>&1 && (( ${#ARCHIVE_SKIP[@]} > 0 )); then
+    for pat in "${ARCHIVE_SKIP[@]}"; do
+      [[ -n "$pat" ]] || continue
+      ARCHIVE_FLAGS+=( "--exclude=${pat}" )
+    done
+  fi
+}
+
 # Run rsync with the ERR trap and `set -e` suspended for the duration, and
 # publish its exit status in RSYNC_RC. A command on the left of `||` is exempt
 # from both, so no trap save/restore dance is needed.
@@ -575,6 +597,20 @@ write_local_files_manifest() {
     fi
     echo ""
 
+    echo "## Archive Policy"
+    if declare -p ARCHIVE_SKIP >/dev/null 2>&1 && (( ${#ARCHIVE_SKIP[@]} > 0 )); then
+      echo "Archives skipped:"
+      for p in "${ARCHIVE_SKIP[@]}"; do echo "- \`$p\`"; done
+    else
+      echo "No archives skipped - every compressed archive under a target was copied."
+    fi
+    if declare -p ARCHIVE_KEEP >/dev/null 2>&1 && (( ${#ARCHIVE_KEEP[@]} > 0 )); then
+      echo ""
+      echo "Kept despite a skip pattern:"
+      for p in "${ARCHIVE_KEEP[@]}"; do echo "- \`$p\`"; done
+    fi
+    echo ""
+
     echo "## OneDrive Extra Excludes"
     if declare -p ONEDRIVE_EXTRA_EXCLUDES >/dev/null 2>&1; then
       for p in "${ONEDRIVE_EXTRA_EXCLUDES[@]}"; do echo "- \`$p\`"; done
@@ -706,7 +742,8 @@ START_TIME=$SECONDS
 
 # Build exclude flag arrays once from config
 build_exclude_flags ${EXTERNAL_EXCLUDES[@]+"${EXTERNAL_EXCLUDES[@]}"}
-EXT_EXCL_FLAGS=( ${EXCLUDE_FLAGS[@]+"${EXCLUDE_FLAGS[@]}"} )
+build_archive_flags
+EXT_EXCL_FLAGS=( ${EXCLUDE_FLAGS[@]+"${EXCLUDE_FLAGS[@]}"} ${ARCHIVE_FLAGS[@]+"${ARCHIVE_FLAGS[@]}"} )
 
 # ══════════════════════════════════════════════════════════════════════════════
 # EXTERNAL DRIVE
@@ -829,7 +866,7 @@ if $RUN_ONEDRIVE; then
   build_exclude_flags \
     ${EXTERNAL_EXCLUDES[@]+"${EXTERNAL_EXCLUDES[@]}"} \
     ${ONEDRIVE_EXTRA_EXCLUDES[@]+"${ONEDRIVE_EXTRA_EXCLUDES[@]}"}
-  ALL_OD_FLAGS=( ${EXCLUDE_FLAGS[@]+"${EXCLUDE_FLAGS[@]}"} )
+  ALL_OD_FLAGS=( ${EXCLUDE_FLAGS[@]+"${EXCLUDE_FLAGS[@]}"} ${ARCHIVE_FLAGS[@]+"${ARCHIVE_FLAGS[@]}"} )
 
   $DRY_RUN || mkdir -p "$ONEDRIVE_DEST"
 

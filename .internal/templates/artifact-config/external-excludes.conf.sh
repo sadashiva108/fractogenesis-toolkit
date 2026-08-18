@@ -27,11 +27,13 @@ EXTERNAL_EXCLUDES=(
   "DockerDesktop/"              # Docker.raw virtual disk — rebuild from registries
   "github-copilot-intellij/"    # Plugin cache — reinstall post-reimage
 
-  # -- Installers --------------------------------------------------------------
-  "*.dmg"
-  "*.pkg"
-  "*.zip"
+  # -- Windows noise -----------------------------------------------------------
   "\$RECYCLE.BIN/"
+  # Archive formats are NOT excluded here. "*.dmg" / "*.pkg" / "*.zip" used to
+  # live at this spot under an "Installers" heading, but this list applies to
+  # every target at any depth, so it dropped 37 real archives while excluding
+  # installers from nothing (~/Downloads is not a captured target). Archive
+  # decisions now live in archive-policy.conf.sh.
 
   # -- Tool caches (large, regenerated) ----------------------------------------
   "github-copilot/"             # Inside ~/.config — caches, plugins, session DBs.
