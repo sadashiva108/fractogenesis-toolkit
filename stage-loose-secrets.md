@@ -93,6 +93,8 @@ A credential-shaped file that landed anywhere else — `home-files-backup/`, `ap
 
 Matching is by **filename only** — contents are never read. The list lives in one place, `SECRET_SHAPES_FLOOR` in `.internal/artifact-config.sh`, and the optional `secret-shapes.conf.sh` fragment can add to it but never remove from it.
 
+For what makes a good shape, when to prefer a `SECRETS_TARGETS` row over a shape, and candidate shapes worth adding, see [[artifact-config-reference|Artifact Config Reference]] — Secret Shapes.
+
 > [!warning] Pitfall
 > A clean run means "no obvious leak", not "no leak". A secret in a file with an innocent name will not appear at all. Filename shape is a net with known holes, not a proof.
 

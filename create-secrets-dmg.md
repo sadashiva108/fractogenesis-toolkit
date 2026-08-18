@@ -156,6 +156,8 @@ The full `secrets-encrypted/` layout — the loose staging subfolders this phase
 
 [[master-directory-reference|Master Directory Reference]]
 
+For how a category comes to exist — the `SECRETS_TARGETS` row that puts a file into one, why the first path segment *is* the DMG category that `validate` and `cleanup` operate on, and how manual staging categories such as `postman/` and `raycast/` work — see [[artifact-config-reference|Artifact Config Reference]].
+
 > [!note]
 > Active scripts stay in Git under `$FRACTOGENESIS_HOME/bin/`. Never copy script source to `$REIMAGE_ARTIFACT_ROOT`, and never store the DMG password in the repo, a note, a filename, a script, or the artifact root — only in an approved password manager.
 

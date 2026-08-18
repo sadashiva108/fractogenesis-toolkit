@@ -1113,6 +1113,8 @@ If the helper reports a `REIMAGE_ARTIFACT_ROOT` or literal-path error, stop here
 
 `artifact-config.sh` reads its backup targets, excludes, and expected folders from reusable shell config fragments. Set those fragments up before the local-file backup phases run.
 
+For what each fragment governs, the precedence between the workspace copy and the committed templates, and which values are derived rather than configured, see [[artifact-config-reference|Artifact Config Reference]].
+
 Route based on whether you already have real config fragments:
 
 - [[#Already Have Fragments|Already Have Fragments]] — from a previous setup or checkout.

@@ -26,6 +26,7 @@ The external artifact root is the authoritative copy. An optional OneDrive secon
     - [[#Load the Shared Reimage Environment|Load the Shared Reimage Environment]]
     - [[#Confirm the Artifact-Config Fragments|Confirm the Artifact-Config Fragments]]
     - [[#Run the Size Audit|Run the Size Audit]]
+    - [[#Scan Archives for Credential Material|Scan Archives for Credential Material]]
     - [[#Choose the Backup Mode|Choose the Backup Mode]]
     - [[#Run the Backup|Run the Backup]]
     - [[#Review Output|Review Output]]
@@ -109,6 +110,8 @@ The backup has one authoritative destination and one optional secondary destinat
 ### Configuration Fragments and Run Modes
 
 The artifact-config fragments sourced from the active fragment directory are the single definition of what is backed up, what is excluded, what routes to secrets, and how OneDrive behaves. Nothing in the scripts hardcodes a target; changing scope means editing a fragment.
+
+For the fragment set, how a `SECRETS_TARGETS` row is written, why a secrets source is held back from the clear-text pass, and which values are derived rather than configured, see [[artifact-config-reference|Artifact Config Reference]].
 
 The mode flag on `bin/backup-home.sh` decides which destinations a run touches:
 
@@ -274,6 +277,7 @@ The fragments it verifies, and what each defines:
 
 | Fragment | Defines |
 |---|---|
+| `archive-policy.conf.sh` | *Optional.* Which compressed archives are copied. Default is keep; `ARCHIVE_SKIP` names the exceptions. |
 | `expected-artifact-folders.conf.sh` | Expected top-level `$REIMAGE_ARTIFACT_ROOT` folders used by the size audit and validation. |
 | `external-dotfiles.conf.sh` | Individual home-directory dotfiles copied when present. |
 | `external-excludes.conf.sh` | Global rsync excludes applied to every external sync. |
@@ -311,6 +315,21 @@ Review these lines in the output:
 
 > [!bug] Troubleshooting
 > The saved report keeps ANSI color codes on purpose; view it in a terminal, not an editor: `less -R "$REIMAGE_ARTIFACT_ROOT/size-audit-reports/runs/<run>/size-audit-report.txt"`.
+
+### Scan Archives for Credential Material
+
+A compressed archive is opaque to every filename sweep in this workflow, so a credential sealed inside one is copied in the clear and passes Phase 3B without comment. Run this before the copy, while the decision is still cheap:
+
+```bash
+.internal/scan-archive-contents.sh --targets --report "$REIMAGE_WORKSPACE_ROOT/archive-content-scan.md"
+```
+
+`--targets` derives its roots from `external-targets.conf.sh` and prunes with the directory-shaped entries in `external-excludes.conf.sh`, so it sees exactly what would be copied. Use `--onedrive` for the same question about corporate cloud — that leg also applies `onedrive-extra-excludes.conf.sh`, so it reports a narrower set. Both are read-only and exit 1 when anything is found, which is informational rather than a failure.
+
+Resolve a finding one of three ways: leave it as-is, add the filename to `ARCHIVE_SKIP` in `archive-policy.conf.sh`, or give the archive a `secrets-targets.conf.sh` row so it is encrypted into the DMG instead of copied in the clear. Archives already named in `ARCHIVE_SKIP` are still scanned and reported, marked as not-copied.
+
+> [!note]
+> Postman exports are the other file type whose credentials hide from a name sweep, and they are covered where the Postman export flow is documented — see [[backup-apps#Postman|backup-apps.md — Postman]].
 
 ### Choose the Backup Mode
 
@@ -495,7 +514,9 @@ The fragments are ordinary Bash files: an array — or, for `secret-flags.conf.s
 
 **`external-excludes.conf.sh`** — rsync filter patterns applied to *every* external sync. Add a pattern here rather than editing a script, to drop noise (caches, installers, `.DS_Store`) from otherwise-wanted targets.
 
-**`secrets-targets.conf.sh`** — credential-shaped sources copied to `secrets-encrypted/` for the later DMG. `KEY | SOURCE | DEST | DESCRIPTION`, with `DEST` relative to `secrets-encrypted/`. Each `KEY` is gated by a `BACKUP_<KEY>` flag. Add a secret by giving it a `KEY` and a `secrets-encrypted/`-relative `DEST`; never route a secret through `external-targets.conf.sh`.
+**`archive-policy.conf.sh`** *(optional)* — which compressed archives (`.zip`, `.dmg`, `.tar.gz`, and the rest) are copied. The default is **keep**: every archive under a target is copied unless a pattern in `ARCHIVE_SKIP` matches it, and `ARCHIVE_KEEP` is evaluated first so it can carve an exception out of a broad skip. Skip an archive when it is large *and* its content is already captured in a better form elsewhere; say which in the comment. Note that `ARCHIVE_KEEP` cannot rescue a file from a directory excluded by `external-excludes.conf.sh` — rsync never descends into a pruned directory, so a filename include is never consulted. Extension patterns belong here, never in `external-excludes.conf.sh`, which applies to every target at any depth.
+
+**`secrets-targets.conf.sh`** — credential-shaped sources copied to `secrets-encrypted/` for the later DMG. `KEY | SOURCE | DEST | DESCRIPTION`, with `DEST` relative to `secrets-encrypted/`. Each `KEY` is gated by a `BACKUP_<KEY>` flag. Add a secret by giving it a `KEY` and a `secrets-encrypted/`-relative `DEST`; never route a secret through `external-targets.conf.sh`. A row here also **holds the file back from the clear-text pass**: any source that falls inside a directory target is excluded from both `home-files-backup/` and OneDrive, so a row means the DMG and only the DMG. That exclusion applies to future runs, not retroactively — a clear-text copy left by an earlier run must be deleted by hand, because rsync's `--delete` leaves excluded files alone on the destination.
 
 **`secret-flags.conf.sh`** — `BACKUP_<KEY>=true|false` toggles for the secrets targets, and for Java `jssecacerts`. An unset flag defaults to `true`; set one to `false` to skip a secret this run, for example `BACKUP_GNUPG=false`.
 

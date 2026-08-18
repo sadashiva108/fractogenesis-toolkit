@@ -567,6 +567,16 @@ Postman exports are manual because the app UI owns the export flow. Treat Postma
 | Inventory when export is blocked | `app-settings-backup/postman/inventory/` | Redacted list of variable names, owning collection/environment, and restore source. No secret values. |
 | External-vault references | `app-settings-backup/postman/README.md` | Document the provider and restore steps, not the secret values. |
 
+Before treating any collection or environment as non-secret, check it rather than assuming. The values that matter are normally references — `{{CLIENT_SECRET}}` resolved from an environment, or `{{vault:...}}` resolved from Postman Vault — and those are safe to back up in the clear. What is not safe is a value pasted directly into a collection: an auth block filled in while debugging, a header typed once and forgotten, or a token assigned from a pre-request script.
+
+```bash
+.internal/scan-postman-collections.py --targets --report "$REIMAGE_WORKSPACE_ROOT/postman-export-scan.md"
+```
+
+It walks collections, environments and globals, reporting every secret-shaped key whose value is a literal rather than a reference, plus formats that are credentials whatever key they sit under — JWTs, PEM private-key blocks, `Authorization: Basic`/`Bearer` literals, `client_secret=` in a request body, and provider token prefixes. Values are never printed: findings give the key, the value's length, and a shape label such as `UUID`, `hex-32`, or `base64ish-16`. It is read-only and exits 1 when anything is found.
+
+A literal is a candidate, not proof — a UUID client id is public, a UUID client secret is not. Resolve one by rewriting the value as a `{{reference}}`, or by giving the file a `secrets-targets.conf.sh` row so it is encrypted into the DMG rather than copied in the clear. Use `--onedrive` to ask the narrower question of what would reach corporate cloud, and plain `--root` with no mode flag to re-check the artifact root after a run.
+
 Use `app-settings-backup/postman/` only for non-secret collection exports, redacted environment examples, variable inventories, and restore notes. Use `secrets-encrypted/postman/` for anything that may contain tokens, passwords, API keys, client secrets, cookies, bearer tokens, or unreviewed environment exports.
 
 Step 4 already created `app-settings-backup/postman/` and `secrets-encrypted/postman/`. Create the subdirectories it does not:
