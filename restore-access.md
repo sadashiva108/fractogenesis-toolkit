@@ -20,13 +20,14 @@ Restore the identity, trust, and credential layer on the reimaged Mac after the 
     - [[#Confirm Your Intent|Confirm Your Intent]]
 - [[#Sequential Steps|Sequential Steps]]
     - [[#Step 1 — Mount the Encrypted Secrets DMG|Step 1 — Mount the Encrypted Secrets DMG]]
-    - [[#Step 2 — Restore SSH and Git Access|Step 2 — Restore SSH and Git Access]]
-    - [[#Step 3 — Restore Certificates and Keychain Material|Step 3 — Restore Certificates and Keychain Material]]
-    - [[#Step 4 — Trust Imported Root and Issuing CA Certificates|Step 4 — Trust Imported Root and Issuing CA Certificates]]
-    - [[#Step 5 — Restore Java Trust Overrides|Step 5 — Restore Java Trust Overrides]]
-    - [[#Step 6 — Restore Shell Environment and CLI Config|Step 6 — Restore Shell Environment and CLI Config]]
-    - [[#Step 7 — Restore Credentials and License Material|Step 7 — Restore Credentials and License Material]]
-    - [[#Step 8 — Eject the DMG and Clean Up Plaintext|Step 8 — Eject the DMG and Clean Up Plaintext]]
+    - [[#Step 2 — Restore Files Swept by the Phase 3B Loose-Secret Sweep|Step 2 — Restore Files Swept by the Phase 3B Loose-Secret Sweep]]
+    - [[#Step 3 — Restore SSH and Git Access|Step 3 — Restore SSH and Git Access]]
+    - [[#Step 4 — Restore Certificates and Keychain Material|Step 4 — Restore Certificates and Keychain Material]]
+    - [[#Step 5 — Trust Imported Root and Issuing CA Certificates|Step 5 — Trust Imported Root and Issuing CA Certificates]]
+    - [[#Step 6 — Restore Java Trust Overrides|Step 6 — Restore Java Trust Overrides]]
+    - [[#Step 7 — Restore Shell Environment and CLI Config|Step 7 — Restore Shell Environment and CLI Config]]
+    - [[#Step 8 — Restore Credentials and License Material|Step 8 — Restore Credentials and License Material]]
+    - [[#Step 9 — Eject the DMG and Clean Up Plaintext|Step 9 — Eject the DMG and Clean Up Plaintext]]
 - [[#Decisions|Decisions]]
 - [[#Troubleshooting|Troubleshooting]]
 
@@ -95,10 +96,10 @@ The runbook is script-free by design. Every restore is a small manual copy, `sec
 
 Every path this runbook reads is defined here, once.
 
-This runbook is manual and does not run a fractogenesis-toolkit entrypoint:
+This runbook is manual apart from one entrypoint:
 
 ```text
-$FRACTOGENESIS_HOME/bin/    # no primary script — this runbook is executed by hand
+$FRACTOGENESIS_HOME/bin/restore-staged-loose.sh   # entrypoint — Step 2; inverse of bin/stage-loose-secrets.sh
 ```
 
 Input evidence built by earlier phases:
@@ -113,6 +114,7 @@ $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/git/                           # ~/.git
 $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/licenses/                      # license keys, offline activation files
 $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/package-managers/              # npm, cargo, and similar credential stores
 $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/ssh/                           # SSH keys, config, known_hosts
+$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/staged-loose/                  # Phase 3B sweep + MANIFEST.tsv — read by Step 2
 $REIMAGE_ARTIFACT_ROOT/home-files-backup/dotfiles/                      # reviewed shell/CLI config subset
 $REIMAGE_ARTIFACT_ROOT/public-certs/                                    # reviewed non-secret CA and trust reference material
 ```
@@ -139,7 +141,7 @@ The `reimage.env` values this runbook depends on. Values are resolved and writte
 | Variable | Meaning |
 |---|---|
 | `REIMAGE_ARTIFACT_ROOT` | Artifact root for this reimage event; the mounted DMG, the dotfiles bundle, and `public-certs/` all resolve under it. |
-| `JAVA_HOME` | Set explicitly in Step 5 to the JDK installed in Phase 10A before dropping in `jssecacerts`. |
+| `JAVA_HOME` | Set explicitly in Step 6 to the JDK installed in Phase 10A before dropping in `jssecacerts`. |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -161,7 +163,7 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 
 ### Confirm Your Intent
 
-- Are you doing a **full first-time restore** (Steps 1 through 8 in order) or a **targeted rerun** of one area (for example, just re-importing a certificate that was missed)? Both are safe; the difference is whether you also do Step 6's selective shell restore.
+- Are you doing a **full first-time restore** (Steps 1 through 8 in order) or a **targeted rerun** of one area (for example, just re-importing a certificate that was missed)? Both are safe; the difference is whether you also do Step 7's selective shell restore.
 - Which **shell files** are you willing to overwrite versus merge? The default is *merge* — comparing each file in a diff tool before adopting changes. Blanket overwrites are a common way to lose machine-specific tweaks.
 - Which **secret categories** are actually in scope for this restore? If a category is empty on the DMG (say, no Postman exports were taken), skip its step rather than inventing a source.
 
@@ -194,7 +196,47 @@ Every subsequent step reads from `/Volumes/all-secrets-*/`; do not copy the DMG'
 > [!bug] Troubleshooting
 > If `hdiutil attach` reports the image as corrupt, see [[#`hdiutil attach` says the DMG is corrupt|`hdiutil attach` says the DMG is corrupt]].
 
-### Step 2 — Restore SSH and Git Access
+### Step 2 — Restore Files Swept by the Phase 3B Loose-Secret Sweep
+
+Phase 3B **moved** every credential-shaped file out of the plaintext artifact tree into `secrets-encrypted/staged-loose/` so the DMG could encrypt it. Nothing puts those files back automatically. Until this step runs, `home-files-backup/`, `app-settings-backup/`, and `staged-ignored-files/` all have holes in them — and the later phases that read those trees (Step 7 below, `restore-apps.md` in Phase 12, `restore-home.md` in Phase 15) will silently restore an incomplete set.
+
+Run it now, while the DMG from Step 1 is still attached and before anything reads those trees.
+
+**1. Dry run first — nothing is written:**
+
+```bash
+./bin/restore-staged-loose.sh
+```
+
+The script finds the mounted image by looking for `/Volumes/*/staged-loose/MANIFEST.tsv` rather than globbing the DMG's filename, because the volume name comes from `-volname` at build time and need not match. If Step 1 gave you an explicit mount point, pass it:
+
+```bash
+./bin/restore-staged-loose.sh --source "$MNT/staged-loose"
+```
+
+**2. Read the `WOULD` list, then apply:**
+
+```bash
+./bin/restore-staged-loose.sh --apply
+```
+
+Each row is copied back to the artifact-root-relative path recorded in the manifest's source column — so the artifact tree is rehydrated, and the ordinary restore phases then copy from it into `$HOME` exactly as they always would.
+
+**3. Confirm the count:**
+
+```bash
+./bin/restore-staged-loose.sh
+```
+
+A second run should report every row as `EXISTS` and `Would restore: 0`. The script copies rather than moves, so it is safe to repeat.
+
+> [!note]
+> `MISSING` rows are recorded in the manifest but absent from the image. That means the DMG predates the sweep that wrote those rows — check you attached the newest `all-secrets-*.dmg`, not an earlier one.
+
+> [!warning] Pitfall
+> This deliberately puts plaintext credentials back onto the artifact drive. That is required for the restore to be complete, but the drive is no longer clean afterwards. Before the artifact root is retired, handed to anyone, or stored long-term, re-run `./bin/stage-loose-secrets.sh --apply` to sweep them back behind the encryption boundary — or wipe the drive.
+
+### Step 3 — Restore SSH and Git Access
 
 SSH first because everything else that talks to GitHub or an internal Git server needs it.
 
@@ -225,7 +267,7 @@ ssh -T git@github.com || true
 > [!bug] Troubleshooting
 > If SSH prompts for the key passphrase in every new shell, see [[#SSH keeps prompting for a passphrase every session|SSH keeps prompting for a passphrase every session]].
 
-### Step 3 — Restore Certificates and Keychain Material
+### Step 4 — Restore Certificates and Keychain Material
 
 Import certificates from the reviewed manual exports. Do this in Keychain Access rather than by shell copy, so each import goes into the correct keychain and you can inspect the result immediately:
 
@@ -235,9 +277,9 @@ open -a "Keychain Access" /Volumes/all-secrets-*/certs/keychain-manual-exports/
 
 For each `.cer` or `.p12` file, drag it into the target keychain (usually `login`) and enter the password if prompted. Reference the reviewed non-secret material under `$REIMAGE_ARTIFACT_ROOT/public-certs/` if you need to double-check which certs are which.
 
-### Step 4 — Trust Imported Root and Issuing CA Certificates
+### Step 5 — Trust Imported Root and Issuing CA Certificates
 
-`jssecacerts` in the next step only covers JVM tools. Non-Java tools (curl, git, browsers) rely on the macOS system and login keychain trust settings instead, so any internal root or issuing CA cert imported in Step 3 still needs its trust set explicitly.
+`jssecacerts` in the next step only covers JVM tools. Non-Java tools (curl, git, browsers) rely on the macOS system and login keychain trust settings instead, so any internal root or issuing CA cert imported in Step 4 still needs its trust set explicitly.
 
 Open Keychain Access and adjust trust in the GUI:
 
@@ -260,9 +302,9 @@ security add-trusted-cert -d -r trustRoot -k "$HOME/Library/Keychains/login.keyc
 > Only mark a certificate as **Always Trust** if it is the company's actual internal root or issuing CA. Doing this for an arbitrary or unverified certificate opens the machine to trust attacks. If in doubt, leave the certificate's trust at "Use System Defaults" and revisit.
 
 > [!bug] Troubleshooting
-> If `curl` still fails against an internal endpoint after the trust change, see [[#`curl` still fails against internal endpoints after Step 4|`curl` still fails against internal endpoints after Step 4]].
+> If `curl` still fails against an internal endpoint after the trust change, see [[#`curl` still fails against internal endpoints after Step 5|`curl` still fails against internal endpoints after Step 5]].
 
-### Step 5 — Restore Java Trust Overrides
+### Step 6 — Restore Java Trust Overrides
 
 Only restore `jssecacerts` after confirming the target JDK is the one installed in Phase 10A — the file lives inside a specific JDK's `lib/security/` directory and does nothing if it lands next to a different JDK.
 
@@ -281,7 +323,7 @@ cp /Volumes/all-secrets-*/certs/java-security/jssecacerts "$JAVA_HOME/lib/securi
 
 Validate an internal TLS use case afterward — the simplest smoke test is a `curl` or `gradle` call against an internal endpoint that requires the corporate root.
 
-### Step 6 — Restore Shell Environment and CLI Config
+### Step 7 — Restore Shell Environment and CLI Config
 
 Do not blindly overwrite fresh shell files. Diff first, adopt selectively.
 
@@ -300,7 +342,7 @@ Common selective restores:
 .zprofile
 .bash_profile
 .bashrc
-.gitconfig                # already restored in Step 2; skip if unchanged
+.gitconfig                # already restored in Step 3; skip if unchanged
 .shell_common.sh
 .shell_local.sh
 .config/
@@ -311,7 +353,7 @@ Common selective restores:
 
 Prefer selective merge over blind copy for machine-specific files — the `.zprofile` on this Mac already has the Homebrew and `nvm` bootstrap added in Phase 10A, and overwriting it would remove those.
 
-### Step 7 — Restore Credentials and License Material
+### Step 8 — Restore Credentials and License Material
 
 Credential-bearing material stays inside the DMG until the moment it is needed. Restore only through supported flows:
 
@@ -333,7 +375,7 @@ For each application license or activation file:
 > [!warning] Pitfall
 > Screenshots or PDFs of subscription pages that contain private identifiers still count as secret material. They belong under `secrets-encrypted/licenses/`, not under `public-certs/` or a general notes folder.
 
-### Step 8 — Eject the DMG and Clean Up Plaintext
+### Step 9 — Eject the DMG and Clean Up Plaintext
 
 Eject the DMG once every restore that reads from it is done:
 
@@ -365,7 +407,7 @@ The commands do X; these judgment calls stay with you.
 
 | Decision | Why it stays with you |
 |---|---|
-| Whether a certificate imported in Step 3 should be marked Always Trust. | Requires knowing whether it is a genuine internal root/issuing CA; incorrect trust weakens the whole TLS story. |
+| Whether a certificate imported in Step 4 should be marked Always Trust. | Requires knowing whether it is a genuine internal root/issuing CA; incorrect trust weakens the whole TLS story. |
 | Whether the SSH keys on the DMG are the current identity or a rotated-out prior identity. | Depends on rotation history that the DMG does not carry. If unsure, generate a new key and register it upstream rather than restoring an old one. |
 | Which lines of a captured `.zshrc` or `.zprofile` should be adopted verbatim versus merged with the fresh file. | The fresh file already has Phase 10A's Homebrew and `nvm` bootstrap; the captured file may have machine-specific tweaks that no longer apply. |
 | Whether an activation file should be reused, or the vendor's normal sign-in and reactivation flow used instead. | Some vendors invalidate copied activation files on new hardware; only you know per-app policy. |
@@ -390,7 +432,7 @@ hdiutil verify "$DMG"
 
 If verification fails, fall back to the previous timestamped `all-secrets-*.dmg` in the same directory. If both fail, rebuild the image with `create-secrets-dmg.md` on the source machine — this runbook does not repair DMGs. Attach the working DMG the same way, confirm the mount, then carry on.
 
-[[#Step 2 — Restore SSH and Git Access|⮕ Continue to Step 2 — Restore SSH and Git Access]]
+[[#Step 3 — Restore SSH and Git Access|⮕ Continue to Step 3 — Restore SSH and Git Access]]
 
 ### SSH keeps prompting for a passphrase every session
 
@@ -402,13 +444,13 @@ ssh-add --apple-use-keychain ~/.ssh/id_ed25519
 
 For persistence, add an `AddKeysToAgent` directive to `~/.ssh/config`; that is a shell config change, not an SSH restore fix.
 
-[[#Step 3 — Restore Certificates and Keychain Material|⮕ Continue to Step 3 — Restore Certificates and Keychain Material]]
+[[#Step 4 — Restore Certificates and Keychain Material|⮕ Continue to Step 4 — Restore Certificates and Keychain Material]]
 
-### `curl` still fails against internal endpoints after Step 4
+### `curl` still fails against internal endpoints after Step 5
 
 The certificate was imported but Always Trust was set on the *end-entity* certificate rather than the root or issuing CA. Only root and issuing CAs earn Always Trust; leaf certs should stay at "Use System Defaults" and rely on the chain. Reopen the certificate in Keychain Access, reset the leaf to "Use System Defaults", and set Always Trust on the internal root or issuing CA instead.
 
-[[#Step 5 — Restore Java Trust Overrides|⮕ Continue to Step 5 — Restore Java Trust Overrides]]
+[[#Step 6 — Restore Java Trust Overrides|⮕ Continue to Step 6 — Restore Java Trust Overrides]]
 
 ---
 

@@ -25,9 +25,10 @@ Consume the pre-image repository audit produced by Phase 2A to re-clone the trac
     - [[#Step 2 — Review the Emitted Clone Commands|Step 2 — Review the Emitted Clone Commands]]
     - [[#Step 3 — Execute the Clone Commands|Step 3 — Execute the Clone Commands]]
     - [[#Step 4 — Restore Staged Ignored Files|Step 4 — Restore Staged Ignored Files]]
-    - [[#Step 5 — Reconcile Rescue Branches|Step 5 — Reconcile Rescue Branches]]
-    - [[#Step 6 — Reconcile Stashes and Tracked Changes|Step 6 — Reconcile Stashes and Tracked Changes]]
-    - [[#Step 7 — Rerun the Status Report and Close the Exit Criteria|Step 7 — Rerun the Status Report and Close the Exit Criteria]]
+    - [[#Step 5 — Restore Per-Repo Gitignored Secrets from the DMG|Step 5 — Restore Per-Repo Gitignored Secrets from the DMG]]
+    - [[#Step 6 — Reconcile Rescue Branches|Step 6 — Reconcile Rescue Branches]]
+    - [[#Step 7 — Reconcile Stashes and Tracked Changes|Step 7 — Reconcile Stashes and Tracked Changes]]
+    - [[#Step 8 — Rerun the Status Report and Close the Exit Criteria|Step 8 — Rerun the Status Report and Close the Exit Criteria]]
 - [[#Decisions|Decisions]]
 - [[#Troubleshooting|Troubleshooting]]
 - [[#Supplemental Reference|Supplemental Reference]]
@@ -296,12 +297,60 @@ bash "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/$LATEST_RUN/rsync-ignored-files.
 ```
 
 > [!note]
-> Kept ignored files that were routed to `secrets-encrypted/repos-gitignored/` by Phase 2A are *not* under `staged-ignored-files/live/` — they come back with the DMG mount in Phase 10B ([[restore-access|restore-access.md]]) and are outside the scope of this runbook.
+> Kept ignored files that were routed to `secrets-encrypted/repos-gitignored/` by Phase 2A are *not* under `staged-ignored-files/live/` — they are inside the encrypted DMG and are restored by Step 5 below, which needs the image attached.
 
 > [!bug] Troubleshooting
 > If the interactive run reports a repo applied but the files are not in the working tree, see [[#`--apply-ignored-files` says "yes" but no files appear in the working tree|`--apply-ignored-files` says "yes" but no files appear in the working tree]].
 
-### Step 5 — Reconcile Rescue Branches
+### Step 5 — Restore Per-Repo Gitignored Secrets from the DMG
+
+Phase 2A routed secret-shaped gitignored files — `.env`, `secrets/`, `gradle.properties` with real passwords — to `secrets-encrypted/repos-gitignored/<label>/` rather than to `staged-ignored-files/live/`, so the Phase 3C DMG would encrypt them. Step 4 does not touch those: they are inside the image, and until this step runs, every cloned repo is missing exactly the files it cannot start without.
+
+Step 1 emitted `rsync-repos-gitignored.sh` alongside the other command files. It carries one guarded block per repo; blocks for repos the image does not carry skip themselves, so it is safe to run whole.
+
+**1. Attach the secrets DMG** if it is not still mounted from Phase 10B. Capture the real mount point rather than globbing the filename — the volume name comes from `-volname` at build time:
+
+```bash
+DMG="$(ls -1 "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/"all-secrets-*.dmg | sort | tail -1)"
+MNT="$(hdiutil attach "$DMG" | awk -F'\t' '/\/Volumes\//{print $NF}' | tail -1)"
+echo "$MNT"
+```
+
+**2. Read the emitted commands before running them:**
+
+```bash
+cat "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/$LATEST_RUN/rsync-repos-gitignored.sh"
+```
+
+**3. Run it.** It locates the image itself by looking for `/Volumes/*/repos-gitignored`; set `DMG_MOUNT` explicitly if more than one image is attached:
+
+```bash
+bash "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/$LATEST_RUN/rsync-repos-gitignored.sh"
+```
+
+**4. Detach the image as soon as the copy finishes** — these are live credentials on a mounted volume:
+
+```bash
+hdiutil detach "$MNT"
+```
+
+**5. Trust any restored `.envrc`.** `direnv` blocks an `.envrc` it has not been told to trust, and does so silently as far as the shell is concerned:
+
+```bash
+cd "$GIT_WORK_REPO_ROOT/<repo>" && direnv allow
+```
+
+> [!warning] Pitfall
+> The bundle label is `basename` of the repo path. Two repos sharing a basename across the work and personal roots collapse to one bundle, and the emitted script would copy it into both — potentially putting work credentials into a repo you push publicly. Check before running:
+>
+> ```bash
+> cut -f1 "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/$LATEST_RUN/raw/repos-input.tsv" \
+>   | xargs -n1 basename | sort | uniq -d
+> ```
+>
+> Anything printed needs its two blocks reconciled by hand before you run the script.
+
+### Step 6 — Reconcile Rescue Branches
 
 For each repo with `carry-forward rows > 0` in the status report, confirm the pre-image rescue branch made it onto the remote before reimage:
 
@@ -331,7 +380,7 @@ For each rescue branch that shows up, choose one:
 > [!bug] Troubleshooting
 > `no rescue branches found on remote` for a repo whose pre-image row shows carry-forward > 0 means Phase 2A's push step was skipped or failed for that repo. This is a real gap. Reconstruct from local backups if any exist; otherwise the carry-forward material is lost, and the row must be closed as "intentionally discarded" in the exit criteria.
 
-### Step 6 — Reconcile Stashes and Tracked Changes
+### Step 7 — Reconcile Stashes and Tracked Changes
 
 Cross-check `raw/stashes-input.tsv` and `raw/tracked-changes-input.tsv` against the current state of each cloned repo. The pre-image push of a rescue branch typically covered these too, so they usually clear during the rescue-branch reconciliation. Anything still outstanding here is either:
 
@@ -340,7 +389,7 @@ Cross-check `raw/stashes-input.tsv` and `raw/tracked-changes-input.tsv` against 
 
 Note the intentional-discard cases in the restore notes.
 
-### Step 7 — Rerun the Status Report and Close the Exit Criteria
+### Step 8 — Rerun the Status Report and Close the Exit Criteria
 
 Run the script one more time to write a fresh bundle that reflects the post-clone reality:
 
@@ -408,7 +457,7 @@ The pre-image inventory recorded an HTTPS URL, so the script did not rewrite it 
 git remote set-url origin "git@${GIT_PERSONAL_GITHUB_HOST}:<personal-username>/<repo>.git"
 ```
 
-[[#Step 7 — Rerun the Status Report and Close the Exit Criteria|⮕ Continue to Step 7 — Rerun the Status Report and Close the Exit Criteria]]
+[[#Step 8 — Rerun the Status Report and Close the Exit Criteria|⮕ Continue to Step 8 — Rerun the Status Report and Close the Exit Criteria]]
 
 ### `--apply-ignored-files` says "yes" but no files appear in the working tree
 
