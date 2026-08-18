@@ -149,7 +149,7 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 ### Confirm Your Intent
 
 - Are you doing a **greenfield** restore (all steps in order) or a **targeted rerun** of one step (e.g. installing an additional platform CLI that Phase 2 didn't capture)? Both are safe; the difference is whether you also do Step 9's comparison at the end.
-- Which **Java baseline** does the machine need? The default here is JDK 17; if a specific project requires 8 or 11, install that in addition — do not replace the baseline.
+- Which **Java baseline** does the machine need? The default here is JDK 21; if a specific project requires 8, 11, or 17, install that in addition — do not replace the baseline.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -291,23 +291,23 @@ Install the base developer runtimes and build tools:
 
 ```bash
 brew install git
-brew install openjdk@17
+brew install openjdk@21
 brew install gradle
 brew install maven
 brew install groovy
 ```
 
-`openjdk@17` is **keg-only**. Homebrew installs it under its own prefix and deliberately does not symlink it into `/Library/Java/JavaVirtualMachines`, which is the only place macOS's Java lookup looks — so the install succeeds and the JDK is still invisible to `java` and `/usr/libexec/java_home`. Create the link Homebrew's caveat text describes (Apple silicon path shown; on an Intel Mac substitute `/usr/local/opt/openjdk@17/libexec/openjdk.jdk`):
+`openjdk@21` is **keg-only**. Homebrew installs it under its own prefix and deliberately does not symlink it into `/Library/Java/JavaVirtualMachines`, which is the only place macOS's Java lookup looks — so the install succeeds and the JDK is still invisible to `java` and `/usr/libexec/java_home`. Create the link Homebrew's caveat text describes (Apple silicon path shown; on an Intel Mac substitute `/usr/local/opt/openjdk@21/libexec/openjdk.jdk`):
 
 ```bash
-sudo ln -sfn /opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk-17.jdk
-/usr/libexec/java_home -v 17
+sudo ln -sfn /opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk-21.jdk
+/usr/libexec/java_home -v 21
 ```
 
-`/usr/libexec/java_home -v 17` must print a path and exit `0`. Do not move on until it does.
+`/usr/libexec/java_home -v 21` must print a path and exit `0`. Do not move on until it does.
 
 > [!warning] Pitfall
-> Skipping the symlink does not look like a failure at this step. `brew install openjdk@17` reports success, and the caveat that tells you to link it scrolls past with the rest of the install output. What you actually get is `java -version` reporting `Unable to locate a Java Runtime` and `/usr/libexec/java_home -v 17` exiting non-zero — and the real damage lands a phase later. [[restore-access|restore-access.md]] Step 6 runs `export JAVA_HOME="$(/usr/libexec/java_home -v 17)"`; command substitution swallows the non-zero exit, so `JAVA_HOME` is silently set to the empty string. The `cp` on the next line then writes `jssecacerts` to `/lib/security/jssecacerts` — an absolute path that is not the JDK, and not even a directory that exists — and the internal-TLS smoke test afterward fails for a reason that has nothing to do with the certificate you just restored. Verify `java_home` here, where it is one command, rather than there, where it is a red herring.
+> Skipping the symlink does not look like a failure at this step. `brew install openjdk@21` reports success, and the caveat that tells you to link it scrolls past with the rest of the install output. What you actually get is `java -version` reporting `Unable to locate a Java Runtime` and `/usr/libexec/java_home -v 21` exiting non-zero — and the real damage lands a phase later. [[restore-access|restore-access.md]] Step 6 runs `export JAVA_HOME="$(/usr/libexec/java_home -v 21)"`; command substitution swallows the non-zero exit, so `JAVA_HOME` is silently set to the empty string. The `cp` on the next line then writes `jssecacerts` to `/lib/security/jssecacerts` — an absolute path that is not the JDK, and not even a directory that exists — and the internal-TLS smoke test afterward fails for a reason that has nothing to do with the certificate you just restored. Verify `java_home` here, where it is one command, rather than there, where it is a red herring.
 
 Confirm the toolchain resolves:
 
@@ -326,12 +326,13 @@ If multiple JDKs are needed later, keep the switch helpers explicit rather than 
 alias jdk8='export JAVA_HOME=$(/usr/libexec/java_home -v 1.8)'
 alias jdk11='export JAVA_HOME=$(/usr/libexec/java_home -v 11)'
 alias jdk17='export JAVA_HOME=$(/usr/libexec/java_home -v 17)'
+alias jdk21='export JAVA_HOME=$(/usr/libexec/java_home -v 21)'
 ```
 
-JDK 17 is the normal baseline unless a project-specific requirement says otherwise.
+JDK 21 is the normal baseline unless a project-specific requirement says otherwise.
 
 > [!bug] Troubleshooting
-> If `java -version` reports something other than the JDK you just installed, see [[#`java -version` prints a version different from `openjdk@17`|`java -version` prints a version different from `openjdk@17`]].
+> If `java -version` reports something other than the JDK you just installed, see [[#`java -version` prints a version different from `openjdk@21`|`java -version` prints a version different from `openjdk@21`]].
 
 > [!warning] Pitfall
 > Do not `brew install node` here — see the next step for why. Installing both `brew`'s `node` and `nvm`'s `node` creates a PATH collision where it is unclear which binary actually runs.
@@ -445,8 +446,8 @@ Confirm the runtime layer meets its exit criteria before starting `restore-acces
 | Xcode CLT | `xcode-select -p` resolves to a valid path. |
 | Homebrew | `brew doctor` is acceptable for continuing setup (no blocking errors). |
 | direnv | `direnv` is installed and hooked into zsh, `.envrc` is allowed, and `FRACTOGENESIS_HOME` populates on `cd` into the repo. |
-| Java | JDK 17 baseline is present unless a different project baseline is required. |
-| Java lookup | `/usr/libexec/java_home -v 17` prints a path and exits `0`, so `JAVA_HOME` resolves for the Phase 10B trust-override copy. |
+| Java | JDK 21 baseline is present unless a different project baseline is required. |
+| Java lookup | `/usr/libexec/java_home -v 21` prints a path and exits `0`, so `JAVA_HOME` resolves for the Phase 10B trust-override copy. |
 | Build tools | Gradle and Maven run. |
 | Node tooling | `nvm`, `node`, and `npm` run. |
 | Platform CLIs | Cloud Foundry CLI, `fly`, `jq`, `yq`, and the other utilities from Step 8 run. |
@@ -465,7 +466,7 @@ The installers do X; these judgment calls stay with you.
 | Decision | Why it stays with you |
 |---|---|
 | Whether to run IT's official workstation-setup script alongside this runbook. | Only you know whether IT's script overlaps or conflicts with the tools installed here. |
-| Which non-baseline JDK versions (8, 11, 21) to install in addition to JDK 17. | Depends on which projects you actively work on; the runbook cannot infer that. |
+| Which non-baseline JDK versions (8, 11, 17) to install in addition to JDK 21. | Depends on which projects you actively work on; the runbook cannot infer that. |
 | Whether a captured `Brewfile` from the pre-image is still relevant. | Some entries may now be IT-managed or discontinued. Reviewing before `brew bundle` is a judgment call. |
 | Whether a version drift versus the pre-image inventory is an approved-newer choice or an accidental regression. | Requires context on why the pre-image had that version. |
 
@@ -492,16 +493,16 @@ Rerun `brew doctor` afterward and confirm the stale-prefix warning is gone befor
 
 [[#Step 5 — Install direnv and Restore the Repo Environment Hook|⮕ Continue to Step 5 — Install direnv and Restore the Repo Environment Hook]]
 
-### `java -version` prints a version different from `openjdk@17`
+### `java -version` prints a version different from `openjdk@21`
 
 `/usr/libexec/java_home -V` lists every installed JDK; the default is the first one. Set `JAVA_HOME` explicitly for the current session:
 
 ```bash
-export JAVA_HOME=$(/usr/libexec/java_home -v 17)
+export JAVA_HOME=$(/usr/libexec/java_home -v 21)
 java -version
 ```
 
-Persist that export in `~/.zprofile` only if 17 is your intended default.
+Persist that export in `~/.zprofile` only if 21 is your intended default.
 
 [[#Step 7 — Install and Manage Node Versions|⮕ Continue to Step 7 — Install and Manage Node Versions]]
 

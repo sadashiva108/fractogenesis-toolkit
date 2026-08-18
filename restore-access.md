@@ -156,7 +156,7 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 ### Prerequisites
 
 - Your shell is at the repository root — `cd "$FRACTOGENESIS_HOME"` once for the session. Per the guide's [[reimaging-guide#Core Assumptions|Core Assumptions]], the commands below assume this and don't repeat it.
-- Phase 10A (`restore-runtime.md`) is complete: JDK 17 (or the intended baseline) is installed and `java -version` prints it.
+- Phase 10A (`restore-runtime.md`) is complete: JDK 21 (or the intended baseline) is installed and `java -version` prints it.
 - The external artifact volume is mounted and `reimage.env` resolves. `ls "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted"` should list at least one `all-secrets-*.dmg`.
 - You have the DMG password from your password manager or wherever it was stored in Phase 3C. Do not proceed without it.
 
@@ -339,13 +339,13 @@ Only restore `jssecacerts` after confirming the target JDK is the one installed 
 Pin `JAVA_HOME` explicitly, and stop if it does not resolve:
 
 ```bash
-JAVA_HOME="$(/usr/libexec/java_home -v 17 2>/dev/null)"
+JAVA_HOME="$(/usr/libexec/java_home -v 21 2>/dev/null)"
 if [ -n "$JAVA_HOME" ] && [ -d "$JAVA_HOME/lib/security" ]; then
   export JAVA_HOME
   printf 'JAVA_HOME=%s\n' "$JAVA_HOME"
   ls -la "$JAVA_HOME/lib/security"
 else
-  printf 'JDK 17 did not resolve (JAVA_HOME=%s). Stop here.\n' "${JAVA_HOME:-<empty>}" >&2
+  printf 'JDK 21 did not resolve (JAVA_HOME=%s). Stop here.\n' "${JAVA_HOME:-<empty>}" >&2
   printf 'Go back to Phase 10A (restore-runtime.md) and install/link the JDK before continuing.\n' >&2
 fi
 ```
@@ -364,13 +364,13 @@ fi
 Depending on how the JDK was installed, `$JAVA_HOME` may be root-owned — if the `cp` reports "Permission denied", rerun that one line with `sudo` and then confirm the file is readable by all (`chmod 644`).
 
 > [!warning] Pitfall
-> Do not run `export JAVA_HOME="$(/usr/libexec/java_home -v 17)"` unguarded. If JDK 17 is missing, `java_home` prints its error to stderr and exits non-zero, `export` still succeeds, and `JAVA_HOME` ends up **empty**. The next `cp` then expands to the absolute path `/lib/security/jssecacerts`, which is not a JDK — it either fails with "No such file or directory" or, under `sudo`, writes a stray trust store at the filesystem root that no JVM ever reads. You would see a clean-looking command and no working Java trust.
+> Do not run `export JAVA_HOME="$(/usr/libexec/java_home -v 21)"` unguarded. If JDK 21 is missing, `java_home` prints its error to stderr and exits non-zero, `export` still succeeds, and `JAVA_HOME` ends up **empty**. The next `cp` then expands to the absolute path `/lib/security/jssecacerts`, which is not a JDK — it either fails with "No such file or directory" or, under `sudo`, writes a stray trust store at the filesystem root that no JVM ever reads. You would see a clean-looking command and no working Java trust.
 
 > [!note]
-> Homebrew's `openjdk@17` is keg-only, so `/usr/libexec/java_home` will not see it until it is linked into the system JDK directory:
+> Homebrew's `openjdk@21` is keg-only, so `/usr/libexec/java_home` will not see it until it is linked into the system JDK directory:
 >
 > ```bash
-> sudo ln -sfn "$(brew --prefix openjdk@17)/libexec/openjdk.jdk" /Library/Java/JavaVirtualMachines/openjdk-17.jdk
+> sudo ln -sfn "$(brew --prefix openjdk@21)/libexec/openjdk.jdk" /Library/Java/JavaVirtualMachines/openjdk-21.jdk
 > /usr/libexec/java_home -V
 > ```
 

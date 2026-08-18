@@ -504,7 +504,7 @@ For Gradle projects, both `Project SDK` and `Gradle JVM` must be set to the inte
 If internal Gradle or Maven downloads still fail after the JDK is set correctly, also confirm the Java trust override (`jssecacerts`) was restored in Phase 10B:
 
 ```bash
-/usr/libexec/java_home -v 17
+/usr/libexec/java_home -v 21
 ls -la "$JAVA_HOME/lib/security/jssecacerts"
 ```
 
