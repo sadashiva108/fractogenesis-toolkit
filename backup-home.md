@@ -323,10 +323,18 @@ Review these lines in the output:
 A compressed archive is opaque to every filename sweep in this workflow, so a credential sealed inside one is copied in the clear and passes Phase 3B without comment. Run this before the copy, while the decision is still cheap:
 
 ```bash
-.internal/scan-archive-contents.sh --targets --report "$REIMAGE_WORKSPACE_ROOT/archive-content-scan.md"
+.internal/scan-archive-contents.sh --context pre-image-backup-home
 ```
 
-`--targets` derives its roots from `external-targets.conf.sh` and prunes with the directory-shaped entries in `external-excludes.conf.sh`, so it sees exactly what would be copied. Use `--onedrive` for the same question about corporate cloud — that leg also applies `onedrive-extra-excludes.conf.sh`, so it reports a narrower set. Both are read-only and exit 1 when anything is found, which is informational rather than a failure.
+The report lands under `loose-secrets-reports/content-scans/runs/<context>-<stamp>/`, beside the Phase 3B sweep's own reports, with a `MANIFEST.md` row and a `latest-run.txt` pointer. Give each run a sub-label so same-day scans stay distinguishable, the same way the size audit and the sweep do. `--dest` moves the report root, `--report FILE` writes one file to an explicit path without a manifest row, and `--no-report` prints to the terminal only.
+
+With no leg flag it scans **both legs**, the same convention as `bin/backup-home.sh` — `--external-only` and `--onedrive-only` narrow it to one, and passing both is an error rather than a merged scan.
+
+Each leg is a separate pass with its own report and its own `MANIFEST.md` row, because they answer different questions. The external leg reads `external-targets.conf.sh` and prunes with the directory-shaped entries in `external-excludes.conf.sh`. The OneDrive leg reads `onedrive-targets.conf.sh` and prunes with `external-excludes.conf.sh` **and** `onedrive-extra-excludes.conf.sh`, so it reports a narrower set — an archive under a folder kept off corporate cloud, such as `Personal/`, appears in the external pass and correctly not in the OneDrive one. Merging them would mean nothing, since the prune sets differ.
+
+The distinction matters because the two outcomes are not equally reversible. An archive copied to the artifact drive can be deleted; one uploaded to corporate cloud cannot be recalled by a local delete. Treat a finding on the OneDrive leg as the stricter of the two.
+
+Every mode is read-only and exits 1 when anything is found, which is informational rather than a failure.
 
 Resolve a finding one of three ways: leave it as-is, add the filename to `ARCHIVE_SKIP` in `archive-policy.conf.sh`, or give the archive a `secrets-targets.conf.sh` row so it is encrypted into the DMG instead of copied in the clear. Archives already named in `ARCHIVE_SKIP` are still scanned and reported, marked as not-copied.
 
@@ -396,10 +404,10 @@ find "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted" -maxdepth 2 | sort
 Re-run the archive scan against the artifact root, this time to confirm what actually landed rather than to decide:
 
 ```bash
-.internal/scan-archive-contents.sh
+.internal/scan-archive-contents.sh --root "$REIMAGE_ARTIFACT_ROOT" --context pre-image-post-backup
 ```
 
-With no mode flag it defaults to `$REIMAGE_ARTIFACT_ROOT`. An archive you added to `ARCHIVE_SKIP` should be absent from the results entirely; one you chose to keep should appear with the same members it had at the source.
+`--root` scans a directory directly, ignoring the target lists and the both-legs default. An archive you added to `ARCHIVE_SKIP` should be absent from the results entirely; one you chose to keep should appear with the same members it had at the source.
 
 > [!warning] Pitfall
 > Finding a credential-bearing archive *here* is worse than finding it before the copy. The plaintext is now on the drive, and if the run included the OneDrive leg it may already be uploading — a local delete does not recall it. That is why the scan step comes before the copy, not after.

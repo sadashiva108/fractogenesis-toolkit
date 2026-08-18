@@ -20,18 +20,30 @@ into a report file.
 Read-only: nothing is copied, moved, rewritten, or deleted.
 
 Usage:
-  .internal/scan-postman-collections.py [--targets | --onedrive] [--root PATH]...
-                                        [--report FILE] [--all]
+  .internal/scan-postman-collections.py [--external-only | --onedrive-only]
+                                        [--root PATH]... [--context LABEL]
+                                        [--dest DIR] [--all]
 
 Options:
-  --targets       Scan the backup-home source targets: every source in
-                  EXTERNAL_TARGETS, with the directory-shaped EXTERNAL_EXCLUDES
-                  pruned. Covers what would actually be copied.
-  --onedrive      Scan the OneDrive leg: ONEDRIVE_TARGETS sources, pruned by
-                  EXTERNAL_EXCLUDES and ONEDRIVE_EXTRA_EXCLUDES.
-  --root PATH     Scan this directory, ignoring the target lists. Repeatable.
-                  With no mode flag, defaults to REIMAGE_ARTIFACT_ROOT.
-  --report FILE   Also write a Markdown report.
+  --external-only Scan only the external drive leg: every source in
+                  EXTERNAL_TARGETS, with the directory-shaped
+                  EXTERNAL_EXCLUDES pruned.
+  --onedrive-only Scan only the OneDrive leg: ONEDRIVE_TARGETS sources, pruned
+                  by EXTERNAL_EXCLUDES and ONEDRIVE_EXTRA_EXCLUDES.
+
+                  With neither flag, BOTH legs run -- the same convention as
+                  bin/backup-home.sh, whose modes these mirror. Each leg gets
+                  its own report and its own MANIFEST row.
+  --root PATH     Scan this directory, ignoring the target lists entirely.
+                  Repeatable, and it suppresses the both-legs default. Use it
+                  to verify the artifact root after a run.
+  --context LABEL Sub-label for this run's directory under the report root.
+                  Default: pre-image.
+  --dest DIR      Report root. Default:
+                  $REIMAGE_ARTIFACT_ROOT/loose-secrets-reports/content-scans
+  --report FILE   Write to this exact path instead of a run directory. For a
+                  one-off; no MANIFEST row is written.
+  --no-report     Terminal only; write nothing.
   --all           List every file scanned, not only those with findings.
 
 Exit codes:
@@ -41,6 +53,7 @@ Exit codes:
 """
 
 import argparse
+import datetime
 import json
 import os
 import re
@@ -48,6 +61,16 @@ import subprocess
 import sys
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+def die(message):
+    """Usage and configuration errors exit 2, per the documented codes.
+
+    sys.exit("text") exits 1, which this script reserves for "findings were
+    found" -- so a config mistake would have been indistinguishable from a hit.
+    """
+    print(message, file=sys.stderr)
+    raise SystemExit(2)
 
 POSTMAN_SUFFIXES = (
     ".postman_collection.json",
@@ -173,7 +196,7 @@ def config_roots(mode):
     """Ask the shared config for target sources and directory prunes."""
     loader = os.path.join(REPO_ROOT, ".internal", "load-reimage-config.sh")
     if not os.path.exists(loader):
-        sys.exit("ERROR: cannot find .internal/load-reimage-config.sh (run from the repo)")
+        die("ERROR: cannot find .internal/load-reimage-config.sh (run from the repo)")
     tvar = "ONEDRIVE_TARGETS" if mode == "onedrive" else "EXTERNAL_TARGETS"
     extra = ' ${ONEDRIVE_EXTRA_EXCLUDES[@]+"${ONEDRIVE_EXTRA_EXCLUDES[@]}"}' if mode == "onedrive" else ""
     script = (
@@ -184,7 +207,7 @@ def config_roots(mode):
     ) % (loader, tvar, extra)
     out = subprocess.run(["bash", "-c", script], capture_output=True, text=True)
     if out.returncode != 0:
-        sys.exit("ERROR: could not load shared config:\n%s" % out.stderr.strip())
+        die("ERROR: could not load shared config:\n%s" % out.stderr.strip())
     roots, prunes, artifact_root = [], [], ""
     for line in out.stdout.splitlines():
         tag, _, rest = line.partition("\t")
@@ -220,10 +243,13 @@ def collect(roots, prunes):
 
 def main():
     ap = argparse.ArgumentParser(add_help=False)
-    ap.add_argument("--targets", action="store_true")
-    ap.add_argument("--onedrive", action="store_true")
+    ap.add_argument("--external-only", dest="targets", action="store_true")
+    ap.add_argument("--onedrive-only", dest="onedrive", action="store_true")
     ap.add_argument("--root", action="append", default=[])
     ap.add_argument("--report")
+    ap.add_argument("--context", default="pre-image")
+    ap.add_argument("--dest")
+    ap.add_argument("--no-report", dest="no_report", action="store_true")
     ap.add_argument("--all", action="store_true")
     ap.add_argument("-h", "--help", action="store_true")
     args = ap.parse_args()
@@ -232,7 +258,46 @@ def main():
         print(__doc__)
         return 0
     if args.targets and args.onedrive:
-        sys.exit("ERROR: --targets and --onedrive scan different legs; run them separately.")
+        die("ERROR: --external-only and --onedrive-only are alternatives; "
+            "omit both to run both legs.")
+    # A context becomes a directory name, so keep it path-safe.
+    if (not args.context or args.context.startswith(".")
+            or any(c in args.context for c in "/\\ \t") or ".." in args.context):
+        die("ERROR: --context must not be empty or contain slashes, '..', "
+                 "a leading dot, or whitespace: %s" % args.context)
+
+    # No leg flag and no --root means BOTH legs, mirroring bin/backup-home.sh.
+    # Two child invocations sharing one run directory: each leg has its own
+    # roots, prune set and counters, so two clean passes beat one pass juggling
+    # two sets of state.
+    if not args.targets and not args.onedrive and not args.root \
+            and not os.environ.get("_SCAN_RUN_DIR"):
+        shared = ""
+        dest = args.dest or ""
+        if not args.no_report and not args.report:
+            if not dest:
+                ar = os.environ.get("REIMAGE_ARTIFACT_ROOT", "")
+                if not ar:
+                    _, _, ar = config_roots("external")
+                if ar:
+                    dest = os.path.join(ar.rstrip("/"), "loose-secrets-reports", "content-scans")
+            if dest:
+                stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+                shared = os.path.join(dest, "runs", "%s-%s" % (args.context, stamp))
+                os.makedirs(shared, exist_ok=True)
+        child = ["--context", args.context]
+        if dest:
+            child += ["--dest", dest]
+        if args.no_report:
+            child.append("--no-report")
+        if args.all:
+            child.append("--all")
+        env = dict(os.environ, _SCAN_RUN_DIR=shared)
+        rc = 0
+        for flag in ("--external-only", "--onedrive-only"):
+            r = subprocess.run([sys.executable, os.path.abspath(__file__), flag] + child, env=env)
+            rc = max(rc, r.returncode)
+        return rc
 
     prunes, leg = [], ""
     roots = [r.rstrip("/") for r in args.root]
@@ -246,12 +311,12 @@ def main():
         if not ar:
             _, _, ar = config_roots("external")
         if not ar:
-            sys.exit("ERROR: no --targets/--onedrive/--root given and REIMAGE_ARTIFACT_ROOT is unset.")
+            die("ERROR: no --targets/--onedrive/--root given and REIMAGE_ARTIFACT_ROOT is unset.")
         roots = [ar.rstrip("/")]
 
     roots = [r for r in dict.fromkeys(roots) if os.path.isdir(r)]
     if not roots:
-        sys.exit("ERROR: no scannable directory among the roots given.")
+        die("ERROR: no scannable directory among the roots given.")
 
     files = collect(roots, prunes)
 
@@ -305,6 +370,36 @@ def main():
     if unreadable:
         print("  %d file(s) could not be parsed." % unreadable)
 
+    # Default the report into a run directory beside the Phase 3B sweep's own
+    # reports. Both answer "is credential material sitting in the clear?", so
+    # one artifact folder holds both, and loose-secrets-reports/ already exists.
+    run_dir = ""
+    dest_root = args.dest or ""
+    if not args.no_report and not args.report:
+        if not dest_root:
+            ar = os.environ.get("REIMAGE_ARTIFACT_ROOT", "")
+            if not ar:
+                _, _, ar = config_roots("external")
+            if ar:
+                dest_root = os.path.join(ar.rstrip("/"), "loose-secrets-reports", "content-scans")
+        shared = os.environ.get("_SCAN_RUN_DIR", "")
+        if shared:
+            run_dir = shared
+        elif dest_root:
+            stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+            run_dir = os.path.join(dest_root, "runs", "%s-%s" % (args.context, stamp))
+            os.makedirs(run_dir, exist_ok=True)
+        if run_dir:
+            if not dest_root:
+                dest_root = os.path.dirname(os.path.dirname(run_dir))
+            # One file per leg, so a both-legs run writes two here.
+            name = ("postman-export-scan-onedrive.md" if args.onedrive
+                    else "postman-export-scan-external.md" if args.targets
+                    else "postman-export-scan.md")
+            args.report = os.path.join(run_dir, name)
+        else:
+            print("  !  REIMAGE_ARTIFACT_ROOT unset and no --dest given; no report written.")
+
     if args.report:
         with open(args.report, "w", encoding="utf-8") as fh:
             fh.write("# Postman Export Scan\n\n")
@@ -323,6 +418,27 @@ def main():
             fh.write("- exports that could not be parsed: %d\n" % unreadable)
             fh.write("\n".join(report_blocks) + "\n")
         print("  Report: %s" % args.report)
+
+        # MANIFEST + latest-run pointer, mirroring the sweep's convention. Only
+        # for a run directory: --report is an explicit one-off, not history.
+        if run_dir:
+            manifest = os.path.join(dest_root, "MANIFEST.md")
+            if not os.path.exists(manifest):
+                with open(manifest, "w", encoding="utf-8") as fh:
+                    fh.write("# Content Scan Runs\n\n"
+                             "Scans that read *inside* files rather than matching filenames:\n"
+                             "archives (`scan-archive-contents.sh`) and Postman exports\n"
+                             "(`scan-postman-collections.py`). The filename sweep that produced\n"
+                             "`../open-findings.md` cannot see either.\n\n"
+                             "| Finished | Context | Scan | Leg | Scanned | With findings | Run |\n"
+                             "|---|---|---|---|---:|---:|---|\n")
+            with open(manifest, "a", encoding="utf-8") as fh:
+                fh.write("| %s | %s | postman | %s | %d | %d | `%s` |\n"
+                         % (datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                            args.context, leg or "artifact root", len(files), hits,
+                            os.path.basename(run_dir)))
+            with open(os.path.join(dest_root, "latest-run.txt"), "w", encoding="utf-8") as fh:
+                fh.write(run_dir + "\n")
 
     return 1 if hits else 0
 

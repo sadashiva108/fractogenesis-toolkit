@@ -15,30 +15,41 @@
 #
 # --- BEGIN USAGE ---
 # Usage:
-#   .internal/scan-archive-contents.sh [--targets] [--root PATH]... [--report FILE] [--all]
+#   .internal/scan-archive-contents.sh [--external-only | --onedrive-only]
+#                                      [--root PATH]... [--context LABEL]
+#                                      [--dest DIR] [--all]
 #
 # Options:
-#   --targets       Scan the backup-home SOURCE targets instead of a plain
-#                   directory: every source in EXTERNAL_TARGETS, with the
-#                   directory-shaped EXTERNAL_EXCLUDES pruned, so the scan sees
-#                   what would actually be copied and nothing else.
-#                   ONEDRIVE_TARGETS sources are a subset of EXTERNAL_TARGETS,
-#                   so this finds every archive the OneDrive leg could carry --
-#                   but it does not say which ones. Use --onedrive for that.
+#   --external-only Scan only the external drive leg: every source in
+#                   EXTERNAL_TARGETS, with the directory-shaped
+#                   EXTERNAL_EXCLUDES pruned, so the scan sees what would
+#                   actually be copied and nothing else.
+#   --onedrive-only Scan only the OneDrive leg: the sources in
+#                   ONEDRIVE_TARGETS, pruned by EXTERNAL_EXCLUDES *and*
+#                   ONEDRIVE_EXTRA_EXCLUDES. A hit here is an archive that
+#                   would be pushed to corporate cloud storage, a different
+#                   decision from one that only reaches the artifact drive.
+#
+#                   With neither flag, BOTH legs run -- the same convention as
+#                   bin/backup-home.sh, whose modes these mirror. Each leg gets
+#                   its own report and its own MANIFEST row: the prune sets
+#                   differ, so a merged result would mean nothing.
+#
 #                   Archives already named in ARCHIVE_SKIP are still scanned,
 #                   and marked as not-copied.
-#   --onedrive      Scan the OneDrive leg instead: the sources in
-#                   ONEDRIVE_TARGETS, pruned by EXTERNAL_EXCLUDES *and*
-#                   ONEDRIVE_EXTRA_EXCLUDES. A hit here is an archive that would
-#                   be pushed to corporate cloud storage, which is a different
-#                   decision from one that only reaches the artifact drive.
-#   --root PATH     Directory to scan, ignoring the target lists. Repeatable.
-#                   Point this at the OneDrive sync folder to audit archives
-#                   already sitting there from before this policy existed.
-#                   With neither --targets nor --root, defaults to
-#                   REIMAGE_ARTIFACT_ROOT: use that AFTER backup-home to check
-#                   what landed, and --targets BEFORE it to decide.
-#   --report FILE   Also write a Markdown report to FILE.
+#   --root PATH     Scan this directory, ignoring the target lists entirely.
+#                   Repeatable, and it suppresses the both-legs default. Use it
+#                   to verify the artifact root after a run
+#                   (--root "$REIMAGE_ARTIFACT_ROOT"), or to audit the OneDrive
+#                   sync folder for archives already sitting there.
+#   --context LABEL Sub-label for this run's directory under the report root.
+#                   Default: pre-image. Same convention as the Phase 3B sweep,
+#                   so same-day runs stay distinguishable in MANIFEST.md.
+#   --dest DIR      Report root. Default:
+#                   $REIMAGE_ARTIFACT_ROOT/loose-secrets-reports/content-scans
+#   --report FILE   Write to this exact path instead of a run directory. For a
+#                   one-off; no MANIFEST row is written.
+#   --no-report     Terminal only; write nothing.
 #   --all           List every archive scanned, not only the ones with hits.
 #   -h, --help      Show this message and exit.
 #
@@ -59,14 +70,20 @@ usage() {
 }
 
 ROOTS=(); REPORT=""; SHOW_ALL=false; USE_TARGETS=false; USE_ONEDRIVE=false
+REPORT_CONTEXT="pre-image"; DEST_ROOT=""; NO_REPORT=false
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --targets)  USE_TARGETS=true; shift ;;
-    --onedrive) USE_ONEDRIVE=true; shift ;;
+    --external-only) USE_TARGETS=true; shift ;;
+    --onedrive-only) USE_ONEDRIVE=true; shift ;;
     --root)    [[ -n "${2:-}" ]] || { echo "ERROR: --root requires a value" >&2; exit 2; }
                ROOTS+=( "$2" ); shift 2 ;;
+    --context) [[ -n "${2:-}" ]] || { echo "ERROR: --context requires a value" >&2; exit 2; }
+               REPORT_CONTEXT="$2"; shift 2 ;;
+    --dest)    [[ -n "${2:-}" ]] || { echo "ERROR: --dest requires a value" >&2; exit 2; }
+               DEST_ROOT="$2"; shift 2 ;;
     --report)  [[ -n "${2:-}" ]] || { echo "ERROR: --report requires a value" >&2; exit 2; }
                REPORT="$2"; shift 2 ;;
+    --no-report) NO_REPORT=true; shift ;;
     --all)     SHOW_ALL=true; shift ;;
     -h|--help) usage; exit 0 ;;
     *)         echo "ERROR: unknown option: $1" >&2; usage >&2; exit 2 ;;
@@ -78,9 +95,45 @@ if [[ -f "$REPO_ROOT/.internal/load-reimage-config.sh" ]]; then
   source "$REPO_ROOT/.internal/load-reimage-config.sh" || exit 2
 fi
 
+# A context becomes a directory name, so keep it path-safe. Unlike the size
+# audit this imposes no prefix -- these scans are run at several points, not
+# only side by side with a phase.
+case "$REPORT_CONTEXT" in
+  *[/\\]*|*..*|.*|*[[:space:]]*|"")
+    echo "ERROR: --context must not be empty or contain slashes, '..', a leading dot, or whitespace: $REPORT_CONTEXT" >&2
+    exit 2 ;;
+esac
+
 if $USE_TARGETS && $USE_ONEDRIVE; then
-  echo "ERROR: --targets and --onedrive scan different legs; run them separately." >&2
+  echo "ERROR: --external-only and --onedrive-only are alternatives; omit both to run both legs." >&2
   exit 2
+fi
+
+# No leg flag and no --root means BOTH legs, mirroring bin/backup-home.sh. Run
+# them as two child invocations sharing one run directory rather than
+# restructuring the single-leg scan: each leg has its own roots, its own prune
+# set and its own counters, so two clean passes are more trustworthy than one
+# pass juggling two sets of state.
+if ! $USE_TARGETS && ! $USE_ONEDRIVE && (( ${#ROOTS[@]} == 0 )) && [[ -z "${_SCAN_RUN_DIR:-}" ]]; then
+  SHARED_DIR=""
+  if ! $NO_REPORT && [[ -z "$REPORT" ]]; then
+    if [[ -z "$DEST_ROOT" && -n "${REIMAGE_ARTIFACT_ROOT:-}" ]]; then
+      DEST_ROOT="$REIMAGE_ARTIFACT_ROOT/loose-secrets-reports/content-scans"
+    fi
+    if [[ -n "$DEST_ROOT" ]]; then
+      SHARED_DIR="$DEST_ROOT/runs/${REPORT_CONTEXT}-$(date '+%Y%m%d-%H%M%S')"
+      mkdir -p "$SHARED_DIR" || { echo "ERROR: cannot create $SHARED_DIR" >&2; exit 2; }
+    fi
+  fi
+  child=( --context "$REPORT_CONTEXT" )
+  [[ -n "$DEST_ROOT" ]] && child+=( --dest "$DEST_ROOT" )
+  $NO_REPORT && child+=( --no-report )
+  $SHOW_ALL  && child+=( --all )
+  rc_a=0; rc_b=0
+  _SCAN_RUN_DIR="$SHARED_DIR" bash "${BASH_SOURCE[0]}" --external-only "${child[@]}" || rc_a=$?
+  _SCAN_RUN_DIR="$SHARED_DIR" bash "${BASH_SOURCE[0]}" --onedrive-only "${child[@]}" || rc_b=$?
+  (( rc_b > rc_a )) && rc_a="$rc_b"
+  exit "$rc_a"
 fi
 
 LEG=""
@@ -112,7 +165,7 @@ if (( ${#ROOTS[@]} == 0 )); then
   if [[ -n "${REIMAGE_ARTIFACT_ROOT:-}" ]]; then
     ROOTS=( "$REIMAGE_ARTIFACT_ROOT" )
   else
-    echo "ERROR: no --targets or --root given and REIMAGE_ARTIFACT_ROOT is not set." >&2
+    echo "ERROR: no leg flag or --root given and REIMAGE_ARTIFACT_ROOT is not set." >&2
     exit 2
   fi
 fi
@@ -210,7 +263,7 @@ printf "  ${DIM}%d shape(s) from the shared SECRET_SHAPES definition${RST}\n" "$
 [[ -n "$LEG" ]] && printf "  ${DIM}Leg: %s${RST}\n" "$LEG"
 printf '%s\n' "  ------------------------------------------------"
 
-# Under --targets, prune the same directories backup-home prunes. Without it the
+# Under a leg flag, prune the same directories backup-home prunes. Without it the
 # scan reports archives from trees that can never reach the artifact root:
 # StuffFromOldComputer/ and github-copilot-intellij/ alone accounted for three
 # of the first four findings on this machine.
@@ -274,7 +327,7 @@ done | sort -u > "$LIST"
 
 # Say what was actually scanned. Without this the reader cannot tell whether a
 # quiet result means "nothing found" or "nothing looked at" -- and under
-# --targets the root list comes from config, so it is not visible on the
+# a leg flag the root list comes from config, so it is not visible on the
 # command line either.
 ROOT_LINES=""
 printf "  ${DIM}Scanned %d archive(s) under %d director%s:${RST}\n" \
@@ -310,6 +363,35 @@ else
 fi
 (( UNREADABLE > 0 )) && printf "  ${YEL}%d archive(s) had no reader available and were not scanned.${RST}\n" "$UNREADABLE"
 
+# Resolve where the report goes. Default is a run directory beside the Phase 3B
+# sweep's own reports: both answer "is credential material sitting in the
+# clear?", so keeping them under one artifact folder means one place to look,
+# and loose-secrets-reports/ is already an expected artifact folder.
+RUN_DIR=""
+if ! $NO_REPORT && [[ -z "$REPORT" ]]; then
+  if [[ -z "$DEST_ROOT" ]]; then
+    if [[ -n "${REIMAGE_ARTIFACT_ROOT:-}" ]]; then
+      DEST_ROOT="$REIMAGE_ARTIFACT_ROOT/loose-secrets-reports/content-scans"
+    else
+      printf "  ${YEL}!  REIMAGE_ARTIFACT_ROOT unset and no --dest given; no report written.${RST}\n" >&2
+    fi
+  fi
+  if [[ -n "${_SCAN_RUN_DIR:-}" ]]; then
+    RUN_DIR="$_SCAN_RUN_DIR"
+  elif [[ -n "$DEST_ROOT" ]]; then
+    RUN_DIR="$DEST_ROOT/runs/${REPORT_CONTEXT}-$(date '+%Y%m%d-%H%M%S')"
+    mkdir -p "$RUN_DIR" || { echo "ERROR: cannot create $RUN_DIR" >&2; exit 2; }
+  fi
+  if [[ -n "$RUN_DIR" ]]; then
+    # One file per leg, so a both-legs run writes two into the same directory.
+    case "$LEG" in
+      *ONEDRIVE*) REPORT="$RUN_DIR/archive-content-scan-onedrive.md" ;;
+      *EXTERNAL*) REPORT="$RUN_DIR/archive-content-scan-external.md" ;;
+      *)          REPORT="$RUN_DIR/archive-content-scan.md" ;;
+    esac
+  fi
+fi
+
 if [[ -n "$REPORT" ]]; then
   {
     echo "# Archive Content Scan"
@@ -334,6 +416,31 @@ if [[ -n "$REPORT" ]]; then
     [[ -s "$FOUND" ]] && cat "$FOUND"
   } > "$REPORT"
   printf "  ${DIM}Report: %s${RST}\n" "$REPORT"
+
+  # MANIFEST + latest-run pointer, mirroring the Phase 3B sweep's convention.
+  # Only for a run directory: --report is an explicit one-off and should not
+  # append history.
+  if [[ -n "$RUN_DIR" ]]; then
+    [[ -n "$DEST_ROOT" ]] || DEST_ROOT="$(dirname "$(dirname "$RUN_DIR")")"
+    MANIFEST="$DEST_ROOT/MANIFEST.md"
+    if [[ ! -f "$MANIFEST" ]]; then
+      {
+        echo "# Content Scan Runs"
+        echo ""
+        echo "Scans that read *inside* files rather than matching filenames:"
+        echo "archives (\`scan-archive-contents.sh\`) and Postman exports"
+        echo "(\`scan-postman-collections.py\`). The filename sweep that produced"
+        echo "\`../open-findings.md\` cannot see either."
+        echo ""
+        echo "| Finished | Context | Scan | Leg | Scanned | With findings | Run |"
+        echo "|---|---|---|---|---:|---:|---|"
+      } > "$MANIFEST"
+    fi
+    printf '| %s | %s | archives | %s | %d | %d | `%s` |\n' \
+      "$(date '+%Y-%m-%d %H:%M:%S')" "$REPORT_CONTEXT" "${LEG:-artifact root}" \
+      "$SCANNED" "$HITS" "$(basename "$RUN_DIR")" >> "$MANIFEST"
+    printf '%s\n' "$RUN_DIR" > "$DEST_ROOT/latest-run.txt"
+  fi
 fi
 
 rm -f "$FOUND" "$LIST"
