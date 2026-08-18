@@ -163,6 +163,7 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 - The external artifact volume is mounted and `$REIMAGE_ARTIFACT_ROOT` resolves; `home-files-backup/home/` and `home-files-backup/dotfiles/` are reachable.
 - Phase 10B (`restore-access.md`) has already restored credential-bearing dotfiles (SSH keys, certificates, Java trust). Do not re-copy anything from `dotfiles/` that would conflict with those.
 - Phase 11A (`restore-git.md`) has already written the dual-identity `~/.gitconfig`. Do not restore `home-files-backup/dotfiles/.gitconfig` wholesale on top of it.
+- Terminal can read and write `~/Documents` and `~/Desktop`. On a fresh macOS install, the first time Terminal touches either one macOS raises a Files-and-Folders (TCC) consent dialog. Grant Terminal Full Disk Access up front — **System Settings → Privacy & Security → Full Disk Access** → add / enable Terminal (or iTerm), then quit and reopen it — or accept each prompt as it appears during Step 3. Denying the prompt does not stop the copy: `rsync` keeps going, prints `Operation not permitted` for the paths it was refused, and exits `23` with a partial tree. Re-run any `rsync` that reported `Operation not permitted` after access is granted.
 
 > [!bug] Troubleshooting
 > If `$REIMAGE_ARTIFACT_ROOT` is unset or unreachable, either mount the artifact volume and re-source `reimage.env`, or pass `--artifact-root PATH` explicitly to any helper that supports it.
@@ -249,31 +250,67 @@ open "$NOTE"
 
 ### Step 3 — Restore Selected Home Subfolders
 
-Restore one target at a time. Prefer `rsync -av --dry-run` first for anything larger than a folder full of hand-picked files, then rerun without `--dry-run` once the diff looks right:
+Restore one target at a time. Prefer a `--dry-run` pass first for anything larger than a folder full of hand-picked files, then rerun without `--dry-run` once the diff looks right. Do not reach for `rsync -a` here — the flag set below is deliberate, and the note underneath explains why:
 
 ```bash
 # Example — Documents (only if on the shortlist)
-rsync -av --dry-run "$REIMAGE_ARTIFACT_ROOT/home-files-backup/home/Documents/" "$HOME/Documents/"
-rsync -av "$REIMAGE_ARTIFACT_ROOT/home-files-backup/home/Documents/" "$HOME/Documents/"
+rsync -rltv -E --no-perms --no-owner --no-group --exclude .DS_Store --dry-run \
+  "$REIMAGE_ARTIFACT_ROOT/home-files-backup/home/Documents/" "$HOME/Documents/"
+rsync -rltv -E --no-perms --no-owner --no-group --exclude .DS_Store \
+  "$REIMAGE_ARTIFACT_ROOT/home-files-backup/home/Documents/" "$HOME/Documents/"
 
 # Example — Desktop
-rsync -av "$REIMAGE_ARTIFACT_ROOT/home-files-backup/home/Desktop/" "$HOME/Desktop/"
+rsync -rltv -E --no-perms --no-owner --no-group --exclude .DS_Store \
+  "$REIMAGE_ARTIFACT_ROOT/home-files-backup/home/Desktop/" "$HOME/Desktop/"
 
 # Example — personal scripts
-rsync -av "$REIMAGE_ARTIFACT_ROOT/home-files-backup/home/scripts/" "$HOME/scripts/"
+rsync -rltv -E --no-perms --no-owner --no-group --exclude .DS_Store \
+  "$REIMAGE_ARTIFACT_ROOT/home-files-backup/home/scripts/" "$HOME/scripts/"
 ```
 
 Update the restore note as you go. Any target *not* on the shortlist stays skipped even if it looks harmless.
 
 > [!note]
-> `rsync -av` preserves permissions and timestamps but does not delete unmatched files in the target — if the reimaged `~/Desktop/` already has content, the merged result is the union. Add `--delete` only when you actively want the pre-image tree to overwrite the reimaged tree, which is rare here.
+> None of these `rsync` invocations delete unmatched files in the target — if the reimaged `~/Desktop/` already has content, the merged result is the union. Add `--delete` only when you actively want the pre-image tree to overwrite the reimaged tree, which is rare here.
+
+> [!warning] Pitfall
+> Do not substitute `rsync -av`. `-a` implies `-p -o -g`, so it copies the *source volume's* permission and ownership bits. An artifact drive that has to be readable from more than one machine is usually exFAT, which has no real POSIX modes — the driver synthesises them, and `-a` faithfully reproduces the synthetic result, landing every restored file world-writable `0777` (and owned by whoever mounted the volume). `-a` also does not carry macOS extended attributes or resource forks. `-rltv` copies content, timestamps, and symlinks; `-E` keeps extended attributes and resource forks; `--no-perms --no-owner --no-group` lets your own umask set sane modes on the reimaged Mac.
+
+> [!note]
+> Where Finder-visible metadata matters more than `rsync`'s incremental behaviour — ACLs, Finder tags, colour labels, resource forks on older files — use `ditto` instead for that one target: `ditto "$REIMAGE_ARTIFACT_ROOT/home-files-backup/home/Documents" "$HOME/Documents"`. `ditto` merges into an existing directory and preserves that metadata in one pass, but it has no `--dry-run` and no per-file progress, so preview with `rsync --dry-run` first when the tree is large.
+
+> [!note]
+> `--no-perms` means the executable bit does not come across if the source volume never carried one — exFAT does not. After restoring `home/scripts/`, re-apply it to anything meant to be run directly:
+>
+> ```bash
+> ls -l "$HOME"/scripts/*.sh
+> chmod +x "$HOME"/scripts/*.sh
+> ```
 
 > [!bug] Troubleshooting
 > If files show up in a OneDrive-managed folder with a machine-name suffix, see [[#Conflict copies appeared inside a OneDrive path|Conflict copies appeared inside a OneDrive path]].
 
 ### Step 4 — Merge Dotfiles Selectively
 
-Never overlay `home-files-backup/dotfiles/` onto `$HOME` wholesale. The reimaged system's shell startup files have already been touched by Phase 8, 10A, and 10B, and Git identity plumbing has been written by Phase 11A. For each dotfile you plan to merge, diff first and copy only the specific stanzas that still matter:
+Never overlay `home-files-backup/dotfiles/` onto `$HOME` wholesale. The reimaged system's shell startup files have already been touched by Phase 8, 10A, and 10B, and Git identity plumbing has been written by Phase 11A. For each dotfile you plan to merge, diff first and copy only the specific stanzas that still matter.
+
+Before any diff or merge, snapshot every shell startup file this step can touch. A bad merge here is not a cosmetic problem — a `.zshrc` that references a missing path gives you a login shell that will not start, and the Troubleshooting fix below assumes a pre-merge copy exists. This is the first command of the step:
+
+```bash
+STAMP="$(date +%Y%m%d-%H%M%S)"
+BACKUP="$HOME/.pre-restore-home-$STAMP"
+mkdir -p "$BACKUP"
+for f in .zshrc .zprofile .zshenv .bash_profile .bashrc \
+         .aliases .exports .functions \
+         .shell_common.sh .shell_aliases.sh .shell_local.sh; do
+  [ -f "$HOME/$f" ] && cp -p "$HOME/$f" "$BACKUP/$f"
+done
+ls -la "$BACKUP"
+```
+
+Record `$BACKUP` in the restore note — the Troubleshooting entry below restores from it.
+
+Then diff and merge, one file at a time:
 
 ```bash
 # Example — .zshrc diff and selective merge
@@ -290,7 +327,7 @@ Categories to consider:
 | `.aliases`, `.exports`, `.functions` | Usually safe to copy across if you author them from scratch, but review first. |
 | `.shell_common.sh`, `.shell_aliases.sh`, `.shell_local.sh` | Selective merge; `.shell_local.sh` is the machine-specific layer. |
 | `.gitconfig` | Do NOT restore. Phase 11A owns this. |
-| `dotfiles/config/`, `dotfiles/copilot/`, `dotfiles/kube/`, `dotfiles/azure/`, `dotfiles/cf/`, `dotfiles/fiddler/`, `dotfiles/dotfiles.falkor.d/` | Restore per-subtree with `rsync -av --dry-run` first. Kube contexts and CF targets in particular can drift. |
+| `dotfiles/config/`, `dotfiles/copilot/`, `dotfiles/kube/`, `dotfiles/azure/`, `dotfiles/cf/`, `dotfiles/fiddler/`, `dotfiles/dotfiles.falkor.d/` | Restore per-subtree with the Step 3 flag set (`rsync -rltv -E --no-perms --no-owner --no-group --exclude .DS_Store`) and `--dry-run` first. Kube contexts and CF targets in particular can drift. |
 
 > [!bug] Troubleshooting
 > If a new shell fails to start or floods the terminal with errors after a merge, see [[#Shell startup broke after a dotfile merge|Shell startup broke after a dotfile merge]].
@@ -358,7 +395,13 @@ OneDrive was still syncing when Step 3 ran. Stop, quarantine the conflict copies
 
 ### Shell startup broke after a dotfile merge
 
-A stanza copied from the pre-image `.zshrc` references a path or command that no longer exists on the reimaged system (e.g. `. "$HOME/.nvm/nvm.sh"` when `nvm` is not installed). Revert to the pre-merge `.zshrc` (if you kept a copy), or comment out the offending line and rerun `exec zsh -l`.
+A stanza copied from the pre-image `.zshrc` references a path or command that no longer exists on the reimaged system (e.g. `. "$HOME/.nvm/nvm.sh"` when `nvm` is not installed). Restore the pre-merge copy Step 4 saved under `~/.pre-restore-home-<timestamp>/`, or comment out the offending line, then rerun `exec zsh -l`. If no shell will start at all, open a session that skips startup files first — `zsh -f`, or `bash --noprofile --norc` from Terminal's **Shell → New Command** — and repair from there:
+
+```bash
+ls -d "$HOME"/.pre-restore-home-*
+cp "$HOME"/.pre-restore-home-<timestamp>/.zshrc "$HOME/.zshrc"
+exec zsh -l
+```
 
 [[#Step 4 — Merge Dotfiles Selectively|⮕ Continue to Step 4 — Merge Dotfiles Selectively]]
 

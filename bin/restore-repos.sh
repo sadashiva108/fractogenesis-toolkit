@@ -398,16 +398,51 @@ classify_repo() {
 }
 
 # Rewrite remote_url with the personal host alias when routing to personal.
+# Returns the owner segment of a github SSH or HTTPS URL, or "" if not github.
+remote_owner() {
+  local url="$1" rest=""
+  case "$url" in
+    git@github.com:*)             rest="${url#git@github.com:}" ;;
+    https://github.com/*)         rest="${url#https://github.com/}" ;;
+    ssh://git@github.com/*)       rest="${url#ssh://git@github.com/}" ;;
+    *) printf ''; return 0 ;;
+  esac
+  printf '%s' "${rest%%/*}"
+}
+
 rewrite_remote_for_host() {
   local url="$1"
   local host="$2"
-  # Only rewrite SSH URLs of the form git@github.com:owner/repo.git.
-  # Leave HTTPS and non-github URLs alone; the operator can adjust manually.
-  if [[ "$url" == git@github.com:* && "$host" != "github.com" ]]; then
+  # Routing to the personal host alias is decided by the pre-image DIRECTORY the
+  # repo sat in, which says nothing about who owns the remote. Swapping only the
+  # host while keeping the path produced
+  #   git@github-personal:<work-org>/<repo>.git
+  # -- a personal key pointed at the work org's repo, which either fails auth or,
+  # worse, silently resolves to a different account's repo of the same name.
+  # So rewrite ONLY when the URL's owner really is the personal account.
+  # GIT_PERSONAL_GITHUB_OWNER unset => never rewrite; the emitted command carries
+  # a REVIEW comment with the aliased form so the operator can decide.
+  local owner
+  owner="$(remote_owner "$url")"
+  if [[ "$url" == git@github.com:* && "$host" != "github.com" \
+        && -n "${GIT_PERSONAL_GITHUB_OWNER:-}" && "$owner" == "${GIT_PERSONAL_GITHUB_OWNER}" ]]; then
     printf 'git@%s:%s' "$host" "${url#git@github.com:}"
   else
     printf '%s' "$url"
   fi
+}
+
+# Emits `git remote add` lines for every remote in the pre-image field except
+# origin. Without this only origin survives the restore: every other remote is
+# dropped and the branch's upstream silently re-points at origin, so the next
+# push goes somewhere the operator did not intend.
+emit_extra_remotes() {
+  local remotes="$1" target="$2"
+  printf '%s\n' "$remotes" | tr ';' '\n' | awk -v t="$target" '
+    /\(fetch\)/ && NF>=2 && $1 != "origin" {
+      printf "git -C \"%s\" remote add %s \"%s\" 2>/dev/null || \\\n", t, $1, $2
+      printf "  git -C \"%s\" remote set-url %s \"%s\"\n", t, $1, $2
+    }'
 }
 
 # ---------------------------------------------------------------------------
@@ -419,6 +454,32 @@ NEEDS_CLONE_COUNT=0
 IGN_AVAILABLE_COUNT=0
 IGN_APPLIED_COUNT=0
 CARRY_FORWARD_TOTAL=0
+
+# ---------------------------------------------------------------------------
+# Duplicate-basename guard
+#
+# Staged bundles are keyed by `basename "$repo_path"`. Two repos sharing a
+# basename across the work and personal roots collapse to one
+# staged-ignored-files/live/<label>/ and one repos-gitignored/<label>/, and the
+# emitted commands would rsync that single bundle into BOTH working trees --
+# which can put work credentials into a repo that gets pushed publicly.
+# Detect it up front and name the offenders rather than failing quietly.
+# ---------------------------------------------------------------------------
+DUPLICATE_LABELS="$(
+  tail -n +2 "$REPOS_TSV" | cut -f1 | while IFS= read -r rp; do
+    [[ -n "$rp" ]] && basename "$rp"
+  done | sort | uniq -d
+)"
+DUPLICATE_LABEL_COUNT=0
+if [[ -n "$DUPLICATE_LABELS" ]]; then
+  DUPLICATE_LABEL_COUNT="$(printf '%s\n' "$DUPLICATE_LABELS" | grep -c .)"
+  echo "" >&2
+  echo "WARNING: $DUPLICATE_LABEL_COUNT repo basename(s) appear more than once." >&2
+  echo "Staged bundles are keyed by basename, so these share one bundle:" >&2
+  printf '%s\n' "$DUPLICATE_LABELS" | sed 's/^/  - /' >&2
+  echo "Reconcile these by hand before running the emitted rsync commands." >&2
+  echo "" >&2
+fi
 
 # Build clone-commands and rsync-commands as here-doc-friendly text lines
 # collected in temporary files (avoids Bash 3.2 array-under-set-u pitfalls).
@@ -499,7 +560,27 @@ do
     if [[ -n "$clone_url" ]]; then
       {
         echo "# $label"
+        if [[ "$clone_url" != "$remote_url" ]]; then
+          echo "# routed to the personal host alias (owner matches GIT_PERSONAL_GITHUB_OWNER)"
+        elif [[ "$CLONE_HOST" != "github.com" && "$remote_url" == git@github.com:* ]]; then
+          echo "# REVIEW: pre-image directory says personal, but the remote owner is"
+          echo "#   $(remote_owner "$remote_url") -- not GIT_PERSONAL_GITHUB_OWNER (${GIT_PERSONAL_GITHUB_OWNER:-unset})."
+          echo "#   Left on github.com. If it really is yours, use instead:"
+          echo "#   git clone \"git@$CLONE_HOST:${remote_url#git@github.com:}\""
+        fi
         echo "cd \"$CLONE_TARGET_ROOT\" && git clone \"$clone_url\""
+        emit_extra_remotes "$remotes" "$CLONE_TARGET_ROOT/$label"
+        if [[ -n "$branch" && "$branch" != "-" ]]; then
+          echo "git -C \"$CLONE_TARGET_ROOT/$label\" checkout \"$branch\" 2>/dev/null || \\"
+          echo "  echo \"WARN: $label -- pre-image branch '$branch' not found in the clone\""
+        fi
+        # The pre-image HEAD is the cheapest possible proof you cloned the right
+        # remote. A repo whose personal remote was ahead of its work remote
+        # clones "successfully" from the stale one and looks fine until much later.
+        if [[ -n "$head_line" && "$head_line" != "-" ]]; then
+          echo "git -C \"$CLONE_TARGET_ROOT/$label\" cat-file -e '$head_line^{commit}' 2>/dev/null || \\"
+          echo "  echo \"WARN: $label -- pre-image HEAD $head_line absent; wrong remote, or unpushed work\""
+        fi
         echo ""
       } >> "$CLONE_CMDS"
     else
@@ -631,6 +712,7 @@ remote before reimage. See \`restore-repos.md\` for the full runbook.
 
 | Check | Verification mode | How to verify | Status | Notes |
 |---|---|---|---|---|
+| No duplicate repo basenames | Command | \`cut -f1 repos.tsv | xargs -n1 basename | sort | uniq -d\` is empty | $( [[ "$DUPLICATE_LABEL_COUNT" -eq 0 ]] && echo 'PASS' || echo 'WARN' ) | $( [[ "$DUPLICATE_LABEL_COUNT" -eq 0 ]] && echo 'Bundle labels are unique.' || echo "Shared bundle label(s): $(printf '%s ' $DUPLICATE_LABELS). Reconcile by hand before running the rsync commands." ) |
 | Pre-image repo inventory read successfully | Command | \`repos.tsv\` produced status rows | $(status_pass_warn "$REPOS_INDEX_OK") | See \`raw/repos-input.tsv\`. |
 | Every tracked repo is present on disk | Mixed | \`git clone\` output from \`clone-commands.sh\` succeeded for each entry | $(status_pass_warn "$CLONES_COMPLETE") | Emitted commands to \`clone-commands.sh\`; run manually and rerun this script to confirm. |
 | Every staged ignored bundle applied | Mixed | \`rsync-ignored-files.sh\` executed or \`--apply-ignored-files\` used | $(status_pass_warn "$IGNORED_FILES_COMPLETE") | Emitted commands to \`rsync-ignored-files.sh\`; review before running. |

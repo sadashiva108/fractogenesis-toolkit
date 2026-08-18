@@ -447,17 +447,44 @@ Recommended reimaged-system Time Machine checkpoints:
 2. **Working development baseline backup** — after Phases 9 through 11 are substantially restored and Phase 12 validation passes.
 3. **Normal ongoing backups** — after the machine is back to daily use.
 
-Before starting reimaged-system Time Machine, confirm the artifact volume is excluded so the manual backup directory is not backed up into the Time Machine partition:
+Before starting reimaged-system Time Machine, the artifact volume MUST be confirmed
+excluded. This is a gate, not a note: if the exclusion did not take, Time Machine
+backs the entire manual backup directory into the Time Machine partition. The block
+below refuses to start a backup unless `tmutil isexcluded` reports `[Excluded]`.
 
-```bash
-sudo tmutil addexclusion -v "$EXTERNAL_DATA_VOLUME"
-tmutil listexclusions | grep "$EXTERNAL_DATA_VOLUME" || true
-tmutil destinationinfo
-tmutil startbackup
-```
+EOF_TM
+
+# The exclusion gate is appended separately from the quoted heredoc above so the
+# artifact volume resolved at capture time is baked into the generated plan. A
+# quoted heredoc emits "$EXTERNAL_DATA_VOLUME" literally, and pasting that into a
+# shell that has not sourced reimage.env hands `addexclusion` an empty argument --
+# a silent no-op immediately followed by a full backup of the artifact drive. The
+# resolved value is written as a defaulted assignment, and the gate still refuses
+# to run if that value is empty or the exclusion does not verify.
+{
+  echo '```bash'
+  printf 'EXTERNAL_DATA_VOLUME="${EXTERNAL_DATA_VOLUME:-%s}"\n' "${EXTERNAL_DATA_VOLUME:-}"
+  cat <<'EOF_TM_GATE'
+if [ -z "$EXTERNAL_DATA_VOLUME" ]; then
+  echo "REFUSING: EXTERNAL_DATA_VOLUME is empty; set it before starting Time Machine." >&2
+else
+  sudo tmutil addexclusion -v "$EXTERNAL_DATA_VOLUME"
+  if tmutil isexcluded "$EXTERNAL_DATA_VOLUME" | grep -q '\[Excluded\]'; then
+    tmutil destinationinfo
+    tmutil startbackup
+  else
+    echo "REFUSING: $EXTERNAL_DATA_VOLUME is not excluded from Time Machine." >&2
+    echo "REFUSING: not starting a backup that would include the artifact drive." >&2
+  fi
+fi
+EOF_TM_GATE
+  echo '```'
+} >> "$OUT/time-machine-reimaged-system-plan.md"
+
+cat >> "$OUT/time-machine-reimaged-system-plan.md" <<'EOF_TM_TAIL'
 
 Avoid starting a Time Machine backup while OneDrive is still doing a large initial sync, while Docker images are being restored, or while Company Portal / Intune is actively installing large apps.
-EOF_TM
+EOF_TM_TAIL
 
 cat > "$OUT/manual-captures-required.md" <<'EOF_MANUAL_FIRST_BOOT'
 # Manual Captures Required After First Boot

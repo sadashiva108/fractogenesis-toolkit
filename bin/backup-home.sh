@@ -252,6 +252,38 @@ build_archive_flags() {
   fi
 }
 
+# Emit an anchored --exclude for every SECRETS_TARGETS source that falls inside
+# the rsync source about to be copied.
+#
+# SECRETS_TARGETS and EXTERNAL_TARGETS are independent passes over the same
+# $HOME and neither knew the other existed, so a file could be staged into
+# secrets-encrypted/ *and* copied in the clear by whichever directory target
+# contains it. That is not hypothetical: ~/.config/gh/hosts.yml and
+# ~/.kube/config were byte-identical in the DMG and in home-files-backup/ on the
+# 2026-08-17 run, and Phase 3B never flagged either, because "hosts.yml" and
+# "config" are not credential-shaped names.
+#
+# Adding a SECRETS_TARGETS row now means "the DMG and only the DMG".
+#
+# The exclude is anchored with a leading "/" so it is relative to this transfer
+# root, not matched by basename at any depth -- an unanchored "config" would
+# exclude every file called config under every target.
+secrets_source_excludes() {
+  local src="$1" entry sp rel
+  [[ -n "$src" ]] || return 0
+  declare -p SECRETS_TARGETS >/dev/null 2>&1 || return 0
+  (( ${#SECRETS_TARGETS[@]} > 0 )) || return 0
+  src="${src%/}"
+  for entry in "${SECRETS_TARGETS[@]}"; do
+    sp="$(config_field "$entry" 2)"
+    [[ -n "$sp" ]] || continue
+    sp="${sp%/}"
+    case "$sp" in
+      "$src"/*) rel="${sp#"$src"/}"; printf '%s\n' "--exclude=/$rel" ;;
+    esac
+  done
+}
+
 # Run rsync with the ERR trap and `set -e` suspended for the duration, and
 # publish its exit status in RSYNC_RC. A command on the left of `||` is exempt
 # from both, so no trap save/restore dance is needed.
@@ -770,7 +802,15 @@ if $RUN_EXTERNAL; then
         current_category="$category"
       fi
 
-      run_rsync "$label" "$src" "$dst" "$DRY_RUN" ${EXT_EXCL_FLAGS[@]+"${EXT_EXCL_FLAGS[@]}"}
+      SEC_EXCL=()
+      while IFS= read -r _se; do
+        [[ -n "$_se" ]] && SEC_EXCL+=( "$_se" )
+      done < <(secrets_source_excludes "$src")
+      if (( ${#SEC_EXCL[@]} > 0 )); then
+        echo -e "  ${DIM}   ${#SEC_EXCL[@]} path(s) held back from $label — staged as secrets instead${RST}"
+      fi
+      run_rsync "$label" "$src" "$dst" "$DRY_RUN" \
+        ${EXT_EXCL_FLAGS[@]+"${EXT_EXCL_FLAGS[@]}"} ${SEC_EXCL[@]+"${SEC_EXCL[@]}"}
     done
   else
     echo -e "  ${YEL}⚠  EXTERNAL_TARGETS is empty or undefined — no directory targets copied.${RST}"
@@ -876,7 +916,12 @@ if $RUN_ONEDRIVE; then
       src=$(config_field "$entry" 2)
       rel_dest=$(config_field "$entry" 3)
       dst="$ONEDRIVE_DEST/$rel_dest"
-      run_rsync "OneDrive/$rel_dest" "$src" "$dst" "$DRY_RUN" ${ALL_OD_FLAGS[@]+"${ALL_OD_FLAGS[@]}"}
+      SEC_EXCL=()
+      while IFS= read -r _se; do
+        [[ -n "$_se" ]] && SEC_EXCL+=( "$_se" )
+      done < <(secrets_source_excludes "$src")
+      run_rsync "OneDrive/$rel_dest" "$src" "$dst" "$DRY_RUN" \
+        ${ALL_OD_FLAGS[@]+"${ALL_OD_FLAGS[@]}"} ${SEC_EXCL[@]+"${SEC_EXCL[@]}"}
     done
   else
     echo -e "  ${YEL}⚠  ONEDRIVE_TARGETS is empty or undefined — nothing to sync.${RST}"

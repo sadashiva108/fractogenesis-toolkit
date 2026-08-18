@@ -69,7 +69,7 @@ Do not manually duplicate the final validation report when reimage-checklist.sh 
 |---|---|---|---|
 | Phase 8 | Enrollment and stabilization | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/enrollment/record-enrollment-*` | Managed enrollment, profiles, security tools, macOS update state, and first stabilization review. |
 | Phase 9 | Initial captures and sanity checks | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/initial-reimaged-system-*` | First post-image evidence bundle before deeper restore work, including restart and Time Machine planning notes. |
-| Phase 13A | Toolkit snapshot | `$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/pre-image-toolkit-snapshot-*`, `$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/latest-docs/` | Final workflow-doc snapshot showing the workflow state actually used after rebuild. |
+| Phase 13A | Toolkit snapshot | `$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/post-image-toolkit-snapshot-*`, `$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/latest-docs/` | Final workflow-doc snapshot showing the workflow state actually used after rebuild. |
 | Phase 13B | System inventory | `$REIMAGE_ARTIFACT_ROOT/system-inventory/post-image-*` | Broad rebuilt-system snapshot for comparison against Phase 4B. |
 | Phase 13C | Company-managed inventory | `$REIMAGE_ARTIFACT_ROOT/managed-inventory/post-image-*` | Managed apps, profiles, launch items, extensions, receipts, and managed preferences after enrollment. |
 | Phase 13D | Performance audit | `$REIMAGE_ARTIFACT_ROOT/performance-audit/post-image-*` | Scenario-based after-state performance bundles that match the pre-image scenarios. |
@@ -103,7 +103,7 @@ $REIMAGE_ARTIFACT_ROOT/
 │   └── checklists/
 │       └── post-image-office-stability-checklist-YYYYMMDD-HHMMSS/
 ├── toolkit-snapshot/
-│   ├── pre-image-toolkit-snapshot-YYYYMMDD-HHMMSS/
+│   ├── post-image-toolkit-snapshot-YYYYMMDD-HHMMSS/
 │   └── latest-docs/
 ├── system-inventory/
 │   └── post-image-YYYYMMDD-HHMMSS/
@@ -230,22 +230,21 @@ Detailed capture runbook: [capture-toolkit-snapshot.md](../capture-toolkit-snaps
 Script-generated evidence:
 
 ```bash
-cd "$REIMAGE_ROOT"
-chmod +x scripts/capture-toolkit-snapshot.sh
-
-./scripts/capture-toolkit-snapshot.sh   --backup-root "$BACKUP_ROOT"   --open
+cd "$FRACTOGENESIS_HOME"
+./bin/capture-toolkit-snapshot.sh --context post-image --open
 ```
 
 Destinations:
 
 ```text
-$BACKUP_ROOT/toolkit-snapshot/pre-image-toolkit-snapshot-YYYYMMDD-HHMMSS/
-$BACKUP_ROOT/toolkit-snapshot/latest-docs/
+$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/post-image-toolkit-snapshot-YYYYMMDD-HHMMSS/
+$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/latest-docs/
 ```
 
 Manual / fallback notes:
 
-- Phase 13A uses the same current destination family as the toolkit snapshot runbook: a fresh timestamped `pre-image-toolkit-snapshot-*` bundle plus a refreshed `docs/` copy.
+- `--context post-image` is required. `bin/capture-toolkit-snapshot.sh` defaults to `--context pre-image`, so omitting it here writes a second `pre-image-toolkit-snapshot-*` bundle next to the genuine Phase 4A one instead of the post-image record.
+- Phase 13A uses the same current destination family as the toolkit snapshot runbook: a fresh timestamped `post-image-toolkit-snapshot-*` bundle plus a refreshed `docs/` copy.
 - Use this phase when you want the final workflow-doc state that actually reflects the rebuilt system and any runbook refinements made during restore.
 - Manual notes are rarely needed unless you want to explain why the post-image workflow-doc snapshot differs from the pre-image one.
 
@@ -255,27 +254,21 @@ Manual / fallback notes:
 
 ## Phase 13B — Post-Image System Inventory Capture
 
-Workflow: [[reimaging-guide#Phase 13B — Post-Image System Inventory Capture|reimaging-guide.md — Phase 13B]].
+Workflow: [[reimaging-guide#Phase 13B — System Inventory Capture|reimaging-guide.md — Phase 13B]].
 
 Detailed capture runbook: [capture-system-inventory.md](../capture-system-inventory.md)
 
 Script-generated evidence:
 
 ```bash
-cd "$REIMAGE_ROOT"
-set -a
-source ./reimage.env
-set +a
-mkdir -p "$BACKUP_ROOT/system-inventory"
-chmod +x scripts/capture-system-inventory.sh
-
-./scripts/capture-system-inventory.sh   --output "$BACKUP_ROOT/system-inventory/post-image-$(date +%Y%m%d-%H%M%S)"
+cd "$FRACTOGENESIS_HOME"
+./bin/capture-system-inventory.sh --context post-image
 ```
 
 Destination:
 
 ```text
-$BACKUP_ROOT/system-inventory/post-image-YYYYMMDD-HHMMSS/
+$REIMAGE_ARTIFACT_ROOT/system-inventory/post-image-YYYYMMDD-HHMMSS/
 ```
 
 Typical contents:
@@ -299,27 +292,21 @@ Manual / fallback notes:
 
 ## Phase 13C — Post-Image Company-Managed Inventory Capture
 
-Workflow: [[reimaging-guide#Phase 13C — Post-Image Company-Managed Inventory Capture|reimaging-guide.md — Phase 13C]].
+Workflow: [[reimaging-guide#Phase 13C — Company Managed Inventory Capture|reimaging-guide.md — Phase 13C]].
 
 Detailed capture runbook: [capture-managed-inventory.md](../capture-managed-inventory.md)
 
 Script-generated evidence:
 
 ```bash
-cd "$REIMAGE_ROOT"
-set -a
-source ./reimage.env
-set +a
-mkdir -p "$BACKUP_ROOT/managed-inventory"
-chmod +x scripts/capture-managed-inventory.sh
-
-./scripts/capture-managed-inventory.sh --phase post-image
+cd "$FRACTOGENESIS_HOME"
+./bin/capture-managed-inventory.sh --context post-image
 ```
 
 Destination:
 
 ```text
-$BACKUP_ROOT/managed-inventory/post-image-YYYYMMDD-HHMMSS/
+$REIMAGE_ARTIFACT_ROOT/managed-inventory/post-image-YYYYMMDD-HHMMSS/
 ```
 
 Expected outputs:
@@ -347,27 +334,21 @@ Manual / fallback notes:
 
 ## Phase 13D — Post-Image Performance Audit Capture
 
-Workflow: [[reimaging-guide#Phase 13D — Post-Image Performance Audit Capture|reimaging-guide.md — Phase 13D]].
+Workflow: [[reimaging-guide#Phase 13D — Performance Audit Capture|reimaging-guide.md — Phase 13D]].
 
 Detailed capture runbook: [capture-performance-audit.md](../capture-performance-audit.md)
 
 Script-generated evidence:
 
 ```bash
-cd "$REIMAGE_ROOT"
-source ./reimage.env
-chmod +x scripts/capture-performance-audit.sh
-
-export PERF_AUDIT_OUTPUT_ROOT="$BACKUP_ROOT/performance-audit"
-mkdir -p "$PERF_AUDIT_OUTPUT_ROOT"
-
-./scripts/capture-performance-audit.sh   --output "$PERF_AUDIT_OUTPUT_ROOT"   --phase post-image   --scenario normal-workload   --sample-count 6   --sample-interval 30
+cd "$FRACTOGENESIS_HOME"
+./bin/capture-performance-audit.sh --phase post-image --scenario normal-workload --sample-count 6 --sample-interval 30
 ```
 
 Destination root:
 
 ```text
-$BACKUP_ROOT/performance-audit/
+$REIMAGE_ARTIFACT_ROOT/performance-audit/
 ```
 
 Scenario bundles normally use names like:
@@ -409,26 +390,23 @@ Manual / fallback notes:
 
 ## Phase 13E — Post-Image Office Stability Capture
 
-Workflow: [[reimaging-guide#Phase 13E — Post-Image Office Stability Capture|reimaging-guide.md — Phase 13E]].
+Workflow: [[reimaging-guide#Phase 13E — Office Stability Capture|reimaging-guide.md — Phase 13E]].
 
 Detailed capture runbook: [capture-office-stability.md](../capture-office-stability.md)
 
 Script-generated evidence:
 
 ```bash
-cd "$REIMAGE_ROOT"
-source ./reimage.env
-chmod +x scripts/capture-office-stability-baseline.sh scripts/office-stability-checklist.sh
+cd "$FRACTOGENESIS_HOME"
+./bin/capture-office-stability.sh --phase post-reimage --artifact-root "$REIMAGE_ARTIFACT_ROOT"
 
-./scripts/capture-office-stability-baseline.sh   --phase post-reimage   --backup-root "$BACKUP_ROOT"
-
-./scripts/office-stability-checklist.sh   --phase post-reimage   --backup-root "$BACKUP_ROOT"   --open
+./bin/office-stability-checklist.sh --phase post-reimage --artifact-root "$REIMAGE_ARTIFACT_ROOT" --open
 ```
 
 Destination root:
 
 ```text
-$BACKUP_ROOT/office-stability/
+$REIMAGE_ARTIFACT_ROOT/office-stability/
 ```
 
 Primary post-image evidence types:
@@ -471,28 +449,23 @@ Detailed capture runbooks: [reimaged-system-checks.md](../reimaged-system-checks
 Script-generated evidence:
 
 ```bash
-cd "$REIMAGE_ROOT"
-set -a
-source ./reimage.env
-set +a
-chmod +x scripts/reimage-checklist.sh
-
-./scripts/reimage-checklist.sh   --phase post   --backup-root "$BACKUP_ROOT"   --open
+cd "$FRACTOGENESIS_HOME"
+./bin/reimage-checklist.sh --phase post --open
 ```
 
 Actual output paths verified from `reimage-checklist.sh`:
 
 ```text
-$BACKUP_ROOT/reimaged-system/checklists/reimage-checklist-YYYYMMDD-HHMMSS.md
-$BACKUP_ROOT/reimaged-system/checklists/latest-reimage-checklist.txt
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/checklists/reimage-checklist-YYYYMMDD-HHMMSS.md
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/checklists/latest-reimage-checklist.txt
 ```
 
 Related `reimaged-system/` directories the script ensures exist:
 
 ```text
-$BACKUP_ROOT/reimaged-system/time-machine/
-$BACKUP_ROOT/reimaged-system/restarts/
-$BACKUP_ROOT/reimaged-system/restore-notes/
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/time-machine/
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/restarts/
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/
 ```
 
 What the automated report covers:

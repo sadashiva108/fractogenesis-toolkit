@@ -252,20 +252,43 @@ The `hello-world` pull is the smoke test for network reachability + registry aut
 
 ### Step 5 — Restore Registry Credentials
 
-Mount the encrypted secrets area (or the consolidated `all-secrets-*.dmg`) and restore `~/.docker/config.json`:
+Quit Docker Desktop completely first (menu-bar whale → **Quit Docker Desktop**, or `osascript -e 'quit app "Docker"'`), and confirm it is down:
+
+```bash
+pgrep -fl "Docker Desktop" || echo "OK: Docker Desktop does not appear to be running"
+```
+
+Docker Desktop owns `~/.docker/config.json`. It manages `credsStore`, `currentContext`, and `plugins` in that file and rewrites it on quit and on every settings change — a copy made while it is running is silently reverted the moment you quit it.
+
+Mount the encrypted secrets area (or the consolidated `all-secrets-*.dmg`) and restore `~/.docker/config.json`. Keep the fresh install's own file first, so you can get back to a known-good Docker Desktop state if the restored one is stale:
 
 ```bash
 mkdir -p ~/.docker
-[[ -f "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/docker/config.json" ]] \
-  && cp "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/docker/config.json" ~/.docker/config.json
-chmod 600 ~/.docker/config.json 2>/dev/null || true
+cp ~/.docker/config.json ~/.docker/config.json.fresh 2>/dev/null || true
+
+SRC="$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/docker/config.json"
+if [ -f "$SRC" ]; then
+  cp "$SRC" ~/.docker/config.json
+  chmod 600 ~/.docker/config.json
+  echo "RESTORED: ~/.docker/config.json from $SRC"
+else
+  echo "*** NOT RESTORED: no config.json at $SRC" >&2
+  echo "*** Registry credentials were NOT restored. Mount the encrypted secrets DMG" >&2
+  echo "*** (secrets-encrypted/all-secrets-*.dmg, Phase 10B) so that path resolves," >&2
+  echo "*** then re-run this step before continuing." >&2
+fi
 ```
 
-Confirm each private registry the pre-image config referenced:
+Relaunch Docker Desktop, wait for the daemon, then confirm each private registry the pre-image config referenced:
 
 ```bash
-docker login "<registry-host>"
+open -a Docker
+# wait ~10 s, then:
+docker info >/dev/null && docker login "<registry-host>"
 ```
+
+> [!note]
+> When `config.json` carries `"credsStore": "desktop"`, the file holds no tokens at all — the registry auths live in the login Keychain, and the Keychain does not survive an erase-and-install. A `docker login` that genuinely prompts for a password or a PAT is the expected outcome here, not a restore failure. What the restored `config.json` buys you is the registry list, the context, and the plugin config; the credentials themselves are re-entered once per registry and re-stored in the new Keychain.
 
 > [!warning] Pitfall
 > Copying `config.json` from the plain-text `app-settings-backup/` path is a bug even if the file happens to sit there — that path is not encrypted and this file may embed credentials. Always take it from `secrets-encrypted/docker/`.

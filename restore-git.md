@@ -1,4 +1,4 @@
-[[reimaging-guide#Phase 11 — Restore Git|← Back to Mac Reimaging Guide]]
+[[reimaging-guide#Phase 11A — Restore Git|← Back to Mac Reimaging Guide]]
 
 # Restore Git
 
@@ -19,6 +19,7 @@ Restore the Git identity plumbing on the reimaged Mac so both work and personal 
 - [[#Before You Run Anything|Before You Run Anything]]
     - [[#Prerequisites|Prerequisites]]
     - [[#Confirm Your Intent|Confirm Your Intent]]
+    - [[#Account Access — Tokens, 2FA, and Key Rotation|Account Access — Tokens, 2FA, and Key Rotation]]
 - [[#Sequential Steps|Sequential Steps]]
     - [[#Step 1 — Install Git and Confirm the Environment|Step 1 — Install Git and Confirm the Environment]]
     - [[#Step 2 — Set Correct Permissions on Restored SSH Keys|Step 2 — Set Correct Permissions on Restored SSH Keys]]
@@ -160,7 +161,7 @@ The `reimage.env` values this runbook depends on. Paths and roots are resolved d
 | `GIT_PERSONAL_GITHUB_HOST` | SSH host alias for personal clones (typically `github-personal` or similar). |
 | `GIT_WORK_SSH_KEY` | Absolute path to the work private key on disk (already restored in Phase 10B). |
 | `GIT_PERSONAL_SSH_KEY` | Absolute path to the personal private key on disk (already restored in Phase 10B). |
-| `GIT_DEFAULT_BRANCH` | Default branch name for `git init` (defaults to `master` when unset). |
+| `GIT_DEFAULT_BRANCH` | Default branch name for `git init` (defaults to `main` when unset). |
 | `GIT_INTERNAL_TLS_SKIP_HOST` | Optional. Internal Enterprise Server host (e.g. `github.internal.example`) whose TLS cert this Mac doesn't trust; scopes `sslVerify=false` to that host only. Unset = verification stays on everywhere. |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -185,10 +186,30 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 
 - Are you doing a **full first-time restore** (Steps 1 through 8 in order) or a **targeted rerun** of one file (e.g. re-writing `~/.ssh/config` after adding a third identity)? Both are safe; the difference is whether you also do Step 7's validation at the end.
 - Do you use the **XDG local config** (`~/.config/git/config.local`) as your primary Git config, or `~/.gitconfig` only? If the answer is "only `~/.gitconfig`", skip Step 6 entirely — do not maintain both.
-- Which **default branch name** does your workflow use? The runbook defaults to `master` because that is what the historical `reimage.env` shipped with; if your remote defaults to `main`, set `GIT_DEFAULT_BRANCH=main` when you record the values in Step 1.
+- Which **default branch name** does your workflow use? The runbook defaults to `main`, matching GitHub's default and `fractogenesis-toolkit`'s own branch. Set `GIT_DEFAULT_BRANCH=master` in Step 1 if your remotes still use the older name — this only affects `init.defaultBranch` for repos you create later, never an existing clone.
 
 > [!warning] Pitfall
 > Do not commit `reimage.env` itself, restored `.gitconfig` files with real email addresses, or restored SSH keys. `.gitignore` should already exclude these; verify before your first commit after restore.
+
+### Account Access — Tokens, 2FA, and Key Rotation
+
+Restoring keys and config gets Git *configured*; it does not get you *authenticated*. The erase took the login keychain with it, so nothing on this Mac remembers a credential, and GitHub has not accepted account passwords over HTTPS for years. Any remote still on an `https://` URL will prompt for a **personal access token** the first time you push or pull, and a token you cannot reach is indistinguishable from a lost account.
+
+- **Have the tokens off-machine before the erase.** Store any personal access token you rely on in a password manager or another device — not in a file on the Mac being wiped, and not in the browser profile that goes with it. The same goes for the account passwords themselves.
+- **Have your 2FA recovery codes off-machine before the erase.** Print them, or keep them in a password manager that syncs elsewhere. They are the only path back in when the second factor is unavailable.
+- **Prefer SSH remotes.** With Steps 2–4 done, `git@…` remotes authenticate from the restored key and never prompt for a token. Reserve HTTPS for the cases that genuinely need it.
+
+If the restored key turns out to be stale — rotated out upstream, or you simply cannot confirm the fingerprint from Step 2 — generate a fresh one and register it rather than fighting the old one:
+
+```bash
+ssh-keygen -t ed25519 -C "<email>"
+pbcopy < ~/.ssh/id_ed25519.pub
+```
+
+Then paste it at `github.com/settings/keys` (repeat per account, using the key path each identity expects — `$GIT_WORK_SSH_KEY` or `$GIT_PERSONAL_SSH_KEY`). Adding a key requires being signed in, which requires the second factor — so do this only after account access is confirmed.
+
+> [!warning] Pitfall
+> An authenticator app whose only enrollment lived on the Mac you just erased is a lockout risk, not an inconvenience. The app is gone, the codes are gone, and adding a new SSH key or minting a replacement token both require signing in. Before the erase, either move the authenticator to a phone or second device, or confirm you hold current recovery codes for **every** account this runbook touches — work GitHub, personal GitHub, and any Enterprise Server host.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -221,7 +242,7 @@ export GIT_WORK_SSH_KEY="$HOME/.ssh/id_work"
 export GIT_PERSONAL_SSH_KEY="$HOME/.ssh/id_personal"
 export GIT_WORK_GITHUB_HOST="github.com"
 export GIT_PERSONAL_GITHUB_HOST="github-personal"
-export GIT_DEFAULT_BRANCH="master"
+export GIT_DEFAULT_BRANCH="main"
 
 python3 bin/prepare-artifact-root.py \
   upsert-env \
@@ -327,7 +348,7 @@ cat > ~/.gitconfig <<EOF
     path = ${GIT_PERSONAL_REPO_ROOT%/}/.gitconfig
 
 [init]
-    defaultBranch = ${GIT_DEFAULT_BRANCH:-master}
+    defaultBranch = ${GIT_DEFAULT_BRANCH:-main}
 EOF
 
 # Optional: skip TLS verification for ONE internal Enterprise Server host whose
@@ -424,7 +445,7 @@ cat > ~/.config/git/config.local <<EOF
     path = ${GIT_PERSONAL_REPO_ROOT%/}/.gitconfig
 
 [init]
-    defaultBranch = ${GIT_DEFAULT_BRANCH:-master}
+    defaultBranch = ${GIT_DEFAULT_BRANCH:-main}
 EOF
 
 # Optional: same host-scoped skip, written into config.local. Unset the variable
@@ -457,17 +478,22 @@ ssh -T "git@${GIT_PERSONAL_GITHUB_HOST}"
 > [!bug] Troubleshooting
 > If one host authenticates and the other returns `Permission denied (publickey)`, see [[#`ssh -T` returns "Permission denied (publickey)" for one host but not the other|`ssh -T` returns "Permission denied (publickey)" for one host but not the other]].
 
-Spot-check from an actual work repo directory:
+Spot-check from inside the work repo root using a throwaway repo. No work repo is cloned yet — Phase 11B ([[restore-repos|restore-repos.md]]) does that, and it runs after this phase — so create a scratch repo rather than `cd`-ing into one that does not exist:
 
 ```bash
 source ./reimage.env
 
-cd "$GIT_WORK_REPO_ROOT/<any-work-repo>"
+mkdir -p "$GIT_WORK_REPO_ROOT/test"
+cd "$GIT_WORK_REPO_ROOT/test"
+git init
 git config user.email
 # Should return the value of: $GIT_WORK_EMAIL
+
+cd ~
+rm -rf "$GIT_WORK_REPO_ROOT/test"
 ```
 
-Spot-check from inside the personal repo root using a throwaway repo:
+Spot-check from inside the personal repo root using the same throwaway technique:
 
 ```bash
 source ./reimage.env

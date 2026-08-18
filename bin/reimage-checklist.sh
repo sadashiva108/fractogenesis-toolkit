@@ -405,6 +405,19 @@ check_app() {
   fi
 }
 
+check_any_app() {
+  # Some vendors do not ship /Applications/<marketing name>.app: CrowdStrike
+  # installs Falcon.app and Zscaler nests Zscaler.app inside /Applications/
+  # Zscaler/. Match those with a case-insensitive ERE over the top level of
+  # /Applications, the same way bin/record-reimaged-system.sh does.
+  local pattern="$1"
+  if ls -1 /Applications 2>/dev/null | grep -Eiq "$pattern"; then
+    echo "PASS"
+  else
+    echo "TODO"
+  fi
+}
+
 check_command() {
   local cmd="$1"
   if command -v "$cmd" >/dev/null 2>&1; then echo "PASS"; else echo "TODO"; fi
@@ -1088,16 +1101,27 @@ if [[ "$PHASE" == "post" ]]; then
     record_check WARN "MDM / Intune enrollment" "Enrollment not confirmed -- check Company Portal"
   fi
 
-  for app in "Company Portal" "CrowdStrike Falcon" "Zscaler"; do
-    STATUS="$(check_app "$app")"
-    if [[ "$STATUS" == "PASS" ]]; then
-      record_check PASS "$app present" "Found in /Applications"
-    else
-      record_check WARN "$app present" "Not found -- may still be installing"
-    fi
-  done
+  if [[ "$(check_app "Company Portal")" == "PASS" ]]; then
+    record_check PASS "Company Portal present" "Found in /Applications"
+  else
+    record_check WARN "Company Portal present" "Not found -- may still be installing"
+  fi
 
-  if pgrep -fl "CrowdStrike|falcon" >/dev/null 2>&1; then
+  # CrowdStrike ships /Applications/Falcon.app and Zscaler nests its app under
+  # /Applications/Zscaler/, so an exact <name>.app test WARNs on a healthy Mac.
+  if [[ "$(check_any_app 'CrowdStrike|Falcon')" == "PASS" ]]; then
+    record_check PASS "CrowdStrike Falcon present" "Found in /Applications"
+  else
+    record_check WARN "CrowdStrike Falcon present" "Not found -- may still be installing"
+  fi
+
+  if [[ "$(check_any_app 'Zscaler')" == "PASS" ]]; then
+    record_check PASS "Zscaler present" "Found in /Applications"
+  else
+    record_check WARN "Zscaler present" "Not found -- may still be installing"
+  fi
+
+  if pgrep -f 'CrowdStrike|falcon' >/dev/null 2>&1; then
     record_check PASS "CrowdStrike/Falcon process" "Running"
   else
     record_check WARN "CrowdStrike/Falcon process" "Not detected -- confirm in Activity Monitor"
@@ -1323,7 +1347,27 @@ if [[ "$PHASE" == "post" ]]; then
 
   TM_LATEST_CHECK="$(tmutil latestbackup 2>/dev/null || true)"
   if [[ -n "$TM_LATEST_CHECK" ]]; then
-    record_check PASS "Time Machine latest backup" "$(basename "$TM_LATEST_CHECK")"
+    TM_LATEST_NAME="$(basename "$TM_LATEST_CHECK")"
+    # A non-empty tmutil latestbackup is not evidence of a POST-image backup:
+    # a destination still holding the pre-erase backup answers just as happily.
+    # tmutil names backups YYYY-MM-DD-HHMMSS[.backup]; reduce that to the same
+    # sortable YYYYMMDD-HHMMSS stamp the Phase 8/9 evidence bundles use and
+    # compare the two lexicographically (equivalent to chronologically here).
+    TM_STAMP="$(printf '%s\n' "$TM_LATEST_NAME" | sed -e 's/\.backup$//' -e 's/^\([0-9]\{4\}\)-\([0-9]\{2\}\)-\([0-9]\{2\}\)-\([0-9]\{6\}\)$/\1\2\3-\4/')"
+    case "$TM_STAMP" in
+      [0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]-[0-9][0-9][0-9][0-9][0-9][0-9]) ;;
+      *) TM_STAMP="" ;;
+    esac
+    POST_EVIDENCE_STAMP="$(find "$REIMAGE_ARTIFACT_ROOT/reimaged-system" -maxdepth 2 -type d \( -name "initial-reimaged-system-*" -o -name "record-enrollment-*" \) 2>/dev/null | sed -e 's#.*/##' -e 's/^.*-\([0-9]\{8\}-[0-9]\{6\}\)$/\1/' | grep -E '^[0-9]{8}-[0-9]{6}$' | sort | tail -1)"
+    if [[ -n "$TM_STAMP" && -n "$POST_EVIDENCE_STAMP" ]]; then
+      if [[ "$TM_STAMP" < "$POST_EVIDENCE_STAMP" ]]; then
+        record_check WARN "Time Machine latest backup" "$TM_LATEST_NAME predates the reimaged-system evidence bundle ($POST_EVIDENCE_STAMP) -- this looks like the pre-erase backup; run a new backup"
+      else
+        record_check PASS "Time Machine latest backup" "$TM_LATEST_NAME (newer than reimaged-system bundle $POST_EVIDENCE_STAMP)"
+      fi
+    else
+      record_check PASS "Time Machine latest backup" "$TM_LATEST_NAME (age not comparable -- no timestamped reimaged-system bundle to compare against)"
+    fi
   else
     record_check WARN "Time Machine latest backup" "No completed backup found yet"
   fi
@@ -1349,18 +1393,32 @@ if [[ "$PHASE" == "post" ]]; then
 
   if dir_nonempty "$REIMAGE_ARTIFACT_ROOT/performance-audit"; then
     # Look specifically for a post-image performance bundle (naming matches capture-performance-audit.sh: <phase>-performance-audit-<scenario>-YYYYMMDD-HHMMSS)
-    POST_PERF="$(find "$REIMAGE_ARTIFACT_ROOT/performance-audit" -maxdepth 1 -type d -name "post-image-performance-audit-*" 2>/dev/null | head -1)"
+    POST_PERF="$(find "$REIMAGE_ARTIFACT_ROOT/performance-audit" -maxdepth 1 -type d -name "post-image-performance-audit-*" 2>/dev/null | sort | tail -1)"
     if [[ -n "$POST_PERF" ]]; then
       record_check PASS "Post-image performance audit bundle" "$(basename "$POST_PERF")"
     else
       record_check WARN "Post-image performance audit bundle" "No post-image-performance-audit-* bundle yet -- run capture-performance-audit.sh --phase post-image"
     fi
+
+    # A post-image bundle for SOME scenario is not enough: the before/after
+    # comparison is per scenario, so a pre-image scenario with no matching
+    # post-image bundle makes that comparison silently empty. Derive the
+    # scenario set from the pre-image bundle names (prefix and trailing
+    # -YYYYMMDD-HHMMSS stripped) and report each one.
+    PRE_PERF_SCENARIOS="$(find "$REIMAGE_ARTIFACT_ROOT/performance-audit" -maxdepth 1 -type d -name "pre-image-performance-audit-*" 2>/dev/null | sed -e 's#.*/##' -e 's/^pre-image-performance-audit-//' -e 's/-[0-9]\{8\}-[0-9]\{6\}$//' | grep -v '^$' | sort -u)"
+    for perf_scenario in $PRE_PERF_SCENARIOS; do
+      if [[ -n "$(find "$REIMAGE_ARTIFACT_ROOT/performance-audit" -maxdepth 1 -type d -name "post-image-performance-audit-$perf_scenario-*" 2>/dev/null | sort | tail -1)" ]]; then
+        record_check PASS "Performance scenario comparable: $perf_scenario" "pre-image and post-image bundles both present"
+      else
+        record_check WARN "Performance scenario comparable: $perf_scenario" "No post-image-performance-audit-$perf_scenario-* bundle -- run capture-performance-audit.sh --phase post-image --scenario $perf_scenario"
+      fi
+    done
   else
     record_check WARN "Performance audit directory" "Empty"
   fi
 
   if dir_nonempty "$REIMAGE_ARTIFACT_ROOT/office-stability"; then
-    POST_OFFICE="$(find "$REIMAGE_ARTIFACT_ROOT/office-stability" -maxdepth 1 -type d -name "post-reimage-*" 2>/dev/null | head -1)"
+    POST_OFFICE="$(find "$REIMAGE_ARTIFACT_ROOT/office-stability" -maxdepth 1 -type d -name "post-reimage-*" 2>/dev/null | sort | tail -1)"
     if [[ -n "$POST_OFFICE" ]]; then
       record_check PASS "Post-image Office stability bundle" "$(basename "$POST_OFFICE")"
     else

@@ -50,7 +50,7 @@ This is the canonical top-level guide for the Mac reimage workflow.
     - [[#Phase 13A — Capture Toolkit Snapshot|Phase 13A — Capture Toolkit Snapshot]]
     - [[#Phase 13B — System Inventory Capture|Phase 13B —System Inventory Capture]]
     - [[#Phase 13C — Company Managed Inventory Capture|Phase 13C — Company Managed Inventory Capture]]
-    - [[#Phase 13D —  Performance Audit Capture|Phase 13D — Performance Audit Capture]]
+    - [[#Phase 13D — Performance Audit Capture|Phase 13D — Performance Audit Capture]]
     - [[#Phase 13E — Office Stability Capture|Phase 13E —  Office Stability Capture]]
 - [[#Phase 14 — Reimaged System Checks|Phase 14 — Reimaged System Checks]]
 - [[#Phase 15 — Restore Home|Phase 15 — Restore Home]]
@@ -699,6 +699,27 @@ This phase brings the rebuilt Mac to a clean, trusted managed baseline before an
 >
 > Once either succeeds, continue this phase's remaining steps using the local copy — no further network dependency for reading the guide itself.
 
+> **Step 2 of this phase: re-establish `FRACTOGENESIS_HOME` and `reimage.env`.** The erase destroyed both, and every runbook from Phase 9 onward assumes they exist. No other phase re-creates them — do it here, immediately after the toolkit lands.
+>
+> **`FRACTOGENESIS_HOME` — the variable every runbook's opening `cd` depends on:**
+> ```bash
+> export FRACTOGENESIS_HOME="$HOME/fractogenesis-toolkit"
+> echo 'export FRACTOGENESIS_HOME="$HOME/fractogenesis-toolkit"' >> ~/.zprofile
+> ```
+> Every runbook starts from `cd "$FRACTOGENESIS_HOME"` (see [[#Core Assumptions|Core Assumptions]]). That value came from `.envrc` or shell startup, neither of which survived the erase. Left unset, `cd ""` is a **no-op that returns 0** — you stay in `$HOME`, every `./bin/…` afterward reports "No such file or directory", and nothing points back at the missing variable. Export it for this shell *and* append it to `~/.zprofile` so it survives the next login and the stabilization restart.
+>
+> **`reimage.env` — copy it back; do not regenerate it:**
+> ```bash
+> cp /Volumes/REIMAGEKIT/reimage.env "$FRACTOGENESIS_HOME/reimage.env"
+> cd "$FRACTOGENESIS_HOME"
+> set -a; source ./reimage.env; set +a
+> ./bin/check-reimage-env.sh
+> ```
+> `reimage.env` is gitignored, so it is in neither the GitHub fetch nor the jump-drive tarball — only the standalone copies placed on the jump drive and on the artifact volume before the erase (see [[reimage-guide-access|reimage-guide-access.md]], Phase 6A). Use the artifact-volume copy instead if the jump drive is not to hand; the two are identical. Paths are spelled out literally here on purpose — `$JUMP_DRIVE_VOLUME` and `$REIMAGE_ARTIFACT_ROOT` are themselves `reimage.env` keys and are still unset at this point.
+
+> [!warning] Pitfall
+> Do **not** rebuild `reimage.env` with `bin/setup-reimage-env.sh` when the copy is inconvenient to reach. That script *recomputes* values rather than restoring them: `REIMAGE_START_DATE` defaults to today, so `REIMAGE_ARTIFACT_ROOT` resolves to a **new, empty** event folder instead of the one holding your backups. Every restore step then reports MISSING for every source while writing its notes into the wrong tree — a failure that looks like a bad backup rather than a bad variable. Regenerating is only correct when starting a genuinely new reimage event.
+
 Primary guide: [[enroll-and-stabilize|enroll-and-stabilize.md]]
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -755,7 +776,7 @@ Primary guides:
 
 ## Phase 11 — Restore Git and Repositories
 
-**Restore Git and Repositories** reestablishes source-control access and repository content on top of the restored runtime and access foundation. This phase is intentionally split into two parts: first restoring the Git identity plumbing (dual `~/.gitconfig` with `includeIf`, `~/.ssh/config` host aliases, key permissions, both-identity validation) so any `git` command routes through the correct SSH key and stamps the correct author; and second consuming the pre-image repository audit from Phase 2C to re-clone the tracked repositories, rsync the reviewed kept ignored files back into each working tree, and reconcile every pre-image carry-forward row (local-only commits, stashes, tracked changes) against the state of the freshly cloned repos.
+**Restore Git and Repositories** reestablishes source-control access and repository content on top of the restored runtime and access foundation. This phase is intentionally split into two parts: first restoring the Git identity plumbing (dual `~/.gitconfig` with `includeIf`, `~/.ssh/config` host aliases, key permissions, both-identity validation) so any `git` command routes through the correct SSH key and stamps the correct author; and second consuming the pre-image repository audit from Phase 2A to re-clone the tracked repositories, rsync the reviewed kept ignored files back into each working tree, and reconcile every pre-image carry-forward row (local-only commits, stashes, tracked changes) against the state of the freshly cloned repos.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -773,7 +794,7 @@ Primary guide: [[restore-git|restore-git.md]]
 
 ### Phase 11B — Restore Repositories
 
-**Restore Repositories** consumes the pre-image repository audit produced by Phase 2C to re-clone the tracked repositories, rsync the reviewed kept ignored files back into each working tree, and reconcile every pre-image carry-forward row (local-only commits, stashes, tracked changes) against the state of the freshly cloned repos. `bin/restore-repos.sh` reads the pre-image `repos.tsv`, classifies each repo's current status on disk, and emits `clone-commands.sh` and `rsync-ignored-files.sh` action files the operator reviews and runs selectively. The script does not autonomously clone; a stale pre-image inventory would silently repopulate repos no longer wanted.
+**Restore Repositories** consumes the pre-image repository audit produced by Phase 2A to re-clone the tracked repositories, rsync the reviewed kept ignored files back into each working tree, and reconcile every pre-image carry-forward row (local-only commits, stashes, tracked changes) against the state of the freshly cloned repos. `bin/restore-repos.sh` reads the pre-image `repos.tsv`, classifies each repo's current status on disk, and emits `clone-commands.sh` and `rsync-ignored-files.sh` action files the operator reviews and runs selectively. The script does not autonomously clone; a stale pre-image inventory would silently repopulate repos no longer wanted.
 
 Primary guide: [[restore-repos|restore-repos.md]]
 
@@ -853,9 +874,9 @@ Manual notes, if needed: [capture-system-inventory.md — Manual context note on
 
 ---
 
-### Phase 13C —  Company Managed Inventory Capture
+### Phase 13C — Company Managed Inventory Capture
 
-Run this when you want to verify that company-managed state was correctly re-applied after enrollment. Unlike Phase 4C, which preserves the pre-image managed footprint, Phase 13C is used to confirm that expected MDM profiles, managed apps, package receipts, launch agents/daemons, system extensions, and managed preference payloads returned on the rebuilt Mac and to highlight anything missing or unexpectedly added.
+Run this when you want to verify that company-managed state was correctly re-applied after enrollment. Unlike Phase 2C, which preserves the pre-image managed footprint, Phase 13C is used to confirm that expected MDM profiles, managed apps, package receipts, launch agents/daemons, system extensions, and managed preference payloads returned on the rebuilt Mac and to highlight anything missing or unexpectedly added.
 
 Follow this capture runbook: [capture-managed-inventory.md](capture-managed-inventory.md).
 
@@ -863,7 +884,7 @@ Follow this capture runbook: [capture-managed-inventory.md](capture-managed-inve
 
 ---
 
-### Phase 13D —  Performance Audit Capture
+### Phase 13D — Performance Audit Capture
 
 Run this when you want the **after** side of the performance comparison. Unlike Phase 4C, which establishes the baseline before erase, Phase 13D reruns the same named scenarios on the rebuilt Mac so you can judge whether responsiveness, resource pressure, memory health, and workload behavior improved, stayed the same, or regressed.
 
@@ -887,9 +908,7 @@ If Outlook or OneNote closes unexpectedly, do not reopen either app first. Captu
 
 Follow this capture runbook: [capture-office-stability.md](capture-office-stability.md).
 
-Generated checklist, when needed: `bin/office-stability-checklist.sh --phase post-reimage --backup-root "$REIMAGE_ARTIFACT_ROOT"`.
-
-> **Naming TODO:** the `--backup-root` flag name itself belongs to `office-stability-checklist.sh`, which isn't migrated to this repo yet (Phase 13E). Only its *value* was updated above (`$REIMAGE_ARTIFACT_ROOT` → `$REIMAGE_ARTIFACT_ROOT`) — revisit whether the flag itself should become `--artifact-root` or similar once that script actually lands here.
+Generated checklist, when needed: `bin/office-stability-checklist.sh --phase post-reimage --artifact-root "$REIMAGE_ARTIFACT_ROOT"`.
 
 Manual checklist, if needed: [capture-office-stability.md — Post-Image Office Stability Checklist Template](capture-office-stability.md#post-image-office-stability-checklist-template).
 

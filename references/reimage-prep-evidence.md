@@ -175,7 +175,7 @@ Manual / fallback notes:
 
 ## Phase 4B — Pre-Image System Inventory Capture
 
-Workflow: [[reimaging-guide#Phase 4B — Pre-Image System Inventory Capture|reimaging-guide.md — Phase 4B]].
+Workflow: [[reimaging-guide#Phase 4B — System Inventory Capture|reimaging-guide.md — Phase 4B]].
 
 Detailed capture runbook: [capture-system-inventory.md](../capture-system-inventory.md)
 
@@ -224,7 +224,7 @@ Manual / fallback notes:
 
 ## Phase 2C — Pre-Image Company-Managed Inventory Capture
 
-Workflow: [[reimaging-guide#Phase 2C — Pre-Image Company-Managed Inventory Capture|reimaging-guide.md — Phase 2C]].
+Workflow: [[reimaging-guide#Phase 2C — Company Managed Inventory Capture|reimaging-guide.md — Phase 2C]].
 
 Detailed capture runbook: [capture-managed-inventory.md](../capture-managed-inventory.md)
 
@@ -274,7 +274,7 @@ Manual / fallback notes:
 
 ## Phase 4C — Pre-Image Performance Audit Capture
 
-Workflow: [[reimaging-guide#Phase 4C — Pre-Image Performance Audit Capture|reimaging-guide.md — Phase 4C]].
+Workflow: [[reimaging-guide#Phase 4C — Performance Audit Capture|reimaging-guide.md — Phase 4C]].
 
 Detailed capture runbook: [capture-performance-audit.md](../capture-performance-audit.md)
 
@@ -343,7 +343,7 @@ Manual / fallback notes:
 
 ## Phase 4D — Pre-Image Office Stability Capture
 
-Workflow: [[reimaging-guide#Phase 4D — Pre-Image Office Stability Capture|reimaging-guide.md — Phase 4D]].
+Workflow: [[reimaging-guide#Phase 4D — Office Stability Capture|reimaging-guide.md — Phase 4D]].
 
 Detailed capture runbook: [capture-office-stability.md](../capture-office-stability.md)
 
@@ -405,7 +405,7 @@ Manual / fallback notes:
 
 ## Phase 6 — Reimage Preparation Checks
 
-Workflow: [[reimaging-guide#Phase 6 — Reimage Preparation Checks|reimaging-guide.md — Phase 6]].
+Workflow: [[reimaging-guide#Phase 6B — Reimage Preparation Checks|reimaging-guide.md — Phase 6]].
 
 Detailed capture runbook: [reimage-prep-checks.md](../reimage-prep-checks.md)
 

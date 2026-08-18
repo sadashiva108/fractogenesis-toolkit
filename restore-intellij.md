@@ -273,6 +273,14 @@ Do not import or copy secrets from plain-text `.settings.jar` exports — the se
 
 ### Step 5 — Restore Scratches Consoles and IDE State
 
+Quit IntelliJ completely (Cmd-Q) before anything is copied into `~/Library/Application Support/JetBrains/…`, and confirm nothing is still running:
+
+```bash
+pgrep -fl idea || echo "OK: IntelliJ does not appear to be running"
+```
+
+IntelliJ holds this configuration in memory and rewrites `options/`, `scratches/`, and `consoles/` from memory when it exits — a copy made underneath a running IDE is silently overwritten the moment you quit, with no error anywhere.
+
 Use the IntelliJ backup subtree as the source of truth:
 
 ```bash
@@ -295,7 +303,7 @@ Target:  ~/Library/Application Support/JetBrains/IntelliJIdea2024.2/scratches/
 
 Be careful with full `config-copy/options/` overlays across a major version change. Prefer the settings ZIP first; overlay individual `options/` files only when something specific did not import.
 
-Confirm after restore:
+Relaunch IntelliJ afterwards, then confirm:
 
 ```text
 Scratches are visible
@@ -320,13 +328,21 @@ Project `.idea` metadata can be helpful, but it can also drag stale paths forwar
 | HTTP Client `*.env.json` | Sensitive. Restore only from the encrypted DMG. |
 | Password / Keychain-adjacent files | Do not restore loose. |
 
+Quit IntelliJ completely (Cmd-Q) before copying into any project's `.idea/`, and confirm nothing is still running:
+
+```bash
+pgrep -fl idea || echo "OK: IntelliJ does not appear to be running"
+```
+
+IntelliJ rewrites `.idea/` — `workspace.xml` above all — when a project closes and again when the IDE exits, so metadata copied in while it is running is overwritten rather than adopted.
+
 Per-project procedure:
 
 ```text
 1. Open the pre-image project metadata folder under app-settings-backup/intellij/project-metadata/<repo>/.
 2. Open the freshly-cloned repo's own .idea/ folder from Phase 11B.
 3. Copy only the categories you decided to restore.
-4. Reopen the IntelliJ project.
+4. Relaunch IntelliJ and reopen the project.
 5. Check Project Structure, Gradle settings, and run configurations before running anything.
 ```
 
@@ -351,6 +367,12 @@ http-client.private.env.json
 *.env.json
 ```
 
+Quit IntelliJ completely (Cmd-Q) before the copy — these files land inside a project's `.idea/`, which IntelliJ rewrites on project close and on exit. Confirm nothing is still running:
+
+```bash
+pgrep -fl idea || echo "OK: IntelliJ does not appear to be running"
+```
+
 Mount the IntelliJ HTTP Client secrets area (either the dedicated `secrets-encrypted/intellij/` folder or the consolidated `all-secrets-*.dmg`, per what the plan-note reported):
 
 ```bash
@@ -364,7 +386,7 @@ DMG=$(ls "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/all-secrets-"*.dmg | tail -1)
 hdiutil attach "$DMG"
 ```
 
-Copy only the correct env file into the correct project, then eject the DMG. After restore, in IntelliJ HTTP Client:
+Copy only the correct env file into the correct project, then eject the DMG. Relaunch IntelliJ afterwards and reopen the project, then confirm in the IntelliJ HTTP Client:
 
 ```text
 environment dropdown appears

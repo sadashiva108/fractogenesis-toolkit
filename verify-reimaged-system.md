@@ -370,14 +370,24 @@ Focus on rows that regressed. A managed process the pre-restart run saw and the 
 
 ### Step 7 — Take the First Post-Image Time Machine Backup
 
-The generated `time-machine-reimaged-system-plan.md` inside the post-restart bundle documents the recommended commands and timing. Before starting the backup, make sure the artifact volume is excluded so the manual backup directory is not folded into Time Machine:
+The generated `time-machine-reimaged-system-plan.md` inside the post-restart bundle documents the recommended commands and timing. The artifact volume must be excluded before the backup starts, and the exclusion must be **verified** — an ineffective exclusion means Time Machine folds the entire manual backup directory into the backup. Treat this as a gate: the backup only starts once `tmutil isexcluded` reports `[Excluded]`.
 
 ```bash
-sudo tmutil addexclusion -v "$EXTERNAL_DATA_VOLUME"
-tmutil listexclusions | grep "$EXTERNAL_DATA_VOLUME" || true
-tmutil destinationinfo
-tmutil startbackup
+if [ -z "$EXTERNAL_DATA_VOLUME" ]; then
+  echo "REFUSING: EXTERNAL_DATA_VOLUME is empty; set it before starting Time Machine." >&2
+else
+  sudo tmutil addexclusion -v "$EXTERNAL_DATA_VOLUME"
+  if tmutil isexcluded "$EXTERNAL_DATA_VOLUME" | grep -q '\[Excluded\]'; then
+    tmutil destinationinfo
+    tmutil startbackup
+  else
+    echo "REFUSING: $EXTERNAL_DATA_VOLUME is not excluded from Time Machine." >&2
+    echo "REFUSING: not starting a backup that would include the artifact drive." >&2
+  fi
+fi
 ```
+
+If the gate refuses, do not work around it by running `tmutil startbackup` by hand. An empty `EXTERNAL_DATA_VOLUME` means `reimage.env` was not sourced — source it and rerun. A volume that will not report `[Excluded]` after `addexclusion` needs to be resolved before any backup runs, or the artifact drive ends up inside the Time Machine backup.
 
 Avoid starting the backup while OneDrive is still doing a large initial sync, while Docker images are being restored, or while Company Portal / Intune is actively pushing a large managed install — a Time Machine backup during those windows can take dramatically longer and includes churn you would rather not preserve.
 
@@ -426,7 +436,9 @@ Confirm you did not switch networks or unlock a captive portal between runs — 
 
 ### latest-initial-reimaged-system-bundle.txt points at the pre-restart bundle after a Step 5 run
 
-The pointer is rewritten on every successful run. If it still points at the pre-restart bundle, Step 5 did not complete successfully — check the tail of `logs/errors.log` inside the older bundle for the failure and rerun the post-restart record.
+A stale pointer does not mean the Step 5 run failed. The bundle is written first and the pointer is rewritten afterwards; if that write fails the script prints `WARNING: could not update the latest-bundle pointer:` with the pointer path and still exits `0`, because the bundle itself is valid. So check the Step 5 run output for that warning first — if it is there, the pointer is stale for a write reason (the output root is read-only, full, or the volume was unmounted), and the authoritative bundle path is the one the script printed on the `First-boot evidence bundle written:` line. Fix the write problem and rerun only if you want the pointer current; the evidence is already recorded.
+
+Only if there was no such warning does a stale pointer suggest the Step 5 run did not reach the end — in that case check the tail of `logs/errors.log` inside the newest bundle and rerun the post-restart record.
 
 [[#Step 6 — Compare the Two Bundles|⮕ Continue to Step 6 — Compare the Two Bundles]]
 
@@ -456,7 +468,7 @@ Each `record-reimaged-system.sh` run emits four planning documents alongside `in
 |---|---|
 | `README.md` | Bundle summary and reading order for someone opening the bundle cold. |
 | `restart-checkpoints.md` | Suggested restart checkpoints across the remaining restore phases, not just this one. Update the `TODO` rows as you take each restart. |
-| `time-machine-reimaged-system-plan.md` | Recommended Time Machine checkpoints, the volume-exclusion command, and the anti-patterns to avoid (OneDrive sync in flight, Docker restore in flight). |
+| `time-machine-reimaged-system-plan.md` | Recommended Time Machine checkpoints, the exclusion gate (resolved artifact volume, `tmutil isexcluded` verification, and refusal to start a backup unless it reports `[Excluded]`), and the anti-patterns to avoid (OneDrive sync in flight, Docker restore in flight). |
 | `manual-captures-required.md` | Enumeration of the manual rows in `initial-checklist.md` with a one-line reason each cannot be scripted. |
 
 ### Manual Review Focus

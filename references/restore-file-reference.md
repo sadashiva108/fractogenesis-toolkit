@@ -96,7 +96,6 @@ $REIMAGE_ARTIFACT_ROOT/
 │   ├── runs/
 │   │   ├── pre-image-YYYYMMDD-HHMMSS/
 │   │   └── post-image-restore-YYYYMMDD-HHMMSS/
-│   ├── staged-ignored-files/
 │   ├── latest-run.txt
 │   └── latest-post-image-restore.txt
 ├── gitignore-superset/
@@ -142,9 +141,12 @@ $REIMAGE_ARTIFACT_ROOT/
 │   ├── RESTORE-README.md
 │   ├── certs/
 │   ├── chrome/
+│   ├── claude/                          # Claude Desktop config (claude_desktop_config.json)
+│   ├── claude-code/                     # Claude Code .claude.json — MCP servers, account/org identifiers
 │   ├── cli-credentials/
 │   ├── cloud/
 │   ├── docker/
+│   ├── extra-secrets-certs-review/      # Phase 3A cert/Keychain review area: discovery/, plan/, decisions/, state/
 │   ├── git/
 │   ├── gnupg/
 │   ├── intellij/
@@ -153,7 +155,9 @@ $REIMAGE_ARTIFACT_ROOT/
 │   ├── package-managers/
 │   ├── postman/
 │   ├── raycast/
-│   └── ssh/
+│   ├── repos-gitignored/                # secret-shaped gitignored repo files routed out of staging by Phase 2A
+│   ├── ssh/
+│   └── staged-loose/                    # loose secrets relocated by Phase 3B, with MANIFEST.tsv recording each original path
 ├── staged-ignored-files/
 │   └── live/
 ├── system-inventory/
@@ -169,6 +173,11 @@ $REIMAGE_ARTIFACT_ROOT/
 
 Not every restore uses every category. Treat this as the full restore/capture map, then use the phase sections below to narrow the active inputs for the current step.
 
+Two `secrets-encrypted/` subtrees have dedicated restore consumers rather than a manual copy-back:
+
+- `secrets-encrypted/staged-loose/` is consumed by `bin/restore-staged-loose.sh`, driven from [[restore-access|restore-access.md]] (Phase 10B). It reads `MANIFEST.tsv` and returns each file to the original path it was staged from.
+- `secrets-encrypted/repos-gitignored/` is consumed by the generated `rsync-repos-gitignored.sh` action file, run from [[restore-repos|restore-repos.md]] Step 5 (Phase 11B) with the DMG attached. These files are deliberately *not* under `staged-ignored-files/live/`.
+
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
 ---
@@ -182,7 +191,7 @@ Not every restore uses every category. Treat this as the full restore/capture ma
 | Phase 10A — Restore Runtime Libraries | `system-inventory/pre-image-*/`, `system-inventory/post-image-*/`, `home-files-backup/dotfiles/` | usually notes only; later validated under `reimaged-system/` |
 | Phase 10B — Restore Access | `secrets-encrypted/`, `public-certs/`, `home-files-backup/dotfiles/` | `reimaged-system/restore-notes/` |
 | Phase 11A — Restore Git | `secrets-encrypted/ssh/`, `secrets-encrypted/git/`, `toolkit-snapshot/latest-docs/` | dual `~/.gitconfig` + `~/.ssh/config` in place; validated end-to-end for work and personal identities |
-| Phase 11B — Restore Repositories | `repo-audit-reports/runs/pre-image-*/repos.tsv`, `repo-audit-reports/staged-ignored-files/live/<label>/` | `repo-audit-reports/runs/post-image-restore-*/`, `repo-audit-reports/latest-post-image-restore.txt`, working repo checkouts |
+| Phase 11B — Restore Repositories | `repo-audit-reports/runs/pre-image-*/repos.tsv`, `staged-ignored-files/live/<label>/` | `repo-audit-reports/runs/post-image-restore-*/`, `repo-audit-reports/latest-post-image-restore.txt`, working repo checkouts |
 | Phase 12 — Restore Apps | `app-settings-backup/`, `secrets-encrypted/`, `reimaged-system/restore-notes/` | app-specific notes and later validation evidence |
 | Phase 13 — Post-Image Captures | matching Phase 4 capture outputs for comparison | `toolkit-snapshot/latest-docs/`, `toolkit-snapshot/pre-image-toolkit-snapshot-*/`, `toolkit-snapshot/latest-pre-image-toolkit-snapshot.txt`, `system-inventory/post-image-*/`, `managed-inventory/post-image-*/`, `performance-audit/post-image-performance-audit-*/`, `office-stability/post-reimage-*/` |
 | Phase 14 — Reimaged System Checks | everything needed for final validation context | `reimaged-system/checklists/reimage-checklist-*.md`, `reimaged-system/checklists/latest-reimage-checklist.txt`, optional manual follow-up in `reimaged-system/restore-notes/` |

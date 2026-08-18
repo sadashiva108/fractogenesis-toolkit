@@ -2,7 +2,7 @@
 
 # Restore Access
 
-**Last updated:** 2026-08-17
+**Last updated:** 2026-08-18
 
 Restore the identity, trust, and credential layer on the reimaged Mac after the runtime toolchain is in place — SSH keys and Git access, certificates and keychains, Java trust overrides pinned to the JDK from Phase 10A, shell and CLI configuration, and license or activation material. Everything here comes out of the encrypted secrets DMG and the reviewed dotfiles bundle built during the pre-image phases; this runbook is manual and does not run a fractogenesis-toolkit entrypoint.
 
@@ -25,9 +25,11 @@ Restore the identity, trust, and credential layer on the reimaged Mac after the 
     - [[#Step 4 — Restore Certificates and Keychain Material|Step 4 — Restore Certificates and Keychain Material]]
     - [[#Step 5 — Trust Imported Root and Issuing CA Certificates|Step 5 — Trust Imported Root and Issuing CA Certificates]]
     - [[#Step 6 — Restore Java Trust Overrides|Step 6 — Restore Java Trust Overrides]]
-    - [[#Step 7 — Restore Shell Environment and CLI Config|Step 7 — Restore Shell Environment and CLI Config]]
-    - [[#Step 8 — Restore Credentials and License Material|Step 8 — Restore Credentials and License Material]]
-    - [[#Step 9 — Eject the DMG and Clean Up Plaintext|Step 9 — Eject the DMG and Clean Up Plaintext]]
+    - [[#Step 7 — Trust the Corporate CA Outside the Keychain|Step 7 — Trust the Corporate CA Outside the Keychain]]
+    - [[#Step 8 — Restore Shell Environment and CLI Config|Step 8 — Restore Shell Environment and CLI Config]]
+    - [[#Step 9 — Restore Credentials and License Material|Step 9 — Restore Credentials and License Material]]
+    - [[#Step 10 — Eject the DMG and Clean Up Plaintext|Step 10 — Eject the DMG and Clean Up Plaintext]]
+- [[#DMG Categories Restored By Hand|DMG Categories Restored By Hand]]
 - [[#Decisions|Decisions]]
 - [[#Troubleshooting|Troubleshooting]]
 
@@ -163,7 +165,7 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 
 ### Confirm Your Intent
 
-- Are you doing a **full first-time restore** (Steps 1 through 8 in order) or a **targeted rerun** of one area (for example, just re-importing a certificate that was missed)? Both are safe; the difference is whether you also do Step 7's selective shell restore.
+- Are you doing a **full first-time restore** (Steps 1 through 10 in order) or a **targeted rerun** of one area (for example, just re-importing a certificate that was missed)? Both are safe; the difference is whether you also do Step 8's selective shell restore.
 - Which **shell files** are you willing to overwrite versus merge? The default is *merge* — comparing each file in a diff tool before adopting changes. Blanket overwrites are a common way to lose machine-specific tweaks.
 - Which **secret categories** are actually in scope for this restore? If a category is empty on the DMG (say, no Postman exports were taken), skip its step rather than inventing a source.
 
@@ -180,25 +182,36 @@ Run these in order. The order enforces a trust chain: SSH before Git access, key
 Mount the newest DMG read-only-ish; macOS mounts DMGs read-write by default, and that's fine here because the DMG is the source, not a target:
 
 ```bash
-DMG="$(ls "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted"/all-secrets-*.dmg | sort | tail -1)"
-hdiutil attach "$DMG"
+DMG="$(ls -1 "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/"all-secrets-*.dmg | sort | tail -1)"
+MNT="$(hdiutil attach "$DMG" | awk -F'\t' '/\/Volumes\//{print $NF}' | tail -1)"
+echo "$MNT"
 ```
 
 Enter the password when prompted. Confirm the mount:
 
 ```bash
 hdiutil info | grep -A1 all-secrets
-ls /Volumes/all-secrets*/
+ls "$MNT"/
 ```
 
-Every subsequent step reads from `/Volumes/all-secrets-*/`; do not copy the DMG's contents wholesale to disk.
+> [!warning] Pitfall
+> The mount point is **not** derived from the `.dmg` filename. It comes from the `-volname` passed to `hdiutil create` back in Phase 3C, and the two need not match — so `/Volumes/all-secrets-*` can glob to nothing on a perfectly good image. Capture `$MNT` here and use it in every step below, including the detach in Step 10: if that glob fails, the command silently does nothing and the plaintext secrets stay mounted.
+
+Every subsequent step reads from `"$MNT"`; do not copy the DMG's contents wholesale to disk.
+
+`$MNT` lives only in the shell that ran the attach. If you continue in a new terminal, re-derive it from a directory the image always carries rather than from the filename:
+
+```bash
+MNT="$(dirname "$(ls -1d /Volumes/*/staged-loose | tail -1)")"
+echo "$MNT"
+```
 
 > [!bug] Troubleshooting
 > If `hdiutil attach` reports the image as corrupt, see [[#`hdiutil attach` says the DMG is corrupt|`hdiutil attach` says the DMG is corrupt]].
 
 ### Step 2 — Restore Files Swept by the Phase 3B Loose-Secret Sweep
 
-Phase 3B **moved** every credential-shaped file out of the plaintext artifact tree into `secrets-encrypted/staged-loose/` so the DMG could encrypt it. Nothing puts those files back automatically. Until this step runs, `home-files-backup/`, `app-settings-backup/`, and `staged-ignored-files/` all have holes in them — and the later phases that read those trees (Step 7 below, `restore-apps.md` in Phase 12, `restore-home.md` in Phase 15) will silently restore an incomplete set.
+Phase 3B **moved** every credential-shaped file out of the plaintext artifact tree into `secrets-encrypted/staged-loose/` so the DMG could encrypt it. Nothing puts those files back automatically. Until this step runs, `home-files-backup/`, `app-settings-backup/`, and `staged-ignored-files/` all have holes in them — and the later phases that read those trees (Step 8 below, `restore-apps.md` in Phase 12, `restore-home.md` in Phase 15) will silently restore an incomplete set.
 
 Run it now, while the DMG from Step 1 is still attached and before anything reads those trees.
 
@@ -244,8 +257,8 @@ Copy the SSH material into place:
 
 ```bash
 mkdir -p ~/.ssh
-cp -R /Volumes/all-secrets-*/ssh/* ~/.ssh/
-cp -R /Volumes/all-secrets-*/git/. ~/    # copies ~/.gitconfig and ~/.config/git/
+cp -R "$MNT"/ssh/* ~/.ssh/
+cp -R "$MNT"/git/. ~/    # copies ~/.gitconfig and ~/.config/git/
 ```
 
 Fix permissions — the SSH client refuses to use loose keys:
@@ -272,7 +285,7 @@ ssh -T git@github.com || true
 Import certificates from the reviewed manual exports. Do this in Keychain Access rather than by shell copy, so each import goes into the correct keychain and you can inspect the result immediately:
 
 ```bash
-open -a "Keychain Access" /Volumes/all-secrets-*/certs/keychain-manual-exports/
+open -a "Keychain Access" "$MNT/certs/keychain-manual-exports/"
 ```
 
 For each `.cer` or `.p12` file, drag it into the target keychain (usually `login`) and enter the password if prompted. Reference the reviewed non-secret material under `$REIMAGE_ARTIFACT_ROOT/public-certs/` if you need to double-check which certs are which.
@@ -292,11 +305,26 @@ open -a "Keychain Access"
 3. Set **When using this certificate** to **Always Trust**.
 4. Close the window and enter your password to save the change.
 
-CLI equivalent, if you prefer to script the trust change instead of using the GUI:
+CLI equivalent, if you prefer to script the trust change instead of using the GUI. Pick **one** of the two forms below — they target different trust domains and must not be combined.
+
+**1. User domain (login keychain, no root needed)** — trusts the CA for your account only. This is the form to use here:
 
 ```bash
-security add-trusted-cert -d -r trustRoot -k "$HOME/Library/Keychains/login.keychain-db" "/Volumes/all-secrets-*/certs/keychain-manual-exports/root-ca.cer"
+CERT="$MNT/certs/keychain-manual-exports/root-ca.cer"
+ls -l "$CERT"
+security add-trusted-cert -r trustRoot -k "$HOME/Library/Keychains/login.keychain-db" "$CERT"
 ```
+
+**2. System domain (admin trust, all users)** — the alternative, only if the CA must be trusted machine-wide:
+
+```bash
+sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain "$CERT"
+```
+
+`-d` selects the admin/system trust domain and requires root; it belongs with `/Library/Keychains/System.keychain` and `sudo`, never with your login keychain.
+
+> [!warning] Pitfall
+> Two ways this command fails silently or confusingly. First, a wildcard inside double quotes is never expanded by the shell — `"$MNT/certs/.../root-ca.cer"` is a real resolved path, but `"/Volumes/all-secrets-*/certs/.../root-ca.cer"` is a literal string and returns "No such file or directory". Second, mixing `-d` with `-k "$HOME/Library/Keychains/login.keychain-db"` asks for the admin domain while pointing at a user keychain; it errors or writes trust somewhere you did not intend. Resolve the path first (the `ls -l` above), then run exactly one of the two forms.
 
 > [!warning] Pitfall
 > Only mark a certificate as **Always Trust** if it is the company's actual internal root or issuing CA. Doing this for an arbitrary or unverified certificate opens the machine to trust attacks. If in doubt, leave the certificate's trust at "Use System Defaults" and revisit.
@@ -308,22 +336,122 @@ security add-trusted-cert -d -r trustRoot -k "$HOME/Library/Keychains/login.keyc
 
 Only restore `jssecacerts` after confirming the target JDK is the one installed in Phase 10A — the file lives inside a specific JDK's `lib/security/` directory and does nothing if it lands next to a different JDK.
 
-Pin `JAVA_HOME` explicitly:
+Pin `JAVA_HOME` explicitly, and stop if it does not resolve:
 
 ```bash
-export JAVA_HOME="$(/usr/libexec/java_home -v 17)"
-ls -la "$JAVA_HOME/lib/security"
+JAVA_HOME="$(/usr/libexec/java_home -v 17 2>/dev/null)"
+if [ -n "$JAVA_HOME" ] && [ -d "$JAVA_HOME/lib/security" ]; then
+  export JAVA_HOME
+  printf 'JAVA_HOME=%s\n' "$JAVA_HOME"
+  ls -la "$JAVA_HOME/lib/security"
+else
+  printf 'JDK 17 did not resolve (JAVA_HOME=%s). Stop here.\n' "${JAVA_HOME:-<empty>}" >&2
+  printf 'Go back to Phase 10A (restore-runtime.md) and install/link the JDK before continuing.\n' >&2
+fi
 ```
 
-Copy the reviewed override into place:
+Copy the reviewed override into place, asserting the target is a real JDK first:
 
 ```bash
-cp /Volumes/all-secrets-*/certs/java-security/jssecacerts "$JAVA_HOME/lib/security/jssecacerts"
+if [ -d "$JAVA_HOME/lib/security" ]; then
+  cp "$MNT/certs/java-security/jssecacerts" "$JAVA_HOME/lib/security/jssecacerts"
+  ls -l "$JAVA_HOME/lib/security/jssecacerts"
+else
+  printf 'Refusing to copy: %s is not a JDK security directory.\n' "${JAVA_HOME:-<empty>}/lib/security" >&2
+fi
 ```
+
+Depending on how the JDK was installed, `$JAVA_HOME` may be root-owned — if the `cp` reports "Permission denied", rerun that one line with `sudo` and then confirm the file is readable by all (`chmod 644`).
+
+> [!warning] Pitfall
+> Do not run `export JAVA_HOME="$(/usr/libexec/java_home -v 17)"` unguarded. If JDK 17 is missing, `java_home` prints its error to stderr and exits non-zero, `export` still succeeds, and `JAVA_HOME` ends up **empty**. The next `cp` then expands to the absolute path `/lib/security/jssecacerts`, which is not a JDK — it either fails with "No such file or directory" or, under `sudo`, writes a stray trust store at the filesystem root that no JVM ever reads. You would see a clean-looking command and no working Java trust.
+
+> [!note]
+> Homebrew's `openjdk@17` is keg-only, so `/usr/libexec/java_home` will not see it until it is linked into the system JDK directory:
+>
+> ```bash
+> sudo ln -sfn "$(brew --prefix openjdk@17)/libexec/openjdk.jdk" /Library/Java/JavaVirtualMachines/openjdk-17.jdk
+> /usr/libexec/java_home -V
+> ```
 
 Validate an internal TLS use case afterward — the simplest smoke test is a `curl` or `gradle` call against an internal endpoint that requires the corporate root.
 
-### Step 7 — Restore Shell Environment and CLI Config
+### Step 7 — Trust the Corporate CA Outside the Keychain
+
+Steps 4 through 6 covered the macOS keychain and the JVM. That is not everything. With TLS interception on the corporate network, npm, Node, pip, Homebrew's `curl`, and Git over HTTPS each consult their **own** bundled CA file and never read the macOS keychain, so they keep failing with `SELF_SIGNED_CERT_IN_CHAIN` or `unable to get local issuer certificate` long after Keychain Access says the root is trusted. Do this now, not at the first broken `npm install` in Phase 11B or 12.
+
+**1. Export the intercepting root to a stable path:**
+
+The most reliable source is the reviewed export already on the DMG — convert it to PEM:
+
+```bash
+mkdir -p ~/.certs
+openssl x509 -inform DER -in "$MNT/certs/keychain-manual-exports/root-ca.cer" -out ~/.certs/corp-root.pem
+```
+
+If the file is already PEM, `openssl` will say so; just copy it instead. To pull it back out of the keychain rather than the DMG, list the CA labels and export by common name:
+
+```bash
+security find-certificate -a /Library/Keychains/System.keychain | grep '"labl"'
+security find-certificate -a -c "<Root CA common name>" -p \
+  /Library/Keychains/System.keychain "$HOME/Library/Keychains/login.keychain-db" \
+  > ~/.certs/corp-root.pem
+```
+
+Confirm you got a certificate and not an empty file:
+
+```bash
+grep -c 'BEGIN CERTIFICATE' ~/.certs/corp-root.pem
+openssl x509 -in ~/.certs/corp-root.pem -noout -subject -issuer -dates
+```
+
+**2. Node and npm:**
+
+```bash
+printf '\nexport NODE_EXTRA_CA_CERTS="$HOME/.certs/corp-root.pem"\n' >> ~/.zprofile
+export NODE_EXTRA_CA_CERTS="$HOME/.certs/corp-root.pem"
+npm config set cafile "$HOME/.certs/corp-root.pem"
+```
+
+**3. Git over HTTPS and Homebrew's `curl`:**
+
+```bash
+git config --global http.sslCAInfo "$HOME/.certs/corp-root.pem"
+printf '\nexport CURL_CA_BUNDLE="$HOME/.certs/corp-root.pem"\n' >> ~/.zprofile
+export CURL_CA_BUNDLE="$HOME/.certs/corp-root.pem"
+```
+
+SSH remotes are unaffected — this only matters for HTTPS remotes, which is what most tooling and CI helpers default to.
+
+**4. Python (pip, requests, and anything built on them):**
+
+```bash
+printf '\nexport REQUESTS_CA_BUNDLE="$HOME/.certs/corp-root.pem"\nexport PIP_CERT="$HOME/.certs/corp-root.pem"\n' >> ~/.zprofile
+export REQUESTS_CA_BUNDLE="$HOME/.certs/corp-root.pem"
+export PIP_CERT="$HOME/.certs/corp-root.pem"
+pip config set global.cert "$HOME/.certs/corp-root.pem"   # optional, persists outside the shell
+```
+
+**5. Smoke-test each store before moving on:**
+
+```bash
+curl -sSI https://registry.npmjs.org/ >/dev/null && echo curl-ok
+node -e "require('https').get('https://registry.npmjs.org/', r => console.log('node-ok', r.statusCode))"
+npm ping
+git ls-remote https://github.com/git/git >/dev/null && echo git-ok
+python3 -c "import urllib.request; urllib.request.urlopen('https://pypi.org/simple/'); print('py-ok')"
+```
+
+> [!note]
+> If the interception uses an intermediate issuing CA as well as a root, the bundle needs both. Concatenate them into the same file — `cat root.pem issuing.pem > ~/.certs/corp-root.pem` — and re-run the smoke tests; a bundle may hold any number of PEM blocks.
+
+> [!warning] Pitfall
+> `~/.zprofile` only reaches processes started from a login shell. GUI apps launched from the Dock or Spotlight — IntelliJ, VS Code, Docker Desktop — do not see `NODE_EXTRA_CA_CERTS` or `REQUESTS_CA_BUNDLE` and will still fail. Launch them from a terminal, or set the variable in the app's own run configuration. And never "fix" this with `npm config set strict-ssl false`, `GIT_SSL_NO_VERIFY=1`, or `pip --trusted-host`: those disable verification instead of establishing trust, and they tend to survive into places you did not intend.
+
+> [!bug] Troubleshooting
+> `SELF_SIGNED_CERT_IN_CHAIN` after all of the above almost always means the tool is reading a different config than you set. Check what it actually resolved: `npm config get cafile`, `git config --get http.sslCAInfo`, `python3 -c "import ssl; print(ssl.get_default_verify_paths())"`, and `echo "$NODE_EXTRA_CA_CERTS"`. A per-repo `.npmrc` or a project-local `.git/config` overrides the global setting.
+
+### Step 8 — Restore Shell Environment and CLI Config
 
 Do not blindly overwrite fresh shell files. Diff first, adopt selectively.
 
@@ -353,16 +481,16 @@ Common selective restores:
 
 Prefer selective merge over blind copy for machine-specific files — the `.zprofile` on this Mac already has the Homebrew and `nvm` bootstrap added in Phase 10A, and overwriting it would remove those.
 
-### Step 8 — Restore Credentials and License Material
+### Step 9 — Restore Credentials and License Material
 
 Credential-bearing material stays inside the DMG until the moment it is needed. Restore only through supported flows:
 
 Typical sources on the mounted volume:
 
 ```text
-/Volumes/all-secrets-*/cli-credentials/    # per-tool credential exports (aws profile files, kube credentials, etc.)
-/Volumes/all-secrets-*/licenses/           # app license keys, serial numbers, activation files
-/Volumes/all-secrets-*/package-managers/   # npm, cargo, and similar credential stores
+$MNT/cli-credentials/    # per-tool credential exports (aws profile files, kube credentials, etc.)
+$MNT/licenses/           # app license keys, serial numbers, activation files
+$MNT/package-managers/   # npm, cargo, and similar credential stores
 ```
 
 For each application license or activation file:
@@ -375,13 +503,19 @@ For each application license or activation file:
 > [!warning] Pitfall
 > Screenshots or PDFs of subscription pages that contain private identifiers still count as secret material. They belong under `secrets-encrypted/licenses/`, not under `public-certs/` or a general notes folder.
 
-### Step 9 — Eject the DMG and Clean Up Plaintext
+### Step 10 — Eject the DMG and Clean Up Plaintext
 
 Eject the DMG once every restore that reads from it is done:
 
 ```bash
-hdiutil detach /Volumes/all-secrets-*
+hdiutil detach "$MNT"
+hdiutil info | grep -c all-secrets   # expect 0
 ```
+
+> [!warning] Pitfall
+> Detach by `"$MNT"`, never by `/Volumes/all-secrets-*`. If the volume name does not match the DMG filename the glob expands to nothing, `hdiutil detach` fails on a literal path, and the mounted plaintext secrets are left sitting on `/Volumes/` — usually unnoticed, because the step "ran". If `$MNT` is no longer set in this shell, re-derive it with the snippet in Step 1.
+
+Before you detach, check [[#DMG Categories Restored By Hand|DMG Categories Restored By Hand]] below — several categories on the image have no step anywhere in the toolkit, and once the DMG is ejected and the artifact drive retired they are gone.
 
 Sweep for any temporary plaintext copies you may have made outside the DMG (Downloads, Desktop) and remove them. The DMG is the durable copy; nothing plaintext should remain on disk after this step.
 
@@ -393,9 +527,32 @@ Confirm the exit criteria before moving on to `restore-git.md`:
 | Git config | `git config --global user.email` returns the intended identity. |
 | Keychain trust | Internal root and issuing CAs are marked Always Trust in the login keychain. |
 | Java trust | `jssecacerts` is present under `$JAVA_HOME/lib/security/`, and an internal TLS smoke test succeeds. |
+| Non-keychain trust | `npm ping`, `git ls-remote` over HTTPS, and a Python HTTPS fetch all succeed with no TLS error. |
+| By-hand categories | Every row in [[#DMG Categories Restored By Hand\|DMG Categories Restored By Hand]] is either restored or consciously skipped. |
 | Shell config | `.zprofile` retains the Homebrew and `nvm` bootstrap from Phase 10A; adopted files were reviewed, not blindly copied. |
 | Credentials and licenses | Each application in scope is activated through its supported flow; no plaintext activation files remain on disk outside the DMG. |
 | DMG | Detached from `/Volumes/`. |
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
+## DMG Categories Restored By Hand
+
+These categories exist on the secrets DMG but have no restore step here and no runbook anywhere else in the toolkit. Walk the list once, while the image is still mounted (`ls "$MNT"`), and restore or consciously skip each one. Nothing downstream will remind you.
+
+| Category on the DMG | Restore by hand |
+|---|---|
+| `gnupg/` | Copy back to `~/.gnupg`, then `chmod 700 ~/.gnupg` and `chmod 600 ~/.gnupg/*` — `gpg` refuses a world-readable home. Verify with `gpg --list-secret-keys`; re-set `trust` on your own key if signing fails. |
+| `cloud/` (AWS) | Copy `credentials` and `config` into `~/.aws/` at mode `600`. Prefer re-running `aws sso login` or re-issuing keys over restoring long-lived access keys; confirm with `aws sts get-caller-identity`. |
+| `kube/` | Copy the kubeconfig to `~/.kube/config` at mode `600`. Cluster tokens are usually expired — re-auth through the cluster's exec/OIDC plugin, then `kubectl config get-contexts`. |
+| `claude/` | Put `claude_desktop_config.json` back under `~/Library/Application Support/Claude/` and restart Claude Desktop so it re-reads the file. |
+| `claude-code/` | Restore `.claude.json` to `~/.claude.json`. It carries MCP server definitions plus account and org identifiers — review it before restoring, drop entries for machines or projects that no longer exist, and re-authenticate rather than trusting any token inside it. |
+| `raycast/` | Restore through Raycast's own flow (Settings → Advanced → Import), not by copying files. The `.rayconfig` export is password-protected; you need the password from Phase 3C. |
+| `chrome/` (`*Passwords*.csv`) | **Intentionally not restored.** Passwords come back through the password manager, which is the system of record. The CSV exists only as a break-glass copy and must be destroyed along with the DMG — never imported into the new browser profile. |
+
+> [!warning] Pitfall
+> The `chrome/*Passwords*.csv` file is plaintext credentials for every site you have ever saved. Do not copy it out of the DMG "just to check", and do not let it survive the DMG. If you already extracted a copy, remove it now and confirm nothing is left: `ls ~/Downloads ~/Desktop | grep -i password`.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
