@@ -232,7 +232,16 @@ if [[ -z "$OUTPUT_ROOT" ]]; then
 fi
 
 REPORT_FILE="$OUTPUT_ROOT/reimage-checklist-${TIMESTAMP}.md"
-mkdir -p "$OUTPUT_ROOT"
+if [[ -z "$OUTPUT_ROOT" ]]; then
+  echo "ERROR: output root resolved to an empty path; refusing to write the checklist." >&2
+  exit 2
+fi
+# Unchecked, a read-only or unwritable destination produced a run that printed a
+# report path that did not exist -- the sign-off artifact for the whole rebuild.
+if ! mkdir -p "$OUTPUT_ROOT" 2>/dev/null; then
+  echo "ERROR: cannot create output root: $OUTPUT_ROOT" >&2
+  exit 2
+fi
 
 # ---------------------------------------------------------------------------
 # Configured workspace roots (post only)
@@ -1084,21 +1093,33 @@ if [[ "$PHASE" == "post" ]]; then
   record_check PASS "Current user" "$(whoami 2>/dev/null || echo unknown)"
   record_check PASS "Hostname" "$(scutil --get ComputerName 2>/dev/null || hostname)"
 
+  # FAIL, not WARN: a rebuilt managed Mac with FileVault off is a compliance and
+  # data-loss problem, and Phase 14 is the last point anyone looks. It is also
+  # trivially fixable at this stage, so failing here costs minutes, not a rerun.
   FV_STATUS="$(fdesetup status 2>/dev/null || echo unknown)"
   if echo "$FV_STATUS" | grep -qi "FileVault is On"; then
     record_check PASS "FileVault" "$FV_STATUS"
   else
-    record_check WARN "FileVault" "$FV_STATUS -- confirm FileVault is enabled"
+    record_check FAIL "FileVault" "$FV_STATUS -- enable FileVault (System Settings > Privacy & Security), then confirm the recovery key is escrowed to MDM"
   fi
 
   # -------------------------------------------------------------------------
   record_section "MDM and Security"
   # -------------------------------------------------------------------------
+  # `profiles status -type enrollment` prints two lines, e.g.
+  #     Enrolled via DEP: No
+  #     MDM enrollment: Yes (User Approved)
+  # A bare `grep -qi enrolled` matches the FIRST line's label regardless of its
+  # Yes/No value, so a DEP-registered but NOT MDM-enrolled Mac scored PASS --
+  # exactly the state Phase 8 exists to catch. Anchor on the field prefix.
+  #
+  # FAIL, not WARN: if MDM enrollment did not complete, Phase 8 did not complete,
+  # and every managed-app and certificate assumption downstream is unfounded.
   MDM_RAW="$(profiles status -type enrollment 2>/dev/null || echo 'unknown')"
-  if echo "$MDM_RAW" | grep -qi "enrolled"; then
-    record_check PASS "MDM / Intune enrollment" "Enrolled"
+  if echo "$MDM_RAW" | grep -Eqi '^[[:space:]]*MDM enrollment:[[:space:]]*Yes'; then
+    record_check PASS "MDM / Intune enrollment" "$(echo "$MDM_RAW" | tr '\n' ' ')"
   else
-    record_check WARN "MDM / Intune enrollment" "Enrollment not confirmed -- check Company Portal"
+    record_check FAIL "MDM / Intune enrollment" "Not MDM-enrolled -- $(echo "$MDM_RAW" | tr '\n' ' ') -- re-run enrollment via Company Portal (Phase 8)"
   fi
 
   if [[ "$(check_app "Company Portal")" == "PASS" ]]; then
@@ -1293,6 +1314,35 @@ if [[ "$PHASE" == "post" ]]; then
   # -------------------------------------------------------------------------
   record_section "Git Repository Status"
   # -------------------------------------------------------------------------
+  # FAIL, not WARN: an empty global identity means Phase 11A did not complete.
+  # Every commit made afterwards is mis-attributed, and the damage is only
+  # discoverable by rewriting history later.
+  GIT_G_NAME="$(git config --global user.name 2>/dev/null || true)"
+  GIT_G_EMAIL="$(git config --global user.email 2>/dev/null || true)"
+  if [[ -n "$GIT_G_NAME" && -n "$GIT_G_EMAIL" ]]; then
+    record_check PASS "Global Git identity" "$GIT_G_NAME <$GIT_G_EMAIL>"
+  else
+    record_check FAIL "Global Git identity" "user.name/user.email not set globally -- re-run restore-git.md (Phase 11A) before committing anything"
+  fi
+
+  # The dual-identity setup is what keeps work commits off personal repos. An
+  # absent includeIf means the personal root silently inherits the work identity.
+  if git config --global --get-regexp '^includeIf' >/dev/null 2>&1; then
+    record_check PASS "Git conditional include (dual identity)" "includeIf present in global config"
+  else
+    record_check WARN "Git conditional include (dual identity)" "No includeIf -- personal repos will use the work identity; see restore-git.md"
+  fi
+
+  # FAIL, not WARN: signing off with a decrypted secrets volume still attached
+  # leaves every credential in the DMG readable to anything running on the Mac.
+  ATTACHED_DMG="$(hdiutil info 2>/dev/null | grep -c 'all-secrets' || true)"
+  [[ -n "$ATTACHED_DMG" ]] || ATTACHED_DMG=0
+  if [[ "$ATTACHED_DMG" -eq 0 ]]; then
+    record_check PASS "Secrets DMG detached" "No all-secrets image attached"
+  else
+    record_check FAIL "Secrets DMG detached" "A secrets DMG is still attached -- hdiutil detach it before signing off"
+  fi
+
   if [[ ${#WORKSPACE_ROOTS[@]} -gt 0 ]]; then
     for WROOT in "${WORKSPACE_ROOTS[@]}"; do
       if [[ -d "$WROOT" ]]; then
@@ -1569,6 +1619,10 @@ printf "\n"
   printf "*Report generated by \`%s\` at %s*\n" "$SCRIPT_NAME" "$TIMESTAMP"
 } > "$REPORT_FILE"
 
+if [[ ! -s "$REPORT_FILE" ]]; then
+  echo "ERROR: checklist report was not written: $REPORT_FILE" >&2
+  exit 2
+fi
 printf "  Report written to:\n  %s\n\n" "$REPORT_FILE"
 
 # Latest-pointer convenience file

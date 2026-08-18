@@ -239,13 +239,28 @@ Read the generated checklist end-to-end. For each row:
 | `PASS` | Move on. |
 | `WARN` | Decide whether it blocks sign-off. If yes, act. If no, record why in a `restore-notes/` note so the next Phase 14 pass carries the reasoning. |
 | `FAIL` | Act. This row must resolve or be explicitly waived with a note before the sign-off pass. |
+
+Only four post-image rows can record `FAIL`, and each one means a phase did not
+finish rather than a detail needing attention:
+
+| Row | Why it blocks sign-off |
+|---|---|
+| MDM / Intune enrollment | Phase 8 did not complete; every managed-app and certificate assumption after it is unfounded. |
+| FileVault | A rebuilt managed Mac with FileVault off is a compliance and data-loss problem, and this is the last point anyone looks. |
+| Global Git identity | Phase 11A did not complete; commits made afterwards are mis-attributed and only fixable by rewriting history. |
+| Secrets DMG detached | A decrypted secrets volume is still attached, leaving every credential in it readable. |
+
+Everything else is `WARN` or `SKIP` by design — including absent optional Phase 13
+captures, security agents still installing, and Docker not yet running. So
+`./bin/reimage-checklist.sh --phase post` exiting **0** now genuinely means "no
+phase was left unfinished", and exiting **1** names which one.
 | `SKIP` | Confirm the skip is intended (e.g., you did not pass `--internal-url` on purpose). If not, rerun with the correct flag. |
 
 > [!warning] Pitfall
 > A `PASS` row proves the check ran, not that the underlying state is what you want. Read the value the row emitted (the specific version, the specific enrollment state) — a `PASS` on a stale value is still a problem.
 
 > [!bug] Troubleshooting
-> If the checklist reports `FAIL` for Docker although Docker Desktop is installed, see [[#The checklist reports `FAIL` for Docker even though Docker Desktop is installed|The checklist reports `FAIL` for Docker even though Docker Desktop is installed]].
+> If the checklist reports `WARN` for Docker although Docker Desktop is installed, see [[#The checklist reports `WARN` for Docker even though Docker Desktop is installed|The checklist reports `WARN` for Docker even though Docker Desktop is installed]].
 
 ### Step 4 — Resolve Manual Sign-Off Areas
 
@@ -310,7 +325,7 @@ Three post-image outcomes need more than a rerun to clear, and each would break 
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
-### The checklist reports `FAIL` for Docker even though Docker Desktop is installed
+### The checklist reports `WARN` for Docker even though Docker Desktop is installed
 
 The Docker CLI check needs the Docker daemon to be responsive, not just the app installed. Launch Docker Desktop, wait for the whale icon to stabilize, and rerun the checklist.
 
