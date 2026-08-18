@@ -145,6 +145,7 @@ REQUIRED_FRAGMENTS=(
 # clean, so absence is reported as a note, never as a failure.
 # ---------------------------------------------------------------------------
 OPTIONAL_FRAGMENTS=(
+  archive-policy.conf.sh
   loose-secret-exceptions.conf.sh
   secret-shapes.conf.sh
 )

@@ -282,9 +282,11 @@ The fragments it verifies, and what each defines:
 | `external-dotfiles.conf.sh` | Individual home-directory dotfiles copied when present. |
 | `external-excludes.conf.sh` | Global rsync excludes applied to every external sync. |
 | `external-targets.conf.sh` | Home-directory targets copied under `home-files-backup/`. |
+| `loose-secret-exceptions.conf.sh` | *Optional.* Phase 3B sweep findings confirmed as noise, each with the evidence for that call. Read by `report-loose-secrets.sh`, not by this phase. |
 | `onedrive-extra-excludes.conf.sh` | Extra excludes applied only to OneDrive syncs. |
 | `onedrive-targets.conf.sh` | The narrower, document-only OneDrive sync target list. |
 | `secret-flags.conf.sh` | Optional secret backup toggles, one per secrets target. |
+| `secret-shapes.conf.sh` | *Optional.* Extra credential-shaped filename globs, added to the built-in floor. Read by `report-loose-secrets.sh` and `stage-loose-secrets.sh`, not by this phase. |
 | `secrets-targets.conf.sh` | Sensitive targets routed to `secrets-encrypted/` instead of `home-files-backup/`. |
 | `skip-entries.conf.sh` | Intentionally skipped paths and the reason each is skipped. |
 
@@ -390,6 +392,17 @@ find "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted" -maxdepth 2 | sort
 
 > [!warning] Pitfall
 > Do not use this output as a bulk restore source without review. Some dotfiles and local configs may be obsolete or unsafe to copy directly onto the post-image system.
+
+Re-run the archive scan against the artifact root, this time to confirm what actually landed rather than to decide:
+
+```bash
+.internal/scan-archive-contents.sh
+```
+
+With no mode flag it defaults to `$REIMAGE_ARTIFACT_ROOT`. An archive you added to `ARCHIVE_SKIP` should be absent from the results entirely; one you chose to keep should appear with the same members it had at the source.
+
+> [!warning] Pitfall
+> Finding a credential-bearing archive *here* is worse than finding it before the copy. The plaintext is now on the drive, and if the run included the OneDrive leg it may already be uploading — a local delete does not recall it. That is why the scan step comes before the copy, not after.
 
 > [!bug] Troubleshooting
 > If a directory you listed in `external-targets.conf.sh` is missing from the copy, see [[#Directory Target Not Backed Up|Directory Target Not Backed Up]].
