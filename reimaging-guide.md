@@ -680,11 +680,15 @@ This phase brings the rebuilt Mac to a clean, trusted managed baseline before an
 >
 > **Primary — if Wi-Fi is connected (it should be, from Phase 7's sign-in step):**
 > ```bash
-> export TOOLKIT_GITHUB_ACCOUNT=<your-github-account>
-> curl -fL -o /tmp/bootstrap.sh \
->   "https://raw.githubusercontent.com/$TOOLKIT_GITHUB_ACCOUNT/fractogenesis-toolkit/main/bootstrap.sh"
-> bash /tmp/bootstrap.sh
+> export TOOLKIT_GITHUB_ACCOUNT="<your-github-account>"   # from the emailed cheatsheet
+> case "${TOOLKIT_GITHUB_ACCOUNT:-}" in
+>   ''|*'<'*) echo "TOOLKIT_GITHUB_ACCOUNT is not a real account yet." >&2 ;;
+>   *) curl -fL -o /tmp/bootstrap.sh \
+>        "https://raw.githubusercontent.com/$TOOLKIT_GITHUB_ACCOUNT/fractogenesis-toolkit/main/bootstrap.sh" \
+>      && bash /tmp/bootstrap.sh ;;
+> esac
 > ```
+> The account **must** be quoted and substituted. Unquoted, `<your-github-account>` is a shell redirection and the line is a syntax error; left unsubstituted, the fetch 404s in a way that looks like a missing file rather than a missing value. The `case` catches both.
 > Installs to `$HOME/fractogenesis-toolkit` (or `$FRACTOGENESIS_HOME` if set). No `git` needed — installing `git` on a bare Mac triggers a large Xcode Command Line Tools popup/download, which this deliberately avoids.
 >
 > This is the one command in the workflow that cannot use `$TOOLKIT_GITHUB_ACCOUNT`. `reimage.env` did not survive the erase, and anything that could hand it to you — the jump drive, the artifact volume — has already handed you the toolkit, making the fetch unnecessary. **Substitute the account from the post-reimage cheatsheet you emailed yourself.**

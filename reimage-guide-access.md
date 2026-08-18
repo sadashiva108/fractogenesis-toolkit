@@ -178,17 +178,30 @@ cd /tmp/fractogenesis-toolkit-access-test
 
 ```bash
 export FRACTOGENESIS_HOME=/tmp/fractogenesis-toolkit-access-test/curl-kit
+: "${FRACTOGENESIS_HOME:?export failed — do not continue}"
+echo "FRACTOGENESIS_HOME=[$FRACTOGENESIS_HOME]"
 ```
+
+The echo is not padding. This variable is load-bearing for every step that follows,
+and every way it can be wrong is silent: `bootstrap.sh` falls back to
+`$HOME/fractogenesis-toolkit` when it is empty, and `cd "$FRACTOGENESIS_HOME"` in
+step 8 becomes `cd ""` — a no-op that returns **0**, leaving you in the parent
+directory with no `bin/` and an error that reads like a missing file. Confirm the
+brackets contain the throwaway path before going on.
 
 Note: a `VAR=val` prefix directly on the curl command (`FRACTOGENESIS_HOME=... curl ... | bash`) does **not** work here — that only sets the variable for `curl`, not for `bash` on the other side of the pipe, which is where `bootstrap.sh` actually runs. It has to be `export`ed on its own line beforehand.
 
 **4. Then fetch and run `bootstrap.sh` — as two steps, not a pipe:**
 
 ```bash
+: "${TOOLKIT_GITHUB_ACCOUNT:?not set — source reimage.env, or export it from the post-reimage cheatsheet}" &&
 curl -fL -o /tmp/bootstrap.sh \
-  "https://raw.githubusercontent.com/$TOOLKIT_GITHUB_ACCOUNT/fractogenesis-toolkit/main/bootstrap.sh"
+  "https://raw.githubusercontent.com/$TOOLKIT_GITHUB_ACCOUNT/fractogenesis-toolkit/main/bootstrap.sh" &&
 bash /tmp/bootstrap.sh
 ```
+
+> [!warning] Pitfall
+> The guard on the first line is not decoration. With `TOOLKIT_GITHUB_ACCOUNT` unset the URL collapses to `raw.githubusercontent.com//fractogenesis-toolkit/…`; GitHub redirects the double slash and the redirect target 404s. What you see is `curl: (56) The requested URL returned error: 404` and `bash: /tmp/bootstrap.sh: No such file or directory` — which reads as "the file is missing from the repo" and sends you to check the wrong thing. The tell is **two** transfer lines in curl's progress output instead of one: a 76-byte redirect body, then the failure. The guard turns that into one unambiguous line naming the variable.
 
 > [!warning] Pitfall
 > Do not use `curl -fsSL … | bash`. With `-f -s`, a 404 — or a captive portal returning its own page — prints nothing, `bash` reads an empty stdin, and the pipeline exits **0**. The test then "passes" while installing nothing, and the failure only surfaces at the pass criteria in step 6, with no indication of the cause. Fetching to a file first turns a failed download into a visible `curl: (22)`.
@@ -201,15 +214,31 @@ bash /tmp/bootstrap.sh
 ls "$FRACTOGENESIS_HOME"
 ```
 
-**6. Pass criteria — all three should be true:**
+**6. Pass criteria — every row must print `PASS`:**
 
 ```bash
-test -d "$FRACTOGENESIS_HOME" && echo "OK: destination directory exists"
-test -f "$FRACTOGENESIS_HOME/bootstrap.sh" && echo "OK: bootstrap.sh present"
-test -x "$FRACTOGENESIS_HOME/bin/build-jump-drive-payload.sh" && echo "OK: bin/ scripts came through executable"
+fail=0
+chk() { if [ "$1" -eq 0 ]; then printf 'PASS  %s\n' "$2"; else printf 'FAIL  %s\n' "$2"; fail=1; fi; }
+
+[ -n "$FRACTOGENESIS_HOME" ];                                    chk $? 'FRACTOGENESIS_HOME is set'
+[ -d "$FRACTOGENESIS_HOME" ];                                    chk $? 'destination directory exists'
+[ -f "$FRACTOGENESIS_HOME/bootstrap.sh" ];                       chk $? 'bootstrap.sh present'
+[ -x "$FRACTOGENESIS_HOME/bin/build-jump-drive-payload.sh" ];    chk $? 'bin/ scripts arrived executable'
+[ ! -e "$HOME/fractogenesis-toolkit" ];                          chk $? 'no stray install in $HOME (the override took effect)'
+
+[ "$fail" -eq 0 ] && echo "ALL PASS" || echo "NOT PROVEN — do not trust this route yet"
 ```
 
-If any of these fail, stop and diagnose before trusting this path during an actual reimage.
+Every row prints `PASS` or `FAIL`. The previous `test … && echo "OK"` form printed
+**nothing** when a check failed, so an unset `FRACTOGENESIS_HOME` — which fails all
+of them at once — looked identical to not having run the block.
+
+The last row is the one that catches a failed override. `bootstrap.sh` falls back to
+`$HOME/fractogenesis-toolkit` when `FRACTOGENESIS_HOME` is empty, so the install
+*succeeds* while landing somewhere this test never looks — and on a pre-erase machine
+that is exactly where Phase 8 will later put the real checkout.
+
+If anything prints `FAIL`, stop and diagnose before trusting this path during an actual reimage.
 
 **7. Open the markdown files, using only what's available on a bare Mac** (no Obsidian, no VS Code — pick any one of these):
 
@@ -326,6 +355,8 @@ mkdir -p /tmp/fractogenesis-toolkit-access-test
 
 ```bash
 export FRACTOGENESIS_HOME="/tmp/fractogenesis-toolkit-access-test/jump-drive-kit"
+: "${FRACTOGENESIS_HOME:?export failed — do not continue}"
+echo "FRACTOGENESIS_HOME=[$FRACTOGENESIS_HOME]"
 ```
 
 **8. Install from the jump drive, referencing both files from the drive itself** — not your real checkout, simulating the true no-network scenario:
@@ -340,15 +371,31 @@ bash "$JUMP_DRIVE_VOLUME/bootstrap.sh" "$JUMP_DRIVE_VOLUME/tarball/fractogenesis
 ls "$FRACTOGENESIS_HOME"
 ```
 
-**10. Pass criteria — all three should be true:**
+**10. Pass criteria — every row must print `PASS`:**
 
 ```bash
-test -d "$FRACTOGENESIS_HOME" && echo "OK: destination directory exists"
-test -f "$FRACTOGENESIS_HOME/bootstrap.sh" && echo "OK: bootstrap.sh present"
-test -x "$FRACTOGENESIS_HOME/bin/build-jump-drive-payload.sh" && echo "OK: bin/ scripts came through executable"
+fail=0
+chk() { if [ "$1" -eq 0 ]; then printf 'PASS  %s\n' "$2"; else printf 'FAIL  %s\n' "$2"; fail=1; fi; }
+
+[ -n "$FRACTOGENESIS_HOME" ];                                    chk $? 'FRACTOGENESIS_HOME is set'
+[ -d "$FRACTOGENESIS_HOME" ];                                    chk $? 'destination directory exists'
+[ -f "$FRACTOGENESIS_HOME/bootstrap.sh" ];                       chk $? 'bootstrap.sh present'
+[ -x "$FRACTOGENESIS_HOME/bin/build-jump-drive-payload.sh" ];    chk $? 'bin/ scripts arrived executable'
+[ ! -e "$HOME/fractogenesis-toolkit" ];                          chk $? 'no stray install in $HOME (the override took effect)'
+
+[ "$fail" -eq 0 ] && echo "ALL PASS" || echo "NOT PROVEN — do not trust this route yet"
 ```
 
-If any of these fail, stop and diagnose before trusting this path during an actual reimage.
+Every row prints `PASS` or `FAIL`. The previous `test … && echo "OK"` form printed
+**nothing** when a check failed, so an unset `FRACTOGENESIS_HOME` — which fails all
+of them at once — looked identical to not having run the block.
+
+The last row is the one that catches a failed override. `bootstrap.sh` falls back to
+`$HOME/fractogenesis-toolkit` when `FRACTOGENESIS_HOME` is empty, so the install
+*succeeds* while landing somewhere this test never looks — and on a pre-erase machine
+that is exactly where Phase 8 will later put the real checkout.
+
+If anything prints `FAIL`, stop and diagnose before trusting this path during an actual reimage.
 
 **11. Open the markdown files, using only what's available on a bare Mac:**
 
@@ -411,6 +458,14 @@ If either test was interrupted partway and left stray directories behind, this c
 
 ```bash
 rm -rf /tmp/fractogenesis-toolkit-access-test
+
+# If FRACTOGENESIS_HOME was ever empty during a run, bootstrap.sh installed here
+# instead. Remove it: on a pre-erase machine this is a stray .git-less copy sitting
+# exactly where Phase 8 will later bootstrap the real one.
+[ -e "$HOME/fractogenesis-toolkit" ] && \
+  echo "Removing stray fallback install: $HOME/fractogenesis-toolkit" && \
+  rm -rf "$HOME/fractogenesis-toolkit"
+
 unset FRACTOGENESIS_HOME JUMP_DRIVE_VOLUME FRACTOGENESIS_PARENT
 ```
 

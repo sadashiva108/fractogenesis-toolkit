@@ -428,11 +428,16 @@ pwd
 **On a freshly reimaged Mac** (no Git/SSH yet — this is the actual scenario Phase 8 onward depends on): use the bootstrap mechanism instead of `git clone` — no auth needed, no Xcode Command Line Tools popup:
 
 ```bash
-export TOOLKIT_GITHUB_ACCOUNT=<your-github-account>
-curl -fL -o /tmp/bootstrap.sh \
-  "https://raw.githubusercontent.com/$TOOLKIT_GITHUB_ACCOUNT/fractogenesis-toolkit/main/bootstrap.sh"
-bash /tmp/bootstrap.sh
+export TOOLKIT_GITHUB_ACCOUNT="<your-github-account>"
+case "${TOOLKIT_GITHUB_ACCOUNT:-}" in
+  ''|*'<'*) echo "TOOLKIT_GITHUB_ACCOUNT is not a real account yet." >&2 ;;
+  *) curl -fL -o /tmp/bootstrap.sh \
+       "https://raw.githubusercontent.com/$TOOLKIT_GITHUB_ACCOUNT/fractogenesis-toolkit/main/bootstrap.sh" \
+     && bash /tmp/bootstrap.sh ;;
+esac
 ```
+
+Quote the placeholder and substitute it. Unquoted, `<your-github-account>` is a shell redirection and the line will not even parse; left unsubstituted, the fetch 404s in a way that looks like a missing file rather than a missing value.
 
 Download and run as two steps, not `curl … | bash`. Piped, `-f -s` makes a 404 or a captive-portal redirect print nothing; `bash` reads an empty stdin and the pipeline exits **0**, so the install silently does not happen and the only symptom is that `cd "$HOME/fractogenesis-toolkit"` below fails.
 
