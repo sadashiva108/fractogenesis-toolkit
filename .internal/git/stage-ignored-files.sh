@@ -211,7 +211,14 @@ if [[ "$DO_COPY" == "true" ]]; then
   printf "reason\trepo_root\trelative_path\tsource_path\n" > "$SKIPPED_LOG"
 fi
 
-mapfile -t REPOS < <(
+# Bash 3.2 has no `mapfile`. Phase 8 and Phase 9 run bin/ scripts before Phase
+# 10A installs Homebrew, so `#!/usr/bin/env bash` resolves to stock /bin/bash
+# there -- and a 4.0 builtin aborts the run at 127 under `set -e`. This is the
+# read-loop idiom verify-doc-paths.sh uses to build its array.
+REPOS=()
+while IFS= read -r repo_path; do
+  [[ -n "$repo_path" ]] && REPOS+=("$repo_path")
+done < <(
   for root in "${ROOTS[@]}"; do
     find "$root" -type d -name .git -prune 2>/dev/null \
       | sed 's#/.git$##'

@@ -286,6 +286,7 @@ mtime_epoch() {
   if [[ -x /usr/bin/stat ]]; then
     /usr/bin/stat -f '%m' "$path"
   else
+    # portability-ok: GNU-STATC — guarded fallback; the BSD form is tried first above
     stat -c '%Y' "$path"
   fi
 }

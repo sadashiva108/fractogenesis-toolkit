@@ -570,7 +570,7 @@ Postman exports are manual because the app UI owns the export flow. Treat Postma
 Before treating any collection or environment as non-secret, check it rather than assuming. The values that matter are normally references — `{{CLIENT_SECRET}}` resolved from an environment, or `{{vault:...}}` resolved from Postman Vault — and those are safe to back up in the clear. What is not safe is a value pasted directly into a collection: an auth block filled in while debugging, a header typed once and forgotten, or a token assigned from a pre-request script.
 
 ```bash
-.internal/scan-postman-collections.py --context pre-image-postman
+.internal/home/scan-postman-collections.py --context pre-image-postman
 ```
 
 The report lands under `loose-secrets-reports/content-scans/runs/<context>-<stamp>/` on the artifact root, with a `MANIFEST.md` row and a `latest-run.txt` pointer — the same run-directory convention the Phase 3B sweep and the size audit use.

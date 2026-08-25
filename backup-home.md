@@ -323,7 +323,7 @@ Review these lines in the output:
 A compressed archive is opaque to every filename sweep in this workflow, so a credential sealed inside one is copied in the clear and passes Phase 3B without comment. Run this before the copy, while the decision is still cheap:
 
 ```bash
-.internal/scan-archive-contents.sh --context pre-image-backup-home
+.internal/home/scan-archive-contents.sh --context pre-image-backup-home
 ```
 
 The report lands under `loose-secrets-reports/content-scans/runs/<context>-<stamp>/`, beside the Phase 3B sweep's own reports, with a `MANIFEST.md` row and a `latest-run.txt` pointer. Give each run a sub-label so same-day scans stay distinguishable, the same way the size audit and the sweep do. `--dest` moves the report root, `--report FILE` writes one file to an explicit path without a manifest row, and `--no-report` prints to the terminal only.
@@ -404,7 +404,7 @@ find "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted" -maxdepth 2 | sort
 Re-run the archive scan against the artifact root, this time to confirm what actually landed rather than to decide:
 
 ```bash
-.internal/scan-archive-contents.sh --root "$REIMAGE_ARTIFACT_ROOT" --context pre-image-post-backup
+.internal/home/scan-archive-contents.sh --root "$REIMAGE_ARTIFACT_ROOT" --context pre-image-post-backup
 ```
 
 `--root` scans a directory directly, ignoring the target lists and the both-legs default. An archive you added to `ARCHIVE_SKIP` should be absent from the results entirely; one you chose to keep should appear with the same members it had at the source.

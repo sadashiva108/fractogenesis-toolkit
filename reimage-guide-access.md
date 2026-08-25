@@ -102,7 +102,7 @@ The values this runbook sets or reads. `JUMP_DRIVE_VOLUME` and `TOOLKIT_GITHUB_A
 | Variable | Meaning |
 |---|---|
 | `TOOLKIT_GITHUB_ACCOUNT` | GitHub account the toolkit is fetched from. This runbook runs pre-image, so `reimage.env` is loaded and the variable is available — unlike the Phase 8 cold start, which has no `reimage.env` and takes the account from the emailed cheatsheet instead. |
-| `FRACTOGENESIS_HOME` | Where the toolkit is checked out. Both tests deliberately override it to a throwaway path so nothing lands in your real checkout. Set by your shell startup / `.envrc`, not stored in `reimage.env`. |
+| `FRACTOGENESIS_HOME` | Where the toolkit is checked out. Both tests deliberately override it to a throwaway path so nothing lands in your real checkout. Set by `.envrc` pre-image and by `bin/init-shell-env.sh` after the erase, never stored in `reimage.env` — see [[references/toolkit-environment-reference|Toolkit Environment Reference]]. |
 | `FRACTOGENESIS_PARENT` | Set for the jump drive test only: the directory holding your real `fractogenesis-toolkit` checkout, from which a fresh payload is built. Not a `reimage.env` key. |
 | `JUMP_DRIVE_VOLUME` | Mount path of the small dedicated jump drive used as the no-network bootstrap fallback, for example `/Volumes/REIMAGEKIT`. |
 
@@ -116,7 +116,7 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 
 ### Prerequisites
 
-- Your shell is at the repository root — `cd "$FRACTOGENESIS_HOME"` once for the session. Per the guide's [[reimaging-guide#Core Assumptions|Core Assumptions]], the commands below assume this and don't repeat it.
+- Your shell is at the toolkit root — `cd "$FRACTOGENESIS_HOME"` once for the session. Per the guide's [[reimaging-guide#Core Assumptions|Core Assumptions]], the commands below assume this and don't repeat it.
 - The original system is still intact — this phase runs before the erase, while problems are still easy to fix.
 - For the jump drive test: the jump drive is mounted, and your real checkout is committed and pushed if you want the tarball to reflect your latest state.
 
@@ -224,6 +224,7 @@ chk() { if [ "$1" -eq 0 ]; then printf 'PASS  %s\n' "$2"; else printf 'FAIL  %s\
 [ -d "$FRACTOGENESIS_HOME" ];                                    chk $? 'destination directory exists'
 [ -f "$FRACTOGENESIS_HOME/bootstrap.sh" ];                       chk $? 'bootstrap.sh present'
 [ -x "$FRACTOGENESIS_HOME/bin/build-jump-drive-payload.sh" ];    chk $? 'bin/ scripts arrived executable'
+[ -x "$FRACTOGENESIS_HOME/bin/init-shell-env.sh" ];             chk $? 'init-shell-env.sh present (Phase 8 Step 2 needs it)'
 [ ! -e "$HOME/fractogenesis-toolkit" ];                          chk $? 'no stray install in $HOME (the override took effect)'
 
 [ "$fail" -eq 0 ] && echo "ALL PASS" || echo "NOT PROVEN — do not trust this route yet"
@@ -343,7 +344,27 @@ cp "$FRACTOGENESIS_PARENT/fractogenesis-toolkit/bootstrap.sh" "$JUMP_DRIVE_VOLUM
 > cp "$FRACTOGENESIS_PARENT/fractogenesis-toolkit/post-reimage-cheatsheet.local.md" "$JUMP_DRIVE_VOLUME/"
 > ```
 >
+> **And the workspace fragments**, which are the same kind of file for the same
+> reason — gitignored, machine-local, on no install route:
+>
+> ```bash
+> mkdir -p "$JUMP_DRIVE_VOLUME/reimage-workspace"
+> rsync -rlt --no-perms --no-owner --no-group \
+>   "$REIMAGE_WORKSPACE_ROOT/artifact-config" \
+>   "$REIMAGE_WORKSPACE_ROOT/staged-certs" \
+>   "$JUMP_DRIVE_VOLUME/reimage-workspace/" 2>/dev/null || true
+> ls -1R "$JUMP_DRIVE_VOLUME/reimage-workspace"
+> ```
+>
+> A few KB of shell fragments, and the reason they matter is that their absence
+> is **silent**: every script falls back to the committed templates and completes
+> normally, so a post-image run against defaults produces evidence that looks
+> exactly like a run against your real configuration. `external-targets.conf.sh`
+> and `expected-artifact-folders.conf.sh` in particular are edited per machine.
+>
 > A bootstrapped checkout with no `reimage.env` resolves `$REIMAGE_ARTIFACT_ROOT` to nothing, and regenerating it with `bin/setup-reimage-env.sh` after the erase defaults `REIMAGE_START_DATE` to *that* day — silently pointing the whole workflow at an artifact root that does not exist. Restoring the original file is the only correct move.
+>
+> `.envrc` needs no copy: it is tracked and committed, so `git archive` ships it in the tarball and it arrives with every install route. What it does need after the erase is `direnv allow`, once Phase 10A has installed direnv — approval is machine-local and keyed by content hash, so an erased Mac has no record of approving it before. See [[references/toolkit-environment-reference|Toolkit Environment Reference]].
 
 **6. Create a throwaway install directory for the toolkit:**
 
@@ -381,6 +402,7 @@ chk() { if [ "$1" -eq 0 ]; then printf 'PASS  %s\n' "$2"; else printf 'FAIL  %s\
 [ -d "$FRACTOGENESIS_HOME" ];                                    chk $? 'destination directory exists'
 [ -f "$FRACTOGENESIS_HOME/bootstrap.sh" ];                       chk $? 'bootstrap.sh present'
 [ -x "$FRACTOGENESIS_HOME/bin/build-jump-drive-payload.sh" ];    chk $? 'bin/ scripts arrived executable'
+[ -x "$FRACTOGENESIS_HOME/bin/init-shell-env.sh" ];             chk $? 'init-shell-env.sh present (Phase 8 Step 2 needs it)'
 [ ! -e "$HOME/fractogenesis-toolkit" ];                          chk $? 'no stray install in $HOME (the override took effect)'
 
 [ "$fail" -eq 0 ] && echo "ALL PASS" || echo "NOT PROVEN — do not trust this route yet"

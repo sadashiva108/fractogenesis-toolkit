@@ -118,7 +118,7 @@ Related scripts, alphabetical:
 
 ```text
 $FRACTOGENESIS_HOME/.internal/performance/generate-performance-manual-observations.py   # helper — auto-fills the manual-context files (called by the entrypoint)
-$FRACTOGENESIS_HOME/bin/generate-performance-rollup-summary.py        # entrypoint — optional quantitative rollup from helper history
+.internal/performance/generate-performance-rollup-summary.py          # helper — optional quantitative rollup from helper history
 mac_memory_health.sh                                                  # external helper — not part of this toolkit; run from ~/.local/bin/ when present
 ```
 
@@ -352,9 +352,9 @@ Two optional pieces sit outside the scenario bundle and add longer-range context
 For a clean pre/post cutover, keep the final pre-image history window intact, archive it (for example under `REIMAGE_WORKSPACE_ROOT/performance-audit/history-archives/`), then start a fresh post-image series so the windows do not intermix. Use the most recent representative 7–14 days as the pre-image window and the first representative 2–7 days after setup settles as the post-image window.
 
 > [!note]
-> Only `mac_memory_health.sh` is external — it lives at `~/.local/bin/`, is not part of this toolkit, and may be absent. `generate-performance-rollup-summary.py` is a migrated `bin/` entrypoint.
+> Only `mac_memory_health.sh` is external — it lives at `~/.local/bin/`, is not part of this toolkit, and may be absent. `generate-performance-rollup-summary.py` is an internal helper you run directly when you want the rollup; `capture-performance-audit.sh` never calls it, so it runs on your schedule rather than the capture's.
 
-**Rollup summary (`generate-performance-rollup-summary.py`).** When you have many diagnostic rollups over days or weeks, this produces a quantitative CSV package under `performance-audit/rollup-summary/<phase>-<stamp>/` (`performance-rollup-summary.md` plus a `summary/` of grouped app RSS/CPU/process-count pivots and health-window CSVs). It does not compute a single merged pre/post score — it produces structured inputs that make that follow-up analysis possible.
+**Rollup summary (`.internal/performance/generate-performance-rollup-summary.py`).** When you have many diagnostic rollups over days or weeks, this produces a quantitative CSV package under `performance-audit/rollup-summary/<phase>-<stamp>/` (`performance-rollup-summary.md` plus a `summary/` of grouped app RSS/CPU/process-count pivots and health-window CSVs). It does not compute a single merged pre/post score — it produces structured inputs that make that follow-up analysis possible.
 
 ### Reviewing and Comparing Bundles
 

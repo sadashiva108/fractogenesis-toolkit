@@ -54,6 +54,7 @@ This is the canonical top-level guide for the Mac reimage workflow.
     - [[#Phase 13E — Office Stability Capture|Phase 13E —  Office Stability Capture]]
 - [[#Phase 14 — Reimaged System Checks|Phase 14 — Reimaged System Checks]]
 - [[#Phase 15 — Restore Home|Phase 15 — Restore Home]]
+- [[#Phase 16 — Post-Image Time Machine|Phase 16 — Post-Image Time Machine]]
 
 > In Obsidian, these are internal heading links. Click in Reading View, or Cmd-click in Live Preview/editing mode.
 
@@ -80,6 +81,23 @@ This guide assumes:
 
 - A developer using a company-managed Apple silicon Mac laptop, typically a MacBook Pro or similar model enrolled through company MDM / Intune / Company Portal.
 - A local `reimage.env` file created from `reimage.env.example`, then updated with the machine-specific resolved paths used by the scripts.
+- **An interactive `zsh`** — the macOS default — as the shell you paste command blocks into. Two of its behaviours bite pasted text, and both look like the command failed when it did not:
+
+    **`#` does not start a comment** unless `interactivecomments` is set — and this applies to a whole-line comment as much as a trailing one. A trailing `# note` arrives as arguments, and a `;` inside that note starts a new command: `grep -c PATTERN file   # expect 1 or more; 0 means failed` runs `grep` with five extra filenames, then tries to execute `0`. The `grep` already succeeded; everything after it is the comment running.
+
+    A **whole-line** `#` comment is worse, because it can consume the lines below it. An apostrophe in the prose opens a quote that stays open until the next one, so
+
+    ```text
+    # print the first lines of the tool's own error
+    ```
+
+    swallows everything up to the next `'` anywhere in the block. The symptom is a `quote>` prompt — or `function quote>` inside a function body — and `zsh: unmatched '`. `Ctrl-C` gets you out. Runbook command blocks therefore carry **no `#` comments at all**; the explanation goes in the prose above the block. To paste your own safely:
+
+    ```bash
+    setopt interactivecomments
+    ```
+
+    **`<placeholder>` is a redirection, not a blank to fill in.** `<` and `>` are redirection operators in every POSIX shell, so `run --url https://<your-host>/` is parsed as *read stdin from `your-host`*, and fails with `no such file or directory: your-host`. Runbook blocks put placeholders inside quotes or in a variable assignment on the line above, so a bare one is a defect worth reporting. When you meet one, quote it: `"<your-host>"`.
 - Company-managed components may include:
     - Intune / Company Portal enrollment
     - Microsoft 365 apps and helpers
@@ -99,7 +117,7 @@ This guide assumes:
 
   Treat those apps, profiles, agents, daemons, and managed preferences as IT-owned state; do not remove Office caches, Outlook profiles, OneNote caches, Office licensing data, security/network agents, management profiles, or other managed-app data unless IT explicitly asks.
 - Credential-bearing files should be stored on the external drive and preferably encrypted before placing any copy in cloud storage.
-- Script commands are run from the repository root (`$FRACTOGENESIS_HOME`). `cd` there once at the start of a working session; the runbooks assume this and do not repeat `cd "$FRACTOGENESIS_HOME"` before every command. Scripts self-locate and resolve their paths from `reimage.env` regardless — this is only about where your shell sits so relative invocations like `./bin/<script>.sh` resolve. If a command must run from somewhere else, that runbook says so explicitly.
+- Script commands are run from the toolkit root (`$FRACTOGENESIS_HOME`) — the directory holding `bin/`, `.internal/`, the runbooks, and `reimage.env`. It is not a repository in every phase: between the erase and Phase 11B the toolkit is a `curl` or jump-drive install with no `.git`, and it is never the same thing as `$REIMAGE_ARTIFACT_ROOT`, the external drive holding backups and evidence. `cd` there once at the start of a working session; the runbooks assume this and do not repeat `cd "$FRACTOGENESIS_HOME"` before every command. Scripts self-locate and resolve their paths from `reimage.env` regardless — this is only about where your shell sits so relative invocations like `./bin/<script>.sh` resolve. If a command must run from somewhere else, that runbook says so explicitly.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -143,7 +161,7 @@ Phase guides used in this stage, in the order they are typically reached:
 | Git and repository restore | Restore Git identity plumbing (dual `.gitconfig`, SSH host aliases) and re-clone the tracked repositories from the pre-image audit, rsyncing the reviewed kept ignored files back into each working tree. | Phase 11 in this guide, `restore-git.md`, and `restore-repos.md`. |
 | App restore | Restore daily apps through the umbrella app phase, with dedicated sub-runbooks for IntelliJ and Docker. | Phase 12 in this guide, `restore-apps.md`, `restore-intellij.md`, and `restore-docker.md`. |
 | Post-image evidence captures | Capture the post-image comparison evidence for system inventory, optional managed-state verification, performance, and Office stability. | Phase 13 in this guide plus `capture-system-inventory.md`, `capture-managed-inventory.md`, `capture-performance-audit.md`, and `capture-office-stability.md`. |
-| Final validation and late home-file restore | Validate the rebuilt Mac, then restore bulk home files only after the rebuild is already trusted. | Phase 14 and Phase 15 in this guide, `reimaged-system-checks.md`, and `restore-home.md`. |
+| Final validation and late home-file restore | Validate the rebuilt Mac, restore bulk home files only after the rebuild is already trusted, then take the first post-image Time Machine backup. | Phases 14, 15, and 16 in this guide, `reimaged-system-checks.md`, `restore-home.md`, and `run-time-machine.md`. |
 
 For the full list of phase guides used in this stage, in the order they are typically reached, see [Restore File Reference — Phase Guide Reference](./references/restore-file-reference.md#phase-guide-reference).
 
@@ -676,53 +694,18 @@ Record the exact method used in the notes.
 
 This phase brings the rebuilt Mac to a clean, trusted managed baseline before any restore work begins. It focuses on completing company enrollment, letting required profiles, security tools, and base managed apps install, applying any required macOS updates, performing the first stabilization restart, and confirming afterward that the managed state still looks healthy. Its purpose is to make sure the machine is ready for the later restore phases without mixing in Git, apps, secrets, or local-file recovery too early.
 
-> **Step 1 of this phase: get this toolkit onto the Mac.** No repo, `git`, or SSH key exists yet — this is by design (see the Restore Strategy section above). Do this before anything else in Phase 8:
+> **Steps 1 and 2 of this phase get the toolkit and its configuration onto the
+> Mac.** No repo, `git`, or SSH key exists yet — that is by design (see the
+> Restore Strategy section above). `bootstrap.sh` installs the toolkit over
+> `curl`, or from the jump drive when there is no network yet; then
+> `bin/init-shell-env.sh` restores `FRACTOGENESIS_HOME` and `reimage.env` into
+> the login shell, bridging the gap until direnv arrives in Phase 10A. How the
+> three config files behave across a clone, a `curl` install, and a jump-drive
+> install is documented once in
+> [[references/toolkit-environment-reference|Toolkit Environment Reference]].
 >
-> **Primary — if Wi-Fi is connected (it should be, from Phase 7's sign-in step):**
-> ```bash
-> export TOOLKIT_GITHUB_ACCOUNT="<your-github-account>"   # from the emailed cheatsheet
-> case "${TOOLKIT_GITHUB_ACCOUNT:-}" in
->   ''|*'<'*) echo "TOOLKIT_GITHUB_ACCOUNT is not a real account yet." >&2 ;;
->   *) curl -fL -o /tmp/bootstrap.sh \
->        "https://raw.githubusercontent.com/$TOOLKIT_GITHUB_ACCOUNT/fractogenesis-toolkit/main/bootstrap.sh" \
->      && bash /tmp/bootstrap.sh ;;
-> esac
-> ```
-> The account **must** be quoted and substituted. Unquoted, `<your-github-account>` is a shell redirection and the line is a syntax error; left unsubstituted, the fetch 404s in a way that looks like a missing file rather than a missing value. The `case` catches both.
-> Installs to `$HOME/fractogenesis-toolkit` (or `$FRACTOGENESIS_HOME` if set). No `git` needed — installing `git` on a bare Mac triggers a large Xcode Command Line Tools popup/download, which this deliberately avoids.
->
-> This is the one command in the workflow that cannot use `$TOOLKIT_GITHUB_ACCOUNT`. `reimage.env` did not survive the erase, and anything that could hand it to you — the jump drive, the artifact volume — has already handed you the toolkit, making the fetch unnecessary. **Substitute the account from the post-reimage cheatsheet you emailed yourself.**
->
-> Download and run as two steps, deliberately. `curl … | bash` hides its own failure: with `-f -s`, a 404 or a captive-portal redirect prints nothing, `bash` reads an empty stdin, and the pipeline exits **0** — no toolkit, no error, and no obvious reason why the next command cannot find `bin/`. Fetching to a file first makes a failed download impossible to miss.
->
-> **Fallback — if there's no network yet** (captive portal, delayed profile push, etc.), use the prepared jump drive:
-> ```bash
-> bash /Volumes/REIMAGEKIT/bootstrap.sh /Volumes/REIMAGEKIT/tarball/fractogenesis-toolkit.tar.gz
-> ```
-> Note the `tarball/` path segment — that is where `bin/build-jump-drive-payload.sh` writes the payload and its `.sha256` sidecar. Checksum-verified before installing; refuses to proceed on a corrupted copy rather than installing something broken.
->
-> Once either succeeds, continue this phase's remaining steps using the local copy — no further network dependency for reading the guide itself.
-
-> **Step 2 of this phase: re-establish `FRACTOGENESIS_HOME` and `reimage.env`.** The erase destroyed both, and every runbook from Phase 9 onward assumes they exist. No other phase re-creates them — do it here, immediately after the toolkit lands.
->
-> **`FRACTOGENESIS_HOME` — the variable every runbook's opening `cd` depends on:**
-> ```bash
-> export FRACTOGENESIS_HOME="$HOME/fractogenesis-toolkit"
-> echo 'export FRACTOGENESIS_HOME="$HOME/fractogenesis-toolkit"' >> ~/.zprofile
-> ```
-> Every runbook starts from `cd "$FRACTOGENESIS_HOME"` (see [[#Core Assumptions|Core Assumptions]]). That value came from `.envrc` or shell startup, neither of which survived the erase. Left unset, `cd ""` is a **no-op that returns 0** — you stay in `$HOME`, every `./bin/…` afterward reports "No such file or directory", and nothing points back at the missing variable. Export it for this shell *and* append it to `~/.zprofile` so it survives the next login and the stabilization restart.
->
-> **`reimage.env` — copy it back; do not regenerate it:**
-> ```bash
-> cp /Volumes/REIMAGEKIT/reimage.env "$FRACTOGENESIS_HOME/reimage.env"
-> cd "$FRACTOGENESIS_HOME"
-> set -a; source ./reimage.env; set +a
-> ./bin/check-reimage-env.sh
-> ```
-> `reimage.env` is gitignored, so it is in neither the GitHub fetch nor the jump-drive tarball — only the standalone copies placed on the jump drive and on the artifact volume before the erase (see [[reimage-guide-access|reimage-guide-access.md]], Phase 6A). Use the artifact-volume copy instead if the jump drive is not to hand; the two are identical. Paths are spelled out literally here on purpose — `$JUMP_DRIVE_VOLUME` and `$REIMAGE_ARTIFACT_ROOT` are themselves `reimage.env` keys and are still unset at this point.
-
-> [!warning] Pitfall
-> Do **not** rebuild `reimage.env` with `bin/setup-reimage-env.sh` when the copy is inconvenient to reach. That script *recomputes* values rather than restoring them: `REIMAGE_START_DATE` defaults to today, so `REIMAGE_ARTIFACT_ROOT` resolves to a **new, empty** event folder instead of the one holding your backups. Every restore step then reports MISSING for every source while writing its notes into the wrong tree — a failure that looks like a bad backup rather than a bad variable. Regenerating is only correct when starting a genuinely new reimage event.
+> Both are documented in full in the phase runbook, including the pitfalls that
+> make each one fail silently. Start there rather than here.
 
 Primary guide: [[enroll-and-stabilize|enroll-and-stabilize.md]]
 
@@ -739,7 +722,7 @@ Primary guide: [[verify-reimaged-system|verify-reimaged-system.md]]
 Primary generated evidence:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/reimaged-system/initial-reimaged-system--YYYYMMDD-HHMMSS/
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/[context-]initial-reimaged-system-YYYYMMDD-HHMMSS/
 ```
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -947,6 +930,46 @@ Primary guide: [[restore-home|restore-home.md]]
 3. Restore only the categories still needed; prefer cloud resync over manual copy.
 4. Merge dotfiles selectively rather than overwriting blindly.
 5. Route special categories through the correct runbook and leave obsolete content behind on purpose.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
+## Phase 16 — Post-Image Time Machine
+
+Follow this phase guide: [Run Time Machine](run-time-machine.md).
+
+Phase 16 is the **post-image side** of the Time Machine workflow, the same way
+Phase 13 is the post-image side of the captures. It uses the same runbook and the
+same `bin/run-time-machine.sh` subcommands as Phase 5; only the timing and the
+purpose differ. Unlike Phase 5, which captures the pre-erase safety net you hope
+never to need, Phase 16 captures the first backup of the rebuilt Mac — the one
+that becomes your ongoing restore point from here on.
+
+It runs **after Phase 15**, and that is the whole point of its position. Phase 15
+is the last phase that puts anything irreplaceable on the machine, so a backup
+taken before it captures a Mac without its home directory. It is also the point
+at which the pre-image Time Machine chain stops being load-bearing: until Restore
+Home is done, that chain is the fallback for everything the targeted Phase 2
+artifacts missed.
+
+> [!warning] Pitfall
+> Check free space on the Time Machine destination before starting. Time Machine
+> thins the oldest backups automatically when a destination runs low, so adding a
+> rebuilt system to the same volume can silently delete the pre-image chain —
+> which is the only complete image of the machine you erased. Decide deliberately
+> whether to inherit the existing backup history or start a new set; see
+> `run-time-machine.md` — Post-Image Pass.
+
+Primary generated evidence:
+
+```text
+$REIMAGE_ARTIFACT_ROOT/time-machine/
+```
+
+Once the backup completes, rerun `./bin/reimage-checklist.sh --phase post` so the
+`Time Machine latest backup` row closes green — it reads `WARN` in Phase 14 by
+design, because at that point no post-image backup exists yet.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 

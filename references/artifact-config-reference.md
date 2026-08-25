@@ -350,12 +350,12 @@ For an archive under a pruned directory, the options are to move it somewhere ca
 
 ### Inspecting archives before deciding
 
-`.internal/scan-archive-contents.sh` lists archive members without extracting and matches them against `SECRET_SHAPES`. Filename sweeps cannot see inside an archive, so a credential sealed in a `.zip` passes Phase 3B silently.
+`.internal/home/scan-archive-contents.sh` lists archive members without extracting and matches them against `SECRET_SHAPES`. Filename sweeps cannot see inside an archive, so a credential sealed in a `.zip` passes Phase 3B silently.
 
 ```bash
-.internal/scan-archive-contents.sh --targets     # what would reach the artifact root
-.internal/scan-archive-contents.sh --onedrive    # what would reach corporate cloud
-.internal/scan-archive-contents.sh               # what already landed (artifact root)
+.internal/home/scan-archive-contents.sh --targets     # what would reach the artifact root
+.internal/home/scan-archive-contents.sh --onedrive    # what would reach corporate cloud
+.internal/home/scan-archive-contents.sh               # what already landed (artifact root)
 ```
 
 `--targets` and `--onedrive` derive their roots from the target fragments and apply the matching excludes, so the scan covers exactly what would be copied. Archives already in `ARCHIVE_SKIP` are still scanned and marked `[ARCHIVE_SKIP - not copied]`.

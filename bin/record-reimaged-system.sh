@@ -38,10 +38,20 @@
 #   # portal is intercepting HTTP HEAD).
 #   ./bin/record-reimaged-system.sh --no-network
 #
+#   # Label the run so the two bundles around the stabilization restart are
+#   # distinguishable on disk without opening them. Matches the --context
+#   # convention already used by report-loose-secrets.sh.
+#   ./bin/record-reimaged-system.sh --context pre-restart     # Step 2
+#   ./bin/record-reimaged-system.sh --context post-restart    # Step 5
+#
 # Options:
 #   --artifact-root PATH  Override REIMAGE_ARTIFACT_ROOT from shared config.
 #   --output-root PATH    Parent directory that will hold the timestamped
 #                         first-boot bundle. Overrides the default layout.
+#   --context LABEL       Prefix the bundle directory name with LABEL:
+#                         LABEL-initial-reimaged-system-YYYYMMDD-HHMMSS.
+#                         Conventional values are pre-restart and post-restart.
+#                         Letters, digits, dot, underscore, and hyphen only.
 #   --no-network          Skip network reachability probes.
 #   --open                Reveal the generated bundle in Finder on completion.
 #   -h, --help            Show this message and exit.
@@ -51,6 +61,19 @@
 #   2. Environment values already exported by the caller or optional .envrc.
 #   3. Values loaded from reimage.env.
 #   4. Defaults and reusable fragments loaded by artifact-config.sh.
+#
+# Bundle naming:
+#   [LABEL-]initial-reimaged-system-YYYYMMDD-HHMMSS
+#
+#   The label leads, matching post-image-performance-audit-*, post-reimage-*,
+#   and the pre-image-* repo-audit runs. bin/reimage-checklist.sh therefore
+#   globs *initial-reimaged-system-* when validating Phase 9 evidence.
+#
+#   Because the label precedes the timestamp, directory names no longer sort
+#   chronologically once more than one label is in play: post-restart sorts
+#   before pre-restart regardless of when each ran. Select a "latest" record
+#   by modification time, or glob one label at a time, rather than sorting the
+#   mixed set lexically.
 #
 # Output location precedence (used only when --output-root is not supplied):
 #   1. $REIMAGE_ARTIFACT_ROOT/reimaged-system/
@@ -96,6 +119,18 @@ ARTIFACT_CONFIG_REQUIRE_REIMAGE_ARTIFACT_ROOT=false
 # shellcheck source=../.internal/load-reimage-config.sh
 source "$CONFIG_LOADER"
 
+# Shared run index. The first-boot bundles are indexed runs under
+# reimaged-system/restarts/ rather than directories at the reimaged-system/
+# root, so this script brackets its work with artifact_run_begin / finalize the
+# way the boundary recorders and the comparison do.
+RUNS_LIB="$REPO_ROOT/.internal/artifact-runs.sh"
+if [[ ! -f "$RUNS_LIB" ]]; then
+  echo "ERROR: shared run index not found: $RUNS_LIB" >&2
+  exit 2
+fi
+# shellcheck source=../.internal/artifact-runs.sh
+source "$RUNS_LIB"
+
 SCRIPT_NAME="${REIMAGE_SCRIPT_DISPLAY_NAME:-record-reimaged-system.sh}"
 
 usage() {
@@ -110,6 +145,31 @@ OUTPUT_ROOT=""
 OPEN_RESULT=false
 RUN_NETWORK=true
 ARTIFACT_ROOT_EXPLICIT=false
+CONTEXT_LABEL=""
+
+# Validate a --context label before it becomes part of a directory name. A label
+# carrying a slash, a space, or a quote produces either a nested path or a name
+# that later globs and `cp` invocations mishandle, so reject it outright rather
+# than silently rewriting what the operator typed. The character class is a
+# POSIX `case` glob rather than a regex so this behaves identically on the
+# stock macOS Bash 3.2.
+validate_context() {
+  local value="$1"
+  case "$value" in
+    "")
+      return 0
+      ;;
+    *[!A-Za-z0-9._-]*)
+      echo "ERROR: --context may contain only letters, digits, dot, underscore, and hyphen: $value" >&2
+      echo "HINT:  the label becomes part of the bundle directory name." >&2
+      exit 2
+      ;;
+    -*)
+      echo "ERROR: --context may not begin with a hyphen: $value" >&2
+      exit 2
+      ;;
+  esac
+}
 
 require_option_value() {
   local option="$1"
@@ -133,6 +193,12 @@ while [[ $# -gt 0 ]]; do
     --output-root)
       require_option_value "$1" "${2:-}"
       OUTPUT_ROOT="$2"
+      shift 2
+      ;;
+    --context)
+      require_option_value "$1" "${2:-}"
+      validate_context "$2"
+      CONTEXT_LABEL="$2"
       shift 2
       ;;
     --no-network)
@@ -194,14 +260,43 @@ STAMP="$(date +%Y%m%d-%H%M%S)"
 # Bundle prefix kept as initial-reimaged-system-* to match the artifact tree
 # documented in references/master-directory-reference.md and the pattern that
 # bin/reimage-checklist.sh looks for when validating Phase 9 evidence.
-OUT="$OUTPUT_ROOT/initial-reimaged-system-$STAMP"
+# The context label leads the directory name:
+# pre-restart-initial-reimaged-system-YYYYMMDD-HHMMSS. This matches the
+# convention already used by post-image-performance-audit-*, post-reimage-*,
+# and the pre-image-* repo-audit runs, where the phase or context comes first.
+#
+# Two consequences for anything that reads these bundles back:
+#   - the artifact name is no longer at the start, so globs need a leading
+#     wildcard: *initial-reimaged-system-* rather than initial-reimaged-system-*;
+#   - names group by label before timestamp, so a "latest bundle" lookup must
+#     rank on the trailing stamp and never on a plain lexical sort.
+# The stamp stays at the end of the name, which is what reimage-checklist.sh
+# extracts to compare bundle age against the Time Machine backup.
+# The context label becomes the run's POINT. `pre-restart` and `post-restart`
+# are both points the run index already knows, so `--context pre-restart` lands
+# in the pre-restart lineage with no further mapping. A run with no context gets
+# `initial`, which is NOT a known point and therefore indexes as `unknown` --
+# the honest answer, since nothing recorded which side of a restart it was on.
+RUN_CATEGORY_ROOT="$OUTPUT_ROOT/restarts"
+RUN_CONTEXT="verify-reimaged-system-${CONTEXT_LABEL:-initial}"
+
 # Approved exception to the validator's no-abort rule: this is the validator
 # creating its own report destination, not observing system state. Without the
 # bundle directory every later write fails silently and the run would still
 # claim "First-boot evidence bundle written".
-if ! mkdir -p "$OUT/logs" "$OUT/raw" "$OUT/checks"; then
-  echo "ERROR: cannot create the evidence bundle directory: $OUT" >&2
+if ! artifact_run_begin "$RUN_CATEGORY_ROOT" "$RUN_CONTEXT"; then
+  echo "ERROR: cannot stage an evidence run under: $RUN_CATEGORY_ROOT" >&2
   echo "ERROR: no evidence was written. Choose a writable --output-root (or reconnect the artifact volume) and rerun." >&2
+  exit 2
+fi
+OUT="$ARTIFACT_RUN_DIR"
+
+# `checks/` is deliberately absent. All six migrated bundles carried one and
+# every one was empty -- nothing has ever written into it. See the
+# "Before adding a directory" rule in script-types-and-locations.md.
+if ! mkdir -p "$OUT/logs" "$OUT/raw"; then
+  echo "ERROR: cannot create the evidence bundle directory: $OUT" >&2
+  artifact_run_abort
   exit 2
 fi
 
@@ -219,7 +314,7 @@ fi
 
 COMMAND_LOG="$OUT/logs/commands.log"
 ERROR_LOG="$OUT/logs/errors.log"
-CHECKLIST="$OUT/initial-checklist.md"
+CHECKLIST="$OUT/checklist.md"
 SUMMARY="$OUT/README.md"
 
 : > "$COMMAND_LOG"
@@ -298,9 +393,22 @@ check_dir_exists() {
   if [[ -d "$1" ]]; then echo "PASS"; else echo "TODO"; fi
 }
 
+# Look one level deep as well as at the top of /Applications. Agents such as
+# Zscaler install as /Applications/Zscaler/Zscaler.app, and a top-level listing
+# alone matches only the enclosing folder — which an empty leftover directory
+# would also satisfy.
 check_any_app() {
   local pattern="$1"
-  if ls -1 /Applications 2>/dev/null | grep -Eiq "$pattern"; then
+  local listing
+  # Build the listing first, then match against a here-string. Piping into
+  # `grep -q` is unsafe under `set -o pipefail`: grep exits on the first match,
+  # the upstream `ls` takes SIGPIPE, and the pipeline reports failure even
+  # though the pattern matched. That race is size-dependent, so it surfaces as
+  # an intermittent TODO on an app that is plainly installed.
+  listing="$( { ls -1 /Applications 2>/dev/null; \
+                ls -1d /Applications/*/*.app 2>/dev/null \
+                  | sed 's#^/Applications/##'; } || true )"
+  if grep -Eiq "$pattern" <<< "$listing"; then
     echo "PASS"
   else
     echo "TODO"
@@ -332,8 +440,12 @@ capture filevault       fdesetup status
 capture profiles-enrollment profiles status -type enrollment
 capture profiles-list   profiles list
 
+# Record every application plus one level of nesting rather than a vendor-name
+# filter. A filter can only confirm what someone thought to list, so an app this
+# Mac was assigned but nobody anticipated is invisible in the evidence. The full
+# list is also what makes the pre/post-restart bundle diff meaningful.
 capture_shell applications-managed \
-  "ls -1 /Applications | grep -Ei 'Company Portal|CrowdStrike|Falcon|Zscaler|Microsoft|Teams|Outlook|OneNote|Chrome|Visual Studio Code|IntelliJ|Docker|Postman|Obsidian|Raycast' || true"
+  "{ ls -1 /Applications 2>/dev/null; ls -1d /Applications/*/*.app 2>/dev/null | sed 's#^/Applications/##'; } | sort -u"
 capture_shell managed-processes \
   "ps aux | grep -Ei 'Intune|Company Portal|CrowdStrike|falcon|Zscaler|Microsoft AutoUpdate|MAU|OneDrive|mdmclient' | grep -v grep || true"
 capture_shell volumes \
@@ -401,12 +513,17 @@ if [[ "$TM_DEST_STATUS" != "PASS" && -n "${EXTERNAL_APPLE_BACKUPS_VOLUME:-}" && 
   fi
 fi
 
-GIT_STATUS="TODO"
+# Not TODO: Phase 10A installs these, so their absence here is the expected
+# state rather than operator action, and a TODO row that no step in this phase
+# can clear teaches the reader to ignore TODO. Presence is still worth
+# recording -- Xcode Command Line Tools supplies git, so it can legitimately
+# appear before Phase 10A runs.
+GIT_STATUS="INFO"
 if grep -q "git version" "$OUT/raw/git-version.txt" 2>/dev/null; then
   GIT_STATUS="PASS"
 fi
 
-BREW_STATUS="TODO"
+BREW_STATUS="INFO"
 if grep -q "Homebrew" "$OUT/raw/brew-version.txt" 2>/dev/null; then
   BREW_STATUS="PASS"
 fi
@@ -426,26 +543,40 @@ Use restarts as deliberate stabilization points, not as random troubleshooting.
 
 | Checkpoint | Recommended Action | Status | Notes |
 |---|---|---|---|
-| After initial Intune / Company Portal enrollment and security tools start appearing | Restart once, then rerun record-reimaged-system.sh | `TODO` | Helps confirm MDM profiles, login items, network filters, and security agents survive reboot. |
+| After Intune / Company Portal enrollment **and** the managed app set is installed from the Company Portal Apps tab (Phase 8 Step 4) | Restart once, then rerun record-reimaged-system.sh | `TODO` | Helps confirm MDM profiles, login items, network filters, security agents, and managed app registration survive reboot. Managed apps belong here, not later — installing them after the first bundle fills the Phase 9 diff with spurious rows. |
 | After macOS updates | Restart when prompted, then rerun record-reimaged-system.sh | `TODO` | Required for OS/security updates. |
 | After Homebrew, shell, Git, Java, Node, Python, Gradle, Maven, Docker CLI basics | Restart once before heavy repo restore | `TODO` | Helps catch path, shell, Rosetta, Java, and developer-tool setup issues. |
 | After Docker Desktop, VPN/Zscaler, certificates, and corporate network access are restored | Restart once before project validation | `TODO` | Helps stabilize network extensions, Docker helpers, and cert trust. |
-| After Office, OneDrive, Teams, Chrome, Obsidian, Postman, VS Code, Raycast are installed/configured | Restart once before reimaged-system validation | `TODO` | Helps confirm login items, background services, and managed app registration. |
+| After the non-managed apps are installed/configured — Obsidian, Postman, VS Code, Raycast, Docker Desktop | Restart once before reimaged-system validation | `TODO` | Helps confirm login items and background services. Managed apps (Office, Teams, OneDrive, Chrome) are **not** installed here; they arrive in Phase 8 via Company Portal. |
 | After Phase 12 validation passes | Final restart, then capture reimaged-system performance/Office baseline | `TODO` | Produces a cleaner comparison point against the pre-image baseline. |
 
 If Outlook or OneNote closes unexpectedly, capture evidence before restarting or reopening the app.
+
+Do not restart while a Company Portal install, a Microsoft AutoUpdate download,
+or a large OneDrive initial sync is in flight. A restart taken mid-install
+produces a bundle that reads as a regression when nothing regressed.
 EOF_RESTART
 
-cat > "$OUT/time-machine-reimaged-system-plan.md" <<'EOF_TM'
+cat > "$OUT/time-machine-plan.md" <<'EOF_TM'
 # Reimaged System Time Machine Plan
+
+Nothing in this file runs during Phase 9. The post-image Time Machine backup is
+Phase 16, taken after Phase 15 — Restore Home, and owned by `run-time-machine.md`.
+These are the notes to carry into it.
 
 Keep Time Machine backups on the dedicated Apple backups partition ($EXTERNAL_APPLE_BACKUPS_VOLUME when defined). Keep workflow evidence and generated checklists under the artifact-root partition ($EXTERNAL_DATA_VOLUME / $REIMAGE_ARTIFACT_ROOT).
 
 Recommended reimaged-system Time Machine checkpoints:
 
-1. **Clean managed baseline backup** — after Phase 8 completes, after initial Intune / Company Portal enrollment is stable, after required security tools are installed or clearly installing, after macOS updates, and after one restart.
-2. **Working development baseline backup** — after Phases 9 through 11 are substantially restored and Phase 12 validation passes.
-3. **Normal ongoing backups** — after the machine is back to daily use.
+1. **First post-image backup (Phase 16)** — after Phase 15 — Restore Home
+   completes. This is the first backup of the rebuilt Mac and the one that
+   matters; everything before it would capture a machine holding nothing that
+   re-enrolling could not reproduce.
+2. **Normal ongoing backups** — after the machine is back to daily use.
+
+Until Phase 16 runs, the pre-image Time Machine chain is still the fallback.
+Check free space before starting: Time Machine thins oldest-first, so a rebuilt
+system added to the same destination can silently delete that chain.
 
 Before starting reimaged-system Time Machine, the artifact volume MUST be confirmed
 excluded. This is a gate, not a note: if the exclusion did not take, Time Machine
@@ -479,9 +610,9 @@ else
 fi
 EOF_TM_GATE
   echo '```'
-} >> "$OUT/time-machine-reimaged-system-plan.md"
+} >> "$OUT/time-machine-plan.md"
 
-cat >> "$OUT/time-machine-reimaged-system-plan.md" <<'EOF_TM_TAIL'
+cat >> "$OUT/time-machine-plan.md" <<'EOF_TM_TAIL'
 
 Avoid starting a Time Machine backup while OneDrive is still doing a large initial sync, while Docker images are being restored, or while Company Portal / Intune is actively installing large apps.
 EOF_TM_TAIL
@@ -491,12 +622,20 @@ cat > "$OUT/manual-captures-required.md" <<'EOF_MANUAL_FIRST_BOOT'
 
 The record-reimaged-system script captures command output and app/process evidence, but these items still require human confirmation.
 
+**Fill these in the post-restart bundle only.** Each run of the script
+regenerates `checklist.md` with every manual row reset, so answers
+written into the pre-restart bundle are discarded by the next run. The
+post-restart bundle is the sign-off bundle; its rows are answered in
+`verify-reimaged-system.md` Step 7. Note in particular that the restart row
+cannot be answered truthfully in a pre-restart bundle.
+
 | Area | Manual Item | Why Manual |
 |---|---|---|
 | Microsoft 365 / O365 sign-in | Confirm sign-in completed during setup | CLI cannot prove the setup prompt was completed correctly. |
 | Company Portal | Confirm device shows registered/compliant in UI | CLI can show enrollment evidence but not the full compliance state. |
 | VPN / Zscaler | Confirm real internal sites load | Process/app presence does not prove internal access. |
-| OneDrive / iCloud | Confirm sync state is acceptable before restore | CLI cannot reliably prove sync completion. |
+| Managed app set | Confirm everything installed in Phase 8 Step 4 is still present, including nested bundles | Presence is scripted; whether the set is *complete for this Mac* is a Company Portal judgment. |
+| OneDrive | Confirm the app is present. Sign-in and initial sync are deliberately deferred | Starting a large sync here collides with the Phase 9 restart, and the ordering against the Phase 15 home-file restore is not settled. |
 | Chrome | Confirm default browser and JSON Formatter/important extensions | Browser settings/extensions are best verified in UI. |
 | Terminal | Confirm Ocean profile/window size or chosen profile | CLI cannot prove the UI preference is visually correct. |
 | Displays and peripherals | Confirm arrangement, scaling, keyboard, mouse, audio | System information does not prove physical usability. |
@@ -526,6 +665,8 @@ Generated: __GENERATED_DATE__
 
 Source script: `__SCRIPT_NAME__`
 
+Context: `__CONTEXT__`
+
 Output bundle:
 
 ~~~text
@@ -538,7 +679,7 @@ __OUT__
 |---|---|
 | Checklist runbook | `verify-reimaged-system.md` |
 | Script | `bin/record-reimaged-system.sh` |
-| Generated evidence bundle | `__OUTPUT_ROOT__/initial-reimaged-system-YYYYMMDD-HHMMSS/` |
+| Generated evidence bundle | `__OUTPUT_ROOT__/[context-]initial-reimaged-system-YYYYMMDD-HHMMSS/` |
 | Preferred generated-artifact root | `__ARTIFACT_ROOT__/reimaged-system/` when the artifact drive is mounted |
 | Local fallback if the artifact drive is unavailable | `~/Desktop/reimaged-system-artifacts/` |
 
@@ -554,16 +695,20 @@ Keep active scripts in the toolkit checkout. Store generated evidence, checklist
 | Zscaler app present | `__ZSCALER_STATUS__` | `raw/applications-managed.txt` |
 | CrowdStrike/Falcon app present | `__CROWDSTRIKE_APP_STATUS__` | `raw/applications-managed.txt` |
 | CrowdStrike/Falcon process present | `__CROWDSTRIKE_PROC_STATUS__` | `raw/managed-processes.txt` |
-| Microsoft Office apps present or installing | `__OFFICE_STATUS__` | `raw/applications-managed.txt` |
-| OneDrive app present | `__ONEDRIVE_STATUS__` | `raw/applications-managed.txt` |
+| Microsoft Office apps present (Phase 8 Step 4) | `__OFFICE_STATUS__` | `raw/applications-managed.txt` |
+| OneDrive app present (sign-in deliberately deferred) | `__ONEDRIVE_STATUS__` | `raw/applications-managed.txt` |
 | Chrome app present | `__CHROME_STATUS__` | `raw/applications-managed.txt` |
 | External artifact root visible | `__ARTIFACT_ROOT_STATUS__` | `raw/artifact-root-spotcheck.txt` |
 | Time Machine destination captured | `__TM_DEST_STATUS__` | `raw/time-machine-destination.txt` |
-| Git available | `__GIT_STATUS__` | `raw/git-version.txt` |
-| Homebrew available | `__BREW_STATUS__` | `raw/brew-version.txt` |
+| Git available (installed in Phase 10A) | `__GIT_STATUS__` | `raw/git-version.txt` |
+| Homebrew available (installed in Phase 10A) | `__BREW_STATUS__` | `raw/brew-version.txt` |
 | Network check | `__NETWORK_STATUS__` | `raw/network-github.txt` |
 
 ## Manual First-Boot Checklist
+
+> Fill these in the **post-restart** bundle only. A rerun regenerates this file
+> and resets every row, so answers written into a pre-restart bundle are lost.
+> See `verify-reimaged-system.md` Step 7.
 
 | Check | Status | Notes |
 |---|---|---|
@@ -574,7 +719,7 @@ Keep active scripts in the toolkit checkout. Store generated evidence, checklist
 | Device shows registered / compliant | `TODO` |  |
 | Required profiles/certificates visible | `TODO` |  |
 | VPN or Zscaler works for internal sites | `TODO` |  |
-| Office install left to approved managed channel | `TODO` |  |
+| Managed app set installed from the Company Portal Apps tab (Phase 8 Step 4) | `TODO` |  |
 | macOS updates checked/applied | `TODO` |  |
 | Second stabilization restart completed | `TODO` |  |
 | External artifact drive reconnected after enrollment stabilized | `TODO` |  |
@@ -586,15 +731,22 @@ Keep active scripts in the toolkit checkout. Store generated evidence, checklist
 ## Recommended Next Actions
 
 1. Review `raw/profiles-enrollment.txt`, `raw/filevault.txt`, and `raw/applications-managed.txt`.
-2. Complete the manual checklist above.
-3. Restart once after managed enrollment and security tools are stable.
-4. Rerun this script after the restart and compare results.
-5. Take the first reimaged-system Time Machine backup after Phase 8 is stable, macOS updates are complete, and the first restart has completed.
+2. If any automated row above reads `TODO` for a managed app, finish
+   `enroll-and-stabilize.md` Step 4 and rerun this script **before** restarting —
+   this bundle is the pre-restart baseline the comparison depends on.
+3. Restart once after managed enrollment, the managed app set, and security tools are all stable.
+4. Rerun this script after the restart, compare results, and complete the manual checklist in that newer bundle.
+5. Do **not** take a Time Machine backup here. The post-image backup is Phase 16,
+   after Phase 15 restores your home directory — a backup taken now would capture
+   a machine holding nothing that re-enrolling could not reproduce, and would miss
+   the home files entirely. Until then the pre-image Time Machine chain is the
+   fallback.
 
 EOF_CHECKLIST
 
 replace_token "$CHECKLIST" "__GENERATED_DATE__" "$(date)"
 replace_token "$CHECKLIST" "__SCRIPT_NAME__" "$SCRIPT_NAME"
+replace_token "$CHECKLIST" "__CONTEXT__" "${CONTEXT_LABEL:-(none supplied)}"
 replace_token "$CHECKLIST" "__OUT__" "$OUT"
 replace_token "$CHECKLIST" "__OUTPUT_ROOT__" "$OUTPUT_ROOT"
 replace_token "$CHECKLIST" "__ARTIFACT_ROOT__" "${REIMAGE_ARTIFACT_ROOT:-<unset>}"
@@ -620,9 +772,9 @@ Generated: __GENERATED_DATE__
 
 Open first:
 
-- `initial-checklist.md`
+- `checklist.md`
 - `restart-checkpoints.md`
-- `time-machine-reimaged-system-plan.md`
+- `time-machine-plan.md`
 - `manual-captures-required.md`
 
 Raw captures are under `raw/`. Command and error logs are under `logs/`.
@@ -632,20 +784,28 @@ EOF_SUMMARY
 
 replace_token "$SUMMARY" "__GENERATED_DATE__" "$(date)"
 
-# Plain-text pointer for shell users so `cat latest-...` reveals the most
-# recent bundle without a `ls -t | head` dance. Written at the parent level.
-# A failed pointer write is not fatal — the bundle above is still valid — but
-# it must be reported: a silently stale pointer sends the operator to an older
-# bundle, which is exactly the symptom verify-reimaged-system.md troubleshoots.
-LATEST_POINTER="$OUTPUT_ROOT/latest-initial-reimaged-system-bundle.txt"
-if ! echo "$OUT" > "$LATEST_POINTER" 2>/dev/null; then
-  echo "WARNING: could not update the latest-bundle pointer: $LATEST_POINTER" >&2
-  echo "WARNING: it may still name an older bundle. Use the bundle path printed below." >&2
+# Index the run. The `latest-initial-reimaged-system-bundle.txt` pointer this
+# script used to write is gone: one pointer cannot name three lineages --
+# initial, pre-restart, post-restart -- and naming whichever ran last is
+# precisely the bug that made verify-reimaged-system.md Step 6 hand-roll its own
+# prefix-filtered selection. `official/<context>.txt` answers per lineage.
+RUN_PASS="$(grep -c '`PASS`' "$CHECKLIST" 2>/dev/null || true)"
+RUN_WARN="$(grep -c '`WARN`' "$CHECKLIST" 2>/dev/null || true)"
+RUN_TODO="$(grep -c '`TODO`' "$CHECKLIST" 2>/dev/null || true)"
+
+if ! artifact_run_finalize "$RUN_CATEGORY_ROOT" \
+     "${RUN_PASS:-0} pass / ${RUN_WARN:-0} warn / ${RUN_TODO:-0} todo"; then
+  echo "ERROR: the bundle was written but artifact-runs reported a problem indexing it — see above." >&2
+  exit 2
 fi
+# finalize promotes the staging directory, so the paths must be re-derived.
+OUT="$ARTIFACT_RUN_DIR"
+CHECKLIST="$OUT/checklist.md"
 
 echo ""
 echo "First-boot evidence bundle written: $OUT"
 echo "Open checklist: $CHECKLIST"
+echo "Run indexed at: $RUN_CATEGORY_ROOT/MANIFEST.md"
 
 if [[ "$OPEN_RESULT" == "true" ]]; then
   open "$OUT" 2>/dev/null || true

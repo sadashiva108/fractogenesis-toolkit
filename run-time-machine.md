@@ -1,5 +1,12 @@
 [[reimaging-guide#Phase 5 — Run Time Machine|← Back to Mac Reimaging Guide]]
 
+> This runbook serves **two** phases, the way the `capture-*` runbooks serve both
+> Phase 4 and Phase 13: **Phase 5** takes the pre-erase backup, and
+> [[reimaging-guide#Phase 16 — Post-Image Time Machine|Phase 16]] takes the first
+> backup of the rebuilt Mac after Restore Home. The steps below are the Phase 5
+> pass; see [[#Post-Image Pass — Phase 16|Post-Image Pass — Phase 16]] for what
+> changes on the post-image side.
+
 <!--
 Migrated from reference-vault/workflows/mac/reimage/backup-time-machine.md.
 Renaming considerations:
@@ -45,6 +52,7 @@ Run and validate a Time Machine backup before a Mac reimage — the broad, whole
     - [[#Step 6 — Eject Before Reimage|Step 6 — Eject Before Reimage]]
 - [[#Decisions|Decisions]]
 - [[#Troubleshooting|Troubleshooting]]
+- [[#Post-Image Pass — Phase 16|Post-Image Pass — Phase 16]]
 - [[#Supplemental Reference|Supplemental Reference]]
     - [[#Subcommand Reference|Subcommand Reference]]
     - [[#Raw Command Equivalents|Raw Command Equivalents]]
@@ -66,7 +74,7 @@ Produce a completed, verified Time Machine backup before the Mac is erased, so t
 
 - **A completed, verified snapshot** — the pre-image backup run to completion on the dedicated Time Machine destination volume, confirmed by the latest-backup record and targeted checksum verification.
 - **Settled exclusions and destination** — the external data volume and the artifact root excluded from Time Machine, and the configured destination confirmed as the Apple backups volume rather than the manual data volume.
-- **The `time-machine/` evidence layer** — the timestamped preflight, pre-run, completion, verification, compare, and log artifacts written under `$REIMAGE_ARTIFACT_ROOT/time-machine/`.
+- **The `time-machine/` evidence layer** — the timestamped pre-run bundle plus the completion, verification, compare, status, diagnose, and log artifacts written under `$REIMAGE_ARTIFACT_ROOT/time-machine/`.
 - **A cleanly ejected drive** — both volumes detached, with no volume mid-write when the erase begins.
 
 **What the rest of the workflow relies on it for**
@@ -83,6 +91,7 @@ Produce a completed, verified Time Machine backup before the Mac is erased, so t
 | read-only Time Machine evidence capture — `bin/record-time-machine-evidence.sh` | broad local-file copy — `backup-home` (Phase 2B) |
 | Time Machine verification, comparison, and the final eject before erase | application settings and IntelliJ state — `backup-apps` / `backup-intellij` (Phase 2D) |
 | the `$REIMAGE_ARTIFACT_ROOT/time-machine/` evidence layout | certificate and Keychain staging — `stage-certs-keychain` (Phase 3A) |
+| the post-image Time Machine pass (Phase 16), after Restore Home | the home-file restore that must precede it — `restore-home` (Phase 15) |
 | | encrypted secrets packaging — `create-secrets-dmg` (Phase 3C) |
 | | cross-phase readiness sign-off — `reimage-prep-checks` (Phase 6B) |
 
@@ -163,7 +172,9 @@ $REIMAGE_ARTIFACT_ROOT/
 ├── time-machine/
 │   ├── compare-YYYYMMDD-HHMMSS.txt
 │   ├── completion-check-YYYYMMDD-HHMMSS.md
+│   ├── diagnose-YYYYMMDD-HHMMSS.txt
 │   ├── diskutil-verifyvolume-applebackups-YYYYMMDD-HHMMSS.txt
+│   ├── final-time-machine-checklist-YYYYMMDD-HHMMSS.md
 │   ├── logs-YYYYMMDD-HHMMSS.txt
 │   ├── pre-image-time-machine-status-YYYYMMDD-HHMMSS/
 │   │   ├── README.md
@@ -186,8 +197,7 @@ $REIMAGE_ARTIFACT_ROOT/
 │   │   │   └── volumes.txt
 │   │   ├── time-machine-pre-run.md
 │   │   └── time-machine-status.md
-│   ├── pre-run-YYYYMMDD-HHMMSS.md
-│   ├── preflight-YYYYMMDD-HHMMSS.md
+│   ├── status-YYYYMMDD-HHMMSS.txt
 │   └── verifychecksums-YYYYMMDD-HHMMSS.txt
 └── ...
 ```
@@ -219,7 +229,7 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 
 ### Prerequisites
 
-- Your shell is at the repository root — `cd "$FRACTOGENESIS_HOME"` once for the session. Per the guide's [[reimaging-guide#Core Assumptions|Core Assumptions]], the commands below assume this and don't repeat it.
+- Your shell is at the toolkit root — `cd "$FRACTOGENESIS_HOME"` once for the session. Per the guide's [[reimaging-guide#Core Assumptions|Core Assumptions]], the commands below assume this and don't repeat it.
 - `REIMAGE_ARTIFACT_ROOT`, `EXTERNAL_DATA_VOLUME`, and `EXTERNAL_APPLE_BACKUPS_VOLUME` resolve, and both external volumes are mounted (`reimage.env` produced by `prepare-artifact-root.md`).
 - The earlier Phase 2 backups are done — Time Machine is the last backup action, so its snapshot post-dates them.
 - Heavy apps that churn files are closed: IntelliJ IDEA, Docker Desktop, Outlook/OneNote, and any dev servers or build processes. OneDrive, Finder, and Terminal are fine to leave running.
@@ -552,6 +562,108 @@ tmutil status
 
 ---
 
+---
+
+## Post-Image Pass — Phase 16
+
+Same runbook, same script, different moment. Phase 5 protects the machine you are
+about to erase; Phase 16 protects the machine you just rebuilt. Run it **after
+Phase 15 — Restore Home**, which is the last phase that puts anything
+irreplaceable on the Mac.
+
+### What Is Different
+
+| | Phase 5 (pre-image) | Phase 16 (post-image) |
+|---|---|---|
+| Purpose | Last-resort fallback if the reimage goes badly | The rebuilt Mac's first restore point, and the start of ongoing backups |
+| Runs after | Phases 2–4 are complete | Phase 15 — Restore Home is complete |
+| Ends with | `eject`, before the erase | No eject — the destination stays connected for normal use |
+| Compare against | The previous pre-image backup | Nothing useful; the pre-image chain is a different system |
+
+### Post-Image Step 1 — Decide Whether to Inherit the Existing Backup History
+
+This decision only exists on the post-image side, and it is the one thing here
+worth thinking about before running anything.
+
+Time Machine identifies the source machine from state held on the destination.
+After an erase and reinstall your Mac no longer matches, so macOS will typically
+offer to **inherit** the existing backup history — or you can claim it explicitly:
+
+```bash
+tmutil destinationinfo
+tmutil listbackups
+sudo tmutil inheritbackup /Volumes/<destination>/<backup-set>
+```
+
+- **Inherit** — new backups continue the existing chain and unchanged files share
+  storage with the prior backups rather than being recopied. The first run is
+  still slow, because the local event store is gone and everything must be
+  scanned, but it does not consume another full system's worth of space.
+- **Do not inherit** — a separate backup set. The first backup is genuinely full
+  and consumes full size again, on the same volume.
+
+> [!warning] Pitfall
+> Whichever you choose, check free space first. Time Machine thins the oldest
+> backups automatically when the destination runs low, so adding a rebuilt system
+> to the volume that holds your pre-image chain can silently delete it — and that
+> chain is the only complete image of the machine you erased.
+>
+> ```bash
+> df -h "$EXTERNAL_APPLE_BACKUPS_VOLUME"
+> tmutil listbackups
+> ```
+
+### Post-Image Step 2 — Confirm the Destination and Exclusions
+
+The exclusion gate is identical to the pre-image pass and just as load-bearing:
+the artifact root is still mounted, and a backup that sweeps it in wastes hours
+and buries the evidence layer inside the backup. Run the same gate — see
+[[#Step 1 — Exclude Volumes and Confirm the Destination|Step 1 — Exclude Volumes and Confirm the Destination]].
+
+### Post-Image Step 3 — Run, Monitor, and Verify
+
+The same subcommands as the pre-image pass:
+
+```bash
+./bin/run-time-machine.sh start
+./bin/run-time-machine.sh monitor --interval 300
+./bin/run-time-machine.sh complete --open
+./bin/run-time-machine.sh verify-latest --mount-if-needed --open
+```
+
+Skip `compare` unless you inherited the history. Comparing a rebuilt system
+against a pre-erase backup reports the entire machine as changed, which is true
+and useless.
+
+### Post-Image Step 4 — Do Not Eject
+
+The pre-image pass ends with `eject` because the erase is next. Phase 16 does
+not: the destination stays attached so scheduled backups continue. The artifact
+drive is a separate decision — eject it whenever you no longer need the evidence
+layer mounted.
+
+### Post-Image Step 5 — Close the Checklist Row
+
+`./bin/reimage-checklist.sh --phase post` reads `WARN` on `Time Machine latest
+backup` until a post-image backup exists, saying the latest backup predates the
+reimaged-system evidence. That is correct during Phase 14. Rerun it after this
+phase to close the row:
+
+```bash
+./bin/reimage-checklist.sh --phase post --artifact-root "$REIMAGE_ARTIFACT_ROOT" --open
+```
+
+> [!bug] Troubleshooting
+> If `tmutil latestbackup` still reports a pre-image timestamp after the backup
+> completes, the backup ran against a stale destination — a Time Machine target
+> that was quarantined or dropped during the reimage answers happily while still
+> holding only the pre-erase chain. Re-check with `tmutil destinationinfo`, add
+> the intended destination if it is missing, and rerun the backup. This is also
+> what a declined inherit prompt looks like from the outside, so confirm which
+> backup set you are writing into before assuming the destination is at fault.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
 ## Supplemental Reference
 
 Longer material most runs will not need, kept out of the main flow.
@@ -562,7 +674,6 @@ Longer material most runs will not need, kept out of the main flow.
 
 | Task | Command |
 |---|---|
-| Capture runtime preflight evidence | `./bin/run-time-machine.sh preflight --open` |
 | Start an explicit immediate backup | `./bin/run-time-machine.sh start` |
 | Monitor progress | `./bin/run-time-machine.sh monitor --interval 300` |
 | Capture one runtime status snapshot | `./bin/run-time-machine.sh status` |

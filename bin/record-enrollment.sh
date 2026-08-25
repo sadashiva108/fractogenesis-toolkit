@@ -3,10 +3,21 @@
 # record-enrollment.sh
 #
 # Phase 8 — Enroll and Stabilize evidence recorder. Runs read-only managed-
-# baseline queries (MDM enrollment, configuration profiles, FileVault, expected
-# managed apps and processes, macOS version, pending software updates), writes
-# each result to a raw/NN-*.txt file, then generates a Markdown record with the
-# Phase 8 exit-criteria table prefilled for the command-verifiable rows.
+# baseline queries (MDM enrollment, configuration profiles, FileVault, installed
+# applications and managed processes, macOS version, pending software updates,
+# Keychain identities),
+# writes each result to a raw/NN-*.txt file, compares the installed application
+# set against the pre-image managed-inventory capture, then generates a Markdown
+# record with the Phase 8 exit-criteria table prefilled for the
+# command-verifiable rows.
+#
+# The expected managed application set is derived from the pre-image capture at
+# $REIMAGE_ARTIFACT_ROOT/managed-inventory/, never from a list of vendor names
+# held in this script. A hardcoded list cannot know what this particular Mac was
+# assigned, and silently scores PASS on a machine missing an entire app suite.
+# When the artifact volume is not mounted the comparison has no source and the
+# row is stamped TODO rather than PASS — "could not check" and "checked and
+# fine" must not look the same.
 #
 # This script records evidence and applies small heuristic PASS/WARN verdicts
 # on the command-verifiable rows only. The truly human-judgment rows (Company
@@ -38,10 +49,26 @@
 #   # layout and the fallback chain entirely).
 #   ./bin/record-enrollment.sh --output /absolute/path/to/output
 #
+#   # Point the managed-application comparison at a specific inventory capture.
+#   ./bin/record-enrollment.sh --managed-inventory /path/to/managed-inventory
+#
+#   # Label the run so the two records around the stabilization restart are
+#   # distinguishable on disk without opening them. Matches the --context
+#   # convention already used by report-loose-secrets.sh.
+#   ./bin/record-enrollment.sh --context pre-restart     # Step 4
+#   ./bin/record-enrollment.sh --context post-restart    # Step 6
+#
 # Options:
 #   --artifact-root PATH  Override REIMAGE_ARTIFACT_ROOT from shared config.
 #   --workspace-root PATH Override REIMAGE_WORKSPACE_ROOT for the fallback path.
 #   --output DIR          Exact output directory for generated files.
+#   --managed-inventory DIR
+#                         Override the pre-image managed-inventory directory
+#                         used to derive the expected application set.
+#   --context LABEL       Prefix the record directory name with LABEL:
+#                         LABEL-record-enrollment-YYYYMMDD-HHMMSS.
+#                         Conventional values are pre-restart and post-restart.
+#                         Letters, digits, dot, underscore, and hyphen only.
 #   --open                Reveal the generated record in Finder on completion.
 #   -h, --help            Show this message and exit.
 #
@@ -50,6 +77,20 @@
 #   2. Environment values already exported by the caller or optional .envrc.
 #   3. Values loaded from reimage.env.
 #   4. Defaults and reusable fragments loaded by artifact-config.sh.
+#
+# Bundle naming:
+#   [LABEL-]record-enrollment-YYYYMMDD-HHMMSS
+#
+#   The label leads, matching post-image-performance-audit-*, post-reimage-*,
+#   and the pre-image-* repo-audit runs. Readers must therefore glob
+#   *record-enrollment-* rather than record-enrollment-*. --output is
+#   unaffected, since it names an exact directory and bypasses the layout.
+#
+#   Because the label precedes the timestamp, directory names no longer sort
+#   chronologically once more than one label is in play: post-restart sorts
+#   before pre-restart regardless of when each ran. Select a "latest" record
+#   by modification time, or glob one label at a time, rather than sorting the
+#   mixed set lexically.
 #
 # Output location precedence (used only when --output is not supplied):
 #   1. $REIMAGE_ARTIFACT_ROOT/reimaged-system/enrollment/
@@ -97,6 +138,30 @@ usage() {
     | sed '1d;$d;s/^# //;s/^#$//'
 }
 
+# Validate a --context label before it becomes part of a directory name. A label
+# carrying a slash, a space, or a quote produces either a nested path or a name
+# that later globs and `cp` invocations mishandle, so reject it outright rather
+# than silently rewriting what the operator typed. The character class is a
+# POSIX `case` glob rather than a regex so this behaves identically on the
+# stock macOS Bash 3.2.
+validate_context() {
+  local value="$1"
+  case "$value" in
+    "")
+      return 0
+      ;;
+    *[!A-Za-z0-9._-]*)
+      echo "ERROR: --context may contain only letters, digits, dot, underscore, and hyphen: $value" >&2
+      echo "HINT:  the label becomes part of the bundle directory name." >&2
+      exit 2
+      ;;
+    -*)
+      echo "ERROR: --context may not begin with a hyphen: $value" >&2
+      exit 2
+      ;;
+  esac
+}
+
 require_option_value() {
   local option="$1"
   local value="${2:-}"
@@ -114,6 +179,8 @@ require_option_value() {
 STAMP="$(date +%Y%m%d-%H%M%S)"
 OUTPUT_DIR=""
 OPEN_RESULT=false
+MANAGED_INVENTORY_DIR=""
+CONTEXT_LABEL=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -130,6 +197,17 @@ while [[ $# -gt 0 ]]; do
     --output)
       require_option_value "$1" "${2:-}"
       OUTPUT_DIR="$2"
+      shift 2
+      ;;
+    --managed-inventory)
+      require_option_value "$1" "${2:-}"
+      MANAGED_INVENTORY_DIR="$2"
+      shift 2
+      ;;
+    --context)
+      require_option_value "$1" "${2:-}"
+      validate_context "$2"
+      CONTEXT_LABEL="$2"
       shift 2
       ;;
     --open)
@@ -151,13 +229,31 @@ done
 # ---------------------------------------------------------------------------
 # Resolve output directory (fallback chain when --output is not supplied)
 # ---------------------------------------------------------------------------
+# The context label leads the directory name:
+# pre-restart-record-enrollment-YYYYMMDD-HHMMSS. This matches the convention
+# already used by post-image-performance-audit-*, post-reimage-*, and the
+# pre-image-* repo-audit runs, where the phase or context comes first.
+#
+# Two consequences for anything that reads these directories back:
+#   - the artifact name is no longer at the start, so globs need a leading
+#     wildcard: *record-enrollment-* rather than record-enrollment-*;
+#   - names group by label before timestamp, so a "latest record" lookup must
+#     rank on the trailing stamp (or on modification time) and never on a
+#     plain lexical sort of the mixed set.
+# The stamp stays at the end of the name, which is what reimage-checklist.sh
+# extracts to compare bundle age against the Time Machine backup.
+CONTEXT_PREFIX=""
+if [[ -n "$CONTEXT_LABEL" ]]; then
+  CONTEXT_PREFIX="$CONTEXT_LABEL-"
+fi
+
 if [[ -z "$OUTPUT_DIR" ]]; then
   if [[ -n "${REIMAGE_ARTIFACT_ROOT:-}" && -d "$REIMAGE_ARTIFACT_ROOT" ]]; then
-    OUTPUT_DIR="$REIMAGE_ARTIFACT_ROOT/reimaged-system/enrollment/record-enrollment-$STAMP"
+    OUTPUT_DIR="$REIMAGE_ARTIFACT_ROOT/reimaged-system/enrollment/${CONTEXT_PREFIX}record-enrollment-$STAMP"
   elif [[ -n "${REIMAGE_WORKSPACE_ROOT:-}" && -d "$REIMAGE_WORKSPACE_ROOT" ]]; then
-    OUTPUT_DIR="$REIMAGE_WORKSPACE_ROOT/enrollment/record-enrollment-$STAMP"
+    OUTPUT_DIR="$REIMAGE_WORKSPACE_ROOT/enrollment/${CONTEXT_PREFIX}record-enrollment-$STAMP"
   else
-    OUTPUT_DIR="$HOME/Desktop/reimaged-system-artifacts/enrollment/record-enrollment-$STAMP"
+    OUTPUT_DIR="$HOME/Desktop/reimaged-system-artifacts/enrollment/${CONTEXT_PREFIX}record-enrollment-$STAMP"
   fi
 fi
 
@@ -225,14 +321,264 @@ record_pipeline() {
 # Record raw evidence
 # ---------------------------------------------------------------------------
 record_cmd      "Enrollment status"              "01-enrollment-status.txt"     profiles status -type enrollment
-record_cmd      "Configuration profiles list"    "02-profiles-list.txt"         profiles list
+# `profiles list` unprivileged returns USER-level profiles only. The managed
+# baseline lives at _computerlevel, so the number that matters needs root --
+# 4 user profiles versus 17 system ones on a typical enrolled Mac.
+#
+# `sudo -n` never prompts: it succeeds if a sudo credential is already cached
+# and fails immediately otherwise. That keeps this script non-interactive, which
+# is the whole reason it can be rerun freely, while still capturing the system
+# scope whenever the operator has recently used sudo. The fallback records the
+# user scope and says which one it got.
+record_pipeline "Configuration profiles list"    "02-profiles-list.txt" \
+  "if sudo -n profiles list 2>/dev/null; then echo; echo '# scope: system (_computerlevel), via sudo -n'; else profiles list; echo; echo '# scope: user only -- no cached sudo credential. Rerun after any sudo command, or run: sudo profiles list'; fi"
 record_cmd      "FileVault status"               "03-filevault-status.txt"      fdesetup status
-record_pipeline "Managed applications present"   "04-managed-apps.txt" \
-  "ls -1 /Applications | grep -Ei 'Company Portal|CrowdStrike|Falcon|Zscaler|Microsoft|Teams|Outlook|OneNote' || true"
+# Record every application, not a vendor-name filter, and include one level of
+# nesting: agents such as Zscaler install as /Applications/Zscaler/Zscaler.app
+# and a top-level listing alone is a weaker signal than it appears. The full
+# list is also what the managed-inventory comparison below reads.
+record_pipeline "Applications present"           "04-managed-apps.txt" \
+  "{ ls -1 /Applications 2>/dev/null; ls -1d /Applications/*/*.app 2>/dev/null | sed 's#^/Applications/##'; } | sort -u"
 record_pipeline "Managed processes present"      "05-managed-processes.txt" \
   "ps aux | grep -Ei 'Intune|Company Portal|CrowdStrike|falcon|Zscaler|Microsoft AutoUpdate|MAU|mdmclient' | grep -v grep || true"
 record_cmd      "macOS version and build"        "06-macos-version.txt"         sw_vers
 record_cmd      "Available software updates"     "07-softwareupdate-list.txt"   softwareupdate --list
+
+# Keychain identities: certificate + private key pairs. Captured in both the
+# general and the ssl-client scopes because the pair of counts is what tells
+# them apart -- an ssl-client identity also appears in the general listing, so
+# the two numbers are nested, not additive.
+#
+# This is the only managed component with no restore path other than
+# re-issuance: an identity whose private key refuses export cannot be restored
+# from a .p12, from Time Machine, or from a disk image. After an erase the
+# count is therefore the only evidence that MDM re-issued what it should have.
+# Package receipts. The pre-image managed inventory records expectations as
+# receipt identifiers, so matching against these is exact where matching app
+# names is not: `com.microsoft.package.Microsoft_Word.app` is unambiguous,
+# "Microsoft Word" is not.
+record_cmd      "Installed package receipts"     "10-package-receipts.txt"     pkgutil --pkgs
+
+# Launch agents and daemons, as absolute paths. The company-scoped inventory
+# records background components this way -- /Library/LaunchDaemons/com.x.y.plist
+# -- and no other capture contains that form, so without this every launchd
+# entry in the expectation set reads as absent.
+record_pipeline "Launchd managed components"     "11-launchd-components.txt" \
+  "ls -1 /Library/LaunchAgents/*.plist /Library/LaunchDaemons/*.plist \"$HOME\"/Library/LaunchAgents/*.plist 2>/dev/null | sort -u"
+
+# System extensions. Endpoint security agents ship as these rather than as
+# kexts, and the company-scoped inventory records them, so without this capture
+# an activated extension reads as absent.
+record_pipeline "System extensions"              "12-system-extensions.txt" \
+  "systemextensionsctl list 2>/dev/null || echo 'systemextensionsctl unavailable'"
+
+record_pipeline "Keychain identities"            "09-keychain-identities.txt" \
+  "echo '## security find-identity -v'; security find-identity -v; echo; echo '## security find-identity -v -p ssl-client'; security find-identity -v -p ssl-client"
+
+# ---------------------------------------------------------------------------
+# Managed application expectations, derived from the pre-image capture
+# ---------------------------------------------------------------------------
+# Resolve the inventory directory: explicit override first, then the artifact
+# root. Phase 8 often runs before the external volume is reconnected, so an
+# absent source is an ordinary outcome rather than an error.
+if [[ -z "$MANAGED_INVENTORY_DIR" && -n "${REIMAGE_ARTIFACT_ROOT:-}" ]]; then
+  if [[ -d "$REIMAGE_ARTIFACT_ROOT/managed-inventory" ]]; then
+    MANAGED_INVENTORY_DIR="$REIMAGE_ARTIFACT_ROOT/managed-inventory"
+  fi
+fi
+
+EXPECT_FILE="$RAW_DIR/08-managed-app-expectations.txt"
+MANAGED_APPS_STATUS="TODO"
+MANAGED_APPS_MISSING_COUNT="0"
+MANAGED_APPS_EXPECTED_COUNT="0"
+MANAGED_APPS_SOURCE="none"
+
+# Pick the narrowest usable expectation source. The capture writes several files
+# per run; only some of them describe COMPANY-managed software, and reading the
+# wrong one produces a large, meaningless miss count rather than an error.
+#
+# 03-installed-app-bundles.txt is deliberately never used: it lists every
+# application the pre-image Mac had, so comparing it at Phase 8 reports the whole
+# un-restored application set. That belongs to Phase 13C, after Phase 12 has put
+# the applications back.
+EXPECT_SOURCE_FILE=""
+if [[ -n "$MANAGED_INVENTORY_DIR" && -d "$MANAGED_INVENTORY_DIR" ]]; then
+  for _candidate in \
+    "$(find "$MANAGED_INVENTORY_DIR" -name '07-company-filter-pass.txt' 2>/dev/null | sort | tail -1)" \
+    "$(find "$MANAGED_INVENTORY_DIR" -name '04-installed-package-receipts.txt' 2>/dev/null | sort | tail -1)"
+  do
+    if [[ -n "$_candidate" && -f "$_candidate" ]]; then
+      EXPECT_SOURCE_FILE="$_candidate"
+      MANAGED_APPS_SOURCE="$(basename "$_candidate")"
+      break
+    fi
+  done
+fi
+
+echo "▶  Managed application expectations ..."
+
+# Gate on the SOURCE FILE, not just the directory. A managed-inventory tree
+# that exists but holds no company-scoped file is "could not check", and
+# scoring it PASS on an empty expectation set is the same defect this row
+# was written to avoid.
+if [[ -z "$EXPECT_SOURCE_FILE" || ! -f "$EXPECT_SOURCE_FILE" ]]; then
+  {
+    echo "# Managed application expectations"
+    echo "# Generated: $(date)"
+    echo "# Source: unavailable"
+    echo ""
+    if [[ -z "$MANAGED_INVENTORY_DIR" ]]; then
+      echo "No pre-image managed-inventory capture was reachable, so the installed"
+      echo "application set could not be compared against what this Mac had before"
+      echo "the erase. This is expected when Phase 8 runs before the external"
+      echo "artifact volume is reconnected in Phase 9."
+    else
+      echo "A managed-inventory tree was found at:"
+      echo ""
+      echo "    $MANAGED_INVENTORY_DIR"
+      echo ""
+      echo "but it holds no company-scoped expectation file. Expected one of:"
+      echo ""
+      echo "    */07-company-filter-pass.txt"
+      echo "    */04-installed-package-receipts.txt"
+      echo ""
+      echo "This row is left as TODO rather than PASS: an empty expectation set"
+      echo "trivially matches, and reporting that as a pass would mean the check"
+      echo "is loudest when it knows least."
+    fi
+    echo ""
+    echo "To close this row, either rerun after reconnecting the drive:"
+    echo ""
+    echo "    ./bin/record-enrollment.sh --artifact-root \"\$REIMAGE_ARTIFACT_ROOT\""
+    echo ""
+    echo "or confirm the application set by hand against the Company Portal Apps"
+    echo "tab and mark the row accordingly."
+  } > "$EXPECT_FILE" 2>&1 || true
+  echo "   • no managed-inventory source; row left as TODO"
+else
+  # Entries are one per line: package receipt identifiers, occasionally an app
+  # name. Drop comments, section rules, and blanks; whatever is left is an
+  # expectation. Parsing this way is format-agnostic, so a new section heading in
+  # a later capture version does not silently change the result.
+  EXPECTED_TMP="$RAW_DIR/.expected.$$"
+  MISSING_TMP="$RAW_DIR/.missing.$$"
+  HAYSTACK_TMP="$RAW_DIR/.haystack.$$"
+
+  # Most sections list one identifier or one absolute path per line, but at least
+  # one records command status lines verbatim -- for example
+  #   * * X9E956P446 com.vendor.agent (1.0/2.0) Agent Name [activated enabled]
+  # A whole line like that matches nothing, so it would always report as absent
+  # while the software sits there activated. Reduce such lines to the
+  # reverse-DNS identifier they contain; keep everything else as-is.
+  #
+  # The test for "is this a status line" is: it contains whitespace and does not
+  # begin with a slash. Absolute paths keep their spaces, because bundle names
+  # legitimately contain them.
+  sed -e 's/[[:space:]]*$//' "$EXPECT_SOURCE_FILE" \
+    | grep -v '^[[:space:]]*#' \
+    | grep -v '^[[:space:]]*---' \
+    | grep -v '^[[:space:]]*$' \
+    | sed 's/^[[:space:]]*//' \
+    | awk '
+        /^\// { print; next }                       # absolute path: keep whole
+        $0 !~ /[[:space:]]/ { print; next }         # bare identifier: keep whole
+        {                                            # status line: pull out IDs
+          for (i = 1; i <= NF; i++) {
+            if ($i ~ /^[A-Za-z][A-Za-z0-9-]*(\.[A-Za-z0-9_-]+){2,}$/) print $i
+          }
+        }' \
+    | sort -uf > "$EXPECTED_TMP" || true
+
+  # The company-scoped inventory is sectioned: package receipts, application
+  # bundles, configuration profiles, background components, preference domains.
+  # Matching all of those against receipts alone reports whole sections as
+  # absent, so the haystack spans every capture that could contain any of them.
+  cat "$RAW_DIR/10-package-receipts.txt" \
+      "$RAW_DIR/11-launchd-components.txt" \
+      "$RAW_DIR/12-system-extensions.txt" \
+      "$RAW_DIR/04-managed-apps.txt" \
+      "$RAW_DIR/02-profiles-list.txt" \
+      "$RAW_DIR/05-managed-processes.txt" \
+    > "$HAYSTACK_TMP" 2>/dev/null || true
+
+  # Expectations arrive in two forms -- bare identifiers and absolute paths --
+  # and the captures they must match against use whichever form is natural for
+  # that command. `pkgutil` prints bare receipt IDs; `ls /Applications` prints
+  # bare bundle names; the inventory records both of those as full paths. So a
+  # miss on the literal string is retried against the basename before an entry
+  # is called absent: /Applications/Microsoft Word.app is present on a Mac whose
+  # application listing says "Microsoft Word.app".
+  : > "$MISSING_TMP"
+  while IFS= read -r item; do
+    [[ -z "$item" ]] && continue
+    if grep -Fqi "$item" "$HAYSTACK_TMP" 2>/dev/null; then
+      continue
+    fi
+    item_base="${item##*/}"
+    if [[ "$item_base" != "$item" ]] && grep -Fqi "$item_base" "$HAYSTACK_TMP" 2>/dev/null; then
+      continue
+    fi
+    printf '%s\n' "$item" >> "$MISSING_TMP"
+  done < "$EXPECTED_TMP"
+
+  # wc -l rather than `grep -c .`: grep exits 1 on an empty file while still
+  # printing 0, so a `|| echo 0` fallback would append a second zero and the
+  # count would read "0\n0". Every line here is written with a trailing
+  # newline, so wc -l is exact.
+  MANAGED_APPS_MISSING_COUNT="$(wc -l < "$MISSING_TMP" | tr -d '[:space:]')"
+  MANAGED_APPS_EXPECTED_COUNT="$(wc -l < "$EXPECTED_TMP" | tr -d '[:space:]')"
+
+  {
+    echo "# Managed application expectations"
+    echo "# Generated: $(date)"
+    echo "# Source: $EXPECT_SOURCE_FILE"
+    echo "# Source kind: $MANAGED_APPS_SOURCE"
+    echo "# Expected bundles found in inventory: $MANAGED_APPS_EXPECTED_COUNT"
+    echo "# Not present on this Mac: $MANAGED_APPS_MISSING_COUNT"
+    echo ""
+    echo "## Present pre-image, absent now"
+    echo ""
+    if [[ "$MANAGED_APPS_MISSING_COUNT" == "0" ]]; then
+      echo "(none)"
+    else
+      cat "$MISSING_TMP"
+      echo ""
+      echo "READ THIS BEFORE ACTING ON THE LIST ABOVE."
+      echo ""
+      echo "Expectations come from the company-scoped inventory, so these are"
+      echo "management-stack components rather than ordinary applications."
+      echo "Two categories are absent for good reasons and are not findings:"
+      echo ""
+      echo "  - Components of a management stack this Mac no longer uses. A Mac"
+      echo "    previously managed by a different tool carries its receipts;"
+      echo "    re-enrolling into the current one will never bring them back, and"
+      echo "    should not."
+      echo "  - Agents that install later in the rollout. Required pushes are"
+      echo "    asynchronous; rerun this record after the Step 7 restart before"
+      echo "    treating anything here as missing."
+      echo "  - Version-pinned receipts. An identifier carrying a version, such as"
+      echo "    a vendor installer receipt, never matches once the vendor ships a"
+      echo "    newer build -- the software is present, the receipt name moved."
+      echo ""
+      echo "Act on absences from the CURRENT stack -- security agents, Company"
+      echo "Portal, the MDM agent. Install those from the Company Portal Apps tab,"
+      echo "never from a vendor download."
+    fi
+    echo ""
+    echo "## Expected set derived from inventory"
+    echo ""
+    cat "$EXPECTED_TMP"
+  } > "$EXPECT_FILE" 2>&1 || true
+
+  rm -f "$EXPECTED_TMP" "$MISSING_TMP" "$HAYSTACK_TMP"
+
+  if [[ "$MANAGED_APPS_MISSING_COUNT" == "0" ]]; then
+    MANAGED_APPS_STATUS="PASS"
+  else
+    MANAGED_APPS_STATUS="WARN"
+  fi
+fi
+echo "   ✓ saved → raw/08-managed-app-expectations.txt"
 
 # ---------------------------------------------------------------------------
 # Heuristic verdicts for the command-verifiable exit-criteria rows
@@ -287,6 +633,62 @@ if [[ "$CROWDSTRIKE_OK" == "true" && "$ZSCALER_OK" == "true" ]]; then
   SECURITY_OK="true"
 fi
 
+# FileVault was already captured but had no row of its own, so the answer lived
+# only in the raw file. reimage-checklist.sh --phase post FAILs sign-off when
+# FileVault is off, and this is the first phase that could have said so.
+FILEVAULT_OK="false"
+if file_contains "$RAW_DIR/03-filevault-status.txt" 'FileVault is On'; then
+  FILEVAULT_OK="true"
+fi
+
+# Configuration profile count. `profiles list` prints a trailing summary line
+# only when run with sufficient privilege; unprivileged it prints little and no
+# total, so an empty count here means "not readable", not "no profiles".
+PROFILE_COUNT="$(grep -oE 'There (are|is) [0-9]+' "$RAW_DIR/02-profiles-list.txt" 2>/dev/null \
+  | grep -oE '[0-9]+' | head -1 || true)"
+PROFILE_COUNT="${PROFILE_COUNT:-unknown}"
+
+# Say which scope the number describes. A user-scope count is not comparable to
+# a system-scope one and reporting them identically invites exactly the wrong
+# conclusion.
+# Detect scope from the OUTPUT, never from the marker. record_pipeline writes a
+# "# Command: ..." header quoting the whole pipeline -- which contains the literal
+# words "scope: system" -- so any marker string is present in the file whether or
+# not that branch ran. `_computerlevel` appears only in genuine system-scope
+# output and cannot be echoed by the command line itself.
+PROFILE_SCOPE="user"
+if grep -q '^_computerlevel' "$RAW_DIR/02-profiles-list.txt" 2>/dev/null; then
+  PROFILE_SCOPE="system"
+fi
+
+# Say something different depending on which scope was obtained. A note that
+# tells you to rerun with sudo, printed on a run that already had sudo, teaches
+# the reader to skip the notes.
+if [[ "$PROFILE_SCOPE" == "system" ]]; then
+  PROFILE_NOTE="System scope: the managed baseline. This is the number to record and to compare against on a later run."
+else
+  PROFILE_NOTE="User scope only -- no cached sudo credential when this ran, so the count covers your own profiles rather than the managed baseline, which is normally several times larger. Run \`sudo -v\` and rerun to capture it. \`unknown\` means not readable, not none."
+fi
+
+# Keychain identity counts, parsed from the trailing summary of each listing
+# rather than by counting numbered lines -- the file holds two listings, so
+# counting entries would silently add them together. Singular and plural forms
+# both appear depending on the count.
+IDENTITY_TOTAL="$(grep -oE '[0-9]+ valid identit(y|ies) found' "$RAW_DIR/09-keychain-identities.txt" 2>/dev/null \
+  | head -1 | grep -oE '^[0-9]+' || true)"
+IDENTITY_SSL="$(grep -oE '[0-9]+ valid identit(y|ies) found' "$RAW_DIR/09-keychain-identities.txt" 2>/dev/null \
+  | tail -1 | grep -oE '^[0-9]+' || true)"
+IDENTITY_TOTAL="${IDENTITY_TOTAL:-unknown}"
+IDENTITY_SSL="${IDENTITY_SSL:-unknown}"
+
+# A machine with zero identities after enrollment has not finished re-issuing
+# them. Any non-zero count is reported rather than judged: how many this Mac
+# should have is a site fact the script cannot know.
+IDENTITIES_OK="false"
+if [[ "$IDENTITY_TOTAL" != "unknown" && "$IDENTITY_TOTAL" != "0" ]]; then
+  IDENTITIES_OK="true"
+fi
+
 UPDATES_OK="false"
 if file_contains "$RAW_DIR/07-softwareupdate-list.txt" 'No new software available'; then
   UPDATES_OK="true"
@@ -300,13 +702,14 @@ fi
 # ---------------------------------------------------------------------------
 # Generate the Markdown record with the Phase 8 exit-criteria table prefilled
 # ---------------------------------------------------------------------------
-REPORT_FILE="$OUT/enrollment-record.md"
+REPORT_FILE="$OUT/record.md"
 
 cat > "$REPORT_FILE" <<EOF
 # Enrollment Record
 
 Generated: $(date)
 Script: $(basename "$0")
+Context: ${CONTEXT_LABEL:-(none supplied)}
 Output directory: $OUT
 
 Use this record as the Phase 8 command-evidence bundle. The command-verifiable rows are prefilled below with a heuristic PASS/WARN verdict. Complete the remaining manual or mixed-review rows after the UI review and the first stabilization restart. See \`enroll-and-stabilize.md\` for the full runbook.
@@ -321,14 +724,23 @@ Use this record as the Phase 8 command-evidence bundle. The command-verifiable r
 | Company Portal opens and shows expected state | Manual | open Company Portal and review the device state | TODO | Fill after UI review. |
 | Required macOS updates are complete or intentionally deferred | Mixed | \`sw_vers\`, \`softwareupdate --list\`, and policy/UI review | $(status_pass_warn "$UPDATES_OK") | See \`raw/06-macos-version.txt\` and \`raw/07-softwareupdate-list.txt\`. |
 | First stabilization restart completed | Manual | observed restart and successful return to login/session | TODO | Fill after the restart checkpoint is complete. |
+| Managed application set matches the pre-image inventory | Mixed | company-scoped inventory vs \`pkgutil --pkgs\` | $MANAGED_APPS_STATUS | $MANAGED_APPS_MISSING_COUNT absent of $MANAGED_APPS_EXPECTED_COUNT expected, from \`$MANAGED_APPS_SOURCE\`. See \`raw/08-managed-app-expectations.txt\`. Components of a superseded management stack stay absent by design. |
+| FileVault is on | Command | \`fdesetup status\` | $(status_pass_warn "$FILEVAULT_OK") | See \`raw/03-filevault-status.txt\`. Phase 14 fails sign-off if this is off. |
+| Configuration profiles installed | Mixed | \`profiles list\` trailing count | $PROFILE_COUNT ($PROFILE_SCOPE scope) | $PROFILE_NOTE |
+| Keychain identities re-issued | Mixed | \`security find-identity -v\` | $(status_pass_warn "$IDENTITIES_OK") | $IDENTITY_TOTAL valid, $IDENTITY_SSL ssl-client. See \`raw/09-keychain-identities.txt\`. Compare against the pre-image count; fingerprints will differ, since these are re-issued rather than restored. |
 | Post-restart baseline still looks healthy | Mixed | rerun the post-restart commands and confirm no regressions | $(status_pass_warn "$POST_RESTART_OK") | Update after post-restart review if this record was written before the final checkpoint. |
 
 ## Manual Follow-Up
 
-1. Open Company Portal and review the device state.
+1. Open Company Portal and review the device state, including the **Apps** tab.
 2. Confirm whether the first stabilization restart has completed.
-3. Update the \`TODO\` rows above.
-4. If this record was written before the final post-restart checkpoint, rerun the script and use the newer record for final sign-off.
+3. Review \`raw/08-managed-app-expectations.txt\` and install anything genuinely
+   missing from the Company Portal **Apps** tab.
+4. Compare the identity count against the pre-image record. Expect the same
+   number and shape with different fingerprints — MDM re-issues these rather
+   than restoring them.
+5. Update the \`TODO\` rows above.
+6. If this record was written before the final post-restart checkpoint, rerun the script and use the newer record for final sign-off.
 
 ## Raw Evidence Files
 
@@ -339,16 +751,22 @@ Use this record as the Phase 8 command-evidence bundle. The command-verifiable r
 - \`raw/05-managed-processes.txt\`
 - \`raw/06-macos-version.txt\`
 - \`raw/07-softwareupdate-list.txt\`
+- \`raw/08-managed-app-expectations.txt\`
+- \`raw/09-keychain-identities.txt\`
+- \`raw/10-package-receipts.txt\`
+- \`raw/11-launchd-components.txt\`
+- \`raw/12-system-extensions.txt\`
 EOF
 
 cat > "$OUT/MANIFEST.txt" <<EOF
 # Enrollment Record Manifest
 Generated: $(date)
 Script: $(basename "$0")
+Context: ${CONTEXT_LABEL:-(none supplied)}
 Output directory: $OUT
 
 Files:
-- enrollment-record.md
+- record.md
 - raw/01-enrollment-status.txt
 - raw/02-profiles-list.txt
 - raw/03-filevault-status.txt
@@ -356,6 +774,11 @@ Files:
 - raw/05-managed-processes.txt
 - raw/06-macos-version.txt
 - raw/07-softwareupdate-list.txt
+- raw/08-managed-app-expectations.txt
+- raw/09-keychain-identities.txt
+- raw/10-package-receipts.txt
+- raw/11-launchd-components.txt
+- raw/12-system-extensions.txt
 EOF
 
 printf '%s\n' "$REPORT_FILE" > "$PARENT_DIR/latest-enrollment-record.txt"

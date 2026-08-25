@@ -9,7 +9,7 @@ authoritative place and apply to Claude exactly as they do to Copilot.
 - **Repo instructions:** `.github/copilot-instructions.md` — build/lint commands,
   architecture, conventions, and the loader/entrypoint/helper rules. (Named for
   Copilot's auto-load convention; the content is tool-agnostic.)
-- **Runbook authoring:** `.github/ai-prompts/runbook-prompts/runbook-fill-prompt.md`
+- **Runbook authoring:** `.github/ai-prompts/runbook-prompts/runbook-prompt.md`
   with `.github/ai-templates/runbook-templates/runbook-template.md.tmpl`.
 - **Script authoring:** `.github/ai-prompts/script-prompts/bash-script-authoring-and-review.md`
   with `.github/ai-templates/script-templates/`.

@@ -27,7 +27,7 @@ This document assumes the standard artifact model: workflow source files stay in
 
 ## Phase Guide Reference
 
-Single source of truth for the phase guides used across the post-image stage (Phase 8 through Phase 15), in the order they are typically reached. Linked from [[reimaging-guide#Post-Image|Post-Image]] in Workflow Map and Reference Guides — update this table, not a copy in the guide, when a post-image runbook is added, renamed, or retired.
+Single source of truth for the phase guides used across the post-image stage (Phase 8 through Phase 16), in the order they are typically reached. Linked from [[reimaging-guide#Post-Image|Post-Image]] in Workflow Map and Reference Guides — update this table, not a copy in the guide, when a post-image runbook is added, renamed, or retired.
 
 | File | Purpose |
 |---|---|
@@ -47,6 +47,8 @@ Single source of truth for the phase guides used across the post-image stage (Ph
 | `capture-office-stability.md` | Post-image Office stability comparison and symptom follow-up. |
 | `reimaged-system-checks.md` | Final post-image validation workflow and generated sign-off artifacts. |
 | `restore-home.md` | Late, selective home-file restore after the clean rebuild is already validated. |
+| `run-time-machine.md` | Pre-image (Phase 5) and post-image (Phase 16) Time Machine passes. |
+| `references/toolkit-environment-reference.md` | How `$FRACTOGENESIS_HOME`, `reimage.env`, and `.envrc` behave across a clone, a `curl` install, and a jump-drive install, and which mechanism loads them at each stage. |
 | `reimaging-scripts-guide.md` | Supporting command reference for automation used during restore, post-image capture, and validation. |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -117,17 +119,17 @@ $REIMAGE_ARTIFACT_ROOT/
 │   └── rollup-summary/
 ├── reimaged-system/
 │   ├── enrollment/
-│   │   ├── record-enrollment-YYYYMMDD-HHMMSS/
+│   │   ├── [context-]record-enrollment-YYYYMMDD-HHMMSS/
 │   │   └── latest-enrollment-record.txt
 │   ├── checklists/
 │   │   ├── reimage-checklist-YYYYMMDD-HHMMSS.md
 │   │   └── latest-reimage-checklist.txt
-│   ├── initial-reimaged-system-YYYYMMDD-HHMMSS/
+│   ├── [context-]initial-reimaged-system-YYYYMMDD-HHMMSS/
 │   │   ├── README.md
-│   │   ├── initial-checklist.md
+│   │   ├── checklist.md
 │   │   ├── manual-captures-required.md
 │   │   ├── restart-checkpoints.md
-│   │   ├── time-machine-reimaged-system-plan.md
+│   │   ├── time-machine-plan.md
 │   │   ├── checks/
 │   │   ├── logs/
 │   │   └── raw/
@@ -186,9 +188,9 @@ Two `secrets-encrypted/` subtrees have dedicated restore consumers rather than a
 
 | Phase | Main sources under `$REIMAGE_ARTIFACT_ROOT` | Main outputs under `$REIMAGE_ARTIFACT_ROOT` |
 |---|---|---|
-| Phase 8 — Enroll and Stabilize | none required beyond `reimage.env`; optional mounted artifact root | `reimaged-system/enrollment/record-enrollment-*/`, `reimaged-system/enrollment/latest-enrollment-record.txt` |
-| Phase 9 — Initial Captures and Sanity Checks | prepared external root, optional `reimaged-system/restore-notes/` | `reimaged-system/initial-reimaged-system-*/`, `reimaged-system/latest-initial-reimaged-system-bundle.txt`, `reimaged-system/restore-notes/`, `reimaged-system/restarts/`, `reimaged-system/time-machine/` |
-| Phase 10A — Restore Runtime Libraries | `system-inventory/pre-image-*/`, `system-inventory/post-image-*/`, `home-files-backup/dotfiles/` | usually notes only; later validated under `reimaged-system/` |
+| Phase 8 — Enroll and Stabilize | none required beyond `reimage.env`; optional mounted artifact root | `reimaged-system/enrollment/*record-enrollment-*/`, `reimaged-system/enrollment/latest-enrollment-record.txt` |
+| Phase 9 — Initial Captures and Sanity Checks | prepared external root, optional `reimaged-system/restore-notes/` | `reimaged-system/*initial-reimaged-system-*/`, `reimaged-system/latest-initial-reimaged-system-bundle.txt`, `reimaged-system/restore-notes/`, `reimaged-system/restarts/`, `reimaged-system/time-machine/` |
+| Phase 10A — Restore Runtime Libraries | `system-inventory/pre-image-*/`, `system-inventory/post-image-*/`, `home-files-backup/dotfiles/` | usually notes only; later validated under `reimaged-system/`. Also retires the Phase 8 `~/.zprofile` bridge and hands config loading to direnv — see `references/toolkit-environment-reference.md` |
 | Phase 10B — Restore Access | `secrets-encrypted/`, `public-certs/`, `home-files-backup/dotfiles/` | `reimaged-system/restore-notes/` |
 | Phase 11A — Restore Git | `secrets-encrypted/ssh/`, `secrets-encrypted/git/`, `toolkit-snapshot/latest-docs/` | dual `~/.gitconfig` + `~/.ssh/config` in place; validated end-to-end for work and personal identities |
 | Phase 11B — Restore Repositories | `repo-audit-reports/runs/pre-image-*/repos.tsv`, `staged-ignored-files/live/<label>/` | `repo-audit-reports/runs/post-image-restore-*/`, `repo-audit-reports/latest-post-image-restore.txt`, working repo checkouts |
@@ -196,6 +198,7 @@ Two `secrets-encrypted/` subtrees have dedicated restore consumers rather than a
 | Phase 13 — Post-Image Captures | matching Phase 4 capture outputs for comparison | `toolkit-snapshot/latest-docs/`, `toolkit-snapshot/pre-image-toolkit-snapshot-*/`, `toolkit-snapshot/latest-pre-image-toolkit-snapshot.txt`, `system-inventory/post-image-*/`, `managed-inventory/post-image-*/`, `performance-audit/post-image-performance-audit-*/`, `office-stability/post-reimage-*/` |
 | Phase 14 — Reimaged System Checks | everything needed for final validation context | `reimaged-system/checklists/reimage-checklist-*.md`, `reimaged-system/checklists/latest-reimage-checklist.txt`, optional manual follow-up in `reimaged-system/restore-notes/` |
 | Phase 15 — Restore Home | `home-files-backup/home/`, `home-files-backup/dotfiles/`, optionally `staged-ignored-files/live/` | optional final notes under `reimaged-system/restore-notes/` |
+| Phase 16 — Post-Image Time Machine | the rebuilt Mac itself; `$EXTERNAL_APPLE_BACKUPS_VOLUME` as destination | `time-machine/` completion, verification, and log artifacts |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -207,13 +210,13 @@ These paths are used before deeper restore work begins.
 
 | Need | Source or destination |
 |---|---|
-| Enrollment record bundle | `reimaged-system/enrollment/record-enrollment-YYYYMMDD-HHMMSS/` |
+| Enrollment record bundle | `reimaged-system/enrollment/[context-]record-enrollment-YYYYMMDD-HHMMSS/` |
 | Enrollment latest-pointer file | `reimaged-system/enrollment/latest-enrollment-record.txt` |
-| First post-image checklist bundle root | `reimaged-system/initial-reimaged-system-YYYYMMDD-HHMMSS/` |
+| First post-image checklist bundle root | `reimaged-system/[context-]initial-reimaged-system-YYYYMMDD-HHMMSS/` |
 | Initial checklist latest-pointer file | `reimaged-system/latest-initial-reimaged-system-bundle.txt` |
-| Initial bundle summary and checklist | `reimaged-system/initial-reimaged-system-YYYYMMDD-HHMMSS/README.md`, `reimaged-system/initial-reimaged-system-YYYYMMDD-HHMMSS/initial-checklist.md` |
-| Initial bundle manual follow-up files | `reimaged-system/initial-reimaged-system-YYYYMMDD-HHMMSS/manual-captures-required.md`, `reimaged-system/initial-reimaged-system-YYYYMMDD-HHMMSS/restart-checkpoints.md`, `reimaged-system/initial-reimaged-system-YYYYMMDD-HHMMSS/time-machine-reimaged-system-plan.md` |
-| Initial bundle raw evidence folders | `reimaged-system/initial-reimaged-system-YYYYMMDD-HHMMSS/raw/`, `reimaged-system/initial-reimaged-system-YYYYMMDD-HHMMSS/logs/`, `reimaged-system/initial-reimaged-system-YYYYMMDD-HHMMSS/checks/` |
+| Initial bundle summary and checklist | `reimaged-system/[context-]initial-reimaged-system-YYYYMMDD-HHMMSS/README.md`, `reimaged-system/[context-]initial-reimaged-system-YYYYMMDD-HHMMSS/checklist.md` |
+| Initial bundle manual follow-up files | `reimaged-system/[context-]initial-reimaged-system-YYYYMMDD-HHMMSS/manual-captures-required.md`, `reimaged-system/[context-]initial-reimaged-system-YYYYMMDD-HHMMSS/restart-checkpoints.md`, `reimaged-system/[context-]initial-reimaged-system-YYYYMMDD-HHMMSS/time-machine-plan.md` |
+| Initial bundle raw evidence folders | `reimaged-system/[context-]initial-reimaged-system-YYYYMMDD-HHMMSS/raw/`, `reimaged-system/[context-]initial-reimaged-system-YYYYMMDD-HHMMSS/logs/`, `reimaged-system/[context-]initial-reimaged-system-YYYYMMDD-HHMMSS/checks/` |
 | Manual early restore notes | `reimaged-system/restore-notes/` |
 | Restart notes or checkpoints | `reimaged-system/restarts/` |
 | First post-image backup notes | `reimaged-system/time-machine/` |

@@ -67,8 +67,8 @@ Do not manually duplicate the final validation report when reimage-checklist.sh 
 
 | Phase | Capture | Primary destination | Purpose |
 |---|---|---|---|
-| Phase 8 | Enrollment and stabilization | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/enrollment/record-enrollment-*` | Managed enrollment, profiles, security tools, macOS update state, and first stabilization review. |
-| Phase 9 | Initial captures and sanity checks | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/initial-reimaged-system-*` | First post-image evidence bundle before deeper restore work, including restart and Time Machine planning notes. |
+| Phase 8 | Enrollment and stabilization | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/enrollment/*record-enrollment-*` | Managed enrollment, profiles, security tools, macOS update state, and first stabilization review. |
+| Phase 9 | Initial captures and sanity checks | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/*initial-reimaged-system-*` | First post-image evidence bundle before deeper restore work, including restart and Time Machine planning notes. |
 | Phase 13A | Toolkit snapshot | `$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/post-image-toolkit-snapshot-*`, `$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/latest-docs/` | Final workflow-doc snapshot showing the workflow state actually used after rebuild. |
 | Phase 13B | System inventory | `$REIMAGE_ARTIFACT_ROOT/system-inventory/post-image-*` | Broad rebuilt-system snapshot for comparison against Phase 4B. |
 | Phase 13C | Company-managed inventory | `$REIMAGE_ARTIFACT_ROOT/managed-inventory/post-image-*` | Managed apps, profiles, launch items, extensions, receipts, and managed preferences after enrollment. |
@@ -87,12 +87,12 @@ $REIMAGE_ARTIFACT_ROOT/
 ├── reimaged-system/
 │   ├── enrollment/
 │   │   ├── latest-enrollment-record.txt
-│   │   └── record-enrollment-YYYYMMDD-HHMMSS/
+│   │   └── [context-]record-enrollment-YYYYMMDD-HHMMSS/
 │   ├── latest-initial-reimaged-system-bundle.txt
 │   ├── checklists/
 │   │   ├── reimage-checklist-YYYYMMDD-HHMMSS.md
 │   │   └── latest-reimage-checklist.txt
-│   ├── initial-reimaged-system-YYYYMMDD-HHMMSS/
+│   ├── [context-]initial-reimaged-system-YYYYMMDD-HHMMSS/
 │   ├── time-machine/
 │   ├── restarts/
 │   └── restore-notes/
@@ -135,13 +135,13 @@ cd "$FRACTOGENESIS_HOME"
 Preferred generated output:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/reimaged-system/enrollment/record-enrollment-YYYYMMDD-HHMMSS/
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/enrollment/[context-]record-enrollment-YYYYMMDD-HHMMSS/
 ```
 
 Typical contents:
 
 ```text
-enrollment-record.md
+record.md
 MANIFEST.txt
 raw/
   01-enrollment-status.txt
@@ -151,18 +151,19 @@ raw/
   05-managed-processes.txt
   06-macos-version.txt
   07-softwareupdate-list.txt
+  08-managed-app-expectations.txt
 ```
 
 Fallback output roots verified by the script:
 
 ```text
-$REIMAGE_WORKSPACE_ROOT/enrollment/record-enrollment-YYYYMMDD-HHMMSS/
-~/Desktop/reimaged-system-artifacts/enrollment/record-enrollment-YYYYMMDD-HHMMSS/
+$REIMAGE_WORKSPACE_ROOT/enrollment/[context-]record-enrollment-YYYYMMDD-HHMMSS/
+~/Desktop/reimaged-system-artifacts/enrollment/[context-]record-enrollment-YYYYMMDD-HHMMSS/
 ```
 
 Manual / fallback notes:
 
-- The generated `enrollment-record.md` prefills the command-verifiable rows and leaves the mixed/manual rows for you.
+- The generated `record.md` prefills the command-verifiable rows and leaves the mixed/manual rows for you.
 - Manual confirmation is still needed for Company Portal UI state, whether the required managed app set looks normal, whether macOS updates were intentionally deferred, and whether the first stabilization restart completed cleanly.
 - If `$REIMAGE_ARTIFACT_ROOT` is not available yet, capture Phase 8 locally first, then keep the output path available so it can be copied into the main artifact tree later.
 
@@ -186,16 +187,16 @@ cd "$FRACTOGENESIS_HOME"
 Generated bundle location:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/reimaged-system/initial-reimaged-system-YYYYMMDD-HHMMSS/
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/[context-]initial-reimaged-system-YYYYMMDD-HHMMSS/
 ```
 
 Typical contents verified from `record-reimaged-system.sh`:
 
 ```text
 README.md
-initial-checklist.md
+checklist.md
 restart-checkpoints.md
-time-machine-reimaged-system-plan.md
+time-machine-plan.md
 manual-captures-required.md
 logs/
 raw/
@@ -483,7 +484,7 @@ What the automated report covers:
 Manual / fallback notes:
 
 - The generated report is the source of truth; use this section only for the manual rows it cannot prove.
-- Manual sign-off still includes Company Portal compliance UI, real internal-site access, OneDrive completion, Office stability under normal use, important project readiness, Git identity checks, SSH fingerprint checks, shell alias restore, display/peripheral correctness, and the second post-image Time Machine backup.
+- Manual sign-off still includes Company Portal compliance UI, real internal-site access, OneDrive completion, Office stability under normal use, important project readiness, Git identity checks, SSH fingerprint checks, shell alias restore, and display/peripheral correctness. The post-image Time Machine backup is **not** part of Phase 14 sign-off; it is Phase 16, after Restore Home.
 - Review any notes placed under `$REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/` before final sign-off so restore exceptions and deferred items stay attached to the validation evidence.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -531,7 +532,7 @@ Project readiness:
 System finish:
   [ ] Display arrangement, scaling, keyboard, mouse, and audio are correct
   [ ] Shell aliases restored and tested
-  [ ] Second reimaged-system Time Machine backup completed
+  [ ] Post-image Time Machine backup deferred to Phase 16 (after Restore Home)
   Notes:
 
 Completed by: TODO

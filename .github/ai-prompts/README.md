@@ -14,7 +14,7 @@ structure: a backlink to the page that linked it, a linked table of contents,
 then `Purpose`, `Artifact and Script Locations`, `Before You Run Anything`,
 `Sequential Steps`, and an optional `Supplemental Reference`.
 
-- Prompt: `.github/ai-prompts/runbook-prompts/runbook-fill-prompt.md`
+- Prompt: `.github/ai-prompts/runbook-prompts/runbook-prompt.md`
 - Template: `.github/ai-templates/runbook-templates/runbook-template.md.tmpl`
 
 ## Author or review a script

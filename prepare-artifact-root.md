@@ -314,7 +314,7 @@ Important behavior:
 
 | Behavior | Meaning |
 |---|---|
-| It self-locates `REPO_ROOT` from its own script path (parent of `.internal/`). | Sourcing scripts must reference it by its actual path relative to the repo root, e.g. `bin/backup-home-files-backup.sh` — there's no `REIMAGE_ROOT` variable to fall back on. |
+| It self-locates `REPO_ROOT` from its own script path (parent of `.internal/`). | Sourcing scripts must reference it by its actual path relative to the repo root, e.g. `bin/backup-home.sh` — there's no `REIMAGE_ROOT` variable to fall back on. |
 | It loads `reimage.env` if present. | Your local `REIMAGE_ARTIFACT_ROOT` plus optional `OFFICE_WATCH`, `ONEDRIVE_FOLDER_NAME`, `ONEDRIVE_ROOT`, and related paths are shared with scripts. |
 | It defines `EXTERNAL_APPLE_BACKUPS_VOLUME`. | Time Machine scripts use this as the backup destination mount path instead of assuming the destination volume is named `AppleBackups`. |
 | It exits if `REIMAGE_ARTIFACT_ROOT` is empty. | Create and source `reimage.env` before running scripts that depend on the backup root. |
@@ -884,6 +884,15 @@ There's no environment variable to set for the repository's own path. `prepare-a
 
 This makes `reimage.env` load automatically whenever you `cd` into this repo, and unload automatically the moment you `cd` out — no manual `source` needed each terminal session.
 
+> [!note]
+> This section covers first-time setup on a Mac that still has its tooling. How
+> `reimage.env` and `.envrc` behave *after* an erase — across a `curl` install,
+> a jump-drive install, and the eventual clone — is documented once in
+> [[references/toolkit-environment-reference|Toolkit Environment Reference]].
+> The short version: `.envrc` is committed and arrives with every route,
+> `reimage.env` is gitignored and has to be carried on the jump drive, and
+> direnv does not exist between the erase and Phase 10A.
+
 **`.envrc` itself can't go stale the way `reimage.env` can.** It's a tracked, committed file in this repo -- the same for every reimage effort on every Mac, not machine- or effort-specific -- so there's no old hostname or date baked into it to worry about.
 
 Check whether this looks like the first time on this Mac, or a repeat from a previous reimage effort:
@@ -1236,7 +1245,7 @@ Creates only the stable top-level generated-artifact directories owned by this p
 For example:
 
 - `secrets-encrypted/` is created here only as a top-level container.
-- nested secrets folders are created later by the secrets runbook, manual staging steps, `backup-home-files-backup.sh`, or `create-secrets-dmg.sh`.
+- nested secrets folders are created later by the secrets runbook, manual staging steps, `backup-home.sh`, or `create-secrets-dmg.sh`.
 - `reimage-confirmation/` is created here so the filled Phase 0 IT confirmation can be copied into the external root during Phase 1.
 - toolkit snapshot child folders are created later by `capture-toolkit-snapshot.md`.
 
@@ -1268,7 +1277,7 @@ $REIMAGE_ARTIFACT_ROOT/
 └── toolkit-snapshot/
 ```
 
-For child-directory details, use the guide that owns that workflow. For example, `backup-dmg-secrets.md` owns the expected `secrets-encrypted/` staging, DMG, validation, and cleanup layout.
+For child-directory details, use the guide that owns that workflow. For example, `create-secrets-dmg.md` owns the expected `secrets-encrypted/` staging, DMG, validation, and cleanup layout.
 
 Folder purpose:
 
@@ -1412,7 +1421,7 @@ In short: `FRACTOGENESIS_PARENT` is where you clone *into*; `FRACTOGENESIS_HOME`
 Neither `bin/prepare-artifact-root.py` nor `.internal/artifact-config.sh` ever reads `FRACTOGENESIS_PARENT` or `FRACTOGENESIS_HOME`. Both self-locate from their own file path, so neither variable is required for the core tooling in this guide to work correctly. They exist for two different, narrower reasons -- neither of which is "the script needs it":
 
 - `FRACTOGENESIS_PARENT` is scratch, throwaway convenience -- it exists only to make the three-line `mkdir`/`cd`/`git clone` sequence easier to read and re-run. Nothing reads it afterward, and it is never written to any file. You could skip setting it entirely and just `cd` to wherever you want and run `git clone ...` directly, with the same result.
-- `FRACTOGENESIS_HOME` is set automatically by `.envrc` once direnv is active, purely as a human-facing "where am I right now" reference -- nothing documented in this guide consumes it. Treat it as informational output, not an input you need to set or override.
+- `FRACTOGENESIS_HOME` is set automatically by `.envrc` once direnv is active. Nothing in *this* guide consumes it, so treat it as informational here — but every runbook from Phase 8 onward opens with `cd "$FRACTOGENESIS_HOME"`, and after an erase there is no direnv to set it. That is why Phase 8 Step 2 persists it by hand; see [[references/toolkit-environment-reference|Toolkit Environment Reference]].
 
 In practice: you only ever *set* `FRACTOGENESIS_PARENT` yourself, and only if cloning manually; you never set `FRACTOGENESIS_HOME` yourself, since direnv derives it from `pwd`; and you never set `$HOME` at all, since macOS does. What actually matters for every command in this guide is simply having your current working directory be the repo root.
 

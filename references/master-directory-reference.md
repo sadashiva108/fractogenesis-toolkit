@@ -436,8 +436,8 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 > $REIMAGE_ARTIFACT_ROOT/reimaged-system/
 > ├── enrollment/
 > │   ├── latest-enrollment-record.txt
-> │   └── record-enrollment-YYYYMMDD-HHMMSS/
-> │       ├── enrollment-record.md
+> │   └── [context-]record-enrollment-YYYYMMDD-HHMMSS/
+> │       ├── record.md
 > │       ├── MANIFEST.txt
 > │       └── raw/
 > │           ├── 01-enrollment-status.txt
@@ -446,17 +446,22 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 > │           ├── 04-managed-apps.txt
 > │           ├── 05-managed-processes.txt
 > │           ├── 06-macos-version.txt
-> │           └── 07-softwareupdate-list.txt
+> │           ├── 07-softwareupdate-list.txt
+> │           ├── 08-managed-app-expectations.txt
+> │           ├── 09-keychain-identities.txt
+> │           ├── 10-package-receipts.txt
+> │           ├── 11-launchd-components.txt
+> │           └── 12-system-extensions.txt
 > ├── checklists/
 > │   ├── reimage-checklist-YYYYMMDD-HHMMSS.md
 > │   └── latest-reimage-checklist.txt
 > ├── latest-initial-reimaged-system-bundle.txt
-> ├── initial-reimaged-system-YYYYMMDD-HHMMSS/
+> ├── [context-]initial-reimaged-system-YYYYMMDD-HHMMSS/
 > │   ├── README.md
-> │   ├── initial-checklist.md
+> │   ├── checklist.md
 > │   ├── manual-captures-required.md
 > │   ├── restart-checkpoints.md
-> │   ├── time-machine-reimaged-system-plan.md
+> │   ├── time-machine-plan.md
 > │   ├── checks/
 > │   ├── logs/
 > │   │   ├── commands.log
@@ -487,10 +492,22 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 > │       ├── volumes.txt
 > │       ├── whoami.txt
 > │       └── xcode-select.txt
+> ├── exit-checks/
+> │   ├── latest-exit-<phase>.txt
+> │   └── exit-<phase>-YYYYMMDD-HHMMSS.md
+> ├── prereq-checks/
+> │   ├── latest-prereq-<phase>.txt
+> │   └── prereq-<phase>-YYYYMMDD-HHMMSS.md
 > ├── restore-notes/
 > ├── restarts/
 > └── time-machine/
 > ```
+>
+> Every post-image artifact lands under `reimaged-system/`. Unlike the pre-image
+> phases, which each add a top-level directory to the artifact root, the restore
+> and validation half writes only into subfolders here.
+
+
 
 > [!example]- `$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/`
 > ```text

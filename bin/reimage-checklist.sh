@@ -87,6 +87,19 @@ if ! source "$CONFIG_LOADER"; then
   echo "ERROR: shared reimage configuration could not be loaded." >&2
   exit 2
 fi
+
+# Shared run index. The post branch resolves indexed evidence through
+# artifact_run_official rather than globbing directory names, because the
+# first-boot bundles now live at reimaged-system/restarts/runs/ under the run
+# grammar and a name-shaped glob can neither find them nor say which lineage it
+# wanted.
+RUNS_LIB="$REPO_ROOT/.internal/artifact-runs.sh"
+if [[ ! -f "$RUNS_LIB" ]]; then
+  echo "ERROR: shared run index not found: $RUNS_LIB" >&2
+  exit 2
+fi
+# shellcheck source=../.internal/artifact-runs.sh
+source "$RUNS_LIB"
 # ─────────────────────────────────────────────────────────────────────────────
 
 SCRIPT_NAME="${REIMAGE_SCRIPT_DISPLAY_NAME:-reimage-checklist.sh}"
@@ -335,6 +348,41 @@ newest_matching() {
   find "$dir" -maxdepth 3 -name "$pattern" -type f 2>/dev/null | sort | tail -1
 }
 
+# Newest directory matching a glob, ranked by the trailing YYYYMMDD-HHMMSS stamp
+# rather than by the whole name.
+#
+# Bundle names carry a variable label -- a leading --context label on the Phase
+# 8/9 recorders, a --scenario mid-name on the performance audit -- so a plain
+# `sort | tail -1` ranks by label first and returns whichever label sorts last,
+# not whichever bundle ran last. With pre-restart and post-restart in play that
+# is actively wrong: "post" precedes "pre" alphabetically, so the older bundle
+# wins. Emit "<stamp>\t<path>", sort on the stamp, and drop the key. Callers
+# pass a leading-wildcard pattern because the artifact name may not start the
+# directory name.
+#
+# Directories whose names carry no trailing stamp cannot be ranked this way; if
+# nothing at all could be ranked, fall back to the previous lexical behaviour so
+# an unconventional layout still reports something rather than reporting empty.
+newest_stamped_dir() {
+  local dir="$1" pattern="$2"
+  local ranked=""
+
+  ranked="$(find "$dir" -maxdepth 1 -type d -name "$pattern" 2>/dev/null \
+    | while IFS= read -r candidate; do
+        stamp="$(printf '%s\n' "${candidate##*/}" \
+          | sed -n 's/^.*-\([0-9]\{8\}-[0-9]\{6\}\)$/\1/p')"
+        [ -n "$stamp" ] && printf '%s\t%s\n' "$stamp" "$candidate"
+      done \
+    | sort | tail -1 | cut -f2-)"
+
+  if [[ -n "$ranked" ]]; then
+    printf '%s\n' "$ranked"
+    return 0
+  fi
+
+  find "$dir" -maxdepth 1 -type d -name "$pattern" 2>/dev/null | sort | tail -1
+}
+
 resolve_latest_repo_audit_run() {
   local audit_root="$1"
   local pointer="$audit_root/latest-run.txt"
@@ -371,6 +419,7 @@ file_age_hours() {
   now="$(date +%s)"
   mtime="$(stat -f %m "$f" 2>/dev/null || true)"
   case "$mtime" in
+    # portability-ok: GNU-STATC — guarded retry; BSD stat -f runs first and this covers a non-numeric result
     ''|*[!0-9]*) mtime="$(stat -c %Y "$f" 2>/dev/null || true)" ;;
   esac
 
@@ -1403,15 +1452,27 @@ if [[ "$PHASE" == "post" ]]; then
     # tmutil names backups YYYY-MM-DD-HHMMSS[.backup]; reduce that to the same
     # sortable YYYYMMDD-HHMMSS stamp the Phase 8/9 evidence bundles use and
     # compare the two lexicographically (equivalent to chronologically here).
+    #
+    # The bundle-side extraction below anchors the stamp to the END of the
+    # directory name. An optional --context label therefore leads the name --
+    # <label>-record-enrollment-<stamp> -- and never trails it: a trailing
+    # label fails this match, gets filtered out by the grep, and leaves
+    # POST_EVIDENCE_STAMP empty -- at which point this check degrades to a
+    # cheerful "age not comparable" PASS and stops catching a pre-erase backup,
+    # which is the entire reason it exists. The globs carry a leading wildcard
+    # for the same reason: the artifact name is no longer at the start.
     TM_STAMP="$(printf '%s\n' "$TM_LATEST_NAME" | sed -e 's/\.backup$//' -e 's/^\([0-9]\{4\}\)-\([0-9]\{2\}\)-\([0-9]\{2\}\)-\([0-9]\{6\}\)$/\1\2\3-\4/')"
     case "$TM_STAMP" in
       [0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]-[0-9][0-9][0-9][0-9][0-9][0-9]) ;;
       *) TM_STAMP="" ;;
     esac
-    POST_EVIDENCE_STAMP="$(find "$REIMAGE_ARTIFACT_ROOT/reimaged-system" -maxdepth 2 -type d \( -name "initial-reimaged-system-*" -o -name "record-enrollment-*" \) 2>/dev/null | sed -e 's#.*/##' -e 's/^.*-\([0-9]\{8\}-[0-9]\{6\}\)$/\1/' | grep -E '^[0-9]{8}-[0-9]{6}$' | sort | tail -1)"
+    # -maxdepth 3 and the run-grammar name: indexed runs sit at
+    # <category>/runs/<id>, one level deeper than the enrollment bundles, which
+    # still use the [context-]record-enrollment-<stamp> form at depth 2.
+    POST_EVIDENCE_STAMP="$(find "$REIMAGE_ARTIFACT_ROOT/reimaged-system" -maxdepth 3 -type d \( -name "verify-reimaged-system-*" -o -name "*record-enrollment-*" \) 2>/dev/null | sed -e 's#.*/##' -e 's/^.*-\([0-9]\{8\}-[0-9]\{6\}\)$/\1/' | grep -E '^[0-9]{8}-[0-9]{6}$' | sort | tail -1)"
     if [[ -n "$TM_STAMP" && -n "$POST_EVIDENCE_STAMP" ]]; then
       if [[ "$TM_STAMP" < "$POST_EVIDENCE_STAMP" ]]; then
-        record_check WARN "Time Machine latest backup" "$TM_LATEST_NAME predates the reimaged-system evidence bundle ($POST_EVIDENCE_STAMP) -- this looks like the pre-erase backup; run a new backup"
+        record_check WARN "Time Machine latest backup" "$TM_LATEST_NAME predates the reimaged-system evidence bundle ($POST_EVIDENCE_STAMP) -- this is the pre-erase backup. Expected until Phase 16 runs the post-image backup after Restore Home; rerun this checklist afterwards to close the row"
       else
         record_check PASS "Time Machine latest backup" "$TM_LATEST_NAME (newer than reimaged-system bundle $POST_EVIDENCE_STAMP)"
       fi
@@ -1427,23 +1488,34 @@ if [[ "$PHASE" == "post" ]]; then
   # -------------------------------------------------------------------------
   POST_DIR="$REIMAGE_ARTIFACT_ROOT/reimaged-system"
 
-  POST_ENROLLMENT="$(find "$POST_DIR/enrollment" -maxdepth 1 -type d -name "record-enrollment-*" 2>/dev/null | sort | tail -1)"
+  POST_ENROLLMENT="$(newest_stamped_dir "$POST_DIR/enrollment" "*record-enrollment-*")"
   if [[ -n "$POST_ENROLLMENT" ]]; then
     record_check PASS "reimaged-system/enrollment" "$(basename "$POST_ENROLLMENT")"
   else
     record_check WARN "reimaged-system/enrollment" "Empty -- run bin/record-enrollment.sh"
   fi
 
-  POST_INITIAL="$(find "$POST_DIR" -maxdepth 1 -type d -name "initial-reimaged-system-*" 2>/dev/null | sort | tail -1)"
+  # Resolved through the run index, not a glob. The first-boot bundles moved to
+  # reimaged-system/restarts/runs/ and were renamed to the run grammar, so the
+  # old `*initial-reimaged-system-*` search at -maxdepth 1 matches nothing --
+  # wrong name, and one level too shallow. Asking the index also separates two
+  # states the glob could not: never having run it, and having run the
+  # pre-restart half and never come back after the restart. The second is the
+  # one worth catching, because it looks like progress.
+  RESTARTS_ROOT="$POST_DIR/restarts"
+  POST_INITIAL="$(artifact_run_official "$RESTARTS_ROOT" "verify-reimaged-system-post-restart" 2>/dev/null)"
+  POST_INITIAL_PRE="$(artifact_run_official "$RESTARTS_ROOT" "verify-reimaged-system-pre-restart" 2>/dev/null)"
   if [[ -n "$POST_INITIAL" ]]; then
-    record_check PASS "reimaged-system/initial-reimaged-system-*" "$(basename "$POST_INITIAL")"
+    record_check PASS "reimaged-system/restarts (post-restart)" "$(basename "$POST_INITIAL")"
+  elif [[ -n "$POST_INITIAL_PRE" ]]; then
+    record_check WARN "reimaged-system/restarts (post-restart)" "Pre-restart run $(basename "$POST_INITIAL_PRE") exists but no post-restart one -- the pair is incomplete. Run bin/record-reimaged-system.sh --context post-restart"
   else
-    record_check WARN "reimaged-system/initial-reimaged-system-*" "Empty -- run bin/record-reimaged-system.sh"
+    record_check WARN "reimaged-system/restarts (post-restart)" "Empty -- run bin/record-reimaged-system.sh --context pre-restart, restart, then --context post-restart"
   fi
 
   if dir_nonempty "$REIMAGE_ARTIFACT_ROOT/performance-audit"; then
     # Look specifically for a post-image performance bundle (naming matches capture-performance-audit.sh: <phase>-performance-audit-<scenario>-YYYYMMDD-HHMMSS)
-    POST_PERF="$(find "$REIMAGE_ARTIFACT_ROOT/performance-audit" -maxdepth 1 -type d -name "post-image-performance-audit-*" 2>/dev/null | sort | tail -1)"
+    POST_PERF="$(newest_stamped_dir "$REIMAGE_ARTIFACT_ROOT/performance-audit" "post-image-performance-audit-*")"
     if [[ -n "$POST_PERF" ]]; then
       record_check PASS "Post-image performance audit bundle" "$(basename "$POST_PERF")"
     else
@@ -1457,7 +1529,9 @@ if [[ "$PHASE" == "post" ]]; then
     # -YYYYMMDD-HHMMSS stripped) and report each one.
     PRE_PERF_SCENARIOS="$(find "$REIMAGE_ARTIFACT_ROOT/performance-audit" -maxdepth 1 -type d -name "pre-image-performance-audit-*" 2>/dev/null | sed -e 's#.*/##' -e 's/^pre-image-performance-audit-//' -e 's/-[0-9]\{8\}-[0-9]\{6\}$//' | grep -v '^$' | sort -u)"
     for perf_scenario in $PRE_PERF_SCENARIOS; do
-      if [[ -n "$(find "$REIMAGE_ARTIFACT_ROOT/performance-audit" -maxdepth 1 -type d -name "post-image-performance-audit-$perf_scenario-*" 2>/dev/null | sort | tail -1)" ]]; then
+      # Existence test, not a newest-selection: any match answers the question, so
+      # no stamp ranking is needed here.
+      if [[ -n "$(find "$REIMAGE_ARTIFACT_ROOT/performance-audit" -maxdepth 1 -type d -name "post-image-performance-audit-$perf_scenario-*" 2>/dev/null | head -1)" ]]; then
         record_check PASS "Performance scenario comparable: $perf_scenario" "pre-image and post-image bundles both present"
       else
         record_check WARN "Performance scenario comparable: $perf_scenario" "No post-image-performance-audit-$perf_scenario-* bundle -- run capture-performance-audit.sh --phase post-image --scenario $perf_scenario"
@@ -1468,7 +1542,7 @@ if [[ "$PHASE" == "post" ]]; then
   fi
 
   if dir_nonempty "$REIMAGE_ARTIFACT_ROOT/office-stability"; then
-    POST_OFFICE="$(find "$REIMAGE_ARTIFACT_ROOT/office-stability" -maxdepth 1 -type d -name "post-reimage-*" 2>/dev/null | sort | tail -1)"
+    POST_OFFICE="$(newest_stamped_dir "$REIMAGE_ARTIFACT_ROOT/office-stability" "post-reimage-*")"
     if [[ -n "$POST_OFFICE" ]]; then
       record_check PASS "Post-image Office stability bundle" "$(basename "$POST_OFFICE")"
     else

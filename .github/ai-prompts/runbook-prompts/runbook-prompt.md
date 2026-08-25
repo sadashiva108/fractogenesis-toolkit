@@ -1,12 +1,12 @@
-# Runbook fill prompt — guidance for Copilot
+# Runbook prompt — guidance for Copilot
 
 Purpose
-- Guide Copilot to populate .github/ai-templates/runbook-templates/runbook-template.md.tmpl for a specific runbook in this repo. Designed for creating a new runbook or updating an existing one.
+- Guide Copilot to populate .github/ai-templates/runbook-templates/runbook-template.md.tmpl for a specific runbook in this repo. Use it to create a new runbook, or to bring an existing one up to the current conventions.
 
 When to use
 - Use when authoring or reworking a runbook. Supports:
     - Creating a new runbook from scratch using minimal inputs
-    - Reflowing existing runbook prose to match fractogenesis-toolkit conventions
+    - Bringing an existing runbook up to the current structure and conventions
 
 Inputs (provide these as structured key/value data before asking Copilot to fill)
 - title (string) — preferred, used as the runbook title heading
@@ -21,7 +21,6 @@ Inputs (provide these as structured key/value data before asking Copilot to fill
 - SAMPLE_COMMANDS (optional runnable examples)
 - ASSET_OR_HOST (token for use in example paths)
 - LAST_UPDATED (date for the runbook's **Last updated:** line)
-- rename_suggestion (optional: new filename if a rename is desired)
 
 Pre-read required files (Copilot MUST inspect these before editing)
 - README.md
@@ -46,7 +45,7 @@ Contents entry when it does not.
 6. `## Purpose` — lead sentences + two labelled lists + an ownership table (see below).
 7. `## How the Workflow Works` (optional) — the concepts and the *why*: what the flow achieves and why each part exists, plus `### Terminology` (optional) and any run-mode table. Kept shallow; depth goes to Supplemental Reference.
 8. `## Artifact and Script Locations` — the single home for every directory tree, with `### Environment Variables`.
-9. `## Before You Run Anything` — a lean pre-flight checklist only: `### Prerequisites` and `### Confirm Your Intent`. No conceptual "why" here.
+9. `## Before You Run Anything` — a lean pre-flight checklist only: `### Prerequisites` and `### Confirm Your Intent`. No conceptual "why" here, and no commands: Prerequisites *declares* what must be true, and the command that *verifies* it is Step 0 under Sequential Steps. Actions belong in steps.
 10. `## Sequential Steps`
 11. `## Decisions` (optional) — genuine judgment calls only.
 12. `## Troubleshooting` (optional)
@@ -167,6 +166,27 @@ existing runbook violates them, reflow it to match rather than copying its shape
 - If the same fact would otherwise be repeated in slightly different words, state it once
   and link to it. Sibling-runbook cross-references belong in the Purpose ownership table,
   not in a second list.
+
+### A runbook has no memory of itself
+
+Write what to do now. Never narrate the document's own history — no "an earlier
+revision of this step", no "this used to say", no "that was wrong". The reader is
+following the runbook, not auditing it, and a correction phrased as a correction
+makes them wonder which other steps are mid-repair.
+
+Keep the *substance* that made the fix necessary, stated as present fact. "There
+is no `jssecacerts` at the top of `java-security/` — every store sits one level
+down under its JDK label" tells the reader everything the archaeology would have,
+and stays true after the next rewrite. "An earlier revision read the flat path"
+tells them about a document that no longer exists.
+
+The history belongs in `APPLY-MANIFEST.md`, which exists to carry it.
+
+This differs deliberately from the convention in `bin/` and `.internal/` scripts,
+where a comment explaining what an earlier revision got wrong is how a fix keeps
+from being undone by the next person who finds the code surprising. A code
+comment is read by someone changing the code; a runbook step is read by someone
+following it. Different audiences, different rules.
 
 ### Metadata (Last updated line)
 
@@ -314,6 +334,75 @@ existing runbook violates them, reflow it to match rather than copying its shape
 ### Commands
 
 - Precede every command block with a single one-line sentence saying what it is for.
+- **Never leave a `<placeholder>` bare in a command block.** `<` and `>` are
+  redirection operators, so `cmd --url https://<host>/` is parsed as a redirect
+  and dies with `no such file or directory: host` — which reads as a broken
+  command rather than an unfilled blank. Put the placeholder in quotes, or
+  better, assign it on its own line first:
+
+  ```bash
+  TARGET="replace-with-the-real-value"
+  cmd --url "$TARGET"
+  ```
+
+  The assignment form is preferable for anything the reader must supply: it names
+  the thing, it survives being re-run, and a reader who pastes the block
+  unchanged gets a clear failure about the value rather than a shell parse error.
+  Angle brackets in *prose*, in tables, and inside heredoc bodies are fine —
+  the rule is about lines the shell will execute.
+- **No `#` comments inside a command block — trailing or whole-line.** Interactive
+  zsh, which is what the operator is pasting into, does not treat `#` as a comment
+  unless `interactivecomments` is set. A trailing `cmd args   # what this does`
+  arrives as extra arguments, and a `;` in the note starts a second command, so the
+  result looks like a failure when the command succeeded.
+  A **whole-line** comment is the worse case: an apostrophe in it opens a quote that
+  stays open until the next `'` anywhere in the block, silently consuming the
+  commands below. `# print the first lines of the tool's own error` does exactly
+  that, and the operator sees a `quote>` prompt and `zsh: unmatched '` rather than
+  anything naming the line at fault.
+  The one-line sentence above the block is where the explanation belongs, which the
+  rule above already requires; a comment inside the block duplicates it into the one
+  place it can break. Where a note must sit beside a specific line, put it in a table
+  or a callout under the block. This applies only to blocks meant to be pasted —
+  comments in `bin/` and `.internal/` scripts are executed by `bash`, never by an
+  interactive zsh, and stay.
+- **zsh expands before it executes, so a guard placed inside the construct is
+  already too late.** An unmatched glob is an *error* in zsh — `zsh: no matches
+  found: …` — rather than the literal pattern Bash passes through. The Bash idiom
+  for a possibly-empty directory therefore never runs:
+
+  ```bash
+  for f in "$DIR"/*.pub; do
+    [ -e "$f" ] || continue
+  ```
+
+  zsh raises the error during expansion, the loop body is never entered, and the
+  guard written precisely for the empty case does not execute. It is worse than
+  useless: it reads as though the case is handled. Iterate `find` output instead,
+  which prints nothing and exits 0 on no match, in both shells:
+
+  ```bash
+  find "$DIR" -maxdepth 1 -name '*.pub' -type f | sort | while IFS= read -r f; do
+  ```
+
+  The same evaluation order is why an unquoted `(`, `[`, `?` or `*` anywhere on an
+  executed line is a hazard even inside text that reads as prose. A whole-line
+  comment ending `… (the secure default).` fails with `zsh: no matches found:
+  (the secure default).` — glob expansion, raised *before* the `#` rule above ever
+  comes into play, which is why removing the `#` alone would not have saved it.
+  Glob metacharacters in a pasted block must be quoted, or produced by something
+  that is not globbing.
+- **Name a later-phase dependency in the prose above the block, not in the block's
+  output.** A runbook step may only use what earlier phases installed. Where a command
+  depends on a tool a later phase brings — `gh`, `npm`, `pip3` and `code` are all
+  installed in Phase 12, well after the Phase 10B access restore — say so in the
+  sentence introducing the block, and say whether deferring is the expected result or
+  a problem. A guard that prints `not installed yet` only after the operator has run
+  it tells them the same fact one step too late, and reads as a failure they caused.
+  Where the phase can proceed without it, say that too, so the reader knows whether to
+  stop. Where an alternative exists on the base system, prefer it outright rather than
+  reaching for the later-phase tool: the dotfile comparison uses `git diff --no-index`
+  because `code --diff` does not exist yet.
 - Keep command blocks small — ideally one logical action each. Avoid large stacked blocks
   of many commands.
 - If a sequence grows long or fiddly, that is a signal to move it into a standalone script
@@ -366,6 +455,23 @@ Auto-detection rules (attempt before asking clarifying questions)
 - Detect dry-run flags by searching script for patterns: --dry-run, -n, DRY_RUN, or usage/help output.
 - If PRIMARY_SCRIPT path does not exist, note that the runbook will create or reference a future script and leave a TODO in the runbook.
 
+Step 0 guidance
+
+- A runbook whose prerequisites can fail **silently** should open Sequential Steps
+  with `### Step 0 — Record Prerequisites`, invoking the phase's prerequisite
+  recorder. Silent failure is the test: an unset variable that makes `cd ""` a
+  no-op returning 0, an unmounted volume a later step reads from, a sign-off with
+  rows nobody answered. A precondition that fails loudly needs no row.
+- Number it 0, not 1. It gates the phase rather than advancing it, and it is
+  rerunnable at any point, unlike the sequential steps below. Numbering it 0 also
+  means adding one to an existing runbook renumbers nothing.
+- Prerequisites and Step 0 are not duplicates. Prerequisites states the
+  requirement in prose so a reader knows what is needed even when they cannot yet
+  run the check; Step 0 verifies it and writes the artifact. Derive Step 0's rows
+  from that list so the two cannot drift.
+- Omit Step 0 entirely when a phase has no prerequisite worth checking. Do not add
+  an empty one for symmetry.
+
 Sequential Steps guidance
 - Break the runbook into small numbered steps that map to the script's phases: prepare -> execute -> verify.
 - Order steps so every dependency is produced before the step that consumes it; state the reason for any branching choice before the command that acts on it (see "Why before how" and "Sequencing" above).
@@ -389,7 +495,6 @@ Cross-reference master-directory-reference.md
 
 Renaming and file placement rules
 - Suggest a canonical new filename using verb-first naming. Provide one recommended filename and up to two alternates.
-- If rename_suggestion provided, include the old path and the new path in a short changelog note at the top of the generated runbook.
 
 Validation checklist (run after generating the filled runbook)
 - [ ] The back-link is the literal first thing in the file; there is no YAML frontmatter.
@@ -411,6 +516,7 @@ Validation checklist (run after generating the filled runbook)
 - [ ] Listed reimage.env variables appear in reimage.env.example or artifact-config.sh.
 - [ ] No absolute personal paths or secrets introduced.
 - [ ] Commands shown are syntactically valid and minimal, each preceded by a one-line purpose.
+- [ ] Pasted command blocks are zsh-safe: no `#` comments trailing or whole-line, no bare `<placeholder>` the shell would read as redirection, and no unquoted glob metacharacters or bare `*` patterns whose non-match would abort the line.
 - [ ] Every directory tree appears once, under Artifact and Script Locations; no tree is redrawn elsewhere.
 - [ ] Reason-before-command holds: no runnable command precedes the rationale a reader needs to run it correctly.
 - [ ] A Worked Example appears only when a concept is hard without one.
@@ -434,7 +540,7 @@ Deliverables
 Example invocation (JSON)
 {
 "title": "Backup apps",
-"BACK_LINK": "reimaging-guide#Phase 2C — Backup Apps",
+"BACK_LINK": "reimaging-guide#Phase 2D — Backup Apps",
 "RUNBOOK_SHORT_DESC": "Collect and stage application settings and installers to the artifact root.",
 "PRIMARY_SCRIPTS": ["bin/backup-apps.sh"],
 "RELATED_SCRIPTS": [".internal/load-reimage-config.sh"],
@@ -442,8 +548,7 @@ Example invocation (JSON)
 "PREREQS": ["bash","rsync"],
 "DRY_RUN_FLAG": "--dry-run",
 "ASSET_OR_HOST": "ASSET01",
-"LAST_UPDATED": "2026-07-16",
-"rename_suggestion": "backup-apps.md"
+"LAST_UPDATED": "2026-07-16"
 }
 
 If any required input is missing, ask one targeted clarifying question only. Use the repo to infer defaults before asking.

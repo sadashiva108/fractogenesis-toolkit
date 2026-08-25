@@ -23,7 +23,8 @@ A script-first, one-pass record of how this Mac is configured — hardware and m
 - [[#Sequential Steps|Sequential Steps]]
     - [[#Step 1 — Prepare and Validate|Step 1 — Prepare and Validate]]
     - [[#Step 2 — Run the Capture|Step 2 — Run the Capture]]
-    - [[#Step 3 — Verify Outputs|Step 3 — Verify Outputs]]
+    - [[#Step 3 — Capture the Restore-Relevant State|Step 3 — Capture the Restore-Relevant State]]
+    - [[#Step 4 — Verify Outputs|Step 4 — Verify Outputs]]
 - [[#Decisions|Decisions]]
 - [[#Troubleshooting|Troubleshooting]]
 - [[#Supplemental Reference|Supplemental Reference]]
@@ -254,7 +255,38 @@ The script prints each section as it runs and finishes with the bundle path. It 
 > [!note]
 > A section for a toolchain you do not use (for example `10-java.txt` with no JDK installed) is written with its header intact and no findings. An empty-but-present section is a valid result, not a failure.
 
-### Step 3 — Verify Outputs
+### Step 3 — Capture the Restore-Relevant State
+
+The inventory above records **command output**: versions, lists, settings, as
+text. This step records the other plane — path, mode, size and **SHA-256** for
+each of the paths the restore phases have to put back:
+
+```bash
+./bin/capture-system-state.sh --phase pre-image --dry-run
+./bin/capture-system-state.sh --phase pre-image
+```
+
+It writes `system-state/pre-image-<stamp>/state.tsv` and `state.md`.
+
+**This is the step with a deadline.** After Phase 13 re-runs it with
+`--phase post-image`, the two join into a cross-erase delta that says which
+restored files are byte-identical to the originals, which merely exist, and —
+the row nothing else in the workflow can produce — which paths the old machine
+had that the rebuilt one does not.
+
+None of that is recoverable later. The comparison needs a recording of a machine
+that will not exist after the erase, and a version string is not one: `java`
+reporting 21.0.11 on both sides is satisfied equally by a correct restore and by
+a fresh install.
+
+> [!warning] Pitfall
+> The delta joins rows on absolute path, so the two captures must be taken as the
+> same user with the same `$HOME`. `capture-system-state.sh` records both in
+> `state.md` and refuses to build a delta when they differ, because joining
+> mismatched homes reports every path as simultaneously added and removed — a
+> result that looks like catastrophic data loss and means nothing.
+
+### Step 4 — Verify Outputs
 
 Confirm the bundle landed and holds all 16 sections plus the manifest, Brewfile, and dotfiles snapshot.
 
@@ -311,19 +343,19 @@ Three outcomes surface when you verify the bundle; each looks like a failure, an
 
 Some queries return less without elevated rights, and a toolchain you do not use will produce an empty section (for example `09-python.txt` with no pyenv or conda). An empty section file with its header intact means the command ran and found nothing — that is a valid result, not an error.
 
-[[#Step 3 — Verify Outputs|⮕ Continue to Step 3 — Verify Outputs]]
+[[#Step 4 — Verify Outputs|⮕ Continue to Step 4 — Verify Outputs]]
 
 ### The Brewfile is empty or missing formulae
 
 `brew bundle dump` only records what Homebrew installed. Formulae or casks installed outside Homebrew will not appear — confirm Homebrew itself is on `PATH` (`06-homebrew.txt` shows `brew doctor` output) and rerun the capture if `brew` was not found on the first pass.
 
-[[#Step 3 — Verify Outputs|⮕ Continue to Step 3 — Verify Outputs]]
+[[#Step 4 — Verify Outputs|⮕ Continue to Step 4 — Verify Outputs]]
 
 ### Fewer than 16 section files in the bundle
 
 The run was interrupted before completing. Delete or ignore the partial bundle and rerun `capture-system-inventory.sh` — each run writes a fresh timestamped directory, so a rerun does not overwrite anything.
 
-[[#Step 3 — Verify Outputs|⮕ Continue to Step 3 — Verify Outputs]]
+[[#Step 4 — Verify Outputs|⮕ Continue to Step 4 — Verify Outputs]]
 
 ---
 

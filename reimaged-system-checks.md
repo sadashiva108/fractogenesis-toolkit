@@ -22,7 +22,7 @@ Run the final proof step for the rebuilt Mac: generate the Phase 14 automated ch
     - [[#Step 2 — Run the Post-Image Checklist|Step 2 — Run the Post-Image Checklist]]
     - [[#Step 3 — Review Automated Rows|Step 3 — Review Automated Rows]]
     - [[#Step 4 — Resolve Manual Sign-Off Areas|Step 4 — Resolve Manual Sign-Off Areas]]
-    - [[#Step 5 — Rerun and Take the Post-Image Time Machine Backup|Step 5 — Rerun and Take the Post-Image Time Machine Backup]]
+    - [[#Step 5 — Rerun and Confirm the Sign-Off Artifact|Step 5 — Rerun and Confirm the Sign-Off Artifact]]
 - [[#Decisions|Decisions]]
 - [[#Troubleshooting|Troubleshooting]]
 - [[#Supplemental Reference|Supplemental Reference]]
@@ -44,13 +44,11 @@ Prove that the rebuilt Mac is usable for daily work and development, keep the fi
 
 - **The post-image checklist bundle** — a timestamped `reimage-checklist-*.md` under `reimaged-system/checklists/` recording PASS, WARN, FAIL, or SKIP for every area automation can reach, plus the `latest-reimage-checklist.txt` pointer to the newest run.
 - **The closed manual sign-off areas** — Company Portal, internal access, OneDrive sync, Office stability, project readiness, and final cleanliness, each resolved by hand and recorded as a Phase 14 note under `restore-notes/`.
-- **The post-image Time Machine backup** — taken at the end of the phase, once the rerun shows a stable result.
 
 **What the rest of the workflow relies on it for**
 
 - Phase 15 merges bulk personal home content only after this phase's checklist is clean and every manual row is closed.
 - The recorded checklist file is the written evidence that the rebuild was trusted at a point in time, rather than something remembered.
-- The post-image Time Machine backup is the fallback that preserves the trusted rebuild before bulk personal content is merged into it.
 
 **Ownership**
 
@@ -59,7 +57,8 @@ Prove that the rebuilt Mac is usable for daily work and development, keep the fi
 | the Phase 14 `--phase post` checklist run and the sign-off bundle it generates | pre-image validation, the same script under `--phase pre` — `reimage-prep-checks` (Phase 6B) |
 | the review of PASS / WARN / FAIL / SKIP rows and the decision to act on each versus record it | early post-image sanity checks and the initial "manual captures required" list this phase reads as pre-flight — `verify-reimaged-system` (Phase 9) |
 | closing the manual sign-off areas (Company Portal, internal access, OneDrive sync, Office stability, project readiness, final cleanliness) | the individual restore evidence — the Phase 10–12 `restore-*` runbooks |
-| the post-image Time Machine backup taken once the result is stable | post-image comparison captures — the Phase 13 `capture-*` runbooks |
+| | post-image comparison captures — the Phase 13 `capture-*` runbooks |
+| | the post-image Time Machine backup — `run-time-machine` (Phase 16), after Restore Home |
 | | bulk personal-home restore, which runs after this sign-off — `restore-home` (Phase 15) |
 
 This runbook is rerunnable: the checklist is meant to run twice (once to see what needs attention, once after fixes) and the final `--phase post` run produces the sign-off artifact.
@@ -76,7 +75,14 @@ The workflow depends on two facts working together: the checklist script covers 
 
 The same script serves Phase 6B with `--phase pre`; that run is the pre-image gate and belongs to a different runbook. This runbook is `--phase post` only, and it is the closing sign-off rather than the first post-image bundle Phase 9 produced.
 
-The post-image Time Machine backup lands at the *end* of Phase 14, not the beginning of Phase 15. The backup is what preserves the trusted rebuild before Phase 15 starts merging bulk personal content into it, so its ordering is deliberate.
+There is no Time Machine backup in this phase. It was previously taken here, on
+the reasoning that it should preserve the trusted rebuild before Phase 15 merges
+bulk personal content into it — but that ordering left the restored home
+directory out of the only post-image backup, and Phase 15's own guidance is to
+prefer cloud resync over manual copy, so little of what it does is
+irreversible. The backup now runs once, in
+[[reimaging-guide#Phase 16 — Post-Image Time Machine|Phase 16]], after Restore
+Home. Until then the pre-image Time Machine chain remains the fallback.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -160,10 +166,10 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 
 ### Prerequisites
 
-- Your shell is at the repository root — `cd "$FRACTOGENESIS_HOME"` once for the session. Per the guide's [[reimaging-guide#Core Assumptions|Core Assumptions]], the commands below assume this and don't repeat it.
+- Your shell is at the toolkit root — `cd "$FRACTOGENESIS_HOME"` once for the session. Per the guide's [[reimaging-guide#Core Assumptions|Core Assumptions]], the commands below assume this and don't repeat it.
 - Every Phase 8–13 runbook that is expected to run has finished, including any restore-notes plan-notes under `reimaged-system/restore-notes/`.
 - The external artifact volume is mounted and `$REIMAGE_ARTIFACT_ROOT` resolves; `reimaged-system/checklists/` will be created if missing.
-- The Phase 9 initial post-image bundle exists under `reimaged-system/initial-reimaged-system-*/`; its `manual-captures-required.md` is reachable.
+- The Phase 9 initial post-image bundle exists under `reimaged-system/*initial-reimaged-system-*/`; its `manual-captures-required.md` is reachable.
 - OneDrive is signed in and sync has settled — the checklist has a row for this, but you reach a clean result faster by resolving it up front.
 
 > [!bug] Troubleshooting
@@ -277,28 +283,25 @@ These rows cannot be proved by a script. Walk them by hand:
 
 Record decisions in a Phase 14 note under `restore-notes/` — especially any manual `PASS` that would look ambiguous to a future reader.
 
-### Step 5 — Rerun and Take the Post-Image Time Machine Backup
+### Step 5 — Rerun and Confirm the Sign-Off Artifact
 
 After Steps 3–4 have resolved every actionable row:
 
 1. Restart once if any Step 3 fix touched a login item, launch agent, or system setting that only re-settles across reboot.
 2. Rerun `./bin/reimage-checklist.sh --phase post --artifact-root "$REIMAGE_ARTIFACT_ROOT" --open`.
 3. Confirm the second run is the sign-off artifact — no unexplained WARN/FAIL rows remain.
-4. Take the post-image Time Machine backup:
 
-```bash
-tmutil destinationinfo
-sudo tmutil startbackup --block
-tmutil latestbackup
-```
+Phase 14 is complete when the second checklist file exists and the manual sign-off table is fully resolved.
 
-Phase 14 is complete when the second checklist file exists, the manual sign-off table is fully resolved, and `tmutil latestbackup` points at a fresh post-image backup.
+> [!note]
+> The `Time Machine latest backup` row will read `WARN` here, saying the latest
+> backup predates the reimaged-system evidence. That is correct and expected:
+> the post-image backup is Phase 16, after Restore Home. Rerun
+> `./bin/reimage-checklist.sh --phase post` once Phase 16 completes if you want
+> that row to close green.
 
 > [!bug] Troubleshooting
 > If a row that was `PASS` on the first run comes back `FAIL` on the rerun, see [[#A row that was `PASS` on the first run went `FAIL` on the rerun|A row that was `PASS` on the first run went `FAIL` on the rerun]].
-
-> [!bug] Troubleshooting
-> If `tmutil latestbackup` still reports a pre-image timestamp after the backup completes, see [[#`tmutil latestbackup` still reports a pre-image timestamp|`tmutil latestbackup` still reports a pre-image timestamp]].
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -313,7 +316,6 @@ The scripts do X; these judgment calls stay with you.
 | Which WARN rows block sign-off vs. get waived with a note | Only you know whether a specific WARN (e.g., a still-syncing OneDrive, a missing rarely-used app) is compatible with "the rebuild is trusted". |
 | Whether Office stability is "back to normal" | The script can only observe presence and versions; the stability sign-off is behavioral over time. |
 | Whether to add `--internal-url` / `--workspace-root` flags this run | Depends on which internal services and workspace roots are in scope for this rebuild. |
-| Whether to take the post-image Time Machine backup on internal storage or an external destination | Depends on the rebuild's data-classification and Time Machine policy. |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -321,7 +323,7 @@ The scripts do X; these judgment calls stay with you.
 
 ## Troubleshooting
 
-Three post-image outcomes need more than a rerun to clear, and each would break the flow of the step that surfaces it. The steps that find them link in from callouts.
+Two post-image outcomes need more than a rerun to clear, and each would break the flow of the step that surfaces it. The steps that find them link in from callouts.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -331,17 +333,11 @@ The Docker CLI check needs the Docker daemon to be responsive, not just the app 
 
 [[#Step 3 — Review Automated Rows|⮕ Continue to Step 3 — Review Automated Rows]]
 
-### `tmutil latestbackup` still reports a pre-image timestamp
-
-The requested backup ran on a stale destination (e.g., a Time Machine target that got quarantined during reimage). Re-check the destination with `tmutil destinationinfo`, add the intended destination if missing, and rerun `sudo tmutil startbackup --block`.
-
-[[#Step 5 — Rerun and Take the Post-Image Time Machine Backup|⮕ Continue to Step 5 — Rerun and Take the Post-Image Time Machine Backup]]
-
 ### A row that was `PASS` on the first run went `FAIL` on the rerun
 
 Something between the two runs changed the underlying state (a fix regressed a different check). Read the row values from both files under `reimaged-system/checklists/` and diff — the earlier PASS captures the last known-good state, and the current FAIL captures the regression.
 
-[[#Step 5 — Rerun and Take the Post-Image Time Machine Backup|⮕ Continue to Step 5 — Rerun and Take the Post-Image Time Machine Backup]]
+[[#Step 5 — Rerun and Confirm the Sign-Off Artifact|⮕ Continue to Step 5 — Rerun and Confirm the Sign-Off Artifact]]
 
 ---
 

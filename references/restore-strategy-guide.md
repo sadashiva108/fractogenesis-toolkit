@@ -60,7 +60,7 @@ That circularity is exactly why the reimage workflow was moved into toolkit shap
 | `fractogenesis-toolkit` | Public | No | `bootstrap.sh` via curl, or the jump drive fallback — see below |
 | `reference-vault` | Private | Yes | SSH key restoration + `git clone` — see [[#Getting reference-vault (Still Needs SSH)|Getting reference-vault (Still Needs SSH)]] |
 
-This matters because it changes what's actually on the critical path. **You do not need `reference-vault`, SSH, or Git to read `reimaging-guide.md` and follow it through Phase 11.** Restoring `reference-vault` is a separate, non-blocking task for getting your personal notes back — it can happen any time after Phase 8, in parallel with the rest of the reimage, not as a prerequisite to it.
+This matters because it changes what's actually on the critical path. **You do not need `reference-vault`, SSH, or Git to read `reimaging-guide.md` and follow it through Phase 11.** The toolkit arrives by `curl` or jump drive in Phase 8 and carries every runbook you need until then. Restoring `reference-vault` is a separate, non-blocking task for getting your personal notes back — it can happen any time after Phase 8, in parallel with the rest of the reimage, not as a prerequisite to it.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -72,7 +72,7 @@ This matters because it changes what's actually on the critical path. **You do n
 
 The first time `git` runs on a fresh macOS install, it triggers a GUI popup to install Xcode Command Line Tools — a large, blocking download, at exactly the moment you're least equipped to wait around or troubleshoot. `curl` and `tar`, by contrast, are core BSD userland binaries present on every Mac from first boot, with no install step and no popup.
 
-`python3` carries the same risk as `git` on some macOS versions — before Command Line Tools are installed, running it can trigger the identical popup. This is why `test-guide-access.md` explicitly tests `python3 --version` as a prerequisite check rather than assuming it's safe: if `python3` does trigger the popup on a given macOS version, every Python script in `bin/` (including `prepare-artifact-root.py`) inherits that same blocking dependency.
+`python3` carries the same risk as `git` on some macOS versions — before Command Line Tools are installed, running it can trigger the identical popup. This is why `reimage-guide-access.md` explicitly tests `python3 --version` as a prerequisite check rather than assuming it's safe: if `python3` does trigger the popup on a given macOS version, every Python script in `bin/` (including `prepare-artifact-root.py`) inherits that same blocking dependency.
 
 ### Why the Repo Is Public
 
@@ -93,7 +93,7 @@ Two failure modes a jump drive introduces that curl doesn't:
 
 ### Validating This Actually Works
 
-None of the above is worth anything unassumed. `test-guide-access.md` (Phase 6B) is the runbook that proves both paths actually work — using only tools guaranteed present on a bare Mac, extracting into a throwaway location so a test never risks a real checkout, with explicit pass/fail criteria rather than an eyeballed "looks fine." Run it before trusting either mechanism for a real reimage, and again any time `bootstrap.sh` changes or a new phase is migrated.
+None of the above is worth anything unassumed. [[reimage-guide-access|reimage-guide-access.md]] (Phase 6A) is the runbook that proves both paths actually work — using only tools guaranteed present on a bare Mac, extracting into a throwaway location so a test never risks your real toolkit, with explicit pass/fail criteria rather than an eyeballed "looks fine." Run it before trusting either mechanism for a real reimage, and again any time `bootstrap.sh` changes or a new phase is migrated.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -101,7 +101,7 @@ None of the above is worth anything unassumed. `test-guide-access.md` (Phase 6B)
 
 ## Getting reference-vault (Still Needs SSH)
 
-`reference-vault` stays private, so it still needs the traditional SSH-key-restoration path. This is **not** on the critical path for following the reimage workflow itself — `reimaging-guide.md` and every phase through 9 are fully readable and runnable from `fractogenesis-toolkit` alone. Do this whenever you want your personal notes back, not as a blocker.
+`reference-vault` stays private, so it still needs the traditional SSH-key-restoration path. This is **not** on the critical path for following the reimage workflow itself — `reimaging-guide.md` and every phase through 11 are fully readable and runnable from `fractogenesis-toolkit` alone. Do this whenever you want your personal notes back, not as a blocker.
 
 ### Recommended Bootstrap Sequence
 
@@ -110,7 +110,7 @@ None of the above is worth anything unassumed. `test-guide-access.md` (Phase 6B)
 2. Install Xcode Command Line Tools (provides git): xcode-select --install
 3. Mount the encrypted secrets DMG from the external drive and unlock it
    with the password from your approved password manager.
-   See: backup-dmg-secrets.md (Restore section) for the full procedure.
+   See: create-secrets-dmg.md (Restore section) for the full procedure.
 4. Copy the SSH keys out of the mounted DMG into ~/.ssh and fix permissions.
 5. Add a minimal ~/.ssh/config entry (or use the work default identity)
    so `git clone` over SSH authenticates.
@@ -120,9 +120,9 @@ None of the above is worth anything unassumed. `test-guide-access.md` (Phase 6B)
    Git/SSH setup (this replaces the minimal step 5 above with the permanent config).
 ```
 
-Note what's *not* in this sequence anymore: there's no step telling you to open `reimaging-guide.md` from inside `reference-vault` once cloned — that file no longer lives there. If you're following this sequence, you're already reading the guide from your `fractogenesis-toolkit` checkout; this sequence exists purely to get your personal vault back, independently.
+Note what's *not* in this sequence anymore: there's no step telling you to open `reimaging-guide.md` from inside `reference-vault` once cloned — that file no longer lives there. If you're following this sequence, you're already reading the guide from your `fractogenesis-toolkit` install — the `curl` or jump-drive copy from Phase 8, or the clone once Phase 11B has made one; this sequence exists purely to get your personal vault back, independently.
 
-Steps 3–4 depend on `reimage.env`'s values (key filenames, host aliases) to fill in placeholders later in `restore-git.md`. Since `reimage.env` itself is not committed to Git, confirm it is captured somewhere reachable during bootstrap — either inside the encrypted secrets DMG alongside the SSH keys, or as a note in your password manager — before you wipe the Mac. Without it, the SSH/Git restore steps still work, but you will need to reconstruct the key names and host aliases by hand.
+Steps 3–4 depend on `reimage.env`'s values (key filenames, host aliases) to fill in placeholders later in `restore-git.md`. `reimage.env` is gitignored, so no install route carries it — the jump drive holds the one copy, placed there in Phase 6A and restored to the toolkit root in Phase 8 Step 2. By the time you reach this sequence it should already be in place; see [[references/toolkit-environment-reference|Toolkit Environment Reference]]. Without it the SSH/Git restore steps still work, but you would have to reconstruct the key names and host aliases by hand.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 

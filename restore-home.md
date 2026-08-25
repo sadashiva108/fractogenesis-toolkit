@@ -63,6 +63,7 @@ Bring back the specific personal-home content — `Documents`, `Desktop`, person
 | per-subtree restore of the `home-files-backup/dotfiles/` config trees | Git identity dotfiles that are part of dual-identity plumbing — `restore-git` (Phase 11A) |
 | reconnecting OneDrive and waiting for its baseline sync to settle | per-app support folders under `~/Library/Application Support/` — `restore-apps`, `restore-docker`, `restore-intellij` (Phase 12) |
 | recording each restore decision under `reimaged-system/restore-notes/` | staged ignored files that live inside a repository — `restore-repos` (Phase 11B), via `staged-ignored-files/live/` |
+| | the post-image Time Machine backup that follows this phase — `run-time-machine` (Phase 16) |
 
 This runbook is rerunnable in the sense that each `rsync` is idempotent, but it is not meant to be re-run wholesale — a second pass typically reintroduces the same "should I have restored this?" question. Prefer to run it once, carefully, and record the outcome.
 
@@ -158,7 +159,7 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 
 ### Prerequisites
 
-- Your shell is at the repository root — `cd "$FRACTOGENESIS_HOME"` once for the session. Per the guide's [[reimaging-guide#Core Assumptions|Core Assumptions]], the commands below assume this and don't repeat it.
+- Your shell is at the toolkit root — `cd "$FRACTOGENESIS_HOME"` once for the session. Per the guide's [[reimaging-guide#Core Assumptions|Core Assumptions]], the commands below assume this and don't repeat it.
 - Phase 14 (`reimaged-system-checks.md`) is complete and clean. If Phase 14 raised outstanding rows, resolve them before touching bulk home content — you want to know the reimaged system was trusted before Phase 15 started, not after.
 - The external artifact volume is mounted and `$REIMAGE_ARTIFACT_ROOT` resolves; `home-files-backup/home/` and `home-files-backup/dotfiles/` are reachable.
 - Phase 10B (`restore-access.md`) has already restored credential-bearing dotfiles (SSH keys, certificates, Java trust). Do not re-copy anything from `dotfiles/` that would conflict with those.
@@ -419,7 +420,7 @@ Longer material most runs will not need, kept out of the main flow.
 
 ### Why This Phase Has No Companion Script
 
-Every earlier restore phase either produces evidence a script can validate (Phase 8, 9, 11B, 12 plan-notes) or writes into paths a script can verify exist (Phase 10A/10B). Phase 15 does neither: the "right answer" for what to restore is a judgment call, and automating the copy step removes the deliberation the phase depends on. The absence of a script is intentional. If a future rebuild wants a `bin/restore-home.sh` that emits a plan-note like Phase 12's, it should still stop short of running any `rsync` on its own.
+Every earlier restore phase either produces evidence a script can validate (Phase 8, 9, 11B, 12 plan-notes) or writes into paths a script can verify exist (Phase 10A/10B). Phase 15 does neither: the "right answer" for what to restore is a judgment call, and automating the copy step removes the deliberation the phase depends on. The absence of a script is intentional. If a future rebuild wants an entrypoint for this phase — it would be named `restore-home.sh`, by the pairing convention — it should emit a plan-note like Phase 12's and still stop short of running any `rsync` on its own. No such script exists, and its absence is the design, not a gap.
 
 ### Relationship to Phase 11B — Restore Repositories
 

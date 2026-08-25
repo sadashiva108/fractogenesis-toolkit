@@ -85,7 +85,7 @@ Standard variables are set once in `reimage.env` and loaded by every script auto
 # reimage.env holds resolved absolute values only: no ${VAR:-...}, no $HOME/...,
 # and no $(...) expressions — those can go stale or fail under set -u.
 # Note: REIMAGE_ROOT is retired. Scripts self-locate from their own position
-# in the repo (see prepare-artifact-root.py's REPO_ROOT); FRACTOGENESIS_HOME
+# in the repo (see REPO_ROOT in prepare-artifact-root.py); FRACTOGENESIS_HOME
 # (set via .envrc, not reimage.env) is the shell-level equivalent if needed.
 export REIMAGE_ARTIFACT_ROOT="/Volumes/<external-data-volume-name>/reimage-<asset-or-host>-<start-date>-open"
 export ONEDRIVE_ROOT="/Users/<user>/Library/CloudStorage/OneDrive-AcmeGroup"
@@ -106,7 +106,7 @@ export ONEDRIVE_DEST_SUBDIR="reimage-<asset-or-host>-<start-date>-open"
 | Phase 2D | Backup apps | `backup-apps.md` | `backup-apps.sh` (public entrypoint), `helpers/apps/backup-docker-settings.sh` and `helpers/apps/backup-intellij-scratches-consoles.sh` (internal helpers), plus app-controlled/manual exports for other apps | `$REIMAGE_ARTIFACT_ROOT/app-settings-backup/` plus matching `secrets-encrypted/` folders |
 | Phase 2D detail | IntelliJ companion flow | `backup-intellij.md` | `backup-apps.sh` (public IntelliJ path), `helpers/apps/backup-intellij-scratches-consoles.sh` (internal helper) | `$REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/` |
 | Phase 3A | Certificate and Keychain staging | `stage-certs-keychain.md` | `stage-certs-keychain.sh` | `$REIMAGE_ARTIFACT_ROOT/public-certs/`, `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/certs/`, `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/extra-secrets-certs-review/` |
-| Phase 3C | Encrypted secrets backup | `backup-dmg-secrets.md` | `create-secrets-dmg.sh` | `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/all-secrets-*.dmg` |
+| Phase 3C | Encrypted secrets backup | `create-secrets-dmg.md` | `create-secrets-dmg.sh` | `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/all-secrets-*.dmg` |
 | Phase 5 | Time Machine backup/status | `run-time-machine.md` | `run-time-machine.sh`, `record-time-machine-evidence.sh` | `/Volumes/AppleBackups`, `$REIMAGE_ARTIFACT_ROOT/time-machine/`, `final-time-machine-checklist-*.md` |
 | Phase 4A | Toolkit snapshot capture | `capture-toolkit-snapshot.md` | `capture-toolkit-snapshot.sh` | `$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/pre-image-toolkit-snapshot-*/`, `$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/latest-docs/` |
 | Phase 4B | Pre-image system inventory evidence | `reimaging-guide.md` (Phase 4) | `capture-system-inventory.sh` | `$REIMAGE_ARTIFACT_ROOT/system-inventory/` |
@@ -115,8 +115,14 @@ export ONEDRIVE_DEST_SUBDIR="reimage-<asset-or-host>-<start-date>-open"
 | Phase 4D | Pre-image Office stability evidence | `reimaging-guide.md` (Phase 4), `capture-office-stability.md` | `watch-office-today.sh `, `capture-workload-snapshot.sh`, `capture-office-stability.sh`, `office-stability-checklist.sh --phase pre-reimage` | `$REIMAGE_ARTIFACT_ROOT/office-stability/`, `$REIMAGE_ARTIFACT_ROOT/office-stability/checklists/` |
 | Phase 6A | Guide access validation (curl/jump drive) | `reimaging-guide.md`, `reimage-guide-access.md` | `bootstrap.sh`, `bin/build-jump-drive-payload.sh` | throwaway test installs only -- no `$REIMAGE_ARTIFACT_ROOT` output |
 | Phase 6B | Final pre-image validation | `reimaging-guide.md`, `reimage-prep-checks.md` | `bin/reimage-checklist.sh --phase pre --artifact-root ...` | `$REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/` |
+| Phase 10A | Restore-phase entry record | `restore-runtime.md` | `bin/record-restore-prereqs.sh` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/boundaries/runs/*-entry-*/` |
+| Phase 10A | Restore-phase exit record | `restore-runtime.md` | `bin/record-restore-exit.sh` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/boundaries/runs/*-exit-*/` |
+| Phase 10A | Restored-state comparison | `restore-runtime.md` | `bin/compare-restored-state.sh` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/comparisons/runs/*-inventory-diff-*/` |
+| Phase 10B | Restored-state comparison | `restore-access.md` | `bin/compare-restored-state.sh --runbook restore-access` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/comparisons/runs/*-inventory-diff-*/` |
+| Phase 10B | Phase delta | `restore-access.md` | `bin/record-restore-state.sh --runbook restore-access --point after` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/state/runs/*-after-*/delta.md` |
+| Phase 8 | Toolkit install and shell environment | `enroll-and-stabilize.md` | `bootstrap.sh`, `bin/init-shell-env.sh` | `~/.zprofile` block; `$FRACTOGENESIS_HOME/reimage.env` restored from the jump drive |
 | Phase 8 | Enrollment/stabilization record | `enroll-and-stabilize.md` | `record-enrollment.sh` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/enrollment/*` when mounted, otherwise `$REIMAGE_WORKSPACE_ROOT/enrollment/*` or `~/Desktop/reimaged-system-artifacts/enrollment/*` |
-| Phase 9 | First-boot record twice around a stabilization restart | `verify-reimaged-system.md` | `record-reimaged-system.sh` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/initial-reimaged-system-YYYYMMDD-HHMMSS/` |
+| Phase 9 | First-boot record twice around a stabilization restart | `verify-reimaged-system.md` | `record-reimaged-system.sh` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/[context-]initial-reimaged-system-YYYYMMDD-HHMMSS/` |
 | Phase 10 | Runtime/access restore helpers | `restore-runtime.md`, `restore-access.md` | targeted manual checks; no single public restore script | selective restore from `home-files-backup/` and `secrets-encrypted/` |
 | Phase 11A | Git identity restore | `restore-git.md` | targeted manual writes to `~/.gitconfig`, `~/.ssh/config`, and the personal-root override; no toolkit script | consumes `secrets-encrypted/ssh/` and `secrets-encrypted/git/` restored in Phase 10B |
 | Phase 11B | Repository restore | `restore-repos.md` | `restore-repos.sh` | `$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/runs/post-image-restore-YYYYMMDD-HHMMSS/`; consumes pre-image `repo-audit-reports/runs/pre-image-*/repos.tsv` and `staged-ignored-files/live/<label>/` |
@@ -126,6 +132,7 @@ export ONEDRIVE_DEST_SUBDIR="reimage-<asset-or-host>-<start-date>-open"
 | Phase 13 | Post-image performance evidence | `capture-performance-audit.md` | `capture-performance-audit.sh` | `$REIMAGE_ARTIFACT_ROOT/performance-audit/post-image-*` |
 | Phase 13 | Post-image Office stability evidence | `capture-office-stability.md` | `capture-office-stability.sh`, `office-stability-checklist.sh --phase post-reimage` | `$REIMAGE_ARTIFACT_ROOT/office-stability/post-reimage-*`, `$REIMAGE_ARTIFACT_ROOT/office-stability/checklists/` |
 | Phase 14 | Final post-image validation | `reimaged-system-checks.md` | `bin/reimage-checklist.sh --phase post` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/checklists/` |
+| Phase 16 | Post-image Time Machine backup | `run-time-machine.md` | `run-time-machine.sh`, `record-time-machine-evidence.sh` | `/Volumes/AppleBackups`, `$REIMAGE_ARTIFACT_ROOT/time-machine/` |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -698,7 +705,7 @@ For toolkit-snapshot checks, the validator should discover the newest timestampe
 The generated bundle is written under:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/reimaged-system/initial-reimaged-system-YYYYMMDD-HHMMSS/
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/[context-]initial-reimaged-system-YYYYMMDD-HHMMSS/
 ```
 
 [[#Table of Contents|⬆ Back to Table of Contents]]

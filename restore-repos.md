@@ -21,14 +21,16 @@ Consume the pre-image repository audit produced by Phase 2A to re-clone the trac
     - [[#Prerequisites|Prerequisites]]
     - [[#Confirm Your Intent|Confirm Your Intent]]
 - [[#Sequential Steps|Sequential Steps]]
+    - [[#Step 0 — Record Prerequisites and the Before-State|Step 0 — Record Prerequisites and the Before-State]]
     - [[#Step 1 — Produce the Initial Status Report|Step 1 — Produce the Initial Status Report]]
     - [[#Step 2 — Review the Emitted Clone Commands|Step 2 — Review the Emitted Clone Commands]]
     - [[#Step 3 — Execute the Clone Commands|Step 3 — Execute the Clone Commands]]
-    - [[#Step 4 — Restore Staged Ignored Files|Step 4 — Restore Staged Ignored Files]]
-    - [[#Step 5 — Restore Per-Repo Gitignored Secrets from the DMG|Step 5 — Restore Per-Repo Gitignored Secrets from the DMG]]
-    - [[#Step 6 — Reconcile Rescue Branches|Step 6 — Reconcile Rescue Branches]]
-    - [[#Step 7 — Reconcile Stashes and Tracked Changes|Step 7 — Reconcile Stashes and Tracked Changes]]
-    - [[#Step 8 — Rerun the Status Report and Close the Exit Criteria|Step 8 — Rerun the Status Report and Close the Exit Criteria]]
+    - [[#Step 4 — Repoint at the Cloned Toolkit|Step 4 — Repoint at the Cloned Toolkit]]
+    - [[#Step 5 — Restore Staged Ignored Files|Step 5 — Restore Staged Ignored Files]]
+    - [[#Step 6 — Restore Per-Repo Gitignored Secrets from the DMG|Step 6 — Restore Per-Repo Gitignored Secrets from the DMG]]
+    - [[#Step 7 — Reconcile Rescue Branches|Step 7 — Reconcile Rescue Branches]]
+    - [[#Step 8 — Reconcile Stashes and Tracked Changes|Step 8 — Reconcile Stashes and Tracked Changes]]
+    - [[#Step 9 — Rerun the Status Report and Close the Exit Criteria|Step 9 — Rerun the Status Report and Close the Exit Criteria]]
 - [[#Decisions|Decisions]]
 - [[#Troubleshooting|Troubleshooting]]
 - [[#Supplemental Reference|Supplemental Reference]]
@@ -167,7 +169,7 @@ The `reimage.env` values this runbook depends on. Values are resolved and writte
 
 | Variable | Meaning |
 |---|---|
-| `FRACTOGENESIS_HOME` | Repository root for this toolkit checkout; where `reimage.env` lives. Set by your shell startup / `.envrc`, not stored in `reimage.env`. |
+| `FRACTOGENESIS_HOME` | Toolkit root; where `reimage.env` lives. Until this phase it points at the `curl` or jump-drive install from Phase 8, not a clone — see [[#Step 4 — Repoint at the Cloned Toolkit|Step 4 — Repoint at the Cloned Toolkit]]. |
 | `REIMAGE_ARTIFACT_ROOT` | Artifact root where Phase 2A wrote the pre-image audit and where this runbook writes its status bundle. Must be mounted; the script fails fast if it is not. |
 | `GIT_WORK_REPO_ROOT` | Directory holding work repos. Repos whose pre-image path was not under `$GIT_PERSONAL_REPO_ROOT` clone into here. |
 | `GIT_PERSONAL_REPO_ROOT` | Directory holding personal repos. Repos whose pre-image path was under here clone through the personal SSH host alias. |
@@ -184,7 +186,7 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 
 ### Prerequisites
 
-- Your shell is at the repository root — `cd "$FRACTOGENESIS_HOME"` once for the session. Per the guide's [[reimaging-guide#Core Assumptions|Core Assumptions]], the commands below assume this and don't repeat it.
+- Your shell is at the toolkit root — `cd "$FRACTOGENESIS_HOME"` once for the session. Per the guide's [[reimaging-guide#Core Assumptions|Core Assumptions]], the commands below assume this and don't repeat it.
 - Phase 11A ([[restore-git|restore-git.md]]) closed out with both `ssh -T` identity checks passing. Repositories need the dual-identity `~/.gitconfig` and `~/.ssh/config` in place before any emitted clone command will authenticate correctly.
 - The external artifact volume is mounted and `reimage.env` resolves. `ls "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/latest-run.txt"` should print the pointer file.
 - The pre-image `repos.tsv` has non-empty rows — this runbook cannot restore repositories that were never inventoried.
@@ -208,6 +210,73 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 ## Sequential Steps
 
 Run these in order. The status report has to exist before you can review the action files, the action files have to be reviewed before they are executed, and the exit criteria can only be closed after a rerun confirms the state after cloning and rsyncing.
+
+### Step 0 — Record Prerequisites and the Before-State
+
+Two recordings, both taken before anything is cloned. They answer different
+questions and only one of them can be taken late.
+
+**0a — may this phase start?** Writes a checklist under
+`reimaged-system/boundaries/` and exits non-zero only on `FAIL`:
+
+```bash
+./bin/record-restore-prereqs.sh --runbook restore-repos --dry-run
+./bin/record-restore-prereqs.sh --runbook restore-repos
+```
+
+The first four rows are derived from *Prerequisites* above, so the two cannot
+drift. The last three read the pre-image audit itself, and they exist because
+`bin/restore-repos.sh` is read-only and always produces a status bundle — a run
+against an empty or damaged audit looks exactly like a clean one.
+
+**Audit remote URLs are URLs** is the row to read twice. `capture-repo-audit.sh`
+builds that column from `git remote -v`, whose output is *itself* tab-separated,
+and writes it into a TSV unsquashed — so the URL can land in a later column and
+leave the remote *name* where the URL belongs. `restore-repos.sh` feeds that
+field to `rewrite_remote_for_host`, so a damaged column surfaces as clone
+commands that are malformed rather than as an error. When this row FAILs, read
+the real URLs out of `repo-audit-summary.txt` before trusting anything in
+`clone-commands.sh`.
+
+The two WARN rows name repositories that need a decision rather than a fix. A
+repository with **no remote** cannot be cloned by anything — its only copy is
+whatever the backup staged, so it is a Time Machine recovery or a deliberate
+loss. A repository whose remotes span **both hosts** has no automatic answer to
+which root it belongs in, because the host is what decides that everywhere else.
+Both are recorded in *Decisions*.
+
+**0b — what is on disk right now?** Writes a run under `reimaged-system/state/`
+recording the clone destinations as they stand before this phase fills them:
+
+```bash
+./bin/record-restore-state.sh --runbook restore-repos --point before --dry-run
+./bin/record-restore-state.sh --runbook restore-repos --point before
+```
+
+Two targets, both walked at depth 1: `$GIT_WORK_REPO_ROOT/` and
+`$GIT_PERSONAL_REPO_ROOT/`. Depth 1 rather than a full walk because the question
+is *which repositories exist*, not what is inside them — a recursive capture of
+27 checkouts would hash tens of thousands of files to answer a question that is
+one row per repository. The before-state is normally two empty roots; the delta
+against the after-state is then literally the list of what this phase restored.
+
+> [!note]
+> Every block in this runbook shows a `--dry-run` line above the real one. It
+> prints the table and writes nothing. On **0b** that preview matters most:
+> `before` is a first-wins point, so the first capture recorded is the one that
+> stays official, and a mistimed one cannot be replaced — only annotated with a
+> pin explaining why it is wrong.
+
+> [!warning] Pitfall
+> **0b expires and 0a does not.** The prerequisite check is rerunnable at any
+> point and costs nothing to repeat. The before-state is gone the moment the
+> first clone lands in either root, so take 0b before Step 1 — and confirm no
+> scratch repository is sitting in a clone root, since one left behind by
+> `restore-git` Step 7 records as restored content.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 1 — Produce the Initial Status Report
 
@@ -278,7 +347,92 @@ bash "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/$LATEST_RUN/clone-commands.sh"
 > [!bug] Troubleshooting
 > If the batch stops because a clone target directory already exists, see [[#`clone-commands.sh` stops at the first repo because the target directory already exists|`clone-commands.sh` stops at the first repo because the target directory already exists]].
 
-### Step 4 — Restore Staged Ignored Files
+**Cloning one repository by hand.** The batch is the normal path, but a single repo clones directly — proving the identity plumbing end to end, or picking up one you need before the rest are ready. Naming the destination rather than `cd`-ing into the root keeps the shell where it started, so a directory-scoped `direnv` does not unload `reimage.env` mid-block:
+
+```bash
+source ./reimage.env
+
+REPO_PATH="replace-with-owner/repo"
+git clone "git@${GIT_WORK_GITHUB_HOST}:${REPO_PATH}.git" "$GIT_WORK_REPO_ROOT/${REPO_PATH##*/}"
+```
+
+For a personal repo, both variables change:
+
+```bash
+source ./reimage.env
+
+REPO_PATH="replace-with-owner/repo"
+git clone "git@${GIT_PERSONAL_GITHUB_HOST}:${REPO_PATH}.git" "$GIT_PERSONAL_REPO_ROOT/${REPO_PATH##*/}"
+```
+
+**Which root a repo belongs in is decided by its remote host, not by where it lived pre-image.** A repository on the corporate Enterprise server belongs under `$GIT_WORK_REPO_ROOT` even if it sat in the personal directory before — an old directory named for its contents rather than an identity will have collected both. Clone one of those under the personal root and `includeIf` authors its commits with the personal address and `core.sshCommand` offers the personal key, which the Enterprise host rejects.
+
+### Step 4 — Repoint at the Cloned Toolkit
+
+`clone-commands.sh` clones every repo from the pre-image inventory, and the
+toolkit is one of them — it lives under `$GIT_PERSONAL_REPO_ROOT` like any other
+personal repo. So the previous step has just produced a **second** copy of the
+toolkit, and `$FRACTOGENESIS_HOME` still points at the first.
+
+Left alone, that is a quiet trap: you read a runbook from one copy, edit it, and
+commit from the other. Only the clone has `.git`, so only the clone can commit —
+and only the bootstrap copy has `reimage.env`, so only the bootstrap copy can
+run scripts. Neither is complete until you merge the two facts.
+
+```bash
+# Capture the current root before anything repoints it -- after step 2 the
+# variable names the clone, and this is the only handle on the old copy.
+TOOLKIT_BOOTSTRAP="$FRACTOGENESIS_HOME"
+TOOLKIT_CLONE="$GIT_PERSONAL_REPO_ROOT/fractogenesis-toolkit"
+
+# 1. Carry reimage.env across. It is gitignored, so the clone does not have it.
+cp "$TOOLKIT_BOOTSTRAP/reimage.env" "$TOOLKIT_CLONE/reimage.env"
+
+# 2. Repoint the shell. init-shell-env.sh self-locates, so running it from the
+#    clone rewrites the profile block to point there.
+bash "$TOOLKIT_CLONE/bin/init-shell-env.sh"
+
+# 3. Approve .envrc in the clone. direnv approval is per-path and per-content.
+cd "$TOOLKIT_CLONE" && direnv allow
+
+# 4. Confirm, then remove the old copy.
+exec zsh -l
+```
+
+After the new shell starts, confirm both facts before deleting anything:
+
+```bash
+echo "$FRACTOGENESIS_HOME"          # must be the clone
+echo "$REIMAGE_ARTIFACT_ROOT"       # must be non-empty
+git -C "$FRACTOGENESIS_HOME" status --short   # must work
+```
+
+Only once all three hold:
+
+```bash
+rm -rf "$TOOLKIT_BOOTSTRAP"
+```
+
+> [!note]
+> `TOOLKIT_BOOTSTRAP` was set in the block above and does not survive
+> `exec zsh -l`. Set it again in the new shell — or just confirm the path by eye
+> before removing anything, which is the safer habit for an `rm -rf` either way.
+
+> [!warning] Pitfall
+> Do the deletion last, and only after the checks pass. `reimage.env` exists in
+> exactly one place on this Mac until step 1 lands — delete the bootstrap copy
+> first and you have destroyed it, with the jump drive as your only remaining
+> source.
+
+> [!note]
+> If direnv is already active from
+> [[restore-runtime#Step 6 — Install direnv and Restore the Repo Environment Hook|Phase 10A Step 6]],
+> the `~/.zprofile` bridge block has already been removed and step 2 above is
+> unnecessary — `.envrc` in the clone sets `FRACTOGENESIS_HOME` on `cd`. Running
+> it anyway is harmless but reintroduces a block you would then remove again.
+> Full picture: [[references/toolkit-environment-reference|Toolkit Environment Reference]].
+
+### Step 5 — Restore Staged Ignored Files
 
 Two paths — pick the one you settled on in the pre-flight.
 
@@ -297,14 +451,14 @@ bash "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/$LATEST_RUN/rsync-ignored-files.
 ```
 
 > [!note]
-> Kept ignored files that were routed to `secrets-encrypted/repos-gitignored/` by Phase 2A are *not* under `staged-ignored-files/live/` — they are inside the encrypted DMG and are restored by Step 5 below, which needs the image attached.
+> Kept ignored files that were routed to `secrets-encrypted/repos-gitignored/` by Phase 2A are *not* under `staged-ignored-files/live/` — they are inside the encrypted DMG and are restored by Step 6 below, which needs the image attached.
 
 > [!bug] Troubleshooting
 > If the interactive run reports a repo applied but the files are not in the working tree, see [[#`--apply-ignored-files` says "yes" but no files appear in the working tree|`--apply-ignored-files` says "yes" but no files appear in the working tree]].
 
-### Step 5 — Restore Per-Repo Gitignored Secrets from the DMG
+### Step 6 — Restore Per-Repo Gitignored Secrets from the DMG
 
-Phase 2A routed secret-shaped gitignored files — `.env`, `secrets/`, `gradle.properties` with real passwords — to `secrets-encrypted/repos-gitignored/<label>/` rather than to `staged-ignored-files/live/`, so the Phase 3C DMG would encrypt them. Step 4 does not touch those: they are inside the image, and until this step runs, every cloned repo is missing exactly the files it cannot start without.
+Phase 2A routed secret-shaped gitignored files — `.env`, `secrets/`, `gradle.properties` with real passwords — to `secrets-encrypted/repos-gitignored/<label>/` rather than to `staged-ignored-files/live/`, so the Phase 3C DMG would encrypt them. Step 5 does not touch those: they are inside the image, and until this step runs, every cloned repo is missing exactly the files it cannot start without.
 
 Step 1 emitted `rsync-repos-gitignored.sh` alongside the other command files. It carries one guarded block per repo; blocks for repos the image does not carry skip themselves, so it is safe to run whole.
 
@@ -350,7 +504,7 @@ cd "$GIT_WORK_REPO_ROOT/<repo>" && direnv allow
 >
 > Anything printed needs its two blocks reconciled by hand before you run the script.
 
-### Step 6 — Reconcile Rescue Branches
+### Step 7 — Reconcile Rescue Branches
 
 For each repo with `carry-forward rows > 0` in the status report, confirm the pre-image rescue branch made it onto the remote before reimage:
 
@@ -380,7 +534,7 @@ For each rescue branch that shows up, choose one:
 > [!bug] Troubleshooting
 > `no rescue branches found on remote` for a repo whose pre-image row shows carry-forward > 0 means Phase 2A's push step was skipped or failed for that repo. This is a real gap. Reconstruct from local backups if any exist; otherwise the carry-forward material is lost, and the row must be closed as "intentionally discarded" in the exit criteria.
 
-### Step 7 — Reconcile Stashes and Tracked Changes
+### Step 8 — Reconcile Stashes and Tracked Changes
 
 Cross-check `raw/stashes-input.tsv` and `raw/tracked-changes-input.tsv` against the current state of each cloned repo. The pre-image push of a rescue branch typically covered these too, so they usually clear during the rescue-branch reconciliation. Anything still outstanding here is either:
 
@@ -389,7 +543,7 @@ Cross-check `raw/stashes-input.tsv` and `raw/tracked-changes-input.tsv` against 
 
 Note the intentional-discard cases in the restore notes.
 
-### Step 8 — Rerun the Status Report and Close the Exit Criteria
+### Step 9 — Rerun the Status Report and Close the Exit Criteria
 
 Run the script one more time to write a fresh bundle that reflects the post-clone reality:
 
@@ -457,13 +611,13 @@ The pre-image inventory recorded an HTTPS URL, so the script did not rewrite it 
 git remote set-url origin "git@${GIT_PERSONAL_GITHUB_HOST}:<personal-username>/<repo>.git"
 ```
 
-[[#Step 8 — Rerun the Status Report and Close the Exit Criteria|⮕ Continue to Step 8 — Rerun the Status Report and Close the Exit Criteria]]
+[[#Step 9 — Rerun the Status Report and Close the Exit Criteria|⮕ Continue to Step 9 — Rerun the Status Report and Close the Exit Criteria]]
 
 ### `--apply-ignored-files` says "yes" but no files appear in the working tree
 
 `rsync -a` respects existing files with newer mtimes. If a clean clone already carries the file with a newer timestamp than the pre-image copy, rsync leaves it alone. Verify with `rsync --dry-run -av` before assuming loss.
 
-[[#Step 4 — Restore Staged Ignored Files|⮕ Continue to Step 4 — Restore Staged Ignored Files]]
+[[#Step 5 — Restore Staged Ignored Files|⮕ Continue to Step 5 — Restore Staged Ignored Files]]
 
 ---
 

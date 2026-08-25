@@ -17,6 +17,8 @@ Purpose
   - For Python, use your usual project linter (e.g., ruff/flake8) if desired; none are enforced here.
   - Documentation lint: ./bin/verify-doc-paths.sh checks that the repository paths named in the governance docs still exist. Run it after moving or renaming any file that the docs point at, and after editing the docs themselves — a stale path silently misdirects the next session.
   - Loose-secret sweep (Phase 3B, stage-loose-secrets.md): ./bin/report-loose-secrets.sh reports credential-shaped files sitting in plaintext outside secrets-encrypted/; ./bin/stage-loose-secrets.sh moves them inside it. Run the check, then the stager (dry-run by default, --apply to move), then the check again — all before Phase 3C builds the DMG, since 3C encrypts secrets-encrypted/ and nothing else. The check never modifies what it scans and saves each run to $REIMAGE_ARTIFACT_ROOT/loose-secrets-reports/ (--no-report to suppress).
+  - Portability lint: ./bin/verify-script-portability.sh flags Bash 4+ syntax and GNU-only userland flags that the macOS target rejects. Run it after editing any bin/ or .internal/ script, and after moving an inline runbook block into a script — that move changes the target shell from the operator's interactive zsh to the Bash 3.2 that `#!/usr/bin/env bash` resolves to in Phases 8 and 9, before Phase 10A installs Homebrew.
+  - An AI session is almost certainly NOT running on macOS. Every shell available to one is Linux with GNU coreutils and Bash 5.x, where `mapfile`, `declare -A`, `sed -i`, and `stat -c` all work silently. Name the environment a check ran in rather than reporting it as verified — "tested on Linux" and "tested on the target Mac" are different claims. On the Mac, `/bin/bash -n` catches parse errors against the real 3.2; the portability lint catches the runtime-level constructs `-n` cannot see. The two are complements, not substitutes.
   - Secret shapes are defined once: SECRET_SHAPES_FLOOR in .internal/artifact-config.sh, extended (never reduced) by the optional secret-shapes.conf.sh fragment. Both scripts above read it via build_secret_shape_predicate. Do not add a private pattern list to a script — that drift is what let credential-shaped files reach home-files-backup/ in the clear.
 
 2) High-level architecture (big picture)
@@ -33,6 +35,8 @@ Purpose
 - Execution semantics:
   - Always run scripts from the repository root unless a script documents explicit absolute-path invocation.
   - Runbook command examples assume this repo-root working directory — stated once in reimaging-guide.md → Core Assumptions and each runbook's Prerequisites. Do not prefix command blocks with `cd "$FRACTOGENESIS_HOME"`; command blocks start at the command.
+  - Phase boundaries are recorded, not just described. `record-restore-prereqs.sh --phase <p>` runs at a phase's Step 0 and answers "may this start"; `record-restore-exit.sh --phase <p>` runs at its final step and answers "did it finish". One check per boundary: a phase never runs the next phase's entry check, and never re-checks its own entry at the end. Both write dated, indexed runs into one category — `reimaged-system/boundaries/` — so a single `MANIFEST.md` answers whether a phase both started and finished, and a question asked three days later has an answer.
+  - Prerequisites declares; Step 0 verifies. `### Prerequisites` states preconditions in prose and contains no commands. A phase whose preconditions can fail *silently* opens Sequential Steps with `### Step 0 — Record Prerequisites`, which runs the recorder and writes an artifact. Number it 0 because it gates rather than advances, is rerunnable at any point, and adding one renumbers nothing. Omit it where a phase has no precondition worth checking.
   - Entrypoints should self-locate via BASH_SOURCE and then load .internal/load-reimage-config.sh.
   - reimage.env must contain resolved absolute values only. Do not commit reimage.env. Keep only reimage.env.example committed.
 - Loader vs helper rules (important for edits and AI-driven changes):
@@ -72,9 +76,9 @@ If anything here should be expanded (e.g., include more runbook summaries or per
 
 6) Session prompts & templates (runbooks)
 - Runbook template: .github/ai-templates/runbook-templates/runbook-template.md.tmpl — canonical template with YAML header, TOC anchors, and guidance for artifact/script locations.
-- Runbook fill prompt: .github/ai-prompts/runbook-prompts/runbook-fill-prompt.md — structured prompt Copilot should use to populate the template when creating a new runbook or updating an existing one (auto-detects env keys and documents rename suggestions).
+- Runbook prompt: .github/ai-prompts/runbook-prompts/runbook-prompt.md — structured prompt Copilot should use to populate the template when creating a new runbook or bringing an existing one up to current conventions (auto-detects env keys).
 - Script authoring prompt: .github/ai-prompts/script-prompts/bash-script-authoring-and-review.md — rules for editing or creating bin/ entrypoints and .internal helpers.
 - Script templates: .github/ai-templates/script-templates/ (bash-entrypoint.sh.tmpl, bash-helper.sh.tmpl)
 
 Quick usage note for Copilot sessions:
-- When asked to create or update a runbook, use the runbook-fill-prompt and target the template above. Include a short human-review checklist and a rename_suggestion when relevant.
+- When asked to create or update a runbook, use the runbook prompt and target the template above. Include a short human-review checklist.

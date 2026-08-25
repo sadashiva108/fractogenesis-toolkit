@@ -19,16 +19,18 @@ Rebuild the non-secret runtime and toolchain layer on the reimaged Mac — Xcode
     - [[#Prerequisites|Prerequisites]]
     - [[#Confirm Your Intent|Confirm Your Intent]]
 - [[#Sequential Steps|Sequential Steps]]
+    - [[#Step 0 — Record Prerequisites|Step 0 — Record Prerequisites]]
     - [[#Step 1 — Install Rosetta 2|Step 1 — Install Rosetta 2]]
     - [[#Step 2 — Install Xcode Command Line Tools|Step 2 — Install Xcode Command Line Tools]]
     - [[#Step 3 — Install Homebrew|Step 3 — Install Homebrew]]
     - [[#Step 4 — Update Homebrew and Run Diagnostics|Step 4 — Update Homebrew and Run Diagnostics]]
-    - [[#Step 5 — Install direnv and Restore the Repo Environment Hook|Step 5 — Install direnv and Restore the Repo Environment Hook]]
-    - [[#Step 6 — Install Java and the JVM Build Tools|Step 6 — Install Java and the JVM Build Tools]]
-    - [[#Step 7 — Install and Manage Node Versions|Step 7 — Install and Manage Node Versions]]
-    - [[#Step 8 — Install Platform CLIs and Helper Utilities|Step 8 — Install Platform CLIs and Helper Utilities]]
-    - [[#Step 9 — Compare Versions Against Captured Inventories|Step 9 — Compare Versions Against Captured Inventories]]
-    - [[#Step 10 — Confirm Readiness for Restore Access|Step 10 — Confirm Readiness for Restore Access]]
+    - [[#Step 5 — Install Obsidian and Open the Toolkit|Step 5 — Install Obsidian and Open the Toolkit]]
+    - [[#Step 6 — Install direnv and Restore the Repo Environment Hook|Step 6 — Install direnv and Restore the Repo Environment Hook]]
+    - [[#Step 7 — Install Java and the JVM Build Tools|Step 7 — Install Java and the JVM Build Tools]]
+    - [[#Step 8 — Install and Manage Node Versions|Step 8 — Install and Manage Node Versions]]
+    - [[#Step 9 — Install Platform CLIs and Helper Utilities|Step 9 — Install Platform CLIs and Helper Utilities]]
+    - [[#Step 10 — Compare Versions Against Captured Inventories|Step 10 — Compare Versions Against Captured Inventories]]
+    - [[#Step 11 — Close Out the Exit Criteria|Step 11 — Close Out the Exit Criteria]]
 - [[#Decisions|Decisions]]
 - [[#Troubleshooting|Troubleshooting]]
 
@@ -83,7 +85,7 @@ This runbook can be rerun. Every step is idempotent (Homebrew and `nvm` skip any
 
 Read this before running anything. The order is a hard bootstrap chain, not a preference: Rosetta 2 goes first on Apple silicon because an Intel-only installer met later in the chain fails opaquely without it, Xcode Command Line Tools have to be present before Homebrew installs cleanly, Homebrew has to be present before `direnv` and the JVM and Node stacks, and the JVM has to be in place before Phase 10B tries to restore the `jssecacerts` Java trust override — that override has to match the JDK that is actually installed. Node stays out of the Homebrew chain intentionally: it is installed via `nvm` so a project can switch versions per repo without a PATH collision with a `brew install node`.
 
-The runbook is script-free by design. Every step is a small, standard installer command that either succeeds cleanly or fails in a way the reader will investigate; automating around Homebrew and `nvm` here would obscure the diagnostic surface those tools already print. The captured pre-image system inventory under `$REIMAGE_ARTIFACT_ROOT/system-inventory/pre-image-*/` and its post-image sibling are the reference for what "restored" looks like — the final step compares the fresh install against them.
+The installs are script-free by design. Every install step is a small, standard command that either succeeds cleanly or fails in a way the reader will investigate; automating around Homebrew and `nvm` would obscure the diagnostic surface those tools already print. The *verification* at the end is scripted, because comparing fifteen version strings against a sixteen-file inventory by eye is exactly the kind of work that misses an absent tool. The captured pre-image system inventory under `$REIMAGE_ARTIFACT_ROOT/system-inventory/pre-image-*/` and its post-image sibling are the reference for what "restored" looks like — the final step compares the fresh install against them.
 
 ### Terminology
 
@@ -108,7 +110,7 @@ This runbook is manual and does not run a fractogenesis-toolkit entrypoint:
 $FRACTOGENESIS_HOME/bin/    # no primary script — this runbook is executed by hand
 ```
 
-Input evidence used for comparison in Step 9:
+Input evidence used for comparison in Step 10:
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/system-inventory/pre-image-YYYYMMDD-HHMMSS/
@@ -138,17 +140,22 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 
 ### Prerequisites
 
-- Your shell is at the repository root — `cd "$FRACTOGENESIS_HOME"` once for the session. Per the guide's [[reimaging-guide#Core Assumptions|Core Assumptions]], the commands below assume this and don't repeat it.
+- Your shell is at the toolkit root — `cd "$FRACTOGENESIS_HOME"` once for the session. Per the guide's [[reimaging-guide#Core Assumptions|Core Assumptions]], the commands below assume this and don't repeat it.
 - Phase 8 (`enroll-and-stabilize.md`) closed out with a clean managed baseline, and Phase 9 (`verify-reimaged-system.md`) signed off day-one usability. If either is still open, close it first.
 - The reimaged Mac has internet access. Homebrew, `nvm`, JDK downloads, and every platform CLI install below hit the network.
-- The external artifact volume is mounted and `reimage.env` resolves so Step 9 can read the pre-image inventory. If it isn't mounted yet, do Steps 1–8 anyway and reconnect the drive before Step 9.
+- The external artifact volume is mounted and `reimage.env` resolves so Step 10 can read the pre-image inventory. If it isn't mounted yet, do Steps 1–9 anyway and reconnect the drive before Step 10.
+
+Each of these is stated here and *verified* in Step 0 — Prerequisites declares,
+Step 0 checks and records. Only the third has a PASS row in an earlier phase; the
+other three are assertions until Step 0 runs, and each fails quietly rather than
+loudly.
 
 > [!bug] Troubleshooting
 > `xcode-select --install` returning "command line tools are already installed" on a freshly reimaged Mac usually means a leftover receipt from the previous install. Confirm the active path with `xcode-select -p`; if it points to nothing, `sudo rm -rf /Library/Developer/CommandLineTools` and rerun the install.
 
 ### Confirm Your Intent
 
-- Are you doing a **greenfield** restore (all steps in order) or a **targeted rerun** of one step (e.g. installing an additional platform CLI that Phase 2 didn't capture)? Both are safe; the difference is whether you also do Step 9's comparison at the end.
+- Are you doing a **greenfield** restore (all steps in order) or a **targeted rerun** of one step (e.g. installing an additional platform CLI that Phase 2 didn't capture)? Both are safe; the difference is whether you also do Step 10's comparison at the end.
 - Which **Java baseline** does the machine need? The default here is JDK 21; if a specific project requires 8, 11, or 17, install that in addition — do not replace the baseline.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -158,6 +165,38 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 ## Sequential Steps
 
 Run these in order. Every step is a dependency for at least one later step: Rosetta before any Intel-only installer, CLT before Homebrew, Homebrew before `direnv`, the JVM, and the CLIs, JVM before Phase 10B's Java trust override work.
+
+### Step 0 — Record Prerequisites
+
+Verify the four preconditions above and write the result. This gates the phase
+rather than advancing it, and it is rerunnable at any point — reconnect the
+artifact drive mid-phase, run it again, get a fresh artifact.
+
+```bash
+bash bin/record-restore-prereqs.sh --runbook restore-runtime --help
+bash bin/record-restore-prereqs.sh --runbook restore-runtime
+```
+
+It records the result under `reimaged-system/prereq-checks/` and exits non-zero
+only on `FAIL`.
+
+| Result | Meaning |
+|---|---|
+| `FAIL` | Toolkit root unresolved, or no network. Nothing below works; stop. |
+| `WARN` | Proceed with a known limit — typically the artifact drive not yet mounted, which is fine through Step 9. |
+| `PASS` | Verified, not assumed. |
+
+> [!note]
+> A completed sign-off means every row was *answered*, not that every answer was
+> `yes`. A row closed as `no` or `known-blocked` is a decision and counts as
+> answered. Rows an earlier phase recorded and a later one resolves —
+> `Git available`, `Homebrew available` — are excluded outright: a `TODO` there
+> is the correct state at the time Phase 9 wrote it, not a question nobody
+> answered.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 1 — Install Rosetta 2
 
@@ -203,18 +242,44 @@ Do not move on until `xcode-select -p` prints a valid path.
 
 ### Step 3 — Install Homebrew
 
-Install Homebrew using the official installer:
+Install Homebrew using the official installer. Download and run as two steps
+rather than piping:
 
 ```bash
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+curl -fL -o /tmp/brew-install.sh https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh
+test -s /tmp/brew-install.sh && /bin/bash /tmp/brew-install.sh
 ```
+
+> [!warning] Pitfall
+> The piped form `/bin/bash -c "$(curl -fsSL …)"` fails silently. With `-f -s`, a
+> 404 or a captive-portal redirect produces empty output, `bash` runs nothing,
+> and the command exits **0** — no Homebrew, no error, and the next step fails
+> for a reason that looks unrelated. This is the same trap
+> [[restore-strategy-guide|restore-strategy-guide.md]] documents for
+> `bootstrap.sh`, and it is easy to hit here by mistyping the URL: the installer
+> lives in `Homebrew/install`, not `Homebrew/brew`. `-o` plus `test -s` makes a
+> failed download impossible to miss.
+
+> [!note]
+> Prefix with `NONINTERACTIVE=1` to skip the confirmation keystroke — useful when
+> starting the install and stepping away. Run `sudo -v` first so the installer's
+> single privilege escalation uses an already-cached credential rather than
+> waiting at a prompt.
 
 On Apple silicon, add the shell bootstrap so `brew` is on `PATH` in new shells:
 
 ```bash
-(echo; echo 'eval "$(/opt/homebrew/bin/brew shellenv)"') >> "$HOME/.zprofile"
-eval "$(/opt/homebrew/bin/brew shellenv)"
+(echo; echo 'eval "$(/opt/homebrew/bin/brew shellenv zsh)"') >> "$HOME/.zprofile"
+eval "$(/opt/homebrew/bin/brew shellenv zsh)"
 ```
+
+> [!note]
+> Homebrew's own post-install message is the authority here — run what it prints
+> rather than what this runbook says, and tell us if the two differ. Current
+> versions emit `brew shellenv zsh`, taking the shell as an argument; older ones
+> omitted it and auto-detected. Both work. Running both, which is easy to do by
+> following the installer's message *and* this block, leaves two lines in
+> `~/.zprofile` that do the same job.
 
 Confirm the install:
 
@@ -243,18 +308,95 @@ Locate any captured `Brewfile` for reference:
 find "$REIMAGE_ARTIFACT_ROOT/system-inventory" -name 'Brewfile*' -print 2>/dev/null
 ```
 
-If you decide to use one, do it only after reviewing:
+Review it. Both of these read the file and install nothing:
 
 ```bash
-brew bundle --file /path/to/Brewfile
+BF="$(find "$REIMAGE_ARTIFACT_ROOT/system-inventory" -name 'Brewfile' -print 2>/dev/null | sort | tail -1)"
+brew bundle list --all --file "$BF"      # every entry, one per line
+brew bundle check --verbose --file "$BF" # which entries are not installed yet
 ```
+
+> [!warning] Pitfall
+> `brew bundle list` without `--all` prints **formulae only**. A Brewfile's casks,
+> taps, and any `mas`/`npm`/`vscode` entries are silently omitted, so a review
+> that looks complete can hide the entries most worth questioning — a VPN client,
+> a packet analyser, a window manager from an untrusted tap. Always pass `--all`.
+> Likewise `brew bundle check` without `--verbose` reports only that something is
+> unmet, never what.
+
+> [!warning] Pitfall
+> `brew bundle --file` **installs**. It is not the review form, and reaching for
+> it after a sentence about reviewing is an easy mistake to make. Use `list` or
+> `check`; add no subcommand only when you have decided to install the whole
+> file, which on a rebuild is rarely what you want.
+
+Then install deliberately rather than in bulk. Steps 7 through 9 already cover
+Java, Node, and the platform CLIs, so the Brewfile is most useful as a checklist
+of what the old machine had — a prompt for "did I forget anything?" once those
+steps are done, not a shortcut past them.
+
+> [!note]
+> Two failures are expected and correct if you do run the whole file. A tap that
+> has since been deprecated reports as empty, its formulae having migrated into
+> core — nothing is lost. And a cask from an untrusted third-party tap is refused
+> outright by current Homebrew; leave it refused unless you actively want that
+> cask, then trust the tap explicitly.
+
+> [!note]
+> A failed `brew bundle` run can still leave **taps** behind even when it
+> installs nothing, because tapping happens before any install. Check with
+> `brew tap` and `brew untap` anything you did not mean to add.
 
 > [!bug] Troubleshooting
 > If `brew doctor` flags a leftover Intel-path Homebrew prefix on Apple silicon, see [[#`brew doctor` reports a stale `/usr/local` on Apple silicon|`brew doctor` reports a stale `/usr/local` on Apple silicon]].
 
-### Step 5 — Install direnv and Restore the Repo Environment Hook
+### Step 5 — Install Obsidian and Open the Toolkit
 
-`direnv` is the mechanism that sets `FRACTOGENESIS_HOME` when you `cd` into this repository checkout — all eight `restore-*` runbooks, this one included, open their Prerequisites assuming it is already doing that. It was installed on the *pre-image* machine back in Phase 1 (`prepare-artifact-root.md`) and no phase reinstalls it after the wipe, so on a reimaged Mac it is simply gone. Homebrew is healthy as of the previous step, so install it now, before any runbook command that spells a path as `$FRACTOGENESIS_HOME/...`.
+Every runbook from here to the end of the reimage is Markdown written for
+Obsidian — callouts, wiki-links, collapsible sections. Read in `less` or
+TextEdit, a `> [!warning] Pitfall` is a line of punctuation and
+`[[restore-git|restore-git.md]]` is not a link. Ten minutes spent here makes the
+remaining six phases materially easier to follow.
+
+```bash
+brew install --cask obsidian
+```
+
+Open the toolkit as a vault: **Open folder as vault** →
+`$FRACTOGENESIS_HOME`. Then `reimaging-guide.md` is the index, every phase
+back-link works, and the callouts render as intended.
+
+```bash
+echo "$FRACTOGENESIS_HOME"    # the path to select in the dialog
+```
+
+> [!note]
+> This is the toolkit only. The `reference-vault` notes vault is a private repo
+> needing SSH and a clone, so it waits for
+> [[restore-apps#Step 4 — Obsidian and Reference Vault|Phase 12 Step 4]]. Nothing
+> here depends on it.
+
+> [!warning] Pitfall
+> Obsidian writes a `.obsidian/` directory into any folder opened as a vault, and
+> the toolkit gitignores it — so your workspace layout, open tabs, and pane
+> arrangement live outside Git and vanish with the checkout. That is the same
+> class of gap as `reimage.env`: fine while you know it, surprising when the
+> checkout moves.
+
+> [!warning] Pitfall
+> `$FRACTOGENESIS_HOME` still points at the `curl` or jump-drive install. Phase
+> 11B clones the toolkit properly and repoints the variable, at which point this
+> vault is aimed at a directory you are about to delete. Re-open the clone as a
+> vault then — see
+> [[restore-repos#Step 4 — Repoint at the Cloned Toolkit|Phase 11B Step 4]].
+
+### Step 6 — Install direnv and Restore the Repo Environment Hook
+
+`direnv` is the mechanism that sets `FRACTOGENESIS_HOME` and loads `reimage.env` when you `cd` into the toolkit root. It was installed on the *pre-image* machine back in Phase 1 (`prepare-artifact-root.md`) and no phase reinstalls it after the wipe, so on a reimaged Mac it is simply gone.
+
+Since Phase 8 that job has been done by a temporary block in `~/.zprofile`, written by `bin/init-shell-env.sh` precisely because direnv does not exist yet. **This step is the handoff**: install direnv, retire the bridge, then confirm direnv has taken over. Homebrew is healthy as of the previous step, so do it now, before any runbook command that spells a path as `$FRACTOGENESIS_HOME/...`.
+
+The full picture of how these two mechanisms divide the workflow between them is in [[references/toolkit-environment-reference|Toolkit Environment Reference]].
 
 Install it:
 
@@ -269,7 +411,28 @@ grep -qxF 'eval "$(direnv hook zsh)"' "$HOME/.zprofile" || (echo; echo 'eval "$(
 eval "$(direnv hook zsh)"
 ```
 
-Approve this checkout's `.envrc` and confirm the variable populates:
+Retire the Phase 8 bridge **before** verifying. `cd` into the toolkit first:
+`exec` inherits the working directory, so the replacement shell starts there and
+direnv can set `FRACTOGENESIS_HOME` itself — no literal path needed anywhere in
+this step.
+
+```bash
+cd "$FRACTOGENESIS_HOME"
+bash ./bin/init-shell-env.sh --remove
+exec zsh -l
+```
+
+> [!warning] Pitfall
+> Do this before the round-trip check below, not after. The Phase 8 block exports
+> `FRACTOGENESIS_HOME` as a plain login-shell export, which direnv does not manage
+> and therefore never unloads. Leave it in place and `cd` out of the toolkit — the
+> value stubbornly persists, the round trip appears to fail, and you would spend
+> the next twenty minutes debugging a direnv hook that was working correctly the
+> whole time. Removing the block first is what makes the check mean anything.
+
+Approve the toolkit's `.envrc` and confirm the variable populates:
+
+The new shell is already in the toolkit directory:
 
 ```bash
 direnv --version
@@ -277,34 +440,72 @@ direnv allow
 echo "$FRACTOGENESIS_HOME"
 ```
 
-`echo "$FRACTOGENESIS_HOME"` must print a resolved absolute path. `cd` out of the repo and back in — the value should disappear and reappear. That round trip is the proof the hook is live, not just that `direnv` is installed.
+`echo "$FRACTOGENESIS_HOME"` must print a resolved absolute path. `cd` out of the toolkit and back in — the value should disappear and reappear. That round trip is the proof the hook is live, not just that `direnv` is installed.
+
+> [!warning] Pitfall
+> `.envrc` only loads `reimage.env` if that file is present in the same directory. It is gitignored, so it arrives by no install route — it was copied there by hand in Phase 8 Step 2. If `direnv allow` succeeds but `echo "$REIMAGE_ARTIFACT_ROOT"` comes back empty, that file is what is missing, not the hook.
 
 > [!warning] Pitfall
 > A restored `.envrc` stays blocked until `direnv allow` is run **in that directory**. direnv records approval by content hash on the machine, and a reimaged Mac has no approval record for any checkout you restore onto it — so a perfectly good `.envrc` sits there doing nothing. This is silent from the shell's point of view: nothing errors, `FRACTOGENESIS_HOME` is just the empty string, and every command built from it quietly resolves against `/` or your current directory instead. If a later runbook's paths look wrong, check `echo "$FRACTOGENESIS_HOME"` before you debug anything else.
 
 > [!note]
-> This runbook keeps shell bootstrap lines in `~/.zprofile` (Homebrew's `shellenv` in Step 3, `nvm` in Step 7), so the hook goes there too. If your pre-image setup put it in `~/.zshrc` instead, pick one file and keep it there — two copies are not harmful, but they make it needlessly hard to tell which one is actually loading.
+> This runbook keeps shell bootstrap lines in `~/.zprofile` (Homebrew's `shellenv` in Step 3, `nvm` in Step 8), so the hook goes there too. If your pre-image setup put it in `~/.zshrc` instead, pick one file and keep it there — two copies are not harmful, but they make it needlessly hard to tell which one is actually loading.
+>
+> The Phase 8 bridge block lives in the same file, between its own `# >>> fractogenesis-toolkit reimage env >>>` markers. `--remove` above takes out that block and leaves everything else, including the direnv hook you just added, untouched.
 
-### Step 6 — Install Java and the JVM Build Tools
+### Step 7 — Install Java and the JVM Build Tools
 
-Install the base developer runtimes and build tools:
+Run these one at a time and read each result before the next. The order is
+load-bearing, not stylistic: the JDK must be installed, linked, and *verified*
+before the build tools go on.
+
+Git first — it depends on nothing here:
 
 ```bash
 brew install git
-brew install openjdk@21
-brew install gradle
-brew install maven
-brew install groovy
 ```
 
-`openjdk@21` is **keg-only**. Homebrew installs it under its own prefix and deliberately does not symlink it into `/Library/Java/JavaVirtualMachines`, which is the only place macOS's Java lookup looks — so the install succeeds and the JDK is still invisible to `java` and `/usr/libexec/java_home`. Create the link Homebrew's caveat text describes (Apple silicon path shown; on an Intel Mac substitute `/usr/local/opt/openjdk@21/libexec/openjdk.jdk`):
+Then the JDK:
+
+```bash
+brew install openjdk@21
+```
+
+`openjdk@21` is **keg-only**. Homebrew installs it under its own prefix and deliberately does not symlink it into `/Library/Java/JavaVirtualMachines`, which is the only place macOS's Java lookup looks — so the install succeeds and the JDK is still invisible to `java` and `/usr/libexec/java_home`.
+
+Create the link Homebrew's caveat text describes. Apple silicon path shown; on an Intel Mac substitute `/usr/local/opt/openjdk@21/libexec/openjdk.jdk`:
 
 ```bash
 sudo ln -sfn /opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk-21.jdk
+```
+
+Verify before continuing. This must print a path and exit `0`:
+
+```bash
 /usr/libexec/java_home -v 21
 ```
 
-`/usr/libexec/java_home -v 21` must print a path and exit `0`. Do not move on until it does.
+> [!warning] Pitfall
+> Do not install the build tools until that command succeeds. `gradle`, `maven`,
+> and `groovy` each declare a dependency on `openjdk` — the versionless, current
+> formula — so Homebrew installs **another** JDK alongside the 21 you just put
+> in. Link and verify 21 first and you know which JDK `java` resolves to and why.
+> Install them first and you are left with two JDKs, no `java_home` entry for
+> either, and a `java -version` answer you cannot account for.
+
+Now the build tools, one at a time:
+
+```bash
+brew install gradle
+```
+
+```bash
+brew install maven
+```
+
+```bash
+brew install groovy
+```
 
 > [!warning] Pitfall
 > Skipping the symlink does not look like a failure at this step. `brew install openjdk@21` reports success, and the caveat that tells you to link it scrolls past with the rest of the install output. What you actually get is `java -version` reporting `Unable to locate a Java Runtime` and `/usr/libexec/java_home -v 21` exiting non-zero — and the real damage lands a phase later. [[restore-access|restore-access.md]] Step 6 runs `export JAVA_HOME="$(/usr/libexec/java_home -v 21)"`; command substitution swallows the non-zero exit, so `JAVA_HOME` is silently set to the empty string. The `cp` on the next line then writes `jssecacerts` to `/lib/security/jssecacerts` — an absolute path that is not the JDK, and not even a directory that exists — and the internal-TLS smoke test afterward fails for a reason that has nothing to do with the certificate you just restored. Verify `java_home` here, where it is one command, rather than there, where it is a red herring.
@@ -337,7 +538,7 @@ JDK 21 is the normal baseline unless a project-specific requirement says otherwi
 > [!warning] Pitfall
 > Do not `brew install node` here — see the next step for why. Installing both `brew`'s `node` and `nvm`'s `node` creates a PATH collision where it is unclear which binary actually runs.
 
-### Step 7 — Install and Manage Node Versions
+### Step 8 — Install and Manage Node Versions
 
 Install `nvm` only:
 
@@ -356,57 +557,219 @@ EOF
 source "$HOME/.zprofile"
 ```
 
-Check a project's required Node version before installing:
+> [!warning] Pitfall
+> There are no projects on this Mac yet. Phase 11B clones the repositories, so at
+> Phase 10A there is no `package.json` or `.nvmrc` anywhere to read — a
+> per-project version check here has nothing to check. Install one sensible
+> baseline now and let each project ask for its own version once it exists.
+
+The pre-image capture recorded what this Mac was running before the erase. That
+is the baseline to reinstall:
 
 ```bash
-grep -A2 '"engines"' package.json 2>/dev/null || true
-cat .nvmrc 2>/dev/null || true
+cat "$REIMAGE_ARTIFACT_ROOT/system-inventory"/pre-image-*/11-node.txt
 ```
 
-Install and switch versions:
+Install that major version — or the current LTS if the capture is unavailable or
+the recorded version is no longer supported:
 
 ```bash
-nvm install "<version>"
-nvm use "<version>"
+nvm install --lts
+```
+
+Make it the default for new shells, so a shell that has not entered any project
+still has a working `node`:
+
+```bash
+nvm alias default "$(nvm current)"
 ```
 
 Confirm the tooling resolves:
 
 ```bash
 node --version
+```
+
+```bash
 npm --version
 ```
 
-### Step 8 — Install Platform CLIs and Helper Utilities
+> [!note]
+> **Per-project versions come later, and mostly take care of themselves.** Once
+> Phase 11B has cloned the repositories, a project pinning its version carries a
+> `.nvmrc`, and `nvm use` in that directory reads it with no argument:
+>
+> ```bash
+> cd <project> && nvm use
+> ```
+>
+> A project declaring `engines.node` in `package.json` instead states a range
+> rather than a version; check it when a build complains, not before:
+>
+> ```bash
+> grep -A2 '"engines"' package.json
+> ```
+>
+> Installing a second version at that point is one `nvm install` and costs
+> nothing — which is why guessing at project requirements now is wasted effort.
 
-Install the common platform tools:
+### Step 9 — Install Platform CLIs and Helper Utilities
+
+Install the common platform tools, one at a time:
 
 ```bash
 brew install cloudfoundry/tap/cf-cli@7
+```
+
+```bash
 brew install --cask fly
+```
+
+```bash
 brew install jq
+```
+
+```bash
 brew install kotlin
+```
+
+```bash
 brew install wget
+```
+
+```bash
 brew install yq
 ```
 
-Confirm the installs:
+Confirm each resolves:
 
 ```bash
 cf --version
+```
+
+```bash
 fly --version
+```
+
+```bash
 jq --version
-kotlin -version 2>/dev/null || true
+```
+
+```bash
+kotlin -version
+```
+
+```bash
 wget --version | head -1
+```
+
+```bash
 yq --version
 ```
+
+> [!bug] Troubleshooting
+> **`zsh: command not found: cf` after the install reported success.** Three
+> separate causes produce this identical symptom, and they stack — resolving one
+> leaves the next in place, which is why the command keeps failing after each
+> apparent fix. Work them in order.
+>
+> **1. The tap was added but the formula never was.** Tapping and installing are
+> separate operations, and a `Brewfile` listing `tap "cloudfoundry/tap"` with no
+> matching `brew "cf-cli@7"` line reproduces exactly this state:
+>
+> ```bash
+> brew install cloudfoundry/tap/cf-cli@7
+> ```
+>
+> **2. Current Homebrew refuses formulae from untrusted third-party taps.** The
+> error names the fix, and `brew trust` does exactly what it says — it records
+> trust and nothing else. It does **not** retry the command you were running, so
+> the operation that triggered the error still has to be re-run afterwards:
+>
+> ```bash
+> brew trust cloudfoundry/tap
+> ```
+>
+> **3. Versioned formulae install unlinked.** `cf-cli@7` is keg-only by design, so
+> "already installed" and "on `PATH`" are different facts. `brew install` on an
+> already-present keg says *"already installed, it's just not linked"* and stops —
+> which reads like success:
+>
+> ```bash
+> brew link cloudfoundry/tap/cf-cli@7
+> ```
+>
+> ```bash
+> cf --version
+> ```
+>
+> If linking is refused because it would overwrite another version, either
+> `brew link --force cloudfoundry/tap/cf-cli@7`, or leave it unlinked and put its
+> own prefix on `PATH` instead:
+>
+> ```bash
+> echo 'export PATH="/opt/homebrew/opt/cf-cli@7/bin:$PATH"' >> "$HOME/.zprofile"
+> ```
+
+> [!note]
+> **An unlinked keg is invisible to a casual check.** `brew list --formula` omits
+> it, so a failed bulk install can look like it installed nothing while having
+> installed several things unlinked. `brew list --formula --full-name` and
+> `ls /opt/homebrew/Cellar` show what is actually on disk. Worth knowing before
+> concluding that a `brew bundle` run left no trace.
+
+> [!warning] Pitfall
+> **A freshly reimaged Mac has no Gatekeeper history, so unsigned casks are
+> blocked on first launch.** `fly` is the one that bites here: macOS reports
+> *"Apple could not verify 'fly' is free of malware"* and refuses to run it. The
+> binary is fine — Concourse ships it unsigned and unnotarized — but this Mac has
+> never approved it before, and the erase removed whatever approval existed.
+>
+> Approve it deliberately rather than reflexively. Confirm it came from Homebrew
+> and not a stray download:
+>
+> ```bash
+> ls -l "$(which fly)"
+> ```
+>
+> Then clear the quarantine flag on that path:
+>
+> ```bash
+> xattr -d com.apple.quarantine "$(readlink -f "$(which fly)")"
+> ```
+>
+> Or approve it through the UI instead, which is equivalent and leaves an audit
+> trail: **System Settings → Privacy & Security**, find the blocked item, choose
+> **Open Anyway**.
+>
+> On a managed Mac, Gatekeeper policy can be MDM-controlled. If neither route
+> works, that is policy rather than a broken install, and it is an IT question.
 
 > [!note]
 > If a workflow still needs legacy `yq` v3 syntax, install it intentionally and document why in a personal note under the restore evidence, rather than silently replacing the Homebrew version.
 
-### Step 9 — Compare Versions Against Captured Inventories
+### Step 10 — Compare Versions Against Captured Inventories
 
-Compare the rebuilt runtime layer against the captured pre-image inventory. This is a paper trail step, not an automated diff: the point is to notice unexpected drift, not to reproduce every historical version exactly.
+Compare the rebuilt runtime layer against the captured pre-image inventory. Preview the options, then run it:
+
+```bash
+bash bin/compare-restored-state.sh --runbook restore-runtime --help
+bash bin/compare-restored-state.sh --runbook restore-runtime --dry-run
+bash bin/compare-restored-state.sh --runbook restore-runtime
+```
+
+`--dry-run` prints the table without writing; the plain form writes a note under
+`reimaged-system/restore-notes/` and prints a one-line summary.
+
+**The row that matters is `MISSING`** — a tool recorded pre-image and absent now.
+That is the one a human scanning terminal output reliably misses, because
+nothing prints when nothing is installed. `differs` is the normal outcome of a
+rebuild: an approved-newer version is expected, and only an unexplained *older*
+version is worth chasing.
+
+Comparison is on the version number rather than the raw string, so `10.9.7` and
+`npm 10.9.7` count as the same; both raw strings are shown so you can see what
+each side reported.
 
 Useful evidence sources under the artifact root:
 
@@ -415,45 +778,123 @@ $REIMAGE_ARTIFACT_ROOT/system-inventory/pre-image-YYYYMMDD-HHMMSS/
 $REIMAGE_ARTIFACT_ROOT/system-inventory/post-image-YYYYMMDD-HHMMSS/
 ```
 
-Useful comparison commands on the live machine:
+The script probes fifteen tools. If you need to check one it does not cover, or
+to see full output rather than a first line:
 
 ```bash
-sw_vers
-brew --version
-git --version
-java -version
 /usr/libexec/java_home -V || true
-gradle --version | head -20 || true
-mvn --version || true
-node --version || true
-npm --version || true
-groovy --version || true
-cf --version || true
+gradle --version || true
 fly --version || true
-jq --version || true
-yq --version || true
 ```
 
 Focus on whether the rebuilt Mac is now ready for the next restore phases, not on matching every older minor version. An approved-newer version is fine; an unexplained-older or missing tool is not.
 
-### Step 10 — Confirm Readiness for Restore Access
+### Step 11 — Close Out the Exit Criteria
 
-Confirm the runtime layer meets its exit criteria before starting `restore-access.md`:
+Confirm what this phase produced. This is a close-out, not a check of the next
+phase: Phase 10B verifies its own entry conditions in its Step 0, the same way
+this runbook did in Step 0.
+
+```bash
+bash bin/record-restore-exit.sh --runbook restore-runtime
+```
+
+It writes a checklist under `reimaged-system/exit-checks/` and exits non-zero on
+any `FAIL`. Two rows are left as `TODO` for you to answer in that file — whether
+each version difference is acceptable, and whether any missing platform CLI is
+one this machine needs. Those are judgements a script cannot make, and recording
+that they were *asked* is the point.
+
+> [!note]
+> This is the exit half of a pair. `record-restore-prereqs.sh` is the entry half,
+> run at each phase's Step 0. One check per boundary — Phase 10A's exit and Phase
+> 10B's entry are separate questions asked by separate runbooks, rather than one
+> runbook reaching across into the next.
+
+If a row needs investigating, each of these is one command. Run it, read the
+result, then the next.
+
+```bash
+arch -x86_64 /usr/bin/uname -m
+```
+
+Prints `x86_64` when Rosetta 2 is installed. On an Intel Mac it is a no-op that
+also prints `x86_64`, so the row is uninformative there.
+
+```bash
+xcode-select -p
+```
+
+Prints the active developer directory, normally
+`/Library/Developer/CommandLineTools`.
+
+```bash
+brew doctor
+```
+
+`Your system is ready to brew.` is the clean result. Warnings are advisory —
+Homebrew says so itself — and a deprecated cask is a note to revisit rather than
+a blocker.
+
+```bash
+/usr/libexec/java_home -v 21
+```
+
+Prints the JDK path and exits `0`. This is the row that matters most, and the
+only one whose failure is invisible until a later phase.
+
+> [!warning] Pitfall
+> `echo "$JAVA_HOME"` printing nothing here is **expected and correct**. Nothing
+> in Phase 10A sets it; [[restore-access|restore-access.md]] Step 6 does. What
+> must work now is `java_home` itself, because Step 6 wraps it in command
+> substitution — which swallows a non-zero exit, leaves `JAVA_HOME` empty, and
+> writes `jssecacerts` to a path that is neither the JDK nor a directory that
+> exists. The TLS smoke test then fails for a reason unrelated to the certificate.
+
+```bash
+cd .. && cd "$FRACTOGENESIS_HOME"
+```
+
+direnv prints `unloading` then `loading` — the round trip proving the hook is
+live rather than merely installed.
+
+```bash
+gradle --version
+```
+
+```bash
+mvn --version
+```
+
+```bash
+node --version
+```
+
+```bash
+npm --version
+```
+
+Finally, record the phase's evidence if you have only run the comparison as a
+dry run:
+
+```bash
+bash bin/compare-restored-state.sh --runbook restore-runtime
+```
+
+The exit criteria for this phase:
 
 | Area | Expected result |
 |---|---|
-| Rosetta 2 | `arch -x86_64 /usr/bin/uname -m` prints `x86_64` (installed on Apple silicon; a no-op on Intel). |
-| Xcode CLT | `xcode-select -p` resolves to a valid path. |
-| Homebrew | `brew doctor` is acceptable for continuing setup (no blocking errors). |
-| direnv | `direnv` is installed and hooked into zsh, `.envrc` is allowed, and `FRACTOGENESIS_HOME` populates on `cd` into the repo. |
-| Java | JDK 21 baseline is present unless a different project baseline is required. |
-| Java lookup | `/usr/libexec/java_home -v 21` prints a path and exits `0`, so `JAVA_HOME` resolves for the Phase 10B trust-override copy. |
-| Build tools | Gradle and Maven run. |
-| Node tooling | `nvm`, `node`, and `npm` run. |
-| Platform CLIs | Cloud Foundry CLI, `fly`, `jq`, `yq`, and the other utilities from Step 8 run. |
-| Version comparison | Every drift versus the pre-image inventory is either an approved-newer version or an intentional decision. |
+| Rosetta 2, Xcode CLT, Homebrew | Installed and healthy. |
+| direnv | Hooked, `.envrc` allowed, and `FRACTOGENESIS_HOME` populating on `cd`. |
+| Java | JDK 21 present and resolving through `java_home`. |
+| Build and Node tooling | Gradle, Maven, `node`, and `npm` run. |
+| Platform CLIs | The utilities from Step 9 run. |
+| Version comparison | Recorded, with every drift either an approved-newer version or an intentional decision. |
 
-Once every row above is a yes, move to [[restore-access|restore-access.md]] to restore the identity, trust, and credential layer. Completing that runbook is what actually unlocks Git, IDE, and application restore in Phases 11 onward.
+Once those hold, move to [[restore-access|restore-access.md]]. Its Step 0 will
+re-verify what it needs from its own side — including the `java_home` row above,
+which is the one worth catching twice.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -491,7 +932,7 @@ sudo rm -rf /usr/local/Homebrew
 
 Rerun `brew doctor` afterward and confirm the stale-prefix warning is gone before installing packages.
 
-[[#Step 5 — Install direnv and Restore the Repo Environment Hook|⮕ Continue to Step 5 — Install direnv and Restore the Repo Environment Hook]]
+[[#Step 6 — Install direnv and Restore the Repo Environment Hook|⮕ Continue to Step 6 — Install direnv and Restore the Repo Environment Hook]]
 
 ### `java -version` prints a version different from `openjdk@21`
 
@@ -504,7 +945,7 @@ java -version
 
 Persist that export in `~/.zprofile` only if 21 is your intended default.
 
-[[#Step 7 — Install and Manage Node Versions|⮕ Continue to Step 7 — Install and Manage Node Versions]]
+[[#Step 8 — Install and Manage Node Versions|⮕ Continue to Step 8 — Install and Manage Node Versions]]
 
 ---
 

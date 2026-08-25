@@ -2,7 +2,7 @@
 
 # Restore Git
 
-**Last updated:** 2026-08-17
+**Last updated:** 2026-08-25
 
 Restore the Git identity plumbing on the reimaged Mac so both work and personal GitHub accounts route automatically based on where a repository lives on disk. This runbook wires up the dual-identity `~/.gitconfig` (work as default, `includeIf` override under the personal repo root), lays down the matching `~/.ssh/config` host aliases, validates both identities, and leaves you with a `git clone` template that Phase 11B then applies at scale against the pre-image repository audit. It does not enumerate a repo list, drive a clone loop, or restore preserved local branches or stashes — that carry-forward work belongs to Phase 11B.
 
@@ -21,6 +21,7 @@ Restore the Git identity plumbing on the reimaged Mac so both work and personal 
     - [[#Confirm Your Intent|Confirm Your Intent]]
     - [[#Account Access — Tokens, 2FA, and Key Rotation|Account Access — Tokens, 2FA, and Key Rotation]]
 - [[#Sequential Steps|Sequential Steps]]
+    - [[#Step 0 — Record Prerequisites and the Before-State|Step 0 — Record Prerequisites and the Before-State]]
     - [[#Step 1 — Install Git and Confirm the Environment|Step 1 — Install Git and Confirm the Environment]]
     - [[#Step 2 — Set Correct Permissions on Restored SSH Keys|Step 2 — Set Correct Permissions on Restored SSH Keys]]
     - [[#Step 3 — Write `~/.ssh/config` with Dual Host Aliases|Step 3 — Write `~/.ssh/config` with Dual Host Aliases]]
@@ -28,7 +29,8 @@ Restore the Git identity plumbing on the reimaged Mac so both work and personal 
     - [[#Step 5 — Write the Personal-Root .gitconfig Override|Step 5 — Write the Personal-Root .gitconfig Override]]
     - [[#Step 6 — Optionally Wire the XDG Local Config|Step 6 — Optionally Wire the XDG Local Config]]
     - [[#Step 7 — Validate Both Identities|Step 7 — Validate Both Identities]]
-    - [[#Step 8 — Apply the Clone Pattern to Re-Clone Repositories|Step 8 — Apply the Clone Pattern to Re-Clone Repositories]]
+    - [[#Step 8 — Compare Restored State Against Captured Inventories|Step 8 — Compare Restored State Against Captured Inventories]]
+    - [[#Step 9 — Close Out the Exit Criteria|Step 9 — Close Out the Exit Criteria]]
 - [[#Decisions|Decisions]]
 - [[#Troubleshooting|Troubleshooting]]
 - [[#Supplemental Reference|Supplemental Reference]]
@@ -103,7 +105,7 @@ Work is the global default because most repos live outside the personal repo roo
 | Work identity | The default identity: `$GIT_WORK_NAME` / `$GIT_WORK_EMAIL`, using `$GIT_WORK_SSH_KEY`, cloned via the `$GIT_WORK_GITHUB_HOST` alias. Applies to any repo not under `$GIT_PERSONAL_REPO_ROOT`. |
 | Personal identity | The override: `$GIT_PERSONAL_NAME` / `$GIT_PERSONAL_EMAIL`, using `$GIT_PERSONAL_SSH_KEY`, cloned via the `$GIT_PERSONAL_GITHUB_HOST` alias. Applies only inside `$GIT_PERSONAL_REPO_ROOT`. |
 | `includeIf gitdir:...` | A Git config directive that pulls in another config file only when the current repo's `.git` directory lives under a specific path. How the personal identity activates without manual switching. |
-| Host alias | An `~/.ssh/config` `Host` entry (e.g. `github-personal`) that maps to `HostName github.com` but forces a specific `IdentityFile`. How the SSH key gets routed without manual switching. |
+| Host entry | An `~/.ssh/config` `Host` block that forces a specific `IdentityFile` for one server. `Host` is the name you type; `HostName` is where SSH actually connects. When the two identities live on different servers — a GitHub Enterprise instance and public GitHub — each block names its own real host, and the two values must match or SSH connects to the wrong server. |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -157,8 +159,8 @@ The `reimage.env` values this runbook depends on. Paths and roots are resolved d
 | `GIT_PERSONAL_EMAIL` | Author email for the personal identity override. |
 | `GIT_WORK_REPO_ROOT` | Directory holding work repos. Repos here inherit the global work identity. |
 | `GIT_PERSONAL_REPO_ROOT` | Directory holding personal repos. `includeIf` fires only for repos under this path. |
-| `GIT_WORK_GITHUB_HOST` | SSH host alias for work clones (typically `github.com`). |
-| `GIT_PERSONAL_GITHUB_HOST` | SSH host alias for personal clones (typically `github-personal` or similar). |
+| `GIT_WORK_GITHUB_HOST` | Host SSH connects to for work clones — a GitHub Enterprise instance such as `github.example.com`, or `github.com`. Written as both `Host` and `HostName` in `~/.ssh/config`, so it must resolve. |
+| `GIT_PERSONAL_GITHUB_HOST` | Host SSH connects to for personal clones, usually `github.com`. Written as both `Host` and `HostName`, so it must resolve. |
 | `GIT_WORK_SSH_KEY` | Absolute path to the work private key on disk (already restored in Phase 10B). |
 | `GIT_PERSONAL_SSH_KEY` | Absolute path to the personal private key on disk (already restored in Phase 10B). |
 | `GIT_DEFAULT_BRANCH` | Default branch name for `git init` (defaults to `main` when unset). |
@@ -221,6 +223,56 @@ Run these in order. `~/.ssh/config` goes down before the Git configs so `core.ss
 
 Every step begins with `source ./reimage.env` — Git config files do not reliably expand shell variables after they are written, so the heredocs below rely on values being resolved *in the current shell* at write time.
 
+### Step 0 — Record Prerequisites and the Before-State
+
+Two recordings, both taken before anything is written. They answer different
+questions and only one of them can be taken late.
+
+**0a — may this phase start?** Writes a checklist under
+`reimaged-system/boundaries/` and exits non-zero only on `FAIL`:
+
+```bash
+./bin/record-restore-prereqs.sh --runbook restore-git --dry-run
+./bin/record-restore-prereqs.sh --runbook restore-git
+```
+
+Its rows are derived from *Prerequisites* above, so the two cannot drift. The
+row worth reading twice is **Identity SSH keys restored and tight**: an unset
+`$GIT_WORK_SSH_KEY`, a key Phase 10B did not restore, or a key at the wrong mode
+does not produce an error. `ssh` skips a key it cannot use and authenticates as
+whichever identity answers next — so the first symptom is a commit pushed under
+the wrong account, found by someone else, later.
+
+**0b — what is on disk right now?** Writes a run under `reimaged-system/state/`
+recording every path this phase will write, as it stands before the phase
+touches it:
+
+```bash
+./bin/record-restore-state.sh --runbook restore-git --point before --dry-run
+./bin/record-restore-state.sh --runbook restore-git --point before
+```
+
+Four targets: `~/.gitconfig`, `~/.config/git/`, `~/.ssh/config`, and the
+personal-root `.gitconfig` reached by `includeIf`.
+
+> [!note]
+> Every block in this runbook shows a `--dry-run` line above the real one. It
+> prints the table and writes nothing. On **0b** that preview is worth more than
+> anywhere else: `before` is a first-wins point, so the first capture recorded is
+> the one that stays official, and a mistimed one cannot be replaced — only
+> annotated with a pin explaining why it is wrong. Read the target list, confirm
+> it describes a machine this phase has not touched, then record.
+
+> [!warning] Pitfall
+> **0b expires and 0a does not.** The prerequisite check is rerunnable at any
+> point and costs nothing to repeat. The before-state is gone the moment Step 3
+> rewrites `~/.ssh/config` — Step 3 replaces that file wholesale rather than
+> appending to it — and Step 4 writes `~/.gitconfig`. Take 0b before Step 1.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 1 — Install Git and Confirm the Environment
 
 Homebrew from Phase 10A is the install path. Confirm Git is available and no stale config is in the way:
@@ -240,8 +292,8 @@ export GIT_PERSONAL_NAME=""
 export GIT_PERSONAL_EMAIL=""
 export GIT_WORK_SSH_KEY="$HOME/.ssh/id_work"
 export GIT_PERSONAL_SSH_KEY="$HOME/.ssh/id_personal"
-export GIT_WORK_GITHUB_HOST="github.com"
-export GIT_PERSONAL_GITHUB_HOST="github-personal"
+export GIT_WORK_GITHUB_HOST="github.example.com"
+export GIT_PERSONAL_GITHUB_HOST="github.com"
 export GIT_DEFAULT_BRANCH="main"
 
 python3 bin/prepare-artifact-root.py \
@@ -310,14 +362,14 @@ cat > ~/.ssh/config <<EOF
 # Personal GitHub — used for repos under the personal repo root.
 # Clone personal repos as: git@${GIT_PERSONAL_GITHUB_HOST}:username/repo.git
 Host ${GIT_PERSONAL_GITHUB_HOST}
-    HostName github.com
+    HostName ${GIT_PERSONAL_GITHUB_HOST}
     User git
     IdentityFile ${GIT_PERSONAL_SSH_KEY}
     IdentitiesOnly yes
 
 # Work GitHub — default for all other repos.
 Host ${GIT_WORK_GITHUB_HOST}
-    HostName github.com
+    HostName ${GIT_WORK_GITHUB_HOST}
     User git
     IdentityFile ${GIT_WORK_SSH_KEY}
     IdentitiesOnly yes
@@ -326,6 +378,17 @@ EOF
 chmod 600 ~/.ssh/config
 ```
 
+Confirm the file resolves the way SSH will actually read it. `ssh -G` prints the *effective* configuration after parsing, so it catches a value that looks right in the file but is not — an unexpanded `${GIT_WORK_GITHUB_HOST}` reads fine to the eye and is a literal hostname to SSH:
+
+```bash
+source ./reimage.env
+
+ssh -G "git@${GIT_WORK_GITHUB_HOST}" | grep -iE '^(hostname|user|identityfile) '
+ssh -G "git@${GIT_PERSONAL_GITHUB_HOST}" | grep -iE '^(hostname|user|identityfile) '
+```
+
+Each `hostname` must match the host you asked for, and each `identityfile` must name that side's key. A `hostname` still reading `${...}` means the block was pasted as text rather than run, and the variables were never substituted — SSH lowercases the value, so it appears as `${git_work_github_host}` rather than the spelling in the file. Two different hosts resolving to the *same* `hostname` means both identities point at one server, which authenticates as whichever account owns the first key offered.
+
 > [!note]
 > `IdentitiesOnly yes` prevents SSH from trying other loaded keys before the specified one. Without it, `ssh-agent` may silently fall back to the wrong key and authenticate as the wrong identity.
 
@@ -333,8 +396,14 @@ chmod 600 ~/.ssh/config
 
 Work identity is the global default; `includeIf` overrides it only inside the personal repo root.
 
+`cat >` truncates `~/.gitconfig`, and [[restore-access|restore-access.md]] Step 7 may have written `http.sslCAInfo` into it pointing at the combined corporate CA bundle. The block below reads that value before the rewrite and puts it back after, so writing the identity cannot silently undo the trust configuration every HTTPS remote depends on. Nothing here needs to know the bundle path — `restore-access` stays its only owner.
+
+The last conditional scopes `sslVerify=false` to a single internal Enterprise Server host whose certificate this Mac does not trust. Leave `GIT_INTERNAL_TLS_SKIP_HOST` unset — that is the secure default — and set it only if Step 7 shows that host genuinely failing to verify.
+
 ```bash
 source ./reimage.env
+
+SAVED_CA_INFO="$(git config --global --get http.sslCAInfo 2>/dev/null || true)"
 
 cat > ~/.gitconfig <<EOF
 [credential]
@@ -351,20 +420,23 @@ cat > ~/.gitconfig <<EOF
     defaultBranch = ${GIT_DEFAULT_BRANCH:-main}
 EOF
 
-# Optional: skip TLS verification for ONE internal Enterprise Server host whose
-# certificate this Mac doesn't trust. Leave GIT_INTERNAL_TLS_SKIP_HOST unset to
-# keep verification on everywhere (the secure default).
+if [ -n "$SAVED_CA_INFO" ]; then
+  git config --global http.sslCAInfo "$SAVED_CA_INFO"
+fi
+
 if [ -n "${GIT_INTERNAL_TLS_SKIP_HOST:-}" ]; then
   git config --global "http.https://${GIT_INTERNAL_TLS_SKIP_HOST}/.sslVerify" false
 fi
 ```
 
-Validate the global identity resolves:
+Validate the global identity resolves, and that the CA bundle survived the rewrite:
 
 ```bash
 git config --global user.email
-# Should return the value of: $GIT_WORK_EMAIL
+git config --global --get http.sslCAInfo
 ```
+
+The first returns `$GIT_WORK_EMAIL`. The second returns the bundle path if Step 7 of `restore-access` set one, and nothing at all if it did not — an empty result is only correct on a Mac with no corporate TLS interception.
 
 > [!note]
 > If the pre-image config had more than one `[user]` block, Git used the lower matching value globally. The layout above keeps a single `[user]` block on purpose — work is the deliberate global default, and the override lives in a separate file that only fires under the personal root.
@@ -376,6 +448,8 @@ git config --global user.email
 
 This file activates only for repositories under `$GIT_PERSONAL_REPO_ROOT`. It changes the identity *and* pins the personal SSH key via `core.sshCommand`, so even if `~/.ssh/config` were misconfigured, personal repos would still send the right key.
 
+The trailing `cat` is not decoration. Git ignores a missing include file silently, so if this write does not happen the only symptom is the wrong author address surfacing two steps later in Step 7 — reading the file back here is what turns that into an immediate failure:
+
 ```bash
 source ./reimage.env
 
@@ -385,11 +459,14 @@ cat > "$GIT_PERSONAL_REPO_ROOT/.gitconfig" <<EOF
 [user]
     name = ${GIT_PERSONAL_NAME}
     email = ${GIT_PERSONAL_EMAIL}
-
 [core]
     sshCommand = ssh -i ${GIT_PERSONAL_SSH_KEY} -F /dev/null
 EOF
+
+cat "$GIT_PERSONAL_REPO_ROOT/.gitconfig"
 ```
+
+The `cat` must echo real values. An empty name or email means `reimage.env` did not load — the block was run from somewhere other than the repository root — and the file was written with the identity blank rather than not written at all, which Git will happily include.
 
 `-F /dev/null` prevents `core.sshCommand` from loading any other SSH config, keeping the override clean and predictable.
 
@@ -398,15 +475,18 @@ Validate the conditional include fires from inside a personal repo:
 ```bash
 source ./reimage.env
 
-mkdir -p "$GIT_PERSONAL_REPO_ROOT/test-repo"
-cd "$GIT_PERSONAL_REPO_ROOT/test-repo"
-git init
-git config user.email
-# Should return the value of: $GIT_PERSONAL_EMAIL
-
-cd ~
-rm -rf "$GIT_PERSONAL_REPO_ROOT/test-repo"
+if [ -z "${GIT_PERSONAL_REPO_ROOT:-}" ]; then
+  echo "GIT_PERSONAL_REPO_ROOT is not set — run this from the repository root"
+else
+  mkdir -p "$GIT_PERSONAL_REPO_ROOT/test-repo"
+  ( cd "$GIT_PERSONAL_REPO_ROOT/test-repo" && git init && git config --show-origin user.email )
+  rm -rf "$GIT_PERSONAL_REPO_ROOT/test-repo"
+fi
 ```
+
+`--show-origin` names the file the value came from, which is the whole question here. Expect `file:$GIT_PERSONAL_REPO_ROOT/.gitconfig` followed by `$GIT_PERSONAL_EMAIL`. An origin of `~/.gitconfig` with a work address means the include did not fire — either the override file is missing, or the `gitdir:` pattern does not match this path. Without `--show-origin` those two causes look identical.
+
+The `cd` is inside a subshell and there is no `cd ~`, so the shell you are typing in never leaves the repository root. That matters for more than tidiness: a directory-scoped environment loader such as `direnv` unloads `reimage.env` the moment you leave, which empties `$GIT_PERSONAL_REPO_ROOT` and makes the cleanup on the next line silently skip. The empty-variable branch exists for the same reason — with no root set, `mkdir -p "/test-repo"` and `cd` both fail, and `git init` would otherwise run in whatever directory you happened to be standing in.
 
 ### Step 6 — Optionally Wire the XDG Local Config
 
@@ -425,7 +505,7 @@ Add an include block to `~/.config/git/config` if not already present:
     path = ~/.config/git/config.local
 ```
 
-Then write `config.local` from `reimage.env`:
+Then write `config.local` from `reimage.env`. The trailing conditional is the same host-scoped TLS skip as Step 4, written into this file instead; leave `GIT_INTERNAL_TLS_SKIP_HOST` unset to keep verification on everywhere.
 
 ```bash
 source ./reimage.env
@@ -448,8 +528,6 @@ cat > ~/.config/git/config.local <<EOF
     defaultBranch = ${GIT_DEFAULT_BRANCH:-main}
 EOF
 
-# Optional: same host-scoped skip, written into config.local. Unset the variable
-# to keep verification on everywhere (the secure default).
 if [ -n "${GIT_INTERNAL_TLS_SKIP_HOST:-}" ]; then
   git config --file ~/.config/git/config.local "http.https://${GIT_INTERNAL_TLS_SKIP_HOST}/.sslVerify" false
 fi
@@ -463,16 +541,14 @@ fi
 
 ### Step 7 — Validate Both Identities
 
-Test both host aliases directly against GitHub:
+Test each host directly. Each command should greet you as the matching GitHub account — the work host as the work account, the personal host as the personal one. A greeting naming the *wrong* account means the two `Host` blocks are routing to the same server or the same key:
 
 ```bash
 source ./reimage.env
 
 ssh -T "git@${GIT_WORK_GITHUB_HOST}"
-# Expected: authenticated as the work GitHub account.
 
 ssh -T "git@${GIT_PERSONAL_GITHUB_HOST}"
-# Expected: authenticated as the personal GitHub account.
 ```
 
 > [!bug] Troubleshooting
@@ -483,72 +559,136 @@ Spot-check from inside the work repo root using a throwaway repo. No work repo i
 ```bash
 source ./reimage.env
 
-mkdir -p "$GIT_WORK_REPO_ROOT/test"
-cd "$GIT_WORK_REPO_ROOT/test"
-git init
-git config user.email
-# Should return the value of: $GIT_WORK_EMAIL
-
-cd ~
-rm -rf "$GIT_WORK_REPO_ROOT/test"
+if [ -z "${GIT_WORK_REPO_ROOT:-}" ]; then
+  echo "GIT_WORK_REPO_ROOT is not set — run this from the repository root"
+else
+  mkdir -p "$GIT_WORK_REPO_ROOT/test"
+  ( cd "$GIT_WORK_REPO_ROOT/test" && git init && git config --show-origin user.email )
+  rm -rf "$GIT_WORK_REPO_ROOT/test"
+fi
 ```
+
+Expect an origin of `~/.gitconfig` and `$GIT_WORK_EMAIL`. This path is outside the personal root, so the global default applies and `includeIf` must not fire — an origin pointing at the personal-root file here means the `gitdir:` pattern is too broad.
 
 Spot-check from inside the personal repo root using the same throwaway technique:
 
 ```bash
 source ./reimage.env
 
-mkdir -p "$GIT_PERSONAL_REPO_ROOT/test"
-cd "$GIT_PERSONAL_REPO_ROOT/test"
-git init
-git config user.email
-# Should return the value of: $GIT_PERSONAL_EMAIL
-
-cd ~
-rm -rf "$GIT_PERSONAL_REPO_ROOT/test"
+if [ -z "${GIT_PERSONAL_REPO_ROOT:-}" ]; then
+  echo "GIT_PERSONAL_REPO_ROOT is not set — run this from the repository root"
+else
+  mkdir -p "$GIT_PERSONAL_REPO_ROOT/test"
+  ( cd "$GIT_PERSONAL_REPO_ROOT/test" && git init && git config --show-origin user.email )
+  rm -rf "$GIT_PERSONAL_REPO_ROOT/test"
+fi
 ```
 
+Expect an origin of `$GIT_PERSONAL_REPO_ROOT/.gitconfig` and `$GIT_PERSONAL_EMAIL`. A work address means the override from Step 5 is missing or the `includeIf` path does not match — Git ignores a missing include file silently, so this check is what catches it.
+
 Do not move on until every spot-check prints the expected value. A silent mismatch here will land in commit history later.
+
+Each block removes its own throwaway repository. Confirm none survived — `ls -d "$GIT_WORK_REPO_ROOT"/test "$GIT_PERSONAL_REPO_ROOT"/test 2>/dev/null` should print nothing. A leftover is not cosmetic: [[backup-repos|backup-repos.md]] discovers repositories with `find <root> -type d -name .git`, so an abandoned scratch repo in a clone root is counted as a real one by the Phase 11B audit and every comparison built on it.
 
 > [!bug] Troubleshooting
 > If the personal spot-check prints the work identity, see [[#`git config user.email` returns the wrong identity inside `$GIT_PERSONAL_REPO_ROOT`|`git config user.email` returns the wrong identity inside `$GIT_PERSONAL_REPO_ROOT`]].
 
-### Step 8 — Apply the Clone Pattern to Re-Clone Repositories
+### Step 8 — Compare Restored State Against Captured Inventories
 
-Use the templates below to re-clone repositories one at a time as you need them, or hand the completed identity plumbing off to [[restore-repos|restore-repos.md]] (Phase 11B) which reads the pre-image repository audit and emits ready-to-run `git clone` commands at scale.
+Step 0b recorded what the machine looked like before this phase wrote anything,
+and the pre-image captures recorded what it looked like before the erase. This
+step is where both earn their keep.
 
-**Work repos** — use the work GitHub host directly and clone into `$GIT_WORK_REPO_ROOT`:
-
-```bash
-source ./reimage.env
-
-cd "$GIT_WORK_REPO_ROOT"
-git clone "git@${GIT_WORK_GITHUB_HOST}:<work-org>/<repo>.git"
-```
-
-**Personal repos** — use the personal host alias and clone into `$GIT_PERSONAL_REPO_ROOT`:
+**1. Capture the after-state.** The pair to Step 0b — same script, same runbook,
+the other point:
 
 ```bash
-source ./reimage.env
-
-cd "$GIT_PERSONAL_REPO_ROOT"
-git clone "git@${GIT_PERSONAL_GITHUB_HOST}:<personal-username>/<repo>.git"
+./bin/record-restore-state.sh --runbook restore-git --point after --dry-run
+./bin/record-restore-state.sh --runbook restore-git --point after
 ```
 
-Once cloned in the right directory, identity and key selection are automatic for every subsequent `git push`, `git pull`, and `git fetch`.
+`after` is latest-wins, so re-running it after a late fix replaces the earlier
+capture rather than being ignored — the opposite of `before`, which is
+first-wins because the earliest observation is the one that caught the untouched
+machine.
+
+**2. Compare against the captured inventories.** This reads `08-git.txt` from
+the pre-image system inventory, which recorded the Git configuration of the
+machine that was erased:
+
+```bash
+./bin/compare-restored-state.sh --runbook restore-git --dry-run
+./bin/compare-restored-state.sh --runbook restore-git
+```
 
 > [!warning] Pitfall
-> If a personal repo was cloned with the default GitHub host by mistake, `includeIf` still sets the personal email, but `~/.ssh/config` may pick the default (work) key — this pushes commits authored as personal but sent over the work key.
+> **`http.sslverify` is the row to read here, and this is the first time it
+> means anything.** Under `restore-access` it reported `correctly dropped`
+> because `~/.gitconfig` did not exist yet — nothing was reviewed and left out,
+> the file was simply absent. This phase writes that file, so the verdict is now
+> real. `**CARRIED FORWARD**` means the pre-image `sslverify = false` came back
+> and TLS verification is off for every Git HTTPS remote. Remove it with
+> `git config --global --unset http.sslverify`, and scope any genuine exemption
+> to one host rather than all of them.
 
-> [!bug] Troubleshooting
-> If `git remote -v` on a personal repo shows the default GitHub host, see [[#After a clean run, `git remote -v` on a personal repo points at the default GitHub host|After a clean run, `git remote -v` on a personal repo points at the default GitHub host]].
+`Git identity email set` is a presence row, not a value comparison: the capture
+holds two `user.email` lines because this is a dual-identity setup, so comparing
+the live global address against one of them would report a confident mismatch on
+a correctly configured machine. Which identity applies where is what Step 7
+validated.
 
-> [!note]
-> Preserved local-only material from Phase 2A ([[backup-repos|backup-repos.md]]) — stashes, local-only branches, chosen kept ignored files — is restored by Phase 11B ([[restore-repos|restore-repos.md]]), which reads the pre-image `repos.tsv` and staged ignored files and emits reviewable clone + rsync commands. Do not chase that reconciliation manually here.
+**3. Join the two recordings.** `delta` is a third point on the state recorder.
+It walks nothing — it joins the official before-state and after-state and records
+what this phase changed on disk:
+
+```bash
+./bin/record-restore-state.sh --runbook restore-git --point delta --dry-run
+./bin/record-restore-state.sh --runbook restore-git --point delta
+```
+
+Expect `~/.gitconfig` as **added** or **content changed**, `~/.ssh/config` as
+**content changed** — Step 3 rewrites it wholesale — and the personal-root
+override as **added**. **removed** is the verdict to read twice: this phase
+writes configuration, and should not be deleting anything.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
 ---
+
+### Step 9 — Close Out the Exit Criteria
+
+Step 0a recorded whether this phase was allowed to start. This step records
+whether it finished. Skip it and nothing anywhere says so — a question that gets
+asked days later, when the answer is no longer reconstructable.
+
+```bash
+./bin/record-restore-exit.sh --runbook restore-git --dry-run
+./bin/record-restore-exit.sh --runbook restore-git
+```
+
+Read the rows rather than the exit status. It records `PASS`, `WARN`, `FAIL` and
+`TODO`, and a `TODO` row is a question only you can answer — not a failure, and
+not a pass either. **Both identities validated** is the one that stays open until
+you close it: `ssh -T` fails identically for an unregistered key and for the
+wrong key, so no script can tell the difference between the two.
+
+Confirm both boundary records landed. One file answers whether the phase both
+started and finished:
+
+```bash
+sed -n '1,40p' "$REIMAGE_ARTIFACT_ROOT/reimaged-system/boundaries/MANIFEST.md"
+```
+
+You are looking for a `restore-git-entry-*` row and a `restore-git-exit-*` row.
+An entry with no exit is the signature of a phase that was walked but never
+closed out.
+
+With both recorded, continue to `restore-repos.md`.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 
 ## Decisions
 
@@ -604,18 +744,6 @@ Without the trailing slash, the include may not fire for nested repos. Re-run St
 Git does not read `config.local` automatically. It must be pulled in from `~/.config/git/config` or `~/.gitconfig` via an `[include]` block. Confirm the include exists; Step 6 writes it.
 
 [[#Step 7 — Validate Both Identities|⮕ Continue to Step 7 — Validate Both Identities]]
-
-### After a clean run, `git remote -v` on a personal repo points at the default GitHub host
-
-The repo was cloned with the default host instead of `$GIT_PERSONAL_GITHUB_HOST`. Update the remote — no need to re-clone:
-
-```bash
-git remote set-url origin "git@${GIT_PERSONAL_GITHUB_HOST}:<personal-username>/<repo>.git"
-```
-
-[[#Step 8 — Apply the Clone Pattern to Re-Clone Repositories|⮕ Continue to Step 8 — Apply the Clone Pattern to Re-Clone Repositories]]
-
----
 
 ## Supplemental Reference
 
