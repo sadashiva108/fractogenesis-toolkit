@@ -2,7 +2,7 @@
 
 # Restore Docker
 
-**Last updated:** 2026-08-17
+**Last updated:** 2026-08-25
 
 Restore Docker Desktop, resource tuning, registry credentials, and the local development container fleet on the reimaged Mac — Redis, RabbitMQ, Elasticsearch (+ Kibana), and MarkLogic (single-node with ml-gradle deployment). This is the dedicated Phase 12 Docker handoff; the companion script `bin/restore-docker.sh` writes a per-run plan-note that surveys the available pre-image sources, checks whether Docker Desktop and the daemon are up on the reimaged Mac, and provides the sign-off checklist.
 
@@ -82,7 +82,7 @@ Read this before running anything. Docker restore has three overlapping concerns
 
 Docker Desktop is treated as a fresh install. Backing up and overlaying the full internal state (`~/Library/Containers/com.docker.docker/`) is intentionally avoided — Docker Desktop reinitialises cleanly on first run, and dragging forward the prior VM disk image consumes disk without benefit. The only pre-image settings that get restored are the operator-facing Resources knobs (CPUs, Memory, Swap, Disk image size, File sharing), and those come from the performance-audit notes rather than a blind file copy.
 
-Registry credentials are the one piece of Docker state that must be preserved carefully. `~/.docker/config.json` is captured pre-image into `secrets-encrypted/docker/` because it may embed base-64 encoded credentials for private registries; on restore, it lands from the encrypted DMG, and `docker login` is used as a confirmation rather than a first-time interactive credential entry.
+Registry credentials are the one piece of Docker state that must be preserved carefully. `~/.docker/config.json` is captured pre-image into the `docker/` category of the encrypted image because it may embed base-64 encoded credentials for private registries; on restore it is read from the attached DMG at `"$MNT"/docker/config.json`, and `docker login` is used as a confirmation rather than a first-time interactive credential entry.
 
 The container fleet restarts in an order that trades cheap-and-fast for slow-and-stateful. Redis and RabbitMQ are single-container recipes that come back in seconds; Elasticsearch and Kibana are project-driven compose stacks with security-mode nuances (the `elastic` user password must match `.env` or the container has to be recreated); MarkLogic is the heaviest and requires a 30–60 second first-boot cluster-initialisation window plus a two-step Gradle deploy (security first, then the full app). Starting slow-and-stateful last means the fast containers are already validated when MarkLogic startup issues show up, so the operator knows where to look.
 
@@ -104,7 +104,7 @@ Artifact locations:
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/app-settings-backup/docker/
-$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/docker/config.json
+$MNT/docker/config.json                                    # inside the attached DMG, not beside it
 $REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/restore-docker-plan-*.md
 ```
 
@@ -260,22 +260,54 @@ pgrep -fl "Docker Desktop" || echo "OK: Docker Desktop does not appear to be run
 
 Docker Desktop owns `~/.docker/config.json`. It manages `credsStore`, `currentContext`, and `plugins` in that file and rewrites it on quit and on every settings change — a copy made while it is running is silently reverted the moment you quit it.
 
-Mount the encrypted secrets area (or the consolidated `all-secrets-*.dmg`) and restore `~/.docker/config.json`. Keep the fresh install's own file first, so you can get back to a known-good Docker Desktop state if the restored one is stale:
+`config.json` lives **inside** the encrypted image, not beside it.
+`secrets-encrypted/` holds the `.dmg` itself plus its manifest and category list;
+the `docker/` category exists only once the image is attached, at
+`"$MNT"/docker/config.json`.
+
+This block covers all three states in order — `$MNT` already set from an earlier
+step, image mounted but the variable lost to a new terminal, image not attached
+at all:
+
+```bash
+if [ -z "${MNT:-}" ] || [ ! -d "${MNT:-}" ]; then
+  MNT="$(find /Volumes -maxdepth 3 -path '*/staged-loose/MANIFEST.tsv' 2>/dev/null | head -1)"
+  [ -n "$MNT" ] && MNT="$(dirname "$(dirname "$MNT")")"
+fi
+
+if [ -z "${MNT:-}" ] || [ ! -d "${MNT:-}" ]; then
+  DMG="$(find "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted" -maxdepth 1 -name 'all-secrets-*.dmg' | sort | tail -1)"
+  MNT="$(hdiutil attach "$DMG" | awk -F'\t' '/\/Volumes\//{print $NF}' | tail -1)"
+fi
+
+printf 'MNT=%s\n' "${MNT:-<not mounted>}"
+ls "$MNT/docker/" 2>/dev/null || echo "no docker/ category in this image"
+```
+
+The mount point is re-derived from a directory the image always carries rather
+than from the `.dmg` filename or a `/Volumes/all-secrets-*` pattern. The volume
+name comes from the `-volname` given at creation in Phase 3C and need not match
+the filename — so a literal path works on the image it was written against and
+silently finds nothing on the next one.
+
+Now restore the file. The fresh install's own copy is kept first, so you can get
+back to a known-good Docker Desktop state if the restored one turns out stale:
 
 ```bash
 mkdir -p ~/.docker
 cp ~/.docker/config.json ~/.docker/config.json.fresh 2>/dev/null || true
 
-SRC="$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/docker/config.json"
+SRC="$MNT/docker/config.json"
 if [ -f "$SRC" ]; then
   cp "$SRC" ~/.docker/config.json
   chmod 600 ~/.docker/config.json
   echo "RESTORED: ~/.docker/config.json from $SRC"
 else
   echo "*** NOT RESTORED: no config.json at $SRC" >&2
-  echo "*** Registry credentials were NOT restored. Mount the encrypted secrets DMG" >&2
-  echo "*** (secrets-encrypted/all-secrets-*.dmg, Phase 10B) so that path resolves," >&2
-  echo "*** then re-run this step before continuing." >&2
+  echo "*** Registry credentials were NOT restored." >&2
+  echo "*** If MNT is empty the image is not attached - run the mount block above." >&2
+  echo "*** If MNT is set but the file is missing, the image carries no docker/" >&2
+  echo "*** category; check the categories list beside the .dmg before continuing." >&2
 fi
 ```
 
@@ -283,15 +315,22 @@ Relaunch Docker Desktop, wait for the daemon, then confirm each private registry
 
 ```bash
 open -a Docker
-# wait ~10 s, then:
-docker info >/dev/null && docker login "<registry-host>"
+```
+
+Give the daemon ten seconds or so to come up, then confirm one registry at a time
+— name it first rather than typing it into the command, so a re-run is a one-line
+edit:
+
+```bash
+REGISTRY="replace-with-the-registry-host"
+docker info >/dev/null && docker login "$REGISTRY"
 ```
 
 > [!note]
 > When `config.json` carries `"credsStore": "desktop"`, the file holds no tokens at all — the registry auths live in the login Keychain, and the Keychain does not survive an erase-and-install. A `docker login` that genuinely prompts for a password or a PAT is the expected outcome here, not a restore failure. What the restored `config.json` buys you is the registry list, the context, and the plugin config; the credentials themselves are re-entered once per registry and re-stored in the new Keychain.
 
 > [!warning] Pitfall
-> Copying `config.json` from the plain-text `app-settings-backup/` path is a bug even if the file happens to sit there — that path is not encrypted and this file may embed credentials. Always take it from `secrets-encrypted/docker/`.
+> Copying `config.json` from the plain-text `app-settings-backup/` path is a bug even if the file happens to sit there — that path is not encrypted and this file may embed credentials. Always take it from `"$MNT"/docker/`, inside the attached image.
 
 ### Step 6 — Restart Redis
 

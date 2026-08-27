@@ -161,6 +161,7 @@ case "$RUNBOOK" in
   restore-access) PHASE_RUNBOOK="restore-access.md" ;;
   restore-git)    PHASE_RUNBOOK="restore-git.md" ;;
   restore-repos)  PHASE_RUNBOOK="restore-repos.md" ;;
+  restore-apps)   PHASE_RUNBOOK="restore-apps.md" ;;
   *) echo "ERROR: no prerequisite checks defined for runbook: $RUNBOOK" >&2
      echo "HINT:  supported runbooks: restore-runtime, restore-access. Others are added as their runbooks are reached." >&2
      exit 2 ;;
@@ -685,6 +686,62 @@ check_restore_repos() {
     record PASS "No repository spans both hosts" "each is unambiguously work or personal"
   else
     record WARN "No repository spans both hosts" "$n repository/repositories have remotes on BOTH the corporate and the public host — the host cannot decide which root they belong in, so record the choice per repository before cloning."
+  fi
+}
+
+# ---------------------------------------------------------------------------
+# restore-apps checks
+#
+# Derived from restore-apps.md -> Prerequisites. This phase is an orchestrator:
+# its steps hand off to restore-intellij.md and restore-docker.md, whose scripts
+# read the pre-image app-settings-backup and emit plan-notes. A missing backup
+# category therefore does not error -- the plan-note simply reports every source
+# for that app as MISSING, which reads like the app had nothing to restore.
+# ---------------------------------------------------------------------------
+check_restore_apps() {
+  local b_root b_run app_root n missing app
+
+  if [[ -n "${FRACTOGENESIS_HOME:-}" && -d "${FRACTOGENESIS_HOME:-}/bin" ]]; then
+    record PASS "Toolkit root resolves" "\`$FRACTOGENESIS_HOME\`"
+  else
+    record FAIL "Toolkit root resolves" "\`FRACTOGENESIS_HOME\` unset or has no \`bin/\`"
+  fi
+
+  b_root="${REIMAGE_ARTIFACT_ROOT:-/nonexistent}/reimaged-system/boundaries"
+  b_run="$(artifact_run_official "$b_root" "restore-repos-exit" 2>/dev/null)"
+  if [[ -n "$b_run" ]]; then
+    record PASS "\`restore-repos\` closed out" "\`$(basename "$b_run")\`"
+  else
+    record FAIL "\`restore-repos\` closed out" "no official \`restore-repos-exit\` run under \`boundaries/\` — several steps here depend on repository checkouts, and IntelliJ project paths resolve to nothing without them"
+  fi
+
+  app_root="${REIMAGE_ARTIFACT_ROOT:-/nonexistent}/app-settings-backup"
+  if [[ -d "$app_root" ]]; then
+    n="$(find "$app_root" -maxdepth 1 -mindepth 1 -type d 2>/dev/null | wc -l | tr -d ' ')"
+    record PASS "Pre-image app settings reachable" "$n category/categories under \`app-settings-backup/\`"
+  else
+    record FAIL "Pre-image app settings reachable" "\`$app_root\` is not there — every plan-note would report all sources MISSING, which reads as an app with nothing to restore rather than an unreachable backup"
+    return 0
+  fi
+
+  # The categories behind the steps most runs reach first. Absent ones are named
+  # here rather than discovered one plan-note at a time.
+  missing=""
+  for app in intellij docker vscode obsidian postman; do
+    [[ -d "$app_root/$app" ]] || missing="${missing:+$missing }$app"
+  done
+  if [[ -z "$missing" ]]; then
+    record PASS "Core app categories captured" "intellij, docker, vscode, obsidian, postman all present"
+  else
+    record WARN "Core app categories captured" "no backup category for: $missing — those steps have nothing to restore from, which is a fact worth knowing before the step rather than inside it"
+  fi
+
+  # The DMG is per-step by design: Postman, IntelliJ, Docker and licenses each
+  # ask for it and eject after. Absent is normal at phase entry.
+  if find /Volumes -maxdepth 1 -type d -name 'all-secrets-*' 2>/dev/null | grep -q .; then
+    record WARN "Encrypted secrets DMG" "currently attached — mount only when a step asks, and eject when done; it holds plaintext"
+  else
+    record PASS "Encrypted secrets DMG" "not attached, which is correct at phase entry — steps mount it as needed"
   fi
 }
 

@@ -26,7 +26,7 @@
 UNRESOLVED_VAR=""
 RESOLVED_PATH=""
 resolve_target() {
-  local spec="$1" out
+  local spec="$1" out name val
   UNRESOLVED_VAR=""
   RESOLVED_PATH=""
   # The tilde here is being pattern-MATCHED against the literal text of a table
@@ -37,15 +37,27 @@ resolve_target() {
     '~')   out="$HOME" ;;
     *)     out="$spec" ;;
   esac
-  case "$out" in
-    *'$JAVA_HOME'*)
-      if [[ -z "${JAVA_HOME:-}" ]]; then
-        UNRESOLVED_VAR="JAVA_HOME"
-        return 1
-      fi
-      out="${out//\$JAVA_HOME/$JAVA_HOME}"
-      ;;
-  esac
+  # Substitute every $NAME the spec carries, not one hardcoded variable. The
+  # original handled $JAVA_HOME alone, so a target written against any other
+  # variable resolved to its own literal text -- which then reported `absent`
+  # for a path nobody had looked at. A wrong answer, and one that reads exactly
+  # like a correct one.
+  while :; do
+    case "$out" in
+      *'$'*)
+        name="${out#*$}"
+        name="${name%%[!A-Za-z0-9_]*}"
+        [[ -n "$name" ]] || break
+        eval "val=\${$name:-}"
+        if [[ -z "$val" ]]; then
+          UNRESOLVED_VAR="$name"
+          return 1
+        fi
+        out="${out//\$$name/$val}"
+        ;;
+      *) break ;;
+    esac
+  done
   RESOLVED_PATH="$out"
   return 0
 }

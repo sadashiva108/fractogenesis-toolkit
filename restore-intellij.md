@@ -2,7 +2,7 @@
 
 # Restore IntelliJ
 
-**Last updated:** 2026-08-17
+**Last updated:** 2026-08-25
 
 Restore IntelliJ IDEA and per-project state on the reimaged Mac in a controlled sequence so imported settings, Scratches, project metadata, and HTTP Client environments end up in the right places without dragging stale machine-specific paths forward or leaking secret material into unencrypted storage. This is the dedicated Phase 12 IntelliJ handoff the umbrella app phase hands to; the companion script `bin/restore-intellij.sh` writes a per-run plan-note that surveys the available pre-image sources and provides the sign-off checklist.
 
@@ -215,7 +215,176 @@ Install IntelliJ IDEA from the approved source (JetBrains Toolbox or direct). Je
 https://account.jetbrains.com/licenses
 ```
 
-Record the version installed, install source, and install date in the plan-note.
+**Verify the download before opening it.** JetBrains publishes a SHA-256 beside
+every build; download it alongside the disk image. `shasum -c` reads the checksum
+file and reports the result rather than leaving you to compare 64 hex characters
+by eye, which is the step people skip and the one that catches a truncated
+transfer:
+
+```bash
+DMG_FILE="replace-with-the-downloaded-dmg-filename"
+( cd ~/Downloads && shasum -a 256 -c "$DMG_FILE.sha256" )
+```
+
+The subshell keeps your shell at the repository root; `shasum -c` resolves the
+filename recorded inside the checksum file relative to the current directory, so
+it has to run beside the image. Expect one line ending `: OK`. `FAILED` means
+re-download — a partial transfer is the usual cause, and a `.dmg` that fails here
+can still mount and install.
+
+More often the checksum is **copied off the download page** rather than saved as
+a file. Compare it directly instead of transcribing it into a file first, and let
+the shell do the comparison rather than your eyes — a hash is exactly the kind of
+string a person confirms by checking the first and last four characters:
+
+```bash
+DMG_FILE="replace-with-the-downloaded-dmg-filename"
+EXPECTED="replace-with-the-hash-from-the-download-page"
+
+DMG_PATH="$HOME/Downloads/$DMG_FILE"
+ACTUAL="$(shasum -a 256 "$DMG_PATH" 2>/dev/null | awk '{print $1}')"
+if [ -z "$ACTUAL" ]; then
+  printf 'COULD NOT HASH - check the path\n  %s\n' "$DMG_PATH"
+elif [ "$EXPECTED" = "$ACTUAL" ]; then
+  echo "OK - checksum matches"
+else
+  printf 'MISMATCH - re-download\n  expected %s\n  actual   %s\n' "$EXPECTED" "$ACTUAL"
+fi
+```
+
+Run it as one block. Split across separate pastes it is easy to set the two
+values, skip the line that computes `ACTUAL`, and get `MISMATCH` with an empty
+`actual` — a wrong answer that looks like a corrupt download rather than a missed
+step. The empty-value branch exists for the same reason: an unreadable or
+misnamed file and a genuinely different hash are different problems, and only one
+of them is fixed by downloading again.
+
+No subshell is needed here because the full path goes to `shasum` directly. Paste
+only the hash into `EXPECTED` — JetBrains publishes the line as
+`<hash> *<filename>`, and including the trailing filename reports MISMATCH on a
+perfectly good image.
+
+**A matching checksum proves transfer integrity, not authenticity.** It comes
+from the same server as the image, so anyone able to serve a modified build can
+serve a matching hash. Apple's notarization check is the separate question, and
+on a managed Mac it is the one that matters. Ask it of the notarization ticket
+directly — no mounting required:
+
+```bash
+xcrun stapler validate "$DMG_PATH"
+```
+
+`The validate action worked!` means Apple notarized this exact image.
+**`does not have a ticket stapled to it` is not a failure** — a notarization
+ticket can be stapled to a file for offline checking, or left to online lookup
+where Gatekeeper asks Apple directly. Vendors commonly staple the application
+inside the image and not the container. It only tells you this check cannot be
+answered offline; it says nothing about authenticity.
+
+The application is where the answer is. Attach the image:
+
+```bash
+hdiutil attach "$DMG_PATH"
+```
+
+The attach output is worth reading rather than scrolling past: each
+`verified   CRC32` line is the disk image's own internal checksum passing, which
+is independent of the SHA-256 comparison above. One says the bytes match what the
+vendor published; the other says the image is structurally intact.
+
+Let the volume and the application name themselves. The mounted volume name
+carries a space, and the bundle name differs by edition:
+
+```bash
+VOL_PATH="$(find /Volumes -maxdepth 1 -type d -name 'IntelliJ*' | head -1)"
+APP_PATH="$(find "$VOL_PATH" -maxdepth 1 -name '*.app' | head -1)"
+echo "APP_PATH=$APP_PATH"
+```
+
+```bash
+spctl -a -vvv "$APP_PATH"
+xcrun stapler validate "$APP_PATH"
+codesign -dv --verbose=2 "$APP_PATH" 2>&1 | grep -E 'Authority|TeamIdentifier'
+```
+
+`find` rather than a `*.app` glob, and not because the glob is longer to type: an
+unmatched glob is an error in zsh that aborts the line, so a wrong volume name
+would fail as a shell parse error rather than leaving `APP_PATH` empty for the
+`echo` to reveal.
+
+Three answers, strongest last. `spctl` should say `accepted` with
+`source=Notarized Developer ID` — and if it does, it has already performed the
+online notarization lookup, so an unstapled ticket has cost nothing but a
+round-trip. `codesign` names who actually signed the build in its `Authority=`
+line, which is the one fact none of the other checks give you: a hash proves the
+bytes arrived intact, notarization proves Apple scanned it, and only the signing
+authority tells you *whose* build this is.
+
+A `rejected` from `spctl`, or a signing authority that is not the vendor you
+expect, is the stop — whatever the checksum said.
+
+**Copy the verified app into `/Applications`.** Only now, and in this order — the
+bundle you keep is then the exact one the three checks above passed, and a
+`rejected` build never reaches `/Applications` at all.
+
+A JetBrains `.dmg` is drag-and-drop. There is no installer, no progress window
+beyond Finder's copy sheet, and nothing that announces success at the end, which
+is why confirming the copy is its own step below rather than something to take on
+faith.
+
+In the Finder window that opened when the image attached, drag **IntelliJ
+IDEA.app** onto the **Applications** shortcut beside it. The bundle is roughly
+4 GB, so the copy takes a moment. If macOS asks for an administrator password,
+answer it — a dismissed prompt cancels the copy silently and leaves nothing
+behind.
+
+Confirm it landed and finished:
+
+```bash
+APP_DEST="$(find /Applications -maxdepth 1 -name 'IntelliJ*.app' | head -1)"
+echo "APP_DEST=${APP_DEST:-not copied yet}"
+du -sh "$APP_PATH" "$APP_DEST"
+```
+
+`find` here for the same reason it is used against `/Volumes` above: an unmatched
+glob is an error in zsh that aborts the line, so a missing application would fail
+as a shell parse error rather than leaving `APP_DEST` empty for the `echo` to
+report.
+
+Equal sizes mean the copy ran to completion. That is a weaker claim than it
+looks, so ask the installed copy the same question the volume copy already
+answered:
+
+```bash
+spctl -a -vvv "$APP_DEST"
+```
+
+`accepted` proves every byte of the signed bundle arrived: a truncated or
+interrupted copy fails signature validation, where a size comparison alone can
+still agree. That is the row worth recording in the plan-note.
+
+> [!bug] Troubleshooting
+> If `APP_DEST` prints `not copied yet`, the drag did not take. Open the mounted
+> volume in Finder and drag the application icon onto the `Applications` shortcut
+> inside that same window, not onto a Dock icon or a Finder sidebar entry.
+
+Detach when done — `VOL_PATH` is still set from above:
+
+```bash
+hdiutil detach "$VOL_PATH"
+```
+
+> [!warning] Pitfall
+> Do **not** reach for `spctl -a -t open --context context:primary-signature` on
+> the `.dmg`. It is the most widely copied recipe for this check and it is the
+> wrong tool: `-t open` assesses documents, and on a disk image it commonly
+> returns `errSecCoreFoundationUnknown` — an error that names nothing, says
+> nothing about the file, and reads like a failed verification when no
+> verification happened. `spctl` is reliable against an **app bundle**, where its
+> default execute context applies. Assess the app, staple-check the image.
+
+Record the version installed, install source, install date, and that both checks
+passed in the plan-note.
 
 > [!note]
 > Company-managed IntelliJ installs sometimes ship a slightly different version than what was on the pre-image system. Note the delta rather than trying to force a match — a settings ZIP produced by the older version generally imports cleanly into a newer one.

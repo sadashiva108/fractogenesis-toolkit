@@ -209,7 +209,7 @@ done
 # recorders and the comparison do it, so each target set is written against a
 # runbook someone has actually just followed. One list, checked in one place:
 # the runbook name IS the artifact name, so there is no second table to drift.
-SUPPORTED_RUNBOOKS="restore-access restore-git restore-repos"
+SUPPORTED_RUNBOOKS="restore-access restore-git restore-repos restore-apps"
 
 if [[ -z "${RUNBOOK:-}" ]]; then
   echo "ERROR: --runbook is required. Supported: $SUPPORTED_RUNBOOKS" >&2
@@ -283,6 +283,22 @@ absolute_path() {
 # repository. At depth 1 the before-state is "these roots are empty", the
 # after-state is one row per restored repository, and the delta between them is
 # literally the list of what this phase put back.
+# Live application config, not the backup those steps read from. `shallow` on
+# the big roots: IntelliJ keeps a subtree per version and Code/User holds every
+# extension's state, and the question a before-state answers here is which of
+# these existed before Phase 12 ran -- not a hash of every file inside them.
+targets_restore_apps() {
+  cat <<'TARGETS'
+shallow@@~/Library/Application Support/JetBrains/@@Step 8 — IntelliJ per-version config roots
+tree@@~/.docker/@@Step 9 — Docker CLI config, contexts, daemon.json
+shallow@@~/Library/Application Support/Code/User/@@Step 6 — VS Code settings and keybindings
+shallow@@~/Library/Application Support/obsidian/@@Step 4 — Obsidian vault registry
+shallow@@~/Library/Application Support/Postman/@@Step 5 — Postman collections and environments
+shallow@@~/Library/Application Support/com.raycast.macos/@@Step 7 — Raycast config
+file@@~/Library/Preferences/com.apple.Terminal.plist@@Step 11 — Terminal profile
+TARGETS
+}
+
 targets_restore_repos() {
   cat <<'TARGETS'
 shallow@@$GIT_WORK_REPO_ROOT/@@Clone destination for work repositories — one row each

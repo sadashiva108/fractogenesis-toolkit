@@ -1,6 +1,14 @@
 # Apply Manifest
 
-**Revision 74** — supersedes earlier manifests. `restore-repos` can close out on a partial restore, because a partial restore is what this phase actually does.
+**Revision 78** — supersedes earlier manifests. `restore-intellij.md` Step 2 installs the application it spent forty lines verifying.
+
+**Revision 77** — supersedes Revision 76 and earlier. `restore-docker.md` reads the DMG's contents instead of the directory that holds the DMG, and `state-walk.sh` resolves any variable rather than one.
+
+**Revision 76** — supersedes Revision 75 and earlier. `restore-intellij.md` verifies the download, and says what a checksum does not prove.
+
+**Revision 75** — supersedes Revision 74 and earlier. `restore-apps.md` gains Step 0, before the first application launch ends the chance to take one.
+
+**Revision 74** — supersedes Revision 73 and earlier. `restore-repos` can close out on a partial restore, because a partial restore is what this phase actually does.
 
 **Revision 73** — supersedes Revision 72 and earlier. The zsh expansion-order trap becomes an authoring rule instead of a lesson relearned per incident.
 
@@ -182,6 +190,7 @@ several separate rounds of work, and splicing them by hand is how the duplicate
 | `restore-access.md` | `restore-access.md` |
 | `restore-repos.md` | `restore-repos.md` |
 | `restore-apps.md` | `restore-apps.md` |
+| `restore-intellij.md` | `restore-intellij.md` |
 | `restore-home.md` | `restore-home.md` |
 | `reimaged-system-checks.md` | `reimaged-system-checks.md` |
 
@@ -203,6 +212,217 @@ several separate rounds of work, and splicing them by hand is how the duplicate
 | `restore-intellij.sh` | `bin/restore-intellij.sh` |
 | `record-reimaged-system.sh` | `bin/record-reimaged-system.sh` |
 | `reimage-checklist.sh` | `bin/reimage-checklist.sh` |
+
+---
+
+## Revision 78 — a step that verified an install it never performed
+
+`restore-intellij.md` Step 2 downloaded the disk image, matched its SHA-256,
+attached it, and assessed the application bundle three ways — then detached the
+volume. Nothing was ever copied into `/Applications`. Step 3 opens with "Launch
+IntelliJ once, dismiss any onboarding, and then quit", against an application
+that is not installed.
+
+The gap survived because every command in the step succeeded. The checksum
+matched, `spctl` returned `accepted`, `hdiutil detach` worked. An operator
+following it reaches the end with a verified image, an ejected volume, and the
+reasonable belief that a step titled *Install IntelliJ IDEA* installed it. Found
+by an operator who ran the step, then found `/Applications` empty.
+
+The copy now sits between the assessment and the detach, and that order is the
+point rather than an accident of where the paragraph landed: the bundle is
+assessed on the mounted volume and copied afterwards, so a `rejected` build never
+reaches `/Applications` at all.
+
+Two confirmations follow it, because a `.dmg` drag-and-drop announces nothing on
+completion — there is no installer, and no window beyond Finder's copy sheet.
+Equal `du -sh` sizes say the copy ran to the end. `spctl -a -vvv` against the
+installed copy says every byte of the signed bundle arrived, which the size
+comparison cannot: a truncated copy fails signature validation while its size can
+still agree at the moment it is read.
+
+`find` rather than an `IntelliJ*.app` glob, consistent with the `/Volumes` lookup
+above it and with the rule Revision 73 records — an unmatched glob aborts the line
+in zsh, so a missing application would read as a shell parse error rather than
+leaving the variable empty for the `echo` to report.
+
+**Modified:** `restore-intellij.md`.
+
+**Not verified here:** the blocks are pasted into the operator's zsh on macOS,
+and this session runs Linux. `verify-doc-paths.sh` passes.
+
+---
+
+## Revision 77 — reading from where a thing is, not where it used to be
+
+Two bugs of the same shape, both found by the operator, both producing a
+confident wrong answer rather than an error.
+
+**`restore-docker.md` looked for `config.json` beside the DMG rather than inside
+it.** Step 5 read
+`$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/docker/config.json`. That directory
+holds the `.dmg`, its manifest, and its category list — nothing else. The
+`docker/` category exists only once the image is attached, at
+`"$MNT"/docker/config.json`.
+
+The manifest explains how it got there: it records staging paths such as
+`…/secrets-encrypted/repos-gitignored/…`, so those category directories did once
+sit there as plain files, before Phase 3C consolidated them into the image and
+removed them. The runbook was written against the pre-consolidation layout and
+was never revisited.
+
+**The remediation text made it worse.** The failure branch told the operator to
+*"mount the encrypted secrets DMG so that path resolves"* — and mounting does not
+make that path resolve. Mounting creates a path somewhere else entirely. An
+operator following the advice would mount, re-run, fail identically, and have no
+way to tell a broken instruction from a missing capture. Step 5 now carries the
+mount block and a re-derive block, and the failure branch distinguishes an
+unattached image from an image with no `docker/` category.
+
+Three supporting references moved with it: the workflow prose, the artifact-path
+listing, and the pitfall that said to *"always take it from
+`secrets-encrypted/docker/`"* — advice that was correct about the danger it named
+and wrong about where to go instead.
+
+**`state-walk.sh` substituted only `$JAVA_HOME`.** Every other variable in a
+target spec survived as literal text, so `shallow@@$GIT_WORK_REPO_ROOT/` resolved
+to the string `$GIT_WORK_REPO_ROOT/`, which does not exist, and the walker
+recorded `absent`. The `restore-repos` before-state taken this session contains
+exactly two rows, both literal, both wrong — and `absent` is a perfectly ordinary
+verdict at a `before` boundary, so nothing looked amiss. `resolve_target` now
+substitutes every `$NAME` a spec carries and reports the offending variable by
+name when one is unset. Verified against a repo root, a `~/` path containing
+spaces, `$JAVA_HOME`, and an undefined variable.
+
+The re-derive block uses `find` rather than the `for d in /Volumes/*/staged-loose`
+glob that `restore-access.md` uses for the same job — an unmatched glob aborts the
+line in zsh, which is the rule added in Revision 73. That glob is a live instance
+of it and is not yet fixed.
+
+**Also unfixed, and named here so it is not mistaken for done:** seventeen
+shell-level `#` comments remain in `restore-docker.md` Steps 6–11. Four of them
+contain parentheses — `# Health endpoint (HTTP 200 = ready)` and similar — which
+abort their line during glob expansion rather than merely printing an error.
+
+---
+
+## Revision 76 — verifying a download, and the limit of doing so
+
+`restore-intellij.md` Step 2 said "install from the approved source" and moved
+on. It now verifies the disk image first, with `shasum -c` reading the checksum
+file JetBrains publishes beside each build rather than asking the operator to
+compare 64 hex characters by eye — the comparison people skip, and the one that
+catches a truncated transfer. A `.dmg` that fails this check will still mount and
+install, which is why the check exists at all.
+
+**A second form covers what operators actually do**, which is copy the hash off
+the download page rather than save the `.sha256` file. It compares two shell
+variables and needs no subshell, since the full path goes to `shasum` directly.
+
+Two things about that block came from watching it fail in use rather than from
+review.
+
+The two blocks originally named the same value `DMG_NAME` and `DMG`. An operator
+carrying values from the first block into the second set the name, set the
+expected hash, skipped the line that computes `ACTUAL`, and got **MISMATCH with a
+blank actual** — a wrong answer that reads like a corrupt download rather than a
+missed step. Both blocks now use `DMG_FILE`, and the prose says to run the second
+as one paste and why.
+
+The block also grew an empty-value branch. An unreadable or misnamed file and a
+genuinely different hash are different problems — only one is fixed by
+downloading again — and the original conflated them into the same MISMATCH. It
+now reports `COULD NOT HASH` with the path it tried.
+
+Verified all four outcomes: match, wrong hash, missing file, and the paste error
+the runbook warns about (the whole `<hash> *<filename>` line pasted into
+`EXPECTED`, which reports MISMATCH on a perfectly good image).
+
+**The step also states what the checksum does not prove.** It is served from the
+same host as the image, so anyone able to serve a modified build can serve a
+matching hash. Integrity and authenticity are different claims, and on a managed
+Mac the second one is Apple's notarization check. The runbook says to stop on a
+failure there regardless of what the checksum reported, because a reader who has
+just seen `: OK` will otherwise read a signature failure as pedantry.
+
+**The first recipe for that check was wrong, and the operator hit it.**
+`spctl -a -t open --context context:primary-signature` on the `.dmg` is the most
+widely copied form of this check and it is the wrong tool: `-t open` assesses
+documents, and against a disk image it commonly returns
+`errSecCoreFoundationUnknown` — an error that names nothing, says nothing about
+the file, and reads like a failed verification when no verification took place.
+Worse than useless in a runbook, where the reader has no way to tell a broken
+check from a bad download.
+
+Replaced with checks that answer the question properly: `xcrun stapler validate`
+against the image, and `spctl -a -vvv` plus `codesign -dv` against the **app
+bundle** after attaching, where spctl's default execute context applies and it is
+reliable. The pitfall callout names the broken form explicitly, because it is
+what a reader will find if they search for this check anywhere else.
+
+**Then the replacement was wrong too, in a more instructive way.** The step said
+a `stapler validate` failure on the image was a stop. The operator ran it and got
+`does not have a ticket stapled to it` — which is not a failure. A notarization
+ticket may be stapled to a file for offline checking or left to online lookup,
+and vendors commonly staple the application inside a disk image rather than the
+container. The check had returned a correct and unalarming result, and the runbook
+told the reader to halt on it.
+
+That is the worse error of the two. A check that fails obscurely wastes time; a
+check that reports a normal condition as a stop teaches the reader to distrust
+the runbook, or to ignore the one time it means it.
+
+The step now reads three answers, strongest last, and says what each one is
+worth: a hash proves the bytes arrived intact, notarization proves Apple scanned
+the build, and only `codesign`'s `Authority=` line tells you *whose* build it is.
+The stop condition is `rejected` from spctl or an unexpected signing authority —
+not an absent staple.
+
+Both blocks follow the conventions the last several revisions established: the
+`cd` is inside a subshell so the operator's shell stays at the repository root
+(`shasum -c` resolves the filename recorded in the checksum file relative to the
+current directory, so it has to run beside the image), and the filenames are
+assigned to a variable rather than left as bare `<placeholder>` angle brackets.
+
+Verified both paths: a matching image reports `: OK`, a modified one reports
+`FAILED` with a non-zero exit and a warning line, and the shell returns to where
+it started in both cases.
+
+---
+
+## Revision 75 — Step 0 for Phase 12
+
+`restore-apps.md` opens with **Step 0 — Record Prerequisites and the
+Before-State**, with recorder support behind it: `check_restore_apps` in the
+prerequisite recorder and `targets_restore_apps` in the state recorder.
+
+**The row that earns 0a** is *Pre-image app settings reachable*. This phase is an
+orchestrator — its steps hand off to `restore-intellij.md` and
+`restore-docker.md`, whose scripts read `app-settings-backup/` and emit
+plan-notes rather than writing config directly. An unreachable backup does not
+error. Every source in every plan-note reports `MISSING`, which is
+indistinguishable from an application that had nothing worth restoring. A
+companion row names which of the five core categories are absent up front, rather
+than letting the operator discover it one plan-note at a time.
+
+**The pitfall that earns 0b** is stated in the runbook's own Step 8: *launch
+IntelliJ once so it creates its Application Support paths, then quit.* That
+launch is what ends the before-state. Afterwards
+`~/Library/Application Support/JetBrains/` holds config this phase created rather
+than config it inherited, and nothing distinguishes the two. The window closes on
+first launch, not on first restore — earlier than an operator would guess, which
+is why the callout says so explicitly.
+
+Seven targets, and the large ones are `shallow`. IntelliJ keeps a subtree per
+version and `Code/User/` holds every extension's state; the question a
+before-state answers is which of these existed before Phase 12 ran, not a hash of
+everything inside them.
+
+Verified on the device side against a fixture, because these targets are the
+first in the table to contain **spaces** — `~/Library/Application Support/…` —
+and a splitting bug there would have surfaced as `unresolved` rows rather than an
+error. All seven resolve, present and absent are distinguished correctly, and the
+prerequisite check runs green against the real artifact root.
 
 ---
 

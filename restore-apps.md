@@ -2,7 +2,7 @@
 
 # Restore Apps
 
-**Last updated:** 2026-08-17
+**Last updated:** 2026-08-25
 
 Restore the day-to-day application layer on the reimaged Mac after the managed baseline, runtime, access, Git, and repository foundations are in place. This is the umbrella runbook for Phase 12: it walks the operator through the ordered install-and-restore sequence for Office, OneDrive, Chrome, Obsidian, Postman, VS Code, Raycast, Terminal, and the remaining daily tools, and hands off to dedicated runbooks for IntelliJ, Docker, and the late local-file restore. `bin/restore-apps.sh` writes a per-run plan-note that surveys the available pre-image backup sources and provides the sign-off checklist the operator ticks through by hand.
 
@@ -18,6 +18,7 @@ Restore the day-to-day application layer on the reimaged Mac after the managed b
     - [[#Prerequisites|Prerequisites]]
     - [[#Confirm Your Intent|Confirm Your Intent]]
 - [[#Sequential Steps|Sequential Steps]]
+    - [[#Step 0 — Record Prerequisites and the Before-State|Step 0 — Record Prerequisites and the Before-State]]
     - [[#Step 1 — Generate the Restore-Apps Plan-Note|Step 1 — Generate the Restore-Apps Plan-Note]]
     - [[#Step 2 — Microsoft Office and Teams|Step 2 — Microsoft Office and Teams]]
     - [[#Step 3 — Chrome and Browser Setup|Step 3 — Chrome and Browser Setup]]
@@ -199,6 +200,57 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 ## Sequential Steps
 
 Run these in order. Each numbered step corresponds to a row (or row group) in the sign-off checklist emitted by `bin/restore-apps.sh`.
+
+### Step 0 — Record Prerequisites and the Before-State
+
+Two recordings, both taken before any application is installed or configured.
+They answer different questions and only one of them can be taken late.
+
+**0a — may this phase start?** Writes a checklist under
+`reimaged-system/boundaries/` and exits non-zero only on `FAIL`:
+
+```bash
+./bin/record-restore-prereqs.sh --runbook restore-apps --dry-run
+./bin/record-restore-prereqs.sh --runbook restore-apps
+```
+
+Its rows are derived from *Prerequisites* above, so the two cannot drift. The one
+worth reading twice is **Pre-image app settings reachable**. This phase is an
+orchestrator: its steps hand off to `restore-intellij.md` and `restore-docker.md`,
+whose scripts read `app-settings-backup/` and emit plan-notes. An unreachable
+backup does not error — every source in every plan-note reports `MISSING`, which
+reads exactly like an application that had nothing worth restoring.
+
+**0b — what is on disk right now?** Writes a run under `reimaged-system/state/`
+recording the live application config paths this phase will populate:
+
+```bash
+./bin/record-restore-state.sh --runbook restore-apps --point before --dry-run
+./bin/record-restore-state.sh --runbook restore-apps --point before
+```
+
+Seven targets, the large ones walked at depth 1 rather than recursively: IntelliJ
+keeps a subtree per version and `Code/User/` holds every extension's state, and
+the question here is which of these existed before Phase 12 ran — not a hash of
+everything inside them.
+
+> [!warning] Pitfall
+> **0b expires the first time you open an application, not the first time you
+> restore one.** Step 8 says in as many words: *launch IntelliJ once so it creates
+> its Application Support paths, then quit.* That launch is what ends the
+> before-state — from then on, `~/Library/Application Support/JetBrains/` holds
+> config this phase created rather than config it inherited, and the two are
+> indistinguishable afterwards. Take 0b before Step 1.
+
+> [!note]
+> `before` is a first-wins point: the first capture recorded stays official, and
+> a mistimed one cannot be replaced, only annotated with a pin explaining why it
+> is wrong. The `--dry-run` line prints the target table and writes nothing —
+> read it, confirm it describes a machine this phase has not touched, then record.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 1 — Generate the Restore-Apps Plan-Note
 
