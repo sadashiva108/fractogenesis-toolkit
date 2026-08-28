@@ -24,3 +24,9 @@ __pycache__/
 
 # Obsidian vault config -- local editor state, not shared repo content
 .obsidian/
+
+# IntelliJ project files -- local editor state, not shared repo content
+.idea/
+*.iml
+*.ipr
+*.iws
