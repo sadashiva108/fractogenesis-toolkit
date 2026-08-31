@@ -325,6 +325,10 @@ printf 'PERS: %s <%s>\n' "$GIT_PERSONAL_NAME" "$GIT_PERSONAL_EMAIL"
 
 If any of the four fields prints blank, fill in `reimage.env` before continuing.
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 2 — Set Correct Permissions on Restored SSH Keys
 
 The keys themselves were laid down by [[restore-access|restore-access.md]] in Phase 10B; this step only fixes permissions and verifies fingerprints. The SSH client refuses to use loose private keys.
@@ -348,6 +352,10 @@ ssh-keygen -lf "$GIT_PERSONAL_SSH_KEY.pub"
 
 > [!warning] Pitfall
 > Do not record the real expected fingerprints in this runbook or any committed markdown. Keep them in an approved encrypted backup or password manager and compare against the live output above.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 3 — Write `~/.ssh/config` with Dual Host Aliases
 
@@ -391,6 +399,10 @@ Each `hostname` must match the host you asked for, and each `identityfile` must 
 
 > [!note]
 > `IdentitiesOnly yes` prevents SSH from trying other loaded keys before the specified one. Without it, `ssh-agent` may silently fall back to the wrong key and authenticate as the wrong identity.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 4 — Write the Global `~/.gitconfig`
 
@@ -444,6 +456,10 @@ The first returns `$GIT_WORK_EMAIL`. The second returns the bundle path if Step 
 > [!note]
 > Skipping TLS verification is a workaround, not the goal. The cleaner long-term fix is to **trust the internal Enterprise Server's CA certificate** — import it into the login keychain with `security add-trusted-cert`, or deploy it via an MDM trust profile — then leave `GIT_INTERNAL_TLS_SKIP_HOST` unset so verification stays on everywhere. Scope the skip to a single host only while you don't yet trust that CA; never disable verification globally.
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 5 — Write the Personal-Root .gitconfig Override
 
 This file activates only for repositories under `$GIT_PERSONAL_REPO_ROOT`. It changes the identity *and* pins the personal SSH key via `core.sshCommand`, so even if `~/.ssh/config` were misconfigured, personal repos would still send the right key.
@@ -487,6 +503,10 @@ fi
 `--show-origin` names the file the value came from, which is the whole question here. Expect `file:$GIT_PERSONAL_REPO_ROOT/.gitconfig` followed by `$GIT_PERSONAL_EMAIL`. An origin of `~/.gitconfig` with a work address means the include did not fire — either the override file is missing, or the `gitdir:` pattern does not match this path. Without `--show-origin` those two causes look identical.
 
 The `cd` is inside a subshell and there is no `cd ~`, so the shell you are typing in never leaves the repository root. That matters for more than tidiness: a directory-scoped environment loader such as `direnv` unloads `reimage.env` the moment you leave, which empties `$GIT_PERSONAL_REPO_ROOT` and makes the cleanup on the next line silently skip. The empty-variable branch exists for the same reason — with no root set, `mkdir -p "/test-repo"` and `cd` both fail, and `git init` would otherwise run in whatever directory you happened to be standing in.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 6 — Optionally Wire the XDG Local Config
 
@@ -538,6 +558,10 @@ fi
 
 > [!bug] Troubleshooting
 > If values you wrote into `config.local` have no effect on `git config` output, see [[#`config.local` is being silently ignored|`config.local` is being silently ignored]].
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 7 — Validate Both Identities
 
@@ -592,6 +616,10 @@ Each block removes its own throwaway repository. Confirm none survived — `ls -
 
 > [!bug] Troubleshooting
 > If the personal spot-check prints the work identity, see [[#`git config user.email` returns the wrong identity inside `$GIT_PERSONAL_REPO_ROOT`|`git config user.email` returns the wrong identity inside `$GIT_PERSONAL_REPO_ROOT`]].
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 8 — Compare Restored State Against Captured Inventories
 

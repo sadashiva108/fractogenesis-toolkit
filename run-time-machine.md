@@ -289,6 +289,10 @@ Optionally sanity-check destination capacity before a long run:
 ./bin/report-size-audit.sh --context pre-image-time-machine --drive "$EXTERNAL_APPLE_BACKUPS_VOLUME"
 ```
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 2 — Capture Pre-Run Evidence and Keep the Mac Awake
 
 Record the starting state and prevent sleep before a potentially multi-hour run. Confirm heavy apps are closed first, so the pre-run snapshot reflects a quiet system.
@@ -310,6 +314,10 @@ caffeinate -dimsu
 
 > [!bug] Troubleshooting
 > If the Mac still sleeps during a long run, see [[#Verify sleep is actually prevented|Verify sleep is actually prevented]].
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 3 — Start and Monitor the Backup
 
@@ -340,6 +348,10 @@ While it runs, keep the Mac plugged in and the destination attached, and avoid l
 
 > [!bug] Troubleshooting
 > If you need to stop the backup session itself rather than the monitor loop, see [[#Stop a running backup|Stop a running backup]].
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 4 — Confirm Completion and Verify
 
@@ -381,6 +393,10 @@ Spot-check user data through the Time Machine UI, confirming recent folders (`~/
 System Settings → General → Time Machine → Browse Backups
 ```
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 5 — Capture Post-Run Evidence and Compare
 
 Record the verified end state and confirm what changed since the previous backup. Run this only after the backup is complete and Time Machine is stopped.
@@ -402,6 +418,10 @@ The compare helper mounts previous and latest APFS snapshots read-only as needed
 
 > [!bug] Troubleshooting
 > If compare reports `Must specify at least one item inside a backup`, that is a usage error rather than corruption — see [[#`tmutil compare` reports "Must specify at least one item inside a backup"|`tmutil compare` reports "Must specify at least one item inside a backup"]].
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 6 — Eject Before Reimage
 

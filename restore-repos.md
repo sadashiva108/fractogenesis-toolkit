@@ -314,6 +314,10 @@ open "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/$LATEST_RUN/restore-status.md"
 > [!bug] Troubleshooting
 > If the run stops with `REIMAGE_ARTIFACT_ROOT is not set or not a directory`, see [[#`bin/restore-repos.sh` exits with "REIMAGE_ARTIFACT_ROOT is not set or not a directory"|`bin/restore-repos.sh` exits with "REIMAGE_ARTIFACT_ROOT is not set or not a directory"]].
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 2 — Review the Emitted Clone Commands
 
 The script emits `clone-commands.sh` alongside the report. Open and review it before running anything:
@@ -332,6 +336,10 @@ For each block, decide:
 
 > [!warning] Pitfall
 > The script only rewrites `git@github.com:` when routing to the personal host. It leaves HTTPS URLs and non-github remotes alone. If the pre-image inventory shows an HTTPS clone URL, the resulting clone will use the OS keychain credential, not your restored SSH key — convert to SSH if that matters.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 3 — Execute the Clone Commands
 
@@ -366,6 +374,10 @@ git clone "git@${GIT_PERSONAL_GITHUB_HOST}:${REPO_PATH}.git" "$GIT_PERSONAL_REPO
 ```
 
 **Which root a repo belongs in is decided by its remote host, not by where it lived pre-image.** A repository on the corporate Enterprise server belongs under `$GIT_WORK_REPO_ROOT` even if it sat in the personal directory before — an old directory named for its contents rather than an identity will have collected both. Clone one of those under the personal root and `includeIf` authors its commits with the personal address and `core.sshCommand` offers the personal key, which the Enterprise host rejects.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 4 — Repoint at the Cloned Toolkit
 
@@ -432,6 +444,10 @@ rm -rf "$TOOLKIT_BOOTSTRAP"
 > it anyway is harmless but reintroduces a block you would then remove again.
 > Full picture: [[references/toolkit-environment-reference|Toolkit Environment Reference]].
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 5 — Restore Staged Ignored Files
 
 Two paths — pick the one you settled on in the pre-flight.
@@ -455,6 +471,10 @@ bash "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/$LATEST_RUN/rsync-ignored-files.
 
 > [!bug] Troubleshooting
 > If the interactive run reports a repo applied but the files are not in the working tree, see [[#`--apply-ignored-files` says "yes" but no files appear in the working tree|`--apply-ignored-files` says "yes" but no files appear in the working tree]].
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 6 — Restore Per-Repo Gitignored Secrets from the DMG
 
@@ -504,6 +524,10 @@ cd "$GIT_WORK_REPO_ROOT/<repo>" && direnv allow
 >
 > Anything printed needs its two blocks reconciled by hand before you run the script.
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 7 — Reconcile Rescue Branches
 
 For each repo with `carry-forward rows > 0` in the status report, confirm the pre-image rescue branch made it onto the remote before reimage:
@@ -534,6 +558,10 @@ For each rescue branch that shows up, choose one:
 > [!bug] Troubleshooting
 > `no rescue branches found on remote` for a repo whose pre-image row shows carry-forward > 0 means Phase 2A's push step was skipped or failed for that repo. This is a real gap. Reconstruct from local backups if any exist; otherwise the carry-forward material is lost, and the row must be closed as "intentionally discarded" in the exit criteria.
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 8 — Reconcile Stashes and Tracked Changes
 
 Cross-check `raw/stashes-input.tsv` and `raw/tracked-changes-input.tsv` against the current state of each cloned repo. The pre-image push of a rescue branch typically covered these too, so they usually clear during the rescue-branch reconciliation. Anything still outstanding here is either:
@@ -542,6 +570,10 @@ Cross-check `raw/stashes-input.tsv` and `raw/tracked-changes-input.tsv` against 
 - A stash the operator intentionally decided not to preserve.
 
 Note the intentional-discard cases in the restore notes.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 9 — Rerun the Status Report and Close the Exit Criteria
 

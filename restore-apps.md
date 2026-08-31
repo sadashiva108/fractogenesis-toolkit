@@ -274,6 +274,10 @@ Skim the **Backup Sources** and **Secret-Bearing Sources** tables and note any `
 > [!bug] Troubleshooting
 > If every row in both tables reads `MISSING`, see [[#The plan-note reports MISSING for every source|The plan-note reports MISSING for every source]].
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 2 — Microsoft Office and Teams
 
 Let the approved company-managed channel install Office and Teams. Do not manually install a second copy from another channel unless IT explicitly asks. Sign in only after the install appears complete and Company Portal / Intune enrollment is stable.
@@ -298,6 +302,10 @@ Paste the versions into the plan-note's `Outlook / OneNote / Teams versions reco
 
 > [!warning] Pitfall
 > Opening Outlook or OneNote before Company Portal has settled is the most common source of the "Office quits at launch" symptom carried over from the pre-image system. Wait for the managed install indicators to settle first.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 3 — Chrome and Browser Setup
 
@@ -324,6 +332,10 @@ Manual import path in Chrome (per profile): `Bookmark Manager → Organize → I
 > [!note]
 > On a managed Mac, Chrome's "Managed by <company>" enrollment, enterprise policies, and force-installed extensions come back automatically via MDM after reimage — you don't restore those; they return with device management.
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 4 — Obsidian and Reference Vault
 
 Install Obsidian from the approved source. Open the restored (or freshly cloned in Phase 11B) reference vault:
@@ -343,6 +355,10 @@ external links open in Chrome
 
 > [!bug] Troubleshooting
 > If Obsidian complains about an unrecognized plugin, decline the install and check the pre-image `app-settings-backup/obsidian/` inventory before enabling anything.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 5 — Postman Collections and Environments
 
@@ -367,6 +383,10 @@ After import: select each environment, confirm every variable is present, confir
 
 > [!bug] Troubleshooting
 > If imported variables show as empty strings, see [[#Postman variables show as empty strings after import|Postman variables show as empty strings after import]].
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 6 — VS Code
 
@@ -419,6 +439,10 @@ Recommended file associations from prior workflow context:
 .txt  → VS Code
 ```
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 7 — Raycast and Quicklinks
 
 Install Raycast from the approved source and recreate the priority Quicklinks:
@@ -439,6 +463,10 @@ common internal portals
 > [!warning] Pitfall
 > Do not store bearer tokens, client secrets, passwords, private keys, or production credentials in Raycast Quicklinks or snippets. Raycast state is not covered by the encrypted secrets model.
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 8 — IntelliJ IDEA Handoff
 
 IntelliJ mixes IDE state, project metadata, and secret-bearing HTTP Client data, so it lives in its own runbook. Start the companion helper, then follow the dedicated guide:
@@ -452,6 +480,10 @@ Then follow: [[restore-intellij|restore-intellij.md]].
 The high-level order there remains: install → launch once and quit → import settings ZIP → restore scratches/consoles and selected project metadata → restore secret-bearing HTTP Client environments only from encrypted storage.
 
 When that runbook is complete, come back here and mark the `IntelliJ dedicated restore completed` row in the plan-note before moving on to Docker.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 9 — Docker Desktop Handoff
 
@@ -471,6 +503,10 @@ $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/docker/config.json
 ```
 
 When that runbook is complete, come back here and mark the `Docker dedicated restore completed` row in the plan-note.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 10 — Additional Daily Apps
 
@@ -496,6 +532,10 @@ For each one:
 3. Restore only the settings or exports that still matter.
 4. Record license or activation handling under `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/licenses/` when applicable.
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 11 — Terminal Profile
 
 If a custom Terminal.app profile was exported in Phase 2D, restore it now:
@@ -506,6 +546,10 @@ open "$REIMAGE_ARTIFACT_ROOT/app-settings-backup/terminal/"*.terminal
 ```
 
 Opening the `.terminal` file installs it as a profile in `Terminal → Settings → Profiles`. Set it as the default there if desired, then check `window-size-note.txt` in the same folder if you also want to reapply the default window size.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 12 — Oracle SQL Developer
 
@@ -519,6 +563,10 @@ Do not restore connection passwords loose; use the approved secret store.
 ```
 
 Record the decision (install vs. skip), install source, JDK version, and connection restore path in the plan-note's `Oracle SQL Developer decision recorded` row.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 13 — Office Stability Follow-Up
 
@@ -542,6 +590,10 @@ Update [[capture-office-stability|capture-office-stability.md]] with the post-im
 
 > [!bug] Troubleshooting
 > If Outlook or OneNote closes unexpectedly while you are validating, see [[#Office quits unexpectedly on first launch|Office quits unexpectedly on first launch]].
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 14 — Close the Plan-Note Sign-Off
 

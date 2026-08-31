@@ -45,8 +45,8 @@
 #   # Override the workspace root used for the local fallback path.
 #   ./bin/record-enrollment.sh --workspace-root /path/to/reimage-workspace
 #
-#   # Write to an exact output directory (skips the reimaged-system/enrollment
-#   # layout and the fallback chain entirely).
+#   # Write to an exact category root (skips the reimaged-system/restarts
+#   # layout and the fallback chain entirely; runs/ is still created under it).
 #   ./bin/record-enrollment.sh --output /absolute/path/to/output
 #
 #   # Point the managed-application comparison at a specific inventory capture.
@@ -55,8 +55,8 @@
 #   # Label the run so the two records around the stabilization restart are
 #   # distinguishable on disk without opening them. Matches the --context
 #   # convention already used by report-loose-secrets.sh.
-#   ./bin/record-enrollment.sh --context pre-restart     # Step 4
-#   ./bin/record-enrollment.sh --context post-restart    # Step 6
+#   ./bin/record-enrollment.sh --context pre-restart     # Step 6
+#   ./bin/record-enrollment.sh --context post-restart    # Step 8
 #
 # Options:
 #   --artifact-root PATH  Override REIMAGE_ARTIFACT_ROOT from shared config.
@@ -65,9 +65,8 @@
 #   --managed-inventory DIR
 #                         Override the pre-image managed-inventory directory
 #                         used to derive the expected application set.
-#   --context LABEL       Prefix the record directory name with LABEL:
-#                         LABEL-record-enrollment-YYYYMMDD-HHMMSS.
-#                         Conventional values are pre-restart and post-restart.
+#   --context LABEL       The run's point. Conventional values are pre-restart
+#                         and post-restart; omitted, the run is `initial`.
 #                         Letters, digits, dot, underscore, and hyphen only.
 #   --open                Reveal the generated record in Finder on completion.
 #   -h, --help            Show this message and exit.
@@ -78,26 +77,26 @@
 #   3. Values loaded from reimage.env.
 #   4. Defaults and reusable fragments loaded by artifact-config.sh.
 #
-# Bundle naming:
-#   [LABEL-]record-enrollment-YYYYMMDD-HHMMSS
+# Run naming:
+#   runs/enroll-and-stabilize-<point>-YYYYMMDD-HHMMSS/
+#     record.md   the rendered record
+#     raw/        the twelve numbered evidence files
 #
-#   The label leads, matching post-image-performance-audit-*, post-reimage-*,
-#   and the pre-image-* repo-audit runs. Readers must therefore glob
-#   *record-enrollment-* rather than record-enrollment-*. --output is
-#   unaffected, since it names an exact directory and bypasses the layout.
+#   The runbook name leads and the point follows it, so one lineage sorts
+#   chronologically and `official/enroll-and-stabilize-<point>.txt` answers
+#   "which run counts" per point. Nothing needs to rank a mixed set by hand,
+#   which is what the old label-first naming forced on every reader.
 #
-#   Because the label precedes the timestamp, directory names no longer sort
-#   chronologically once more than one label is in play: post-restart sorts
-#   before pre-restart regardless of when each ran. Select a "latest" record
-#   by modification time, or glob one label at a time, rather than sorting the
-#   mixed set lexically.
+#   There is no per-run MANIFEST.txt: it listed the same twelve files every
+#   time and duplicated what `raw/` already shows. The category's MANIFEST.md
+#   is the index that matters.
 #
 # Output location precedence (used only when --output is not supplied):
-#   1. $REIMAGE_ARTIFACT_ROOT/reimaged-system/enrollment/
+#   1. $REIMAGE_ARTIFACT_ROOT/reimaged-system/restarts/
 #        when REIMAGE_ARTIFACT_ROOT is set and currently mounted.
-#   2. $REIMAGE_WORKSPACE_ROOT/enrollment/
+#   2. $REIMAGE_WORKSPACE_ROOT/restarts/
 #        when the artifact root is not yet available and a workspace is set.
-#   3. ~/Desktop/reimaged-system-artifacts/enrollment/
+#   3. ~/Desktop/reimaged-system-artifacts/restarts/
 #        as a final fallback so Phase 8 can complete on a bare Mac before the
 #        external artifact volume is reconnected.
 #
@@ -132,6 +131,19 @@ ARTIFACT_CONFIG_REQUIRE_REIMAGE_ARTIFACT_ROOT=false
 
 # shellcheck source=../.internal/load-reimage-config.sh
 source "$CONFIG_LOADER"
+
+# Shared run index. The enrollment records are indexed runs under
+# reimaged-system/restarts/ alongside record-reimaged-system.sh's first-boot
+# bundles: both capture the machine on one side of a stabilization restart, so
+# they belong to one lineage keyed by point rather than to two categories that
+# have to be read together.
+RUNS_LIB="$REPO_ROOT/.internal/artifact-runs.sh"
+if [[ ! -f "$RUNS_LIB" ]]; then
+  echo "ERROR: shared run index not found: $RUNS_LIB" >&2
+  exit 2
+fi
+# shellcheck source=../.internal/artifact-runs.sh
+source "$RUNS_LIB"
 
 usage() {
   sed -n '/^# --- BEGIN USAGE ---$/,/^# --- END USAGE ---$/p' "$0" \
@@ -242,19 +254,20 @@ done
 #     plain lexical sort of the mixed set.
 # The stamp stays at the end of the name, which is what reimage-checklist.sh
 # extracts to compare bundle age against the Time Machine backup.
-CONTEXT_PREFIX=""
-if [[ -n "$CONTEXT_LABEL" ]]; then
-  CONTEXT_PREFIX="$CONTEXT_LABEL-"
-fi
-
+# The context label becomes the run's POINT, so `--context pre-restart` lands in
+# the pre-restart lineage with no further mapping. A run with no context gets
+# `initial`, which is NOT a known point and indexes as `unknown` -- the honest
+# answer, since nothing recorded which side of a restart it was on. This mirrors
+# record-reimaged-system.sh exactly; the two scripts share the category.
 if [[ -z "$OUTPUT_DIR" ]]; then
   if [[ -n "${REIMAGE_ARTIFACT_ROOT:-}" && -d "$REIMAGE_ARTIFACT_ROOT" ]]; then
-    OUTPUT_DIR="$REIMAGE_ARTIFACT_ROOT/reimaged-system/enrollment/${CONTEXT_PREFIX}record-enrollment-$STAMP"
+    OUTPUT_ROOT="$REIMAGE_ARTIFACT_ROOT/reimaged-system"
   elif [[ -n "${REIMAGE_WORKSPACE_ROOT:-}" && -d "$REIMAGE_WORKSPACE_ROOT" ]]; then
-    OUTPUT_DIR="$REIMAGE_WORKSPACE_ROOT/enrollment/${CONTEXT_PREFIX}record-enrollment-$STAMP"
+    OUTPUT_ROOT="$REIMAGE_WORKSPACE_ROOT"
   else
-    OUTPUT_DIR="$HOME/Desktop/reimaged-system-artifacts/enrollment/${CONTEXT_PREFIX}record-enrollment-$STAMP"
+    OUTPUT_ROOT="$HOME/Desktop/reimaged-system-artifacts"
   fi
+  OUTPUT_DIR="$OUTPUT_ROOT/restarts"
 fi
 
 # Resolve a relative --output against the current directory before the guard
@@ -275,10 +288,21 @@ if [[ -n "${REPO_ROOT:-}" && ( "$OUTPUT_DIR" == "$REPO_ROOT" || "$OUTPUT_DIR" ==
   exit 2
 fi
 
-OUT="$OUTPUT_DIR"
+RUN_CATEGORY_ROOT="$OUTPUT_DIR"
+RUN_CONTEXT="enroll-and-stabilize-${CONTEXT_LABEL:-initial}"
+
+if ! artifact_run_begin "$RUN_CATEGORY_ROOT" "$RUN_CONTEXT"; then
+  echo "ERROR: cannot stage an enrollment run under: $RUN_CATEGORY_ROOT" >&2
+  echo "ERROR: no evidence was written. Choose a writable --output (or reconnect the artifact volume) and rerun." >&2
+  exit 2
+fi
+OUT="$ARTIFACT_RUN_DIR"
 RAW_DIR="$OUT/raw"
-PARENT_DIR="$(dirname "$OUT")"
-mkdir -p "$RAW_DIR" "$PARENT_DIR"
+if ! mkdir -p "$RAW_DIR"; then
+  echo "ERROR: cannot create the enrollment record directory: $OUT" >&2
+  artifact_run_abort
+  exit 2
+fi
 
 # ---------------------------------------------------------------------------
 # Evidence capture helpers
@@ -712,35 +736,33 @@ Script: $(basename "$0")
 Context: ${CONTEXT_LABEL:-(none supplied)}
 Output directory: $OUT
 
-Use this record as the Phase 8 command-evidence bundle. The command-verifiable rows are prefilled below with a heuristic PASS/WARN verdict. Complete the remaining manual or mixed-review rows after the UI review and the first stabilization restart. See \`enroll-and-stabilize.md\` for the full runbook.
+This is the Phase 8 evidence bundle for one side of the stabilization restart. It records what the machine reported, not whether the phase passed: the verdict is the exit checklist under \`reimaged-system/boundaries/\`, built by \`record-enrollment.sh --context exit\` from the official post-restart run. Keeping them apart means rerunning a capture never silently discards an answered row, and an answered row never has to be copied forward into a newer record. See \`enroll-and-stabilize.md\` for the full runbook.
 
-## Exit Criteria
+## What This Run Observed
 
-| Check | Verification mode | How to verify | Status | Notes |
-|---|---|---|---|---|
-| Enrollment completed or clearly stabilized | Mixed | \`profiles status -type enrollment\` plus expected company state | $(status_pass_warn "$ENROLLMENT_OK") | See \`raw/01-enrollment-status.txt\`. |
-| Required profiles/certificates appear | Mixed | \`profiles list\` plus expected profile/cert presence | $(status_pass_warn "$PROFILES_OK") | See \`raw/02-profiles-list.txt\`. |
-| Required security tools are installed or actively installing | Mixed | managed app/process checks plus visual sanity review | $(status_pass_warn "$SECURITY_OK") | See \`raw/04-managed-apps.txt\` and \`raw/05-managed-processes.txt\`. |
-| Company Portal opens and shows expected state | Manual | open Company Portal and review the device state | TODO | Fill after UI review. |
-| Required macOS updates are complete or intentionally deferred | Mixed | \`sw_vers\`, \`softwareupdate --list\`, and policy/UI review | $(status_pass_warn "$UPDATES_OK") | See \`raw/06-macos-version.txt\` and \`raw/07-softwareupdate-list.txt\`. |
-| First stabilization restart completed | Manual | observed restart and successful return to login/session | TODO | Fill after the restart checkpoint is complete. |
-| Managed application set matches the pre-image inventory | Mixed | company-scoped inventory vs \`pkgutil --pkgs\` | $MANAGED_APPS_STATUS | $MANAGED_APPS_MISSING_COUNT absent of $MANAGED_APPS_EXPECTED_COUNT expected, from \`$MANAGED_APPS_SOURCE\`. See \`raw/08-managed-app-expectations.txt\`. Components of a superseded management stack stay absent by design. |
-| FileVault is on | Command | \`fdesetup status\` | $(status_pass_warn "$FILEVAULT_OK") | See \`raw/03-filevault-status.txt\`. Phase 14 fails sign-off if this is off. |
-| Configuration profiles installed | Mixed | \`profiles list\` trailing count | $PROFILE_COUNT ($PROFILE_SCOPE scope) | $PROFILE_NOTE |
-| Keychain identities re-issued | Mixed | \`security find-identity -v\` | $(status_pass_warn "$IDENTITIES_OK") | $IDENTITY_TOTAL valid, $IDENTITY_SSL ssl-client. See \`raw/09-keychain-identities.txt\`. Compare against the pre-image count; fingerprints will differ, since these are re-issued rather than restored. |
-| Post-restart baseline still looks healthy | Mixed | rerun the post-restart commands and confirm no regressions | $(status_pass_warn "$POST_RESTART_OK") | Update after post-restart review if this record was written before the final checkpoint. |
+| Observation | Result | Evidence |
+|---|---|---|
+| Enrollment status | $(status_pass_warn "$ENROLLMENT_OK") | \`raw/01-enrollment-status.txt\` |
+| Configuration profiles present | $(status_pass_warn "$PROFILES_OK") | \`raw/02-profiles-list.txt\` |
+| Profile count | $PROFILE_COUNT ($PROFILE_SCOPE scope) | $PROFILE_NOTE |
+| Security tooling installed or installing | $(status_pass_warn "$SECURITY_OK") | \`raw/04-managed-apps.txt\`, \`raw/05-managed-processes.txt\` |
+| macOS updates | $(status_pass_warn "$UPDATES_OK") | \`raw/06-macos-version.txt\`, \`raw/07-softwareupdate-list.txt\` |
+| Managed application set vs pre-image inventory | $MANAGED_APPS_STATUS | $MANAGED_APPS_MISSING_COUNT absent of $MANAGED_APPS_EXPECTED_COUNT expected, from \`$MANAGED_APPS_SOURCE\`. See \`raw/08-managed-app-expectations.txt\`. Components of a superseded management stack stay absent by design. |
+| FileVault | $(status_pass_warn "$FILEVAULT_OK") | \`raw/03-filevault-status.txt\` |
+| Keychain identities | $(status_pass_warn "$IDENTITIES_OK") | $IDENTITY_TOTAL valid, $IDENTITY_SSL ssl-client. See \`raw/09-keychain-identities.txt\`. Fingerprints differ from the pre-image set — MDM re-issues these rather than restoring them. |
+| Post-restart health | $(status_pass_warn "$POST_RESTART_OK") | Meaningful only on a \`--context post-restart\` run. |
 
-## Manual Follow-Up
+\`rows.tsv\` beside this file carries the same verdicts tab-separated, which is what the exit checklist reads rather than reparsing this table.
+
+## Review While the Evidence Is Fresh
 
 1. Open Company Portal and review the device state, including the **Apps** tab.
-2. Confirm whether the first stabilization restart has completed.
-3. Review \`raw/08-managed-app-expectations.txt\` and install anything genuinely
+2. Review \`raw/08-managed-app-expectations.txt\` and install anything genuinely
    missing from the Company Portal **Apps** tab.
-4. Compare the identity count against the pre-image record. Expect the same
-   number and shape with different fingerprints — MDM re-issues these rather
-   than restoring them.
-5. Update the \`TODO\` rows above.
-6. If this record was written before the final post-restart checkpoint, rerun the script and use the newer record for final sign-off.
+3. Compare the identity count against the pre-image record. Expect the same
+   number and shape with different fingerprints.
+
+Anything that needs a decision rather than a look is asked once, in the exit checklist.
 
 ## Raw Evidence Files
 
@@ -758,35 +780,38 @@ Use this record as the Phase 8 command-evidence bundle. The command-verifiable r
 - \`raw/12-system-extensions.txt\`
 EOF
 
-cat > "$OUT/MANIFEST.txt" <<EOF
-# Enrollment Record Manifest
-Generated: $(date)
-Script: $(basename "$0")
-Context: ${CONTEXT_LABEL:-(none supplied)}
-Output directory: $OUT
+# The verdicts, tab-separated, so the exit checklist reads a table rather than
+# reparsing Markdown -- the same split comparison.md / rows.tsv already uses.
+ROWS_FILE="$OUT/rows.tsv"
+{
+  printf 'check\tstatus\tdetail\n'
+  printf 'enrollment\t%s\t%s\n'        "$(status_pass_warn "$ENROLLMENT_OK")" "raw/01-enrollment-status.txt"
+  printf 'profiles\t%s\t%s\n'          "$(status_pass_warn "$PROFILES_OK")" "$PROFILE_COUNT profiles, $PROFILE_SCOPE scope"
+  printf 'security-tools\t%s\t%s\n'    "$(status_pass_warn "$SECURITY_OK")" "raw/04-managed-apps.txt"
+  printf 'macos-updates\t%s\t%s\n'     "$(status_pass_warn "$UPDATES_OK")" "raw/07-softwareupdate-list.txt"
+  printf 'managed-apps\t%s\t%s\n'      "$MANAGED_APPS_STATUS" "$MANAGED_APPS_MISSING_COUNT absent of $MANAGED_APPS_EXPECTED_COUNT expected"
+  printf 'filevault\t%s\t%s\n'         "$(status_pass_warn "$FILEVAULT_OK")" "raw/03-filevault-status.txt"
+  printf 'keychain-identities\t%s\t%s\n' "$(status_pass_warn "$IDENTITIES_OK")" "$IDENTITY_TOTAL valid, $IDENTITY_SSL ssl-client"
+  printf 'post-restart-health\t%s\t%s\n' "$(status_pass_warn "$POST_RESTART_OK")" "meaningful only on a post-restart run"
+} > "$ROWS_FILE"
 
-Files:
-- record.md
-- raw/01-enrollment-status.txt
-- raw/02-profiles-list.txt
-- raw/03-filevault-status.txt
-- raw/04-managed-apps.txt
-- raw/05-managed-processes.txt
-- raw/06-macos-version.txt
-- raw/07-softwareupdate-list.txt
-- raw/08-managed-app-expectations.txt
-- raw/09-keychain-identities.txt
-- raw/10-package-receipts.txt
-- raw/11-launchd-components.txt
-- raw/12-system-extensions.txt
-EOF
+RUN_PASS="$(grep -c '	PASS	' "$ROWS_FILE" 2>/dev/null || true)"
+RUN_WARN="$(grep -c '	WARN	' "$ROWS_FILE" 2>/dev/null || true)"
 
-printf '%s\n' "$REPORT_FILE" > "$PARENT_DIR/latest-enrollment-record.txt"
+if ! artifact_run_finalize "$RUN_CATEGORY_ROOT" \
+     "${RUN_PASS:-0} pass / ${RUN_WARN:-0} warn"; then
+  echo "ERROR: the record was written but artifact-runs reported a problem indexing it — see above." >&2
+  exit 2
+fi
+# finalize promotes the staging directory, so the paths must be re-derived.
+OUT="$ARTIFACT_RUN_DIR"
+REPORT_FILE="$OUT/record.md"
 
 echo ""
 echo "Enrollment record complete."
 echo "Record → $REPORT_FILE"
+echo "Run indexed at: $RUN_CATEGORY_ROOT/MANIFEST.md"
 
 if [[ "$OPEN_RESULT" == "true" ]]; then
-  open -R "$REPORT_FILE"
+  open -R "$REPORT_FILE" 2>/dev/null || true
 fi

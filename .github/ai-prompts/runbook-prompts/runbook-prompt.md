@@ -243,15 +243,17 @@ following it. Different audiences, different rules.
       status (`> [!check]` pass, `> [!fail]` error, `> [!warning]` caution, `> [!note]`
       neutral), each ending in `→ [[#Heading|Heading]]` with any sample inside the callout.
     - Never a table: it can't hold multi-line console output and forces link-pipe escaping.
-- **Sequential Steps takes one of two forms; pick by whether the flow forks.**
-    - **Default — one back-link at the end of the whole section.** A straight-through
-      flow is read top to bottom, so its steps need no individual escape hatch. This
-      holds however many steps it has: length alone does not justify the other form.
-    - **Per-step back-links, when the flow forks into routed paths.** A fork means
-      readers arrive in the middle of the section from a path index or a
-      troubleshooting Continue link, with no idea where the section ends, so each
-      step ends with its own back-link and `---`. `backup-repos.md` is the reference
-      for this form; every other runbook uses the default.
+- **Every step ends with its own back-link and `---`.** A step is a section: it is
+  long enough that a reader who finishes one is far from where the Table of Contents
+  would otherwise be, and readers arrive in the middle of Sequential Steps routinely
+  — from a troubleshooting Continue link, a path index, or a cross-runbook link into
+  a named step. Scrolling to the end of a 700-line section to get back is the cost
+  the single trailing back-link imposed, and it is why this rule changed.
+    - The first step is the exception: nothing precedes it but the section intro, so
+      it gets no back-link above it.
+    - This holds whether or not the flow forks. A forked flow adds routing links and
+      `⮕ Continue to <heading>` forward-links on top of it; it does not change the
+      per-step rule. `backup-repos.md` is still the reference for the forked shape.
 - Every section ends with a back-link, then a `---` divider on the next line — no exceptions:
     - A **parent/main section** links back to the Table of Contents:
       `[[#Table of Contents|⬆ Back to Table of Contents]]`.

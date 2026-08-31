@@ -207,6 +207,10 @@ $REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/restore-intellij-plan-YYYYM
 
 Skim the **Backup Sources**, **Detected IntelliJ Version Subtrees**, and **Secret-Bearing Sources** tables before continuing. If the version subtree table shows no `IntelliJIdea20YY.N/` rows, the Phase 2D IntelliJ backup did not produce per-version content and the scratches restore collapses to "settings ZIP only."
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 2 — Install IntelliJ IDEA
 
 Install IntelliJ IDEA from the approved source (JetBrains Toolbox or direct). JetBrains license lookup for reference:
@@ -389,6 +393,10 @@ passed in the plan-note.
 > [!note]
 > Company-managed IntelliJ installs sometimes ship a slightly different version than what was on the pre-image system. Note the delta rather than trying to force a match — a settings ZIP produced by the older version generally imports cleanly into a newer one.
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 3 — First Launch and Quit
 
 Launch IntelliJ once, dismiss any onboarding, and then quit. This lets IntelliJ create its own Application Support / Preferences / Caches / Logs paths for the newly-installed version before any restore writes into them:
@@ -411,6 +419,10 @@ Help → Show Log in Finder
 
 > [!warning] Pitfall
 > Skipping this step is the most common cause of "settings ZIP imported but nothing changed." IntelliJ silently ignores an import into a config directory it did not create itself. Always confirm the `IntelliJIdea20YY.N/` directory exists under `~/Library/Application Support/JetBrains/` before importing.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 4 — Import the Manual Settings ZIP
 
@@ -439,6 +451,10 @@ Do not import or copy secrets from plain-text `.settings.jar` exports — the se
 
 > [!bug] Troubleshooting
 > If the import reports success but nothing in the IDE changed, see [[#IntelliJ imported the settings ZIP but nothing changed|IntelliJ imported the settings ZIP but nothing changed]].
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 5 — Restore Scratches Consoles and IDE State
 
@@ -482,6 +498,10 @@ custom VM options match intended heap settings
 IDE logs do not show migration errors
 ```
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 6 — Restore Project Idea Metadata Selectively
 
 Project `.idea` metadata can be helpful, but it can also drag stale paths forward or embed credentials. Review each category before copying:
@@ -515,6 +535,10 @@ Per-project procedure:
 5. Check Project Structure, Gradle settings, and run configurations before running anything.
 ```
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 7 — Restore HTTP Client Request Files
 
 Non-secret HTTP Client request files can restore directly from the project-metadata bundle:
@@ -525,6 +549,10 @@ Non-secret HTTP Client request files can restore directly from the project-metad
 ```
 
 These are ordinary text files — safe to copy from `app-settings-backup/intellij/project-metadata/<repo>/` into the matching cloned repo without unlocking any secret material. Confirm nothing in a request file interpolates a hard-coded secret; if it does, treat it as if it were an `.env.json` and route it through the encrypted-DMG restore below instead.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 8 — Restore HTTP Client Env Files from the Encrypted DMG
 
@@ -577,6 +605,10 @@ git status --ignored -s
 > [!bug] Troubleshooting
 > If a request resolves a variable as `null` after the copy, see [[#HTTP Client requests resolve null for a variable|HTTP Client requests resolve null for a variable]]. If `git status` lists an `.env.json` as staged or untracked in the working tree, see [[#git status shows an env.json staged after restore|git status shows an env.json staged after restore]].
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 9 — Validate Project SDKs Gradle and Tests
 
 For each important project, open it in IntelliJ and confirm:
@@ -614,6 +646,10 @@ Record per-project state in the plan-note:
 
 > [!bug] Troubleshooting
 > If IntelliJ offers no JDK for Project SDK or Gradle JVM, see [[#IntelliJ cannot find a JDK|IntelliJ cannot find a JDK]].
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 10 — Close the Plan-Note Sign-Off
 

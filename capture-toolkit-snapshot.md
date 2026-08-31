@@ -193,6 +193,10 @@ bash -n bin/capture-toolkit-snapshot.sh
 > [!note]
 > The entrypoint self-locates and loads shared config through `.internal/load-reimage-config.sh`, so you do not source `reimage.env` by hand for the scripted path.
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 2 — Capture the Toolkit Snapshot
 
 Run the scripted capture. It writes a fresh timestamped bundle carrying both `docs/` and `config/`, and repoints `latest-docs` at it; `--open` reveals the bundle when it finishes:
@@ -222,6 +226,10 @@ That writes a `pre-image-toolkit-config-YYYYMMDD-HHMMSS/` bundle holding `config
 
 > [!warning] Pitfall
 > Do not copy `*.sh` or `*.py` helper scripts into the backup drive. The script source of truth is the Git repository; `docs/` carries the readable runbooks and templates only, not the executables.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 3 — Verify Outputs
 

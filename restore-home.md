@@ -201,6 +201,10 @@ files needed offline are marked "Always Keep on This Device"
 > [!warning] Pitfall
 > Restoring into a OneDrive-managed folder before OneDrive has settled produces conflict copies (`filename-machinename.ext`) or silent duplication. Wait until the OneDrive menu-bar icon shows "Up to date" before Step 3.
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 2 — Draw the Explicit Restore Shortlist
 
 Before any `rsync`, write down which categories you are actually restoring and why. Skim `home-files-backup/MANIFEST.md` to know what's actually in the bundle:
@@ -249,6 +253,10 @@ EOF
 open "$NOTE"
 ```
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 3 — Restore Selected Home Subfolders
 
 Restore one target at a time. Prefer a `--dry-run` pass first for anything larger than a folder full of hand-picked files, then rerun without `--dry-run` once the diff looks right. Do not reach for `rsync -a` here — the flag set below is deliberate, and the note underneath explains why:
@@ -290,6 +298,10 @@ Update the restore note as you go. Any target *not* on the shortlist stays skipp
 
 > [!bug] Troubleshooting
 > If files show up in a OneDrive-managed folder with a machine-name suffix, see [[#Conflict copies appeared inside a OneDrive path|Conflict copies appeared inside a OneDrive path]].
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 4 — Merge Dotfiles Selectively
 
@@ -336,6 +348,10 @@ Categories to consider:
 > [!bug] Troubleshooting
 > If `git` starts stamping the wrong author, or work and personal repos share one identity, see [[#Git identity regressed to a single identity|Git identity regressed to a single identity]].
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 5 — Handle Categories with Special Rules
 
 | Category | Route |
@@ -348,6 +364,10 @@ Categories to consider:
 | Old machine-specific tool state you no longer use | Leave behind on purpose. Record the decision in the restore note. |
 
 If a genuinely useful file only shows up under `~/Library/Application Support/…` in the bundle, restore it via the matching app runbook so the app-specific validation catches it.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 6 — Record the Restore and Validate
 

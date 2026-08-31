@@ -308,7 +308,7 @@ check_restore_runtime() {
   if [[ -n "$cmp_run" && -f "$cmp_root/$cmp_run/comparison.md" ]]; then
     record PASS "Runtime comparison recorded" "\`$(basename "$cmp_run")\`"
   else
-    record FAIL "Runtime comparison recorded" "no official run for \`post-image-restore-runtime-inventory-diff\` under \`comparisons/\` — \`--dry-run\` writes nothing; rerun \`bash bin/compare-restored-state.sh --runbook restore-runtime\` without it"
+    record FAIL "Runtime comparison recorded" "no official run for \`restore-runtime-inventory-diff\` under \`comparisons/\` — \`--dry-run\` writes nothing; rerun \`bash bin/compare-restored-state.sh --runbook restore-runtime\` without it"
   fi
 
   # Freshness. "A comparison exists" and "that comparison still describes this

@@ -187,6 +187,10 @@ Confirm the options and that config loads without error:
 > [!note]
 > This is an aggregate validator: it runs with `set -uo pipefail` and intentionally does **not** abort on the first failing check. Every area still produces a PASS/WARN/FAIL/SKIP row, so one missing artifact never hides the state of the others.
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 2 — Run the Validation
 
 Run the pre-image checklist and open the results in Finder when it finishes:
@@ -208,6 +212,10 @@ $REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/latest-reimage-checklist.txt
 ```
 
 It exits `0` with no FAILs, `1` when one or more FAIL rows were recorded, and `2` on bad arguments or unloadable config.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 3 — Resolve Findings and Sign Off Manual Rows
 
@@ -233,6 +241,10 @@ Capture these in the sign-off note so the decision is written down, not just rem
 
 > [!note]
 > Obsidian restore-*source* decisions themselves belong to [[backup-apps|Backup Apps]]; here you only confirm the vault is synced or copied.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 4 — Verify and Final Spot Checks
 

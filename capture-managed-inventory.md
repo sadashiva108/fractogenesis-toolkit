@@ -213,6 +213,10 @@ Confirm the destination has room if you have not already run the size audit for 
 ./bin/report-size-audit.sh --context pre-image-managed-inventory
 ```
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 2 — Run the Capture
 
 Run the full capture. For the pre-image run, the default context is correct, so no flag is needed:
@@ -233,6 +237,10 @@ The script prints each section as it runs and finishes with the bundle path. It 
 
 > [!note]
 > Section 07 (the company-focused filter pass) is expected to be a subset of the earlier sections. Empty results there are normal on a lightly managed machine — it means none of the filtered vendor names matched, not that the capture failed.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 3 — Verify Outputs
 

@@ -195,6 +195,10 @@ Read the `OUTSIDE` list. That is the finding that matters: credential-shaped fil
 
 Exit `0` means nothing is loose and you can go straight to Phase 3C. Exit `1` means there are candidates; continue.
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 2 — Review the Proposed Moves
 
 ```bash
@@ -208,6 +212,10 @@ Read the list before staging it. The question to ask about each row is not *is t
 > [!warning] Pitfall
 > `settings.xml` and `gradle.properties` are shapes because they routinely hold server passwords and signing keys. If yours do not, they will still be staged. That is not a malfunction — see [[#A Candidate Is Not Actually a Secret|A Candidate Is Not Actually a Secret]] for the `--keep` route.
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 3 — Stage Them
 
 ```bash
@@ -220,6 +228,10 @@ Nothing is ever overwritten. A destination that already exists is reported as `E
 
 > [!warning] Pitfall
 > Staging by hand with `cp` instead of letting this script `mv` leaves the plaintext original exactly where it was. You then have the secret in two places, one of them unencrypted, and the check still reports it.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 4 — Confirm the Tree Is Clean
 

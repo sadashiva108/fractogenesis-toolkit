@@ -195,6 +195,10 @@ $REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/restore-docker-plan-YYYYMMD
 
 Confirm the **Local Docker State** table before continuing — if `Docker Desktop app` is `INSTALLED` and `Docker daemon reachable` is `REACHABLE`, Step 2 collapses to "confirm settings" rather than a full install.
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 2 — Install Docker Desktop
 
 Install Docker Desktop from the approved source:
@@ -220,6 +224,10 @@ docker system df
 > [!bug] Troubleshooting
 > If `docker version` or `docker info` reports that the daemon is not running, see [[#Docker daemon not running|Docker daemon not running]].
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 3 — Apply Resource Settings
 
 Restore resource settings from the pre-image performance-audit / system-inventory notes rather than copying Docker Desktop internal state blindly.
@@ -238,6 +246,10 @@ Restore resource settings from the pre-image performance-audit / system-inventor
 
 Restart Docker Desktop after changes, then re-run `docker info` to confirm the values took effect.
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 4 — Validate the Docker CLI
 
 ```bash
@@ -249,6 +261,10 @@ docker volume ls
 ```
 
 The `hello-world` pull is the smoke test for network reachability + registry auth-in-the-clear.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 5 — Restore Registry Credentials
 
@@ -332,6 +348,10 @@ docker info >/dev/null && docker login "$REGISTRY"
 > [!warning] Pitfall
 > Copying `config.json` from the plain-text `app-settings-backup/` path is a bug even if the file happens to sit there — that path is not encrypted and this file may embed credentials. Always take it from `"$MNT"/docker/`, inside the attached image.
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 6 — Restart Redis
 
 Redis is a lightweight standalone container for caching and session storage.
@@ -370,6 +390,10 @@ redis-cli -h localhost -p 6379 ping
 
 > [!bug] Troubleshooting
 > If a restarted container does not come up, or cannot see a bind-mounted project directory, see [[#Docker containers fail after restore|Docker containers fail after restore]].
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 7 — Restart RabbitMQ
 
@@ -410,6 +434,10 @@ Management UI: [http://localhost:15672](http://localhost:15672) — default cred
 
 > [!bug] Troubleshooting
 > If the container is running but the management UI stays unreachable, see [[#RabbitMQ management UI unreachable|RabbitMQ management UI unreachable]].
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 8 — Restart Elasticsearch and Kibana
 
@@ -488,6 +516,10 @@ Key Elasticsearch settings for reference:
 > If the health check against `:9200` returns `401`, see [[#Elasticsearch returns 401|Elasticsearch returns 401]].
 > If Kibana comes back up red, see [[#Kibana `Status: Red` after restart|Kibana `Status: Red` after restart]].
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 9 — Restart MarkLogic Single-Node
 
 Project location: `src/main/docker/marklogic/` in `carrier-services-storage`. The single-node compose file is `docker-compose.marklogic.yml`, which pulls `progressofficial/marklogic-db` directly (no custom build for local dev).
@@ -534,6 +566,10 @@ Non-zero exit means one of `:7997`, `:8001`, `:8002/manage/v2` is failing — fi
 
 > [!bug] Troubleshooting
 > If the MarkLogic container exits within seconds of `up -d`, see [[#MarkLogic container exits immediately|MarkLogic container exits immediately]].
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 10 — Deploy MarkLogic Security and Application
 
@@ -612,6 +648,10 @@ docker compose -f docker-compose.marklogic.yml down -v
 
 > [!warning] Pitfall
 > `down -v` removes the persisted MarkLogic data volume. The next `up` re-initialises from scratch and you will need to re-run `mlDeploySecurity` and `mlDeploy`. Use it deliberately.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 11 — Close the Plan-Note Sign-Off
 

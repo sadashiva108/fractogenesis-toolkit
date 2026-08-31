@@ -327,6 +327,10 @@ A count of `0` means nothing is checked. That is not a neutral outcome: credenti
 
 [[#Step 2 — Run the IntelliJ Backup|⮕ Continue to Step 2 — Run the IntelliJ Backup]]
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 2 — Run the IntelliJ Backup
 
 Two things decide what this run produces, and both are settled before the command.
@@ -396,6 +400,10 @@ Include at least code style schemes, color schemes/themes, keymaps, inspection p
 
 > [!note]
 > The ZIP is usually easier to import after reimage than restoring individual config files, which is why it is worth capturing even though the scripted backup already copied most of this state.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 4 — Verify Outputs
 

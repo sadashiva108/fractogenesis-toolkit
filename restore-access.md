@@ -392,6 +392,10 @@ fi
 > [!bug] Troubleshooting
 > If `hdiutil attach` reports the image as corrupt, see [[#`hdiutil attach` says the DMG is corrupt|`hdiutil attach` says the DMG is corrupt]].
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 2 — Restore Files Swept by the Phase 3B Loose-Secret Sweep
 
 Phase 3B **moved** every credential-shaped file out of the plaintext artifact tree into `secrets-encrypted/staged-loose/` so the DMG could encrypt it. Nothing puts those files back automatically. Until this step runs, `home-files-backup/`, `app-settings-backup/`, and `staged-ignored-files/` all have holes in them — and the later phases that read those trees (Step 8 below, `restore-apps.md` in Phase 12, `restore-home.md` in Phase 15) will silently restore an incomplete set.
@@ -431,6 +435,10 @@ A second run should report every row as `EXISTS` and `Would restore: 0`. The scr
 
 > [!warning] Pitfall
 > This deliberately puts plaintext credentials back onto the artifact drive. That is required for the restore to be complete, but the drive is no longer clean afterwards. Before the artifact root is retired, handed to anyone, or stored long-term, re-run `./bin/stage-loose-secrets.sh --apply` to sweep them back behind the encryption boundary — or wipe the drive.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 3 — Restore SSH and Git Access
 
@@ -529,6 +537,10 @@ ssh -T "git@$GIT_ALIAS" || true
 > [!bug] Troubleshooting
 > If SSH prompts for the key passphrase in every new shell, see [[#SSH keeps prompting for a passphrase every session|SSH keeps prompting for a passphrase every session]].
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 4 — Restore Certificates and Keychain Material
 
 **First ask the machine, not the image.** On a managed Mac, enrolment in Phase 8
@@ -619,6 +631,10 @@ Reference the reviewed non-secret material under `$REIMAGE_ARTIFACT_ROOT/public-
 > [!note]
 > `open -a "Keychain Access" <directory>` does not work — Keychain Access opens certificate *files*, not folders. Use plain `open` to reveal the directory in Finder, then drag.
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 5 — Trust the Internal Root Certificate
 
 `jssecacerts` in the next step only covers JVM tools. Non-Java tools (curl, git, browsers) rely on the macOS keychain trust settings instead, so the internal **root** needs its trust set explicitly.
@@ -683,6 +699,10 @@ sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keyc
 
 > [!bug] Troubleshooting
 > If `curl` still fails against an internal endpoint after the trust change, see [[#`curl` still fails against internal endpoints after Step 5|`curl` still fails against internal endpoints after Step 5]].
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 6 — Restore Java Trust Overrides
 
@@ -936,6 +956,10 @@ If you have no internal HTTPS endpoint to hand, run it against a public one
 instead. That will not prove the corporate root is present, but it does catch a
 badly built store — which is the more likely mistake with form **A**, where an
 old public-root set comes along with the copy.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 7 — Trust the Corporate CA Outside the Keychain
 
@@ -1294,6 +1318,10 @@ tests did.
 > If one tool fails while the others pass — most often `npm` — see
 > [[#One smoke test fails while the others pass|One smoke test fails while the others pass]].
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 8 — Restore Shell Environment and CLI Config
 
 Do not blindly overwrite fresh shell files. Diff first, adopt selectively.
@@ -1382,6 +1410,10 @@ symptom will not appear until the first `npm install` two phases later. If you
 do overwrite it, re-run Step 7's `.zprofile` block afterwards — it is idempotent
 and reports `ADDED` or `PRESENT`.
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 9 — Restore Credentials and License Material
 
 Credential-bearing material stays inside the DMG until the moment it is needed. Restore only through supported flows:
@@ -1452,6 +1484,10 @@ For each application license or activation file:
 
 > [!warning] Pitfall
 > Screenshots or PDFs of subscription pages that contain private identifiers still count as secret material. They belong under `secrets-encrypted/licenses/` — not under `public-certs/`, not in `reimaged-system/restore-notes/`, and not in a general notes folder. Staging them there *before* the Phase 3C build is what causes the `licenses/` category to exist on the next image; nothing is added to a DMG after it is built.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 10 — Eject the DMG and Clean Up Plaintext
 

@@ -2,7 +2,7 @@
 
 # Verify Reimaged System
 
-**Last updated:** 2026-08-18
+**Last updated:** 2026-08-31
 
 Reconnect the external artifact drive, prove the freshly reimaged Mac is basically usable, and record the first-boot evidence twice around a stabilization restart before deeper restore work begins. This phase pairs the human-driven day-one checks — network, browser, terminal, displays, peripherals, audio — with `record-reimaged-system.sh`, which records the same 14 read-only signals into two comparable evidence bundles, and hands off to Phase 10 once the pair is clean. This phase installs nothing managed: the managed app set belongs to Phase 8, and arriving here with it incomplete invalidates the bundle comparison the phase is built around.
 
@@ -59,7 +59,7 @@ with it.
 - **The reconnected artifact root** — the external artifact drive brought back online and spot-checked, so Phase 9 and later evidence lands under `reimaged-system/` instead of the Desktop fallback.
 - **Two first-boot evidence bundles** — a pre-restart and a post-restart `initial-reimaged-system-*` bundle, each holding `checklist.md`, the companion planning documents, `raw/`, and `logs/`.
 - **The pre/post-restart comparison** — the row-by-row read across the second stabilization restart that names anything which regressed.
-- **The `reimaged-system/` working subfolders** — `prereq-checks/`, `restore-notes/`, `restarts/`, and `time-machine/`, written into by later phases. Everything the post-image half produces lands under `reimaged-system/`; unlike the pre-image phases, it adds no new top-level directories to the artifact root.
+- **The `reimaged-system/` working subfolders** — `boundaries/`, `comparisons/`, `state/`, `restarts/`, `restore-notes/`, and `time-machine/`, written into by later phases. Everything the post-image half produces lands under `reimaged-system/`; unlike the pre-image phases, it adds no new top-level directories to the artifact root.
 
 **What the rest of the workflow relies on it for**
 
@@ -79,7 +79,7 @@ with it.
 | | the post-image Time Machine backup — `run-time-machine` (Phase 16), after Restore Home |
 | | post-image managed-inventory comparison — `capture-managed-inventory` (Phase 13C) |
 | relocating any Phase 8 record that landed on a fallback path | the managed application set and its Company Portal installs — `enroll-and-stabilize` (Phase 8 Step 4) |
-| the `reimaged-system/` subfolders used by later phases (`prereq-checks`, `restore-notes`, `restarts`, `time-machine`) | the final validated sign-off — its `reimage-checklist.sh --phase post` bundle and the resolution of the manual rows this phase only enumerates — `reimaged-system-checks` (Phase 14) |
+| the `reimaged-system/` subfolders used by later phases (`boundaries`, `comparisons`, `state`, `restarts`, `restore-notes`, `time-machine`) | the final validated sign-off — its `reimage-checklist.sh --phase post` bundle and the resolution of the manual rows this phase only enumerates — `reimaged-system-checks` (Phase 14) |
 
 This runbook can be rerun. Each run of `record-reimaged-system.sh` writes a fresh timestamped bundle and updates the `latest-initial-reimaged-system-bundle.txt` pointer, so a later run does not overwrite the pre-restart bundle you use for comparison.
 
@@ -258,10 +258,11 @@ $REIMAGE_ARTIFACT_ROOT/reimaged-system/
 │   │   ├── commands.log
 │   │   └── errors.log
 │   └── checks/
-├── exit-checks/
-├── prereq-checks/
-├── restore-notes/
+├── boundaries/
+├── comparisons/
+├── state/
 ├── restarts/
+├── restore-notes/
 └── time-machine/
 ```
 
@@ -388,6 +389,10 @@ configured but not present.
 > [!warning] Pitfall
 > Do not run heavy restore work before this step lands cleanly. Later phases assume `reimaged-system/` is the sink for restore notes and comparison bundles; a missing artifact root means those writes silently miss their intended home.
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 2 — Record the Pre-Restart First-Boot Bundle
 
 Run the first-boot record before the second stabilization restart. Preview the flags first:
@@ -437,6 +442,9 @@ The script emits `checklist.md` with automated rows prefilled, three companion p
 > [!bug] Troubleshooting
 > If the network row is stamped `WARN` on a Mac that clearly has internet, see [[#Network row is WARN on a machine that clearly has internet|Network row is WARN on a machine that clearly has internet]].
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 3 — Review Manual First-Boot Areas
 
@@ -460,6 +468,10 @@ certificates, or repositories waits for Phase 10+.
 > Deliberately **not** in this phase: OneDrive sign-in and initial sync. See
 > [[enroll-and-stabilize#Step 4 — Install and Confirm Required and Available Managed Apps|Phase 8 Step 4]].
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 4 — Take the Second Stabilization Restart
 
 Restart the Mac. This is the Phase 9 restart, distinct from the Phase 8 first stabilization restart.
@@ -478,6 +490,10 @@ After the restart:
 2. Reconnect network if needed.
 3. Continue directly to Step 5.
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 5 — Record the Post-Restart First-Boot Bundle
 
 Rerun the record, labelled as the post-restart bundle. This is the sign-off bundle — it is the one you cite in Step 8.
@@ -490,6 +506,10 @@ Each run writes a fresh timestamped bundle, so the pre-restart bundle from Step 
 
 > [!bug] Troubleshooting
 > If `latest-initial-reimaged-system-bundle.txt` still names the pre-restart bundle after this run, see [[#latest-initial-reimaged-system-bundle.txt points at the pre-restart bundle after a Step 5 run|latest-initial-reimaged-system-bundle.txt points at the pre-restart bundle after a Step 5 run]].
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 6 — Compare the Two Bundles
 
@@ -527,6 +547,10 @@ Focus on rows that regressed. A managed process the pre-restart run saw and the 
 
 > [!bug] Troubleshooting
 > If a row disagrees across the pair that should have been stable, see [[#The two bundles disagree on a row that should be stable|The two bundles disagree on a row that should be stable]].
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 7 — Close Out the Exit Criteria
 
@@ -650,7 +674,8 @@ TOC verification performed before publishing:
 - deleted optional sections were also removed from the Table of Contents;
 - the `initial-reimaged-system-*` bundle prefix and the anchors other files link
   to are preserved as-is;
-- each top-level section ends with a single "Back to Table of Contents" link,
-  except Troubleshooting, whose back-link sits under its intro and whose routed
-  symptom subsections stay out of the Table of Contents.
+- each top-level section and each Sequential Step ends with a "Back to Table of
+  Contents" link and a divider, except the first step, which has nothing above it
+  to return from, and Troubleshooting, whose back-link sits under its intro and
+  whose routed symptom subsections stay out of the Table of Contents.
 -->

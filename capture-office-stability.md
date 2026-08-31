@@ -262,6 +262,10 @@ touch "$OFFICE_WATCH/bundle-watch-start.marker"
 > [!warning] Pitfall
 > Do not reset the marker after an incident until that incident's evidence is captured. The most common mistake is resetting it too late; resetting it too early erases the window you were trying to document. Reset it only when you deliberately want a new clean window.
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 2 — Exercise Office and Snapshot the Workload
 
 Build the workload up in a fixed order so the watcher records clean transitions. Run a workload snapshot at each stage below — the command is the same every time, and it writes into `$OFFICE_WATCH`:
@@ -280,6 +284,10 @@ Stages, in order:
 > [!bug] Troubleshooting
 > If Outlook or OneNote closes on its own at any point, do not reopen it — see [[#Outlook or OneNote Closed Unexpectedly|Outlook or OneNote Closed Unexpectedly]].
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 3 — Run the Baseline Collector
 
 At the end of the window, turn everything the watcher recorded into a structured, timestamped bundle and ZIP under `office-stability/`. The collector re-runs the marker-relative crash/bundle/process checks itself, so you do not need to have run them by hand:
@@ -293,6 +301,10 @@ It writes the numbered section files `00`–`08` and `office-stability-summary.m
 > [!note]
 > If the unified-log pull is slow and you want a faster first pass, add `--skip-unified-log`; file `07-unified-log-office-since-marker.txt` then just records that it was skipped.
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 4 — Generate the Checklist Report
 
 Turn the bundle into a readable sign-off report under `office-stability/checklists/`. Run this after the collector and before closing out the phase; `--open` opens the report when it finishes:
@@ -302,6 +314,10 @@ Turn the bundle into a readable sign-off report under `office-stability/checklis
 ```
 
 This is Office-specific and runs separately from the general Phase 6B checklist; its findings roll up to that Phase 6B sign-off. A hand-tracked equivalent is kept in Supplemental Reference for when you are not generating the report.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 5 — Verify Outputs
 

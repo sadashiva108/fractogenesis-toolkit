@@ -160,6 +160,10 @@ This one is worth testing deliberately, not assuming. On several past macOS vers
 > [!bug] Troubleshooting
 > If the popup appears, it's a real finding: `prepare-artifact-root.py` (and every other Python script in `bin/`) would be blocked by the exact popup this whole toolkit was designed to avoid. Note it, decline/cancel it, and flag it in the reimage's own migration log.
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 2 — Validate Bootstrapped fractogenesis-toolkit (curl)
 
 **1. Create a throwaway toolkit directory:**
@@ -300,6 +304,10 @@ rm -rf /tmp/fractogenesis-toolkit-access-test
 ```bash
 unset FRACTOGENESIS_HOME
 ```
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 3 — Validate Jump Drive fractogenesis-toolkit
 
@@ -473,6 +481,10 @@ unset FRACTOGENESIS_PARENT
 
 > [!note]
 > If this is the actual physical jump drive rather than a local-tarball test, the same commands work as written — just make sure `$JUMP_DRIVE_VOLUME` points at the drive's real mount path.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 4 — Clean Up
 

@@ -371,6 +371,10 @@ than installing something broken.
 Either route ends with the toolkit on disk and no further network dependency
 for reading the runbooks themselves.
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 2 — Establish the Shell Environment
 
 The erase destroyed `FRACTOGENESIS_HOME` and `reimage.env`, and every runbook
@@ -476,6 +480,10 @@ at `$FRACTOGENESIS_HOME` with `reimage.env` loaded.
 > 10A and takes over from `.envrc`; remove the block then. Full picture:
 > [[toolkit-environment-reference|Toolkit Environment Reference]].
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 3 — Complete Managed Enrollment
 
 Complete the managed enrollment flow driven by the OS and Company Portal:
@@ -526,6 +534,10 @@ misleads:
 
 > [!warning] Pitfall
 > Do not manually install Office or security tooling from a separate channel unless IT explicitly asks. Duplicate installs can conflict with the managed copy that policy is about to push.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 4 — Install and Confirm Required and Available Managed Apps
 
@@ -616,6 +628,10 @@ through Intune.
 > Machine steps, and its interaction with the later home-files restore is not
 > yet settled.
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 5 — Apply Required macOS Updates
 
 If IT policy, Company Portal, or System Settings requires macOS updates before restore work, complete them here.
@@ -644,6 +660,10 @@ That shortcut looks like it saves a reboot, and it costs more than it saves:
 Taking the update reboot as part of this step, then recording Step 6, then
 taking a deliberate Step 7 restart costs about two extra minutes and keeps both
 records meaning what they claim.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 6 — Record the Pre-Restart Baseline
 
@@ -704,6 +724,10 @@ The script prints each subsystem as it runs, writes the twelve `raw/NN-*.txt` fi
 > [!bug] Troubleshooting
 > If the script reports a Desktop path instead of the artifact root, see [[#The record landed on the Desktop instead of the artifact root|The record landed on the Desktop instead of the artifact root]].
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 7 — Take the First Stabilization Restart
 
 Restart the Mac to confirm the managed baseline survives a reboot.
@@ -722,6 +746,10 @@ After the restart:
 1. Sign back in.
 2. Reconnect network if needed.
 3. Continue directly to Step 8.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 8 — Record the Post-Restart Baseline
 
@@ -749,6 +777,10 @@ there is no obvious loss of enrollment, profiles, or base managed apps
 
 > [!bug] Troubleshooting
 > If a key item disappeared after the restart (missing profiles, missing security tool, enrollment reporting unenrolled), stop and resolve that with IT before moving on. Do not begin restore work on a broken managed baseline.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 9 — Close Out the Exit Criteria
 
@@ -970,7 +1002,8 @@ The script refuses to write output under the toolkit repo checkout as a safety i
 TOC verification performed before publishing:
 - every Table of Contents entry resolves to a heading present in this file;
 - deleted optional sections were also removed from the Table of Contents;
-- each top-level section ends with a single "Back to Table of Contents" link,
-  except Troubleshooting, whose back-link sits under its intro and whose routed
-  symptom subsections stay out of the Table of Contents.
+- each top-level section and each Sequential Step ends with a "Back to Table of
+  Contents" link and a divider, except the first step, which has nothing above it
+  to return from, and Troubleshooting, whose back-link sits under its intro and
+  whose routed symptom subsections stay out of the Table of Contents.
 -->

@@ -1,6 +1,12 @@
 # Apply Manifest
 
-**Revision 80** — supersedes earlier manifests. `restore-runtime.md` Step 11 says which command answers which row, and what answering a `TODO` actually means.
+**Revision 83** — supersedes earlier manifests. Every step gets its own way back, the enrollment records join the restart lineage, and a record stops carrying a verdict it cannot keep current.
+
+**Revision 82** — supersedes Revision 81 and earlier. The entry boundary joins the exit boundary in `boundaries/`, in the documentation and on the drive.
+
+**Revision 81** — supersedes Revision 80 and earlier. `restore-runtime.md` sends the reader to the directory the comparison is actually written to, and defines its own outputs so the two cannot drift again.
+
+**Revision 80** — supersedes Revision 79 and earlier. `restore-runtime.md` Step 11 says which command answers which row, and what answering a `TODO` actually means.
 
 **Revision 79** — supersedes Revision 78 and earlier. The alias list that decides the `jssecacerts` form is named, kept, and read by the loop that needs it.
 
@@ -216,6 +222,180 @@ several separate rounds of work, and splicing them by hand is how the duplicate
 | `restore-intellij.sh` | `bin/restore-intellij.sh` |
 | `record-reimaged-system.sh` | `bin/record-reimaged-system.sh` |
 | `reimage-checklist.sh` | `bin/reimage-checklist.sh` |
+
+---
+
+## Revision 83 — three changes with one shape: put each thing where it can stay true
+
+**Every Sequential Step now ends with a back-link and a divider.** The house rule
+said the opposite: one back-link at the end of the whole section, per-step links
+only when the flow forks. Measured against how these runbooks are actually read,
+that was wrong. `restore-runtime.md` Steps 1–11 ran seven hundred lines with no
+way back, and readers do not arrive at the top — they come in from a
+troubleshooting Continue link, a path index, or a cross-runbook link that names a
+step. The rule in `runbook-prompt.md` is rewritten, and all 22 runbooks with more
+than one step are converted, 106 back-links in total. The first step of each
+runbook is the exception: nothing precedes it but the section intro.
+
+`backup-repos.md` needed no change — it already had the per-step form under the
+old fork carve-out, which is now simply the rule.
+
+**`record-enrollment.sh` writes indexed runs under `restarts/`.** It was the last
+producer on the pre-run-category shape: directories it named itself, a
+`latest-enrollment-record.txt` holding an absolute path, and a per-run
+`MANIFEST.txt` that listed the same twelve files every time. It now brackets its
+work with `artifact_run_begin` / `artifact_run_finalize` and writes
+`restarts/runs/enroll-and-stabilize-<point>-<stamp>/`.
+
+`--context` becomes the run's *point* rather than a directory-name prefix, so
+`pre-restart` and `post-restart` land in lineages the index already understands
+and a run with no context is `initial` — the same mapping
+`record-reimaged-system.sh` uses, into the same category. Both scripts capture the
+machine on one side of a stabilization restart; they were never two kinds of
+thing.
+
+The runbook name now leads and the point follows, which retires a documented
+hazard rather than restating it: under the old label-first naming
+`post-restart-record-enrollment-…` sorted *before* `pre-restart-…` however recent
+each was, so every reader had to be warned not to sort the mixed set. One lineage
+per point sorts chronologically and `official/<context>.txt` answers "which run
+counts" without sorting anything.
+
+The three-tier output fallback is unchanged — artifact root, workspace, Desktop —
+now resolving to `<tier>/restarts`. Phase 8 still completes on a bare Mac.
+
+**The record stops carrying the exit-criteria table.** `record.md` prefilled the
+Phase 8 exit criteria with `TODO` rows in *every* run, pre-restart included, which
+is why the runbook had to tell the reader to open the Step 8 record and not the
+Step 6 one, and why rerunning a capture silently discarded rows someone had
+answered. A capture and a verdict have different lifecycles and now live apart:
+`record.md` reports what the machine said, `rows.tsv` beside it carries the same
+verdicts tab-separated, and the exit checklist under `boundaries/` will be built
+from the official post-restart run's rows. The split matches
+`comparison.md` / `rows.tsv`, which exists for the same reason.
+
+**Modified:** `.github/ai-prompts/runbook-prompts/runbook-prompt.md`,
+`bin/record-enrollment.sh`, and 22 runbooks.
+
+**Not verified here:** `bash -n` and the portability lint pass on
+`record-enrollment.sh`; `verify-doc-paths.sh --all` passes with 1076 anchors and
+no breaks. The script has not been run — that needs a managed Mac. Its exit mode,
+the two new modes in `record-reimaged-system.sh`, the Phase 8 and Phase 9 runbook
+reworks, and the migration of the nine existing enrollment runs into `restarts/`
+are still outstanding.
+
+---
+
+## Revision 82 — the entry half of the pair was still documented in its old home
+
+`prereq-checks/` and `exit-checks/` were folded into one `boundaries/` category
+when the two boundary halves were given a single home. `exit-checks/` was cleaned
+up then. `prereq-checks/` was not: `record-restore-prereqs.sh` has been writing
+`boundaries/runs/<runbook>-entry-<stamp>/` for some time, while three documents
+still described the old layout, and four real checklists were still sitting in
+`prereq-checks/` under phase-ordinal names.
+
+`restore-runtime.md` Step 0 claimed `reimaged-system/prereq-checks/`. It now names
+`boundaries/` and its context, `restore-runtime-entry` — and Artifact and Script
+Locations, which gained the output categories in Revision 81 while this stale
+claim was two hundred lines above it, now attributes `boundaries/` to Steps 0 and
+11 rather than Step 11 alone.
+
+`verify-reimaged-system.md` listed the working subfolders twice, both times as
+`prereq-checks`/`exit-checks`, and its `reimaged-system/` tree carried both.
+`comparisons/` and `state/` were missing from all three.
+
+`references/master-directory-reference.md` is the document the others defer to for
+this layout, and it still drew both dead directories with their `latest-*.txt`
+pointers — the pre-`boundaries` shape entirely, missing `boundaries/`,
+`comparisons/` and `state/`. It now draws `boundaries/` and `comparisons/` in
+full and states the run-category shape once, since four subfolders share it.
+
+**The drive was migrated, not just the documentation.** Four checklists moved out
+of `prereq-checks/`:
+
+| Was | Now |
+|---|---|
+| `prereq-10A-20260819-093632.md` | `boundaries/runs/restore-runtime-entry-20260819-093632/checklist.md` |
+| `prereq-10B-20260820-011553.md` | `boundaries/runs/restore-access-entry-20260820-011553/checklist.md` |
+| `prereq-10B-20260820-013905.md` | `boundaries/runs/restore-access-entry-20260820-013905/checklist.md` |
+| `prereq-10B-20260820-015233.md` | `boundaries/runs/restore-access-entry-20260820-015233/checklist.md` |
+
+Runbook names come from each file's own `Pairs with` line rather than from the
+ordinal in its filename. The file contents are untouched — they still open "Phase
+10A Prerequisite Check", because a dated artifact records what was true when it
+was written and is never regenerated. Their manifest rows carry `migrated from
+prereq-checks/` in the Note column, which is where that fact belongs.
+
+The four rows were inserted into `boundaries/MANIFEST.md` in completion order
+rather than appended. Officialness for `entry` is last-wins by *file order*, not
+by timestamp — `artifact_runs_rebuild` reads the rows with `tail -1` — so
+appending four 2026-08-19/20 rows below the existing ones would have made a
+migrated run official over `restore-access-entry-20260824-063529`. Inserting them
+in order preserves the invariant the rule depends on without editing any existing
+row. `artifact_runs_rebuild` then wrote `official/restore-runtime-entry.txt`,
+which had never existed, and left `restore-access-entry.txt` on the 08-24 run.
+
+`prereq-checks/` and its two `latest-prereq-<phase>.txt` pointers are gone. The
+pointers were the old one-per-category form the run categories replaced with
+`official/<context>.txt`.
+
+**Modified:** `restore-runtime.md`, `verify-reimaged-system.md`,
+`references/master-directory-reference.md`, `APPLY-MANIFEST.md`.
+
+**Not verified here:** `verify-doc-paths.sh --all` passes. The migration itself was
+performed against the live artifact root and its result read back — `official/`
+lists nine pointers, the four runs are on disk with their `checklist.md`, and
+`prereq-checks/` no longer exists.
+
+---
+
+## Revision 81 — a runbook pointing at a directory the script stopped writing to
+
+`restore-runtime.md` twice sent the reader to `reimaged-system/restore-notes/`
+for the version comparison. `compare-restored-state.sh` writes to
+`reimaged-system/comparisons/`, as a run category: `runs/<context>-<stamp>/`
+holding `comparison.md` and `rows.tsv`, `official/<context>.txt` naming the
+newest run, and a `MANIFEST.md` indexing all of them.
+
+`restore-notes/` is not a dead path — `restore-access.md` Step 9 and
+`restore-home.md` both write hand-authored notes there, which is why nothing
+flagged it. A reader following Step 10 finds a real directory with real files in
+it, none of them the comparison. Reported by the operator, who had the run
+directory on screen.
+
+**The runbook now defines its own outputs.** Artifact and Script Locations opens
+with "Every path this runbook reads or writes is defined here, once" and then
+listed only the inputs. Both output categories were named nowhere but in the prose
+of the steps that write them — which is precisely how one of them drifted, and how
+`exit-checks/` survived in Step 11 until Revision 80. `comparisons/` and
+`boundaries/` are now in that section with their shared run-category shape and
+their two contexts, and the steps refer to them instead of describing them.
+
+Step 10 also says how to reach the newest run: read the run name out of
+`official/restore-runtime-inventory-diff.txt` rather than picking the latest
+timestamp out of `runs/` by eye.
+
+**Two script strings carried the same stale prefix.**
+
+`compare-restored-state.sh` documented its own output as
+`runs/post-image-<runbook>-diff-<stamp>/`. `RUN_CONTEXT` builds
+`<runbook>-inventory-diff`, so the header described a directory the script has
+never created. Its usage block also still advertised `--runbook` as taking
+`10A, 10B`, while the parser accepts runbook names and its own error message says
+so.
+
+`record-restore-exit.sh` told the operator there was "no official run for
+`post-image-restore-runtime-inventory-diff`" — a `FAIL` message naming a context
+that cannot exist, two lines below the lookup that correctly uses
+`restore-runtime-inventory-diff`. The message is what an operator greps for.
+
+**Modified:** `restore-runtime.md`, `bin/compare-restored-state.sh`,
+`bin/record-restore-exit.sh`, `APPLY-MANIFEST.md`.
+
+**Not verified here:** both script edits are comment and message text only, with
+no change to logic; `bash -n` and the portability lint pass. Neither script was
+run — that needs the artifact root on the Mac. `verify-doc-paths.sh --all` passes.
 
 ---
 

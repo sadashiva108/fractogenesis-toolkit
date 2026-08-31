@@ -206,6 +206,10 @@ ls -1t "$REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/" 2>/dev/null | hea
 
 For each outstanding row, either fix the underlying issue now, or record the deliberate skip in a fresh Phase 14 note under `restore-notes/` so the Phase 14 checklist has something to reference when it lands on the matching row.
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 2 — Run the Post-Image Checklist
 
 Run the unified checklist entrypoint in post-image mode:
@@ -235,6 +239,10 @@ $REIMAGE_ARTIFACT_ROOT/reimaged-system/checklists/reimage-checklist-YYYYMMDD-HHM
 ```
 
 with `latest-reimage-checklist.txt` updated to point at the fresh run.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 3 — Review Automated Rows
 
@@ -268,6 +276,10 @@ phase was left unfinished", and exiting **1** names which one.
 > [!bug] Troubleshooting
 > If the checklist reports `WARN` for Docker although Docker Desktop is installed, see [[#The checklist reports `WARN` for Docker even though Docker Desktop is installed|The checklist reports `WARN` for Docker even though Docker Desktop is installed]].
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 4 — Resolve Manual Sign-Off Areas
 
 These rows cannot be proved by a script. Walk them by hand:
@@ -282,6 +294,10 @@ These rows cannot be proved by a script. Walk them by hand:
 | Final cleanliness | Are temporary secret copies removed, DMGs ejected, and no scratch credentials left in `$HOME`? |
 
 Record decisions in a Phase 14 note under `restore-notes/` — especially any manual `PASS` that would look ambiguous to a future reader.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 5 — Rerun and Confirm the Sign-Off Artifact
 

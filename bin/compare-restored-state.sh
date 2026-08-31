@@ -57,7 +57,8 @@
 #     --inventory pre-image-20260816-211456
 #
 # Options:
-#   --runbook NAME         Which phase to compare. Required. Supported: 10A, 10B
+#   --runbook NAME        Which phase to compare. Required.
+#                         Supported: restore-runtime, restore-access
 #   --inventory NAME      Named inventory bundle under system-inventory/.
 #                         Default: the newest pre-image-* bundle.
 #   --artifact-root PATH  Override REIMAGE_ARTIFACT_ROOT.
@@ -74,7 +75,7 @@
 #   -h, --help            Show this message and exit.
 #
 # Output:
-#   <artifact-root>/reimaged-system/comparisons/runs/post-image-<runbook>-diff-<stamp>/
+#   <artifact-root>/reimaged-system/comparisons/runs/<runbook>-inventory-diff-<stamp>/
 #     comparison.md   the rendered note
 #     rows.tsv        the joined rows, so a later comparison need not reparse Markdown
 #   indexed in that category\'s MANIFEST.md, with official/ naming the newest run.

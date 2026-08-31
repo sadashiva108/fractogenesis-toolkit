@@ -364,6 +364,10 @@ Artifact root: <$REIMAGE_ARTIFACT_ROOT>
 > [!warning] Pitfall
 > `--supported-apps` and `--preflight` are the only two modes that create nothing — both exit before any `mkdir`. Every other mode, `--candidate-review` included, creates `app-settings-backup/` as its first act, so none of them is safe for inspecting an artifact root you have not committed to. `--preflight` exits `2` when the root is unset, the volume is not mounted, or `prepare-artifact-root` has not created the expected top-level folders — fix that here rather than at Step 3.
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 2 — Check Backup-Root Capacity
 
 Run the size audit before writing app artifacts, to confirm the destination has room. The `--context` label keeps this phase's audit distinct from the ones `backup-home` and `backup-repos` run against the same backup root.
@@ -380,6 +384,10 @@ Review these lines in the output:
 
 > [!note]
 > This audit is global to the Phase 2 backup root. It confirms the destination volume is mounted and shows headroom; it does **not** estimate the size of individual app-controlled exports.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 3 — Determine Which Apps to Back Up
 
@@ -449,6 +457,10 @@ Re-running candidate review is safe — it **preserves the choices you have made
 > [!note]
 > The full Step 4 backup **requires** this checklist and stops with instructions if it is missing. To deliberately skip the checklist and back up everything detected instead, run Step 4 with `--all-detected`.
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 4 — Run the Automated Backup
 
 Run the real backup. It reads the selection checklist you completed in Step 3 and acts only on the apps you checked — running the scripted captures for selected supported apps, and creating a ready folder with a README for every selected app whose backup is manual or unsupported. Apps you do not have are silently skipped even when checked.
@@ -491,6 +503,10 @@ Rerun a single script-class portion through the same entrypoint when needed — 
 
 > [!warning] Pitfall
 > A successful run here is **not** a completed phase. It backs up only the selected script-class apps. IntelliJ has not run at all. Any selected Chrome, Postman, Fiddler Everywhere, Terminal, and (if you use them) Raycast, TNAS PC, and iMovie still need their manual exports, Obsidian still needs its restore-source decision, and your selected unsupported apps still need filling in. Each has a folder with a README naming what belongs there — a folder containing only a README means the export was not done.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 5 — Complete Manual Exports
 
@@ -868,6 +884,10 @@ Phase 3C picks the folder up through its catch-all sweep of `secrets-encrypted/*
 > [!warning] Pitfall
 > The Passwords export is plaintext. Never place it under `app-settings-backup/`, OneDrive, iCloud, email, Desktop, Downloads, or a repo — only `secrets-encrypted/macos-passwords/`. Prefer the password manager over exporting at all.
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 6 — Optional Apps
 
 These apps are manual and belong to the optional group, so their full steps live under Supplemental Reference to keep the main flow lean. Complete any you checked in Step 3 — this index just points to each one's full steps. The scripted optional apps (Mos, Wireshark) are captured automatically in Step 4 and are not listed here.
@@ -876,6 +896,10 @@ These apps are manual and belong to the optional group, so their full steps live
 - [[#Obsidian|Obsidian]] — review the generated vault inventory and record each vault's restore source.
 - [[#TNAS PC|TNAS PC]] — saved TNAS connections or credentials matter.
 - [[#iMovie|iMovie]] — you keep iMovie projects or libraries and must confirm they are backed up.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 7 — Verify Outputs
 

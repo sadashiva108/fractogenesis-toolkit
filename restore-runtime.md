@@ -117,6 +117,19 @@ $REIMAGE_ARTIFACT_ROOT/system-inventory/pre-image-YYYYMMDD-HHMMSS/
 $REIMAGE_ARTIFACT_ROOT/system-inventory/post-image-YYYYMMDD-HHMMSS/    # only present after Phase 13B
 ```
 
+Output written by Steps 0, 10, and 11:
+
+```text
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/boundaries/     # Steps 0 and 11 — the entry and exit checklists
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/comparisons/    # Step 10 — the version comparison
+```
+
+Both are run categories with the same shape: `runs/<context>-YYYYMMDD-HHMMSS/`
+holding that run's files, `official/<context>.txt` naming the newest run, and a
+`MANIFEST.md` indexing every completed run. Step 0 writes under the context
+`restore-runtime-entry` and Step 11 under `restore-runtime-exit`; Step 10 writes
+under `restore-runtime-inventory-diff`.
+
 The complete `system-inventory/` layout is defined once in the Master Directory Reference:
 
 [[master-directory-reference|Master Directory Reference]]
@@ -177,8 +190,9 @@ bash bin/record-restore-prereqs.sh --runbook restore-runtime --help
 bash bin/record-restore-prereqs.sh --runbook restore-runtime
 ```
 
-It records the result under `reimaged-system/prereq-checks/` and exits non-zero
-only on `FAIL`.
+It records the result under `reimaged-system/boundaries/` and exits non-zero
+only on `FAIL`, writing this phase's entry half under the context
+`restore-runtime-entry`.
 
 | Result | Meaning |
 |---|---|
@@ -219,6 +233,10 @@ That must print `x86_64`. Do not move on until it does.
 > [!note]
 > On an Intel Mac this step is a harmless no-op — `softwareupdate` reports that Rosetta is not applicable to this architecture and exits, and the `arch` check still prints `x86_64` because it runs natively. Run it unconditionally rather than branching on architecture. No reboot is required on either architecture; translation is available as soon as the install finishes.
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 2 — Install Xcode Command Line Tools
 
 Install first because Homebrew and later build tooling may depend on the compiler and linker they provide.
@@ -239,6 +257,10 @@ git --version 2>/dev/null || true
 ```
 
 Do not move on until `xcode-select -p` prints a valid path.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 3 — Install Homebrew
 
@@ -290,6 +312,10 @@ brew --version
 
 > [!note]
 > A `Brewfile` may exist under the captured system inventory. Review it before considering `brew bundle` — do not blindly reinstall everything from an old Brewfile if some entries are now managed by IT or no longer needed.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 4 — Update Homebrew and Run Diagnostics
 
@@ -350,6 +376,10 @@ steps are done, not a shortcut past them.
 > [!bug] Troubleshooting
 > If `brew doctor` flags a leftover Intel-path Homebrew prefix on Apple silicon, see [[#`brew doctor` reports a stale `/usr/local` on Apple silicon|`brew doctor` reports a stale `/usr/local` on Apple silicon]].
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 5 — Install Obsidian and Open the Toolkit
 
 Every runbook from here to the end of the reimage is Markdown written for
@@ -389,6 +419,10 @@ echo "$FRACTOGENESIS_HOME"    # the path to select in the dialog
 > vault is aimed at a directory you are about to delete. Re-open the clone as a
 > vault then — see
 > [[restore-repos#Step 4 — Repoint at the Cloned Toolkit|Phase 11B Step 4]].
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 6 — Install direnv and Restore the Repo Environment Hook
 
@@ -452,6 +486,10 @@ echo "$FRACTOGENESIS_HOME"
 > This runbook keeps shell bootstrap lines in `~/.zprofile` (Homebrew's `shellenv` in Step 3, `nvm` in Step 8), so the hook goes there too. If your pre-image setup put it in `~/.zshrc` instead, pick one file and keep it there — two copies are not harmful, but they make it needlessly hard to tell which one is actually loading.
 >
 > The Phase 8 bridge block lives in the same file, between its own `# >>> fractogenesis-toolkit reimage env >>>` markers. `--remove` above takes out that block and leaves everything else, including the direnv hook you just added, untouched.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 7 — Install Java and the JVM Build Tools
 
@@ -538,6 +576,10 @@ JDK 21 is the normal baseline unless a project-specific requirement says otherwi
 > [!warning] Pitfall
 > Do not `brew install node` here — see the next step for why. Installing both `brew`'s `node` and `nvm`'s `node` creates a PATH collision where it is unclear which binary actually runs.
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 8 — Install and Manage Node Versions
 
 Install `nvm` only:
@@ -612,6 +654,10 @@ npm --version
 >
 > Installing a second version at that point is one `nvm install` and costs
 > nothing — which is why guessing at project requirements now is wasted effort.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 9 — Install Platform CLIs and Helper Utilities
 
@@ -748,6 +794,10 @@ yq --version
 > [!note]
 > If a workflow still needs legacy `yq` v3 syntax, install it intentionally and document why in a personal note under the restore evidence, rather than silently replacing the Homebrew version.
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 10 — Compare Versions Against Captured Inventories
 
 Compare the rebuilt runtime layer against the captured pre-image inventory. Preview the options, then run it:
@@ -758,8 +808,12 @@ bash bin/compare-restored-state.sh --runbook restore-runtime --dry-run
 bash bin/compare-restored-state.sh --runbook restore-runtime
 ```
 
-`--dry-run` prints the table without writing; the plain form writes a note under
-`reimaged-system/restore-notes/` and prints a one-line summary.
+`--dry-run` prints the table without writing; the plain form writes a run under
+`reimaged-system/comparisons/` and prints a one-line summary. The run directory
+holds `comparison.md`, the rendered note, and `rows.tsv`, the joined rows a later
+comparison reads instead of reparsing the Markdown. To open the newest run without
+reading dates off directory names, take the run name from
+`comparisons/official/restore-runtime-inventory-diff.txt`.
 
 **The row that matters is `MISSING`** — a tool recorded pre-image and absent now.
 That is the one a human scanning terminal output reliably misses, because
@@ -786,6 +840,10 @@ fly --version || true
 ```
 
 Focus on whether the rebuilt Mac is now ready for the next restore phases, not on matching every older minor version. An approved-newer version is fine; an unexplained-older or missing tool is not.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 11 — Close Out the Exit Criteria
 
@@ -912,8 +970,8 @@ editing `checklist.md` itself. Replace each `TODO` with the answer and put the r
 close a row, and so does `no` when `no` is the considered answer — the check is
 for rows nobody looked at.
 
-*Version drift reviewed.* Read the `differs` rows in the comparison note under
-`reimaged-system/restore-notes/`. A newer version is the expected outcome of a
+*Version drift reviewed.* Read the `differs` rows in `comparison.md`, in the run
+Step 10 recorded. A newer version is the expected outcome of a
 rebuild and closes as `accepted`. An *older* version is the one to explain: say
 in Notes why it is older and whether that is deliberate.
 

@@ -492,16 +492,35 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 > │       ├── volumes.txt
 > │       ├── whoami.txt
 > │       └── xcode-select.txt
-> ├── exit-checks/
-> │   ├── latest-exit-<phase>.txt
-> │   └── exit-<phase>-YYYYMMDD-HHMMSS.md
-> ├── prereq-checks/
-> │   ├── latest-prereq-<phase>.txt
-> │   └── prereq-<phase>-YYYYMMDD-HHMMSS.md
-> ├── restore-notes/
+> ├── boundaries/
+> │   ├── MANIFEST.md
+> │   ├── official/
+> │   │   └── <runbook>-<point>.txt
+> │   └── runs/
+> │       └── <runbook>-<point>-YYYYMMDD-HHMMSS/
+> │           └── checklist.md
+> ├── comparisons/
+> │   ├── MANIFEST.md
+> │   ├── official/
+> │   │   └── <runbook>-inventory-diff.txt
+> │   └── runs/
+> │       └── <runbook>-inventory-diff-YYYYMMDD-HHMMSS/
+> │           ├── comparison.md
+> │           └── rows.tsv
+> ├── state/
 > ├── restarts/
+> ├── restore-notes/
 > └── time-machine/
 > ```
+>
+> `boundaries/`, `comparisons/`, `state/` and `restarts/` are run categories with
+> one shape: `runs/<context>-YYYYMMDD-HHMMSS/` holding a single run's files,
+> `official/<context>.txt` naming the run that counts, and an append-only
+> `MANIFEST.md` indexing every completed run. Officialness is computed from the
+> manifest rather than stored there, so `official/` can be regenerated from it.
+> `boundaries/` uses the points `entry` and `exit` — one pair per runbook, written
+> by that runbook's Step 0 and its close-out. `restore-notes/` is the exception:
+> hand-written notes, no run structure.
 >
 > Every post-image artifact lands under `reimaged-system/`. Unlike the pre-image
 > phases, which each add a top-level directory to the artifact root, the restore

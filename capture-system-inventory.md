@@ -232,6 +232,10 @@ Confirm the destination has room if you have not already run the size audit for 
 > [!note]
 > No admin privileges are required for the read-only queries. Some sections may show fewer results without elevated rights, but the capture still completes and records what it can see.
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 2 — Run the Capture
 
 If you want section 12 to capture your Docker images, containers, volumes, and networks, start Docker Desktop before you run — with the daemon stopped, `12-docker.txt` records only a "cannot connect to the Docker daemon" error (the client version and `docker compose version` still capture). A `clean-boot` snapshot with Docker intentionally off is fine.
@@ -254,6 +258,10 @@ The script prints each section as it runs and finishes with the bundle path. It 
 
 > [!note]
 > A section for a toolchain you do not use (for example `10-java.txt` with no JDK installed) is written with its header intact and no findings. An empty-but-present section is a valid result, not a failure.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 3 — Capture the Restore-Relevant State
 
@@ -285,6 +293,10 @@ a fresh install.
 > `state.md` and refuses to build a delta when they differ, because joining
 > mismatched homes reports every path as simultaneously added and removed — a
 > result that looks like catastrophic data loss and means nothing.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 4 — Verify Outputs
 

@@ -230,6 +230,10 @@ python3 bin/prepare-artifact-root.py upsert-env --env-file reimage.env "PERFORMA
 > [!note]
 > With no `--output`, the capture defaults to `$REIMAGE_ARTIFACT_ROOT/performance-audit/`. Pass `--output "$REIMAGE_WORKSPACE_ROOT/performance-audit"` only when staging locally before the backup drive is mounted, or `--artifact-root PATH` to point at a different artifact root for one invocation. When you stage locally, create that destination the same way.
 
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 2 — Run the Capture
 
 Run one invocation per scenario. For the pre-image `normal-workload` baseline:
@@ -256,6 +260,10 @@ cp -R "$REIMAGE_WORKSPACE_ROOT/performance-audit/." "$REIMAGE_ARTIFACT_ROOT/perf
 
 > [!bug] Troubleshooting
 > If a `clean-boot` run records Docker as stopped, see [[#A clean-boot run shows Docker stopped|A clean-boot run shows Docker stopped]].
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Step 3 — Verify Outputs
 
