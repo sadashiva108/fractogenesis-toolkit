@@ -612,7 +612,8 @@ offer to **inherit** the existing backup history — or you can claim it explici
 ```bash
 tmutil destinationinfo
 tmutil listbackups
-sudo tmutil inheritbackup /Volumes/<destination>/<backup-set>
+BACKUP_SET="replace-with-a-path-from-listbackups"
+sudo tmutil inheritbackup "$BACKUP_SET"
 ```
 
 - **Inherit** — new backups continue the existing chain and unchanged files share

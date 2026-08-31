@@ -24,6 +24,7 @@ Reconnect the external artifact drive, prove the freshly reimaged Mac is basical
     - [[#Prerequisites|Prerequisites]]
     - [[#Confirm Your Intent|Confirm Your Intent]]
 - [[#Sequential Steps|Sequential Steps]]
+    - [[#Step 0 — Record Prerequisites|Step 0 — Record Prerequisites]]
     - [[#Step 1 — Reconnect the External Artifact Drive|Step 1 — Reconnect the External Artifact Drive]]
     - [[#Step 2 — Record the Pre-Restart First-Boot Bundle|Step 2 — Record the Pre-Restart First-Boot Bundle]]
     - [[#Step 3 — Review Manual First-Boot Areas|Step 3 — Review Manual First-Boot Areas]]
@@ -57,7 +58,8 @@ with it.
 **What it sets up**
 
 - **The reconnected artifact root** — the external artifact drive brought back online and spot-checked, so Phase 9 and later evidence lands under `reimaged-system/` instead of the Desktop fallback.
-- **Two first-boot evidence bundles** — a pre-restart and a post-restart `initial-reimaged-system-*` bundle, each holding `checklist.md`, the companion planning documents, `raw/`, and `logs/`.
+- **Two first-boot evidence bundles** — a pre-restart and a post-restart run under `reimaged-system/restarts/`, each holding `checklist.md`, the companion planning documents, `raw/`, and `logs/`.
+- **An entry and an exit checklist** — under `reimaged-system/boundaries/`, recording what was decided about that evidence rather than what it says.
 - **The pre/post-restart comparison** — the row-by-row read across the second stabilization restart that names anything which regressed.
 - **The `reimaged-system/` working subfolders** — `boundaries/`, `comparisons/`, `state/`, `restarts/`, `restore-notes/`, and `time-machine/`, written into by later phases. Everything the post-image half produces lands under `reimaged-system/`; unlike the pre-image phases, it adds no new top-level directories to the artifact root.
 
@@ -81,7 +83,7 @@ with it.
 | relocating any Phase 8 record that landed on a fallback path | the managed application set and its Company Portal installs — `enroll-and-stabilize` (Phase 8 Step 4) |
 | the `reimaged-system/` subfolders used by later phases (`boundaries`, `comparisons`, `state`, `restarts`, `restore-notes`, `time-machine`) | the final validated sign-off — its `reimage-checklist.sh --phase post` bundle and the resolution of the manual rows this phase only enumerates — `reimaged-system-checks` (Phase 14) |
 
-This runbook can be rerun. Each run of `record-reimaged-system.sh` writes a fresh timestamped bundle and updates the `latest-initial-reimaged-system-bundle.txt` pointer, so a later run does not overwrite the pre-restart bundle you use for comparison.
+This runbook can be rerun. Each run of `record-reimaged-system.sh` writes a fresh indexed run and moves that point's `official/` pointer, so a later run does not overwrite the pre-restart bundle you use for comparison — and a rerun of one point never disturbs the other.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -118,7 +120,7 @@ proven to survive a reboot has to be installed *before* the pre-restart bundle.
 Anything installed between the two runs appears in the Step 6 diff as a change,
 and a diff full of newly-arrived applications hides the one row that actually
 regressed. If managed apps are still missing or still installing when you reach
-Step 2, return to [[enroll-and-stabilize#Step 4 — Install and Confirm Required and Available Managed Apps|Phase 8 Step 4]]
+Step 2, return to [[enroll-and-stabilize#Step 5 — Install and Confirm Required and Available Managed Apps|Phase 8 Step 5]]
 and finish there first. If you discover this after Step 2 has already run,
 simply rerun the record — each run writes a fresh timestamped bundle, and the
 comparison reads the two most recent.
@@ -142,7 +144,7 @@ Three things are worth knowing before the first command rather than after it.
 restart is the test. Anything that must be proven to survive a reboot has to
 exist before the Step 2 record. If managed apps are still missing or still
 installing when you get here, go back to
-[[enroll-and-stabilize#Step 4 — Install and Confirm Required and Available Managed Apps|Phase 8 Step 4]]
+[[enroll-and-stabilize#Step 5 — Install and Confirm Required and Available Managed Apps|Phase 8 Step 5]]
 and finish there. If you discover it after Step 2 has already run, just rerun
 the record — each run writes a fresh timestamped bundle, and Step 6 compares
 the two most recent.
@@ -175,8 +177,8 @@ discovering the flag after a bundle has gone to the wrong place.
 
 | Term | Meaning |
 |---|---|
-| First-boot bundle | One timestamped `[context-]initial-reimaged-system-YYYYMMDD-HHMMSS/` directory produced by `record-reimaged-system.sh`. |
-| Context label | The optional `--context` value prefixed to the bundle directory name — `pre-restart-initial-reimaged-system-YYYYMMDD-HHMMSS` — conventionally `pre-restart` or `post-restart`. Matches the leading-phase convention of `post-image-performance-audit-*` and `pre-image-*`. |
+| First-boot bundle | One indexed run, `restarts/runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/`, produced by `record-reimaged-system.sh`. |
+| Point | The `--context` value, which becomes the run's point and completes its name: `verify-reimaged-system-pre-restart-YYYYMMDD-HHMMSS`. `pre-restart` and `post-restart` for the pair around the restart, `initial` when omitted. `entry` and `exit` select the boundary modes instead of a capture. |
 | Pre-restart bundle | The first-boot bundle written before the second stabilization restart. |
 | Post-restart bundle | The first-boot bundle written after the second stabilization restart; the sign-off bundle. |
 | Second stabilization restart | The Phase 9 restart taken after the pre-restart bundle, distinct from the Phase 8 first stabilization restart. |
@@ -205,12 +207,18 @@ $FRACTOGENESIS_HOME/bin/record-enrollment.sh    # entrypoint — Phase 8 enrollm
 Artifact root:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/reimaged-system/    # first-boot bundles, restart notes, Time Machine notes, restore notes
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/restarts/      # Steps 2 and 5 — the first-boot bundles either side of the restart
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/boundaries/    # Steps 0 and 7 — the entry and exit checklists
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/comparisons/   # Step 6 — the diff across the pair
 ```
+
+All three are run categories with one shape: `runs/<context>-YYYYMMDD-HHMMSS/` holding a single run's files, `official/<context>.txt` naming the run that counts, and an append-only `MANIFEST.md` indexing every completed run.
+
+`restarts/` is shared with Phase 8, which writes `enroll-and-stabilize-<point>` there. Both phases capture the machine either side of a stabilization restart, so they are one lineage keyed by point — which is what lets Step 0 ask after Phase 8's post-restart record without knowing where Phase 8 chose to put it.
 
 ### Bundle Layout
 
-The bundle name keeps `initial-reimaged-system` and a trailing `YYYYMMDD-HHMMSS`, matching the artifact tree documented in the Master Directory Reference. A `--context` label is prefixed to it — `pre-restart-initial-reimaged-system-YYYYMMDD-HHMMSS` — matching the leading-phase convention of `post-image-performance-audit-*`, `post-reimage-*`, and the `pre-image-*` repo-audit runs. `bin/reimage-checklist.sh` therefore globs `*initial-reimaged-system-*` with a leading wildcard, and extracts the trailing stamp to compare bundle age against the Time Machine backup.
+Each run is named `verify-reimaged-system-<point>-YYYYMMDD-HHMMSS`: the runbook name leads, the point follows it, and the stamp trails. `bin/reimage-checklist.sh` extracts that trailing stamp to compare bundle age against the Time Machine backup, and resolves the bundle itself through `official/<context>.txt` rather than globbing for it.
 
 > [!warning] Pitfall
 > Because the label precedes the timestamp, bundle names no longer sort
@@ -220,9 +228,12 @@ The bundle name keeps `initial-reimaged-system` and a trailing `YYYYMMDD-HHMMSS`
 > sort the mixed set and take the last entry.
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/reimaged-system/
-├── latest-initial-reimaged-system-bundle.txt
-├── [context-]initial-reimaged-system-YYYYMMDD-HHMMSS/
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/restarts/
+├── MANIFEST.md
+├── official/
+│   └── verify-reimaged-system-<point>.txt
+└── runs/
+    └── verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/
 │   ├── README.md
 │   ├── checklist.md
 │   ├── restart-checkpoints.md
@@ -299,12 +310,12 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
   Available catalog — and the first stabilization restart taken. If anything
   this Mac needs is still listed as installable in the Company Portal **Apps**
   tab, return to
-  [[enroll-and-stabilize#Step 4 — Install and Confirm Required and Available Managed Apps|Phase 8 Step 4]]
+  [[enroll-and-stabilize#Step 5 — Install and Confirm Required and Available Managed Apps|Phase 8 Step 5]]
   and finish there before running anything here.
 - You have signed back in after the Phase 8 restart and network is connected.
 - The external artifact drive is available to reconnect. On a bare Mac the
-  Phase 8 records will have landed on a fallback path — `$REIMAGE_WORKSPACE_ROOT/enrollment/`
-  when a workspace was set, otherwise `~/Desktop/reimaged-system-artifacts/enrollment/`.
+  Phase 8 records will have landed on a fallback path — `$REIMAGE_WORKSPACE_ROOT/`
+  when a workspace was set, otherwise `~/Desktop/reimaged-system-artifacts/`.
   Either is fine; Phase 9 owns relocating them.
 
 > [!note]
@@ -334,6 +345,37 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 
 Run these in order. The two script runs bracket the human checks and the second restart, and the comparison between them is what this phase produces.
 
+### Step 0 — Record Prerequisites
+
+Verify what this phase assumes, before the drive is reconnected and before
+anything is captured. The rows are cheap and one of them is not obvious:
+
+```bash
+./bin/record-reimaged-system.sh --context entry
+```
+
+It writes `checklist.md` under `reimaged-system/boundaries/` with the context
+`verify-reimaged-system-entry`, and exits non-zero on any `FAIL`.
+
+The row that matters is **Phase 8 closed out**. It reads Phase 8's exit
+checklist — not Phase 8's evidence — and `FAIL`s when no
+`enroll-and-stabilize-exit` run exists. That is the boundary pair working as
+designed: this phase does not re-derive whether enrollment finished, it asks
+whether the phase that owned that question signed off on it. A `WARN` there means
+the checklist exists with rows nobody answered, which is worth clearing before
+you build a baseline on top of it.
+
+> [!note]
+> The artifact root row is expected to be `WARN` at this point. Step 1 is what
+> reconnects the volume; this checklist lands on the Desktop fallback and is
+> relocated with everything else.
+
+Two rows are left `TODO`. Answer them in that file the same way Step 7 describes.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ### Step 1 — Reconnect the External Artifact Drive
 
 Reconnect the external artifact drive so subsequent runs land under `$REIMAGE_ARTIFACT_ROOT/reimaged-system/` instead of the Desktop fallback.
@@ -346,22 +388,36 @@ ls -la "$REIMAGE_ARTIFACT_ROOT" 2>/dev/null || echo "artifact root not visible"
 find "$REIMAGE_ARTIFACT_ROOT/reimaged-system" -maxdepth 2 -type d 2>/dev/null | sort
 ```
 
-If the Phase 8 records landed on either fallback path, copy them under
-`reimaged-system/enrollment/` now so all Phase 8+ evidence lives together:
+If Phase 8 landed on either fallback path, its runs are sitting in a `restarts/`
+and a `boundaries/` category there. Copy the run directories across, then rebuild
+the destination index so the relocated runs are known to it:
 
 ```bash
-mkdir -p "$REIMAGE_ARTIFACT_ROOT/reimaged-system/enrollment"
-cp -Rp "$REIMAGE_WORKSPACE_ROOT/enrollment/"*record-enrollment-* \
-  "$REIMAGE_ARTIFACT_ROOT/reimaged-system/enrollment/" 2>/dev/null || true
-cp -Rp "$HOME/Desktop/reimaged-system-artifacts/enrollment/"*record-enrollment-* \
-  "$REIMAGE_ARTIFACT_ROOT/reimaged-system/enrollment/" 2>/dev/null || true
+for TIER in "$REIMAGE_WORKSPACE_ROOT" "$HOME/Desktop/reimaged-system-artifacts"; do
+  for CATEGORY in restarts boundaries; do
+    if [ -d "$TIER/$CATEGORY/runs" ]; then
+      mkdir -p "$REIMAGE_ARTIFACT_ROOT/reimaged-system/$CATEGORY/runs"
+      cp -Rp "$TIER/$CATEGORY/runs/"enroll-and-stabilize-* \
+        "$REIMAGE_ARTIFACT_ROOT/reimaged-system/$CATEGORY/runs/" 2>/dev/null || true
+    fi
+  done
+done
+```
+
+The copy moves runs but not their index rows, so the destination `MANIFEST.md`
+does not yet know about them. Append a row per relocated run and regenerate the
+pointers:
+
+```bash
+./bin/reindex-artifact-runs.sh --category "$REIMAGE_ARTIFACT_ROOT/reimaged-system/restarts"
+./bin/reindex-artifact-runs.sh --category "$REIMAGE_ARTIFACT_ROOT/reimaged-system/boundaries"
 ```
 
 > [!note]
-> Do not copy the fallback's `latest-enrollment-record.txt` — it names the old
-> location and would point at a path that no longer receives new records. The
-> next `record-enrollment.sh` run writes a correct pointer beside the relocated
-> bundles.
+> Do not copy the fallback's `MANIFEST.md` over the destination's. The destination
+> may already hold Phase 9 runs of its own, and the manifest is append-only —
+> overwriting it discards their rows and, with them, the pointers computed from
+> them.
 
 Records relocated this way are historical evidence of the state at the time they
 were written. Do not edit them to reflect what is true now; rerun
@@ -408,10 +464,10 @@ Run it, labelling it as the pre-restart bundle. With no `--output-root`, the scr
 ```
 
 > [!note]
-> The bundle lands at `pre-restart-initial-reimaged-system-YYYYMMDD-HHMMSS` —
+> The bundle lands at `restarts/runs/verify-reimaged-system-pre-restart-YYYYMMDD-HHMMSS/` —
 > the label leads, matching `post-image-performance-audit-*`,
 > `post-reimage-*`, and the `pre-image-*` repo-audit runs.
-> `bin/reimage-checklist.sh` globs `*initial-reimaged-system-*` with a leading
+> `bin/reimage-checklist.sh` resolves this run through the index rather than a glob, with a leading
 > wildcard, so labelled and unlabelled bundles are both found. The label is
 > also written inside `checklist.md`, so a bundle stays self-describing even if
 > it is later moved or renamed.
@@ -429,7 +485,7 @@ If Step 1 could not bring the artifact root online (network-only workspace, VPN 
 ./bin/record-reimaged-system.sh --context pre-restart --output-root ~/Desktop/reimaged-system-artifacts/first-boot
 ```
 
-The script emits `checklist.md` with automated rows prefilled, three companion planning documents, a `raw/` directory of read-only command captures, and a `logs/` directory. It also updates `latest-initial-reimaged-system-bundle.txt` at the parent level.
+The script emits `checklist.md` with automated rows prefilled, three companion planning documents, a `raw/` directory of read-only command captures, and a `logs/` directory. It indexes the run and moves `official/verify-reimaged-system-post-restart.txt` to it.
 
 > [!warning] Pitfall
 > Do not fill the manual rows in this bundle. Step 5 regenerates the checklist
@@ -459,14 +515,14 @@ certificates, or repositories waits for Phase 10+.
 | Managed apps | Everything from Phase 8 Step 4 is present, including nested bundles. |
 | Network | An actual internal work site loads, not just public internet. If it needs VPN and VPN needs a certificate not yet re-enrolled, record that as known-blocked rather than failed. |
 | Browser | Default browser set; profile signed in; the extensions you depend on are back. Under MDM, check `chrome://policy` if anything behaves oddly. |
-| Terminal | Profile, font, and window size restored. Confirm `echo $SHELL` is what you expect **before** Phase 10 begins writing to shell rc files. |
+| Terminal | Opens, and `echo $SHELL` prints what you expect — `/bin/zsh` on a stock Mac. Check it **before** Phase 10 begins writing to shell rc files, since those are written for the login shell you actually have. The saved profile, font and window size are restored in Phase 12 ([[restore-apps|restore-apps.md]]), not here; a default-looking Terminal is correct at this point. |
 | Displays | Arrangement, scaling, and refresh rate set — then re-verified after the Step 4 restart. This is the setting most likely to silently fail to persist on a rebuilt Mac. |
 | Peripherals | Keyboard, mouse/trackpad, audio input and output. |
 | Finder and system | File extensions, path bar, status bar, keyboard repeat rate, Dock, screenshot location. |
 
 > [!note]
 > Deliberately **not** in this phase: OneDrive sign-in and initial sync. See
-> [[enroll-and-stabilize#Step 4 — Install and Confirm Required and Available Managed Apps|Phase 8 Step 4]].
+> [[enroll-and-stabilize#Step 5 — Install and Confirm Required and Available Managed Apps|Phase 8 Step 5]].
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -505,7 +561,7 @@ Rerun the record, labelled as the post-restart bundle. This is the sign-off bund
 Each run writes a fresh timestamped bundle, so the pre-restart bundle from Step 2 stays in place for the comparison in Step 6. This is the bundle whose manual rows you fill, in Step 8.
 
 > [!bug] Troubleshooting
-> If `latest-initial-reimaged-system-bundle.txt` still names the pre-restart bundle after this run, see [[#latest-initial-reimaged-system-bundle.txt points at the pre-restart bundle after a Step 5 run|latest-initial-reimaged-system-bundle.txt points at the pre-restart bundle after a Step 5 run]].
+> If `official/verify-reimaged-system-post-restart.txt` still names the pre-restart bundle after this run, see [[#`official/` names the wrong run for a point|`official/` names the wrong run for a point]].
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -513,32 +569,40 @@ Each run writes a fresh timestamped bundle, so the pre-restart bundle from Step 
 
 ### Step 6 — Compare the Two Bundles
 
-Read the two `checklist.md` files side by side and look for rows that flipped from `PASS` to `WARN` or `TODO`:
+Compare the checklist rows across the restart:
 
 ```bash
-BUNDLES="$REIMAGE_ARTIFACT_ROOT/reimaged-system"
-
-# Prefer the labelled pair when --context was used. Sorting is safe here
-# because each glob covers a single label, so the timestamp is the only part
-# that varies within it.
-PRE=$(ls -1d "$BUNDLES"/pre-restart-initial-reimaged-system-* 2>/dev/null | sort | tail -1)
-POST=$(ls -1d "$BUNDLES"/post-restart-initial-reimaged-system-* 2>/dev/null | sort | tail -1)
-
-# Fall back to the two most recent bundles when the labels are absent.
-if [ -z "$PRE" ] || [ -z "$POST" ]; then
-  PRE=$(ls -1dt "$BUNDLES"/*initial-reimaged-system-*/ 2>/dev/null | sed -n '2p')
-  POST=$(cat "$BUNDLES/latest-initial-reimaged-system-bundle.txt" 2>/dev/null)
-fi
-
-printf 'PRE  = %s\nPOST = %s\n' "$PRE" "$POST"
-diff -u "$PRE/checklist.md" "$POST/checklist.md" | head -80
+./bin/record-reimaged-system.sh --context diff
 ```
 
-> [!warning] Pitfall
-> Read the printed `PRE` and `POST` before reading the diff. Under the recency
-> fallback the pair is whatever ran most recently, which is wrong if you
-> recorded three bundles instead of two — the extra run silently becomes the
-> "pre" side. Labelling both runs with `--context` removes the guesswork.
+It resolves both bundles through `official/`, so there is nothing to name and no
+way to compare a run against itself. It writes a comparison under
+`reimaged-system/comparisons/` with the context
+`verify-reimaged-system-restart-diff` — which is the run Step 7 looks for when it
+asks whether the pair was compared — and prints a one-line summary.
+
+Rows are grouped by what happened to them, and **Regressed** is the section to
+read. It holds every row that was good before the restart and is not now; when it
+is empty it says so, which is a stronger statement than an empty diff.
+
+| Group | What it means |
+|---|---|
+| **Regressed** | Passed before the restart, does not now. The finding. |
+| improved | Was `TODO`, `WARN` or `FAIL`; now passes. The expected direction. |
+| answered | Was `TODO`; now carries a considered `no` or a qualified answer. |
+| changed | Moved between two non-passing states. |
+| new / dropped | Present on one side only — usually a checklist that changed shape between runs, not a machine that did. |
+| unchanged | Same on both sides. Counted, and listed in `rows.tsv`. |
+
+`PASS` and a hand-written `yes` mean the same thing here, and a qualified answer
+like `yes, with exception` reads as good rather than as a change of state — so a
+row you answered by hand does not surface as a regression.
+
+> [!note]
+> A raw `diff -u` of the two `checklist.md` files still works and is sometimes
+> what you want, but it interleaves reordered rows, evidence paths and timestamps
+> with the handful of verdicts that actually moved. That is why this step is a
+> comparison rather than a diff.
 
 Focus on rows that regressed. A managed process the pre-restart run saw and the post-restart run did not is usually the first thing IT will ask about.
 
@@ -554,19 +618,66 @@ Focus on rows that regressed. A managed process the pre-restart run saw and the 
 
 ### Step 7 — Close Out the Exit Criteria
 
-This is the **only** step that fills manual rows. Open the post-restart
-`checklist.md` — the Step 5 bundle, not the Step 2 one — and answer
-every row from what you actually observed. Every row must be effectively `yes`
-before proceeding to Phase 10:
+Confirm what this phase produced. Phase 10A verifies its own entry conditions in
+its Step 0; this is the other half of that pair.
 
-| Check | Verification mode | How to verify |
-|---|---|---|
-| `$REIMAGE_ARTIFACT_ROOT` is mounted and readable | Command | `ls "$REIMAGE_ARTIFACT_ROOT"` and Step 1 spot-check |
-| Pre-restart first-boot bundle recorded | Command | `pre-restart-initial-reimaged-system-*/` from Step 2 exists, or the Step 2 bundle by timestamp |
-| Post-restart first-boot bundle recorded | Command | `post-restart-initial-reimaged-system-*/` from Step 5 exists, or the Step 5 bundle by timestamp |
-| No new critical regressions across the two bundles | Mixed | Step 6 diff plus row-by-row review |
-| Managed app set complete and unchanged since the pre-restart bundle | Mixed | Company Portal **Apps** tab plus `raw/applications-managed.txt` in both bundles |
-| Browser, network, terminal, display, keyboard, mouse, and audio basics are usable | Manual | Step 3 review |
+```bash
+./bin/record-reimaged-system.sh --context exit
+```
+
+It writes `checklist.md` under `reimaged-system/boundaries/` with the context
+`verify-reimaged-system-exit`, and exits non-zero on any `FAIL`. The file holds
+two tables: **Automated**, and **Manual** — the rows it cannot answer, left as
+`TODO`.
+
+Every Automated row resolves through the run index rather than by looking for
+directories, so a bundle that exists on a Phase 8 fallback path but was never
+relocated reads as absent — which, from here, is what it is.
+
+> [!warning] Pitfall
+> One row has no manual equivalent: **The pair brackets the restart** compares the
+> two runs' stamps and `FAIL`s when the post-restart bundle is not actually newer
+> than the pre-restart one. That happens when Step 5 never ran after the restart
+> and an earlier run is standing in for it. Two bundles exist, `official/` names
+> both, and the comparison in Step 6 produces a clean-looking diff — of the
+> machine against itself, before the restart. It is the failure in this phase
+> least visible by eye, which is why it is checked here rather than trusted.
+
+**Answer the Manual rows** by editing `checklist.md` itself — nothing re-probes
+them and no later phase collects them. Replace each `TODO` with the answer and put
+the reasoning in Notes. `yes` and `accepted` close a row, and so does `no` when
+`no` is the considered answer.
+
+*No new critical regressions across the two bundles.* Read the Step 6 comparison
+row by row. A row that flipped because the network changed between runs is not a
+regression; anything else is, until explained.
+
+*Managed app set complete and unchanged since the pre-restart bundle.* The Company
+Portal **Apps** tab plus `raw/applications-managed.txt` in both bundles.
+
+*First-boot basics are usable.* Browser, network, terminal, display, keyboard,
+mouse and audio — the Step 3 review, recorded here rather than left as something
+you remember doing.
+
+> [!warning] Pitfall
+> Each run writes its own dated directory, so a rerun does not update the file you
+> answered — it produces a new `checklist.md` with every Manual row back at
+> `TODO`. Answer them in the last run you intend to keep.
+
+The exit criteria for this phase, and where each is settled:
+
+| Area | Settled by |
+|---|---|
+| `$REIMAGE_ARTIFACT_ROOT` mounted and readable | Automated |
+| Both first-boot bundles recorded | Automated, from the run index |
+| The post-restart bundle genuinely follows the restart | Automated, by stamp comparison |
+| The two bundles were compared | Automated, from the run index |
+| The post-restart checklist has no unanswered rows | Automated |
+| Regressions, managed app set, first-boot basics | Manual, answered here |
+
+Once the checklist has no `FAIL` and no unanswered `TODO`, move to
+[[restore-runtime|restore-runtime.md]]. Its Step 0 re-verifies what it needs from
+its own side.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -597,13 +708,22 @@ Confirm you did not switch networks or unlock a captive portal between runs — 
 
 [[#Step 7 — Close Out the Exit Criteria|⮕ Continue to Step 7 — Close Out the Exit Criteria]]
 
-### latest-initial-reimaged-system-bundle.txt points at the pre-restart bundle after a Step 5 run
+### `official/` names the wrong run for a point
 
-A stale pointer does not mean the Step 5 run failed. The bundle is written first and the pointer is rewritten afterwards; if that write fails the script prints `WARNING: could not update the latest-bundle pointer:` with the pointer path and still exits `0`, because the bundle itself is valid. So check the Step 5 run output for that warning first — if it is there, the pointer is stale for a write reason (the output root is read-only, full, or the volume was unmounted), and the authoritative bundle path is the one the script printed on the `First-boot evidence bundle written:` line. Fix the write problem and rerun only if you want the pointer current; the evidence is already recorded.
+Each point has its own pointer, and officialness is computed from the category's
+`MANIFEST.md` rather than stored — so a pointer is never edited by hand.
+Regenerate them all from the index:
 
-Only if there was no such warning does a stale pointer suggest the Step 5 run did not reach the end — in that case check the tail of `logs/errors.log` inside the newest bundle and rerun the post-restart record.
+```bash
+./bin/reindex-artifact-runs.sh --category "$REIMAGE_ARTIFACT_ROOT/reimaged-system/restarts"
+```
 
-[[#Step 6 — Compare the Two Bundles|⮕ Continue to Step 6 — Compare the Two Bundles]]
+If the recomputed answer is still not the run you want, the default rule is the
+disagreement, not a bug. `pre-restart` is a **first-wins** point, so the earliest
+run of that point stays official however many follow it — which is wrong when a
+sequence of pre-restart runs precedes the restart and the *last* one is the state
+the machine was actually in. That case is settled by pinning the run you mean,
+with the reason recorded in the manifest row, not by deleting runs.
 
 ### Network row is WARN on a machine that clearly has internet
 
@@ -613,7 +733,7 @@ Only if there was no such warning does a stale pointer suggest the Step 5 run di
 
 ### The bundle landed on the Desktop instead of the artifact root
 
-Expected fallback when `REIMAGE_ARTIFACT_ROOT` was unset or the volume was not mounted at run time. Once the artifact root is mounted and resolving, copy the Desktop bundle under `reimaged-system/` and rerun subsequent recordings with the artifact root in scope so `latest-initial-reimaged-system-bundle.txt` points at the right place.
+Expected fallback when `REIMAGE_ARTIFACT_ROOT` was unset or the volume was not mounted at run time. Once the artifact root is mounted and resolving, copy the run directories under `reimaged-system/restarts/runs/`, then run `./bin/reindex-artifact-runs.sh --category "$REIMAGE_ARTIFACT_ROOT/reimaged-system/restarts"` — a copied run carries no index row, so without the reindex it stays invisible to every reader.
 
 [[#Step 3 — Review Manual First-Boot Areas|⮕ Continue to Step 3 — Review Manual First-Boot Areas]]
 
@@ -653,8 +773,8 @@ The script proves most command-checkable state on its own. Manual attention shou
 
 | Order | Condition | Path |
 |---|---|---|
-| 1 | `REIMAGE_ARTIFACT_ROOT` set and directory exists | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/[context-]initial-reimaged-system-YYYYMMDD-HHMMSS/` |
-| 2 | Neither of the above | `~/Desktop/reimaged-system-artifacts/[context-]initial-reimaged-system-YYYYMMDD-HHMMSS/` |
+| 1 | `REIMAGE_ARTIFACT_ROOT` set and directory exists | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/restarts/` |
+| 2 | Neither of the above | `~/Desktop/reimaged-system-artifacts/restarts/` |
 
 The script refuses to write output under the toolkit repo checkout as a safety invariant — a bundle landing inside the working tree almost always signals an unset or relative root variable.
 
@@ -672,8 +792,7 @@ The script refuses to write output under the toolkit repo checkout as a safety i
 TOC verification performed before publishing:
 - every Table of Contents entry resolves to a heading present in this file;
 - deleted optional sections were also removed from the Table of Contents;
-- the `initial-reimaged-system-*` bundle prefix and the anchors other files link
-  to are preserved as-is;
+- the anchors other files link to are preserved as-is;
 - each top-level section and each Sequential Step ends with a "Back to Table of
   Contents" link and a divider, except the first step, which has nothing above it
   to return from, and Troubleshooting, whose back-link sits under its intro and

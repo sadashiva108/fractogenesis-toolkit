@@ -338,9 +338,12 @@ Review it. Both of these read the file and install nothing:
 
 ```bash
 BF="$(find "$REIMAGE_ARTIFACT_ROOT/system-inventory" -name 'Brewfile' -print 2>/dev/null | sort | tail -1)"
-brew bundle list --all --file "$BF"      # every entry, one per line
-brew bundle check --verbose --file "$BF" # which entries are not installed yet
+brew bundle list --all --file "$BF"
+brew bundle check --verbose --file "$BF"
 ```
+
+`list` prints every entry, one per line; `check --verbose` prints only the
+entries not installed yet.
 
 > [!warning] Pitfall
 > `brew bundle list` without `--all` prints **formulae only**. A Brewfile's casks,
@@ -397,7 +400,7 @@ Open the toolkit as a vault: **Open folder as vault** →
 back-link works, and the callouts render as intended.
 
 ```bash
-echo "$FRACTOGENESIS_HOME"    # the path to select in the dialog
+echo "$FRACTOGENESIS_HOME"
 ```
 
 > [!note]
@@ -503,33 +506,48 @@ Git first — it depends on nothing here:
 brew install git
 ```
 
+**Name the JDK major once.** Every command below reads it, `reimage.env` carries
+it, and Phase 10B's trust-store step and both boundary recorders read it back —
+so it is chosen here and never retyped. Substitute the major your projects need:
+
+```bash
+REIMAGE_JDK_BASELINE="21"
+export REIMAGE_JDK_BASELINE
+```
+
 Then the JDK:
 
 ```bash
-brew install openjdk@21
+brew install "openjdk@$REIMAGE_JDK_BASELINE"
 ```
 
-`openjdk@21` is **keg-only**. Homebrew installs it under its own prefix and deliberately does not symlink it into `/Library/Java/JavaVirtualMachines`, which is the only place macOS's Java lookup looks — so the install succeeds and the JDK is still invisible to `java` and `/usr/libexec/java_home`.
+The `openjdk@<major>` formulae are **keg-only**. Homebrew installs them under
+their own prefix and deliberately does not symlink them into
+`/Library/Java/JavaVirtualMachines`, which is the only place macOS's Java lookup
+looks — so the install succeeds and the JDK is still invisible to `java` and
+`/usr/libexec/java_home`.
 
-Create the link Homebrew's caveat text describes. Apple silicon path shown; on an Intel Mac substitute `/usr/local/opt/openjdk@21/libexec/openjdk.jdk`:
+Create the link Homebrew's caveat text describes. `brew --prefix` resolves the
+formula's own location, so this is the same command on Apple silicon and Intel:
 
 ```bash
-sudo ln -sfn /opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk-21.jdk
+sudo ln -sfn "$(brew --prefix "openjdk@$REIMAGE_JDK_BASELINE")/libexec/openjdk.jdk" \
+  "/Library/Java/JavaVirtualMachines/openjdk-$REIMAGE_JDK_BASELINE.jdk"
 ```
 
 Verify before continuing. This must print a path and exit `0`:
 
 ```bash
-/usr/libexec/java_home -v 21
+/usr/libexec/java_home -v "$REIMAGE_JDK_BASELINE"
 ```
 
 > [!warning] Pitfall
 > Do not install the build tools until that command succeeds. `gradle`, `maven`,
 > and `groovy` each declare a dependency on `openjdk` — the versionless, current
-> formula — so Homebrew installs **another** JDK alongside the 21 you just put
-> in. Link and verify 21 first and you know which JDK `java` resolves to and why.
-> Install them first and you are left with two JDKs, no `java_home` entry for
-> either, and a `java -version` answer you cannot account for.
+> formula — so Homebrew installs **another** JDK alongside the one you just put
+> in. Link and verify the baseline first and you know which JDK `java` resolves
+> to and why. Install them first and you are left with two JDKs, no `java_home`
+> entry for either, and a `java -version` answer you cannot account for.
 
 Now the build tools, one at a time:
 
@@ -546,7 +564,7 @@ brew install groovy
 ```
 
 > [!warning] Pitfall
-> Skipping the symlink does not look like a failure at this step. `brew install openjdk@21` reports success, and the caveat that tells you to link it scrolls past with the rest of the install output. What you actually get is `java -version` reporting `Unable to locate a Java Runtime` and `/usr/libexec/java_home -v 21` exiting non-zero — and the real damage lands a phase later. [[restore-access|restore-access.md]] Step 6 runs `export JAVA_HOME="$(/usr/libexec/java_home -v 21)"`; command substitution swallows the non-zero exit, so `JAVA_HOME` is silently set to the empty string. The `cp` on the next line then writes `jssecacerts` to `/lib/security/jssecacerts` — an absolute path that is not the JDK, and not even a directory that exists — and the internal-TLS smoke test afterward fails for a reason that has nothing to do with the certificate you just restored. Verify `java_home` here, where it is one command, rather than there, where it is a red herring.
+> Skipping the symlink does not look like a failure at this step. The `brew install` reports success, and the caveat that tells you to link it scrolls past with the rest of the install output. What you actually get is `java -version` reporting `Unable to locate a Java Runtime` and `/usr/libexec/java_home -v "$REIMAGE_JDK_BASELINE"` exiting non-zero — and the real damage lands a phase later, where [[restore-access|restore-access.md]] Step 6 resolves `JAVA_HOME` through command substitution, which swallows a non-zero exit and leaves it empty. Verify `java_home` here, where it is one command, rather than there, where it is a red herring.
 
 Confirm the toolchain resolves:
 
@@ -559,19 +577,69 @@ mvn --version
 groovy --version
 ```
 
-If multiple JDKs are needed later, keep the switch helpers explicit rather than editing `JAVA_HOME` by hand each time:
+**Pin `JAVA_HOME` and record both values.** `JAVA_HOME` is not set by anything so
+far — Phase 10B Step 6 needs it, and so does any build run between now and then.
+Resolve it from the baseline rather than typing a path:
 
 ```bash
-alias jdk8='export JAVA_HOME=$(/usr/libexec/java_home -v 1.8)'
-alias jdk11='export JAVA_HOME=$(/usr/libexec/java_home -v 11)'
-alias jdk17='export JAVA_HOME=$(/usr/libexec/java_home -v 17)'
-alias jdk21='export JAVA_HOME=$(/usr/libexec/java_home -v 21)'
+JAVA_HOME="$(/usr/libexec/java_home -v "$REIMAGE_JDK_BASELINE")"
+export JAVA_HOME
+printf 'JAVA_HOME=%s\n' "${JAVA_HOME:-<empty>}"
 ```
 
-JDK 21 is the normal baseline unless a project-specific requirement says otherwise.
+An `<empty>` here means the symlink step above did not take, and every later step
+that reads it fails somewhere else instead.
+
+Now write both into `reimage.env`, so a new terminal or a later phase does not
+have to rediscover them. `upsert-env` accepts any `KEY=VALUE` it is given,
+including an empty `VALUE`, and reports no error when it writes one — so check
+both values in the same block that writes them, where the check cannot drift away
+from the thing it protects:
+
+```bash
+if [ -z "$REIMAGE_JDK_BASELINE" ] || [ -z "$JAVA_HOME" ]; then
+  printf 'REFUSING to write: REIMAGE_JDK_BASELINE=%s JAVA_HOME=%s\n' \
+    "${REIMAGE_JDK_BASELINE:-<empty>}" "${JAVA_HOME:-<empty>}"
+  printf 'Fix the empty one above before running upsert-env.\n'
+else
+  python3 bin/prepare-artifact-root.py \
+    upsert-env \
+    --env-file reimage.env \
+    "REIMAGE_JDK_BASELINE=${REIMAGE_JDK_BASELINE}" \
+    "JAVA_HOME=${JAVA_HOME%/}"
+fi
+```
+
+Confirm what landed, rather than trusting the write:
+
+```bash
+grep -E '^(export )?(REIMAGE_JDK_BASELINE|JAVA_HOME)=' reimage.env
+```
+
+> [!note]
+> `REIMAGE_JDK_BASELINE` is the durable value: it names an intent that survives
+> reinstalling the JDK. `JAVA_HOME` is a convenience — it is a resolved absolute
+> path, so it goes stale if the JDK moves or the baseline changes. Phase 10B
+> re-derives it from the baseline rather than trusting the stored path, which is
+> why the baseline is the one that matters.
+
+If several JDKs are needed later, keep the switch helpers explicit rather than
+editing `JAVA_HOME` by hand each time. Substitute the majors your projects
+actually need:
+
+```bash
+JDK_MAJORS="1.8 11 17 21"
+for V in $JDK_MAJORS; do
+  alias "jdk$(printf '%s' "$V" | tr -d '.')=export JAVA_HOME=\$(/usr/libexec/java_home -v $V)"
+done
+alias | grep '^jdk'
+```
+
+Each alias resolves its JDK at the moment you invoke it, so one that is not
+installed fails then rather than at definition time.
 
 > [!bug] Troubleshooting
-> If `java -version` reports something other than the JDK you just installed, see [[#`java -version` prints a version different from `openjdk@21`|`java -version` prints a version different from `openjdk@21`]].
+> If `java -version` reports something other than the JDK you just installed, see [[#`java -version` prints a version different from the baseline|`java -version` prints a version different from the baseline]].
 
 > [!warning] Pitfall
 > Do not `brew install node` here — see the next step for why. Installing both `brew`'s `node` and `nvm`'s `node` creates a PATH collision where it is unclear which binary actually runs.
@@ -661,10 +729,16 @@ npm --version
 
 ### Step 9 — Install Platform CLIs and Helper Utilities
 
-Install the common platform tools, one at a time:
+Install the common platform tools, one at a time.
+
+The Cloud Foundry CLI is installed from a versioned formula, and the major is a
+deployment-compatibility choice rather than "whatever is newest" — a CLI ahead of
+the foundation it talks to fails at push time, not install time. Name it once and
+substitute the major your foundation expects:
 
 ```bash
-brew install cloudfoundry/tap/cf-cli@7
+CF_CLI_MAJOR="7"
+brew install "cloudfoundry/tap/cf-cli@$CF_CLI_MAJOR"
 ```
 
 ```bash
@@ -721,10 +795,10 @@ yq --version
 >
 > **1. The tap was added but the formula never was.** Tapping and installing are
 > separate operations, and a `Brewfile` listing `tap "cloudfoundry/tap"` with no
-> matching `brew "cf-cli@7"` line reproduces exactly this state:
+> matching `brew "cf-cli@<major>"` line reproduces exactly this state:
 >
 > ```bash
-> brew install cloudfoundry/tap/cf-cli@7
+> brew install "cloudfoundry/tap/cf-cli@$CF_CLI_MAJOR"
 > ```
 >
 > **2. Current Homebrew refuses formulae from untrusted third-party taps.** The
@@ -736,13 +810,13 @@ yq --version
 > brew trust cloudfoundry/tap
 > ```
 >
-> **3. Versioned formulae install unlinked.** `cf-cli@7` is keg-only by design, so
+> **3. Versioned formulae install unlinked.** `cf-cli@<major>` is keg-only by design, so
 > "already installed" and "on `PATH`" are different facts. `brew install` on an
 > already-present keg says *"already installed, it's just not linked"* and stops —
 > which reads like success:
 >
 > ```bash
-> brew link cloudfoundry/tap/cf-cli@7
+> brew link "cloudfoundry/tap/cf-cli@$CF_CLI_MAJOR"
 > ```
 >
 > ```bash
@@ -750,11 +824,11 @@ yq --version
 > ```
 >
 > If linking is refused because it would overwrite another version, either
-> `brew link --force cloudfoundry/tap/cf-cli@7`, or leave it unlinked and put its
+> `brew link --force "cloudfoundry/tap/cf-cli@$CF_CLI_MAJOR"`, or leave it unlinked and put its
 > own prefix on `PATH` instead:
 >
 > ```bash
-> echo 'export PATH="/opt/homebrew/opt/cf-cli@7/bin:$PATH"' >> "$HOME/.zprofile"
+> printf 'export PATH="%s/bin:$PATH"\n' "$(brew --prefix "cf-cli@$CF_CLI_MAJOR")" >> "$HOME/.zprofile"
 > ```
 
 > [!note]
@@ -1039,16 +1113,18 @@ Rerun `brew doctor` afterward and confirm the stale-prefix warning is gone befor
 
 [[#Step 6 — Install direnv and Restore the Repo Environment Hook|⮕ Continue to Step 6 — Install direnv and Restore the Repo Environment Hook]]
 
-### `java -version` prints a version different from `openjdk@21`
+### `java -version` prints a version different from the baseline
 
-`/usr/libexec/java_home -V` lists every installed JDK; the default is the first one. Set `JAVA_HOME` explicitly for the current session:
+`/usr/libexec/java_home -V` lists every installed JDK; the default is the first one, which is not necessarily the one Step 7 installed. Set `JAVA_HOME` explicitly for the current session:
 
 ```bash
-export JAVA_HOME=$(/usr/libexec/java_home -v 21)
+export JAVA_HOME="$(/usr/libexec/java_home -v "$REIMAGE_JDK_BASELINE")"
 java -version
 ```
 
-Persist that export in `~/.zprofile` only if 21 is your intended default.
+If `REIMAGE_JDK_BASELINE` is empty here, this shell never loaded `reimage.env` — `source reimage.env` first rather than substituting a number, so the value stays in one place.
+
+Persist that export in `~/.zprofile` only if the baseline is your intended machine-wide default; Step 7 already recorded it in `reimage.env` either way.
 
 [[#Step 8 — Install and Manage Node Versions|⮕ Continue to Step 8 — Install and Manage Node Versions]]
 

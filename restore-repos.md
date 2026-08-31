@@ -391,32 +391,47 @@ commit from the other. Only the clone has `.git`, so only the clone can commit â
 and only the bootstrap copy has `reimage.env`, so only the bootstrap copy can
 run scripts. Neither is complete until you merge the two facts.
 
+Capture the current root before anything repoints it. After the shell is
+repointed the variable names the clone, and this is the only handle on the old
+copy:
+
 ```bash
-# Capture the current root before anything repoints it -- after step 2 the
-# variable names the clone, and this is the only handle on the old copy.
 TOOLKIT_BOOTSTRAP="$FRACTOGENESIS_HOME"
 TOOLKIT_CLONE="$GIT_PERSONAL_REPO_ROOT/fractogenesis-toolkit"
+```
 
-# 1. Carry reimage.env across. It is gitignored, so the clone does not have it.
+**1. Carry `reimage.env` across.** It is gitignored, so the clone does not have it:
+
+```bash
 cp "$TOOLKIT_BOOTSTRAP/reimage.env" "$TOOLKIT_CLONE/reimage.env"
+```
 
-# 2. Repoint the shell. init-shell-env.sh self-locates, so running it from the
-#    clone rewrites the profile block to point there.
+**2. Repoint the shell.** `init-shell-env.sh` self-locates, so running it from the
+clone rewrites the profile block to point there:
+
+```bash
 bash "$TOOLKIT_CLONE/bin/init-shell-env.sh"
+```
 
-# 3. Approve .envrc in the clone. direnv approval is per-path and per-content.
+**3. Approve `.envrc` in the clone.** direnv approval is per-path and per-content,
+so the clone needs its own:
+
+```bash
 cd "$TOOLKIT_CLONE" && direnv allow
+```
 
-# 4. Confirm, then remove the old copy.
+**4. Start a fresh login shell**, then confirm before removing the old copy:
+
+```bash
 exec zsh -l
 ```
 
 After the new shell starts, confirm both facts before deleting anything:
 
 ```bash
-echo "$FRACTOGENESIS_HOME"          # must be the clone
-echo "$REIMAGE_ARTIFACT_ROOT"       # must be non-empty
-git -C "$FRACTOGENESIS_HOME" status --short   # must work
+echo "$FRACTOGENESIS_HOME"
+echo "$REIMAGE_ARTIFACT_ROOT"
+git -C "$FRACTOGENESIS_HOME" status --short
 ```
 
 Only once all three hold:

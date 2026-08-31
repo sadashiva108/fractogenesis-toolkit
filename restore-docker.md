@@ -378,13 +378,14 @@ Verify:
 ```bash
 docker ps --filter name=redis
 docker exec -it redis redis-cli ping
-# expected: PONG
 ```
+
+Expect `PONG`.
 
 Optional local client via Homebrew:
 
 ```bash
-brew install redis   # installs CLI only, no daemon
+brew install redis
 redis-cli -h localhost -p 6379 ping
 ```
 
@@ -417,12 +418,11 @@ docker ps -a --filter name=rabbitmq
 docker start rabbitmq
 ```
 
-Verify (wait ~15 s for RabbitMQ to finish booting):
+Verify, after waiting about 15 seconds for RabbitMQ to finish booting. Expect `200`:
 
 ```bash
 docker ps --filter name=rabbitmq
 curl -s -o /dev/null -w "%{http_code}" http://localhost:15672
-# expected: 200
 ```
 
 Management UI: [http://localhost:15672](http://localhost:15672) — default credentials `guest` / `guest` for local dev only.
@@ -452,9 +452,11 @@ The project ships two compose files:
 
 Configuration is driven by `.env` in the same directory:
 
-```bash
-# .env (carrier-services-storage/src/main/docker/elastic/.env)
-ELASTIC_PASSWORD=fake-test      # change for any non-local use
+`.env` sits at `carrier-services-storage/src/main/docker/elastic/.env`. The
+passwords below are local-only throwaways — change them for any non-local use:
+
+```text
+ELASTIC_PASSWORD=fake-test
 KIBANA_PASSWORD=fake-test
 STACK_VERSION=8.13.0
 ES_PORT=9200
@@ -467,12 +469,16 @@ KIBANA_PORT=5601
 Elasticsearch only:
 
 ```bash
-cd <workspace>/carrier-services-storage/src/main/docker/elastic/
+WORKSPACE="replace-with-your-workspace-path"
+cd "$WORKSPACE/carrier-services-storage/src/main/docker/elastic/"
 docker compose -f docker-compose.yml up -d
-# wait ~20s, then:
+```
+
+Wait about 20 seconds for the cluster to come up, then check it. Expect `200`:
+
+```bash
 curl -s -o /dev/null -w "%{http_code}" \
   -u elastic:fake-test http://localhost:9200
-# expected: 200
 ```
 
 Generate a local API key and write it to `gradle-elastic-local.properties`:
@@ -493,7 +499,11 @@ Stop:
 
 ```bash
 docker compose -f docker-compose-es-kibana.yml down
-# or, Elasticsearch only:
+```
+
+Or Elasticsearch only, leaving Kibana up:
+
+```bash
 docker compose -f docker-compose.yml down
 ```
 
@@ -527,7 +537,8 @@ Project location: `src/main/docker/marklogic/` in `carrier-services-storage`. Th
 Populate the admin credentials (default to `admin` / `admin` for local dev; do not commit real credentials):
 
 ```bash
-cd <workspace>/carrier-services-storage/src/main/docker/marklogic/
+WORKSPACE="replace-with-your-workspace-path"
+cd "$WORKSPACE/carrier-services-storage/src/main/docker/marklogic/"
 cat secrets/mldb_admin_username.txt
 cat secrets/mldb_admin_password.txt
 ```
@@ -540,20 +551,24 @@ docker compose -f docker-compose.marklogic.yml up -d
 
 `MARKLOGIC_INIT=true` in the compose file triggers first-boot cluster initialisation. Wait ~30–60 seconds for MarkLogic to finish initialising, then verify:
 
+The health endpoint, where `200` means ready:
+
 ```bash
-# Health endpoint (HTTP 200 = ready)
 curl -s -o /dev/null -w "%{http_code}" http://localhost:7997
-# expected: 200
+```
 
-# Admin UI
+The admin UI — log in as `admin` / `admin`:
+
+```bash
 open http://localhost:8001
-# Login: admin / admin
+```
 
-# Management API
+The management API, which should also answer `200`:
+
+```bash
 curl -s -o /dev/null -w "%{http_code}" \
   --anyauth -u admin:admin \
   http://localhost:8002/manage/v2
-# expected: 200
 ```
 
 Run the sanity-check script before any Gradle deploy:
@@ -627,8 +642,10 @@ Verify the app server:
 curl -s -o /dev/null -w "%{http_code}" \
   --anyauth -u carrier-services-storage-admin:carrier-services-storage-admin-password \
   http://localhost:8042
-# expected: 200 or 404 (404 is fine — server is up, no root handler)
 ```
+
+Expect `200` or `404`. A `404` is fine here — it means the server is up and
+simply has no handler at the root path.
 
 Incremental module reload:
 
@@ -639,10 +656,14 @@ Incremental module reload:
 Tear down when done experimenting:
 
 ```bash
-cd <workspace>/carrier-services-storage/src/main/docker/marklogic/
+WORKSPACE="replace-with-your-workspace-path"
+cd "$WORKSPACE/carrier-services-storage/src/main/docker/marklogic/"
 docker compose -f docker-compose.marklogic.yml down
+```
 
-# Remove the persisted data volume too (full clean slate):
+To remove the persisted data volume as well, for a full clean slate:
+
+```bash
 docker compose -f docker-compose.marklogic.yml down -v
 ```
 
@@ -687,8 +708,12 @@ Docker restore fails in a handful of recognisable ways, each with a fix long eno
 ### Docker daemon not running
 
 ```bash
-open -a Docker   # launch Docker Desktop
-# wait ~10 s, then:
+open -a Docker
+```
+
+Wait about 10 seconds for Docker Desktop to finish starting, then:
+
+```bash
 docker info
 ```
 
@@ -710,9 +735,19 @@ Confirm Docker file sharing includes the project directories the containers bind
 
 ### Port conflict
 
+Check a single port — 9200 is Elasticsearch:
+
 ```bash
-lsof -i :9200                                                                     # example: Elasticsearch
-python3 <workspace>/carrier-services-storage/src/main/docker/marklogic/scripts/port-checker.py   # MarkLogic cluster ports
+lsof -i :9200
+```
+
+Or check the whole MarkLogic cluster port range at once. Set the workspace path
+first rather than pasting it inline, so an unset value fails visibly instead of
+being read as a redirection:
+
+```bash
+WORKSPACE="replace-with-your-workspace-path"
+python3 "$WORKSPACE/carrier-services-storage/src/main/docker/marklogic/scripts/port-checker.py"
 ```
 
 [[#Step 8 — Restart Elasticsearch and Kibana|⮕ Continue to Step 8 — Restart Elasticsearch and Kibana]]
@@ -743,8 +778,9 @@ Credentials mismatch. Confirm:
 
 ### Elasticsearch returns 401
 
+Verify the password matches the one in `.env`:
+
 ```bash
-# verify the password matches .env
 curl -u elastic:fake-test http://localhost:9200/_cluster/health?pretty
 ```
 
@@ -794,8 +830,9 @@ Longer material most runs will not need, kept out of the main flow.
 For a 3-node cluster with nginx load balancing, use the cluster compose file:
 
 ```bash
-cd <workspace>/carrier-services-storage/src/main/docker/marklogic/
-python3 scripts/port-checker.py                              # confirm cluster ports are free
+WORKSPACE="replace-with-your-workspace-path"
+cd "$WORKSPACE/carrier-services-storage/src/main/docker/marklogic/"
+python3 scripts/port-checker.pye
 docker compose -f docker-compose.marklogic-cluster.yml up -d
 ```
 
@@ -823,8 +860,10 @@ After a reimage, when volumes were preserved:
 ```bash
 docker start redis
 docker start rabbitmq
-# Elasticsearch / Kibana and MarkLogic: re-run compose up from project directories
 ```
+
+Elasticsearch, Kibana and MarkLogic are not restarted this way — re-run
+`docker compose up` from their project directories, as above.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 

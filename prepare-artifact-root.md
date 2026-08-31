@@ -415,7 +415,8 @@ FRACTOGENESIS_PARENT="/path/to/local/repo-parent"
 mkdir -p "$FRACTOGENESIS_PARENT"
 cd "$FRACTOGENESIS_PARENT"
 
-git clone git@github.com:<your-github-account>/fractogenesis-toolkit.git
+TOOLKIT_GITHUB_ACCOUNT="replace-with-your-github-account"
+git clone "git@github.com:$TOOLKIT_GITHUB_ACCOUNT/fractogenesis-toolkit.git"
 ```
 
 `cd` into the checkout itself -- this directory is what the rest of the guide calls `FRACTOGENESIS_HOME`:
@@ -678,7 +679,7 @@ Export them before running the script:
 ```bash
 export EXTERNAL_DATA_VOLUME="/Volumes/<data-volume>"
 export REIMAGE_WORKSPACE_ROOT="$HOME/<workspace-dir>"
-export EXTERNAL_APPLE_BACKUPS_VOLUME="/Volumes/<time-machine-volume>"   # only if one is in use
+export EXTERNAL_APPLE_BACKUPS_VOLUME="/Volumes/replace-with-time-machine-volume"
 ```
 
 Then confirm each landed, because an unset value here is the failure that costs the most later:
@@ -697,7 +698,7 @@ If you intend to use the optional OneDrive secondary copy, also export the folde
 
 ```bash
 export ONEDRIVE_FOLDER_NAME="OneDrive-<OrgName>"
-export ONEDRIVE_PARENT_DIR="/path/to/<sync-parent>"   # only when overriding the default
+export ONEDRIVE_PARENT_DIR="replace-with-the-sync-parent-path"
 ```
 
 `bin/setup-reimage-env.sh` computes the rest for you -- you rarely need to type anything, but each can be overridden by exporting your own value beforehand:

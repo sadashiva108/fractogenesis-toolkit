@@ -64,11 +64,11 @@
 #   4. Defaults and reusable fragments loaded by artifact-config.sh.
 #
 # Bundle naming:
-#   [LABEL-]initial-reimaged-system-YYYYMMDD-HHMMSS
+#   runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS
 #
 #   The label leads, matching post-image-performance-audit-*, post-reimage-*,
 #   and the pre-image-* repo-audit runs. bin/reimage-checklist.sh therefore
-#   globs *initial-reimaged-system-* when validating Phase 9 evidence.
+#   resolves the bundle through official/<context>.txt when validating Phase 9 evidence.
 #
 #   Because the label precedes the timestamp, directory names no longer sort
 #   chronologically once more than one label is in play: post-restart sorts
@@ -79,7 +79,7 @@
 # Output location precedence (used only when --output-root is not supplied):
 #   1. $REIMAGE_ARTIFACT_ROOT/reimaged-system/
 #        when REIMAGE_ARTIFACT_ROOT is set and currently mounted. The bundle
-#        lands at reimaged-system/initial-reimaged-system-YYYYMMDD-HHMMSS/,
+#        lands at reimaged-system/restarts/runs/verify-reimaged-system-initial-<stamp>/,
 #        matching the layout documented in references/master-directory-reference.md.
 #   2. ~/Desktop/reimaged-system-artifacts/
 #        as a fallback so the checklist can complete on a bare Mac before the
@@ -273,17 +273,17 @@ if [[ -n "${REPO_ROOT:-}" && ( "$OUTPUT_ROOT" == "$REPO_ROOT" || "$OUTPUT_ROOT" 
 fi
 
 STAMP="$(date +%Y%m%d-%H%M%S)"
-# Bundle prefix kept as initial-reimaged-system-* to match the artifact tree
+# Run ids are <runbook>-<point>-<stamp> to match the artifact tree
 # documented in references/master-directory-reference.md and the pattern that
 # bin/reimage-checklist.sh looks for when validating Phase 9 evidence.
 # The context label leads the directory name:
-# pre-restart-initial-reimaged-system-YYYYMMDD-HHMMSS. This matches the
+# verify-reimaged-system-pre-restart-YYYYMMDD-HHMMSS. This matches the
 # convention already used by post-image-performance-audit-*, post-reimage-*,
 # and the pre-image-* repo-audit runs, where the phase or context comes first.
 #
 # Two consequences for anything that reads these bundles back:
 #   - the artifact name is no longer at the start, so globs need a leading
-#     wildcard: *initial-reimaged-system-* rather than initial-reimaged-system-*;
+#     the run index rather than a glob;
 #   - names group by label before timestamp, so a "latest bundle" lookup must
 #     rank on the trailing stamp and never on a plain lexical sort.
 # The stamp stays at the end of the name, which is what reimage-checklist.sh
@@ -422,7 +422,7 @@ boundary_exit() {
     fi
   fi
 
-  if [[ -n "$(artifact_run_official "$comparisons_root" "verify-reimaged-system-inventory-diff" 2>/dev/null || true)" ]]; then
+  if [[ -n "$(artifact_run_official "$comparisons_root" "verify-reimaged-system-restart-diff" 2>/dev/null || true)" ]]; then
     b_record PASS "The two bundles were compared" "recorded under \`comparisons/\`"
   else
     b_record WARN "The two bundles were compared" "no official comparison run — Step 6 compares them, and without it nothing names what changed across the restart"
@@ -443,6 +443,146 @@ boundary_exit() {
   b_manual "Managed app set complete and unchanged since the pre-restart bundle" "Company Portal Apps tab plus \`raw/applications-managed.txt\` in both bundles."
   b_manual "First-boot basics are usable" "Browser, network, terminal, display, keyboard, mouse and audio — the Step 3 review."
 }
+
+# ---------------------------------------------------------------------------
+# Comparison mode: --context diff
+#
+# Reads the two official first-boot bundles and reports how their checklist rows
+# changed across the restart. A raw `diff -u` of two checklists is technically
+# complete and practically unreadable: it interleaves reordered rows, evidence
+# paths and timestamps with the handful of verdicts that actually moved.
+#
+# Writes to comparisons/ under verify-reimaged-system-restart-diff, which is the
+# run the exit checklist looks for when it asks whether the pair was compared.
+# ---------------------------------------------------------------------------
+if [[ "${CONTEXT_LABEL:-}" == "diff" ]]; then
+  RESTARTS_ROOT="$OUTPUT_ROOT/restarts"
+  CMP_ROOT="$OUTPUT_ROOT/comparisons"
+
+  PRE_RUN="$(artifact_run_official "$RESTARTS_ROOT" "verify-reimaged-system-pre-restart" 2>/dev/null || true)"
+  POST_RUN="$(artifact_run_official "$RESTARTS_ROOT" "verify-reimaged-system-post-restart" 2>/dev/null || true)"
+  PRE_FILE="${PRE_RUN:+$RESTARTS_ROOT/$PRE_RUN/checklist.md}"
+  POST_FILE="${POST_RUN:+$RESTARTS_ROOT/$POST_RUN/checklist.md}"
+
+  for _side in "PRE:$PRE_FILE" "POST:$POST_FILE"; do
+    if [[ -z "${_side#*:}" || ! -f "${_side#*:}" ]]; then
+      echo "ERROR: no official ${_side%%:*}-restart bundle with a checklist.md under $RESTARTS_ROOT" >&2
+      echo "ERROR: record it with: ./bin/record-reimaged-system.sh --context pre-restart|post-restart" >&2
+      exit 2
+    fi
+  done
+
+  # A checklist row is `| <check> | `<STATUS>` | <evidence> |`. The backticked
+  # status in field 3 is what separates a check row from the Item/Location and
+  # heading tables in the same file, so parse on that rather than on position.
+  #
+  # The status set is NOT the four the script writes. Manual rows are answered by
+  # hand, so a post-restart checklist carries `yes`, `no`, `accepted` and the like
+  # where the generated file had `TODO`. Matching only PASS/WARN/FAIL/TODO made
+  # every answered row invisible on one side and reported it as dropped -- the
+  # comparison said fifteen rows disappeared across a restart that changed none.
+  # Accept any short backticked token instead, and exclude anything holding a
+  # dot or slash, which is how an evidence path in that column is told apart.
+  _rows_of() {
+    awk -F'|' '
+      NF >= 4 {
+        c = $2; st = $3
+        gsub(/^[ \t]+|[ \t]+$/, "", c)
+        gsub(/^[ \t`]+|[ \t`]+$/, "", st)
+        # Field 3 is the status column in both tables, so no content test is
+        # needed -- only the table furniture has to be skipped. A length cap was
+        # tried and was wrong: an operator answering a manual row writes prose
+        # like `yes, with exception`, and capping the length dropped that row
+        # from one side and then reported it as having disappeared.
+        if (c != "Check" && c !~ /^-+$/ && st != "" && st !~ /^-+$/)
+          printf "%s\t%s\n", c, st
+      }' "$1"
+  }
+
+  PRE_TMP="$(mktemp)"; POST_TMP="$(mktemp)"
+  _rows_of "$PRE_FILE"  > "$PRE_TMP"
+  _rows_of "$POST_FILE" > "$POST_TMP"
+
+  ROWS_TMP="$(mktemp)"
+  awk -F'\t' '
+    NR == FNR { pre[$1] = $2; next }
+    {
+      post[$1] = $2
+      p = ($1 in pre) ? pre[$1] : "-"
+      # "good" spans both vocabularies: the script writes PASS, a person writes
+      # yes or accepted, and they mean the same thing about the same row.
+      # Prefix match, so a qualified answer -- `yes, with exception` -- still
+      # reads as good rather than as a change of state.
+      good_p = (p ~ /^(PASS|yes|accepted)/)
+      good_n = ($2 ~ /^(PASS|yes|accepted)/)
+      verdict = "unchanged"
+      if (p == "-")                          verdict = "new"
+      else if (p == $2)                      verdict = "unchanged"
+      else if (good_p && !good_n)            verdict = "REGRESSED"
+      else if (!good_p && good_n)            verdict = "improved"
+      else if (p == "TODO")                  verdict = "answered"
+      else                                   verdict = "changed"
+      printf "%s\t%s\t%s\t%s\n", $1, p, $2, verdict
+    }
+    END { for (k in pre) if (!(k in post)) printf "%s\t%s\t-\tdropped\n", k, pre[k] }
+  ' "$PRE_TMP" "$POST_TMP" | sort > "$ROWS_TMP"
+
+  N_REG="$(awk -F'\t' '$4=="REGRESSED"' "$ROWS_TMP" | wc -l | tr -d ' ')"
+  N_IMP="$(awk -F'\t' '$4=="improved"'  "$ROWS_TMP" | wc -l | tr -d ' ')"
+  N_CHG="$(awk -F'\t' '$4=="changed"'   "$ROWS_TMP" | wc -l | tr -d ' ')"
+  N_ANS="$(awk -F'\t' '$4=="answered"' "$ROWS_TMP" | wc -l | tr -d ' ')"
+  N_NEW="$(awk -F'\t' '$4=="new"||$4=="dropped"' "$ROWS_TMP" | wc -l | tr -d ' ')"
+  N_SAME="$(awk -F'\t' '$4=="unchanged"' "$ROWS_TMP" | wc -l | tr -d ' ')"
+
+  if ! artifact_run_begin "$CMP_ROOT" "verify-reimaged-system-restart-diff"; then
+    echo "ERROR: cannot stage a comparison run under: $CMP_ROOT" >&2
+    rm -f "$PRE_TMP" "$POST_TMP" "$ROWS_TMP"
+    exit 2
+  fi
+
+  cp "$ROWS_TMP" "$ARTIFACT_RUN_DIR/rows.tsv"
+  {
+    printf '# verify-reimaged-system — restart comparison — %s\n\n' "$ARTIFACT_RUN_STAMP"
+    printf 'Generated by `bin/record-reimaged-system.sh --context diff` on %s.\n\n' "$(date)"
+    printf 'Pre-restart:  `%s`\n\n' "$PRE_RUN"
+    printf 'Post-restart: `%s`\n\n' "$POST_RUN"
+    printf '**%s regressed · %s improved · %s answered · %s changed · %s added or dropped · %s unchanged**\n\n' \
+      "$N_REG" "$N_IMP" "$N_ANS" "$N_CHG" "$N_NEW" "$N_SAME"
+    if [[ "${N_REG:-0}" -gt 0 ]]; then
+      printf '## Regressed\n\nA row that passed before the restart and does not now. This is the section to read.\n\n'
+      printf '| Check | Before | After |\n| --- | --- | --- |\n'
+      awk -F'\t' '$4=="REGRESSED" { printf "| %s | `%s` | `%s` |\n", $1, $2, $3 }' "$ROWS_TMP"
+      printf '\n'
+    else
+      printf '## Regressed\n\nNothing. No row that passed before the restart fails after it.\n\n'
+    fi
+    for _sect in improved answered changed new dropped; do
+      if awk -F'\t' -v s="$_sect" '$4==s' "$ROWS_TMP" | grep -q .; then
+        printf '## %s\n\n' "$_sect"
+        printf '| Check | Before | After |\n| --- | --- | --- |\n'
+        awk -F'\t' -v s="$_sect" '$4==s { printf "| %s | `%s` | `%s` |\n", $1, $2, $3 }' "$ROWS_TMP"
+        printf '\n'
+      fi
+    done
+    printf '## Unchanged\n\n%s row(s) read the same on both sides; they are in `rows.tsv`.\n' "$N_SAME"
+  } > "$ARTIFACT_RUN_DIR/comparison.md"
+
+  rm -f "$PRE_TMP" "$POST_TMP" "$ROWS_TMP"
+
+  if ! artifact_run_finalize "$CMP_ROOT" \
+       "$N_REG regressed / $N_IMP improved / $N_CHG changed"; then
+    echo "ERROR: the comparison was written but could not be indexed." >&2
+    exit 2
+  fi
+
+  echo "" >&2
+  echo "Comparison → $ARTIFACT_RUN_DIR/comparison.md" >&2
+  printf '%s regressed · %s improved · %s answered · %s changed · %s added or dropped · %s unchanged\n' \
+    "$N_REG" "$N_IMP" "$N_ANS" "$N_CHG" "$N_NEW" "$N_SAME" >&2
+  # A regression is a finding to read, not a failure of the comparison -- the
+  # same rule compare-restored-state.sh follows for a MISSING row.
+  exit 0
+fi
 
 if [[ "${CONTEXT_LABEL:-}" == "entry" || "${CONTEXT_LABEL:-}" == "exit" ]]; then
   BOUNDARY_ROOT="$OUTPUT_ROOT/boundaries"
@@ -892,7 +1032,7 @@ __OUT__
 |---|---|
 | Checklist runbook | `verify-reimaged-system.md` |
 | Script | `bin/record-reimaged-system.sh` |
-| Generated evidence bundle | `__OUTPUT_ROOT__/[context-]initial-reimaged-system-YYYYMMDD-HHMMSS/` |
+| Generated evidence bundle | `__OUTPUT_ROOT__/restarts/runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/` |
 | Preferred generated-artifact root | `__ARTIFACT_ROOT__/reimaged-system/` when the artifact drive is mounted |
 | Local fallback if the artifact drive is unavailable | `~/Desktop/reimaged-system-artifacts/` |
 
@@ -908,7 +1048,7 @@ Keep active scripts in the toolkit checkout. Store generated evidence, checklist
 | Zscaler app present | `__ZSCALER_STATUS__` | `raw/applications-managed.txt` |
 | CrowdStrike/Falcon app present | `__CROWDSTRIKE_APP_STATUS__` | `raw/applications-managed.txt` |
 | CrowdStrike/Falcon process present | `__CROWDSTRIKE_PROC_STATUS__` | `raw/managed-processes.txt` |
-| Microsoft Office apps present (Phase 8 Step 4) | `__OFFICE_STATUS__` | `raw/applications-managed.txt` |
+| Microsoft Office apps present (Phase 8 Step 5) | `__OFFICE_STATUS__` | `raw/applications-managed.txt` |
 | OneDrive app present (sign-in deliberately deferred) | `__ONEDRIVE_STATUS__` | `raw/applications-managed.txt` |
 | Chrome app present | `__CHROME_STATUS__` | `raw/applications-managed.txt` |
 | External artifact root visible | `__ARTIFACT_ROOT_STATUS__` | `raw/artifact-root-spotcheck.txt` |
@@ -932,13 +1072,13 @@ Keep active scripts in the toolkit checkout. Store generated evidence, checklist
 | Device shows registered / compliant | `TODO` |  |
 | Required profiles/certificates visible | `TODO` |  |
 | VPN or Zscaler works for internal sites | `TODO` |  |
-| Managed app set installed from the Company Portal Apps tab (Phase 8 Step 4) | `TODO` |  |
+| Managed app set installed from the Company Portal Apps tab (Phase 8 Step 5) | `TODO` |  |
 | macOS updates checked/applied | `TODO` |  |
 | Second stabilization restart completed | `TODO` |  |
 | External artifact drive reconnected after enrollment stabilized | `TODO` |  |
-| Chrome baseline settings restored | `TODO` |  |
-| Terminal baseline settings restored | `TODO` |  |
-| Display/keyboard/mouse basics restored | `TODO` |  |
+| Chrome opens and can reach an internal site | `TODO` | Bookmarks, profiles and saved passwords arrive in restore-apps.md (Phase 12), not here. |
+| Terminal opens and `echo $SHELL` is the expected login shell | `TODO` | Profile, font and window size arrive in restore-apps.md (Phase 12), not here. |
+| Display/keyboard/mouse basics work | `TODO` |  |
 | Ready to move to Phase 10 runtime environment restore | `TODO` |  |
 
 ## Recommended Next Actions
@@ -997,7 +1137,7 @@ EOF_SUMMARY
 
 replace_token "$SUMMARY" "__GENERATED_DATE__" "$(date)"
 
-# Index the run. The `latest-initial-reimaged-system-bundle.txt` pointer this
+# Index the run. The single `latest-*.txt` pointer this
 # script used to write is gone: one pointer cannot name three lineages --
 # initial, pre-restart, post-restart -- and naming whichever ran last is
 # precisely the bug that made verify-reimaged-system.md Step 6 hand-roll its own

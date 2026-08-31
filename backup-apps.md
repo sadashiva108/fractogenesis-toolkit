@@ -496,7 +496,7 @@ Rerun a single script-class portion through the same entrypoint when needed — 
 ```bash
 ./bin/backup-apps.sh --docker-only --open
 ./bin/backup-apps.sh --vscode-only --open
-./bin/backup-apps.sh --apps-only --open   # Claude, draw.io, Zoom, Mos, Wireshark
+./bin/backup-apps.sh --apps-only --open
 ```
 
 `--intellij-only` is not a rerun convenience like these — it is the only way IntelliJ is ever captured, and [[backup-intellij|Backup IntelliJ]] covers what to set up first.
@@ -597,7 +597,11 @@ A literal is a candidate, not proof — a UUID client id is public, a UUID clien
 
 Use `app-settings-backup/postman/` only for non-secret collection exports, redacted environment examples, variable inventories, and restore notes. Use `secrets-encrypted/postman/` for anything that may contain tokens, passwords, API keys, client secrets, cookies, bearer tokens, or unreviewed environment exports.
 
-Step 4 already created `app-settings-backup/postman/` and `secrets-encrypted/postman/`. Create the subdirectories it does not:
+Step 4 already created `app-settings-backup/postman/` and `secrets-encrypted/postman/`. Create the subdirectories it does not.
+
+The `README.txt` in each drop folder is not decoration: an empty directory under
+`app-settings-backup/` is deleted by the next full `backup-apps.sh` run, so a drop
+target survives only by not being empty.
 
 ```bash
 mkdir -p \
@@ -607,9 +611,6 @@ mkdir -p \
   "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/postman/environments" \
   "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/postman/vault-if-export-allowed"
 
-# An empty directory under app-settings-backup/ is deleted by the next full
-# backup-apps.sh run. A drop target survives only by not being empty, so give
-# the three above the README.txt that every other drop folder here carries.
 for d in collections environments-redacted inventory; do
   printf '%s\n' \
     "Postman drop folder: $d" \
@@ -946,11 +947,10 @@ One failure spans more than one step and has a fix long enough to break a step's
 
 ### An app was installed after your last backup run and has no folder
 
-Detection runs only while the script runs, so a newly installed app has no folder yet. Rerun Step 3 first so the app is added to the selection checklist, check it, then rerun the entrypoint so it is detected and its folders are created:
+Detection runs only while the script runs, so a newly installed app has no folder yet. The first command adds the new app to the checklist; check it in `app-backup-selection.md`, then run the second so the app is detected and its folders created:
 
 ```bash
-./bin/backup-apps.sh --candidate-review   # adds the new app to the checklist
-# check the new app in app-backup-selection.md, then:
+./bin/backup-apps.sh --candidate-review
 ./bin/backup-apps.sh
 ```
 
@@ -1087,18 +1087,29 @@ find "$REIMAGE_ARTIFACT_ROOT/app-settings-backup/raycast" -maxdepth 2 -type f | 
 find "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/raycast" -maxdepth 3 -type f | sort 2>/dev/null || true
 ```
 
-If an export landed in Downloads, move it by sensitivity (swap in the real filename):
+If an export landed in Downloads, move it by sensitivity. Swap in the real
+filename in each case, and run only the line that matches what you exported —
+the two Quick Links lines take the same filename to different destinations, and
+which one is right depends on what is in the file.
+
+The settings/data export is password-protected and secret-bearing:
 
 ```bash
-# Password-protected settings/data export — secret-bearing.
 mv "$HOME/Downloads/raycast-settings-and-data-YYYYMMDD-HHMMSS.rayconfig" \
   "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/raycast/"
+```
 
-# Reviewed non-secret Quick Links JSON.
+Quick Links JSON you have read and confirmed carries nothing sensitive:
+
+```bash
 mv "$HOME/Downloads/raycast-quicklinks-YYYYMMDD-HHMMSS.json" \
   "$REIMAGE_ARTIFACT_ROOT/app-settings-backup/raycast/"
+```
 
-# Sensitive or unreviewed Quick Links JSON.
+Quick Links JSON that is sensitive, or that you have not reviewed yet — unreviewed
+is treated as sensitive:
+
+```bash
 mv "$HOME/Downloads/raycast-quicklinks-YYYYMMDD-HHMMSS.json" \
   "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/raycast/quicklinks-if-sensitive/"
 ```

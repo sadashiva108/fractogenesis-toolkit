@@ -218,12 +218,13 @@ The complete `secrets-encrypted/` layout is defined once in the Master Directory
 ---
 ### Environment Variables
 
-The values this runbook depends on. `REIMAGE_ARTIFACT_ROOT` is resolved and written during `prepare-artifact-root.md`; `JAVA_HOME` is not a `reimage.env` value and is set by Step 6 from `/usr/libexec/java_home`.
+The values this runbook depends on. `REIMAGE_ARTIFACT_ROOT` is resolved and written during `prepare-artifact-root.md`; `REIMAGE_JDK_BASELINE` and `JAVA_HOME` are written during Phase 10A Step 7 and confirmed in Step 0 here.
 
 | Variable | Meaning |
 |---|---|
 | `REIMAGE_ARTIFACT_ROOT` | Artifact root for this reimage event; the mounted DMG, the dotfiles bundle, and `public-certs/` all resolve under it. |
-| `JAVA_HOME` | Set explicitly in Step 6 to the JDK installed in Phase 10A before dropping in `jssecacerts`. |
+| `REIMAGE_JDK_BASELINE` | The JDK major this machine is pinned to, chosen in Phase 10A Step 7 and recorded in `reimage.env`. Step 6 resolves the trust-store target from it. |
+| `JAVA_HOME` | Recorded in `reimage.env` by Phase 10A Step 7, and re-derived from the baseline by Step 6 rather than trusted — a stored absolute path goes stale if the JDK moves. |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -236,7 +237,7 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 ### Prerequisites
 
 - Your shell is at the toolkit root — `cd "$FRACTOGENESIS_HOME"` once for the session. Per the guide's [[reimaging-guide#Core Assumptions|Core Assumptions]], the commands below assume this and don't repeat it.
-- Phase 10A (`restore-runtime.md`) is complete: the intended JDK baseline is installed and `java -version` prints it. If several JDKs are present, `REIMAGE_JDK_BASELINE` in `reimage.env` decides which one Step 6 writes the trust override into.
+- Phase 10A (`restore-runtime.md`) is complete: the intended JDK baseline is installed and `java -version` prints it. Its Step 7 records `REIMAGE_JDK_BASELINE` and `JAVA_HOME` in `reimage.env`; the baseline is what decides which JDK Step 6 writes the trust override into when several are present. Step 0 confirms both are set and shows how to set them if they are not.
 - The external artifact volume is mounted and `reimage.env` resolves. `ls "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted"` should list at least one `all-secrets-*.dmg`.
 - You have the DMG password from your password manager or wherever it was stored in Phase 3C. Do not proceed without it.
 
@@ -300,25 +301,28 @@ stands before the phase touches it.
 
 > [!warning] Pitfall
 > **0b expires and 0a does not.** The prerequisite check is rerunnable at any
-> point and costs nothing to repeat. The before-state is gone the moment Step 1
-> mounts the image and Step 3 writes `~/.ssh` — and because `before` is a
-> first-wins point, a capture taken afterwards becomes permanently official
-> while describing a machine the phase has already changed. The diff it produces
-> reads "nothing changed", which is worse than no diff at all.
+> point and costs nothing to repeat. The before-state cannot be recovered once
+> Step 1 mounts the image and Step 3 writes `~/.ssh`: the machine is no longer in
+> the state the capture is supposed to describe, and no later run can go back and
+> observe it.
 >
-> Phase 10A has no before-state for exactly this reason, which is why its
-> version-drift review had to be reconstructed from a cross-erase comparison
-> instead of a within-phase one.
+> `before` is a first-wins point, which compounds it in one specific way. The
+> first `before` run you record stays official — so a capture taken late is not
+> merely inaccurate, it is the one every comparison uses from then on, and
+> rerunning does not replace it. The diff it produces reads "nothing changed",
+> which is worse than no diff at all.
 >
 > If you have already started the phase, still run it — the certificate, JVM
 > trust, CA bundle and shell-config targets are untouched until Steps 4-9 — but
-> note in the run that Steps 1-3 preceded it, or pin it with a reason.
+> note in the run that Steps 1-3 preceded it, so the comparison is read with that
+> in mind rather than at face value.
 
 Most targets will read `absent`. That is correct: this phase is what creates
 them, and the point of recording it is so the after-state has something to
-differ from. `$JAVA_HOME/lib/security/` should read `unresolved` rather than
-`absent` — `JAVA_HOME` is set by Step 6, so an empty one here is the expected
-state and "nothing was checked" is the honest answer.
+differ from. `$JAVA_HOME/lib/security/` reads `unresolved` when this
+capture runs before the JDK values are confirmed below — "nothing was checked" is
+the honest answer for a target whose path had not resolved yet. Once they are
+set it resolves to a real directory, which is the more useful before-state.
 
 | Row | Why it is checked |
 |---|---|
@@ -338,6 +342,53 @@ state and "nothing was checked" is the honest answer.
 > which is neither the JDK nor a directory that exists, and the TLS smoke test
 > afterwards fails for a reason unrelated to the certificate you just restored.
 > Catching it here costs one command; catching it there costs an hour.
+
+**Confirm the JDK values this phase reads.** Phase 10A Step 7 chose
+`REIMAGE_JDK_BASELINE`, resolved `JAVA_HOME` from it, and wrote both into
+`reimage.env`. Neither survives a new terminal on its own, so check them here
+rather than discovering an empty one inside Step 6:
+
+```bash
+source reimage.env 2>/dev/null || true
+printf 'REIMAGE_JDK_BASELINE=%s\n' "${REIMAGE_JDK_BASELINE:-<empty>}"
+printf 'JAVA_HOME=%s\n' "${JAVA_HOME:-<empty>}"
+```
+
+If both print a value, nothing more is needed — Step 6 re-derives `JAVA_HOME`
+from the baseline anyway, and this only confirms the baseline is the one you
+expect.
+
+If either is empty, `reimage.env` predates Phase 10A Step 7 or was never written.
+Set the baseline to the major Phase 10A installed, resolve `JAVA_HOME` from it,
+and record both so the next terminal does not repeat this:
+
+```bash
+REIMAGE_JDK_BASELINE="21"
+export REIMAGE_JDK_BASELINE
+JAVA_HOME="$(/usr/libexec/java_home -v "$REIMAGE_JDK_BASELINE")"
+export JAVA_HOME
+printf 'JAVA_HOME=%s\n' "${JAVA_HOME:-<empty>}"
+```
+
+`/usr/libexec/java_home -V` lists what is actually installed if you are unsure
+which major to name. Stop if `JAVA_HOME` printed `<empty>`: the JDK is not linked
+into `/Library/Java/JavaVirtualMachines`, which is Phase 10A Step 7's symlink, and
+Step 6 has nothing to write into.
+
+Otherwise record both:
+
+```bash
+python3 bin/prepare-artifact-root.py \
+  upsert-env \
+  --env-file reimage.env \
+  "REIMAGE_JDK_BASELINE=${REIMAGE_JDK_BASELINE}" \
+  "JAVA_HOME=${JAVA_HOME%/}"
+```
+
+> [!note]
+> `upsert-env` writes whatever it is given, including an empty value, and reports
+> no error when it does. That is why the `<empty>` check above comes first rather
+> than trusting the assignment to have worked.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -708,7 +759,7 @@ sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keyc
 
 Only restore `jssecacerts` after confirming the target JDK is the one installed in Phase 10A — the file lives inside a specific JDK's `lib/security/` directory and does nothing if it lands next to a different JDK.
 
-Pin `JAVA_HOME` explicitly, and stop if it does not resolve:
+Re-derive `JAVA_HOME` from the baseline, and stop if it does not resolve. Step 0 confirmed both values; this resolves the path again rather than trusting the one `reimage.env` stored, because a recorded absolute path goes stale if the JDK is reinstalled or the baseline changes:
 
 ```bash
 if [ -n "${REIMAGE_JDK_BASELINE:-}" ]; then

@@ -349,10 +349,15 @@ Use `.cer`/`.pem` for public certificate material only, and `.p12`/`.pfx` for a 
 - CLI — check **both** levels, because user certs and device certs live in different scopes:
 
 ```bash
-profiles status -type enrollment          # is the Mac MDM/DEP enrolled?
-profiles show                             # USER-level profiles (your client certs, e.g. dkittrell)
-sudo profiles show                        # COMPUTER-level profiles (device/agent certs)
+profiles status -type enrollment
+profiles show
+sudo profiles show
 ```
+
+The first says whether the Mac is MDM/DEP enrolled. The second lists **user**-level
+profiles, which is where your own client certificates live. The third, under
+`sudo`, lists **computer**-level profiles — the device and agent certificates. The
+two scopes hold different material, which is why both are here.
 
 Then search for your issuer or subject, e.g. `grep -i -B2 -A6 'scep\|<issuer-CA-name>\|<cert-CN>'`. Note that `profiles show` lists payload *types and identifiers* but not the SCEP server URL — read the URL from the profile in the Device Management GUI.
 

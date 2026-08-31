@@ -123,7 +123,8 @@ directly. Restore a stashed copy *before* the audit run and pass
 The filled IT confirmation is written to `$REIMAGE_WORKSPACE_ROOT/reimage-confirmation/`
 and copied into the artifact root by Phase 1. Long-running performance and Office
 evidence stages locally the same way. `record-enrollment.sh` falls back to
-`$REIMAGE_WORKSPACE_ROOT/enrollment/` when the drive is not mounted. In every case
+`$REIMAGE_WORKSPACE_ROOT/` when the drive is not mounted, creating the same
+`restarts/` and `boundaries/` categories under it. In every case
 the workspace is authoritative only until the artifact root is available; after
 that the artifact root is.
 
@@ -434,64 +435,7 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 > [!example]- `$REIMAGE_ARTIFACT_ROOT/reimaged-system/`
 > ```text
 > $REIMAGE_ARTIFACT_ROOT/reimaged-system/
-> ├── enrollment/
-> │   ├── latest-enrollment-record.txt
-> │   └── [context-]record-enrollment-YYYYMMDD-HHMMSS/
-> │       ├── record.md
-> │       ├── MANIFEST.txt
-> │       └── raw/
-> │           ├── 01-enrollment-status.txt
-> │           ├── 02-profiles-list.txt
-> │           ├── 03-filevault-status.txt
-> │           ├── 04-managed-apps.txt
-> │           ├── 05-managed-processes.txt
-> │           ├── 06-macos-version.txt
-> │           ├── 07-softwareupdate-list.txt
-> │           ├── 08-managed-app-expectations.txt
-> │           ├── 09-keychain-identities.txt
-> │           ├── 10-package-receipts.txt
-> │           ├── 11-launchd-components.txt
-> │           └── 12-system-extensions.txt
-> ├── checklists/
-> │   ├── reimage-checklist-YYYYMMDD-HHMMSS.md
-> │   └── latest-reimage-checklist.txt
-> ├── latest-initial-reimaged-system-bundle.txt
-> ├── [context-]initial-reimaged-system-YYYYMMDD-HHMMSS/
-> │   ├── README.md
-> │   ├── checklist.md
-> │   ├── manual-captures-required.md
-> │   ├── restart-checkpoints.md
-> │   ├── time-machine-plan.md
-> │   ├── checks/
-> │   ├── logs/
-> │   │   ├── commands.log
-> │   │   └── errors.log
-> │   └── raw/
-> │       ├── applications-managed.txt
-> │       ├── backup-root-spotcheck.txt
-> │       ├── brew-version.txt
-> │       ├── computer-name.txt
-> │       ├── date.txt
-> │       ├── filevault.txt
-> │       ├── git-version.txt
-> │       ├── hardware.txt
-> │       ├── host-name.txt
-> │       ├── hostname.txt
-> │       ├── local-host-name.txt
-> │       ├── managed-processes.txt
-> │       ├── network-github.txt
-> │       ├── network-microsoft.txt
-> │       ├── network-ping.txt
-> │       ├── profiles-enrollment.txt
-> │       ├── profiles-list.txt
-> │       ├── softwareupdate-list.txt
-> │       ├── sw_vers.txt
-> │       ├── time-machine-destination.txt
-> │       ├── time-machine-latest.txt
-> │       ├── uname.txt
-> │       ├── volumes.txt
-> │       ├── whoami.txt
-> │       └── xcode-select.txt
+> ├── enrollment/                       # Phase 8 screenshots only — the records live under restarts/
 > ├── boundaries/
 > │   ├── MANIFEST.md
 > │   ├── official/

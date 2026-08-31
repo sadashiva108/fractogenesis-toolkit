@@ -722,7 +722,7 @@ Primary guide: [[verify-reimaged-system|verify-reimaged-system.md]]
 Primary generated evidence:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/reimaged-system/[context-]initial-reimaged-system-YYYYMMDD-HHMMSS/
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/restarts/runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/
 ```
 
 [[#Table of Contents|⬆ Back to Table of Contents]]

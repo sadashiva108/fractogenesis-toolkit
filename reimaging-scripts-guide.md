@@ -80,13 +80,16 @@ This matters because Phase 4 captures are stored on the backup drive, but they a
 
 Standard variables are set once in `reimage.env` and loaded by every script automatically — see [[reimaging-guide#Phase 1 — Prepare the External Artifact Root|Phase 1 — Prepare the External Artifact Root]] (the standalone "Shared Setup and Externalized Configuration" section this used to point to no longer exists as its own heading; reimage.env setup is now covered there and in `prepare-artifact-root.md`):
 
+Example entries, to adjust to your environment. `reimage.env` holds **resolved
+absolute values only** — no `${VAR:-...}`, no `$HOME/...`, and no `$(...)`
+expressions, since those can go stale or fail under `set -u`.
+
+`REIMAGE_ROOT` is retired: scripts self-locate from their own position in the
+repo (see `REPO_ROOT` in `prepare-artifact-root.py`), and `FRACTOGENESIS_HOME`,
+set via `.envrc` rather than `reimage.env`, is the shell-level equivalent when
+one is needed.
+
 ```bash
-# Example reimage.env entries — adjust to match your environment.
-# reimage.env holds resolved absolute values only: no ${VAR:-...}, no $HOME/...,
-# and no $(...) expressions — those can go stale or fail under set -u.
-# Note: REIMAGE_ROOT is retired. Scripts self-locate from their own position
-# in the repo (see REPO_ROOT in prepare-artifact-root.py); FRACTOGENESIS_HOME
-# (set via .envrc, not reimage.env) is the shell-level equivalent if needed.
 export REIMAGE_ARTIFACT_ROOT="/Volumes/<external-data-volume-name>/reimage-<asset-or-host>-<start-date>-open"
 export ONEDRIVE_ROOT="/Users/<user>/Library/CloudStorage/OneDrive-AcmeGroup"
 export ONEDRIVE_DEST_SUBDIR="reimage-<asset-or-host>-<start-date>-open"
@@ -121,8 +124,12 @@ export ONEDRIVE_DEST_SUBDIR="reimage-<asset-or-host>-<start-date>-open"
 | Phase 10B | Restored-state comparison | `restore-access.md` | `bin/compare-restored-state.sh --runbook restore-access` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/comparisons/runs/*-inventory-diff-*/` |
 | Phase 10B | Phase delta | `restore-access.md` | `bin/record-restore-state.sh --runbook restore-access --point after` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/state/runs/*-after-*/delta.md` |
 | Phase 8 | Toolkit install and shell environment | `enroll-and-stabilize.md` | `bootstrap.sh`, `bin/init-shell-env.sh` | `~/.zprofile` block; `$FRACTOGENESIS_HOME/reimage.env` restored from the jump drive |
-| Phase 8 | Enrollment/stabilization record | `enroll-and-stabilize.md` | `record-enrollment.sh` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/enrollment/*` when mounted, otherwise `$REIMAGE_WORKSPACE_ROOT/enrollment/*` or `~/Desktop/reimaged-system-artifacts/enrollment/*` |
-| Phase 9 | First-boot record twice around a stabilization restart | `verify-reimaged-system.md` | `record-reimaged-system.sh` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/[context-]initial-reimaged-system-YYYYMMDD-HHMMSS/` |
+| Phase 8 | Enrollment/stabilization record | `enroll-and-stabilize.md` | `record-enrollment.sh` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/restarts/runs/enroll-and-stabilize-<point>-*/`, falling back to `$REIMAGE_WORKSPACE_ROOT/` or `~/Desktop/reimaged-system-artifacts/` |
+| Phase 8 | Entry and exit boundary | `enroll-and-stabilize.md` | `record-enrollment.sh --context entry\|exit` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/boundaries/runs/enroll-and-stabilize-{entry,exit}-*/` |
+| Phase 9 | Restart comparison | `verify-reimaged-system.md` | `record-reimaged-system.sh --context diff` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/comparisons/runs/verify-reimaged-system-restart-diff-*/` |
+| Phase 9 | Entry and exit boundary | `verify-reimaged-system.md` | `record-reimaged-system.sh --context entry\|exit` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/boundaries/runs/verify-reimaged-system-{entry,exit}-*/` |
+| any | Index relocated or migrated runs | `verify-reimaged-system.md` | `reindex-artifact-runs.sh` | rewrites `<category>/MANIFEST.md` and `<category>/official/` |
+| Phase 9 | First-boot record twice around a stabilization restart | `verify-reimaged-system.md` | `record-reimaged-system.sh` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/restarts/runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/` |
 | Phase 10 | Runtime/access restore helpers | `restore-runtime.md`, `restore-access.md` | targeted manual checks; no single public restore script | selective restore from `home-files-backup/` and `secrets-encrypted/` |
 | Phase 11A | Git identity restore | `restore-git.md` | targeted manual writes to `~/.gitconfig`, `~/.ssh/config`, and the personal-root override; no toolkit script | consumes `secrets-encrypted/ssh/` and `secrets-encrypted/git/` restored in Phase 10B |
 | Phase 11B | Repository restore | `restore-repos.md` | `restore-repos.sh` | `$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/runs/post-image-restore-YYYYMMDD-HHMMSS/`; consumes pre-image `repo-audit-reports/runs/pre-image-*/repos.tsv` and `staged-ignored-files/live/<label>/` |
@@ -170,6 +177,7 @@ Current preferred script layout:
 │   │   │               ├── prepare-artifact-root.py
 │   │   │               ├── record-reimaged-system.sh
 │   │   │               ├── record-enrollment.sh
+│   │   │               ├── reindex-artifact-runs.sh
 │   │   │               ├── restore-repos.sh
 │   │   │               └── helpers/
 │   │   │                   ├── apps/
@@ -249,8 +257,13 @@ Then review the generated Git audit report, mark selected ignored-file patterns,
 
 ```bash
 ./bin/backup-home.sh --external-only
-# Optional OneDrive copy after confirming ONEDRIVE_ROOT points at ~/Library/CloudStorage/OneDrive-AcmeGroup:
-# ./bin/backup-home.sh --onedrive-only
+```
+
+Optionally copy to OneDrive as well, but only after confirming `ONEDRIVE_ROOT`
+points at the real sync directory under `~/Library/CloudStorage/`:
+
+```bash
+./bin/backup-home.sh --onedrive-only
 ```
 
 Primary output:
@@ -341,11 +354,16 @@ $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/extra-secrets-certs-review/
 Two entrypoints, split so the reporting side is always safe to run. Both read the same `SECRET_SHAPES` from shared config.
 
 ```bash
-./bin/report-loose-secrets.sh                    # report only; never writes to what it scans
-./bin/stage-loose-secrets.sh                     # dry run by default
-./bin/stage-loose-secrets.sh --apply             # move into the encryption boundary
+./bin/report-loose-secrets.sh
+./bin/stage-loose-secrets.sh
+./bin/stage-loose-secrets.sh --apply
 ./bin/report-loose-secrets.sh --context pre-image-stage-loose-secrets-after
 ```
+
+`report-loose-secrets.sh` reports only and never writes to what it scans.
+`stage-loose-secrets.sh` is a dry run unless given `--apply`, which moves the
+findings inside the encryption boundary. The final line re-reports, so the run
+carries its own before and after.
 
 Outputs:
 
@@ -385,14 +403,22 @@ fi
 
 Use `record-time-machine-evidence.sh` for read-only Time Machine captures:
 
+The full pre-backup evidence bundle:
+
 ```bash
-# Full pre-backup evidence bundle.
 ./bin/record-time-machine-evidence.sh pre-run --open
+```
 
-# Optional focused APFS destination-volume verification after Time Machine is stopped.
+A focused APFS destination-volume verification, optional, and only after Time
+Machine has been stopped:
+
+```bash
 ./bin/record-time-machine-evidence.sh verify-volume --open
+```
 
-# Final Time Machine checklist after the backup and any optional verification are complete.
+The final checklist, once the backup and any optional verification are complete:
+
+```bash
 ./bin/record-time-machine-evidence.sh final --open
 ```
 
@@ -432,8 +458,11 @@ Use `run-time-machine.sh` only for runtime Time Machine operations:
 ./bin/run-time-machine.sh start
 ./bin/run-time-machine.sh monitor --interval 300
 ./bin/run-time-machine.sh complete --open
+```
 
-# Optional runtime checks after completion.
+Optional runtime checks, after completion:
+
+```bash
 ./bin/run-time-machine.sh verify-latest --mount-if-needed --open
 ./bin/run-time-machine.sh unmount-latest
 ./bin/run-time-machine.sh compare --open
@@ -598,7 +627,8 @@ Post-image, use the same scenario name as the matching pre-image bundle:
 Quantitative rollups are produced separately from the capture itself, by a Python helper that reads the mac-memory-health output the capture leaves behind:
 
 ```bash
-python3 ./bin/generate-performance-rollup-summary.py --input <performance-audit-run-dir>
+PERF_RUN="replace-with-the-performance-audit-run-directory"
+python3 ./bin/generate-performance-rollup-summary.py --input "$PERF_RUN"
 ```
 
 It is owned by `capture-performance-audit.md`; run it after a capture, and again post-image so the two rollups can be compared.
@@ -705,7 +735,7 @@ For toolkit-snapshot checks, the validator should discover the newest timestampe
 The generated bundle is written under:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/reimaged-system/[context-]initial-reimaged-system-YYYYMMDD-HHMMSS/
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/restarts/runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/
 ```
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -803,11 +833,18 @@ $REIMAGE_ARTIFACT_ROOT/reimaged-system/checklists/latest-reimage-checklist.txt
 Not phase steps. These check the setup the phases depend on, and none of them writes workflow artifacts.
 
 ```bash
-./bin/setup-reimage-env.sh          # bootstrap: create reimage.env before anything else exists
-./bin/check-reimage-env.sh          # diagnostic: does reimage.env match this effort, or is it left over?
-./bin/verify-artifact-config.sh     # are the artifact-config fragments present and syntactically valid?
-./bin/verify-doc-paths.sh           # do the repository paths named in the governance docs still exist?
+./bin/setup-reimage-env.sh
+./bin/check-reimage-env.sh
+./bin/verify-artifact-config.sh
+./bin/verify-doc-paths.sh
 ```
+
+| Script | The question it answers |
+|---|---|
+| `setup-reimage-env.sh` | Bootstrap — creates `reimage.env` before anything else exists. |
+| `check-reimage-env.sh` | Does `reimage.env` match this effort, or is it left over from the last one? |
+| `verify-artifact-config.sh` | Are the artifact-config fragments present and syntactically valid? |
+| `verify-doc-paths.sh` | Do the repository paths named in the governance docs still exist? |
 
 `verify-artifact-config.sh` prints a `Selected by:` line naming which fragment directory actually won — the per-machine workspace copy or the committed templates. A run that says "committed templates" verified the generic set, not yours.
 
@@ -843,82 +880,139 @@ Use the manual tables in the owning phase guides and save completed copies besid
 
 ## Common Run Order
 
+Two sequences, pre-image and post-image. Every command assumes the shell is at
+the repository root with `reimage.env` loaded.
+
 ```bash
-cd "$FRACTOGENESIS_HOME"   # REIMAGE_ROOT is retired -- see reimaging-scripts-guide.md Script Source and Artifact Rules
+cd "$FRACTOGENESIS_HOME"
 chmod +x bin/*.sh bin/*.py
+```
 
-# Phase 1 — preparation
-# Follow prepare-artifact-root.md first. That guide uses prepare-artifact-root.py
-# when reimage.env needs resolved values written back to disk.
+**Phase 1 — preparation.** Follow `prepare-artifact-root.md` first; it uses
+`prepare-artifact-root.py` when `reimage.env` needs resolved values written back
+to disk. There is no command to run here.
 
-# Phase 2 — backups
+**Phase 2 — backups.**
+
+```bash
 ./bin/report-size-audit.sh
 ./bin/backup-repos.sh --artifact-root "$REIMAGE_ARTIFACT_ROOT" --root ~/path/to/projects --root ~/path/to/docs
 ./bin/backup-home.sh --external-only
-# Optional: run the OneDrive copy only after ONEDRIVE_ROOT resolves to ~/Library/CloudStorage/OneDrive-AcmeGroup.
-# ./bin/backup-home.sh --onedrive-only
 ./bin/backup-apps.sh --artifact-root "$REIMAGE_ARTIFACT_ROOT" --open
 ./bin/backup-apps.sh --artifact-root "$REIMAGE_ARTIFACT_ROOT" --intellij-projects-root ~/path/to/projects
-# Manual/app-controlled follow-up: Chrome, Postman, Raycast, Obsidian, and any other app exports that backup-apps.sh cannot complete.
-# Phase 3A certificate/Keychain staging:
-# ./bin/stage-certs-keychain.sh
-# Phase 3C final DMG after all manual secret staging:
-# If Chrome password CSVs, secret-bearing Postman exports, optional app secret exports,
-# IntelliJ HTTP Client env files, or cert/Keychain material were staged, run secrets DMG after that.
-./bin/create-secrets-dmg.sh
+```
 
-# Phase 5 — Time Machine last before validation
+Optional, and only after `ONEDRIVE_ROOT` resolves to the real sync directory:
+
+```bash
+./bin/backup-home.sh --onedrive-only
+```
+
+Then the manual, app-controlled exports `backup-apps.sh` cannot complete —
+Chrome, Postman, Raycast, Obsidian and any others. Phase 3A certificate and
+Keychain staging follows:
+
+```bash
+./bin/stage-certs-keychain.sh
+```
+
+**Phase 3C — the secrets DMG, after all manual staging is done.** If Chrome
+password CSVs, secret-bearing Postman exports, optional app secret exports,
+IntelliJ HTTP Client env files, or cert/Keychain material were staged, this has
+to run after that staging rather than before it:
+
+```bash
+./bin/create-secrets-dmg.sh
+```
+
+**Phase 5 — Time Machine, last before validation.**
+
+```bash
 ./bin/record-time-machine-evidence.sh pre-run --open
 ./bin/run-time-machine.sh start
 ./bin/run-time-machine.sh monitor --interval 300
 ./bin/run-time-machine.sh complete --open
-# Optional:
-# ./bin/record-time-machine-evidence.sh verify-volume --open
-# ./bin/run-time-machine.sh verify-latest --mount-if-needed --open
-# ./bin/run-time-machine.sh unmount-latest
-# ./bin/run-time-machine.sh compare --open
 ./bin/record-time-machine-evidence.sh final --open
+```
 
-# Phase 4 — captures and reference snapshots
+Optional verification between `complete` and `final`:
+
+```bash
+./bin/record-time-machine-evidence.sh verify-volume --open
+./bin/run-time-machine.sh verify-latest --mount-if-needed --open
+./bin/run-time-machine.sh unmount-latest
+./bin/run-time-machine.sh compare --open
+```
+
+**Phase 4 — captures and reference snapshots.**
+
+```bash
 ./bin/capture-toolkit-snapshot.sh --artifact-root "$REIMAGE_ARTIFACT_ROOT" --open
 ./bin/capture-system-inventory.sh
 ./bin/capture-performance-audit.sh --output "$REIMAGE_ARTIFACT_ROOT/performance-audit" --phase pre-image --scenario clean-boot --sample-count 6 --sample-interval 30
 ./bin/capture-performance-audit.sh --output "$REIMAGE_ARTIFACT_ROOT/performance-audit" --phase pre-image --scenario normal-workload --sample-count 6 --sample-interval 30
 ./bin/capture-office-stability.sh --phase pre-reimage --artifact-root "$REIMAGE_ARTIFACT_ROOT"
 ./bin/office-stability-checklist.sh --phase pre-reimage --artifact-root "$REIMAGE_ARTIFACT_ROOT"
+```
 
-# Phase 6 — final pre-image validation
-# Manual sign-off reference for the remaining rows in this phase: reimage-prep-checks.md
+**Phase 6 — final pre-image validation.** `reimage-prep-checks.md` is the manual
+sign-off reference for the rows this does not cover:
+
+```bash
 ./bin/reimage-checklist.sh --phase pre --artifact-root "$REIMAGE_ARTIFACT_ROOT" --open
 ```
 
-Post-image (Phases 8–14):
+Post-image (Phases 8–14). The boundary recorders that bracket each phase are not
+listed here — each runbook's Step 0 and close-out own those.
+
+**Phase 8 — enroll and stabilize.**
 
 ```bash
+./bin/record-enrollment.sh --context pre-restart
+./bin/record-enrollment.sh --context post-restart
+```
 
-# Phase 8 — enroll and stabilize; record enrollment evidence
-./bin/record-enrollment.sh --open
+**Phase 9 — first-boot record, once either side of the stabilization restart.**
 
-# Phase 9 — first-boot record (pre-restart and post-restart)
-./bin/record-reimaged-system.sh --open
+```bash
+./bin/record-reimaged-system.sh --context pre-restart
+./bin/record-reimaged-system.sh --context post-restart
+```
 
-# Phase 11B — repository restore (after Phase 11A Git identity plumbing)
+**Phase 11B — repository restore**, after Phase 11A has done the Git identity
+plumbing:
+
+```bash
 ./bin/restore-repos.sh --open
-# Optional: interactively rsync reviewed kept ignored files into each cloned repo
-# ./bin/restore-repos.sh --apply-ignored-files --open
+```
 
-# Phase 12 — restore helpers
+Optionally, interactively rsync reviewed kept-ignored files into each cloned
+repository:
+
+```bash
+./bin/restore-repos.sh --apply-ignored-files --open
+```
+
+**Phase 12 — restore helpers.**
+
+```bash
 ./bin/restore-apps.sh --open
 ./bin/restore-intellij.sh --open
 ./bin/restore-docker.sh --open
+```
 
-# Phase 13 — post-image evidence captures
+**Phase 13 — post-image evidence captures.**
+
+```bash
 ./bin/capture-system-inventory.sh
 ./bin/capture-performance-audit.sh --output "$REIMAGE_ARTIFACT_ROOT/performance-audit" --phase post-image --scenario normal-workload --sample-count 6 --sample-interval 30
 ./bin/capture-office-stability.sh --phase post-reimage --artifact-root "$REIMAGE_ARTIFACT_ROOT"
 ./bin/office-stability-checklist.sh --phase post-reimage --artifact-root "$REIMAGE_ARTIFACT_ROOT"
+```
 
-# Phase 14 — final post-image validation
+**Phase 14 — final post-image validation.**
+
+```bash
 ./bin/reimage-checklist.sh \
   --phase post \
   --artifact-root "$REIMAGE_ARTIFACT_ROOT" \

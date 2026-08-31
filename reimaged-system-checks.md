@@ -115,7 +115,7 @@ $REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/                # optional 
 Pre-flight file written by Phase 9 (read, not written here):
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/reimaged-system/initial-reimaged-system-YYYYMMDD-HHMMSS/manual-captures-required.md
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/restarts/runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/manual-captures-required.md
 ```
 
 Directory shape read and written by this runbook:
@@ -127,7 +127,7 @@ $REIMAGE_ARTIFACT_ROOT/
 │   ├── checklists/
 │   │   ├── latest-reimage-checklist.txt
 │   │   └── reimage-checklist-YYYYMMDD-HHMMSS.md
-│   ├── initial-reimaged-system-YYYYMMDD-HHMMSS/
+│   ├── restarts/runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/
 │   │   └── manual-captures-required.md
 │   └── restore-notes/
 └── ...
@@ -169,7 +169,7 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 - Your shell is at the toolkit root — `cd "$FRACTOGENESIS_HOME"` once for the session. Per the guide's [[reimaging-guide#Core Assumptions|Core Assumptions]], the commands below assume this and don't repeat it.
 - Every Phase 8–13 runbook that is expected to run has finished, including any restore-notes plan-notes under `reimaged-system/restore-notes/`.
 - The external artifact volume is mounted and `$REIMAGE_ARTIFACT_ROOT` resolves; `reimaged-system/checklists/` will be created if missing.
-- The Phase 9 initial post-image bundle exists under `reimaged-system/*initial-reimaged-system-*/`; its `manual-captures-required.md` is reachable.
+- The Phase 9 post-restart bundle is the official run for `verify-reimaged-system-post-restart` under `reimaged-system/restarts/`; its `manual-captures-required.md` is reachable.
 - OneDrive is signed in and sync has settled — the checklist has a row for this, but you reach a clean result faster by resolving it up front.
 
 > [!bug] Troubleshooting
@@ -194,9 +194,17 @@ Run these in order. The first pass surfaces the issues; the second pass records 
 Before the automated checklist, resolve or acknowledge the manual rows Phase 9 already flagged:
 
 ```bash
-LATEST_INITIAL=$(ls -1dt "$REIMAGE_ARTIFACT_ROOT/reimaged-system/initial-reimaged-system-"* 2>/dev/null | head -n1)
+RESTARTS="$REIMAGE_ARTIFACT_ROOT/reimaged-system/restarts"
+LATEST_INITIAL="$RESTARTS/$(cat "$RESTARTS/official/verify-reimaged-system-post-restart.txt" 2>/dev/null)"
+printf 'BUNDLE = %s\n' "$LATEST_INITIAL"
 open "$LATEST_INITIAL/manual-captures-required.md"
 ```
+
+The bundle is resolved through the run index rather than by listing directories:
+Phase 9's first-boot bundles are indexed runs under `restarts/`, and
+`official/<context>.txt` names the one that counts. The post-restart lineage is
+the one this phase is asking about, because it is the run taken after the second
+stabilization restart.
 
 Also scan any plan-notes from the restore phases:
 

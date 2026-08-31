@@ -23,15 +23,16 @@ Bring the freshly reimaged Mac to a clean, trusted managed baseline before any r
     - [[#Prerequisites|Prerequisites]]
     - [[#Confirm Your Intent|Confirm Your Intent]]
 - [[#Sequential Steps|Sequential Steps]]
-    - [[#Step 1 — Install the Toolkit onto the Rebuilt Mac|Step 1 — Install the Toolkit onto the Rebuilt Mac]]
-    - [[#Step 2 — Establish the Shell Environment|Step 2 — Establish the Shell Environment]]
-    - [[#Step 3 — Complete Managed Enrollment|Step 3 — Complete Managed Enrollment]]
-    - [[#Step 4 — Install and Confirm Required and Available Managed Apps|Step 4 — Install and Confirm Required and Available Managed Apps]]
-    - [[#Step 5 — Apply Required macOS Updates|Step 5 — Apply Required macOS Updates]]
-    - [[#Step 6 — Record the Pre-Restart Baseline|Step 6 — Record the Pre-Restart Baseline]]
-    - [[#Step 7 — Take the First Stabilization Restart|Step 7 — Take the First Stabilization Restart]]
-    - [[#Step 8 — Record the Post-Restart Baseline|Step 8 — Record the Post-Restart Baseline]]
-    - [[#Step 9 — Close Out the Exit Criteria|Step 9 — Close Out the Exit Criteria]]
+    - [[#Step 1 — Reach Your Cheatsheet and Password Manager|Step 1 — Reach Your Cheatsheet and Password Manager]]
+    - [[#Step 2 — Install the Toolkit onto the Rebuilt Mac|Step 2 — Install the Toolkit onto the Rebuilt Mac]]
+    - [[#Step 3 — Establish the Shell Environment|Step 3 — Establish the Shell Environment]]
+    - [[#Step 4 — Complete Managed Enrollment|Step 4 — Complete Managed Enrollment]]
+    - [[#Step 5 — Install and Confirm Required and Available Managed Apps|Step 5 — Install and Confirm Required and Available Managed Apps]]
+    - [[#Step 6 — Apply Required macOS Updates|Step 6 — Apply Required macOS Updates]]
+    - [[#Step 7 — Record the Pre-Restart Baseline|Step 7 — Record the Pre-Restart Baseline]]
+    - [[#Step 8 — Take the First Stabilization Restart|Step 8 — Take the First Stabilization Restart]]
+    - [[#Step 9 — Record the Post-Restart Baseline|Step 9 — Record the Post-Restart Baseline]]
+    - [[#Step 10 — Close Out the Exit Criteria|Step 10 — Close Out the Exit Criteria]]
 - [[#Decisions|Decisions]]
 - [[#Troubleshooting|Troubleshooting]]
 - [[#Supplemental Reference|Supplemental Reference]]
@@ -55,7 +56,8 @@ Establish a clean, managed, and stable macOS baseline before restoring runtime t
   state IT expects, with the full managed app set present from both assignment
   modes (Required push and Available catalog), required macOS updates applied,
   and the whole thing confirmed to survive the first stabilization restart.
-- **Timestamped record bundles** — one directory per `record-enrollment.sh` run holding the twelve raw evidence files, `record.md`, and `MANIFEST.txt`, plus a `latest-enrollment-record.txt` pointer.
+- **Indexed evidence runs** — one run per `record-enrollment.sh` capture under `reimaged-system/restarts/`, holding the twelve raw evidence files, `record.md`, and `rows.tsv`.
+- **An entry and an exit checklist** — under `reimaged-system/boundaries/`, recording what was decided about that evidence rather than what it says.
 - **The closed-out Phase 8 exit-criteria table** — prefilled with heuristic verdicts on the command-verifiable rows and finished by hand for the manual-judgment rows.
 
 **What the rest of the workflow relies on it for**
@@ -138,26 +140,27 @@ Two mistakes are easy to make here and both are avoidable by reading this first.
 
 **Do the work before the record, not after.** Every `record-enrollment.sh` run is
 a snapshot of the moment it runs. Enrollment, the managed app installs, and the
-macOS updates all happen in Steps 3–5; Step 6 photographs the result. A record
+macOS updates all happen in Steps 4–6; Step 7 photographs the result. A record
 taken while Company Portal is still installing is honest evidence of an
 incomplete baseline, not a sign-off — so finish the step, then record.
 
 **Fill the manual rows in the post-restart record only.** Each run generates a
 fresh `record.md` with the manual rows reset to `TODO`, so anything
-you hand-write into the pre-restart record is discarded by the next run. Step 8
-produces the sign-off record; Step 9 is where the `TODO` rows get answered. Note
+you hand-write into the pre-restart record is discarded by the next run. Step 9
+produces the sign-off record; Step 10 is where the `TODO` rows get answered. Note
 in particular that *First stabilization restart completed* cannot honestly be
-answered in the Step 6 record, because at that point the restart has not
+answered in the Step 7 record, because at that point the restart has not
 happened.
 
 | Step | What you do | Manual rows |
 |---|---|---|
-| 1–2 | Install the toolkit, restore `reimage.env`, wire up the shell. | — |
-| 3–5 | Enroll, install managed apps, apply macOS updates. | — |
-| 6 | Record the pre-restart baseline. | Leave every `TODO` alone. |
-| 7 | Take the stabilization restart. | — |
-| 8 | Record the post-restart baseline. | Leave them for Step 9. |
-| 9 | Close out the exit criteria. | Fill them all, here, once. |
+| 1 | Reach the cheatsheet and your password manager. | — |
+| 2–3 | Install the toolkit, restore `reimage.env`, wire up the shell. | — |
+| 4–6 | Enroll, install managed apps, apply macOS updates. | — |
+| 7 | Record the pre-restart baseline. | Leave every `TODO` alone. |
+| 8 | Take the stabilization restart. | — |
+| 9 | Record the post-restart baseline. | Leave them for Step 10. |
+| 10 | Close out the exit criteria. | Fill them all, here, once. |
 
 **Every script run has options.** Each step that runs a script previews
 `--help` before the command, and the flags that matter for that step are named
@@ -176,8 +179,8 @@ apart at a glance rather than by comparing timestamps.
 | Stabilization restart | The first reboot taken after enrollment and required tool install, before restore work begins. |
 | Pre-restart record | The Phase 8 record captured before the stabilization restart. |
 | Post-restart record | The Phase 8 record captured after the stabilization restart; used as the sign-off record. |
-| Record bundle | One timestamped run directory holding the twelve raw files, `record.md`, and `MANIFEST.txt`. |
-| Context label | The optional `--context` value prefixed to the record directory name — `pre-restart-record-enrollment-YYYYMMDD-HHMMSS` — conventionally `pre-restart` or `post-restart`. Matches the leading-phase convention of `post-image-performance-audit-*` and `pre-image-*`. |
+| Record bundle | One indexed run holding the twelve raw files, `record.md`, and `rows.tsv`. |
+| Point | The `--context` value, which becomes the run's point and completes its name: `enroll-and-stabilize-pre-restart-YYYYMMDD-HHMMSS`. `pre-restart` and `post-restart` for the pair around the restart, `initial` when omitted. `entry` and `exit` select the boundary modes instead of a capture. |
 | Required assignment | An Intune app assignment that installs itself after enrollment, asynchronously. |
 | Available assignment | An Intune app assignment that appears in the Company Portal **Apps** tab and installs only when you click Install. It never arrives on its own. |
 
@@ -192,45 +195,53 @@ Every path and directory tree this runbook uses is defined here, once. Later sec
 Primary script:
 
 ```text
-$FRACTOGENESIS_HOME/bin/record-enrollment.sh    # entrypoint — records Phase 8 evidence and prefills the exit-criteria table
+$FRACTOGENESIS_HOME/bin/record-enrollment.sh    # entrypoint — records Phase 8 evidence, and its entry and exit boundaries
 ```
 
 Artifact root:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/reimaged-system/enrollment/    # all Phase 8 record bundles land here
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/restarts/      # Steps 7 and 9 — the evidence either side of the restart
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/boundaries/    # Steps 3 and 10 — the entry and exit checklists
 ```
 
 ### Record Bundle Layout
 
-Each run writes one timestamped bundle plus a `latest-enrollment-record.txt` pointer at the parent level:
+Both directories are run categories with one shape: `runs/<context>-YYYYMMDD-HHMMSS/` holding a single run's files, `official/<context>.txt` naming the run that counts, and an append-only `MANIFEST.md` indexing every completed run. Officialness is computed from the manifest rather than stored, so `official/` can be regenerated.
+
+This phase writes five contexts: `enroll-and-stabilize-entry` and `-exit` under `boundaries/`, and `-initial`, `-pre-restart` and `-post-restart` under `restarts/`. `restarts/` is shared with Phase 9, which writes `verify-reimaged-system-<point>` there — both phases capture the machine either side of a stabilization restart, so they are one lineage keyed by point rather than two categories that have to be read together.
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/reimaged-system/enrollment/
-├── latest-enrollment-record.txt
-└── [context-]record-enrollment-YYYYMMDD-HHMMSS/
-    ├── record.md
-    ├── MANIFEST.txt
-    └── raw/
-        ├── 01-enrollment-status.txt
-        ├── 02-profiles-list.txt
-        ├── 03-filevault-status.txt
-        ├── 04-managed-apps.txt
-        ├── 05-managed-processes.txt
-        ├── 06-macos-version.txt
-        ├── 07-softwareupdate-list.txt
-        ├── 08-managed-app-expectations.txt
-        ├── 09-keychain-identities.txt
-        ├── 10-package-receipts.txt
-        ├── 11-launchd-components.txt
-        └── 12-system-extensions.txt
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/restarts/
+├── MANIFEST.md
+├── official/
+│   └── enroll-and-stabilize-<point>.txt
+└── runs/
+    └── enroll-and-stabilize-<point>-YYYYMMDD-HHMMSS/
+        ├── record.md
+        ├── rows.tsv
+        └── raw/
+            ├── 01-enrollment-status.txt
+            ├── 02-profiles-list.txt
+            ├── 03-filevault-status.txt
+            ├── 04-managed-apps.txt
+            ├── 05-managed-processes.txt
+            ├── 06-macos-version.txt
+            ├── 07-softwareupdate-list.txt
+            ├── 08-managed-app-expectations.txt
+            ├── 09-keychain-identities.txt
+            ├── 10-package-receipts.txt
+            ├── 11-launchd-components.txt
+            └── 12-system-extensions.txt
 ```
+
+`record.md` reports what the machine said; `rows.tsv` carries the same verdicts tab-separated. Step 9 reads the second, not the first — a table meant for a person and a table meant for a script have different jobs, and reparsing Markdown to get a verdict is how they drift apart.
 
 The complete `$REIMAGE_ARTIFACT_ROOT/reimaged-system/` layout is defined once in the Master Directory Reference:
 
 [[master-directory-reference|Master Directory Reference]]
 
-When the artifact volume is not yet mounted, the script falls back to `$REIMAGE_WORKSPACE_ROOT/enrollment/` and then to `~/Desktop/reimaged-system-artifacts/enrollment/`, keeping the same timestamped bundle name. The full precedence is spelled out under Supplemental Reference.
+When the artifact volume is not yet mounted, the script falls back to `$REIMAGE_WORKSPACE_ROOT/` and then to `~/Desktop/reimaged-system-artifacts/`, creating the same `restarts/` and `boundaries/` categories under whichever it lands on. The full precedence is spelled out under Supplemental Reference.
 
 ### Environment Variables
 
@@ -238,8 +249,8 @@ The `reimage.env` values this runbook depends on. Values are resolved and writte
 
 | Variable | Meaning |
 |---|---|
-| `REIMAGE_ARTIFACT_ROOT` | Absolute path to the artifact root where `reimaged-system/enrollment/` lives. Optional here — the script falls back if it is unset or unmounted. |
-| `REIMAGE_WORKSPACE_ROOT` | Absolute path to a local workspace used as the intermediate fallback; bundles land under `$REIMAGE_WORKSPACE_ROOT/enrollment/` when the artifact root is not available. |
+| `REIMAGE_ARTIFACT_ROOT` | Absolute path to the artifact root where `reimaged-system/restarts/` and `reimaged-system/boundaries/` live. Optional here — the script falls back if it is unset or unmounted. |
+| `REIMAGE_WORKSPACE_ROOT` | Absolute path to a local workspace used as the intermediate fallback; the categories land under `$REIMAGE_WORKSPACE_ROOT/` when the artifact root is not available. |
 | `FRACTOGENESIS_HOME` | Absolute path to the toolkit repository root; entrypoints are run from here. Set by your shell startup / `.envrc`, not stored in `reimage.env`. |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -258,23 +269,23 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 
 > [!note]
 > Unlike every later runbook, this one does **not** assume a shell at
-> `$FRACTOGENESIS_HOME` with `reimage.env` loaded. Neither exists yet — Steps 1
-> and 2 create them. The guide's [[reimaging-guide#Core Assumptions|Core Assumptions]]
+> `$FRACTOGENESIS_HOME` with `reimage.env` loaded. Neither exists yet — Steps 2
+> and 3 create them. The guide's [[reimaging-guide#Core Assumptions|Core Assumptions]]
 > apply from Step 3 onward.
 - Company Portal is installed and signed in. It is the only sanctioned install
   channel for managed apps, and its **Apps** tab is where Available assignments
   are found. Nothing else in this phase substitutes for it.
 
 > [!note]
-> `REIMAGE_ARTIFACT_ROOT` and the external artifact volume are *not* required at this point. `record-enrollment.sh` falls back to `$REIMAGE_WORKSPACE_ROOT/enrollment/` and then to `~/Desktop/reimaged-system-artifacts/enrollment/` so Phase 8 can complete before the external drive is reconnected in Phase 9.
+> `REIMAGE_ARTIFACT_ROOT` and the external artifact volume are *not* required at this point. `record-enrollment.sh` falls back to `$REIMAGE_WORKSPACE_ROOT/` and then to `~/Desktop/reimaged-system-artifacts/`, creating the same `restarts/` and `boundaries/` categories under whichever it lands on, so Phase 8 can complete before the external drive is reconnected in Phase 9.
 
 > [!bug] Troubleshooting
 > If the script errors with "shared config loader not found", the toolkit was placed in the wrong location or is a partial extract — re-run bootstrap and confirm `$FRACTOGENESIS_HOME/.internal/load-reimage-config.sh` exists before continuing.
 
 ### Confirm Your Intent
 
-- Whether this is the **pre-restart** run (Step 6, before the stabilization
-  restart) or the **post-restart** run (Step 8, the sign-off record). Pass that
+- Whether this is the **pre-restart** run (Step 7, before the stabilization
+  restart) or the **post-restart** run (Step 9, the sign-off record). Pass that
   answer as `--context pre-restart` or `--context post-restart` so the two
   records are distinguishable on disk without opening them. The flag is
   optional and changes nothing but the directory name and a header line.
@@ -293,9 +304,40 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 
 ## Sequential Steps
 
-Run these in order. Steps 1–2 put the toolkit and its configuration on the Mac; the human-driven steps (enrollment, managed app install, updates, the restart) come next; the script runs are the evidence that proves each step landed. The pre-restart record in Step 6 is the "everything installed and updates applied" snapshot, and the post-restart record in Step 8 is the sign-off snapshot that proves the baseline survived the reboot.
+Run these in order. Step 1 gets you the cheatsheet and passwords the rest depends on; Steps 2–3 put the toolkit and its configuration on the Mac; the human-driven steps (enrollment, managed app install, updates, the restart) come next; the script runs are the evidence that proves each step landed. The pre-restart record in Step 7 is the "everything installed and updates applied" snapshot, and the post-restart record in Step 9 is the sign-off snapshot that proves the baseline survived the reboot.
 
-### Step 1 — Install the Toolkit onto the Rebuilt Mac
+### Step 1 — Reach Your Cheatsheet and Password Manager
+
+Nothing here touches the Mac's configuration. This step exists because the next
+one needs two things this machine does not have yet: the account name that
+`bootstrap.sh` fetches from, and whatever passwords the phase asks for.
+
+**Open the post-reimage cheatsheet you emailed yourself.** It carries
+`TOOLKIT_GITHUB_ACCOUNT` for the network route in Step 2, and the short list of
+values worth having on screen before a fresh Mac starts asking for them. The
+jump drive built in Phase 6A is the alternative and carries the same values plus
+`bootstrap.sh` itself — if you have it, this step is already satisfied.
+
+**Open your password manager** in the same session. Phase 8 and Phase 10B both
+ask for credentials that are not on this machine and not on the artifact drive.
+
+> [!note]
+> Safari is on every fresh Mac and is enough for both. If your mail or your vault
+> is reachable more easily in another browser — a Gmail account, or a vault whose
+> extension you rely on — install Google Chrome from Company Portal first, which
+> is [[#Step 5 — Install and Confirm Required and Available Managed Apps|Step 5]],
+> and come back here. That reorders two steps and costs nothing; enrollment does
+> not depend on anything in Step 2 or Step 3.
+
+Neither the cheatsheet nor the vault is stored on the artifact drive on purpose:
+the drive is not mounted yet at this point in the phase, and a credential that
+only exists on the machine being rebuilt is not a credential you can use.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
+### Step 2 — Install the Toolkit onto the Rebuilt Mac
 
 Nothing else in this phase can run until the toolkit is on disk. There is no
 repository, no `git`, and no SSH key at this point, and that is deliberate —
@@ -308,7 +350,7 @@ Phase 10A refers to the variable rather than a fixed path — so setting it now 
 what makes the rest of this runbook work wherever you put the toolkit:
 
 ```bash
-export FRACTOGENESIS_HOME="$HOME/fractogenesis-toolkit"   # change the path if you prefer
+export FRACTOGENESIS_HOME="$HOME/fractogenesis-toolkit"
 ```
 
 > [!warning] Pitfall
@@ -321,7 +363,7 @@ export FRACTOGENESIS_HOME="$HOME/fractogenesis-toolkit"   # change the path if y
 the Phase 7 sign-in step:
 
 ```bash
-export TOOLKIT_GITHUB_ACCOUNT="<your-github-account>"   # from the emailed cheatsheet
+export TOOLKIT_GITHUB_ACCOUNT="replace-with-the-account-from-your-cheatsheet"
 case "${TOOLKIT_GITHUB_ACCOUNT:-}" in
   ''|*'<'*) echo "TOOLKIT_GITHUB_ACCOUNT is not a real account yet." >&2 ;;
   *) curl -fL -o /tmp/bootstrap.sh \
@@ -375,7 +417,7 @@ for reading the runbooks themselves.
 
 ---
 
-### Step 2 — Establish the Shell Environment
+### Step 3 — Establish the Shell Environment
 
 The erase destroyed `FRACTOGENESIS_HOME` and `reimage.env`, and every runbook
 from here to Phase 16 assumes both exist. No other phase re-creates them.
@@ -453,7 +495,7 @@ bash "$FRACTOGENESIS_HOME/bin/init-shell-env.sh" --dry-run
 
 > [!note]
 > This replaces what `.envrc` did before the erase. Without it, every new
-> Terminal — including the one after the stabilization restart in Step 7 —
+> Terminal — including the one after the stabilization restart in Step 8 —
 > starts with none of these values, and `cd "$FRACTOGENESIS_HOME"` becomes
 > `cd ""`, a **no-op that returns 0**. You stay in `$HOME`, every `./bin/…`
 > afterward reports "No such file or directory", and nothing points back at the
@@ -480,11 +522,32 @@ at `$FRACTOGENESIS_HOME` with `reimage.env` loaded.
 > 10A and takes over from `.envrc`; remove the block then. Full picture:
 > [[toolkit-environment-reference|Toolkit Environment Reference]].
 
+**Record the entry boundary.** Every other runbook records its entry conditions
+at Step 0. This one cannot: Phase 8 begins on a Mac with no toolkit on it, and
+`$FRACTOGENESIS_HOME` and `reimage.env` are what Steps 2 and 3 just created. Here
+is the first moment there is anything to run, and the rows are about what was
+true before the phase started as much as what these two steps established:
+
+```bash
+./bin/record-enrollment.sh --context entry
+```
+
+It writes `checklist.md` under `reimaged-system/boundaries/` with the context
+`enroll-and-stabilize-entry`, and exits non-zero on any `FAIL`. A `FAIL` on
+network or Company Portal stops the phase — enrollment, managed installs and
+macOS updates each need both. Two rows are left `TODO`; answer them in that file
+as described in Step 10, which explains the mechanics once for both boundaries.
+
+> [!note]
+> The artifact root row is expected to be `WARN` here. The external volume is not
+> reconnected until Phase 9 Step 1, so this checklist lands on the workspace or
+> Desktop fallback along with everything else this phase writes.
+
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
 ---
 
-### Step 3 — Complete Managed Enrollment
+### Step 4 — Complete Managed Enrollment
 
 Complete the managed enrollment flow driven by the OS and Company Portal:
 
@@ -513,7 +576,7 @@ misleads:
 > [!note]
 > **The profile count is the quickest check that policy landed in full.**
 > `profiles list` ends with a line such as `There are 17 system configuration
-> profiles installed`; a machine mid-push shows noticeably fewer. Step 6's record
+> profiles installed`; a machine mid-push shows noticeably fewer. Step 7's record
 > extracts that number into its own exit-criteria row, so there is nothing to
 > note by hand — but the row reads `unknown` when the listing was not readable at
 > the privilege level the script ran with, which means "could not tell", not
@@ -523,13 +586,13 @@ misleads:
 > **Required pushes are asynchronous and keep arriving.** The set present when you
 > first look is a snapshot, not the final state; an agent can land an hour later
 > with no prompt and no action from you. Do not treat a component missing here as
-> missing for good — Step 6's record captures whatever exists at that moment, and
-> Step 8's post-restart record is the one that matters.
+> missing for good — Step 7's record captures whatever exists at that moment, and
+> Step 9's post-restart record is the one that matters.
 
 > [!note]
 > **Microsoft Office does not arrive here.** It is almost always an *Available*
 > assignment, which means it installs only when you click Install in the Company
-> Portal Apps tab — that is Step 4. Waiting for Office in this step is the single
+> Portal Apps tab — that is Step 5. Waiting for Office in this step is the single
 > most common way to lose an afternoon in Phase 8.
 
 > [!warning] Pitfall
@@ -539,7 +602,7 @@ misleads:
 
 ---
 
-### Step 4 — Install and Confirm Required and Available Managed Apps
+### Step 5 — Install and Confirm Required and Available Managed Apps
 
 Intune assigns apps in two modes, and they behave differently. Both must be
 settled before Phase 9 begins.
@@ -549,9 +612,28 @@ settled before Phase 9 begins.
 | Required | Pushed automatically after enrollment. Delivery is asynchronous and can take from minutes to hours. | Wait, and confirm arrival. |
 | Available | Listed in the Company Portal **Apps** tab with an Install button. **Never installs on its own.** | Open the Apps tab and install what this Mac needs. |
 
-Open **Company Portal** → **Apps** → **All apps** and install everything this
-Mac requires. Office is typically published as a single suite item rather than
-as individual apps.
+Open **Company Portal** → **Apps** → **All apps**. The catalog lists everything
+assigned to this account, but **do not install all of it here**. This phase needs
+three, and each for a different reason:
+
+| Install now | Why here rather than later |
+|---|---|
+| **Google Chrome** | Install this first. It is how you reach LastPass for every password this phase and the next need, and the email holding the post-reimage cheatsheet that carries `TOOLKIT_GITHUB_ACCOUNT` for Step 1. |
+| **Microsoft 365 Apps for macOS** | The single suite item that delivers Word, Excel, PowerPoint, Outlook and OneNote — plus Teams, OneDrive and AutoUpdate. The individual Microsoft apps are not separately installable; this is the only way to get them. |
+| **Zscaler** | The TLS-inspecting proxy agent. It has to be in place before Phase 10B trusts the corporate CA, and its absence changes how every later network failure reads. |
+
+Everything else in the catalog belongs to a later phase or to no phase at all.
+**Postman Enterprise in particular is installed during Phase 12**
+([[restore-apps|restore-apps.md]]), together with its settings and environments —
+installing it here gives you an empty copy that the restore then has to work
+around. Microsoft Edge, PrinterLogic and Identity Agent are installed when you
+actually need them, on the same reasoning.
+
+> [!note]
+> Chrome comes from Company Portal, which needs enrollment — so on a Mac where
+> Step 3 has not finished, use Safari to reach the cheatsheet and LastPass for
+> long enough to get through Step 1. Chrome is a convenience here, not a
+> dependency; nothing in this runbook requires a specific browser.
 
 Confirm what actually landed:
 
@@ -632,7 +714,7 @@ through Intune.
 
 ---
 
-### Step 5 — Apply Required macOS Updates
+### Step 6 — Apply Required macOS Updates
 
 If IT policy, Company Portal, or System Settings requires macOS updates before restore work, complete them here.
 
@@ -640,40 +722,40 @@ If IT policy, Company Portal, or System Settings requires macOS updates before r
 2. Allow any required reboot to complete.
 3. Return to this runbook before doing restore work.
 
-**If the update forces a reboot, let it happen here and carry on to Step 6
-afterwards.** Do not try to count it as the Step 7 stabilization restart.
+**If the update forces a reboot, let it happen here and carry on to Step 7
+afterwards.** Do not try to count it as the Step 8 stabilization restart.
 
 That shortcut looks like it saves a reboot, and it costs more than it saves:
 
-- **Step 7 is a gate, not just a reboot.** It has four pre-restart confirmations,
-  and skipping to Step 8 skips them. One of them — *"any required
+- **Step 8 is a gate, not just a reboot.** It has four pre-restart confirmations,
+  and skipping to Step 9 skips them. One of them — *"any required
   update-triggered restart is already done or in motion"* — cannot be satisfied
   by the very restart it is meant to gate.
-- **It breaks what the pair of records means.** Step 6 is the
+- **It breaks what the pair of records means.** Step 7 is the
   everything-installed-and-updates-applied snapshot. Run before an update
-  reboot, it is not: updates apply *during* that reboot. Step 8 then differs from
-  Step 6 in two ways at once — a reboot *and* an OS version change — with
+  reboot, it is not: updates apply *during* that reboot. Step 9 then differs from
+  Step 7 in two ways at once — a reboot *and* an OS version change — with
   `sw_vers` and `softwareupdate --list` both moving. The comparison exists to
   isolate whether the managed baseline survived a reboot, and it can no longer
   answer that.
 
-Taking the update reboot as part of this step, then recording Step 6, then
-taking a deliberate Step 7 restart costs about two extra minutes and keeps both
+Taking the update reboot as part of this step, then recording Step 7, then
+taking a deliberate Step 8 restart costs about two extra minutes and keeps both
 records meaning what they claim.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
 ---
 
-### Step 6 — Record the Pre-Restart Baseline
+### Step 7 — Record the Pre-Restart Baseline
 
-Record the evidence that Steps 3–5 landed as expected. Preview the script's options first so you know which fallback path it will pick:
+Record the evidence that Steps 4–6 landed as expected. Preview the script's options first so you know which fallback path it will pick:
 
 ```bash
 ./bin/record-enrollment.sh --help
 ```
 
-Run the record, labelling it as the pre-restart run. With no `--output`, the destination follows the fallback chain: the artifact root when it is mounted, otherwise `$REIMAGE_WORKSPACE_ROOT/enrollment/`, otherwise the Desktop:
+Run the record, labelling it as the pre-restart run. With no `--output`, the destination follows the fallback chain: the artifact root when it is mounted, otherwise `$REIMAGE_WORKSPACE_ROOT/`, otherwise the Desktop:
 
 ```bash
 sudo -v && ./bin/record-enrollment.sh --context pre-restart
@@ -693,18 +775,10 @@ sudo -v && ./bin/record-enrollment.sh --context pre-restart
 > succeeds, and the profile row simply reports `user scope` and says so.
 
 > [!note]
-> The record lands at `pre-restart-record-enrollment-YYYYMMDD-HHMMSS` — the
-> label leads, matching `post-image-performance-audit-*`, `post-reimage-*`,
-> and the `pre-image-*` repo-audit runs. Anything reading these directories
-> back globs `*record-enrollment-*`, with the leading wildcard, so labelled
-> and unlabelled records are both found. The label is also written inside
-> `record.md` and `MANIFEST.txt`, so a record stays self-describing even if it
-> is later moved or renamed.
-
-> [!warning] Pitfall
-> A label before the timestamp means names no longer sort chronologically
-> across labels. Select the newest record from the pointer file, or by
-> modification time — not by lexically sorting a mixed set.
+> The run lands at `restarts/runs/enroll-and-stabilize-pre-restart-YYYYMMDD-HHMMSS/`
+> and is indexed in that category's `MANIFEST.md`. Nothing needs to glob for it:
+> `official/enroll-and-stabilize-pre-restart.txt` names the run that counts, which
+> is how Step 10 and Phase 9 both find it.
 
 
 If the external artifact volume is already reconnected, force the record onto it explicitly:
@@ -713,10 +787,12 @@ If the external artifact volume is already reconnected, force the record onto it
 sudo -v && ./bin/record-enrollment.sh --context pre-restart --artifact-root "$REIMAGE_ARTIFACT_ROOT"
 ```
 
-The script prints each subsystem as it runs, writes the twelve `raw/NN-*.txt` files, generates `record.md` with the exit-criteria table prefilled, writes `MANIFEST.txt`, and updates `latest-enrollment-record.txt` at the parent level.
+The script prints each subsystem as it runs, writes the twelve `raw/NN-*.txt` files, generates `record.md`, writes `rows.tsv` beside it, and indexes the run.
 
 > [!note]
-> `WARN` on a row does not mean failure. Review the raw file for context — a `WARN` on `Required macOS updates are complete or intentionally deferred` while updates are still pending is expected before Step 5 finishes.
+> `WARN` on a row does not mean failure. Review the raw file for context — a `WARN` on the macOS updates row while updates are still pending is expected before Step 6 finishes.
+>
+> The record states what the machine reported and nothing more. It carries no exit criteria and no `TODO` rows: those are Step 10's, asked once, against the post-restart run. That separation is why rerunning a capture here can never discard an answer someone already gave.
 
 > [!bug] Troubleshooting
 > If the profiles row recorded nothing at all, see [[#Profiles list is empty right after enrollment|Profiles list is empty right after enrollment]].
@@ -728,7 +804,7 @@ The script prints each subsystem as it runs, writes the twelve `raw/NN-*.txt` fi
 
 ---
 
-### Step 7 — Take the First Stabilization Restart
+### Step 8 — Take the First Stabilization Restart
 
 Restart the Mac to confirm the managed baseline survives a reboot.
 
@@ -745,15 +821,15 @@ After the restart:
 
 1. Sign back in.
 2. Reconnect network if needed.
-3. Continue directly to Step 8.
+3. Continue directly to Step 9.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
 ---
 
-### Step 8 — Record the Post-Restart Baseline
+### Step 9 — Record the Post-Restart Baseline
 
-Rerun the record after the restart, labelled as the post-restart run. This is the sign-off record: it is the one you cite when closing out the exit criteria in Step 9.
+Rerun the record after the restart, labelled as the post-restart run. This is the sign-off record: it is the one you cite when closing out the exit criteria in Step 10.
 
 ```bash
 sudo -v && ./bin/record-enrollment.sh --context post-restart
@@ -765,7 +841,7 @@ sudo -v && ./bin/record-enrollment.sh --context post-restart
 > captured system-scope — and the two counts are then not comparable, which is
 > the one thing this pair of records exists to support.
 
-Each run writes a fresh timestamped bundle, so the pre-restart record from Step 6 is left in place for comparison.
+Each run writes a fresh indexed run, so the pre-restart record from Step 7 is left in place for comparison and `official/enroll-and-stabilize-post-restart.txt` moves to this one. Step 10 reads that pointer, so there is nothing to select by hand and no way to cite the Step 7 record by mistake.
 
 Confirm manually that:
 
@@ -782,69 +858,76 @@ there is no obvious loss of enrollment, profiles, or base managed apps
 
 ---
 
-### Step 9 — Close Out the Exit Criteria
+### Step 10 — Close Out the Exit Criteria
 
-This is the **only** step that fills manual rows. Open the post-restart
-`record.md` — the Step 8 record, not the Step 6 one — and answer
-every `TODO` from what you actually observed. Rows written into an earlier
-record were discarded when this one was generated.
-
-Locate the newest record. The pointer file is authoritative; the fallback
-walks the three output tiers newest-first:
+Confirm what this phase produced. This is a close-out, not a check of the next
+phase: Phase 9 verifies its own entry conditions in its Step 0.
 
 ```bash
-LATEST_RECORD=""
-for POINTER in \
-  "$REIMAGE_ARTIFACT_ROOT/reimaged-system/enrollment/latest-enrollment-record.txt" \
-  "$REIMAGE_WORKSPACE_ROOT/enrollment/latest-enrollment-record.txt" \
-  "$HOME/Desktop/reimaged-system-artifacts/enrollment/latest-enrollment-record.txt"; do
-  if [ -f "$POINTER" ]; then
-    LATEST_RECORD="$(cat "$POINTER")"
-    [ -f "$LATEST_RECORD" ] && break
-  fi
-done
-
-# No pointer resolved: take the most recently modified record directory.
-if [ ! -f "$LATEST_RECORD" ]; then
-  for ENROLLMENT_DIR in \
-    "$REIMAGE_ARTIFACT_ROOT/reimaged-system/enrollment" \
-    "$REIMAGE_WORKSPACE_ROOT/enrollment" \
-    "$HOME/Desktop/reimaged-system-artifacts/enrollment"; do
-    NEWEST=$(ls -1dt "$ENROLLMENT_DIR"/*record-enrollment-*/ 2>/dev/null | head -1)
-    if [ -n "$NEWEST" ] && [ -f "$NEWEST/record.md" ]; then
-      LATEST_RECORD="$NEWEST/record.md"
-      break
-    fi
-  done
-fi
-
-echo "$LATEST_RECORD"
+./bin/record-enrollment.sh --context exit
 ```
 
+It writes `checklist.md` under `reimaged-system/boundaries/` with the context
+`enroll-and-stabilize-exit`, and exits non-zero on any `FAIL`. The file holds two
+tables: **Automated**, and **Manual** — the rows it cannot answer, left as `TODO`.
+
+The Automated rows are not fresh probes. They restate the verdicts the Step 9 run
+recorded, read from that run's `rows.tsv`, which the script finds through
+`official/enroll-and-stabilize-post-restart.txt`. There is no pointer to walk and
+no way to sign off against the Step 7 record by accident, and a checklist built
+this way cannot disagree with the evidence it cites.
+
 > [!warning] Pitfall
-> The fallback sorts by modification time, not by name. With the context label
-> leading, `post-restart-record-enrollment-…` sorts *before*
-> `pre-restart-record-enrollment-…` however recent each one is, so a lexical
-> `sort | tail -1` over a mixed set returns the pre-restart record and you
-> would sign off against the wrong evidence. Note the glob also needs a leading
-> wildcard — `*record-enrollment-*` — since the artifact name no longer starts
-> the directory name.
+> A `FAIL` on **Post-restart baseline recorded** means Step 9 has not run since
+> the restart. Run it, then rerun this — do not answer around the row. The whole
+> close-out is a statement about the post-restart machine, and without that run
+> there is nothing for it to be about.
 
-Confirm every row is effectively `yes` before proceeding to Phase 9:
+**Answer the Manual rows.** Nothing re-probes them and no later phase collects
+them: you answer them by editing `checklist.md` itself. Replace each `TODO` with
+the answer and put the reasoning in Notes. `yes` and `accepted` close a row, and
+so does `no` when `no` is the considered answer — the check is for rows nobody
+looked at.
 
-| Check | Verification mode | How to verify |
-|---|---|---|
-| Enrollment completed or clearly stabilized | Mixed | `profiles status -type enrollment` plus expected company state |
-| Required profiles/certificates appear | Mixed | `profiles list` plus expected profile/cert presence |
-| Required security tools are installed or actively installing | Mixed | managed app/process checks plus visual sanity review |
-| Company Portal opens and shows expected state | Manual | open Company Portal and review the device state |
-| Required macOS updates are complete or intentionally deferred | Mixed | `sw_vers`, `softwareupdate --list`, and policy/UI review |
-| First stabilization restart completed | Manual | observed restart and successful return to login/session |
-| Managed application set matches the pre-image inventory | Mixed | `raw/08-managed-app-expectations.txt` plus the Company Portal **Apps** tab |
-| FileVault is on | Command | `fdesetup status` — Phase 14 fails sign-off if it is off |
-| Configuration profiles installed | Mixed | trailing count from the record; confirm it says *system scope* in both records, not *user scope* |
-| Keychain identities re-issued | Mixed | `security find-identity -v` — same count and shape as pre-image, different fingerprints |
-| Post-restart baseline still looks healthy | Mixed | rerun the Step 6 commands and confirm no obvious regressions |
+*Company Portal shows the expected state.* Open it, confirm the device is listed,
+and check that the **Apps** tab shows nothing this Mac needs still listed as
+installable. Anything outstanding belongs to Step 5, not here.
+
+*Required security tools are installed or actively installing.* An agent mid-install
+and an agent that failed look identical from a process list, which is why this row
+is manual. Give it a few minutes and look again before closing it.
+
+*First stabilization restart completed.* You observed it and came back to a login
+session. Recorded because the two baselines mean nothing if the restart between
+them never happened.
+
+*Keychain identities re-issued.* Compare the count and shape against the pre-image
+record. Expect the same number with different fingerprints — MDM re-issues these
+rather than restoring them, so matching fingerprints would be the surprising
+result.
+
+> [!warning] Pitfall
+> Each run writes its own dated directory, so a rerun does not update the file you
+> answered — it produces a new `checklist.md` with every Manual row back at
+> `TODO`. Answer them in the last run you intend to keep, and carry the answers
+> forward if you rerun after answering.
+
+The exit criteria for this phase, and where each is settled:
+
+| Area | Settled by |
+|---|---|
+| Enrollment completed | Automated, from the Step 9 record |
+| Required profiles and certificates present | Automated, from the Step 9 record |
+| macOS updates complete or intentionally deferred | Automated, from the Step 9 record |
+| Managed application set matches the pre-image inventory | Automated, from the Step 9 record |
+| FileVault is on | Automated, from the Step 9 record — Phase 14 fails sign-off if it is off |
+| Both baselines recorded, bracketing the restart | Automated, from the run index |
+| Company Portal state, security tooling, the restart itself, identity re-issue | Manual, answered here |
+
+Once the checklist has no `FAIL` and no unanswered `TODO`, move to
+[[verify-reimaged-system|verify-reimaged-system.md]]. Its Step 0 reads this
+checklist rather than re-deriving any of it, which is the reason to finish it here
+rather than carrying an open row forward.
 
 > [!bug] Troubleshooting
 > If the enrollment row reads `WARN` on a Mac you know is enrolled, see [[#Enrollment row is WARN even though the Mac is clearly enrolled|Enrollment row is WARN even though the Mac is clearly enrolled]].
@@ -883,19 +966,19 @@ Five outcomes look like failures but usually are not, and each would otherwise b
 
 Profile push is asynchronous. Wait a few minutes and rerun `./bin/record-enrollment.sh`. If it stays empty for more than roughly 10–15 minutes on a network-connected machine, check Company Portal for a pending enrollment issue before escalating.
 
-[[#Step 7 — Take the First Stabilization Restart|⮕ Continue to Step 7 — Take the First Stabilization Restart]]
+[[#Step 8 — Take the First Stabilization Restart|⮕ Continue to Step 8 — Take the First Stabilization Restart]]
 
 ### The record landed on the Desktop instead of the artifact root
 
-That is the intended final fallback when neither `REIMAGE_ARTIFACT_ROOT` nor `REIMAGE_WORKSPACE_ROOT` resolves to a mounted directory. Once the external artifact volume is reconnected in Phase 9, either move the bundle into `reimaged-system/enrollment/` or rerun the script with `--artifact-root "$REIMAGE_ARTIFACT_ROOT"` so the sign-off record lives with the other Phase 8+ evidence.
+That is the intended final fallback when neither `REIMAGE_ARTIFACT_ROOT` nor `REIMAGE_WORKSPACE_ROOT` resolves to a mounted directory. Phase 9 Step 1 relocates what landed there; you can also rerun the script with `--artifact-root "$REIMAGE_ARTIFACT_ROOT"` once the volume is back, so the run is indexed alongside the other Phase 8+ evidence rather than in a second category on the Desktop.
 
-[[#Step 7 — Take the First Stabilization Restart|⮕ Continue to Step 7 — Take the First Stabilization Restart]]
+[[#Step 8 — Take the First Stabilization Restart|⮕ Continue to Step 8 — Take the First Stabilization Restart]]
 
 ### Enrollment row is WARN even though the Mac is clearly enrolled
 
 `profiles status -type enrollment` phrasing has changed across macOS versions; the heuristic looks for `enrolled|yes|mdm`. Open `raw/01-enrollment-status.txt` and read the actual line — if it reports MDM enrollment in different wording, mark the row `PASS` by hand and note the wording.
 
-[[#Step 9 — Close Out the Exit Criteria|⮕ Continue to Step 9 — Close Out the Exit Criteria]]
+[[#Step 10 — Close Out the Exit Criteria|⮕ Continue to Step 10 — Close Out the Exit Criteria]]
 
 ### Managed application row is TODO or names unexpected apps
 
@@ -913,13 +996,13 @@ ones that were never top-level applications, and act only on the real absences.
 The row is `Mixed` for exactly this reason — the script narrows the search, you
 make the call.
 
-[[#Step 9 — Close Out the Exit Criteria|⮕ Continue to Step 9 — Close Out the Exit Criteria]]
+[[#Step 10 — Close Out the Exit Criteria|⮕ Continue to Step 10 — Close Out the Exit Criteria]]
 
 ### Security tools row is WARN
 
 Confirm the app or process name in `raw/04-managed-apps.txt` / `raw/05-managed-processes.txt`. CrowdStrike ships as `Falcon.app`, and the heuristic looks for both names — but a vendor rename or a staged rollout can miss the pattern. Rerun after the install finishes; if the tool is genuinely absent and policy expects it, escalate.
 
-[[#Step 9 — Close Out the Exit Criteria|⮕ Continue to Step 9 — Close Out the Exit Criteria]]
+[[#Step 10 — Close Out the Exit Criteria|⮕ Continue to Step 10 — Close Out the Exit Criteria]]
 
 ---
 
@@ -988,9 +1071,11 @@ softwareupdate --list 2>/dev/null || true
 
 | Order | Condition | Path |
 |---|---|---|
-| 1 | `REIMAGE_ARTIFACT_ROOT` set and directory exists | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/enrollment/record-enrollment-YYYYMMDD-HHMMSS/` |
-| 2 | Artifact root unavailable, `REIMAGE_WORKSPACE_ROOT` set and directory exists | `$REIMAGE_WORKSPACE_ROOT/enrollment/record-enrollment-YYYYMMDD-HHMMSS/` |
-| 3 | Neither of the above | `~/Desktop/reimaged-system-artifacts/enrollment/record-enrollment-YYYYMMDD-HHMMSS/` |
+| 1 | `REIMAGE_ARTIFACT_ROOT` set and directory exists | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/` |
+| 2 | Artifact root unavailable, `REIMAGE_WORKSPACE_ROOT` set and directory exists | `$REIMAGE_WORKSPACE_ROOT/` |
+| 3 | Neither of the above | `~/Desktop/reimaged-system-artifacts/` |
+
+The `restarts/` and `boundaries/` categories are created under whichever tier wins, so a fallback run is a complete, indexed category rather than a loose directory.
 
 The script refuses to write output under the toolkit repo checkout as a safety invariant — a record landing inside the working tree almost always signals an unset or relative root variable, not a real destination.
 

@@ -247,23 +247,27 @@ If anything prints `FAIL`, stop and diagnose before trusting this path during an
 
 **7. Open the markdown files, using only what's available on a bare Mac** (no Obsidian, no VS Code — pick any one of these):
 
+*Option A — TextEdit.* A GUI editor, always present on a bare Mac:
+
 ```bash
-# Option A -- TextEdit (GUI, always present)
 open -a TextEdit "$FRACTOGENESIS_HOME/reimaging-guide.md"
 ```
 
+*Option B — Quick Look.* No app launch; reveals the file in Finder, where Space previews it:
+
 ```bash
-# Option B -- Quick Look (GUI, no app launch -- select the file in Finder, then press Space)
 open -R "$FRACTOGENESIS_HOME/reimaging-guide.md"
 ```
 
+*Option C — Terminal, paginated.* Quit with `q`:
+
 ```bash
-# Option C -- Terminal, paginated (quit with q)
 less "$FRACTOGENESIS_HOME/reimaging-guide.md"
 ```
 
+*Option D — Terminal, dumped to screen.*
+
 ```bash
-# Option D -- Terminal, dumps the file
 cat "$FRACTOGENESIS_HOME/prepare-artifact-root.md" | head -50
 ```
 
@@ -427,25 +431,26 @@ that is exactly where Phase 8 will later put the real checkout.
 
 If anything prints `FAIL`, stop and diagnose before trusting this path during an actual reimage.
 
-**11. Open the markdown files, using only what's available on a bare Mac:**
+**11. Open the markdown files, using only what's avail*Option A — TextEdit.* A GUI editor, always present on a bare Mac:
 
 ```bash
-# Option A -- TextEdit (GUI, always present)
+ (GUI, always present)
 open -a TextEdit "$FRACTOGENESIS_HOME/reimaging-guide.md"
 ```
+*Option B — Quick Look.* No app launch; reveals the file in Finder, where Space previews it:
 
 ```bash
-# Option B -- Quick Look (GUI, no app launch -- select the file in Finder, then press Space)
+
 open -R "$FRACTOGENESIS_HOME/reimaging-guide.md"
-```
+```*Option C — Terminal, paginated.* Quit with `q`:
 
 ```bash
-# Option C -- Terminal, paginated (quit with q)
+)
 less "$FRACTOGENESIS_HOME/reimaging-guide.md"
-```
+``*Option D — Terminal, dumped to screen.*
 
 ```bash
-# Option D -- Terminal, dumps the file
+le
 cat "$FRACTOGENESIS_HOME/prepare-artifact-root.md" | head -50
 ```
 
@@ -488,14 +493,16 @@ unset FRACTOGENESIS_PARENT
 
 ### Step 4 — Clean Up
 
-If either test was interrupted partway and left stray directories behind, this clears everything both tests could have created:
+If either test was interrupted partway and left stray directories behind, this clears everything both tests could have created.
+
+The `$HOME/fractogenesis-toolkit` line matters more than it looks: if
+`FRACTOGENESIS_HOME` was ever empty during a run, `bootstrap.sh` installed there
+instead. On a pre-erase machine that is a stray `.git`-less copy sitting exactly
+where Phase 8 will later bootstrap the real one.
 
 ```bash
 rm -rf /tmp/fractogenesis-toolkit-access-test
 
-# If FRACTOGENESIS_HOME was ever empty during a run, bootstrap.sh installed here
-# instead. Remove it: on a pre-erase machine this is a stray .git-less copy sitting
-# exactly where Phase 8 will later bootstrap the real one.
 [ -e "$HOME/fractogenesis-toolkit" ] && \
   echo "Removing stray fallback install: $HOME/fractogenesis-toolkit" && \
   rm -rf "$HOME/fractogenesis-toolkit"

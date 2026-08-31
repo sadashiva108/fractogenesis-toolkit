@@ -373,7 +373,8 @@ OneDrive-only rerun:
 Override the artifact root for a one-off run instead of editing `reimage.env`:
 
 ```bash
-./bin/backup-home.sh --artifact-root /Volumes/<volume>/<artifact-root> --external-only
+ARTIFACT_ROOT_OVERRIDE="replace-with-the-artifact-root-path"
+./bin/backup-home.sh --artifact-root "$ARTIFACT_ROOT_OVERRIDE" --external-only
 ```
 
 The run exits `0` on success, `2` for a usage or prerequisite problem, and `1` when a copy fails — the failing target, its source and destination, and the underlying rsync exit code are printed. Warnings for rsync exit `23` and `24` are counted and summarized at the end without failing the run.

@@ -261,18 +261,25 @@ open "$NOTE"
 
 Restore one target at a time. Prefer a `--dry-run` pass first for anything larger than a folder full of hand-picked files, then rerun without `--dry-run` once the diff looks right. Do not reach for `rsync -a` here — the flag set below is deliberate, and the note underneath explains why:
 
+Documents, only if it is on the shortlist — dry run first, then the real pass:
+
 ```bash
-# Example — Documents (only if on the shortlist)
 rsync -rltv -E --no-perms --no-owner --no-group --exclude .DS_Store --dry-run \
   "$REIMAGE_ARTIFACT_ROOT/home-files-backup/home/Documents/" "$HOME/Documents/"
 rsync -rltv -E --no-perms --no-owner --no-group --exclude .DS_Store \
   "$REIMAGE_ARTIFACT_ROOT/home-files-backup/home/Documents/" "$HOME/Documents/"
+```
 
-# Example — Desktop
+Desktop:
+
+```bash
 rsync -rltv -E --no-perms --no-owner --no-group --exclude .DS_Store \
   "$REIMAGE_ARTIFACT_ROOT/home-files-backup/home/Desktop/" "$HOME/Desktop/"
+```
 
-# Example — personal scripts
+Personal scripts:
+
+```bash
 rsync -rltv -E --no-perms --no-owner --no-group --exclude .DS_Store \
   "$REIMAGE_ARTIFACT_ROOT/home-files-backup/home/scripts/" "$HOME/scripts/"
 ```
@@ -325,11 +332,15 @@ Record `$BACKUP` in the restore note — the Troubleshooting entry below restore
 
 Then diff and merge, one file at a time:
 
+`.zshrc`, as the worked example — read the difference first:
+
 ```bash
-# Example — .zshrc diff and selective merge
 diff -u ~/.zshrc "$REIMAGE_ARTIFACT_ROOT/home-files-backup/dotfiles/.zshrc" | less
-# Edit ~/.zshrc by hand, copying only the stanzas you need.
 ```
+
+Then edit `~/.zshrc` by hand, copying across only the stanzas you need. There is
+no command for this half on purpose: a whole-file copy is what overwrites the
+shell configuration Phase 10A just built.
 
 Categories to consider:
 
@@ -420,7 +431,8 @@ A stanza copied from the pre-image `.zshrc` references a path or command that no
 
 ```bash
 ls -d "$HOME"/.pre-restore-home-*
-cp "$HOME"/.pre-restore-home-<timestamp>/.zshrc "$HOME/.zshrc"
+PRE_RESTORE="replace-with-the-directory-listed-above"
+cp "$PRE_RESTORE/.zshrc" "$HOME/.zshrc"
 exec zsh -l
 ```
 

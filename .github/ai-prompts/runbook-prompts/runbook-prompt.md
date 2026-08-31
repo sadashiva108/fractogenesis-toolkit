@@ -336,6 +336,18 @@ following it. Different audiences, different rules.
 ### Commands
 
 - Precede every command block with a single one-line sentence saying what it is for.
+- **A command block never aborts the shell.** `exit` closes the operator's terminal,
+  and `return 1 2>/dev/null || exit 1` is the same thing wearing a disguise: at the
+  top level of an interactive shell `return` sets status 1, so the `||` fires and
+  `exit` runs. A pasted block has no function to return from, so it has nothing to
+  abort except the session. Guards **report**, and the operator decides whether to
+  stop: `if [ -z "$VAR" ]; then printf 'ERROR: ...\n'; fi`.
+- **Guard a value in the block that consumes it, not the block that sets it.** A
+  check beside a literal assignment can only fail if the operator typed an empty
+  string; a check beside the write it protects fails when the value genuinely did
+  not resolve. If a guard's justification names a command, that command belongs in
+  the same block.
+
 - **Never leave a `<placeholder>` bare in a command block.** `<` and `>` are
   redirection operators, so `cmd --url https://<host>/` is parsed as a redirect
   and dies with `no such file or directory: host` — which reads as a broken
@@ -518,7 +530,7 @@ Validation checklist (run after generating the filled runbook)
 - [ ] Listed reimage.env variables appear in reimage.env.example or artifact-config.sh.
 - [ ] No absolute personal paths or secrets introduced.
 - [ ] Commands shown are syntactically valid and minimal, each preceded by a one-line purpose.
-- [ ] Pasted command blocks are zsh-safe: no `#` comments trailing or whole-line, no bare `<placeholder>` the shell would read as redirection, and no unquoted glob metacharacters or bare `*` patterns whose non-match would abort the line.
+- [ ] Pasted command blocks are zsh-safe: no `#` comments trailing or whole-line, no bare `<placeholder>` the shell would read as redirection, and no unquoted glob metacharacters or bare `*` patterns whose non-match would abort the line, and no `exit` or `return … || exit` that would close the operator's terminal.
 - [ ] Every directory tree appears once, under Artifact and Script Locations; no tree is redrawn elsewhere.
 - [ ] Reason-before-command holds: no runnable command precedes the rationale a reader needs to run it correctly.
 - [ ] A Worked Example appears only when a concept is hard without one.

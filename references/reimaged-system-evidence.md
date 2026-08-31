@@ -67,8 +67,8 @@ Do not manually duplicate the final validation report when reimage-checklist.sh 
 
 | Phase | Capture | Primary destination | Purpose |
 |---|---|---|---|
-| Phase 8 | Enrollment and stabilization | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/enrollment/*record-enrollment-*` | Managed enrollment, profiles, security tools, macOS update state, and first stabilization review. |
-| Phase 9 | Initial captures and sanity checks | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/*initial-reimaged-system-*` | First post-image evidence bundle before deeper restore work, including restart and Time Machine planning notes. |
+| Phase 8 | Enrollment and stabilization | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/restarts/runs/enroll-and-stabilize-<point>-*` | Managed enrollment, profiles, security tools, macOS update state, and first stabilization review. |
+| Phase 9 | Initial captures and sanity checks | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/restarts/runs/verify-reimaged-system-<point>-*` | First post-image evidence bundle before deeper restore work, including restart and Time Machine planning notes. |
 | Phase 13A | Toolkit snapshot | `$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/post-image-toolkit-snapshot-*`, `$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/latest-docs/` | Final workflow-doc snapshot showing the workflow state actually used after rebuild. |
 | Phase 13B | System inventory | `$REIMAGE_ARTIFACT_ROOT/system-inventory/post-image-*` | Broad rebuilt-system snapshot for comparison against Phase 4B. |
 | Phase 13C | Company-managed inventory | `$REIMAGE_ARTIFACT_ROOT/managed-inventory/post-image-*` | Managed apps, profiles, launch items, extensions, receipts, and managed preferences after enrollment. |
@@ -85,14 +85,15 @@ Do not manually duplicate the final validation report when reimage-checklist.sh 
 ```text
 $REIMAGE_ARTIFACT_ROOT/
 ├── reimaged-system/
-│   ├── enrollment/
-│   │   ├── latest-enrollment-record.txt
-│   │   └── [context-]record-enrollment-YYYYMMDD-HHMMSS/
-│   ├── latest-initial-reimaged-system-bundle.txt
+│   ├── restarts/
+│   │   ├── MANIFEST.md
+│   │   ├── official/
+│   │   └── runs/enroll-and-stabilize-<point>-YYYYMMDD-HHMMSS/
+│   ├── restarts/official/verify-reimaged-system-<point>.txt
 │   ├── checklists/
 │   │   ├── reimage-checklist-YYYYMMDD-HHMMSS.md
 │   │   └── latest-reimage-checklist.txt
-│   ├── [context-]initial-reimaged-system-YYYYMMDD-HHMMSS/
+│   ├── restarts/runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/
 │   ├── time-machine/
 │   ├── restarts/
 │   └── restore-notes/
@@ -135,7 +136,7 @@ cd "$FRACTOGENESIS_HOME"
 Preferred generated output:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/reimaged-system/enrollment/[context-]record-enrollment-YYYYMMDD-HHMMSS/
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/restarts/runs/enroll-and-stabilize-<point>-YYYYMMDD-HHMMSS/
 ```
 
 Typical contents:
@@ -157,8 +158,8 @@ raw/
 Fallback output roots verified by the script:
 
 ```text
-$REIMAGE_WORKSPACE_ROOT/enrollment/[context-]record-enrollment-YYYYMMDD-HHMMSS/
-~/Desktop/reimaged-system-artifacts/enrollment/[context-]record-enrollment-YYYYMMDD-HHMMSS/
+$REIMAGE_WORKSPACE_ROOT/restarts/runs/enroll-and-stabilize-<point>-YYYYMMDD-HHMMSS/
+~/Desktop/reimaged-system-artifacts/restarts/runs/enroll-and-stabilize-<point>-YYYYMMDD-HHMMSS/
 ```
 
 Manual / fallback notes:
@@ -187,7 +188,7 @@ cd "$FRACTOGENESIS_HOME"
 Generated bundle location:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/reimaged-system/[context-]initial-reimaged-system-YYYYMMDD-HHMMSS/
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/restarts/runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/
 ```
 
 Typical contents verified from `record-reimaged-system.sh`:
@@ -209,7 +210,7 @@ Related `reimaged-system/` paths created or reused by the script:
 $REIMAGE_ARTIFACT_ROOT/reimaged-system/time-machine/
 $REIMAGE_ARTIFACT_ROOT/reimaged-system/restarts/
 $REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/
-$REIMAGE_ARTIFACT_ROOT/reimaged-system/latest-initial-reimaged-system-bundle.txt
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/restarts/official/verify-reimaged-system-<point>.txt
 ```
 
 Manual / fallback notes:

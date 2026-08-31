@@ -262,19 +262,10 @@ done
 # ---------------------------------------------------------------------------
 # Resolve output directory (fallback chain when --output is not supplied)
 # ---------------------------------------------------------------------------
-# The context label leads the directory name:
-# pre-restart-record-enrollment-YYYYMMDD-HHMMSS. This matches the convention
-# already used by post-image-performance-audit-*, post-reimage-*, and the
-# pre-image-* repo-audit runs, where the phase or context comes first.
-#
-# Two consequences for anything that reads these directories back:
-#   - the artifact name is no longer at the start, so globs need a leading
-#     wildcard: *record-enrollment-* rather than record-enrollment-*;
-#   - names group by label before timestamp, so a "latest record" lookup must
-#     rank on the trailing stamp (or on modification time) and never on a
-#     plain lexical sort of the mixed set.
-# The stamp stays at the end of the name, which is what reimage-checklist.sh
-# extracts to compare bundle age against the Time Machine backup.
+# Run ids are <runbook>-<point>-<stamp>, so one lineage sorts chronologically and
+# the stamp trails -- which is what reimage-checklist.sh extracts to compare
+# evidence age against the Time Machine backup. Readers do not glob for a run at
+# all: official/<context>.txt names the one that counts, per point.
 # The context label becomes the run's POINT, so `--context pre-restart` lands in
 # the pre-restart lineage with no further mapping. A run with no context gets
 # `initial`, which is NOT a known point and indexes as `unknown` -- the honest
@@ -434,7 +425,13 @@ boundary_exit() {
         enrollment)      b_record "$status" "Enrollment completed" "$detail" ;;
         profiles)        b_record "$status" "Required profiles and certificates present" "$detail" ;;
         macos-updates)   b_record "$status" "macOS updates complete or deferred" "$detail" ;;
-        managed-apps)    b_record "$status" "Managed application set matches the pre-image inventory" "$detail" ;;
+        managed-apps)
+          if [[ "$status" == "PASS" ]]; then
+            b_record PASS "Managed application set matches the pre-image inventory" "$detail"
+          else
+            b_manual "Managed application set is accounted for" "$detail Each absence is deliberate — a superseded management stack, a repackaged component, a version-pinned receipt — or a genuine gap to raise with IT. Company-scoped applications that Phase 12 restores are absent on schedule here; name which is which."
+          fi
+          ;;
       esac
     done < "$rows"
   else
@@ -639,7 +636,11 @@ if [[ -n "$MANAGED_INVENTORY_DIR" && -d "$MANAGED_INVENTORY_DIR" ]]; then
   do
     if [[ -n "$_candidate" && -f "$_candidate" ]]; then
       EXPECT_SOURCE_FILE="$_candidate"
-      MANAGED_APPS_SOURCE="$(basename "$_candidate")"
+      # The bundle-relative path, not the basename. The expectation file lives in
+      # the pre-image managed-inventory bundle, NOT in this run's raw/ -- citing
+      # `07-company-filter-pass.txt` alone sends a reader looking for it beside
+      # the twelve files that are here, where it has never been.
+      MANAGED_APPS_SOURCE="managed-inventory/$(basename "$(dirname "$_candidate")")/$(basename "$_candidate")"
       break
     fi
   done
@@ -802,10 +803,21 @@ else
 
   rm -f "$EXPECTED_TMP" "$MISSING_TMP" "$HAYSTACK_TMP"
 
+  # A count, not a verdict. The expectation set is the pre-image COMPANY-scoped
+  # inventory, which mixes two populations: software Intune pushes during this
+  # phase, and company-scoped applications that Phase 12 restores. An absence in
+  # the second is on schedule at Phase 8, so grading any absence as WARN reports
+  # the normal case as a problem.
+  #
+  # It also cannot be graded here even for the first population. Deciding whether
+  # an absent entry is deliberate -- a superseded management stack, a repackaged
+  # component, a version-pinned receipt -- or a genuine gap needing a ticket is
+  # exactly the judgement `record_manual` exists for. This run supplies the
+  # evidence; the exit checklist asks the question.
   if [[ "$MANAGED_APPS_MISSING_COUNT" == "0" ]]; then
     MANAGED_APPS_STATUS="PASS"
   else
-    MANAGED_APPS_STATUS="WARN"
+    MANAGED_APPS_STATUS="REVIEW"
   fi
 fi
 echo "   ✓ saved → raw/08-managed-app-expectations.txt"

@@ -410,11 +410,18 @@ export GIT_PERSONAL_REPO_ROOT="$HOME/path/to/personal/repos"
 `bin/prepare-artifact-root.py upsert-env` accepts any `KEY=VALUE` pair it's given, including an empty `VALUE` -- it does not check that the value is non-empty before writing it, so a typo'd or unset shell variable on the next line gets written into `reimage.env` silently, with no error at all. Guard against that here, before it can happen, rather than relying on catching it downstream:
 
 ```bash
-if [[ -z "$GIT_WORK_REPO_ROOT" ]]; then
-  echo "ERROR: GIT_WORK_REPO_ROOT is empty -- the export above didn't take. Fix it before continuing; do not run upsert-env with an empty value."
-  return 1 2>/dev/null || exit 1
+if [ -z "$GIT_WORK_REPO_ROOT" ]; then
+  printf 'ERROR: GIT_WORK_REPO_ROOT is empty -- the export above did not take.\n'
+  printf 'Fix it before continuing; do not run upsert-env with an empty value.\n'
 fi
 ```
+
+> [!warning] Pitfall
+> The guard reports rather than aborting. `return 1 2>/dev/null || exit 1` reads
+> like a safe abort and is not one in a pasted block: at the top level of an
+> interactive shell `return` sets status 1, the `||` fires, and `exit` closes the
+> terminal you are working in. A block you paste has no function to return from,
+> so it has nothing to abort except your session.
 
 Write the resolved Git root values into `reimage.env`:
 

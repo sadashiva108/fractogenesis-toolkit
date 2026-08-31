@@ -1,6 +1,18 @@
 # Apply Manifest
 
-**Revision 83** — supersedes earlier manifests. Every step gets its own way back, the enrollment records join the restart lineage, and a record stops carrying a verdict it cannot keep current.
+**Revision 89** — supersedes earlier manifests. The restart comparison becomes a comparison instead of a diff, and two Phase 9 rows stop asking for state Phase 12 produces.
+
+**Revision 88** — supersedes Revision 87 and earlier. Every `#` comment and bare placeholder leaves the pasted command blocks, and Phase 8 opens with the cheatsheet its next step depends on.
+
+**Revision 87** — supersedes Revision 86 and earlier. The last documents describing the pre-`restarts/` bundle layout are corrected, found by a step that failed in the operator's terminal.
+
+**Revision 86** — supersedes Revision 85 and earlier. Phase 8 installs three apps rather than "everything this Mac requires", and a guard that could close the operator's terminal is gone from the house style.
+
+**Revision 85** — supersedes Revision 84 and earlier. The JDK major is named once and carried, and a Pitfall that explained a real hazard with the wrong mechanism is corrected.
+
+**Revision 84** — supersedes Revision 83 and earlier. Phases 8 and 9 get the entry and exit boundaries every other phase already had, and the enrollment records join the restart lineage on disk.
+
+**Revision 83** — supersedes Revision 82 and earlier. Every step gets its own way back, the enrollment records join the restart lineage, and a record stops carrying a verdict it cannot keep current.
 
 **Revision 82** — supersedes Revision 81 and earlier. The entry boundary joins the exit boundary in `boundaries/`, in the documentation and on the drive.
 
@@ -222,6 +234,444 @@ several separate rounds of work, and splicing them by hand is how the duplicate
 | `restore-intellij.sh` | `bin/restore-intellij.sh` |
 | `record-reimaged-system.sh` | `bin/record-reimaged-system.sh` |
 | `reimage-checklist.sh` | `bin/reimage-checklist.sh` |
+
+---
+
+## Revision 89 — a diff nobody could read, and a row nothing could satisfy
+
+**`--context diff` compares the two first-boot bundles.** Step 6 previously ran
+`diff -u` over two `checklist.md` files, which is complete and unreadable: it
+interleaves reordered rows, evidence paths and timestamps with the handful of
+verdicts that actually moved. The new mode parses both checklists, joins them on
+the check name, and groups rows by what happened — **Regressed** first, and
+saying so explicitly when it is empty, which is a stronger statement than a diff
+that comes back quiet.
+
+It resolves both sides through `official/`, so there is nothing to name and no way
+to compare a run against itself, and it writes to `comparisons/` under
+`verify-reimaged-system-restart-diff`.
+
+That context closes a gap this manifest should record: Revision 84 gave the Phase
+9 exit checklist a row asking whether the pair had been compared, and pointed it
+at `verify-reimaged-system-inventory-diff` — a context **nothing has ever
+written**. The row could only ever have reported "no official comparison run".
+The exit row now names the context that exists.
+
+**Three parser bugs, each caught by running it against the operator's real
+bundles rather than fabricated ones.**
+
+The first accepted only `PASS`, `WARN`, `FAIL` and `TODO`. Manual rows are
+answered by hand, so the post-restart checklist carries `yes` and `no` where the
+generated file had `TODO` — every answered row was invisible on one side, and the
+comparison reported **fifteen rows dropped** across a restart that changed none.
+
+The second was the fix for the first: a length cap, to tell a status from an
+evidence path. It rejected `yes, with exception` — a real answer in the
+operator's own checklist — and dropped that row the same way. Field 3 is the
+status column in both tables, so no content test was needed; only the header and
+separator rows had to be skipped, and those were being parsed as data too.
+
+The third was semantic. `PASS` and a hand-written `yes` mean the same thing about
+the same row, and a qualified `yes, with exception` is still good — matched on
+prefix now, so an answered row does not surface as a regression.
+
+A `TODO` that becomes a considered `no` is neither improvement nor regression, so
+it gets its own group: **answered**. That is the normal Phase 9 flow, and folding
+it into "changed" would have buried it.
+
+**Two checklist rows asked for state Phase 9 cannot produce.** *Chrome baseline
+settings restored* and *Terminal baseline settings restored* — bookmarks,
+profiles, saved passwords, fonts and window sizes all arrive in
+`restore-apps.md` (Phase 12). Chrome may well be installed by then, from Company
+Portal in Phase 8, but installed is not configured. The operator had already
+answered both `no`, which is the correct answer to the wrong question.
+
+They now ask what Phase 9 can answer — Chrome opens and reaches an internal site,
+Terminal opens and `echo $SHELL` is the expected login shell — and each says in
+its Notes where the settings actually come from. Same correction as the manual
+Terminal row in Revision 86; this is the generated half.
+
+The two `Phase 8 Step 4` references in the template are now `Step 5`, following
+Revision 88's renumber.
+
+**Modified:** `bin/record-reimaged-system.sh`, `verify-reimaged-system.md`,
+`reimaging-scripts-guide.md`, `APPLY-MANIFEST.md`.
+
+**Not verified here:** `bash -n` and the portability lint pass. The comparison was
+run against copies of the operator's real 2026-08-19 bundles and produced 0
+regressed, 12 improved, 3 answered, 0 dropped, 20 unchanged — the three parser
+bugs above were each found that way, and none would have shown against synthetic
+input. The two rewritten checklist rows have not been generated on the Mac.
+
+---
+
+## Revision 88 — the sweep behind Revision 87
+
+Revision 87 fixed the block that failed in the operator's terminal and counted 88
+more like it. This is that sweep.
+
+**All 88 `#` comments are out of the command blocks**, across six runbooks and the
+scripts guide. Each was rewritten, not deleted — a label became the sentence
+introducing its block, a multi-purpose block became several labelled ones, and an
+annotation of expected output became prose after the command. `reimaging-scripts-guide.md`
+lost its two 40-line "Common Run Order" blocks in favour of one block per phase
+with the phase named above it.
+
+A second class turned up that Revision 87 had not measured: **28 trailing
+comments**. The rule names "trailing or whole-line" and only whole-line had been
+counted. Same treatment.
+
+**restore-docker.md's `.env` block was mislabelled `bash`.** It is file content —
+so `ELASTIC_PASSWORD=fake-test      # change for any non-local use` was a
+legitimate comment in a `.env` file, being reported as a shell defect. Relabelled
+`text`, which is what it always was.
+
+**Ten bare `<placeholder>` instances went with them**, the same family: `<` and
+`>` redirect, so `cd <workspace>/…` is a parse error rather than a blank to fill.
+Each became a named assignment above the command. Three apparent hits were inside
+quoted heredocs — file content templates, where nothing is interpreted — and were
+left alone.
+
+**Two mistakes I made during the sweep, both caught by re-reading the result.**
+A truncated match left `cd "$FRACTOGENESIS_HOME"t Source and Artifact Rules` in
+the scripts guide. And stripping the Raycast `mv` comments removed the only thing
+distinguishing three commands, two of which take the *same* filename to different
+destinations; restored as prose, with the reviewed/unreviewed distinction stated.
+
+**Step 6's guard was split across two pastes.** The operator hit it: both runs
+existed, both had `checklist.md`, and it still reported one side missing —
+because `$PRE` and `$POST` were set by an earlier block and gone from that shell.
+A `[ ! -f "$PRE/checklist.md" ]` against an empty variable reports the file
+missing when what is missing is the variable. Resolution and check are now one
+block that prints every path it tested, so a failure names the file. This is the
+rule added in Revision 85 — guard a value in the block that consumes it — broken
+the same day it was written.
+
+**`enroll-and-stabilize.md` gains a new Step 1.** Steps 1–9 became 2–10.
+
+The old Step 1 fetched the toolkit using `TOOLKIT_GITHUB_ACCOUNT`, a value that
+lives in the cheatsheet the operator emailed themselves — with no step telling
+them to open it, and no mention of the password manager the phase also needs.
+Step 1 is now reaching both, before anything depends on them.
+
+Its note handles the circularity rather than leaving it to be discovered: Chrome
+comes from Company Portal, which needs enrollment, which is three steps later.
+Safari is on every fresh Mac and is enough for mail and a vault — but an operator
+whose mail is Gmail, or whose vault leans on a browser extension, can install
+Chrome at Step 5 first and come back, since enrollment depends on nothing in
+Steps 2–3.
+
+The renumber reached further than the headings: the run-order table, the
+pre/post-restart record cross-references, the macOS-update reboot argument, and
+the exit-criteria table all name step numbers in prose. One blanket replacement
+also wrongly bumped a **cross-file** anchor into `restore-access.md`, turning
+`#Step 7 — Trust the Corporate CA` into a link to a heading that does not exist —
+caught by `verify-doc-paths.sh --all`, which is the check that exists for exactly
+this.
+
+**Modified:** `backup-apps.md`, `backup-home.md`, `enroll-and-stabilize.md`,
+`prepare-artifact-root.md`, `reimaged-system-checks.md`, `reimaging-guide.md`,
+`reimaging-scripts-guide.md`, `restore-docker.md`, `restore-home.md`,
+`restore-repos.md`, `restore-runtime.md`, `run-time-machine.md`,
+`stage-certs-keychain.md`, `verify-reimaged-system.md`, `reimage-guide-access.md`,
+`APPLY-MANIFEST.md`.
+
+**Not verified here:** `verify-doc-paths.sh --all` passes with 1078 anchors and no
+breaks. A detector for both comment classes and for bare placeholders outside
+heredocs reports zero across every runbook. None of the rewritten blocks has been
+pasted into zsh on the Mac — that is the only test that would prove the original
+complaint fixed.
+
+---
+
+## Revision 87 — a step that failed three ways in one paste
+
+`verify-reimaged-system.md` Step 6 was run and produced nothing usable:
+
+```
+zsh: command not found: #
+zsh: no matches found: …/reimaged-system/pre-restart-initial-reimaged-system-*
+PRE  =
+diff: /checklist.md: No such file or directory
+```
+
+Three defects, each already covered by a rule this repo wrote:
+
+**`#` comments in a pasted block.** Four of them, each reported as a command not
+found. The block had carried them since before the no-comments rule existed.
+
+**The old flat bundle paths.** The globs looked for
+`reimaged-system/pre-restart-initial-reimaged-system-*`, a layout that ended when
+the first-boot bundles became indexed runs under `restarts/`.
+
+**An unmatched glob aborting the line.** `no matches found` is zsh's NOMATCH, and
+it is why `PRE` and `POST` were empty rather than merely wrong — the assignments
+never ran, so the `diff` fell through to `/checklist.md`.
+
+Step 6 now resolves both sides through `official/<context>.txt`: nothing to glob,
+nothing to sort, and no way for a third run to be picked up as half of the pair —
+which is what the old recency fallback did, and what its Pitfall warned about
+instead of preventing. A guard prints both paths and says which capture is
+missing when one is.
+
+**The same staleness was in eleven other places**, none of which had been run yet.
+`reimaged-system-checks.md` Step 1 had the identical `ls -1dt` glob and would have
+failed identically at Phase 14. `verify-reimaged-system.md` still defined the
+bundle and its context label in Terminology by the old name, described the Step 5
+run as updating a pointer file, and listed the old paths in its fallback table.
+`reimaging-guide.md`, `reimaging-scripts-guide.md`,
+`references/reimaged-system-evidence.md` and `references/restore-file-reference.md`
+all drew the flat layout.
+
+**A Troubleshooting entry described a file that no longer exists.**
+*"latest-initial-reimaged-system-bundle.txt points at the pre-restart bundle after
+a Step 5 run"* — that pointer was retired with the layout, and neither the script
+nor the drive has one. Replaced with the question that replaced it: `official/`
+naming the wrong run for a point, which is regenerated with
+`reindex-artifact-runs.sh` and, when the recomputed answer is still wrong, settled
+by pinning rather than by deleting runs. First-wins on `pre-restart` is named as
+the reason that disagreement happens.
+
+`bin/record-reimaged-system.sh` carried the same description in its usage header
+and three comments; corrected. The one surviving mention, in
+`reimage-checklist.sh`, is a comment recording what an earlier revision got wrong,
+which is what script comments are for.
+
+**Found and not fixed:** 88 `#` comments sit in command blocks across six
+runbooks — `reimaging-scripts-guide.md` (41), `restore-docker.md` (17),
+`reimage-guide-access.md` (11), `backup-apps.md`, `restore-repos.md`,
+`restore-home.md`. Every one is the defect that produced the first three lines of
+the output above. Heredoc bodies were excluded from that count; those are file
+contents, not pasted commands. Left for a deliberate pass rather than folded into
+this one.
+
+**Modified:** `verify-reimaged-system.md`, `reimaged-system-checks.md`,
+`reimaging-guide.md`, `reimaging-scripts-guide.md`,
+`references/reimaged-system-evidence.md`, `references/restore-file-reference.md`,
+`bin/record-reimaged-system.sh`, `APPLY-MANIFEST.md`.
+
+**Not verified here:** `bash -n` passes on the script; `verify-doc-paths.sh --all`
+passes. The rewritten Step 6 has not been run on the Mac — that needs the artifact
+volume mounted, which this session does not have.
+
+---
+
+## Revision 86 — "install everything this Mac requires" was the wrong instruction
+
+`enroll-and-stabilize.md` Step 4 said to open the Company Portal Apps tab and
+install everything assigned. For this account that is seven items, and only three
+belong to Phase 8. Postman Enterprise is the clearest counter-example: Phase 12
+restores it *with* its settings and environments, so installing it here produces
+an empty copy the restore then has to work around.
+
+Step 4 now names the three and says why each is here rather than later:
+
+- **Google Chrome**, first — it is how the operator reaches LastPass for the
+  passwords this phase and the next need, and the email carrying the cheatsheet
+  with `TOOLKIT_GITHUB_ACCOUNT` for Step 1.
+- **Microsoft 365 Apps for macOS** — the individual Microsoft apps are not
+  separately installable, so the suite item is the only route to them.
+- **Zscaler** — must precede Phase 10B's corporate-CA work, and its absence
+  changes how every later network failure reads.
+
+The circularity in the Chrome argument is stated rather than left for the
+operator to hit: Chrome comes from Company Portal, which needs enrollment, which
+is Step 3 — so Safari covers the cheatsheet and LastPass for as long as it takes
+to get through Step 1. Chrome is a convenience here, not a dependency.
+
+**`verify-reimaged-system.md` claimed a Terminal state Phase 9 cannot produce.**
+Its manual-review row read "Profile, font, and window size restored" — those are
+restored in Phase 12, so an operator comparing against it at Phase 9 is checking
+for something no earlier step wrote, and a default-looking Terminal reads as a
+regression. The row now checks what Phase 9 can actually check: that Terminal
+opens and `echo $SHELL` prints the expected login shell, `/bin/zsh` on a stock
+Mac, before Phase 10 begins writing rc files for it. It says explicitly that a
+default appearance is correct at this point.
+
+**Modified:** `enroll-and-stabilize.md`, `verify-reimaged-system.md`,
+`APPLY-MANIFEST.md`.
+
+**Not verified here:** `verify-doc-paths.sh --all` passes. The app list comes from
+the operator's own Company Portal catalog, observed 2026-08-31, and is recorded
+in the project note on managed-app absences rather than only in the runbook —
+it is account-specific and will drift.
+
+---
+
+## Revision 85 — a version typed six times is a version that will disagree with itself
+
+`restore-runtime.md` Step 7 hardcoded `21` in the formula name, the symlink source
+and destination, the verification command, the alias list and two Pitfalls, while
+`REIMAGE_JDK_BASELINE` already existed in `reimage.env.example` and both boundary
+recorders already read it. The runbook was the only place still spelling the
+number out.
+
+Step 7 now chooses it once, guards it against the empty value `upsert-env` will
+happily write, and every later command reads it. The symlink uses
+`brew --prefix "openjdk@$REIMAGE_JDK_BASELINE"`, which also retires the
+"Apple silicon path shown; on Intel substitute…" instruction — the formula knows
+where it is.
+
+The multi-JDK aliases were four hardcoded majors. They are a loop over a list you
+substitute, and the alias name is derived from the major rather than typed
+alongside it, so the two cannot disagree.
+
+`cf-cli@7` had the same shape and a sharper reason to be a variable: the CLI major
+is a deployment-compatibility choice, and a CLI ahead of its foundation fails at
+push time, not install time. Named once as `CF_CLI_MAJOR`, and the PATH line for
+the unlinked keg now asks `brew --prefix` instead of hardcoding
+`/opt/homebrew/opt/cf-cli@7/bin`.
+
+**`JAVA_HOME` was assumed by three places and set by none of them.** Phase 10B
+Step 0's Pitfall described it failing, Step 6 resolved it, and the Environment
+Variables table said it "is not a `reimage.env` value" — but nothing established
+it, and it does not survive a new terminal. Step 7 now resolves it from the
+baseline, refuses to record an empty one, and writes both keys with `upsert-env`.
+Phase 10B Step 0 confirms both and carries the recovery path for a shell that
+never loaded them.
+
+Step 6 still re-derives `JAVA_HOME` rather than trusting the stored value, and now
+says why: a recorded absolute path goes stale when the JDK is reinstalled or the
+baseline moves. The baseline is the durable value; the path is a convenience.
+
+**`JAVA_HOME` is deliberately commented out in `reimage.env.example`.** It is the
+one key in that file that must never be present-but-empty. The `REIMAGE_*` keys
+are inert when blank; `JAVA_HOME` is read by the shell and every JVM tool, so
+`export JAVA_HOME=` overwrites a working value with an empty string the moment the
+file is sourced — verified rather than assumed. That is also why Step 7 stops
+instead of recording an unresolved one.
+
+**A Pitfall had the right warning and the wrong mechanism.** Phase 10B Step 0 said
+that because `before` is first-wins, "a capture taken afterwards becomes
+permanently official". That is not what first-wins does — the first run recorded
+is official and a later one never displaces it. Reported by the operator.
+
+The hazard is real and is now stated correctly: the before-state cannot be
+recovered once Steps 1-3 have run, because the machine is no longer in the state
+the capture describes. First-wins compounds it in one specific way — a late
+capture is not merely inaccurate, it is the first, so it stays official and
+rerunning does not replace it.
+
+The claim that "Phase 10A has no before-state for exactly this reason" is removed.
+It stopped being true when Phase 10A gained its boundary captures.
+
+**Modified:** `restore-runtime.md`, `restore-access.md`, `reimage.env.example`,
+`APPLY-MANIFEST.md`.
+
+**Not verified here:** `verify-doc-paths.sh --all` and `verify-artifact-config.sh`
+pass. The command blocks are pasted into the operator's zsh on macOS and none has
+been run there — `brew --prefix`, `/usr/libexec/java_home` and the Homebrew
+formulae do not exist on this Linux session. `reimage.env` itself was not touched:
+its `REIMAGE_JDK_BASELINE` and `JAVA_HOME` values depend on which JDK is installed
+on that Mac, and Step 7's `upsert-env` block is the authoritative way to write
+them.
+
+---
+
+## Revision 84 — the two phases that had no boundary now have one
+
+Phases 8 and 9 stated exit criteria in a Markdown table and asked the operator to
+hold themselves to it. Every phase from 10A onward records an entry and an exit
+run under `boundaries/`, so `boundaries/MANIFEST.md` answers "did this phase both
+start and finish" — for every phase but the first two.
+
+**Four new modes, in the scripts that already own those phases.** Not a new pair
+of dispatchers: `record-enrollment.sh --context entry|exit` and
+`record-reimaged-system.sh --context entry|exit`. The questions are each
+runbook's, and the Phase 8 exit checklist is built from that script's own
+`rows.tsv` — a separate script would have meant two files sharing one definition
+of what a Phase 8 row means.
+
+Phase 8's entry is recorded after Step 2, not at Step 0. That phase begins on a
+Mac with no toolkit on it: `$FRACTOGENESIS_HOME` and `reimage.env` are what Steps
+1 and 2 create, and the script is not on the machine before them. Step 2 is the
+first moment there is anything to run, and the runbook says so where the step is
+rather than leaving it to look like an oversight.
+
+**Neither exit re-probes what an evidence run already recorded.** Phase 8's reads
+the official post-restart run's `rows.tsv`; Phase 9's resolves both first-boot
+bundles through the index. A checklist that re-probed could disagree with the
+record it cites, and the disagreement would be invisible.
+
+Phase 9's entry reads Phase 8's *exit checklist* rather than Phase 8's evidence.
+That is the pair doing its job: a phase asks the phase before it whether it closed
+out, instead of re-deriving the answer from artifacts it does not own.
+
+One Phase 9 exit row has no manual equivalent, because a person cannot see it:
+**the pair brackets the restart** compares the two runs' stamps and fails when the
+post-restart bundle is not actually newer than the pre-restart one. That happens
+when Step 5 never ran after the restart and an earlier run stands in. Two bundles
+exist, `official/` names both, and Step 6 produces a clean-looking diff — of the
+machine against itself, before the restart.
+
+**Three consumers were reading the old layout.** Found by tracing before
+migrating, not after:
+
+`reimage-checklist.sh` globbed `*record-enrollment-*` under `enrollment/` for its
+Phase 14 evidence row, and again in the Time Machine age comparison. The second
+mattered more: an empty `POST_EVIDENCE_STAMP` degrades that check to a cheerful
+"age not comparable" PASS, which is exactly the pre-erase-backup case it exists to
+catch. Both now ask the run index.
+
+`record-restore-prereqs.sh` read `latest-enrollment-record.txt`. Its two sign-off
+rows now read the `-exit` checklists under `boundaries/`, which fixes a second bug
+behind the path: it was counting `TODO` rows in an *evidence bundle*, and since
+rerunning a capture brings unanswered rows back, that row could never stay signed
+off once someone had answered it. A capture and a sign-off are different
+artifacts, and only the second can be complete.
+
+**`bin/reindex-artifact-runs.sh` is new**, because the gap it fills had no owner.
+`artifact_runs_rebuild` recomputes pointers *from* the manifest and cannot see a
+run the manifest has never heard of — which is the state of every run that arrives
+by being copied: relocated from a Phase 8 fallback path, or migrated from an older
+layout. It indexes what is on disk and unindexed, then rebuilds.
+
+It inserts rows in completion order rather than appending. Officialness for a
+latest-wins point is the LAST matching row in file order, not the newest
+timestamp, so appending a recovered 2026-08-19 run below an existing 2026-08-24
+one would quietly make the older run official. Insertion preserves every existing
+row verbatim, which is what append-only protects.
+
+Its sort key is `-k2,3`, not `-k2,2`. Fields are whitespace-separated and the
+leading pipe is field 1, so the date is field 2 and the time field 3 — sorting on
+the date alone collapses every run recorded on one day into an arbitrary order,
+and for a latest-wins point that silently changes which run is official. Caught by
+a test with two same-day runs, which the first version reordered.
+
+**The drive was migrated.** Nine enrollment runs moved from `enrollment/` into
+`restarts/runs/`, renamed `enroll-and-stabilize-<point>-<stamp>`: two `initial`,
+six `pre-restart`, one `post-restart`. The per-run `MANIFEST.txt` files and the
+`latest-enrollment-record.txt` pointer are gone; the two `initial` runs had their
+inner `enrollment-record.md` renamed to `record.md`, which the other seven already
+used. `enrollment/` survives holding the nine Phase 8 screenshots, which belong to
+no run.
+
+**Worth a decision:** `official/enroll-and-stabilize-pre-restart.txt` now names
+`20260818-230958`, the first of six pre-restart runs, because `pre-restart` is a
+first-wins point. The `verify-reimaged-system-pre-restart` lineage carries an
+operator pin for exactly this reason — "the last of them is the state the machine
+was actually in when it restarted". The same argument applies here and the same
+pin is not in place. Left as it computes rather than pinned on the operator's
+behalf.
+
+**Created:** `bin/reindex-artifact-runs.sh`.
+
+**Modified:** `bin/record-enrollment.sh`, `bin/record-reimaged-system.sh`,
+`bin/reimage-checklist.sh`, `bin/record-restore-prereqs.sh`,
+`enroll-and-stabilize.md`, `verify-reimaged-system.md`,
+`references/master-directory-reference.md`,
+`references/reimaged-system-evidence.md`, `references/restore-file-reference.md`,
+`reimaging-scripts-guide.md`, `APPLY-MANIFEST.md`.
+
+**Not verified here:** `bash -n` and the portability lint pass on all five
+scripts; `verify-doc-paths.sh --all` passes with 1077 anchors and no breaks. All
+four boundary modes and the reindex were exercised against fabricated artifact
+roots on Linux — including a deliberately out-of-order restart pair, which the
+Phase 9 exit caught, and a same-day reindex, which caught the sort-key bug. None
+has run on the Mac: the macOS probes (`profiles`, `sw_vers`, `fdesetup`,
+Company Portal) return nothing there, so their rows are untested against real
+output. The migration itself was performed against the live artifact root and read
+back — nine runs indexed, six pointers rebuilt, the existing pin preserved.
 
 ---
 

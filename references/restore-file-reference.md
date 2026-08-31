@@ -118,13 +118,14 @@ $REIMAGE_ARTIFACT_ROOT/
 │   ├── post-image-performance-audit-<scenario>-YYYYMMDD-HHMMSS/
 │   └── rollup-summary/
 ├── reimaged-system/
-│   ├── enrollment/
-│   │   ├── [context-]record-enrollment-YYYYMMDD-HHMMSS/
-│   │   └── latest-enrollment-record.txt
+│   ├── restarts/
+│   │   ├── MANIFEST.md
+│   │   ├── official/
+│   │   └── runs/enroll-and-stabilize-<point>-YYYYMMDD-HHMMSS/
 │   ├── checklists/
 │   │   ├── reimage-checklist-YYYYMMDD-HHMMSS.md
 │   │   └── latest-reimage-checklist.txt
-│   ├── [context-]initial-reimaged-system-YYYYMMDD-HHMMSS/
+│   ├── restarts/runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/
 │   │   ├── README.md
 │   │   ├── checklist.md
 │   │   ├── manual-captures-required.md
@@ -133,7 +134,7 @@ $REIMAGE_ARTIFACT_ROOT/
 │   │   ├── checks/
 │   │   ├── logs/
 │   │   └── raw/
-│   ├── latest-initial-reimaged-system-bundle.txt
+│   ├── restarts/official/verify-reimaged-system-<point>.txt
 │   ├── restore-notes/
 │   ├── restarts/
 │   └── time-machine/
@@ -188,8 +189,8 @@ Two `secrets-encrypted/` subtrees have dedicated restore consumers rather than a
 
 | Phase | Main sources under `$REIMAGE_ARTIFACT_ROOT` | Main outputs under `$REIMAGE_ARTIFACT_ROOT` |
 |---|---|---|
-| Phase 8 — Enroll and Stabilize | none required beyond `reimage.env`; optional mounted artifact root | `reimaged-system/enrollment/*record-enrollment-*/`, `reimaged-system/enrollment/latest-enrollment-record.txt` |
-| Phase 9 — Initial Captures and Sanity Checks | prepared external root, optional `reimaged-system/restore-notes/` | `reimaged-system/*initial-reimaged-system-*/`, `reimaged-system/latest-initial-reimaged-system-bundle.txt`, `reimaged-system/restore-notes/`, `reimaged-system/restarts/`, `reimaged-system/time-machine/` |
+| Phase 8 — Enroll and Stabilize | none required beyond `reimage.env`; optional mounted artifact root | `reimaged-system/restarts/runs/enroll-and-stabilize-<point>-*/`, `reimaged-system/boundaries/runs/enroll-and-stabilize-{entry,exit}-*/` |
+| Phase 9 — Initial Captures and Sanity Checks | prepared external root, optional `reimaged-system/restore-notes/` | `reimaged-system/restarts/` (runs, `official/`, `MANIFEST.md`), `reimaged-system/boundaries/`, `reimaged-system/restore-notes/`, `reimaged-system/time-machine/` |
 | Phase 10A — Restore Runtime Libraries | `system-inventory/pre-image-*/`, `system-inventory/post-image-*/`, `home-files-backup/dotfiles/` | usually notes only; later validated under `reimaged-system/`. Also retires the Phase 8 `~/.zprofile` bridge and hands config loading to direnv — see `references/toolkit-environment-reference.md` |
 | Phase 10B — Restore Access | `secrets-encrypted/`, `public-certs/`, `home-files-backup/dotfiles/` | `reimaged-system/restore-notes/` |
 | Phase 11A — Restore Git | `secrets-encrypted/ssh/`, `secrets-encrypted/git/`, `toolkit-snapshot/latest-docs/` | dual `~/.gitconfig` + `~/.ssh/config` in place; validated end-to-end for work and personal identities |
@@ -210,18 +211,18 @@ These paths are used before deeper restore work begins.
 
 | Need | Source or destination |
 |---|---|
-| Enrollment record bundle | `reimaged-system/enrollment/[context-]record-enrollment-YYYYMMDD-HHMMSS/` |
-| Enrollment latest-pointer file | `reimaged-system/enrollment/latest-enrollment-record.txt` |
-| First post-image checklist bundle root | `reimaged-system/[context-]initial-reimaged-system-YYYYMMDD-HHMMSS/` |
-| Initial checklist latest-pointer file | `reimaged-system/latest-initial-reimaged-system-bundle.txt` |
-| Initial bundle summary and checklist | `reimaged-system/[context-]initial-reimaged-system-YYYYMMDD-HHMMSS/README.md`, `reimaged-system/[context-]initial-reimaged-system-YYYYMMDD-HHMMSS/checklist.md` |
-| Initial bundle manual follow-up files | `reimaged-system/[context-]initial-reimaged-system-YYYYMMDD-HHMMSS/manual-captures-required.md`, `reimaged-system/[context-]initial-reimaged-system-YYYYMMDD-HHMMSS/restart-checkpoints.md`, `reimaged-system/[context-]initial-reimaged-system-YYYYMMDD-HHMMSS/time-machine-plan.md` |
-| Initial bundle raw evidence folders | `reimaged-system/[context-]initial-reimaged-system-YYYYMMDD-HHMMSS/raw/`, `reimaged-system/[context-]initial-reimaged-system-YYYYMMDD-HHMMSS/logs/`, `reimaged-system/[context-]initial-reimaged-system-YYYYMMDD-HHMMSS/checks/` |
+| Enrollment record run | `reimaged-system/restarts/runs/enroll-and-stabilize-<point>-YYYYMMDD-HHMMSS/` |
+| Enrollment official-run pointer | `reimaged-system/restarts/official/enroll-and-stabilize-<point>.txt` |
+| First post-image checklist bundle root | `reimaged-system/restarts/runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/` |
+| Official-run pointer per point | `reimaged-system/restarts/official/verify-reimaged-system-<point>.txt` |
+| Initial bundle summary and checklist | `reimaged-system/restarts/runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/README.md`, `reimaged-system/restarts/runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/checklist.md` |
+| Initial bundle manual follow-up files | `reimaged-system/restarts/runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/manual-captures-required.md`, `reimaged-system/restarts/runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/restart-checkpoints.md`, `reimaged-system/restarts/runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/time-machine-plan.md` |
+| Initial bundle raw evidence folders | `reimaged-system/restarts/runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/raw/`, `reimaged-system/restarts/runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/logs/` |
 | Manual early restore notes | `reimaged-system/restore-notes/` |
 | Restart notes or checkpoints | `reimaged-system/restarts/` |
 | First post-image backup notes | `reimaged-system/time-machine/` |
 
-Phase 8 can also stage locally under `REIMAGE_WORKSPACE_ROOT/enrollment/` when the external drive is not mounted yet, then copy the bundle back into `$REIMAGE_ARTIFACT_ROOT/reimaged-system/enrollment/` later.
+Phase 8 can also stage locally under `REIMAGE_WORKSPACE_ROOT/` when the external drive is not mounted yet. Phase 9 Step 1 copies those runs into `$REIMAGE_ARTIFACT_ROOT/reimaged-system/` and reindexes the destination category, since a copied run carries no index row of its own.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
