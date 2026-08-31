@@ -53,7 +53,7 @@ Collect and stage application state — settings, exports, inventories, and prof
 > In Obsidian, these are internal heading links. Click in Reading View, or Cmd-click in Live Preview/editing mode.
 
 > [!info] Callout legend
-> This runbook uses Obsidian callouts so each type reads distinctly: `[!note]` an easily-missed fact · `[!warning]` Pitfall, a mistake you are likely to make here · `[!bug]` Troubleshooting, what to do when a step misbehaves.
+> Two kinds, used sparingly. `[!warning]` **Pitfall** — skipping it costs something you do not get back: state overwritten, a security boundary crossed, or a wrong result that stays quiet until a later phase. `[!bug]` **Troubleshooting** — what to do when a step misbehaves. Everything else is prose, in the paragraph that needed it. A box around an explanation only makes the explanation easier to skip.
 
 ---
 
@@ -144,11 +144,9 @@ The table lists every covered app, how it is backed up, and whether it is in the
 
 Optional-group apps with manual steps (Raycast, Obsidian, TNAS PC, iMovie) keep those steps in [[#Optional App Exports|Optional App Exports]], reached from Step 6, so the main flow stays focused on what most Macs have. Scripted optional apps (Mos, Wireshark) are captured automatically in Step 4 and need no manual steps; the note-only apps need nothing at all.
 
-> [!note]
-> The script only acts on apps it detects **and** that you check in the selection checklist. For an app you do not have, it creates no folder and the manifest marks it "Not detected on this Mac" — so a clean run on a Mac without Docker is correct, not a failure.
+The script only acts on apps it detects **and** that you check in the selection checklist. For an app you do not have it creates no folder, and the manifest marks it "Not detected on this Mac" — so a clean run on a Mac without Docker is correct, not a failure.
 
-> [!note]
-> Two Zoom entries were reconciled into one. "Join for Zoom Meetings" is a third-party App Store launcher that only opens meeting links and holds no state to back up; only the full **zoom.us** client is covered (detected in both `/Applications` and `~/Applications`). Recordings under `~/Documents/Zoom` belong to Phase 2B.
+Two Zoom entries were reconciled into one. "Join for Zoom Meetings" is a third-party App Store launcher that only opens meeting links and holds no state to back up, so only the full **zoom.us** client is covered (detected in both `/Applications` and `~/Applications`). Recordings under `~/Documents/Zoom` belong to Phase 2B.
 
 ### Apps Not Covered Here
 
@@ -283,10 +281,7 @@ The values these scripts read. `REIMAGE_ARTIFACT_ROOT` and `REIMAGE_WORKSPACE_RO
 | `REIMAGE_ARTIFACT_ROOT` | The artifact root where `app-settings-backup/` and `secrets-encrypted/` are written. `--artifact-root PATH` overrides it for one invocation. |
 | `REIMAGE_WORKSPACE_ROOT` | Local planning area outside the artifact root, used only for optional temporary working notes. |
 
-`backup-apps.sh` reads no artifact-config fragments and no OneDrive settings; `report-size-audit.sh`, invoked in Step 2, reads both.
-
-> [!note]
-> `report-size-audit.sh` also checks the external destination volume configured in `reimage.env`. If that volume is not mounted, resolve it in `prepare-artifact-root.md` before running the audit.
+`backup-apps.sh` reads no artifact-config fragments and no OneDrive settings; `report-size-audit.sh`, invoked in Step 2, reads both. The audit also checks the external destination volume configured in `reimage.env`; if that volume is not mounted, resolve it in `prepare-artifact-root.md` before running it.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -303,8 +298,7 @@ A short pre-flight: confirm you are set up, then decide what this run is for.
 - The managed-inventory phase (`capture-managed-inventory.md`) has already run for this pre-image pass, so its artifacts are available to consult in Step 3.
 - Docker Desktop is running **if** you want current image and container inventories captured; settings files are captured either way.
 
-> [!note]
-> The commands below omit `--artifact-root`: `backup-apps.sh` resolves the artifact root automatically from `reimage.env` (via shared config), so it is implicit. Pass `--artifact-root PATH` only when you want to override that value for a single run.
+The commands below omit `--artifact-root`: `backup-apps.sh` resolves the artifact root automatically from `reimage.env` through shared config, so it is implicit. Pass `--artifact-root PATH` only to override that value for a single run.
 
 > [!bug] Troubleshooting
 > If `REIMAGE_ARTIFACT_ROOT` is empty, fix `reimage.env` or pass `--artifact-root PATH` explicitly on every command below.
@@ -341,8 +335,7 @@ List what this toolkit can back up, and confirm the script runs:
 ./bin/backup-apps.sh --supported-apps
 ```
 
-> [!note]
-> `--supported-apps` is info only — it lists coverage and exits without writing anything or computing sizes. The same coverage is in the table under [[#What Gets Backed Up, and How|What Gets Backed Up, and How]].
+`--supported-apps` is info only: it lists coverage and exits without writing anything or computing sizes. The same coverage is in the table under [[#What Gets Backed Up, and How|What Gets Backed Up, and How]].
 
 Confirm the artifact root and state this run will use:
 
@@ -361,8 +354,7 @@ Artifact root: <$REIMAGE_ARTIFACT_ROOT>
   managed inventory   : present — Phase 2C has run
 ```
 
-> [!warning] Pitfall
-> `--supported-apps` and `--preflight` are the only two modes that create nothing — both exit before any `mkdir`. Every other mode, `--candidate-review` included, creates `app-settings-backup/` as its first act, so none of them is safe for inspecting an artifact root you have not committed to. `--preflight` exits `2` when the root is unset, the volume is not mounted, or `prepare-artifact-root` has not created the expected top-level folders — fix that here rather than at Step 3.
+`--supported-apps` and `--preflight` are the only two modes that create nothing — both exit before any `mkdir`. Every other mode, `--candidate-review` included, creates `app-settings-backup/` as its first act, so none of them is safe for inspecting an artifact root you have not committed to. `--preflight` exits `2` when the root is unset, the volume is not mounted, or `prepare-artifact-root` has not created the expected top-level folders; fix that here rather than at Step 3.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -382,8 +374,7 @@ Review these lines in the output:
 - `Available on /Volumes/<drive>`
 - `✓ External drive: enough space` or `✗ External drive: NOT ENOUGH SPACE`
 
-> [!note]
-> This audit is global to the Phase 2 backup root. It confirms the destination volume is mounted and shows headroom; it does **not** estimate the size of individual app-controlled exports.
+This audit is global to the Phase 2 backup root. It confirms the destination volume is mounted and shows headroom; it does **not** estimate the size of individual app-controlled exports.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -415,11 +406,9 @@ By default candidate review consults the newest `pre-image-*` bundle under `mana
   --managed-inventory "$REIMAGE_ARTIFACT_ROOT/managed-inventory/pre-image-YYYYMMDD-HHMMSS"
 ```
 
-> [!note]
-> Candidate review reads the managed verdict from the bundle's `03-installed-app-bundles.txt` — the single authoritative per-app call written by the managed-inventory phase — and never re-derives its own, so the two never disagree. It only reads; it never runs the capture. If no bundle exists yet, the run still succeeds but skips the partition (every detected app stays a Known candidate) and says so in `raw/managed-inventory-source.txt`; run `capture-managed-inventory.md` first for the managed split.
+Candidate review reads the managed verdict from the bundle's `03-installed-app-bundles.txt` — the single authoritative per-app call written by the managed-inventory phase — and never re-derives its own, so the two never disagree. It only reads; it never runs the capture. If no bundle exists yet the run still succeeds but skips the partition (every detected app stays a Known candidate) and says so in `raw/managed-inventory-source.txt`; run `capture-managed-inventory.md` first for the managed split.
 
-> [!warning] Pitfall
-> Only a *strong* signal — a configuration profile, a managed preference, or the corporate-tooling filter — moves an app to the Managed table; a lone package receipt is treated as weak and left in the candidate list, because installed-from-a-package is not "managed". And a managed app that reinstalls automatically may still hold local-only user state management will not restore, so judge each managed app rather than assuming it is fully covered.
+The partition is deliberately conservative: only a strong signal moves an app out of the candidate list, so an app flagged by a package receipt alone stays there on purpose. And a managed app that reinstalls automatically may still hold local-only user state management will not restore, so judge each managed app rather than assuming it is fully covered.
 
 #### Select the apps to back up
 
@@ -436,8 +425,7 @@ It has four selectable sections, each listing only apps detected on *this* Mac. 
 - **Manual backup (supported)** — the toolkit supports these but the backup is entirely manual (Chrome, Postman, Fiddler Everywhere, Terminal, Raycast, TNAS PC, iMovie). Step 4 makes a ready folder for the ones you keep; you perform the export from the app's UI. They start **checked**.
 - **Unsupported apps on this Mac (manual backup)** — installed apps the toolkit does not cover, **excluding company-managed apps** (a strong managed verdict means IT restores the app, so it is not a manual-backup candidate). Check the ones you will back up by hand; Step 4 creates a drop-folder under `app-settings-backup/manual-unsupported/<app>/` and lists them as manual TODOs in the manifest. The excluded managed apps are recorded in the candidate review's `raw/unsupported-managed-excluded.txt`.
 
-> [!note]
-> Note-only apps (like 4K Live Wallpaper and NexiGo Webcam Settings) have no automatic backup and no manual export step, so they are left off the checklist entirely — reconfigure them from their app UI after reimage. They remain documented in the coverage table.
+Note-only apps (like 4K Live Wallpaper and NexiGo Webcam Settings) have no automatic backup and no manual export step, so they are left off the checklist entirely — reconfigure them from their app UI after reimage. They remain documented in the coverage table.
 
 Open the checklist, put an `x` between the brackets for each app to act on, and save:
 
@@ -446,16 +434,14 @@ Open the checklist, put an `x` between the brackets for each app to act on, and 
 - [ ] Zoom           # skipped
 ```
 
-> [!note]
-> The managed exclusion reads the managed verdict from the managed-inventory bundle. If managed apps (Company Portal, the Microsoft suite, security agents, and so on) still appear in the unsupported list, candidate review ran without a managed inventory — run [[capture-managed-inventory|Capture Managed Inventory]] first, then rerun candidate review to regenerate the checklist with those apps dropped. Apps flagged only by a weak, receipt-only signal are treated as not-managed and remain in the list on purpose.
+The managed exclusion leans on that same verdict. If managed apps (Company Portal, the Microsoft suite, security agents, and so on) still appear in the unsupported list, candidate review ran without a managed inventory — run [[capture-managed-inventory|Capture Managed Inventory]] first, then rerun candidate review to regenerate the checklist with those apps dropped. Apps flagged only by a weak, receipt-only signal are treated as not-managed and remain in the list on purpose.
 
 Re-running candidate review is safe — it **preserves the choices you have made** (checked or unchecked) and adds newly-installed apps at their section default (supported checked, unsupported unchecked), so you can iterate as you install or remove apps.
 
+The full Step 4 backup **requires** this checklist and stops with instructions if it is missing. To skip the checklist deliberately and back up everything detected instead, run Step 4 with `--all-detected`.
+
 > [!warning] Pitfall
 > Step 4 backs up **only what is checked here**. A freshly generated checklist starts with **all supported apps checked** (across the automatic, both, and manual sections) and all unsupported apps unchecked — so review it before Step 4: uncheck any supported app you do not want, and check any unsupported app you will back up by hand. Remember the both- and manual-section apps still need their manual export done. The candidate tables above help you decide.
-
-> [!note]
-> The full Step 4 backup **requires** this checklist and stops with instructions if it is missing. To deliberately skip the checklist and back up everything detected instead, run Step 4 with `--all-detected`.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -477,8 +463,7 @@ Whether an app should be *running* or *quit* is per-app, not a blanket rule: Doc
 ./bin/backup-apps.sh --open
 ```
 
-> [!note]
-> If you have not built the checklist yet, this run stops and points you to Step 3. To back up every detected app without a checklist, add `--all-detected`.
+If you have not built the checklist yet, this run stops and points you to Step 3; add `--all-detected` to back up every detected app without one.
 
 This captures the script-class apps and prepares folders for the manual-class ones:
 
@@ -515,6 +500,13 @@ These exports must be triggered from each app's own UI — the script cannot per
 [[#macOS Passwords (Keychain-backed)|macOS Passwords]] is the exception: it is a system credential store, not an installed app, so it has no registry row, no Step 3 checklist entry, and no folder created for it. Nothing will remind you — decide it here or not at all.
 
 Each export sorts its outputs by the [[#Destination Rules|Destination Rules]]: reviewed non-secret material under `app-settings-backup/<app>/`, anything secret-bearing under `secrets-encrypted/<app>/`.
+
+> [!warning] Pitfall
+> **Nothing ever encrypts `app-settings-backup/`.** It is the plaintext tree: it leaves with the drive exactly as you wrote it, and Phase 3C encrypts only `secrets-encrypted/`. A credential left in the plaintext tree therefore crosses the erase in the clear, and once the DMG is built nothing goes back to look for it. Route anything credential-bearing to `secrets-encrypted/<app>/` instead, where it is staged for the Phase 3C build and counted as staged rather than loose by the Phase 3B sweep.
+>
+> The same material keeps reappearing in different shapes across the exports below and their optional companions: exported password CSVs, captured session traffic, HTTP-client environment files, config exports that carry their own password, and the auth or session tokens an app keeps inside its own profile. When you cannot tell whether an export carries one, treat it as though it does — unreviewed is secret-bearing.
+>
+> None of it goes to OneDrive, iCloud, email, Desktop, Downloads, or a repo either. Those sit outside the artifact root entirely, so neither the Phase 3B sweep nor the Phase 3C build ever sees them, and the file simply stays where you left it.
 
 > [!bug] Troubleshooting
 > If an app was installed after your last script run, its folder will not exist yet. See [[#Troubleshooting|Troubleshooting]] before creating folders by hand.
@@ -565,11 +557,9 @@ Save the CSV **only** under secret-bearing staging, named per profile:
 $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/chrome/Chrome Passwords <profile> YYYYMMDD-HHMMSS.csv
 ```
 
-> [!warning] Pitfall
-> Never save a password CSV under `app-settings-backup/`, OneDrive, iCloud, email, Desktop, Downloads, or a repo. It belongs only under `secrets-encrypted/chrome/`.
+The CSV is that profile's whole password store in plaintext, so `secrets-encrypted/chrome/` is the only place it goes.
 
-> [!note]
-> On a company-managed Mac, Chrome may be enrolled in browser management ("Managed by <company>"). Its enterprise policies and force-installed extensions are re-applied by MDM after reimage — don't back those up; they return with management. You're only backing up *your* per-profile bookmarks, settings, and passwords.
+On a company-managed Mac, Chrome may be enrolled in browser management ("Managed by <company>"). Its enterprise policies and force-installed extensions are re-applied by MDM after reimage — do not back those up; they return with management. You are only backing up *your* per-profile bookmarks, settings, and passwords.
 
 #### Postman
 
@@ -621,8 +611,7 @@ for d in collections environments-redacted inventory; do
 done
 ```
 
-> [!warning] Pitfall
-> The prune is scoped to `app-settings-backup/`, so the two `secrets-encrypted/postman/` subdirectories above are safe while empty. The three under `app-settings-backup/` are not — without the README they are gone the next time you run the full capture, and nothing reports it as a loss.
+The prune is scoped to `app-settings-backup/`, so the two `secrets-encrypted/postman/` subdirectories above are safe while empty. The three under `app-settings-backup/` are not: without the README they are gone the next time you run the full capture, and nothing reports it as a loss.
 
 Create the starter READMEs so each area documents its own rules. These use an unquoted heredoc (`<<EOF`) so `$REIMAGE_ARTIFACT_ROOT` expands to the resolved path in the written file:
 
@@ -783,8 +772,7 @@ find "$REIMAGE_ARTIFACT_ROOT/app-settings-backup/postman" -maxdepth 3 -type f | 
 find "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/postman" -maxdepth 3 -type f | sort 2>/dev/null || true
 ```
 
-> [!warning] Pitfall
-> If Vault export is blocked, do not work around the control. Record a redacted inventory under `app-settings-backup/postman/inventory/` (variable names, owning collection/environment, and restore source — no values) and restore from the approved source after reimage.
+If Vault export is blocked, do not work around the control. Record a redacted inventory under `app-settings-backup/postman/inventory/` — variable names, owning collection and environment, and restore source, with no values — and restore from the approved source after reimage.
 
 #### Fiddler Everywhere
 
@@ -804,7 +792,7 @@ mkdir -p \
   "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/fiddler-everywhere"
 ```
 
-Export your saved sessions from the Fiddler Everywhere UI (session list → export, typically a `.saz` archive) and save them **only** under secret-bearing staging:
+Session captures almost always contain live auth material: headers, cookies, and bearer tokens recorded verbatim as they went over the wire. Export your saved sessions from the Fiddler Everywhere UI (session list → export, typically a `.saz` archive) and save them **only** under secret-bearing staging:
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/fiddler-everywhere/fiddler-sessions-YYYYMMDD-HHMMSS.saz
@@ -819,9 +807,6 @@ grep -RniE 'token|password|passwd|secret|apikey|api_key|authorization|bearer|coo
 ```
 
 After reimage, sign back into your Progress account to restore synced settings.
-
-> [!warning] Pitfall
-> Fiddler session captures almost always contain live auth material. Default any exported traffic to `secrets-encrypted/fiddler-everywhere/`; keep only reviewed, credential-free rule sets under `app-settings-backup/`.
 
 #### Terminal
 
@@ -851,12 +836,9 @@ EOF
 
 #### IntelliJ Settings Export
 
-The scriptable IntelliJ capture ran in Step 4; the settings ZIP is the manual, app-controlled piece. Export it from IntelliJ IDEA and follow the review, validation, and restore detail in its companion runbook:
+The scriptable IntelliJ capture ran in Step 4; the settings ZIP is the manual, app-controlled piece. HTTP Client environment files are the part to sort by hand as you go: they routinely hold working credentials, so they belong in encrypted-secrets staging rather than in the normal IntelliJ backup. Export the ZIP from IntelliJ IDEA and follow the review, validation, and restore detail in its companion runbook:
 
 [[backup-intellij|Backup IntelliJ]]
-
-> [!warning] Pitfall
-> IntelliJ HTTP Client environment files can contain working credentials. Route them to Phase 3A encrypted secrets, not the normal IntelliJ backup.
 
 #### macOS Passwords (Keychain-backed)
 
@@ -882,8 +864,7 @@ $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/macos-passwords/passwords_YYYYMMDD-HHMM
 
 Phase 3C picks the folder up through its catch-all sweep of `secrets-encrypted/*/`, so the CSV is encrypted into the DMG without needing a dedicated rule. Phase 3B counts it as `STAGED` rather than an open finding, because `*password*.csv` is a tracked secret shape and the file is already inside `secrets-encrypted/` — put it anywhere else and the same filename reports as `OUTSIDE`.
 
-> [!warning] Pitfall
-> The Passwords export is plaintext. Never place it under `app-settings-backup/`, OneDrive, iCloud, email, Desktop, Downloads, or a repo — only `secrets-encrypted/macos-passwords/`. Prefer the password manager over exporting at all.
+Prefer the password manager over exporting at all, though: the export is your whole password store in one plaintext file, and `secrets-encrypted/macos-passwords/` is the only place it can live.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -914,8 +895,7 @@ find "$REIMAGE_ARTIFACT_ROOT/app-settings-backup" -maxdepth 4 -type f | sort 2>/
 find "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted" -maxdepth 3 -type f | sort 2>/dev/null || true
 ```
 
-> [!warning] Pitfall
-> Do not treat a missing optional note or unfilled template as a failure. Optional notes are not required backup artifacts; at most, a note you intended to capture and forgot is worth a warning, not a blocked phase.
+Do not treat a missing optional note or unfilled template as a failure. Optional notes are not required backup artifacts; at most, a note you intended to capture and forgot is worth a warning, not a blocked phase.
 
 > [!bug] Troubleshooting
 > If an app you expected is missing a folder entirely, see [[#An app was installed after your last backup run and has no folder|An app was installed after your last backup run and has no folder]].
@@ -923,7 +903,6 @@ find "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted" -maxdepth 3 -type f | sort 2>/de
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
 ---
-
 
 ## Decisions
 
@@ -1075,8 +1054,7 @@ The `.rayconfig` from `Export Settings & Data` is password-protected and carries
 $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/raycast/raycast-settings-and-data-YYYYMMDD-HHMMSS.rayconfig
 ```
 
-> [!warning] Pitfall
-> Do not store the `.rayconfig` export password in this runbook or in any app backup. Keep it in your approved password manager; if you need a reminder, record only a non-secret hint such as `TODO_ENTRY_NAME`.
+Do not store the `.rayconfig` export password in this runbook or in any app backup. Keep it in your approved password manager; if you need a reminder here, record only a non-secret hint such as `TODO_ENTRY_NAME`.
 
 ##### Artifact-local checks
 
@@ -1165,14 +1143,13 @@ no vault backup can contain it — not git, not Obsidian Sync, not a cloud folde
 Lose it and Obsidian opens to an empty picker after reimage; re-adding folders by
 hand mints a **new vault ID** for each, orphaning any state keyed to the old one.
 
-> [!warning] Pitfall
-> Do not back up that directory wholesale. It is an Electron profile: most of its
-> bulk is the app binary and Chromium caches that reinstalling regenerates, and
-> `Cookies`, `Local Storage`, `Session Storage`, and `IndexedDB` hold Obsidian
-> Sync and Publish **session state**. An `rsync -a` of it puts an auth token into
-> `app-settings-backup/`, which Phase 3C never encrypts. The helper takes the
-> registry and geometry files and nothing else, and the generated report lists
-> every exclusion with its reason.
+Do not back up that directory wholesale, though. It is an Electron profile:
+most of its bulk is the app binary and Chromium caches that reinstalling
+regenerates, and `Cookies`, `Local Storage`, `Session Storage`, and `IndexedDB`
+hold Obsidian Sync and Publish **session state** — an `rsync -a` of it puts an
+auth token into `app-settings-backup/`, the tree nothing encrypts. The helper
+takes the registry and geometry files and nothing else, and the generated report
+lists every exclusion with its reason.
 
 ##### Why it checks each vault against every remote
 
@@ -1195,12 +1172,11 @@ definition, and flags `.obsidian/plugins/<id>/data.json` files — community-plu
 settings that routinely carry API tokens and belong in `secrets-encrypted/`, not
 in the plaintext copy.
 
-> [!note]
-> The helper makes **no network calls**. Ahead/behind comes from existing
-> remote-tracking refs, so the run cannot hang or prompt for credentials on an
-> unreachable remote — at the cost of the counts being as of your last fetch. Run
-> `git fetch --all` in each vault first if you need them authoritative. The
-> generated report says so too.
+The helper makes **no network calls**. Ahead/behind comes from existing
+remote-tracking refs, so the run cannot hang or prompt for credentials on an
+unreachable remote — at the cost of the counts being as of your last fetch. Run
+`git fetch --all` in each vault first if you need them authoritative; the
+generated report says so too.
 
 ##### Rerunning it alone
 
@@ -1275,8 +1251,7 @@ TNAS connections to re-add after reimage:
 EOF
 ```
 
-> [!warning] Pitfall
-> Do not copy TNAS-stored passwords into `app-settings-backup/`. Restore credentials from your password manager, and stage any credential file only under `secrets-encrypted/tnas-pc/`.
+Any password TNAS PC has stored is secret-bearing: keep it out of `app-settings-backup/`, restore credentials from your password manager, and stage any credential file you locate only under `secrets-encrypted/tnas-pc/`.
 
 [[#Step 6 — Optional Apps|⬆ Back to Optional Apps]]
 
@@ -1296,8 +1271,7 @@ iMovie libraries to preserve (restore as files, not app settings):
 EOF
 ```
 
-> [!warning] Pitfall
-> Do not copy multi-gigabyte iMovie libraries into the app-settings artifact root. Keep them in your local-file backup (Phase 2B) or on an external drive; record only their locations here.
+Do not copy multi-gigabyte iMovie libraries into the app-settings artifact root. Keep them in your local-file backup (Phase 2B) or on an external drive, and record only their locations here.
 
 [[#Step 6 — Optional Apps|⬆ Back to Optional Apps]]
 
@@ -1335,6 +1309,10 @@ Per-app notes, mini checklists, and inventories are optional. Use them only when
 | App-local note | `$REIMAGE_ARTIFACT_ROOT/app-settings-backup/<app>/` | The note is tightly coupled to a specific app artifact and worth keeping with it. |
 
 Use app-local notes sparingly; you do not need one for every app. A missing or unfilled optional note should not block final validation by itself — at most it warrants a warning if you meant to capture it and forgot.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Relationship to Later Phases
 

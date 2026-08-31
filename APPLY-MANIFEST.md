@@ -1,6 +1,28 @@
 # Apply Manifest
 
-**Revision 89** — supersedes earlier manifests. The restart comparison becomes a comparison instead of a diff, and two Phase 9 rows stop asking for state Phase 12 produces.
+**Revision 100** — supersedes Revision 99 and earlier. Five runbooks get the enumerated steps the house rules always required, and a checker now enforces the rules that were drifting unnoticed.
+
+**Revision 99** — supersedes Revision 98 and earlier. The certificate report distinguishes a trust decision from chain-completion material, and draws the corporate chain as one picture.
+
+**Revision 98** — supersedes Revision 97 and earlier. `[!note]` is retired from the runbooks, and a callout now has to earn the interruption.
+
+**Revision 97** — supersedes Revision 96 and earlier. What the phase declines to install becomes a written decision with a reason, and the JVM trust prompt says what it is about to produce.
+
+**Revision 96** — supersedes earlier manifests. The phase stops pinning a random public CA as the corporate root, and stops offering the public trust store for import.
+
+**Revision 95** — supersedes Revision 94 and earlier. The certificate comparison stops reading one member of each bundle and stops offering JVM truststores for import into the keychain.
+
+**Revision 94** — supersedes Revision 93 and earlier. US spelling restored, and two Pitfalls stop naming a section that was renamed out from under them.
+
+**Revision 93** — supersedes Revision 92 and earlier. The certificate comparison answers "what do I still have to install" instead of printing three listings, and explains its own arithmetic.
+
+**Revision 92** — supersedes Revision 91 and earlier. The SSH test stops being a command that can hang forever, and the reason it hung is written down.
+
+**Revision 91** — supersedes Revision 90 and earlier. `restore-access.md` stops being a second implementation of the script that already drives it, and the phase states its re-run guarantee.
+
+**Revision 90** — supersedes Revision 89 and earlier. Step 4 compares the installed chain against the image and imports only the gap.
+
+**Revision 89** — supersedes Revision 88 and earlier. The restart comparison becomes a comparison instead of a diff, and two Phase 9 rows stop asking for state Phase 12 produces.
 
 **Revision 88** — supersedes Revision 87 and earlier. Every `#` comment and bare placeholder leaves the pasted command blocks, and Phase 8 opens with the cheatsheet its next step depends on.
 
@@ -234,6 +256,851 @@ several separate rounds of work, and splicing them by hand is how the duplicate
 | `restore-intellij.sh` | `bin/restore-intellij.sh` |
 | `record-reimaged-system.sh` | `bin/record-reimaged-system.sh` |
 | `reimage-checklist.sh` | `bin/reimage-checklist.sh` |
+
+---
+
+## Revision 100 — the rules existed; nothing was checking them
+
+> backup-app.md is also using too many Notes and Pitfalls. I've also noticed some
+> runbooks don't consistently follow the instructions and rules for runbook
+> prompts for instance prepare-artifact-root.md, backup-home.md, backup-repos.md,
+> capture-office-stability.md, create-secrets-dmg.md, stage-certs-keychain.md
+> don't have enumerated steps.
+
+Five of those six did not. `capture-office-stability.md` is fully conforming —
+Steps 1 through 5, each with its back-link — so the list was one file long.
+
+### Enumerated steps, in five runbooks
+
+| Runbook | Steps | Was |
+|---|---|---|
+| `prepare-artifact-root.md` | 12 | 14 unnumbered, and `Sequential Steps` was an **H3** |
+| `backup-repos.md` | 17 | 19 unnumbered |
+| `stage-certs-keychain.md` | 9 | 9 unnumbered |
+| `backup-home.md` | 8 | 8 unnumbered |
+| `create-secrets-dmg.md` | 5 | 5 unnumbered |
+
+Four headings became `####` rather than steps, because they are branches you pick
+between rather than actions you do in order: `Already Have Fragments` /
+`Initialize From Scratch` under prepare-artifact-root's Step 9, and
+`Fresh Superset` / `Carry Selections Forward` under backup-repos' Step 4. Both
+pairs already had a routing index above them naming the choice, and both were
+already absent from their Table of Contents — the house rule's own signature for
+a routed destination.
+
+`backup-repos.md`'s `Choose Your Path` was examined for the same treatment and
+deliberately left as a numbered step: what it routes to is not two adjacent
+headings but two multi-step chains that rejoin later, and the authoring prompt
+names this file as the reference for that forked shape.
+
+The same five runbooks were also missing step-ending back-links — 39 of 53 steps
+had none, which is the same drift from the same cause. Those are in. Two
+`templates/*.md` links into renamed `create-secrets-dmg.md` headings were
+repointed centrally.
+
+### backup-apps.md: 33 callouts to 8
+
+The worst file in the repo, and its problem was not volume alone. **Seven
+Pitfalls stated one rule** — never put plaintext credentials under
+`app-settings-backup/` — once each for Chrome, Fiddler, IntelliJ, macOS
+Passwords, Raycast, Obsidian and TNAS. Seven boxes saying the same thing teach a
+reader that the box means nothing.
+
+They are now one Pitfall, placed where the manual-export material begins, naming
+`app-settings-backup/` as never encrypted and listing the shapes this takes —
+password CSVs, session captures, HTTP-client env files, config exports carrying
+their own password, app auth tokens. Each app section keeps its specific fact as
+prose, because that is the part that is actually about that app: that Fiddler
+captures carry live auth material verbatim, that Obsidian's `Cookies` and
+`Local Storage` hold Sync session state so an `rsync -a` puts a token into the
+unencrypted tree.
+
+All 13 `[!note]` folded into prose. Three Pitfalls remain.
+
+### `bin/verify-runbook-structure.sh`
+
+The real finding is that none of this was detectable. A runbook whose steps were
+never enumerated passes every check the repo has: its paths resolve, its anchors
+resolve, its scripts are portable. The rules lived only in a prompt that only
+gets read when someone authors a new runbook.
+
+Nine rules: `SEQ-H2`, `STEP-NUM` (consecutive, em dash, and a runbook may open at
+Step 0), `STEP-BACK`, `TOC-STEP`, `NO-NOTE`, `PITFALL` (budget, as WARN — it is a
+sweep trigger, not a limit), `LEGEND`, `FENCE`, `ORPHAN`.
+
+Two of those exist because of mistakes made in the last two revisions rather than
+from theory. `ORPHAN` catches a quote block whose first line is a bare `>`, which
+is the exact signature of folding a multi-paragraph callout into prose by
+replacing only its opening paragraph — Revision 98 did that five times, twice
+stranding a fenced code block inside a quote that no longer existed. Checking
+merely for "a quote block with no `[!` opener" was tried first and flagged the
+legitimate standalone blockquotes several runbooks carry under their title; the
+bare-`>`-first-line test is precise because no human writes one.
+
+### The checker found two bugs in itself, and one in a runbook
+
+Worth recording, because the first two would have made it worse than useless —
+a check that reports failures against conforming files gets ignored, and then so
+do its real findings.
+
+1. **It asserted steps start at Step 1.** Six conforming runbooks open at
+   **Step 0** — the ones that record a prerequisite and before-state boundary.
+   Six false FAILs. The first number now sets the start.
+2. **It did not track code fences.** `backup-apps.md` quotes a Markdown template
+   in a ```text block containing `## Restore plan`, which ended the Sequential
+   Steps extraction early and made Steps 6 and 7 invisible to every rule. It
+   reported a real-looking `STEP-BACK` failure against a file that was fine.
+   Every check now reads a fence-stripped copy with line numbers preserved.
+
+And then the real one. `reimage-guide-access.md` had **81 code fences — an odd
+number**, from a closing fence with prose welded onto it:
+
+```
+```*Option C — Terminal, paginated.* Quit with `q`:
+```
+
+plus a two-backtick fence, a `)` and an `le` left stranded inside blocks, and a
+sentence truncated mid-word to `using only what's avail*Option A — TextEdit.*`.
+`git log` puts it in commit `ea05ad2` — the **Revision 88 comment sweep**, which
+moved `#` comments out of pasted blocks and, in this one region, ate the newlines
+around them. From that unclosed fence to the end of the document, Obsidian
+renders prose as code.
+
+It sat committed through eleven revisions because nothing looked. Paths resolved.
+Anchors resolved. The file opened. The region is restored to what the sweep was
+trying to produce — prose labels above each block, no comments inside — and
+`FENCE` is now a rule.
+
+### Where the rest of the repo stands
+
+The structural rules now pass in all 27 runbooks. What remains is a callout
+backlog the checker names precisely: **23 files still carry `[!note]`** (worst:
+`backup-repos.md` 15, `verify-reimaged-system.md` 7, `restore-repos.md` 5,
+`backup-home.md` 5, `stage-loose-secrets.md` 5), **7 have no callout legend**, and
+six steps carry two Pitfalls where one merged Pitfall would do. Not swept here —
+that is a decision per file, not a bulk edit.
+
+The budget in the authoring prompt is reconciled with what the checker measures:
+eight **Pitfalls** per file, with `[!bug]` and `[!info]` excluded as navigation
+rather than commentary. The prompt also now names the seven-Pitfalls-one-rule
+pattern explicitly, since spotting it is what turned 15 Pitfalls into 3.
+
+---
+
+## Revision 99 — two of two turned out to be zero
+
+The operator opened the one certificate enrollment installed and compared it to
+the two the report was offering:
+
+> Two of the certificates under What to install seem to be the same as this one
+> except the DC is different but maybe the company changed that? ... I'm thinking
+> this one may supersede those two CN=Issuing-GAIG-CA01
+
+Three intermediates, all issued by `CN=Root GAIG CA`, from the run's `rows.tsv`:
+
+| Subject | notBefore | notAfter | Where |
+|---|---|---|---|
+| `DC=dmz, DC=certprod, CN=Issuing-CERTPROD-CA01` | 2017-09-27 04:42:47 | **2042-04-26 17:43:42** | keychain (enrollment) |
+| `DC=com, DC=afginc, DC=ga, CN=Issuing-GAIG-CA01` | 2017-04-27 15:13:46 | **2042-04-26 17:43:42** | image only |
+| `DC=com, DC=afginc, DC=ga, CN=Issuing-GAIG-CA01` | 2018-06-30 18:21:58 | 2028-06-30 18:31:58 | image only |
+
+and the root itself, already installed, expiring **2042-04-26 17:43:42**.
+
+**The matching expiry is not evidence of sameness — it is the reason to expect
+it.** An intermediate cannot outlive its issuer, so a CA that issues with a
+clamped lifetime stamps every intermediate with the root's own `notAfter`. Two
+unrelated intermediates under one root routinely agree to the second. What
+separates them is `notBefore`, which differs by five months, along with the
+subject and the fingerprint.
+
+So CERTPROD does **not** supersede the GAIG pair. They are *sibling* issuing CAs
+under one root — a two-tier PKI running one per network zone, which is what the
+`DC=` components name: `certprod.dmz` and `ga.afginc.com` are two places, not one
+place renamed. The two GAIG rows, sharing a subject and differing in fingerprint,
+*are* one CA renewed — one decision, not two.
+
+### The better answer was that none of it was a decision at all
+
+All three are **intermediates**, and an intermediate is not a trust anchor. It is
+valid because the root signed it, and a correctly configured TLS server sends its
+intermediates with the leaf in the handshake. The root — the single `both` row —
+is already in the keychain. A client needs its own copy of an intermediate only
+against a server that fails to send the chain, and the fix for that is normally
+the server.
+
+The report had no way to say this, because it did not know what any row *was*. It
+sorted by where a certificate lives and never by what it is, so a root and an
+intermediate arrived in **What to install** as two identical-looking actions.
+
+### `role`, and the chain as a picture
+
+`cert_row_from_pem` now derives a `role` per certificate — `root` when
+self-signed, `intermediate` when `CA:TRUE` and issued by someone else, `leaf` when
+`CA:FALSE` — and **What to install** carries it. When every corporate row is an
+intermediate and the root is already installed, the section says so and says the
+list is unlikely to be necessary.
+
+A new **The corporate chain** section draws every certificate on either side that
+chains to the root, ordered root first, with where each lives. On the operator's
+data it is five rows that answer the original question at a glance: the root in
+both places, the two GAIG intermediates image-only and sharing a subject, the
+CERTPROD intermediate keychain-only — and, one row below, `CN=dkittrell` issued
+*by* CERTPROD, which is the most direct evidence available of which issuing CA is
+actually in use on this Mac. The section states the three rules the operator had
+to ask about: siblings versus versions, same-subject renewals, and the clamped
+expiry.
+
+The chain marker is carried on installed rows too, not only image rows. Without
+that the picture would show the half that is on the image — which is exactly the
+half that does not explain how the pieces relate.
+
+### Also: seven openssl calls became three
+
+`cert_row_from_pem` ran a separate `openssl x509` for the fingerprint, the
+constraints, each date, the subject and the issuer. openssl prints all of them
+from one invocation, and the fields are parsed by prefix so its output order does
+not matter. On a 131-certificate bundle that is a few hundred processes saved per
+run.
+
+### The `[!note]` rule reached the files that generate runbooks
+
+Revision 98 wrote the callout rule into
+`.github/ai-prompts/runbook-prompts/runbook-prompt.md` but left
+`.github/ai-templates/runbook-templates/runbook-template.md.tmpl` teaching the old
+one — including a `> [!note]` placeholder in its Step 1 and the superseded legend.
+A rule that lives only in the prompt is reintroduced by the next runbook generated
+from the template, so the template now carries the two-type legend, a prose
+placeholder where the `[!note]` was, and a Pitfall placeholder that states the
+cost test and says to delete itself when the step has no such mistake.
+
+One inconsistency inside the prompt is resolved at the same time: the
+routing-index rule listed `[!note]` as a neutral fork outcome. Fork markers are a
+*routing device* rather than commentary — they are how a branch is told apart at a
+glance — so they keep `[!check]` / `[!fail]` / `[!warning]` and are exempt from the
+one-per-step budget, but only inside a routing index, and a neutral outcome is a
+bullet rather than a fourth colour.
+
+---
+
+## Revision 98 — a box around an explanation makes it easier to skip
+
+> I think Note is way overused ... Same goes for Pitfall ... There's just too
+> many which diminishes the point of having these standout in the first place.
+
+The count made the case on its own. Across the three runbooks the operator is
+actively working through:
+
+| | Callouts | of which `[!note]` | of which Pitfall | Lines |
+|---|---|---|---|---|
+| `restore-access.md` | 48 | 24 | 16 | 1520 |
+| `restore-runtime.md` | 36 | 14 | 17 | 1140 |
+| `enroll-and-stabilize.md` | 38 | 20 | 10 | 1094 |
+
+One interruption every thirty-odd lines, and half of them typed `[!note]` — the
+callout that by definition carries no urgency. A reader who meets forty boxes in
+a file learns to read past boxes, which is paid for by the two or three that
+would have saved them an afternoon.
+
+### The rule
+
+A callout is an **interruption**, and it has to earn the interruption. One test,
+applied to each one:
+
+> Does a reader who skips this lose something they do not get back — state
+> overwritten, a security boundary crossed, or a wrong result that stays quiet
+> until a later phase?
+
+"Likely to be got wrong" does not qualify on its own. What makes something a
+Pitfall is the *cost* of getting it wrong. `[!note]` is retired outright: a
+clarification, an easily-missed fact, an explanation of why a step is shaped the
+way it is, a count that will surprise the reader, an output that looks like a
+failure and is not — all of it is prose, in the paragraph that needed it.
+
+Budget: at most one callout per step, a step with none is normal, and a file over
+about ten has stopped signalling anything.
+
+### What that produced
+
+| | Before | After | Pitfalls kept |
+|---|---|---|---|
+| `restore-access.md` | 48 | 14 | 7 |
+| `restore-runtime.md` | 36 | 13 | 7 |
+| `enroll-and-stabilize.md` | 38 | 13 | 5 |
+
+Nothing was deleted. Every fact in the thirty-four folded callouts is still in
+the file, in the sentence that needed it — several read better for it, because a
+callout lets you state a fact without connecting it to anything, and prose does
+not.
+
+Two callouts on the same subject were merged rather than both kept, under a
+bolded lead naming the shared failure with each case as its own paragraph. Six
+merges, and each one reads as a single idea where two boxes read as a list:
+
+- Step 1's two mount Pitfalls → *both obvious ways of working the path out by
+  hand fail quietly*.
+- Step 6's `jssecacerts` pair → the replacement hazard and "read the alias list
+  first" are one decision.
+- Step 7's JDK pair in Phase 10A → link the JDK before the build tools, and do
+  not skip the symlink to get there faster.
+- direnv's two silences → *a direnv setup that is not working looks exactly like
+  one that is*.
+- Phase 8's bootstrap fetch: two Pitfalls and a note → *a failed fetch here exits
+  `0` and looks like a successful one*.
+- Phase 8's two managed-channel Pitfalls → *Company Portal is the channel, and
+  waiting is the correct response to a slow rollout*.
+
+The ones kept are the ones with a cost: the before-state that cannot be recaptured
+once Step 1 mounts the image; plaintext credentials going back onto the artifact
+drive; Always Trust on anything but the internal root; `copy` replacing a JDK's
+whole trust set; `.zprofile` overwritten wholesale, undoing two phases silently;
+the Chrome password CSV; `setup-reimage-env.sh` recomputing `REIMAGE_ARTIFACT_ROOT`
+into a new empty folder; `sudo` not surviving the restart, which makes the two
+enrollment records incomparable; and rerunning a close-out, which resets every
+Manual row you already answered.
+
+### The rule is written down, not just applied
+
+`.github/ai-prompts/runbook-prompts/runbook-prompt.md` now carries the cost test,
+the no-`[!note]` rule, the one-per-step budget, the merge instruction, and the
+ten-per-file sweep trigger — plus four checklist rows, including one for the
+mistake this pass actually made.
+
+### Found while sweeping
+
+Folding a multi-paragraph callout by replacing only its opening paragraphs leaves
+the rest of the block still quoted — orphaned `>` lines with no callout above
+them, which Obsidian renders as a bare blockquote and which no existing check
+catches. Five of them, across `restore-runtime.md` and `enroll-and-stabilize.md`,
+including two fenced code blocks left indented inside a quote that had ceased to
+exist. Found by scanning for a `>` line whose block never opened with `[!`, which
+is now a checklist row.
+
+---
+
+## Revision 97 — what was not installed is a decision, not an omission
+
+Two questions from the operator, and they are the same question asked at two
+scales.
+
+> I'm not sure what all these are for can I find out later and inspect each to
+> make sure it's one I really want to install? ... After I install if any can you
+> make a report of the ones I didn't install so i can check back later or if
+> there's a problem later it may be one of these does need to be installed?
+
+and, of the JVM store:
+
+> I would like to also see what the stock has so I can see what CAs it has before
+> the merge, the aliases over stock and what does merge do? Will it be a superset
+> or will I be left with the new aliases?
+
+Both are asking what a prompt cannot answer: *what am I actually agreeing to, and
+what happens to everything I say no to.*
+
+### 35 things to install was still the wrong number
+
+Revision 96 got the comparison down from 130 to 35 by subtracting the built-in
+public roots. 35 is honest arithmetic and useless advice. Reading the operator's
+real list, most of the 35 are not decisions at all:
+
+- **Eleven are expired.** QuoVadis 2021, Sonera 2021, Cybertrust 2021, GlobalSign
+  R2 2021, GeoTrust 2022, Staat der Nederlanden EV 2022, Hongkong Post 2023,
+  Security Communication RootCA1 2023, E-Tugra 2023, Trustis 2024, Baltimore
+  2025. Nothing can chain to a certificate past its `notAfter`, so installing one
+  cannot make anything work.
+- **Several are distrusted on purpose.** TrustCor appears in the list. Apple and
+  Mozilla removed TrustCor from their trust stores in 2022. Its presence is a
+  reason *not* to install, and a report that lists it as "to install" has
+  inverted the finding.
+- **Exactly two chain to the corporate root** — both `CN=Issuing-GAIG-CA01`, one
+  as `gaig-issuing-ca.pem` and one as `Issuing-GAIG-CA01.cer`, which is one
+  certificate staged twice.
+
+So **What to install** now applies a second subtraction, and the two are
+different questions:
+
+| Subtraction | Question |
+|---|---|
+| minus already in a keychain, minus built-in public roots | *Is this already trusted?* |
+| minus expired, minus everything outside the corporate chain | *If not, is it something to act on?* |
+
+Corporate membership is resolved **by issuer, transitively** from the pinned
+root: the root, whatever it issued, whatever those issued. Certificates already
+in a keychain take part in the walk, so a corporate intermediate that enrollment
+installed still vouches for its children on the image — verified on a fixture
+where a leaf issued by `Issuing-CERTPROD-CA01` (keychain-only) is correctly
+classified corporate.
+
+Expiry is `openssl x509 -checkend 0`, which needs no date arithmetic — relevant
+because the repo's floor is BSD `date` and GNU `date -d` is not available.
+
+### `deferred.md` — the record of the "no"s
+
+The second question is the one worth answering carefully: *if something breaks in
+six months, was it one of these?* A decision with no record is indistinguishable
+later from an oversight, so every certificate the phase declines to import is now
+written to `deferred.md` beside `comparison.md`, with subject, issuer, dates,
+fingerprint, source path on the image, and the reason. It is written even when
+empty, so its absence always means an old run rather than a clean one.
+
+The reason column is the useful part, because the two reasons have different
+answers to "could this be my problem":
+
+| `Why` | Could it be? |
+|---|---|
+| `expired` | Almost never. A host that still needs that authority needs the *renewed* one, which arrives through enrollment. |
+| `not the corporate chain` | Possibly. Most were dropped from the trust store deliberately, but a partner or vendor endpoint can legitimately depend on one. |
+
+`deferred.md` carries the command to inspect one before deciding — including how
+to pull a single member out of a bundle, since `openssl x509` reads only the
+first certificate in a file — and the honest test, which is the failing
+connection rather than the list:
+
+```
+openssl s_client -connect <host>:443 -showcerts </dev/null
+```
+
+If the authority that host offers is not in `deferred.md`, nothing skipped here
+is the cause.
+
+**"After I install, report what I didn't" needs no new mechanism.** Each run
+rebuilds the comparison from the live keychains, so anything installed since
+drops off the deferred list by itself. Install what you decide to, re-run, and
+the deferred list in the new run *is* the remainder. Older runs stay in the index
+as the record of what was outstanding when.
+
+### The JVM prompt named the decision and hid the outcome
+
+```
+Install jssecacerts into openjdk-21.jdk by 'merge', importing the 3 alias(es) listed above? [y/N]
+```
+
+Three aliases is a correct description of what is being *decided* and a bad
+description of what is about to *exist*. `merge` copies this JDK's own `cacerts`
+and imports the additions on top: 127 stock entries plus 3 gives a store of 130,
+not 3. The operator asked directly whether they would be left with only the new
+aliases — the prompt had earned that doubt. It now reads:
+
+```
+Install jssecacerts into openjdk-21.jdk by 'merge' — 130 entr(ies): 127 from stock plus the 3 listed above?
+```
+
+And, before the first prompt, the step writes a comparison run —
+`comparisons/`, context `restore-access-jdk-trust-diff` — holding per JDK:
+
+| Section | Answers |
+|---|---|
+| Counts | What each form produces, as a number, including `Result of merge` and `Result of copy`. |
+| **Added by the capture** | Exactly what `merge` imports: alias, owner, issuer, expiry. |
+| **Stock only** | What `copy` would discard — CAs this JDK ships that the capture lacks. |
+| **This JDK's stock trust set** | Every CA the JDK trusts today, which is what was asked for. |
+
+That last table is the direct answer to *what does the stock have*. It also makes
+the difference between the forms concrete rather than adjectival: the two differ
+in exactly one place, which is what each **drops** — `merge` drops nothing;
+`copy` drops every `stock-only` row and restores every entry the capture held
+that this JDK has since dropped.
+
+The run is written before the prompts and is not conditional on the answer, so a
+declined JDK still leaves a dated, indexed record of what it was offered.
+
+Entry detail comes from one `keytool -list -v` per keystore rather than
+`-list -rfc` piped into `openssl` per certificate — one process instead of ~150,
+for the same four fields.
+
+### Not a defect: the syntax error at line 1484
+
+The operator saw
+
+```
+./bin/restore-access.sh: line 1484: syntax error near unexpected token `do'
+```
+
+immediately after answering `N`. Line 1484 is a comment. Bash reads a script
+incrementally rather than parsing it whole, and the file was being edited in this
+session while that invocation was running, so the interpreter resumed at a byte
+offset that had moved underneath it. Nothing in the script was wrong; `bash -n`
+was clean before and after. Worth recording because the same symptom from any
+other cause would be a real defect.
+
+---
+
+## Revision 96 — the corporate root was a Belgian public CA
+
+The operator ran the comparison against the real image: **130 certificates to
+install**, from a dozen countries, and the phase reporting
+
+```
+corporate root: /Volumes/all-secrets-.../certs/loose-candidates-selected/gaig-cert.pem
+```
+
+`gaig-cert.pem` is not a certificate. It is a **131-certificate CA bundle** — the
+public trust store plus the corporate root at entry #129. Two failures follow from
+that, and the second is the serious one.
+
+**Public roots were offered for import.** The comparison excluded
+`SystemRootCertificates.keychain` from the installed side — deliberately, to keep
+the report readable — while including public roots from the image side. So every
+public root in the bundle looked missing. The Mac already trusts all of them.
+
+The installed side now includes the public trust store for **matching**, and a
+fourth bucket, `public-root`, absorbs them. They are counted and not listed:
+"22 of the 24 certificates this image carries are built-in public roots" is the
+useful sentence, and 130 table rows are not.
+
+**`resolve_corp_cert` pinned a public CA as the corporate root.** It took the
+first file that parsed as self-signed, and `openssl x509` reads only the *first*
+certificate in a file — so the test passed on entry #1 of the bundle, a
+GlobalSign root. Step 5 would have added that to the System keychain as
+`trustRoot`, and Step 7 would have built the CA bundle around it. Both would have
+reported success.
+
+The rule is now the one that actually identifies it: **the corporate root is the
+self-signed certificate on the image that the public trust store does not already
+contain.** Nothing else distinguishes it — it is a root like any other and its
+name is whatever the organisation chose. Single-certificate files are preferred
+over bundle members, so the capture's own `root-gaig-ca.pem` is cited rather than
+`gaig-cert.pem#129`. Verified against a fixture of the same shape: 23-certificate
+bundle, 20 public roots, and the pick lands on the standalone corporate file.
+
+`step_certs` reports on the same rule, and now labels a bundle as a bundle
+instead of walking into it.
+
+**On why the source is the external drive** — the operator's other question. It is
+correct, and the runbook now says why. A keychain stores certificates, not files;
+`security add-trusted-cert` and the CA bundle both need a file, and the mounted
+image is where one exists. It is not a different root: matching is on SHA-256, and
+in this run `CN=Root GAIG CA` was the single row in **Already installed by
+enrollment** — byte-identical to what enrollment delivered, fingerprint
+`E0B9DF45…`. Step 5 finds it already trusted and does nothing, which is the right
+outcome and not a skipped step.
+
+**Modified:** `bin/restore-access.sh`, `restore-access.md`, `APPLY-MANIFEST.md`.
+
+**Not verified here:** `bash -n` and the portability lint pass. Both fixes were
+exercised against a fixture rebuilt to the real image's shape — a bundle of public
+roots with one corporate root inside it, the same root also present standalone —
+and the report went from every public root as a candidate to two, with the pick
+resolving to the standalone file. `cert_public_root_fingerprints` calls `security`
+against `SystemRootCertificates.keychain`, which does not exist here, so it was
+stubbed for the test and has never run for real.
+
+---
+
+## Revision 95 — a file is not a certificate
+
+The operator ran the comparison against the real image and read the output, which
+found two defects no fixture had.
+
+**Bundles were represented by one arbitrary member.** `openssl x509 -in <file>`
+reads only the **first** certificate in a file, and `gaig-cert.pem` and the
+captured truststores are bundles. So a file holding several certificates
+contributed exactly one to the comparison, chosen by position, and the rest were
+invisible — neither offered for import nor counted as already installed. On the
+operator's image that surfaced as a Spanish public CA appearing as an import
+candidate, because it happened to be first in a bundle.
+
+Every PEM is now split before parsing, the same way the keychain stream already
+was, and each certificate is compared on its own and cited as `<path>#<n>`. The
+count of certificates and the count of files are now reported separately, since
+they are no longer the same number.
+
+**JVM truststores were being offered for import into the login keychain.**
+`certs/java-security/` holds the per-JDK `jssecacerts` files — hundreds of
+**public** roots — and Step 4 was walking them like any other certificate
+directory. "Actalis Authentication Root CA" turned up under *what to install*,
+which is not a corporate certificate and not something that belongs in a keychain
+at all.
+
+That tree is Step 6's, and Step 6 already has a considered answer for it: take the
+captured store wholesale, or merge only what it adds over the JDK's own `cacerts`.
+Step 4 now skips it and says so, in the report and in the runbook — and notes that
+a public CA appearing under *what to install* is this exclusion failing. The
+operator reached the same conclusion from the output before reading the fix.
+
+**A third, smaller one.** A certificate with no Basic Constraints extension
+produced an empty `CA` column rather than a value — visible in the operator's
+paste as a blank cell on two client certificates. Blank in a column the step's own
+Pitfall tells you to read is worse than useless; it now reads `CA:unknown`.
+
+**Modified:** `bin/restore-access.sh`, `restore-access.md`, `APPLY-MANIFEST.md`.
+
+**Not verified here:** `bash -n` and the portability lint pass. Rebuilt the
+fixture to match the shapes the operator reported — a three-certificate bundle, a
+`jssecacerts` of public roots, the same certificate present both loose and inside
+a bundle — and confirmed the public roots are gone from the candidate list, the
+bundle member is matched to its loose copy with both paths on one row, and the
+counts read 6 certificates in 4 files, 3 distinct, 2 installed, 1 to install. The
+`security` half has still never run.
+
+---
+
+## Revision 94 — a spelling the repo had already decided, and two stale cross-references
+
+**"enrolment" was mine, and wrong for this repo.** 21 occurrences across
+`restore-access.md`, `bin/restore-access.sh` and `bin/compare-restored-state.sh`,
+introduced over the last few revisions. The repository already used the US form
+242 times and ships a script called `record-enrollment.sh`, so the prose and the
+artifacts it described disagreed with each other. All 21 are corrected; the count
+outside this manifest is now 225 US and 0 British.
+
+The historical entries in this file keep the old spelling. A delivery record says
+what was delivered, and editing past entries to look tidier is the one thing this
+file is not for.
+
+`runbook-prompt.md` gains the rule, since a convention that exists only as a
+majority in the corpus is one the next session re-litigates: match the spelling
+already in the repo, and check both forms with `grep -c` before introducing a new
+word.
+
+**Two Pitfalls still named `On the image only`.** Revision 93 renamed that section
+to `What to install` and rewrote the report around the subtraction, but left two
+callouts in `restore-access.md` Step 4 pointing at the old name — one of them the
+`CA:FALSE` warning, which is the most important callout in the step. A reader
+following it would look for a section heading that no longer exists.
+
+Both now name `What to install` and `Already installed by enrollment`. This is the
+second time in three revisions that renaming a generated section left runbook
+prose behind it; the section names are generated by the script and referenced by
+hand, and nothing checks that the two agree.
+
+**Modified:** `restore-access.md`, `bin/restore-access.sh`,
+`bin/compare-restored-state.sh`,
+`.github/ai-prompts/runbook-prompts/runbook-prompt.md`, `APPLY-MANIFEST.md`.
+
+**Not verified here:** `bash -n` passes on both scripts; `verify-doc-paths.sh
+--all` passes. The spelling change is text-only and touches no logic. Nothing
+checks that a runbook's reference to a generated section heading still matches
+what the script emits — that gap is now twice-demonstrated and still open.
+
+---
+
+## Revision 93 — three listings are not a comparison
+
+Revision 90 built the certificate comparison as three sections and left the
+subtraction implicit. The operator read it and asked the question it should have
+answered outright: which of these do I still need to install, and why is one
+section so much smaller than the listing I ran by hand.
+
+**The report now opens with `What to install`** — the image's certificates minus
+the ones enrolment already delivered — and states the arithmetic in the sentence:
+"the image's N minus the M enrolment already installed". A `How that number was
+reached` table follows, giving both sides' totals and both subtractions, so a
+surprising count can be traced instead of doubted.
+
+The small-section question has a real answer, now written into the report and the
+runbook: **Already installed by enrolment is an intersection**, so it cannot be
+larger than the number of certificates the image carries. A hand-run
+`security find-certificate` listing is closer to *In the keychains only*, which is
+usually the biggest section. Both also exclude the ~150 built-in public roots,
+because `security find-certificate` does not search
+`SystemRootCertificates.keychain`.
+
+**Two bugs found by running it, one of which made the tables empty.**
+
+`exp` is an awk built-in — the exponential function — and I used it as an array
+name for expiry dates. Every `_cert_table` invocation was a syntax error, so the
+counts printed correctly above three empty tables. It only surfaced when the
+fixture had enough certificates for a table to matter.
+
+Counts were per *row*, not per certificate. The image stages the same root twice,
+once as PEM and once as DER, and each copy counted separately — overstating how
+many certificates were involved and making "already installed" disagree with the
+number of things a person would actually decide about. Counting is by distinct
+SHA-256 now, and a certificate present at several paths is one row with its
+sources joined.
+
+**A third, still unproven.** The keychain PEM stream is split by `awk` with
+`print > out` and no `close()`. That is fine under gawk — verified here with 40
+certificates — but macOS ships one-true-awk, whose simultaneous open-file limit
+is far lower, and a keychain has many more than 40. `close()` is added; whether
+it was the cause of a short listing on the Mac is untested, because this session
+has no `security` to produce a real stream.
+
+**Modified:** `bin/restore-access.sh`, `restore-access.md`, `APPLY-MANIFEST.md`.
+
+**Not verified here:** `bash -n` and the portability lint pass. The report was
+generated against a fixture of a root staged as both PEM and DER, an
+intermediate, a leaf, and five keychain-only certificates — the dedupe, the
+subtraction and every count were checked against it. The `security` half has
+still never run.
+
+---
+
+## Revision 92 — a test that hangs is worse than no test
+
+Revision 91 replaced Step 3's inline SSH restore with the subcommand and left one
+instruction behind: *"Test with one of the aliases the step lists"*, followed by a
+bare `ssh -T <alias>`. Run against the public Git host on this network it printed
+the host-key prompt, accepted the key, and then hung with no output. Reported from
+the operator's terminal.
+
+The bare command was wrong in two ways at once.
+
+**It blocks on the host-key prompt.** In a pasted block that prompt is answered by
+whatever line follows it — the fourth of the five paste hazards this repo already
+tracks, and the first one to appear in a block I wrote after documenting them.
+
+**It can hang indefinitely after the key is accepted, and `ConnectTimeout` does
+not bound it.** That option covers the TCP connect, which succeeds. The stall is
+later: at `SSH2_MSG_KEX_ECDH_REPLY`, the first large packet of the key exchange,
+dropped by a path-MTU black hole through the VPN tunnel. Small packets pass, the
+host key is exchanged, and then the session stops.
+
+`step_ssh` now probes each alias itself. `ssh-keyscan` seeds the host key first so
+nothing prompts, `BatchMode=yes` makes an unknown host an error rather than a
+question, and the probe carries its own watchdog — because no `ssh` option bounds
+a mid-KEX stall. Verified against a listener that accepts TCP and then says
+nothing: 8 seconds to a reported failure rather than an indefinite hang.
+
+**The condition was known and written down nowhere the operator would find it.**
+That SSH to the public host stalls on this network, that the internal host works
+on port 22 because internal and public take different egress paths, and that the
+substitution is HTTPS with a token — all of it existed in a session note and in
+none of the runbooks. `restore-git.md` carries a `known-blocked` exit row for it
+and never says what the block is.
+
+A Troubleshooting entry now names the symptom precisely — host key accepted, then
+silence — states that it is not a key problem, gives the two `ping -D` sizes that
+confirm a black hole, and says what follows: try the internal alias before
+concluding anything about the keys, and where the public host is genuinely
+unreachable, substitute HTTPS and record it in Phase 11A. It also notes that port
+443 is not an automatic escape, since a TLS-inspecting proxy accepts the
+connection and then closes it.
+
+**Confirmed on the machine while this was being written:** `github.gaig.com`
+authenticated normally. The restored keys were never the problem.
+
+**Modified:** `bin/restore-access.sh`, `restore-access.md`, `APPLY-MANIFEST.md`.
+
+**Not verified here:** `bash -n` and the portability lint pass. The watchdog was
+exercised against a synthetic stalling listener on Linux; `ssh-keyscan` seeding
+and the greeting-match path have not run on the Mac.
+
+---
+
+## Revision 91 — a runbook that reimplemented its own script
+
+`restore-access.md` carried **313 lines of inline shell across 73 blocks** while
+`bin/restore-access.sh` already implemented all twelve steps as subcommands — and
+the runbook said so, twice, in its intro and its locations table. The blocks were
+not a missing script. They were a second copy of the one that was there, free to
+drift from it, and the runbook had no way to tell you it had.
+
+The steps are now the subcommand plus the reasoning the script's output cannot
+carry. **313 lines → 79**, and the two largest went 63 → 2 and 125 → 1.
+
+**Step 6 was not a collapse — the script was missing half the step.** The runbook
+offered two forms of `jssecacerts` restore: copy the captured store wholesale, or
+build from this JDK's current `cacerts` plus only what the capture added.
+`step_java` implemented the first and had no notion of the second, so the
+runbook's own recommendation for anything but a same-week capture was
+unreachable from the script.
+
+`--jssecacerts merge|copy` now implements both, and **`merge` is the default**:
+it is defensible in every case and only costs time. It computes the added aliases
+per JDK, builds the new store in `/tmp`, and installs only once every alias
+imported — a half-imported store is a JVM trusting an arbitrary subset of the
+corporate chain.
+
+**Testing `merge` against real keystores found a flaw in my own design.** With a
+stock store of two public roots and a capture holding one of them plus two
+corporate CAs plus a *third, since-distrusted* public root, `merge` imported all
+three additions — putting back the public root the JDK vendor had deliberately
+dropped. That is the harm `merge` exists to avoid, reintroduced by the mechanism
+meant to prevent it.
+
+"Adds over stock" is not "corporate": it is everything the capture holds that
+this JDK does not, which is the internal CAs **plus** anything the vendor has
+distrusted since. Nothing in a certificate separates them — a CA is corporate
+because of who runs it. So the step prints the alias list, says plainly that an
+unfamiliar public root there is one this JDK dropped, and names the count in the
+confirmation prompt. The script does not guess, and no longer silently decides.
+
+**The phase now states its re-run guarantee up front**, with a table of what each
+step reports on a second run, because "run it again rather than reconstructing
+what you finished" is only usable advice if you can see it is true. The script
+was already idempotent in every place that matters — `mount` finds an attached
+image, `trust` checks the trust settings first, `corp_ca` is marker-guarded and
+rebuilds its bundle rather than appending, `dotfiles` and `credentials` never
+write — and Step 6's check is computed from the installed alias set rather than a
+file comparison, so a store left by an interrupted run, or by the other form,
+reads as not done.
+
+**`mnt` is a new query**, not a step: it prints the mounted image's path so a
+hand-typed command can set `MNT` without the runbook restating the re-derivation
+loop that `find_mounted_image` already is. Its first version called that function
+from the argument parser, which runs before the function is defined — every
+invocation reported "no mounted secrets image" on a command-not-found rather than
+on the state of the machine. The query is answered after the definitions now.
+
+**Modified:** `bin/restore-access.sh`, `restore-access.md`, `APPLY-MANIFEST.md`.
+
+**Not verified here:** `bash -n` and the portability lint pass. The `merge` form,
+its alias diff and its idempotency check were exercised against generated
+keystores with a real `keytool` on Linux, including the distrusted-root case
+above. Nothing that touches `security`, `hdiutil`, `sudo` or `/Volumes` has run —
+`mount`, `trust`, the keychain half of Step 4, and the `mnt` query's success path
+are untested outside the Mac.
+
+---
+
+## Revision 90 — the certificate step never showed you the gap it was scoped to
+
+`restore-access.md` Step 4 said to scope the import to the gap between what
+enrolment installed and what the image carries, then handed the operator two
+listings and left the join to them: a `security find-certificate` dump on one
+side, a `for` loop over `openssl x509` on the other, and the instruction to "read
+it against the listing below". Matching a keychain dump against a directory of
+`.pem` files by eye is the work, and the runbook was assigning it rather than
+doing it.
+
+`step_certs` now writes a comparison run under `comparisons/`, context
+`restore-access-cert-diff`, with both sides carrying subject, issuer,
+`CA:TRUE`/`CA:FALSE`, validity dates, SHA-256, and — for image rows — the path
+inside the image. Three sections: **on the image only**, which is the import
+candidate list and the only rows the step acts on; **already installed by
+enrolment**, which is what to keep; and **installed only**, which is context.
+
+The installed copy is the one to keep, and the comparison says why rather than
+asserting it: it arrived through the channel that also carries its trust settings
+and that MDM re-delivers, while the file on the image is a snapshot of a chain
+that may since have been rotated.
+
+**Matched on SHA-256 and nothing else.** The same CA is routinely filed under a
+different label in a keychain than in a file, so a name-based comparison reports
+a certificate as missing when it is installed under another name — which would
+produce exactly the redundant import the step exists to avoid.
+
+Both empty sections are meaningful, and the runbook now says so. An empty
+"on the image only" is a clean result: enrolment installed everything, and Step 5
+becomes a verification. An empty "already installed" is the opposite — on a
+managed Mac, enrolment not having delivered the chain is itself the finding.
+
+**Verified against real certificates rather than fabricated rows.** A root, an
+intermediate it signed, and a leaf, with the root also staged as DER: the DER copy
+matched the PEM on fingerprint, both CAs landed in "already installed", and the
+leaf surfaced alone as an import candidate carrying `CA:FALSE`. That is the case
+the step's Pitfall is about — a leaf marked Always Trust tells the system to trust
+one endpoint as an authority — and it is now visible in a column rather than
+inferred from an `openssl` invocation the operator has to read.
+
+**Scope note.** `security find-certificate` searches the login and System
+keychains, not `SystemRootCertificates.keychain`, so the ~150 built-in public
+roots appear in no section. That is what keeps "installed only" readable, and the
+comparison states it rather than leaving the absence to be noticed.
+
+`restore-access.sh` gained the shared run index, which it did not previously
+source, and degrades to a warning rather than failing when the artifact root is
+not mounted or the index is unavailable — this step's value is the listing, and a
+missing artifact root should not stop the phase.
+
+**Modified:** `bin/restore-access.sh`, `restore-access.md`, `APPLY-MANIFEST.md`.
+
+**Not verified here:** `bash -n` and the portability lint pass. The image side and
+the join were exercised against generated certificates on Linux. The keychain
+side calls `security`, which does not exist here, so `cert_rows_installed` has
+not been run at all — the PEM-splitting `awk` and the two-keychain query are
+untested against real output.
 
 ---
 

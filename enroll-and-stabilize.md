@@ -42,7 +42,7 @@ Bring the freshly reimaged Mac to a clean, trusted managed baseline before any r
 > In Obsidian, these are internal heading links. Click in Reading View, or Cmd-click in Live Preview/editing mode.
 
 > [!info] Callout legend
-> This runbook uses Obsidian callouts so each type reads distinctly: `[!note]` an easily-missed fact · `[!warning]` Pitfall, a mistake you are likely to make here · `[!bug]` Troubleshooting, what to do when a step misbehaves.
+> Two kinds, used sparingly. `[!warning]` **Pitfall** — skipping it costs something you do not get back: state overwritten, a security boundary crossed, or a wrong result that stays quiet until a later phase. `[!bug]` **Troubleshooting** — what to do when a step misbehaves. Everything else is prose, in the paragraph that needed it. A box around an explanation only makes the explanation easier to skip.
 
 ---
 
@@ -267,17 +267,16 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 - You have signed into the company Microsoft 365 / O365 account when prompted and network (Wi-Fi or Ethernet) is connected.
 - You have the post-reimage cheatsheet you emailed yourself, or the jump drive built in Phase 6A. One of the two is required: the cheatsheet carries `TOOLKIT_GITHUB_ACCOUNT` for the network route, and the jump drive carries both `bootstrap.sh` and the `reimage.env` copy.
 
-> [!note]
-> Unlike every later runbook, this one does **not** assume a shell at
-> `$FRACTOGENESIS_HOME` with `reimage.env` loaded. Neither exists yet — Steps 2
-> and 3 create them. The guide's [[reimaging-guide#Core Assumptions|Core Assumptions]]
-> apply from Step 3 onward.
+Unlike every later runbook, this one does **not** assume a shell at
+`$FRACTOGENESIS_HOME` with `reimage.env` loaded. Neither exists yet — Steps 2 and
+3 create them — so the guide's
+[[reimaging-guide#Core Assumptions|Core Assumptions]] apply only from Step 3
+onward.
 - Company Portal is installed and signed in. It is the only sanctioned install
   channel for managed apps, and its **Apps** tab is where Available assignments
   are found. Nothing else in this phase substitutes for it.
 
-> [!note]
-> `REIMAGE_ARTIFACT_ROOT` and the external artifact volume are *not* required at this point. `record-enrollment.sh` falls back to `$REIMAGE_WORKSPACE_ROOT/` and then to `~/Desktop/reimaged-system-artifacts/`, creating the same `restarts/` and `boundaries/` categories under whichever it lands on, so Phase 8 can complete before the external drive is reconnected in Phase 9.
+`REIMAGE_ARTIFACT_ROOT` and the external artifact volume are *not* required at this point. `record-enrollment.sh` falls back to `$REIMAGE_WORKSPACE_ROOT/` and then to `~/Desktop/reimaged-system-artifacts/`, creating the same `restarts/` and `boundaries/` categories under whichever it lands on, so Phase 8 can complete before the external drive is reconnected in Phase 9.
 
 > [!bug] Troubleshooting
 > If the script errors with "shared config loader not found", the toolkit was placed in the wrong location or is a partial extract — re-run bootstrap and confirm `$FRACTOGENESIS_HOME/.internal/load-reimage-config.sh` exists before continuing.
@@ -321,13 +320,12 @@ jump drive built in Phase 6A is the alternative and carries the same values plus
 **Open your password manager** in the same session. Phase 8 and Phase 10B both
 ask for credentials that are not on this machine and not on the artifact drive.
 
-> [!note]
-> Safari is on every fresh Mac and is enough for both. If your mail or your vault
-> is reachable more easily in another browser — a Gmail account, or a vault whose
-> extension you rely on — install Google Chrome from Company Portal first, which
-> is [[#Step 5 — Install and Confirm Required and Available Managed Apps|Step 5]],
-> and come back here. That reorders two steps and costs nothing; enrollment does
-> not depend on anything in Step 2 or Step 3.
+Safari is on every fresh Mac and is enough for both. If your mail or your vault
+is reachable more easily in another browser — a Gmail account, or a vault whose
+extension you rely on — install Google Chrome from Company Portal first, which is
+[[#Step 5 — Install and Confirm Required and Available Managed Apps|Step 5]], and
+come back here. That reorders two steps and costs nothing, since enrollment does
+not depend on anything in Step 2 or Step 3.
 
 Neither the cheatsheet nor the vault is stored on the artifact drive on purpose:
 the drive is not mounted yet at this point in the phase, and a credential that
@@ -353,11 +351,10 @@ what makes the rest of this runbook work wherever you put the toolkit:
 export FRACTOGENESIS_HOME="$HOME/fractogenesis-toolkit"
 ```
 
-> [!warning] Pitfall
-> Export it on its own line, before anything else. A `VAR=val curl … | bash`
-> prefix sets the variable for `curl` only, not for the `bash` on the other side
-> of the pipe — which is where `bootstrap.sh` actually runs, and where the value
-> is needed.
+Export it on its own line, before anything else. A `VAR=val curl … | bash` prefix
+sets the variable for `curl` only, not for the `bash` on the other side of the
+pipe — which is where `bootstrap.sh` actually runs, and where the value is
+needed.
 
 **Primary route — network available.** Wi-Fi should already be connected from
 the Phase 7 sign-in step:
@@ -378,24 +375,23 @@ Mac triggers a large Xcode Command Line Tools download, which this deliberately
 avoids.
 
 > [!warning] Pitfall
-> Quote and substitute the account. Unquoted, `<your-github-account>` is a shell
-> redirection and the line is a syntax error; left unsubstituted, the fetch 404s
-> in a way that looks like a missing file rather than a missing value. The `case`
-> guard catches both.
+> **A failed fetch here exits `0` and looks like a successful one.** That is why
+> the block downloads to a file and runs it as a separate step rather than
+> reaching for `curl … | bash`: with `-f -s`, a 404 or a captive-portal redirect
+> prints nothing, `bash` reads an empty stdin, and the pipeline succeeds — no
+> toolkit, no error, and no obvious reason why the next command cannot find
+> `bin/`.
+>
+> The account is the usual way to get there. Unquoted,
+> `<your-github-account>` is a shell redirection and the line is a syntax error;
+> left unsubstituted, the fetch 404s in a way that looks like a missing file
+> rather than a missing value. The `case` guard catches both.
 
-> [!note]
-> This is the one command in the workflow that cannot read
-> `$TOOLKIT_GITHUB_ACCOUNT` from `reimage.env`. That file did not survive the
-> erase, and anything able to hand it to you — the jump drive, the artifact
-> volume — has already handed you the toolkit, making the fetch unnecessary.
-> Take the account from the post-reimage cheatsheet you emailed yourself.
-
-> [!note]
-> Download and run as two steps, deliberately. `curl … | bash` hides its own
-> failure: with `-f -s`, a 404 or captive-portal redirect prints nothing, `bash`
-> reads an empty stdin, and the pipeline exits **0** — no toolkit, no error, and
-> no obvious reason why the next command cannot find `bin/`. Fetching to a file
-> first makes a failed download impossible to miss.
+This is the one command in the workflow that cannot read
+`$TOOLKIT_GITHUB_ACCOUNT` from `reimage.env`. That file did not survive the
+erase, and anything able to hand it to you — the jump drive, the artifact
+volume — has already handed you the toolkit, making the fetch unnecessary. Take
+the account from the post-reimage cheatsheet you emailed yourself.
 
 **Fallback route — no network yet.** Captive portal, delayed profile push, or
 enrollment still settling. Use the jump drive prepared in
@@ -451,27 +447,29 @@ ls -1 "$HOME/reimage-workspace/artifact-config/"
 it reads as `0777`.
 
 > [!warning] Pitfall
-> Their absence is silent. With `REIMAGE_WORKSPACE_ROOT` set but
-> `artifact-config/` missing, every script prints one warning to stderr and then
-> falls back to the committed templates — producing evidence that looks identical
-> to a run against your own configuration. If the jump-drive copy is missing,
-> recover from the home backup instead:
+> **Both ways this step goes wrong produce evidence that looks right.** Restore
+> these two files; do not regenerate them.
+>
+> With `REIMAGE_WORKSPACE_ROOT` set but `artifact-config/` missing, every script
+> prints one warning to stderr and then falls back to the committed templates —
+> producing evidence indistinguishable from a run against your own
+> configuration. If the jump-drive copy is missing, recover from the home backup
+> instead:
 >
 > ```bash
 > find "$REIMAGE_ARTIFACT_ROOT/home-files-backup" -type d -name artifact-config
 > ```
 >
 > and copy it back before running anything that records evidence.
-
-> [!warning] Pitfall
-> Do **not** rebuild `reimage.env` with `bin/setup-reimage-env.sh` when the copy
-> is inconvenient to reach. That script *recomputes* values rather than
+>
+> And do **not** rebuild `reimage.env` with `bin/setup-reimage-env.sh` when the
+> copy is inconvenient to reach. That script *recomputes* values rather than
 > restoring them: `REIMAGE_START_DATE` defaults to today, so
 > `REIMAGE_ARTIFACT_ROOT` resolves to a **new, empty** event folder instead of
-> the one holding your backups. Every restore step then reports MISSING for
-> every source while writing its notes into the wrong tree — a failure that
-> looks like a bad backup rather than a bad variable. Regenerating is only
-> correct when starting a genuinely new reimage event.
+> the one holding your backups. Every restore step then reports MISSING for every
+> source while writing its notes into the wrong tree — a failure that looks like
+> a bad backup rather than a bad variable. Regenerating is only correct when
+> starting a genuinely new reimage event.
 
 **Then wire both into your shell, once:**
 
@@ -493,13 +491,11 @@ Preview before it writes anything:
 bash "$FRACTOGENESIS_HOME/bin/init-shell-env.sh" --dry-run
 ```
 
-> [!note]
-> This replaces what `.envrc` did before the erase. Without it, every new
-> Terminal — including the one after the stabilization restart in Step 8 —
-> starts with none of these values, and `cd "$FRACTOGENESIS_HOME"` becomes
-> `cd ""`, a **no-op that returns 0**. You stay in `$HOME`, every `./bin/…`
-> afterward reports "No such file or directory", and nothing points back at the
-> missing variable.
+This replaces what `.envrc` did before the erase. Without it, every new Terminal
+— including the one after the stabilization restart in Step 8 — starts with none
+of these values, and `cd "$FRACTOGENESIS_HOME"` becomes `cd ""`, a **no-op that
+returns 0**. You stay in `$HOME`, every `./bin/…` afterward reports "No such file
+or directory", and nothing points back at the missing variable.
 
 Confirm before continuing:
 
@@ -511,16 +507,15 @@ cd "$FRACTOGENESIS_HOME"
 From this point on, the commands in this and every later runbook assume you are
 at `$FRACTOGENESIS_HOME` with `reimage.env` loaded.
 
-> [!note]
-> `bin/` scripts do not actually depend on your shell: each one sources
-> `.internal/load-reimage-config.sh`, which reads `reimage.env` from the toolkit
-> root itself. What the profile block buys you is the *typed* commands —
-> `ls "$REIMAGE_ARTIFACT_ROOT"` and the like — working without a manual
-> `source` in every new terminal.
->
-> The block is a bridge, not the permanent arrangement. direnv arrives in Phase
-> 10A and takes over from `.envrc`; remove the block then. Full picture:
-> [[toolkit-environment-reference|Toolkit Environment Reference]].
+`bin/` scripts do not actually depend on your shell: each one sources
+`.internal/load-reimage-config.sh`, which reads `reimage.env` from the toolkit
+root itself. What the profile block buys you is the *typed* commands —
+`ls "$REIMAGE_ARTIFACT_ROOT"` and the like — working without a manual `source` in
+every new terminal.
+
+The block is a bridge, not the permanent arrangement. direnv arrives in Phase 10A
+and takes over from `.envrc`; remove the block then. Full picture:
+[[toolkit-environment-reference|Toolkit Environment Reference]].
 
 **Record the entry boundary.** Every other runbook records its entry conditions
 at Step 0. This one cannot: Phase 8 begins on a Mac with no toolkit on it, and
@@ -538,10 +533,9 @@ network or Company Portal stops the phase — enrollment, managed installs and
 macOS updates each need both. Two rows are left `TODO`; answer them in that file
 as described in Step 10, which explains the mechanics once for both boundaries.
 
-> [!note]
-> The artifact root row is expected to be `WARN` here. The external volume is not
-> reconnected until Phase 9 Step 1, so this checklist lands on the workspace or
-> Desktop fallback along with everything else this phase writes.
+The artifact root row is expected to be `WARN` here. The external volume is not
+reconnected until Phase 9 Step 1, so this checklist lands on the workspace or
+Desktop fallback along with everything else this phase writes.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -573,30 +567,24 @@ misleads:
 | Certificate identities | `Microsoft.Profiles.SCEP.*` and `*.credentials.*` payloads re-issue the Keychain identities that could not be exported before the erase. Captured automatically in `raw/09-keychain-identities.txt` |
 | FileVault enforcement | `com.apple.MCX.FileVault2` plus escrow payloads. Captured in `raw/03-filevault-status.txt` and stamped as its own exit-criteria row — Phase 14 fails sign-off if it is off |
 
-> [!note]
-> **The profile count is the quickest check that policy landed in full.**
-> `profiles list` ends with a line such as `There are 17 system configuration
-> profiles installed`; a machine mid-push shows noticeably fewer. Step 7's record
-> extracts that number into its own exit-criteria row, so there is nothing to
-> note by hand — but the row reads `unknown` when the listing was not readable at
-> the privilege level the script ran with, which means "could not tell", not
-> "none installed".
+**The profile count is the quickest check that policy landed in full.**
+`profiles list` ends with a line such as `There are 17 system configuration
+profiles installed`, and a machine mid-push shows noticeably fewer. Step 7's
+record extracts that number into its own exit-criteria row, so there is nothing
+to note by hand — but the row reads `unknown` when the listing was not readable
+at the privilege level the script ran with, which means "could not tell" rather
+than "none installed".
 
-> [!note]
-> **Required pushes are asynchronous and keep arriving.** The set present when you
-> first look is a snapshot, not the final state; an agent can land an hour later
-> with no prompt and no action from you. Do not treat a component missing here as
-> missing for good — Step 7's record captures whatever exists at that moment, and
-> Step 9's post-restart record is the one that matters.
+**Required pushes are asynchronous and keep arriving.** The set present when you
+first look is a snapshot, not the final state: an agent can land an hour later
+with no prompt and no action from you. Do not treat a component missing here as
+missing for good — Step 7's record captures whatever exists at that moment, and
+Step 9's post-restart record is the one that matters.
 
-> [!note]
-> **Microsoft Office does not arrive here.** It is almost always an *Available*
-> assignment, which means it installs only when you click Install in the Company
-> Portal Apps tab — that is Step 5. Waiting for Office in this step is the single
-> most common way to lose an afternoon in Phase 8.
-
-> [!warning] Pitfall
-> Do not manually install Office or security tooling from a separate channel unless IT explicitly asks. Duplicate installs can conflict with the managed copy that policy is about to push.
+**Microsoft Office does not arrive here.** It is almost always an *Available*
+assignment, which means it installs only when you click Install in the Company
+Portal Apps tab — that is Step 5. Waiting for Office in this step is the single
+most common way to lose an afternoon in Phase 8.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -629,11 +617,10 @@ installing it here gives you an empty copy that the restore then has to work
 around. Microsoft Edge, PrinterLogic and Identity Agent are installed when you
 actually need them, on the same reasoning.
 
-> [!note]
-> Chrome comes from Company Portal, which needs enrollment — so on a Mac where
-> Step 3 has not finished, use Safari to reach the cheatsheet and LastPass for
-> long enough to get through Step 1. Chrome is a convenience here, not a
-> dependency; nothing in this runbook requires a specific browser.
+Chrome comes from Company Portal, which needs enrollment, so on a Mac where
+Step 3 has not finished, use Safari to reach the cheatsheet and LastPass for long
+enough to get through Step 1. Chrome is a convenience here rather than a
+dependency; nothing in this runbook requires a specific browser.
 
 Confirm what actually landed:
 
@@ -644,41 +631,37 @@ pkgutil --pkgs | grep -iE 'com.microsoft|crowdstrike|zscaler'
 sudo profiles list | grep -iEB2 -A4 'microsoft|office|autoupdate'
 ```
 
-> [!note]
-> Some managed apps install **nested**, not at the top level of
-> `/Applications`.
-> A top-level `ls | grep` will miss some and read as "not installed" on a machine
-> where it is running fine. Check the menu bar before concluding an agent is
-> absent.
+Some managed apps install **nested**, not at the top level of `/Applications`, so
+a top-level `ls | grep` misses them and reads as "not installed" on a machine
+where they are running fine. Check the menu bar before concluding an agent is
+absent.
 
-> [!note]
-> **Office installs as one suite, and brings more than Office.** A complete
-> install of *Microsoft 365 Apps for macOS* puts Word, Excel, PowerPoint,
-> Outlook, and OneNote in `/Applications` — and typically Teams, OneDrive, and
-> Microsoft AutoUpdate alongside them. Confirm by receipt rather than by eye,
-> since the app names and the package identifiers do not match:
->
-> ```bash
-> pkgutil --pkgs | grep -iE 'com\.microsoft\.(package|teams|OneDrive|pkg\.licensing)'
-> ```
->
-> Expect `com.microsoft.package.Microsoft_<App>.app` for each app, plus
-> `com.microsoft.package.Microsoft_AutoUpdate.app`, `com.microsoft.pkg.licensing`,
-> and shared components such as `Frameworks`, `Proofing_Tools`, and `DFonts`.
-> If Teams and OneDrive appear here, they came with the suite and are not separate
-> assignments to chase.
+**Office installs as one suite, and brings more than Office.** A complete install
+of *Microsoft 365 Apps for macOS* puts Word, Excel, PowerPoint, Outlook, and
+OneNote in `/Applications` — and typically Teams, OneDrive, and Microsoft
+AutoUpdate alongside them. Confirm by receipt rather than by eye, since the app
+names and the package identifiers do not match:
 
-> [!note]
-> The authoritative list of what this Mac should have is the pre-image capture,
-> not this runbook. Compare against it rather than against a fixed expectation:
->
-> ```bash
-> grep -riE 'teams|onenote|crowdstrike|falcon|zscaler' \
->   "$REIMAGE_ARTIFACT_ROOT/managed-inventory/" | head -40
-> ```
->
-> Anything present pre-image and absent now is a real gap. Anything in neither
-> was never assigned to this account.
+```bash
+pkgutil --pkgs | grep -iE 'com\.microsoft\.(package|teams|OneDrive|pkg\.licensing)'
+```
+
+Expect `com.microsoft.package.Microsoft_<App>.app` for each app, plus
+`com.microsoft.package.Microsoft_AutoUpdate.app`, `com.microsoft.pkg.licensing`,
+and shared components such as `Frameworks`, `Proofing_Tools`, and `DFonts`. If
+Teams and OneDrive appear here, they came with the suite and are not separate
+assignments to chase.
+
+The authoritative list of what this Mac should have is the pre-image capture, not
+this runbook. Compare against it rather than against a fixed expectation:
+
+```bash
+grep -riE 'teams|onenote|crowdstrike|falcon|zscaler' \
+  "$REIMAGE_ARTIFACT_ROOT/managed-inventory/" | head -40
+```
+
+Anything present pre-image and absent now is a real gap. Anything in neither was
+never assigned to this account.
 
 If an app is in neither the Required push nor the Available catalog, it is not
 assigned to you. That is an IT request, not a local fix — and the question to
@@ -687,28 +670,24 @@ apps are licensed for self-install from a vendor portal instead of deployed
 through Intune.
 
 > [!warning] Pitfall
-> Do not install Office, security tooling, or any other managed app from a
-> vendor download or from Homebrew. An unmanaged copy receives no configuration
-> profiles, can collide with the managed package when it lands, and can read as
-> non-compliant. Company Portal is the channel.
+> **Company Portal is the channel, and waiting is the correct response to a slow
+> rollout.** Do not install Office, security tooling, or any other managed app
+> from a vendor download or from Homebrew: an unmanaged copy receives no
+> configuration profiles, can collide with the managed package when it lands, and
+> can read as non-compliant. And do not remove profiles, disable security
+> software, or change management settings to work around a slow push — IT owns
+> that state, and undoing it here is the kind of change that surfaces as a
+> compliance flag weeks later.
 
-> [!warning] Pitfall
-> Do not remove profiles, disable security software, or change management
-> settings while waiting for installs to complete, even to work around a slow
-> rollout. IT owns that state.
+Installing a TLS-inspecting proxy agent here is intentional, and its effects are
+handled later. Tools carrying their own CA bundle — npm, pip, `requests`, Java —
+will fail certificate validation until
+[[restore-access#Step 7 — Trust the Corporate CA Outside the Keychain|Phase 10B Step 7]].
+That is expected, not a broken install.
 
-> [!note]
-> Installing a TLS-inspecting proxy agent here is intentional and its effects
-> are handled later. Tools carrying their own CA bundle — npm, pip, `requests`,
-> Java — will fail certificate validation until
-> [[restore-access#Step 7 — Trust the Corporate CA Outside the Keychain|Phase 10B Step 7]].
-> That is expected, not a broken install.
-
-> [!note]
-> Leave OneDrive **signed out** for now. The app arrives with the Office suite,
-> but starting an initial sync conflicts with the Phase 9 restart and Time
-> Machine steps, and its interaction with the later home-files restore is not
-> yet settled.
+Leave OneDrive **signed out** for now. The app arrives with the Office suite, but
+starting an initial sync conflicts with the Phase 9 restart and Time Machine
+steps, and its interaction with the later home-files restore is not yet settled.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -761,24 +740,22 @@ Run the record, labelling it as the pre-restart run. With no `--output`, the des
 sudo -v && ./bin/record-enrollment.sh --context pre-restart
 ```
 
-> [!note]
-> **Why `sudo -v` first.** `profiles list` returns *user-level* profiles
-> unprivileged — typically four — while the managed baseline lives at
-> `_computerlevel` and is several times larger. The script never prompts for a
-> password: it tries `sudo -n`, which succeeds only against an already-cached
-> credential and fails instantly otherwise. That keeps the script safe to rerun
-> unattended, and it means the system-scope count is captured only if you have
-> used `sudo` recently.
->
-> `sudo -v` refreshes that credential without running anything, so the record
-> gets the number that matters. It is optional: without it the run still
-> succeeds, and the profile row simply reports `user scope` and says so.
+**Why `sudo -v` first.** `profiles list` returns *user-level* profiles
+unprivileged — typically four — while the managed baseline lives at
+`_computerlevel` and is several times larger. The script never prompts for a
+password: it tries `sudo -n`, which succeeds only against an already-cached
+credential and fails instantly otherwise. That keeps it safe to rerun unattended,
+and it means the system-scope count is captured only if you have used `sudo`
+recently.
 
-> [!note]
-> The run lands at `restarts/runs/enroll-and-stabilize-pre-restart-YYYYMMDD-HHMMSS/`
-> and is indexed in that category's `MANIFEST.md`. Nothing needs to glob for it:
-> `official/enroll-and-stabilize-pre-restart.txt` names the run that counts, which
-> is how Step 10 and Phase 9 both find it.
+`sudo -v` refreshes that credential without running anything, so the record gets
+the number that matters. It is optional: without it the run still succeeds, and
+the profile row simply reports `user scope` and says so.
+
+The run lands at `restarts/runs/enroll-and-stabilize-pre-restart-YYYYMMDD-HHMMSS/`
+and is indexed in that category's `MANIFEST.md`. Nothing needs to glob for it:
+`official/enroll-and-stabilize-pre-restart.txt` names the run that counts, which
+is how Step 10 and Phase 9 both find it.
 
 
 If the external artifact volume is already reconnected, force the record onto it explicitly:
@@ -789,10 +766,9 @@ sudo -v && ./bin/record-enrollment.sh --context pre-restart --artifact-root "$RE
 
 The script prints each subsystem as it runs, writes the twelve `raw/NN-*.txt` files, generates `record.md`, writes `rows.tsv` beside it, and indexes the run.
 
-> [!note]
-> `WARN` on a row does not mean failure. Review the raw file for context — a `WARN` on the macOS updates row while updates are still pending is expected before Step 6 finishes.
->
-> The record states what the machine reported and nothing more. It carries no exit criteria and no `TODO` rows: those are Step 10's, asked once, against the post-restart run. That separation is why rerunning a capture here can never discard an answer someone already gave.
+`WARN` on a row does not mean failure. Review the raw file for context — a `WARN` on the macOS updates row while updates are still pending is expected before Step 6 finishes.
+
+The record states what the machine reported and nothing more. It carries no exit criteria and no `TODO` rows: those are Step 10's, asked once, against the post-restart run. That separation is why rerunning a capture here can never discard an answer someone already gave.
 
 > [!bug] Troubleshooting
 > If the profiles row recorded nothing at all, see [[#Profiles list is empty right after enrollment|Profiles list is empty right after enrollment]].
@@ -877,11 +853,10 @@ recorded, read from that run's `rows.tsv`, which the script finds through
 no way to sign off against the Step 7 record by accident, and a checklist built
 this way cannot disagree with the evidence it cites.
 
-> [!warning] Pitfall
-> A `FAIL` on **Post-restart baseline recorded** means Step 9 has not run since
-> the restart. Run it, then rerun this — do not answer around the row. The whole
-> close-out is a statement about the post-restart machine, and without that run
-> there is nothing for it to be about.
+A `FAIL` on **Post-restart baseline recorded** means Step 9 has not run since the
+restart. Run it, then rerun this rather than answering around the row: the whole
+close-out is a statement about the post-restart machine, and without that run
+there is nothing for it to be about.
 
 **Answer the Manual rows.** Nothing re-probes them and no later phase collects
 them: you answer them by editing `checklist.md` itself. Replace each `TODO` with
@@ -907,10 +882,10 @@ rather than restoring them, so matching fingerprints would be the surprising
 result.
 
 > [!warning] Pitfall
-> Each run writes its own dated directory, so a rerun does not update the file you
-> answered — it produces a new `checklist.md` with every Manual row back at
-> `TODO`. Answer them in the last run you intend to keep, and carry the answers
-> forward if you rerun after answering.
+> **Rerunning this does not update the checklist you answered — it writes a new
+> one with every Manual row back at `TODO`.** Each run lands in its own dated
+> directory, so answer the Manual rows in the last run you intend to keep, and
+> carry your answers forward if you rerun after answering.
 
 The exit criteria for this phase, and where each is settled:
 

@@ -39,7 +39,7 @@ Restore the identity, trust, and credential layer on the reimaged Mac after the 
 > In Obsidian, these are internal heading links. Click in Reading View, or Cmd-click in Live Preview/editing mode.
 
 > [!info] Callout legend
-> This runbook uses Obsidian callouts so each type reads distinctly: `[!note]` an easily-missed fact · `[!warning]` Pitfall, a mistake you are likely to make here · `[!bug]` Troubleshooting, what to do when a step misbehaves.
+> Two kinds, used sparingly. `[!warning]` **Pitfall** — skipping it costs something you do not get back: state overwritten, a security boundary crossed, or a wrong result that stays quiet until a later phase. `[!bug]` **Troubleshooting** — what to do when a step misbehaves. Everything else is prose, in the paragraph that needed it. A box around an explanation only makes the explanation easier to skip.
 
 ---
 
@@ -137,30 +137,27 @@ $REIMAGE_ARTIFACT_ROOT/home-files-backup/dotfiles/                      # review
 $REIMAGE_ARTIFACT_ROOT/public-certs/                                    # reviewed non-secret CA and trust reference material
 ```
 
-> [!note]
-> That list is the image's fourteen categories, and it is authoritative because
-> it comes from the image itself. Confirm yours without the DMG password:
->
-> ```bash
-> cat "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/"all-secrets-*-categories.txt
-> ```
->
-> The list is what *this* image happens to carry, not the full scheme.
-> `git/`, `licenses/` and `package-managers/` are real categories that
-> `create-secrets-dmg.sh` stages **only when there is applicable material** — no
-> `~/.git-credentials`, no `.npmrc` worth keeping, no locally-exported license
-> file, and the category simply is not created. Absent here does not mean
-> unsupported, and a future image may well carry all three.
->
-> `cloud/` (AWS) is the one that is excluded by design rather than by
-> circumstance: cloud CLIs are re-authenticated after a reimage rather than
-> restored, so the category is never staged. See
-> [[create-secrets-dmg#What Gets Staged|create-secrets-dmg → What Gets Staged]].
->
-> Note that `git/` is about credentials — `~/.git-credentials` and helper cache.
-> `~/.gitconfig` is not a credential; it is in `home-files-backup/dotfiles/` and
-> Phase 11A restores it. The two are easy to conflate and live in different
-> places.
+That list is the image's fourteen categories, and it is authoritative because it
+comes from the image itself. Confirm yours without needing the DMG password:
+
+```bash
+cat "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/"all-secrets-*-categories.txt
+```
+
+What it names is what *this* image happens to carry, not the full scheme. `git/`,
+`licenses/` and `package-managers/` are real categories that
+`create-secrets-dmg.sh` stages **only when there is applicable material** — no
+`~/.git-credentials`, no `.npmrc` worth keeping, no locally-exported license
+file, and the category is simply not created. Absent here does not mean
+unsupported, and a future image may well carry all three. `cloud/` (AWS) is the
+one excluded by design rather than by circumstance: cloud CLIs are
+re-authenticated after a reimage rather than restored, so it is never staged. See
+[[create-secrets-dmg#What Gets Staged|create-secrets-dmg → What Gets Staged]].
+
+`git/` here means credentials — `~/.git-credentials` and the helper cache.
+`~/.gitconfig` is not a credential: it lives in `home-files-backup/dotfiles/` and
+Phase 11A restores it. The two are easy to conflate, and they live in different
+places.
 
 Artifacts this phase generates, all under `$REIMAGE_ARTIFACT_ROOT/reimaged-system/`:
 
@@ -180,6 +177,10 @@ state/official/restore-access-delta.txt                          # newest delta
 state/runs/restore-access-delta-YYYYMMDD-HHMMSS/                 # Step 11 — delta.md, before vs after
 
 comparisons/MANIFEST.md                                          # index of every comparison
+comparisons/official/restore-access-cert-diff.txt                # newest certificate diff
+comparisons/runs/restore-access-cert-diff-YYYYMMDD-HHMMSS/       # Step 4 — comparison.md, deferred.md, rows.tsv
+comparisons/official/restore-access-jdk-trust-diff.txt           # newest JDK trust diff
+comparisons/runs/restore-access-jdk-trust-diff-YYYYMMDD-HHMMSS/  # Step 6 — comparison.md, rows.tsv
 comparisons/official/restore-access-inventory-diff.txt           # newest inventory diff
 comparisons/runs/restore-access-inventory-diff-YYYYMMDD-HHMMSS/  # Step 11 — comparison.md, vs the pre-image captures
 
@@ -269,6 +270,32 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 
 Run these in order. The order enforces a trust chain: SSH before Git access, keychain trust before Java trust, JDK trust before shell restore, credentials last of the identity-adjacent material, DMG eject last of all.
 
+**Every step is safe to re-run, and re-running is how you resume.** If you are
+picking this phase back up and cannot recall which steps you finished, run them
+again rather than trying to reconstruct it — each one detects the work it already
+did and reports that instead of repeating it:
+
+| Step | What a second run reports |
+|---|---|
+| 1 mount | `already mounted` — the attached image is found, not re-attached |
+| 3 ssh | Copies the same content and re-applies the modes; a partial run is completed |
+| 5 trust | `already trusted in the admin domain — nothing to do` |
+| 6 java | `already carries the … trust set`, per JDK, computed from the alias set rather than assumed |
+| 7 corp-ca | Bundle rebuilt from source, never appended to; `~/.zprofile already carries the block` |
+| 8 dotfiles | Reports only — it never writes |
+| 9 credentials | Reports only — it never writes |
+
+The whole phase in order, which is the same thing as resuming it:
+
+```bash
+./bin/restore-access.sh
+```
+
+Add `--dry-run` to see what the ordered run would do without doing any of it, or
+`--from <step>` to start partway. A step that needs you rather than failing —
+an admin password, a decision — reports a `GATE` and the run continues; re-run
+that step alone once you have passed it.
+
 ### Step 0 — Record Prerequisites and the Before-State
 
 Two recordings, both taken before anything is mounted or written. They answer
@@ -291,13 +318,12 @@ stands before the phase touches it.
 ./bin/record-restore-state.sh --runbook restore-access --point before
 ```
 
-> [!note]
-> Every block in this runbook shows a `--dry-run` line above the real one. It
-> prints the table and writes nothing. On **0b** that preview is worth more than
-> anywhere else: `before` is a first-wins point, so the first capture recorded is
-> the one that stays official, and a mistimed one cannot be replaced — only
-> annotated with a pin explaining why it is wrong. Read the target list, confirm
-> it describes a machine the phase has not touched, then record.
+Every block in this runbook shows a `--dry-run` line above the real one; it
+prints the table and writes nothing. On **0b** that preview is worth more than
+anywhere else. `before` is a first-wins point, so the first capture recorded is
+the one that stays official, and a mistimed one cannot be replaced — only
+annotated with a pin explaining why it is wrong. Read the target list, confirm it
+describes a machine the phase has not touched, then record.
 
 > [!warning] Pitfall
 > **0b expires and 0a does not.** The prerequisite check is rerunnable at any
@@ -334,14 +360,14 @@ set it resolves to a real directory, which is the more useful before-state.
 | Build and runtime tooling present | `WARN`. A gap blocks a later phase, not this one. |
 | Runtime comparison recorded | `WARN`. Evidence that Phase 10A Step 10 ran. |
 
-> [!warning] Pitfall
-> The Java row is checked here rather than left to Step 6 because it fails
-> invisibly. Step 6 resolves `JAVA_HOME` through `/usr/libexec/java_home`,
-> and command substitution swallows a non-zero exit — so `JAVA_HOME` becomes the
-> empty string, the next line writes `jssecacerts` to `/lib/security/jssecacerts`,
-> which is neither the JDK nor a directory that exists, and the TLS smoke test
-> afterwards fails for a reason unrelated to the certificate you just restored.
-> Catching it here costs one command; catching it there costs an hour.
+The Java row is checked here rather than left to Step 6 because it is the one
+that fails invisibly. Step 6 resolves `JAVA_HOME` through
+`/usr/libexec/java_home`, and command substitution swallows a non-zero exit — so
+`JAVA_HOME` becomes the empty string, the next line writes `jssecacerts` to
+`/lib/security/jssecacerts`, which is neither the JDK nor a directory that
+exists, and the TLS smoke test afterwards fails for a reason unrelated to the
+certificate you just restored. Catching it here costs one command; catching it
+there costs an hour.
 
 **Confirm the JDK values this phase reads.** Phase 10A Step 7 chose
 `REIMAGE_JDK_BASELINE`, resolved `JAVA_HOME` from it, and wrote both into
@@ -385,10 +411,9 @@ python3 bin/prepare-artifact-root.py \
   "JAVA_HOME=${JAVA_HOME%/}"
 ```
 
-> [!note]
-> `upsert-env` writes whatever it is given, including an empty value, and reports
-> no error when it does. That is why the `<empty>` check above comes first rather
-> than trusting the assignment to have worked.
+`upsert-env` writes whatever it is given, including an empty value, and reports
+no error when it does — which is why the `<empty>` check above comes first,
+rather than trusting the assignment to have worked.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -396,49 +421,47 @@ python3 bin/prepare-artifact-root.py \
 
 ### Step 1 — Mount the Encrypted Secrets DMG
 
-Mount the newest DMG read-only-ish; macOS mounts DMGs read-write by default, and that's fine here because the DMG is the source, not a target:
-
 ```bash
-DMG="$(ls -1 "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/"all-secrets-*.dmg 2>/dev/null | sort | tail -1)"
-MNT="$(hdiutil attach "$DMG" | awk -F'\t' '/\/Volumes\//{print $NF}' | tail -1)"
-if [ -n "$MNT" ] && [ -d "$MNT" ]; then
-  printf 'Mounted at: %s\n' "$MNT"
-else
-  printf 'MOUNT FAILED. MNT=%s — stop here; do not run any step below.\n' "${MNT:-<empty>}" >&2
-fi
+./bin/restore-access.sh mount
 ```
 
-Enter the password when prompted. Confirm the mount:
+It selects the newest `all-secrets-*.dmg` under
+`$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/`, prompts for the Phase 3C passphrase,
+and prints the mount point it actually got.
+
+**Re-running is safe.** An image already attached is detected and reported rather
+than attached a second time, so if you are resuming and cannot recall whether
+this ran, run it. That applies to every step in this phase.
+
+Every later step reads from the mounted image; do not copy its contents wholesale
+to disk. Steps run through the script find the mount themselves. For a command
+you type by hand, ask for the path rather than re-deriving it:
 
 ```bash
-hdiutil info | grep -A1 all-secrets
-ls "$MNT"/
+MNT="$(./bin/restore-access.sh mnt)"
+printf 'MNT = %s\n' "$MNT"
 ```
 
-> [!warning] Pitfall
-> The mount point is **not** derived from the `.dmg` filename. It comes from the `-volname` passed to `hdiutil create` back in Phase 3C, and the two need not match — so `/Volumes/all-secrets-*` can glob to nothing on a perfectly good image. Capture `$MNT` here and use it in every step below, including the detach in Step 10: if that glob fails, the command silently does nothing and the plaintext secrets stay mounted.
+Ask rather than re-derive, because both obvious ways of working the path out by
+hand fail quietly. The mount point is **not** taken from the `.dmg` filename: it
+comes from the `-volname` passed to `hdiutil create` back in Phase 3C, and the
+two need not match, so `/Volumes/all-secrets-*` can glob to nothing on a
+perfectly good image. That is why the script and the `mnt` query both locate the
+image by a directory it always carries, `staged-loose/MANIFEST.tsv`, rather than
+by name.
 
-> [!warning] Pitfall
-> `MNT="$(hdiutil attach …)"` is the same command-substitution swallow that Step 0's Java row exists to catch. A wrong password, an already-attached image, or a corrupt DMG all exit non-zero, `awk` prints nothing, and `MNT` becomes the **empty string** — which a bare `echo "$MNT"` renders as a blank line that looks like output. Every step below then runs against `/`: Step 3 copies from `/ssh/*`, Step 5 reads `/certs/…`, and Step 10 runs `hdiutil detach ""`. The guard above is why the mount prints a labelled path rather than a bare one.
-
-Every subsequent step reads from `"$MNT"`; do not copy the DMG's contents wholesale to disk.
-
-`$MNT` lives only in the shell that ran the attach. If you continue in a new terminal, re-derive it from a directory the image always carries rather than from the filename:
-
-```bash
-MNT=""
-for d in /Volumes/*/staged-loose; do
-  [ -f "$d/MANIFEST.tsv" ] && MNT="$(dirname "$d")"
-done
-if [ -n "$MNT" ] && [ -d "$MNT" ]; then
-  printf 'Re-derived mount: %s\n' "$MNT"
-else
-  printf 'No mounted secrets image found. Re-attach with the block above.\n' >&2
-fi
-```
-
-> [!warning] Pitfall
-> The obvious one-liner for this — `MNT="$(dirname "$(ls -1d /Volumes/*/staged-loose | tail -1)")"` — fails into a value that looks valid. No match means `ls` errors, the inner substitution is empty, and **`dirname ""` returns `.`**, so `$MNT` silently becomes your current directory and every later `"$MNT"/ssh/*` reads out of the toolkit checkout. The loop above also tests for `MANIFEST.tsv` rather than the bare directory, matching how `bin/restore-staged-loose.sh` finds the same image.
+A hand-rolled `MNT="$(hdiutil attach …)"` is the same command-substitution
+swallow that Step 0's Java row exists to catch. A wrong password, an
+already-attached image or a corrupt DMG all exit non-zero, `awk` prints nothing,
+and `MNT` becomes the **empty string** — which a bare `echo "$MNT"` renders as a
+blank line that looks like output. Every later step then runs against `/`:
+copying from `/ssh/*`, reading `/certs/…`, and finally `hdiutil detach ""`. The
+one-liner for re-deriving it has the same shape —
+`MNT="$(dirname "$(ls -1d /Volumes/*/staged-loose | tail -1)")"` — where no match
+means `ls` errors, the inner substitution is empty, and **`dirname ""` returns
+`.`**, so `$MNT` silently becomes your current directory and every later
+`"$MNT"/ssh/*` reads out of the toolkit checkout. The script fails the step
+instead, and the `mnt` query exits non-zero rather than printing nothing.
 
 > [!bug] Troubleshooting
 > If `hdiutil attach` reports the image as corrupt, see [[#`hdiutil attach` says the DMG is corrupt|`hdiutil attach` says the DMG is corrupt]].
@@ -481,8 +504,7 @@ Each row is copied back to the artifact-root-relative path recorded in the manif
 
 A second run should report every row as `EXISTS` and `Would restore: 0`. The script copies rather than moves, so it is safe to repeat.
 
-> [!note]
-> `MISSING` rows are recorded in the manifest but absent from the image. That means the DMG predates the sweep that wrote those rows — check you attached the newest `all-secrets-*.dmg`, not an earlier one.
+`MISSING` rows are recorded in the manifest but absent from the image, which means the DMG predates the sweep that wrote those rows — check you attached the newest `all-secrets-*.dmg` and not an earlier one.
 
 > [!warning] Pitfall
 > This deliberately puts plaintext credentials back onto the artifact drive. That is required for the restore to be complete, but the drive is no longer clean afterwards. Before the artifact root is retired, handed to anyone, or stored long-term, re-run `./bin/stage-loose-secrets.sh --apply` to sweep them back behind the encryption boundary — or wipe the drive.
@@ -493,100 +515,42 @@ A second run should report every row as `EXISTS` and `Would restore: 0`. The scr
 
 ### Step 3 — Restore SSH and Git Access
 
-SSH first because everything else that talks to GitHub or an internal Git server needs it.
-
-Copy the SSH material into place:
-
 ```bash
-mkdir -p ~/.ssh
-cp -R "$MNT"/ssh/* ~/.ssh/
+./bin/restore-access.sh ssh
 ```
 
-> [!note]
-> Only SSH material comes out of the image here. `~/.gitconfig` and
-> `~/.config/git/` are **not** in it — they are not credentials, so Phase 3A
-> never staged them. They live in the reviewed dotfiles bundle at
-> `$REIMAGE_ARTIFACT_ROOT/home-files-backup/dotfiles/`, and restoring them is
-> Phase 11A's job per the Ownership table above. The image carries no `git/`
-> category and never has, so copying one out of it fails with *"No such file or
-> directory"* — which reads like a missing capture rather than a category that
-> was never built. Confirm what yours holds without the password:
->
-> ```bash
-> cat "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/"all-secrets-*-categories.txt
-> ```
+It copies the image's `ssh/` category into `~/.ssh`, then sets the modes SSH
+insists on: `700` on the directory, `600` on every private key, `644` on the
+public ones. It reports the counts it applied and lists the host aliases found in
+`~/.ssh/config`.
 
-Fix permissions — the SSH client refuses to use loose keys:
+**Re-running is safe.** The copy overwrites with the same content and the modes
+are set unconditionally, so a partial earlier run is completed rather than
+compounded.
 
-```bash
-chmod 700 ~/.ssh
-find ~/.ssh -type f -exec chmod 600 {} \;
-```
+Mode is not cosmetic here. `ssh` refuses a private key that is group- or
+world-readable, and the error names permissions rather than the key — which reads
+like a missing key on a machine where the key is present and correct. A plain
+`cp -R` from a mounted image does not preserve the modes, so the step sets them
+itself.
 
-Confirm the SSH identity works — against the **host alias you actually use**,
-not against `github.com`. The dual-identity routing `restore-git.md` sets up in
-Phase 11A works through aliases, so on a machine that follows that convention
-there may be no `Host github.com` block at all, and a bare `github.com` test
-offers no key.
+**The step tests each alias itself**, so there is nothing to type. For every
+`Host` in `~/.ssh/config` it seeds the host key with `ssh-keyscan`, then probes
+non-interactively and reports the greeting, the error, or a stall.
 
-List what the restored config defines, then test each alias you rely on:
+Leave the testing to the step rather than typing a bare `ssh -T <alias>`. That
+command blocks on the host-key prompt — which, in a pasted block, is answered by
+whatever line follows it — and it can then hang indefinitely *after* the key is
+accepted. `ConnectTimeout` does not save you: it bounds the TCP connect, and that
+stall comes later. The probe seeds the host key first and carries its own
+watchdog, giving up at 20 seconds.
 
-```bash
-grep -E '^Host ' ~/.ssh/config
-```
-
-The image restores more keys than the machine still uses. Nothing deletes a key
-that was rotated out, so what comes back is every key you have ever had rather
-than the set that still authenticates. Three facts separate them: the
-**fingerprint**, which is what you compare against each account's registered
-keys; whether `~/.ssh/config` **names** it, which is the best evidence of what
-the previous machine actually used; and whether it carries a **passphrase**.
-
-```bash
-find "$HOME/.ssh" -maxdepth 1 -name '*.pub' -type f | sort | while IFS= read -r pub; do
-  key="${pub%.pub}"
-  ref="not in config"
-  grep -qF "$(basename "$key")" "$HOME/.ssh/config" 2>/dev/null && ref="in config"
-  pass="passphrase required"
-  ssh-keygen -y -f "$key" </dev/null >/dev/null 2>&1 && pass="no passphrase"
-  printf '%s  [%s, %s]\n  %s\n' "$(basename "$key")" "$ref" "$pass" "$(ssh-keygen -lf "$pub")"
-done
-```
-
-Two details in that block are load-bearing. It iterates `find` output rather than
-a `*.pub` glob because an unmatched glob in **zsh** is an error that aborts the
-line — the `[ -e "$f" ] || continue` idiom is a Bash habit that never gets to run
-here, and this runbook is pasted into interactive zsh. And the `</dev/null` is
-what makes the passphrase test non-interactive: `ssh-keygen -y` prompts when a
-key is encrypted, so with no stdin it fails immediately instead of stopping the
-loop at the first protected key. A key reported as needing a passphrase you no
-longer have is replaceable without the old one — see
-[[#`ssh -T` fails after the keys are restored|`ssh -T` fails after the keys are restored]].
-
-A key marked `not in config` is a candidate for retirement, not a defect. It may
-still be authorized on an account, a server, or an `authorized_keys` file
-somewhere, so check its fingerprint against everything it might reach before
-deleting anything — unreferenced locally and unregistered remotely are different
-claims. For the keys that *are* referenced, compare each fingerprint against what
-that account has registered. [[restore-git|restore-git.md]] Step 2 repeats that
-comparison for the two keys `reimage.env` names; this is the wider inventory that
-tells you which two those should be.
-
-```bash
-GIT_ALIAS="paste-an-alias-from-the-list-above"
-ssh -T "git@$GIT_ALIAS" || true
-```
+If you do test by hand, test an alias and never a bare hostname. A bare host has
+no `IdentityFile`, so SSH offers no key and the test fails for a reason unrelated
+to the keys you just restored.
 
 > [!bug] Troubleshooting
-> `ssh -T` failing here has three unrelated causes that look alike — an absent
-> key, a host with no `IdentityFile`, and a network that cannot carry the
-> protocol. See [[#`ssh -T` fails after the keys are restored|`ssh -T` fails after the keys are restored]].
-
-> [!note]
-> The full Git identity workflow (work vs personal routing, per-repo `.gitconfig`, dual-identity `~/.gitconfig`) belongs to [[restore-git|restore-git.md]] in Phase 11A. This step is only about SSH reachability.
-
-> [!bug] Troubleshooting
-> If SSH prompts for the key passphrase in every new shell, see [[#SSH keeps prompting for a passphrase every session|SSH keeps prompting for a passphrase every session]].
+> If an alias stalls with no output after the host key, see [[#An SSH alias hangs after the host key is accepted|An SSH alias hangs after the host key is accepted]].
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -594,69 +558,215 @@ ssh -T "git@$GIT_ALIAS" || true
 
 ### Step 4 — Restore Certificates and Keychain Material
 
-**First ask the machine, not the image.** On a managed Mac, enrolment in Phase 8
+**First ask the machine, not the image.** On a managed Mac, enrollment in Phase 8
 usually installs the corporate CA chain through a configuration profile, so some
 or all of what this step would import is already present before you start. The
-step is scoped to the *gap*, and you cannot see the gap without looking at both
-sides.
+step is scoped to the *gap*, and the gap is invisible from either listing alone.
 
 ```bash
-security find-certificate -a -Z 2>/dev/null | grep -E '^SHA-256 hash:|"(labl|alis)"'
+./bin/restore-access.sh certs
 ```
 
-That prints every certificate in your keychains as a hash followed by its label.
-Read it against the listing below and import only what is genuinely missing.
-Importing a certificate that is already installed is not harmful, but it hides
-the more useful fact — that enrolment already did the work, and a missing cert
-therefore means enrolment did *not*, which is a different problem with a
-different fix.
+That identifies the corporate root on the image and writes a comparison run under
+`reimaged-system/comparisons/`, context `restore-access-cert-diff`, holding
+`comparison.md`, `deferred.md` and `rows.tsv`. Open the comparison:
 
-> [!note]
-> Presence is not trust. A certificate can be installed and carry no trust
-> settings at all. Step 5 is about the second thing, and these are what it reads:
->
-> ```bash
-> security dump-trust-settings 2>/dev/null; echo "--- admin domain ---"; security dump-trust-settings -d 2>/dev/null
-> ```
->
-> If enrolment delivered the chain through a profile, trust may already be set
-> and Step 5 becomes a verification rather than an action.
+```bash
+CMP="$REIMAGE_ARTIFACT_ROOT/reimaged-system/comparisons"
+open "$CMP/$(cat "$CMP/official/restore-access-cert-diff.txt")/comparison.md"
+```
 
-**Then see what the image carries.** Phase 3A stages certificates into more than one place, and which of them holds the corporate root depends on how it was captured:
+It opens with **What to install**, and that section is the answer. Nothing else
+in the file is an action.
+
+| Section | What to do with it |
+|---|---|
+| **What to install** | The result. Import these; check `Role` and `CA` on each first. |
+| **Deferred — decided against, not lost** | The count and the two reasons. Itemised in `deferred.md`. |
+| **The corporate chain** | How the pieces relate. Read this when a row surprises you. |
+| **How that number was reached** | The arithmetic, if the count surprises you. |
+| **Already installed by enrollment** | Keep. Do not import over them. |
+| **In the keychains only** | Context. Nothing here is an action. |
+
+**What to install is narrower than "on the image and not installed."** Two
+subtractions produce it, and they answer different questions:
+
+| Subtraction | Question it answers |
+|---|---|
+| minus what is already in a keychain, minus the built-in public roots | *Is this already trusted?* |
+| minus what has expired, minus what chains to no authority this organisation owns | *If it is not, is it something to act on?* |
+
+The second subtraction is why a capture holding 130-odd public CAs does not
+produce 130 things to do. Membership of the corporate chain is resolved by
+issuer, transitively from the pinned root — the root, whatever it issued,
+whatever those issued in turn — and certificates already in a keychain take part
+in that walk, so a corporate intermediate that enrollment installed still
+vouches for its children on the image.
+
+Each row is one distinct certificate. A certificate staged twice on the image —
+once as PEM, once as DER, or once loose and once inside a bundle — is one
+decision, so its source paths are joined into a single row rather than repeating
+it. A bundle contributes each certificate in it separately, cited as
+`<path>#<n>`.
+
+Two things are deliberately left out of the comparison, and both would be
+noticeable if the exclusion ever failed. `certs/java-security/` is not compared
+at all: those are the per-JDK `jssecacerts` truststores, full of public roots — a
+JVM trust store, not something to import into the login keychain. They belong to
+[[#Step 6 — Restore Java Trust Overrides|Step 6]], which decides per JDK whether
+to take the captured store wholesale or merge only its additions. A public CA
+turning up under **What to install** would be this exclusion failing.
+
+The built-in public roots are the other. A capture can carry a whole CA bundle,
+and most images do; where it does, nearly everything in it is the public trust
+store this Mac already has. Those are counted as public roots and deliberately
+not listed — there are typically 130-odd of them, none is an action, and listing
+them buries the handful that are. The corporate certificates are what is left
+once they are subtracted.
+
+#### Root, intermediate, leaf — only one of them is a trust decision
+
+**What to install** can be non-empty and still require nothing of you, and the
+`Role` column is what tells the difference.
+
+| Role | What it is | Is installing it a decision? |
+|---|---|---|
+| **root** | Self-signed: it vouches for itself. | **Yes.** Installing a root asserts that you believe it. There is normally exactly one. |
+| **intermediate** | Signed by the root. | **No.** It is valid because the root is trusted. A correctly configured TLS server sends its intermediates with the leaf, so a client needs its own copy only against a server that fails to send the chain — and the fix for that is normally the server. |
+| **leaf** | An endpoint or client identity. | **Never.** Re-enrollment reissues these; see the Pitfall below. |
+
+So a **What to install** list made entirely of intermediates, under a root that is
+already in the keychain, is a list of things that are almost certainly
+unnecessary. Installing them anyway is harmless. Leaving them out costs nothing
+and is easy to revisit. The report says so explicitly when that is the case.
+
+**The corporate chain** section lays out every certificate on either side that
+chains to the root, ordered root first, with where each one lives. The buckets
+sort by *where* a certificate is; this sorts by *what it is*, which is what makes
+the pieces legible as one structure rather than a list of fingerprints. Three
+things it exists to settle:
+
+- **Two intermediates with different subjects under one root are siblings, not
+  versions of each other.** A two-tier PKI commonly runs one issuing CA per
+  network zone or directory namespace — which is what the `DC=` components name,
+  so `DC=dmz, DC=certprod` and `DC=com, DC=afginc, DC=ga` are two different
+  places, not one place renamed. Neither supersedes the other, and enrollment
+  having installed one says nothing about whether you need the other.
+- **Two certificates with the same subject and different fingerprints are one CA
+  renewed** — the same issuing authority, re-issued with a new validity window.
+  That is one decision, not two.
+- **An intermediate whose `notAfter` matches the root's exactly is not a
+  coincidence, and not evidence that two certificates are the same one.** An
+  intermediate cannot outlive its issuer, so a CA that issues with a clamped
+  lifetime stamps every intermediate with the root's own expiry. Two unrelated
+  intermediates under one root routinely share an expiry to the second.
+
+The chain also shows this Mac's own client identity, if enrollment issued one,
+sitting under whichever intermediate signed it — which is the most direct
+evidence of which issuing CA is actually in use here.
+
+#### Nothing is discarded silently
+
+Every certificate the phase declines to import is written to **`deferred.md`** in
+the same run directory, with its subject, issuer, dates, fingerprint, source path
+on the image, and the reason it was left alone. Two reasons exist:
+
+| `Why` | What it means | Could it be the cause of a later failure? |
+|---|---|---|
+| `expired` | Past `notAfter`. | Almost never. Nothing can chain to it today, so installing it changes nothing; a host that still needs that authority needs the *renewed* one, which arrives through enrollment. |
+| `not the corporate chain` | Current, but issued by nobody this organisation owns — a public CA the Phase 3A capture swept up. | Possibly. Most were dropped from the system trust store deliberately, and a distrusted root is one to leave uninstalled — but a partner or vendor endpoint can legitimately depend on one. |
+
+`deferred.md` carries the command to inspect any single one before deciding,
+including how to pull one member out of a bundle — `openssl x509` reads only the
+*first* certificate in a file, so a source cited `<path>#<n>` has to be split
+first.
+
+**You do not have to decide now.** Skipping all of them is the correct default:
+the corporate chain is what this phase exists to restore, and the rest are
+leftovers of a capture that swept broadly on purpose. Come back only if something
+fails in a way that looks like a missing CA — TLS refusing an internal host, a
+build unable to verify a repository, a proxy rejecting a certificate.
+
+Even then, the honest test is the failing connection itself rather than the list:
+
+```bash
+openssl s_client -connect <host>:443 -showcerts </dev/null 2>/dev/null | grep -E '^ *[0-9] s:|^ *[0-9] i:'
+```
+
+The topmost issuer is the authority that has to be trusted. If it is not in
+`deferred.md`, nothing skipped here is the problem.
+
+The report is a snapshot, and re-running is how it is refreshed. Each run of
+`./bin/restore-access.sh certs` rebuilds the comparison from the live keychains,
+so anything installed since drops off the deferred list by itself. The newest run
+is always the current answer to *what is still outstanding*, and the older runs
+stay in the index as the record of what was outstanding when. That is also the
+answer to "which ones did I end up not installing": install what you decide to,
+re-run, and the deferred list in the new run is exactly the remainder.
+
+#### Reading the rest of the report
+
+**The root is pinned from a file on the mounted image, and that is correct even
+when enrollment already installed it.** A keychain stores certificates, not
+files, and both `security add-trusted-cert` in Step 5 and the CA bundle in Step 7
+need a file — the image is where one exists. It is not a *different* root:
+matching is on SHA-256, so a row appearing under **Already installed by
+enrollment** is byte-identical to what enrollment delivered, and Step 5 then
+finds it already trusted and does nothing. That is the correct outcome, not a
+skipped step.
+
+**Already installed by enrollment** is an intersection, so it can never be larger
+than the number of certificates the image carries. If it looks small next to a
+keychain listing you ran by hand, that is why — the hand listing is closer to
+**In the keychains only**, which is usually the biggest section here. Both counts
+also exclude the ~150 built-in public roots, because `security find-certificate`
+searches the login and System keychains and not
+`SystemRootCertificates.keychain`.
+
+**Import only what is on the image and not installed.** The installed copy is the
+one to keep: it arrived through the channel that also carries its trust settings
+and that MDM re-delivers, while the file on the image is a snapshot of a chain
+that may since have been rotated. Importing a certificate that is already present
+is not harmful, but it hides the more useful fact — that enrollment already did
+the work, and so a certificate that is *missing* means enrollment did not, which
+is a different problem with a different fix.
+
+Matching is on SHA-256 and never on label, which matters more than it sounds: the
+same CA is routinely filed under a different name in a keychain than in a file on
+the image, and a name-based comparison reports a certificate as missing when it
+is installed under another one.
+
+> [!warning] Pitfall
+> Read the `CA` column before Step 5. A `CA:FALSE` row in **What to install** is
+> a **leaf**, usually the old machine's client identity, swept up by Phase 3A
+> because it was credential-shaped. Re-enrollment issues a new one, so restoring
+> the old is at best inert and at worst confusing later — two client certs for
+> the same subject, one of them dead. Marking one Always Trust is worse: it tells
+> the system to trust a single endpoint's certificate as though it were an
+> authority.
+
+An empty **What to install** section is a clean result rather than a failed run:
+it means enrollment installed everything the image carries, and Step 5 becomes a
+verification instead of an action. An empty **Already installed by enrollment**
+section is the opposite — on a managed Mac, enrollment not having delivered the
+chain is itself the finding.
+
+Presence is not trust, either. A certificate can be installed and carry no trust
+settings at all; Step 5 is about the second thing, and these are what it reads:
+
+```bash
+security dump-trust-settings 2>/dev/null; echo "--- admin domain ---"; security dump-trust-settings -d 2>/dev/null
+```
+
+**See what the image carries, if you need the layout.** Phase 3A stages
+certificates into more than one place, and the comparison names each row's source
+path — but the tree itself is sometimes worth seeing:
 
 ```bash
 ls -R "$MNT/certs"
 ```
 
-> [!warning] Pitfall
-> `keychain-manual-exports/` holds a `.p12` only when a Keychain identity was **exportable**, and on a managed Mac many are not — the export refuses with *"The contents of this item cannot be retrieved."* Where that happened, the directory holds Phase 3A's review notes and no certificate, and the reviewed cert material sits under `loose-candidates-selected/` instead. This is why the listing above decides where to look rather than the step naming a file: an assumed `root-ca.cer` fails with "No such file or directory" and reads like a missing file rather than a wrong assumption. Phase 3A's notes in that directory record which identities refused and why. Non-exportable identities are re-issued by re-enrolment; no backup can restore them.
-
-**Identify every candidate before importing any of them.** A directory of
-`.pem` and `.cer` files tells you nothing about which are certificate
-authorities and which are leaf certificates, and the names actively mislead —
-`<org>-cert.pem` sitting beside `<org>-issuing-ca.pem` and `root-<org>-ca.pem`
-is a leaf in CA company.
-
-```bash
-for f in "$MNT"/certs/loose-candidates-selected/*; do b=$(basename "$f"); for form in PEM DER; do if openssl x509 -in "$f" -inform $form -noout >/dev/null 2>&1; then printf '\n%s\n' "$b"; openssl x509 -in "$f" -inform $form -noout -subject -issuer | sed 's/^/   /'; printf '   sha256=%s\n' "$(openssl x509 -in "$f" -inform $form -noout -fingerprint -sha256 | sed 's/.*=//')"; printf '   %s\n' "$(openssl x509 -in "$f" -inform $form -noout -text | grep -A1 'Basic Constraints' | tail -1 | sed 's/^ *//')"; break; fi; done; done
-```
-
-Three things come out of that, and each decides something:
-
-| Field | What it settles |
-|---|---|
-| `CA:TRUE` / `CA:FALSE` | Whether it is an authority at all. `CA:FALSE` is a **leaf** — never mark it Always Trust in Step 5. |
-| `subject` = `issuer` | Self-signed, so it is a **root**. Differing means it is an issuing/intermediate CA. |
-| `sha256` | Its identity. Compare against the keychain listing above — **match on this, never on the label**, since the same CA is routinely filed under different names in different places. |
-
-> [!warning] Pitfall
-> A leaf certificate in this directory is usually the *old machine's* client
-> identity, swept up by Phase 3A because it was credential-shaped. Re-enrolment
-> issues a new one, so restoring the old is at best inert and at worst confusing
-> later — two client certs for the same subject, one of them dead. Marking one
-> Always Trust is worse: it tells the system to trust a single endpoint's
-> certificate as though it were an authority. The exit checklist asks you to
-> confirm you did not, which is too late to be the only place it is said.
+`keychain-manual-exports/` holds a `.p12` only when a Keychain identity was **exportable**, and on a managed Mac many are not — the export refuses with *"The contents of this item cannot be retrieved."* Where that happened the directory holds Phase 3A's review notes and no certificate, and the reviewed cert material sits under `loose-candidates-selected/` instead; Phase 3A's notes there record which identities refused and why. Non-exportable identities are re-issued by re-enrollment, and no backup can restore them.
 
 Pin the corporate root once, from whatever the listings above showed, and reuse it in Steps 5 and 7:
 
@@ -679,8 +789,7 @@ open "$MNT/certs"
 
 Reference the reviewed non-secret material under `$REIMAGE_ARTIFACT_ROOT/public-certs/` if you need to check which cert is which.
 
-> [!note]
-> `open -a "Keychain Access" <directory>` does not work — Keychain Access opens certificate *files*, not folders. Use plain `open` to reveal the directory in Finder, then drag.
+`open -a "Keychain Access" <directory>` does not work — Keychain Access opens certificate *files*, not folders — so use plain `open` to reveal the directory in Finder, then drag from there.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -694,7 +803,7 @@ Reference the reviewed non-secret material under `$REIMAGE_ARTIFACT_ROOT/public-
 
 Giving an intermediate its own Always Trust makes it a second, independent anchor. If the organisation later revokes or replaces the root, that intermediate stays trusted regardless — and intermediates rotate far more often than roots, so the override goes stale and starts bypassing the chain it was meant to follow.
 
-**Check what is already there before changing anything.** On a managed Mac, enrolment in Phase 8 commonly configures this, and the step becomes a verification:
+**Check what is already there before changing anything.** On a managed Mac, enrollment in Phase 8 commonly configures this, and the step becomes a verification:
 
 ```bash
 security dump-trust-settings 2>/dev/null; echo "--- admin domain ---"; security dump-trust-settings -d 2>/dev/null
@@ -742,8 +851,15 @@ sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keyc
 
 `-d` selects the admin/system trust domain and requires root; it belongs with `/Library/Keychains/System.keychain` and `sudo`, never with your login keychain.
 
-> [!warning] Pitfall
-> Two ways this command fails silently or confusingly. First, a wildcard inside double quotes is never expanded by the shell — `"$MNT/certs/.../root-ca.cer"` is a real resolved path, but `"/Volumes/all-secrets-*/certs/.../root-ca.cer"` is a literal string and returns "No such file or directory". Second, mixing `-d` with `-k "$HOME/Library/Keychains/login.keychain-db"` asks for the admin domain while pointing at a user keychain; it errors or writes trust somewhere you did not intend. Resolve the path first (the `ls -l` above), then run exactly one of the two forms.
+Two things make this command fail confusingly if you assemble it by hand. A
+wildcard inside double quotes is never expanded by the shell, so
+`"$MNT/certs/.../root-ca.cer"` is a real resolved path while
+`"/Volumes/all-secrets-*/certs/.../root-ca.cer"` is a literal string that returns
+"No such file or directory". And mixing `-d` with
+`-k "$HOME/Library/Keychains/login.keychain-db"` asks for the admin domain while
+pointing at a user keychain — it errors, or writes trust somewhere you did not
+intend. Resolve the path first with the `ls -l` above, then run exactly one of
+the two forms.
 
 > [!warning] Pitfall
 > **Always Trust belongs to exactly one certificate here: the internal root.** Not an intermediate — see above. Not a leaf, ever: Step 4's `CA:FALSE` check exists to catch those, and marking one Always Trust tells the system to treat a single endpoint's certificate as an authority. And not an unverified certificate of any kind — confirm the `sha256` against something you trust before asserting trust in it. If in doubt, leave it at "Use System Defaults" and revisit; that setting is the safe default precisely because it defers to the chain.
@@ -757,256 +873,96 @@ sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keyc
 
 ### Step 6 — Restore Java Trust Overrides
 
-Only restore `jssecacerts` after confirming the target JDK is the one installed in Phase 10A — the file lives inside a specific JDK's `lib/security/` directory and does nothing if it lands next to a different JDK.
-
-Re-derive `JAVA_HOME` from the baseline, and stop if it does not resolve. Step 0 confirmed both values; this resolves the path again rather than trusting the one `reimage.env` stored, because a recorded absolute path goes stale if the JDK is reinstalled or the baseline changes:
-
 ```bash
-if [ -n "${REIMAGE_JDK_BASELINE:-}" ]; then
-  JAVA_HOME="$(/usr/libexec/java_home -v "$REIMAGE_JDK_BASELINE" 2>/dev/null)"
-else
-  JAVA_HOME="$(/usr/libexec/java_home 2>/dev/null)"
-fi
-if [ -n "$JAVA_HOME" ] && [ -d "$JAVA_HOME/lib/security" ]; then
-  export JAVA_HOME
-  printf 'JAVA_HOME=%s\n' "$JAVA_HOME"
-  ls -la "$JAVA_HOME/lib/security"
-else
-  printf 'No JDK resolved (JAVA_HOME=%s). Stop here.\n' "${JAVA_HOME:-<empty>}" >&2
-  printf 'Go back to Phase 10A (restore-runtime.md) and install/link the JDK before continuing.\n' >&2
-fi
+./bin/restore-access.sh java
 ```
 
-**The image holds one `jssecacerts` per JDK, not one file.** Phase 3A captured
-every JDK on the old machine, each under its own label:
+It walks every JDK under `/Library/Java/JavaVirtualMachines`, finds that JDK's
+captured store on the image, works out what the capture adds over the JDK's own
+`cacerts`, shows you the list, and installs after you confirm.
+
+**Before the first prompt it writes a comparison run** under
+`reimaged-system/comparisons/`, context `restore-access-jdk-trust-diff`, and
+prints the path. Read it before answering. Per JDK it holds:
+
+| Section | What it answers |
+|---|---|
+| Counts | What each form produces, as a number. |
+| **Added by the capture** | Exactly what `merge` imports — alias, owner, issuer, expiry. The only entries being decided. |
+| **Stock only** | What `copy` would discard: CAs this JDK ships that the old machine's store did not have. |
+| **This JDK's stock trust set** | Every CA the JDK trusts today, before anything is installed. |
 
 ```bash
-ls -R "$MNT/certs/java-security/"
+CMP="$REIMAGE_ARTIFACT_ROOT/reimaged-system/comparisons"
+open "$CMP/$(cat "$CMP/official/restore-access-jdk-trust-diff.txt")/comparison.md"
 ```
 
-There is no `jssecacerts` at the top of `java-security/` — every store sits one
-level down, under the label of the JDK it came from. A path without the label
-fails with "No such file or directory", which reads as a missing capture rather
-than a wrong path.
+**`merge` produces a superset of stock, not the additions alone.** The base of
+the file is a byte copy of this JDK's own `cacerts`, and the added aliases are
+imported on top: 127 stock entries plus 2 additions gives a store of 129. The
+confirmation prompt names only the additions because those are the only entries
+being *decided*, and it states the resulting size alongside them for exactly this
+reason.
 
-Pick the label matching the JDK you just pinned, and verify it against the
-inventory sidecar. That sidecar sits beside the image and is readable **without
-the DMG password**, so you can confirm the file before trusting it:
+The two forms differ in one place, and it is what each **drops**:
 
-```bash
-SRC="$MNT/certs/java-security/<label>.jdk/jssecacerts"
-shasum -a 256 "$SRC"; grep -F "$(basename "$(dirname "$SRC")")" "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/"java-jssecacerts-inventory-*.md
-```
-
-> [!warning] Pitfall
-> `jssecacerts` does not *add* to `cacerts` — the JVM uses it **instead of**
-> `cacerts` when it exists. Copying a captured file therefore replaces the new
-> JDK's entire trust set with the old machine's, public roots included, frozen at
-> the date of capture. Over a long enough gap that matters: vendors distrust
-> public CAs between releases, and an old store keeps trusting what the new JDK
-> deliberately dropped.
-
-Which form to use turns on what the capture actually adds over stock, so list that
-first. The two `keytool` runs dump the alias set of each store; `comm -23` prints
-the aliases present in the capture but absent from this JDK's `cacerts` — the
-certificates the corporate build put there, usually a handful of internal CAs. The
-`tee` keeps that list on disk as `/tmp/jss-added.txt`, which form B reads.
-
-```bash
-keytool -list -keystore "$SRC" -storepass changeit 2>/dev/null | awk '/trustedCertEntry/{print $1}' | sed 's/,$//' | sort > /tmp/jss-captured.txt
-keytool -list -keystore "$JAVA_HOME/lib/security/cacerts" -storepass changeit 2>/dev/null | awk '/trustedCertEntry/{print $1}' | sed 's/,$//' | sort > /tmp/jss-fresh.txt
-comm -23 /tmp/jss-captured.txt /tmp/jss-fresh.txt | tee /tmp/jss-added.txt
-```
-
-Then choose one of two forms.
-
-**A — copy the captured store wholesale.** Simplest, and what Phase 3A captured
-for. Accepts the old public-root set.
-
-```bash
-if [ -d "$JAVA_HOME/lib/security" ] && [ -f "$SRC" ]; then
-  cp "$SRC" "$JAVA_HOME/lib/security/jssecacerts"
-  ls -l "$JAVA_HOME/lib/security/jssecacerts"
-else
-  printf 'Refusing to copy: JAVA_HOME=%s / SRC=%s\n' "${JAVA_HOME:-<empty>}" "${SRC:-<empty>}" >&2
-fi
-```
-
-**B — build a fresh store from this JDK's current `cacerts`, plus only the
-additions.** More work, and it keeps the new JDK's public roots current. It starts
-from a copy of the stock store and imports one alias per line of
-`/tmp/jss-added.txt`:
-
-```bash
-cp "$JAVA_HOME/lib/security/cacerts" "$JAVA_HOME/lib/security/jssecacerts"
-while IFS= read -r JSS_ALIAS <&3; do
-  [ -n "$JSS_ALIAS" ] || continue
-  keytool -importkeystore -srckeystore "$SRC" -srcstorepass changeit \
-    -destkeystore "$JAVA_HOME/lib/security/jssecacerts" -deststorepass changeit \
-    -srcalias "$JSS_ALIAS" -noprompt
-done 3< /tmp/jss-added.txt
-```
-
-> [!note]
-> The loop reads the alias list on file descriptor 3 rather than standard input, so
-> a `keytool` run that decides to prompt cannot swallow the remaining aliases and
-> end the loop after the first import.
-
-Prefer **B** when the capture is more than a few months old; **A** is fine for a
-same-week rebuild.
-
-Depending on how the JDK was installed, `$JAVA_HOME` may be root-owned — if the `cp` reports "Permission denied", rerun that one line with `sudo` and then confirm the file is readable by all (`chmod 644`).
-
-> [!warning] Pitfall
-> Do not run `export JAVA_HOME="$(/usr/libexec/java_home ...)"` unguarded. If no matching JDK is installed, `java_home` prints its error to stderr and exits non-zero, `export` still succeeds, and `JAVA_HOME` ends up **empty**. The next `cp` then expands to the absolute path `/lib/security/jssecacerts`, which is not a JDK — it either fails with "No such file or directory" or, under `sudo`, writes a stray trust store at the filesystem root that no JVM ever reads. You would see a clean-looking command and no working Java trust.
-
-> [!note]
-> Homebrew's `openjdk@<major>` formulae are keg-only, so `/usr/libexec/java_home` will not see one until it is linked into the system JDK directory. Substitute the major you installed in Phase 10A:
->
-> ```bash
-> JDK_FORMULA="openjdk@${REIMAGE_JDK_BASELINE:-<major>}"
-> sudo ln -sfn "$(brew --prefix "$JDK_FORMULA")/libexec/openjdk.jdk" "/Library/Java/JavaVirtualMachines/${JDK_FORMULA/@/-}.jdk"
-> /usr/libexec/java_home -V
-> ```
-
-**Validate it.** Two checks, and they answer different things.
-
-First, confirm the JVM can read the store and see how many anchors it holds. A
-count near the fresh `cacerts` count plus a handful is right; a count of zero or
-a `keytool` error means the file is not a keystore:
-
-```bash
-keytool -list -keystore "$JAVA_HOME/lib/security/jssecacerts" -storepass changeit 2>/dev/null | grep -c 'trustedCertEntry'
-```
-
-Second, make the JVM actually complete a TLS handshake through it. `curl` will
-not do — it reads its own CA bundle, not the JVM's, so it can pass while Java
-still fails. This is a single-file Java program, which JDK 11 and later run
-directly:
-
-```bash
-cat > /tmp/JvmTlsCheck.java <<'EOF'
-import java.net.*;
-public class JvmTlsCheck {
-  public static void main(String[] args) throws Exception {
-    URL u = URI.create(args[0]).toURL();
-    HttpURLConnection c = (HttpURLConnection) u.openConnection();
-    c.setConnectTimeout(10000); c.setReadTimeout(10000); c.setRequestMethod("HEAD");
-    System.out.println(u.getHost() + " -> HTTP " + c.getResponseCode());
-  }
-}
-EOF
-```
-
-**Choose the host by its issuer, not by its name.** An internal-looking host that
-serves a publicly-trusted certificate will pass this test without ever
-exercising the corporate root, which is the one thing it is meant to prove.
-Three shell variables carry this through, and they are set at different points.
-Knowing which is which up front saves a wrong paste:
-
-| Variable | Holds | Example |
+| | `merge` | `copy` |
 |---|---|---|
-| `DOMAIN` | Your organisation's **two-label** domain. Optional — only used to narrow a long host list. | `example.com` |
-| `CANDIDATE` | **One full hostname** you are checking the issuer of. Reset it and re-run to check the next. | `api.example.com` |
-| `INTERNAL_URL` | Derived from the `CANDIDATE` that turned out to be internal. You do not type this one. | `https://api.example.com/` |
+| Starts from | this JDK's `cacerts` | the captured file |
+| Adds | the added aliases | the added aliases |
+| Discards | nothing | every stock-only entry |
+| Restores | nothing | every entry the capture held that this JDK has since dropped |
 
-Candidates are wherever your tooling already points, and you do not have to
-remember where that is. Harvest every HTTPS host named in the reviewed dotfiles
-bundle:
+**Re-running is safe.** A JDK whose `jssecacerts` already carries the intended
+alias set is reported as done and skipped. That set is computed, not assumed, so
+a file left by an interrupted run — or by the other form below — is correctly
+seen as *not* done.
 
-```bash
-DOTFILES="$REIMAGE_ARTIFACT_ROOT/home-files-backup/dotfiles"
-find "$DOTFILES" -maxdepth 5 -type f -size -2M \
-  \( -name '*.json' -o -name '*.xml' -o -name '*.properties' -o -name '*.conf' \
-     -o -name '*.cfg' -o -name '*.yaml' -o -name '*.yml' -o -name '*.toml' \
-     -o -name '.npmrc' -o -name 'config' -o -name '.gitconfig' \) -print0 2>/dev/null \
-| xargs -0 grep -ohE 'https://[A-Za-z0-9][A-Za-z0-9.-]+' 2>/dev/null \
-| sed 's|https://||' | sort -u > /tmp/tls-hosts.txt
-sort -t. -k2 /tmp/tls-hosts.txt
-```
+**Two forms, and the default is `merge`.**
 
-That is usually under a dozen hostnames, sorted so related ones sit together —
-read it and pick the ones on your organisation's domain. There is deliberately
-no filter for "public" hosts: a denylist of well-known vendors goes stale, and it
-cannot know that an organisation's internal services live on an ordinary `.com`.
-Recognition is the operator's job and takes a second.
-
-If the list is long enough to be awkward, roll it up by registrable domain first
-and then narrow. `DOMAIN` is the two-label form — `example.com`, not a URL and
-not a full hostname:
+| Form | What it installs | When it is right |
+|---|---|---|
+| `merge` *(default)* | This JDK's current `cacerts`, plus only the aliases the capture adds. | Always defensible; necessary once the capture is more than a few months old. |
+| `copy` | The captured store, wholesale. | A same-week capture, where the public-root set has not moved. |
 
 ```bash
-awk -F. 'NF>=2 {print tolower($(NF-1)"."$NF)}' /tmp/tls-hosts.txt | sort | uniq -c | sort -rn | head -15
+./bin/restore-access.sh java --jssecacerts copy
 ```
 
-```bash
-DOMAIN="example.com"
-grep -E "(^|\.)$DOMAIN\$" /tmp/tls-hosts.txt
-```
+> [!warning] Pitfall
+> **`jssecacerts` does not *add* to `cacerts` — the JVM uses it instead of
+> `cacerts` when the file exists.** So `copy` replaces the JDK's entire trust set
+> with the old machine's, public roots included, frozen at the date of capture;
+> vendors distrust public CAs between releases, and an old store keeps trusting
+> what the new JDK deliberately dropped.
+>
+> Read the alias list before confirming, under either form. "Adds over stock"
+> means everything the capture has that this JDK does not — the internal CAs
+> **and** any public root the JDK vendor has distrusted since the capture. No
+> signal in a certificate separates them: a CA is corporate because of who runs
+> it. An unfamiliar public root in that list is one this JDK dropped on purpose,
+> and importing it puts it back.
 
-> [!note]
-> This searches the **backup**, not the live machine, and that is deliberate:
-> at this point in the phase most of the config that names these hosts has not
-> been restored yet. Step 8 is what puts `~/.npmrc`, `~/.kube/` and `~/.config/`
-> back. The Phase 10B before-state capture will confirm it — those paths read
-> `absent` there.
+The step backs up any existing `jssecacerts` as `jssecacerts.pre-reimage-<stamp>`
+before writing, because the file it replaces is not recoverable from the JDK
+install. Under `merge` it builds the new store in `/tmp` and installs it only
+once every alias imported — a half-imported store is a JVM trusting an arbitrary
+subset of the corporate chain.
 
-**Now check the issuer.** Take one hostname from the list above — a full
-hostname, not the two-label `DOMAIN` — put it in `CANDIDATE`, and ask its server
-which CA signed its certificate:
+Afterwards it reports how many trusted entries the installed store holds. Under
+`merge` that should be the JDK's stock count plus the additions — the same number
+the prompt named — and a count at or near the additions alone means the public
+roots did not come across, which the step says out loud.
 
-```bash
-CANDIDATE="api.example.com"
-if CANDIDATE_ISSUER="$(echo | openssl s_client -connect "$CANDIDATE:443" -servername "$CANDIDATE" 2>/dev/null | openssl x509 -noout -issuer 2>/dev/null)"; then
-  printf 'RESPONDED  %s\n           %s\n' "$CANDIDATE" "$CANDIDATE_ISSUER"
-else
-  printf 'NO TLS     %s\n' "$CANDIDATE"
-fi
-```
+Declining is recorded, not lost. The comparison run is written before the prompts
+and is not conditional on the answer, so a JDK you decline still has a dated,
+indexed record of what it was offered and what it trusts. Re-running writes a
+fresh run and re-asks.
 
-Both outcomes are labelled and both name the host. An earlier form printed a
-sentence on failure and a bare `issuer=` line on success, which made a working
-host look like nothing had happened — the failure was louder than the success,
-so silence read as a problem.
-
-Reset `CANDIDATE` to the next hostname and run it again for each one you want to
-weigh. Read the issuer, not the hostname:
-
-| Issuer looks like | Verdict |
-|---|---|
-| `C=US, O=DigiCert Inc, CN=…`, `Let's Encrypt`, `O=Google Trust Services` | A **public** CA. The host may be internal and still be useless here — a handshake against it succeeds through the JDK's stock roots and never touches yours. |
-| `DC=com, DC=<org>, CN=Issuing-<something>` | Your **internal** CA. This is the target. |
-
-An internally-hosted service on a public certificate is common — Git servers and
-anything with an externally-resolvable name often have one — so expect to check
-more than one candidate.
-
-If every candidate reports a public issuer, this test cannot prove anything about
-the corporate root. Say so and defer the question to the first real build against
-your internal artifact repository, rather than recording a pass that measured
-nothing.
-
-Once `CANDIDATE` holds a host with an **internal** issuer, leave it set — the
-target is derived from it, so there is nothing to retype and no chance of
-testing a different host than the one you vetted:
-
-```bash
-INTERNAL_URL="https://$CANDIDATE/"
-"$JAVA_HOME/bin/java" /tmp/JvmTlsCheck.java "$INTERNAL_URL"
-```
-
-Read the outcome by its failure, not just its success:
-
-| Result | Meaning |
-|---|---|
-| `-> HTTP 200` (or 302, 401, 403) | The handshake completed. Trust works — the status code itself does not matter. |
-| `SSLHandshakeException: PKIX path building failed` | The corporate root is **not** in the store this JVM is using. The copy went to the wrong JDK, or the store does not contain it. |
-| `UnknownHostException`, connect timeout | Network or VPN, not trust. Nothing to fix here. |
-
-If you have no internal HTTPS endpoint to hand, run it against a public one
-instead. That will not prove the corporate root is present, but it does catch a
-badly built store — which is the more likely mistake with form **A**, where an
-old public-root set comes along with the copy.
+A JDK with no counterpart on the image is reported rather than skipped silently.
+The image captured one store per JDK **by name**, so a JDK installed after the
+capture, or at a different version, has none — and that JVM has no corporate
+trust until one is put there.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -1014,360 +970,66 @@ old public-root set comes along with the copy.
 
 ### Step 7 — Trust the Corporate CA Outside the Keychain
 
-Steps 4 through 6 covered the macOS keychain and the JVM. That is not everything. With TLS interception on the corporate network, npm, Node, pip, Homebrew's `curl`, and Git over HTTPS each consult their **own** bundled CA file and never read the macOS keychain, so they keep failing with `SELF_SIGNED_CERT_IN_CHAIN` or `unable to get local issuer certificate` long after Keychain Access says the root is trusted. Do this now, not at the first broken `npm install` in Phase 11B or 12.
-
-**0. Re-establish `$MNT` and `$CORP_CERT` first.**
-
-Step 4 pinned `$CORP_CERT`, and it lives only in the shell that set it. Steps 4
-and 5 are GUI work, so a new terminal by now is the normal case rather than the
-exception. Find the image, then let the certificates on it identify themselves:
+Step 5 taught macOS to trust the internal root. It taught nothing else: `npm`,
+`git`, `pip`, `curl`, Node and Python each carry their own trust store and none
+of them reads the keychain.
 
 ```bash
-MNT=""
-for d in /Volumes/*/staged-loose; do
-  [ -f "$d/MANIFEST.tsv" ] && MNT="$(dirname "$d")"
-done
-if [ -z "$MNT" ]; then
-  printf 'NO IMAGE    nothing mounted — use the keychain export in step 1 instead\n' >&2
-else
-  printf 'MNT=%s\n\n' "$MNT"
-  for f in "$MNT"/certs/loose-candidates-selected/*; do
-    [ -f "$f" ] || continue
-    subj="$(openssl x509 -in "$f" -noout -subject 2>/dev/null \
-         || openssl x509 -inform DER -in "$f" -noout -subject 2>/dev/null)"
-    iss="$(openssl x509 -in "$f" -noout -issuer 2>/dev/null \
-        || openssl x509 -inform DER -in "$f" -noout -issuer 2>/dev/null)"
-    if [ -z "$subj" ]; then
-      printf 'NOT A CERT  %s\n' "$(basename "$f")"
-    elif [ "${subj#subject=}" = "${iss#issuer=}" ]; then
-      printf 'ROOT        %s\n            %s\n' "$(basename "$f")" "$subj"
-    else
-      printf 'NOT A ROOT  %s\n            %s\n            %s\n' "$(basename "$f")" "$subj" "$iss"
-    fi
-  done
-fi
+./bin/restore-access.sh corp-ca
 ```
 
-A root is self-signed — its subject and its issuer are the same string, which is
-what the listing tests. Rely on that rather than on the filenames: the names in
-`loose-candidates-selected/` were chosen by whoever exported them and routinely
-label an issuing CA or a leaf as though it were the root. Anything printed as
-`NOT A ROOT` is one of those; read the note at the end of this step before
-putting one in the bundle.
+It exports the root, builds the bundle, points every store at it, and smoke-tests
+each one.
 
-Now pin the file the listing marked `ROOT`, substituting its name for the
-example one:
+**Re-running is safe.** The bundle is rebuilt from source rather than appended
+to, and the `~/.zprofile` block is guarded by a `REIMAGE-CA-BUNDLE` marker — a
+second run reports the block is already there instead of adding another.
 
-```bash
-CORP_CERT_FILE="root-ca.pem"
-CORP_CERT="$MNT/certs/loose-candidates-selected/$CORP_CERT_FILE"
-if [ ! -f "$CORP_CERT" ]; then
-  printf 'NO SUCH FILE  %s\n' "$CORP_CERT" >&2
-  printf '              set CORP_CERT_FILE to a name the listing marked ROOT\n' >&2
-elif ! openssl x509 -in "$CORP_CERT" -noout -subject 2>/dev/null \
-  && ! openssl x509 -inform DER -in "$CORP_CERT" -noout -subject; then
-  printf 'NOT A CERT    %s\n' "$CORP_CERT" >&2
-else
-  printf 'CORP_CERT=%s\n' "$CORP_CERT"
-  openssl x509 -in "$CORP_CERT" -noout -subject -issuer -dates 2>/dev/null \
-    || openssl x509 -inform DER -in "$CORP_CERT" -noout -subject -issuer -dates
-fi
-```
+**It takes the root from wherever it is.** With the image mounted it reads the
+certificate Step 4 identified; with the image already detached it exports the
+root back out of the keychain, where Step 5 put it. Do not re-mount the image
+just for this step.
 
-> [!warning] Pitfall
-> `CORP_CERT_FILE` starts as an example name, not yours. Left alone or mistyped,
-> `$CORP_CERT` names a path that does not exist — and every `openssl` form in
-> step 1 fails **after** truncating `~/.certs/corp-root.pem` to zero bytes. Five
-> tools then trust a bundle containing nothing, and each of them fails later with
-> a TLS error that points at the network instead of at the bundle. The check
-> above is what stops that; the `grep -c` in step 1 is the second net.
+**The bundle is the system roots *plus* the corporate root, not the corporate
+root alone.** Every consumer configured here — npm's `cafile`, git's
+`sslCAInfo`, `CURL_CA_BUNDLE`, `REQUESTS_CA_BUNDLE`, `PIP_CERT` — **replaces**
+its trust store with this file rather than adding to it. A corporate-root-only
+bundle therefore breaks every endpoint the corporate CA did not issue, which on a
+network that intercepts internal hosts only is most of the internet. The step
+warns and continues if it cannot export the system roots, because a bundle of one
+root is worth having and worth knowing about.
 
-**If the image is already detached**, do not re-mount it for this. The root is in
-your keychain by now, and the export-from-keychain form at the end of step 1
-needs no DMG at all — it is the better source at this point in the phase.
+Three similarly-named things pass through this step, and conflating them is the
+confusion it generates most:
 
-**1. Export the intercepting root to a stable path.**
+| Name | Kind of value |
+|---|---|
+| `CORP_CERT` | A path to a certificate file on the mounted image. |
+| `ROOT_CN` | A certificate common name, as it appears in a keychain listing. |
+| `CA_BUNDLE` | The fixed destination path the tools are pointed at. |
 
-Name the destination first. Everything below — the gate, both `.zprofile`
-forms, and every per-tool config write in step 2 — reads these two variables,
-so the bundle path is written down exactly once:
-
-```bash
-CA_BUNDLE_REL=".certs/corp-root.pem"
-CA_BUNDLE="$HOME/$CA_BUNDLE_REL"
-```
-
-This is a fixed location, not a copy of whatever the source file was called.
-`$CORP_CERT_FILE` names a file *on the image*; this names the file *five tools
-will be pointed at for the life of the machine*, and those two must not be the
-same string. The bundle may end up holding the intermediate as well as the root
-(see the note at the end of this step), which would make a name inherited from
-the root file wrong; and a future image whose export is called something else
-would otherwise silently move the path every tool's config points at.
-
-Two sources produce the same bundle; pick either. Both write to a staging file,
-and neither touches `$CA_BUNDLE` — the verification gate at the end installs it,
-and only if there is something worth installing. That ordering is deliberate: a
-redirect that truncates the bundle before discovering it has nothing to write is
-the failure this step exists to prevent.
-
-*Source A — the keychain.* The better source once Step 5 has trusted the root,
-and it needs no DMG. List the CA labels first:
-
-```bash
-security find-certificate -a /Library/Keychains/System.keychain | grep '"labl"'
-```
-
-Each line of that output is a certificate's label — `"labl"<blob>="..."` —
-which for a CA is its common name. `ROOT_CN` takes **that string, not a
-filename**: it is matched against certificates already in the keychain, so
-nothing on the DMG and nothing named `.pem` or `.cer` belongs in it. Look for
-the label that describes a root; the intermediates beside it are usually
-labelled `Issuing-...` and are not what this bundle wants.
-
-| Variable | Kind of value | Example |
-|---|---|---|
-| `CORP_CERT_FILE` (step 0) | A filename on the mounted image | `root-ca.pem` |
-| `ROOT_CN` (here) | A certificate common name from the keychain listing | `Root Example CA` |
-| `CA_BUNDLE` (above) | The fixed destination path | `$HOME/.certs/corp-root.pem` |
-
-```bash
-ROOT_CN="Root Example CA"
-security find-certificate -a -c "$ROOT_CN" -p \
-  /Library/Keychains/System.keychain "$HOME/Library/Keychains/login.keychain-db" \
-  > /tmp/corp-root-staging.pem
-```
-
-*Source B — the mounted image.* Uses `$CORP_CERT` from step 0. Both encodings
-are tried because the export on the image may be either:
-
-```bash
-openssl x509 -inform DER -in "$CORP_CERT" -out /tmp/corp-root-staging.pem 2>/dev/null \
-  || openssl x509 -inform PEM -in "$CORP_CERT" -out /tmp/corp-root-staging.pem
-```
-
-*Combine with the system roots.* The corporate root alone is **not** the right
-bundle. Every consumer configured in step 2 — npm's `cafile`, Git's
-`http.sslCAInfo`, `CURL_CA_BUNDLE`, `REQUESTS_CA_BUNDLE`, `PIP_CERT` —
-**replaces** its trust store with this file rather than adding to it. On a
-network that intercepts internal hosts and lets public traffic through
-untouched, a corporate-root-only bundle then rejects most of the internet:
-
-```text
-npm error code UNABLE_TO_GET_ISSUER_CERT_LOCALLY
-npm error request to https://registry.npmjs.org/-/ping failed,
-          reason: unable to get local issuer certificate
-```
-
-The issuer of a *public* endpoint tells you which kind of network you are on:
-
-```bash
-echo | openssl s_client -connect registry.npmjs.org:443 -servername registry.npmjs.org 2>/dev/null \
-  | openssl x509 -noout -issuer
-```
-
-A public CA — `Google Trust Services`, `DigiCert`, `ISRG` — means public traffic
-is **not** intercepted and the bundle must carry the system roots as well. Your
-corporate root as the issuer means everything is intercepted. Combine
-unconditionally: it costs nothing in the second case and is the difference
-between working and not in the first.
-
-```bash
-security find-certificate -a -p /System/Library/Keychains/SystemRootCertificates.keychain \
-  > /tmp/corp-root-combined.pem
-cat /tmp/corp-root-staging.pem >> /tmp/corp-root-combined.pem
-grep -c 'BEGIN CERTIFICATE' /tmp/corp-root-combined.pem
-```
-
-Expect a count in the low hundreds. A count of `1` means the system-root export
-produced nothing, and the bundle would work for internal hosts and fail for
-everything else.
-
-*Verify, then install:*
-
-```bash
-count="$(grep -c 'BEGIN CERTIFICATE' /tmp/corp-root-staging.pem 2>/dev/null)" || count=0
-subj="$(openssl x509 -in /tmp/corp-root-staging.pem -noout -subject 2>/dev/null)"
-iss="$(openssl x509 -in /tmp/corp-root-staging.pem -noout -issuer 2>/dev/null)"
-if [ "$count" -eq 0 ] || [ -z "$subj" ]; then
-  printf 'EMPTY       nothing was exported; %s left alone\n' "$CA_BUNDLE" >&2
-  printf '            source A: ROOT_CN matched no certificate — check it against the labels\n' >&2
-  printf '            source B: $CORP_CERT did not parse — re-run step 0\n' >&2
-elif [ "${subj#subject=}" != "${iss#issuer=}" ]; then
-  printf 'NOT A ROOT  %s\n            %s\n' "$subj" "$iss" >&2
-  printf '            an issuing CA or a leaf; see the note at the end of this step\n' >&2
-else
-  mkdir -p "$(dirname "$CA_BUNDLE")"
-  mv /tmp/corp-root-combined.pem "$CA_BUNDLE"
-  rm -f /tmp/corp-root-staging.pem
-  printf 'INSTALLED   %s (%s certificate(s))\n' "$CA_BUNDLE" \
-    "$(grep -c 'BEGIN CERTIFICATE' "$CA_BUNDLE")"
-  printf '            corporate root: %s\n' "$subj"
-fi
-```
-
-`ROOT_CN` starts as an example, exactly as `CORP_CERT_FILE` does in step 0 — the
-`EMPTY` branch is what tells you it was left that way. `openssl x509` reads only
-the first block of a multi-certificate file, so with more than one match the
-root test judges the first; a count above 1 from source A is normally the same
-certificate found in both keychains.
-
-**2. Point every store at the bundle.**
-
-In a fresh terminal, re-run the two `CA_BUNDLE_REL` / `CA_BUNDLE` lines from the
-top of step 1 — they are the one definition, and they need no DMG and no
-`$CORP_CERT`. Then confirm step 1 actually left something there:
-
-```bash
-[ -s "$CA_BUNDLE" ] \
-  && printf 'READY     %s\n' "$CA_BUNDLE" \
-  || printf 'MISSING   %s — run step 1 first\n' "$CA_BUNDLE" >&2
-```
-
-Two mechanisms are needed, because the tools split on which one they read.
-Environment variables cover `curl`, Node and the Python `requests` stack;
-per-tool config files cover npm, Git and pip, and are read by invocations that
-never see your profile — a launchd job, an IDE's embedded terminal, a CI runner
-on this machine.
-
-*Persist the environment variables.* One block, written once. The heredoc is
-quoted, so `$HOME` reaches `.zprofile` unexpanded and stays correct if the
-account is ever moved:
-
-```bash
-if grep -q 'REIMAGE-CA-BUNDLE' ~/.zprofile 2>/dev/null; then
-  printf 'PRESENT   ~/.zprofile already carries the block; left alone\n'
-else
-  {
-    printf '\n# REIMAGE-CA-BUNDLE — corporate TLS interception root (restore-access.md Step 7)\n'
-    for v in NODE_EXTRA_CA_CERTS CURL_CA_BUNDLE REQUESTS_CA_BUNDLE PIP_CERT; do
-      printf 'export %s="$HOME/%s"\n' "$v" "$CA_BUNDLE_REL"
-    done
-  } >> ~/.zprofile
-  printf 'ADDED     ~/.zprofile\n'
-fi
-for v in NODE_EXTRA_CA_CERTS CURL_CA_BUNDLE REQUESTS_CA_BUNDLE PIP_CERT; do
-  export "$v=$CA_BUNDLE"
-done
-```
-
-The format string is single-quoted, so `$HOME` reaches `.zprofile` unexpanded
-and the file stays correct if the account ever moves; `%s` is where
-`$CA_BUNDLE_REL` lands. That is the reason the path is split into a relative
-half and an absolute one rather than written out here — the literal `$HOME` and
-the substituted filename have to coexist on the same line.
-
-The `REIMAGE-CA-BUNDLE` marker is what makes this safe to re-run. Without it,
-working the step twice appends the exports twice; the shell tolerates that, but
-the next person reading `.zprofile` cannot tell a deliberate override from an
-accidental repeat.
-
-*Write the per-tool config files.* Step 7 runs in Phase 10B, before Phase 12
-restores applications, so some of these tools legitimately are not installed
-yet. Each reports rather than failing silently — re-run this block after the
-apps are back:
-
-```bash
-if command -v npm >/dev/null 2>&1; then
-  npm config set cafile "$CA_BUNDLE" && printf 'SET       npm cafile\n'
-else
-  printf 'SKIP      npm not installed yet — re-run this block after Phase 12\n'
-fi
-if command -v git >/dev/null 2>&1; then
-  git config --global http.sslCAInfo "$CA_BUNDLE" && printf 'SET       git http.sslCAInfo\n'
-else
-  printf 'SKIP      git not installed yet\n'
-fi
-if command -v pip3 >/dev/null 2>&1; then
-  pip3 config set global.cert "$CA_BUNDLE" >/dev/null && printf 'SET       pip global.cert\n'
-else
-  printf 'SKIP      pip3 not installed yet — re-run this block after Phase 12\n'
-fi
-```
-
-SSH remotes are unaffected by any of this — it reaches HTTPS remotes only, which
-is what most tooling and CI helpers default to.
-
-**3. Smoke-test each store before moving on.**
-
-Each test **forces** the tool to use `$CA_BUNDLE`. That is not decoration: run
-without it, three of the five measure the system keychain instead and pass while
-the bundle is broken. macOS `curl` and `git` consult the keychain regardless of
-`CURL_CA_BUNDLE` and `http.sslCAInfo`, and `urllib.request` reads
+**The smoke tests force each tool to use the bundle**, which is not decoration.
+Run without forcing, three of the five measure the system keychain instead and
+pass while the bundle is broken: macOS `curl` and `git` consult the keychain
+regardless of `CURL_CA_BUNDLE` and `http.sslCAInfo`, and `urllib.request` reads
 `ssl.get_default_verify_paths()` and never looks at `REQUESTS_CA_BUNDLE` at all.
 `npm` is the only one of the five that honours its own setting unprompted —
-which is why, in the run that produced this note, npm was the only test to
-report a real misconfiguration while the other four reported success.
+which is why, in the run that produced this note, npm was the only test to report
+a real misconfiguration while the other four reported success.
 
 They hit public endpoints on purpose: a public endpoint is what a
 corporate-root-only bundle cannot validate, so it is the case worth testing.
 
-`smoke` takes a label and a command. On failure it prints the first four lines
-of the tool's own error under the `FAIL`, because a bare `FAIL` says something
-is wrong and nothing about what — and these five fail for entirely unrelated
-reasons.
-
-**Expect `SKIP node` and `SKIP npm` on a first pass.** Node and npm arrive with
-`restore-apps` (Phase 12); `curl`, `git` and `python3` are on the base system or
-came with Phase 10A, so those three are the ones that report here. A `SKIP` is
-not a pass — it means the test did not run — so note which skipped and come back
-after Phase 12.
-
-```bash
-smoke() {
-  label="$1"; shift
-  if out="$("$@" 2>&1)"; then
-    printf 'PASS  %s\n' "$label"
-  else
-    printf 'FAIL  %s\n' "$label"
-    printf '%s\n' "$out" | sed -n '1,4p' | sed 's/^/      /'
-  fi
-}
-
-export CA_BUNDLE_SMOKE="$CA_BUNDLE"
-
-smoke curl curl -sSI --cacert "$CA_BUNDLE" https://registry.npmjs.org/
-
-if command -v node >/dev/null 2>&1; then
-  smoke node node -e "require('https').get('https://registry.npmjs.org/', r => process.exit(r.statusCode < 400 ? 0 : 1)).on('error', e => { console.error(e.message); process.exit(1); })"
-else printf 'SKIP  node\n'; fi
-
-if command -v npm >/dev/null 2>&1; then smoke npm npm ping
-else printf 'SKIP  npm\n'; fi
-
-smoke git git -c http.sslCAInfo="$CA_BUNDLE" ls-remote https://github.com/git/git
-
-smoke python python3 -c "import os, ssl, urllib.request; ctx = ssl.create_default_context(cafile=os.environ['CA_BUNDLE_SMOKE']); urllib.request.urlopen('https://pypi.org/simple/', context=ctx)"
-```
-
-When you do come back after Phase 12, re-run both blocks of step 2 as well as
-this one: the config writes for `npm` and `pip3` skipped for the same reason the
-tests did.
-
-> [!note]
-> If the interception uses an intermediate issuing CA as well as a root, the
-> bundle needs both — a bundle may hold any number of PEM blocks. Reach for this
-> only when the smoke tests fail with `unable to get local issuer certificate`
-> after a clean `INSTALLED`; a server that sends its own intermediate, as most
-> do, needs the root alone.
->
-> ```bash
-> ISSUING_CERT="$MNT/certs/loose-candidates-selected/issuing-ca.pem"
-> cat "$ISSUING_CERT" >> "$CA_BUNDLE"
-> grep -c 'BEGIN CERTIFICATE' "$CA_BUNDLE"
-> ```
->
-> Append, never rebuild. `cat root.pem issuing.pem > "$CA_BUNDLE"` truncates its
-> own input the moment `root.pem` *is* `$CA_BUNDLE`, which after step 1 it is —
-> the redirection empties the file before `cat` reads it, and you lose every
-> certificate already there. Expect the count to rise by exactly one.
-
-> [!warning] Pitfall
-> `~/.zprofile` only reaches processes started from a login shell. GUI apps launched from the Dock or Spotlight — IntelliJ, VS Code, Docker Desktop — do not see `NODE_EXTRA_CA_CERTS` or `REQUESTS_CA_BUNDLE` and will still fail. Launch them from a terminal, or set the variable in the app's own run configuration. And never "fix" this with `npm config set strict-ssl false`, `GIT_SSL_NO_VERIFY=1`, or `pip --trusted-host`: those disable verification instead of establishing trust, and they tend to survive into places you did not intend.
+**Expect `SKIP npm` on a first pass.** npm arrives with Node, which Phase 10A
+Step 8 installs, so if you are running this phase before that one has finished
+the tool is not there to configure. A `SKIP` is the step reporting that honestly
+rather than claiming success — re-run the step afterwards, which is safe to
+repeat and configures whatever has since appeared.
 
 > [!bug] Troubleshooting
-> If one tool fails while the others pass — most often `npm` — see
-> [[#One smoke test fails while the others pass|One smoke test fails while the others pass]].
+> If a smoke test fails, the step prints the first four lines of that tool's own
+> error underneath it. A bare `FAIL` says something is wrong and nothing about
+> what, and these five fail for entirely unrelated reasons.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -1375,91 +1037,31 @@ tests did.
 
 ### Step 8 — Restore Shell Environment and CLI Config
 
-Do not blindly overwrite fresh shell files. Diff first, adopt selectively.
-
-**VS Code is not installed yet** — `restore-apps` (Phase 12) Step 6 installs it,
-two phases from here, so `code` is not on `PATH` and cannot open the comparison.
-Everything below uses tools the machine already has: `cmp` and `diff` from the
-base system, and `git` from the Command Line Tools that Phase 10A installed.
-
-First, see which files actually differ. Comparing the whole of `$HOME` against
-the backup would recurse through every file you own, so the candidate list is
-walked by name instead:
-
 ```bash
-DOTFILES_BACKUP="$REIMAGE_ARTIFACT_ROOT/home-files-backup/dotfiles"
-printf 'Using dotfiles backup: %s\n\n' "$DOTFILES_BACKUP"
-for f in .zshrc .zprofile .bash_profile .bashrc .gitconfig \
-         .shell_common.sh .shell_local.sh; do
-  b="$DOTFILES_BACKUP/$f"; l="$HOME/$f"
-  if   [ ! -e "$b" ]; then printf 'NO BACKUP   %s\n' "$f"
-  elif [ ! -e "$l" ]; then printf 'BACKUP ONLY %s  (nothing here to merge into)\n' "$f"
-  elif cmp -s "$b" "$l"; then printf 'SAME        %s\n' "$f"
-  else                       printf 'DIFFERS     %s  <- review this one\n' "$f"
-  fi
-done
+./bin/restore-access.sh dotfiles
 ```
 
-Then review one file at a time. Set `F` to a name the listing marked `DIFFERS`
-and re-run; left is what you have now, right is the backup:
+It compares each shell file against the backup and reports one of `NO BACKUP`,
+`BACKUP ONLY`, `SAME` or `DIFFERS`. **It changes nothing** — this step is a
+report, and the merging is yours.
+
+Review a differing file, then merge by hand:
 
 ```bash
 F=".zshrc"
-git diff --no-index --color=always "$HOME/$F" "$DOTFILES_BACKUP/$F" | less -R
-```
-
-`git diff --no-index` exits 1 when the files differ, which is the normal case
-here and not an error. For an editor rather than a pager, `vimdiff "$HOME/$F"
-"$DOTFILES_BACKUP/$F"` works on the base system; `code --diff` becomes available
-after Phase 12 if you would rather leave the shell files until then.
-
-The directory-shaped entries in the list below — `.config/`, `.kube/`, `.cf/`,
-`.azure/` — are restored per-subtree by `restore-home` (Phase 15), not here.
-This step is the flat shell files.
-
-Common selective restores:
-
-```text
-.zshrc
-.zprofile
-.bash_profile
-.bashrc
-.gitconfig                (Phase 11A owns Git identity — see the note below)
-.shell_common.sh
-.shell_local.sh
-.config/
-.kube/
-.cf/
-.azure/
+git diff --no-index --color=always "$HOME/$F" "$REIMAGE_ARTIFACT_ROOT/home-files-backup/dotfiles/$F" | less -R
 ```
 
 > [!warning] Pitfall
-> The pre-image `.gitconfig` in that backup carries `[http] sslverify = false` —
-> **global**, not per-host. Adopting the file whole turns off TLS verification
-> for every Git HTTPS remote, which defeats the Git half of Step 7 while `npm`,
-> `pip`, `curl` and Node keep verifying normally. That asymmetry is what makes it
-> survive: nothing else looks broken.
->
-> Take `user.name`, the `includeif` routing and `credential.helper` if you want
-> them; leave the `[http]` block. Then confirm:
->
-> ```bash
-> git config --global --get http.sslverify
-> ```
->
-> Empty is correct. If it returns `false`, remove it with
-> `git config --global --unset http.sslverify`. `restore-git.md` (Phase 11A) has
-> the per-host form for the one case that genuinely needs an exemption — and
-> check first, because Step 7 put the corporate root in the CA bundle, so a host
-> that failed to verify before may verify now.
+> Do not copy `.zprofile` over wholesale. It carries Phase 10A's Homebrew and nvm
+> bootstrap *and* Step 7's CA-bundle block, neither of which exists in a
+> pre-image backup. Overwriting it undoes both, and the failure surfaces later as
+> tools that cannot find their trust store.
 
-Prefer selective merge over blind copy for machine-specific files. `.zprofile`
-is the one that will bite: it already carries the Homebrew and `nvm` bootstrap
-added in Phase 10A **and** the `REIMAGE-CA-BUNDLE` block Step 7 wrote a few
-minutes ago. Copying the backup over it silently removes both, and the CA
-symptom will not appear until the first `npm install` two phases later. If you
-do overwrite it, re-run Step 7's `.zprofile` block afterwards — it is idempotent
-and reports `ADDED` or `PRESENT`.
+`BACKUP ONLY` means the file exists in the backup and not on this machine. There
+is nothing here to merge into, so copying it is a decision rather than a merge —
+read it first, because a pre-image `.zshrc` can reference paths this machine does
+not have yet.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -1467,74 +1069,31 @@ and reports `ADDED` or `PRESENT`.
 
 ### Step 9 — Restore Credentials and License Material
 
-Credential-bearing material stays inside the DMG until the moment it is needed. Restore only through supported flows:
-
-Typical sources on the mounted volume:
-
-```text
-$MNT/cli-credentials/    ~/.netrc, gh config, and per-tool credential exports
-$MNT/git/                ~/.git-credentials and Git helper cache
-$MNT/package-managers/   .npmrc, .yarnrc(.yml), .pypirc, gradle.properties,
-                         Maven settings.xml
-$MNT/licenses/           Vendor license keys, serials, activation exports
+```bash
+./bin/restore-access.sh credentials
 ```
 
-All four are **conditional**. Phase 3C creates each only if there was applicable
-material to stage, so a missing directory means nothing was captured, not that
-something went wrong. Check which ones you actually have rather than working
-from the list:
+It reports which credential categories the image carries — `cli-credentials`,
+`git`, `package-managers`, `licenses` — as `PRESENT` with a file count or
+`ABSENT`. **It restores nothing**, and that is the point: most of what is in
+these categories should be re-issued rather than copied.
+
+**Re-authenticate rather than restore.** A stored token was issued to the old
+machine's session. Copying it forward can work, silently keeps a credential that
+should have been rotated with the rebuild, and leaves you unable to tell which of
+the two happened. Where the tool has a login flow, use it:
 
 ```bash
-for c in cli-credentials git package-managers licenses; do
-  if [ -d "$MNT/$c" ]; then
-    printf 'PRESENT   %-18s %s file(s)\n' "$c" \
-      "$(find "$MNT/$c" -type f ! -name '.DS_Store' | wc -l | tr -d ' ')"
-  else
-    printf 'ABSENT    %-18s nothing was staged for this category\n' "$c"
-  fi
-done
+gh auth login
 ```
 
-There is no `cloud/`: AWS and other cloud CLIs are deliberately not backed up,
-and are re-authenticated instead. Prefer re-authentication for everything in
-`git/` and `package-managers/` too — a registry token or a Git helper cache
-restored from a three-week-old image is as likely to be stale as valid, and
-re-issuing it costs less than debugging it.
+The step notices whether `gh` is installed. If the image carries `gh/hosts.yml`
+and `gh` is not here yet, it says to defer: Phase 12 installs `gh`, and
+`gh auth login` afterwards is the whole restore for it.
 
-`cli-credentials/` most often holds `gh/hosts.yml`, the GitHub CLI's stored
-OAuth token.
-
-**Expect to defer this one.** `gh` is installed by `restore-apps` (Phase 12), so
-on a first pass through this phase it is not on `PATH` and there is nothing to
-check — the block below will say so rather than fail, and that is the normal
-result here, not a problem to chase. Run it to confirm which case you are in:
-
-```bash
-if command -v gh >/dev/null 2>&1; then
-  gh auth status 2>&1 | sed -n '1,6p'
-else
-  printf 'gh is not installed yet — Phase 12 installs it; defer this row.\n'
-fi
-```
-
-Once `gh` exists, `gh auth login` is the restore. It re-issues the token against
-the account you are actually signed into now, which a copied `hosts.yml` cannot
-do — the file may name an account, host, or scope set that no longer applies.
-Restore the file only if re-authentication is unavailable, and then to
-`~/.config/gh/hosts.yml` at mode `600`.
-
-Nothing later in this phase depends on it, so deferring costs nothing. Note it
-on the exit checklist so Phase 12 picks it up.
-
-For each application license or activation file:
-
-1. Use the application vendor's supported import or reactivation flow — not a manual copy of an activation file unless the vendor explicitly documents that path.
-2. Keep copied activation files out of Git and OneDrive unless separately approved.
-3. Record only redacted restore notes in plain Markdown, under `$REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/`.
-4. Remove any temporary plaintext copies after the app is activated and validated.
-
-> [!warning] Pitfall
-> Screenshots or PDFs of subscription pages that contain private identifiers still count as secret material. They belong under `secrets-encrypted/licenses/` — not under `public-certs/`, not in `reimaged-system/restore-notes/`, and not in a general notes folder. Staging them there *before* the Phase 3C build is what causes the `licenses/` category to exist on the next image; nothing is added to a DMG after it is built.
+Licenses come back through each vendor's own flow, not by copying activation
+files. An activation record copied from another machine is usually inert, and
+occasionally counts against a seat limit.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -1560,8 +1119,7 @@ hdiutil info | grep -c all-secrets
 
 Expect `0`. Judge this by the printed number, not by an exit status: `grep -c` prints `0` **and exits 1** when nothing matches.
 
-> [!warning] Pitfall
-> Detach by `"$MNT"`, never by `/Volumes/all-secrets-*`. If the volume name does not match the DMG filename the glob expands to nothing, `hdiutil detach` fails on a literal path, and the mounted plaintext secrets are left sitting on `/Volumes/` — usually unnoticed, because the step "ran". If `$MNT` is no longer set in this shell, re-derive it with the snippet in Step 1.
+Detach by `"$MNT"` and never by `/Volumes/all-secrets-*`. If the volume name does not match the DMG filename the glob expands to nothing, `hdiutil detach` fails on a literal path, and the mounted plaintext secrets are left sitting on `/Volumes/` — usually unnoticed, because the step "ran". If `$MNT` is no longer set in this shell, re-derive it with the snippet in Step 1.
 
 Sweep for any temporary plaintext copies you may have made outside the DMG (Downloads, Desktop) and remove them. The DMG is the durable copy; nothing plaintext should remain on disk after this step.
 
@@ -1614,12 +1172,11 @@ Rows worth understanding, because they are not the version comparison that
 | `**CARRIED FORWARD**` | That value came back. Remove it with `git config --global --unset http.sslverify`, and scope it per host with `GIT_INTERNAL_TLS_SKIP_HOST` in `restore-git.md` if one internal host genuinely needs it. |
 | `**MISSING**` | Recorded pre-image, absent now. On this phase that is trust or identity, not a tool a later phase installs. |
 
-> [!note]
-> `Git credential.helper` and `Git init.defaultBranch` reading `**MISSING**` here
-> is expected: `restore-git.md` (Phase 11A) owns the global Git configuration and
-> has not run yet. Re-run this comparison after Phase 11A — that is also when
-> `http.sslverify` could come back, so a `correctly dropped` verdict now is not
-> the final answer on that row.
+`Git credential.helper` and `Git init.defaultBranch` reading `**MISSING**` here
+is expected: `restore-git.md` (Phase 11A) owns the global Git configuration and
+has not run yet. Re-run this comparison after Phase 11A — that is also when
+`http.sslverify` could come back, so a `correctly dropped` verdict now is not the
+final answer on that row.
 
 **3. Join the two recordings.** `delta` is a third point on the same script. It
 walks nothing — it joins the official before-state and after-state and records
@@ -1678,11 +1235,10 @@ staged-loose destinations, and the DMG being detached. There is no separate
 table to tick here — the checklist is the table, and keeping a second copy in
 the runbook is how the two drift apart.
 
-> [!note]
-> `bin/record-restore-prereqs.sh` and `bin/record-restore-exit.sh` are one pair
-> per phase boundary, not one per runbook. This phase runs the `10B` entry check
-> at Step 0 and the `10B` exit check here. It never runs Phase 11A's entry check,
-> and never re-runs its own entry check at the end.
+`bin/record-restore-prereqs.sh` and `bin/record-restore-exit.sh` are one pair per
+phase boundary, not one per runbook. This phase runs the `10B` entry check at
+Step 0 and the `10B` exit check here; it never runs Phase 11A's entry check, and
+never re-runs its own entry check at the end.
 
 **2. Confirm both boundary records landed.** One file answers whether the phase
 both started and finished:
@@ -1751,6 +1307,48 @@ Five failures here have fixes long enough to break the flow of the step that sur
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
+### An SSH alias hangs after the host key is accepted
+
+The symptom is specific: the host key prompt appears and is answered, `Warning:
+Permanently added …` prints, and then nothing. No greeting, no error, no prompt
+back.
+
+That is not a key problem. The keys are being offered fine — the connection never
+gets far enough to use them. TCP completes, the small early packets are exchanged,
+and the session stalls at `SSH2_MSG_KEX_ECDH_REPLY`, which is the first **large**
+packet. A path along the way is dropping packets above a certain size without
+reporting it: a path-MTU black hole, typically through a VPN tunnel.
+
+Confirm it rather than assuming, from the tunnel MTUs and a sized ping:
+
+```bash
+ifconfig | grep -A1 '^utun' | grep mtu
+ping -c1 -D -s 1472 github.com
+ping -c1 -D -s 1300 github.com
+```
+
+A large `-s` failing while a smaller one passes is the black hole. `-D` sets
+don't-fragment, so the packet is dropped rather than split.
+
+`ConnectTimeout` will not bound this — it covers the TCP connect, which succeeded.
+Press Ctrl-C, or use the step's own probe, which carries a watchdog.
+
+**This is a network path, not something to fix on the Mac.** Two things follow
+from it:
+
+- Another host on the same protocol may be fine. Internal and public destinations
+  routinely take different egress paths, so an internal Git host can work on port
+  22 while the public one does not. Test the internal alias before concluding the
+  keys are broken.
+- Where the public host is genuinely unreachable over SSH, use HTTPS with a
+  personal access token for those remotes instead, and record the substitution.
+  Port 443 is not automatically an escape: a TLS-inspecting proxy will accept the
+  connection and then close it, since SSH-over-443 is not TLS.
+
+Phase 11A ([[restore-git|restore-git.md]]) is where that substitution is made and
+recorded; a blocked public host is a legitimate `known-blocked` row there rather
+than a failure of this step.
+
 ### `hdiutil attach` says the DMG is corrupt
 
 Verify the DMG on disk before assuming it is unrecoverable:
@@ -1797,7 +1395,7 @@ nc -z -G 5 github.com 22 && echo "TCP 22 reachable" || echo "TCP 22 blocked or f
 
 **If the probe fails**, outbound 22 is blocked — common on corporate networks,
 and a freshly enrolled Mac may also be waiting on a VPN or a firewall profile
-that arrived with enrolment.
+that arrived with enrollment.
 
 **If the probe SUCCEEDS and `ssh` still times out**, which is the more
 confusing case, the TCP handshake completes and the SSH protocol does not.

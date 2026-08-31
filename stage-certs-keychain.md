@@ -21,15 +21,15 @@ Discover, review, and stage the certificate and macOS Keychain material worth pr
     - [[#Prerequisites|Prerequisites]]
     - [[#Confirm Your Intent|Confirm Your Intent]]
 - [[#Sequential Steps|Sequential Steps]]
-    - [[#Load Shared Configuration|Load Shared Configuration]]
-    - [[#Initialize the Staged-Certs Config|Initialize the Staged-Certs Config]]
-    - [[#Run the Scan|Run the Scan]]
-    - [[#Generate the Normalized Plan|Generate the Normalized Plan]]
-    - [[#Review the Generated Artifacts|Review the Generated Artifacts]]
-    - [[#Export Selected Keychain Items|Export Selected Keychain Items]]
-    - [[#Stage Selected Loose Files|Stage Selected Loose Files]]
-    - [[#Record Decisions and Restore Notes|Record Decisions and Restore Notes]]
-    - [[#Verify Before Phase 3B|Verify Before Phase 3B]]
+    - [[#Step 1 — Load Shared Configuration|Step 1 — Load Shared Configuration]]
+    - [[#Step 2 — Initialize the Staged-Certs Config|Step 2 — Initialize the Staged-Certs Config]]
+    - [[#Step 3 — Run the Scan|Step 3 — Run the Scan]]
+    - [[#Step 4 — Generate the Normalized Plan|Step 4 — Generate the Normalized Plan]]
+    - [[#Step 5 — Review the Generated Artifacts|Step 5 — Review the Generated Artifacts]]
+    - [[#Step 6 — Export Selected Keychain Items|Step 6 — Export Selected Keychain Items]]
+    - [[#Step 7 — Stage Selected Loose Files|Step 7 — Stage Selected Loose Files]]
+    - [[#Step 8 — Record Decisions and Restore Notes|Step 8 — Record Decisions and Restore Notes]]
+    - [[#Step 9 — Verify Before Phase 3B|Step 9 — Verify Before Phase 3B]]
 - [[#Decisions|Decisions]]
 - [[#Supplemental Reference|Supplemental Reference]]
     - [[#What to Keep and What Phase 3C Already Covers|What to Keep and What Phase 3C Already Covers]]
@@ -245,7 +245,7 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 
 Run these in order. Steps map to the script's phases — prepare (load config, initialize) → execute (scan, plan, export, stage) → verify — and any file you add later means rerunning `scan` then `plan` so the latest review state is on disk before Phase 3C.
 
-### Load Shared Configuration
+### Step 1 — Load Shared Configuration
 
 Source the local environment before running any command below, and re-source it after any edit to `reimage.env` in the same shell:
 
@@ -262,7 +262,11 @@ printf 'REIMAGE_ARTIFACT_ROOT=%s\n' "$REIMAGE_ARTIFACT_ROOT"
 printf 'REIMAGE_WORKSPACE_ROOT=%s\n' "${REIMAGE_WORKSPACE_ROOT:-}"
 ```
 
-### Initialize the Staged-Certs Config
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
+### Step 2 — Initialize the Staged-Certs Config
 
 First run or new workspace only — copy the reusable fragments into your workspace:
 
@@ -275,7 +279,11 @@ This writes `loose-candidates-selected.conf.sh`, `project-local.conf.sh`, and `t
 > [!note]
 > Init skips files that already exist and will not overwrite reviewed selections unless you pass `--force`. If the workspace fragments are already there from a prior reimage, skip this step — the staging step later edits them in place.
 
-### Run the Scan
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
+### Step 3 — Run the Scan
 
 Inventory the Keychain and filesystem cert surface, and write the review reports:
 
@@ -288,7 +296,11 @@ The scan creates the staging folders, captures certificate and identity inventor
 > [!note]
 > The scan does not export Keychain items, decide what to keep, build the DMG, or delete anything. Those are your calls (export, stage) or Phase 3C's (DMG, cleanup).
 
-### Generate the Normalized Plan
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
+### Step 4 — Generate the Normalized Plan
 
 Turn the raw reports into one deduped working queue:
 
@@ -300,7 +312,11 @@ The plan (via `prepare-certs-keychain-staging.py`) cleans malformed TSV rows, no
 
 Use `cert-keychain-normalized-plan-primary-*.tsv` as your working queue — a review plan, not an approval list. The full output catalog is in [[#Generated Review Artifacts|Generated Review Artifacts]].
 
-### Review the Generated Artifacts
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
+### Step 5 — Review the Generated Artifacts
 
 Treat every file under `extra-secrets-certs-review/` as a review clue, not a bulk-copy list. Start with the highest-signal reports:
 
@@ -313,7 +329,11 @@ Treat every file under `extra-secrets-certs-review/` as a review clue, not a bul
 
 Decide, per row, using What to Keep and What Phase 3C Already Covers. Keychain items you decide to keep go to Export Selected Keychain Items; filesystem paths you decide to keep go to Stage Selected Loose Files. The complete catalog of generated files is in Generated Review Artifacts.
 
-### Export Selected Keychain Items
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
+### Step 6 — Export Selected Keychain Items
 
 Only Keychain items you intentionally keep **and can actually export** need a manual export. Most corporate identities on a managed Mac are non-exportable and re-provision automatically after reimage — so export is the exception, and "document + re-enroll" is the common outcome.
 
@@ -368,7 +388,11 @@ Then search for your issuer or subject, e.g. `grep -i -B2 -A6 'scep\|<issuer-CA-
 > [!warning] Pitfall
 > Internal hostnames (for example a SCEP/NDES server) belong only in this checklist and the export summary — both live under `secrets-encrypted/` and ride into the encrypted DMG. Keep them **out** of the public `public-certs/` export inventory; describe the source generically there.
 
-### Stage Selected Loose Files
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
+### Step 7 — Stage Selected Loose Files
 
 For filesystem items you keep, list their absolute paths in the matching workspace fragment; the next scan copies the real files into `secrets-encrypted/certs/`. Each fragment maps to one destination so staged material stays easy to audit:
 
@@ -410,7 +434,11 @@ Then confirm in `configured-staged-files-*.tsv` that the configured paths were c
 > [!warning] Pitfall
 > Do not list items Phase 3C already auto-captures — `~/.keystore`, home-root `*.jks`, Desktop/Downloads cert bundles, JDK/IntelliJ JBR `jssecacerts`, or ssh/gnupg/docker/kube/Chrome/IntelliJ-HTTP/Postman/Raycast secret material. Re-listing them duplicates staging work. See [[#What to Keep and What Phase 3C Already Covers|What to Keep and What Phase 3C Already Covers]].
 
-### Record Decisions and Restore Notes
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
+### Step 8 — Record Decisions and Restore Notes
 
 `keychain-detail` writes all three records from one classification, so they stay consistent and reflect the real export state (it scans the exports dir). Re-run it after any manual export so the counts update:
 
@@ -426,14 +454,18 @@ That emits, each timestamped:
 
 Then confirm by hand — the helper fills what it can and leaves the rest for you:
 
-- Set each identity's `Enrollment server` in the checklist (the helper flags it; read the SCEP URL from Device Management — see [[#Export Selected Keychain Items|step 5]]).
+- Set each identity's `Enrollment server` in the checklist (the helper flags it; read the SCEP URL from Device Management — see [[#Step 6 — Export Selected Keychain Items|step 5]]).
 - If you attempted an export that failed, record the exact error under `Export attempt` in the checklist and tick "Private-key export failure documented" in the summary.
 - Tick the remaining sign-off boxes once each view is reviewed.
 
 > [!warning] Pitfall
 > Keep internal hostnames (a SCEP/NDES server) out of the **public** inventory — the helper already omits them; do not paste them back in. Hostnames belong only in the checklist and summary under `secrets-encrypted/`, which ride into the encrypted DMG.
 
-### Verify Before Phase 3B
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
+### Step 9 — Verify Before Phase 3B
 
 List what is staged and confirm it is all intentional:
 

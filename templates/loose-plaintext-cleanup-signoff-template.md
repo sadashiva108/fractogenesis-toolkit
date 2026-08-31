@@ -1,4 +1,4 @@
-[[create-secrets-dmg#Clean Up Loose Plaintext After Validation|← Back to Create Secrets DMG]]
+[[create-secrets-dmg#Step 5 — Clean Up Loose Plaintext After Validation|← Back to Create Secrets DMG]]
 
 # Loose Plaintext Cleanup Sign-Off (manual items only)
 

@@ -23,14 +23,14 @@ The external artifact root is the authoritative copy. An optional OneDrive secon
     - [[#Prerequisites|Prerequisites]]
     - [[#Confirm Your Intent|Confirm Your Intent]]
 - [[#Sequential Steps|Sequential Steps]]
-    - [[#Load the Shared Reimage Environment|Load the Shared Reimage Environment]]
-    - [[#Confirm the Artifact-Config Fragments|Confirm the Artifact-Config Fragments]]
-    - [[#Run the Size Audit|Run the Size Audit]]
-    - [[#Scan Archives for Credential Material|Scan Archives for Credential Material]]
-    - [[#Choose the Backup Mode|Choose the Backup Mode]]
-    - [[#Run the Backup|Run the Backup]]
-    - [[#Review Output|Review Output]]
-    - [[#Confirm the OneDrive Sync|Confirm the OneDrive Sync]]
+    - [[#Step 1 — Load the Shared Reimage Environment|Step 1 — Load the Shared Reimage Environment]]
+    - [[#Step 2 — Confirm the Artifact-Config Fragments|Step 2 — Confirm the Artifact-Config Fragments]]
+    - [[#Step 3 — Run the Size Audit|Step 3 — Run the Size Audit]]
+    - [[#Step 4 — Scan Archives for Credential Material|Step 4 — Scan Archives for Credential Material]]
+    - [[#Step 5 — Choose the Backup Mode|Step 5 — Choose the Backup Mode]]
+    - [[#Step 6 — Run the Backup|Step 6 — Run the Backup]]
+    - [[#Step 7 — Review Output|Step 7 — Review Output]]
+    - [[#Step 8 — Confirm the OneDrive Sync|Step 8 — Confirm the OneDrive Sync]]
 - [[#Decisions|Decisions]]
 - [[#Troubleshooting|Troubleshooting]]
 - [[#Supplemental Reference|Supplemental Reference]]
@@ -231,7 +231,7 @@ A short pre-flight. Confirm you are set up, then confirm what you intend this ru
 
 Run these in order. The first three are shared setup; you then choose the backup mode, run it, and review what landed. The final OneDrive check applies only to a run that included OneDrive.
 
-### Load the Shared Reimage Environment
+### Step 1 — Load the Shared Reimage Environment
 
 `backup-home.sh` and `report-size-audit.sh` self-locate and load shared config through `.internal/load-reimage-config.sh` — you never source `reimage.env` by hand. `verify-artifact-config.sh` resolves the fragment directory on its own without sourcing the fragments, so a broken fragment gets reported instead of aborting the load.
 
@@ -265,7 +265,11 @@ The header block names each one before any copying starts:
 > [!note]
 > The two OneDrive lines appear only when that run resolves a usable root. `skipped` means you asked to skip it with `--external-only`; `unavailable` means the run wanted OneDrive and could not resolve it, and the reason prints directly underneath. If any of these is not what you expect, stop here rather than at the copy.
 
-### Confirm the Artifact-Config Fragments
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
+### Step 2 — Confirm the Artifact-Config Fragments
 
 The fragments are the entire definition of what gets backed up, what is excluded, what routes to secrets, and how OneDrive behaves. Confirm they are present and parse before the backup runs:
 
@@ -295,7 +299,11 @@ To change what gets backed up, excluded, or routed to secrets, edit these fragme
 > [!warning] Pitfall
 > Read the `Selected by:` line, not just the fragment results. A run that reports `committed templates (no workspace copy found)` verified the generic fragment set, not this Mac's — and `backup-home.sh` will back up that same generic set.
 
-### Run the Size Audit
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
+### Step 3 — Run the Size Audit
 
 Run the size audit before copying, so a full or unmounted drive is caught early. Give it a sub-label so this capture stays distinguishable from other same-day audits in `size-audit-reports/MANIFEST.md`:
 
@@ -318,7 +326,11 @@ Review these lines in the output:
 > [!bug] Troubleshooting
 > The saved report keeps ANSI color codes on purpose; view it in a terminal, not an editor: `less -R "$REIMAGE_ARTIFACT_ROOT/size-audit-reports/runs/<run>/size-audit-report.txt"`.
 
-### Scan Archives for Credential Material
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
+### Step 4 — Scan Archives for Credential Material
 
 A compressed archive is opaque to every filename sweep in this workflow, so a credential sealed inside one is copied in the clear and passes Phase 3B without comment. Run this before the copy, while the decision is still cheap:
 
@@ -341,14 +353,22 @@ Resolve a finding one of three ways: leave it as-is, add the filename to `ARCHIV
 > [!note]
 > Postman exports are the other file type whose credentials hide from a name sweep, and they are covered where the Postman export flow is documented — see [[backup-apps#Postman|backup-apps.md — Postman]].
 
-### Choose the Backup Mode
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
+### Step 5 — Choose the Backup Mode
 
 Pick the mode intentionally before running it. External-only fills the authoritative destination first and does not wait on cloud sync; the default adds the OneDrive secondary in the same run; OneDrive-only refreshes just the secondary after the external copy already succeeded. Add `--dry-run` to any of them when you want to see the scope before committing to it.
 
 > [!warning] Pitfall
 > Any mode that includes OneDrive still leaves the OneDrive copy unproven. Writing to the local OneDrive folder is not the same as OneDrive uploading it, which is why the last step of this runbook exists.
 
-### Run the Backup
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
+### Step 6 — Run the Backup
 
 Run the mode you chose.
 
@@ -379,7 +399,11 @@ ARTIFACT_ROOT_OVERRIDE="replace-with-the-artifact-root-path"
 
 The run exits `0` on success, `2` for a usage or prerequisite problem, and `1` when a copy fails — the failing target, its source and destination, and the underlying rsync exit code are printed. Warnings for rsync exit `23` and `24` are counted and summarized at the end without failing the run.
 
-### Review Output
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
+### Step 7 — Review Output
 
 Confirm what landed before moving on:
 
@@ -416,7 +440,11 @@ Re-run the archive scan against the artifact root, this time to confirm what act
 > [!bug] Troubleshooting
 > If a directory you listed in `external-targets.conf.sh` is missing from the copy, see [[#Directory Target Not Backed Up|Directory Target Not Backed Up]].
 
-### Confirm the OneDrive Sync
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
+### Step 8 — Confirm the OneDrive Sync
 
 This step applies only when `backup-home.sh` ran with OneDrive enabled. Checking the local folder proves the files were *written* to the local OneDrive-synced folder; it does not prove OneDrive *uploaded* them.
 
@@ -497,7 +525,7 @@ export ONEDRIVE_DEST_SUBDIR="$(basename "${REIMAGE_ARTIFACT_ROOT%/}")"
 
 `backup-home.sh` refuses to write under the repo checkout and errors instead. To recover: move any stray contents into the real OneDrive root, quarantine the stray folder until the move shows in OneDrive web, then correct `reimage.env` through `prepare-artifact-root.md` before rerunning.
 
-[[#Confirm the OneDrive Sync|⮕ Continue to Confirm the OneDrive Sync]]
+[[#Step 8 — Confirm the OneDrive Sync|⮕ Continue to Step 8 — Confirm the OneDrive Sync]]
 
 ---
 
@@ -518,7 +546,7 @@ A third case hides even a valid, existing target: a pattern in `external-exclude
 > [!note]
 > `SOURCE` uses trailing-slash semantics: `…/dir/` syncs the directory's contents into `DEST`, while `…/dir` syncs the directory itself. Before assuming the script is at fault, confirm the source resolves to a directory exactly as written: `ls -d "$HOME/path/you/entered"`.
 
-[[#Run the Backup|⮕ Continue to Run the Backup]]
+[[#Step 6 — Run the Backup|⮕ Continue to Step 6 — Run the Backup]]
 
 ---
 

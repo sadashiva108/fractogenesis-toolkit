@@ -1,4 +1,4 @@
-[[create-secrets-dmg#Validate the Mounted DMG|← Back to Create Secrets DMG]]
+[[create-secrets-dmg#Step 4 — Validate the Mounted DMG|← Back to Create Secrets DMG]]
 
 # Manual-Export Pass Criteria (manual items only)
 

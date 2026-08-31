@@ -457,7 +457,7 @@ collect_restore_runtime() {
 # What this phase rebuilds is trust and identity, not tool versions, so almost
 # none of it is a probe_version. The captures that cover it are spread across
 # three roots: the system inventory recorded the Git and shell configuration,
-# the managed inventory recorded which CA profiles enrolment pushed, and the
+# the managed inventory recorded which CA profiles enrollment pushed, and the
 # jssecacerts manifest beside the encrypted image recorded a SHA-256 per JDK.
 # ---------------------------------------------------------------------------
 # ---------------------------------------------------------------------------
@@ -535,7 +535,7 @@ collect_restore_access() {
     "inventory:07-shell.txt" '^/(bin|opt|usr)/.*sh$'
 
   # --- Trust ---------------------------------------------------------------
-  # Enrolment pushes the corporate root through a configuration profile, so the
+  # Enrollment pushes the corporate root through a configuration profile, so the
   # managed inventory is the record of what SHOULD be trusted. The live side
   # asks the trust store rather than the keychain file list, because a
   # certificate being present is not the same as it being trusted.

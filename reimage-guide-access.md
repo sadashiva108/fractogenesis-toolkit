@@ -431,26 +431,29 @@ that is exactly where Phase 8 will later put the real checkout.
 
 If anything prints `FAIL`, stop and diagnose before trusting this path during an actual reimage.
 
-**11. Open the markdown files, using only what's avail*Option A — TextEdit.* A GUI editor, always present on a bare Mac:
+**11. Open the markdown files, using only what's available on a bare Mac:**
+
+*Option A — TextEdit.* A GUI editor, always present:
 
 ```bash
- (GUI, always present)
 open -a TextEdit "$FRACTOGENESIS_HOME/reimaging-guide.md"
 ```
+
 *Option B — Quick Look.* No app launch; reveals the file in Finder, where Space previews it:
 
 ```bash
-
 open -R "$FRACTOGENESIS_HOME/reimaging-guide.md"
-```*Option C — Terminal, paginated.* Quit with `q`:
+```
+
+*Option C — Terminal, paginated.* Quit with `q`:
 
 ```bash
-)
 less "$FRACTOGENESIS_HOME/reimaging-guide.md"
-``*Option D — Terminal, dumped to screen.*
+```
+
+*Option D — Terminal, dumped to screen.*
 
 ```bash
-le
 cat "$FRACTOGENESIS_HOME/prepare-artifact-root.md" | head -50
 ```
 

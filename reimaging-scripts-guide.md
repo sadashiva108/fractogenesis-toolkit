@@ -837,6 +837,7 @@ Not phase steps. These check the setup the phases depend on, and none of them wr
 ./bin/check-reimage-env.sh
 ./bin/verify-artifact-config.sh
 ./bin/verify-doc-paths.sh
+./bin/verify-runbook-structure.sh
 ```
 
 | Script | The question it answers |
@@ -845,10 +846,13 @@ Not phase steps. These check the setup the phases depend on, and none of them wr
 | `check-reimage-env.sh` | Does `reimage.env` match this effort, or is it left over from the last one? |
 | `verify-artifact-config.sh` | Are the artifact-config fragments present and syntactically valid? |
 | `verify-doc-paths.sh` | Do the repository paths named in the governance docs still exist? |
+| `verify-runbook-structure.sh` | Do the runbooks still follow the structural house rules? |
 
 `verify-artifact-config.sh` prints a `Selected by:` line naming which fragment directory actually won — the per-machine workspace copy or the committed templates. A run that says "committed templates" verified the generic set, not yours.
 
 `verify-doc-paths.sh` is repository maintenance rather than reimage work: run it after moving or renaming anything the docs point at.
+
+`verify-runbook-structure.sh` is the same kind of maintenance, aimed at a failure the other checks cannot see. Paths resolve and anchors resolve in a runbook whose steps were never enumerated, so a document written before a house rule existed keeps passing everything until someone reads it beside a conforming one. It also catches unbalanced code fences — a bulk edit that eats a newline welds a `` ``` `` to the sentence after it, and from there to the end of the file Obsidian renders prose as code.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 

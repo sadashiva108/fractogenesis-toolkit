@@ -29,23 +29,23 @@ Git remotes protect what you have committed and pushed. They do not protect loca
     - [[#Selected Path vs Direct Path|Selected Path vs Direct Path]]
     - [[#Why Secrets Are Routed Separately|Why Secrets Are Routed Separately]]
 - [[#Sequential Steps|Sequential Steps]]
-    - [[#Define Git Repository Roots|Define Git Repository Roots]]
-    - [[#Load Shared Configuration|Load Shared Configuration]]
-    - [[#Run the Size Audit|Run the Size Audit]]
-    - [[#Run the Repository Audit|Run the Repository Audit]]
-    - [[#Review the Repository Audit|Review the Repository Audit]]
-    - [[#Scan for Stale Ignore Entries|Scan for Stale Ignore Entries]]
-    - [[#Review the Gitignore Superset|Review the Gitignore Superset]]
-    - [[#Choose Your Path|Choose Your Path]]
-    - [[#Choose Which Ignored Files to Keep|Choose Which Ignored Files to Keep]]
-    - [[#Create or Update the Exclude List|Create or Update the Exclude List]]
-    - [[#Set Up the Secrets-Patterns List|Set Up the Secrets-Patterns List]]
-    - [[#Run the Selected Dry Run|Run the Selected Dry Run]]
-    - [[#Run the Filtered Dry Run|Run the Filtered Dry Run]]
-    - [[#Run the Selected Copy|Run the Selected Copy]]
-    - [[#Run the Direct Dry Run|Run the Direct Dry Run]]
-    - [[#Run the Direct Copy|Run the Direct Copy]]
-    - [[#Review Output Files|Review Output Files]]
+    - [[#Step 1 — Define Git Repository Roots|Step 1 — Define Git Repository Roots]]
+    - [[#Step 2 — Load Shared Configuration|Step 2 — Load Shared Configuration]]
+    - [[#Step 3 — Run the Size Audit|Step 3 — Run the Size Audit]]
+    - [[#Step 4 — Run the Repository Audit|Step 4 — Run the Repository Audit]]
+    - [[#Step 5 — Review the Repository Audit|Step 5 — Review the Repository Audit]]
+    - [[#Step 6 — Scan for Stale Ignore Entries|Step 6 — Scan for Stale Ignore Entries]]
+    - [[#Step 7 — Review the Gitignore Superset|Step 7 — Review the Gitignore Superset]]
+    - [[#Step 8 — Choose Your Path|Step 8 — Choose Your Path]]
+    - [[#Step 9 — Choose Which Ignored Files to Keep|Step 9 — Choose Which Ignored Files to Keep]]
+    - [[#Step 10 — Create or Update the Exclude List|Step 10 — Create or Update the Exclude List]]
+    - [[#Step 11 — Set Up the Secrets-Patterns List|Step 11 — Set Up the Secrets-Patterns List]]
+    - [[#Step 12 — Run the Selected Dry Run|Step 12 — Run the Selected Dry Run]]
+    - [[#Step 13 — Run the Filtered Dry Run|Step 13 — Run the Filtered Dry Run]]
+    - [[#Step 14 — Run the Selected Copy|Step 14 — Run the Selected Copy]]
+    - [[#Step 15 — Run the Direct Dry Run|Step 15 — Run the Direct Dry Run]]
+    - [[#Step 16 — Run the Direct Copy|Step 16 — Run the Direct Copy]]
+    - [[#Step 17 — Review Output Files|Step 17 — Review Output Files]]
 - [[#Manual Decisions That Remain Manual|Manual Decisions That Remain Manual]]
 - [[#Supplemental Reference|Supplemental Reference]]
     - [[#Worked Example|Worked Example]]
@@ -364,7 +364,7 @@ The **Direct path** is an off-ramp: a broad dump of every file Git reports as ig
 
 ### Why Secrets Are Routed Separately
 
-Some files you need for development are also credential-shaped — env files, keys, keystores, IDE data sources. You still want them after the reimage, so you keep them; you just must not let them sync in the clear. `secrets-patterns.txt` diverts kept, credential-shaped files into `secrets-encrypted/repos-gitignored/`, where the Phase 3C DMG encrypts them. See [[#Set Up the Secrets-Patterns List|Set Up the Secrets-Patterns List]] for how to configure it, and the [[#Worked Example|Worked Example]] to see it in action.
+Some files you need for development are also credential-shaped — env files, keys, keystores, IDE data sources. You still want them after the reimage, so you keep them; you just must not let them sync in the clear. `secrets-patterns.txt` diverts kept, credential-shaped files into `secrets-encrypted/repos-gitignored/`, where the Phase 3C DMG encrypts them. See [[#Step 11 — Set Up the Secrets-Patterns List|Step 11 — Set Up the Secrets-Patterns List]] for how to configure it, and the [[#Worked Example|Worked Example]] to see it in action.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -374,7 +374,7 @@ Some files you need for development are also credential-shaped — env files, ke
 
 Run these in order. The steps up to Choose Your Path are common setup: they define the repository roots, load shared configuration, and produce the audits and superset every later step reads. Choose Your Path then forks into the Selected chain or the Direct off-ramp, and the two rejoin at the final review of output files.
 
-### Define Git Repository Roots
+### Step 1 — Define Git Repository Roots
 
 Define the local repository root directories in `reimage.env` before running the backups below.
 
@@ -484,7 +484,7 @@ If the validation prints no Git repositories, confirm the variables are loaded a
 
 ---
 
-### Load Shared Configuration
+### Step 2 — Load Shared Configuration
 
 Source the local environment before running any command below, and re-source it after any edit to `reimage.env` in the same shell:
 
@@ -506,7 +506,7 @@ printf 'GIT_PERSONAL_REPO_ROOT=%s\n' "${GIT_PERSONAL_REPO_ROOT:-}"
 
 ---
 
-### Run the Size Audit
+### Step 3 — Run the Size Audit
 
 Check destination capacity first:
 
@@ -523,7 +523,7 @@ Look for `✓ External drive: enough space` (or the `✗ NOT ENOUGH SPACE` count
 
 ---
 
-### Run the Repository Audit
+### Step 4 — Run the Repository Audit
 
 This step refreshes both the repo audit and the gitignore superset in one run. The refresh regenerates `gitignore-review-template.txt`, so route by whether you have selections to carry into it — running first and deciding after costs you either your previous marks or this run's newly discovered patterns.
 
@@ -536,11 +536,7 @@ This step refreshes both the repo audit and the gitignore superset in one run. T
 > [!note]
 > The script reads `gitignore-review-template.txt`, `backup-exclude-list.txt`, and `secrets-patterns.txt` from `$REIMAGE_ARTIFACT_ROOT/gitignore-superset/` only. The workspace copies are a manual stash so your decisions survive a new artifact root — nothing reads them directly.
 
-[[#Table of Contents|⬆ Back to Table of Contents]]
-
----
-
-### Fresh Superset
+#### Fresh Superset
 
 The superset is generated from scratch and `gitignore-review-template.txt` arrives with every box `[ ]`:
 
@@ -548,11 +544,11 @@ The superset is generated from scratch and `gitignore-review-template.txt` arriv
 ./bin/backup-repos.sh --artifact-root "$REIMAGE_ARTIFACT_ROOT" --open
 ```
 
-[[#Review the Repository Audit|⮕ Continue to Review the Repository Audit]]
+[[#Step 5 — Review the Repository Audit|⮕ Continue to Step 5 — Review the Repository Audit]]
 
 ---
 
-### Carry Selections Forward
+#### Carry Selections Forward
 
 Restore all three operator-maintained files into the artifact root first. `gitignore-superset/` already exists — `prepare-artifact-root.md` creates it as one of the expected artifact folders:
 
@@ -583,11 +579,13 @@ Then refresh with `--preserve-selections`, so the regenerated superset inherits 
 > [!note]
 > Only the review template needs the flag. It is the one file the refresh regenerates, so without `--preserve-selections` your marks are reset. `backup-exclude-list.txt` and `secrets-patterns.txt` are never regenerated — the refresh seeds them only when absent and reports `kept existing` otherwise, so restoring them is the whole job.
 
-[[#Review the Repository Audit|⮕ Continue to Review the Repository Audit]]
+[[#Step 5 — Review the Repository Audit|⮕ Continue to Step 5 — Review the Repository Audit]]
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
 
 ---
 
-### Review the Repository Audit
+### Step 5 — Review the Repository Audit
 
 Open the newest summary to review it:
 
@@ -604,7 +602,7 @@ Act on what the audit surfaces — push feature branches, preserve uncommitted w
 
 ---
 
-### Scan for Stale Ignore Entries
+### Step 6 — Scan for Stale Ignore Entries
 
 Optional, and worth running when repos have been renamed or restructured since the last backup.
 
@@ -637,7 +635,7 @@ A review-worthy row is one of two things: a file you deleted, in which case dele
 
 ---
 
-### Review the Gitignore Superset
+### Step 7 — Review the Gitignore Superset
 
 The audit run above already generated the superset, with your previous selections carried forward if you restored a template and passed `--preserve-selections`. Review it here — do not re-collect it.
 
@@ -655,12 +653,12 @@ open "$REIMAGE_ARTIFACT_ROOT/gitignore-superset/summary.txt"
 
 ---
 
-### Choose Your Path
+### Step 8 — Choose Your Path
 
 Common setup is done — route by how much review you want:
 
-- [[#Choose Which Ignored Files to Keep|Choose Which Ignored Files to Keep]] — the **Selected path** (preferred): reviewed, reads all three files.
-- [[#Run the Direct Dry Run|Run the Direct Dry Run]] — the **Direct path** (off-ramp): an unreviewed broad dump.
+- [[#Step 9 — Choose Which Ignored Files to Keep|Step 9 — Choose Which Ignored Files to Keep]] — the **Selected path** (preferred): reviewed, reads all three files.
+- [[#Step 15 — Run the Direct Dry Run|Step 15 — Run the Direct Dry Run]] — the **Direct path** (off-ramp): an unreviewed broad dump.
 
 Both chains rejoin at the Review Output Files step.
 
@@ -671,7 +669,7 @@ Both chains rejoin at the Review Output Files step.
 
 ---
 
-### Choose Which Ignored Files to Keep
+### Step 9 — Choose Which Ignored Files to Keep
 
 This is the **Select** stage. In `gitignore-review-template.txt`, change the box on each pattern whose files you want to keep from `[ ]` to `[x]`:
 
@@ -684,7 +682,7 @@ Checking a pattern *keeps* its files; leaving it unchecked means they are not ba
 Give credential-shaped patterns particular attention — `.env`, `*.pem`, `*.key`, `*.p12`, `*.jks`, `*.keystore`, `credentials.json`, `.idea/dataSources.local.xml`, `*.http`, and similar:
 
 > [!note]
-> Do not skip a secret you need just because it is a secret. Checking is what *captures* a file; the next-but-one step ([[#Set Up the Secrets-Patterns List|Set Up the Secrets-Patterns List]]) is what keeps it segregated. Capture here, segregate there.
+> Do not skip a secret you need just because it is a secret. Checking is what *captures* a file; the next-but-one step ([[#Step 11 — Set Up the Secrets-Patterns List|Step 11 — Set Up the Secrets-Patterns List]]) is what keeps it segregated. Capture here, segregate there.
 
 Save your edited template back to the workspace so you can reuse it later:
 
@@ -698,7 +696,7 @@ cp -p \
 
 ---
 
-### Create or Update the Exclude List
+### Step 10 — Create or Update the Exclude List
 
 This is the **Exclude** stage. `backup-exclude-list.txt` drops generated, cache, dependency, and build-output noise back out of the selected set.
 
@@ -731,7 +729,7 @@ cp -p \
 
 ---
 
-### Set Up the Secrets-Patterns List
+### Step 11 — Set Up the Secrets-Patterns List
 
 This is the **Route** stage. `secrets-patterns.txt` diverts kept, credential-shaped files into `secrets-encrypted/repos-gitignored/` so they never sit beside the ordinary staged files that sync to cloud storage, and so the Phase 3C DMG sweeps them. It uses the same one-pattern-per-line format and matching engine as the exclude list, and `bin/backup-repos.sh` picks it up automatically whenever it exists — no flag.
 
@@ -780,7 +778,7 @@ cp -p \
 
 ---
 
-### Run the Selected Dry Run
+### Step 12 — Run the Selected Dry Run
 
 First pass — Select only, before the exclude list applies:
 
@@ -794,7 +792,7 @@ Review `staged-ignored-files/dryrun/candidates.tsv`. If `secrets-patterns.txt` e
 
 ---
 
-### Run the Filtered Dry Run
+### Step 13 — Run the Filtered Dry Run
 
 Second pass — Select + Exclude, with all three files in play. This is the run that exercises the whole pipeline before any copy:
 
@@ -810,7 +808,7 @@ The summary reports two exclusion numbers because `excluded.tsv` holds one row p
 
 ---
 
-### Run the Selected Copy
+### Step 14 — Run the Selected Copy
 
 Only after both dry runs look right. This copies the filtered, routed set into `staged-ignored-files/live/`:
 
@@ -820,14 +818,16 @@ Only after both dry runs look right. This copies the filtered, routed set into `
 
 Secret candidates are copied out to `secrets-encrypted/repos-gitignored/`, with `secrets-copied.tsv` and `secrets-copy-failed.tsv` recorded under `live/` alongside the ordinary `copied.tsv`.
 
-[[#Review Output Files|⮕ Continue to Review Output Files]]
+[[#Step 17 — Review Output Files|⮕ Continue to Step 17 — Review Output Files]]
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
 
 ---
 
-### Run the Direct Dry Run
+### Step 15 — Run the Direct Dry Run
 
 > [!warning] Pitfall
-> This is the Direct off-ramp. It reads none of your three review files and does no secrets routing. If you meant to use them, go back to [[#Choose Your Path|Choose Your Path]].
+> This is the Direct off-ramp. It reads none of your three review files and does no secrets routing. If you meant to use them, go back to [[#Step 8 — Choose Your Path|Step 8 — Choose Your Path]].
 
 Broad dump of every ignored file, no review:
 
@@ -839,7 +839,7 @@ Broad dump of every ignored file, no review:
 
 ---
 
-### Run the Direct Copy
+### Step 16 — Run the Direct Copy
 
 Only after reviewing the direct dry run:
 
@@ -850,11 +850,13 @@ Only after reviewing the direct dry run:
 > [!warning] Pitfall
 > Because the Direct path does no routing, this can copy `.env` files, keys, certificates, and keystores straight into ordinary output. Do not treat it as a shortcut around secret review — handle those through `secrets-encrypted/` and the consolidated DMG workflow.
 
-[[#Review Output Files|⮕ Continue to Review Output Files]]
+[[#Step 17 — Review Output Files|⮕ Continue to Step 17 — Review Output Files]]
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
 
 ---
 
-### Review Output Files
+### Step 17 — Review Output Files
 
 Both paths land here. Before final validation, review the run outputs under `staged-ignored-files/`:
 

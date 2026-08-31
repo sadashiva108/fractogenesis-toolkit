@@ -19,7 +19,9 @@ Runbook template for fractogenesis-toolkit.
   its body, and its Table of Contents entry.
 - Every directory tree lives once, under "Artifact and Script Locations".
 - Links are Obsidian wiki-links ([[#Heading|Label]]) and callouts are Obsidian
-  callouts (> [!type]). Keep prose otherwise link-free so a hurried reader stays
+  callouts (> [!type]). There is no [!note]: only [!warning] Pitfall and
+  [!bug] Troubleshooting, at most one per step, and under about ten in the file.
+  Everything else is prose. Keep prose otherwise link-free so a hurried reader stays
   on the path.
 - Routing-index forks: each option's link label is its destination heading (keep
   headings short). Console-first when there is output to match, a short bullet when there
@@ -53,7 +55,8 @@ Runbook template for fractogenesis-toolkit.
 
 > In Obsidian, these are internal heading links. Click in Reading View, or Cmd-click in Live Preview/editing mode.
 
-> This runbook uses Obsidian callouts so each type reads distinctly: `[!note]` an easily-missed fact · `[!warning]` Pitfall, a mistake you are likely to make here · `[!bug]` Troubleshooting, what to do when a step misbehaves.
+> [!info] Callout legend
+> Two kinds, used sparingly. `[!warning]` **Pitfall** — skipping it costs something you do not get back: state overwritten, a security boundary crossed, or a wrong result that stays quiet until a later phase. `[!bug]` **Troubleshooting** — what to do when a step misbehaves. Everything else is prose, in the paragraph that needed it. A box around an explanation only makes the explanation easier to skip.
 
 ---
 
@@ -213,8 +216,10 @@ Preview without changing anything, when the script supports it:
 ./bin/{{PRIMARY_SCRIPT}} {{DRY_RUN_FLAG}}
 ```
 
-> [!note]
-> {{an easily-missed fact about this step}}.
+{{an easily-missed fact about this step}} — as a plain sentence, not a callout.
+Clarifications, expected-but-surprising output, and why a step is shaped the way
+it is are prose. Only a Pitfall gets a box, and only when skipping it costs
+something the reader does not get back.
 
 ### Step 2 — Execute the Primary Action
 
@@ -239,7 +244,10 @@ find "$REIMAGE_ARTIFACT_ROOT/{{ARTIFACT_PATHS}}" -maxdepth 2 -type f | sort | he
 ```
 
 > [!warning] Pitfall
-> {{a mistake a reader is likely to make when verifying}}.
+> {{a mistake whose COST is unrecoverable — state overwritten, a security
+> boundary crossed, or a wrong result that stays quiet until a later phase.
+> "Likely to be got wrong" is not enough on its own. Delete this callout if the
+> step has no such mistake; most steps do not.}}
 
 <!--
 One back-link for the whole section is the default, and it goes here — a

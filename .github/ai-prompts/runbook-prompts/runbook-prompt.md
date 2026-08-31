@@ -188,6 +188,15 @@ from being undone by the next person who finds the code surprising. A code
 comment is read by someone changing the code; a runbook step is read by someone
 following it. Different audiences, different rules.
 
+### Spelling follows the repository, not the author
+
+US spelling throughout: **enrollment**, not "enrolment". The repo already had 242
+uses of the US form and a script named `record-enrollment.sh` when 31 British ones
+were introduced alongside them, so the artifacts and the prose describing them
+disagreed. The same applies to any word with a US/British split — match what is
+already there rather than what reads naturally to you, and check with a `grep -c`
+of both forms before adding a new one.
+
 ### Metadata (Last updated line)
 
 - A runbook carries no YAML frontmatter. The back-link is the literal first thing in the
@@ -240,8 +249,12 @@ following it. Different audiences, different rules.
     - **Short criterion, no console output — bullet.** `- [[#Heading|Heading]] — short
       criterion.` If the heading already states the branch, drop the criterion.
     - **Error/fail outcomes — callouts.** One Obsidian callout per outcome, colored by
-      status (`> [!check]` pass, `> [!fail]` error, `> [!warning]` caution, `> [!note]`
-      neutral), each ending in `→ [[#Heading|Heading]]` with any sample inside the callout.
+      status (`> [!check]` pass, `> [!fail]` error, `> [!warning]` caution), each ending
+      in `→ [[#Heading|Heading]]` with any sample inside the callout. These are a
+      *routing device*, not commentary: they are how a fork's branches are told apart at
+      a glance, so they are exempt from the one-per-step budget below — but only inside a
+      routing index, and a neutral outcome is a bullet rather than a fourth callout
+      colour.
     - Never a table: it can't hold multi-line console output and forces link-pipe escaping.
 - **Every step ends with its own back-link and `---`.** A step is a section: it is
   long enough that a reader who finishes one is far from where the Table of Contents
@@ -289,15 +302,44 @@ following it. Different audiences, different rules.
 
 ### Callouts (Obsidian, consistent form)
 
-- Runbooks are read in Obsidian, so use Obsidian callouts, which color and icon each type
-  distinctly. Give Pitfall/Troubleshooting a custom title so the vocabulary survives:
-    - `> [!note]` — clarification or easily-missed fact.
-    - `> [!warning] Pitfall` — a mistake the reader is likely to make here.
+- **A callout is an interruption, and it has to earn the interruption.** Two types in
+  the body of a step:
+    - `> [!warning] Pitfall` — skipping it costs something the reader does not get back:
+      state overwritten, a security boundary crossed, or a wrong result that stays quiet
+      until a later phase. "Likely to be got wrong" is not enough on its own; what makes
+      it a Pitfall is the cost of getting it wrong.
     - `> [!bug] Troubleshooting` — what to do when a step misbehaves.
 
+  There is no `[!note]` anywhere in a runbook. A clarification, an easily-missed fact, an
+  explanation of why a step is shaped the way it is, a count that will surprise the reader,
+  an output that looks like a failure and is not — all of these are **prose**, in the
+  paragraph that needed them. Boxing an explanation does not make it more visible; it makes
+  it easier to skip, and it spends the attention that a real Pitfall two screens later
+  needs.
+
+  `[!check]` / `[!fail]` appear only as routing-index branch markers (see the Links
+  section) and `[!info]` only as the one-line callout legend under the Table of Contents.
+  Neither is available for commentary.
+
   Out-of-sequence returns are plain back-links, not callouts (see the Links section).
+- **Budget: at most one callout per step, and a step with none is normal.** If a step has
+  grown two Pitfalls, they are usually one Pitfall about two related ways the same thing
+  goes wrong — merge them under a bolded lead sentence that names the shared failure, with
+  each specific case as its own paragraph inside. If they are genuinely unrelated, one of
+  them is prose.
+- A whole file with more than **eight Pitfalls** has stopped signalling anything. Sweep
+  it: fold the explanations into prose, merge the near duplicates, and keep only what
+  meets the cost test above. `[!bug]` Troubleshooting pointers and the `[!info]` legend
+  are navigation, not commentary, so they do not count against the budget — a runbook
+  with a large Troubleshooting section legitimately carries many of the former.
+- Seven Pitfalls repeating one rule for seven different apps is one Pitfall stated once,
+  plus the app-specific fact in each section's prose. Look for this before adding
+  another: the same sentence appearing in three places is the signal.
+- `./bin/verify-runbook-structure.sh` enforces everything in this section, plus the
+  numbering, back-link, Table of Contents, code-fence and orphaned-quote rules. Run it
+  after editing a runbook.
 - In a non-Obsidian viewer these degrade to plain blockquotes with the `[!type]` label
-  still readable (GitHub styles note/warning natively).
+  still readable (GitHub styles warning natively).
 - Keep the type set small and use it the same way in every runbook, so readers learn to
   scan for it. Include a one-line callout legend under the Table of Contents.
 
@@ -522,6 +564,9 @@ Validation checklist (run after generating the filled runbook)
 - [ ] TOC links resolve to headings present in the file, using Obsidian wiki-link form.
 - [ ] The "In Obsidian, these are internal heading links" note and the callout legend are present under the TOC.
 - [ ] Callouts use the Obsidian `> [!type]` forms; any Troubleshooting fix lives inline OR in the Troubleshooting section, never both.
+- [ ] No `> [!note]` anywhere: every clarification, explanation and expected-output remark is prose in the paragraph that needed it.
+- [ ] Every `> [!warning] Pitfall` passes the cost test — skipping it loses state, crosses a security boundary, or produces a wrong result that stays quiet. At most one callout per step, and under about ten in the file.
+- [ ] Folding a callout into prose left no orphaned `>` continuation lines behind it.
 - [ ] The `## Troubleshooting` parent carries a Table-of-Contents back-link under its intro, above the first symptom subsection.
 - [ ] Sequential Steps uses the default single back-link, unless the flow forks into routed paths — in which case every step carries its own.
 - [ ] Section and step intros are link-free; only links that earn their place remain.

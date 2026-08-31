@@ -19,11 +19,11 @@ Package every credential-bearing file that must survive the reimage into one AES
     - [[#Prerequisites|Prerequisites]]
     - [[#Confirm Your Intent|Confirm Your Intent]]
 - [[#Sequential Steps|Sequential Steps]]
-    - [[#Load Shared Configuration|Load Shared Configuration]]
-    - [[#Confirm Manual Staging Is Present|Confirm Manual Staging Is Present]]
-    - [[#Build the Encrypted DMG|Build the Encrypted DMG]]
-    - [[#Validate the Mounted DMG|Validate the Mounted DMG]]
-    - [[#Clean Up Loose Plaintext After Validation|Clean Up Loose Plaintext After Validation]]
+    - [[#Step 1 — Load Shared Configuration|Step 1 — Load Shared Configuration]]
+    - [[#Step 2 — Confirm Manual Staging Is Present|Step 2 — Confirm Manual Staging Is Present]]
+    - [[#Step 3 — Build the Encrypted DMG|Step 3 — Build the Encrypted DMG]]
+    - [[#Step 4 — Validate the Mounted DMG|Step 4 — Validate the Mounted DMG]]
+    - [[#Step 5 — Clean Up Loose Plaintext After Validation|Step 5 — Clean Up Loose Plaintext After Validation]]
 - [[#Decisions|Decisions]]
 - [[#Troubleshooting|Troubleshooting]]
 - [[#Supplemental Reference|Supplemental Reference]]
@@ -204,7 +204,7 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 
 Run these in order. They map to the flow: load config → confirm inputs → build → validate → clean up. Cleanup is deliberately last and gated on validation, because it deletes plaintext secrets.
 
-### Load Shared Configuration
+### Step 1 — Load Shared Configuration
 
 Source the local environment before running any command below, and re-source it after any edit to `reimage.env` in the same shell:
 
@@ -220,7 +220,11 @@ Confirm the artifact root resolved:
 printf 'REIMAGE_ARTIFACT_ROOT=%s\n' "$REIMAGE_ARTIFACT_ROOT"
 ```
 
-### Confirm Manual Staging Is Present
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
+### Step 2 — Confirm Manual Staging Is Present
 
 Before building, confirm the manual exports you meant to include are actually staged — the build only packages what is already there. Run:
 
@@ -235,7 +239,11 @@ Act on the report: if an export you intended shows EMPTY, stage it into the matc
 > [!warning] Pitfall
 > Do not delete any loose staged export here. Nothing is removed until after the DMG is built, mounted, and verified.
 
-### Build the Encrypted DMG
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
+### Step 3 — Build the Encrypted DMG
 
 Build the consolidated DMG. The default run first reruns the Phase 3A review scan so the certificate/Keychain review artifacts are current, then stages and encrypts every category found:
 
@@ -260,7 +268,11 @@ The script prints a staging summary, then prompts twice for an encryption passwo
 > [!warning] Pitfall
 > Save the DMG password in an approved password manager **immediately** after the build. Without it the DMG cannot be opened after the reimage, and the private keys inside (GPG especially) cannot be regenerated.
 
-### Validate the Mounted DMG
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
+### Step 4 — Validate the Mounted DMG
 
 Mount the newest DMG, check its contents, and detach — one command:
 
@@ -283,7 +295,11 @@ Then confirm the few things a script cannot (these roll up to the Phase 6B sign-
 > [!bug] Troubleshooting
 > If `validate` reports FAIL for a category that is staged on disk, see [[#Validate reports FAIL for a category staged on disk|Validate reports FAIL for a category staged on disk]].
 
-### Clean Up Loose Plaintext After Validation
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
+### Step 5 — Clean Up Loose Plaintext After Validation
 
 Only after `validate` passed and you saved the password, clean up. Preview first — dry-run is the default and deletes nothing:
 
@@ -334,7 +350,7 @@ A FAIL means a category is staged on disk but missing from the image: the DMG wa
 
 Move the file into the correct `secrets-encrypted/<category>/` folder, rerun `./bin/create-secrets-dmg.sh` so the newest DMG includes it, then validate again.
 
-[[#Validate the Mounted DMG|⮕ Continue to Validate the Mounted DMG]]
+[[#Step 4 — Validate the Mounted DMG|⮕ Continue to Step 4 — Validate the Mounted DMG]]
 
 ---
 

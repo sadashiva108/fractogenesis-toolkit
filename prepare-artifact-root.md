@@ -20,17 +20,18 @@ Recommended path: create the local `reimage.env` file first, then source it in e
     - [[#Artifact Root Naming Convention|Artifact Root Naming Convention]]
     - [[#About artifact-config.sh|About artifact-config.sh]]
 - [[#Sequential Steps|Sequential Steps]]
-    - [[#Confirm the Repo Is Cloned|Confirm the Repo Is Cloned]]
-    - [[#Choose the External Data Volume|Choose the External Data Volume]]
-    - [[#Confirm External Data Volume Readiness|Confirm External Data Volume Readiness]]
-    - [[#Create Local Reimage Environment Profile|Create Local Reimage Environment Profile]]
-    - [[#Set Up direnv|Set Up direnv]]
-    - [[#Create the Artifact Root|Create the Artifact Root]]
-    - [[#Load and Confirm the Environment|Load and Confirm the Environment]]
-    - [[#Set Up the artifact-config Fragments|Set Up the artifact-config Fragments]]
-    - [[#Create the Standard Directory Layout|Create the Standard Directory Layout]]
-    - [[#Copy the Filled IT Reimage Confirmation Into reimage-confirmation|Copy the Filled IT Reimage Confirmation Into reimage-confirmation]]
-    - [[#Verify the Prepared Root|Verify the Prepared Root]]
+    - [[#Step 1 — Confirm the Repo Is Cloned|Step 1 — Confirm the Repo Is Cloned]]
+    - [[#Step 2 — Choose the External Data Volume|Step 2 — Choose the External Data Volume]]
+    - [[#Step 3 — Confirm External Data Volume Readiness|Step 3 — Confirm External Data Volume Readiness]]
+    - [[#Step 4 — Create Local Reimage Environment Profile|Step 4 — Create Local Reimage Environment Profile]]
+    - [[#Step 5 — Set Up direnv|Step 5 — Set Up direnv]]
+    - [[#Step 6 — Confirm reimage.env Is Loaded|Step 6 — Confirm reimage.env Is Loaded]]
+    - [[#Step 7 — Create the Artifact Root|Step 7 — Create the Artifact Root]]
+    - [[#Step 8 — Load and Confirm the Environment|Step 8 — Load and Confirm the Environment]]
+    - [[#Step 9 — Set Up the artifact-config Fragments|Step 9 — Set Up the artifact-config Fragments]]
+    - [[#Step 10 — Create the Standard Directory Layout|Step 10 — Create the Standard Directory Layout]]
+    - [[#Step 11 — Copy the Filled IT Reimage Confirmation Into reimage-confirmation|Step 11 — Copy the Filled IT Reimage Confirmation Into reimage-confirmation]]
+    - [[#Step 12 — Verify the Prepared Root|Step 12 — Verify the Prepared Root]]
 - [[#Supplemental Reference|Supplemental Reference]]
     - [[#Repo Path Variables and Self-Locating Scripts|Repo Path Variables and Self-Locating Scripts]]
     - [[#reimage.env Must Contain Resolved Values, Not Literal References|reimage.env Must Contain Resolved Values, Not Literal References]]
@@ -352,13 +353,13 @@ These are the stable top-level folders the Create the Standard Directory Layout 
 
 ---
 
-### Sequential Steps
+## Sequential Steps
 
 This section is the ordered execution path for preparing the artifact root: confirm the repo checkout, choose and verify the external volume, set up or resume `reimage.env`, load it into the shell (direnv or manual `source`), create the artifact root and its standard folder layout, drop in the filled IT reimage confirmation, then verify the result. Each step assumes the ones before it are already done.
 
 ---
 
-### Confirm the Repo Is Cloned
+### Step 1 — Confirm the Repo Is Cloned
 
 Before anything else in Sequential Steps -- confirm this repo is actually checked out on this Mac.
 
@@ -399,7 +400,7 @@ cd "$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 pwd
 ```
 
-[[#Choose the External Data Volume|⮕ Continue to Choose the External Data Volume]]
+[[#Step 2 — Choose the External Data Volume|⮕ Continue to Step 2 — Choose the External Data Volume]]
 
 ---
 
@@ -453,11 +454,11 @@ If there's no network yet, use the prepared jump drive fallback instead — see 
 
 The repo is public, so no access request is needed either way.
 
-[[#Choose the External Data Volume|⮕ Continue to Choose the External Data Volume]]
+[[#Step 2 — Choose the External Data Volume|⮕ Continue to Step 2 — Choose the External Data Volume]]
 
 ---
 
-### Choose the External Data Volume
+### Step 2 — Choose the External Data Volume
 
 Identify the external data/artifact volume. This step only chooses the parent external data/artifact volume. Do not create `$REIMAGE_ARTIFACT_ROOT` yet.
 
@@ -528,7 +529,7 @@ These values get written into `reimage.env` for real once it's created a few ste
 
 ---
 
-### Confirm External Data Volume Readiness
+### Step 3 — Confirm External Data Volume Readiness
 
 Confirm the selected external parent volume is mounted, is not read-only, and allows the current macOS user to write at the parent path. This step checks the external drive itself before the artifact root exists.
 
@@ -604,7 +605,7 @@ rm -f "$TEST_FILE"
 
 ---
 
-### Create Local Reimage Environment Profile
+### Step 4 — Create Local Reimage Environment Profile
 
 Create `reimage.env`, the local, machine-specific config file the rest of this guide reads for `REIMAGE_ARTIFACT_ROOT`, `REIMAGE_WORKSPACE_ROOT`, and related paths.
 
@@ -669,7 +670,7 @@ Before creating `reimage.env`, confirm you have the required environment variabl
 
 | Variable | Required? | Source |
 |---|---|---|
-| `EXTERNAL_DATA_VOLUME` | Required | [[#Choose the External Data Volume\|Choose the External Data Volume]] |
+| `EXTERNAL_DATA_VOLUME` | Required | [[#Step 2 — Choose the External Data Volume\|Step 2 — Choose the External Data Volume]] |
 | `REIMAGE_WORKSPACE_ROOT` | Required | [[#Local workspace\|Local workspace]] |
 | `EXTERNAL_APPLE_BACKUPS_VOLUME` | Optional | Same step, if a Time Machine destination is in use |
 | `ONEDRIVE_FOLDER_NAME` | Required *for OneDrive* | The sync folder's name, e.g. `OneDrive-AcmeGroup`. Leave unset to skip OneDrive entirely |
@@ -761,7 +762,7 @@ If the `reimage.env already exists:` header printed with no `export` lines after
 
 `ASSET_OR_HOST` matches this Mac's hostname (or you know you set a deliberate custom tag) and `EXTERNAL_DATA_VOLUME` matches the volume you just chose. That pair is what identifies this file as the effort you're on right now. Do not gate the decision on `REIMAGE_START_DATE`: a reimage commonly runs across multiple days, so a start date earlier than today is normal and does not make the file stale -- the date only records when this effort began.
 
-[[#Set Up direnv|⮕ Continue to Set Up direnv]]
+[[#Step 5 — Set Up direnv|⮕ Continue to Step 5 — Set Up direnv]]
 
 ---
 
@@ -881,7 +882,7 @@ There's no environment variable to set for the repository's own path. `prepare-a
 
 ---
 
-### Set Up direnv
+### Step 5 — Set Up direnv
 
 This makes `reimage.env` load automatically whenever you `cd` into this repo, and unload automatically the moment you `cd` out — no manual `source` needed each terminal session.
 
@@ -926,7 +927,7 @@ direnv already appears installed and hooked into this Mac -- likely set up durin
 
 Then confirm your shell has `reimage.env` loaded correctly:
 
-- [[#Confirm reimage.env Is Loaded|Confirm reimage.env Is Loaded]]
+- [[#Step 6 — Confirm reimage.env Is Loaded|Step 6 — Confirm reimage.env Is Loaded]]
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -983,7 +984,7 @@ Both should print resolved values with no further action. `cd` out of the repo a
 
 The `if [[ -f reimage.env ]]; then dotenv reimage.env; fi` line in `.envrc` is why a stale `reimage.env` matters even though `.envrc` itself doesn't go stale: direnv will happily `dotenv` whatever `reimage.env` currently exists, old or new, with no distinction. 
 
-[[#Set Up direnv|⬆ Back to Set Up direnv]]
+[[#Step 5 — Set Up direnv|⬆ Back to Set Up direnv]]
 
 ---
 
@@ -1019,11 +1020,11 @@ Both should print resolved values with no further action. `cd` out of the repo a
 
 The `if [[ -f reimage.env ]]; then dotenv reimage.env; fi` line in `.envrc` is why a stale `reimage.env` matters even though `.envrc` itself doesn't go stale: direnv will happily `dotenv` whatever `reimage.env` currently exists, old or new, with no distinction. 
 
-[[#Set Up direnv|⬆ Back to Set Up direnv]]
+[[#Step 5 — Set Up direnv|⬆ Back to Set Up direnv]]
 
 ---
 
-### Confirm reimage.env Is Loaded
+### Step 6 — Confirm reimage.env Is Loaded
 
 Confirm your shell has `reimage.env` loaded correctly — there's no `REIMAGE_ROOT` to check anymore, since the repo's location is no longer stored in a variable at all.
 
@@ -1047,11 +1048,11 @@ cd "$(dirname "$REIMAGE_ENV")"
 
 A resolved, non-blank `REIMAGE_ARTIFACT_ROOT` here only proves *a* value loaded -- not that it's *this* effort's value. If you arrived here after a break of days or weeks, double-check the printed path actually matches the effort you're working on today.
 
-[[#Create the Artifact Root|⮕ Continue to Create the Artifact Root]]
+[[#Table of Contents|⬆ Back to Table of Contents]]
 
 ---
 
-### Create the Artifact Root
+### Step 7 — Create the Artifact Root
 
 By this point `reimage.env` already has `REIMAGE_ARTIFACT_ROOT` resolved correctly -- it was written in at creation time, not left blank. This step runs the entrypoint that actually creates the directory on the external volume.
 
@@ -1072,18 +1073,18 @@ OK: artifact root exists
 
 Route based on what it actually prints:
 
-> [!check] Both `OK:` lines printed → [[#Load and Confirm the Environment|Load and Confirm the Environment]]
+> [!check] Both `OK:` lines printed → [[#Step 8 — Load and Confirm the Environment|Step 8 — Load and Confirm the Environment]]
 > ```text
 > OK: REIMAGE_ARTIFACT_ROOT is under EXTERNAL_DATA_VOLUME
 > OK: artifact root exists
 > ```
 
-> [!fail] `Permission denied` → [[#Confirm External Data Volume Readiness|⬆ Back to Confirm External Data Volume Readiness]]
+> [!fail] `Permission denied` → [[#Step 3 — Confirm External Data Volume Readiness|⬆ Back to Confirm External Data Volume Readiness]]
 > ```text
 > Permission denied while creating REIMAGE_ARTIFACT_ROOT.
 > ```
 
-> [!fail] `Operation not permitted` → [[#Confirm External Data Volume Readiness|⬆ Back to Confirm External Data Volume Readiness]]
+> [!fail] `Operation not permitted` → [[#Step 3 — Confirm External Data Volume Readiness|⬆ Back to Confirm External Data Volume Readiness]]
 > ```text
 > Operation not permitted while creating REIMAGE_ARTIFACT_ROOT.
 > ```
@@ -1099,7 +1100,7 @@ Route based on what it actually prints:
 
 ---
 
-### Load and Confirm the Environment
+### Step 8 — Load and Confirm the Environment
 
 Load the local config into the current terminal after the backup/capture root has been created:
 
@@ -1124,7 +1125,7 @@ If the helper reports a `REIMAGE_ARTIFACT_ROOT` or literal-path error, stop here
 
 ---
 
-### Set Up the artifact-config Fragments
+### Step 9 — Set Up the artifact-config Fragments
 
 `artifact-config.sh` reads its backup targets, excludes, and expected folders from reusable shell config fragments. Set those fragments up before the local-file backup phases run.
 
@@ -1148,7 +1149,7 @@ bash -n .internal/artifact-config.sh
 
 ---
 
-### Already Have Fragments
+#### Already Have Fragments
 
 If you already have real `*.conf.sh` fragments -- from a previous setup, copied out of a `fractogenesis-toolkit` checkout, or anywhere else -- **you don't need to copy them anywhere**. They belong at exactly one path, and it is under the workspace, never the artifact root:
 
@@ -1190,7 +1191,7 @@ head -40 "$REIMAGE_WORKSPACE_ROOT/artifact-config/external-targets.conf.sh"
 head -20 "$REIMAGE_WORKSPACE_ROOT/artifact-config/secrets-targets.conf.sh"
 ```
 
-#### Confirm the Loader Resolved to the Workspace
+##### Confirm the Loader Resolved to the Workspace
 
 Files existing is not the same as the loader using them. Ask the loader which directory it chose -- it exports the answer, so this is a direct reading rather than an inference from values:
 
@@ -1217,11 +1218,11 @@ Or run the aggregate validator, which resolves the same directory, reports it, a
 ./bin/verify-artifact-config.sh
 ```
 
-[[#Create the Standard Directory Layout|⮕ Continue to Create the Standard Directory Layout]]
+[[#Step 10 — Create the Standard Directory Layout|⮕ Continue to Step 10 — Create the Standard Directory Layout]]
 
 ---
 
-### Initialize From Scratch
+#### Initialize From Scratch
 
 Use this path if you don't already have real config fragments.
 
@@ -1235,11 +1236,11 @@ This copies this repo's committed template fragments into `$REIMAGE_WORKSPACE_RO
 
 Use the workspace copy going forward when you rerun backups later and most of the target/exclude config has not changed. You can adjust only the files that actually changed instead of rebuilding the full artifact-config setup from scratch.
 
-[[#Create the Standard Directory Layout|⮕ Continue to Create the Standard Directory Layout]]
+[[#Step 10 — Create the Standard Directory Layout|⮕ Continue to Step 10 — Create the Standard Directory Layout]]
 
 ---
 
-### Create the Standard Directory Layout
+### Step 10 — Create the Standard Directory Layout
 
 Creates only the stable top-level generated-artifact directories owned by this preparation guide. Optional evidence-capture roots are created later by the capture guides that actually use them. Child directories belong to the runbook or script that creates them.
 
@@ -1305,7 +1306,7 @@ Folder purpose:
 
 ---
 
-### Copy the Filled IT Reimage Confirmation Into reimage-confirmation
+### Step 11 — Copy the Filled IT Reimage Confirmation Into reimage-confirmation
 
 After the standard layout exists, copy the filled Phase 0 IT confirmation into the new top-level `reimage-confirmation/` folder:
 
@@ -1349,7 +1350,7 @@ The entrypoint preserves the source filename and saves a timestamped `.previous-
 
 ---
 
-### Verify the Prepared Root
+### Step 12 — Verify the Prepared Root
 
 Run the verification helper after creating the standard layout and sourcing `reimage.env`:
 
@@ -1486,7 +1487,7 @@ mount the expected external volume manually
 
 Do not erase, repair, repartition, or reformat the external drive until you are certain which disk and volume you are looking at.
 
-[[#Confirm External Data Volume Readiness|⮕ Continue to Confirm External Data Volume Readiness]]
+[[#Step 3 — Confirm External Data Volume Readiness|⮕ Continue to Step 3 — Confirm External Data Volume Readiness]]
 
 ---
 
@@ -1518,7 +1519,7 @@ Media Read-Only: No
 
 If the volume is mounted read-only, stop and inspect the drive in Disk Utility. Do not force repair or erase during the reimage workflow unless you have already confirmed the disk identity and have another known-good backup.
 
-[[#Create Local Reimage Environment Profile|⮕ Continue to Create Local Reimage Environment Profile]]
+[[#Step 4 — Create Local Reimage Environment Profile|⮕ Continue to Step 4 — Create Local Reimage Environment Profile]]
 
 ---
 
@@ -1570,7 +1571,7 @@ Those broader changes can affect Time Machine-adjacent data, other folders, or f
 
 After the repair succeeds, rerun the create helper.
 
-[[#Create Local Reimage Environment Profile|⮕ Continue to Create Local Reimage Environment Profile]]
+[[#Step 4 — Create Local Reimage Environment Profile|⮕ Continue to Step 4 — Create Local Reimage Environment Profile]]
 
 ---
 
@@ -1627,7 +1628,7 @@ python3 bin/prepare-artifact-root.py \
 
 Do not erase, repair, or repartition the external drive until you are certain which disk and volume you are looking at.
 
-[[#Create Local Reimage Environment Profile|⮕ Continue to Create Local Reimage Environment Profile]]
+[[#Step 4 — Create Local Reimage Environment Profile|⮕ Continue to Step 4 — Create Local Reimage Environment Profile]]
 
 ---
 
@@ -1675,7 +1676,7 @@ set +a
 
 Or add the optional zsh persistence block from Load and Confirm the Environment.
 
-[[#Create the Standard Directory Layout|⮕ Continue to Create the Standard Directory Layout]]
+[[#Step 10 — Create the Standard Directory Layout|⮕ Continue to Step 10 — Create the Standard Directory Layout]]
 
 ---
 
@@ -1727,7 +1728,7 @@ set +u
 
 That prompt error means shell nounset mode was enabled while the prompt/theme expected optional variables such as `VIRTUAL_ENV` to be unset sometimes. It is not a artifact-root failure.
 
-[[#Set Up direnv|⮕ Continue to Set Up direnv]]
+[[#Step 5 — Set Up direnv|⮕ Continue to Step 5 — Set Up direnv]]
 
 ---
 
@@ -1763,7 +1764,7 @@ rm -rf './$EXTERNAL_DATA_VOLUME'
 
 Then confirm `REIMAGE_ARTIFACT_ROOT` prints as an absolute `/Volumes/...` path before rerunning the create helper.
 
-[[#Load and Confirm the Environment|⮕ Continue to Load and Confirm the Environment]]
+[[#Step 8 — Load and Confirm the Environment|⮕ Continue to Step 8 — Load and Confirm the Environment]]
 
 ---
 
@@ -1803,7 +1804,7 @@ python3 bin/prepare-artifact-root.py \
 
 This rerun creates only the stable top-level folders. It must not create any child folders under optional capture roots. If a missing folder is a workflow-owned child folder such as `secrets-encrypted/certs/keychain-manual-exports/`, `secrets-encrypted/extra-secrets-certs-review/`, `system-inventory/`, `performance-audit/`, or `office-stability/`, go back to the owning runbook or script instead of adding it here.
 
-[[#Verify the Prepared Root|⬆ Back to Verify the Prepared Root]]
+[[#Step 12 — Verify the Prepared Root|⬆ Back to Verify the Prepared Root]]
 
 ---
 
@@ -1835,4 +1836,4 @@ chmod 644 ~/.ssh/*.pub
 
 Do not broadly `chmod -R` the whole backup root or home directory.
 
-[[#Verify the Prepared Root|⬆ Back to Verify the Prepared Root]]
+[[#Step 12 — Verify the Prepared Root|⬆ Back to Verify the Prepared Root]]
