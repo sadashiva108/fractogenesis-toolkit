@@ -1,6 +1,10 @@
 # Apply Manifest
 
-**Revision 78** — supersedes earlier manifests. `restore-intellij.md` Step 2 installs the application it spent forty lines verifying.
+**Revision 80** — supersedes earlier manifests. `restore-runtime.md` Step 11 says which command answers which row, and what answering a `TODO` actually means.
+
+**Revision 79** — supersedes Revision 78 and earlier. The alias list that decides the `jssecacerts` form is named, kept, and read by the loop that needs it.
+
+**Revision 78** — supersedes Revision 77 and earlier. `restore-intellij.md` Step 2 installs the application it spent forty lines verifying.
 
 **Revision 77** — supersedes Revision 76 and earlier. `restore-docker.md` reads the DMG's contents instead of the directory that holds the DMG, and `state-walk.sh` resolves any variable rather than one.
 
@@ -212,6 +216,105 @@ several separate rounds of work, and splicing them by hand is how the duplicate
 | `restore-intellij.sh` | `bin/restore-intellij.sh` |
 | `record-reimaged-system.sh` | `bin/record-reimaged-system.sh` |
 | `reimage-checklist.sh` | `bin/reimage-checklist.sh` |
+
+---
+
+## Revision 80 — a close-out that listed its commands without saying what they were for
+
+`restore-runtime.md` Step 11 ran `record-restore-exit.sh`, then presented nine
+command blocks under "If a row needs investigating, each of these is one
+command." Which row each one investigated was never stated, so an operator
+holding a checklist of `PASS` rows had no way to tell that none of the commands
+applied to them. Reported as exactly that: does a `PASS` mean I skip the script
+below, and what about the Manual section?
+
+Each block now carries the exact Automated row name it re-runs, and the set is
+introduced as diagnostics for rows that are not `PASS`. The row names are copied
+from `record-restore-exit.sh`'s `record` calls so the two read as one thing.
+
+**The Manual rows had no instructions at all.** The step said two rows are left
+as `TODO` "for you to answer in that file" and stopped. Nothing said that
+answering means editing `checklist.md` by hand, that no script ever revisits
+them, that `no` closes a row as legitimately as `yes`, or where to look to decide
+either one. Both rows now say what evidence answers them and what a closed row
+looks like.
+
+A Pitfall covers the trap underneath: every run writes its own dated directory,
+so a rerun after answering does not update the answered file — it produces a
+fresh one with both rows back at `TODO`.
+
+**Two ordering and naming defects found while tracing it.**
+
+`record-restore-exit.sh` records `FAIL "Runtime comparison recorded"` when no
+official comparison run exists, and `--dry-run` writes nothing. Step 10 offers
+the dry run, and the command that fixes the resulting `FAIL` sat at the *bottom*
+of Step 11, sixty lines past the point where the operator hits it. It is now the
+first thing in the step, before the checklist that depends on it.
+
+The step named `reimaged-system/exit-checks/` as the output directory. That
+category was folded into `boundaries/` when the two boundary halves were given
+one home; every other runbook already says `boundaries/`. This was the last
+reference to the old path outside historical manifest entries.
+
+`/usr/libexec/java_home -v 21` hardcoded a major the checklist does not. The
+script derives it from `REIMAGE_JDK_BASELINE`, so the diagnostic could pass on a
+JDK the row is not asking about. Both read the same key now.
+
+**The two halves became routed sub-sections.** A clean run — every Automated row
+`PASS` — has no use for any of the nine diagnostics, but they sat between the
+operator and the only part of the step still asking something of them. The halves
+are now `#### Investigate the Rows That Are Not PASS` and `#### Answer the Manual
+Rows`, with a two-option routing index above them so a clean run jumps straight
+to the Manual table. Neither is in the Table of Contents: they are reached by
+routing, and the step still reads straight through for anyone who has a row to
+chase.
+
+**Step 10 named an inventory that does not exist yet.** Its evidence block listed
+`system-inventory/post-image-YYYYMMDD-HHMMSS/` beside the pre-image bundle, with
+no qualifier — while the same runbook's Terminology table and directory tree both
+say that bundle arrives in Phase 13B. An operator looking for it during Phase 10A
+finds nothing and cannot tell whether the capture failed or was never due. The
+block also redrew a tree that Artifact and Script Locations already owns, which
+is how the two descriptions drifted apart in the first place. Replaced with one
+sentence naming the pre-image bundle and saying where the other one comes from.
+
+**Modified:** `restore-runtime.md`, `APPLY-MANIFEST.md`.
+
+**Not verified here:** the blocks are pasted into the operator's zsh on macOS,
+and this session runs Linux. `verify-doc-paths.sh` passes.
+
+---
+
+## Revision 79 — an instruction that pointed into a collapsed callout
+
+`restore-access.md` Step 6 forks into two forms of `jssecacerts` restore. Form B
+said to "use the `comm` output above as the alias list", and its command block
+carried the placeholder `-srcalias "alias-from-the-comm-output-above"`.
+
+The `comm` it named sat inside the `> [!warning] Pitfall` callout above the fork.
+In Obsidian a callout renders as a distinct box and can be folded, so "above" was
+pointing at something the reader may not have had on screen — and had no reason to
+read as a step they were meant to have run. The output was also never named: it
+went to stdout between two temp files, so recovering it meant scrollback.
+
+The diff now stands as its own block before the fork, with the reason before the
+command, and `tee` gives the result a filename. Form B reads that file in a loop
+instead of asking for one hand-substituted alias per invocation, which removes the
+placeholder and the "repeat for each alias" instruction together.
+
+The loop reads on file descriptor 3. `keytool` is given every password and
+`-noprompt`, so it should not touch standard input — but a keystore that surprises
+it can, and a `keytool` that consumes the alias list ends the loop after one
+import while reporting success. Descriptor 3 makes that impossible rather than
+unlikely.
+
+`JSS_ALIAS` rather than `alias`, which is a shell builtin name.
+
+**Modified:** `restore-access.md`, `APPLY-MANIFEST.md`.
+
+**Not verified here:** the blocks are pasted into the operator's zsh on macOS, and
+no JDK or captured store was available to run them against. `verify-doc-paths.sh`
+passes.
 
 ---
 

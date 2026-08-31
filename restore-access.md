@@ -2,7 +2,7 @@
 
 # Restore Access
 
-**Last updated:** 2026-08-25
+**Last updated:** 2026-08-31
 
 Restore the identity, trust, and credential layer on the reimaged Mac after the runtime toolchain is in place — SSH keys and Git access, certificates and keychains, Java trust overrides pinned to the JDK from Phase 10A, shell and CLI configuration, and license or activation material. Everything here comes out of the encrypted secrets DMG and the reviewed dotfiles bundle built during the pre-image phases. Most of it is manual — small copies, `security` commands, and Keychain Access actions — but four steps are scripted: Step 0 and the closing step run the boundary recorders in `bin/`, Step 2 runs `bin/restore-staged-loose.sh`, and `bin/restore-access.sh` can drive the whole phase.
 
@@ -734,16 +734,18 @@ shasum -a 256 "$SRC"; grep -F "$(basename "$(dirname "$SRC")")" "$REIMAGE_ARTIFA
 > the date of capture. Over a long enough gap that matters: vendors distrust
 > public CAs between releases, and an old store keeps trusting what the new JDK
 > deliberately dropped.
->
-> See what the capture actually adds before deciding:
->
-> ```bash
-> keytool -list -keystore "$SRC" -storepass changeit 2>/dev/null | awk '/trustedCertEntry/{print $1}' | sed 's/,$//' | sort > /tmp/jss-captured.txt
-> keytool -list -keystore "$JAVA_HOME/lib/security/cacerts" -storepass changeit 2>/dev/null | awk '/trustedCertEntry/{print $1}' | sed 's/,$//' | sort > /tmp/jss-fresh.txt
-> comm -23 /tmp/jss-captured.txt /tmp/jss-fresh.txt
-> ```
->
-> That list is what the corporate build added. Usually a handful of internal CAs.
+
+Which form to use turns on what the capture actually adds over stock, so list that
+first. The two `keytool` runs dump the alias set of each store; `comm -23` prints
+the aliases present in the capture but absent from this JDK's `cacerts` — the
+certificates the corporate build put there, usually a handful of internal CAs. The
+`tee` keeps that list on disk as `/tmp/jss-added.txt`, which form B reads.
+
+```bash
+keytool -list -keystore "$SRC" -storepass changeit 2>/dev/null | awk '/trustedCertEntry/{print $1}' | sed 's/,$//' | sort > /tmp/jss-captured.txt
+keytool -list -keystore "$JAVA_HOME/lib/security/cacerts" -storepass changeit 2>/dev/null | awk '/trustedCertEntry/{print $1}' | sed 's/,$//' | sort > /tmp/jss-fresh.txt
+comm -23 /tmp/jss-captured.txt /tmp/jss-fresh.txt | tee /tmp/jss-added.txt
+```
 
 Then choose one of two forms.
 
@@ -760,18 +762,27 @@ fi
 ```
 
 **B — build a fresh store from this JDK's current `cacerts`, plus only the
-additions.** More work, and it keeps the new JDK's public roots current. Use the
-`comm` output above as the alias list:
+additions.** More work, and it keeps the new JDK's public roots current. It starts
+from a copy of the stock store and imports one alias per line of
+`/tmp/jss-added.txt`:
 
 ```bash
 cp "$JAVA_HOME/lib/security/cacerts" "$JAVA_HOME/lib/security/jssecacerts"
-keytool -importkeystore -srckeystore "$SRC" -srcstorepass changeit \
-  -destkeystore "$JAVA_HOME/lib/security/jssecacerts" -deststorepass changeit \
-  -srcalias "alias-from-the-comm-output-above" -noprompt
+while IFS= read -r JSS_ALIAS <&3; do
+  [ -n "$JSS_ALIAS" ] || continue
+  keytool -importkeystore -srckeystore "$SRC" -srcstorepass changeit \
+    -destkeystore "$JAVA_HOME/lib/security/jssecacerts" -deststorepass changeit \
+    -srcalias "$JSS_ALIAS" -noprompt
+done 3< /tmp/jss-added.txt
 ```
 
-Repeat the `-srcalias` import for each alias the `comm` listed. Prefer **B** when
-the capture is more than a few months old; **A** is fine for a same-week rebuild.
+> [!note]
+> The loop reads the alias list on file descriptor 3 rather than standard input, so
+> a `keytool` run that decides to prompt cannot swallow the remaining aliases and
+> end the loop after the first import.
+
+Prefer **B** when the capture is more than a few months old; **A** is fine for a
+same-week rebuild.
 
 Depending on how the JDK was installed, `$JAVA_HOME` may be root-owned — if the `cp` reports "Permission denied", rerun that one line with `sudo` and then confirm the file is readable by all (`chmod 644`).
 

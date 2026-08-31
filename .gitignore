@@ -25,8 +25,24 @@ __pycache__/
 # Obsidian vault config -- local editor state, not shared repo content
 .obsidian/
 
-# IntelliJ project files -- local editor state, not shared repo content
-.idea/
+# JetBrains IDEs (IntelliJ IDEA, WebStorm, PyCharm)
+# Written as `.idea/*` rather than `.idea/` on purpose: git does not descend into a
+# directory excluded wholesale, so a negation like `!.idea/codeStyles/` would be
+# ignored. This form leaves the door open.
+#
+# If the team ever standardizes on IntelliJ, these are the ones worth sharing —
+# uncomment to re-include:
+#   !.idea/codeStyles/          formatting, so diffs stop churning between developers
+#   !.idea/inspectionProfiles/  shared lint expectations
+#   !.idea/runConfigurations/   e.g. serve:http, npm test
+#   !.idea/vcs.xml              tells IntelliJ the project root is a Git repo; identical for everyone
+#
+# Never share, whatever the team decides: workspace.xml (per-user UI state, huge and
+# constantly dirty), tasks.xml, usage.statistics.xml, shelf/, httpRequests/ (scratch
+# requests can hold live tokens), dataSources.xml + dataSources.local.xml (connection
+# details, sometimes credentials), and *.iml (absolute machine paths).
+.idea/*
 *.iml
 *.ipr
 *.iws
+/out/

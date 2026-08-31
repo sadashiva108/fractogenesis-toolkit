@@ -2,7 +2,7 @@
 
 # Restore Runtime
 
-**Last updated:** 2026-08-17
+**Last updated:** 2026-08-31
 
 Rebuild the non-secret runtime and toolchain layer on the reimaged Mac — Xcode Command Line Tools, Homebrew, Java and the JVM build tools, Node via `nvm`, and the platform CLIs — before any secret material or repository work begins. This runbook is manual by design; every install is `xcode-select`, `brew`, or `nvm` and there is no fractogenesis-toolkit entrypoint to drive it. The captured pre-image and post-image system inventories from Phases 4B and 13B are the reference for what "restored" means here.
 
@@ -771,12 +771,10 @@ Comparison is on the version number rather than the raw string, so `10.9.7` and
 `npm 10.9.7` count as the same; both raw strings are shown so you can see what
 each side reported.
 
-Useful evidence sources under the artifact root:
-
-```text
-$REIMAGE_ARTIFACT_ROOT/system-inventory/pre-image-YYYYMMDD-HHMMSS/
-$REIMAGE_ARTIFACT_ROOT/system-inventory/post-image-YYYYMMDD-HHMMSS/
-```
+The comparison reads the `system-inventory/pre-image-YYYYMMDD-HHMMSS/` bundle
+captured before the erase; that is the only inventory that exists at this point.
+The matching `post-image-` bundle belongs to Phase 13B, along with the audit that
+reads both — nothing here needs it.
 
 The script probes fifteen tools. If you need to check one it does not cover, or
 to see full output rather than a first line:
@@ -795,15 +793,26 @@ Confirm what this phase produced. This is a close-out, not a check of the next
 phase: Phase 10B verifies its own entry conditions in its Step 0, the same way
 this runbook did in Step 0.
 
+Three parts, in this order: record the comparison for real, run the checklist,
+then answer by hand the rows the checklist could not.
+
+**First, put the comparison on disk.** `--dry-run` writes nothing, so a Step 10
+that ended on the dry run gives the checklist a `FAIL` it cannot resolve on its
+own. Running this again when it has already been recorded is harmless:
+
+```bash
+bash bin/compare-restored-state.sh --runbook restore-runtime
+```
+
+**Then run the checklist.**
+
 ```bash
 bash bin/record-restore-exit.sh --runbook restore-runtime
 ```
 
-It writes a checklist under `reimaged-system/exit-checks/` and exits non-zero on
-any `FAIL`. Two rows are left as `TODO` for you to answer in that file — whether
-each version difference is acceptable, and whether any missing platform CLI is
-one this machine needs. Those are judgements a script cannot make, and recording
-that they were *asked* is the point.
+It writes `checklist.md` under `reimaged-system/boundaries/` and exits non-zero
+on any `FAIL`. The file holds two tables: **Automated**, the rows the script
+probed, and **Manual**, the rows it cannot answer, left as `TODO`.
 
 > [!note]
 > This is the exit half of a pair. `record-restore-prereqs.sh` is the entry half,
@@ -811,8 +820,17 @@ that they were *asked* is the point.
 > 10B's entry are separate questions asked by separate runbooks, rather than one
 > runbook reaching across into the next.
 
-If a row needs investigating, each of these is one command. Run it, read the
-result, then the next.
+Route by what the Automated table shows:
+
+- [[#Investigate the Rows That Are Not PASS|Investigate the Rows That Are Not PASS]] — any row is `FAIL` or `WARN`.
+- [[#Answer the Manual Rows|Answer the Manual Rows]] — every row is `PASS`.
+
+#### Investigate the Rows That Are Not PASS
+
+Each command below re-runs one row's check and shows the full output the row
+summarised, so run only the ones whose rows need it.
+
+*Row: Rosetta 2 available.*
 
 ```bash
 arch -x86_64 /usr/bin/uname -m
@@ -821,12 +839,16 @@ arch -x86_64 /usr/bin/uname -m
 Prints `x86_64` when Rosetta 2 is installed. On an Intel Mac it is a no-op that
 also prints `x86_64`, so the row is uninformative there.
 
+*Row: Xcode Command Line Tools.*
+
 ```bash
 xcode-select -p
 ```
 
 Prints the active developer directory, normally
 `/Library/Developer/CommandLineTools`.
+
+*Row: Homebrew installed.*
 
 ```bash
 brew doctor
@@ -836,8 +858,11 @@ brew doctor
 Homebrew says so itself — and a deprecated cask is a note to revisit rather than
 a blocker.
 
+*Row: Java resolves via java_home.* The major comes from `REIMAGE_JDK_BASELINE`,
+the same key the checklist reads, so both ask about the same JDK.
+
 ```bash
-/usr/libexec/java_home -v 21
+/usr/libexec/java_home -v "${REIMAGE_JDK_BASELINE:-21}"
 ```
 
 Prints the JDK path and exits `0`. This is the row that matters most, and the
@@ -851,12 +876,16 @@ only one whose failure is invisible until a later phase.
 > writes `jssecacerts` to a path that is neither the JDK nor a directory that
 > exists. The TLS smoke test then fails for a reason unrelated to the certificate.
 
+*Row: direnv installed and hooked.*
+
 ```bash
 cd .. && cd "$FRACTOGENESIS_HOME"
 ```
 
 direnv prints `unloading` then `loading` — the round trip proving the hook is
 live rather than merely installed.
+
+*Row: JVM build tools run.*
 
 ```bash
 gradle --version
@@ -866,6 +895,8 @@ gradle --version
 mvn --version
 ```
 
+*Row: Node tooling runs.*
+
 ```bash
 node --version
 ```
@@ -874,12 +905,28 @@ node --version
 npm --version
 ```
 
-Finally, record the phase's evidence if you have only run the comparison as a
-dry run:
+#### Answer the Manual Rows
 
-```bash
-bash bin/compare-restored-state.sh --runbook restore-runtime
-```
+Nothing re-probes these and no later phase collects them: you answer them by
+editing `checklist.md` itself. Replace each `TODO` with the answer and put the reasoning in Notes. `yes` and `accepted`
+close a row, and so does `no` when `no` is the considered answer — the check is
+for rows nobody looked at.
+
+*Version drift reviewed.* Read the `differs` rows in the comparison note under
+`reimaged-system/restore-notes/`. A newer version is the expected outcome of a
+rebuild and closes as `accepted`. An *older* version is the one to explain: say
+in Notes why it is older and whether that is deliberate.
+
+*Platform CLI gaps accepted.* If the Platform CLIs row is `WARN` it names what is
+missing. Close as `accepted` and name in Notes the ones this machine does not
+need. If one turns out to be needed, install it and rerun rather than accepting
+the row.
+
+> [!warning] Pitfall
+> Each run writes its own dated directory, so a rerun does not update the file
+> you answered — it produces a new `checklist.md` with `TODO` in both rows again.
+> Answer the Manual rows in the last run you intend to keep, and carry the
+> answers forward if you rerun after answering.
 
 The exit criteria for this phase:
 
