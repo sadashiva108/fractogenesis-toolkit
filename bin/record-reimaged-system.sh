@@ -48,9 +48,10 @@
 #   --artifact-root PATH  Override REIMAGE_ARTIFACT_ROOT from shared config.
 #   --output-root PATH    Parent directory that will hold the timestamped
 #                         first-boot bundle. Overrides the default layout.
-#   --context LABEL       Prefix the bundle directory name with LABEL:
-#                         LABEL-initial-reimaged-system-YYYYMMDD-HHMMSS.
-#                         Conventional values are pre-restart and post-restart.
+#   --context LABEL       The run's point. Conventional values are pre-restart
+#                         and post-restart; omitted, the run is `initial`.
+#                         `entry` and `exit` select the boundary modes instead
+#                         of a first-boot capture -- see Boundary modes below.
 #                         Letters, digits, dot, underscore, and hyphen only.
 #   --no-network          Skip network reachability probes.
 #   --open                Reveal the generated bundle in Finder on completion.
@@ -83,6 +84,21 @@
 #   2. ~/Desktop/reimaged-system-artifacts/
 #        as a fallback so the checklist can complete on a bare Mac before the
 #        external artifact volume is reconnected.
+#
+# Boundary modes:
+#   `--context entry` and `--context exit` write a checklist to
+#   reimaged-system/boundaries/ under verify-reimaged-system-{entry,exit}, in
+#   the same category and grammar the restore phases use, so one index answers
+#   "did this phase both start and finish" for every phase in the workflow.
+#
+#   Entry reads Phase 8's exit checklist rather than re-deriving whether
+#   enrollment finished: the pair exists so each phase asks the phase before it
+#   whether it closed out, instead of reaching into its evidence.
+#
+#   Exit resolves both first-boot bundles through the run index and checks that
+#   the post-restart one is actually newer than the pre-restart one. A stale
+#   post-restart bundle standing in for a run that never happened presents as a
+#   complete pair, and is the failure this phase is least able to see by eye.
 #
 # Exit status:
 #   0  Bundle written successfully. Individual failed checks are recorded as
@@ -277,6 +293,203 @@ STAMP="$(date +%Y%m%d-%H%M%S)"
 # in the pre-restart lineage with no further mapping. A run with no context gets
 # `initial`, which is NOT a known point and therefore indexes as `unknown` --
 # the honest answer, since nothing recorded which side of a restart it was on.
+# ---------------------------------------------------------------------------
+# Boundary modes: --context entry and --context exit
+#
+# These capture no first-boot evidence. They record what was decided about it,
+# into reimaged-system/boundaries/ under verify-reimaged-system-{entry,exit} --
+# the same category and grammar the restore phases use, so one place answers
+# "did this phase both start and finish" for every phase.
+#
+# The entry mode reads Phase 8's exit checklist. That is the pair doing its job:
+# Phase 9 does not re-derive whether enrollment finished, it asks whether the
+# phase that owned that question closed it out.
+#
+# Self-contained helpers: the bundle path's row machinery is template-driven and
+# defined further down, so nothing here may use it.
+# ---------------------------------------------------------------------------
+BOUNDARY_ROWS=""
+BOUNDARY_MANUAL=""
+b_pass=0; b_warn=0; b_fail=0
+
+b_record() {
+  case "$1" in
+    PASS) b_pass=$(( b_pass + 1 )) ;;
+    WARN) b_warn=$(( b_warn + 1 )) ;;
+    FAIL) b_fail=$(( b_fail + 1 )) ;;
+  esac
+  BOUNDARY_ROWS="${BOUNDARY_ROWS}| ${2} | \`${1}\` | ${3} |"$'\n'
+  printf '  %-5s %s\n' "$1" "$2" >&2
+}
+
+b_manual() {
+  BOUNDARY_MANUAL="${BOUNDARY_MANUAL}| ${1} | \`TODO\` | ${2} |"$'\n'
+}
+
+# Unanswered rows in a generated checklist: `TODO` in the Status column.
+b_todo_count() {
+  grep -c '| `TODO` |' "$1" 2>/dev/null || true
+}
+
+boundary_entry() {
+  local boundaries_root restarts_root run f n
+
+  boundaries_root="$OUTPUT_ROOT/boundaries"
+  restarts_root="$OUTPUT_ROOT/restarts"
+
+  if [[ -n "${FRACTOGENESIS_HOME:-}" && -d "${FRACTOGENESIS_HOME:-}" ]]; then
+    b_record PASS "Toolkit root resolved" "\`$FRACTOGENESIS_HOME\`"
+  else
+    b_record FAIL "Toolkit root resolved" "\`FRACTOGENESIS_HOME\` unset or not a directory — every command in this runbook assumes the shell is at the toolkit root"
+  fi
+
+  if /sbin/ping -c 1 -t 5 8.8.8.8 >/dev/null 2>&1; then
+    b_record PASS "Network reachable" "ICMP to 8.8.8.8"
+  else
+    b_record WARN "Network reachable" "no route — the first-boot bundle records a network row, which will read as a failure of the machine rather than of the link"
+  fi
+
+  # Phase 8's close-out, not Phase 8's evidence. A recorded exit is the only
+  # thing that says a person looked at what Phase 8 produced.
+  run="$(artifact_run_official "$boundaries_root" "enroll-and-stabilize-exit" 2>/dev/null || true)"
+  f=""
+  [[ -n "$run" ]] && f="$boundaries_root/$run/checklist.md"
+  if [[ -z "$f" || ! -f "$f" ]]; then
+    b_record FAIL "Phase 8 closed out" "no official \`enroll-and-stabilize-exit\` run under \`boundaries/\` — Phase 8 has not signed off, so nothing establishes that enrollment and the managed app set are settled"
+  else
+    n="$(b_todo_count "$f")"
+    if [[ "${n:-0}" -eq 0 ]]; then
+      b_record PASS "Phase 8 closed out" "\`$(basename "$run")\`, no unanswered rows"
+    else
+      b_record WARN "Phase 8 closed out" "\`$(basename "$run")\` has $n unanswered row(s) — answer them before relying on this phase's baseline"
+    fi
+  fi
+
+  run="$(artifact_run_official "$restarts_root" "enroll-and-stabilize-post-restart" 2>/dev/null || true)"
+  if [[ -n "$run" ]]; then
+    b_record PASS "Phase 8 post-restart record present" "\`$(basename "$run")\`"
+  else
+    b_record WARN "Phase 8 post-restart record present" "none under \`restarts/\` — it may still be on a Phase 8 fallback path; Step 1 relocates it"
+  fi
+
+  if [[ -n "${REIMAGE_ARTIFACT_ROOT:-}" && -d "${REIMAGE_ARTIFACT_ROOT:-}" ]]; then
+    b_record PASS "Artifact root mounted" "\`$REIMAGE_ARTIFACT_ROOT\`"
+  else
+    b_record WARN "Artifact root mounted" "not mounted — expected at entry. Step 1 is what reconnects it; this run lands on the Desktop fallback"
+  fi
+
+  b_manual "Signed back in after the Phase 8 restart" "This is the session that came back from the first stabilization restart, not a session that never restarted."
+  b_manual "Nothing this Mac needs is still installable" "The Company Portal Apps tab shows no Required or Available assignment this machine needs that has not been installed. Phase 8 Step 4 owns finishing that."
+}
+
+boundary_exit() {
+  local restarts_root comparisons_root pre post f n pre_stamp post_stamp
+
+  restarts_root="$OUTPUT_ROOT/restarts"
+  comparisons_root="$OUTPUT_ROOT/comparisons"
+
+  if [[ -n "${REIMAGE_ARTIFACT_ROOT:-}" && -d "${REIMAGE_ARTIFACT_ROOT:-}" ]]; then
+    b_record PASS "Artifact root mounted and readable" "\`$REIMAGE_ARTIFACT_ROOT\`"
+  else
+    b_record FAIL "Artifact root mounted and readable" "not mounted — Step 1 reconnects it, and Phase 10 onward assumes it. Evidence written now lands on a fallback path"
+  fi
+
+  pre="$(artifact_run_official "$restarts_root" "verify-reimaged-system-pre-restart" 2>/dev/null || true)"
+  post="$(artifact_run_official "$restarts_root" "verify-reimaged-system-post-restart" 2>/dev/null || true)"
+
+  if [[ -n "$pre" ]]; then
+    b_record PASS "Pre-restart first-boot bundle recorded" "\`$(basename "$pre")\`"
+  else
+    b_record FAIL "Pre-restart first-boot bundle recorded" "no official \`verify-reimaged-system-pre-restart\` run — Step 2 has not produced one"
+  fi
+
+  if [[ -n "$post" ]]; then
+    b_record PASS "Post-restart first-boot bundle recorded" "\`$(basename "$post")\`"
+  else
+    b_record FAIL "Post-restart first-boot bundle recorded" "no official \`verify-reimaged-system-post-restart\` run — Step 5 has not produced one"
+  fi
+
+  # A post-restart bundle older than the pre-restart one means Step 5 never ran
+  # after the restart and an earlier run is standing in for it -- which looks
+  # like a complete pair and is not one.
+  if [[ -n "$pre" && -n "$post" ]]; then
+    pre_stamp="$(printf '%s' "$pre" | sed 's/^.*-\([0-9]\{8\}-[0-9]\{6\}\)$/\1/')"
+    post_stamp="$(printf '%s' "$post" | sed 's/^.*-\([0-9]\{8\}-[0-9]\{6\}\)$/\1/')"
+    if [[ "$post_stamp" > "$pre_stamp" ]]; then
+      b_record PASS "The pair brackets the restart" "post-restart $post_stamp is newer than pre-restart $pre_stamp"
+    else
+      b_record FAIL "The pair brackets the restart" "post-restart $post_stamp is NOT newer than pre-restart $pre_stamp — the post-restart bundle predates the restart it is supposed to follow"
+    fi
+  fi
+
+  if [[ -n "$(artifact_run_official "$comparisons_root" "verify-reimaged-system-inventory-diff" 2>/dev/null || true)" ]]; then
+    b_record PASS "The two bundles were compared" "recorded under \`comparisons/\`"
+  else
+    b_record WARN "The two bundles were compared" "no official comparison run — Step 6 compares them, and without it nothing names what changed across the restart"
+  fi
+
+  f=""
+  [[ -n "$post" ]] && f="$restarts_root/$post/checklist.md"
+  if [[ -n "$f" && -f "$f" ]]; then
+    n="$(b_todo_count "$f")"
+    if [[ "${n:-0}" -eq 0 ]]; then
+      b_record PASS "Post-restart checklist answered" "no unanswered rows in \`$(basename "$post")\`"
+    else
+      b_record WARN "Post-restart checklist answered" "$n unanswered row(s) in \`$(basename "$post")/checklist.md\` — this step is the only one that fills them"
+    fi
+  fi
+
+  b_manual "No new critical regressions across the two bundles" "Read the Step 6 comparison row by row. A row that flipped because the network changed between runs is not a regression; anything else is, until explained."
+  b_manual "Managed app set complete and unchanged since the pre-restart bundle" "Company Portal Apps tab plus \`raw/applications-managed.txt\` in both bundles."
+  b_manual "First-boot basics are usable" "Browser, network, terminal, display, keyboard, mouse and audio — the Step 3 review."
+}
+
+if [[ "${CONTEXT_LABEL:-}" == "entry" || "${CONTEXT_LABEL:-}" == "exit" ]]; then
+  BOUNDARY_ROOT="$OUTPUT_ROOT/boundaries"
+
+  echo "Recording the Phase 9 $CONTEXT_LABEL boundary ..." >&2
+  if [[ "$CONTEXT_LABEL" == "entry" ]]; then boundary_entry; else boundary_exit; fi
+
+  if ! artifact_run_begin "$BOUNDARY_ROOT" "verify-reimaged-system-$CONTEXT_LABEL"; then
+    echo "ERROR: cannot stage a boundary run under: $BOUNDARY_ROOT" >&2
+    exit 2
+  fi
+
+  BOUNDARY_FILE="$ARTIFACT_RUN_DIR/checklist.md"
+  {
+    printf '# verify-reimaged-system — %s Criteria — %s\n\n' "$CONTEXT_LABEL" "$ARTIFACT_RUN_STAMP"
+    printf 'Generated by `bin/record-reimaged-system.sh --context %s` on %s.\n\n' "$CONTEXT_LABEL" "$(date)"
+    printf 'Pairs with [[verify-reimaged-system|verify-reimaged-system.md]].\n\n'
+    printf '## Automated\n\n'
+    printf '| Check | Result | Detail |\n| --- | --- | --- |\n'
+    printf '%s' "$BOUNDARY_ROWS"
+    printf '\n**%s pass · %s warn · %s fail**\n\n' "$b_pass" "$b_warn" "$b_fail"
+    if [[ -n "$BOUNDARY_MANUAL" ]]; then
+      printf '## Manual\n\n'
+      printf 'Answer these here. A row closed as `no` or `accepted` is a decision and counts as answered; the check is for rows nobody looked at.\n\n'
+      printf '| Check | Status | Notes |\n| --- | --- | --- |\n'
+      printf '%s' "$BOUNDARY_MANUAL"
+      printf '\n'
+    fi
+    printf '## How to read this\n\n'
+    printf -- '- **FAIL** (%s here) means the phase is not finished. Resolve before starting the next one.\n' "$b_fail"
+    printf -- '- **WARN** (%s here) means proceed with a known limit, named in the row.\n' "$b_warn"
+    printf -- '- Every row is resolved through the run index, so a bundle that exists under a fallback path but was never relocated reads as absent — which is what it is, from here.\n'
+  } > "$BOUNDARY_FILE" || { artifact_run_abort; echo "ERROR: could not write $BOUNDARY_FILE" >&2; exit 2; }
+
+  if ! artifact_run_finalize "$BOUNDARY_ROOT" "$b_pass pass / $b_warn warn / $b_fail fail"; then
+    echo "ERROR: the checklist was written but could not be indexed." >&2
+    exit 2
+  fi
+
+  echo "" >&2
+  echo "Checklist → $ARTIFACT_RUN_DIR/checklist.md" >&2
+  printf '%s pass · %s warn · %s fail\n' "$b_pass" "$b_warn" "$b_fail" >&2
+  echo "Answer the Manual rows in that file." >&2
+  [[ "$b_fail" -eq 0 ]] || exit 1
+  exit 0
+fi
+
 RUN_CATEGORY_ROOT="$OUTPUT_ROOT/restarts"
 RUN_CONTEXT="verify-reimaged-system-${CONTEXT_LABEL:-initial}"
 

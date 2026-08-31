@@ -58,6 +58,11 @@
 #   ./bin/record-enrollment.sh --context pre-restart     # Step 6
 #   ./bin/record-enrollment.sh --context post-restart    # Step 8
 #
+#   # Boundary modes. These capture no evidence: they record what was decided
+#   # about it, into reimaged-system/boundaries/.
+#   ./bin/record-enrollment.sh --context entry           # Step 2
+#   ./bin/record-enrollment.sh --context exit            # Step 9
+#
 # Options:
 #   --artifact-root PATH  Override REIMAGE_ARTIFACT_ROOT from shared config.
 #   --workspace-root PATH Override REIMAGE_WORKSPACE_ROOT for the fallback path.
@@ -67,6 +72,8 @@
 #                         used to derive the expected application set.
 #   --context LABEL       The run's point. Conventional values are pre-restart
 #                         and post-restart; omitted, the run is `initial`.
+#                         `entry` and `exit` select the boundary modes instead
+#                         of an evidence capture -- see Boundary modes below.
 #                         Letters, digits, dot, underscore, and hyphen only.
 #   --open                Reveal the generated record in Finder on completion.
 #   -h, --help            Show this message and exit.
@@ -100,9 +107,21 @@
 #        as a final fallback so Phase 8 can complete on a bare Mac before the
 #        external artifact volume is reconnected.
 #
+# Boundary modes:
+#   `--context entry` and `--context exit` write a checklist to
+#   reimaged-system/boundaries/ under enroll-and-stabilize-{entry,exit}, in the
+#   same category and grammar the restore phases use. They probe nothing that an
+#   evidence run already recorded: the exit checklist reads the official
+#   post-restart run's rows.tsv, so it cannot disagree with the record it cites.
+#
+#   Entry is recorded after Step 2, not at Step 0. Phase 8 starts on a Mac with
+#   no toolkit on it -- $FRACTOGENESIS_HOME and reimage.env are what Steps 1 and
+#   2 create, and this script is not on the machine before them.
+#
 # Exit status:
-#   0  Evidence recorded successfully.
-#   1  Evidence capture ran but a generated file could not be written.
+#   0  Evidence recorded successfully, or the boundary has no FAIL row.
+#   1  Evidence capture ran but a generated file could not be written; or, in a
+#      boundary mode, the checklist was written and carries at least one FAIL.
 #   2  Usage, configuration, or prerequisite error.
 # --- END USAGE ---
 # =============================================================================
@@ -190,6 +209,7 @@ require_option_value() {
 # ---------------------------------------------------------------------------
 STAMP="$(date +%Y%m%d-%H%M%S)"
 OUTPUT_DIR=""
+OUTPUT_DIR_EXPLICIT=""
 OPEN_RESULT=false
 MANAGED_INVENTORY_DIR=""
 CONTEXT_LABEL=""
@@ -209,6 +229,7 @@ while [[ $# -gt 0 ]]; do
     --output)
       require_option_value "$1" "${2:-}"
       OUTPUT_DIR="$2"
+      OUTPUT_DIR_EXPLICIT="$2"
       shift 2
       ;;
     --managed-inventory)
@@ -259,6 +280,14 @@ done
 # `initial`, which is NOT a known point and indexes as `unknown` -- the honest
 # answer, since nothing recorded which side of a restart it was on. This mirrors
 # record-reimaged-system.sh exactly; the two scripts share the category.
+if [[ -n "${REIMAGE_ARTIFACT_ROOT:-}" && -d "$REIMAGE_ARTIFACT_ROOT" ]]; then
+  OUTPUT_ROOT="$REIMAGE_ARTIFACT_ROOT/reimaged-system"
+elif [[ -n "${REIMAGE_WORKSPACE_ROOT:-}" && -d "${REIMAGE_WORKSPACE_ROOT:-}" ]]; then
+  OUTPUT_ROOT="$REIMAGE_WORKSPACE_ROOT"
+else
+  OUTPUT_ROOT="$HOME/Desktop/reimaged-system-artifacts"
+fi
+
 if [[ -z "$OUTPUT_DIR" ]]; then
   if [[ -n "${REIMAGE_ARTIFACT_ROOT:-}" && -d "$REIMAGE_ARTIFACT_ROOT" ]]; then
     OUTPUT_ROOT="$REIMAGE_ARTIFACT_ROOT/reimaged-system"
@@ -286,6 +315,183 @@ esac
 if [[ -n "${REPO_ROOT:-}" && ( "$OUTPUT_DIR" == "$REPO_ROOT" || "$OUTPUT_DIR" == "$REPO_ROOT"/* ) ]]; then
   echo "ERROR: refusing to write output under the repo checkout: $OUTPUT_DIR" >&2
   exit 2
+fi
+
+# ---------------------------------------------------------------------------
+# Boundary modes: --context entry and --context exit
+#
+# These do not capture evidence. They record what was decided about it, into
+# reimaged-system/boundaries/ under enroll-and-stabilize-{entry,exit}, the same
+# category and grammar the restore phases use. Kept in this script rather than a
+# new one because the questions are Phase 8's and the exit checklist is built
+# from this script's own rows.tsv -- splitting them would mean two files sharing
+# one definition of what a Phase 8 row means.
+#
+# Entry is recorded after Step 2, not at Step 0. Phase 8 begins on a Mac with no
+# toolkit on it: $FRACTOGENESIS_HOME and reimage.env are what Steps 1 and 2
+# create, and this script does not exist on the machine before them. Step 2 is
+# the first moment there is anything to run.
+#
+# Self-contained helpers: the evidence path's status_pass_warn and friends are
+# defined further down, after this dispatch point, so nothing here may call them.
+# ---------------------------------------------------------------------------
+BOUNDARY_ROWS=""
+BOUNDARY_MANUAL=""
+b_pass=0; b_warn=0; b_fail=0
+
+b_record() {
+  case "$1" in
+    PASS) b_pass=$(( b_pass + 1 )) ;;
+    WARN) b_warn=$(( b_warn + 1 )) ;;
+    FAIL) b_fail=$(( b_fail + 1 )) ;;
+  esac
+  BOUNDARY_ROWS="${BOUNDARY_ROWS}| ${2} | \`${1}\` | ${3} |"$'\n'
+  printf '  %-5s %s\n' "$1" "$2" >&2
+}
+
+b_manual() {
+  BOUNDARY_MANUAL="${BOUNDARY_MANUAL}| ${1} | \`TODO\` | ${2} |"$'\n'
+}
+
+boundary_entry() {
+  local out
+
+  if [[ -n "${FRACTOGENESIS_HOME:-}" && -d "${FRACTOGENESIS_HOME:-}" ]]; then
+    b_record PASS "Toolkit root resolved" "\`$FRACTOGENESIS_HOME\`"
+  else
+    b_record FAIL "Toolkit root resolved" "\`FRACTOGENESIS_HOME\` unset or not a directory — Steps 1 and 2 are what set it; do not continue past this row"
+  fi
+
+  if [[ -f "${FRACTOGENESIS_HOME:-/nonexistent}/reimage.env" ]]; then
+    b_record PASS "reimage.env restored" "present in the toolkit root"
+  else
+    b_record WARN "reimage.env restored" "not found — the jump-drive copy has not been placed yet; every later root variable falls back to a default"
+  fi
+
+  if /sbin/ping -c 1 -t 5 8.8.8.8 >/dev/null 2>&1; then
+    b_record PASS "Network reachable" "ICMP to 8.8.8.8"
+  else
+    b_record FAIL "Network reachable" "no route — enrollment, managed installs and macOS updates all need it"
+  fi
+
+  if [[ -d "/Applications/Company Portal.app" ]]; then
+    b_record PASS "Company Portal installed" "/Applications/Company Portal.app"
+  else
+    b_record FAIL "Company Portal installed" "absent — it is the only sanctioned install channel for managed apps, and the Apps tab is where Available assignments are found"
+  fi
+
+  out="$(profiles status -type enrollment 2>&1 | head -2 | tr '\n' ' ' || true)"
+  b_record PASS "Enrollment status readable" "${out:-no output} — recorded as entry state, not as a requirement"
+
+  out="$( { sw_vers -productVersion 2>/dev/null || true; } | tr -d '\n') ($( { sw_vers -buildVersion 2>/dev/null || true; } | tr -d '\n'))"
+  b_record PASS "macOS build at entry" "$out"
+
+  if [[ -n "${REIMAGE_ARTIFACT_ROOT:-}" && -d "${REIMAGE_ARTIFACT_ROOT:-}" ]]; then
+    b_record PASS "Artifact root mounted" "\`$REIMAGE_ARTIFACT_ROOT\`"
+  else
+    b_record WARN "Artifact root mounted" "not mounted — expected here. Phase 8 completes on the workspace or Desktop fallback and Phase 9 Step 1 relocates what it wrote"
+  fi
+
+  b_manual "Signed into the company account" "The Microsoft 365 sign-in prompted during Setup Assistant was completed with the company account, not a personal one."
+  b_manual "Cheatsheet or jump drive was available" "One of the two is required: the emailed cheatsheet carries \`TOOLKIT_GITHUB_ACCOUNT\` for the network route, the Phase 6A jump drive carries \`bootstrap.sh\` and the \`reimage.env\` copy."
+}
+
+boundary_exit() {
+  local restarts_root pr_run pr_dir rows check status detail
+
+  restarts_root="$OUTPUT_ROOT/restarts"
+  pr_run="$(artifact_run_official "$restarts_root" "enroll-and-stabilize-post-restart" 2>/dev/null || true)"
+  pr_dir=""
+  [[ -n "$pr_run" ]] && pr_dir="$restarts_root/$pr_run"
+
+  if [[ -n "$pr_dir" && -d "$pr_dir" ]]; then
+    b_record PASS "Post-restart baseline recorded" "\`$(basename "$pr_dir")\`"
+  else
+    b_record FAIL "Post-restart baseline recorded" "no official \`enroll-and-stabilize-post-restart\` run under \`restarts/\` — run \`./bin/record-enrollment.sh --context post-restart\` after the restart, then rerun this"
+  fi
+
+  if [[ -n "$(artifact_run_official "$restarts_root" "enroll-and-stabilize-pre-restart" 2>/dev/null || true)" ]]; then
+    b_record PASS "Pre-restart baseline recorded" "the pair is complete, so the restart has something to be compared across"
+  else
+    b_record WARN "Pre-restart baseline recorded" "no official \`enroll-and-stabilize-pre-restart\` run — the post-restart record stands alone and nothing establishes what changed across the restart"
+  fi
+
+  # The verdicts come from the post-restart run's rows.tsv rather than being
+  # re-probed here: this checklist is a statement about the recorded evidence,
+  # and re-probing would let it disagree with the record it cites.
+  rows="$pr_dir/rows.tsv"
+  if [[ -f "$rows" ]]; then
+    while IFS="$(printf '\t')" read -r check status detail; do
+      case "$check" in
+        check|'') continue ;;
+        filevault)
+          if [[ "$status" == "PASS" ]]; then
+            b_record PASS "FileVault is on" "$detail"
+          else
+            b_record FAIL "FileVault is on" "recorded \`$status\` — Phase 14 fails sign-off if this stays off"
+          fi
+          ;;
+        enrollment)      b_record "$status" "Enrollment completed" "$detail" ;;
+        profiles)        b_record "$status" "Required profiles and certificates present" "$detail" ;;
+        macos-updates)   b_record "$status" "macOS updates complete or deferred" "$detail" ;;
+        managed-apps)    b_record "$status" "Managed application set matches the pre-image inventory" "$detail" ;;
+      esac
+    done < "$rows"
+  else
+    b_record WARN "Recorded verdicts readable" "no \`rows.tsv\` in the post-restart run — it predates the split that produced one, so its verdicts cannot be read without reparsing \`record.md\`"
+  fi
+
+  b_manual "Company Portal shows the expected state" "Opened, device listed, and the Apps tab shows nothing this Mac needs still listed as installable."
+  b_manual "Required security tools are installed or actively installing" "Managed app and process checks plus a visual sanity review — an agent mid-install looks the same as one that failed."
+  b_manual "First stabilization restart completed" "Observed restart and a successful return to the login session."
+  b_manual "Keychain identities re-issued" "Count and shape match the pre-image record. Fingerprints will differ — MDM re-issues these rather than restoring them."
+}
+
+if [[ "${CONTEXT_LABEL:-}" == "entry" || "${CONTEXT_LABEL:-}" == "exit" ]]; then
+  BOUNDARY_ROOT="$OUTPUT_ROOT/boundaries"
+  [[ -n "$OUTPUT_DIR_EXPLICIT" ]] && BOUNDARY_ROOT="$OUTPUT_DIR_EXPLICIT"
+
+  echo "Recording the Phase 8 $CONTEXT_LABEL boundary ..." >&2
+  if [[ "$CONTEXT_LABEL" == "entry" ]]; then boundary_entry; else boundary_exit; fi
+
+  if ! artifact_run_begin "$BOUNDARY_ROOT" "enroll-and-stabilize-$CONTEXT_LABEL"; then
+    echo "ERROR: cannot stage a boundary run under: $BOUNDARY_ROOT" >&2
+    exit 2
+  fi
+
+  BOUNDARY_FILE="$ARTIFACT_RUN_DIR/checklist.md"
+  {
+    printf '# enroll-and-stabilize — %s Criteria — %s\n\n' "$CONTEXT_LABEL" "$ARTIFACT_RUN_STAMP"
+    printf 'Generated by `bin/record-enrollment.sh --context %s` on %s.\n\n' "$CONTEXT_LABEL" "$(date)"
+    printf 'Pairs with [[enroll-and-stabilize|enroll-and-stabilize.md]].\n\n'
+    printf '## Automated\n\n'
+    printf '| Check | Result | Detail |\n| --- | --- | --- |\n'
+    printf '%s' "$BOUNDARY_ROWS"
+    printf '\n**%s pass · %s warn · %s fail**\n\n' "$b_pass" "$b_warn" "$b_fail"
+    if [[ -n "$BOUNDARY_MANUAL" ]]; then
+      printf '## Manual\n\n'
+      printf 'Answer these here. A row closed as `no` or `accepted` is a decision and counts as answered; the check is for rows nobody looked at.\n\n'
+      printf '| Check | Status | Notes |\n| --- | --- | --- |\n'
+      printf '%s' "$BOUNDARY_MANUAL"
+      printf '\n'
+    fi
+    printf '## How to read this\n\n'
+    printf -- '- **FAIL** (%s here) means the phase is not finished. Resolve before starting the next one.\n' "$b_fail"
+    printf -- '- **WARN** (%s here) means proceed with a known limit, named in the row.\n' "$b_warn"
+    printf -- '- The Automated rows restate what the recorded evidence says; they do not re-probe the machine, so this checklist cannot disagree with the run it cites.\n'
+  } > "$BOUNDARY_FILE" || { artifact_run_abort; echo "ERROR: could not write $BOUNDARY_FILE" >&2; exit 2; }
+
+  if ! artifact_run_finalize "$BOUNDARY_ROOT" "$b_pass pass / $b_warn warn / $b_fail fail"; then
+    echo "ERROR: the checklist was written but could not be indexed." >&2
+    exit 2
+  fi
+
+  echo "" >&2
+  echo "Checklist → $ARTIFACT_RUN_DIR/checklist.md" >&2
+  printf '%s pass · %s warn · %s fail\n' "$b_pass" "$b_warn" "$b_fail" >&2
+  echo "Answer the Manual rows in that file." >&2
+  [[ "$b_fail" -eq 0 ]] || exit 1
+  exit 0
 fi
 
 RUN_CATEGORY_ROOT="$OUTPUT_DIR"

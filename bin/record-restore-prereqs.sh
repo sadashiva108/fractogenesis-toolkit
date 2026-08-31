@@ -298,27 +298,33 @@ check_restore_runtime() {
   # not check" rendered as silence, in a checklist whose entire purpose is
   # recording that every question was asked.
   #
-  # The Phase 9 bundle is resolved through the run index, not through a
-  # `latest-*.txt` pointer. That pointer was retired when the first-boot bundles
-  # moved into `reimaged-system/restarts/`: a single pointer cannot name several
-  # lineages, and these have three -- initial, pre-restart, post-restart. The
-  # post-restart lineage is the one a Phase 9 sign-off is asking about, because
-  # it is the run taken after the stabilization restart.
-  local rec bun n label src restarts_root bun_run
-  rec="$(cat "${REIMAGE_ARTIFACT_ROOT:-}/reimaged-system/enrollment/latest-enrollment-record.txt" 2>/dev/null)"
-  restarts_root="${REIMAGE_ARTIFACT_ROOT:-/nonexistent}/reimaged-system/restarts"
-  bun_run="$(artifact_run_official "$restarts_root" "verify-reimaged-system-post-restart" 2>/dev/null)"
-  bun=""
-  [[ -n "$bun_run" ]] && bun="$restarts_root/$bun_run"
+  # Both sign-offs are read from `boundaries/`, not from the evidence bundles,
+  # and through the run index rather than a `latest-*.txt` pointer. Two separate
+  # reasons, both learned here:
+  #
+  # An evidence run records what the machine reported; the exit checklist
+  # records what a person decided about it, and only the second can be
+  # "complete". Reading the bundle asked the wrong artifact -- and because
+  # rerunning a capture brings its unanswered rows back, a bundle could never
+  # stay signed off even once someone had answered it.
+  #
+  # A single pointer cannot name several lineages, and these categories have
+  # several: restarts/ carries initial, pre-restart and post-restart;
+  # boundaries/ carries entry and exit per runbook. `official/<context>.txt`
+  # answers per lineage, which is what the question actually is.
+  local n label src boundaries_root exit_run
+  boundaries_root="${REIMAGE_ARTIFACT_ROOT:-/nonexistent}/reimaged-system/boundaries"
 
-  for label in "\`enroll-and-stabilize\` enrollment record" "\`verify-reimaged-system\` first-boot bundle"; do
+  for label in "\`enroll-and-stabilize\`" "\`verify-reimaged-system\`"; do
     case "$label" in
-      *enrollment\ record) src="$rec" ;;
-      *)                           src="${bun:+$bun/checklist.md}" ;;
+      *enroll-and-stabilize*) exit_run="$(artifact_run_official "$boundaries_root" "enroll-and-stabilize-exit" 2>/dev/null)" ;;
+      *)                      exit_run="$(artifact_run_official "$boundaries_root" "verify-reimaged-system-exit" 2>/dev/null)" ;;
     esac
+    src=""
+    [[ -n "$exit_run" ]] && src="$boundaries_root/$exit_run/checklist.md"
 
     if [[ -z "$src" ]]; then
-      record WARN "Sign-off complete: $label" "its \`latest-*\` pointer is missing or empty — the sign-off cannot be located, so this row is unchecked rather than clean"
+      record WARN "Sign-off complete: $label" "no official \`-exit\` run under \`boundaries/\` — the close-out has not been recorded, so this row is unchecked rather than clean"
       continue
     fi
     if [[ ! -f "$src" ]]; then

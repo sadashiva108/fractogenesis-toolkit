@@ -1454,22 +1454,21 @@ if [[ "$PHASE" == "post" ]]; then
     # compare the two lexicographically (equivalent to chronologically here).
     #
     # The bundle-side extraction below anchors the stamp to the END of the
-    # directory name. An optional --context label therefore leads the name --
-    # <label>-record-enrollment-<stamp> -- and never trails it: a trailing
-    # label fails this match, gets filtered out by the grep, and leaves
+    # directory name. Run ids are <runbook>-<point>-<stamp>, so the stamp trails
+    # and this match holds. Anything that moves the stamp off the end leaves
     # POST_EVIDENCE_STAMP empty -- at which point this check degrades to a
     # cheerful "age not comparable" PASS and stops catching a pre-erase backup,
-    # which is the entire reason it exists. The globs carry a leading wildcard
-    # for the same reason: the artifact name is no longer at the start.
+    # which is the entire reason it exists.
     TM_STAMP="$(printf '%s\n' "$TM_LATEST_NAME" | sed -e 's/\.backup$//' -e 's/^\([0-9]\{4\}\)-\([0-9]\{2\}\)-\([0-9]\{2\}\)-\([0-9]\{6\}\)$/\1\2\3-\4/')"
     case "$TM_STAMP" in
       [0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]-[0-9][0-9][0-9][0-9][0-9][0-9]) ;;
       *) TM_STAMP="" ;;
     esac
     # -maxdepth 3 and the run-grammar name: indexed runs sit at
-    # <category>/runs/<id>, one level deeper than the enrollment bundles, which
-    # still use the [context-]record-enrollment-<stamp> form at depth 2.
-    POST_EVIDENCE_STAMP="$(find "$REIMAGE_ARTIFACT_ROOT/reimaged-system" -maxdepth 3 -type d \( -name "verify-reimaged-system-*" -o -name "*record-enrollment-*" \) 2>/dev/null | sed -e 's#.*/##' -e 's/^.*-\([0-9]\{8\}-[0-9]\{6\}\)$/\1/' | grep -E '^[0-9]{8}-[0-9]{6}$' | sort | tail -1)"
+    # <category>/runs/<id>. Both producers write there now -- the enrollment
+    # records joined the restart lineage -- so both names are run ids ending in
+    # the stamp this extraction anchors to.
+    POST_EVIDENCE_STAMP="$(find "$REIMAGE_ARTIFACT_ROOT/reimaged-system" -maxdepth 3 -type d \( -name "verify-reimaged-system-*" -o -name "enroll-and-stabilize-*" \) 2>/dev/null | sed -e 's#.*/##' -e 's/^.*-\([0-9]\{8\}-[0-9]\{6\}\)$/\1/' | grep -E '^[0-9]{8}-[0-9]{6}$' | sort | tail -1)"
     if [[ -n "$TM_STAMP" && -n "$POST_EVIDENCE_STAMP" ]]; then
       if [[ "$TM_STAMP" < "$POST_EVIDENCE_STAMP" ]]; then
         record_check WARN "Time Machine latest backup" "$TM_LATEST_NAME predates the reimaged-system evidence bundle ($POST_EVIDENCE_STAMP) -- this is the pre-erase backup. Expected until Phase 16 runs the post-image backup after Restore Home; rerun this checklist afterwards to close the row"
@@ -1488,11 +1487,20 @@ if [[ "$PHASE" == "post" ]]; then
   # -------------------------------------------------------------------------
   POST_DIR="$REIMAGE_ARTIFACT_ROOT/reimaged-system"
 
-  POST_ENROLLMENT="$(newest_stamped_dir "$POST_DIR/enrollment" "*record-enrollment-*")"
+  # Resolved through the run index for the same reasons as the first-boot row
+  # below: the enrollment records moved into reimaged-system/restarts/runs/ and
+  # were renamed to the run grammar, and the index separates "never ran it" from
+  # "ran the pre-restart half and never came back" -- the second being the one
+  # worth catching, because it looks like progress.
+  RESTARTS_ROOT="$POST_DIR/restarts"
+  POST_ENROLLMENT="$(artifact_run_official "$RESTARTS_ROOT" "enroll-and-stabilize-post-restart" 2>/dev/null)"
+  POST_ENROLLMENT_PRE="$(artifact_run_official "$RESTARTS_ROOT" "enroll-and-stabilize-pre-restart" 2>/dev/null)"
   if [[ -n "$POST_ENROLLMENT" ]]; then
-    record_check PASS "reimaged-system/enrollment" "$(basename "$POST_ENROLLMENT")"
+    record_check PASS "reimaged-system/restarts (enrollment post-restart)" "$(basename "$POST_ENROLLMENT")"
+  elif [[ -n "$POST_ENROLLMENT_PRE" ]]; then
+    record_check WARN "reimaged-system/restarts (enrollment post-restart)" "Pre-restart run $(basename "$POST_ENROLLMENT_PRE") exists but no post-restart one -- the pair is incomplete. Run bin/record-enrollment.sh --context post-restart"
   else
-    record_check WARN "reimaged-system/enrollment" "Empty -- run bin/record-enrollment.sh"
+    record_check WARN "reimaged-system/restarts (enrollment post-restart)" "Empty -- run bin/record-enrollment.sh --context pre-restart, restart, then --context post-restart"
   fi
 
   # Resolved through the run index, not a glob. The first-boot bundles moved to
@@ -1502,7 +1510,6 @@ if [[ "$PHASE" == "post" ]]; then
   # states the glob could not: never having run it, and having run the
   # pre-restart half and never come back after the restart. The second is the
   # one worth catching, because it looks like progress.
-  RESTARTS_ROOT="$POST_DIR/restarts"
   POST_INITIAL="$(artifact_run_official "$RESTARTS_ROOT" "verify-reimaged-system-post-restart" 2>/dev/null)"
   POST_INITIAL_PRE="$(artifact_run_official "$RESTARTS_ROOT" "verify-reimaged-system-pre-restart" 2>/dev/null)"
   if [[ -n "$POST_INITIAL" ]]; then
