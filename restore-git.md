@@ -2,7 +2,7 @@
 
 # Restore Git
 
-**Last updated:** 2026-08-25
+**Last updated:** 2026-09-01
 
 Restore the Git identity plumbing on the reimaged Mac so both work and personal GitHub accounts route automatically based on where a repository lives on disk. This runbook wires up the dual-identity `~/.gitconfig` (work as default, `includeIf` override under the personal repo root), lays down the matching `~/.ssh/config` host aliases, validates both identities, and leaves you with a `git clone` template that Phase 11B then applies at scale against the pre-image repository audit. It does not enumerate a repo list, drive a clone loop, or restore preserved local branches or stashes — that carry-forward work belongs to Phase 11B.
 
@@ -27,20 +27,21 @@ Restore the Git identity plumbing on the reimaged Mac so both work and personal 
     - [[#Step 3 — Write `~/.ssh/config` with Dual Host Aliases|Step 3 — Write `~/.ssh/config` with Dual Host Aliases]]
     - [[#Step 4 — Write the Global `~/.gitconfig`|Step 4 — Write the Global `~/.gitconfig`]]
     - [[#Step 5 — Write the Personal-Root .gitconfig Override|Step 5 — Write the Personal-Root .gitconfig Override]]
-    - [[#Step 6 — Optionally Wire the XDG Local Config|Step 6 — Optionally Wire the XDG Local Config]]
+    - [[#Step 6 — Seed the Local Preferences Overlay|Step 6 — Seed the Local Preferences Overlay]]
     - [[#Step 7 — Validate Both Identities|Step 7 — Validate Both Identities]]
     - [[#Step 8 — Compare Restored State Against Captured Inventories|Step 8 — Compare Restored State Against Captured Inventories]]
     - [[#Step 9 — Close Out the Exit Criteria|Step 9 — Close Out the Exit Criteria]]
 - [[#Decisions|Decisions]]
 - [[#Troubleshooting|Troubleshooting]]
 - [[#Supplemental Reference|Supplemental Reference]]
+    - [[#One Repository, Two Remotes|One Repository, Two Remotes]]
     - [[#Optional Maintenance — Update All Local Repos|Optional Maintenance — Update All Local Repos]]
     - [[#Optional — git-together Legacy Notes|Optional — git-together Legacy Notes]]
 
 > In Obsidian, these are internal heading links. Click in Reading View, or Cmd-click in Live Preview/editing mode.
 
 > [!info] Callout legend
-> This runbook uses Obsidian callouts so each type reads distinctly: `[!note]` an easily-missed fact · `[!warning]` Pitfall, a mistake you are likely to make here · `[!bug]` Troubleshooting, what to do when a step misbehaves.
+> This runbook uses Obsidian callouts so each type reads distinctly: `[!warning]` Pitfall, a mistake whose cost you do not get back · `[!bug]` Troubleshooting, what to do when a step misbehaves.
 
 ---
 
@@ -102,8 +103,8 @@ Work is the global default because most repos live outside the personal repo roo
 
 | Term | Meaning |
 |---|---|
-| Work identity | The default identity: `$GIT_WORK_NAME` / `$GIT_WORK_EMAIL`, using `$GIT_WORK_SSH_KEY`, cloned via the `$GIT_WORK_GITHUB_HOST` alias. Applies to any repo not under `$GIT_PERSONAL_REPO_ROOT`. |
-| Personal identity | The override: `$GIT_PERSONAL_NAME` / `$GIT_PERSONAL_EMAIL`, using `$GIT_PERSONAL_SSH_KEY`, cloned via the `$GIT_PERSONAL_GITHUB_HOST` alias. Applies only inside `$GIT_PERSONAL_REPO_ROOT`. |
+| Work identity | The default identity: `$GIT_WORK_NAME` / `$GIT_WORK_EMAIL`, using `$GIT_WORK_SSH_KEY`, cloned via `$GIT_WORK_GITHUB_HOST`. Applies to any repo not under `$GIT_PERSONAL_REPO_ROOT`. |
+| Personal identity | The override: `$GIT_PERSONAL_NAME` / `$GIT_PERSONAL_EMAIL`, using `$GIT_PERSONAL_SSH_KEY`, cloned via `$GIT_PERSONAL_GITHUB_HOST`. Applies only inside `$GIT_PERSONAL_REPO_ROOT`. |
 | `includeIf gitdir:...` | A Git config directive that pulls in another config file only when the current repo's `.git` directory lives under a specific path. How the personal identity activates without manual switching. |
 | Host entry | An `~/.ssh/config` `Host` block that forces a specific `IdentityFile` for one server. `Host` is the name you type; `HostName` is where SSH actually connects. When the two identities live on different servers — a GitHub Enterprise instance and public GitHub — each block names its own real host, and the two values must match or SSH connects to the wrong server. |
 
@@ -134,8 +135,7 @@ Live targets this runbook writes on the reimaged Mac:
 ~/.ssh/config                             # dual host aliases
 ~/.gitconfig                              # work-default with includeIf for personal
 $GIT_PERSONAL_REPO_ROOT/.gitconfig        # personal identity override + core.sshCommand
-~/.config/git/config                      # optional: XDG include that loads config.local
-~/.config/git/config.local                # optional: XDG local overrides
+~/.config/git/config.local                # preferences overlay, loaded by the [include] in ~/.gitconfig
 $GIT_WORK_SSH_KEY, $GIT_PERSONAL_SSH_KEY  # permission-fixed, not restored here (Phase 10B owns restore)
 ```
 
@@ -162,7 +162,8 @@ The five work-and-default keys are required. The four `GIT_PERSONAL_*` keys are 
 | `GIT_WORK_REPO_ROOT` | Directory holding work repos. Repos here inherit the global work identity. |
 | `GIT_PERSONAL_REPO_ROOT` | Directory holding personal repos. `includeIf` fires only for repos under this path. |
 | `GIT_WORK_GITHUB_HOST` | Host SSH connects to for work clones — a GitHub Enterprise instance such as `github.example.com`, or `github.com` when there is no Enterprise instance. Written as both `Host` and `HostName` in `~/.ssh/config`, so it must resolve. |
-| `GIT_PERSONAL_GITHUB_HOST` | Optional. Host SSH connects to for personal clones, usually `github.com`. When both accounts live on `github.com` and only the key differs, use an alias such as `github-personal` — `Host` then carries the alias and `HostName` the real host. Written as both, so `HostName` must resolve. |
+| `GIT_PERSONAL_GITHUB_HOST` | Optional. The name written as `Host` in `~/.ssh/config` and typed in personal clone URLs, usually `github.com`. When both accounts live on one server, set this to an alias such as `github.com-personal` and put the real server in `GIT_PERSONAL_GITHUB_HOSTNAME`. |
+| `GIT_PERSONAL_GITHUB_HOSTNAME` | Optional. The server SSH actually connects to for personal clones, written as `HostName`. Leave blank unless `GIT_PERSONAL_GITHUB_HOST` is an alias; blank means `HostName` takes the `Host` value. Whatever is in effect must resolve. |
 | `GIT_WORK_SSH_KEY` | Absolute path to the work private key on disk (already restored in Phase 10B). |
 | `GIT_PERSONAL_SSH_KEY` | Optional. Absolute path to the personal private key on disk (already restored in Phase 10B). |
 | `GIT_DEFAULT_BRANCH` | Default branch name for `git init` (defaults to `main` when unset). |
@@ -188,7 +189,7 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 ### Confirm Your Intent
 
 - Are you doing a **full first-time restore** (Steps 1 through 8 in order) or a **targeted rerun** of one file (e.g. re-writing `~/.ssh/config` after adding a third identity)? Both are safe; the difference is whether you also do Step 7's validation at the end.
-- Do you use the **XDG local config** (`~/.config/git/config.local`) as your primary Git config, or `~/.gitconfig` only? If the answer is "only `~/.gitconfig`", skip Step 6 entirely — do not maintain both.
+- Do you have **Git preferences to carry forward** — aliases, a pager, a diff tool, signing keys? They go in `~/.config/git/config.local` in Step 6, never in `~/.gitconfig`, which this runbook rewrites in full. Skip Step 6 if you have none.
 - Which **default branch name** does your workflow use? The runbook defaults to `main`, matching GitHub's default and `fractogenesis-toolkit`'s own branch. Set `GIT_DEFAULT_BRANCH=master` in Step 1 if your remotes still use the older name — this only affects `init.defaultBranch` for repos you create later, never an existing clone.
 
 > [!warning] Pitfall
@@ -256,13 +257,12 @@ touches it:
 Four targets: `~/.gitconfig`, `~/.config/git/`, `~/.ssh/config`, and the
 personal-root `.gitconfig` reached by `includeIf`.
 
-> [!note]
-> Every block in this runbook shows a `--dry-run` line above the real one. It
-> prints the table and writes nothing. On **0b** that preview is worth more than
-> anywhere else: `before` is a first-wins point, so the first capture recorded is
-> the one that stays official, and a mistimed one cannot be replaced — only
-> annotated with a pin explaining why it is wrong. Read the target list, confirm
-> it describes a machine this phase has not touched, then record.
+Every block in this runbook shows a `--dry-run` line above the real one. It
+prints the table and writes nothing. On **0b** that preview is worth more than
+anywhere else: `before` is a first-wins point, so the first capture recorded is
+the one that stays official, and a mistimed one cannot be replaced — only
+annotated with a pin explaining why it is wrong. Read the target list, confirm
+it describes a machine this phase has not touched, then record.
 
 > [!warning] Pitfall
 > **0b expires and 0a does not.** The prerequisite check is rerunnable at any
@@ -295,7 +295,14 @@ export GIT_PERSONAL_NAME=""
 export GIT_PERSONAL_EMAIL=""
 export GIT_PERSONAL_SSH_KEY=""
 export GIT_PERSONAL_GITHUB_HOST=""
+export GIT_PERSONAL_GITHUB_HOSTNAME=""
 ```
+
+`GIT_PERSONAL_GITHUB_HOSTNAME` is deliberately outside the all-or-nothing personal
+set. Blank is its normal value and means `HostName` takes whatever
+`GIT_PERSONAL_GITHUB_HOST` holds; it is filled only when that host is an alias, so
+requiring it alongside the other four would demand a value most Macs must leave
+empty.
 
 `upsert-env` accepts any `KEY=VALUE` it is given, including an empty `VALUE`, and
 reports no error when it writes one — so check the values in the same block that
@@ -340,7 +347,8 @@ else
     "GIT_PERSONAL_NAME=$GIT_PERSONAL_NAME" \
     "GIT_PERSONAL_EMAIL=$GIT_PERSONAL_EMAIL" \
     "GIT_PERSONAL_SSH_KEY=$GIT_PERSONAL_SSH_KEY" \
-    "GIT_PERSONAL_GITHUB_HOST=$GIT_PERSONAL_GITHUB_HOST"
+    "GIT_PERSONAL_GITHUB_HOST=$GIT_PERSONAL_GITHUB_HOST" \
+    "GIT_PERSONAL_GITHUB_HOSTNAME=$GIT_PERSONAL_GITHUB_HOSTNAME"
 fi
 ```
 
@@ -439,7 +447,7 @@ fi
 | Key chosen by | where the repository sits on disk | the remote URL, independently per remote |
 | What it costs | one repository with both a personal and a work remote sends the same key to both | every clone URL is non-canonical, and `gh repo clone` plus absolute submodule URLs emit the real host and bypass the alias |
 
-Direct is the default, and is right whenever the two identities sit on different servers. Take the alias when they share one, or when a single repository must push to both accounts with the correct key for each. Switching later costs one value here, a re-run of this step, and one `git remote set-url` per affected repository.
+Direct is the default, and is right whenever the two identities sit on different servers — different hostnames route themselves, and that includes a single repository holding a remote on each. The alias is for the one case direct cannot cover: both accounts on the *same* server, where one `Host` block can only carry one `IdentityFile`. Switching later costs one value here, a re-run of this step, and one `git remote set-url` per affected repository.
 
 Write the file:
 
@@ -489,6 +497,10 @@ Each `hostname` must be the server you expect SSH to reach — the same name you
 
 Work identity is the global default; `includeIf` overrides it only inside the personal repo root.
 
+This file is authored from `reimage.env`, not restored from the pre-image copy in `secrets-encrypted/git/`. Read that copy for reference, never as a source. A pre-image `~/.gitconfig` is a debugging surface that accumulates: `http.sslverify = false` set during one afternoon's TLS problem disables verification for every HTTPS remote on the new Mac; a `gitdir:` path that moved makes `includeIf` match nothing, which Git reports as silence rather than an error; and a second `[user]` block overrides `email` while leaving the `name` above it in force, so commits go out under one account's name and the other's address. Authoring the file means each of those is a value you choose now rather than one you inherit.
+
+The `[include]` at the top of the heredoc is what keeps this rewrite safe to repeat. Aliases, pager, signing keys, `git lfs install`'s filter block and every other preference belong in `~/.config/git/config.local`, which nothing in this runbook writes. Git ignores a missing include file silently, so the line is harmless before that file exists. Its position matters: first in the file means the identity below always wins over anything the overlay sets, and the `includeIf` further down still wins over both.
+
 `cat >` truncates `~/.gitconfig`, and [[restore-access|restore-access.md]] Step 7 may have written `http.sslCAInfo` into it pointing at the combined corporate CA bundle. The block below reads that value before the rewrite and puts it back after, so writing the identity cannot silently undo the trust configuration every HTTPS remote depends on. Nothing here needs to know the bundle path — `restore-access` stays its only owner.
 
 ```bash
@@ -497,6 +509,9 @@ source ./reimage.env
 SAVED_CA_INFO="$(git config --global --get http.sslCAInfo 2>/dev/null || true)"
 
 cat > ~/.gitconfig <<EOF
+[include]
+    path = ~/.config/git/config.local
+
 [credential]
     helper = osxkeychain
 
@@ -525,9 +540,6 @@ git config --global --get http.sslCAInfo
 
 The first returns `$GIT_WORK_EMAIL`. The second returns the bundle path if Step 7 of `restore-access` set one, and nothing at all if it did not — an empty result is only correct on a Mac with no corporate TLS interception.
 
-> [!note]
-> If the pre-image config had more than one `[user]` block, Git used the lower matching value globally. The layout above keeps a single `[user]` block on purpose — work is the deliberate global default, and the override lives in a separate file that only fires under the personal root.
-
 > [!bug] Troubleshooting
 > If that check comes back empty on a Mac that *does* sit behind corporate TLS interception, or an internal Enterprise Server host later refuses to verify, see [[#An internal Enterprise Server host fails TLS verification|An internal Enterprise Server host fails TLS verification]].
 
@@ -537,7 +549,7 @@ The first returns `$GIT_WORK_EMAIL`. The second returns the bundle path if Step 
 
 ### Step 5 — Write the Personal-Root .gitconfig Override
 
-This file activates only for repositories under `$GIT_PERSONAL_REPO_ROOT`. It changes the identity *and* pins the personal SSH key via `core.sshCommand`, so even if `~/.ssh/config` were misconfigured, personal repos would still send the right key.
+This file activates only for repositories under `$GIT_PERSONAL_REPO_ROOT`. It changes the identity *and* pins the personal SSH key via `core.sshCommand`, so even if `~/.ssh/config` were misconfigured, personal repos would still send the right key. That pin is per repository, not per remote: `-F /dev/null` also stops SSH reading `~/.ssh/config` at all, so a repository under this root that gains a second remote on the work host sends the personal key there too. Which is a judgment call rather than a fault; the mechanics, and what it takes to make one repository serve both accounts properly, are in [[#One Repository, Two Remotes|One Repository, Two Remotes]].
 
 The trailing `cat` is not decoration. Git ignores a missing include file silently, so if this write does not happen the only symptom is the wrong author address surfacing two steps later in Step 7 — reading the file back here is what turns that into an immediate failure:
 
@@ -583,52 +595,47 @@ The `cd` is inside a subshell and there is no `cd ~`, so the shell you are typin
 
 ---
 
-### Step 6 — Optionally Wire the XDG Local Config
+### Step 6 — Seed the Local Preferences Overlay
 
-Skip this step if `~/.gitconfig` is your only Git config. Only do it if you intentionally use `~/.config/git/config` as the primary path and `config.local` for machine-specific overlays.
+`~/.gitconfig` holds identity and routing, and this runbook rewrites it in full every time it runs. Everything else you care about — aliases, pager, `pull.rebase`, `fetch.prune`, diff and merge tools, `user.signingkey` and `commit.gpgsign`, `url.insteadOf` rewrites, and the `[filter "lfs"]` block `git lfs install` writes — lives in `~/.config/git/config.local` instead, which nothing here writes or truncates. Step 4 already wired the `[include]` that loads it, so this step only creates the file and puts your preferences back.
 
-Git reads `~/.config/git/config` automatically under the XDG spec, but `config.local` is only read if it is explicitly included. Wire it up:
+Never put `user.name`, `user.email` or `includeIf` in this file. Identity has one owner, and a second copy of it here is how a stale address outlives the runbook that was supposed to replace it.
+
+Create the directory and the file:
 
 ```bash
 mkdir -p ~/.config/git
+
+touch ~/.config/git/config.local
 ```
 
-Add an include block to `~/.config/git/config` if not already present:
-
-```ini
-[include]
-    path = ~/.config/git/config.local
-```
-
-Then write `config.local` from `reimage.env`. It mirrors the global file rather than adding to it — same identity, same `includeIf`, same default branch — so whichever of the two Git loads last, the answer is the same.
+The pre-image `~/.gitconfig` in `secrets-encrypted/git/` is the reference for what to carry over. Read it, take the preference sections, and leave the identity sections behind. A minimal starting point:
 
 ```bash
-source ./reimage.env
+cat > ~/.config/git/config.local <<'EOF'
+[alias]
+    st = status -sb
+    lg = log --oneline --graph --decorate
 
-cat > ~/.config/git/config.local <<EOF
-# ~/.config/git/config.local
-# Local private Git configuration — loaded via ~/.config/git/config include
+[pull]
+    rebase = true
 
-[credential]
-    helper = osxkeychain
-
-[user]
-    name = ${GIT_WORK_NAME}
-    email = ${GIT_WORK_EMAIL}
-
-[includeIf "gitdir:${GIT_PERSONAL_REPO_ROOT%/}/"]
-    path = ${GIT_PERSONAL_REPO_ROOT%/}/.gitconfig
-
-[init]
-    defaultBranch = ${GIT_DEFAULT_BRANCH:-main}
+[fetch]
+    prune = true
 EOF
 ```
 
-> [!warning] Pitfall
-> If `~/.gitconfig` and `~/.config/git/config.local` both exist with conflicting settings, Git merges them in load order with later values winning. Keep them consistent or consolidate to one — the XDG path is preferred on a fresh system, `~/.gitconfig` is the legacy path. Do not have them fight each other.
+Confirm the include resolves and that identity did not follow the preferences across:
 
-> [!bug] Troubleshooting
-> If values you wrote into `config.local` have no effect on `git config` output, see [[#`config.local` is being silently ignored|`config.local` is being silently ignored]].
+```bash
+git config --show-origin --get-regexp '^(alias|pull|fetch)\.'
+
+git config --show-origin user.email
+```
+
+The first lists your preferences with `~/.config/git/config.local` as their origin; nothing listed means the file is empty or the include is missing. The second must still report `~/.gitconfig` or the personal-root override, never `config.local`.
+
+If you use `git lfs`, re-run `git lfs install` after this step rather than hand-copying its filter block — it writes the block itself and knows which paths this Git build expects.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -805,7 +812,7 @@ The commands do X; these judgment calls stay with you.
 | Decision | Why it stays with you |
 |---|---|
 | Whether the restored SSH keys are still the current identity or a rotated-out prior key. | Depends on rotation history the artifact drive does not carry. If unsure, generate a new key and register it upstream rather than restoring an old one. |
-| Which config path to make canonical: `~/.gitconfig` or `~/.config/git/config` + `config.local`. | Both work; letting them fight each other silently breaks identity. Pick one and be consistent. |
+| Whether a repository under `$GIT_PERSONAL_REPO_ROOT` should also carry a work remote. | Keys can be routed per remote; authorship cannot — one commit carries one name and email to both. Either one address is verified on both accounts, or one side's commits arrive unattributed, or the two are really two repositories. Supplemental Reference walks the configuration for each. |
 | Whether to reinstate `git-together` and `alias git=git-together`. | Legacy workaround; only worth it if the workflow still uses paired commits. See Supplemental Reference. |
 | Which repositories are worth re-cloning right now versus later. | Depends on immediate work priorities; this runbook is deliberately silent about the list. |
 
@@ -849,7 +856,15 @@ Without the trailing slash, the include may not fire for nested repos. Re-run St
 
 ### `config.local` is being silently ignored
 
-Git does not read `config.local` automatically. It must be pulled in from `~/.config/git/config` or `~/.gitconfig` via an `[include]` block. Confirm the include exists; Step 6 writes it.
+Git does not read `config.local` automatically — it is loaded by the `[include]` block at the top of `~/.gitconfig`, which Step 4 writes. Confirm the block is there and that its `path` matches where the file actually is:
+
+```bash
+git config --get-all include.path
+
+ls -l ~/.config/git/config.local
+```
+
+An `[include]` naming a file that does not exist is ignored in silence, which is the same symptom as a file whose settings are being overridden. Check the file exists before assuming precedence is the problem.
 
 [[#Step 7 — Validate Both Identities|⮕ Continue to Step 7 — Validate Both Identities]]
 
@@ -881,6 +896,62 @@ The skip is a workaround, not the goal. The durable fix is to trust the internal
 ## Supplemental Reference
 
 Longer material most runs will not need, kept out of the main flow.
+
+### One Repository, Two Remotes
+
+A repository under `$GIT_PERSONAL_REPO_ROOT` that also pushes to the work host crosses both identities at once. Two things decide what happens, they are decided at different moments, and only one of them is per-remote.
+
+| | Decided | Per-remote? |
+|---|---|---|
+| **Authentication** — which key is offered, which account you are | at push time, from the remote URL's host | yes |
+| **Authorship** — the name and email inside the commit | at `git commit`, before any remote is involved | no |
+
+Push transfers objects that already exist. A commit pushed to both remotes is the same object with the same SHA and the same author line, so no remote configuration can give it a different author on one side.
+
+**Fixing the authentication half.** The personal-root override pins one key for the whole repository, and `-F /dev/null` stops SSH consulting `~/.ssh/config` at all, so the work remote is offered the personal key with no `Host` block able to correct it. Drop the pin in that one repository and hostname routing comes back:
+
+```bash
+git config --unset core.sshCommand
+
+git config --get core.sshCommand
+```
+
+The second command printing nothing is the confirmation. Each remote is then matched to its `Host` block by the hostname in its URL, and each gets its own key. This is local to the repository — the override still applies to every other repository under the personal root.
+
+An alias is needed here only when both remotes live on the *same* server. Different hostnames route themselves; two accounts on one hostname cannot, because a single `Host` block carries a single `IdentityFile`. That is the case the `GIT_PERSONAL_GITHUB_HOST` / `GIT_PERSONAL_GITHUB_HOSTNAME` pair exists for, and it is set once in Step 0c rather than per repository.
+
+**Why a verified email is the whole of the authorship half.** GitHub decides who a commit belongs to by matching its author email against the verified emails on an account. Nothing else is consulted — not the SSH key that pushed it, not the account that owns the repository.
+
+| | Author email verified on that account | Not verified there |
+|---|---|---|
+| Push | succeeds | succeeds |
+| Commit page shows | your avatar, linked to your profile | the raw name and email, no link |
+| Contribution graph | counts | does not count |
+| Blame and pull-request authorship | attributed to you | shows as an outside author |
+
+So the failure is attribution, not rejection — unless the server enables an author-email push rule, which is opt-in and uncommon. That is why the symptom is usually noticed socially rather than technically: commits keep landing, and colleagues start using the name on them.
+
+Three ways to resolve it, in order of how well they hold up:
+
+- **Verify one address on both accounts.** Add the address you commit with as a second verified email on the other account. One authorship then satisfies both, and nothing in this runbook changes. Best where policy allows it.
+- **Pin the repository to one identity.** Where only one side's attribution matters, set it locally and accept that the other side sees an outside author:
+
+    ```bash
+    git config user.email "the-address-that-should-own-these-commits"
+
+    git config user.name "The matching name"
+
+    git config --show-origin user.email
+    ```
+
+    The origin must read `.git/config` for the pin to be in effect; a repository-local value beats both the global file and the `includeIf` override.
+- **Split the repository.** Two accounts that must each own their own commits are two repositories with a shared upstream. Configuration cannot make one commit carry two authors, and arrangements that appear to are rewriting history on one side.
+
+Set both `user.name` and `user.email` together when you pin. Setting only the email leaves the name from the layer above in force, which produces commits carrying one account's name and the other's address — correct enough to pass every check and wrong in the one place people read.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Optional Maintenance — Update All Local Repos
 

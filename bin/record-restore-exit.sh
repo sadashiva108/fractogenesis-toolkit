@@ -652,7 +652,49 @@ check_restore_git() {
     record PASS "Identity values recorded in \`reimage.env\`" "work and personal identities complete"
   fi
 
-  record_manual "Both identities validated" "Step 7 ran \`ssh -T\` against both host aliases and each returned the expected account. An unregistered key and a wrong key fail identically, so this is the row only you can close."
+  # `GIT_PERSONAL_GITHUB_HOSTNAME` sits outside the all-or-nothing set above on
+  # purpose: blank is its normal value and means `HostName` inherits whatever
+  # `GIT_PERSONAL_GITHUB_HOST` holds. It is filled only when that host is an
+  # alias -- two accounts on one server, where a single `Host` name cannot carry
+  # two keys. The failure this row catches is an alias with nothing real behind
+  # it: `Host github.com-personal` / `HostName github.com-personal` writes a name
+  # DNS cannot resolve, and ssh reports it as an unreachable host rather than as
+  # a configuration mistake.
+  if [[ -n "${GIT_PERSONAL_GITHUB_HOST:-}" ]]; then
+    want_alias="$GIT_PERSONAL_GITHUB_HOST"
+    want_real="${GIT_PERSONAL_GITHUB_HOSTNAME:-$GIT_PERSONAL_GITHUB_HOST}"
+    if [[ ! -f "$HOME/.ssh/config" ]]; then
+      record FAIL "Personal SSH host resolves to a real server" "\`~/.ssh/config\` does not exist -- Step 3 writes it"
+    else
+      got_real="$(awk -v want="$want_alias" '
+        BEGIN { inblock = 0 }
+        {
+          line = $0
+          sub(/^[ \t]+/, "", line)
+          if (tolower(line) ~ /^host[ \t]/) {
+            sub(/^[^ \t]+[ \t]+/, "", line)
+            inblock = (line == want) ? 1 : 0
+            next
+          }
+          if (inblock && tolower(line) ~ /^hostname[ \t]/) {
+            sub(/^[^ \t]+[ \t]+/, "", line)
+            print line
+            exit
+          }
+        }' "$HOME/.ssh/config" 2>/dev/null)"
+      if [[ -z "$got_real" ]]; then
+        record FAIL "Personal SSH host resolves to a real server" "no \`Host $want_alias\` block with a \`HostName\` in \`~/.ssh/config\` -- re-run Step 3"
+      elif [[ "$got_real" != "$want_real" ]]; then
+        record FAIL "Personal SSH host resolves to a real server" "\`Host $want_alias\` points at \`$got_real\`, but \`reimage.env\` expects \`$want_real\` -- \`~/.ssh/config\` and \`reimage.env\` disagree, and \`restore-repos\` trusts \`reimage.env\`"
+      elif [[ "$want_alias" == "$want_real" ]]; then
+        record PASS "Personal SSH host resolves to a real server" "\`$want_alias\` is a real host; no alias in use"
+      else
+        record PASS "Personal SSH host resolves to a real server" "alias \`$want_alias\` resolves to \`$want_real\`"
+      fi
+    fi
+  fi
+
+  record_manual "Both identities validated" "Step 7 ran \`ssh -T\` against both hosts and each returned the expected account. An unregistered key and a wrong key fail identically, so this is the row only you can close."
 }
 
 # ---------------------------------------------------------------------------

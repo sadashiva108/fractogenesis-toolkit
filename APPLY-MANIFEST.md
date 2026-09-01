@@ -2,6 +2,8 @@
 
 **Revision 123** — supersedes Revision 122 and earlier. Step 5 stops telling every reader to install a browser one reader needed.
 
+**Revision 123** — supersedes Revision 122 and earlier. `restore-git` stops destroying what it did not write, the alias it documented becomes one it can produce, and a repository that serves both accounts gets the configuration for each half.
+
 **Revision 122** — supersedes Revision 121 and earlier. The managed-application row stops asking a question the decisions log has already answered.
 
 **Revision 121** — supersedes Revision 120 and earlier. The managed inventory joins the shared run index, and its three readers stop taking whichever bundle sorted last.
@@ -388,6 +390,153 @@ and it lost to the one printed in the table the reader was acting from.
   `verify-runbook-structure.sh` unchanged at its pre-existing 30 FAIL / 5 WARN.
 - No `[!note]`, no new callout, no change to the step's numbering or back-link,
   so the structural rules the checker enforces are untouched.
+
+---
+
+## Revision 123 — the phase writes identity and stops overwriting everything else
+
+`restore-git` authors `~/.ssh/config` and `~/.gitconfig` from `reimage.env` rather
+than restoring the pre-image copies, and that is correct: a pre-image `~/.gitconfig`
+accumulates debugging state. A real one carried `http.sslverify = false` left over
+from an afternoon's TLS problem, an `includeIf "gitdir:~/shiva/"` pointing at a
+path the machine no longer had, and a second `[user]` block that overrode `email`
+while leaving the `name` above it in force — so commits went out under one
+account's name and the other's address for long enough that colleagues learned the
+wrong name. Restoring that file verbatim reinstates all three.
+
+What the runbook did not say is that it authors on purpose, and it did not stop
+the rewrite from taking things it never meant to own.
+
+### Step 3 reads the file before it truncates it
+
+Phase 10B restores `~/.ssh/config` from the secrets DMG; Step 3 then replaces it
+wholesale. Step 4 already handled this asymmetry for its own file, reading
+`http.sslCAInfo` out and putting it back. Step 3 had no equivalent, so a jump
+host, an internal GitLab, a second Enterprise instance or a standing
+`AddKeysToAgent` directive was destroyed silently — the next connection to that
+host falls back to default key selection and fails days later, far from this step.
+The step now prints the existing file first and says plainly what the write costs.
+
+### The alias the documentation promised is now one the block can write
+
+The Environment Variables table described using an alias when both accounts live
+on one server: "`Host` then carries the alias and `HostName` the real host." The
+heredoc wrote `GIT_PERSONAL_GITHUB_HOST` into *both* fields, so setting it to
+`github.com-personal` produced `HostName github.com-personal`, which DNS cannot
+resolve. The documented capability could not be produced.
+
+`GIT_PERSONAL_GITHUB_HOSTNAME` is the missing half. It is optional and sits
+outside the all-or-nothing `GIT_PERSONAL_*` set: blank is its normal value and
+means `HostName` inherits the `Host` value, so requiring it alongside the other
+four would demand a value most Macs must leave empty. Step 3 presents both schemes
+as a decision with its costs, Step 0c records the key, and
+`record-restore-exit.sh` gains a row that reads the written `Host` block back and
+fails when an alias has nothing real behind it.
+
+The repository-placement check in that same script already worked under both
+schemes: it matches the remote URL against `GIT_PERSONAL_GITHUB_HOST`, which is
+the name that appears in the URL either way.
+
+### Preferences move out of the file the phase rewrites
+
+Step 6 wrote a second copy of the identity into `~/.config/git/config.local` —
+same `[user]`, same `includeIf`, same default branch — and carried a Pitfall
+warning that the two files must not fight each other. Two authoritative copies of
+one fact, plus a warning about the consequence.
+
+`~/.gitconfig` now opens with `[include] path = ~/.config/git/config.local`, and
+Step 6 seeds that file with preferences only: aliases, pager, `pull.rebase`,
+signing keys, the `[filter "lfs"]` block. Nothing in the runbook writes or
+truncates it, so a repeated run can no longer take an alias set with it. Include
+position is deliberate — first in the file means the identity below always wins,
+and the `includeIf` further down still wins over both. The `Decisions` row asking
+which config path to make canonical is gone: there is one, and the other file has
+a different job.
+
+### Step 7's guard reported the wrong cause and its scratch repo was unsafe
+
+`if [ -z "${GIT_WORK_REPO_ROOT:-}" ]` tests whether a variable is empty. Its
+message read `run this from the repository root`, which is a different failure
+with a different remedy — the value comes from `reimage.env`, and `backup-repos`
+Step 1 records it. The prose above it, "spot-check from inside the work repo
+root", read as an instruction about the reader's working directory when the block
+enters the root itself. Standing in the toolkit checkout is required, not wrong:
+`source ./reimage.env` resolves against it. Both now say so, and the printed
+identity is labelled as the one applying at the root rather than where the shell
+stands.
+
+The scratch repository used a fixed name. `mkdir -p "$GIT_WORK_REPO_ROOT/test"`
+succeeds silently when that directory already exists, and the unguarded
+`rm -rf "$GIT_WORK_REPO_ROOT/test"` that followed would delete a real repository of
+that name — a validation step that reads one value destroying a clone root's
+contents. `mktemp -d` cannot collide with anything the operator owns, so the
+`rm -rf` only removes what the block just made. The name `.identity-check.XXXXXX`
+is self-identifying because an interrupted run leaves one behind, and the Phase 11B
+audit counts any `.git` under a clone root as a real repository.
+
+### A dual-remote repository is a decision, not a defect
+
+Step 5's `core.sshCommand = ssh -i <key> -F /dev/null` pins the personal key per
+*repository*, and `-F /dev/null` stops SSH reading `~/.ssh/config` at all. A
+repository under the personal root that gains a work remote therefore sends the
+personal key to the work host with no `Host` block able to correct it. The fix is
+local — `git config --unset core.sshCommand` in that repository restores hostname
+routing — and Step 5 now says the pin is per repository rather than per remote.
+
+Attribution is the half that has no configuration answer. Git stamps one author
+into a commit at commit time; push transfers that object unchanged, so both
+remotes receive the same name and email.
+
+`Supplemental Reference` gains **One Repository, Two Remotes**, because this needs
+more room than a `Decisions` cell. It separates what is decided at push time from
+what is decided at commit time, gives the `git config --unset core.sshCommand`
+fix for the first, and states plainly what settles the second: GitHub attributes a
+commit by matching its author email against an account's verified emails, and
+consults nothing else — not the key that pushed it, not who owns the repository.
+Unverified is an attribution failure, not a rejection: the push succeeds, the
+avatar and profile link do not appear, and the contribution graph does not count
+it. Which is why it is normally noticed socially rather than technically, after
+colleagues have been reading the wrong name for a while.
+
+The three resolutions are ranked rather than listed — verify one address on both
+accounts, pin the repository to one identity, or split it — and the section ends
+on the trap that produced the symptom in the first place: pinning `user.email`
+without `user.name` leaves the name from the layer above in force, so the commit
+carries one account's name and the other's address and passes every check.
+
+Step 3's alias guidance is narrowed to match. The alias is not for a repository
+with two remotes; different hostnames route themselves. It is only for two
+accounts on one server, where a single `Host` block carries a single
+`IdentityFile`.
+
+### Verification performed
+
+- `verify-runbook-structure.sh`: `restore-git.md` clears the file. The remaining
+  `[!note]` in Step 0b and the callout legend advertising a type the rules forbid
+  were folded to prose; the repo's other 26 documents are unchanged at their
+  pre-existing failures.
+- `verify-doc-paths.sh`: 116 OK, 0 MISSING, 0 ANCHOR BROKEN.
+- `bash -n bin/record-restore-exit.sh` clean; `verify-script-portability.sh`
+  clean against the Bash 3.2 / BSD floor.
+- The new `awk` `Host`-block parser exercised directly against an alias block, a
+  direct-host block, and an absent host: `github.com-personal` yields
+  `github.com`, `github.gaig.com` yields itself, an unknown host yields nothing.
+- Run on Linux with GNU coreutils and Bash 5.x. `shellcheck` was not available.
+  Not executed on the target Mac.
+
+### Known follow-ups, not applied
+
+- `reimage.env` on the owner's Mac has no `GIT_PERSONAL_GITHUB_HOSTNAME`. Blank is
+  the correct value there — the two identities sit on different servers — but Step
+  0c writes it on the next run and the exit row reports the direct scheme until
+  then.
+- `restore-access.md` still teaches the `Host github.com-<label>` alias pattern in
+  its own troubleshooting while `restore-git` treats direct hosts as the default.
+  The two are now compatible rather than contradictory, but the vocabulary has not
+  been reconciled.
+- `compare-restored-state.sh` compares the *count* of `Host` lines in
+  `~/.ssh/config`, not their names, so a change of host scheme between runs passes
+  unremarked. Left alone: this revision does not touch comparison policy.
 
 ---
 
