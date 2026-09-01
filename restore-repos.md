@@ -377,7 +377,9 @@ For each block, decide:
 - **Reroute** — the URL uses the wrong host alias (rare — the script rewrites `git@github.com:` when routing to personal). Fix by hand.
 
 > [!warning] Pitfall
-> The script only rewrites `git@github.com:` when routing to the personal host. It leaves HTTPS URLs and non-github remotes alone. If the pre-image inventory shows an HTTPS clone URL, the resulting clone will use the OS keychain credential, not your restored SSH key — convert to SSH if that matters.
+> The script only rewrites `git@github.com:` when routing to the personal host. It leaves HTTPS URLs and non-github remotes alone, so a pre-image HTTPS clone URL produces a clone that authenticates from the OS keychain rather than your restored SSH key.
+>
+> Which protocol is correct here is a decision, not a default. The audit records the protocol the *pre-image* machine used, on whatever network it was on. If SSH to that host is blocked from where you are now — a corporate network commonly permits it to an internal Enterprise Server while blocking it to the public internet — an `ssh` URL restored faithfully produces a clone that cannot fetch or push, and the failure arrives one repository at a time inside the clone batch. Confirm SSH reaches each host before converting toward it, and leave HTTPS in place where it does not.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 

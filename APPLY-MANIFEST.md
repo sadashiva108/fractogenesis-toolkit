@@ -1,6 +1,8 @@
 # Apply Manifest
 
-**Revision 123** — supersedes Revision 122 and earlier. Step 5 stops telling every reader to install a browser one reader needed.
+**Revision 125** — supersedes Revision 124 and earlier. Phase 11A stops assuming SSH works, stops assuming a host key is already trusted, and says which account to be signed into.
+
+**Revision 124** — supersedes Revision 123 and earlier. Step 5 stops telling every reader to install a browser one reader needed.
 
 **Revision 123** — supersedes Revision 122 and earlier. `restore-git` stops destroying what it did not write, the alias it documented becomes one it can produce, and a repository that serves both accounts gets the configuration for each half.
 
@@ -358,7 +360,116 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 
 ---
 
-## Revision 123 — Chrome was one operator's dependency, written as everyone's
+## Revision 125 — the transport is not a given, and neither is the trust
+
+Revision 123 fixed what `restore-git` *wrote*. This one fixes what it assumed:
+that SSH reaches both hosts, that `known_hosts` already trusts them, and that a
+reader comparing key fingerprints knows which account to be looking at. One walk
+of Phase 11A on a corporate network broke all three, in that order.
+
+### Both hosts prompt, and the runbook did not say so
+
+Phase 10B seeds `known_hosts` with one `ssh-keyscan` per `Host` in
+`~/.ssh/config` — the file restored off the image. Phase 11A Step 3 then replaces
+that file wholesale, and any `Host` name that differs from the pre-image one was
+never probed. A pre-image `Host github.com-shiva` rewritten to `Host github.com`
+leaves `github.com` unseeded, so Step 7's first command asks about authenticity
+before it can greet anyone.
+
+Step 7 went straight to "each command should greet you as the matching account",
+which is the *second* question. It now says the prompt is expected, that an
+authenticity prompt is not an authentication failure, and gives each host its own
+source of truth: an internal Enterprise Server verifies against the pre-image
+`known_hosts` staged under `secrets-encrypted/ssh/` on the artifact drive, and
+`github.com` against the fingerprints GitHub publishes. Two things it states
+plainly because both were got wrong in practice — checking the live `known_hosts`
+after accepting a prompt returns the value that acceptance just stored and proves
+nothing, and pasting the fingerprint at the prompt only means something when the
+value came from somewhere other than the prompt. Where neither source is to hand,
+the answer is `no`: an unverified `yes` is the one action here that re-running
+does not undo.
+
+`restore-access.md` carries the other half. Its probe covers the names in the file
+*at probe time*, and Phase 11A changes them afterwards, so the step now says to
+re-run the probe after that rewrite rather than assume it was covered.
+
+### SSH is not always available, and it is a per-identity fact
+
+An inspecting proxy stalls port 22 mid-handshake — `ssh_dispatch_run_fatal`,
+raised after TCP has already connected — and closes GitHub's port-443 endpoint
+outright on seeing an SSH banner where it expects TLS. The internal host is
+unaffected because it rides the corporate tunnel, so one identity authenticates
+and the other does not, from the same correct configuration.
+
+Nothing in the runbook admitted this was possible. `Troubleshooting` gains **SSH
+is blocked on this network**, which names both symptoms, says they are one cause,
+and carries the switch to HTTPS with a personal access token: the
+`git remote set-url`, the `credential.helper` confirmation, what the push prompts
+for, and the warning against a token embedded in a remote URL, which writes it in
+plaintext into `.git/config` and from there into the next artifact capture.
+Identity is untouched by any of it — `includeIf` matches on path and knows nothing
+about protocol.
+
+`Decisions` gains the protocol row. Step 3 says to write both `Host` blocks
+regardless, because reachability is a property of the network rather than of the
+configuration and can change when the machine moves. Step 5's `core.sshCommand`
+prose now says the pin governs SSH only: an `https://` remote never invokes `ssh`,
+so the key it names is never offered and the "safety net even if `~/.ssh/config`
+is wrong" claim does not extend to those remotes.
+
+`restore-repos.md` inherits the consequence. Its Pitfall advised converting HTTPS
+clone URLs to SSH; the audit records the protocol the *pre-image* machine used, on
+whatever network it was on, so restoring an `ssh` URL faithfully can produce a
+clone that cannot fetch or push — arriving one repository at a time inside a batch
+that stops on first failure. Confirm SSH reaches the host before converting toward
+it, and leave HTTPS where it does not.
+
+### Step 2 never said which account to be signed into
+
+It asks the reader to compare each fingerprint against "what GitHub has registered
+on each account" and stops. Nothing says the two accounts are checked separately,
+and a browser holds one GitHub session per profile, so the settings page in front
+of you belongs to whichever account you last signed into.
+
+The cost is specific rather than cosmetic. A public key can be registered on only
+one account per GitHub installation, so a personal key added to a work account
+makes the personal account reject it with `Key is already in use` until it is
+removed from the other — which reads as a broken key rather than a misplaced one,
+and sends people to a personal access token for a problem a token does not solve.
+Across separate installations the namespaces do not overlap and the same key can
+sit on both, worth avoiding for its own reason: one private key opening both a
+personal account and an employer's systems.
+
+### A numbering collision, resolved forward
+
+Two Revision 123 entries existed — this runbook work, and a later commit
+describing Step 5's Chrome dependency in `enroll-and-stabilize`. The later of the
+two is renumbered 124 and this entry is 125. Numbers are not reused and earlier
+entries are not otherwise edited.
+
+### Verification performed
+
+- `verify-doc-paths.sh` clean across all documents, including the new
+  Troubleshooting anchor and the new `restore-access` → `restore-git` link.
+- `verify-runbook-structure.sh` unchanged at 29 FAIL / 5 WARN. `restore-git.md`
+  remains clear of the file; `restore-access.md` and `restore-repos.md` did not
+  regress.
+- No script changed in this revision, so no `bash -n` or portability run applies.
+- Run on Linux with GNU coreutils and Bash 5.x. Not executed on the target Mac.
+
+### Known follow-ups, not applied
+
+- `bin/restore-access.sh` still probes once, in Phase 10B. The re-run after Phase
+  11A's rewrite is an instruction rather than automation, and Step 12's **SSH host
+  keys seeded** row still counts against the aliases present when it ran.
+- `bin/restore-repos.sh` rewrites `git@github.com:` toward the personal host and
+  has no notion of a host being unreachable. Protocol per identity is a human
+  decision the script cannot see.
+- Nothing in the artifact root records which protocol each identity settled on.
+
+---
+
+## Revision 124 — Chrome was one operator's dependency, written as everyone's
 
 Revision 86 named three apps in Step 5 against the previous "install everything
 this Mac requires", and attaching the reason to each was the point of the change.

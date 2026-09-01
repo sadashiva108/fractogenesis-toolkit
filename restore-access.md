@@ -2,7 +2,7 @@
 
 # Restore Access
 
-**Last updated:** 2026-08-31
+**Last updated:** 2026-09-01
 
 Restore the identity, trust, and credential layer on the reimaged Mac after the runtime toolchain is in place — SSH keys and Git access, certificates and keychains, Java trust overrides pinned to the JDK from Phase 10A, shell and CLI configuration, and license or activation material. Everything here comes out of the encrypted secrets DMG and the reviewed dotfiles bundle built during the pre-image phases. Most of it is manual — small copies, `security` commands, and Keychain Access actions — but four steps are scripted: Step 0 and the closing step run the boundary recorders in `bin/`, Step 2 runs `bin/restore-staged-loose.sh`, and `bin/restore-access.sh` can drive the whole phase.
 
@@ -588,9 +588,14 @@ one — Phase 3A stages the `ssh/` category as it finds it, and a machine whose
 `known_hosts` was absent or was excluded contributes none. What fills the file is
 the probe, one `ssh-keyscan` per `Host` in `~/.ssh/config`.
 
-That has a specific edge, and it is the reason to care: **only aliases get
-seeded.** A host you reach by its real name rather than through a `Host` block is
-not probed and not seeded, so its first connection prompts. That prompt is
+That has a specific edge, and it is the reason to care: **only the `Host` names
+present in the file at probe time get seeded.** A host you reach by its real name
+rather than through a `Host` block is not probed and not seeded, so its first
+connection prompts. So is a host whose `Host` name changes after this step runs:
+[[restore-git#Step 3 — Write `~/.ssh/config` with Dual Host Aliases|restore-git.md]]
+rewrites `~/.ssh/config` wholesale in Phase 11A, and a name that differs from the
+one the image carried was never probed here. Re-run the probe after that rewrite
+rather than assuming this step covered it. That prompt is
 harmless at a shell and expensive inside
 [[restore-repos#Step 3 — Execute the Clone Commands|Phase 11B's clone loop]], which
 is not waiting for an answer. If `git clone` stalls on an unfamiliar host later,

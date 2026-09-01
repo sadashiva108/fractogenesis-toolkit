@@ -415,6 +415,10 @@ ssh-keygen -lf "$GIT_WORK_SSH_KEY.pub"
 ssh-keygen -lf "$GIT_PERSONAL_SSH_KEY.pub"
 ```
 
+Compare each against the account it belongs to, signed in as that account. A browser holds one GitHub session per profile, so open the second account in a separate profile or a private window rather than assuming the settings page in front of you belongs to the account you mean. The work fingerprint is checked on `$GIT_WORK_GITHUB_HOST` and the personal one on `$GIT_PERSONAL_GITHUB_HOST`; nothing in the output above says which is which.
+
+Getting that wrong is not a filing error. A public key can be registered on only one account per GitHub installation, so a personal key added to a work account on the same installation makes the personal account reject it with `Key is already in use` until it is removed from the other one — which reads as a broken key rather than a misplaced one, and sends people to a personal access token for a problem a token does not solve. Across separate installations, an Enterprise Server instance and `github.com`, the namespaces do not overlap and the same key can sit on both. Avoid that too: one private key that opens both your personal account and your employer's systems is a boundary worth keeping.
+
 > [!warning] Pitfall
 > Do not record the real expected fingerprints in this runbook or any committed markdown. Keep them in an approved encrypted backup or password manager and compare against the live output above.
 
@@ -448,6 +452,8 @@ fi
 | What it costs | one repository with both a personal and a work remote sends the same key to both | every clone URL is non-canonical, and `gh repo clone` plus absolute submodule URLs emit the real host and bypass the alias |
 
 Direct is the default, and is right whenever the two identities sit on different servers — different hostnames route themselves, and that includes a single repository holding a remote on each. The alias is for the one case direct cannot cover: both accounts on the *same* server, where one `Host` block can only carry one `IdentityFile`. Switching later costs one value here, a re-run of this step, and one `git remote set-url` per affected repository.
+
+Write both blocks whatever you expect to use. Whether SSH is reachable at all is a property of the network rather than of this configuration, it can differ between the two identities, and it is not knowable until validation probes it. A `Host` block for an identity that turns out to need HTTPS costs nothing and is in place the moment the network changes.
 
 Write the file:
 
@@ -573,6 +579,8 @@ The first prints `~/.config/git/config.local`. The second prints one `includeif.
 
 This file activates only for repositories under `$GIT_PERSONAL_REPO_ROOT`. It changes the identity *and* pins the personal SSH key via `core.sshCommand`, so even if `~/.ssh/config` were misconfigured, personal repos would still send the right key. That pin is per repository, not per remote: `-F /dev/null` also stops SSH reading `~/.ssh/config` at all, so a repository under this root that gains a second remote on the work host sends the personal key there too. Which is a judgment call rather than a fault; the mechanics, and what it takes to make one repository serve both accounts properly, are in [[#One Repository, Two Remotes|One Repository, Two Remotes]].
 
+The pin governs SSH only. A remote on an `https://` URL never invokes `ssh`, so `core.sshCommand` is inert for it and the key it names is never offered — those remotes authenticate from the credential helper instead. Identity is unaffected either way, because `includeIf` matches on the repository's path and knows nothing about protocol.
+
 The trailing `cat` is not decoration. Git ignores a missing include file silently, so if this write does not happen the only symptom is the wrong author address surfacing two steps later in Step 7 — reading the file back here is what turns that into an immediate failure:
 
 ```bash
@@ -669,7 +677,14 @@ If you use `git lfs`, re-run `git lfs install` after this step rather than hand-
 
 ### Step 7 — Validate Both Identities
 
-Test each host directly. Each command should greet you as the matching GitHub account — the work host as the work account, the personal host as the personal one. A greeting naming the *wrong* account means the two `Host` blocks are routing to the same server or the same key:
+Test each host directly. Expect both to ask about host authenticity before they greet you. `known_hosts` was seeded in Phase 10B from the `~/.ssh/config` restored off the image, and this runbook has since replaced that file with different `Host` names, so the names being connected to now were never probed. An authenticity prompt is not an authentication failure — it is the first of two questions, and the greeting answers the second.
+
+Answer it deliberately rather than typing `yes`. Each host has its own source of truth:
+
+- **An internal Enterprise Server host** verifies against the pre-image `known_hosts` staged under `secrets-encrypted/ssh/` on the artifact drive. Mount the image and run `ssh-keygen -lf` against that file — a match means the key survived the reimage unchanged. The `known_hosts` on this Mac proves nothing once a prompt has been accepted, because it returns the value that acceptance just stored.
+- **`github.com`** verifies against the fingerprints GitHub publishes in its own documentation. Paste the fingerprint at the prompt instead of typing `yes`: SSH compares what you paste against what the server offered and refuses on mismatch, so the answer carries the check. Typing back the value the prompt displayed carries none.
+
+Where neither source is to hand, answer `no`. Nothing is lost — the command is re-runnable, and an unverified `yes` is the one thing here that cannot be undone by re-running it.
 
 ```bash
 source ./reimage.env
@@ -678,6 +693,11 @@ ssh -T "git@${GIT_WORK_GITHUB_HOST}"
 
 ssh -T "git@${GIT_PERSONAL_GITHUB_HOST}"
 ```
+
+Past the prompt, each command should greet you as the matching GitHub account — the work host as the work account, the personal host as the personal one. A greeting naming the *wrong* account means the two `Host` blocks are routing to the same server or the same key. `ssh_dispatch_run_fatal: Operation timed out` is a third outcome and a different problem entirely: the TCP connection was made and the SSH session then stalled, which is a network device interfering rather than anything about keys or identity.
+
+> [!bug] Troubleshooting
+> If either host stalls or the connection is closed without a greeting, see [[#SSH is blocked on this network|SSH is blocked on this network]].
 
 > [!bug] Troubleshooting
 > If one host authenticates and the other returns `Permission denied (publickey)`, see [[#`ssh -T` returns "Permission denied (publickey)" for one host but not the other|`ssh -T` returns "Permission denied (publickey)" for one host but not the other]].
@@ -838,6 +858,7 @@ The commands do X; these judgment calls stay with you.
 | Decision | Why it stays with you |
 |---|---|
 | Whether the restored SSH keys are still the current identity or a rotated-out prior key. | Depends on rotation history the artifact drive does not carry. If unsure, generate a new key and register it upstream rather than restoring an old one. |
+| Which protocol each identity uses. | SSH keeps identity routing in this runbook's hands and is unaffected by TLS interception, so it is preferred where it works. Whether it works is a property of the network, can differ between the two identities, and can change when you move between networks. Where SSH is blocked, that identity's remotes use HTTPS with a personal access token; `includeIf` still supplies the right author either way. Troubleshooting carries the switch. |
 | Whether a repository under `$GIT_PERSONAL_REPO_ROOT` should also carry a work remote. | Keys can be routed per remote; authorship cannot — one commit carries one name and email to both. Either one address is verified on both accounts, or one side's commits arrive unattributed, or the two are really two repositories. Supplemental Reference walks the configuration for each. |
 | Whether to reinstate `git-together` and `alias git=git-together`. | Legacy workaround; only worth it if the workflow still uses paired commits. See Supplemental Reference. |
 | Which repositories are worth re-cloning right now versus later. | Depends on immediate work priorities; this runbook is deliberately silent about the list. |
@@ -848,7 +869,7 @@ The commands do X; these judgment calls stay with you.
 
 ## Troubleshooting
 
-Four failures here either span more than one step or have a fix long enough to break a step's flow. Each is reached from a callout in the step that surfaces it.
+Five failures here either span more than one step or have a fix long enough to break a step's flow. Each is reached from a callout in the step that surfaces it.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -893,6 +914,46 @@ ls -l ~/.config/git/config.local
 An `[include]` naming a file that does not exist is ignored in silence, which is the same symptom as a file whose settings are being overridden. Check the file exists before assuming precedence is the problem.
 
 [[#Step 7 — Validate Both Identities|⮕ Continue to Step 7 — Validate Both Identities]]
+
+### SSH is blocked on this network
+
+Two symptoms, one cause. `ssh_dispatch_run_fatal: Connection to <address> port 22: Operation timed out` means TCP connected and the SSH session then stalled mid-handshake. `Connection closed by <address> port 443` against GitHub's alternate endpoint means an inspecting proxy expecting TLS saw an SSH banner and dropped the connection. Both are a network device between you and the host, and neither is fixable from `~/.ssh/config`.
+
+This is per-identity. A corporate network commonly permits SSH to an internal Enterprise Server over its own tunnel while blocking it to the public internet, so the work host greets you and the personal one times out. Confirm which side is affected before changing anything — one working host proves the keys and the config are sound.
+
+Where SSH is genuinely unavailable for an identity, that identity's remotes use HTTPS with a personal access token. Identity itself does not change: `includeIf` matches on the repository's path and is indifferent to protocol, so commits still carry the right name and address.
+
+Point the remote at HTTPS and let the credential helper store the token:
+
+```bash
+git remote set-url origin https://github.com/OWNER/REPO.git
+
+git config --global credential.helper
+
+git push
+```
+
+The middle command must print `osxkeychain`. The push then prompts once for a username and a password — the password is the **token**, not the account password, which GitHub no longer accepts for Git operations. macOS stores it after that and does not ask again.
+
+Never put the token in the remote URL. A `https://user:token@host/...` remote works and writes the token in plaintext into `.git/config`, where it survives into backups and into the next artifact capture.
+
+If the push fails on certificate verification rather than credentials, the problem is the CA bundle and not the token:
+
+```bash
+git config --global --get http.sslCAInfo
+```
+
+An empty result on a Mac behind a TLS-inspecting proxy means the trust work in Phase 10B did not finish. Fix that rather than reaching for `http.sslverify=false`, which disables verification for every HTTPS remote on the machine.
+
+To confirm which credential was actually used, and that it is a token rather than something a browser flow left behind:
+
+```bash
+printf 'protocol=https\nhost=github.com\n' | git credential-osxkeychain get | grep '^username='
+```
+
+The account name it prints is the one the push authenticated as. The token's own *Last used* timestamp on the account's settings page is the only confirmation that comes from the server rather than from this Mac.
+
+[[#Step 8 — Compare Restored State Against Captured Inventories|⮕ Continue to Step 8 — Compare Restored State Against Captured Inventories]]
 
 ### An internal Enterprise Server host fails TLS verification
 
