@@ -1,5 +1,11 @@
 # Apply Manifest
 
+**Revision 123** — supersedes Revision 122 and earlier. Step 5 stops telling every reader to install a browser one reader needed.
+
+**Revision 122** — supersedes Revision 121 and earlier. The managed-application row stops asking a question the decisions log has already answered.
+
+**Revision 121** — supersedes Revision 120 and earlier. The managed inventory joins the shared run index, and its three readers stop taking whichever bundle sorted last.
+
 **Revision 120** — supersedes Revision 119 and earlier. The repository audit joins the shared run index, and keeps the counts the shared schema has no room for.
 
 **Revision 119** — supersedes Revision 118 and earlier. The comparison stops asking a question the decisions log already answered.
@@ -298,6 +304,8 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `restore-intellij.md` | `restore-intellij.md` |
 | `reimaged-system-checks.md` | `reimaged-system-checks.md` |
 | `reimage-prep-checks.md` | `reimage-prep-checks.md` |
+| `capture-managed-inventory.md` | `capture-managed-inventory.md` |
+| `backup-apps.md` | `backup-apps.md` |
 | `restore-docker.md` | `restore-docker.md` |
 | `restore-git.md` | `restore-git.md` |
 | `backup-repos.md` | `backup-repos.md` |
@@ -316,6 +324,7 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `master-directory-reference.md` | `references/master-directory-reference.md` |
 | `restore-file-reference.md` | `references/restore-file-reference.md` |
 | `reimaged-system-evidence.md` | `references/reimaged-system-evidence.md` |
+| `reimage-prep-evidence.md` | `references/reimage-prep-evidence.md` |
 | `toolkit-environment-reference.md` | `references/toolkit-environment-reference.md` |
 
 ## Modified — `.github/`
@@ -329,6 +338,8 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | File | Destination |
 |---|---|
 | `record-enrollment.sh` | `bin/record-enrollment.sh` |
+| `capture-managed-inventory.sh` | `bin/capture-managed-inventory.sh` |
+| `backup-apps.sh` | `bin/backup-apps.sh` |
 | `restore-apps.sh` | `bin/restore-apps.sh` |
 | `restore-docker.sh` | `bin/restore-docker.sh` |
 | `restore-intellij.sh` | `bin/restore-intellij.sh` |
@@ -342,6 +353,284 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `backup-repos.sh` | `bin/backup-repos.sh` |
 | `setup-reimage-env.sh` | `bin/setup-reimage-env.sh` |
 | `compare-restored-state.sh` | `bin/compare-restored-state.sh` |
+
+---
+
+## Revision 123 — Chrome was one operator's dependency, written as everyone's
+
+Revision 86 named three apps in Step 5 against the previous "install everything
+this Mac requires", and attaching the reason to each was the point of the change.
+Chrome's reason was true and specific — LastPass for the credentials Phase 8 and
+Phase 10B ask for, and the email holding the post-reimage cheatsheet — but it is
+one operator's arrangement, not a property of the workflow. The table said
+**Install now** and the cell said **Install this first**, so it read as required.
+
+Nothing in the runbook needs Chrome. Step 1 already says so, three hundred lines
+earlier, where a reader at Step 5 will not be looking.
+
+The table now separates the two kinds of item: Microsoft 365 Apps for macOS and
+Zscaler are needed on every Mac, and Chrome is a third row headed **only if you
+need it**, naming Safari as sufficient and the two conditions under which it is
+not — a vault that relies on the extension, or mail that is easier to reach in
+it.
+
+The paragraph under the table said the same thing again in different words
+("Chrome is a convenience here rather than a dependency") and was deleted rather
+than reworded. Step 1 covers reaching the vault before enrollment; the table now
+covers whether to install Chrome at all. Two places stating one fact is the
+duplication the single-source-of-truth rule exists to stop, and this is what it
+looks like when it accumulates: the correct statement was already in the file,
+and it lost to the one printed in the table the reader was acting from.
+
+### Verification performed
+
+- `verify-doc-paths.sh --all` clean at 713 OK / 0 MISSING / 0 ANCHOR BROKEN;
+  `verify-runbook-structure.sh` unchanged at its pre-existing 30 FAIL / 5 WARN.
+- No `[!note]`, no new callout, no change to the step's numbering or back-link,
+  so the structural rules the checker enforces are untouched.
+
+---
+
+## Revision 122 — an absence that was explained stays explained
+
+Revision 86 got the grading right: an absence at Phase 8 cannot be scored, because
+the expectation set mixes software the Intune push delivers during the phase with
+company-scoped applications Phase 12 restores, and within the first population
+telling a superseded management stack from a genuine gap is a judgement no script
+makes. So the row became `REVIEW` and the exit checklist asked a person.
+
+What it did not do is remember the answer. The row seeded the manual question
+with a count and an evidence path and stopped there, so the same seven absences
+were re-judged from memory on every run. That is not hypothetical either: the
+2026-08-19 record concluded "one genuine gap — Microsoft 365 Copilot, raised with
+IT", and both halves were wrong. Copilot is one of the entries that never installs
+automatically, and the note's own supporting observation — *not offered in Company
+Portal* — was the answer rather than the symptom. A wrong conclusion, re-derived
+rather than looked up, became settled.
+
+`bin/record-decision.sh` already exists for exactly this shape of fact, and
+`compare-restored-state.sh` already reads it back. This row now does the same.
+
+### The lineage is the comparison, not the run
+
+`--excepts enroll-and-stabilize-managed-apps:<entry>`.
+
+Deliberately **not** `$RUN_CONTEXT`, which is what `compare-restored-state.sh`
+uses. Its lineages are per-comparison and a decision about one genuinely does not
+apply to another. Here the run contexts are `pre-restart`, `post-restart`,
+`initial`, `entry`, `exit` — five recordings of the same phase — and a decision is
+about an *application*, not about the run that happened to notice it. Keying on
+the run context would have made every decision invisible to every other run of
+the same phase, which is the failure this change exists to remove.
+
+Matching is exact, for the reason `compare-restored-state.sh` states: an
+approximate match excuses the wrong entry, which is strictly worse than excusing
+none. `com.microsoft.MSTeams` must not answer for
+`com.microsoft.MSTeamsAudioDevice`.
+
+### The verdict rule, and why it is weaker than the comparison's
+
+`compare-restored-state.sh` appends `— **decided**` and never lets it change a
+verdict, because its question is whether the machine matches the image — a fact
+about the machine, which no decision alters.
+
+This row asks something different: *is the managed application set accounted
+for?* An absence named by a decision is accounted for; that is the entire claim
+the decision makes. So the rule here is:
+
+| Absent | Undecided | Status | Detail |
+|---|---|---|---|
+| 0 | 0 | `PASS` | `0 absent of N expected` |
+| n | 0 | `PASS` | `n absent of N expected, all accounted for in the decisions log` |
+| n | m | `REVIEW` | `n absent of N expected, m still to account for` |
+
+The two passes never read the same. "Nothing was absent" and "seven absences
+someone has explained" are different facts, and a bare zero for the second would
+be the substitution this repo keeps refusing to make.
+
+The exit-checklist row title changed with it. It read *"Managed application set
+matches the pre-image inventory"* on the PASS branch, which is false in the new
+middle case — the set does not match, it is explained. Both branches now carry one
+name, `Managed application set is accounted for`, and the detail says which kind
+of pass it is.
+
+### What the operator sees
+
+`raw/08-managed-app-expectations.txt` marks each already-named absence
+`[decided]` and keeps it in the list — the machine still does not have it; the
+marker only says someone weighed it. It prints the `--check` command for reading
+the reasons, and, when anything is still open, the `record-decision.sh` invocation
+that closes it. The manual row asks only about what is open and names the same
+command.
+
+The log is one file per reimage event, so a fresh artifact root starts empty and
+the standing answers are recorded once against it. That is a property of the
+decisions log, not of this change: a decision belongs to the event whose artifact
+root holds it.
+
+### Two defects found while verifying
+
+- The raw file said *"Two categories are absent for good reasons"* above **three**
+  bullets — the version-pinned-receipt case was added in Revision 86 without the
+  lead sentence being counted again. It now names the categories instead of
+  counting them, so a fourth cannot break it the same way.
+- `# Source kind: <path>` printed one line under `# Source: <path>`. The label
+  described the value when it was a bare filename standing for which of the two
+  candidate files was chosen; it is a path now, and the label named neither. It
+  reads `# Cited as:`, which is what the value is — the citation the record row
+  carries.
+
+### Verification performed
+
+- Run end to end against a scratch root with a decisions log naming two entries:
+  `80 absent of 80 expected, 78 still to account for`, status `REVIEW`, the two
+  named entries marked `[decided]`, and the unrelated `restore-access` lineage in
+  the same log correctly ignored.
+- Re-run with every entry named: status `PASS`, detail `all accounted for in the
+  decisions log`, and the raw file's "nothing here needs deciding again" note.
+- `--context exit` against a fabricated post-restart `rows.tsv`: the manual row
+  reaches the sign-off with its backticks and its `record-decision.sh` invocation
+  intact.
+- Exact-match guard checked directly: `com.jamfsoftware` does not match
+  `com.jamfsoftware.osxenrollment`; an entry whose label contains spaces
+  (`/Applications/Microsoft 365 Copilot.app`) does.
+- `bash -n` clean; `verify-script-portability.sh` clean; `verify-doc-paths.sh
+  --all` clean at 713 OK / 0 MISSING / 0 ANCHOR BROKEN;
+  `verify-runbook-structure.sh` unchanged at its pre-existing 30 FAIL / 5 WARN.
+- Run on Linux with GNU coreutils and Bash 5.x. Not executed on the target Mac.
+
+### Known follow-ups, not applied
+
+- The seven standing absences recorded in the owner's notes are not yet in this
+  artifact root's `decisions.md`. Until they are, the row keeps reporting them as
+  open — which is correct, and is the one-time cost of moving the answers onto
+  the drive where the next run can read them.
+- The 2026-08-19 IT ticket for Microsoft 365 Copilot was raised against expected
+  behaviour. Worth reading what it concluded before that framing is recorded as a
+  decision.
+
+---
+
+## Revision 121 — the managed inventory is asked for by lineage, not by date
+
+`managed-inventory/` had no index of its own, and it did not obviously need one:
+every bundle is fresh, nothing updates in place, and the layout was one
+timestamped directory per capture. What it lacked was a way to say **which
+capture you mean**. Three separate readers each answered that question by
+sorting the directory names and taking the last:
+
+```
+find "$base" -maxdepth 1 -type d -name 'pre-image-*' | sort | tail -1   # backup-apps.sh
+find "$MANAGED_INVENTORY_DIR" -name '07-company-filter-pass.txt' | sort | tail -1
+find "$MANAGED_PARENT" -maxdepth 1 -type d -name 'pre-image-*' | sort | tail -1
+```
+
+Two of those three are already wrong today, and the third becomes wrong at Phase
+13C.
+
+`record-enrollment.sh` searched the whole category recursively, so as soon as the
+post-image capture exists its Phase 8 comparison would read that bundle and diff
+the restored Mac against *itself* — reporting a clean managed-application set on
+a machine missing an entire suite, in the one row that exists to catch exactly
+that. `backup-apps.sh` filtered on the `pre-image-` prefix but then fell back to
+"the newest bundle of any context" when none matched, which is the same failure
+one step further out. Only `compare-restored-state.sh` was prefix-safe, and its
+`-maxdepth 1` made it the one read that a relayout would break loudly rather
+than quietly.
+
+This is the defect `artifact-runs.sh` was extracted to remove, stated in its own
+header: a category holds several independent lineages, and recency cannot tell
+them apart. `official/pre-image.txt` and `official/post-image.txt` name them.
+
+### The producer
+
+`capture-managed-inventory.sh` now stages through `artifact_run_begin`, writes
+into the staging directory, and promotes it with `artifact_run_finalize`, which
+appends the index row and moves the pointer. Three details are not incidental:
+
+- **The bundle's own `MANIFEST.txt` records the final path, not the staging
+  one.** The staging directory is renamed seconds after the manifest is written,
+  so recording `$OUT` verbatim would have put a path that no longer exists into
+  the file whose job is to say where the bundle is. It also gains a `Run:` line,
+  so a directory copied off the drive still carries its identity.
+- **The progress lines print `runs/<id>/`, not
+  `.<id>.incomplete/`.** An operator watching seven sections scroll past has been
+  shown a path they will go looking for.
+- **An EXIT trap discards an unfinalized run.** A capture that dies part way
+  through has produced sections that do not answer the question the bundle
+  exists to answer, and leaving it beside the real bundles makes "every
+  directory under `runs/` is a complete capture" merely usual rather than true.
+
+`--output DIR` is unchanged and deliberately still unindexed: the caller named
+an exact path, so there is no category root to index it under and no lineage it
+belongs to. Both the script's usage block and the runbook now say so, and say
+not to use it for the Phase 2C or 13C evidence.
+
+### The readers
+
+All three resolve `official/pre-image.txt`. `backup-apps.sh` and
+`record-enrollment.sh` gained the `artifact-runs.sh` source line;
+`compare-restored-state.sh` already had it.
+
+`backup-apps.sh` loses its any-context fallback outright rather than keeping it
+behind the pointer. The review partitions out apps management will reinstall,
+and only the pre-image capture knows what management had installed before the
+erase; taking a post-image bundle because it sorted last is not a degraded
+answer, it is a wrong one. With no official pre-image run the review still runs,
+skips the partition, and writes why into `raw/managed-inventory-source.txt` —
+a visible gap instead of a silent substitution.
+
+`backup-apps.sh --preflight` also stops testing the category for contents and
+prints the resolved run instead. `ls -A` on a category that holds a post-image
+bundle is non-empty, and the old line called that "Phase 2C has run".
+
+`record-enrollment.sh` stops searching for its expectation file and names it in
+the resolved bundle: the bundle is one run directory, so a search could only
+widen the answer past the lineage just resolved. `--managed-inventory DIR` now
+means a bundle rather than the category root, which is what its help text
+already implied. The `Source:` citation it writes is computed relative to the
+artifact root, so it stays correct for a bundle outside it.
+
+### Retrofit
+
+The one existing run on the open artifact root — `pre-image-20260816-085020` —
+was moved into `runs/` and indexed by `reindex-artifact-runs.sh`, which built
+`MANIFEST.md` and `official/pre-image.txt`. The bundle's contents are untouched.
+
+Doing this **before** Phase 13 is the whole point of the timing: post-image
+captures now land already indexed, and only this one pre-image bundle needed
+retrofitting. Converting afterwards would have meant retrofitting both lineages.
+
+### Verification performed
+
+- `capture-managed-inventory.sh` run end to end against a scratch root: it
+  staged, promoted, indexed, wrote `official/pre-image.txt`, recorded
+  `7 sections / N managed / N likely` in the row, and left no `.incomplete`
+  directory behind. Re-run with `--output DIR`: bundle written, nothing indexed.
+- `backup-apps.sh --preflight` against the live artifact root resolves and
+  prints `runs/pre-image-20260816-085020`.
+- `artifact_run_official` resolves that run from the live category, and the
+  resolved bundle holds section 03 with 13 `[managed:` verdicts — the file and
+  the format the candidate review reads.
+- `bash -n` clean on all four edited scripts; `verify-script-portability.sh`
+  clean against the Bash 3.2 / BSD floor; `verify-doc-paths.sh --all` clean at
+  712 OK / 0 MISSING / 0 ANCHOR BROKEN; `verify-runbook-structure.sh` unchanged
+  at its pre-existing 30 FAIL / 5 WARN.
+- Run on Linux with GNU coreutils and Bash 5.x. Not executed on the target Mac.
+
+### Known follow-ups, not applied
+
+- Every capture prints `artifact-runs: context 'pre-image' has no recognised
+  point suffix; latest-wins applies` on stderr. It is accurate — `pre-image` is
+  not one of the reserved trailing words, and latest-wins is the rule this
+  category wants — but it is now operator-visible on every Phase 2C and 13C run,
+  and the runbook has a paragraph explaining it. Letting a caller declare its
+  point would remove the note; that is a change to the shared pointer policy and
+  affects `repo-audit-reports/` identically, so it was not made here.
+- `repo-audit-reports/latest-run.txt` is still inert and still needs deleting by
+  hand; the session's mount refuses deletion.
+- `system-inventory/` and `time-machine/` remain unconverted and still need the
+  design decisions Revision 120 named.
 
 ---
 

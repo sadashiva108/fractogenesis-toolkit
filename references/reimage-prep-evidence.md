@@ -68,7 +68,7 @@ Do not manually recreate the Phase 6 checklist when reimage-checklist.sh already
 |---|---|---|---|
 | Phase 4A | Toolkit snapshot | `$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/pre-image-toolkit-snapshot-*`, `$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/latest-docs/` | Current reimage workflow docs and lightweight toolkit snapshot context that should travel with the capture set. |
 | Phase 4B | System inventory | `$REIMAGE_ARTIFACT_ROOT/system-inventory/pre-image-*` | Broad workstation rebuild context: hardware, macOS, apps, toolchains, shell, Git, network, cloud, and certificates. |
-| Phase 2C | Company-managed inventory | `$REIMAGE_ARTIFACT_ROOT/managed-inventory/pre-image-*` | Managed apps, profiles, background services, system extensions, package receipts, and managed preferences. |
+| Phase 2C | Company-managed inventory | `$REIMAGE_ARTIFACT_ROOT/managed-inventory/runs/pre-image-*` | Managed apps, profiles, background services, system extensions, package receipts, and managed preferences. |
 | Phase 4C | Performance audit | `$REIMAGE_ARTIFACT_ROOT/performance-audit/pre-image-*` | Scenario-based performance baselines and optional historical trend summaries/charts. |
 | Phase 4D | Office stability | `$REIMAGE_ARTIFACT_ROOT/office-stability/` | Office-specific baseline bundles, watcher-derived evidence, incident captures, and Office checklist output. |
 | Phase 6 | Reimage preparation checks | `$REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/` | Final go / no-go validation, readable checklist output, and remaining manual sign-off rows before erase. |
@@ -126,8 +126,11 @@ $REIMAGE_ARTIFACT_ROOT/
 │   ├── pre-image-YYYYMMDD-HHMMSS/
 │   └── post-image-YYYYMMDD-HHMMSS/
 └── managed-inventory/
-    ├── pre-image-YYYYMMDD-HHMMSS/
-    └── post-image-YYYYMMDD-HHMMSS/
+    ├── MANIFEST.md
+    ├── official/
+    └── runs/
+        ├── pre-image-YYYYMMDD-HHMMSS/
+        └── post-image-YYYYMMDD-HHMMSS/
 ```
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -235,7 +238,6 @@ cd "$REIMAGE_ROOT"
 set -a
 source ./reimage.env
 set +a
-mkdir -p "$BACKUP_ROOT/managed-inventory"
 chmod +x scripts/capture-managed-inventory.sh
 
 ./bin/capture-managed-inventory.sh
@@ -244,7 +246,7 @@ chmod +x scripts/capture-managed-inventory.sh
 Destination:
 
 ```text
-$BACKUP_ROOT/managed-inventory/pre-image-YYYYMMDD-HHMMSS/
+$BACKUP_ROOT/managed-inventory/runs/pre-image-YYYYMMDD-HHMMSS/
 ```
 
 Expected outputs:
@@ -265,7 +267,7 @@ Use this when you want a more precise record of MDM-delivered apps, profiles, ba
 Manual / fallback notes:
 
 - There is no separate fallback checklist for this capture.
-- Run the script or manual commands first, then review the bundle under `$REIMAGE_ARTIFACT_ROOT/managed-inventory/`.
+- Run the script or manual commands first, then review the bundle named by `$REIMAGE_ARTIFACT_ROOT/managed-inventory/official/pre-image.txt`.
 - Add a short comparison note only if a managed-state difference still needs explanation after reviewing the captured bundle.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]

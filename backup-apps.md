@@ -255,7 +255,7 @@ $REIMAGE_ARTIFACT_ROOT/
 └── ...
 ```
 
-Step 3's candidate review folds in the managed-inventory artifacts produced by the prior managed-inventory phase under `managed-inventory/`; that layout and the complete `$REIMAGE_ARTIFACT_ROOT` map are drawn once elsewhere:
+Step 3's candidate review folds in the artifacts produced by the prior managed-inventory phase, resolving the run named by `managed-inventory/official/pre-image.txt`; that layout and the complete `$REIMAGE_ARTIFACT_ROOT` map are drawn once elsewhere:
 
 [[backup-intellij|Backup IntelliJ]] — full `intellij/` subtree
 
@@ -399,14 +399,14 @@ A **related-app review** table (for apps that belong elsewhere, such as Music) a
 
 Two TSVs sit alongside the Markdown. `known-app-candidates.tsv` is the **full** candidate inventory — every installed app under `/Applications` and `~/Applications`, whether or not the toolkit supports it, each with its managed verdict and a `toolkit_supported` column. `toolkit-supported-candidates.tsv` is the subset this toolkit can back up (the apps in the curated tables). Sort `known-app-candidates.tsv` by `toolkit_supported` to find installed apps you may need to back up by hand — the curated tables above only cover the supported ones.
 
-By default candidate review consults the newest `pre-image-*` bundle under `managed-inventory/`. Point it at a specific one with `--managed-inventory DIR`:
+By default candidate review consults the official **pre-image** run — the bundle named by `managed-inventory/official/pre-image.txt`. It asks for that lineage by name rather than taking the newest bundle, because after the Phase 13C post-image capture the newest bundle describes the machine you are about to compare, not the one you are backing up. Point it at a specific bundle with `--managed-inventory DIR`:
 
 ```bash
 ./bin/backup-apps.sh --candidate-review \
-  --managed-inventory "$REIMAGE_ARTIFACT_ROOT/managed-inventory/pre-image-YYYYMMDD-HHMMSS"
+  --managed-inventory "$REIMAGE_ARTIFACT_ROOT/managed-inventory/runs/pre-image-YYYYMMDD-HHMMSS"
 ```
 
-Candidate review reads the managed verdict from the bundle's `03-installed-app-bundles.txt` — the single authoritative per-app call written by the managed-inventory phase — and never re-derives its own, so the two never disagree. It only reads; it never runs the capture. If no bundle exists yet the run still succeeds but skips the partition (every detected app stays a Known candidate) and says so in `raw/managed-inventory-source.txt`; run `capture-managed-inventory.md` first for the managed split.
+Candidate review reads the managed verdict from the bundle's `03-installed-app-bundles.txt` — the single authoritative per-app call written by the managed-inventory phase — and never re-derives its own, so the two never disagree. It only reads; it never runs the capture. If no official pre-image run exists yet the run still succeeds but skips the partition (every detected app stays a Known candidate) and says so in `raw/managed-inventory-source.txt`; run `capture-managed-inventory.md` first for the managed split.
 
 The partition is deliberately conservative: only a strong signal moves an app out of the candidate list, so an app flagged by a package receipt alone stays there on purpose. And a managed app that reinstalls automatically may still hold local-only user state management will not restore, so judge each managed app rather than assuming it is fully covered.
 

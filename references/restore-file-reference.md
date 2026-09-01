@@ -110,8 +110,9 @@ $REIMAGE_ARTIFACT_ROOT/
 │   └── MANIFEST.md
 ├── loose-secrets-reports/
 ├── managed-inventory/
-│   ├── pre-image-YYYYMMDD-HHMMSS/
-│   └── post-image-YYYYMMDD-HHMMSS/
+│   └── runs/
+│       ├── pre-image-YYYYMMDD-HHMMSS/
+│       └── post-image-YYYYMMDD-HHMMSS/
 ├── office-stability/
 │   ├── pre-reimage-office-baseline-YYYYMMDD-HHMMSS/
 │   ├── post-reimage-office-baseline-YYYYMMDD-HHMMSS/
@@ -202,7 +203,7 @@ Two `secrets-encrypted/` subtrees have dedicated restore consumers rather than a
 | Phase 11A — Restore Git | `secrets-encrypted/ssh/`, `secrets-encrypted/git/`, `toolkit-snapshot/latest-docs/` | dual `~/.gitconfig` + `~/.ssh/config` in place; validated end-to-end for work and personal identities |
 | Phase 11B — Restore Repositories | `repo-audit-reports/runs/pre-image-*/repos.tsv`, `staged-ignored-files/live/<label>/` | `repo-audit-reports/runs/post-image-restore-*/`, `repo-audit-reports/official/post-image-restore.txt`, `repo-audit-reports/sign-offs/post-image-restore-*.md`, working repo checkouts |
 | Phase 12 — Restore Apps | `app-settings-backup/`, `secrets-encrypted/`, `reimaged-system/restore-notes/` | `reimaged-system/restore-notes/restore-{apps,docker,intellij}-plan-*.md`, `reimaged-system/sign-offs/restore-{apps,docker,intellij}-*.md` |
-| Phase 13 — Post-Image Captures | matching Phase 4 capture outputs for comparison | `toolkit-snapshot/latest-docs/`, `toolkit-snapshot/pre-image-toolkit-snapshot-*/`, `toolkit-snapshot/latest-pre-image-toolkit-snapshot.txt`, `system-inventory/post-image-*/`, `managed-inventory/post-image-*/`, `performance-audit/post-image-performance-audit-*/`, `office-stability/post-reimage-*/` |
+| Phase 13 — Post-Image Captures | matching Phase 4 capture outputs for comparison | `toolkit-snapshot/latest-docs/`, `toolkit-snapshot/pre-image-toolkit-snapshot-*/`, `toolkit-snapshot/latest-pre-image-toolkit-snapshot.txt`, `system-inventory/post-image-*/`, `managed-inventory/runs/post-image-*/`, `performance-audit/post-image-performance-audit-*/`, `office-stability/post-reimage-*/` |
 | Phase 14 — Reimaged System Checks | everything needed for final validation context; every `reimaged-system/sign-offs/` file | `reimaged-system/checklists/reimage-checklist-*.md`, `reimaged-system/checklists/latest-reimage-checklist.txt`, `reimaged-system/sign-offs/reimaged-system-checks-*.md`, optional prose follow-up in `reimaged-system/restore-notes/` |
 | Phase 15 — Restore Home | `home-files-backup/home/`, `home-files-backup/dotfiles/`, optionally `staged-ignored-files/live/` | `reimaged-system/restore-notes/decisions.md`; optional final notes under `reimaged-system/restore-notes/` |
 | Phase 16 — Post-Image Time Machine | the rebuilt Mac itself; `$EXTERNAL_APPLE_BACKUPS_VOLUME` as destination | `time-machine/` completion, verification, and log artifacts |
@@ -321,7 +322,7 @@ These are the Phase 13 comparison outputs created after the rebuilt Mac is subst
 |---|---|
 | Toolkit snapshot | `toolkit-snapshot/latest-docs/`, `toolkit-snapshot/pre-image-toolkit-snapshot-YYYYMMDD-HHMMSS/`, and `toolkit-snapshot/latest-pre-image-toolkit-snapshot.txt` |
 | System inventory | `system-inventory/post-image-YYYYMMDD-HHMMSS/` |
-| Company-managed inventory | `managed-inventory/post-image-YYYYMMDD-HHMMSS/` |
+| Company-managed inventory | `managed-inventory/runs/post-image-YYYYMMDD-HHMMSS/` |
 | Performance audit | `performance-audit/post-image-performance-audit-<scenario>-YYYYMMDD-HHMMSS/` |
 | Office stability | `office-stability/post-reimage-office-baseline-YYYYMMDD-HHMMSS/` and `office-stability/checklists/` |
 

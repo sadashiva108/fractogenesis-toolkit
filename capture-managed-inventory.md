@@ -2,7 +2,7 @@
 
 # Capture Managed Inventory
 
-**Last updated:** 2026-08-16
+**Last updated:** 2026-09-01
 
 A read-only record of what a company-managed Mac has under management — MDM enrollment, configuration profiles, installed apps and package receipts, background agents and daemons, system extensions, and managed preferences. It observes and records only; it never modifies managed state. Run it pre-image (Phase 2C) to preserve a before-reimage picture, and again post-image (Phase 13C) to compare the freshly re-enrolled machine against that record.
 
@@ -16,6 +16,7 @@ A read-only record of what a company-managed Mac has under management — MDM en
     - [[#Read-Only Guarantee|Read-Only Guarantee]]
     - [[#Terminology|Terminology]]
 - [[#Artifact and Script Locations|Artifact and Script Locations]]
+    - [[#Category Layout|Category Layout]]
     - [[#Bundle Layout|Bundle Layout]]
     - [[#Environment Variables|Environment Variables]]
 - [[#Before You Run Anything|Before You Run Anything]]
@@ -74,6 +75,8 @@ This capture can be rerun at any time and on any managed Mac: each run writes a 
 
 Read this before running anything. Management state is spread across several independent macOS subsystems, and no single command reports all of it. This capture runs one command per subsystem, writes each result to its own numbered file, and adds a filtered pass that narrows everything to likely corporate tooling. The result is a self-contained bundle you can read on the external drive without the machine present.
 
+Each run is indexed, not just written. The script stages the bundle, promotes it when every section has completed, records a row in the category's `MANIFEST.md`, and points `official/<context>.txt` at it. That pointer is how every later reader finds this capture: `backup-apps` reads the official **pre-image** run for its managed-app partition, and so do the Phase 8 enrollment record and the Phase 10 restored-state comparison. Naming the lineage is the point — once Phase 13C writes a post-image bundle beside the pre-image one, "the newest bundle" stops meaning "what this Mac had before the erase", and a comparison that took it would measure the machine against itself.
+
 The workflow is script-first. `capture-managed-inventory.sh` runs every section in one pass and writes the bundle plus a `MANIFEST.txt`. The same sections are documented as individual commands in [[#Per-Section Command Reference|Per-Section Command Reference]] for the rare case where you need to rerun or troubleshoot just one — use the script for the standard run, the individual commands only when isolating a single section.
 
 ### What Gets Captured
@@ -107,8 +110,9 @@ Every command in this capture reads state and writes only into the bundle. Nothi
 | Configuration profile | A `.mobileconfig` payload pushed by MDM to enforce settings; listed by `profiles show -type configuration`. |
 | Package receipt | A record left by an installer (`pkgutil`), the best clue for centrally deployed software. |
 | Managed preference | A preference file under `/Library/Managed Preferences` enforced or delivered by management. |
-| Context | The `--context` label (`pre-image` / `post-image`) that prefixes the run directory. |
-| Bundle | One timestamped run directory under `managed-inventory/`, holding the seven section files and `MANIFEST.txt`. |
+| Context | The `--context` label (`pre-image` / `post-image`) that prefixes the run directory. It is also the lineage name: one official pointer per context. |
+| Bundle | One timestamped run directory under `managed-inventory/runs/`, holding the seven section files and its own `MANIFEST.txt`. |
+| Official run | The bundle a reader gets when it asks this category for a context. Computed, not stored: latest completed run of that context wins, and `official/<context>.txt` caches the answer. |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -133,15 +137,37 @@ $FRACTOGENESIS_HOME/bin/report-size-audit.sh           # entrypoint — capacity
 Artifact root:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/managed-inventory/               # all managed-inventory bundles land here
+$REIMAGE_ARTIFACT_ROOT/managed-inventory/               # the run category; all bundles land under its runs/
 ```
 
-### Bundle Layout
+### Category Layout
 
-Each run writes one timestamped bundle. The `<context>` prefix comes from `--context` (default `pre-image`):
+`managed-inventory/` is a run category. Bundles live under `runs/`, `MANIFEST.md` is the append-only index of completed runs, and each file under `official/` names the current run for one context:
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/managed-inventory/
+├── MANIFEST.md                         # append-only index; one row per completed run
+├── official/
+│   ├── pre-image.txt                   # → runs/pre-image-YYYYMMDD-HHMMSS
+│   └── post-image.txt                  # → runs/post-image-YYYYMMDD-HHMMSS (after Phase 13C)
+└── runs/
+    └── <context>-YYYYMMDD-HHMMSS/      # one bundle; see Bundle Layout
+```
+
+`MANIFEST.md` is the source of truth and is never edited by hand; the pointers under `official/` are a derived cache. If one goes missing or names a run that is not on disk, regenerate them rather than writing one:
+
+```bash
+./bin/reindex-artifact-runs.sh --category "$REIMAGE_ARTIFACT_ROOT/managed-inventory"
+```
+
+A directory whose name still carries a `.incomplete` suffix is a capture that died part way through. It is deliberately not indexed and not official — delete it, or leave it; no reader will see it.
+
+### Bundle Layout
+
+Each run writes one timestamped bundle under `runs/`. The `<context>` prefix comes from `--context` (default `pre-image`), and is also the run's lineage:
+
+```text
+$REIMAGE_ARTIFACT_ROOT/managed-inventory/runs/
 └── <context>-YYYYMMDD-HHMMSS/
     ├── 01-enrollment-status.txt
     ├── 02-profiles-configuration.txt
@@ -150,8 +176,10 @@ $REIMAGE_ARTIFACT_ROOT/managed-inventory/
     ├── 05-background-managed-components.txt
     ├── 06-managed-preference-payloads.txt
     ├── 07-company-filter-pass.txt
-    └── MANIFEST.txt
+    └── MANIFEST.txt                    # this bundle's own file list, run id, and context
 ```
+
+The bundle's `MANIFEST.txt` describes one capture; the category's `MANIFEST.md` indexes them all. They are different files answering different questions, and the bundle keeps its own so a directory copied off the drive still says what it is.
 
 The complete `$REIMAGE_ARTIFACT_ROOT` map is defined once in the Master Directory Reference:
 
@@ -231,9 +259,11 @@ For the post-image run (Phase 13C, after the Mac is re-enrolled), set the contex
 ./bin/capture-managed-inventory.sh --context post-image
 ```
 
-To point at a different artifact root for one invocation, add `--artifact-root PATH`. To write to an exact directory and skip the `managed-inventory/<context>-<stamp>` layout entirely, use `--output DIR`.
+To point at a different artifact root for one invocation, add `--artifact-root PATH`. To write to an exact directory, use `--output DIR` — that skips the run layout *and* the index, so nothing under `official/` will point at the result and no later phase will find it. Use it for a scratch capture you intend to read yourself, never for the Phase 2C or 13C evidence.
 
-The script prints each section as it runs and finishes with the bundle path. It writes the seven section files and `MANIFEST.txt` under `managed-inventory/<context>-<stamp>/`.
+The script prints each section as it runs and finishes with the bundle path and its run id. It writes the seven section files and `MANIFEST.txt` under `managed-inventory/runs/<context>-<stamp>/`, then indexes the run and moves `official/<context>.txt` onto it.
+
+The line `context 'pre-image' has no recognised point suffix; latest-wins applies` is expected. The shared run index reserves a small set of trailing words (`before`, `entry`, `exit`, and similar) that select a pointer rule; `pre-image` is not one of them, so the run gets the default rule — the latest completed capture of that context is the official one — which is what this category wants.
 
 > [!note]
 > Section 07 (the company-focused filter pass) is expected to be a subset of the earlier sections. Empty results there are normal on a lightly managed machine — it means none of the filtered vendor names matched, not that the capture failed.
@@ -244,19 +274,31 @@ The script prints each section as it runs and finishes with the bundle path. It 
 
 ### Step 3 — Verify Outputs
 
-Confirm the bundle landed and holds all seven sections plus the manifest.
+Confirm the bundle landed, was indexed, and holds all seven sections plus the manifest. Resolve it through the pointer the rest of the workflow will use rather than by picking the newest directory — checking the same way the later phases read it is what proves those phases will find it:
 
 ```bash
-LATEST="$(ls -dt "$REIMAGE_ARTIFACT_ROOT"/managed-inventory/*/ | head -1)"
-echo "$LATEST"
-ls -1 "$LATEST"
+CATEGORY="$REIMAGE_ARTIFACT_ROOT/managed-inventory"
+CONTEXT="pre-image"   # post-image on the Phase 13C run
+if [ -f "$CATEGORY/official/$CONTEXT.txt" ]; then
+  OFFICIAL="$CATEGORY/$(cat "$CATEGORY/official/$CONTEXT.txt")"
+  echo "$OFFICIAL"
+  ls -1 "$OFFICIAL"
+else
+  printf 'ERROR: no official %s run — the capture was not indexed.\n' "$CONTEXT"
+fi
 ```
 
 You should see `01-` through `07-` and `MANIFEST.txt`. Spot-check the enrollment and profile sections, which carry the most decision-relevant evidence:
 
 ```bash
-sed -n '1,40p' "$LATEST/01-enrollment-status.txt"
-sed -n '1,40p' "$LATEST/02-profiles-configuration.txt"
+sed -n '1,40p' "$OFFICIAL/01-enrollment-status.txt"
+sed -n '1,40p' "$OFFICIAL/02-profiles-configuration.txt"
+```
+
+The row this run added to the category index, which is what `backup-apps` and the Phase 8 record resolve through:
+
+```bash
+tail -3 "$REIMAGE_ARTIFACT_ROOT/managed-inventory/MANIFEST.md"
 ```
 
 > [!bug] Troubleshooting
@@ -370,10 +412,15 @@ The bundle is the evidence. Do not retype app, profile, package, agent, daemon, 
 The pre-image bundle (Phase 2C) and the post-image bundle (Phase 13C) share the same seven-section shape, so they diff cleanly. After re-enrollment, compare matching section files to see what management restored, added, or dropped:
 
 ```bash
-PRE="$REIMAGE_ARTIFACT_ROOT/managed-inventory/pre-image-YYYYMMDD-HHMMSS"
-POST="$REIMAGE_ARTIFACT_ROOT/managed-inventory/post-image-YYYYMMDD-HHMMSS"
-diff "$PRE/04-installed-package-receipts.txt" "$POST/04-installed-package-receipts.txt"
-diff "$PRE/02-profiles-configuration.txt"    "$POST/02-profiles-configuration.txt"
+CATEGORY="$REIMAGE_ARTIFACT_ROOT/managed-inventory"
+if [ -f "$CATEGORY/official/pre-image.txt" ] && [ -f "$CATEGORY/official/post-image.txt" ]; then
+  PRE="$CATEGORY/$(cat "$CATEGORY/official/pre-image.txt")"
+  POST="$CATEGORY/$(cat "$CATEGORY/official/post-image.txt")"
+  diff "$PRE/04-installed-package-receipts.txt" "$POST/04-installed-package-receipts.txt"
+  diff "$PRE/02-profiles-configuration.txt"    "$POST/02-profiles-configuration.txt"
+else
+  printf 'Both a pre-image and a post-image run must be official before they can be compared.\n'
+fi
 ```
 
 Timestamps and generation dates in the file headers will always differ; focus on the payload lines. Expect some legitimate churn from re-enrollment — the point is to surface anything unexpected, not to demand an identical match.

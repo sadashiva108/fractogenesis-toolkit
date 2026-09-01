@@ -345,7 +345,7 @@ Phase 2D reads this record to decide which installed apps are MDM-restored and c
 Primary output:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/managed-inventory/pre-image-*
+$REIMAGE_ARTIFACT_ROOT/managed-inventory/runs/pre-image-*
 ```
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -830,7 +830,7 @@ Do not reset the Office marker after an incident until the incident evidence has
 |---|---|---|---|---|
 | Phase 13A | Toolkit snapshot | `$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/pre-image-toolkit-snapshot-*`, `$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/latest-docs/` | capture-toolkit-snapshot.md | — |
 | Phase 13B | System inventory | `$REIMAGE_ARTIFACT_ROOT/system-inventory/post-image-*` | capture-system-inventory.md | `capture-system-inventory.md` — Manual context note only when needed |
-| Phase 13C | Company-managed inventory | `$REIMAGE_ARTIFACT_ROOT/managed-inventory/post-image-*` | capture-managed-inventory.md | — |
+| Phase 13C | Company-managed inventory | `$REIMAGE_ARTIFACT_ROOT/managed-inventory/runs/post-image-*` | capture-managed-inventory.md | — |
 | Phase 13D | Performance audit | `$REIMAGE_ARTIFACT_ROOT/performance-audit/post-image-*` | capture-performance-audit.md | `capture-performance-audit.md` — Manual Observations |
 | Phase 13E | Office stability | `$REIMAGE_ARTIFACT_ROOT/office-stability/post-reimage-*` | capture-office-stability.md | `capture-office-stability.md` — Post-Image Office Stability Checklist Template |
 

@@ -5,16 +5,18 @@
 # Company-managed inventory capture (Phase 2C pre-image / Phase 13C post-image):
 # a read-only record of company-managed apps, configuration profiles, launch
 # agents/daemons, system extensions, and managed preferences. Writes a
-# timestamped bundle under managed-inventory/. It observes and records only —
-# it does not modify managed state. See capture-managed-inventory.md for the
-# full runbook.
+# timestamped bundle under managed-inventory/runs/ and indexes it in that
+# category's MANIFEST.md, so every reader resolves a bundle through
+# official/<context>.txt rather than by globbing directory names. It observes
+# and records only — it does not modify managed state. See
+# capture-managed-inventory.md for the full runbook.
 #
 # --- BEGIN USAGE ---
 # Usage:
 #   cd <repo-root>
 #   chmod +x bin/capture-managed-inventory.sh
 #
-#   # Default -- pre-image bundle under managed-inventory/pre-image-<stamp>/
+#   # Default -- pre-image bundle under managed-inventory/runs/pre-image-<stamp>/
 #   ./bin/capture-managed-inventory.sh
 #
 #   # Post-image bundle
@@ -23,14 +25,17 @@
 #   # Override the artifact root for this invocation
 #   ./bin/capture-managed-inventory.sh --artifact-root /path/to/reimage-artifact-root
 #
-#   # Write to an exact output directory (skips the managed-inventory/<context>-<stamp> layout)
+#   # Write to an exact output directory (skips the run layout AND the index)
 #   ./bin/capture-managed-inventory.sh --output /absolute/path/to/output
 #
 # Options:
 #   --artifact-root PATH  Override REIMAGE_ARTIFACT_ROOT from shared config.
 #   --context LABEL       pre-image | post-image | pre-image-<label> | post-image-<label>.
 #                         Prefix for the timestamped run directory. Default: pre-image.
-#   --output DIR          Exact output directory for generated files.
+#   --output DIR          Exact output directory for generated files. A bundle
+#                         written there is NOT indexed: the caller named an exact
+#                         path, so there is no category root to index it under and
+#                         no lineage it belongs to.
 #   -h, --help            Show this message and exit.
 #
 # Configuration precedence:
@@ -64,12 +69,24 @@ ARTIFACT_CONFIG_REQUIRE_REIMAGE_ARTIFACT_ROOT=false
 # shellcheck source=../.internal/load-reimage-config.sh
 source "$CONFIG_LOADER"
 
+# The managed inventory is a run category like any other. Staging through the
+# shared index is what lets backup-apps.sh and record-enrollment.sh ask for the
+# `pre-image` lineage BY NAME. Both used to take the newest directory under
+# managed-inventory/, which after Phase 13C is a post-image bundle -- so a
+# pre-image comparison would have silently compared the machine against itself.
+RUNS_LIB="$REPO_ROOT/.internal/artifact-runs.sh"
+if [[ ! -f "$RUNS_LIB" ]]; then
+  echo "ERROR: shared run index not found: $RUNS_LIB" >&2
+  exit 2
+fi
+# shellcheck source=../.internal/artifact-runs.sh
+source "$RUNS_LIB"
+
 usage() {
   sed -n '/^# --- BEGIN USAGE ---$/,/^# --- END USAGE ---$/p' "$0" \
     | sed '1d;$d;s/^# //;s/^#$//'
 }
 
-STAMP="$(date +%Y%m%d-%H%M%S)"
 CONTEXT="pre-image"
 OUTPUT_DIR=""
 
@@ -130,7 +147,12 @@ case "$CONTEXT" in
     ;;
 esac
 
-# Resolve the output directory. --output overrides the standard layout entirely.
+# Resolve the output directory. --output overrides the standard layout entirely
+# and is deliberately left out of the index, so INDEXED gates every later step
+# that only makes sense for a staged run.
+INDEXED=false
+CATEGORY_ROOT=""
+
 if [[ -z "$OUTPUT_DIR" ]]; then
   if [[ -z "${REIMAGE_ARTIFACT_ROOT:-}" ]]; then
     echo "ERROR: REIMAGE_ARTIFACT_ROOT is not set." >&2
@@ -141,11 +163,39 @@ if [[ -z "$OUTPUT_DIR" ]]; then
     echo "ERROR: artifact root not found: $REIMAGE_ARTIFACT_ROOT" >&2
     exit 2
   fi
-  OUTPUT_DIR="$REIMAGE_ARTIFACT_ROOT/managed-inventory/${CONTEXT}-${STAMP}"
+  CATEGORY_ROOT="$REIMAGE_ARTIFACT_ROOT/managed-inventory"
+  if ! artifact_run_begin "$CATEGORY_ROOT" "$CONTEXT"; then
+    echo "ERROR: could not stage a run under: $CATEGORY_ROOT" >&2
+    exit 2
+  fi
+  OUTPUT_DIR="$ARTIFACT_RUN_DIR"
+  INDEXED=true
 fi
 
 OUT="$OUTPUT_DIR"
 mkdir -p "$OUT"
+
+# What the progress lines call the bundle. $OUT is the `.incomplete` staging
+# directory until finalize renames it, and an operator watching seven sections
+# scroll past ".pre-image-20260901-134944.incomplete/" has been shown a path that
+# will not exist by the time they go looking for it.
+OUT_LABEL="$(basename "$OUT")"
+if [[ "$INDEXED" == true ]]; then
+  OUT_LABEL="runs/$ARTIFACT_RUN_ID"
+fi
+
+# A capture that dies part way through has produced sections that do not answer
+# the question the bundle exists to answer, and an unfinalized staging directory
+# would sit beside the real bundles looking like one. Discarding it is what makes
+# "every directory under runs/ is a complete capture" true rather than usual.
+cleanup_managed_inventory_run() {
+  if [[ "$INDEXED" == true ]]; then
+    artifact_run_abort
+  fi
+  return 0
+}
+trap cleanup_managed_inventory_run EXIT
+trap 'exit 130' INT TERM
 
 section() {
   local name="$1"
@@ -163,7 +213,7 @@ section() {
 
 end_section() {
   echo "" >> "$_SECTION_FILE"
-  echo "   ✓ saved → $(basename "$OUT")/$(basename "$_SECTION_FILE")"
+  echo "   ✓ saved → $OUT_LABEL/$(basename "$_SECTION_FILE")"
 }
 
 r() { "$@" >> "$_SECTION_FILE" 2>&1 || true; }
@@ -291,12 +341,23 @@ section "Company-focused filter pass" "07-company-filter-pass.txt"
   { systemextensionsctl list 2>/dev/null | grep -Ei -- "$MANAGED_ID_FILTER" || true; } >> "$_SECTION_FILE"
 end_section
 
+# The staging directory is renamed by artifact_run_finalize, so recording $OUT
+# here would name a path that stops existing seconds later. A bundle copied
+# somewhere else should still say where it was written and which run it is.
+FINAL_OUT="$OUT"
+RUN_ID_LINE=""
+if [[ "$INDEXED" == true ]]; then
+  FINAL_OUT="$ARTIFACT_RUN_FINAL_DIR"
+  RUN_ID_LINE="Run: $ARTIFACT_RUN_ID"
+fi
+
 cat > "$OUT/MANIFEST.txt" <<EOF
 # Company Managed Inventory Capture
 Generated: $(date)
 Script: $(basename "$0")
 Context: $CONTEXT
-Output directory: $OUT
+${RUN_ID_LINE:+$RUN_ID_LINE
+}Output directory: $FINAL_OUT
 
 Files:
 - 01-enrollment-status.txt
@@ -308,6 +369,29 @@ Files:
 - 07-company-filter-pass.txt
 EOF
 
+# The managed-app counts come from section 03's own verdicts rather than being
+# recomputed here, for the same reason the candidate review reads them: one
+# authoritative call per app, in one place.
+RESULT_SUMMARY="7 sections"
+if [[ -f "$OUT/03-installed-app-bundles.txt" ]]; then
+  _managed="$(grep -c '\[managed:' "$OUT/03-installed-app-bundles.txt" 2>/dev/null || true)"
+  _likely="$(grep -c '\[likely:' "$OUT/03-installed-app-bundles.txt" 2>/dev/null || true)"
+  RESULT_SUMMARY="7 sections / ${_managed:-0} managed / ${_likely:-0} likely"
+fi
+
+if [[ "$INDEXED" == true ]]; then
+  trap - EXIT INT TERM
+  if ! artifact_run_finalize "$CATEGORY_ROOT" "$RESULT_SUMMARY"; then
+    echo "ERROR: the bundle was written but could not be indexed under: $CATEGORY_ROOT" >&2
+    echo "Repair the index with: ./bin/reindex-artifact-runs.sh --category \"$CATEGORY_ROOT\"" >&2
+    exit 2
+  fi
+  OUT="$ARTIFACT_RUN_DIR"
+fi
+
 echo ""
 echo "Company-managed inventory capture complete."
 echo "Output → $OUT"
+if [[ "$INDEXED" == true ]]; then
+  echo "Run    → $ARTIFACT_RUN_ID (official for context '$CONTEXT')"
+fi

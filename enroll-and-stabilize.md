@@ -105,7 +105,7 @@ One numbered file per managed subsystem, plus a Markdown record with the exit-cr
 05  managed processes present          ps aux name-filter for expected managed agents
 06  macOS version and build            sw_vers
 07  available software updates         softwareupdate --list
-08  managed app expectations           diff of 04 against pre-image managed-inventory/
+08  managed app expectations           diff of 04 against the official pre-image managed-inventory run
 09  keychain identities                security find-identity -v, general and ssl-client
 10  installed package receipts         pkgutil --pkgs
 11  launchd managed components         /Library/Launch{Agents,Daemons} plists
@@ -115,9 +115,12 @@ One numbered file per managed subsystem, plus a Markdown record with the exit-cr
 Every command reads state; nothing writes to managed state. You can run this on a live managed machine without risk to compliance.
 
 File `08` is different from the others: it is not a command capture but a
-comparison. It reads the pre-image `managed-inventory/` capture on the artifact
-root, extracts the application bundles this Mac had before the erase, and names
-the ones absent now. That is the only source that knows what *this* Mac is
+comparison. It reads the managed-inventory run named by
+`managed-inventory/official/pre-image.txt` on the artifact root, extracts the
+application bundles this Mac had before the erase, and names the ones absent now.
+It asks for the pre-image lineage by name because Phase 13C writes a post-image
+bundle into the same category, and comparing against that one would measure this
+Mac against itself. That is the only source that knows what *this* Mac is
 supposed to have — a fixed list of vendor names in the script would be a guess.
 When the artifact volume is not yet mounted the comparison has no source, and
 the row is stamped `TODO` rather than `PASS`, because "could not check" and
@@ -292,10 +295,14 @@ onward.
 - Whether the managed app set is complete. Required assignments arrive on their
   own; Available assignments never do. If the Company Portal **Apps** tab still
   lists something this Mac needs, finish Step 4 before recording anything.
-- Whether the pre-image `managed-inventory/` capture is reachable. When the
+- Whether the official pre-image `managed-inventory` run is reachable. When the
   artifact volume is mounted the script can diff the current app set against
   what this Mac had before the erase; when it is not, that row is stamped
   `TODO` and the comparison falls to you.
+- Whether the absences this Mac reports every time have been written down. The
+  managed-application row asks about absences no decision names, so recording
+  them once with `record-decision.sh` is what stops the same judgements being
+  re-made on each run.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -601,14 +608,14 @@ settled before Phase 9 begins.
 | Available | Listed in the Company Portal **Apps** tab with an Install button. **Never installs on its own.** | Open the Apps tab and install what this Mac needs. |
 
 Open **Company Portal** → **Apps** → **All apps**. The catalog lists everything
-assigned to this account, but **do not install all of it here**. This phase needs
-three, and each for a different reason:
+assigned to this account, but **do not install all of it here**. Two items are
+needed on every Mac, and one depends on how you reach your passwords and mail:
 
 | Install now | Why here rather than later |
 |---|---|
-| **Google Chrome** | Install this first. It is how you reach LastPass for every password this phase and the next need, and the email holding the post-reimage cheatsheet that carries `TOOLKIT_GITHUB_ACCOUNT` for Step 1. |
 | **Microsoft 365 Apps for macOS** | The single suite item that delivers Word, Excel, PowerPoint, Outlook and OneNote — plus Teams, OneDrive and AutoUpdate. The individual Microsoft apps are not separately installable; this is the only way to get them. |
 | **Zscaler** | The TLS-inspecting proxy agent. It has to be in place before Phase 10B trusts the corporate CA, and its absence changes how every later network failure reads. |
+| **Google Chrome** — only if you need it | Safari reaches most vaults and mail accounts, and nothing in this workflow requires a particular browser. Install Chrome here when your vault relies on its extension, or your mail is more reachable in it — for the passwords this phase and Phase 10B ask for, and the email holding the post-reimage cheatsheet. Install it first when you do, since Step 1 wanted it. |
 
 Everything else in the catalog belongs to a later phase or to no phase at all.
 **Postman Enterprise in particular is installed during Phase 12**
@@ -616,11 +623,6 @@ Everything else in the catalog belongs to a later phase or to no phase at all.
 installing it here gives you an empty copy that the restore then has to work
 around. Microsoft Edge, PrinterLogic and Identity Agent are installed when you
 actually need them, on the same reasoning.
-
-Chrome comes from Company Portal, which needs enrollment, so on a Mac where
-Step 3 has not finished, use Safari to reach the cheatsheet and LastPass for long
-enough to get through Step 1. Chrome is a convenience here rather than a
-dependency; nothing in this runbook requires a specific browser.
 
 Confirm what actually landed:
 
@@ -656,8 +658,13 @@ The authoritative list of what this Mac should have is the pre-image capture, no
 this runbook. Compare against it rather than against a fixed expectation:
 
 ```bash
-grep -riE 'teams|onenote|crowdstrike|falcon|zscaler' \
-  "$REIMAGE_ARTIFACT_ROOT/managed-inventory/" | head -40
+CATEGORY="$REIMAGE_ARTIFACT_ROOT/managed-inventory"
+if [ -f "$CATEGORY/official/pre-image.txt" ]; then
+  PRE="$CATEGORY/$(cat "$CATEGORY/official/pre-image.txt")"
+  grep -riE 'teams|onenote|crowdstrike|falcon|zscaler' "$PRE" | head -40
+else
+  printf 'No official pre-image run — reconnect the artifact volume, or close this by hand.\n'
+fi
 ```
 
 Anything present pre-image and absent now is a real gap. Anything in neither was
@@ -914,7 +921,7 @@ rather than carrying an open row forward.
 > If the security-tools row reads `WARN`, see [[#Security tools row is WARN|Security tools row is WARN]].
 
 > [!bug] Troubleshooting
-> If the managed-application row reads `TODO` or names apps you do not recognise, see [[#Managed application row is TODO or names unexpected apps|Managed application row is TODO or names unexpected apps]].
+> If the managed-application row reads `TODO` or `REVIEW`, see [[#Managed application row is TODO or REVIEW|Managed application row is TODO or REVIEW]].
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -958,21 +965,60 @@ That is the intended final fallback when neither `REIMAGE_ARTIFACT_ROOT` nor `RE
 
 [[#Step 10 — Close Out the Exit Criteria|⮕ Continue to Step 10 — Close Out the Exit Criteria]]
 
-### Managed application row is TODO or names unexpected apps
+### Managed application row is TODO or REVIEW
 
-`TODO` means the comparison had no source: the pre-image `managed-inventory/`
-capture was not reachable, which is normal when Phase 8 runs before the external
+`TODO` means the comparison had no source: the official pre-image
+`managed-inventory` run was not reachable, which is normal when Phase 8 runs before the external
 artifact volume is reconnected. Rerun after Phase 9 Step 1 with
 `--artifact-root "$REIMAGE_ARTIFACT_ROOT"`, or close the row by hand against the
 Company Portal **Apps** tab.
 
-A `WARN` naming apps you do not recognise is usually the extraction being
-literal rather than wrong. The comparison pulls every `.app` name it can find in
-the inventory text, so it picks up bundles nested inside other applications and
-helper bundles that were never separately installed. Read the list, ignore the
-ones that were never top-level applications, and act only on the real absences.
-The row is `Mixed` for exactly this reason — the script narrows the search, you
-make the call.
+`REVIEW` means the comparison ran and found absences nobody has accounted for
+yet. It is not a failure and not a count of missing software — the row reports a
+number and asks you a question, because the expectation set mixes software the
+Intune push delivers during this phase with company-scoped applications Phase 12
+restores, and an absence in the second is on schedule here.
+
+Open `raw/08-managed-app-expectations.txt`. Entries marked `[decided]` are
+already named by an entry in the decisions log and are not what the row is
+asking about; the ones without the marker are. For each of those, decide which
+it is — a management stack this Mac no longer uses, a repackaged component, a
+version-pinned receipt whose vendor has since shipped a newer build, an agent
+still rolling out, an application Phase 12 puts back, or a genuine gap for IT.
+
+The extraction is literal, so some entries were never separately-installed
+applications: it pulls every `.app` name in the inventory text, including bundles
+nested inside other applications and helper bundles. Those are absences of things
+that never existed on their own, and deciding so is a legitimate answer.
+
+Write each answer down. An absence you explain out loud is one the next run asks
+about again, and a conclusion re-derived from memory is how a wrong one becomes
+settled:
+
+```bash
+./bin/record-decision.sh \
+  --runbook enroll-and-stabilize \
+  --title "Superseded management stack" \
+  --excepts "enroll-and-stabilize-managed-apps:com.example.oldagent" \
+  --reason "Replaced by the current MDM. The pre-image receipt cannot return."
+```
+
+The reference after the colon must match the entry in
+`08-managed-app-expectations.txt` exactly — a near miss excuses nothing, which is
+the intended failure, since an approximate match would excuse the wrong entry.
+Repeat `--excepts` to cover several entries with one reason. Once every absence
+is named, the row reads `PASS` with the count and the words *all accounted for in
+the decisions log* — which is a different statement from "nothing was absent",
+and says so.
+
+Read back what has been decided at any time:
+
+```bash
+./bin/record-decision.sh --check enroll-and-stabilize-managed-apps
+```
+
+The log is one file per reimage event, so a fresh artifact root starts empty and
+the standing answers are recorded once more against it.
 
 [[#Step 10 — Close Out the Exit Criteria|⮕ Continue to Step 10 — Close Out the Exit Criteria]]
 
@@ -1021,8 +1067,13 @@ agents such as `Zscaler/Zscaler.app` are not missed:
 What this Mac had before the erase, for comparison:
 
 ```bash
-grep -rhoiE '[A-Za-z0-9][A-Za-z0-9._ -]*\.app' \
-  "$REIMAGE_ARTIFACT_ROOT/managed-inventory" 2>/dev/null | sort -uf
+CATEGORY="$REIMAGE_ARTIFACT_ROOT/managed-inventory"
+if [ -f "$CATEGORY/official/pre-image.txt" ]; then
+  PRE="$CATEGORY/$(cat "$CATEGORY/official/pre-image.txt")"
+  grep -rhoiE '[A-Za-z0-9][A-Za-z0-9._ -]*\.app' "$PRE" 2>/dev/null | sort -uf
+else
+  printf 'No official pre-image run — reconnect the artifact volume, or close this by hand.\n'
+fi
 ```
 
 Expected managed processes running:

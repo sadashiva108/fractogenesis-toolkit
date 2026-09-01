@@ -315,24 +315,29 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 > [!example]- `$REIMAGE_ARTIFACT_ROOT/managed-inventory/`
 > ```text
 > $REIMAGE_ARTIFACT_ROOT/managed-inventory/
-> ├── pre-image-YYYYMMDD-HHMMSS/
-> │   ├── 01-enrollment-status.txt
-> │   ├── 02-profiles-configuration.txt
-> │   ├── 03-installed-app-bundles.txt
-> │   ├── 04-installed-package-receipts.txt
-> │   ├── 05-background-managed-components.txt
-> │   ├── 06-managed-preference-payloads.txt
-> │   ├── 07-company-filter-pass.txt
-> │   └── MANIFEST.txt
-> └── post-image-YYYYMMDD-HHMMSS/
->     ├── 01-enrollment-status.txt
->     ├── 02-profiles-configuration.txt
->     ├── 03-installed-app-bundles.txt
->     ├── 04-installed-package-receipts.txt
->     ├── 05-background-managed-components.txt
->     ├── 06-managed-preference-payloads.txt
->     ├── 07-company-filter-pass.txt
->     └── MANIFEST.txt
+> ├── MANIFEST.md                          # append-only index of completed runs
+> ├── official/
+> │   ├── pre-image.txt                     # → runs/pre-image-YYYYMMDD-HHMMSS
+> │   └── post-image.txt                    # → runs/post-image-YYYYMMDD-HHMMSS
+> └── runs/
+>     ├── pre-image-YYYYMMDD-HHMMSS/
+>     │   ├── 01-enrollment-status.txt
+>     │   ├── 02-profiles-configuration.txt
+>     │   ├── 03-installed-app-bundles.txt
+>     │   ├── 04-installed-package-receipts.txt
+>     │   ├── 05-background-managed-components.txt
+>     │   ├── 06-managed-preference-payloads.txt
+>     │   ├── 07-company-filter-pass.txt
+>     │   └── MANIFEST.txt
+>     └── post-image-YYYYMMDD-HHMMSS/
+>         ├── 01-enrollment-status.txt
+>         ├── 02-profiles-configuration.txt
+>         ├── 03-installed-app-bundles.txt
+>         ├── 04-installed-package-receipts.txt
+>         ├── 05-background-managed-components.txt
+>         ├── 06-managed-preference-payloads.txt
+>         ├── 07-company-filter-pass.txt
+>         └── MANIFEST.txt
 > ```
 
 > [!example]- `$REIMAGE_ARTIFACT_ROOT/office-stability/`

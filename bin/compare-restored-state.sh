@@ -251,19 +251,29 @@ fi
 # filename means the system inventory, which is what every 10A probe uses.
 #
 #   inventory:10-java.txt   system-inventory/pre-image-*/
-#   managed:02-profiles-*   managed-inventory/pre-image-*/
+#   managed:02-profiles-*   the official pre-image run under managed-inventory/
 #   secrets:java-jssecacerts-inventory-*.md
 #                           secrets-encrypted/   (readable without the DMG
 #                           password -- these are the manifests beside the
 #                           image, not its contents)
 #
-# Resolution is by glob and takes the newest match, so a spec survives the
-# timestamp in a capture directory name.
+# Within a resolved capture directory, the file part of a spec is a glob and takes
+# the newest match, so a spec survives the timestamp in a section file name.
+#
+# The capture DIRECTORY is a different question. managed-inventory is a run
+# category, so its pre-image lineage is named by official/pre-image.txt and read
+# from there -- not chosen by taking the newest directory, which after Phase 13C
+# is a post-image bundle and would have this comparison measure the restored
+# machine against itself.
 # ---------------------------------------------------------------------------
 MANAGED_PARENT="$REIMAGE_ARTIFACT_ROOT/managed-inventory"
 SECRETS_PARENT="$REIMAGE_ARTIFACT_ROOT/secrets-encrypted"
 
-MANAGED_DIR="$(find "$MANAGED_PARENT" -maxdepth 1 -type d -name 'pre-image-*' 2>/dev/null | sort | tail -1)"
+MANAGED_RUN="$(artifact_run_official "$MANAGED_PARENT" pre-image 2>/dev/null || true)"
+MANAGED_DIR=""
+if [[ -n "$MANAGED_RUN" ]]; then
+  MANAGED_DIR="$MANAGED_PARENT/$MANAGED_RUN"
+fi
 
 capture_file() {
   # $1 = spec. Prints an absolute path, or nothing when unresolved.

@@ -71,7 +71,7 @@ Do not manually duplicate the final validation report when reimage-checklist.sh 
 | Phase 9 | Initial captures and sanity checks | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/restarts/runs/verify-reimaged-system-<point>-*` | First post-image evidence bundle before deeper restore work, including restart and Time Machine planning notes. |
 | Phase 13A | Toolkit snapshot | `$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/post-image-toolkit-snapshot-*`, `$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/latest-docs/` | Final workflow-doc snapshot showing the workflow state actually used after rebuild. |
 | Phase 13B | System inventory | `$REIMAGE_ARTIFACT_ROOT/system-inventory/post-image-*` | Broad rebuilt-system snapshot for comparison against Phase 4B. |
-| Phase 13C | Company-managed inventory | `$REIMAGE_ARTIFACT_ROOT/managed-inventory/post-image-*` | Managed apps, profiles, launch items, extensions, receipts, and managed preferences after enrollment. |
+| Phase 13C | Company-managed inventory | `$REIMAGE_ARTIFACT_ROOT/managed-inventory/runs/post-image-*` | Managed apps, profiles, launch items, extensions, receipts, and managed preferences after enrollment. |
 | Phase 13D | Performance audit | `$REIMAGE_ARTIFACT_ROOT/performance-audit/post-image-*` | Scenario-based after-state performance bundles that match the pre-image scenarios. |
 | Phase 13E | Office stability | `$REIMAGE_ARTIFACT_ROOT/office-stability/post-reimage-*`, `checklists/post-image-office-stability-checklist-*` | Office stability baseline, watcher-derived evidence, and post-image comparison checklist output. |
 | Phase 14 | Reimaged system checks | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/checklists/reimage-checklist-*.md` | Final validation report plus the remaining manual sign-off rows before the rebuilt Mac is considered trusted. |
@@ -113,7 +113,8 @@ $REIMAGE_ARTIFACT_ROOT/
 ├── system-inventory/
 │   └── post-image-YYYYMMDD-HHMMSS/
 ├── managed-inventory/
-│   └── post-image-YYYYMMDD-HHMMSS/
+│   └── runs/
+│       └── post-image-YYYYMMDD-HHMMSS/
 └── performance-audit/
     ├── post-image-performance-audit-<scenario>-YYYYMMDD-HHMMSS/
     └── rollup-summary/
@@ -313,7 +314,7 @@ cd "$FRACTOGENESIS_HOME"
 Destination:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/managed-inventory/post-image-YYYYMMDD-HHMMSS/
+$REIMAGE_ARTIFACT_ROOT/managed-inventory/runs/post-image-YYYYMMDD-HHMMSS/
 ```
 
 Expected outputs:

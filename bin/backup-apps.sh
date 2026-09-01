@@ -27,7 +27,7 @@
 #   ./bin/backup-apps.sh --all-detected
 #
 #   # Point candidate review at a specific managed-inventory bundle
-#   ./bin/backup-apps.sh --candidate-review --managed-inventory /path/to/managed-inventory/pre-image-<stamp>
+#   ./bin/backup-apps.sh --candidate-review --managed-inventory /path/to/managed-inventory/runs/pre-image-<stamp>
 #
 #   # List the apps this toolkit can back up (info only)
 #   ./bin/backup-apps.sh --supported-apps
@@ -47,13 +47,14 @@
 # Optional:
 #   --candidate-review      Generate a review-only app candidate bundle under:
 #                           $REIMAGE_ARTIFACT_ROOT/app-settings-backup/candidate-review/
-#                           Consumes the newest managed-inventory bundle (if present)
-#                           to enrich raw/ and partition managed apps into their own
-#                           table. Runs standalone when no managed bundle exists.
+#                           Consumes the official pre-image managed-inventory bundle
+#                           (if present) to enrich raw/ and partition managed apps into
+#                           their own table. Runs standalone when no managed bundle
+#                           exists.
 #   --managed-inventory DIR Managed-inventory bundle candidate review should consult.
-#                           Default: newest pre-image-* under
-#                           $REIMAGE_ARTIFACT_ROOT/managed-inventory/. Only used with
-#                           --candidate-review.
+#                           Default: the run named by
+#                           $REIMAGE_ARTIFACT_ROOT/managed-inventory/official/pre-image.txt.
+#                           Only used with --candidate-review.
 #   --supported-apps        List the supported apps (app, group, how backed up) and exit.
 #                           Info only; writes nothing and computes no sizes.
 #   --preflight             Report the resolved config, the artifact root, and
@@ -132,6 +133,18 @@ ARTIFACT_CONFIG_REQUIRE_REIMAGE_ARTIFACT_ROOT=false
 
 # shellcheck source=../.internal/load-reimage-config.sh
 source "$CONFIG_LOADER"
+
+# Candidate review consults the pre-image managed inventory, and a lineage is
+# something to ask for by name: `official/pre-image.txt` names it, where "the
+# newest directory under managed-inventory/" stops meaning pre-image the moment
+# Phase 13C writes a post-image bundle beside it.
+RUNS_LIB="$REPO_ROOT/.internal/artifact-runs.sh"
+if [[ ! -f "$RUNS_LIB" ]]; then
+  echo "ERROR: shared run index not found: $RUNS_LIB" >&2
+  exit 2
+fi
+# shellcheck source=../.internal/artifact-runs.sh
+source "$RUNS_LIB"
 
 usage() {
   sed -n '/^# --- BEGIN USAGE ---$/,/^# --- END USAGE ---$/p' "$0" \
@@ -429,11 +442,14 @@ if [[ "$SHOW_PREFLIGHT" == true ]]; then
     printf '  app backup manifest : none — Step 4 writes it\n'
   fi
 
-  if [[ -d "$REIMAGE_ARTIFACT_ROOT/managed-inventory" ]] \
-     && [[ -n "$(ls -A "$REIMAGE_ARTIFACT_ROOT/managed-inventory" 2>/dev/null)" ]]; then
-    printf '  managed inventory   : present — Phase 2C has run\n'
+  # Resolve the pointer rather than testing the directory for contents: after
+  # Phase 13C the category is non-empty for a post-image bundle that answers a
+  # different question, and pre-flight would have called that "Phase 2C has run".
+  _pf_managed="$(artifact_run_official "$REIMAGE_ARTIFACT_ROOT/managed-inventory" pre-image 2>/dev/null || true)"
+  if [[ -n "$_pf_managed" ]]; then
+    printf '  managed inventory   : %s — Phase 2C has run\n' "$_pf_managed"
   else
-    printf '  managed inventory   : empty — run Phase 2C first for managed-app partitioning\n'
+    printf '  managed inventory   : no official pre-image run — run Phase 2C first for managed-app partitioning\n'
   fi
 
   printf '\nNothing was created by this check.\n'
@@ -941,20 +957,26 @@ emit_candidate_row() {
 
 find_managed_inventory_bundle() {
   # Echo the managed-inventory bundle candidate review should consult, or nothing.
-  # Honors --managed-inventory; otherwise picks the newest pre-image-* bundle
-  # (falling back to the newest bundle of any context). Never fails the review.
+  # Honors --managed-inventory; otherwise resolves the official PRE-IMAGE run.
+  # Never fails the review.
+  #
+  # There is no fall-back to "the newest bundle of any context". This review
+  # partitions out apps that management will reinstall, and only the pre-image
+  # capture knows what management had installed BEFORE the erase. A post-image
+  # bundle answers a different question, and taking it because it sorted last is
+  # how the review would silently report a machine's managed set as its own
+  # baseline. When no pre-image run is official the review runs unpartitioned and
+  # says so, which is a visible gap rather than a wrong answer.
   if [[ -n "$MANAGED_INVENTORY_DIR" ]]; then
     [[ -d "$MANAGED_INVENTORY_DIR" ]] && printf '%s\n' "$MANAGED_INVENTORY_DIR"
     return 0
   fi
   local base="$REIMAGE_ARTIFACT_ROOT/managed-inventory"
   [[ -d "$base" ]] || return 0
-  local d
-  d="$(find "$base" -maxdepth 1 -mindepth 1 -type d -name 'pre-image-*' 2>/dev/null | sort | tail -1)"
-  if [[ -z "$d" ]]; then
-    d="$(find "$base" -maxdepth 1 -mindepth 1 -type d 2>/dev/null | sort | tail -1)"
-  fi
-  [[ -n "$d" ]] && printf '%s\n' "$d"
+  local rel
+  rel="$(artifact_run_official "$base" pre-image 2>/dev/null || true)"
+  [[ -n "$rel" ]] || return 0
+  printf '%s\n' "$base/$rel"
   return 0
 }
 
@@ -1050,8 +1072,10 @@ generate_candidate_review() {
   else
     : > "$managed_index"
     {
-      echo "No managed-inventory bundle was found under:"
+      echo "No official pre-image managed-inventory run was found under:"
       echo "$REIMAGE_ARTIFACT_ROOT/managed-inventory/"
+      echo ""
+      echo "Expected a pointer at official/pre-image.txt naming a run under runs/."
       echo ""
       echo "Managed-app partitioning was skipped, so every detected app is listed as a"
       echo "Known Phase 2D candidate. Run capture-managed-inventory.md first, or pass"

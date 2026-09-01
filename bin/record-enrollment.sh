@@ -11,13 +11,22 @@
 # record with the Phase 8 exit-criteria table prefilled for the
 # command-verifiable rows.
 #
-# The expected managed application set is derived from the pre-image capture at
-# $REIMAGE_ARTIFACT_ROOT/managed-inventory/, never from a list of vendor names
+# The expected managed application set is derived from the run named by
+# $REIMAGE_ARTIFACT_ROOT/managed-inventory/official/pre-image.txt, never from a
+# list of vendor names
 # held in this script. A hardcoded list cannot know what this particular Mac was
 # assigned, and silently scores PASS on a machine missing an entire app suite.
 # When the artifact volume is not mounted the comparison has no source and the
 # row is stamped TODO rather than PASS — "could not check" and "checked and
 # fine" must not look the same.
+#
+# An absence is never GRADED here, only counted and matched against the
+# decisions log. Deciding whether an absent entry is a superseded management
+# stack, an agent still rolling out, a version-pinned receipt, or a genuine gap
+# is a judgement a script cannot make -- but it is a judgement someone has often
+# already made and written down, and re-deriving it every run is how a wrong
+# conclusion gets carried forward as settled. `bin/record-decision.sh` holds
+# those answers; this reads them back.
 #
 # This script records evidence and applies small heuristic PASS/WARN verdicts
 # on the command-verifiable rows only. The truly human-judgment rows (Company
@@ -50,7 +59,7 @@
 #   ./bin/record-enrollment.sh --output /absolute/path/to/output
 #
 #   # Point the managed-application comparison at a specific inventory capture.
-#   ./bin/record-enrollment.sh --managed-inventory /path/to/managed-inventory
+#   ./bin/record-enrollment.sh --managed-inventory /path/to/managed-inventory/runs/pre-image-<stamp>
 #
 #   # Label the run so the two records around the stabilization restart are
 #   # distinguishable on disk without opening them. Matches the --context
@@ -68,8 +77,11 @@
 #   --workspace-root PATH Override REIMAGE_WORKSPACE_ROOT for the fallback path.
 #   --output DIR          Exact output directory for generated files.
 #   --managed-inventory DIR
-#                         Override the pre-image managed-inventory directory
-#                         used to derive the expected application set.
+#                         Override the pre-image managed-inventory BUNDLE used to
+#                         derive the expected application set — one run directory
+#                         holding the numbered section files, not the category
+#                         root. Default: the run named by
+#                         managed-inventory/official/pre-image.txt.
 #   --context LABEL       The run's point. Conventional values are pre-restart
 #                         and post-restart; omitted, the run is `initial`.
 #                         `entry` and `exit` select the boundary modes instead
@@ -444,10 +456,15 @@ boundary_exit() {
         profiles)        b_record "$status" "Required profiles and certificates present" "$detail" ;;
         macos-updates)   b_record "$status" "macOS updates complete or deferred" "$detail" ;;
         managed-apps)
+          # One row name for both outcomes. PASS no longer means "nothing was
+          # absent" -- it also covers absences every one of which a decision
+          # names -- so a title asserting the set MATCHES would have been false
+          # in exactly the case the decisions log exists to produce. The detail
+          # says which kind of pass it is.
           if [[ "$status" == "PASS" ]]; then
-            b_record PASS "Managed application set matches the pre-image inventory" "$detail"
+            b_record PASS "Managed application set is accounted for" "$detail"
           else
-            b_manual "Managed application set is accounted for" "$detail Each absence is deliberate — a superseded management stack, a repackaged component, a version-pinned receipt — or a genuine gap to raise with IT. Company-scoped applications that Phase 12 restores are absent on schedule here; name which is which."
+            b_manual "Managed application set is accounted for" "$detail — see \`raw/08-managed-app-expectations.txt\` for which. Absences already named by the decisions log are marked \`[decided]\` there and are not being asked about again. For each one still open: it is a superseded management stack, a repackaged component, a version-pinned receipt, an agent still rolling out, an application Phase 12 restores on schedule — or a genuine gap to raise with IT. Record the answer with \`./bin/record-decision.sh --runbook enroll-and-stabilize --excepts enroll-and-stabilize-managed-apps:<entry>\` so this row stops re-asking it."
           fi
           ;;
       esac
@@ -646,9 +663,17 @@ record_pipeline "Keychain identities"            "09-keychain-identities.txt" \
 # Resolve the inventory directory: explicit override first, then the artifact
 # root. Phase 8 often runs before the external volume is reconnected, so an
 # absent source is an ordinary outcome rather than an error.
+#
+# Resolve the PRE-IMAGE lineage by name. Phase 13C writes a post-image bundle
+# into the same category, and this row asks what the Mac had BEFORE the erase --
+# so searching the category for whichever section file sorted last would, once
+# that bundle exists, compare the restored machine against itself and report a
+# clean match on a machine missing an entire app suite.
 if [[ -z "$MANAGED_INVENTORY_DIR" && -n "${REIMAGE_ARTIFACT_ROOT:-}" ]]; then
-  if [[ -d "$REIMAGE_ARTIFACT_ROOT/managed-inventory" ]]; then
-    MANAGED_INVENTORY_DIR="$REIMAGE_ARTIFACT_ROOT/managed-inventory"
+  _mi_root="$REIMAGE_ARTIFACT_ROOT/managed-inventory"
+  _mi_run="$(artifact_run_official "$_mi_root" pre-image 2>/dev/null || true)"
+  if [[ -n "$_mi_run" ]]; then
+    MANAGED_INVENTORY_DIR="$_mi_root/$_mi_run"
   fi
 fi
 
@@ -656,7 +681,51 @@ EXPECT_FILE="$RAW_DIR/08-managed-app-expectations.txt"
 MANAGED_APPS_STATUS="TODO"
 MANAGED_APPS_MISSING_COUNT="0"
 MANAGED_APPS_EXPECTED_COUNT="0"
+MANAGED_APPS_DECIDED_COUNT="0"
+MANAGED_APPS_OPEN_COUNT="0"
 MANAGED_APPS_SOURCE="none"
+# Set alongside the verdict once a comparison runs. The TODO wording is the one
+# case where the counts mean nothing, so it does not quote them.
+MANAGED_APPS_DETAIL="no pre-image source was reachable, so nothing was compared"
+
+# The lineage `--excepts` references name for this comparison. It is deliberately
+# NOT the run context: a decision is about an application, not about the run that
+# happened to notice it, so one recorded during the post-restart run must still
+# answer for the exit record. Using $RUN_CONTEXT here would have made every
+# decision invisible to every other run of the same phase.
+MANAGED_APPS_LINEAGE="enroll-and-stabilize-managed-apps"
+MANAGED_APPS_DECIDED_LABELS=""
+
+# Read the labels this lineage excepts out of the reimage event's decisions log.
+# The shape mirrors compare-restored-state.sh, which reads the same file for the
+# same reason: refs are rendered as `code spans`, so odd-indexed backtick fields
+# are the references and even-indexed ones the separators between them.
+#
+# A missing or unreadable log is not an error. Decisions are optional, and a
+# record that refused to run without one would be worse than the problem.
+load_managed_app_decisions() {
+  local log="${REIMAGE_ARTIFACT_ROOT:-/nonexistent}/reimaged-system/restore-notes/decisions.md"
+  [[ -f "$log" ]] || return 0
+  MANAGED_APPS_DECIDED_LABELS="$(awk -v ctx="$MANAGED_APPS_LINEAGE" '
+    /^- \*\*Excepts:\*\*/ {
+      n = split($0, part, "`")
+      for (i = 2; i <= n; i += 2) {
+        ref = part[i]
+        c = index(ref, ":")
+        if (c > 0 && substr(ref, 1, c - 1) == ctx) print substr(ref, c + 1)
+      }
+    }
+  ' "$log" 2>/dev/null || true)"
+  return 0
+}
+
+managed_app_is_decided() {
+  [[ -n "$MANAGED_APPS_DECIDED_LABELS" ]] || return 1
+  # Exact match only. An approximate one would quietly excuse the wrong entry,
+  # which is strictly worse than excusing none -- `com.microsoft.MSTeams` must
+  # not answer for `com.microsoft.MSTeamsAudioDevice`.
+  printf '%s\n' "$MANAGED_APPS_DECIDED_LABELS" | grep -qxF -- "$1"
+}
 
 # Pick the narrowest usable expectation source. The capture writes several files
 # per run; only some of them describe COMPANY-managed software, and reading the
@@ -668,17 +737,25 @@ MANAGED_APPS_SOURCE="none"
 # the applications back.
 EXPECT_SOURCE_FILE=""
 if [[ -n "$MANAGED_INVENTORY_DIR" && -d "$MANAGED_INVENTORY_DIR" ]]; then
+  # Named directly in the resolved bundle rather than searched for. The bundle is
+  # one run directory, so a search could only ever widen the answer beyond the
+  # lineage that was just resolved.
   for _candidate in \
-    "$(find "$MANAGED_INVENTORY_DIR" -name '07-company-filter-pass.txt' 2>/dev/null | sort | tail -1)" \
-    "$(find "$MANAGED_INVENTORY_DIR" -name '04-installed-package-receipts.txt' 2>/dev/null | sort | tail -1)"
+    "$MANAGED_INVENTORY_DIR/07-company-filter-pass.txt" \
+    "$MANAGED_INVENTORY_DIR/04-installed-package-receipts.txt"
   do
-    if [[ -n "$_candidate" && -f "$_candidate" ]]; then
+    if [[ -f "$_candidate" ]]; then
       EXPECT_SOURCE_FILE="$_candidate"
-      # The bundle-relative path, not the basename. The expectation file lives in
-      # the pre-image managed-inventory bundle, NOT in this run's raw/ -- citing
-      # `07-company-filter-pass.txt` alone sends a reader looking for it beside
-      # the twelve files that are here, where it has never been.
-      MANAGED_APPS_SOURCE="managed-inventory/$(basename "$(dirname "$_candidate")")/$(basename "$_candidate")"
+      # The artifact-root-relative path, not the basename. The expectation file
+      # lives in the pre-image managed-inventory bundle, NOT in this run's raw/ --
+      # citing `07-company-filter-pass.txt` alone sends a reader looking for it
+      # beside the twelve files that are here, where it has never been. An
+      # explicit --managed-inventory can point outside the artifact root, and
+      # there the absolute path is the only one that resolves.
+      case "$_candidate" in
+        "${REIMAGE_ARTIFACT_ROOT:-/dev/null}"/*) MANAGED_APPS_SOURCE="${_candidate#"${REIMAGE_ARTIFACT_ROOT:-}"/}" ;;
+        *) MANAGED_APPS_SOURCE="$_candidate" ;;
+      esac
       break
     fi
   done
@@ -697,19 +774,23 @@ if [[ -z "$EXPECT_SOURCE_FILE" || ! -f "$EXPECT_SOURCE_FILE" ]]; then
     echo "# Source: unavailable"
     echo ""
     if [[ -z "$MANAGED_INVENTORY_DIR" ]]; then
-      echo "No pre-image managed-inventory capture was reachable, so the installed"
+      echo "No official pre-image managed-inventory run was reachable, so the installed"
       echo "application set could not be compared against what this Mac had before"
       echo "the erase. This is expected when Phase 8 runs before the external"
       echo "artifact volume is reconnected in Phase 9."
+      echo ""
+      echo "When the volume is mounted, the pointer to resolve is:"
+      echo ""
+      echo "    managed-inventory/official/pre-image.txt"
     else
-      echo "A managed-inventory tree was found at:"
+      echo "A managed-inventory bundle was found at:"
       echo ""
       echo "    $MANAGED_INVENTORY_DIR"
       echo ""
       echo "but it holds no company-scoped expectation file. Expected one of:"
       echo ""
-      echo "    */07-company-filter-pass.txt"
-      echo "    */04-installed-package-receipts.txt"
+      echo "    07-company-filter-pass.txt"
+      echo "    04-installed-package-receipts.txt"
       echo ""
       echo "This row is left as TODO rather than PASS: an empty expectation set"
       echo "trivially matches, and reporting that as a pass would mean the check"
@@ -732,6 +813,8 @@ else
   EXPECTED_TMP="$RAW_DIR/.expected.$$"
   MISSING_TMP="$RAW_DIR/.missing.$$"
   HAYSTACK_TMP="$RAW_DIR/.haystack.$$"
+  DECIDED_TMP="$RAW_DIR/.decided.$$"
+  OPEN_TMP="$RAW_DIR/.open.$$"
 
   # Most sections list one identifier or one absolute path per line, but at least
   # one records command status lines verbatim -- for example
@@ -777,7 +860,11 @@ else
   # miss on the literal string is retried against the basename before an entry
   # is called absent: /Applications/Microsoft Word.app is present on a Mac whose
   # application listing says "Microsoft Word.app".
+  load_managed_app_decisions
+
   : > "$MISSING_TMP"
+  : > "$DECIDED_TMP"
+  : > "$OPEN_TMP"
   while IFS= read -r item; do
     [[ -z "$item" ]] && continue
     if grep -Fqi "$item" "$HAYSTACK_TMP" 2>/dev/null; then
@@ -788,6 +875,11 @@ else
       continue
     fi
     printf '%s\n' "$item" >> "$MISSING_TMP"
+    if managed_app_is_decided "$item"; then
+      printf '%s\n' "$item" >> "$DECIDED_TMP"
+    else
+      printf '%s\n' "$item" >> "$OPEN_TMP"
+    fi
   done < "$EXPECTED_TMP"
 
   # wc -l rather than `grep -c .`: grep exits 1 on an empty file while still
@@ -796,27 +888,56 @@ else
   # newline, so wc -l is exact.
   MANAGED_APPS_MISSING_COUNT="$(wc -l < "$MISSING_TMP" | tr -d '[:space:]')"
   MANAGED_APPS_EXPECTED_COUNT="$(wc -l < "$EXPECTED_TMP" | tr -d '[:space:]')"
+  MANAGED_APPS_DECIDED_COUNT="$(wc -l < "$DECIDED_TMP" | tr -d '[:space:]')"
+  MANAGED_APPS_OPEN_COUNT="$(wc -l < "$OPEN_TMP" | tr -d '[:space:]')"
 
   {
     echo "# Managed application expectations"
     echo "# Generated: $(date)"
     echo "# Source: $EXPECT_SOURCE_FILE"
-    echo "# Source kind: $MANAGED_APPS_SOURCE"
+    echo "# Cited as: $MANAGED_APPS_SOURCE"
     echo "# Expected bundles found in inventory: $MANAGED_APPS_EXPECTED_COUNT"
     echo "# Not present on this Mac: $MANAGED_APPS_MISSING_COUNT"
+    echo "# Of those, already accounted for in the decisions log: $MANAGED_APPS_DECIDED_COUNT"
+    echo "# Still to account for: $MANAGED_APPS_OPEN_COUNT"
     echo ""
     echo "## Present pre-image, absent now"
     echo ""
     if [[ "$MANAGED_APPS_MISSING_COUNT" == "0" ]]; then
       echo "(none)"
     else
-      cat "$MISSING_TMP"
+      # `decided` is appended, never substituted, and the entry stays in the
+      # list: the machine still does not have it. What the marker adds is that
+      # someone already weighed it and wrote down why.
+      while IFS= read -r _absent; do
+        [[ -z "$_absent" ]] && continue
+        if managed_app_is_decided "$_absent"; then
+          printf '%s  [decided]\n' "$_absent"
+        else
+          printf '%s\n' "$_absent"
+        fi
+      done < "$MISSING_TMP"
+      echo ""
+      if [[ "$MANAGED_APPS_DECIDED_COUNT" != "0" ]]; then
+        echo "Entries marked [decided] are named by an entry in:"
+        echo ""
+        echo "    reimaged-system/restore-notes/decisions.md"
+        echo ""
+        echo "Read the reason with:"
+        echo ""
+        echo "    ./bin/record-decision.sh --check $MANAGED_APPS_LINEAGE"
+        echo ""
+      fi
+      if [[ "$MANAGED_APPS_OPEN_COUNT" == "0" ]]; then
+        echo "Every absence above is accounted for. Nothing here needs deciding again."
+        echo ""
+      fi
       echo ""
       echo "READ THIS BEFORE ACTING ON THE LIST ABOVE."
       echo ""
       echo "Expectations come from the company-scoped inventory, so these are"
       echo "management-stack components rather than ordinary applications."
-      echo "Two categories are absent for good reasons and are not findings:"
+      echo "These categories are absent for good reasons and are not findings:"
       echo ""
       echo "  - Components of a management stack this Mac no longer uses. A Mac"
       echo "    previously managed by a different tool carries its receipts;"
@@ -832,6 +953,16 @@ else
       echo "Act on absences from the CURRENT stack -- security agents, Company"
       echo "Portal, the MDM agent. Install those from the Company Portal Apps tab,"
       echo "never from a vendor download."
+      echo ""
+      echo "Once you have decided what an absence is, record it so the next run"
+      echo "does not ask again -- and so the reasoning survives being remembered"
+      echo "wrong:"
+      echo ""
+      echo "    ./bin/record-decision.sh \\"
+      echo "      --runbook enroll-and-stabilize \\"
+      echo "      --title '<what this group of absences is>' \\"
+      echo "      --excepts '$MANAGED_APPS_LINEAGE:<absent entry, exactly as listed above>' \\"
+      echo "      --reason '<why it is absent, and why that is correct>'"
     fi
     echo ""
     echo "## Expected set derived from inventory"
@@ -839,7 +970,7 @@ else
     cat "$EXPECTED_TMP"
   } > "$EXPECT_FILE" 2>&1 || true
 
-  rm -f "$EXPECTED_TMP" "$MISSING_TMP" "$HAYSTACK_TMP"
+  rm -f "$EXPECTED_TMP" "$MISSING_TMP" "$HAYSTACK_TMP" "$DECIDED_TMP" "$OPEN_TMP"
 
   # A count, not a verdict. The expectation set is the pre-image COMPANY-scoped
   # inventory, which mixes two populations: software Intune pushes during this
@@ -852,10 +983,28 @@ else
   # component, a version-pinned receipt -- or a genuine gap needing a ticket is
   # exactly the judgement `record_manual` exists for. This run supplies the
   # evidence; the exit checklist asks the question.
+  #
+  # What CAN be answered here is whether the question has already been answered.
+  # This row asks "is the managed application set accounted for", and an absence
+  # named by a decision is accounted for by definition -- that is the whole claim
+  # the decision makes. So a fully-decided set passes, and the detail says so
+  # rather than reporting a bare zero, because "no absences" and "seven absences
+  # someone has explained" are different facts and must not read the same.
+  #
+  # This is a weaker rule than compare-restored-state.sh's, deliberately. There a
+  # decision cannot change the verdict, because the question is whether the
+  # machine matches the image -- a fact about the machine. Here the question is
+  # whether someone has accounted for the difference, which is exactly what the
+  # decision records.
   if [[ "$MANAGED_APPS_MISSING_COUNT" == "0" ]]; then
     MANAGED_APPS_STATUS="PASS"
+    MANAGED_APPS_DETAIL="0 absent of $MANAGED_APPS_EXPECTED_COUNT expected"
+  elif [[ "$MANAGED_APPS_OPEN_COUNT" == "0" ]]; then
+    MANAGED_APPS_STATUS="PASS"
+    MANAGED_APPS_DETAIL="$MANAGED_APPS_MISSING_COUNT absent of $MANAGED_APPS_EXPECTED_COUNT expected, all accounted for in the decisions log"
   else
     MANAGED_APPS_STATUS="REVIEW"
+    MANAGED_APPS_DETAIL="$MANAGED_APPS_MISSING_COUNT absent of $MANAGED_APPS_EXPECTED_COUNT expected, $MANAGED_APPS_OPEN_COUNT still to account for"
   fi
 fi
 echo "   ✓ saved → raw/08-managed-app-expectations.txt"
@@ -1003,7 +1152,7 @@ This is the Phase 8 evidence bundle for one side of the stabilization restart. I
 | Profile count | $PROFILE_COUNT ($PROFILE_SCOPE scope) | $PROFILE_NOTE |
 | Security tooling installed or installing | $(status_pass_warn "$SECURITY_OK") | \`raw/04-managed-apps.txt\`, \`raw/05-managed-processes.txt\` |
 | macOS updates | $(status_pass_warn "$UPDATES_OK") | \`raw/06-macos-version.txt\`, \`raw/07-softwareupdate-list.txt\` |
-| Managed application set vs pre-image inventory | $MANAGED_APPS_STATUS | $MANAGED_APPS_MISSING_COUNT absent of $MANAGED_APPS_EXPECTED_COUNT expected, from \`$MANAGED_APPS_SOURCE\`. See \`raw/08-managed-app-expectations.txt\`. Components of a superseded management stack stay absent by design. |
+| Managed application set vs pre-image inventory | $MANAGED_APPS_STATUS | $MANAGED_APPS_DETAIL, from \`$MANAGED_APPS_SOURCE\`. See \`raw/08-managed-app-expectations.txt\`, which marks each absence already named by the decisions log and names the categories that are not findings: a superseded management stack, an agent still rolling out, a version-pinned receipt. |
 | FileVault | $(status_pass_warn "$FILEVAULT_OK") | \`raw/03-filevault-status.txt\` |
 | Keychain identities | $(status_pass_warn "$IDENTITIES_OK") | $IDENTITY_TOTAL valid, $IDENTITY_SSL ssl-client. See \`raw/09-keychain-identities.txt\`. Fingerprints differ from the pre-image set — MDM re-issues these rather than restoring them. |
 | Post-restart health | $(status_pass_warn "$POST_RESTART_OK") | Meaningful only on a \`--context post-restart\` run. |
@@ -1045,7 +1194,7 @@ ROWS_FILE="$OUT/rows.tsv"
   printf 'profiles\t%s\t%s\n'          "$(status_pass_warn "$PROFILES_OK")" "$PROFILE_COUNT profiles, $PROFILE_SCOPE scope"
   printf 'security-tools\t%s\t%s\n'    "$(status_pass_warn "$SECURITY_OK")" "raw/04-managed-apps.txt"
   printf 'macos-updates\t%s\t%s\n'     "$(status_pass_warn "$UPDATES_OK")" "raw/07-softwareupdate-list.txt"
-  printf 'managed-apps\t%s\t%s\n'      "$MANAGED_APPS_STATUS" "$MANAGED_APPS_MISSING_COUNT absent of $MANAGED_APPS_EXPECTED_COUNT expected"
+  printf 'managed-apps\t%s\t%s\n'      "$MANAGED_APPS_STATUS" "$MANAGED_APPS_DETAIL"
   printf 'filevault\t%s\t%s\n'         "$(status_pass_warn "$FILEVAULT_OK")" "raw/03-filevault-status.txt"
   printf 'keychain-identities\t%s\t%s\n' "$(status_pass_warn "$IDENTITIES_OK")" "$IDENTITY_TOTAL valid, $IDENTITY_SSL ssl-client"
   printf 'post-restart-health\t%s\t%s\n' "$(status_pass_warn "$POST_RESTART_OK")" "meaningful only on a post-restart run"

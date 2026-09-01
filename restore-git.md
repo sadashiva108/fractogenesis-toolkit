@@ -416,7 +416,32 @@ ssh-keygen -lf "$GIT_PERSONAL_SSH_KEY.pub"
 
 ### Step 3 — Write `~/.ssh/config` with Dual Host Aliases
 
-Write the SSH host aliases so `git@$GIT_PERSONAL_GITHUB_HOST` and `git@$GIT_WORK_GITHUB_HOST` route to the right keys automatically:
+This step replaces `~/.ssh/config` wholesale. Phase 10B restored the pre-image file from the secrets DMG, so what sits on disk right now is the config from the erased Mac. Read it before it goes, and copy out by hand any `Host` block that is not one of the two identities below — a jump host, an internal GitLab, a second Enterprise instance, a standing `AddKeysToAgent` directive:
+
+```bash
+if [ -f ~/.ssh/config ]; then
+  cat ~/.ssh/config
+else
+  printf 'No ~/.ssh/config on this Mac yet.\n'
+fi
+```
+
+> [!warning] Pitfall
+> The write below truncates the file. Any `Host` block it does not name is gone, and SSH reports nothing when it happens. The next connection to that host silently falls back to default key selection and fails, or authenticates as the wrong account — days later, far from this step, with nothing pointing back here.
+
+`Host` is the name you type in a clone URL; `HostName` is where SSH actually connects. When the two identities live on different servers — a GitHub Enterprise instance and public GitHub — each `Host` names its own real server and neither needs an alias. When both accounts live on `github.com`, one `Host` name cannot carry two keys, so the non-default identity takes an alias: `Host` holds the alias, `HostName` holds the real server.
+
+| | Direct host | Alias |
+|---|---|---|
+| `GIT_PERSONAL_GITHUB_HOST` | `github.com` | `github.com-personal` |
+| `GIT_PERSONAL_GITHUB_HOSTNAME` | leave blank | `github.com` |
+| Clone URL | `git@github.com:owner/repo.git` | `git@github.com-personal:owner/repo.git` |
+| Key chosen by | where the repository sits on disk | the remote URL, independently per remote |
+| What it costs | one repository with both a personal and a work remote sends the same key to both | every clone URL is non-canonical, and `gh repo clone` plus absolute submodule URLs emit the real host and bypass the alias |
+
+Direct is the default, and is right whenever the two identities sit on different servers. Take the alias when they share one, or when a single repository must push to both accounts with the correct key for each. Switching later costs one value here, a re-run of this step, and one `git remote set-url` per affected repository.
+
+Write the file:
 
 ```bash
 source ./reimage.env
@@ -427,7 +452,7 @@ cat > ~/.ssh/config <<EOF
 # Personal GitHub — used for repos under the personal repo root.
 # Clone personal repos as: git@${GIT_PERSONAL_GITHUB_HOST}:username/repo.git
 Host ${GIT_PERSONAL_GITHUB_HOST}
-    HostName ${GIT_PERSONAL_GITHUB_HOST}
+    HostName ${GIT_PERSONAL_GITHUB_HOSTNAME:-$GIT_PERSONAL_GITHUB_HOST}
     User git
     IdentityFile ${GIT_PERSONAL_SSH_KEY}
     IdentitiesOnly yes
@@ -452,10 +477,9 @@ ssh -G "git@${GIT_WORK_GITHUB_HOST}" | grep -iE '^(hostname|user|identityfile) '
 ssh -G "git@${GIT_PERSONAL_GITHUB_HOST}" | grep -iE '^(hostname|user|identityfile) '
 ```
 
-Each `hostname` must match the host you asked for, and each `identityfile` must name that side's key. A `hostname` still reading `${...}` means the block was pasted as text rather than run, and the variables were never substituted — SSH lowercases the value, so it appears as `${git_work_github_host}` rather than the spelling in the file. Two different hosts resolving to the *same* `hostname` means both identities point at one server, which authenticates as whichever account owns the first key offered.
+Each `hostname` must be the server you expect SSH to reach — the same name you asked for under the direct scheme, the real server under the alias scheme — and each `identityfile` must name that side's key. A `hostname` still reading `${...}` means the block was pasted as text rather than run, and the variables were never substituted — SSH lowercases the value, so it appears as `${git_work_github_host}` rather than the spelling in the file. Two different hosts resolving to the *same* `hostname` means both identities point at one server, which authenticates as whichever account owns the first key offered.
 
-> [!note]
-> `IdentitiesOnly yes` prevents SSH from trying other loaded keys before the specified one. Without it, `ssh-agent` may silently fall back to the wrong key and authenticate as the wrong identity.
+`IdentitiesOnly yes` is what makes the choice stick. Without it `ssh-agent` offers every loaded key in turn and the server accepts the first one it recognises, which may be the other account's.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -625,41 +649,50 @@ ssh -T "git@${GIT_PERSONAL_GITHUB_HOST}"
 > [!bug] Troubleshooting
 > If one host authenticates and the other returns `Permission denied (publickey)`, see [[#`ssh -T` returns "Permission denied (publickey)" for one host but not the other|`ssh -T` returns "Permission denied (publickey)" for one host but not the other]].
 
-Spot-check from inside the work repo root using a throwaway repo. No work repo is cloned yet — Phase 11B ([[restore-repos|restore-repos.md]]) does that, and it runs after this phase — so create a scratch repo rather than `cd`-ing into one that does not exist:
+Spot-check the work root. Run this from the repository root like every other block here — the block enters `$GIT_WORK_REPO_ROOT` itself, so your working directory does not need to be there and should not be, because `source ./reimage.env` resolves against this checkout. No work repository is cloned yet, since Phase 11B does that after this phase, so the block makes a scratch repository under the root and reads the identity from inside it. The value it prints is the one that applies at `$GIT_WORK_REPO_ROOT`, not the one that applies where your shell is standing:
 
 ```bash
 source ./reimage.env
 
 if [ -z "${GIT_WORK_REPO_ROOT:-}" ]; then
-  echo "GIT_WORK_REPO_ROOT is not set — run this from the repository root"
+  printf 'ERROR: GIT_WORK_REPO_ROOT is not set in reimage.env. backup-repos.md Step 1 records it.\n'
+elif [ ! -d "$GIT_WORK_REPO_ROOT" ]; then
+  printf 'ERROR: GIT_WORK_REPO_ROOT is %s, which does not exist.\n' "$GIT_WORK_REPO_ROOT"
 else
-  mkdir -p "$GIT_WORK_REPO_ROOT/test"
-  ( cd "$GIT_WORK_REPO_ROOT/test" && git init && git config --show-origin user.email )
-  rm -rf "$GIT_WORK_REPO_ROOT/test"
+  scratch="$(mktemp -d "$GIT_WORK_REPO_ROOT/.identity-check.XXXXXX")"
+  ( cd "$scratch" && git init -q && git config --show-origin user.email )
+  rm -rf "$scratch"
 fi
 ```
 
-Expect an origin of `~/.gitconfig` and `$GIT_WORK_EMAIL`. This path is outside the personal root, so the global default applies and `includeIf` must not fire — an origin pointing at the personal-root file here means the `gitdir:` pattern is too broad.
+Expect one line: an origin of `~/.gitconfig` and `$GIT_WORK_EMAIL`. This path is outside the personal root, so the global default applies and `includeIf` must not fire — an origin pointing at the personal-root file here means the `gitdir:` pattern is too broad.
 
-Spot-check from inside the personal repo root using the same throwaway technique:
+> [!warning] Pitfall
+> `mktemp -d` is what keeps this safe to run. A fixed scratch name such as `$GIT_WORK_REPO_ROOT/test` cannot be created safely: `mkdir -p` succeeds silently when the directory already exists, so a real repository of that name would be written into and then deleted by a step whose only job is to read a value. `mktemp -d` cannot collide with anything you own, so the `rm -rf` only ever removes what the block just made.
+
+Spot-check the personal root the same way. Where a real repository already sits under `$GIT_PERSONAL_REPO_ROOT`, `git config --show-origin user.email` inside it answers this without a scratch repository at all; the block covers the case where nothing is cloned there yet:
 
 ```bash
 source ./reimage.env
 
 if [ -z "${GIT_PERSONAL_REPO_ROOT:-}" ]; then
-  echo "GIT_PERSONAL_REPO_ROOT is not set — run this from the repository root"
+  printf 'ERROR: GIT_PERSONAL_REPO_ROOT is not set in reimage.env. backup-repos.md Step 1 records it.\n'
+elif [ ! -d "$GIT_PERSONAL_REPO_ROOT" ]; then
+  printf 'ERROR: GIT_PERSONAL_REPO_ROOT is %s, which does not exist.\n' "$GIT_PERSONAL_REPO_ROOT"
 else
-  mkdir -p "$GIT_PERSONAL_REPO_ROOT/test"
-  ( cd "$GIT_PERSONAL_REPO_ROOT/test" && git init && git config --show-origin user.email )
-  rm -rf "$GIT_PERSONAL_REPO_ROOT/test"
+  scratch="$(mktemp -d "$GIT_PERSONAL_REPO_ROOT/.identity-check.XXXXXX")"
+  ( cd "$scratch" && git init -q && git config --show-origin user.email )
+  rm -rf "$scratch"
 fi
 ```
 
-Expect an origin of `$GIT_PERSONAL_REPO_ROOT/.gitconfig` and `$GIT_PERSONAL_EMAIL`. A work address means the override from Step 5 is missing or the `includeIf` path does not match — Git ignores a missing include file silently, so this check is what catches it.
+Expect an origin of `$GIT_PERSONAL_REPO_ROOT/.gitconfig` and `$GIT_PERSONAL_EMAIL`. A work address means the override is missing or the `includeIf` path does not match — Git ignores a missing include file silently, so this check is what catches it.
 
-Do not move on until every spot-check prints the expected value. A silent mismatch here will land in commit history later.
+Both blocks print `direnv: unloading` on a Mac using direnv. That is the subshell leaving this checkout, and it is expected. It does mean nothing inside the parentheses can reference a `reimage.env` value, so keep the subshell to `git` calls that read configuration already on disk.
 
-Each block removes its own throwaway repository. Confirm none survived — `ls -d "$GIT_WORK_REPO_ROOT"/test "$GIT_PERSONAL_REPO_ROOT"/test 2>/dev/null` should print nothing. A leftover is not cosmetic: [[backup-repos|backup-repos.md]] discovers repositories with `find <root> -type d -name .git`, so an abandoned scratch repo in a clone root is counted as a real one by the Phase 11B audit and every comparison built on it.
+Do not move on until every spot-check prints the expected value. A silent mismatch here lands in commit history later.
+
+Each block removes its own scratch repository. If one is interrupted between `mktemp` and `rm`, a `.identity-check.*` directory survives — remove it. The Phase 11B repository audit discovers repositories with `find <root> -type d -name .git`, so an abandoned scratch repo in a clone root is counted as a real one by that audit and by every comparison built on it. The name is deliberately self-identifying for exactly that reason.
 
 > [!bug] Troubleshooting
 > If the personal spot-check prints the work identity, see [[#`git config user.email` returns the wrong identity inside `$GIT_PERSONAL_REPO_ROOT`|`git config user.email` returns the wrong identity inside `$GIT_PERSONAL_REPO_ROOT`]].
