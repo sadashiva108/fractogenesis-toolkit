@@ -686,15 +686,57 @@ Answer it deliberately rather than typing `yes`. Each host has its own source of
 
 Where neither source is to hand, answer `no`. Nothing is lost — the command is re-runnable, and an unverified `yes` is the one thing here that cannot be undone by re-running it.
 
+Run one identity at a time. Each command can stop on an authenticity prompt or stall on a blocked port, and stacking them means the line below becomes the answer typed into the prompt above it — so they are separate blocks, and each output belongs to one host.
+
+Which block to use is per identity, and one of each is a normal configuration: use the SSH block for an identity whose remotes are `git@` URLs, and the HTTPS block for one that had to move to HTTPS.
+
+Validate the work identity over SSH:
+
 ```bash
 source ./reimage.env
 
 ssh -T "git@${GIT_WORK_GITHUB_HOST}"
+```
+
+Validate the personal identity over SSH:
+
+```bash
+source ./reimage.env
 
 ssh -T "git@${GIT_PERSONAL_GITHUB_HOST}"
 ```
 
-Past the prompt, each command should greet you as the matching GitHub account — the work host as the work account, the personal host as the personal one. A greeting naming the *wrong* account means the two `Host` blocks are routing to the same server or the same key. `ssh_dispatch_run_fatal: Operation timed out` is a third outcome and a different problem entirely: the TCP connection was made and the SSH session then stalled, which is a network device interfering rather than anything about keys or identity.
+Past the prompt, each greets you as the matching GitHub account — the work host as the work account, the personal host as the personal one. A greeting naming the *wrong* account means the two `Host` blocks are routing to the same server or the same key. `ssh_dispatch_run_fatal: Operation timed out` is a third outcome and a different problem entirely: the TCP connection was made and the SSH session then stalled, which is a network device interfering rather than anything about keys or identity.
+
+**Where an identity is on HTTPS, use the two blocks below in place of that identity's `ssh -T`.** An `https://` remote never invokes `ssh`, so `ssh -T` reports on a path those remotes do not take — it can fail while every push works, or succeed while none of them do. The equivalent questions are which credential is stored for the host, and whether it reaches a repository only that account can read.
+
+Read the stored credential:
+
+```bash
+source ./reimage.env
+
+printf 'protocol=https\nhost=%s\n' "${GIT_PERSONAL_GITHUB_HOSTNAME:-$GIT_PERSONAL_GITHUB_HOST}" \
+  | git credential-osxkeychain get \
+  | grep '^username='
+```
+
+No output means nothing is stored yet and the first push will prompt for a username and a token. A `username=` line naming the personal account means a credential is present, which is not the same as it being the right one: GitHub authenticates the token and ignores the username sent alongside it, so a token belonging to another account authenticates as that account whatever this line says.
+
+Confirm what the credential actually reaches. Name a **private** repository only the intended account can read — a public one proves nothing, because it answers without any credential at all:
+
+```bash
+PRIVATE_REPO="https://replace-with-host/replace-with-owner/replace-with-private-repo.git"
+
+if GIT_TERMINAL_PROMPT=0 git ls-remote "$PRIVATE_REPO" >/dev/null 2>&1; then
+  printf 'reachable — the stored credential has access\n'
+else
+  printf 'not reachable — no credential, the wrong account, or the token lacks access to this repository\n'
+fi
+```
+
+`GIT_TERMINAL_PROMPT=0` is what keeps this from hanging: without it, a missing credential turns the check into an interactive username prompt rather than a result.
+
+That pair proves access rather than naming the account, which is as far as the base system reaches — `gh` arrives in Phase 12. The account name itself is confirmed from the other end, by the token's *Last used* timestamp on its settings page, or by the author line on a pushed commit once one exists.
 
 > [!bug] Troubleshooting
 > If either host stalls or the connection is closed without a greeting, see [[#SSH is blocked on this network|SSH is blocked on this network]].

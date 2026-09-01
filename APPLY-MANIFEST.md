@@ -1,5 +1,7 @@
 # Apply Manifest
 
+**Revision 126** — supersedes Revision 125 and earlier. Step 7 validates one identity per block, and an identity on HTTPS gets a check that reports on the path it actually takes.
+
 **Revision 125** — supersedes Revision 124 and earlier. Phase 11A stops assuming SSH works, stops assuming a host key is already trusted, and says which account to be signed into.
 
 **Revision 124** — supersedes Revision 123 and earlier. Step 5 stops telling every reader to install a browser one reader needed.
@@ -357,6 +359,65 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `backup-repos.sh` | `bin/backup-repos.sh` |
 | `setup-reimage-env.sh` | `bin/setup-reimage-env.sh` |
 | `compare-restored-state.sh` | `bin/compare-restored-state.sh` |
+
+---
+
+## Revision 126 — one identity per block, and a check that matches the transport
+
+Revision 125 established that transport is a per-identity fact. Step 7's
+validation had not caught up: it stacked both `ssh -T` calls in one block and
+offered no way to validate an identity that had moved to HTTPS.
+
+### Stacked commands and interactive prompts do not mix
+
+Both `ssh -T` calls sat in a single block. Either can stop on a host-authenticity
+prompt, and a prompt in a pasted block is answered by whatever line follows it —
+so the second command became the answer to the first, and the operator saw one
+run of output for two hosts with no way to tell which produced what. Either can
+also stall for thirty seconds or more on a blocked port, which is a poor thing to
+sit behind another command.
+
+They are now one block per identity, each preceded by the line saying which
+identity it validates.
+
+### `ssh -T` reports on a path an HTTPS remote never takes
+
+Where an identity moved to HTTPS, `ssh -T` is not a weaker check — it is a check
+of something else. It can fail while every push succeeds, and succeed while none
+of them do. Step 7 now offers the transport-matched pair in its place, and says
+which to use.
+
+The first reads the stored credential out of the keychain by host, and states the
+limit of what that proves: GitHub authenticates the token and ignores the username
+sent with it, so a token belonging to another account authenticates as that
+account whatever the stored username says.
+
+The second is the check that carries weight — `git ls-remote` against a
+**private** repository only the intended account can read. A public repository
+answers without any credential at all and proves nothing. `GIT_TERMINAL_PROMPT=0`
+is set on that call for the same reason the blocks were split: without it, a
+missing credential turns the check into an interactive username prompt instead of
+a result.
+
+Neither names the account, and the step says so rather than implying otherwise.
+`gh` is a Phase 12 arrival, so the base system reaches access but not identity.
+The account is confirmed from the server side — the token's *Last used* timestamp,
+or the author line on a pushed commit.
+
+### Verification performed
+
+- `verify-doc-paths.sh` clean; `verify-runbook-structure.sh` unchanged at 29 FAIL
+  / 5 WARN with `restore-git.md` still clear of the file.
+- Command blocks re-read after writing to confirm the `printf` escapes survived
+  the edit as `\n` rather than a literal backslash-n pair.
+- Documentation only; no script changed.
+- Run on Linux with GNU coreutils and Bash 5.x. Not executed on the target Mac.
+
+### Known follow-ups, not applied
+
+- `bin/record-restore-exit.sh` closes **Both identities validated** as a manual
+  row and describes it as `ssh -T` against both hosts. The wording predates
+  transport being a per-identity choice and still assumes SSH on both sides.
 
 ---
 
