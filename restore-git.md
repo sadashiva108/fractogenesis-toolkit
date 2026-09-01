@@ -872,8 +872,11 @@ asked days later, when the answer is no longer reconstructable.
 Read the rows rather than the exit status. It records `PASS`, `WARN`, `FAIL` and
 `TODO`, and a `TODO` row is a question only you can answer — not a failure, and
 not a pass either. **Both identities validated** is the one that stays open until
-you close it: `ssh -T` fails identically for an unregistered key and for the
-wrong key, so no script can tell the difference between the two.
+you close it, and it asks about each identity on the transport its remotes
+actually use. Neither transport can be graded from here: `ssh -T` fails
+identically for an unregistered key and for the wrong key, and an HTTPS
+credential authenticates as the token's owner whatever username is stored beside
+it.
 
 Confirm both boundary records landed. One file answers whether the phase both
 started and finished:

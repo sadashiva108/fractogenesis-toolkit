@@ -694,7 +694,14 @@ check_restore_git() {
     fi
   fi
 
-  record_manual "Both identities validated" "Step 7 ran \`ssh -T\` against both hosts and each returned the expected account. An unregistered key and a wrong key fail identically, so this is the row only you can close."
+  # Transport is a per-identity choice, not a property of the phase: a network
+  # that blocks SSH to the public internet while permitting it to an internal
+  # Enterprise Server over its tunnel leaves one identity on SSH and the other on
+  # HTTPS. An earlier wording described this row as `ssh -T` against both hosts,
+  # which reads as a failure to anyone whose personal remotes are HTTPS -- where
+  # `ssh -T` reports on a path those remotes never take, and can fail while every
+  # push succeeds. The row names the check for each transport instead.
+  record_manual "Both identities validated" "Each identity was checked on the transport its remotes actually use. Over SSH, \`ssh -T\` against that host returned the expected account. Over HTTPS, a \`git ls-remote\` against a private repository only that account can read succeeded. Neither can be graded here: \`ssh -T\` fails identically for an unregistered key and for the wrong key, and an HTTPS credential authenticates as the token's owner regardless of the username stored beside it. This is the row only you can close."
 }
 
 # ---------------------------------------------------------------------------

@@ -1,6 +1,6 @@
 # Apply Manifest
 
-**Revision 126** — supersedes Revision 125 and earlier. Step 7 validates one identity per block, and an identity on HTTPS gets a check that reports on the path it actually takes.
+**Revision 126** — supersedes Revision 125 and earlier. Step 7 validates one identity per block, an identity on HTTPS gets a check that reports on the path it actually takes, and the exit row asks the same question.
 
 **Revision 125** — supersedes Revision 124 and earlier. Phase 11A stops assuming SSH works, stops assuming a host key is already trusted, and says which account to be signed into.
 
@@ -410,14 +410,30 @@ or the author line on a pushed commit.
   / 5 WARN with `restore-git.md` still clear of the file.
 - Command blocks re-read after writing to confirm the `printf` escapes survived
   the edit as `\n` rather than a literal backslash-n pair.
-- Documentation only; no script changed.
-- Run on Linux with GNU coreutils and Bash 5.x. Not executed on the target Mac.
+- `bash -n bin/record-restore-exit.sh` clean; `verify-script-portability.sh` clean
+  against the Bash 3.2 / BSD floor.
+- Run on Linux with GNU coreutils and Bash 5.x. `shellcheck` was not available.
+  Not executed on the target Mac.
 
-### Known follow-ups, not applied
+### The exit row asks about the transport each identity uses
 
-- `bin/record-restore-exit.sh` closes **Both identities validated** as a manual
-  row and describes it as `ssh -T` against both hosts. The wording predates
-  transport being a per-identity choice and still assumes SSH on both sides.
+`record_manual "Both identities validated"` described itself as `ssh -T` against
+both hosts. To an operator whose personal remotes are HTTPS that is a row
+describing a check they did not run and should not run — `ssh -T` reports on a
+path those remotes never take, so it can fail while every push succeeds, and
+answering the row honestly would mean either running the wrong check or leaving it
+open.
+
+It now names the check for each transport: `ssh -T` returning the expected account
+where the remotes are `git@`, and a `git ls-remote` against a private repository
+only that account can read where they are `https://`. It also states why neither
+side can be graded by the script — `ssh -T` fails identically for an unregistered
+key and for the wrong key, and an HTTPS credential authenticates as the token's
+owner whatever username sits beside it in the keychain. Step 9's prose in
+`restore-git.md` carries the same two sentences.
+
+The code comment above the row records what the previous wording assumed, since
+the reason it changed is not visible from the string itself.
 
 ---
 
