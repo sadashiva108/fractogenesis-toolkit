@@ -1,5 +1,7 @@
 # Apply Manifest
 
+**Revision 127** — supersedes Revision 126 and earlier. The system inventory joins the run index, and refreshing one section copies the bundle forward instead of editing it.
+
 **Revision 126** — supersedes Revision 125 and earlier. Step 7 validates one identity per block, an identity on HTTPS gets a check that reports on the path it actually takes, and the exit row asks the same question.
 
 **Revision 125** — supersedes Revision 124 and earlier. Phase 11A stops assuming SSH works, stops assuming a host key is already trusted, and says which account to be signed into.
@@ -359,6 +361,138 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `backup-repos.sh` | `bin/backup-repos.sh` |
 | `setup-reimage-env.sh` | `bin/setup-reimage-env.sh` |
 | `compare-restored-state.sh` | `bin/compare-restored-state.sh` |
+
+---
+
+## Revision 127 — refreshing one section stops editing the bundle it refreshes
+
+`system-inventory/` was the conversion that needed a decision rather than a
+mechanism. Everything else about it is ordinary — timestamped bundles, one per
+context — but `--section docker` resolved the newest bundle by `ls -dt` and
+**rewrote one file inside it**. A run index exists to make a promoted run's
+contents fixed, so the two could not both stand.
+
+Three ways out, and the first two are worse than they look:
+
+- **Leave the section in place and record an amendment row.** The index then
+  stops describing what is in a directory: a row plus every later row does. Every
+  consumer that reads a run would have to read the manifest forward to know what
+  it is holding, and none of them do. It also needs a new row kind in the shared
+  library, so the cost lands on every category.
+- **Give single-section runs their own lineage.** No new machinery, but the
+  correction ends up in a different directory from the bundle it corrects, and a
+  reader of the official bundle sees the stale `12-docker.txt` with nothing
+  saying a newer answer exists. That is the failure the in-place update was
+  written to avoid, reintroduced one level out.
+- **Copy the bundle forward.** Chosen.
+
+A `--section` run now stages a new run, copies the official bundle of the same
+context into it, overwrites the one section, and promotes it. The previous run is
+untouched and still on disk; the pointer always resolves to a complete bundle. A
+bundle is around **120 KB**, which is what makes this affordable — the objection
+to copy-forward is duplication, and at that size it costs less than the ambiguity
+it removes.
+
+### Telling a captured section from a carried one
+
+This is the one thing copy-forward must explain that in-place editing did not, so
+it is recorded twice:
+
+- the bundle's own `MANIFEST.txt` names the section captured at its generation
+  date and the run every other file came from;
+- the category row reads `section 'docker' refreshed, rest carried from
+  pre-image-20260816-211456`.
+
+Each carried file keeps its original `# Generated:` header, so a timestamp inside
+a section file is when that section was captured — not when its bundle was made.
+Without those two lines a copied bundle would claim, by its directory stamp, to
+be a capture of a moment that never happened.
+
+### The pin marker is stripped from the copy
+
+`PINNED-OFFICIAL.txt` describes one run. Carried into a copy it names a run that
+directory is not, and `artifact_runs_rebuild` scans markers off disk — so a
+copied marker would let a rebuild resurrect a pin from a bundle that merely
+inherited the file. The copy deletes it.
+
+### Two defects the first test run exposed
+
+- The `--output` in-place guard fires on `-f "$OUTPUT_DIR/MANIFEST.txt"`, and a
+  copy-forward run has just copied one into its own staging directory. Every
+  `--section` run therefore matched it, kept the manifest it inherited — dated
+  for another run, silent about the refresh — and printed "nothing was indexed"
+  while the pointer had in fact advanced. The guard is now gated on
+  `INDEXED != true`.
+- The progress lines, the Brewfile line and the dotfiles line all printed
+  `basename "$OUT"`, which during staging is `.pre-image-….incomplete`. They
+  print the promoted name.
+
+### The readers
+
+`compare-restored-state.sh`, `record-restore-prereqs.sh` and
+`reimage-checklist.sh` resolve `official/pre-image.txt`. Two were globbing with
+`-maxdepth 1` and would have broken loudly on the relayout;
+`reimage-checklist.sh` was testing the category for contents, which after Phase
+13B is non-empty for a post-image bundle it would have called "System inventory
+captured". It now reports the resolved run, and WARNs distinctly when bundles
+exist but no pointer does — a repair, not a missing capture.
+
+`compare-restored-state.sh --inventory NAME` takes a bare run id and resolves it
+under `runs/`, so the value stays typeable from what the manifest and the pointer
+both print.
+
+### Retrofit
+
+`pre-image-20260816-211456` moved into `runs/` and was indexed;
+`official/pre-image.txt` written. Bundle contents untouched.
+
+### Delivery note — this revision's code shipped before its entry
+
+The scripts and runbooks below landed in commit `c4184dd` ("Refactored
+captures."), written from a concurrent session against the same working tree.
+The code is correct and complete; what was missing was this entry, so `git log`
+alone does not connect that commit to the conversion it carried. Read this file,
+not the log, for what changed when.
+
+The same concurrency produced a numbering collision earlier in the day: two
+different changes were both written as Revision 123. It was resolved by
+renumbering the Chrome change to 124, which is where it now sits.
+
+### Verification performed
+
+- Copy-forward run end to end against a scratch copy of the live category with a
+  pin marker planted in the source bundle: new run promoted, pointer advanced,
+  20 files in, 19 out (the marker correctly stripped), source bundle and its
+  marker untouched, `12-docker.txt` dated today and `01-hardware.txt` still dated
+  2026-08-16.
+- `compare-restored-state.sh --runbook restore-runtime --dry-run` against the
+  live artifact root resolves `system-inventory/runs/pre-image-20260816-211456`.
+- `bash -n` clean on all four edited scripts; `verify-script-portability.sh`
+  clean; `verify-doc-paths.sh --all` clean at 713 OK / 0 MISSING / 0 ANCHOR
+  BROKEN.
+- `verify-runbook-structure.sh` reads **29 FAIL / 5 WARN** against the 30/5
+  baseline. Document count is unchanged at 27, every remaining failure is
+  `NO-NOTE` or `LEGEND`, and `[!note]` and legend counts are byte-identical to
+  the pre-change tree in every runbook — so one structural rule flipped to PASS.
+  Which file it was is not isolated; no rule fails in any file this revision
+  touched.
+- Run on Linux with GNU coreutils and Bash 5.x. Not executed on the target Mac.
+
+### Known follow-ups, not applied
+
+- `time-machine/` remains unconverted, and is larger than it was scoped as. **Two
+  producers** write into that category, not one: `run-time-machine.sh` (six
+  artifact kinds) and `record-time-machine-evidence.sh` (a `pre-run` bundle, a
+  `verify-volume` capture and a `final` checklist). They are coupled —
+  `record-time-machine-evidence.sh final` reads four of the other script's
+  artifacts back by `-maxdepth 1` glob (`completion-check-*.md`,
+  `verifychecksums-*.txt`, `diskutil-verifyvolume-applebackups-*.txt`, and the
+  `pre-image-time-machine-status-*/` directory), so both producers and all four
+  read-backs have to move in one atomic change. `reimage-checklist.sh` and
+  `record-reimaged-system.sh` also read the category.
+- `performance-audit/`, `toolkit-snapshot/` and `office-stability/` are still
+  unscoped.
+- `repo-audit-reports/latest-run.txt` is still inert and still needs deleting.
 
 ---
 

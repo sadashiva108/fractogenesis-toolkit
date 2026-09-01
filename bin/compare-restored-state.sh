@@ -148,6 +148,14 @@ fi
 # shellcheck source=../../.internal/artifact-runs.sh
 source "$RUNS_LIB"
 
+SSH_HOSTS_LIB="$REPO_ROOT/.internal/ssh-host-list.sh"
+if [[ ! -f "$SSH_HOSTS_LIB" ]]; then
+  echo "ERROR: shared ssh host list helper not found: $SSH_HOSTS_LIB" >&2
+  exit 2
+fi
+# shellcheck source=../../.internal/ssh-host-list.sh
+source "$SSH_HOSTS_LIB"
+
 usage() {
   sed -n '/^# --- BEGIN USAGE ---$/,/^# --- END USAGE ---$/p' "$0" \
     | sed '1d;$d;s/^# //;s/^#$//'
@@ -517,9 +525,19 @@ collect_restore_git() {
     "git config --global --get-regexp '^includeif' | head -1" \
     "inventory:08-git.txt" 'includeif'
 
-  probe_presence "SSH host aliases configured" \
-    "grep -ciE '^[[:space:]]*Host[[:space:]]' \"$HOME/.ssh/config\" 2>/dev/null" \
-    "inventory:08-git.txt" 'user\.name='
+  # The names in `~/.ssh/config`, not how many of them there are. A count
+  # cannot see a routing change: two blocks before and two after passes while
+  # `github.com-shiva` has silently become `github.com`, which sends every
+  # pre-image personal remote to a host that no longer exists. Both sides come
+  # from `ssh_host_list` so the comparison is of the same shape on each.
+  #
+  # `not recorded` on the inventory side means the pre-image bundle predates the
+  # `ssh.hosts=` line, which no capture written before this wrote. That is the
+  # honest answer for those bundles -- there is nothing to compare -- and it
+  # resolves on the next reimage rather than being papered over here.
+  probe_value "SSH routing hosts" \
+    "ssh_host_list" \
+    "inventory:08-git.txt" 'ssh\.hosts='
 }
 
 collect_restore_access() {

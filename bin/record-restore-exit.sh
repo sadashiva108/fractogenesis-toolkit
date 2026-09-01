@@ -142,7 +142,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ -z "${RUNBOOK:-}" ]]; then
-  echo "ERROR: --runbook is required. Supported: restore-runtime, restore-access" >&2
+  echo "ERROR: --runbook is required. Supported: restore-runtime, restore-access, restore-git, restore-repos" >&2
   usage >&2
   exit 2
 fi
@@ -153,7 +153,7 @@ case "$RUNBOOK" in
   restore-git)    PHASE_RUNBOOK="restore-git.md";     PHASE_NEXT="restore-repos.md" ;;
   restore-repos)  PHASE_RUNBOOK="restore-repos.md";   PHASE_NEXT="restore-apps.md" ;;
   *) echo "ERROR: no exit criteria defined for runbook: $RUNBOOK" >&2
-     echo "HINT:  supported runbooks: restore-runtime, restore-access. Others are added as their runbooks are reached." >&2
+     echo "HINT:  supported runbooks: restore-runtime, restore-access, restore-git, restore-repos. Others are added as their runbooks are reached." >&2
      exit 2 ;;
 esac
 

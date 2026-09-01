@@ -144,6 +144,14 @@ fi
 # shellcheck source=../.internal/artifact-runs.sh
 source "$RUNS_LIB"
 
+SSH_HOSTS_LIB="$REPO_ROOT/.internal/ssh-host-list.sh"
+if [[ ! -f "$SSH_HOSTS_LIB" ]]; then
+  echo "ERROR: shared ssh host list helper not found: $SSH_HOSTS_LIB" >&2
+  exit 2
+fi
+# shellcheck source=../.internal/ssh-host-list.sh
+source "$SSH_HOSTS_LIB"
+
 # Gate for --section: true when no filter is set, or when the filter matches
 # this section's keyword. Wraps each section block without altering its body.
 want() { [[ -z "$SECTION_FILTER" || "$SECTION_FILTER" == "$1" ]]; }
@@ -481,7 +489,7 @@ fi
 # 08 — Git
 # ---------------------------------------------------------------------------
 if want git; then
-section "Git global config" "08-git.txt"
+section "Git and SSH routing" "08-git.txt"
   r git config --list --show-origin
   h ""
   h "--- .gitconfig ---"
@@ -489,6 +497,20 @@ section "Git global config" "08-git.txt"
   h ""
   h "--- .gitignore_global ---"
   r cat "$HOME/.gitignore_global"
+  h ""
+  h "--- .ssh/config ---"
+  r cat "$HOME/.ssh/config"
+  h ""
+  # The raw file above is for a person to read; this line is for
+  # `compare-restored-state.sh`, which needs one value it can compare against
+  # the same list derived from the restored Mac. Without it the comparison had
+  # nothing on this side to match and anchored on `user.name=` instead --
+  # a Git key standing in for an SSH fact, which meant the row could not
+  # disagree with anything. `08-git.txt` carries it rather than a new numbered
+  # section because Phase 11A already reads this file and the routing is the
+  # other half of the identity it records.
+  h "--- SSH routing hosts (normalized) ---"
+  h "ssh.hosts=$(ssh_host_list)"
 end_section
 fi
 
