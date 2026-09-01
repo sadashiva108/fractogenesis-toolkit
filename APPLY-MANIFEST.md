@@ -509,6 +509,36 @@ with two remotes; different hostnames route themselves. It is only for two
 accounts on one server, where a single `Host` block carries a single
 `IdentityFile`.
 
+### The new key is documented as optional and checked anyway
+
+`references/environment-variable-reference.md` gains `GIT_PERSONAL_GITHUB_HOSTNAME`
+in the *Written by a later runbook* table and as a second worked example of the
+**Optional** shape, beside `GIT_PERSONAL_GITHUB_OWNER`. It is explicitly kept out
+of the all-or-nothing `GIT_PERSONAL_*` group, and the reference now says why:
+blank is the correct value on every Mac whose two identities sit on different
+servers, so requiring it would fail the common case. Optional is not the same as
+unchecked — the exit row reads the `Host` block back out of `~/.ssh/config` and
+compares its `HostName` to what `reimage.env` says, which catches an alias with
+nothing real behind it whether or not the key was set.
+
+### Verification added to the steps that were writing blind
+
+- **Step 3** counts `Host` blocks and reads the file mode. The count is what
+  proves nothing carried over from the pre-image file was lost to the rewrite, now
+  that the step prints that file first; the mode matters because SSH refuses a
+  config wider than `0600` with `Bad owner or permissions` and falls back to
+  defaults for every host in it.
+- **Step 4** prints `include.path` and the `includeif.gitdir:` key. Git ignores a
+  directive whose file is missing and says nothing, so a path typed wrong here has
+  no symptom until a commit carries the wrong address. Neither file exists at that
+  point and that is correct — what is being checked is that the paths are right
+  while the values are still in the shell that wrote them.
+- **Step 5** carried the same fixed-name scratch repository as Step 7, with the
+  same guard message naming the wrong cause. `mkdir -p "$GIT_PERSONAL_REPO_ROOT/test-repo"`
+  followed by an unguarded `rm -rf` of that path would have deleted a real
+  repository of that name. It now uses `mktemp -d` and reports the actual cause,
+  matching Step 7.
+
 ### Verification performed
 
 - `verify-runbook-structure.sh`: `restore-git.md` clears the file. The remaining

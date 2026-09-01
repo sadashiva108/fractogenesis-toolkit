@@ -149,7 +149,7 @@ $FRACTOGENESIS_HOME/reimage.env    # sourced at the start of every step below
 
 The `reimage.env` values this runbook depends on. `REIMAGE_ARTIFACT_ROOT` is resolved during `prepare-artifact-root.md` and the repository roots during `backup-repos.md`. The identity keys, host aliases and default branch are written **by this runbook**, in Step 0c — they are not in `reimage.env.example` and do not exist in `reimage.env` until 0c records them, since `upsert-env` appends a key that is not yet present.
 
-The five work-and-default keys are required. The four `GIT_PERSONAL_*` keys are optional and all-or-nothing: fill every one or leave every one blank.
+The five work-and-default keys are required. The four `GIT_PERSONAL_*` identity keys are optional and all-or-nothing: fill every one or leave every one blank. `GIT_PERSONAL_GITHUB_HOSTNAME` is written by the same step but stands outside that group — blank is its normal value and means `HostName` inherits the `Host` value, so requiring it would fail every Mac whose two identities sit on different servers. Step 9 checks it whether or not it is set, by reading the written `Host` block back out of `~/.ssh/config`.
 
 | Variable | Meaning |
 |---|---|
@@ -489,6 +489,16 @@ Each `hostname` must be the server you expect SSH to reach — the same name you
 
 `IdentitiesOnly yes` is what makes the choice stick. Without it `ssh-agent` offers every loaded key in turn and the server accepts the first one it recognises, which may be the other account's.
 
+Two things the parse above cannot tell you: whether anything you meant to carry across is still in the file, and whether SSH will read it at all. Check both:
+
+```bash
+grep -cE '^[[:space:]]*[Hh]ost[[:space:]]' ~/.ssh/config
+
+stat -f '%Sp %N' ~/.ssh/config
+```
+
+The count is 2 with no extra hosts, and higher by exactly the number you copied back in from the file printed at the start of this step — a count of 2 after you saw four blocks means two were lost to the rewrite. The mode must read `-rw-------`; SSH refuses a config file any wider with `Bad owner or permissions` and falls back to defaults for every host in it.
+
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
 ---
@@ -540,6 +550,18 @@ git config --global --get http.sslCAInfo
 
 The first returns `$GIT_WORK_EMAIL`. The second returns the bundle path if Step 7 of `restore-access` set one, and nothing at all if it did not — an empty result is only correct on a Mac with no corporate TLS interception.
 
+Git ignores an `include` or `includeIf` whose file is missing and reports nothing, so a path typed wrong here surfaces later as the wrong author address rather than as an error. Confirm both directives carry the paths they should:
+
+```bash
+source ./reimage.env
+
+git config --global --get-all include.path
+
+git config --global --get-regexp '^includeif\.'
+```
+
+The first prints `~/.config/git/config.local`. The second prints one `includeif.gitdir:...` key whose path is `$GIT_PERSONAL_REPO_ROOT` with a trailing slash, and whose value is the override file under that root. Neither file exists yet, and that is correct — the overlay is seeded in Step 6 and the override written in Step 5. What is being checked here is that the directives point where they were meant to, while the values are still in the shell that wrote them.
+
 > [!bug] Troubleshooting
 > If that check comes back empty on a Mac that *does* sit behind corporate TLS interception, or an internal Enterprise Server host later refuses to verify, see [[#An internal Enterprise Server host fails TLS verification|An internal Enterprise Server host fails TLS verification]].
 
@@ -579,17 +601,21 @@ Validate the conditional include fires from inside a personal repo:
 source ./reimage.env
 
 if [ -z "${GIT_PERSONAL_REPO_ROOT:-}" ]; then
-  echo "GIT_PERSONAL_REPO_ROOT is not set — run this from the repository root"
+  printf 'ERROR: GIT_PERSONAL_REPO_ROOT is not set in reimage.env. backup-repos.md Step 1 records it.\n'
+elif [ ! -d "$GIT_PERSONAL_REPO_ROOT" ]; then
+  printf 'ERROR: GIT_PERSONAL_REPO_ROOT is %s, which does not exist.\n' "$GIT_PERSONAL_REPO_ROOT"
 else
-  mkdir -p "$GIT_PERSONAL_REPO_ROOT/test-repo"
-  ( cd "$GIT_PERSONAL_REPO_ROOT/test-repo" && git init && git config --show-origin user.email )
-  rm -rf "$GIT_PERSONAL_REPO_ROOT/test-repo"
+  scratch="$(mktemp -d "$GIT_PERSONAL_REPO_ROOT/.identity-check.XXXXXX")"
+  ( cd "$scratch" && git init -q && git config --show-origin user.email )
+  rm -rf "$scratch"
 fi
 ```
 
 `--show-origin` names the file the value came from, which is the whole question here. Expect `file:$GIT_PERSONAL_REPO_ROOT/.gitconfig` followed by `$GIT_PERSONAL_EMAIL`. An origin of `~/.gitconfig` with a work address means the include did not fire — either the override file is missing, or the `gitdir:` pattern does not match this path. Without `--show-origin` those two causes look identical.
 
-The `cd` is inside a subshell and there is no `cd ~`, so the shell you are typing in never leaves the repository root. That matters for more than tidiness: a directory-scoped environment loader such as `direnv` unloads `reimage.env` the moment you leave, which empties `$GIT_PERSONAL_REPO_ROOT` and makes the cleanup on the next line silently skip. The empty-variable branch exists for the same reason — with no root set, `mkdir -p "/test-repo"` and `cd` both fail, and `git init` would otherwise run in whatever directory you happened to be standing in.
+The `cd` is inside a subshell and there is no `cd ~`, so the shell you are typing in never leaves the repository root. That matters for more than tidiness: a directory-scoped environment loader such as `direnv` unloads `reimage.env` the moment you leave, which empties `$GIT_PERSONAL_REPO_ROOT` and makes the cleanup on the next line silently skip. `direnv: unloading` printed by this block is that unload happening inside the subshell, and is expected. The guards exist for the same reason — with no root set, a scratch directory would be created at the filesystem root, and `git init` would otherwise run in whatever directory you happened to be standing in.
+
+`mktemp -d` names the scratch repository rather than a fixed path. A fixed name cannot be removed safely: `mkdir -p` succeeds silently on a directory that already exists, so a real repository of that name would be written into and then deleted by a step that only reads a value. If a run is interrupted before the `rm`, a `.identity-check.*` directory is left under the personal root — remove it, because the Phase 11B audit counts any `.git` under a clone root as a repository.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 

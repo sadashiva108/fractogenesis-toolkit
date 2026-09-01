@@ -71,6 +71,7 @@ None of these appear in `reimage.env.example`. They do not exist in `reimage.env
 | `JAVA_HOME` | [[restore-runtime\|restore-runtime.md]] (Phase 10A) | Step 7 |
 | `GIT_WORK_NAME`, `GIT_WORK_EMAIL`, `GIT_WORK_SSH_KEY`, `GIT_WORK_GITHUB_HOST`, `GIT_DEFAULT_BRANCH` | [[restore-git\|restore-git.md]] (Phase 11A) | Step 0c |
 | `GIT_PERSONAL_NAME`, `GIT_PERSONAL_EMAIL`, `GIT_PERSONAL_SSH_KEY`, `GIT_PERSONAL_GITHUB_HOST` | [[restore-git\|restore-git.md]] (Phase 11A) | Step 0c |
+| `GIT_PERSONAL_GITHUB_HOSTNAME` | [[restore-git\|restore-git.md]] (Phase 11A) | Step 0c |
 | `GIT_PERSONAL_GITHUB_OWNER` | [[restore-repos\|restore-repos.md]] (Phase 11B) | Step 0c |
 
 [[restore-access|restore-access.md]] (Phase 10B) Step 0 re-records `REIMAGE_JDK_BASELINE` and `JAVA_HOME` when a `reimage.env` predating Phase 10A Step 7 reaches it. That is a recovery path, not ownership: it confirms first and writes only when the value is missing.
@@ -147,12 +148,16 @@ Three shapes, and they are not interchangeable:
 | Shape | Meaning | Example |
 |---|---|---|
 | Required | The step refuses to write without it. | `GIT_WORK_EMAIL`, `GIT_WORK_REPO_ROOT` |
-| Optional | Blank is a decision with a defined meaning. | `GIT_PERSONAL_GITHUB_OWNER` — blank means *never rewrite a clone URL* |
+| Optional | Blank is a decision with a defined meaning. | `GIT_PERSONAL_GITHUB_OWNER` — blank means *never rewrite a clone URL*; `GIT_PERSONAL_GITHUB_HOSTNAME` — blank means *`HostName` inherits the `Host` value* |
 | All-or-nothing group | Fill every member or leave every member blank. Half a group is never right. | The four `GIT_PERSONAL_*` identity keys, together with `GIT_PERSONAL_REPO_ROOT` |
 
 The personal Git group is the worked example. A Mac with no separate personal identity leaves all five blank, and that is a `PASS` at every boundary. A half-filled group is what fails quietly: an identity with no root leaves `restore-git.md` Step 5's override at `/.gitconfig`, and a root with no identity clones into a directory `includeIf` never matches, so those commits land under the **work** identity and nothing reports it until someone else notices the author line.
 
 Both directions are checked — in `check_restore_git()` in `bin/record-restore-exit.sh`, and again in `check_restore_repos()` in `bin/record-restore-prereqs.sh`.
+
+`GIT_PERSONAL_GITHUB_HOSTNAME` is written by the same step and belongs to the same runbook, but deliberately **not** to that group. Blank is its normal value on most Macs and means `HostName` inherits whatever `GIT_PERSONAL_GITHUB_HOST` holds, which is correct whenever the two identities sit on different servers. It is filled only when that host is an alias — two accounts on one server, where a single `Host` block cannot carry two keys. Adding it to the all-or-nothing group would fail every correctly configured Mac that has no alias.
+
+Optional does not mean unchecked. `check_restore_git()` reads the `Host` block back out of `~/.ssh/config` and compares its `HostName` against what `reimage.env` says it should be, so the failure the key exists to prevent — an alias with nothing real behind it, where `Host` and `HostName` are the same unresolvable name — is caught whether or not the key is set.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
