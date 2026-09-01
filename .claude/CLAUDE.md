@@ -14,6 +14,10 @@ authoritative place and apply to Claude exactly as they do to Copilot.
 - **Script authoring:** `.github/ai-prompts/script-prompts/bash-script-authoring-and-review.md`
   with `.github/ai-templates/script-templates/`.
 - **Script placement:** `.github/guides/script-types-and-locations.md`.
+- **Parked work:** `docs/gaps/` and `docs/sessions/` — read both before starting
+  in an unfamiliar area, and write to `docs/gaps/` instead of widening the task
+  when you find a second defect. Contents are gitignored; the rules are in
+  `.github/copilot-instructions.md` section 4b.
 
 Do not restate their contents here. When guidance changes, edit the source above
 so there is one place to maintain.

@@ -62,6 +62,28 @@ Purpose
 - reimage.env.example
 - .github/ai-prompts/script-prompts/bash-script-authoring-and-review.md (authoring/review rules)
 
+4b) docs/ -- parked work, not repository content
+
+Three directories, tracked but with their contents gitignored. They exist so a
+note has an obvious home and does not become a line in a chat log nobody reads
+again.
+
+- docs/features/ -- ideas and features to build later.
+- docs/gaps/     -- defects and must-dos found while working on something else,
+                    parked so the current task stays finished.
+- docs/sessions/ -- session handoffs, and the prompts that start the next session.
+
+Rules for an AI session:
+- WRITE here rather than widening the task. Finding a second defect while fixing
+  the first is normal; fixing both in one change is how a small edit becomes an
+  unreviewable one. Note it in docs/gaps/ and say so in the summary.
+- READ docs/gaps/ and docs/sessions/ before starting work in an area -- the
+  answer to "why is this half-done" is often already written down.
+- These files are NOT tracked. Anything that must survive a fresh clone belongs
+  in APPLY-MANIFEST.md or the runbook it concerns, not here.
+- One file per item, named for the thing rather than the date. A dated filename
+  sorts by when someone noticed, which is never the question being asked.
+
 5) Other AI assistant configs
 - .claude/CLAUDE.md — pointer only; it routes Claude sessions to this file and to the .github/ai-prompts and .github/ai-templates sets. Keep guidance here, not there.
 - No AGENTS.md, .cursorrules, or .windsurfrules. If one is added, make it a pointer to this file rather than a second copy of these rules.

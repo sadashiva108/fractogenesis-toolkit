@@ -1,5 +1,7 @@
 # Apply Manifest
 
+**Revision 128** — supersedes Revision 127 and earlier. A note found mid-task gets somewhere to go that is not the end of a chat log.
+
 **Revision 127** — supersedes Revision 126 and earlier. The system inventory joins the run index, and refreshing one section copies the bundle forward instead of editing it.
 
 **Revision 126** — supersedes Revision 125 and earlier. Step 7 validates one identity per block, an identity on HTTPS gets a check that reports on the path it actually takes, the exit row asks the same question, and the SSH-hosts comparison starts comparing something.
@@ -361,6 +363,98 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `backup-repos.sh` | `bin/backup-repos.sh` |
 | `setup-reimage-env.sh` | `bin/setup-reimage-env.sh` |
 | `compare-restored-state.sh` | `bin/compare-restored-state.sh` |
+
+---
+
+## Revision 128 — somewhere to put the thing you are not going to fix right now
+
+Two sessions ran against this tree today, and both produced the same kind of
+residue: a defect noticed while fixing a different one, an idea worth keeping, a
+handoff that had to be written somewhere. All of it lived in chat logs, which is
+where knowledge goes to be re-derived. `docs/` is the answer, and it exists
+already — this revision makes it legible to the next session and decides how git
+treats it.
+
+```
+docs/features/   ideas and features to build later
+docs/gaps/       defects and must-dos found while working on something else
+docs/sessions/   session handoffs, and the prompts that start the next session
+```
+
+### The directories are tracked; their contents are not
+
+`.gitignore` keeps the three directories and ignores what goes in them, so a
+fresh clone has the layout without carrying one person's working notes. Deciding
+otherwise later is a one-line change — delete the three `docs/<dir>/*` lines —
+which is why the rules are written per-directory rather than as one `docs/`.
+
+That form is deliberate for a second reason, and the file already documents it
+against `.idea/*`: git does not descend into a directory excluded wholesale, so a
+bare `docs/` would make every `!` line below it dead. The `.gitkeep` files are
+what actually carry the directories into the repository.
+
+### Why `docs/gaps/` earns its place
+
+The rule attached to it in `.github/copilot-instructions.md` is the point of the
+directory, not a description of it: **write here rather than widening the task.**
+Finding a second defect while fixing the first is normal. Fixing both in one
+change is how a reviewable edit becomes an unreviewable one, and this session
+produced a live example — the `time-machine/` conversion turned out to span two
+coupled producers and four glob read-backs, discovered halfway in. Stopping and
+writing it down was the right move; before today there was nowhere in the
+repository to write it.
+
+Filenames are named for the thing, not the date. A dated filename sorts by when
+someone noticed, which is never the question being asked.
+
+### Where the rules live
+
+`.github/copilot-instructions.md` gains section **4b** — the authoritative copy,
+tool-agnostic like the rest of that file. `.claude/CLAUDE.md` gains a pointer to
+it and does not restate it, which is that file's whole stated contract.
+
+### A reconciliation, since two sessions wrote into one manifest today
+
+Recorded here because the entries themselves are committed and this repository
+does not go back and repair them:
+
+- **Revision 123 was written twice**, by two sessions, for different changes. The
+  later-committed one — Step 5's Chrome change — was renumbered **124**, which is
+  where it sits. Correct, and confirmed from both sides.
+- **Commit `b3493e5` does not describe most of what it contains.** Its message
+  came from this session and names only the Revision 127 manifest entry; the
+  commit also carries `.internal/ssh-host-list.sh`,
+  `bin/capture-system-inventory.sh`, `bin/compare-restored-state.sh` and
+  `bin/record-restore-exit.sh` from the concurrent Phase 11A work.
+- **Revision 126 was extended after 127 landed**, so an entry that precedes 127
+  in file order describes later work.
+
+None of these lost anything. What they cost is `git log` as a narrative, which is
+the cost this file exists to absorb: read `APPLY-MANIFEST.md`, not the log, for
+what changed when.
+
+### Verification performed
+
+- `git check-ignore` confirms `docs/sessions/restore-git-2026-09-01.txt` and
+  `docs/sessions/run-index-2026-09-01.md` are ignored, and that all three
+  `.gitkeep` files are not.
+- `git add -An docs/` stages exactly the three `.gitkeep` files and nothing else.
+- `verify-doc-paths.sh --all` clean; `verify-runbook-structure.sh` unchanged at
+  29 FAIL / 5 WARN; `verify-script-portability.sh` clean.
+
+### Known follow-ups, not applied
+
+- `loose-secrets-reports/` and `size-audit-reports/` look converted and are not.
+  Each has a `MANIFEST.md`, a `runs/` directory and a `latest-run.txt`, but no
+  `official/` — they are the two implementations `artifact-runs.sh` was extracted
+  *from*, still carrying their own copies of the pattern. Their manifests are
+  headed `# Loose Secret Checks` and `# Size Audit Runs`, so
+  `_artifact_runs_ensure_manifest` will refuse to append to either. Converting
+  them needs the Revision 120 treatment: rename the domain manifest, then let
+  `reindex-artifact-runs.sh` build the standard one beside it.
+- `time-machine/` is unconverted and larger than it was scoped as; the details
+  are in `docs/sessions/run-index-2026-09-01.md`.
+- `performance-audit/`, `toolkit-snapshot/` and `office-stability/` are unscoped.
 
 ---
 
