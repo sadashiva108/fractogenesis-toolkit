@@ -649,7 +649,7 @@ Three failures here either span more than one step or have a fix long enough to 
 
 ### Office quits unexpectedly on first launch
 
-Capture evidence before reopening the app: crash reports under `~/Library/Logs/DiagnosticReports/`, the current state of Microsoft AutoUpdate, and any Intune / installer processes still running. Compare Office bundle versions and modified timestamps against the pre-image evidence in `system-inventory/pre-image-*/`. Do not re-launch the app until the update or installer that overlapped the crash has finished.
+Capture evidence before reopening the app: crash reports under `~/Library/Logs/DiagnosticReports/`, the current state of Microsoft AutoUpdate, and any Intune / installer processes still running. Compare Office bundle versions and modified timestamps against the pre-image evidence in the run named by `system-inventory/official/pre-image.txt`. Do not re-launch the app until the update or installer that overlapped the crash has finished.
 
 [[#Step 13 — Office Stability Follow-Up|⮕ Continue to Step 13 — Office Stability Follow-Up]]
 

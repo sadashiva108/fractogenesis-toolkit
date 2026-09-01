@@ -469,7 +469,7 @@ Do not reset the Office marker after an incident until the incident evidence has
 | Subphase | Evidence | Destination | Supporting reference | Manual notes or checklist section |
 |---|---|---|---|---|
 | Phase 4A | Toolkit snapshot | `$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/pre-image-toolkit-snapshot-*`, `$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/latest-docs/` | capture-toolkit-snapshot.md | — |
-| Phase 4B | System inventory | `$REIMAGE_ARTIFACT_ROOT/system-inventory/pre-image-*` | capture-system-inventory.md | `capture-system-inventory.md` — Manual context note only when needed |
+| Phase 4B | System inventory | `$REIMAGE_ARTIFACT_ROOT/system-inventory/runs/pre-image-*` | capture-system-inventory.md | `capture-system-inventory.md` — Manual context note only when needed |
 | Phase 4C | Performance audit | `$REIMAGE_ARTIFACT_ROOT/performance-audit/pre-image-*` | capture-performance-audit.md | `capture-performance-audit.md` — Manual Observations |
 | Phase 4D | Office stability | `$REIMAGE_ARTIFACT_ROOT/office-stability/pre-reimage-*` | capture-office-stability.md | `capture-office-stability.md` — Final Pre-Reimage Checklist |
 
@@ -829,7 +829,7 @@ Do not reset the Office marker after an incident until the incident evidence has
 | Subphase | Evidence | Destination | Supporting reference | Manual notes or checklist section |
 |---|---|---|---|---|
 | Phase 13A | Toolkit snapshot | `$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/pre-image-toolkit-snapshot-*`, `$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/latest-docs/` | capture-toolkit-snapshot.md | — |
-| Phase 13B | System inventory | `$REIMAGE_ARTIFACT_ROOT/system-inventory/post-image-*` | capture-system-inventory.md | `capture-system-inventory.md` — Manual context note only when needed |
+| Phase 13B | System inventory | `$REIMAGE_ARTIFACT_ROOT/system-inventory/runs/post-image-*` | capture-system-inventory.md | `capture-system-inventory.md` — Manual context note only when needed |
 | Phase 13C | Company-managed inventory | `$REIMAGE_ARTIFACT_ROOT/managed-inventory/runs/post-image-*` | capture-managed-inventory.md | — |
 | Phase 13D | Performance audit | `$REIMAGE_ARTIFACT_ROOT/performance-audit/post-image-*` | capture-performance-audit.md | `capture-performance-audit.md` — Manual Observations |
 | Phase 13E | Office stability | `$REIMAGE_ARTIFACT_ROOT/office-stability/post-reimage-*` | capture-office-stability.md | `capture-office-stability.md` — Post-Image Office Stability Checklist Template |

@@ -650,46 +650,51 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 > ```text
 > $REIMAGE_ARTIFACT_ROOT/system-inventory/
 > ├── version-inventory.txt
-> ├── pre-image-YYYYMMDD-HHMMSS/
-> │   ├── MANIFEST.txt
-> │   ├── Brewfile
-> │   ├── dotfiles/
-> │   ├── 01-hardware.txt
-> │   ├── 02-macos.txt
-> │   ├── 03-disk.txt
-> │   ├── 04-display.txt
-> │   ├── 05-apps.txt
-> │   ├── 06-homebrew.txt
-> │   ├── 07-shell.txt
-> │   ├── 08-git.txt
-> │   ├── 09-python.txt
-> │   ├── 10-java.txt
-> │   ├── 11-node.txt
-> │   ├── 12-docker.txt
-> │   ├── 13-network.txt
-> │   ├── 14-cloud.txt
-> │   ├── 15-env.txt
-> │   └── 16-certs.txt
-> └── post-image-YYYYMMDD-HHMMSS/
->     ├── MANIFEST.txt
->     ├── Brewfile
->     ├── dotfiles/
->     ├── 01-hardware.txt
->     ├── 02-macos.txt
->     ├── 03-disk.txt
->     ├── 04-display.txt
->     ├── 05-apps.txt
->     ├── 06-homebrew.txt
->     ├── 07-shell.txt
->     ├── 08-git.txt
->     ├── 09-python.txt
->     ├── 10-java.txt
->     ├── 11-node.txt
->     ├── 12-docker.txt
->     ├── 13-network.txt
->     ├── 14-cloud.txt
->     ├── 15-env.txt
->     └── 16-certs.txt
+> ├── MANIFEST.md                          # append-only index of completed runs
+> ├── official/
+> │   ├── pre-image.txt                     # → runs/pre-image-YYYYMMDD-HHMMSS
+> │   └── post-image.txt                    # → runs/post-image-YYYYMMDD-HHMMSS
+> └── runs/
+>     ├── pre-image-YYYYMMDD-HHMMSS/
+>     │   ├── MANIFEST.txt
+>     │   ├── Brewfile
+>     │   ├── dotfiles/
+>     │   ├── 01-hardware.txt
+>     │   ├── 02-macos.txt
+>     │   ├── 03-disk.txt
+>     │   ├── 04-display.txt
+>     │   ├── 05-apps.txt
+>     │   ├── 06-homebrew.txt
+>     │   ├── 07-shell.txt
+>     │   ├── 08-git.txt
+>     │   ├── 09-python.txt
+>     │   ├── 10-java.txt
+>     │   ├── 11-node.txt
+>     │   ├── 12-docker.txt
+>     │   ├── 13-network.txt
+>     │   ├── 14-cloud.txt
+>     │   ├── 15-env.txt
+>     │   └── 16-certs.txt
+>     └── post-image-YYYYMMDD-HHMMSS/
+>         ├── MANIFEST.txt
+>         ├── Brewfile
+>         ├── dotfiles/
+>         ├── 01-hardware.txt
+>         ├── 02-macos.txt
+>         ├── 03-disk.txt
+>         ├── 04-display.txt
+>         ├── 05-apps.txt
+>         ├── 06-homebrew.txt
+>         ├── 07-shell.txt
+>         ├── 08-git.txt
+>         ├── 09-python.txt
+>         ├── 10-java.txt
+>         ├── 11-node.txt
+>         ├── 12-docker.txt
+>         ├── 13-network.txt
+>         ├── 14-cloud.txt
+>         ├── 15-env.txt
+>         └── 16-certs.txt
 > ```
 
 > [!example]- `$REIMAGE_ARTIFACT_ROOT/time-machine/`

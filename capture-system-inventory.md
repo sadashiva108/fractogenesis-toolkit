@@ -30,6 +30,7 @@ A script-first, one-pass record of how this Mac is configured — hardware and m
 - [[#Supplemental Reference|Supplemental Reference]]
     - [[#Per-Section Command Reference|Per-Section Command Reference]]
     - [[#Manual context note only when needed|Manual context note only when needed]]
+    - [[#How a Single-Section Refresh Works|How a Single-Section Refresh Works]]
     - [[#Interpretation Notes|Interpretation Notes]]
     - [[#Pre-Image vs Post-Image Comparison|Pre-Image vs Post-Image Comparison]]
 
@@ -140,15 +141,35 @@ $FRACTOGENESIS_HOME/bin/report-size-audit.sh          # entrypoint — capacity 
 Artifact root:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/system-inventory/               # all system-inventory bundles land here
+$REIMAGE_ARTIFACT_ROOT/system-inventory/               # the run category; all bundles land under its runs/
+```
+
+### Category Layout
+
+`system-inventory/` is a run category. Bundles live under `runs/`, `MANIFEST.md` is the append-only index of completed runs, and each file under `official/` names the current bundle for one context:
+
+```text
+$REIMAGE_ARTIFACT_ROOT/system-inventory/
+├── MANIFEST.md                         # append-only index; one row per completed run
+├── official/
+│   ├── pre-image.txt                   # → runs/pre-image-YYYYMMDD-HHMMSS
+│   └── post-image.txt                  # → runs/post-image-YYYYMMDD-HHMMSS (after Phase 13B)
+└── runs/
+    └── <context>-YYYYMMDD-HHMMSS/      # one bundle; see Bundle Layout
+```
+
+`MANIFEST.md` is the source of truth and is never edited by hand; the pointers under `official/` are a derived cache. Regenerate them rather than writing one:
+
+```bash
+./bin/reindex-artifact-runs.sh --category "$REIMAGE_ARTIFACT_ROOT/system-inventory"
 ```
 
 ### Bundle Layout
 
-Each run writes one timestamped bundle. The `<context>` prefix comes from `--context` (default `pre-image`):
+Each run writes one timestamped bundle under `runs/`. The `<context>` prefix comes from `--context` (default `pre-image`):
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/system-inventory/
+$REIMAGE_ARTIFACT_ROOT/system-inventory/runs/
 └── <context>-YYYYMMDD-HHMMSS/
     ├── MANIFEST.txt
     ├── Brewfile
@@ -252,9 +273,16 @@ For the post-image run (Phase 13B, after the Mac is rebuilt), set the context so
 ./bin/capture-system-inventory.sh --context post-image
 ```
 
-To point at a different artifact root for one invocation, add `--artifact-root PATH`. To write to an exact directory and skip the `system-inventory/<context>-<stamp>` layout entirely, use `--output DIR`. To re-run a single section, add `--section NAME` (e.g. `--section docker`); by default it updates that section in your most recent bundle of the same `--context` (overwriting just that file and leaving the others and `MANIFEST.txt` untouched). Add `--new-bundle` to write a fresh timestamped bundle instead.
+To point at a different artifact root for one invocation, add `--artifact-root PATH`. To write to an exact directory, use `--output DIR` — that skips the run layout *and* the index, so nothing under `official/` will point at the result. Use it for a scratch capture, never for the Phase 4B or 13B evidence.
 
-The script prints each section as it runs and finishes with the bundle path. It writes the 16 section files, `MANIFEST.txt`, the `Brewfile`, and the `dotfiles/` snapshot under `system-inventory/<context>-<stamp>/`.
+The script prints each section as it runs and finishes with the bundle path and its run id. It writes the 16 section files, `MANIFEST.txt`, the `Brewfile`, and the `dotfiles/` snapshot under `system-inventory/runs/<context>-<stamp>/`, then indexes the run and moves `official/<context>.txt` onto it.
+
+Re-capturing a single section is `--section NAME`, and it never edits the bundle you already have — it copies the official bundle of the same `--context` forward into a new run and overwrites just that one file:
+
+```bash
+./bin/capture-system-inventory.sh --section docker
+```
+
 
 > [!note]
 > A section for a toolchain you do not use (for example `10-java.txt` with no JDK installed) is written with its header intact and no findings. An empty-but-present section is a valid result, not a failure.
@@ -303,7 +331,7 @@ a fresh install.
 Confirm the bundle landed and holds all 16 sections plus the manifest, Brewfile, and dotfiles snapshot.
 
 ```bash
-LATEST="$(ls -dt "$REIMAGE_ARTIFACT_ROOT"/system-inventory/*/ | head -1)"
+LATEST="$REIMAGE_ARTIFACT_ROOT/system-inventory/$(cat "$REIMAGE_ARTIFACT_ROOT/system-inventory/official/pre-image.txt")"
 echo "$LATEST"
 ls -1 "$LATEST"
 ```
@@ -509,7 +537,26 @@ Add a short manual note only when a missing detail still matters, such as:
 - a restore constraint for a licensed app or installer (the license material itself is staged in Phase 3A/3C, not here);
 - a one-off environment quirk that would not be obvious from the generated bundle alone.
 
-Save that note and any screenshots beside the generated bundle under `$REIMAGE_ARTIFACT_ROOT/system-inventory/<context>-<stamp>/`. These hand-verified items roll up to the Phase 6B [[reimage-prep-checks|reimage-prep-checks]] sign-off.
+Save that note and any screenshots beside the generated bundle under `$REIMAGE_ARTIFACT_ROOT/system-inventory/runs/<context>-<stamp>/`. These hand-verified items roll up to the Phase 6B [[reimage-prep-checks|reimage-prep-checks]] sign-off.
+
+### How a Single-Section Refresh Works
+
+`--section NAME` stages a new run, copies the official bundle of the same `--context` into it, overwrites the one section file being re-captured, and promotes the result. The bundle it copied from is untouched and stays on disk.
+
+This is why the bundle the pointer resolves to is always complete. Editing the section in place would leave a promoted run whose contents no longer match the index row naming it; writing a one-file bundle instead would leave the pointer resolving to a bundle missing fifteen sections. Copying forward is what avoids both, and a bundle is around 120 KB, so it costs little.
+
+Two things record what happened, and they are worth reading together:
+
+- The new bundle's `MANIFEST.txt` names the section captured at its generation date, and the run every other file was carried from.
+- The category `MANIFEST.md` row reads `section '<name>' refreshed, rest carried from <run-id>`.
+
+Each carried file keeps its own original `# Generated:` header, so a timestamp inside a section file is the time that section was captured — not the time of the bundle holding it.
+
+`--new-bundle` writes a bundle holding that section alone. Use it when there is no baseline worth carrying; it is the wrong choice when there is, because the pointer would then resolve to an incomplete bundle.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
 
 ### Interpretation Notes
 
@@ -520,8 +567,9 @@ Read each section for what it is best at: `01`/`02` for the machine and OS basel
 The pre-image bundle (Phase 4B) and the post-image bundle (Phase 13B) share the same section shape, so they diff cleanly. After the rebuild, compare matching section files to see what came back, what is missing, and what changed:
 
 ```bash
-PRE="$REIMAGE_ARTIFACT_ROOT/system-inventory/pre-image-YYYYMMDD-HHMMSS"
-POST="$REIMAGE_ARTIFACT_ROOT/system-inventory/post-image-YYYYMMDD-HHMMSS"
+CATEGORY="$REIMAGE_ARTIFACT_ROOT/system-inventory"
+PRE="$CATEGORY/$(cat "$CATEGORY/official/pre-image.txt")"
+POST="$CATEGORY/$(cat "$CATEGORY/official/post-image.txt")"
 diff "$PRE/06-homebrew.txt" "$POST/06-homebrew.txt"
 diff "$PRE/Brewfile"        "$POST/Brewfile"
 ```

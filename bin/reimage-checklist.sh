@@ -930,8 +930,14 @@ if [[ "$PHASE" == "pre" ]]; then
   # -------------------------------------------------------------------------
   SYS_INV_DIR="$REIMAGE_ARTIFACT_ROOT/system-inventory"
 
-  if dir_nonempty "$SYS_INV_DIR"; then
-    record_check PASS "System inventory captured" "$(du -sh "$SYS_INV_DIR" 2>/dev/null | cut -f1)"
+  # Resolve the pointer rather than testing the directory for contents. After
+  # Phase 13B the category is non-empty for a post-image bundle, and "captured"
+  # here means the PRE-image baseline the later comparisons read.
+  SYS_INV_RUN="$(artifact_run_official "$SYS_INV_DIR" pre-image 2>/dev/null || true)"
+  if [[ -n "$SYS_INV_RUN" ]]; then
+    record_check PASS "System inventory captured" "\`${SYS_INV_RUN#runs/}\`, $(du -sh "$SYS_INV_DIR" 2>/dev/null | cut -f1) on disk"
+  elif dir_nonempty "$SYS_INV_DIR"; then
+    record_check WARN "System inventory captured" "bundles present but no official \`pre-image\` run -- repair with: ./bin/reindex-artifact-runs.sh --category \"\$REIMAGE_ARTIFACT_ROOT/system-inventory\""
   else
     record_check FAIL "System inventory captured" "Empty -- run capture-system-inventory.sh"
   fi

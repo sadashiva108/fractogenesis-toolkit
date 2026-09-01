@@ -12,12 +12,25 @@
 # It observes and records — the only things it writes are into the bundle. See
 # capture-system-inventory.md for the full runbook.
 #
+# WHY A --section RUN COPIES THE BUNDLE FORWARD. Refreshing one section used to
+# rewrite that file inside the newest bundle. That is the one thing a run index
+# forbids: a promoted run's contents must stay fixed, or a manifest row stops
+# describing the directory it names. Spawning a one-file bundle instead is worse
+# -- the pointer would resolve to a bundle with fifteen sections missing.
+#
+# So a --section run stages a NEW run, copies the official bundle into it,
+# overwrites just that one section, and promotes it. The previous run is
+# untouched and still on disk, the official bundle is always complete, and the
+# bundle's own MANIFEST.txt records which section was captured now and which run
+# the rest was carried from. A bundle is around 120 KB, so the duplication costs
+# less than the ambiguity it removes.
+#
 # --- BEGIN USAGE ---
 # Usage:
 #   cd <repo-root>
 #   chmod +x bin/capture-system-inventory.sh
 #
-#   # Default -- pre-image bundle under system-inventory/pre-image-<stamp>/
+#   # Default -- pre-image bundle under system-inventory/runs/pre-image-<stamp>/
 #   ./bin/capture-system-inventory.sh
 #
 #   # Post-image bundle (Phase 13B)
@@ -26,10 +39,10 @@
 #   # Override the artifact root for this invocation
 #   ./bin/capture-system-inventory.sh --artifact-root /path/to/reimage-artifact-root
 #
-#   # Write to an exact output directory (skips the system-inventory/<context>-<stamp> layout)
+#   # Write to an exact output directory (skips the run layout AND the index)
 #   ./bin/capture-system-inventory.sh --output /absolute/path/to/output
 #
-#   # Capture only one section, updating the latest bundle of this context
+#   # Refresh one section: copies the official bundle forward into a new run
 #   ./bin/capture-system-inventory.sh --section docker
 #
 #   # Capture only one section into a fresh timestamped bundle
@@ -46,11 +59,13 @@
 #   --section NAME        Capture only one section. One of: hardware, macos, disk,
 #                         display, apps, homebrew, shell, git, python, java, node,
 #                         docker, network, cloud, env, certs. Default: all. By
-#                         default a single-section run updates the latest existing
-#                         bundle of the same --context (overwriting just that one
-#                         section file); pass --new-bundle to force a fresh bundle.
-#   --new-bundle          With --section, force a fresh timestamped bundle instead
-#                         of updating the latest one. Default: off.
+#                         default a single-section run copies the official bundle
+#                         of the same --context forward into a new run and
+#                         overwrites just that section; pass --new-bundle for a
+#                         bundle holding that section alone.
+#   --new-bundle          With --section, write a fresh bundle containing only the
+#                         named section instead of copying the official one
+#                         forward. Default: off.
 #   -h, --help            Show this message and exit.
 #
 # Configuration precedence:
@@ -110,8 +125,24 @@ STAMP="$(date +%Y%m%d-%H%M%S)"
 CONTEXT="pre-image"
 OUTPUT_DIR=""
 SECTION_FILTER=""   # empty = all sections
-NEW_BUNDLE=false    # with --section, force a fresh bundle instead of updating latest
-UPDATED_EXISTING=false   # set true when a --section run updates an existing bundle
+NEW_BUNDLE=false    # with --section, write a section-only bundle instead of copying forward
+UPDATED_EXISTING=false   # set true when a --section run updates a bundle in place (--output only)
+CARRIED_FROM=""     # run id a --section run copied its other sections from
+INDEXED=false
+CATEGORY_ROOT=""
+
+# The system inventory is a run category. Sourcing this is what lets a --section
+# run resolve the bundle it copies forward by lineage rather than by taking
+# whichever directory sorted last -- which after Phase 13B is a post-image bundle,
+# and refreshing the docker section of the wrong context is a silent way to make
+# the pre-image baseline describe the restored machine.
+RUNS_LIB="$REPO_ROOT/.internal/artifact-runs.sh"
+if [[ ! -f "$RUNS_LIB" ]]; then
+  echo "ERROR: shared run index not found: $RUNS_LIB" >&2
+  exit 2
+fi
+# shellcheck source=../.internal/artifact-runs.sh
+source "$RUNS_LIB"
 
 # Gate for --section: true when no filter is set, or when the filter matches
 # this section's keyword. Wraps each section block without altering its body.
@@ -195,41 +226,80 @@ if [[ -z "$OUTPUT_DIR" ]]; then
     exit 2
   fi
 
+  CATEGORY_ROOT="$REIMAGE_ARTIFACT_ROOT/system-inventory"
+  if ! artifact_run_begin "$CATEGORY_ROOT" "$CONTEXT"; then
+    echo "ERROR: could not stage a run under: $CATEGORY_ROOT" >&2
+    exit 2
+  fi
+  OUTPUT_DIR="$ARTIFACT_RUN_DIR"
+  INDEXED=true
+
   if [[ -n "$SECTION_FILTER" && "$NEW_BUNDLE" != true ]]; then
-    # Default single-section behavior: update the latest bundle of this context
-    # rather than spawning a new one. The `|| true` and `head -1` keep the glob
-    # safe under set -euo pipefail when no bundle matches. The glob is anchored
-    # to the <stamp> shape so context "pre-image" cannot match a longer sibling
-    # context such as "pre-image-cleanboot-<stamp>".
-    LATEST_BUNDLE="$(ls -dt "$REIMAGE_ARTIFACT_ROOT/system-inventory/${CONTEXT}-"[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]-[0-9][0-9][0-9][0-9][0-9][0-9]/ 2>/dev/null | head -1 || true)"
-    if [[ -n "$LATEST_BUNDLE" ]]; then
-      OUTPUT_DIR="${LATEST_BUNDLE%/}"
-      UPDATED_EXISTING=true
+    # Copy the official bundle of this context forward, then let the section
+    # blocks below overwrite the one file being refreshed. Resolved by lineage,
+    # never by recency: `official/<context>.txt` is the only thing that can say
+    # "the pre-image bundle" once a post-image one exists beside it.
+    _prev_rel="$(artifact_run_official "$CATEGORY_ROOT" "$CONTEXT" 2>/dev/null || true)"
+    if [[ -n "$_prev_rel" ]]; then
+      if ! cp -R "$CATEGORY_ROOT/$_prev_rel"/. "$OUTPUT_DIR"/; then
+        artifact_run_abort
+        echo "ERROR: could not copy $_prev_rel forward into the new run." >&2
+        exit 1
+      fi
+      # A pin marker describes ONE run. Carried into a copy it names a run this
+      # directory is not, and artifact_runs_rebuild reads markers off disk -- so
+      # leaving it here would let a rebuild resurrect a pin from a bundle that
+      # only inherited the file.
+      rm -f "$OUTPUT_DIR/PINNED-OFFICIAL.txt"
+      CARRIED_FROM="${_prev_rel#runs/}"
+      echo "Copying forward from ${_prev_rel}; refreshing section '$SECTION_FILTER'." >&2
     else
-      echo "Note: no existing ${CONTEXT} bundle found; creating a new one." >&2
-      OUTPUT_DIR="$REIMAGE_ARTIFACT_ROOT/system-inventory/${CONTEXT}-${STAMP}"
+      echo "Note: no official ${CONTEXT} bundle to copy forward; this run holds section '$SECTION_FILTER' alone." >&2
     fi
-  else
-    OUTPUT_DIR="$REIMAGE_ARTIFACT_ROOT/system-inventory/${CONTEXT}-${STAMP}"
   fi
 fi
 
-# The --output path above skips the latest-bundle branch, so a single-section
-# run into an existing bundle would otherwise replace that bundle's full-run
-# MANIFEST.txt with one stamped for the partial run. Apply the same update
-# semantics whenever the target already looks like a captured bundle.
-if [[ -n "$SECTION_FILTER" && "$NEW_BUNDLE" != true && "$UPDATED_EXISTING" != true \
-      && -f "$OUTPUT_DIR/MANIFEST.txt" ]]; then
+# --output only. A single-section run into an exact directory that already holds
+# a bundle would otherwise replace that bundle's full-run MANIFEST.txt with one
+# stamped for the partial run, so it keeps the old in-place semantics.
+#
+# `INDEXED != true` is the load-bearing clause. A copy-forward run has just
+# copied a MANIFEST.txt into its own staging directory, so without it every
+# --section run would match this test, keep the manifest it inherited -- dated
+# for another run, silent about the refresh -- and report that nothing was
+# indexed while the pointer had in fact advanced.
+if [[ "$INDEXED" != true && -n "$SECTION_FILTER" && "$NEW_BUNDLE" != true \
+      && "$UPDATED_EXISTING" != true && -f "$OUTPUT_DIR/MANIFEST.txt" ]]; then
   UPDATED_EXISTING=true
 fi
 
 OUT="$OUTPUT_DIR"
 mkdir -p "$OUT"
 
+# What the banner and the progress lines call the bundle. $OUT is the
+# `.incomplete` staging directory until finalize renames it, and a path printed
+# here that stops existing thirty seconds later is worse than no path.
+OUT_LABEL="$OUT"
+if [[ "$INDEXED" == true ]]; then
+  OUT_LABEL="$ARTIFACT_RUN_FINAL_DIR"
+fi
+
+# A capture that dies part way through has produced a bundle that answers only
+# some of the questions it exists to answer. Discarding it is what makes "every
+# directory under runs/ is a complete bundle" true rather than usual.
+cleanup_system_inventory_run() {
+  if [[ "$INDEXED" == true ]]; then
+    artifact_run_abort
+  fi
+  return 0
+}
+trap cleanup_system_inventory_run EXIT
+trap 'exit 130' INT TERM
+
 echo ""
 echo "============================================="
 echo " Mac System Inventory Capture"
-echo " Output → $OUT"
+echo " Output → $OUT_LABEL"
 echo "============================================="
 echo ""
 
@@ -279,7 +349,7 @@ section() {
 
 end_section() {
   echo "" >> "$_SECTION_FILE"
-  echo "   ✓ saved → $(basename "$OUT")/$(basename "$_SECTION_FILE")"
+  echo "   ✓ saved → $(basename "$OUT_LABEL")/$(basename "$_SECTION_FILE")"
 }
 
 # Append stdout+stderr of a command to the current section file
@@ -368,7 +438,7 @@ section "Homebrew formulae and casks" "06-homebrew.txt"
   h ""
   h "--- Brewfile export ---"
   brew bundle dump --file="$OUT/Brewfile" --force >> "$_SECTION_FILE" 2>&1 \
-    && echo "Brewfile saved → $(basename "$OUT")/Brewfile" >> "$_SECTION_FILE" \
+    && echo "Brewfile saved → $(basename "$OUT_LABEL")/Brewfile" >> "$_SECTION_FILE" \
     || echo "brew bundle dump failed" >> "$_SECTION_FILE"
 end_section
 fi
@@ -623,7 +693,7 @@ fi
 if [[ -z "$SECTION_FILTER" || "$SECTION_FILTER" == "shell" ]]; then
 echo ""
 echo "============================================="
-echo " Copying dotfiles → $(basename "$OUT")/dotfiles/"
+echo " Copying dotfiles → $(basename "$OUT_LABEL")/dotfiles/"
 echo "============================================="
 
 DOTDIR="$OUT/dotfiles"
@@ -651,10 +721,13 @@ fi
 # ---------------------------------------------------------------------------
 # Manifest
 # ---------------------------------------------------------------------------
-# When updating an existing bundle (single-section default), leave its original
-# full-run MANIFEST.txt untouched so the manifest and its generation date still
-# describe the complete bundle. The re-captured section file keeps its own fresh
-# "# Generated:" header from the section helper.
+# A copied-forward bundle gets its OWN manifest, overwriting the one it
+# inherited. Keeping the copied manifest would leave a bundle describing itself
+# by another run's generation date, and would say nothing about the section that
+# is the only reason this run exists. The provenance lines below are what let a
+# reader tell a captured section from a carried one -- which is the single thing
+# the old in-place update did not have to explain, and the single thing
+# copy-forward must.
 if [[ "$UPDATED_EXISTING" != true ]]; then
   echo ""
   echo "============================================="
@@ -667,18 +740,57 @@ if [[ "$UPDATED_EXISTING" != true ]]; then
     echo "# Host: $(hostname)"
     echo "# Artifact root: ${REIMAGE_ARTIFACT_ROOT:-(not set)}"
     echo "# Context: $CONTEXT"
-    [[ -n "$SECTION_FILTER" ]] && echo "# Section filter: $SECTION_FILTER"
+    [[ "$INDEXED" == true ]] && echo "# Run: $ARTIFACT_RUN_ID"
+    if [[ -n "$SECTION_FILTER" ]]; then
+      echo "# Section filter: $SECTION_FILTER"
+      if [[ -n "$CARRIED_FROM" ]]; then
+        echo "#"
+        echo "# Only '$SECTION_FILTER' was captured at the generation date above."
+        echo "# Every other file was copied forward from run: $CARRIED_FROM"
+        echo "# and still carries its own '# Generated:' header from that capture."
+      else
+        echo "#"
+        echo "# This bundle holds section '$SECTION_FILTER' alone."
+      fi
+    fi
     echo ""
     echo "## Files captured"
     ls -lh "$OUT"
   } > "$OUT/MANIFEST.txt"
 fi
 
+if [[ "$INDEXED" == true ]]; then
+  if [[ -n "$SECTION_FILTER" && -n "$CARRIED_FROM" ]]; then
+    RESULT_SUMMARY="section '$SECTION_FILTER' refreshed, rest carried from $CARRIED_FROM"
+  elif [[ -n "$SECTION_FILTER" ]]; then
+    RESULT_SUMMARY="section '$SECTION_FILTER' only"
+  else
+    RESULT_SUMMARY="full capture, 16 sections"
+  fi
+  trap - EXIT INT TERM
+  if ! artifact_run_finalize "$CATEGORY_ROOT" "$RESULT_SUMMARY"; then
+    echo "ERROR: the bundle was written but could not be indexed under: $CATEGORY_ROOT" >&2
+    echo "Repair the index with: ./bin/reindex-artifact-runs.sh --category \"$CATEGORY_ROOT\"" >&2
+    exit 1
+  fi
+  OUT="$ARTIFACT_RUN_DIR"
+fi
+
 if [[ "$UPDATED_EXISTING" == true ]]; then
   echo ""
-  echo "Updated section '$SECTION_FILTER' in existing bundle:"
+  echo "Updated section '$SECTION_FILTER' in place at an exact --output path:"
   echo "   $OUT"
-  echo "Other sections and MANIFEST.txt were left unchanged."
+  echo "Other sections and MANIFEST.txt were left unchanged, and nothing was indexed."
+elif [[ -n "$SECTION_FILTER" && -n "$CARRIED_FROM" ]]; then
+  echo ""
+  echo "============================================="
+  echo " ✅ Section '$SECTION_FILTER' refreshed"
+  echo "    $OUT"
+  echo ""
+  echo "    Carried forward from: $CARRIED_FROM"
+  echo "    That run is untouched and still on disk."
+  echo "============================================="
+  echo ""
 else
   echo ""
   echo "============================================="

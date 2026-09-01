@@ -355,13 +355,15 @@ check_restore_runtime() {
     record WARN "Artifact root mounted" "unset or unmounted — Steps 1-9 are fine; reconnect before Step 10"
   fi
 
-  # 5 -- the inventory Step 10 compares against.
+  # 5 -- the inventory Step 10 compares against. Resolved through the pointer
+  # Step 10 itself resolves, so this check answers the question that step will
+  # ask rather than a similar-looking one about directory names.
   local inv
-  inv="$(find "${REIMAGE_ARTIFACT_ROOT:-/nonexistent}/system-inventory" -maxdepth 1 -type d -name 'pre-image-*' 2>/dev/null | sort | tail -1)"
+  inv="$(artifact_run_official "${REIMAGE_ARTIFACT_ROOT:-/nonexistent}/system-inventory" pre-image 2>/dev/null || true)"
   if [[ -n "$inv" ]]; then
-    record PASS "Pre-image system inventory found" "\`$(basename "$inv")\`"
+    record PASS "Pre-image system inventory found" "\`${inv#runs/}\`"
   else
-    record WARN "Pre-image system inventory found" "none under \`system-inventory/\` — Step 10's comparison has no baseline"
+    record WARN "Pre-image system inventory found" "no official \`pre-image\` run under \`system-inventory/\` — Step 10's comparison has no baseline"
   fi
 }
 

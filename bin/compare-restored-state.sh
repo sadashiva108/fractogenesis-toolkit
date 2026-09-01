@@ -52,15 +52,16 @@
 #   # Read it without writing anything.
 #   bash bin/compare-restored-state.sh --runbook restore-runtime --dry-run
 #
-#   # Against a specific captured inventory rather than the newest.
+#   # Against a specific captured inventory rather than the official one.
 #   bash bin/compare-restored-state.sh --runbook restore-runtime \
 #     --inventory pre-image-20260816-211456
 #
 # Options:
 #   --runbook NAME        Which phase to compare. Required.
 #                         Supported: restore-runtime, restore-access
-#   --inventory NAME      Named inventory bundle under system-inventory/.
-#                         Default: the newest pre-image-* bundle.
+#   --inventory NAME      Named inventory bundle under system-inventory/runs/.
+#                         Default: the run named by
+#                         system-inventory/official/pre-image.txt.
 #   --artifact-root PATH  Override REIMAGE_ARTIFACT_ROOT.
 #   --output-root PATH    Category root for the run. A destination inside the repo
 #                         checkout is refused.
@@ -219,9 +220,11 @@ fi
 
 INVENTORY_PARENT="$REIMAGE_ARTIFACT_ROOT/system-inventory"
 
-# Newest pre-image bundle by trailing stamp. Bundle names carry a phase prefix
-# (pre-image-, post-image-), so a plain lexical sort over a mixed set would rank
-# by phase before date; restricting the glob to one phase makes sorting safe.
+# The pre-image lineage is resolved by name, not by date. system-inventory is a
+# run category, so `official/pre-image.txt` says which bundle IS the pre-image
+# baseline -- where "the newest directory whose name starts pre-image-" stopped
+# being able to say it once a --section refresh could add another, and would say
+# the wrong thing entirely if a post-image bundle ever sorted last.
 if [[ -z "${RUNBOOK:-}" ]]; then
   echo "ERROR: --runbook is required. Supported: restore-runtime, restore-access" >&2
   usage >&2
@@ -230,15 +233,23 @@ fi
 resolve_runbook "$RUNBOOK" || exit 2
 
 if [[ -z "$INVENTORY_NAME" ]]; then
-  INVENTORY_DIR="$(find "$INVENTORY_PARENT" -maxdepth 1 -type d -name 'pre-image-*' 2>/dev/null | sort | tail -1)"
+  _inv_rel="$(artifact_run_official "$INVENTORY_PARENT" pre-image 2>/dev/null || true)"
+  INVENTORY_DIR=""
+  if [[ -n "$_inv_rel" ]]; then
+    INVENTORY_DIR="$INVENTORY_PARENT/$_inv_rel"
+  fi
 else
-  INVENTORY_DIR="$INVENTORY_PARENT/$INVENTORY_NAME"
+  # An explicitly named bundle lives under runs/ like every other. Accepting a
+  # bare run id rather than `runs/<id>` keeps --inventory typeable from what the
+  # manifest and the pointer both print.
+  INVENTORY_DIR="$INVENTORY_PARENT/runs/${INVENTORY_NAME#runs/}"
 fi
 
 if [[ -z "$INVENTORY_DIR" || ! -d "$INVENTORY_DIR" ]]; then
   echo "ERROR: no pre-image system inventory found under $INVENTORY_PARENT" >&2
   echo "HINT:  \`capture-system-inventory\` (capture-system-inventory) writes it before the erase." >&2
-  echo "HINT:  List what is available:  ls -1 \"$INVENTORY_PARENT\"" >&2
+  echo "HINT:  List what is available:  ls -1 \"$INVENTORY_PARENT/runs\"" >&2
+  echo "HINT:  Repair a missing pointer:  ./bin/reindex-artifact-runs.sh --category \"$INVENTORY_PARENT\"" >&2
   exit 2
 fi
 
@@ -250,7 +261,7 @@ fi
 # what it rebuilt. A probe names its source with a `root:glob` spec; a bare
 # filename means the system inventory, which is what every 10A probe uses.
 #
-#   inventory:10-java.txt   system-inventory/pre-image-*/
+#   inventory:10-java.txt   the official pre-image run under system-inventory/
 #   managed:02-profiles-*   the official pre-image run under managed-inventory/
 #   secrets:java-jssecacerts-inventory-*.md
 #                           secrets-encrypted/   (readable without the DMG

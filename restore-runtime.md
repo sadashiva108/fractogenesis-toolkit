@@ -85,15 +85,15 @@ This runbook can be rerun. Every step is idempotent (Homebrew and `nvm` skip any
 
 Read this before running anything. The order is a hard bootstrap chain, not a preference: Rosetta 2 goes first on Apple silicon because an Intel-only installer met later in the chain fails opaquely without it, Xcode Command Line Tools have to be present before Homebrew installs cleanly, Homebrew has to be present before `direnv` and the JVM and Node stacks, and the JVM has to be in place before Phase 10B tries to restore the `jssecacerts` Java trust override — that override has to match the JDK that is actually installed. Node stays out of the Homebrew chain intentionally: it is installed via `nvm` so a project can switch versions per repo without a PATH collision with a `brew install node`.
 
-The installs are script-free by design. Every install step is a small, standard command that either succeeds cleanly or fails in a way the reader will investigate; automating around Homebrew and `nvm` would obscure the diagnostic surface those tools already print. The *verification* at the end is scripted, because comparing fifteen version strings against a sixteen-file inventory by eye is exactly the kind of work that misses an absent tool. The captured pre-image system inventory under `$REIMAGE_ARTIFACT_ROOT/system-inventory/pre-image-*/` and its post-image sibling are the reference for what "restored" looks like — the final step compares the fresh install against them.
+The installs are script-free by design. Every install step is a small, standard command that either succeeds cleanly or fails in a way the reader will investigate; automating around Homebrew and `nvm` would obscure the diagnostic surface those tools already print. The *verification* at the end is scripted, because comparing fifteen version strings against a sixteen-file inventory by eye is exactly the kind of work that misses an absent tool. The captured pre-image system inventory — the run named by `$REIMAGE_ARTIFACT_ROOT/system-inventory/official/pre-image.txt` — and its post-image sibling are the reference for what "restored" looks like — the final step compares the fresh install against them.
 
 ### Terminology
 
 | Term | Meaning |
 |---|---|
 | Runtime layer | The non-secret toolchain (CLT, Homebrew, JDK, Node, build tools, platform CLIs). Not shell profiles or credentials. |
-| Pre-image inventory | The `system-inventory/pre-image-YYYYMMDD-HHMMSS/` bundle captured in Phase 4B. |
-| Post-image inventory | The `system-inventory/post-image-YYYYMMDD-HHMMSS/` bundle captured in Phase 13B after restore completes. Not available yet during this phase; used later for the audit. |
+| Pre-image inventory | The bundle named by `system-inventory/official/pre-image.txt`, captured in Phase 4B. |
+| Post-image inventory | The bundle named by `system-inventory/official/post-image.txt`, captured in Phase 13B after restore completes. Not available yet during this phase; used later for the audit. |
 | Approved-newer version | A newer tool version than the pre-image had, chosen intentionally because the older one is unsupported or has a known issue. Not a drift. |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -130,8 +130,8 @@ $REIMAGE_ARTIFACT_ROOT/reimaged-system/                # every artifact this run
 Input evidence used for comparison in Step 10, read and never written:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/system-inventory/pre-image-YYYYMMDD-HHMMSS/
-$REIMAGE_ARTIFACT_ROOT/system-inventory/post-image-YYYYMMDD-HHMMSS/    # only present after Phase 13B
+$REIMAGE_ARTIFACT_ROOT/system-inventory/runs/pre-image-YYYYMMDD-HHMMSS/
+$REIMAGE_ARTIFACT_ROOT/system-inventory/runs/post-image-YYYYMMDD-HHMMSS/    # only present after Phase 13B
 ```
 
 The complete `system-inventory/` layout is defined once in the Master Directory Reference:
@@ -981,7 +981,7 @@ Comparison is on the version number rather than the raw string, so `10.9.7` and
 `npm 10.9.7` count as the same; both raw strings are shown so you can see what
 each side reported.
 
-The comparison reads the `system-inventory/pre-image-YYYYMMDD-HHMMSS/` bundle
+The comparison reads the bundle named by `system-inventory/official/pre-image.txt`
 captured before the erase; that is the only inventory that exists at this point.
 The matching `post-image-` bundle belongs to Phase 13B, along with the audit that
 reads both — nothing here needs it.

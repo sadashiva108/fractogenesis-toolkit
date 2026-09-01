@@ -67,7 +67,7 @@ Do not manually recreate the Phase 6 checklist when reimage-checklist.sh already
 | Phase | Capture | Primary destination | Purpose |
 |---|---|---|---|
 | Phase 4A | Toolkit snapshot | `$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/pre-image-toolkit-snapshot-*`, `$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/latest-docs/` | Current reimage workflow docs and lightweight toolkit snapshot context that should travel with the capture set. |
-| Phase 4B | System inventory | `$REIMAGE_ARTIFACT_ROOT/system-inventory/pre-image-*` | Broad workstation rebuild context: hardware, macOS, apps, toolchains, shell, Git, network, cloud, and certificates. |
+| Phase 4B | System inventory | `$REIMAGE_ARTIFACT_ROOT/system-inventory/runs/pre-image-*` | Broad workstation rebuild context: hardware, macOS, apps, toolchains, shell, Git, network, cloud, and certificates. |
 | Phase 2C | Company-managed inventory | `$REIMAGE_ARTIFACT_ROOT/managed-inventory/runs/pre-image-*` | Managed apps, profiles, background services, system extensions, package receipts, and managed preferences. |
 | Phase 4C | Performance audit | `$REIMAGE_ARTIFACT_ROOT/performance-audit/pre-image-*` | Scenario-based performance baselines and optional historical trend summaries/charts. |
 | Phase 4D | Office stability | `$REIMAGE_ARTIFACT_ROOT/office-stability/` | Office-specific baseline bundles, watcher-derived evidence, incident captures, and Office checklist output. |
@@ -123,8 +123,11 @@ $REIMAGE_ARTIFACT_ROOT/
 │   ├── pre-image-toolkit-snapshot-YYYYMMDD-HHMMSS/
 │   └── latest-docs/
 ├── system-inventory/
-│   ├── pre-image-YYYYMMDD-HHMMSS/
-│   └── post-image-YYYYMMDD-HHMMSS/
+│   ├── MANIFEST.md
+│   ├── official/
+│   └── runs/
+│       ├── pre-image-YYYYMMDD-HHMMSS/
+│       └── post-image-YYYYMMDD-HHMMSS/
 └── managed-inventory/
     ├── MANIFEST.md
     ├── official/
@@ -192,13 +195,13 @@ set +a
 mkdir -p "$BACKUP_ROOT/system-inventory"
 chmod +x scripts/capture-system-inventory.sh
 
-./bin/capture-system-inventory.sh   --output "$BACKUP_ROOT/system-inventory/pre-image-$(date +%Y%m%d-%H%M%S)"
+./bin/capture-system-inventory.sh   --artifact-root "$BACKUP_ROOT"
 ```
 
 Destination:
 
 ```text
-$BACKUP_ROOT/system-inventory/pre-image-YYYYMMDD-HHMMSS/
+$BACKUP_ROOT/system-inventory/runs/pre-image-YYYYMMDD-HHMMSS/
 ```
 
 Typical contents:
