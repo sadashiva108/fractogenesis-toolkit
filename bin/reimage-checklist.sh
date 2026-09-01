@@ -657,10 +657,15 @@ if [[ "$PHASE" == "pre" ]]; then
   LATEST_AUDIT_RUN="$(resolve_latest_repo_audit_run "$REPO_AUDIT_DIR" 2>/dev/null || true)"
   LATEST_AUDIT="${LATEST_AUDIT_RUN:+$LATEST_AUDIT_RUN/repo-audit-summary.txt}"
 
-  if [[ -f "$REPO_AUDIT_MANIFEST" ]] && grep -q '^# Repository Audit Runs$' "$REPO_AUDIT_MANIFEST" 2>/dev/null; then
+  # The heading comes from the run-index library rather than a literal. Revision
+  # 120 moved `# Repository Audit Runs` into the renamed domain manifest
+  # `repo-audit-index.md` and let the shared index take `MANIFEST.md`, and this
+  # row kept testing the old string -- so it recorded FAIL against a manifest
+  # that was exactly canonical. One sentinel, defined once, cannot drift again.
+  if [[ -f "$REPO_AUDIT_MANIFEST" ]] && grep -q "^${ARTIFACT_RUNS_MANIFEST_HEADING}\$" "$REPO_AUDIT_MANIFEST" 2>/dev/null; then
     record_check PASS "Repository audit manifest" "$REPO_AUDIT_MANIFEST"
   elif [[ -f "$REPO_AUDIT_MANIFEST" ]]; then
-    record_check FAIL "Repository audit manifest" "Existing MANIFEST.md is not the canonical append-only run index"
+    record_check FAIL "Repository audit manifest" "Not an artifact-runs index -- expected \`$ARTIFACT_RUNS_MANIFEST_HEADING\`. Rename the domain manifest, then rebuild with: ./bin/reindex-artifact-runs.sh --category \"\$REIMAGE_ARTIFACT_ROOT/repo-audit-reports\""
   else
     record_check FAIL "Repository audit manifest" "Missing $REPO_AUDIT_MANIFEST"
   fi

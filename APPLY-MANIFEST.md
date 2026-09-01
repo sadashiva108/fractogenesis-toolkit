@@ -1,5 +1,9 @@
 # Apply Manifest
 
+**Revision 130** — supersedes Revision 129 and earlier. The documentation lint stops counting the notes nobody ships.
+
+**Revision 129** — supersedes Revision 128 and earlier. The Phase 6B repository-audit row stops failing a manifest that is exactly correct.
+
 **Revision 128** — supersedes Revision 127 and earlier. A note found mid-task gets somewhere to go that is not the end of a chat log.
 
 **Revision 127** — supersedes Revision 126 and earlier. The system inventory joins the run index, and refreshing one section copies the bundle forward instead of editing it.
@@ -363,6 +367,135 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `backup-repos.sh` | `bin/backup-repos.sh` |
 | `setup-reimage-env.sh` | `bin/setup-reimage-env.sh` |
 | `compare-restored-state.sh` | `bin/compare-restored-state.sh` |
+
+---
+
+## Revision 130 — a baseline that moves is not a baseline
+
+Revision 128 gave parked notes a home under `docs/`, tracked the three
+directories and gitignored their contents. `bin/verify-doc-paths.sh --all` was
+never told about them, so from that revision onward it scanned every gap,
+feature and session handoff as if it were governance documentation.
+
+### What that cost
+
+The `OK` total moved whenever anyone wrote a note. Three figures were recorded
+on 2026-09-01 alone:
+
+| Recorded | Where | OK |
+|---|---|---|
+| after the run-index session | `docs/sessions/run-index-2026-09-01.md` §5 | 713 |
+| in the brief that followed it | `docs/sessions/next-session-prompt-run-index.md` | 745 |
+| after this session parked nine notes | measured | 860 |
+
+Not one of those differences was a regression, and none was caused by editing a
+tracked document. But a brief that says *compare against 745 OK* asks the next
+session to compare against a number that moved for reasons unrelated to its
+work — and the honest answer, *"the count changed and I did not cause it"*, is
+indistinguishable from not having looked. A baseline nobody can fail is worse
+than no baseline: it trains the reader to skip the row.
+
+With `docs/` pruned the total returns to **713**, which is the figure the
+run-index session recorded before any note had been parked. The 745 in the brief
+was itself already inflated.
+
+### Why exclusion is right, not just convenient
+
+`APPLY-MANIFEST.md` was already excluded, and the stated reason applies here
+word for word: it quotes paths as they were at the time of a revision, so a
+reference that no longer resolves is the record working correctly. A session
+handoff has exactly that property — it describes a defect at the moment someone
+found it, and the fix may well move the path it names.
+
+The second reason is Revision 128's own: these contents never reach a fresh
+clone. A lint over the documentation a clone does not receive is measuring
+something the repository does not ship.
+
+`--doc` still reaches a note deliberately, which is the right shape — checking a
+handoff is an act, not a default.
+
+### What did not change
+
+`MISSING` and `ANCHOR BROKEN` were 0 before and are 0 after; they were never the
+rows affected, and they remain the ones worth quoting. `--all` still exercises
+the wikilink anchor check across every runbook and reference, which is the mode's
+whole reason for existing: 1094 anchors, 0 broken.
+
+### Validation
+
+`bash -n` clean. `verify-script-portability.sh` 74 clean / 0 WARN / 0 FAIL.
+`verify-runbook-structure.sh` 29 FAIL / 5 WARN across 27 documents, unchanged —
+no runbook was touched. `--all` and `--doc` both exercised, the latter against a
+note under `docs/sessions/` to confirm exclusion did not make it unreachable.
+
+**All of it ran on Linux with Bash 5.x.** `shellcheck` was not available.
+`/bin/bash -n` against real macOS Bash 3.2 is owed on this file along with
+Revisions 116–129.
+
+---
+
+## Revision 129 — a check that fails the thing it was written to confirm
+
+Revision 120 moved the repository audit onto the shared run index. The per-run
+counts the shared schema has no room for moved into a renamed domain manifest,
+`repo-audit-index.md`, and `MANIFEST.md` became the standard artifact-runs index
+that `.internal/artifact-runs.sh` writes and reads. The old
+`# Repository Audit Runs` heading exists nowhere on disk any more.
+
+`bin/reimage-checklist.sh` kept testing for it.
+
+### What the row was actually reporting
+
+```
+| Repository audit manifest | FAIL | Existing MANIFEST.md is not the canonical append-only run index |
+```
+
+Recorded against a `MANIFEST.md` headed `# Artifact Runs`, built by
+`reindex-artifact-runs.sh`, holding four correctly indexed runs, and resolving
+its pointers exactly as designed. The row said the opposite of the truth, in a
+Phase 6B gate whose entire purpose is to decide whether it is safe to erase the
+machine.
+
+The neighbouring `resolve_latest_repo_audit_run()` *was* converted in Revision
+120 — it calls `artifact_run_official "$audit_root" "pre-image"` correctly. Only
+the header sentinel a few lines below it was missed, which is why nothing caught
+this: every other row in the section passed, and a section that is 90% green does
+not read as broken.
+
+### One sentinel, defined once
+
+`.internal/artifact-runs.sh` already exports `ARTIFACT_RUNS_MANIFEST_HEADING`,
+and `_artifact_runs_ensure_manifest` tests against it to decide whether a
+manifest is an artifact-runs index. `reimage-checklist.sh` sources that library
+at line 102 and then hand-wrote the same string at line 660. Two copies of one
+sentinel is what let this drift, so the fix is not a corrected literal — it is
+the literal deleted and the library's constant used in its place. A future rename
+of the heading now moves both callers or neither.
+
+### The FAIL branch keeps its job, and gains a repair
+
+A manifest that genuinely is not an artifact-runs index is still a `FAIL`, which
+is the case Revision 120 created for `loose-secrets-reports/` and
+`size-audit-reports/` — both still carry their own domain headings and will fail
+this test if they are ever pointed at it. The row now names the heading it
+expected and gives the Revision 120 treatment as a command rather than leaving
+the reader to reconstruct it: rename the domain manifest, then rebuild the index
+beside it. That matches the library's own stated principle — a stale or missing
+pointer is a repair command, not a diagnosis — and the pattern already used by
+the system-inventory row in this same file.
+
+### Validation
+
+`bash -n` clean. `verify-script-portability.sh` 74 clean / 0 WARN / 0 FAIL
+against the Bash 3.2 + BSD floor. `verify-doc-paths.sh --all` 0 MISSING / 0
+ANCHOR BROKEN. `verify-runbook-structure.sh` 29 FAIL / 5 WARN across 27
+documents, unchanged — no runbook was touched. The corrected condition was
+exercised against the live `repo-audit-reports/MANIFEST.md` on the artifact
+volume: the old sentinel does not match it, the new one does.
+
+**All of it ran on Linux with Bash 5.x.** `shellcheck` was not available.
+`/bin/bash -n` against real macOS Bash 3.2 is owed on this file along with
+Revisions 116–128.
 
 ---
 

@@ -31,10 +31,11 @@
 #
 # Options:
 #   --doc PATH    Check PATH instead of the default doc set. Repeatable.
-#   --all         Check every Markdown document in the repository: the runbooks
-#                 and references as well as the governance set. This is where
-#                 the wikilink anchors live, so it is the mode that exercises
-#                 the anchor check. Not yet the default -- see below.
+#   --all         Check every tracked Markdown document in the repository: the
+#                 runbooks and references as well as the governance set. This is
+#                 where the wikilink anchors live, so it is the mode that
+#                 exercises the anchor check. Not yet the default -- see below.
+#                 docs/ is excluded; pass --doc for a note under it.
 #   --verbose     List OK references too, not just MISSING and WARN.
 #   -h, --help    Show this message and exit.
 #
@@ -169,8 +170,19 @@ if $ALL_DOCS && (( ${#DOCS[@]} == 0 )); then
     # APPLY-MANIFEST.md is excluded: it is a change log that quotes paths and
     # links as they were at the time of a revision, so a reference that no
     # longer resolves is the record working correctly.
+    #
+    # docs/ is excluded for the same reason and one more. Its contents are
+    # gitignored working notes -- gaps, features, session handoffs -- so they
+    # quote paths as they were when someone noticed something, and they never
+    # reach a fresh clone. Counting them also made the OK total move every time
+    # any session parked a note, which is what stopped that total being usable
+    # as a baseline: three figures were recorded on one day, 713, 745 and 860,
+    # and none of the differences was a regression. MISSING and ANCHOR BROKEN
+    # are the rows that mean something, and they are unaffected either way.
+    # A note can still be checked deliberately with --doc.
     find . -name .git -prune -o -name __pycache__ -prune \
          -o -path './.github/ai-templates/*' -prune \
+         -o -path './docs/*' -prune \
          -o -type f -name '*.md' -print 2>/dev/null \
       | sed 's|^\./||' \
       | grep -v '^APPLY-MANIFEST\.md$' \
