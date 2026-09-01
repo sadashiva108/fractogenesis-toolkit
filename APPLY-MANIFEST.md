@@ -2,7 +2,7 @@
 
 **Revision 127** — supersedes Revision 126 and earlier. The system inventory joins the run index, and refreshing one section copies the bundle forward instead of editing it.
 
-**Revision 126** — supersedes Revision 125 and earlier. Step 7 validates one identity per block, an identity on HTTPS gets a check that reports on the path it actually takes, and the exit row asks the same question.
+**Revision 126** — supersedes Revision 125 and earlier. Step 7 validates one identity per block, an identity on HTTPS gets a check that reports on the path it actually takes, the exit row asks the same question, and the SSH-hosts comparison starts comparing something.
 
 **Revision 125** — supersedes Revision 124 and earlier. Phase 11A stops assuming SSH works, stops assuming a host key is already trusted, and says which account to be signed into.
 
@@ -538,14 +538,77 @@ Neither names the account, and the step says so rather than implying otherwise.
 The account is confirmed from the server side — the token's *Last used* timestamp,
 or the author line on a pushed commit.
 
+### The SSH hosts row was not comparing anything
+
+`rows.tsv` carried `presence  SSH host aliases configured  2  recorded`. The live
+side counted `Host` lines in `~/.ssh/config`; the recorded side reported whether
+the pre-image `08-git.txt` contained `user.name=`. `08-git.txt` is
+`git config --list --show-origin` plus `~/.gitconfig` and `~/.gitignore_global`
+— **it never captured `~/.ssh/config`**, so there was no SSH fact on that side
+and a Git key was standing in for one. Any pre-image Mac with a `user.name`
+yields `recorded`, so the row could not disagree with anything: `0 | recorded`
+and `2 | recorded` read identically.
+
+The label was wrong too, in the vocabulary Revisions 123 and 125 settled. A
+`Host` block is a real hostname by default and an *alias* only when `Host` and
+`HostName` differ, so "aliases" named the exception as though it were the rule.
+
+Both sides now exist and both are the same shape. `capture-system-inventory.sh`
+writes `~/.ssh/config` into `08-git.txt` and closes the section with a normalized
+`ssh.hosts=` line; the section title becomes *Git and SSH routing*, since it now
+records both halves of how an operation picks an author and a key. The row
+becomes a `probe_value` named **SSH routing hosts**, comparing the sorted `Host`
+names rather than how many there are — a count cannot see `github.com-shiva`
+becoming `github.com`, which is precisely the change that sends every pre-image
+personal remote to a host that no longer exists.
+
+`08-git.txt` carries it rather than a new numbered section because Phase 11A
+already reads that file and a new number would have to be inserted rather than
+appended.
+
+Bundles captured before this have no `ssh.hosts=` line, so the row reads
+`not recorded` on the inventory side for them. That is the honest answer — there
+is nothing to compare — and it resolves at the next pre-image capture rather than
+being papered over.
+
+### The derivation lives in one place
+
+`.internal/ssh-host-list.sh` is new, sourced by both `capture-system-inventory.sh`
+and `compare-restored-state.sh`. Deriving the list separately on each side of the
+reimage is how two implementations drift into disagreeing about formatting and
+report a mismatch that is not one.
+
+Three decisions are recorded in its header because each is a trap:
+`[Hh]ost[[:space:]]` excludes `HostName`, which would otherwise put every
+server's real address into a list meant to hold the names typed in clone URLs —
+the exact distinction that matters when one is an alias. A `Host` line may carry
+several patterns, so they are split. And `LC_ALL=C` on the sort: the capture runs
+on the pre-image Mac and the comparison on the restored one, and a collation
+difference reorders the list without changing its contents, reporting a mismatch
+against two identical sets.
+
+### The usage strings named two runbooks out of four
+
+`record-restore-exit.sh` dispatches on `restore-runtime`, `restore-access`,
+`restore-git` and `restore-repos`, while both its error and its hint advertised
+only the first two. Running it without `--runbook` told the operator their own
+phase was unsupported. Corrected to list all four.
+
 ### Verification performed
 
+- `bash -n` clean on all three edited scripts and the new helper;
+  `verify-script-portability.sh` clean on all four against the Bash 3.2 / BSD
+  floor.
+- `ssh_host_list` exercised directly against an alias block, a direct-host block
+  and an absent file: it returns the sorted pair, and prints nothing and returns
+  0 when the file does not exist.
+- The full comparison path simulated with a fabricated `08-git.txt`: an alias
+  list and a direct-host list produce a mismatch naming both, and an absent
+  `~/.ssh/config` yields `MISSING` on the live side.
 - `verify-doc-paths.sh` clean; `verify-runbook-structure.sh` unchanged at 29 FAIL
   / 5 WARN with `restore-git.md` still clear of the file.
 - Command blocks re-read after writing to confirm the `printf` escapes survived
   the edit as `\n` rather than a literal backslash-n pair.
-- `bash -n bin/record-restore-exit.sh` clean; `verify-script-portability.sh` clean
-  against the Bash 3.2 / BSD floor.
 - Run on Linux with GNU coreutils and Bash 5.x. `shellcheck` was not available.
   Not executed on the target Mac.
 

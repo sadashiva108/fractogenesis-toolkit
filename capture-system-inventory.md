@@ -456,11 +456,12 @@ echo "$PATH" | tr ':' '\n'
 grep -E 'plugins|ZSH_THEME' ~/.zshrc 2>/dev/null
 ```
 
-**`08` — Git global config.** Global identity, default branch, credential helper, and the global gitignore path.
+**`08` — Git and SSH routing.** Global identity, default branch, credential helper, the global gitignore path, and `~/.ssh/config` — the two halves of how a Git operation picks an author and a key. The section closes with a normalized `ssh.hosts=` line listing the `Host` names in sorted order, which is what Phase 11A's comparison reads: the raw file is for a person, that line is the value a machine can compare against the restored Mac. Names only, never `HostName`, so an alias and the server behind it stay distinguishable.
 
 ```bash
 git config --list --show-origin
 cat ~/.gitconfig
+cat ~/.ssh/config
 ```
 
 **`09` — Python environment.** Interpreters on `PATH`, pyenv versions, conda environments, and global pip packages. Virtual environments rebuild from `requirements.txt`/`pyproject.toml`, so capture names and locations, not the envs themselves.
