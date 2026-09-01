@@ -452,8 +452,20 @@ what changed when.
   `_artifact_runs_ensure_manifest` will refuse to append to either. Converting
   them needs the Revision 120 treatment: rename the domain manifest, then let
   `reindex-artifact-runs.sh` build the standard one beside it.
-- `time-machine/` is unconverted and larger than it was scoped as; the details
-  are in `docs/sessions/run-index-2026-09-01.md`.
+- `time-machine/` is unconverted, and the design record for it is
+  `docs/features/time-machine-run-index-conversion.md` — the first file written
+  under the new layout, and the reason it earns its place. Writing it up surfaced
+  two things the approving conversation did not have. **Phase 16 runs the same
+  subcommands into the same flat namespace as Phase 5**, so the category is about
+  to hold two of every artifact kind distinguishable only by date, while
+  `record-time-machine-evidence.sh` resolves its inputs with a newest-match glob
+  — the pre-image/post-image lineage collision `artifact-runs.sh` was extracted
+  to remove, live and unfixed. And **migrating it necessarily moves signed-off
+  Phase 5 evidence**, because its artifacts are flat files rather than
+  directories, so the escape that made the Revision 120 conversion safe — the run
+  directories never moved — does not exist here. A third migration option that
+  touches no historical evidence is written up there and has not been put to the
+  owner.
 - `performance-audit/`, `toolkit-snapshot/` and `office-stability/` are unscoped.
 
 ---
