@@ -328,9 +328,12 @@ targets_restore_access() {
 # "/lib/security", which does not exist -- so a naive test records `absent`,
 # which is a confident wrong answer about a path nothing ever looked at.
 #
-# Only $JAVA_HOME is substituted, because it is the only variable in the table
-# above. Add a case when a second one appears. A general expander needs `eval`
-# or indirect expansion, and neither is worth carrying for one variable.
+# Every $NAME a spec carries is substituted, not one hardcoded variable. The
+# table above uses $JAVA_HOME, $GIT_WORK_REPO_ROOT and $GIT_PERSONAL_REPO_ROOT;
+# the original single-variable form resolved the latter two to their own literal
+# text and then reported `absent` for a path nobody had looked at -- a wrong
+# answer that reads exactly like a correct one. The expansion loop itself lives
+# in .internal/state-walk.sh, which is where a third caller would find it.
 #
 # It reports through GLOBALS rather than stdout, and that is not a style choice.
 # The obvious form -- `if ! resolved="$(resolve_target "$spec")"` -- runs the

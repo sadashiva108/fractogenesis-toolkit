@@ -2,7 +2,7 @@
 
 # Verify Reimaged System
 
-**Last updated:** 2026-08-31
+**Last updated:** 2026-09-01
 
 Reconnect the external artifact drive, prove the freshly reimaged Mac is basically usable, and record the first-boot evidence twice around a stabilization restart before deeper restore work begins. This phase pairs the human-driven day-one checks — network, browser, terminal, displays, peripherals, audio — with `record-reimaged-system.sh`, which records the same 14 read-only signals into two comparable evidence bundles, and hands off to Phase 10 once the pair is clean. This phase installs nothing managed: the managed app set belongs to Phase 8, and arriving here with it incomplete invalidates the bundle comparison the phase is built around.
 
@@ -61,7 +61,7 @@ with it.
 - **Two first-boot evidence bundles** — a pre-restart and a post-restart run under `reimaged-system/restarts/`, each holding `checklist.md`, the companion planning documents, `raw/`, and `logs/`.
 - **An entry and an exit checklist** — under `reimaged-system/boundaries/`, recording what was decided about that evidence rather than what it says.
 - **The pre/post-restart comparison** — the row-by-row read across the second stabilization restart that names anything which regressed.
-- **The `reimaged-system/` working subfolders** — `boundaries/`, `comparisons/`, `state/`, `restarts/`, `restore-notes/`, and `time-machine/`, written into by later phases. Everything the post-image half produces lands under `reimaged-system/`; unlike the pre-image phases, it adds no new top-level directories to the artifact root.
+- **The `reimaged-system/` working subfolders** — `boundaries/`, `comparisons/`, `state/`, `restarts/`, `sign-offs/`, `restore-notes/`, and `time-machine/`, written into by later phases. Everything the post-image half produces lands under `reimaged-system/`; unlike the pre-image phases, it adds no new top-level directories to the artifact root.
 
 **What the rest of the workflow relies on it for**
 
@@ -81,7 +81,7 @@ with it.
 | | the post-image Time Machine backup — `run-time-machine` (Phase 16), after Restore Home |
 | | post-image managed-inventory comparison — `capture-managed-inventory` (Phase 13C) |
 | relocating any Phase 8 record that landed on a fallback path | the managed application set and its Company Portal installs — `enroll-and-stabilize` (Phase 8 Step 4) |
-| the `reimaged-system/` subfolders used by later phases (`boundaries`, `comparisons`, `state`, `restarts`, `restore-notes`, `time-machine`) | the final validated sign-off — its `reimage-checklist.sh --phase post` bundle and the resolution of the manual rows this phase only enumerates — `reimaged-system-checks` (Phase 14) |
+| the `reimaged-system/` subfolders used by later phases (`boundaries`, `comparisons`, `state`, `restarts`, `sign-offs`, `restore-notes`, `time-machine`) | the final validated sign-off — its `reimage-checklist.sh --phase post` bundle and the resolution of the manual rows this phase only enumerates — `reimaged-system-checks` (Phase 14) |
 
 This runbook can be rerun. Each run of `record-reimaged-system.sh` writes a fresh indexed run and moves that point's `official/` pointer, so a later run does not overwrite the pre-restart bundle you use for comparison — and a rerun of one point never disturbs the other.
 
@@ -100,7 +100,7 @@ The preferred path is script-first: run the script before the restart, do the hu
 Each `record-reimaged-system.sh` run writes one timestamped bundle containing:
 
 ```text
-checklist.md               automated + manual rows with PASS/WARN/TODO on the automated ones
+checklist.md               automated rows with PASS/WARN; manual rows live in sign-offs/
 README.md                          bundle summary and reading order
 restart-checkpoints.md             planned restart points across restore phases
 time-machine-plan.md               notes for the Phase 16 backup; nothing runs here
@@ -149,9 +149,9 @@ and finish there. If you discover it after Step 2 has already run, just rerun
 the record — each run writes a fresh timestamped bundle, and Step 6 compares
 the two most recent.
 
-**Fill the manual rows in the post-restart bundle only.** Each run regenerates
-`checklist.md` with the manual rows reset, so anything hand-written into
-the pre-restart bundle is discarded by the next run. Step 5 produces the
+**Answer the manual rows against the post-restart bundle.** They live in the
+sign-off under `reimaged-system/sign-offs/`, not in `checklist.md`, and a rerun
+copies your answers forward rather than resetting them. Step 5 produces the
 sign-off bundle and Step 8 is where its rows get answered. *Second
 stabilization restart completed* in particular cannot honestly be answered in
 the Step 2 bundle, because the restart is Step 4.
@@ -273,6 +273,7 @@ $REIMAGE_ARTIFACT_ROOT/reimaged-system/restarts/
 ├── comparisons/
 ├── state/
 ├── restarts/
+├── sign-offs/
 ├── restore-notes/
 └── time-machine/
 ```
@@ -488,9 +489,10 @@ If Step 1 could not bring the artifact root online (network-only workspace, VPN 
 The script emits `checklist.md` with automated rows prefilled, three companion planning documents, a `raw/` directory of read-only command captures, and a `logs/` directory. It indexes the run and moves `official/verify-reimaged-system-post-restart.txt` to it.
 
 > [!warning] Pitfall
-> Do not fill the manual rows in this bundle. Step 5 regenerates the checklist
-> from scratch and your answers are lost. Worse, the restart rows cannot be
-> answered truthfully yet — the Phase 9 restart is Step 4.
+> Do not answer the manual rows yet. The restart rows cannot be answered
+> truthfully at this point — the Phase 9 restart is Step 4 — and an answer given
+> now carries forward into every later sign-off as though it had been
+> considered.
 
 > [!bug] Troubleshooting
 > If the bundle landed on the Desktop when you expected the artifact root, see [[#The bundle landed on the Desktop instead of the artifact root|The bundle landed on the Desktop instead of the artifact root]].
@@ -643,9 +645,11 @@ relocated reads as absent — which, from here, is what it is.
 > machine against itself, before the restart. It is the failure in this phase
 > least visible by eye, which is why it is checked here rather than trusted.
 
-**Answer the Manual rows** by editing `checklist.md` itself — nothing re-probes
-them and no later phase collects them. Replace each `TODO` with the answer and put
-the reasoning in Notes. `yes` and `accepted` close a row, and so does `no` when
+**Answer the Manual rows** in the sign-off named at the end of the run, under
+`reimaged-system/sign-offs/` — nothing re-probes them. Replace each `TODO` with
+the answer and put the reasoning in Notes. Edit `Status` and `Notes` only;
+`Answered against` is written for you, and a row still naming an older run is
+carried rather than re-verified. `yes` and `accepted` close a row, and so does `no` when
 `no` is the considered answer.
 
 *No new critical regressions across the two bundles.* Read the Step 6 comparison

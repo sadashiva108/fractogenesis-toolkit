@@ -310,6 +310,23 @@ secrets-encrypted/
 
 ---
 
+### Environment Variables
+
+The `reimage.env` values this runbook depends on. The first two are resolved during `prepare-artifact-root.md`. The repository roots are written **by this runbook**, in Step 1 — they are not in `reimage.env.example` and do not exist in `reimage.env` until Step 1 records them, since `upsert-env` appends a key that is not yet present.
+
+| Variable | Meaning |
+|---|---|
+| `FRACTOGENESIS_HOME` | Repository root for this toolkit checkout; where `reimage.env` lives. Set by your shell startup / `.envrc`, not stored in `reimage.env`. |
+| `REIMAGE_ARTIFACT_ROOT` | Artifact root for this reimage event; where every audit, superset and staged tree below is written. |
+| `GIT_WORK_REPO_ROOT` | Resolved absolute path to the parent directory holding work/corporate repositories — a folder of repos, not a single repo. Required. Phase 11B clones back into it, and `record-restore-prereqs.sh --runbook restore-repos` fails when it is unset, because every repository would otherwise fall back to its pre-image parent directory. |
+| `GIT_PERSONAL_REPO_ROOT` | Resolved absolute path to the parent directory holding personal/reference repositories. Optional, and all-or-nothing with the `GIT_PERSONAL_*` identity `restore-git.md` records: a Mac with no separate personal identity leaves both blank. Set one without the other and Phase 11B either clones into a root `includeIf` never matches, or has nowhere to write the personal override. Must differ from `GIT_WORK_REPO_ROOT` — equal roots make `includeIf` apply the personal identity to every repository. |
+
+Keep both as resolved absolute paths. A literal `$HOME/...` or `${GIT_WORK_REPO_ROOT:-...}` in `reimage.env` goes stale or fails under `set -u`.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
 ## Before You Run Anything
 
 Each part below answers *why* a step exists before the Sequential Steps show *how* to run it.
@@ -380,7 +397,9 @@ Define the local repository root directories in `reimage.env` before running the
 
 These values tell the Git helper scripts where to search for repositories. They should point to parent folders that contain one or more Git repositories, not necessarily to a single repo.
 
-You do **not** need both roots. `GIT_WORK_REPO_ROOT` should point to your existing work/corporate repo path. `GIT_PERSONAL_REPO_ROOT` is optional and can stay blank when you do not maintain a separate personal/reference repo area on this Mac.
+You do **not** need both roots. `GIT_WORK_REPO_ROOT` is required and should point to your existing work/corporate repo path. `GIT_PERSONAL_REPO_ROOT` is optional and can stay blank when you do not maintain a separate personal/reference repo area on this Mac.
+
+If you do set it, it is all-or-nothing with the `GIT_PERSONAL_*` identity that [[restore-git|restore-git.md]] Step 0c records: a personal root with no identity clones into a directory `includeIf` never matches, so those commits land under the *work* identity, and an identity with no root leaves that runbook's override at `/.gitconfig`. `record-restore-prereqs.sh --runbook restore-repos` fails on either half. Leaving both blank is a complete, valid answer.
 
 Common examples:
 

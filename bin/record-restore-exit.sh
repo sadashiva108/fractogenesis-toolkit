@@ -98,6 +98,19 @@ fi
 # shellcheck source=../../.internal/artifact-runs.sh
 source "$RUNS_LIB"
 
+# Manual rows leave the run directory. `artifact_run_begin` stages a NEW run on
+# every invocation, so a row answered inside checklist.md comes back as a fresh
+# `TODO` the next time this runs -- the failure verify-reimaged-system.md warns
+# about. The sign-off carries answers forward and stamps each with the run it
+# was answered against. See .internal/sign-offs.sh.
+SIGNOFF_LIB="$REPO_ROOT/.internal/sign-offs.sh"
+if [[ ! -f "$SIGNOFF_LIB" ]]; then
+  echo "ERROR: shared sign-off helper not found: $SIGNOFF_LIB" >&2
+  exit 2
+fi
+# shellcheck source=../.internal/sign-offs.sh
+source "$SIGNOFF_LIB"
+
 usage() {
   sed -n '/^# --- BEGIN USAGE ---$/,/^# --- END USAGE ---$/p' "$0" \
     | sed '1d;$d;s/^# //;s/^#$//'
@@ -180,10 +193,11 @@ record() {
   printf '  %-5s %s\n' "$status" "$check" >&2
 }
 
-# Rows only a person can answer. Written as TODO so the artifact records that
-# they were asked, which a purely automated checklist cannot do.
+# Rows only a person can answer. Collected as item<TAB>note and replayed into
+# the sign-off once the run id exists; they are no longer rendered into
+# checklist.md, because that file is replaced on every run.
 record_manual() {
-  MANUAL_ROWS="${MANUAL_ROWS}| ${1} | \`TODO\` | ${2} |"$'\n'
+  MANUAL_ROWS="${MANUAL_ROWS}${1}"$'\t'"${2}"$'\n'
 }
 
 # Version output goes to stdout for some tools and stderr for others, so 2>&1 is
@@ -556,7 +570,7 @@ echo "Recording ${PHASE_RUNBOOK%.md} exit criteria..." >&2
 # Phase 11A exit -- restore-git
 # ---------------------------------------------------------------------------
 check_restore_git() {
-  local out helper
+  local out helper ev missing_env pers_set pers_blank
 
   if [[ -f "$HOME/.gitconfig" ]]; then
     record PASS "Global .gitconfig written" "\`~/.gitconfig\` present"
@@ -596,6 +610,46 @@ check_restore_git() {
     record PASS "SSH host aliases written" "\`~/.ssh/config\` carries Host entries"
   else
     record FAIL "SSH host aliases written" "no Host entries in \`~/.ssh/config\` — Step 3 writes them"
+  fi
+
+  # The values Step 0c wrote into reimage.env. An exit row and not an entry row
+  # on purpose: at entry they are unset by definition -- 0c is what sets them --
+  # and a row that can only FAIL at the boundary it is checked at is a scheduled
+  # false alarm, not a check. `upsert-env` writes an empty value without
+  # complaining, so "the key is present in reimage.env" is not the question;
+  # "it carries a value" is.
+  #
+  # The GIT_PERSONAL_* set is OPTIONAL and all-or-nothing. A Mac with no separate
+  # personal identity leaves all four blank and that is a PASS. A half-filled set
+  # is the failure worth the row: Step 5 writes the override unquoted, Git accepts
+  # an empty name or email without complaint, and the first symptom is a commit
+  # authored by nobody.
+  missing_env=""
+  for ev in GIT_WORK_NAME GIT_WORK_EMAIL GIT_WORK_SSH_KEY \
+            GIT_WORK_GITHUB_HOST GIT_DEFAULT_BRANCH; do
+    eval "out=\${$ev:-}"
+    [[ -n "$out" ]] || missing_env="${missing_env:+$missing_env }$ev"
+  done
+  pers_set=""; pers_blank=""
+  for ev in GIT_PERSONAL_NAME GIT_PERSONAL_EMAIL GIT_PERSONAL_SSH_KEY \
+            GIT_PERSONAL_GITHUB_HOST; do
+    eval "out=\${$ev:-}"
+    if [[ -n "$out" ]]; then
+      pers_set="${pers_set:+$pers_set }$ev"
+    else
+      pers_blank="${pers_blank:+$pers_blank }$ev"
+    fi
+  done
+  if [[ -n "$missing_env" ]]; then
+    record FAIL "Identity values recorded in \`reimage.env\`" "required and empty: \`$missing_env\` — Step 0c writes these. \`restore-repos\` reads the host alias from here rather than re-deriving it, so an empty one surfaces a phase later as a clone routed to the wrong identity."
+  elif [[ -n "$pers_set" && -n "$pers_blank" ]]; then
+    record FAIL "Identity values recorded in \`reimage.env\`" "the personal identity is half-filled — set: \`$pers_set\`; blank: \`$pers_blank\`. Fill all four or clear all four; Step 5 writes an override with an empty field otherwise and Git accepts it without complaint."
+  elif [[ -n "$pers_set" && -z "${GIT_PERSONAL_REPO_ROOT:-}" ]]; then
+    record FAIL "Identity values recorded in \`reimage.env\`" "a personal identity is set but \`GIT_PERSONAL_REPO_ROOT\` is empty — \`includeIf\` has no \`gitdir:\` to match and Step 5 would write to \`/.gitconfig\`. That value comes from \`backup-repos\`."
+  elif [[ -z "$pers_set" ]]; then
+    record PASS "Identity values recorded in \`reimage.env\`" "work identity complete; no personal identity configured — the personal halves of Steps 3, 5 and 6 do not apply"
+  else
+    record PASS "Identity values recorded in \`reimage.env\`" "work and personal identities complete"
   fi
 
   record_manual "Both identities validated" "Step 7 ran \`ssh -T\` against both host aliases and each returned the expected account. An unregistered key and a wrong key fail identically, so this is the row only you can close."
@@ -694,10 +748,17 @@ emit() {
 
   if [[ -n "$MANUAL_ROWS" ]]; then
     printf '## Manual\n\n'
-    printf 'Answer these here. A row closed as `no` or `accepted` is a decision and counts as answered; the check is for rows nobody looked at.\n\n'
-    printf '| Check | Status | Notes |\n| --- | --- | --- |\n'
-    printf '%s' "$MANUAL_ROWS"
-    printf '\n'
+    printf 'The rows a person answers are not in this file. Rerunning this script\n'
+    printf 'stages a new run directory, so an answer recorded here would come back as\n'
+    printf 'a fresh `TODO`. They live in the sign-off, which carries answers forward\n'
+    printf 'and records the run each was answered against:\n\n'
+    if [[ -n "${SIGNOFF_FILE:-}" ]]; then
+      printf '    %s\n\n' "$SIGNOFF_FILE"
+    else
+      printf '    <artifact-root>/reimaged-system/sign-offs/%s-YYYYMMDD-HHMMSS.md\n\n' "$RUN_CONTEXT"
+    fi
+    printf 'A row closed as `no` or `accepted` is a decision and counts as answered;\n'
+    printf 'the check is for rows nobody looked at.\n\n'
   fi
 
   printf '## How to read this\n\n'
@@ -749,11 +810,28 @@ fi
 
 CHECK_FILE="$ARTIFACT_RUN_DIR/checklist.md"
 
+# Sibling of the boundaries category, not inside it: a sign-off outlives the run
+# it was opened for, so it must not sit in a directory a later run replaces.
+# Opened before `emit` so SIGNOFF_FILE resolves for the pointer in the Manual
+# section, and named for this run so a carried answer says which run it answered.
+SIGNOFF_ROOT="$(dirname "$OUTPUT_ROOT")/sign-offs"
+if ! signoff_begin "$SIGNOFF_ROOT" "$RUN_CONTEXT" "$ARTIFACT_RUN_ID"; then
+  echo "ERROR: cannot open a sign-off under: $SIGNOFF_ROOT" >&2
+  artifact_run_abort
+  exit 2
+fi
+
 if ! emit > "$CHECK_FILE"; then
   echo "ERROR: could not write the checklist: $CHECK_FILE" >&2
   artifact_run_abort
   exit 2
 fi
+
+while IFS=$'\t' read -r _signoff_item _signoff_note; do
+  [[ -n "$_signoff_item" ]] || continue
+  signoff_row "$_signoff_item" "$_signoff_note"
+done <<< "$MANUAL_ROWS"
+signoff_finalize "" "$CHECK_FILE"
 
 # The result summary lands in the manifest row, so the index answers "did this
 # phase pass" without opening the run.
@@ -768,7 +846,8 @@ CHECK_FILE="$ARTIFACT_RUN_DIR/checklist.md"
 echo "" >&2
 echo "Checklist → $CHECK_FILE" >&2
 printf '%s pass · %s warn · %s fail\n' "$pass_count" "$warn_count" "$fail_count" >&2
-echo "Answer the Manual rows in that file before starting $PHASE_NEXT." >&2
+echo "Answer the Manual rows in the sign-off before starting $PHASE_NEXT:" >&2
+echo "  $SIGNOFF_FILE" >&2
 
 if [[ "$OPEN_RESULT" == "true" ]]; then
   open -R "$CHECK_FILE" 2>/dev/null || true

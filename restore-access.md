@@ -182,6 +182,7 @@ $REIMAGE_ARTIFACT_ROOT/reimaged-system/
 boundaries/MANIFEST.md                                           # index of every entry and exit run
 boundaries/official/restore-access-entry.txt                     # newest entry run
 boundaries/official/restore-access-exit.txt                      # newest exit run
+sign-offs/restore-access-exit-YYYYMMDD-HHMMSS.md                 # Step 12 — the rows you answer
 boundaries/runs/restore-access-entry-YYYYMMDD-HHMMSS/            # Step 0a — checklist.md
 boundaries/runs/restore-access-exit-YYYYMMDD-HHMMSS/             # Step 12 — checklist.md
 
@@ -569,11 +570,14 @@ non-interactively and reports the greeting, the error, or a stall.
 > machine had. So the retirement lives only on this Mac, and only until the next
 > re-run.
 >
-> **Record it in `reimaged-system/restore-notes/` when you retire one.** That is
-> the category's whole purpose — a decision no artifact can hold, including a
-> deliberate "not restored". Nothing else in the workflow can tell your deletion
-> from an accident: Step 12 counts private keys and checks their modes, and
-> passes identically either way.
+> **Record it with `./bin/record-decision.sh` when you retire one**, naming the
+> comparison it excepts:
+> `--runbook restore-access --title "Retired <key>" --excepts comparisons/restore-access-inventory-diff`.
+> That appends to `reimaged-system/restore-notes/decisions.md`, and a later run
+> that sees the key flagged can ask `--check restore-access-inventory-diff` and
+> get the answer instead of re-deciding it. Nothing else in the workflow can tell
+> your deletion from an accident: Step 12 counts private keys and checks their
+> modes, and passes identically either way.
 >
 > The same applies to `known_hosts`. Deleting it is a reasonable choice; Step 12
 > will `WARN` about it on every close-out, and answering that row is where you
@@ -1458,7 +1462,7 @@ Rows worth understanding, because they are not the version comparison that
 | `identical` | A `jssecacerts` SHA-256 match — the installed file is byte-for-byte the captured one. This is the strongest row the toolkit produces. |
 | `no baseline` on a `jssecacerts` row | That JDK was installed after the pre-image capture, so no hash was recorded. That JVM has no corporate trust unless you put it there. A JDK that is *not* installed produces no row at all. |
 | `correctly dropped` | An inverted row, and a **pass**. `http.sslverify = false` was recorded pre-image; carrying it forward would disable TLS verification for every Git HTTPS remote and undo Step 7. |
-| `**CARRIED FORWARD**` | That value came back. Remove it with `git config --global --unset http.sslverify`, and scope it per host with `GIT_INTERNAL_TLS_SKIP_HOST` in `restore-git.md` if one internal host genuinely needs it. |
+| `**CARRIED FORWARD**` | That value came back. Remove it with `git config --global --unset http.sslverify`, and, if one internal host genuinely needs it, scope it to that host as [[restore-git#An internal Enterprise Server host fails TLS verification|restore-git.md → Troubleshooting]] describes. |
 | `**MISSING**` | Recorded pre-image, absent now. On this phase that is trust or identity, not a tool a later phase installs. |
 
 `Git credential.helper` and `Git init.defaultBranch` reading `**MISSING**` here

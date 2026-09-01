@@ -2,7 +2,7 @@
 
 # Restore Repositories
 
-**Last updated:** 2026-08-17
+**Last updated:** 2026-09-01
 
 Consume the pre-image repository audit produced by Phase 2A to re-clone the tracked repositories onto the reimaged Mac, rsync the reviewed kept ignored files back into each working tree, and reconcile every pre-image carry-forward row (local-only commits, stashes, tracked changes) against the state of the freshly cloned repos. Runs after Phase 11A has wired up the dual-identity `~/.gitconfig` and `~/.ssh/config`, so every clone command emitted here already routes through the correct SSH key.
 
@@ -51,6 +51,7 @@ Restore the *content* side of the Git story: get every repository that existed o
 **What it sets up**
 
 - **The restore-status bundle** — a timestamped `post-image-restore-*` run under `repo-audit-reports/runs/` holding `restore-status.md`, the machine-readable `raw/status.tsv`, and copies of the pre-image inputs it classified against.
+- **The Phase 11B sign-off** — `repo-audit-reports/sign-offs/post-image-restore-YYYYMMDD-HHMMSS.md`, holding the two rows only you can answer. It sits beside `runs/` rather than inside one, because a run directory is replaced on every rerun and an answered row must not be.
 - **Reviewable action files** — `clone-commands.sh` and `rsync-ignored-files.sh`, emitted per run so you decide which repositories are cloned and which kept ignored files are rsynced back, rather than the script deciding for you.
 - **The restored working trees** — every tracked repository back on disk under the correct Git root, with its `staged-ignored-files/live/<label>/` bundle rsynced into place.
 - **A closed carry-forward ledger** — every pre-image rescue branch, stash, and tracked change either merged, cherry-picked, left as a branch with a note, or explicitly discarded.
@@ -69,7 +70,7 @@ Restore the *content* side of the Git story: get every repository that existed o
 | rsyncing `$REIMAGE_ARTIFACT_ROOT/staged-ignored-files/live/<label>/` back into each cloned working tree | the encrypted secret ignored files under `secrets-encrypted/repos-gitignored/`, which come back with the DMG — `restore-access` (Phase 10B) |
 | the timestamped restore-status bundle under `repo-audit-reports/runs/post-image-restore-*/`, its exit-criteria table, and the Phase 11B sign-off | IDE-specific repo state such as IntelliJ project files and the VS Code workspace — `restore-intellij` and `restore-apps` (Phase 12) |
 
-This runbook can be rerun. Each run writes a fresh timestamped bundle under `repo-audit-reports/runs/post-image-restore-*/`; earlier runs stay untouched, so an early "before any clones" run and a later "everything cloned" run can be diffed to prove progress.
+This runbook can be rerun. Each run writes a fresh timestamped bundle under `repo-audit-reports/runs/post-image-restore-*/`; earlier runs stay untouched, so an early "before any clones" run and a later "everything cloned" run can be diffed to prove progress. A rerun also writes a new sign-off carrying your answers forward, so rerunning never costs you a row you already closed.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -165,7 +166,7 @@ post-image-restore-YYYYMMDD-HHMMSS/
 
 ### Environment Variables
 
-The `reimage.env` values this runbook depends on. Values are resolved and written during `prepare-artifact-root.md` (paths and roots) and set by the operator (identity keys) before Phase 11A.
+The `reimage.env` values this runbook depends on. `REIMAGE_ARTIFACT_ROOT` is resolved during `prepare-artifact-root.md`, the repository roots during [[backup-repos|backup-repos.md]] Step 1, and the host aliases during [[restore-git|restore-git.md]] Step 0c. `GIT_PERSONAL_GITHUB_OWNER` is written **by this runbook**, in Step 0c. Who owns which key, across every phase: [[references/environment-variable-reference|Environment Variable Reference]].
 
 | Variable | Meaning |
 |---|---|
@@ -175,6 +176,7 @@ The `reimage.env` values this runbook depends on. Values are resolved and writte
 | `GIT_PERSONAL_REPO_ROOT` | Directory holding personal repos. Repos whose pre-image path was under here clone through the personal SSH host alias. |
 | `GIT_WORK_GITHUB_HOST` | SSH host alias for work clones. Emitted in the clone commands. |
 | `GIT_PERSONAL_GITHUB_HOST` | SSH host alias for personal clones. Rewrites `git@github.com:` in the pre-image remote URL when routing to personal. |
+| `GIT_PERSONAL_GITHUB_OWNER` | Optional. The GitHub account that owns your personal repositories. `bin/restore-repos.sh` rewrites a clone URL to `$GIT_PERSONAL_GITHUB_HOST` **only** when the URL's owner matches this, so a work-org repository sitting under the personal root is never handed a personal SSH alias. Blank means never rewrite — every candidate is flagged for review in Step 2 instead. Written **by this runbook**, in Step 0c; it is not in `reimage.env.example` and no earlier phase sets it. |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -270,9 +272,49 @@ against the after-state is then literally the list of what this phase restored.
 > [!warning] Pitfall
 > **0b expires and 0a does not.** The prerequisite check is rerunnable at any
 > point and costs nothing to repeat. The before-state is gone the moment the
-> first clone lands in either root, so take 0b before Step 1 — and confirm no
+> first clone lands in either root, so take 0b before Step 0c — and confirm no
 > scratch repository is sitting in a clone root, since one left behind by
 > `restore-git` Step 7 records as restored content.
+
+**0c — record the personal-repo owner.** `bin/restore-repos.sh` rewrites a clone
+URL to `$GIT_PERSONAL_GITHUB_HOST` only when the URL's owner matches
+`GIT_PERSONAL_GITHUB_OWNER`. That match is what keeps a work-org repository
+sitting under the personal root from being handed a personal SSH alias. It is the
+only `reimage.env` key this phase owns, no earlier phase sets it, and Step 1 is
+the first thing that reads it.
+
+Blank is a valid answer and means *never rewrite*: every repository that would
+have routed personal is flagged for review in Step 2 instead. Skip this on a Mac
+with no personal identity — 0a's *Clone roots set and distinct* row has already
+established there is no personal root, and an owner without a root routes
+nothing.
+
+```bash
+export GIT_PERSONAL_GITHUB_OWNER="your-personal-github-account"
+
+if [ -n "$GIT_PERSONAL_GITHUB_OWNER" ] && [ -z "${GIT_PERSONAL_REPO_ROOT:-}" ]; then
+  printf 'REFUSING to write. An owner is set but GIT_PERSONAL_REPO_ROOT is empty,\n'
+  printf 'so no repository can route to the personal host regardless of the owner.\n'
+  printf 'Leave the owner blank, or record the root in backup-repos and source\n'
+  printf 'reimage.env again.\n'
+else
+  python3 bin/prepare-artifact-root.py \
+    upsert-env \
+    --env-file reimage.env \
+    "GIT_PERSONAL_GITHUB_OWNER=$GIT_PERSONAL_GITHUB_OWNER"
+fi
+```
+
+Confirm what landed, rather than trusting the write:
+
+```bash
+grep -E '^(export )?GIT_PERSONAL_GITHUB_OWNER=' reimage.env
+```
+
+`upsert-env` writes an empty value without complaint, which is correct here — a
+blank owner is a decision, not an omission. What it cannot tell you is whether
+the account you typed is the right one; Step 2 is where that shows up, as a clone
+command routed to the wrong host.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 

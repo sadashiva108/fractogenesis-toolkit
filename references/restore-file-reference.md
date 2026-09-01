@@ -49,6 +49,7 @@ Single source of truth for the phase guides used across the post-image stage (Ph
 | `restore-home.md` | Late, selective home-file restore after the clean rebuild is already validated. |
 | `run-time-machine.md` | Pre-image (Phase 5) and post-image (Phase 16) Time Machine passes. |
 | `references/toolkit-environment-reference.md` | How `$FRACTOGENESIS_HOME`, `reimage.env`, and `.envrc` behave across a clone, a `curl` install, and a jump-drive install, and which mechanism loads them at each stage. |
+| `references/environment-variable-reference.md` | Which runbook owns each `reimage.env` key and when it is written; why most keys are absent from `reimage.env.example`; the write guard, the optional and all-or-nothing shapes, and which boundary recorder checks a key. |
 | `reimaging-scripts-guide.md` | Supporting command reference for automation used during restore, post-image capture, and validation. |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -135,6 +136,9 @@ $REIMAGE_ARTIFACT_ROOT/
 │   │   ├── logs/
 │   │   └── raw/
 │   ├── restarts/official/verify-reimaged-system-<point>.txt
+│   ├── sign-offs/
+│   │   ├── <runbook>-YYYYMMDD-HHMMSS.md
+│   │   └── latest-<runbook>.txt
 │   ├── restore-notes/
 │   ├── restarts/
 │   └── time-machine/
@@ -189,16 +193,16 @@ Two `secrets-encrypted/` subtrees have dedicated restore consumers rather than a
 
 | Phase | Main sources under `$REIMAGE_ARTIFACT_ROOT` | Main outputs under `$REIMAGE_ARTIFACT_ROOT` |
 |---|---|---|
-| Phase 8 — Enroll and Stabilize | none required beyond `reimage.env`; optional mounted artifact root | `reimaged-system/restarts/runs/enroll-and-stabilize-<point>-*/`, `reimaged-system/boundaries/runs/enroll-and-stabilize-{entry,exit}-*/` |
+| Phase 8 — Enroll and Stabilize | none required beyond `reimage.env`; optional mounted artifact root | `reimaged-system/restarts/runs/enroll-and-stabilize-<point>-*/`, `reimaged-system/boundaries/runs/enroll-and-stabilize-{entry,exit}-*/`, `reimaged-system/sign-offs/enroll-and-stabilize-{entry,exit}-*.md` |
 | Phase 9 — Initial Captures and Sanity Checks | prepared external root, optional `reimaged-system/restore-notes/` | `reimaged-system/restarts/` (runs, `official/`, `MANIFEST.md`), `reimaged-system/boundaries/`, `reimaged-system/restore-notes/`, `reimaged-system/time-machine/` |
 | Phase 10A — Restore Runtime Libraries | `system-inventory/pre-image-*/`, `system-inventory/post-image-*/`, `home-files-backup/dotfiles/` | usually notes only; later validated under `reimaged-system/`. Also retires the Phase 8 `~/.zprofile` bridge and hands config loading to direnv — see `references/toolkit-environment-reference.md` |
-| Phase 10B — Restore Access | `secrets-encrypted/`, `public-certs/`, `home-files-backup/dotfiles/` | `reimaged-system/restore-notes/` |
+| Phase 10B — Restore Access | `secrets-encrypted/`, `public-certs/`, `home-files-backup/dotfiles/` | `reimaged-system/restore-notes/`, `reimaged-system/sign-offs/restore-access-exit-*.md` |
 | Phase 11A — Restore Git | `secrets-encrypted/ssh/`, `secrets-encrypted/git/`, `toolkit-snapshot/latest-docs/` | dual `~/.gitconfig` + `~/.ssh/config` in place; validated end-to-end for work and personal identities |
-| Phase 11B — Restore Repositories | `repo-audit-reports/runs/pre-image-*/repos.tsv`, `staged-ignored-files/live/<label>/` | `repo-audit-reports/runs/post-image-restore-*/`, `repo-audit-reports/latest-post-image-restore.txt`, working repo checkouts |
-| Phase 12 — Restore Apps | `app-settings-backup/`, `secrets-encrypted/`, `reimaged-system/restore-notes/` | app-specific notes and later validation evidence |
+| Phase 11B — Restore Repositories | `repo-audit-reports/runs/pre-image-*/repos.tsv`, `staged-ignored-files/live/<label>/` | `repo-audit-reports/runs/post-image-restore-*/`, `repo-audit-reports/latest-post-image-restore.txt`, `repo-audit-reports/sign-offs/post-image-restore-*.md`, working repo checkouts |
+| Phase 12 — Restore Apps | `app-settings-backup/`, `secrets-encrypted/`, `reimaged-system/restore-notes/` | `reimaged-system/restore-notes/restore-{apps,docker,intellij}-plan-*.md`, `reimaged-system/sign-offs/restore-{apps,docker,intellij}-*.md` |
 | Phase 13 — Post-Image Captures | matching Phase 4 capture outputs for comparison | `toolkit-snapshot/latest-docs/`, `toolkit-snapshot/pre-image-toolkit-snapshot-*/`, `toolkit-snapshot/latest-pre-image-toolkit-snapshot.txt`, `system-inventory/post-image-*/`, `managed-inventory/post-image-*/`, `performance-audit/post-image-performance-audit-*/`, `office-stability/post-reimage-*/` |
-| Phase 14 — Reimaged System Checks | everything needed for final validation context | `reimaged-system/checklists/reimage-checklist-*.md`, `reimaged-system/checklists/latest-reimage-checklist.txt`, optional manual follow-up in `reimaged-system/restore-notes/` |
-| Phase 15 — Restore Home | `home-files-backup/home/`, `home-files-backup/dotfiles/`, optionally `staged-ignored-files/live/` | optional final notes under `reimaged-system/restore-notes/` |
+| Phase 14 — Reimaged System Checks | everything needed for final validation context; every `reimaged-system/sign-offs/` file | `reimaged-system/checklists/reimage-checklist-*.md`, `reimaged-system/checklists/latest-reimage-checklist.txt`, `reimaged-system/sign-offs/reimaged-system-checks-*.md`, optional prose follow-up in `reimaged-system/restore-notes/` |
+| Phase 15 — Restore Home | `home-files-backup/home/`, `home-files-backup/dotfiles/`, optionally `staged-ignored-files/live/` | `reimaged-system/restore-notes/decisions.md`; optional final notes under `reimaged-system/restore-notes/` |
 | Phase 16 — Post-Image Time Machine | the rebuilt Mac itself; `$EXTERNAL_APPLE_BACKUPS_VOLUME` as destination | `time-machine/` completion, verification, and log artifacts |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -218,6 +222,8 @@ These paths are used before deeper restore work begins.
 | Initial bundle summary and checklist | `reimaged-system/restarts/runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/README.md`, `reimaged-system/restarts/runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/checklist.md` |
 | Initial bundle manual follow-up files | `reimaged-system/restarts/runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/manual-captures-required.md`, `reimaged-system/restarts/runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/restart-checkpoints.md`, `reimaged-system/restarts/runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/time-machine-plan.md` |
 | Initial bundle raw evidence folders | `reimaged-system/restarts/runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/raw/`, `reimaged-system/restarts/runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/logs/` |
+| Rows a person answers, per runbook | `reimaged-system/sign-offs/<runbook>-YYYYMMDD-HHMMSS.md`, `reimaged-system/sign-offs/latest-<runbook>.txt` |
+| Decisions no capture can hold, whole event | `reimaged-system/restore-notes/decisions.md` |
 | Manual early restore notes | `reimaged-system/restore-notes/` |
 | Restart notes or checkpoints | `reimaged-system/restarts/` |
 | First post-image backup notes | `reimaged-system/time-machine/` |

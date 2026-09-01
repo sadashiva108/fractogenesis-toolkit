@@ -47,7 +47,8 @@ Bring back the specific personal-home content — `Documents`, `Desktop`, person
 - **Selectively merged dotfiles** — `~/.zshrc`, `~/.aliases`, `~/.functions`, and the other shell startup files, merged stanza by stanza rather than overwritten, with `~/.gitconfig` deltas reviewed rather than adopted wholesale.
 - **Restored narrow config trees** — the per-tool subtrees under `home-files-backup/dotfiles/` (`config/`, `azure/`, `cf/`, `copilot/`, `kube/`, and siblings), copied per subtree.
 - **A settled OneDrive** — the client reconnected and given a full sync baseline before any OneDrive-managed path is touched.
-- **The restore note** — every restore decision, including each deliberate "not restored", recorded under `reimaged-system/restore-notes/`.
+- **The restore shortlist** — the working note under `reimaged-system/restore-notes/` where you draft what earns a restore before any `rsync` runs.
+- **The decisions** — each deliberate "not restored", appended to the event's `reimaged-system/restore-notes/decisions.md` by `bin/record-decision.sh`.
 
 **What the rest of the workflow relies on it for**
 
@@ -77,7 +78,9 @@ Read this before running anything. Phase 15 is intentionally last because plain-
 
 The order matters. OneDrive reconnects first, because half of the interesting content is already in the cloud and the sync client is the supported restore path for anything under `~/Library/CloudStorage/OneDrive-*/`. Copying files into a OneDrive path before OneDrive has settled produces conflict copies at best and silent duplication at worst. Personal home subfolders come next, restored one target at a time so the operator can see the diff and stop if something unexpected shows up. Dotfiles are merged, never overwritten wholesale — the reimaged system's shell startup files have already been touched by Phase 8 (`bootstrap.sh`) and Phase 10A/10B (runtime + access), and blindly overlaying a pre-image `~/.zshrc` undoes that. Finally, categories with special rules (Downloads, `~/Library/Application Support/`, secrets) get called out separately so they route through the right runbook or get skipped on purpose.
 
-Every restore decision, including "I decided not to restore X," goes into a note under `reimaged-system/restore-notes/`. Phase 15 has no automated evidence — the note is the artifact.
+Every restore decision, including "I decided not to restore X," is appended to `reimaged-system/restore-notes/decisions.md` with `bin/record-decision.sh`. Phase 15 has no automated evidence — the record is the artifact. It is one append-only file for the whole reimage event rather than a dated file per pass, because a decision is not superseded by a later decision the way a capture is superseded by a later capture: both stay true, and the older one is usually the one you need later.
+
+The dated shortlist note is a different thing and stays a different file. It is a worksheet for this pass — what you intend to restore, and why — and it is finished when the pass is.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -106,6 +109,7 @@ Restore notes (this runbook writes here):
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/restore-home-YYYYMMDD.md
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/decisions.md
 ```
 
 Directory shape read by this runbook:
@@ -128,7 +132,8 @@ $REIMAGE_ARTIFACT_ROOT/
 ├── ...
 ├── reimaged-system/
 │   └── restore-notes/
-│       └── restore-home-YYYYMMDD.md
+│       ├── restore-home-YYYYMMDD.md
+│       └── decisions.md
 ├── ...
 ├── staged-ignored-files/
 │   └── live/
@@ -173,7 +178,7 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 
 - Which specific home subfolders and dotfiles justify restore? Draft the shortlist in Step 2 before running any `rsync`; do not restore anything not on the list.
 - Are you rebuilding a personal-use Mac (where old `Documents/` clutter is annoying but low-risk) or a shared / regulated device (where any spurious PII carry-forward is a compliance issue)? Bias toward *not* restoring on the second.
-- Do you want the restore notes under the default `reimaged-system/restore-notes/`, or a scratch location for a personal machine? The default is what Phase 14 sign-off expects on a work rebuild.
+- Do you want the restore notes under the default `reimaged-system/restore-notes/`, or a scratch location for a personal machine? The default is what Phase 14 sign-off expects on a work rebuild; `bin/record-decision.sh --notes-root PATH` redirects the decisions log the same way.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 

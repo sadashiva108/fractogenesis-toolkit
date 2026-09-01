@@ -2,7 +2,7 @@
 
 # Reimage Preparation Checks
 
-**Last updated:** 2026-08-17
+**Last updated:** 2026-09-01
 
 The Phase 6B go / no-go gate before you erase the Mac. `reimage-checklist.sh --phase pre` proves as many prep items as automation can — backup roots, Git audit, secrets DMG, captures, cloud-folder evidence — and writes a timestamped report. You then complete the handful of rows automation cannot prove: IT approval, Time Machine, DMG password storage, and whether OneDrive/iCloud uploads have actually settled. Proceed to Phase 7 only when the report has zero FAILs and every manual row is signed off.
 
@@ -209,6 +209,8 @@ The run writes the report and refreshes the latest-pointer:
 ```text
 $REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/reimage-checklist-YYYYMMDD-HHMMSS.md
 $REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/latest-reimage-checklist.txt
+$REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/sign-offs/reimage-prep-checks-YYYYMMDD-HHMMSS.md
+$REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/sign-offs/latest-reimage-prep-checks.txt
 ```
 
 It exits `0` with no FAILs, `1` when one or more FAIL rows were recorded, and `2` on bad arguments or unloadable config.
@@ -265,7 +267,7 @@ find "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted" -maxdepth 2 -print 2>/dev/null |
 ```
 
 > [!warning] Pitfall
-> A clean report is necessary, not sufficient. The manual rows in Step 3 are part of the gate — do not proceed to Phase 7 on a zero-FAIL report while any `TODO` row is still open.
+> A clean report is necessary, not sufficient. The manual rows — answered in the sign-off under `reimage-prep-checks/sign-offs/`, not in the report — are part of the gate. Do not proceed to Phase 7 on a zero-FAIL report while any `TODO` row is still open.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 

@@ -2,7 +2,7 @@
 
 # Restore IntelliJ
 
-**Last updated:** 2026-08-25
+**Last updated:** 2026-09-01
 
 Restore IntelliJ IDEA and per-project state on the reimaged Mac in a controlled sequence so imported settings, Scratches, project metadata, and HTTP Client environments end up in the right places without dragging stale machine-specific paths forward or leaking secret material into unencrypted storage. This is the dedicated Phase 12 IntelliJ handoff the umbrella app phase hands to; the companion script `bin/restore-intellij.sh` writes a per-run plan-note that surveys the available pre-image sources and provides the sign-off checklist.
 
@@ -45,7 +45,8 @@ Bring IntelliJ IDEA back to a working state for every project that mattered pre-
 
 **What it sets up**
 
-- **The IntelliJ plan-note** — a timestamped `restore-intellij-plan-*.md` under `reimaged-system/restore-notes/` that surveys which pre-image IntelliJ sources are present and carries the sign-off checklist.
+- **The IntelliJ plan-note** — a timestamped `restore-intellij-plan-*.md` under `reimaged-system/restore-notes/` that surveys which pre-image IntelliJ sources are present. It is regenerable.
+- **The IntelliJ sign-off** — `reimaged-system/sign-offs/restore-intellij-YYYYMMDD-HHMMSS.md`, holding the rows you answer. A rerun carries your answers forward and stamps each with the run it was answered against.
 - **A working IntelliJ install** — IntelliJ IDEA installed from the approved channel and launched once so it owns its own Application Support paths, with version and install source recorded.
 - **Restored IDE-level state** — the manual settings ZIP imported, plus Scratches, Consoles, and per-version `config-copy/` content from the matching version subtree.
 - **Restored project state** — the selected `.idea` categories per repo and the non-secret HTTP Client request files that go with them.
@@ -54,7 +55,7 @@ Bring IntelliJ IDEA back to a working state for every project that mattered pre-
 **What the rest of the workflow relies on it for**
 
 - The Phase 12 umbrella plan-note cannot close its `IntelliJ dedicated restore completed` row until this runbook is done.
-- Phase 14 `reimaged-system-checks` reads the newest `restore-intellij-plan-*.md` under `reimaged-system/restore-notes/` and reports any row still on `TODO`.
+- Phase 14 `reimaged-system-checks` reads the newest `restore-intellij-*.md` under `reimaged-system/sign-offs/` and reports any row still on `TODO`, and any row answered against an older run.
 
 **Ownership**
 
@@ -70,7 +71,7 @@ Bring IntelliJ IDEA back to a working state for every project that mattered pre-
 | routing HTTP Client environment files (`*.env.json`, `http-client.private.env.json`) from the encrypted DMG only | Git identity and remote routing — `restore-git` (Phase 11A) |
 | validating Project SDK, Gradle JVM, run configurations, and test builds | the cross-phase post-image sign-off that reads these plan-notes — `reimaged-system-checks` (Phase 14) |
 
-This runbook can be rerun. Regenerating the plan-note produces a fresh timestamped file under `reimaged-system/restore-notes/`; prior plan-notes are preserved so you can compare a partial re-run against the last full pass.
+This runbook can be rerun. Regenerating the plan-note produces a fresh timestamped file under `reimaged-system/restore-notes/` and a new sign-off carrying your existing answers forward, so a rerun costs you nothing already recorded; prior plan-notes are preserved so you can compare a partial re-run against the last full pass.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -109,6 +110,7 @@ $REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/
 $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/intellij/
 $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/all-secrets-*.dmg
 $REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/restore-intellij-plan-*.md
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/sign-offs/restore-intellij-*.md
 ```
 
 Directory shape this runbook reads, alphabetized at every level. Omitted siblings are shown as `...`:
@@ -129,8 +131,10 @@ $REIMAGE_ARTIFACT_ROOT/
 │       └── restore-notes/
 ├── ...
 ├── reimaged-system/
-│   └── restore-notes/
-│       └── restore-intellij-plan-YYYYMMDD-HHMMSS.md
+│   ├── restore-notes/
+│   │   └── restore-intellij-plan-YYYYMMDD-HHMMSS.md
+│   └── sign-offs/
+│       └── restore-intellij-YYYYMMDD-HHMMSS.md
 ├── ...
 └── secrets-encrypted/
     ├── all-secrets-YYYYMMDD-HHMMSS.dmg
@@ -181,7 +185,7 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 
 - Are you restoring every project that was open pre-image, or a smaller set? Restoring `.idea/` metadata for a project you no longer need drags stale run configurations forward for no benefit.
 - Which IntelliJ version are you installing? The scratches / config-copy restore must land in the matching Application Support subtree; a version bump means falling back to the settings ZIP alone.
-- Do you want the plan-note under the default `reimaged-system/restore-notes/`, or a scratch location (`--output-root ~/Desktop/…`)? Phase 14 `reimaged-system-checks.md` reads from the default path.
+- Do you want the plan-note under the default `reimaged-system/restore-notes/`, or a scratch location (`--output-root ~/Desktop/…`)? The sign-off has its own `--signoff-root`, defaulting to `reimaged-system/sign-offs/`. Phase 14 `reimaged-system-checks.md` reads the sign-off from that default path.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -203,6 +207,7 @@ The generated file lives under:
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/restore-intellij-plan-YYYYMMDD-HHMMSS.md
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/sign-offs/restore-intellij-YYYYMMDD-HHMMSS.md
 ```
 
 Skim the **Backup Sources**, **Detected IntelliJ Version Subtrees**, and **Secret-Bearing Sources** tables before continuing. If the version subtree table shows no `IntelliJIdea20YY.N/` rows, the Phase 2D IntelliJ backup did not produce per-version content and the scratches restore collapses to "settings ZIP only."
@@ -742,7 +747,7 @@ Longer material most runs will not need, kept out of the main flow.
 
 ### How the plan-note relates to the Phase 14 sign-off
 
-The plan-note file (`restore-intellij-plan-YYYYMMDD-HHMMSS.md`) is the operator-facing checklist for IntelliJ, but it is also an input to Phase 14 `reimaged-system-checks.md`. The Phase 14 validator scans `reimaged-system/restore-notes/` for the most recent `restore-intellij-plan-*.md`, reads the sign-off checklist, and reports any row still on `TODO`. That is why leaving a note next to a `TODO` row (e.g. `plugin deferred`) matters — the validator has no other way to distinguish "forgotten" from "intentionally deferred."
+The plan-note surveys the sources; the sign-off (`reimaged-system/sign-offs/restore-intellij-YYYYMMDD-HHMMSS.md`) is the operator-facing checklist and the input to Phase 14 `reimaged-system-checks.md`. The two are separate files because they have opposite lifetimes: the plan-note is regenerated on every run, while an answered row is the one thing here that cannot be recomputed. Phase 14 reads the newest sign-off for this runbook and reports any row still on `TODO`, plus any row whose `Answered against` names a run older than the newest. That is why leaving a note next to a `TODO` row (e.g. `plugin deferred`) matters — the validator has no other way to distinguish "forgotten" from "intentionally deferred."
 
 ### Why the manual settings ZIP is preferred over `options/` overlays
 

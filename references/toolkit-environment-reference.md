@@ -228,6 +228,7 @@ This reference describes how the environment behaves. It deliberately does not d
 
 | Topic | Owned by |
 |---|---|
+| Which runbook owns each `reimage.env` key, and when each is written | [[environment-variable-reference\|Environment Variable Reference]] |
 | Creating `reimage.env` for a new reimage event, and first-time direnv setup | [[prepare-artifact-root|prepare-artifact-root.md]] (Phase 1) |
 | Building the jump-drive payload, and **proving** both the curl and jump-drive routes work | [[reimage-guide-access|reimage-guide-access.md]] (Phase 6A) |
 | Installing the toolkit after the erase, and restoring the shell environment | [[enroll-and-stabilize|enroll-and-stabilize.md]] (Phase 8, Steps 1–2) |

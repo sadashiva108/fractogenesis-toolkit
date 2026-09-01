@@ -2,7 +2,7 @@
 
 # Enroll and Stabilize
 
-**Last updated:** 2026-08-18
+**Last updated:** 2026-09-01
 
 Bring the freshly reimaged Mac to a clean, trusted managed baseline before any restore work begins. This phase covers the human-driven work — completing MDM enrollment, installing and confirming the managed app set from both Intune assignment modes, applying required macOS updates, taking the first stabilization restart, and reconfirming afterward — and pairs it with `record-enrollment.sh`, which records read-only command evidence for each managed subsystem and prefills the Phase 8 exit-criteria table for the command-verifiable rows.
 
@@ -144,10 +144,10 @@ macOS updates all happen in Steps 4–6; Step 7 photographs the result. A record
 taken while Company Portal is still installing is honest evidence of an
 incomplete baseline, not a sign-off — so finish the step, then record.
 
-**Fill the manual rows in the post-restart record only.** Each run generates a
-fresh `record.md` with the manual rows reset to `TODO`, so anything
-you hand-write into the pre-restart record is discarded by the next run. Step 9
-produces the sign-off record; Step 10 is where the `TODO` rows get answered. Note
+**Answer the manual rows against the post-restart record.** They live in the
+sign-off under `reimaged-system/sign-offs/`, not in `record.md`, and a rerun
+copies your answers forward rather than resetting them. Step 9 produces the
+sign-off record; Step 10 is where the `TODO` rows get answered. Note
 in particular that *First stabilization restart completed* cannot honestly be
 answered in the Step 7 record, because at that point the restart has not
 happened.
@@ -858,9 +858,10 @@ restart. Run it, then rerun this rather than answering around the row: the whole
 close-out is a statement about the post-restart machine, and without that run
 there is nothing for it to be about.
 
-**Answer the Manual rows.** Nothing re-probes them and no later phase collects
-them: you answer them by editing `checklist.md` itself. Replace each `TODO` with
-the answer and put the reasoning in Notes. `yes` and `accepted` close a row, and
+**Answer the Manual rows** in the sign-off named at the end of the run, under
+`reimaged-system/sign-offs/`. Nothing re-probes them. Replace each `TODO` with
+the answer and put the reasoning in Notes. Edit `Status` and `Notes` only;
+`Answered against` is written for you. `yes` and `accepted` close a row, and
 so does `no` when `no` is the considered answer — the check is for rows nobody
 looked at.
 
@@ -882,10 +883,12 @@ rather than restoring them, so matching fingerprints would be the surprising
 result.
 
 > [!warning] Pitfall
-> **Rerunning this does not update the checklist you answered — it writes a new
-> one with every Manual row back at `TODO`.** Each run lands in its own dated
-> directory, so answer the Manual rows in the last run you intend to keep, and
-> carry your answers forward if you rerun after answering.
+> **A rerun carries your answers forward, but does not re-verify them.** The new
+> sign-off copies each answer along with the run it was answered against, so a
+> row still naming an older run is *carried*: durable, but last checked against a
+> capture this run has replaced. Phase 14 reports carried rows separately from
+> fresh ones. Re-read them, and clear a row's `Answered against` cell to
+> re-affirm it on the next run.
 
 The exit criteria for this phase, and where each is settled:
 

@@ -25,7 +25,7 @@ Renaming considerations:
 
 # Run Time Machine
 
-**Last updated:** 2026-08-17
+**Last updated:** 2026-09-01
 
 Run and validate a Time Machine backup before a Mac reimage — the broad, whole-home safety net that sits alongside, and never replaces, the targeted `$REIMAGE_ARTIFACT_ROOT` artifacts produced by the earlier Phase 2 backups.
 
@@ -75,6 +75,7 @@ Produce a completed, verified Time Machine backup before the Mac is erased, so t
 - **A completed, verified snapshot** — the pre-image backup run to completion on the dedicated Time Machine destination volume, confirmed by the latest-backup record and targeted checksum verification.
 - **Settled exclusions and destination** — the external data volume and the artifact root excluded from Time Machine, and the configured destination confirmed as the Apple backups volume rather than the manual data volume.
 - **The `time-machine/` evidence layer** — the timestamped pre-run bundle plus the completion, verification, compare, status, diagnose, and log artifacts written under `$REIMAGE_ARTIFACT_ROOT/time-machine/`.
+- **The Time Machine sign-off** — `time-machine/sign-offs/run-time-machine-YYYYMMDD-HHMMSS.md`, holding the rows only you can answer. The final checklist is regenerated on every run; the sign-off carries your answers forward and records the run each was answered against.
 - **A cleanly ejected drive** — both volumes detached, with no volume mid-write when the erase begins.
 
 **What the rest of the workflow relies on it for**
@@ -175,6 +176,9 @@ $REIMAGE_ARTIFACT_ROOT/
 │   ├── diagnose-YYYYMMDD-HHMMSS.txt
 │   ├── diskutil-verifyvolume-applebackups-YYYYMMDD-HHMMSS.txt
 │   ├── final-time-machine-checklist-YYYYMMDD-HHMMSS.md
+│   ├── sign-offs/
+│   │   ├── run-time-machine-YYYYMMDD-HHMMSS.md
+│   │   └── latest-run-time-machine.txt
 │   ├── logs-YYYYMMDD-HHMMSS.txt
 │   ├── pre-image-time-machine-status-YYYYMMDD-HHMMSS/
 │   │   ├── README.md

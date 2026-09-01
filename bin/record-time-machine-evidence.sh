@@ -112,6 +112,18 @@ OPEN_AFTER=false
 TIME_MACHINE_DEST="${EXTERNAL_APPLE_BACKUPS_VOLUME:-}"
 EXTERNAL_DATA_VOLUME="${EXTERNAL_DATA_VOLUME:-}"
 
+# Manual rows leave the generated artifact. This script is rerun freely and each
+# run writes a newly stamped file, so a row answered inside one is not carried
+# into the next. The sign-off carries answers forward and records the run each
+# was answered against. See .internal/sign-offs.sh.
+SIGNOFF_LIB="$REPO_ROOT/.internal/sign-offs.sh"
+if [[ ! -f "$SIGNOFF_LIB" ]]; then
+  echo "ERROR: shared sign-off helper not found: $SIGNOFF_LIB" >&2
+  exit 2
+fi
+# shellcheck source=../.internal/sign-offs.sh
+source "$SIGNOFF_LIB"
+
 usage() {
   sed -n '/^# --- BEGIN USAGE ---$/,/^# --- END USAGE ---$/p' "$0" \
     | sed '1d;$d;s/^# //;s/^#$//'
@@ -455,6 +467,15 @@ capture_final_checklist() {
   out="$REIMAGE_ARTIFACT_ROOT/time-machine/final-time-machine-checklist-$stamp.md"
   mkdir -p "$REIMAGE_ARTIFACT_ROOT/time-machine"
 
+  # Sibling of the evidence it summarises, and named for the runbook rather than
+  # for this script: `run-time-machine.md` is the phase an operator remembers.
+  # Opened before the heredoc so SIGNOFF_FILE resolves inside it.
+  if ! signoff_begin "$REIMAGE_ARTIFACT_ROOT/time-machine/sign-offs" \
+                     "run-time-machine" "run-time-machine-$stamp"; then
+    echo "ERROR: cannot open a sign-off under: $REIMAGE_ARTIFACT_ROOT/time-machine/sign-offs" >&2
+    return 1
+  fi
+
   tm_status_text="$(tm_status_text)"
   tm_running="NO"
   if grep -Eq 'Running[[:space:]]*=[[:space:]]*1' <<< "$tm_status_text"; then
@@ -529,10 +550,12 @@ Time Machine only. OneDrive, iCloud, Obsidian, app sync, and external-drive ejec
 
 ## Manual Checks Remaining
 
-| Item | Status | Notes |
-|---|---|---|
-| Time Machine UI spot-check completed | TODO | Browse expected files from the latest backup. |
-| Time Machine evidence reviewed before reimage | TODO | Review completion, latest backup, exclusion, optional verification, and optional checksum evidence. |
+The rows a person answers are not in this file. Each run writes a newly stamped
+checklist, so an answer recorded here would not reach the next one. They live in
+the sign-off, which carries answers forward and records the run each was
+answered against:
+
+    $SIGNOFF_FILE
 
 ## Latest Backup
 
@@ -558,7 +581,12 @@ Completed by: TODO
 Date: YYYY-MM-DD
 EOF
 
+  signoff_row "Time Machine UI spot-check completed" "Browse expected files from the latest backup."
+  signoff_row "Time Machine evidence reviewed before reimage" "Review completion, latest backup, exclusion, optional verification, and optional checksum evidence."
+  signoff_finalize "Phase 5" "$out"
+
   say "Created: $out"
+  say "Sign-off: $SIGNOFF_FILE"
   maybe_open "$out"
 }
 

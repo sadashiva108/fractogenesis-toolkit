@@ -803,14 +803,20 @@ If that still prints an old path instead of `<unset, good>`, something is re-exp
 
 #### Optional Values (Set in Their Own Phase)
 
-These optional variables have no computed default and are **not** set here. Following the same principle as folder creation -- each is set by the runbook that first uses it -- they stay blank in `reimage.env` until that phase. They are listed here only so you know they exist and where they get set; the full catalog with comments lives in `reimage.env.example`. (If you export one before creating `reimage.env`, `bin/setup-reimage-env.sh` captures it — but you don't need to; the phase that uses it will set it.)
+These variables have no computed default and are **not** set here. Following the same principle as folder creation -- each is set by the runbook that first uses it -- they do not appear in `reimage.env` at all until that phase writes them.
 
-| Variable | Set in |
-|---|---|
-| `GIT_WORK_REPO_ROOT`, `GIT_PERSONAL_REPO_ROOT` | [[backup-repos\|backup-repos.md]] (Phase 2A) |
-| `PERFORMANCE_HISTORY_SOURCE` | [[capture-performance-audit\|capture-performance-audit.md]] (Phase 4C) |
-| `OFFICE_WATCH` | [[capture-office-stability\|capture-office-stability.md]] (Phase 4D) |
-| Git identity / SSH / host / branch values | [[restore-git\|restore-git.md]] (Phase 11A) |
+Most are **absent from `reimage.env.example` too**, not merely blank in it. A blank in the template reads as "fill me in now" several phases before the runbook that owns the value, and a key listed there that no runbook owns is how `GIT_PERSONAL_GITHUB_OWNER` came to sit unset and undocumented through an entire reimage. `prepare-artifact-root.py upsert-env` appends a key that is not yet in the file, so nothing needs a placeholder to write into. `PERFORMANCE_HISTORY_SOURCE` and `OFFICE_WATCH` are the exceptions: `init-reimage-env` emits both, so the template carries them.
+
+Exporting one of these in your shell before creating `reimage.env` no longer captures it. `bin/setup-reimage-env.sh` captures only the keys this phase owns -- there is no back door for handing `reimage.env` a restore-phase value three phases early with nothing checking it was the right one. Each is documented under *Artifact and Script Locations → Environment Variables* in the runbook that writes it.
+
+| Variable | Set in | In the template? |
+|---|---|---|
+| `GIT_WORK_REPO_ROOT`, `GIT_PERSONAL_REPO_ROOT` | [[backup-repos\|backup-repos.md]] (Phase 2A) Step 1 | No |
+| `PERFORMANCE_HISTORY_SOURCE` | [[capture-performance-audit\|capture-performance-audit.md]] (Phase 4C) | Yes, blank |
+| `OFFICE_WATCH` | [[capture-office-stability\|capture-office-stability.md]] (Phase 4D) | Yes, blank |
+| `REIMAGE_JDK_BASELINE`, `JAVA_HOME` | [[restore-runtime\|restore-runtime.md]] (Phase 10A) Step 7 | No |
+| Git identity / SSH key / host alias / default branch | [[restore-git\|restore-git.md]] (Phase 11A) Step 0c | No |
+| `GIT_PERSONAL_GITHUB_OWNER` | [[restore-repos\|restore-repos.md]] (Phase 11B) Step 0c | No |
 
 `JUMP_DRIVE_VOLUME` is reference-only -- the no-network bootstrap jump drive path, not read by `prepare-artifact-root.py` (see the Phase 6A jump-drive fallback).
 

@@ -52,6 +52,7 @@ It consolidates the artifact locations documented across the workflow — prepar
 **Cross-cutting references**
 
 - `references/backup-file-reference.md`
+- `references/environment-variable-reference.md`
 - `references/reimage-prep-evidence.md`
 - `references/reimaged-system-evidence.md`
 - `reimaging-scripts-guide.md`
@@ -453,6 +454,9 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 > │           └── rows.tsv
 > ├── state/
 > ├── restarts/
+> ├── sign-offs/
+> │   ├── latest-<runbook>.txt
+> │   └── <runbook>-YYYYMMDD-HHMMSS.md
 > ├── restore-notes/
 > └── time-machine/
 > ```
@@ -463,8 +467,28 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 > `MANIFEST.md` indexing every completed run. Officialness is computed from the
 > manifest rather than stored there, so `official/` can be regenerated from it.
 > `boundaries/` uses the points `entry` and `exit` — one pair per runbook, written
-> by that runbook's Step 0 and its close-out. `restore-notes/` is the exception:
-> hand-written notes, no run structure.
+> by that runbook's Step 0 and its close-out.
+>
+> Two categories are deliberately outside that shape, because a run category
+> replaces its contents and neither of these may be replaced.
+>
+> `sign-offs/` holds the rows a person answers, one file per runbook per run,
+> named for the run so `Answered against` in each row points at something real.
+> A new run copies the previous file forward rather than starting blank, so an
+> answer survives a rerun and its age stays visible: a row still naming an older
+> run is *carried*, not re-verified. It is not run-indexed on purpose —
+> officialness under `official/` is computed latest-wins, so keeping an answered
+> file authoritative would depend on remembering to pin it after every edit,
+> which is the same failure it exists to prevent.
+>
+> `restore-notes/` holds prose: the generated plan-notes the Phase 12 restore
+> scripts write, the per-pass worksheets, and one append-only `decisions.md` per
+> reimage event carrying the exceptions a row cannot hold — why a delta is
+> expected, what was retired, what was not restored. Dated files would scatter
+> that across the drive; a decision is not superseded by a later decision the way
+> a capture is superseded by a later capture, so there is nothing to date.
+> `bin/record-decision.sh` appends to it and can be asked, with `--check`,
+> whether a comparison that keeps flagging something was already decided.
 >
 > Every post-image artifact lands under `reimaged-system/`. Unlike the pre-image
 > phases, which each add a top-level directory to the artifact root, the restore

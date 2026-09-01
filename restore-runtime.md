@@ -2,7 +2,7 @@
 
 # Restore Runtime
 
-**Last updated:** 2026-08-31
+**Last updated:** 2026-09-01
 
 Rebuild the non-secret runtime and toolchain layer on the reimaged Mac — Xcode Command Line Tools, Homebrew, Java and the JVM build tools, Node via `nvm`, and the platform CLIs — before any secret material or repository work begins. This runbook is manual by design; every install is `xcode-select`, `brew`, or `nvm` and there is no fractogenesis-toolkit entrypoint to drive it. The captured pre-image and post-image system inventories from Phases 4B and 13B are the reference for what "restored" means here.
 
@@ -160,19 +160,23 @@ Both categories have the same shape: `runs/<context>-YYYYMMDD-HHMMSS/` holding
 that run's files, `official/<context>.txt` naming the newest run, and an
 append-only `MANIFEST.md` indexing every completed run.
 
-There is no `restore-notes/` in this phase. Phase 15 (`restore-home.md`) owns
-that category, where a hand-written note is the only artifact a step produces.
+There is no `restore-notes/` or `sign-offs/` entry in this phase. Phase 15
+(`restore-home.md`) owns the prose category, where a hand-written note is the
+only artifact a step produces; `sign-offs/` belongs to the phases that ask a
+person to answer rows, and this one asks none.
 Everything this runbook records is generated, so it goes to `boundaries/` and
 `comparisons/` where the run index can find it.
 
 ### Environment Variables
 
-The `reimage.env` values this runbook depends on. Values are resolved and written during `prepare-artifact-root.md`.
+The `reimage.env` values this runbook depends on. `REIMAGE_ARTIFACT_ROOT` is resolved and written during `prepare-artifact-root.md`; `FRACTOGENESIS_HOME` is a shell-startup value and is never stored in `reimage.env` at all. The last two are exported and written **by this runbook**, in [[#Step 7 — Install Java and the JVM Build Tools|Step 7]] — they are not in `reimage.env.example` and do not exist in `reimage.env` until Step 7 records them, since `upsert-env` appends a key that is not yet present. [[restore-access|restore-access.md]] Step 0 confirms both and re-records them if a `reimage.env` predating Step 7 reaches Phase 10B.
 
 | Variable | Meaning |
 |---|---|
 | `REIMAGE_ARTIFACT_ROOT` | Artifact root for this reimage event; used to locate the captured system inventory for version comparison. |
 | `FRACTOGENESIS_HOME` | Repository root for this toolkit checkout; used only to keep command examples portable. Set by your shell startup / `.envrc`, not stored in `reimage.env`. |
+| `REIMAGE_JDK_BASELINE` | The JDK major this machine is pinned to. Named once in Step 7 and never retyped: that step's `brew install openjdk@…`, its symlink, and its `java_home -v` verification all read it, and its write guard refuses to record an empty one. Phase 10B writes the `jssecacerts` trust override into whichever JDK resolves through it, so on a multi-JDK machine this is what decides which one gets the corporate trust. Not a version this toolkit hardcodes anywhere — the checks report which path resolved rather than asserting a number, so nothing goes stale when the baseline moves. The boundary recorders tolerate a blank and fall back to the machine's default JDK, which is right on a machine with one installed; Step 7 itself does not. |
+| `JAVA_HOME` | Resolved from `REIMAGE_JDK_BASELINE` through `/usr/libexec/java_home` in Step 7, exported there, and written to `reimage.env` in the same block, so a new terminal or a later phase does not rediscover it. The one key here that must never be present-but-empty: unlike the `REIMAGE_*` keys, the shell and every JVM tool already read `JAVA_HOME`, so `export JAVA_HOME=` overwrites a working value with an empty string the moment `reimage.env` is sourced. Step 7's guard is what prevents that — it refuses to write **either** key when **either** one is empty, rather than recording half a pair. A convenience in any case: every step that needs it re-derives it from the baseline rather than trusting the stored path, which goes stale when the JDK is reinstalled. |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 

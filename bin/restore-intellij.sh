@@ -39,6 +39,8 @@
 #   --output-root PATH     Override the destination directory for the
 #                          generated plan-note.
 #                          Default: <artifact-root>/reimaged-system/restore-notes
+#   --signoff-root PATH    Directory for the sign-off.
+#                          Default: <artifact-root>/reimaged-system/sign-offs
 #   --open                 Reveal the generated plan-note in Finder on
 #                          completion.
 #   -h, --help             Show this message and exit.
@@ -51,6 +53,11 @@
 #
 # Output location:
 #   $REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/restore-intellij-plan-YYYYMMDD-HHMMSS.md
+#   $REIMAGE_ARTIFACT_ROOT/reimaged-system/sign-offs/restore-intellij-YYYYMMDD-HHMMSS.md
+#
+#   The plan-note surveys the sources and is regenerable. The sign-off holds
+#   the rows a person answers; answers carry forward between runs and each
+#   records the run it was answered against. Phase 14 reads the sign-off.
 #
 # Exit status:
 #   0  Plan-note written; no fatal errors. MISSING source rows do not change
@@ -93,6 +100,19 @@ if ! source "$CONFIG_LOADER"; then
   exit 2
 fi
 
+# The sign-off rows leave the plan-note entirely. A plan-note is regenerable --
+# rerunning this script is the documented way to refresh the survey -- and an
+# answered row is the one thing in it that cannot be recomputed. Keeping both in
+# one file meant a rerun handed Phase 14 a fresh set of TODOs while the answers
+# sat in an older file nothing reads. See .internal/sign-offs.sh.
+SIGNOFF_LIB="$REPO_ROOT/.internal/sign-offs.sh"
+if [[ ! -f "$SIGNOFF_LIB" ]]; then
+  echo "ERROR: shared sign-off helper not found: $SIGNOFF_LIB" >&2
+  exit 2
+fi
+# shellcheck source=../.internal/sign-offs.sh
+source "$SIGNOFF_LIB"
+
 usage() {
   sed -n '/^# --- BEGIN USAGE ---$/,/^# --- END USAGE ---$/p' "$0" \
     | sed '1d;$d;s/^# //;s/^#$//'
@@ -114,6 +134,7 @@ require_option_value() {
 # ---------------------------------------------------------------------------
 STAMP="$(date +%Y%m%d-%H%M%S)"
 OUTPUT_ROOT=""
+SIGNOFF_ROOT=""
 OPEN_RESULT=false
 
 while [[ $# -gt 0 ]]; do
@@ -126,6 +147,11 @@ while [[ $# -gt 0 ]]; do
     --output-root)
       require_option_value "$1" "${2:-}"
       OUTPUT_ROOT="$2"
+      shift 2
+      ;;
+    --signoff-root)
+      require_option_value "$1" "${2:-}"
+      SIGNOFF_ROOT="$2"
       shift 2
       ;;
     --open)
@@ -161,7 +187,26 @@ if ! mkdir -p "$OUTPUT_ROOT" 2>/dev/null; then
   exit 2
 fi
 
+if [[ -z "$SIGNOFF_ROOT" ]]; then
+  SIGNOFF_ROOT="$REIMAGE_ARTIFACT_ROOT/reimaged-system/sign-offs"
+fi
+
+SIGNOFF_ROOT="$(absolute_path "$SIGNOFF_ROOT")"
+
+if [[ -n "${REPO_ROOT:-}" && ( "$SIGNOFF_ROOT" == "$REPO_ROOT" || "$SIGNOFF_ROOT" == "$REPO_ROOT"/* ) ]]; then
+  echo "ERROR: refusing to write output under the repo checkout: $SIGNOFF_ROOT" >&2
+  exit 2
+fi
+
 PLAN_FILE="$OUTPUT_ROOT/restore-intellij-plan-$STAMP.md"
+
+# Open the sign-off before the plan is written: it resolves SIGNOFF_FILE, which
+# the plan-note points at, and carries forward any answers from the last run.
+RUN_ID="restore-intellij-$STAMP"
+if ! signoff_begin "$SIGNOFF_ROOT" "restore-intellij" "$RUN_ID"; then
+  echo "ERROR: could not open the sign-off under $SIGNOFF_ROOT" >&2
+  exit 2
+fi
 
 # ---------------------------------------------------------------------------
 # Source enumeration
@@ -286,20 +331,11 @@ SECRETS_DMG="$(latest_secrets_dmg)"
   printf '\n'
 
   printf '## Sign-Off Checklist\n\n'
-  printf '| Item | Status | Notes |\n'
-  printf '| --- | --- | --- |\n'
-  printf '| IntelliJ installed | TODO |  |\n'
-  printf '| Install source recorded (Toolbox / direct / version) | TODO |  |\n'
-  printf '| First launch completed and quit | TODO |  |\n'
-  printf '| Settings ZIP imported | TODO |  |\n'
-  printf '| Scratches and Consoles restored | TODO |  |\n'
-  printf '| Project SDK configured on key projects | TODO |  |\n'
-  printf '| Gradle JVM configured on key projects | TODO |  |\n'
-  printf '| Run configurations present | TODO |  |\n'
-  printf '| Plugins reinstalled or confirmed | TODO |  |\n'
-  printf '| HTTP Client env files restored from encrypted source only | TODO |  |\n'
-  printf '| Key projects open cleanly and tests build | TODO |  |\n'
-  printf '| No secrets committed accidentally (`git status --ignored -s` clean) | TODO |  |\n'
+  printf 'The rows a person answers live in their own file, so regenerating\n'
+  printf 'this plan never discards an answer:\n\n'
+  printf '    %s\n\n' "$SIGNOFF_FILE"
+  printf 'Answers carry forward between runs and each row records the run it\n'
+  printf 'was answered against. Phase 14 reads that file, not this one.\n'
 } > "$PLAN_FILE" || {
   # Without -e a failed redirect would still fall through to the success line
   # below, and Phase 14 reads the newest plan-note — a phantom hand-off.
@@ -308,6 +344,24 @@ SECRETS_DMG="$(latest_secrets_dmg)"
 }
 
 echo "Plan-note → $PLAN_FILE"
+
+# Row text is the key that carries an answer between runs, so rewording one
+# orphans its answer. sign-offs.sh reports that rather than dropping it, but
+# treat these strings as identifiers, not as prose.
+signoff_row 'IntelliJ installed' ''
+signoff_row 'Install source recorded (Toolbox / direct / version)' ''
+signoff_row 'First launch completed and quit' ''
+signoff_row 'Settings ZIP imported' ''
+signoff_row 'Scratches and Consoles restored' ''
+signoff_row 'Project SDK configured on key projects' ''
+signoff_row 'Gradle JVM configured on key projects' ''
+signoff_row 'Run configurations present' ''
+signoff_row 'Plugins reinstalled or confirmed' ''
+signoff_row 'HTTP Client env files restored from encrypted source only' ''
+signoff_row 'Key projects open cleanly and tests build' ''
+signoff_row 'No secrets committed accidentally (`git status --ignored -s` clean)' ''
+
+signoff_finalize "Phase 12" "$PLAN_FILE"
 
 if [[ "$OPEN_RESULT" == true ]]; then
   open -R "$PLAN_FILE" 2>/dev/null || true

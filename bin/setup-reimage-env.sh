@@ -24,9 +24,10 @@
 #                              OneDrive-AcmeGroup). When set, ONEDRIVE_ROOT is
 #                              resolved and the per-reimage OneDrive destination
 #                              is created. Leave unset to skip OneDrive entirely.
-# Any other reimage.env variable already exported in this shell (for example
-# OFFICE_WATCH, PERFORMANCE_HISTORY_SOURCE, REIMAGE_WORKSPACE_ROOT, or the GIT_*
-# values) is also captured into reimage.env, so nothing you set is dropped.
+# The remaining keys THIS phase owns -- OFFICE_WATCH, JUMP_DRIVE_VOLUME,
+# TOOLKIT_GITHUB_ACCOUNT -- are captured from the shell when already exported, so
+# nothing you set here is dropped. Keys another runbook owns are deliberately not
+# captured; see the loop below.
 
 set -euo pipefail
 
@@ -60,16 +61,19 @@ python3 bin/prepare-artifact-root.py \
   --workspace-root "${REIMAGE_WORKSPACE_ROOT:-}" \
   --performance-history-source "${PERFORMANCE_HISTORY_SOURCE:-}"
 
-# Capture any other optional reimage.env variables already exported in this
-# shell, so a value you deliberately set is not silently dropped at creation.
-# These are normally set later by the runbook that uses them; exporting one
-# first is simply honored here.
+# Capture the remaining keys this phase owns, when they are already exported in
+# the shell, so a value you deliberately set is not dropped at creation.
+#
+# The list is deliberately short. It used to carry the two Git repository roots
+# and the nine Git identity keys, and reimage.env.example carried them as blanks
+# for the same reason -- between them they let reimage.env be handed values three
+# and four phases before the runbook that owns them, with nothing checking that
+# the values were the ones that machine would actually restore with. Both are
+# gone. A key belongs to the runbook that uses it, `upsert-env` appends a key
+# that is not yet in the file, and backup-repos.md, restore-git.md and
+# restore-repos.md each record their own.
 _captured=()
-for _k in OFFICE_WATCH JUMP_DRIVE_VOLUME \
-          GIT_WORK_REPO_ROOT GIT_PERSONAL_REPO_ROOT \
-          GIT_WORK_NAME GIT_WORK_EMAIL GIT_PERSONAL_NAME GIT_PERSONAL_EMAIL \
-          GIT_WORK_GITHUB_HOST GIT_PERSONAL_GITHUB_HOST \
-          GIT_WORK_SSH_KEY GIT_PERSONAL_SSH_KEY GIT_DEFAULT_BRANCH; do
+for _k in OFFICE_WATCH JUMP_DRIVE_VOLUME TOOLKIT_GITHUB_ACCOUNT; do
   _v="${!_k:-}"
   [ -n "$_v" ] && _captured+=("${_k}=${_v}")
 done

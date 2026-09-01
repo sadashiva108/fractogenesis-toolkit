@@ -572,7 +572,8 @@ Validation checklist (run after generating the filled runbook)
 - [ ] Section and step intros are link-free; only links that earn their place remain.
 - [ ] Routing-index forks follow the layout house rule — console-first when there is output to match, a short bullet when there is not, callouts for error/fail outcomes, never a table — and each option's link label matches its destination heading.
 - [ ] PRIMARY_SCRIPT path exists in the repo or a TODO notes creation.
-- [ ] Listed reimage.env variables appear in reimage.env.example or artifact-config.sh.
+- [ ] Every reimage.env variable the runbook lists is either written by this runbook, or written by an earlier one and named as such in the Environment Variables intro. `reimage.env.example` is NOT the reference for this: it carries only the keys `prepare-artifact-root.md` establishes, and a key another runbook owns is deliberately absent from it rather than sitting there blank. `upsert-env` appends a key that is not yet in the file, so a value never needs a placeholder to write into.
+- [ ] A variable this runbook writes is documented in its Environment Variables table with the step that writes it, and is not left as a blank in `reimage.env.example` for someone to fill in early.
 - [ ] No absolute personal paths or secrets introduced.
 - [ ] Commands shown are syntactically valid and minimal, each preceded by a one-line purpose.
 - [ ] Pasted command blocks are zsh-safe: no `#` comments trailing or whole-line, no bare `<placeholder>` the shell would read as redirection, and no unquoted glob metacharacters or bare `*` patterns whose non-match would abort the line, and no `exit` or `return … || exit` that would close the operator's terminal.

@@ -147,7 +147,9 @@ $FRACTOGENESIS_HOME/reimage.env    # sourced at the start of every step below
 
 ### Environment Variables
 
-The `reimage.env` values this runbook depends on. Paths and roots are resolved during `prepare-artifact-root.md`; the identity keys, host aliases, and default branch are recorded here in Step 1.
+The `reimage.env` values this runbook depends on. `REIMAGE_ARTIFACT_ROOT` is resolved during `prepare-artifact-root.md` and the repository roots during `backup-repos.md`. The identity keys, host aliases and default branch are written **by this runbook**, in Step 0c — they are not in `reimage.env.example` and do not exist in `reimage.env` until 0c records them, since `upsert-env` appends a key that is not yet present.
+
+The five work-and-default keys are required. The four `GIT_PERSONAL_*` keys are optional and all-or-nothing: fill every one or leave every one blank.
 
 | Variable | Meaning |
 |---|---|
@@ -155,16 +157,15 @@ The `reimage.env` values this runbook depends on. Paths and roots are resolved d
 | `REIMAGE_ARTIFACT_ROOT` | Artifact root for this reimage event; used only for the input paths above. |
 | `GIT_WORK_NAME` | Author name for the default work identity. |
 | `GIT_WORK_EMAIL` | Author email for the default work identity. |
-| `GIT_PERSONAL_NAME` | Author name for the personal identity override. |
-| `GIT_PERSONAL_EMAIL` | Author email for the personal identity override. |
+| `GIT_PERSONAL_NAME` | Optional. Author name for the personal identity override. |
+| `GIT_PERSONAL_EMAIL` | Optional. Author email for the personal identity override. |
 | `GIT_WORK_REPO_ROOT` | Directory holding work repos. Repos here inherit the global work identity. |
 | `GIT_PERSONAL_REPO_ROOT` | Directory holding personal repos. `includeIf` fires only for repos under this path. |
-| `GIT_WORK_GITHUB_HOST` | Host SSH connects to for work clones — a GitHub Enterprise instance such as `github.example.com`, or `github.com`. Written as both `Host` and `HostName` in `~/.ssh/config`, so it must resolve. |
-| `GIT_PERSONAL_GITHUB_HOST` | Host SSH connects to for personal clones, usually `github.com`. Written as both `Host` and `HostName`, so it must resolve. |
+| `GIT_WORK_GITHUB_HOST` | Host SSH connects to for work clones — a GitHub Enterprise instance such as `github.example.com`, or `github.com` when there is no Enterprise instance. Written as both `Host` and `HostName` in `~/.ssh/config`, so it must resolve. |
+| `GIT_PERSONAL_GITHUB_HOST` | Optional. Host SSH connects to for personal clones, usually `github.com`. When both accounts live on `github.com` and only the key differs, use an alias such as `github-personal` — `Host` then carries the alias and `HostName` the real host. Written as both, so `HostName` must resolve. |
 | `GIT_WORK_SSH_KEY` | Absolute path to the work private key on disk (already restored in Phase 10B). |
-| `GIT_PERSONAL_SSH_KEY` | Absolute path to the personal private key on disk (already restored in Phase 10B). |
+| `GIT_PERSONAL_SSH_KEY` | Optional. Absolute path to the personal private key on disk (already restored in Phase 10B). |
 | `GIT_DEFAULT_BRANCH` | Default branch name for `git init` (defaults to `main` when unset). |
-| `GIT_INTERNAL_TLS_SKIP_HOST` | Optional. Internal Enterprise Server host (e.g. `github.internal.example`) whose TLS cert this Mac doesn't trust; scopes `sslVerify=false` to that host only. Unset = verification stays on everywhere. |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -178,7 +179,7 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 
 - Your shell is at the repository root — `cd "$FRACTOGENESIS_HOME"` once for the session. Per the guide's [[reimaging-guide#Core Assumptions|Core Assumptions]], the commands below assume this and don't repeat it.
 - Phase 10B ([[restore-access|restore-access.md]]) is complete: the SSH keys referenced by `$GIT_WORK_SSH_KEY` and `$GIT_PERSONAL_SSH_KEY` exist on disk, the internal-CA trust is in the login keychain, and `hdiutil detach` cleaned up any mounted DMG.
-- `reimage.env` is present, and you know your Git identity values (name, email, SSH key paths, host aliases). Step 1 records them into `reimage.env`; don't leave an identity value blank — a blank email silently produces a `.gitconfig` with an empty email.
+- `reimage.env` is present, and you know your Git identity values (name, email, SSH key paths, host aliases). Step 0c records them into `reimage.env`. The work values are required. The personal set is optional — a Mac with no separate personal identity leaves all four blank — but it is all-or-nothing: a half-filled personal identity silently produces an override `.gitconfig` with an empty email, which Git accepts without complaint.
 - You know the SSH key fingerprints registered on GitHub for both accounts, or can look them up in a password manager. You will compare them in Step 2.
 
 > [!bug] Troubleshooting
@@ -267,7 +268,95 @@ personal-root `.gitconfig` reached by `includeIf`.
 > **0b expires and 0a does not.** The prerequisite check is rerunnable at any
 > point and costs nothing to repeat. The before-state is gone the moment Step 3
 > rewrites `~/.ssh/config` — Step 3 replaces that file wholesale rather than
-> appending to it — and Step 4 writes `~/.gitconfig`. Take 0b before Step 1.
+> appending to it — and Step 4 writes `~/.gitconfig`. Take 0b before Step 0c.
+
+**0c — confirm the values this phase writes.** Steps 3 through 6 write your
+identity into `~/.ssh/config`, `~/.gitconfig`, and the personal-root override.
+They read it from `reimage.env`, and no earlier phase sets it: the repository
+roots carry over from the pre-image backup, the identity does not. Record it
+here, before the first write, rather than discovering an empty value inside a
+heredoc that accepts it silently.
+
+`reimage.env` is not one of 0b's four targets, so recording it here does not
+disturb the capture you just took.
+
+Fill in the real values. The five work-and-default keys are required. The four
+`GIT_PERSONAL_*` keys are optional — leave all four blank if this Mac has no
+separate personal identity — but fill all four or none:
+
+```bash
+export GIT_WORK_NAME="Your Name"
+export GIT_WORK_EMAIL="you@company.example"
+export GIT_WORK_SSH_KEY="$HOME/.ssh/id_work"
+export GIT_WORK_GITHUB_HOST="github.example.com"
+export GIT_DEFAULT_BRANCH="main"
+
+export GIT_PERSONAL_NAME=""
+export GIT_PERSONAL_EMAIL=""
+export GIT_PERSONAL_SSH_KEY=""
+export GIT_PERSONAL_GITHUB_HOST=""
+```
+
+`upsert-env` accepts any `KEY=VALUE` it is given, including an empty `VALUE`, and
+reports no error when it writes one — so check the values in the same block that
+writes them, where the check cannot drift away from the thing it protects:
+
+```bash
+_empty=""
+for _k in GIT_WORK_NAME GIT_WORK_EMAIL GIT_WORK_SSH_KEY \
+          GIT_WORK_GITHUB_HOST GIT_DEFAULT_BRANCH; do
+  eval "_v=\${$_k:-}"
+  [ -n "$_v" ] || _empty="${_empty:+$_empty }$_k"
+done
+
+_pers_set=""; _pers_blank=""
+for _k in GIT_PERSONAL_NAME GIT_PERSONAL_EMAIL GIT_PERSONAL_SSH_KEY \
+          GIT_PERSONAL_GITHUB_HOST; do
+  eval "_v=\${$_k:-}"
+  if [ -n "$_v" ]; then _pers_set="${_pers_set:+$_pers_set }$_k"
+  else                 _pers_blank="${_pers_blank:+$_pers_blank }$_k"; fi
+done
+
+if [ -n "$_empty" ]; then
+  printf 'REFUSING to write. Required and empty: %s\n' "$_empty"
+elif [ -n "$_pers_set" ] && [ -n "$_pers_blank" ]; then
+  printf 'REFUSING to write. The personal identity is half-filled.\n'
+  printf '  set:   %s\n' "$_pers_set"
+  printf '  blank: %s\n' "$_pers_blank"
+  printf 'Fill the blanks, or clear all four to skip the personal identity.\n'
+elif [ -n "$_pers_set" ] && [ -z "${GIT_PERSONAL_REPO_ROOT:-}" ]; then
+  printf 'REFUSING to write. A personal identity is set but GIT_PERSONAL_REPO_ROOT is empty.\n'
+  printf 'includeIf would have no gitdir: to match and Step 5 would write to /.gitconfig.\n'
+  printf 'That value comes from backup-repos; set it there and source reimage.env again.\n'
+else
+  python3 bin/prepare-artifact-root.py \
+    upsert-env \
+    --env-file reimage.env \
+    "GIT_WORK_NAME=$GIT_WORK_NAME" \
+    "GIT_WORK_EMAIL=$GIT_WORK_EMAIL" \
+    "GIT_WORK_SSH_KEY=$GIT_WORK_SSH_KEY" \
+    "GIT_WORK_GITHUB_HOST=$GIT_WORK_GITHUB_HOST" \
+    "GIT_DEFAULT_BRANCH=$GIT_DEFAULT_BRANCH" \
+    "GIT_PERSONAL_NAME=$GIT_PERSONAL_NAME" \
+    "GIT_PERSONAL_EMAIL=$GIT_PERSONAL_EMAIL" \
+    "GIT_PERSONAL_SSH_KEY=$GIT_PERSONAL_SSH_KEY" \
+    "GIT_PERSONAL_GITHUB_HOST=$GIT_PERSONAL_GITHUB_HOST"
+fi
+```
+
+Confirm what landed, rather than trusting the write:
+
+```bash
+grep -E '^(export )?GIT_(WORK|PERSONAL|DEFAULT)' reimage.env
+```
+
+Nothing checks these at 0a, and that is deliberate. The prerequisite recorder
+asks what must be true *before* the phase starts; these are values the phase
+itself records, so a row over them could only ever fail at entry — a scheduled
+false alarm rather than a check. They are verified at the other end instead, by
+`record-restore-exit.sh --runbook restore-git` in Step 9, which is also where the
+all-or-nothing rule on the personal set is enforced against what actually landed
+in the file.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -283,47 +372,15 @@ git --version
 git config --global --list
 ```
 
-Record your Git identity, SSH host aliases, and default branch in `reimage.env` — these are the values this runbook writes into `~/.gitconfig`, `~/.ssh/config`, and the personal-root override. Fill in the real values (leave the `GIT_PERSONAL_*` pair blank if you have no separate personal identity), then upsert them. The repository roots (`GIT_WORK_REPO_ROOT`, `GIT_PERSONAL_REPO_ROOT`) already carry over from the pre-image backup.
-
-```bash
-export GIT_WORK_NAME="Your Name"
-export GIT_WORK_EMAIL="you@company.example"
-export GIT_PERSONAL_NAME=""
-export GIT_PERSONAL_EMAIL=""
-export GIT_WORK_SSH_KEY="$HOME/.ssh/id_work"
-export GIT_PERSONAL_SSH_KEY="$HOME/.ssh/id_personal"
-export GIT_WORK_GITHUB_HOST="github.example.com"
-export GIT_PERSONAL_GITHUB_HOST="github.com"
-export GIT_DEFAULT_BRANCH="main"
-
-python3 bin/prepare-artifact-root.py \
-  upsert-env \
-  --env-file reimage.env \
-  "GIT_WORK_NAME=$GIT_WORK_NAME" \
-  "GIT_WORK_EMAIL=$GIT_WORK_EMAIL" \
-  "GIT_PERSONAL_NAME=$GIT_PERSONAL_NAME" \
-  "GIT_PERSONAL_EMAIL=$GIT_PERSONAL_EMAIL" \
-  "GIT_WORK_SSH_KEY=$GIT_WORK_SSH_KEY" \
-  "GIT_PERSONAL_SSH_KEY=$GIT_PERSONAL_SSH_KEY" \
-  "GIT_WORK_GITHUB_HOST=$GIT_WORK_GITHUB_HOST" \
-  "GIT_PERSONAL_GITHUB_HOST=$GIT_PERSONAL_GITHUB_HOST" \
-  "GIT_DEFAULT_BRANCH=$GIT_DEFAULT_BRANCH"
-```
-
-Source the reimage environment for the rest of this runbook:
+Source the reimage environment for the rest of this runbook — Step 0c has just written the identity values into it:
 
 ```bash
 source ./reimage.env
-```
-
-Sanity-check that the identity keys resolved to non-empty values:
-
-```bash
 printf 'WORK: %s <%s>\n' "$GIT_WORK_NAME" "$GIT_WORK_EMAIL"
-printf 'PERS: %s <%s>\n' "$GIT_PERSONAL_NAME" "$GIT_PERSONAL_EMAIL"
+printf 'PERS: %s <%s>\n' "${GIT_PERSONAL_NAME:-<none>}" "${GIT_PERSONAL_EMAIL:-<none>}"
 ```
 
-If any of the four fields prints blank, fill in `reimage.env` before continuing.
+This is the read-back of what 0c wrote, from the file rather than from the shell that wrote it. A blank `WORK` field means the upsert did not land even though 0c's guard passed — check `reimage.env` directly before continuing. `PERS` printing `<none>` is correct on a Mac with no separate personal identity; the personal halves of Steps 3, 5 and 6 then do not apply.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -410,8 +467,6 @@ Work identity is the global default; `includeIf` overrides it only inside the pe
 
 `cat >` truncates `~/.gitconfig`, and [[restore-access|restore-access.md]] Step 7 may have written `http.sslCAInfo` into it pointing at the combined corporate CA bundle. The block below reads that value before the rewrite and puts it back after, so writing the identity cannot silently undo the trust configuration every HTTPS remote depends on. Nothing here needs to know the bundle path — `restore-access` stays its only owner.
 
-The last conditional scopes `sslVerify=false` to a single internal Enterprise Server host whose certificate this Mac does not trust. Leave `GIT_INTERNAL_TLS_SKIP_HOST` unset — that is the secure default — and set it only if Step 7 shows that host genuinely failing to verify.
-
 ```bash
 source ./reimage.env
 
@@ -435,10 +490,6 @@ EOF
 if [ -n "$SAVED_CA_INFO" ]; then
   git config --global http.sslCAInfo "$SAVED_CA_INFO"
 fi
-
-if [ -n "${GIT_INTERNAL_TLS_SKIP_HOST:-}" ]; then
-  git config --global "http.https://${GIT_INTERNAL_TLS_SKIP_HOST}/.sslVerify" false
-fi
 ```
 
 Validate the global identity resolves, and that the CA bundle survived the rewrite:
@@ -453,8 +504,8 @@ The first returns `$GIT_WORK_EMAIL`. The second returns the bundle path if Step 
 > [!note]
 > If the pre-image config had more than one `[user]` block, Git used the lower matching value globally. The layout above keeps a single `[user]` block on purpose — work is the deliberate global default, and the override lives in a separate file that only fires under the personal root.
 
-> [!note]
-> Skipping TLS verification is a workaround, not the goal. The cleaner long-term fix is to **trust the internal Enterprise Server's CA certificate** — import it into the login keychain with `security add-trusted-cert`, or deploy it via an MDM trust profile — then leave `GIT_INTERNAL_TLS_SKIP_HOST` unset so verification stays on everywhere. Scope the skip to a single host only while you don't yet trust that CA; never disable verification globally.
+> [!bug] Troubleshooting
+> If that check comes back empty on a Mac that *does* sit behind corporate TLS interception, or an internal Enterprise Server host later refuses to verify, see [[#An internal Enterprise Server host fails TLS verification|An internal Enterprise Server host fails TLS verification]].
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -525,7 +576,7 @@ Add an include block to `~/.config/git/config` if not already present:
     path = ~/.config/git/config.local
 ```
 
-Then write `config.local` from `reimage.env`. The trailing conditional is the same host-scoped TLS skip as Step 4, written into this file instead; leave `GIT_INTERNAL_TLS_SKIP_HOST` unset to keep verification on everywhere.
+Then write `config.local` from `reimage.env`. It mirrors the global file rather than adding to it — same identity, same `includeIf`, same default branch — so whichever of the two Git loads last, the answer is the same.
 
 ```bash
 source ./reimage.env
@@ -547,10 +598,6 @@ cat > ~/.config/git/config.local <<EOF
 [init]
     defaultBranch = ${GIT_DEFAULT_BRANCH:-main}
 EOF
-
-if [ -n "${GIT_INTERNAL_TLS_SKIP_HOST:-}" ]; then
-  git config --file ~/.config/git/config.local "http.https://${GIT_INTERNAL_TLS_SKIP_HOST}/.sslVerify" false
-fi
 ```
 
 > [!warning] Pitfall
@@ -772,6 +819,31 @@ Without the trailing slash, the include may not fire for nested repos. Re-run St
 Git does not read `config.local` automatically. It must be pulled in from `~/.config/git/config` or `~/.gitconfig` via an `[include]` block. Confirm the include exists; Step 6 writes it.
 
 [[#Step 7 — Validate Both Identities|⮕ Continue to Step 7 — Validate Both Identities]]
+
+### An internal Enterprise Server host fails TLS verification
+
+`git` over HTTPS to an internal Enterprise Server reports a certificate problem — `SSL certificate problem: unable to get local issuer certificate`, or a `server certificate verification failed`. This is a debugging path, not a configuration option: no `reimage.env` key turns it on, and none of the steps above write it.
+
+**Check whether the exemption is still needed before reaching for one.** [[restore-access|restore-access.md]] Step 7 puts the corporate root into the CA bundle and points Git at it, so a host that failed to verify pre-image often verifies now. Confirm the bundle is actually wired up first:
+
+```bash
+git config --global --get http.sslCAInfo
+git ls-remote "https://<internal-host>/<org>/<repo>.git" >/dev/null && echo verified
+```
+
+An empty first line on a Mac behind corporate TLS interception is the real fault — Step 7 of `restore-access` never ran, or ran and did not write. Fix that rather than exempting the host.
+
+**If the host genuinely does not verify**, scope the exemption to that one host and nothing else:
+
+```bash
+git config --global "http.https://<internal-host>/.sslVerify" false
+```
+
+Never `git config --global http.sslverify false`. That disables verification for every HTTPS remote, it is what the pre-image machine had set, and `record-restore-exit.sh --runbook restore-git` records a `FAIL` on *TLS verification left on* when it finds it — the row exists because this phase is the one that could carry it forward. Remove a global one with `git config --global --unset http.sslverify`.
+
+The skip is a workaround, not the goal. The durable fix is to trust the internal CA — `security add-trusted-cert` into the login keychain, or an MDM trust profile — and then drop the per-host exemption so verification is on everywhere again.
+
+[[#Step 5 — Write the Personal-Root .gitconfig Override|⮕ Continue to Step 5 — Write the Personal-Root .gitconfig Override]]
 
 ## Supplemental Reference
 

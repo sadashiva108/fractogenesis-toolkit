@@ -129,6 +129,7 @@ export ONEDRIVE_DEST_SUBDIR="reimage-<asset-or-host>-<start-date>-open"
 | Phase 9 | Restart comparison | `verify-reimaged-system.md` | `record-reimaged-system.sh --context diff` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/comparisons/runs/verify-reimaged-system-restart-diff-*/` |
 | Phase 9 | Entry and exit boundary | `verify-reimaged-system.md` | `record-reimaged-system.sh --context entry\|exit` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/boundaries/runs/verify-reimaged-system-{entry,exit}-*/` |
 | any | Index relocated or migrated runs | `verify-reimaged-system.md` | `reindex-artifact-runs.sh` | rewrites `<category>/MANIFEST.md` and `<category>/official/` |
+| any | Record a decision no capture can hold | `restore-access.md`, `restore-home.md` | `record-decision.sh` | appends to `$REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/decisions.md` |
 | Phase 9 | First-boot record twice around a stabilization restart | `verify-reimaged-system.md` | `record-reimaged-system.sh` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/restarts/runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/` |
 | Phase 10 | Runtime/access restore helpers | `restore-runtime.md`, `restore-access.md` | targeted manual checks; no single public restore script | selective restore from `home-files-backup/` and `secrets-encrypted/` |
 | Phase 11A | Git identity restore | `restore-git.md` | targeted manual writes to `~/.gitconfig`, `~/.ssh/config`, and the personal-root override; no toolkit script | consumes `secrets-encrypted/ssh/` and `secrets-encrypted/git/` restored in Phase 10B |
@@ -177,6 +178,7 @@ Current preferred script layout:
 │   │   │               ├── prepare-artifact-root.py
 │   │   │               ├── record-reimaged-system.sh
 │   │   │               ├── record-enrollment.sh
+│   │   │               ├── record-decision.sh
 │   │   │               ├── reindex-artifact-runs.sh
 │   │   │               ├── restore-repos.sh
 │   │   │               └── helpers/
@@ -213,7 +215,10 @@ Use it only when `prepare-artifact-root.md` tells you to:
 
 ```text
 init-reimage-env  -> write the starter resolved values into reimage.env after copying reimage.env.example
-upsert-env        -> write resolved Git root values, resolved REIMAGE_ARTIFACT_ROOT values, or a renamed final REIMAGE_ARTIFACT_ROOT back into reimage.env
+upsert-env        -> write or update any resolved KEY=VALUE in reimage.env. Replaces a matching
+                     `export KEY=` line, and APPENDS the key when the file does not carry it yet --
+                     which is why a key another runbook owns is absent from reimage.env.example
+                     rather than sitting in it blank. See references/environment-variable-reference.md
 ```
 
 This helper does not replace Phase 1. The drive checks, shell validation, root creation, and directory layout still belong to `prepare-artifact-root.md` and must be followed in order.
@@ -763,12 +768,13 @@ $REIMAGE_ARTIFACT_ROOT/repo-audit-reports/latest-post-image-restore.txt
 ./bin/restore-apps.sh --open
 ```
 
-Surveys the Phase 2D `app-settings-backup/` subtree plus the encrypted-secrets sources that feed Postman, IntelliJ, Docker, and licenses, marks each as `PRESENT` / `MISSING`, and emits a plan-note with the ordered restore sequence and sign-off checklist. Install nothing on its own; the operator ticks the checklist by hand while following [[restore-apps|restore-apps.md]].
+Surveys the Phase 2D `app-settings-backup/` subtree plus the encrypted-secrets sources that feed Postman, IntelliJ, Docker, and licenses, marks each as `PRESENT` / `MISSING`, and emits a plan-note with the ordered restore sequence. The rows the operator ticks go to a separate sign-off, so regenerating the plan-note never discards an answer. Installs nothing on its own; the operator ticks the sign-off by hand while following [[restore-apps|restore-apps.md]].
 
-The generated plan-note is written under:
+The generated plan-note and its sign-off are written under:
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/restore-apps-plan-YYYYMMDD-HHMMSS.md
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/sign-offs/restore-apps-YYYYMMDD-HHMMSS.md
 ```
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -781,10 +787,11 @@ $REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/restore-apps-plan-YYYYMMDD-
 
 Surveys the Phase 2D `app-settings-backup/intellij/` subtree (per-version `config-copy/`, `scratches-and-consoles/`, `manifests/`, plus `manual-settings-export/IntelliJ-settings-*.zip` and `project-metadata/`) and the encrypted-secrets sources that hold HTTP Client `*.env.json` files. Marks each as `PRESENT` / `MISSING`, points at the most recent settings ZIP for `File → Manage IDE Settings → Import Settings`, and emits an IntelliJ-specific sign-off checklist. Install nothing on its own; the operator ticks the checklist by hand while following [[restore-intellij|restore-intellij.md]].
 
-The generated plan-note is written under:
+The generated plan-note and its sign-off are written under:
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/restore-intellij-plan-YYYYMMDD-HHMMSS.md
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/sign-offs/restore-intellij-YYYYMMDD-HHMMSS.md
 ```
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -797,10 +804,11 @@ $REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/restore-intellij-plan-YYYYM
 
 Surveys the Phase 2D `app-settings-backup/docker/` subtree (settings-store, daemon.json, contexts/, image/container/compose inventories) plus the encrypted `secrets-encrypted/docker/config.json`, checks whether Docker Desktop is installed and whether the daemon is currently reachable on the reimaged Mac, and emits a Docker-specific sign-off checklist that covers Desktop install, resource settings, registry credentials, and the local container fleet (Redis, RabbitMQ, Elasticsearch + Kibana, MarkLogic).
 
-The generated plan-note is written under:
+The generated plan-note and its sign-off are written under:
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/restore-docker-plan-YYYYMMDD-HHMMSS.md
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/sign-offs/restore-docker-YYYYMMDD-HHMMSS.md
 ```
 
 [[#Table of Contents|⬆ Back to Table of Contents]]

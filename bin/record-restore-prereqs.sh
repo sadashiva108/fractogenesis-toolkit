@@ -508,15 +508,22 @@ echo "Checking ${PHASE_RUNBOOK%.md} prerequisites..." >&2
 # Phase 11A checks -- restore-git
 #
 # Derived from restore-git.md -> Prerequisites, one row per bullet, so the two
-# cannot drift. The silent failure this phase has is the one worth the whole
-# step: an unset $GIT_WORK_SSH_KEY or a key file that did not come back does not
-# error. Git falls back to another key in ~/.ssh, authenticates successfully as
-# the WRONG account, and the first symptom is a commit pushed under the personal
-# identity to a work repository -- discovered by someone else, later.
+# cannot drift.
+#
+# The identity values are deliberately NOT checked here. Step 0c of that runbook
+# is what records them, so at this boundary they are unset by definition and a
+# row over them could only ever FAIL -- a scheduled false alarm, which is the
+# mirror of the failure this recorder exists to prevent. They are checked at the
+# other end, by check_restore_git() in record-restore-exit.sh, which also
+# enforces that the optional GIT_PERSONAL_* set is filled all-or-nothing.
+#
+# The SSH keys are not checked here either. restore-access's own exit recorder
+# already carries `SSH private keys restored and tight`, and row 2 below is what
+# makes that verdict reachable -- re-probing it would be this phase answering the
+# previous phase's question with worse information, and it cannot even name the
+# key files without the identity values Step 0c has not written yet.
 # ---------------------------------------------------------------------------
 check_restore_git() {
-  local out missing key
-
   # 1 -- toolkit root. Phase 11A is commonly reached in a new shell.
   if [[ -n "${FRACTOGENESIS_HOME:-}" && -d "${FRACTOGENESIS_HOME:-}/bin" ]]; then
     record PASS "Toolkit root resolves" "\`$FRACTOGENESIS_HOME\`"
@@ -535,51 +542,7 @@ check_restore_git() {
     record FAIL "\`restore-access\` closed out" "no official \`restore-access-exit\` run under \`boundaries/\` — run \`./bin/record-restore-exit.sh --runbook restore-access\` at the end of \`restore-access\`"
   fi
 
-  # 3 -- the two identity keys named by reimage.env. Existence AND mode: ssh
-  # silently refuses a group-readable private key and falls through to the next
-  # one, which is the failure described above.
-  #
-  # One row, not one per key. Two rows with the same check name and different
-  # details read as a repeated check rather than as two findings, and the
-  # summary counts them twice.
-  local key_problems="" label
-  for label in GIT_WORK_SSH_KEY GIT_PERSONAL_SSH_KEY; do
-    eval "key=\${$label:-}"
-    if [[ -z "$key" ]]; then
-      key_problems="${key_problems:+$key_problems; }\`$label\` unset"
-      continue
-    fi
-    if [[ ! -f "$key" ]]; then
-      key_problems="${key_problems:+$key_problems; }\`$key\` not on disk"
-      continue
-    fi
-    out="$(/usr/bin/stat -f '%Lp' "$key" 2>/dev/null)"
-    case "$out" in
-      400|600) ;;
-      *) key_problems="${key_problems:+$key_problems; }\`$key\` is mode \`${out:-unknown}\`" ;;
-    esac
-  done
-  if [[ -z "$key_problems" ]]; then
-    record PASS "Identity SSH keys restored and tight" "both keys present at 400 or 600"
-  else
-    record FAIL "Identity SSH keys restored and tight" "$key_problems — ssh skips a key it cannot use and authenticates as whichever identity answers next"
-  fi
-
-  # 4 -- the identity values themselves. Step 4 writes them into ~/.gitconfig
-  # unquoted; an unset one produces a config with an empty name or email that
-  # Git accepts without complaint.
-  missing=""
-  for out in GIT_WORK_NAME GIT_WORK_EMAIL GIT_PERSONAL_NAME GIT_PERSONAL_EMAIL; do
-    eval "key=\${$out:-}"
-    [[ -n "$key" ]] || missing="${missing:+$missing }$out"
-  done
-  if [[ -z "$missing" ]]; then
-    record PASS "Git identity values set" "work and personal name and email present"
-  else
-    record FAIL "Git identity values set" "unset in \`reimage.env\`: \`$missing\` — Step 4 would write an empty identity"
-  fi
-
-  # 5 -- git itself. Loud if absent, but the row is free and Step 1 assumes it.
+  # 3 -- git itself. Loud if absent, but the row is free and Step 1 assumes it.
   if command -v git >/dev/null 2>&1; then
     record PASS "Git available" "$(git --version 2>/dev/null)"
   else
@@ -603,7 +566,7 @@ check_restore_git() {
 # exactly like a clean one.
 # ---------------------------------------------------------------------------
 check_restore_repos() {
-  local b_root b_run audit_root run_dir tsv n
+  local b_root b_run audit_root run_dir tsv n pers_ident pk pv
 
   # 1 -- toolkit root. Same row as restore-git: this phase is reached in a new
   # shell, and a directory-scoped loader unloads reimage.env outside the repo.
@@ -623,13 +586,36 @@ check_restore_repos() {
     record FAIL "\`restore-git\` closed out" "no official \`restore-git-exit\` run under \`boundaries/\` — run \`./bin/record-restore-exit.sh --runbook restore-git\` at the end of \`restore-git\`"
   fi
 
-  # 3 -- clone roots set and distinct. Both unset sends every repository to the
-  # pre-image parent; both equal collapses two identities into one directory,
-  # and includeIf then applies the personal identity to work repositories.
-  if [[ -z "${GIT_WORK_REPO_ROOT:-}" || -z "${GIT_PERSONAL_REPO_ROOT:-}" ]]; then
-    record FAIL "Clone roots set and distinct" "\`GIT_WORK_REPO_ROOT\` or \`GIT_PERSONAL_REPO_ROOT\` is unset in \`reimage.env\`"
-  elif [[ "${GIT_WORK_REPO_ROOT%/}" == "${GIT_PERSONAL_REPO_ROOT%/}" ]]; then
+  # 3 -- clone roots. GIT_WORK_REPO_ROOT is required: unset, every repository
+  # falls back to its pre-image parent directory.
+  #
+  # GIT_PERSONAL_REPO_ROOT is OPTIONAL and all-or-nothing with the personal
+  # identity restore-git recorded, matching backup-repos.md and the
+  # `Identity values recorded in reimage.env` row in record-restore-exit.sh. A
+  # Mac with no personal identity has no personal root, and that is a PASS --
+  # this row used to FAIL on it, which made a legitimate single-identity machine
+  # unable to start the phase.
+  #
+  # What is never right is half the pair. A personal root with no identity clones
+  # into a directory `includeIf` will not match, so those commits land under the
+  # work identity. An identity with no root leaves restore-git Step 5's override
+  # at `/.gitconfig`. Both roots equal is its own failure: includeIf then applies
+  # the personal identity to every repository.
+  pers_ident=""
+  for pk in GIT_PERSONAL_NAME GIT_PERSONAL_EMAIL GIT_PERSONAL_SSH_KEY GIT_PERSONAL_GITHUB_HOST; do
+    eval "pv=\${$pk:-}"
+    [[ -z "$pv" ]] || pers_ident="set"
+  done
+  if [[ -z "${GIT_WORK_REPO_ROOT:-}" ]]; then
+    record FAIL "Clone roots set and distinct" "\`GIT_WORK_REPO_ROOT\` is unset in \`reimage.env\` — every repository would fall back to its pre-image parent directory. \`backup-repos\` Step 1 records it."
+  elif [[ -n "${GIT_PERSONAL_REPO_ROOT:-}" && "${GIT_WORK_REPO_ROOT%/}" == "${GIT_PERSONAL_REPO_ROOT%/}" ]]; then
     record FAIL "Clone roots set and distinct" "both roots are \`${GIT_WORK_REPO_ROOT%/}\` — \`includeIf\` would apply the personal identity to every repository"
+  elif [[ -n "${GIT_PERSONAL_REPO_ROOT:-}" && -z "$pers_ident" ]]; then
+    record FAIL "Clone roots set and distinct" "\`GIT_PERSONAL_REPO_ROOT\` is \`${GIT_PERSONAL_REPO_ROOT%/}\` but no \`GIT_PERSONAL_*\` identity was recorded — repositories would clone into a root \`includeIf\` never matches and commit under the work identity. Either record the identity in \`restore-git\` Step 0c or clear the root."
+  elif [[ -z "${GIT_PERSONAL_REPO_ROOT:-}" && -n "$pers_ident" ]]; then
+    record FAIL "Clone roots set and distinct" "a personal identity is recorded but \`GIT_PERSONAL_REPO_ROOT\` is empty — \`includeIf\` has no \`gitdir:\` to match and nothing can route to the personal host. \`backup-repos\` Step 1 records that root."
+  elif [[ -z "${GIT_PERSONAL_REPO_ROOT:-}" ]]; then
+    record PASS "Clone roots set and distinct" "\`${GIT_WORK_REPO_ROOT%/}\`; no personal root and no personal identity — every repository clones under the work root"
   else
     record PASS "Clone roots set and distinct" "\`${GIT_WORK_REPO_ROOT%/}\` and \`${GIT_PERSONAL_REPO_ROOT%/}\`"
   fi

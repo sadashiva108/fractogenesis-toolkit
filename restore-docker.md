@@ -2,7 +2,7 @@
 
 # Restore Docker
 
-**Last updated:** 2026-08-25
+**Last updated:** 2026-09-01
 
 Restore Docker Desktop, resource tuning, registry credentials, and the local development container fleet on the reimaged Mac — Redis, RabbitMQ, Elasticsearch (+ Kibana), and MarkLogic (single-node with ml-gradle deployment). This is the dedicated Phase 12 Docker handoff; the companion script `bin/restore-docker.sh` writes a per-run plan-note that surveys the available pre-image sources, checks whether Docker Desktop and the daemon are up on the reimaged Mac, and provides the sign-off checklist.
 
@@ -48,7 +48,8 @@ Bring Docker Desktop and the local development container fleet back to a working
 
 **What it sets up**
 
-- **The Docker plan-note** — a timestamped per-run file under `reimaged-system/restore-notes/` that surveys the pre-image Docker sources, records local Docker Desktop and daemon state, and carries the Docker sign-off checklist.
+- **The Docker plan-note** — a timestamped per-run file under `reimaged-system/restore-notes/` that surveys the pre-image Docker sources and records local Docker Desktop and daemon state. It is regenerable; rerunning replaces nothing you have written.
+- **The Docker sign-off** — `reimaged-system/sign-offs/restore-docker-YYYYMMDD-HHMMSS.md`, holding the rows you answer. A rerun copies your answers forward instead of starting blank, and stamps each with the run it was answered against.
 - **A working Docker Desktop install** — installed from the approved channel, with the operator-facing Resources settings restored (CPUs, Memory, Swap, Disk image, File sharing, Kubernetes off).
 - **Restored registry authentication** — `~/.docker/config.json` recovered from the encrypted DMG and confirmed with `docker login` per private registry.
 - **The running local container fleet** — Redis, RabbitMQ, Elasticsearch (+ Kibana), and MarkLogic single-node, with MarkLogic security and application resources deployed through ml-gradle.
@@ -56,7 +57,7 @@ Bring Docker Desktop and the local development container fleet back to a working
 **What the rest of the workflow relies on it for**
 
 - The Phase 12 umbrella plan-note carries a `Docker dedicated restore completed` row that this runbook closes before the umbrella flow continues.
-- Phase 14 `reimaged-system-checks.md` reads the plan-notes under `reimaged-system/restore-notes/` and flags any row still outstanding.
+- Phase 14 `reimaged-system-checks.md` reads the sign-offs under `reimaged-system/sign-offs/` and flags any row still outstanding, and any row answered against an older run.
 - Local development after the reimage depends on the restarted container fleet and on registry credentials that authenticate without a fresh interactive token entry.
 
 **Ownership**
@@ -70,7 +71,7 @@ Bring Docker Desktop and the local development container fleet back to a working
 | restarting Redis, RabbitMQ, Elasticsearch (+ Kibana), and MarkLogic | repository re-clone, which supplies the Elasticsearch and MarkLogic compose files — `restore-repos` (Phase 11B) |
 | MarkLogic single-node deploy via ml-gradle (`mlDeploySecurity`, `mlDeploy`, `mlLoadModules`) | MarkLogic multi-node cluster steady-state operation — noted here as reference only; the `carrier-services-storage` project README owns it |
 
-This runbook can be rerun. Regenerating the plan-note produces a fresh timestamped file under `reimaged-system/restore-notes/`; container `docker start` operations are idempotent, and compose deploys are structured to re-run cleanly against an existing volume.
+This runbook can be rerun. Regenerating the plan-note produces a fresh timestamped file under `reimaged-system/restore-notes/` and a new sign-off carrying your existing answers forward, so a rerun costs you nothing already recorded; container `docker start` operations are idempotent, and compose deploys are structured to re-run cleanly against an existing volume.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -106,6 +107,7 @@ Artifact locations:
 $REIMAGE_ARTIFACT_ROOT/app-settings-backup/docker/
 $MNT/docker/config.json                                    # inside the attached DMG, not beside it
 $REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/restore-docker-plan-*.md
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/sign-offs/restore-docker-*.md
 ```
 
 Directory shape this runbook reads (the full layout lives in [[master-directory-reference|Master Directory Reference]]):
@@ -123,8 +125,10 @@ $REIMAGE_ARTIFACT_ROOT/
 │       └── settings-store.json
 ├── ...
 ├── reimaged-system/
-│   └── restore-notes/
-│       └── restore-docker-plan-YYYYMMDD-HHMMSS.md
+│   ├── restore-notes/
+│   │   └── restore-docker-plan-YYYYMMDD-HHMMSS.md
+│   └── sign-offs/
+│       └── restore-docker-YYYYMMDD-HHMMSS.md
 ├── ...
 └── secrets-encrypted/
     └── docker/
@@ -169,7 +173,7 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 
 - Are you restoring every container the pre-image system ran, or only the ones you actively need this week? The pre-image inventory records what was installed, not what still matters — reinstall is a chance to prune.
 - Do you want persisted MarkLogic and Elasticsearch data volumes carried forward if they exist in the Docker VM, or a clean slate (`docker compose down -v`)? A clean slate means re-running `mlDeploySecurity` and `mlDeploy`.
-- Do you want the plan-note under the default `reimaged-system/restore-notes/`, or a scratch location (`--output-root ~/Desktop/…`)? Phase 14 `reimaged-system-checks.md` reads from the default path.
+- Do you want the plan-note under the default `reimaged-system/restore-notes/`, or a scratch location (`--output-root ~/Desktop/…`)? The sign-off has its own `--signoff-root`, defaulting to `reimaged-system/sign-offs/`. Phase 14 `reimaged-system-checks.md` reads the sign-off from that default path.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -676,9 +680,9 @@ docker compose -f docker-compose.marklogic.yml down -v
 
 ### Step 11 — Close the Plan-Note Sign-Off
 
-Reopen the plan-note and flip every completed row from `TODO` to `Done`. Leave any row still open with a short note explaining why (e.g. `MarkLogic deferred — not needed this week`). Phase 14 `reimaged-system-checks.md` reads these plan-notes and will flag outstanding rows.
+Reopen the **sign-off** — not the plan-note — and flip every completed row from `TODO` to `Done`. Leave any row still open with a short note explaining why (e.g. `MarkLogic deferred — not needed this week`). Edit `Status` and `Notes` only; `Answered against` is written for you. Phase 14 `reimaged-system-checks.md` reads these sign-offs and will flag outstanding rows, and rows answered against an older run.
 
-Return to [[restore-apps|restore-apps.md]] Step 9 and mark the `Docker dedicated restore completed` row in the umbrella plan-note before continuing to Step 10 of that runbook.
+Return to [[restore-apps|restore-apps.md]] Step 9 and mark the `Docker dedicated restore completed` row in the umbrella sign-off before continuing to Step 10 of that runbook.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 

@@ -100,6 +100,18 @@ if [[ ! -f "$RUNS_LIB" ]]; then
 fi
 # shellcheck source=../.internal/artifact-runs.sh
 source "$RUNS_LIB"
+
+# The Manual Sign-Off rows leave the report. A report is regenerable -- this
+# script is rerun freely and `latest-reimage-checklist.txt` moves to the newest
+# one -- so a row answered inside it is lost the next time it runs. The sign-off
+# carries answers forward. See .internal/sign-offs.sh.
+SIGNOFF_LIB="$REPO_ROOT/.internal/sign-offs.sh"
+if [[ ! -f "$SIGNOFF_LIB" ]]; then
+  echo "ERROR: shared sign-off helper not found: $SIGNOFF_LIB" >&2
+  exit 2
+fi
+# shellcheck source=../.internal/sign-offs.sh
+source "$SIGNOFF_LIB"
 # ─────────────────────────────────────────────────────────────────────────────
 
 SCRIPT_NAME="${REIMAGE_SCRIPT_DISPLAY_NAME:-reimage-checklist.sh}"
@@ -1607,6 +1619,79 @@ printf "\n"
 # =============================================================================
 # WRITE MARKDOWN REPORT
 # =============================================================================
+# The pre-image checklist writes outside reimaged-system/, which is post-image by
+# construction, so its sign-off sits beside its own reports rather than being
+# forced into a post-image category. Post-image is a category under
+# reimaged-system/, so its sign-off is a sibling of checklists/, not a child.
+if [[ "$PHASE" == "pre" ]]; then
+  SIGNOFF_CONTEXT="reimage-prep-checks"
+  SIGNOFF_ROOT="$OUTPUT_ROOT/sign-offs"
+else
+  SIGNOFF_CONTEXT="reimaged-system-checks"
+  SIGNOFF_ROOT="$(dirname "$OUTPUT_ROOT")/sign-offs"
+fi
+
+if ! signoff_begin "$SIGNOFF_ROOT" "$SIGNOFF_CONTEXT" "$SIGNOFF_CONTEXT-$TIMESTAMP"; then
+  echo "ERROR: cannot open a sign-off under: $SIGNOFF_ROOT" >&2
+  exit 2
+fi
+
+declare_signoff_rows() {
+  if [[ "$PHASE" == "pre" ]]; then
+    signoff_row "IT confirmed approved reimage method in writing" ""
+    signoff_row "LastPass vault verified accessible at lastpass.com" ""
+    signoff_row "DMG password saved to LastPass immediately after creation" ""
+    signoff_row "DMG verified -- opens in Finder; gnupg/private-keys-v1.d/, ssh/, and certs/java-security/ present" ""
+    signoff_row "Time Machine backup completed and tmutil latestbackup confirmed" ""
+    signoff_row "OneDrive -- no pending uploads (check menu bar icon and web spot-check)" ""
+    signoff_row "iCloud Drive -- no pending uploads for relied-on files, if used" ""
+    signoff_row "VS Code Settings Sync state confirmed (signed-in account, on/off, last synced data)" ""
+    signoff_row "Obsidian vault synced or manually copied" ""
+    signoff_row "Export passwords (.p12/.pfx, DMG) saved only in approved password manager" ""
+    signoff_row "Loose private-key/keystore/certificate candidates reviewed" ""
+    signoff_row "All important branches pushed to remote" ""
+    signoff_row "Stashes converted to branches/commits or intentionally abandoned" ""
+    if [[ -n "${EXTERNAL_APPLE_BACKUPS_VOLUME:-}" ]]; then
+      signoff_row "External volumes ejected before reimage starts" "\`$EXTERNAL_DATA_VOLUME\` and \`$EXTERNAL_APPLE_BACKUPS_VOLUME\`"
+    else
+      signoff_row "External volumes ejected before reimage starts" "\`$EXTERNAL_DATA_VOLUME\`"
+    fi
+  else
+    signoff_row "Company Portal shows device registered/compliant" "Confirm in Company Portal UI"
+    signoff_row "VPN / Zscaler can reach real internal work sites" "Use browser; optional --internal-url evidence"
+    signoff_row "OneDrive sync completed or backlog is acceptable" "Confirm from OneDrive menu bar"
+    signoff_row "Outlook remains open during normal use" "Observe after managed install/update activity settles"
+    signoff_row "OneNote remains open during normal use" "Observe after managed install/update activity settles"
+    signoff_row "IntelliJ opens important projects successfully" "Confirm SDK, Gradle JVM, run configs, plugins, scratches"
+    signoff_row "HTTP Client private env files restored only where intended" "Manual -- sensitive and project-specific"
+    signoff_row "Docker Desktop resource settings match intended values" "Confirm in Docker Desktop UI"
+    signoff_row "Important Git branches/commits/stashes restored" "Review raw git-repos-summary if available"
+    signoff_row "Core Java/Gradle project test passes" "Run project-specific tests"
+    signoff_row "Corporate Java TLS works after jssecacerts restore" "Validate with internal Maven/Gradle"
+    signoff_row "Core Python project test passes" "Run project-specific tests"
+    signoff_row "Core Node/UI project test passes" "Run project-specific tests"
+    signoff_row "Obsidian vault opens and internal links work" "Confirm Reading View and Cmd-click in Live Preview"
+    signoff_row "Postman collections/environments imported" "Confirm in Postman UI"
+    signoff_row "Chrome JSON Formatter and important extensions restored" "Confirm in Chrome extension UI"
+    signoff_row "Display arrangement, scaling, keyboard, mouse, audio correct" "Confirm physically"
+    if [[ -n "${GIT_WORK_REPO_ROOT:-}" ]]; then
+      signoff_row "Work Git identity confirmed" "$GIT_WORK_REPO_ROOT; verify git config user.email"
+    else
+      signoff_row "Work Git identity confirmed" "GIT_WORK_REPO_ROOT is not configured; verify git config user.email in an actual work repo"
+    fi
+    if [[ -n "${GIT_PERSONAL_REPO_ROOT:-}" ]]; then
+      signoff_row "Personal Git identity confirmed, if personal repos are used" "$GIT_PERSONAL_REPO_ROOT; verify git config user.email"
+    else
+      signoff_row "Personal Git identity confirmed, if personal repos are used" "GIT_PERSONAL_REPO_ROOT is not configured"
+    fi
+    signoff_row "Personal SSH (github-personal) authenticated" "ssh -T git@github-personal"
+    signoff_row "SSH key fingerprints match GitHub Settings" "ssh-keygen -lf against both keys"
+    signoff_row "Git Together decision made (use it or skip it)" "Confirm installed and alias working, or document the decision to skip"
+    signoff_row "Shell aliases restored and tested" "Source ~/.zshrc; confirm ll, jdk17, nvm"
+    signoff_row "Second reimaged-system Time Machine backup completed" "Run after restart and validation"
+  fi
+}
+
 {
   if [[ "$PHASE" == "pre" ]]; then
     printf "# Phase 6B -- Final Pre-Image Validation Checklist\n\n"
@@ -1636,65 +1721,12 @@ printf "\n"
   printf "%s\n" "$REPORT"
   printf "%s\n\n" "---"
 
-  if [[ "$PHASE" == "pre" ]]; then
-    printf "## Manual Sign-Off (Pre-Image)\n\n"
-    printf "Complete these items manually before proceeding to Phase 7:\n\n"
-    printf "| Item | Confirmed |\n| --- | --- |\n"
-    printf "| IT confirmed approved reimage method in writing | TODO |\n"
-    printf "| LastPass vault verified accessible at lastpass.com | TODO |\n"
-    printf "| DMG password saved to LastPass immediately after creation | TODO |\n"
-    printf "| DMG verified -- opens in Finder; gnupg/private-keys-v1.d/, ssh/, and certs/java-security/ present | TODO |\n"
-    printf "| Time Machine backup completed and tmutil latestbackup confirmed | TODO |\n"
-    printf "| OneDrive -- no pending uploads (check menu bar icon and web spot-check) | TODO |\n"
-    printf "| iCloud Drive -- no pending uploads for relied-on files, if used | TODO |\n"
-    printf "| VS Code Settings Sync state confirmed (signed-in account, on/off, last synced data) | TODO |\n"
-    printf "| Obsidian vault synced or manually copied | TODO |\n"
-    printf "| Export passwords (.p12/.pfx, DMG) saved only in approved password manager | TODO |\n"
-    printf "| Loose private-key/keystore/certificate candidates reviewed | TODO |\n"
-    printf "| All important branches pushed to remote | TODO |\n"
-    printf "| Stashes converted to branches/commits or intentionally abandoned | TODO |\n"
-    if [[ -n "${EXTERNAL_APPLE_BACKUPS_VOLUME:-}" ]]; then
-      printf "| External volumes ejected before reimage starts (\`%s\` and \`%s\`) | TODO |\n" "$EXTERNAL_DATA_VOLUME" "$EXTERNAL_APPLE_BACKUPS_VOLUME"
-    else
-      printf "| External data volume ejected before reimage starts (\`%s\`) | TODO |\n" "$EXTERNAL_DATA_VOLUME"
-    fi
-  else
-    printf "## Manual Sign-Off (Post-Image)\n\n"
-    printf "Complete these items manually before final sign-off:\n\n"
-    printf "| Item | Result | Notes |\n| --- | --- | --- |\n"
-    printf "| Company Portal shows device registered/compliant | TODO | Confirm in Company Portal UI |\n"
-    printf "| VPN / Zscaler can reach real internal work sites | TODO | Use browser; optional --internal-url evidence |\n"
-    printf "| OneDrive sync completed or backlog is acceptable | TODO | Confirm from OneDrive menu bar |\n"
-    printf "| Outlook remains open during normal use | TODO | Observe after managed install/update activity settles |\n"
-    printf "| OneNote remains open during normal use | TODO | Observe after managed install/update activity settles |\n"
-    printf "| IntelliJ opens important projects successfully | TODO | Confirm SDK, Gradle JVM, run configs, plugins, scratches |\n"
-    printf "| HTTP Client private env files restored only where intended | TODO | Manual -- sensitive and project-specific |\n"
-    printf "| Docker Desktop resource settings match intended values | TODO | Confirm in Docker Desktop UI |\n"
-    printf "| Important Git branches/commits/stashes restored | TODO | Review raw git-repos-summary if available |\n"
-    printf "| Core Java/Gradle project test passes | TODO | Run project-specific tests |\n"
-    printf "| Corporate Java TLS works after jssecacerts restore | TODO | Validate with internal Maven/Gradle |\n"
-    printf "| Core Python project test passes | TODO | Run project-specific tests |\n"
-    printf "| Core Node/UI project test passes | TODO | Run project-specific tests |\n"
-    printf "| Obsidian vault opens and internal links work | TODO | Confirm Reading View and Cmd-click in Live Preview |\n"
-    printf "| Postman collections/environments imported | TODO | Confirm in Postman UI |\n"
-    printf "| Chrome JSON Formatter and important extensions restored | TODO | Confirm in Chrome extension UI |\n"
-    printf "| Display arrangement, scaling, keyboard, mouse, audio correct | TODO | Confirm physically |\n"
-    if [[ -n "${GIT_WORK_REPO_ROOT:-}" ]]; then
-      printf "| Work Git identity confirmed in configured work repo root | TODO | %s; verify git config user.email |\n" "$GIT_WORK_REPO_ROOT"
-    else
-      printf "| Work Git identity confirmed in a real work repo | TODO | GIT_WORK_REPO_ROOT is not configured; verify git config user.email in an actual work repo |\n"
-    fi
-    if [[ -n "${GIT_PERSONAL_REPO_ROOT:-}" ]]; then
-      printf "| Personal Git identity confirmed in configured personal repo root | TODO | %s; verify git config user.email |\n" "$GIT_PERSONAL_REPO_ROOT"
-    else
-      printf "| Personal Git identity confirmed, if personal repos are used | TODO | GIT_PERSONAL_REPO_ROOT is not configured |\n"
-    fi
-    printf "| Personal SSH (github-personal) authenticated | TODO | ssh -T git@github-personal |\n"
-    printf "| SSH key fingerprints match GitHub Settings | TODO | ssh-keygen -lf against both keys |\n"
-    printf "| Git Together decision made (use it or skip it) | TODO | Confirm installed and alias working, or document the decision to skip |\n"
-    printf "| Shell aliases restored and tested | TODO | Source ~/.zshrc; confirm ll, jdk17, nvm |\n"
-    printf "| Second reimaged-system Time Machine backup completed | TODO | Run after restart and validation |\n"
-  fi
+  printf "## Manual Sign-Off\n\n"
+  printf "The rows a person answers are not in this report. This script is rerun\n"
+  printf "freely and the latest-pointer moves to the newest report, so an answer\n"
+  printf "recorded here would be lost. They live in the sign-off, which carries\n"
+  printf "answers forward and records the run each was answered against:\n\n"
+  printf "    %s\n\n" "$SIGNOFF_FILE"
 
   printf "\n%s\n\n" "---"
   printf "*Report generated by \`%s\` at %s*\n" "$SCRIPT_NAME" "$TIMESTAMP"
@@ -1704,7 +1736,11 @@ if [[ ! -s "$REPORT_FILE" ]]; then
   echo "ERROR: checklist report was not written: $REPORT_FILE" >&2
   exit 2
 fi
+declare_signoff_rows
+signoff_finalize "$([[ "$PHASE" == "pre" ]] && printf 'Phase 6' || printf 'Phase 14')" "$REPORT_FILE"
+
 printf "  Report written to:\n  %s\n\n" "$REPORT_FILE"
+printf "  Sign-off:\n  %s\n\n" "$SIGNOFF_FILE"
 
 # Latest-pointer convenience file
 printf '%s\n' "$REPORT_FILE" > "$OUTPUT_ROOT/latest-reimage-checklist.txt" 2>/dev/null || true

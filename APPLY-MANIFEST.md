@@ -1,5 +1,11 @@
 # Apply Manifest
 
+**Revision 118** — supersedes Revision 117 and earlier. Every `reimage.env` key gets one owning runbook, and the template stops asking for values it does not own.
+
+**Revision 117** — supersedes Revision 116 and earlier. The other side of the ledger: a decision the immutable image cannot carry.
+
+**Revision 116** — supersedes Revision 115 and earlier. The rows a person answers move out of the run directory that replaces them.
+
 **Revision 115** — supersedes Revision 114 and earlier. The phase's re-run guarantee gains its one exception: Step 3 restores an identity you deliberately deleted.
 
 **Revision 114** — supersedes Revision 113 and earlier. `known_hosts` stops being described as restored when it is rebuilt, and Step 12 counts it.
@@ -239,8 +245,11 @@ several separate rounds of work, and splicing them by hand is how the duplicate
 | `toolkit-environment-reference.md` | `references/toolkit-environment-reference.md` |
 | `init-shell-env.sh` | `bin/init-shell-env.sh` |
 | `compare-runtime-versions.sh` | `bin/compare-runtime-versions.sh` |
-| `record-restore-prereqs.sh` | `.internal/restore/record-restore-prereqs.sh` |
-| `record-restore-exit.sh` | `.internal/restore/record-restore-exit.sh` |
+| `record-restore-prereqs.sh` | `bin/record-restore-prereqs.sh` |
+| `record-restore-exit.sh` | `bin/record-restore-exit.sh` |
+| `sign-offs.sh` | `.internal/sign-offs.sh` |
+| `record-decision.sh` | `bin/record-decision.sh` |
+| `environment-variable-reference.md` | `references/environment-variable-reference.md` |
 
 `init-shell-env.sh` needs no `chmod +x` if it reaches a Mac through
 `bootstrap.sh`, which chmods `bin/` on extract. Commit it with mode 100755 so
@@ -263,10 +272,16 @@ several separate rounds of work, and splicing them by hand is how the duplicate
 | `restore-runtime.md` | `restore-runtime.md` |
 | `restore-access.md` | `restore-access.md` |
 | `restore-repos.md` | `restore-repos.md` |
+| `restore-home.md` | `restore-home.md` |
 | `restore-apps.md` | `restore-apps.md` |
 | `restore-intellij.md` | `restore-intellij.md` |
 | `restore-home.md` | `restore-home.md` |
 | `reimaged-system-checks.md` | `reimaged-system-checks.md` |
+| `reimage-prep-checks.md` | `reimage-prep-checks.md` |
+| `restore-docker.md` | `restore-docker.md` |
+| `restore-git.md` | `restore-git.md` |
+| `backup-repos.md` | `backup-repos.md` |
+| `reimage.env.example` | `reimage.env.example` |
 
 ## Modified — `references/`
 
@@ -275,6 +290,13 @@ several separate rounds of work, and splicing them by hand is how the duplicate
 | `master-directory-reference.md` | `references/master-directory-reference.md` |
 | `restore-file-reference.md` | `references/restore-file-reference.md` |
 | `reimaged-system-evidence.md` | `references/reimaged-system-evidence.md` |
+| `toolkit-environment-reference.md` | `references/toolkit-environment-reference.md` |
+
+## Modified — `.github/`
+
+| File | Destination |
+|---|---|
+| `runbook-prompt.md` | `.github/ai-prompts/runbook-prompts/runbook-prompt.md` |
 
 ## Modified — `bin/`
 
@@ -286,6 +308,380 @@ several separate rounds of work, and splicing them by hand is how the duplicate
 | `restore-intellij.sh` | `bin/restore-intellij.sh` |
 | `record-reimaged-system.sh` | `bin/record-reimaged-system.sh` |
 | `reimage-checklist.sh` | `bin/reimage-checklist.sh` |
+| `record-restore-exit.sh` | `bin/record-restore-exit.sh` |
+| `record-time-machine-evidence.sh` | `bin/record-time-machine-evidence.sh` |
+| `restore-repos.sh` | `bin/restore-repos.sh` |
+| `record-restore-prereqs.sh` | `bin/record-restore-prereqs.sh` |
+| `record-restore-state.sh` | `bin/record-restore-state.sh` |
+| `setup-reimage-env.sh` | `bin/setup-reimage-env.sh` |
+| `compare-restored-state.sh` | `bin/compare-restored-state.sh` |
+
+---
+
+## Revision 118 — the template asked for values it did not own
+
+`reimage.env.example` carried `export GIT_WORK_EMAIL=""` and eight more like it.
+Copied at Phase 1, that blank reads as *fill me in now* — eleven phases before
+`restore-git.md` reaches the step that actually writes it. `bin/setup-reimage-env.sh`
+made the invitation real, capturing thirteen keys another runbook owned if they
+happened to be exported in the shell.
+
+The cost was not hypothetical. `GIT_PERSONAL_GITHUB_OWNER` sat in that template
+unset, read by `bin/restore-repos.sh` to decide whether a clone URL gets the
+personal SSH alias, documented in no runbook's Environment Variables table, and
+written by nothing. Blank means *never rewrite* — a run against an empty value
+looks exactly like a clean one.
+
+The rule this revision applies: **the runbook that uses a value is the runbook
+that sets it.** Ask of any key, in any runbook: does this runbook need it set,
+and does it use it? If not, it does not appear there — not in the table, not in
+the template, not in a capture list, not even as a blank.
+
+`references/environment-variable-reference.md` is the new home for the catalog,
+the write guard, the optional and all-or-nothing shapes, and which boundary
+recorder checks a key.
+
+### The template now holds fourteen keys, and only what Phase 1 establishes
+
+Gone from `reimage.env.example`: the two Git repository roots, the nine Git
+identity keys, `REIMAGE_JDK_BASELINE`, and the commented-out `JAVA_HOME`. Each is
+now documented under *Artifact and Script Locations → Environment Variables* in
+the runbook that writes it — `backup-repos.md` Step 1, `restore-git.md` Step 0c,
+`restore-runtime.md` Step 7, `restore-repos.md` Step 0c — with the step named.
+
+Removing them is safe because of a property of `update_env_exports` that nothing
+had relied on deliberately: it replaces a matching `export KEY=` line and
+**appends** the key when it finds none. No placeholder is needed to write into.
+`reimage.env` now accumulates keys in the order the phases actually run.
+
+`setup-reimage-env.sh`'s capture loop drops from thirteen keys to three —
+`OFFICE_WATCH`, `JUMP_DRIVE_VOLUME`, `TOOLKIT_GITHUB_ACCOUNT`. The last was
+missing despite `reimage-guide-access.md` documenting it as a Phase 1 key.
+
+### Two Step 0c's, and why they are 0c and not a numbered step
+
+`restore-git.md` recorded its identity values in Step 1, wedged behind
+`brew install git`. `restore-repos.md` recorded `GIT_PERSONAL_GITHUB_OWNER`
+nowhere at all. Both now do it as **Step 0c**, after 0a's prerequisite check and
+0b's before-state — the shape `restore-access.md` Step 0 already used for
+`REIMAGE_JDK_BASELINE` and `JAVA_HOME`.
+
+A numbered step would have been cleaner to point at and cost a renumber of eight
+headings, the table of contents, roughly forty in-document `Step N` references,
+four target notes in `record-restore-state.sh`, and three FAIL messages in
+`record-restore-exit.sh` that name `restore-git` step numbers from outside the
+file. 0c costs none of that, and `reimage.env` is not one of 0b's targets, so the
+before-state is undisturbed.
+
+Both carry the guard from `restore-runtime.md` Step 7: check the values in the
+same block that writes them, refuse rather than record half a pair, then read
+back from the file rather than re-printing the shell variables that were written.
+
+### The entry recorder stopped failing on values the phase itself records
+
+`check_restore_git()` in `record-restore-prereqs.sh` had two rows over the Git
+identity. On a genuine first-time restore both were unset — Step 0c is what sets
+them — so both FAILed, the recorder exited 1, and the runbook's own Step 0 told
+you to stop. The checklist under `boundaries/` was then permanently wrong about a
+phase that went fine.
+
+Both rows are gone, and a single `Identity values recorded in reimage.env` row
+appears in `check_restore_git()` in `record-restore-exit.sh` instead. This is the
+repo's existing convention, not a new one: *one check per boundary*, and where
+the same subject is checked on both sides it is renamed rather than repeated —
+`restore-access` entry has *Identity SSH keys restored and tight*, its exit has
+*SSH private keys restored and tight*. A row that can only fail at the boundary
+it is checked at is a scheduled false alarm, the mirror of the failure the entry
+recorder exists to prevent.
+
+The SSH-key row went with them. It could not name the key files without the
+identity values, and `restore-access`'s exit already answers that question.
+
+### The personal Git identity is optional, and all-or-nothing
+
+`backup-repos.md` called `GIT_PERSONAL_REPO_ROOT` optional. `check_restore_repos()`
+hard-FAILed when it was unset. Both were defensible and they could not both be
+right, and the effect was that a Mac with one Git identity could not start
+Phase 11B.
+
+It is now optional across the board, and all-or-nothing with the four
+`GIT_PERSONAL_*` identity keys: fill every member or leave every member blank.
+Half a group is what fails quietly — an identity with no root leaves
+`restore-git.md` Step 5's override at `/.gitconfig`, and a root with no identity
+clones into a directory `includeIf` never matches, so those commits land under
+the **work** identity and the first symptom is an author line someone else
+notices. Both directions now FAIL, in both recorders.
+
+### `GIT_INTERNAL_TLS_SKIP_HOST` is retired
+
+TLS verification stays on; that decision was already made and
+`record-restore-exit.sh` already enforced it with a FAIL on a global
+`http.sslverify=false`. A per-host skip is a debugging situation, not a
+configuration option, so it is no longer a `reimage.env` key, no longer a
+conditional in `restore-git.md` Steps 4 and 6, and no longer a row in that
+runbook's Environment Variables table.
+
+It moved to `restore-git.md` → *Troubleshooting* → **An internal Enterprise
+Server host fails TLS verification**, which leads with *check whether you still
+need it* — `restore-access.md` Step 7 puts the corporate root in the CA bundle, so
+a host that failed pre-image often verifies now. Two live pointers named the
+variable "in restore-git.md" and would have been orphaned by a plain deletion;
+`restore-access.md` and `compare-restored-state.sh` now point at the heading.
+
+### Corrections found on the way
+
+- `reimage.env.example` wrote `REIMAGE_JDK_BASELINE=` with no `export`.
+  `update_env_exports` matches only on `export `, so a later write would have
+  appended a second line and left the file carrying two, with the last one
+  winning. Removing the key removed the bug.
+- `restore-git.md`'s Troubleshooting intro said "Four failures" over three
+  subsections. The TLS entry is the fourth, and the count is now true.
+- `record-restore-state.sh` documented `resolve_target` as substituting
+  `$JAVA_HOME` alone and invited the reader to "add a case when a second one
+  appears". `state-walk.sh` had already been generalised to every `$NAME`, and two
+  of the targets above that comment use `$GIT_WORK_REPO_ROOT` and
+  `$GIT_PERSONAL_REPO_ROOT`.
+- `restore-runtime.md`'s Environment Variables table said its first two values
+  were "resolved and written during `prepare-artifact-root.md`", which was never
+  true of `FRACTOGENESIS_HOME`.
+- `prepare-artifact-root.md`'s *Optional Values* section said these keys "stay
+  blank in `reimage.env`", that the catalog "lives in `reimage.env.example`", and
+  that `setup-reimage-env.sh` would capture one. All three are now false; the
+  table gains an *In the template?* column and the two JDK keys it never listed.
+- The runbook authoring checklist required that "listed reimage.env variables
+  appear in reimage.env.example or artifact-config.sh" — a rule that would have
+  pushed the next session to undo this. Replaced with the ownership rule.
+
+### Verification at time of delivery
+
+- `bash -n` clean under Bash 5.x and the 3.2-compatible parse on every changed
+  script; `verify-script-portability.sh` clean; `verify-doc-paths.sh` clean at
+  0 missing and 0 broken anchors; `verify-runbook-structure.sh` unchanged at its
+  pre-existing 30 FAIL / 5 WARN.
+- `[!note]` and Pitfall counts unchanged or lower in every touched runbook —
+  `restore-git.md` is one `[!note]` below where it started.
+- All 32 `bash` blocks in `restore-git.md` parse, as do all four in
+  `restore-repos.md` Step 0.
+- The new exit row exercised across five states: work-only PASS, work+personal
+  PASS, half-filled personal FAIL, personal-without-root FAIL, missing work key
+  FAIL. `check_restore_repos()` row 3 exercised across six.
+- `upsert-env` exercised against a copy of the trimmed template: 14 keys in,
+  17 out, each appended as a properly quoted `export`.
+- `record-restore-prereqs.sh --runbook restore-git --dry-run` renders the
+  four-row checklist, down from six.
+- Run on Linux with GNU coreutils and Bash 5.x. Not executed on the target Mac.
+
+### Known follow-ups, not applied
+
+- `bin/check-reimage-env.sh` validates nothing in `reimage.env` beyond what it
+  already checked; it has no view of which keys should exist by which phase. The
+  catalog in the new reference is the input a checker would need.
+- `record-restore-state.sh` and `record-restore-exit.sh` still describe
+  `restore-git` step numbers in string literals. They are correct today; a future
+  renumber has to find them by grep.
+- The run-index conversion of `time-machine/` and `repo-audit-reports/` deferred
+  in Revision 116 is still open.
+
+---
+
+## Revision 117 — the other side of the ledger
+
+`restore-access.md` already stated the problem, and stated it exactly:
+
+> the retirement lives only on this Mac, and only until the next re-run [...]
+> Nothing else in the workflow can tell your deletion from an accident.
+
+An expired SSH key deleted after restore is a correct action. The pre-image DMG
+is an immutable capture and legitimately still contains that key, so it is also
+correct that every future inventory diff reports it missing. Both halves are
+right, and there was nowhere to write down that they were right *together* —
+which meant the difference got re-examined on every run, by someone who had
+already decided it once.
+
+`bin/record-decision.sh` writes that down. One append-only `decisions.md` per
+reimage event, under `reimaged-system/restore-notes/`.
+
+### Why not one file per decision, or per phase, or dated
+
+A capture is superseded by a later capture, which is why the run categories are
+dated and why `official/` exists. A decision is not superseded by a later
+decision — both remain true, and the older one is usually the one being looked
+for six months on. There is nothing for a date to select between, so dating the
+files would only scatter one narrative across the drive and leave a reader
+guessing which file holds the answer. The artifact root already is the reimage
+event; the log is one file inside it.
+
+### `--excepts`, which is the part that does work
+
+A decision only a human can find is one a comparison re-flags forever. An entry
+names the lineage it explains — `comparisons/restore-access-inventory-diff` —
+so the question a flagged diff raises has a lookup instead of an argument:
+
+```
+./bin/record-decision.sh --check restore-access-inventory-diff
+```
+
+It exits non-zero when nothing matches, so it reads correctly in a test. The
+field is free text and nothing validates that the lineage exists, deliberately:
+a decision often outlives the artifact that prompted it, and a reference that
+fails to resolve is still the reason someone wrote the entry.
+
+### Append-only means append-only
+
+Entries are never edited or removed by this script, including to correct one —
+a correction is appended. This is the rule the run manifests already follow, for
+the same reason: what was believed at the time is the part with evidentiary
+value, and a log that can be rewritten cannot be used to settle a question about
+the past.
+
+Empty reasons are refused. A decision with a title and no reason is a note
+nobody can act on, and it is the form this file would silently fill with.
+
+### What did not change
+
+Phase 15's dated shortlist note stays a dated file. It is a worksheet for one
+pass — what you intend to restore, and why — and it is finished when the pass
+is, which is exactly the lifetime a date expresses. Only the decisions moved out
+of it. `restore-home.md` says which is which rather than leaving a reader to
+infer it from two files in one directory.
+
+### Verification at time of delivery
+
+- `bash -n` clean; `verify-script-portability.sh` clean against the Bash 3.2 /
+  BSD floor; `verify-doc-paths.sh --all` clean; `verify-runbook-structure.sh`
+  unchanged at its pre-existing 30 FAIL / 5 WARN.
+- Exercised end to end against a scratch artifact root: first entry creates the
+  file with its header, a second appends below it, `--excepts` records one and
+  many references, a reason supplied on stdin round-trips with its line breaks,
+  `--check` matches and exits 0, a miss exits 1, and an empty reason is refused.
+- Run on Linux with GNU coreutils and Bash 5.x. Not executed on the target Mac.
+
+### Known follow-ups, not applied
+
+- Nothing reads `decisions.md` automatically. `--check` has to be asked. Wiring
+  it into `compare-restored-state.sh`, so a flagged row reports "already
+  decided" on its own, is the obvious next step and is a change to comparison
+  output rather than to this file.
+- The run-index conversion of `time-machine/` and `repo-audit-reports/` deferred
+  in Revision 116 is still open.
+
+---
+
+## Revision 116 — the answer was in the file that gets replaced
+
+Every recorder in this workflow writes a checklist, and every checklist has rows
+only a person can answer. Those rows were living inside the run directory the
+recorder had just staged — which is the one place guaranteed to be replaced.
+`verify-reimaged-system.md` said so plainly, as a Pitfall:
+
+> Rerunning this does not update the checklist you answered — it writes a new one
+> with every Manual row back at `TODO`.
+
+That warning was accurate, and the workaround it prescribed — answer the last run
+you intend to keep, carry your answers forward by hand — is the kind of
+instruction that holds until the day someone reruns a phase for a good reason and
+silently loses a week of judgement. The same defect had already reached Phase 12
+unremarked: `restore-docker.md` invited a rerun in one section and told the
+operator to tick rows in the regenerated plan-note in another, while Phase 14
+scanned *every* plan-note and would flag the stranded one forever.
+
+### The category was doing two jobs
+
+`restore-notes/` held script-written plan-notes and hand-written decisions in one
+directory, and no rule could describe both. The split that matters is not who
+wrote a file but how long it has to live: a survey is regenerable and belongs
+with its run, an answered row cannot be recomputed and must outlive every run.
+
+So the rows move to `reimaged-system/sign-offs/`, one file per runbook per run,
+named for the run. `restore-notes/` keeps the plan-notes and gains what it was
+always for — the observations and deliberate exceptions a row cannot hold.
+
+### Why this category is not run-indexed
+
+`artifact-runs.sh` already solves durable selection, and pinning a run with
+`artifact_run_set_official` survives a rebuild, so a run-indexed `sign-offs/` was
+the obvious first answer. It is the wrong shape. Officialness there is
+**computed** — latest-wins for most points — so an answered file stays
+authoritative only while someone remembers to pin it after every tick. A
+durability mechanism that depends on a remembered manual step is the failure it
+was built to prevent, wearing a different hat.
+
+Carry-forward needs no pin. Each new sign-off copies the previous one rather than
+starting blank, so latest-wins is safe by construction instead of by discipline.
+
+### Carrying an answer forward is not the same as re-checking it
+
+That buys durability and pays for it in staleness, so the file records both. Each
+row carries `Answered against`, naming the run the answer was given against, and
+the header counts rows as outstanding, answered, or **carried** — durable, but
+last checked against a capture that has since been replaced. Phase 14 reports
+carried rows separately, so a three-week-old answer cannot present itself as a
+fresh one at final sign-off. To re-affirm a row, clear its `Answered against`
+cell; the next run re-stamps it.
+
+The operator owns `Status` and `Notes`. Nothing else in the file is hand-edited.
+
+### Where a sign-off lives when its producer is not post-image
+
+`reimaged-system/` is post-image by construction, so `reimage-checklist.sh
+--phase pre` writes to `reimage-prep-checks/sign-offs/` — beside its own reports
+rather than forced into a category that would misfile it. `restore-repos.sh` and
+`record-time-machine-evidence.sh` follow the same rule into
+`repo-audit-reports/sign-offs/` and `time-machine/sign-offs/`.
+
+### Rows are identified by their text
+
+Matching between generations is by item text, so rewording a row orphans its
+answer. That is reported rather than swallowed: an unmatched prior row is
+preserved under `## Rows no longer emitted`, and if the item is ever declared
+again the lookup finds it there and restores the answer. For the same reason,
+three rows in `reimage-checklist.sh` that were named after configured paths —
+`$EXTERNAL_DATA_VOLUME` and both Git repo roots — now carry a stable item and
+put the path in Notes. A row named after a value orphans its own answer the day
+that value changes.
+
+### The orphan
+
+`runtime-version-comparison-20260819-121523.md` predated Revision 32, which moved
+that output into `comparisons/` and renamed the script. Revision 110 confirmed
+nothing writes it any more, and it has now been moved to
+`comparisons/runs/restore-runtime-version-comparison-20260819-121523/comparison.md`
+and indexed with `reindex-artifact-runs.sh`. It gets its own context rather than
+joining `restore-runtime-inventory-diff`: a different tool produced it, in a
+different format, and folding it into that lineage would assert a continuity that
+did not exist. The category held no pins, so the pointer rebuild was purely
+computational and no other lineage moved.
+
+### Verification at time of delivery
+
+- `bash -n` clean on the new helper and all nine edited scripts.
+- `verify-script-portability.sh` clean across 72 files against the Bash 3.2 / BSD
+  floor; `verify-doc-paths.sh --all` clean, 1078 anchors resolving.
+- `verify-runbook-structure.sh` reports 30 FAIL / 5 WARN both before and after
+  these edits. That count is pre-existing and untouched by this revision.
+- Carry-forward exercised across four generations: an answer carries, ages from
+  answered to carried, re-affirms when its cell is cleared, and a reworded row
+  lands under `Rows no longer emitted` without compounding on later runs. An
+  item containing backticks and a note containing `|` both survive a round trip.
+- All nine edited scripts were run end to end against scratch artifact roots:
+  each wrote its sign-off, its generated artifact pointed at that file, and the
+  row counts matched what the script declared. `restore-docker.sh` was
+  additionally answered and rerun, confirming the answer carried forward with
+  its provenance stamp and its note intact.
+- Run on Linux with GNU coreutils and Bash 5.x. Nothing here has been executed on
+  the target Mac; `/bin/bash -n` against the real 3.2 is still owed.
+
+### Known follow-ups, not applied
+
+- `record-time-machine-evidence.sh` and `restore-repos.sh` now write sign-offs,
+  but neither category uses the shared run index. Converting `time-machine/` and
+  `repo-audit-reports/` would mean rewriting a `MANIFEST.md` that Phase 2A wrote
+  in the predecessor format and restructuring completed pre-image evidence, on a
+  drive that is meant to stop changing. The sign-offs did not need it: both
+  scripts already generate a run identity the sign-off names.
+- `restore-notes/` still has no single append-only `decisions.md`. Phase 15 and
+  `restore-access.md` Steps 3 and 9 continue to write free-standing notes.
+- `restore-git.md` is deliberately untouched; it is being revised separately.
 
 ---
 

@@ -96,7 +96,11 @@ $REIMAGE_ARTIFACT_ROOT/
 │   ├── restarts/runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/
 │   ├── time-machine/
 │   ├── restarts/
+│   ├── sign-offs/
+│   │   ├── <runbook>-YYYYMMDD-HHMMSS.md
+│   │   └── latest-<runbook>.txt
 │   └── restore-notes/
+│       └── decisions.md
 ├── office-stability/
 │   ├── office-stability-summary-YYYYMMDD-HHMMSS.md
 │   ├── post-reimage-office-baseline-YYYYMMDD-HHMMSS.zip
@@ -209,6 +213,7 @@ Related `reimaged-system/` paths created or reused by the script:
 ```text
 $REIMAGE_ARTIFACT_ROOT/reimaged-system/time-machine/
 $REIMAGE_ARTIFACT_ROOT/reimaged-system/restarts/
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/sign-offs/
 $REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/
 $REIMAGE_ARTIFACT_ROOT/reimaged-system/restarts/official/verify-reimaged-system-<point>.txt
 ```
@@ -467,6 +472,7 @@ Related `reimaged-system/` directories the script ensures exist:
 ```text
 $REIMAGE_ARTIFACT_ROOT/reimaged-system/time-machine/
 $REIMAGE_ARTIFACT_ROOT/reimaged-system/restarts/
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/sign-offs/
 $REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/
 ```
 
@@ -486,7 +492,8 @@ Manual / fallback notes:
 
 - The generated report is the source of truth; use this section only for the manual rows it cannot prove.
 - Manual sign-off still includes Company Portal compliance UI, real internal-site access, OneDrive completion, Office stability under normal use, important project readiness, Git identity checks, SSH fingerprint checks, shell alias restore, and display/peripheral correctness. The post-image Time Machine backup is **not** part of Phase 14 sign-off; it is Phase 16, after Restore Home.
-- Review any notes placed under `$REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/` before final sign-off so restore exceptions and deferred items stay attached to the validation evidence.
+- The rows a person answers live under `$REIMAGE_ARTIFACT_ROOT/reimaged-system/sign-offs/`, one file per runbook. An answer carries forward from the run it was given against, so check the `carried` count in each file's header as well as the outstanding one — a carried row is durable but was not re-verified against the newest capture.
+- Review `$REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/decisions.md` before final sign-off — `./bin/record-decision.sh --list` — so restore exceptions and deferred items stay attached to the validation evidence. When a comparison reports a difference you think was already accepted, `--check <lineage>` answers it without re-deciding.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -508,6 +515,7 @@ Managed baseline and restart checkpoints:
 Final validation run:
   [ ] reimage-checklist.sh --phase post completed
   [ ] latest-reimage-checklist.txt points to the intended final report
+  [ ] sign-offs reviewed — no outstanding rows, and carried rows re-affirmed
   [ ] restore-notes reviewed for deferred/manual follow-up items
   Notes:
 

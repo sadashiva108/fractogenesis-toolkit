@@ -2,7 +2,7 @@
 
 # Reimaged System Checks
 
-**Last updated:** 2026-08-17
+**Last updated:** 2026-09-01
 
 Run the final proof step for the rebuilt Mac: generate the Phase 14 automated checklist with `bin/reimage-checklist.sh --phase post`, resolve the remaining manual sign-off rows, and land the evidence next to the rest of the reimage artifacts. This is the phase where "the rebuild is trusted" transitions from a plan to a recorded fact, and it deliberately runs after every restore that is expected to produce evidence a script can validate.
 
@@ -43,7 +43,7 @@ Prove that the rebuilt Mac is usable for daily work and development, keep the fi
 **What it sets up**
 
 - **The post-image checklist bundle** — a timestamped `reimage-checklist-*.md` under `reimaged-system/checklists/` recording PASS, WARN, FAIL, or SKIP for every area automation can reach, plus the `latest-reimage-checklist.txt` pointer to the newest run.
-- **The closed manual sign-off areas** — Company Portal, internal access, OneDrive sync, Office stability, project readiness, and final cleanliness, each resolved by hand and recorded as a Phase 14 note under `restore-notes/`.
+- **The closed manual sign-off areas** — Company Portal, internal access, OneDrive sync, Office stability, project readiness, and final cleanliness. The rows themselves are answered in `reimaged-system/sign-offs/`, which carries an answer forward between runs and records the run it was answered against; a decision that needs more room than a row — a deliberate skip and why — goes in `restore-notes/`.
 
 **What the rest of the workflow relies on it for**
 
@@ -109,7 +109,9 @@ Generated output roots:
 ```text
 $REIMAGE_ARTIFACT_ROOT/reimaged-system/checklists/reimage-checklist-YYYYMMDD-HHMMSS.md
 $REIMAGE_ARTIFACT_ROOT/reimaged-system/checklists/latest-reimage-checklist.txt
-$REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/                # optional manual follow-up notes
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/sign-offs/reimaged-system-checks-YYYYMMDD-HHMMSS.md
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/sign-offs/latest-reimaged-system-checks.txt
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/                # optional prose notes
 ```
 
 Pre-flight file written by Phase 9 (read, not written here):
@@ -129,6 +131,9 @@ $REIMAGE_ARTIFACT_ROOT/
 │   │   └── reimage-checklist-YYYYMMDD-HHMMSS.md
 │   ├── restarts/runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/
 │   │   └── manual-captures-required.md
+│   ├── sign-offs/
+│   │   ├── latest-<runbook>.txt
+│   │   └── <runbook>-YYYYMMDD-HHMMSS.md
 │   └── restore-notes/
 └── ...
 ```
@@ -167,7 +172,7 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 ### Prerequisites
 
 - Your shell is at the toolkit root — `cd "$FRACTOGENESIS_HOME"` once for the session. Per the guide's [[reimaging-guide#Core Assumptions|Core Assumptions]], the commands below assume this and don't repeat it.
-- Every Phase 8–13 runbook that is expected to run has finished, including any restore-notes plan-notes under `reimaged-system/restore-notes/`.
+- Every Phase 8–13 runbook that is expected to run has finished, and each has left a sign-off under `reimaged-system/sign-offs/`.
 - The external artifact volume is mounted and `$REIMAGE_ARTIFACT_ROOT` resolves; `reimaged-system/checklists/` will be created if missing.
 - The Phase 9 post-restart bundle is the official run for `verify-reimaged-system-post-restart` under `reimaged-system/restarts/`; its `manual-captures-required.md` is reachable.
 - OneDrive is signed in and sync has settled — the checklist has a row for this, but you reach a clean result faster by resolving it up front.
@@ -206,13 +211,37 @@ Phase 9's first-boot bundles are indexed runs under `restarts/`, and
 the one this phase is asking about, because it is the run taken after the second
 stabilization restart.
 
-Also scan any plan-notes from the restore phases:
+Every phase that has rows a person answers leaves them in one sign-off per
+runbook, so the remaining work across the whole rebuild is one count per file
+rather than a hunt through run directories. Count what is still open:
 
 ```bash
-ls -1t "$REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/" 2>/dev/null | head
+grep -c '| `TODO` |' "$REIMAGE_ARTIFACT_ROOT"/reimaged-system/sign-offs/*.md 2>/dev/null
 ```
 
-For each outstanding row, either fix the underlying issue now, or record the deliberate skip in a fresh Phase 14 note under `restore-notes/` so the Phase 14 checklist has something to reference when it lands on the matching row.
+> [!warning] A zero here is not the same as a clean phase
+> An answered row carries forward from the run it was answered against, so a
+> sign-off can read zero outstanding while every row was last checked weeks ago
+> against a capture that has since been replaced. Each file's header counts them
+> as `carried`, and every row names its run in `Answered against`. Re-read the
+> carried rows before signing off; to re-affirm one, clear its `Answered
+> against` cell and the next run of that phase re-stamps it.
+
+For each outstanding row, either fix the underlying issue now, or answer it in the sign-off with a note saying why it was skipped. When the reasoning needs more room than a row — a decision a later reader would not reconstruct from one line — append it with `bin/record-decision.sh` and reference it from the row.
+
+A comparison that keeps reporting a difference you have already accepted is the
+case this exists for. Ask whether it was already decided rather than deciding it
+again:
+
+```bash
+./bin/record-decision.sh --check restore-access-inventory-diff
+```
+
+Read the whole log before final sign-off:
+
+```bash
+./bin/record-decision.sh --list
+```
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 

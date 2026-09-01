@@ -44,6 +44,8 @@
 #                          against the current directory, and a destination
 #                          inside the repo checkout is refused.
 #                          Default: <artifact-root>/reimaged-system/restore-notes
+#   --signoff-root PATH    Directory for the sign-off.
+#                          Default: <artifact-root>/reimaged-system/sign-offs
 #   --open                 Reveal the generated plan-note in Finder on
 #                          completion.
 #   -h, --help             Show this message and exit.
@@ -61,6 +63,11 @@
 #
 # Output location:
 #   $REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/restore-docker-plan-YYYYMMDD-HHMMSS.md
+#   $REIMAGE_ARTIFACT_ROOT/reimaged-system/sign-offs/restore-docker-YYYYMMDD-HHMMSS.md
+#
+#   The plan-note surveys the sources and is regenerable. The sign-off holds
+#   the rows a person answers; answers carry forward between runs and each
+#   records the run it was answered against. Phase 14 reads the sign-off.
 #
 # Exit status:
 #   0  Plan-note written; no fatal errors.
@@ -95,6 +102,19 @@ ARTIFACT_CONFIG_REQUIRE_REIMAGE_ARTIFACT_ROOT=false
 # shellcheck source=../.internal/load-reimage-config.sh
 source "$CONFIG_LOADER"
 
+# The sign-off rows leave the plan-note entirely. A plan-note is regenerable --
+# rerunning this script is the documented way to refresh the survey -- and an
+# answered row is the one thing in it that cannot be recomputed. Keeping both in
+# one file meant a rerun handed Phase 14 a fresh set of TODOs while the answers
+# sat in an older file nothing reads. See .internal/sign-offs.sh.
+SIGNOFF_LIB="$REPO_ROOT/.internal/sign-offs.sh"
+if [[ ! -f "$SIGNOFF_LIB" ]]; then
+  echo "ERROR: shared sign-off helper not found: $SIGNOFF_LIB" >&2
+  exit 2
+fi
+# shellcheck source=../.internal/sign-offs.sh
+source "$SIGNOFF_LIB"
+
 usage() {
   sed -n '/^# --- BEGIN USAGE ---$/,/^# --- END USAGE ---$/p' "$0" \
     | sed '1d;$d;s/^# //;s/^#$//'
@@ -116,6 +136,7 @@ require_option_value() {
 # ---------------------------------------------------------------------------
 STAMP="$(date +%Y%m%d-%H%M%S)"
 OUTPUT_ROOT=""
+SIGNOFF_ROOT=""
 OPEN_RESULT=false
 
 while [[ $# -gt 0 ]]; do
@@ -128,6 +149,11 @@ while [[ $# -gt 0 ]]; do
     --output-root)
       require_option_value "$1" "${2:-}"
       OUTPUT_ROOT="$2"
+      shift 2
+      ;;
+    --signoff-root)
+      require_option_value "$1" "${2:-}"
+      SIGNOFF_ROOT="$2"
       shift 2
       ;;
     --open)
@@ -206,7 +232,26 @@ if ! mkdir -p "$OUTPUT_ROOT" 2>/dev/null; then
   exit 2
 fi
 
+if [[ -z "$SIGNOFF_ROOT" ]]; then
+  SIGNOFF_ROOT="$REIMAGE_ARTIFACT_ROOT/reimaged-system/sign-offs"
+fi
+
+SIGNOFF_ROOT="$(absolute_path "$SIGNOFF_ROOT")"
+
+if [[ -n "${REPO_ROOT:-}" && ( "$SIGNOFF_ROOT" == "$REPO_ROOT" || "$SIGNOFF_ROOT" == "$REPO_ROOT"/* ) ]]; then
+  echo "ERROR: refusing to write output under the repo checkout: $SIGNOFF_ROOT" >&2
+  exit 2
+fi
+
 PLAN_FILE="$OUTPUT_ROOT/restore-docker-plan-$STAMP.md"
+
+# Open the sign-off before the plan is written: it resolves SIGNOFF_FILE, which
+# the plan-note points at, and carries forward any answers from the last run.
+RUN_ID="restore-docker-$STAMP"
+if ! signoff_begin "$SIGNOFF_ROOT" "restore-docker" "$RUN_ID"; then
+  echo "ERROR: could not open the sign-off under $SIGNOFF_ROOT" >&2
+  exit 2
+fi
 
 # ---------------------------------------------------------------------------
 # Source enumeration
@@ -299,24 +344,33 @@ DAEMON="$(docker_daemon_status)"
   printf '\n'
 
   printf '## Sign-Off Checklist\n\n'
-  printf '| Item | Status | Notes |\n'
-  printf '| --- | --- | --- |\n'
-  printf '| Docker Desktop installed | TODO |  |\n'
-  printf '| Docker daemon reachable (`docker info`) | TODO |  |\n'
-  printf '| Resources settings (CPU/Memory/Swap/Disk) restored | TODO |  |\n'
-  printf '| File sharing includes project roots | TODO |  |\n'
-  printf '| `~/.docker/config.json` restored and `docker login` verified per registry | TODO |  |\n'
-  printf '| Redis container running | TODO |  |\n'
-  printf '| RabbitMQ container running (management UI reachable) | TODO |  |\n'
-  printf '| Elasticsearch reachable on `:9200` | TODO |  |\n'
-  printf '| Kibana reachable on `:5601` (if used) | TODO |  |\n'
-  printf '| MarkLogic single-node running (`:7997` health `200`) | TODO |  |\n'
-  printf '| MarkLogic security deployed (`mlDeploySecurity`) | TODO |  |\n'
-  printf '| MarkLogic app deployed (`mlDeploy`) | TODO |  |\n'
-  printf '| Image / container inventory spot-check vs pre-image | TODO |  |\n'
+  printf 'The rows a person answers live in their own file, so regenerating\n'
+  printf 'this plan never discards an answer:\n\n'
+  printf '    %s\n\n' "$SIGNOFF_FILE"
+  printf 'Answers carry forward between runs and each row records the run it\n'
+  printf 'was answered against. Phase 14 reads that file, not this one.\n'
 } > "$PLAN_FILE"
 
 echo "Plan-note → $PLAN_FILE"
+
+# Row text is the key that carries an answer between runs, so rewording one
+# orphans its answer. sign-offs.sh reports that rather than dropping it, but
+# treat these strings as identifiers, not as prose.
+signoff_row 'Docker Desktop installed' ''
+signoff_row 'Docker daemon reachable (`docker info`)' ''
+signoff_row 'Resources settings (CPU/Memory/Swap/Disk) restored' ''
+signoff_row 'File sharing includes project roots' ''
+signoff_row '`~/.docker/config.json` restored and `docker login` verified per registry' ''
+signoff_row 'Redis container running' ''
+signoff_row 'RabbitMQ container running (management UI reachable)' ''
+signoff_row 'Elasticsearch reachable on `:9200`' ''
+signoff_row 'Kibana reachable on `:5601` (if used)' ''
+signoff_row 'MarkLogic single-node running (`:7997` health `200`)' ''
+signoff_row 'MarkLogic security deployed (`mlDeploySecurity`)' ''
+signoff_row 'MarkLogic app deployed (`mlDeploy`)' ''
+signoff_row 'Image / container inventory spot-check vs pre-image' ''
+
+signoff_finalize "Phase 12" "$PLAN_FILE"
 
 if [[ "$OPEN_RESULT" == true ]]; then
   open -R "$PLAN_FILE" 2>/dev/null || true

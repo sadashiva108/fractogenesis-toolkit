@@ -112,6 +112,18 @@ if ! source "$CONFIG_LOADER"; then
   exit 2
 fi
 
+# Manual rows leave the generated artifact. This script is rerun freely and each
+# run writes a newly stamped file, so a row answered inside one is not carried
+# into the next. The sign-off carries answers forward and records the run each
+# was answered against. See .internal/sign-offs.sh.
+SIGNOFF_LIB="$REPO_ROOT/.internal/sign-offs.sh"
+if [[ ! -f "$SIGNOFF_LIB" ]]; then
+  echo "ERROR: shared sign-off helper not found: $SIGNOFF_LIB" >&2
+  exit 2
+fi
+# shellcheck source=../.internal/sign-offs.sh
+source "$SIGNOFF_LIB"
+
 usage() {
   sed -n '/^# --- BEGIN USAGE ---$/,/^# --- END USAGE ---$/p' "$0" \
     | sed '1d;$d;s/^# //;s/^#$//'
@@ -294,6 +306,15 @@ fi
 OUT="$OUTPUT_DIR"
 RAW_DIR="$OUT/raw"
 mkdir -p "$RAW_DIR"
+
+# The run directory this script already writes IS the run identity, so the
+# sign-off can name it exactly without the category being converted to the
+# shared run index. It sits beside runs/ rather than inside one, because a run
+# directory is replaced and an answered row must not be.
+if ! signoff_begin "$AUDIT_ROOT/sign-offs" "post-image-restore" "post-image-restore-$STAMP"; then
+  echo "ERROR: cannot open a sign-off under: $AUDIT_ROOT/sign-offs" >&2
+  exit 2
+fi
 
 # Preserve the pre-image inputs alongside the report for provenance.
 cp -p "$REPOS_TSV" "$RAW_DIR/repos-input.tsv" 2>/dev/null || true
@@ -716,8 +737,15 @@ remote before reimage. See \`restore-repos.md\` for the full runbook.
 | Pre-image repo inventory read successfully | Command | \`repos.tsv\` produced status rows | $(status_pass_warn "$REPOS_INDEX_OK") | See \`raw/repos-input.tsv\`. |
 | Every tracked repo is present on disk | Mixed | \`git clone\` output from \`clone-commands.sh\` succeeded for each entry | $(status_pass_warn "$CLONES_COMPLETE") | Emitted commands to \`clone-commands.sh\`; run manually and rerun this script to confirm. |
 | Every staged ignored bundle applied | Mixed | \`rsync-ignored-files.sh\` executed or \`--apply-ignored-files\` used | $(status_pass_warn "$IGNORED_FILES_COMPLETE") | Emitted commands to \`rsync-ignored-files.sh\`; review before running. |
-| Rescue branches (\`reimage/YYYYMMDD/*\`) present on remote for every carry-forward row | Manual | \`git ls-remote origin 'reimage/*'\` per repo | TODO | The pre-image audit recorded $CARRY_FORWARD_TOTAL carry-forward rows across $TOTAL repos; each row must map to a pushed rescue branch or be intentionally discarded. |
-| Personal repos route via the personal SSH host alias | Manual | \`git remote -v\` on each personal repo | TODO | Fill after cloning; see the personal-host pitfall in \`restore-git.md\` Step 8. |
+
+## Manual Sign-Off
+
+The rows a person answers are not in this report. Each run writes a new run
+directory, so an answer recorded here would not reach the next one. They live in
+the sign-off, which carries answers forward and records the run each was
+answered against:
+
+    $SIGNOFF_FILE
 
 ## Per-Repo Status
 
@@ -803,6 +831,10 @@ if [[ "$OUTPUT_DIR_DEFAULTED" == true ]]; then
 else
   echo "NOTE: --output was used; latest-post-image-restore.txt left unchanged." >&2
 fi
+
+signoff_row "Rescue branches (\`reimage/YYYYMMDD/*\`) present on remote for every carry-forward row" "The pre-image audit recorded $CARRY_FORWARD_TOTAL carry-forward rows across $TOTAL repos; each must map to a pushed rescue branch or be intentionally discarded. Verify with \`git ls-remote origin 'reimage/*'\` per repo."
+signoff_row "Personal repos route via the personal SSH host alias" "Fill after cloning. Verify with \`git remote -v\` on each personal repo."
+signoff_finalize "Phase 11B" "$REPORT_MD"
 
 echo ""
 echo "Restore repositories report complete."
