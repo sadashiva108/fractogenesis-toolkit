@@ -49,7 +49,7 @@ Restore the access layer that later repo, IDE, application, and project work dep
 
 **What it sets up**
 
-- **SSH identity** — keys, `~/.ssh/config`, and `known_hosts` copied out of the mounted DMG, with the tight permissions the SSH client insists on.
+- **SSH identity** — keys and `~/.ssh/config` copied out of the mounted DMG, with the tight permissions the SSH client insists on, and `known_hosts` rebuilt by probing rather than restored.
 - **Keychain trust** — certificates imported from the reviewed manual exports, with genuine internal root and issuing CAs explicitly marked Always Trust so non-Java tools reach internal endpoints.
 - **JVM trust** — the `jssecacerts` override dropped into the `lib/security/` directory of the JDK actually installed in Phase 10A.
 - **Shell and CLI configuration** — a reviewed, selectively merged restore from the dotfiles bundle, rather than a blanket overwrite of the fresh files.
@@ -99,17 +99,30 @@ The restores themselves are manual by design. Every one is a small copy, `securi
 
 ## Artifact and Script Locations
 
-Every path this runbook reads or writes is defined here, once.
+Every path this runbook reads or writes is defined here, once. Later sections
+refer back to these names instead of redrawing them.
 
-Scripts this runbook runs:
+Primary script:
 
 ```text
-$FRACTOGENESIS_HOME/bin/restore-access.sh          # entrypoint — drives Steps 0–12; every step is also a subcommand
-$FRACTOGENESIS_HOME/bin/record-restore-prereqs.sh  # entrypoint — Step 0a, entry boundary
-$FRACTOGENESIS_HOME/bin/record-restore-state.sh    # entrypoint — Step 0b before-state, Step 11 after-state
-$FRACTOGENESIS_HOME/bin/restore-staged-loose.sh    # entrypoint — Step 2, inverse of bin/stage-loose-secrets.sh
-$FRACTOGENESIS_HOME/bin/compare-restored-state.sh  # entrypoint — Step 11, both baselines
-$FRACTOGENESIS_HOME/bin/record-restore-exit.sh     # entrypoint — Step 12, exit boundary
+$FRACTOGENESIS_HOME/bin/restore-access.sh              # entrypoint — drives Steps 1–10; every step is also a subcommand
+```
+
+Related scripts, alphabetical:
+
+```text
+$FRACTOGENESIS_HOME/bin/compare-restored-state.sh      # entrypoint (Step 11 — compares both baselines)
+$FRACTOGENESIS_HOME/bin/record-restore-exit.sh         # entrypoint (Step 12 — exit boundary)
+$FRACTOGENESIS_HOME/bin/record-restore-prereqs.sh      # entrypoint (Step 0a — entry boundary)
+$FRACTOGENESIS_HOME/bin/record-restore-state.sh        # entrypoint (Step 0b before-state, Step 11 after-state)
+$FRACTOGENESIS_HOME/bin/restore-staged-loose.sh        # entrypoint (Step 2 — inverse of stage-loose-secrets.sh)
+$FRACTOGENESIS_HOME/bin/stage-loose-secrets.sh         # entrypoint (Step 2 — re-sweeps plaintext back behind encryption)
+```
+
+Artifact root:
+
+```text
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/                # every artifact this runbook generates lands here
 ```
 
 Input evidence built by earlier phases:
@@ -121,7 +134,7 @@ $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/certs/java-security/           # jsseca
 $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/certs/keychain-manual-exports/ # manual .cer/.p12 exports for Keychain Access
 $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/certs/loose-candidates-selected/ # reviewed loose cert/key material staged in Phase 3A
 $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/cli-credentials/               # per-tool credential exports
-$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/ssh/                           # SSH keys, config, known_hosts — read by Step 3
+$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/ssh/                           # SSH keys and config — read by Step 3
 $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/staged-loose/                  # Phase 3B sweep + MANIFEST.tsv — read by Step 2
 $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/chrome/                        # break-glass password CSV — see DMG Categories Restored By Hand
 $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/claude/                        # restored by hand
@@ -159,9 +172,13 @@ re-authenticated after a reimage rather than restored, so it is never staged. Se
 Phase 11A restores it. The two are easy to conflate, and they live in different
 places.
 
-Artifacts this phase generates, all under `$REIMAGE_ARTIFACT_ROOT/reimaged-system/`:
+### Bundle Layout
+
+Everything this runbook writes, under the artifact root named above. Reads are
+listed separately in the section before this one; this tree is output only.
 
 ```text
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/
 boundaries/MANIFEST.md                                           # index of every entry and exit run
 boundaries/official/restore-access-entry.txt                     # newest entry run
 boundaries/official/restore-access-exit.txt                      # newest exit run
@@ -180,7 +197,9 @@ comparisons/MANIFEST.md                                          # index of ever
 comparisons/official/restore-access-cert-diff.txt                # newest certificate diff
 comparisons/runs/restore-access-cert-diff-YYYYMMDD-HHMMSS/       # Step 4 — comparison.md, deferred.md, rows.tsv
 comparisons/official/restore-access-jdk-trust-diff.txt           # newest JDK trust diff
-comparisons/runs/restore-access-jdk-trust-diff-YYYYMMDD-HHMMSS/  # Step 6 — comparison.md, rows.tsv
+comparisons/runs/restore-access-jdk-trust-diff-YYYYMMDD-HHMMSS/  # Step 6 compare — comparison.md, rows.tsv, pre-existing/
+comparisons/official/restore-access-jdk-trust-result.txt         # newest JDK trust install
+comparisons/runs/restore-access-jdk-trust-result-YYYYMMDD-HHMMSS/# Step 6 install — result.md, pre-existing/
 comparisons/official/restore-access-inventory-diff.txt           # newest inventory diff
 comparisons/runs/restore-access-inventory-diff-YYYYMMDD-HHMMSS/  # Step 11 — comparison.md, vs the pre-image captures
 
@@ -198,13 +217,13 @@ Step 2 also writes back into the plaintext artifact tree — `home-files-backup/
 Live targets this runbook writes on the reimaged Mac. Each names the step that writes it, because the `state/` captures above are only interpretable against this list — and `bin/record-restore-state.sh` walks exactly these paths:
 
 ```text
-~/.ssh/                              # Step 3 — keys, config, known_hosts
+~/.ssh/                              # Step 3 — keys and config from the image; known_hosts seeded by the probe
 ~/.gitconfig                         # NOT written here — Phase 11A restores it; Step 7 may add http.sslCAInfo
 ~/.config/git/                       # NOT written here — Phase 11A restores it
 ~/Library/Keychains/                 # Steps 4-5 — imported certificates, login keychain trust settings
 /Library/Keychains/System.keychain   # Step 5 — only if the system-domain trust form is used
 $JAVA_HOME/lib/security/             # Step 6 — jssecacerts override, pinned to the Phase 10A JDK
-~/.certs/                            # Step 7 — corp-root.pem, the CA bundle non-keychain tools read
+~/.certs/                            # Step 7 — system-and-corp-roots.pem, the CA bundle non-keychain tools read
 ~/.npmrc                             # Step 7 — npm config set cafile
 ~/.config/pip/pip.conf               # Step 7 — pip config set global.cert
 ~/.zprofile                          # Step 7 appends five CA exports; Step 8 may then merge over it
@@ -278,10 +297,10 @@ did and reports that instead of repeating it:
 | Step | What a second run reports |
 |---|---|
 | 1 mount | `already mounted` — the attached image is found, not re-attached |
-| 3 ssh | Copies the same content and re-applies the modes; a partial run is completed |
+| 3 ssh | Copies the same content and re-applies the modes; a partial run is completed — **and an identity you deliberately deleted comes back**, see Step 3 |
 | 5 trust | `already trusted in the admin domain — nothing to do` |
 | 6 java | `already carries the … trust set`, per JDK, computed from the alias set rather than assumed |
-| 7 corp-ca | Bundle rebuilt from source, never appended to; `~/.zprofile already carries the block` |
+| 7 tool-trust | Bundle rebuilt from source, never appended to; `~/.zprofile already carries the block, naming this bundle` |
 | 8 dotfiles | Reports only — it never writes |
 | 9 credentials | Reports only — it never writes |
 
@@ -538,6 +557,54 @@ itself.
 `Host` in `~/.ssh/config` it seeds the host key with `ssh-keyscan`, then probes
 non-interactively and reports the greeting, the error, or a stall.
 
+> [!warning] Pitfall
+> **Re-running this step reverses a deletion.** It copies the whole `ssh/`
+> category every time, so an identity you retired by removing it from `~/.ssh`
+> is back the next time Step 3 runs — with the right mode, reported as a
+> success, and indistinguishable in the output from one that was supposed to be
+> there.
+>
+> The image cannot be corrected: it is an encrypted, immutable capture of the
+> machine before the erase, and the retired key is legitimately part of what that
+> machine had. So the retirement lives only on this Mac, and only until the next
+> re-run.
+>
+> **Record it in `reimaged-system/restore-notes/` when you retire one.** That is
+> the category's whole purpose — a decision no artifact can hold, including a
+> deliberate "not restored". Nothing else in the workflow can tell your deletion
+> from an accident: Step 12 counts private keys and checks their modes, and
+> passes identically either way.
+>
+> The same applies to `known_hosts`. Deleting it is a reasonable choice; Step 12
+> will `WARN` about it on every close-out, and answering that row is where you
+> say so.
+
+**`known_hosts` is rebuilt here, not restored.** Do not assume the image carries
+one — Phase 3A stages the `ssh/` category as it finds it, and a machine whose
+`known_hosts` was absent or was excluded contributes none. What fills the file is
+the probe, one `ssh-keyscan` per `Host` in `~/.ssh/config`.
+
+That has a specific edge, and it is the reason to care: **only aliases get
+seeded.** A host you reach by its real name rather than through a `Host` block is
+not probed and not seeded, so its first connection prompts. That prompt is
+harmless at a shell and expensive inside
+[[restore-repos#Step 3 — Execute the Clone Commands|Phase 11B's clone loop]], which
+is not waiting for an answer. If `git clone` stalls on an unfamiliar host later,
+this is why.
+
+Check what landed, and re-run this step alone if the file is empty or missing:
+
+```bash
+wc -l < "$HOME/.ssh/known_hosts"
+```
+
+```bash
+./bin/restore-access.sh ssh
+```
+
+Step 12's **SSH host keys seeded** row reports the same thing, counted against
+the number of aliases in `~/.ssh/config`.
+
 Leave the testing to the step rather than typing a bare `ssh -T <alias>`. That
 command blocks on the host-key prompt — which, in a pasted block, is answered by
 whatever line follows it — and it can then hang indefinitely *after* the key is
@@ -772,11 +839,24 @@ Pin the corporate root once, from whatever the listings above showed, and reuse 
 
 ```bash
 CORP_CERT="$MNT/certs/<subdirectory>/<filename>"
-ls -l "$CORP_CERT" && openssl x509 -in "$CORP_CERT" -inform PEM -noout -subject -issuer -dates 2>/dev/null \
-  || openssl x509 -in "$CORP_CERT" -inform DER -noout -subject -issuer -dates
+ls -l "$CORP_CERT"
 ```
 
-One of the two `openssl` forms prints a subject, issuer, and validity window; the other errors. Note which one worked — Step 7 needs the format. If neither prints, the file is not a certificate.
+Then read it. Most captures are PEM, so try that first:
+
+```bash
+openssl x509 -in "$CORP_CERT" -inform PEM -noout -subject -issuer -dates
+```
+
+Only if that errors, the file is DER:
+
+```bash
+openssl x509 -in "$CORP_CERT" -inform DER -noout -subject -issuer -dates
+```
+
+Whichever prints a subject, issuer, and validity window is the format — note it, because Step 7 needs it. If neither prints, the file is not a certificate.
+
+Run them as separate commands rather than chaining them with `&&` and `||`. Chained, the DER attempt fires whenever *anything* to its left failed — including a mistyped path — so a wrong `$CORP_CERT` produces a screen of `OSSL_DECODER` and `STORE routines` errors that read as a corrupt certificate rather than a bad path. Suppressing the first form's errors to keep the chain readable makes it worse: the run that actually needed a diagnostic is the one whose diagnostic was thrown away.
 
 Then import **only what the keychain listing showed was missing** — matched by
 `sha256`, and only files that reported `CA:TRUE`. Open the folder in Finder and
@@ -831,6 +911,14 @@ Only if the root is *not* yet trusted:
 
 Leave every intermediate at `Use System Defaults`.
 
+**Confirm the trust change took, against a real endpoint.** macOS `curl` reads the keychain, so an internal HTTPS host that failed before this step should succeed after it — with no `--cacert`, no `CA_BUNDLE`, and nothing from Step 7 in place yet:
+
+```bash
+curl -sS -o /dev/null -w '%{http_code}\n' https://<an-internal-https-host>
+```
+
+Any HTTP status is a pass: the response code means TLS validated. A `curl: (60) SSL certificate problem` means it did not, and that is the failure the entry below is about. This is also the cleanest demonstration of where Step 5 ends and [[#Step 7 — Trust the Corporate CA Outside the Keychain|Step 7]] begins — `curl`, `git` and the browsers are done once the keychain is right; npm, pip, `requests` and the JVM carry their own trust stores and need Step 7 regardless.
+
 > [!bug] Troubleshooting
 > If an intermediate reads anything other than *"This certificate is valid"*, the problem is **above** it — the root is missing, or is present but not trusted. Fix the root and re-open the intermediate; it should go valid on its own. Do not resolve it by trusting the intermediate, which hides a broken chain rather than repairing one.
 
@@ -865,7 +953,7 @@ the two forms.
 > **Always Trust belongs to exactly one certificate here: the internal root.** Not an intermediate — see above. Not a leaf, ever: Step 4's `CA:FALSE` check exists to catch those, and marking one Always Trust tells the system to treat a single endpoint's certificate as an authority. And not an unverified certificate of any kind — confirm the `sha256` against something you trust before asserting trust in it. If in doubt, leave it at "Use System Defaults" and revisit; that setting is the safe default precisely because it defers to the chain.
 
 > [!bug] Troubleshooting
-> If `curl` still fails against an internal endpoint after the trust change, see [[#`curl` still fails against internal endpoints after Step 5|`curl` still fails against internal endpoints after Step 5]].
+> If the `curl` check above still reports an SSL certificate problem, see [[#The trust change did not take — Always Trust is on the wrong certificate|The trust change did not take — Always Trust is on the wrong certificate]].
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -873,24 +961,79 @@ the two forms.
 
 ### Step 6 — Restore Java Trust Overrides
 
+**This step is review, then act — two commands.** The first compares and
+installs nothing:
+
 ```bash
 ./bin/restore-access.sh java
 ```
 
 It walks every JDK under `/Library/Java/JavaVirtualMachines`, finds that JDK's
 captured store on the image, works out what the capture adds over the JDK's own
-`cacerts`, shows you the list, and installs after you confirm.
+`cacerts`, and writes the comparison. Then it stops and tells you what to run
+next. Naming a mode is how you say yes:
 
-**Before the first prompt it writes a comparison run** under
+```bash
+./bin/restore-access.sh java --jssecacerts merge
+```
+
+```bash
+./bin/restore-access.sh java --jssecacerts copy
+```
+
+There is no default mode, deliberately. Installing a JVM trust store has real
+consequences under either form, and the comparison is what makes the choice
+answerable — asking for it at a confirmation prompt asked at the one moment you
+had least information, because the report had just been written and not yet read.
+
+**The two passes write two different documents, because they answer different
+questions.** Re-running the comparison on the way into an install would produce a
+third copy of a decision already made; what an install has to record is what came
+of it.
+
+| Pass | Context | Holds |
+|---|---|---|
+| compare | `restore-access-jdk-trust-diff` | `comparison.md` — the decision: what the capture holds, what it adds over stock, what `copy` would discard. |
+| install | `restore-access-jdk-trust-result` | `result.md` — the outcome: what each JVM trusted before, what it trusts now, and every entry that moved either way. |
+
+**The comparison run** is written under
 `reimaged-system/comparisons/`, context `restore-access-jdk-trust-diff`, and
-prints the path. Read it before answering. Per JDK it holds:
+prints the path. Read it before choosing a mode. Per JDK it holds:
 
 | Section | What it answers |
 |---|---|
+| Identity | Which JDK this section is about: its version, its `Contents/Home` path, the `jssecacerts` that would be written, and whether it is the `REIMAGE_JDK_BASELINE` JDK. Every installed JDK gets its own section. |
 | Counts | What each form produces, as a number. |
-| **Added by the capture** | Exactly what `merge` imports — alias, owner, issuer, expiry. The only entries being decided. |
+| **Added by the capture** | Exactly what `merge` imports — alias, **role**, subject, issuer, expiry, and whether it has expired. The only entries being decided. |
 | **Stock only** | What `copy` would discard: CAs this JDK ships that the old machine's store did not have. |
 | **This JDK's stock trust set** | Every CA the JDK trusts today, before anything is installed. |
+
+#### Not every added entry is a CA
+
+The added rows are exported and read individually, so `Role` and `Expires` are
+each certificate's own facts rather than the keystore's claim about them. That
+matters because a JVM trust store accumulates two very different things.
+
+| Role | What it is | What trusting it means |
+|---|---|---|
+| `root` / `intermediate` | A certificate authority. | Every host it signs validates, now and after every renewal. |
+| **`leaf`** | A **pinned server certificate** — one specific host. | That host validates until its certificate is renewed, at which point it silently stops and has to be re-imported by hand. |
+
+A `leaf` in a trust store is the fingerprint of an earlier workaround: someone
+hit a TLS failure against an internal service and imported *that server's own
+certificate* rather than the CA that issued it. Java accepts any
+`trustedCertEntry` as a trust anchor, so it works — which is why the workaround
+survives, and why it keeps having to be redone.
+
+Read the `Issuer` column against the CA rows in the same table. If the issuing
+CA is also in the list, trusting **it** covers every host it signs and the pinned
+leaves are redundant.
+
+`Expires` earns the same attention. An expired entry in a trust store is inert:
+importing it cannot make a connection succeed. If a service depended on a pinned
+certificate that has since lapsed, that service is failing right now for a reason
+no reimage caused — and the durable fix is the issuing CA, not another pinned
+certificate with a new date on it.
 
 ```bash
 CMP="$REIMAGE_ARTIFACT_ROOT/reimaged-system/comparisons"
@@ -943,9 +1086,40 @@ seen as *not* done.
 > it. An unfamiliar public root in that list is one this JDK dropped on purpose,
 > and importing it puts it back.
 
-The step backs up any existing `jssecacerts` as `jssecacerts.pre-reimage-<stamp>`
-before writing, because the file it replaces is not recoverable from the JDK
-install. Under `merge` it builds the new store in `/tmp` and installs it only
+#### What the install records
+
+`result.md` is a before-and-after, per JDK, against **the trust store that was
+actually there** — the previous `jssecacerts` where one existed, and the JDK's
+stock `cacerts` where none did, because that is what the JVM was really using. A
+diff against an empty file would report 150 additions that are not additions.
+
+| Section | What it answers |
+|---|---|
+| Identity | Version, the `jssecacerts` written, what it was compared against, entries before and after, and where the backups are. |
+| **Added** | What this JVM trusts now and did not before — read back from the *installed* file, so the role and expiry describe what is actually trusted rather than what was intended. |
+| **Removed** | What this JVM trusted before and does not now. |
+
+**Removed is where `copy` becomes legible.** Its cost is not what it adds but
+what it drops, and no amount of before-the-fact comparison shows that as
+concretely as the list of authorities this JVM no longer trusts. Under `merge`
+the section normally reads "Nothing" — which is the claim `merge` makes about
+itself, verified against the installed file rather than asserted.
+
+A `copy` that dropped two roots, followed later by a `merge`, shows those two
+roots returning under **Added**. The pair of documents is a history of what this
+JVM trusted and when.
+
+**Existing trust stores are backed up twice.** The compare pass copies every
+`jssecacerts` that already exists into `pre-existing/<jdk-name>-jssecacerts`
+inside the comparison run, before anything is installed and whichever mode you
+later choose. The install pass separately keeps
+`jssecacerts.pre-reimage-<stamp>` beside the JDK.
+
+Two copies because they fail differently: the sibling is the one to reach for
+when reverting a bad install, and the one in the run directory is the one that
+still exists after the JDK is upgraded or removed, which takes its whole
+directory — and the sibling backup with it — along the way. The file being
+replaced is not recoverable from the JDK install itself. Under `merge` it builds the new store in `/tmp` and installs it only
 once every alias imported — a half-imported store is a JVM trusting an arbitrary
 subset of the corporate chain.
 
@@ -975,7 +1149,7 @@ Step 5 taught macOS to trust the internal root. It taught nothing else: `npm`,
 of them reads the keychain.
 
 ```bash
-./bin/restore-access.sh corp-ca
+./bin/restore-access.sh tool-trust
 ```
 
 It exports the root, builds the bundle, points every store at it, and smoke-tests
@@ -985,10 +1159,93 @@ each one.
 to, and the `~/.zprofile` block is guarded by a `REIMAGE-CA-BUNDLE` marker — a
 second run reports the block is already there instead of adding another.
 
-**It takes the root from wherever it is.** With the image mounted it reads the
-certificate Step 4 identified; with the image already detached it exports the
-root back out of the keychain, where Step 5 put it. Do not re-mount the image
-just for this step.
+#### The root is an ingredient; the bundle is the output
+
+The corporate root is an ingredient; the bundle is what Step 7 produces from it.
+
+| Path | What it is | Holds |
+|---|---|---|
+| `$MNT/certs/loose-candidates-selected/root-gaig-ca.pem` | a **source** — the corporate root as the image captured it | 1 certificate |
+| `~/.certs/system-and-corp-roots.pem` | the **output** — the CA bundle this step builds | ~159: every system root, plus that 1 corporate root |
+
+Step 7 does not point your tools at the root. It *builds a trust store* and
+points them at that, because `npm`, `git`, `pip`, `curl`, Node and Python all
+**replace** their trust store with the file you name rather than adding to it —
+so a file holding the corporate root alone would break every host the corporate
+CA did not issue, which on a network that intercepts internal traffic only is
+most of the internet. The name says what is in it for that reason.
+
+Confirm what actually landed. Ask the script for the path rather than naming it
+— `CA_BUNDLE` is a variable *inside* `restore-access.sh` and is not set in your
+shell:
+
+```bash
+BUNDLE="$(./bin/restore-access.sh bundle)"
+printf 'bundle: %s\n' "$BUNDLE"
+grep -c 'BEGIN CERTIFICATE' "$BUNDLE"
+```
+
+A number in the 150s, not `1`. To count what it holds as certificates rather
+than as PEM headers:
+
+```bash
+openssl crl2pkcs7 -nocrl -certfile "$BUNDLE" | openssl pkcs7 -print_certs -noout | grep -c 'subject='
+```
+
+**There is no `$CA_BUNDLE` in your shell**, and reaching for one fails in a way
+that reads like a missing bundle rather than a missing variable. The
+`~/.zprofile` block Step 7 writes exports `NODE_EXTRA_CA_CERTS`,
+`CURL_CA_BUNDLE`, `REQUESTS_CA_BUNDLE` and `PIP_CERT` — deliberately, because
+those are the names the tools themselves read. `CA_BUNDLE` is internal to
+`restore-access.sh`. So `grep -c 'BEGIN CERTIFICATE' "$CA_BUNDLE"` expands to
+`grep -c 'BEGIN CERTIFICATE' ""` and reports `grep: : No such file or
+directory`, and `source ~/.zprofile` does not help because the variable was
+never there to load. Resolve the path with `./bin/restore-access.sh bundle`, or
+use `$CURL_CA_BUNDLE`, which the block does export.
+
+**It takes the root from wherever it is**, trying three sources in order:
+
+| Order | Source                         | When it applies                                                                       |
+| ----- | ------------------------------ | ------------------------------------------------------------------------------------- |
+| 1     | `--tool-trust PATH`            | You named the file outright.                                                          |
+| 2     | The login and System keychains | Usually. Step 5 put the root there, and this is the copy the machine is really using. |
+| 3     | The mounted image              | An ordered run, which has a mount.                                                    |
+
+The keychain is tried before the image on purpose. **Running one step alone has
+no mounted image** — `$MNT` lives in the process that mounted it, and
+`./bin/restore-access.sh tool-trust` is a new process — so a step that could only
+read the image would fail every time it was re-run on its own, which is the
+normal way to redo one step. Do not re-mount the image just for this step.
+
+If none of the three yields a root, the step names all three and what each one
+found, then stops without touching the bundle. The way out is whichever of these
+matches your situation:
+
+```bash
+./bin/restore-access.sh certs
+```
+
+```bash
+./bin/restore-access.sh tool-trust --corp-cert "$MNT/certs/loose-candidates-selected/<file>"
+```
+
+```bash
+./bin/restore-access.sh --from tool-trust
+```
+
+The first re-runs Step 4, which finds and reports the root. The second asserts it.
+The third mounts the image and continues the ordered run from here.
+
+The run says which source it used, because "the bundle was built" and "the bundle
+was built from the copy you meant" are different claims.
+
+Which source it used does not change what you get. Step 4's comparison matches on
+SHA-256, so a root appearing under **Already installed by enrollment** is
+byte-identical to the file on the image — the same certificate reached by two
+routes. A run reporting `corporate root taken from the login/System keychain`
+built the same bundle it would have built from
+`certs/loose-candidates-selected/root-gaig-ca.pem`, and did it without needing
+the image mounted.
 
 **The bundle is the system roots *plus* the corporate root, not the corporate
 root alone.** Every consumer configured here — npm's `cafile`, git's
@@ -1045,6 +1302,10 @@ It compares each shell file against the backup and reports one of `NO BACKUP`,
 `BACKUP ONLY`, `SAME` or `DIFFERS`. **It changes nothing** — this step is a
 report, and the merging is yours.
 
+**The merge runs one way: backup → `$HOME`.** The backup is the read-only side
+of every command in this step. Nothing here writes to it, and nothing later in
+the workflow rebuilds it.
+
 Review a differing file, then merge by hand:
 
 ```bash
@@ -1052,11 +1313,39 @@ F=".zshrc"
 git diff --no-index --color=always "$HOME/$F" "$REIMAGE_ARTIFACT_ROOT/home-files-backup/dotfiles/$F" | less -R
 ```
 
+Left column is `$HOME` — what this machine has now. Right column is the backup —
+what the erased machine had. You are building the left one.
+
 > [!warning] Pitfall
-> Do not copy `.zprofile` over wholesale. It carries Phase 10A's Homebrew and nvm
-> bootstrap *and* Step 7's CA-bundle block, neither of which exists in a
-> pre-image backup. Overwriting it undoes both, and the failure surfaces later as
-> tools that cannot find their trust store.
+> **`home-files-backup/dotfiles/` is the only surviving record of the pre-image
+> machine, and editing it is not recoverable.** The DMG holds secrets, not shell
+> config; a Time Machine snapshot has it only if Phase 5 ran and you still have
+> the disk. Nothing in this workflow rebuilds that capture — `backup-home.md`
+> runs before the erase, and the machine it captured is gone.
+>
+> The danger is not that the risk is obvious and ignored; it is that both paths
+> look alike. The diff command opens two files of the same name in one pager,
+> and the second one is the irreplaceable one. Editing the wrong pane, or
+> saving into the wrong window a few minutes later, produces no error.
+>
+> **An edited capture keeps reporting, and keeps sounding certain.** After a
+> `.zshrc` is edited on the backup side, this step still prints `DIFFERS`, or
+> `SAME` — and neither is distinguishable from the honest verdict. The
+> comparison quietly becomes your new configuration measured against itself,
+> which is the failure mode this whole phase is built to avoid, arriving through
+> the one file nobody thought to protect.
+>
+> If you want to try a merge before committing to it, copy the backup file to
+> `/tmp` and edit there. Open the artifact root read-only in your editor if it
+> offers that.
+
+`.zprofile` is the one file to never copy over wholesale, in either direction. On
+this machine it carries Phase 10A's Homebrew and nvm bootstrap *and* Step 7's
+CA-bundle block, none of which exists in a pre-image backup — overwriting it
+undoes both, and the failure surfaces later as tools that cannot find their trust
+store. In the other direction it is worse: a `.zprofile` copied *onto* the backup
+records a CA bundle that did not exist until this phase ran, so the capture
+starts asserting something about the old machine that was never true.
 
 `BACKUP ONLY` means the file exists in the backup and not on this machine. There
 is nothing here to merge into, so copying it is a decision rather than a merge —
@@ -1197,7 +1486,7 @@ you rebuild the delta when either side is re-recorded or re-pinned — which
 happens, because `after` is latest-wins and `before` can be pinned with a
 caveat.
 
-Expect `~/.certs/corp-root.pem` as **added** (Step 7), `System.keychain` as
+Expect `~/.certs/system-and-corp-roots.pem` as **added** (Step 7), `System.keychain` as
 **content changed** (Step 5), and the restored SSH keys as **mode changed**
 (Step 3). **removed** is the verdict to read twice — this phase restores, and
 should rarely delete.
@@ -1462,7 +1751,7 @@ For persistence, add an `AddKeysToAgent` directive to `~/.ssh/config`; that is a
 
 [[#Step 4 — Restore Certificates and Keychain Material|⮕ Continue to Step 4 — Restore Certificates and Keychain Material]]
 
-### `curl` still fails against internal endpoints after Step 5
+### The trust change did not take — Always Trust is on the wrong certificate
 
 Always Trust was set on the wrong certificate. **Only the root earns an explicit trust setting.** An issuing CA and a leaf both chain to it and stay on "Use System Defaults" — trusting an issuing CA directly widens what the machine accepts beyond what the root's own policy allows, and this environment has more than one issuing CA under the same root, so trusting the one you happen to have imported does not cover the others.
 
@@ -1502,7 +1791,8 @@ from this step. An empty `cafile` means step 2's write did not take; re-run it.
 holds:
 
 ```bash
-grep -c 'BEGIN CERTIFICATE' "$CA_BUNDLE"
+BUNDLE="$(./bin/restore-access.sh bundle)"
+grep -c 'BEGIN CERTIFICATE' "$BUNDLE"
 ```
 
 A count of `1` means Step 7's combine did not happen and the bundle carries only
@@ -1514,11 +1804,12 @@ because `NODE_EXTRA_CA_CERTS` **adds** instead of replacing, which is exactly
 why `npm` can fail while `node` succeeds against the same registry. Rebuild:
 
 ```bash
+BUNDLE="$(./bin/restore-access.sh bundle)"
 security find-certificate -a -p /System/Library/Keychains/SystemRootCertificates.keychain \
   > /tmp/ca-combined.pem
-cat "$CA_BUNDLE" >> /tmp/ca-combined.pem
+cat "$BUNDLE" >> /tmp/ca-combined.pem
 grep -c 'BEGIN CERTIFICATE' /tmp/ca-combined.pem
-cp /tmp/ca-combined.pem "$CA_BUNDLE"
+cp /tmp/ca-combined.pem "$BUNDLE"
 ```
 
 Expect a count in the low hundreds, then re-run the smoke tests.

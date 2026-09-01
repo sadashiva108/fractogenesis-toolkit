@@ -544,7 +544,7 @@ collect_restore_access() {
     "managed:02-profiles-configuration.txt" 'Credential Profile for installing root certificate'
 
   probe_presence "CA bundle for non-keychain tools" \
-    "grep -c 'BEGIN CERTIFICATE' \"\$HOME/.certs/corp-root.pem\" 2>/dev/null" \
+    "grep -c 'BEGIN CERTIFICATE' \"\$HOME/.certs/system-and-corp-roots.pem\" 2>/dev/null" \
     "managed:02-profiles-configuration.txt" 'Credential Profile for installing root certificate'
 }
 

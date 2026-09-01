@@ -31,10 +31,19 @@
 #
 #   # Run one step
 #   ./bin/restore-access.sh ssh
-#   ./bin/restore-access.sh corp-ca
+#   ./bin/restore-access.sh tool-trust
+#
+#   # Step 6 is review-then-act. Compare first, decide, then install:
+#   ./bin/restore-access.sh java
+#   ./bin/restore-access.sh java --jssecacerts merge
 #
 #   # Print the mounted image's path, for a shell that needs $MNT
 #   MNT="$(./bin/restore-access.sh mnt)"
+#
+#   # Print the CA bundle's path, for a shell that needs it. The bundle path is
+#   # internal to this script; the ~/.zprofile block exports CURL_CA_BUNDLE and
+#   # friends, never a bare CA_BUNDLE.
+#   BUNDLE="$(./bin/restore-access.sh bundle)"
 #
 #   # Resume the ordered run from a step
 #   ./bin/restore-access.sh --from java
@@ -47,7 +56,7 @@
 #   certs         Identify the corporate root on the image (Step 4)
 #   trust         Add the root to the System keychain as trusted (Step 5)
 #   java          Install jssecacerts into the installed JDKs (Step 6)
-#   corp-ca       Build the CA bundle and point npm/git/pip/curl at it (Step 7)
+#   tool-trust    Build the CA bundle and point npm/git/pip/curl at it (Step 7)
 #   dotfiles      Report which shell files differ from the backup (Step 8)
 #   credentials   Report which credential categories the image carries (Step 9)
 #   mnt           Not a step: print the mounted image's path and exit.
@@ -63,13 +72,19 @@
 #   --artifact-root PATH  Override REIMAGE_ARTIFACT_ROOT for this invocation.
 #   --mnt PATH            Use an already-mounted image at PATH instead of
 #                         attaching one. Skips the `mount` step.
-#   --jssecacerts MODE    How Step 6 builds each JDK's trust override.
-#                         merge (default) starts from that JDK's current cacerts
-#                         and imports only the aliases the capture added, keeping
-#                         the JDK's public roots current. copy installs the
-#                         captured store wholesale, which also replaces those
-#                         public roots with the old machine's. Use copy only for
-#                         a same-week capture.
+#   --corp-cert PATH      Name the corporate root outright, for Step 7. Use it
+#                         when running `tool-trust` alone against no mounted image
+#                         and the keychain does not hold the root either.
+#   --jssecacerts MODE    How Step 6 builds each JDK's trust override, and the
+#                         switch that makes Step 6 ACT. Without it, `java` only
+#                         compares and writes the artifact -- read that, then
+#                         re-run with the mode you chose.
+#                         merge starts from that JDK's current cacerts and
+#                         imports only the aliases the capture added, keeping the
+#                         JDK's public roots current. copy installs the captured
+#                         store wholesale, which also replaces those public roots
+#                         with the old machine's. Use copy only for a same-week
+#                         capture.
 #   --yes                 Do not pause for confirmation before a privileged
 #                         action. Intended for a re-run, not a first run.
 #   -h, --help            Show this message and exit.
@@ -146,7 +161,7 @@ require_option_value() {
 # Step registry. Space-separated, not an array of arrays: Bash 3.2 is the floor
 # and has no associative arrays.
 # ---------------------------------------------------------------------------
-ALL_STEPS="prereqs mount staged-loose ssh certs trust java corp-ca dotfiles credentials finish"
+ALL_STEPS="prereqs mount staged-loose ssh certs trust java tool-trust dotfiles credentials finish"
 
 step_is_known() {
   case " $ALL_STEPS " in
@@ -164,7 +179,16 @@ FROM_STEP=""
 ONLY_STEP=""
 MNT="${MNT:-}"
 PRINT_MNT=false
-JSSE_MODE="merge"
+PRINT_BUNDLE=false
+# Empty means COMPARE ONLY. Installing a JVM trust store is a decision that
+# needs the comparison read first, and a default of "merge" made the ordered run
+# ask for that decision at a confirmation prompt -- the one place the operator
+# has the least information. Naming the mode is now how you say yes.
+JSSE_MODE=""
+# Step 7's explicit override. Kept separate from CORP_CERT, which Step 4
+# resolves from the mounted image -- one is what the operator asserted, the
+# other is what the phase discovered, and conflating them loses which was which.
+CORP_CERT_OPT=""
 FAILURES=0
 GATES=0
 
@@ -175,6 +199,9 @@ while [[ $# -gt 0 ]]; do
     --from)          require_option_value "$1" "${2:-}"; FROM_STEP="$2"; shift 2 ;;
     --only)          require_option_value "$1" "${2:-}"; ONLY_STEP="$2"; shift 2 ;;
     --artifact-root) require_option_value "$1" "${2:-}"; REIMAGE_ARTIFACT_ROOT="$2"; shift 2 ;;
+    --corp-cert)
+      [[ -n "${2:-}" && "${2:-}" != --* ]] || { echo "ERROR: --corp-cert needs a path" >&2; exit 2; }
+      CORP_CERT_OPT="$2"; shift 2; continue ;;
     --mnt)           require_option_value "$1" "${2:-}"; MNT="$2"; shift 2 ;;
     --jssecacerts)
       require_option_value "$1" "${2:-}"
@@ -190,6 +217,15 @@ while [[ $# -gt 0 ]]; do
       # it here reported "no mounted image" for the wrong reason -- a
       # command-not-found on every run, mounted or not.
       PRINT_MNT=true; shift ;;
+    bundle)
+      # Query, not a step. $CA_BUNDLE is a variable INSIDE this script: the
+      # ~/.zprofile block Step 7 writes exports NODE_EXTRA_CA_CERTS,
+      # CURL_CA_BUNDLE, REQUESTS_CA_BUNDLE and PIP_CERT, and deliberately not a
+      # generic CA_BUNDLE. So a runbook block that said `grep -c ... "$CA_BUNDLE"`
+      # ran against an empty string in the operator's shell and reported
+      # `grep: : No such file or directory`. This is how a pasted command asks
+      # for the path instead of guessing it.
+      PRINT_BUNDLE=true; shift ;;
     --*)             echo "ERROR: unknown option: $1" >&2; usage >&2; exit 2 ;;
     *)
       if step_is_known "$1"; then
@@ -221,7 +257,7 @@ fi
 # Shared state, written by earlier steps and read by later ones
 # ---------------------------------------------------------------------------
 CORP_CERT=""
-CA_BUNDLE_REL=".certs/corp-root.pem"
+CA_BUNDLE_REL=".certs/system-and-corp-roots.pem"
 CA_BUNDLE="$HOME/$CA_BUNDLE_REL"
 STAMP="$(date +%Y%m%d-%H%M%S)"
 
@@ -316,14 +352,18 @@ cert_row_from_pem() {
     # else, so trusting its root is what makes it valid -- a client almost never
     # needs its own copy, because a correctly configured TLS server sends the
     # intermediates with the leaf in the handshake.
-    if [[ "$ca" == "CA:FALSE" ]]; then
-      role=leaf
-    elif [[ -n "$subj" && "$subj" == "$iss" ]]; then
-      role=root
-    elif [[ "$ca" == "CA:TRUE" ]]; then
-      role=intermediate
+    # Absent Basic Constraints means NOT a CA (RFC 5280 4.2.1.9), so anything
+    # that does not assert CA:TRUE is a leaf. Treating an absent extension as
+    # "unknown" put real server certificates -- which is what a pinned entry in
+    # a JVM trust store usually is -- into a bucket with no advice attached.
+    if [[ "$ca" == "CA:TRUE" ]]; then
+      if [[ -n "$subj" && "$subj" == "$iss" ]]; then
+        role=root
+      else
+        role=intermediate
+      fi
     else
-      role=unknown
+      role=leaf
     fi
 
     printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
@@ -1322,6 +1362,45 @@ jks_rows() {
     }'
 }
 
+# Where a JDK lives, and what it is. `name` alone is a directory name, and on a
+# Mac with several JDKs installed that is not enough to know which one a table is
+# about -- or which one `java` on the PATH actually resolves to.
+jdk_release_version() {
+  local jdk="$1" rel="$1/Contents/Home/release"
+  if [[ -f "$rel" ]]; then
+    sed -n 's/^JAVA_VERSION="\(.*\)"$/\1/p' "$rel" | head -1
+  fi
+}
+
+# Alias, plus everything cert_row_from_pem knows, for ONE alias in a keystore.
+#
+# Used only for the aliases a capture ADDS -- typically a handful -- because it
+# costs an export and an openssl parse each. That is what buys the role and the
+# expiry check, and those are what turn a list of unfamiliar names into a
+# decision: a `leaf` in a trust store is a pinned server certificate, and an
+# expired one cannot help anything.
+jks_alias_row() {
+  local store="$1" alias_name="$2" tmp rc
+  tmp="$(mktemp)"
+  if keytool -exportcert -rfc -alias "$alias_name" -keystore "$store" \
+       -storepass changeit > "$tmp" 2>/dev/null && [[ -s "$tmp" ]]; then
+    local row
+    row="$(cert_row_from_pem "$tmp" "$alias_name" 2>/dev/null || true)"
+    if [[ -n "$row" ]]; then
+      local soon=no
+      openssl x509 -in "$tmp" -checkend 2592000 -noout >/dev/null 2>&1 || soon=yes
+      printf '%s\t%s\t%s\n' "$alias_name" "$row" "$soon"
+      rc=0
+    else
+      rc=1
+    fi
+  else
+    rc=1
+  fi
+  rm -f "$tmp"
+  return "${rc:-1}"
+}
+
 # ---------------------------------------------------------------------------
 # Step 6 -- the trust-store comparison artifact
 #
@@ -1337,8 +1416,8 @@ jks_rows() {
 # ---------------------------------------------------------------------------
 jdk_trust_comparison() {
   local srcroot="$1" jvmdir="$2"
-  local cmp_root jdk name src cacerts stock_tmp cap_tmp rows md
-  local n_stock n_cap n_added n_common n_stockonly
+  local cmp_root jdk name src cacerts stock_tmp cap_tmp rows md added_rows
+  local n_stock n_cap n_added n_common n_stockonly n_leaf n_exp_add n_soon
 
   if [[ "$RUNS_LIB_OK" != true ]]; then
     warn "shared run index not available; skipping the JDK trust comparison"
@@ -1403,7 +1482,17 @@ jdk_trust_comparison() {
     cacerts="$jdk/Contents/Home/lib/security/cacerts"
     src="$srcroot/$name/jssecacerts"
 
-    printf -- '---\n\n## %s\n\n' "$name" >> "$md"
+    local jver jbase=""
+    jver="$(jdk_release_version "$jdk")"
+    [[ -n "${REIMAGE_JDK_BASELINE:-}" && "$jver" == "${REIMAGE_JDK_BASELINE}"* ]] \
+      && jbase=" — **the \`REIMAGE_JDK_BASELINE\` JDK**"
+    printf -- '---\n\n## %s%s\n\n' "$name" "$jbase" >> "$md"
+    printf '| | |\n| --- | --- |\n' >> "$md"
+    printf '| Version | `%s` |\n' "${jver:-unknown}" >> "$md"
+    printf '| Home | `%s/Contents/Home` |\n' "$jdk" >> "$md"
+    printf '| Trust store it would write | `%s/Contents/Home/lib/security/jssecacerts` |\n' "$jdk" >> "$md"
+    printf '| Captured store on the image | `%s` |\n' "${src/#$MNT\//}" >> "$md"
+    printf '\n' >> "$md"
     if [[ ! -f "$cacerts" ]]; then
       printf 'No `cacerts` in this JDK — nothing to compare.\n\n' >> "$md"
       continue
@@ -1454,11 +1543,57 @@ jdk_trust_comparison() {
       printf 'None. The capture adds nothing this JDK does not already trust, so there is\n' >> "$md"
       printf 'no corporate CA to install here.\n\n' >> "$md"
     else
-      printf 'These are the only entries the prompt decides about. Expect internal CAs.\n' >> "$md"
-      printf 'An unfamiliar **public** root in this table is one the JDK vendor dropped\n' >> "$md"
-      printf 'between the capture and now — importing it puts it back, which is what\n' >> "$md"
-      printf '`merge` exists to avoid doing by accident.\n\n' >> "$md"
-      _jdk_table "$name" added >> "$md"
+      printf 'This is the whole decision. Each row is exported and read individually, so\n' >> "$md"
+      printf 'the role and the expiry are the certificate'"'"'s own, not the keystore'"'"'s claim\n' >> "$md"
+      printf 'about it.\n\n'  >> "$md"
+
+      # Export each added alias and read the certificate itself. `role` and
+      # `expired` are the two facts that turn a list of unfamiliar aliases into
+      # a decision, and neither is in `keytool -list -v` output.
+      added_rows="$(mktemp)"
+      awk -F'\t' -v j="$name" '$1 == j && $2 == "added" { print $3 }' "$rows" \
+        | while IFS= read -r a; do
+            [[ -n "$a" ]] || continue
+            jks_alias_row "$src" "$a" || printf '%s\t\t\t\t\t\t\t\t\t\tunreadable\tno\n' "$a"
+          done > "$added_rows"
+
+      # alias 1 | sha 2 | ca 3 | nb 4 | na 5 | subj 6 | iss 7 | src 8 | expiry 9 | role 10 | soon 11
+      { printf '| Alias | Role | Subject | Issuer | Expires | Status |\n'
+        printf '| --- | --- | --- | --- | --- | --- |\n'
+        awk -F'\t' '{
+          st = ($9 == "expired") ? "**EXPIRED**" : (($11 == "yes") ? "**expires within 30 days**" : "current")
+          printf "| `%s` | %s | %s | %s | %s | %s |\n", $1, $10, $6, $7, $5, st
+        }' "$added_rows"
+        printf '\n'; } >> "$md"
+
+      n_leaf="$(awk -F'\t' '$10=="leaf"{c++} END{print c+0}' "$added_rows")"
+      n_exp_add="$(awk -F'\t' '$9=="expired"{c++} END{print c+0}' "$added_rows")"
+      n_soon="$(awk -F'\t' '$9!="expired" && $11=="yes"{c++} END{print c+0}' "$added_rows")"
+
+      printf 'Expect internal CAs. An unfamiliar **public** root here is one the JDK\n' >> "$md"
+      printf 'vendor dropped between the capture and now — importing it puts it back,\n' >> "$md"
+      printf 'which is what `merge` exists to avoid doing by accident.\n\n' >> "$md"
+
+      if [[ "${n_leaf:-0}" -gt 0 ]]; then
+        { printf '> **`leaf` rows: %s of these are pinned server certificates, not CAs.**\n' "$n_leaf"
+        printf '> Someone hit a TLS failure against an internal service and imported that\n'
+        printf '> *server'"'"'s own certificate* rather than the CA that issued it. Java accepts\n'
+        printf '> any `trustedCertEntry` as an anchor, so it works — until the server'"'"'s\n'
+        printf '> certificate is renewed, at which point it silently stops working and has to\n'
+        printf '> be re-imported by hand.\n'
+        printf '>\n'
+        printf '> Check the `Issuer` column against the CA rows in this same table. If the\n'
+        printf '> issuing CA is here too, trusting **it** covers every host it signs, now and\n'
+        printf '> after every renewal, and the pinned leaves are redundant.\n\n'; } >> "$md"
+      fi
+      if [[ "${n_exp_add:-0}" -gt 0 || "${n_soon:-0}" -gt 0 ]]; then
+        { printf '> **Dates matter more than usual here.** Already expired: %s. Expiring\n' "${n_exp_add:-0}"
+        printf '> within 30 days: %s. An expired entry in a trust store is inert —\n' "${n_soon:-0}"
+        printf '> importing it cannot make a connection succeed, and if a service depended on\n'
+        printf '> one, that service is failing right now for a reason no reimage caused. The\n'
+        printf '> durable fix is the issuing CA, not another pinned certificate.\n\n'; } >> "$md"
+      fi
+      rm -f "$added_rows"
     fi
 
     printf '### Stock only — what `copy` would discard\n\n' >> "$md"
@@ -1485,8 +1620,183 @@ jdk_trust_comparison() {
     warn "the JDK trust comparison was written but could not be indexed"
     return 0
   fi
+  # A copy of every jssecacerts that already exists, kept WITH the comparison.
+  #
+  # Step 6 also backs one up beside the JDK before overwriting it, but that copy
+  # dies with the JDK: uninstalling or upgrading the JDK takes the whole
+  # directory, sibling backup included. The run directory outlives both, and it
+  # is where someone looking for "what did this machine trust before we touched
+  # it" will actually look.
+  local kept=0
+  for jdk in "$jvmdir"/*.jdk; do
+    [[ -d "$jdk" ]] || continue
+    name="$(basename "$jdk")"
+    if [[ -f "$jdk/Contents/Home/lib/security/jssecacerts" ]]; then
+      mkdir -p "$ARTIFACT_RUN_DIR/pre-existing"
+      cp -p "$jdk/Contents/Home/lib/security/jssecacerts" \
+            "$ARTIFACT_RUN_DIR/pre-existing/$name-jssecacerts" 2>/dev/null \
+        && kept=$((kept + 1))
+    fi
+  done
+  (( kept > 0 )) && info "$kept existing jssecacerts file(s) copied to $ARTIFACT_RUN_DIR/pre-existing/"
+
   ok "JDK trust comparison: $ARTIFACT_RUN_DIR/comparison.md"
-  info "read it before answering the prompts below — it lists each JDK's stock trust set, the additions, and what 'copy' would discard"
+}
+
+# ---------------------------------------------------------------------------
+# Step 6 -- the RESULT artifact
+#
+# The compare pass and the install pass answer different questions, so they
+# write different documents. Running the comparison again on the way into an
+# install produced a third copy of a decision already made -- the same tables,
+# the same counts, and nothing about what actually happened.
+#
+# What an install has to record is the OUTCOME: for each JDK, what its trust
+# store held before, what it holds now, and precisely which entries moved in
+# either direction. `copy` in particular is only legible this way, because its
+# cost is what it REMOVED, and no amount of before-the-fact comparison shows
+# that as well as the list of what is actually gone.
+#
+# "Before" is the previous jssecacerts where one existed. Where none did, it is
+# the JDK's cacerts -- because that is what the JVM was really using, and a diff
+# against an empty file would report 150 additions that are not additions.
+# ---------------------------------------------------------------------------
+RESULT_MD=""
+RESULT_DIR=""
+RESULT_ROOT=""
+
+jdk_result_begin() {
+  local jvmdir="$1" cmp_root jdk name
+  RESULT_MD=""; RESULT_DIR=""; RESULT_ROOT=""
+
+  if [[ "$RUNS_LIB_OK" != true ]]; then
+    warn "shared run index not available; the install will not be recorded"
+    return 0
+  fi
+  if [[ -z "${REIMAGE_ARTIFACT_ROOT:-}" || ! -d "${REIMAGE_ARTIFACT_ROOT:-}" ]]; then
+    warn "artifact root not mounted; the install will not be recorded"
+    return 0
+  fi
+  $DRY_RUN && return 0
+
+  cmp_root="$REIMAGE_ARTIFACT_ROOT/reimaged-system/comparisons"
+  if ! artifact_run_begin "$cmp_root" "restore-access-jdk-trust-result"; then
+    warn "could not stage a result run under $cmp_root"
+    return 0
+  fi
+  RESULT_ROOT="$cmp_root"; RESULT_DIR="$ARTIFACT_RUN_DIR"; RESULT_MD="$ARTIFACT_RUN_DIR/result.md"
+
+  # The pre-existing stores are copied here BEFORE anything is written, because
+  # after the install they no longer exist to copy.
+  local kept=0
+  for jdk in "$jvmdir"/*.jdk; do
+    [[ -d "$jdk" ]] || continue
+    name="$(basename "$jdk")"
+    if [[ -f "$jdk/Contents/Home/lib/security/jssecacerts" ]]; then
+      mkdir -p "$RESULT_DIR/pre-existing"
+      cp -p "$jdk/Contents/Home/lib/security/jssecacerts" \
+            "$RESULT_DIR/pre-existing/$name-jssecacerts" 2>/dev/null && kept=$((kept + 1))
+    fi
+  done
+
+  { printf '# restore-access — JVM trust stores installed — %s\n\n' "$ARTIFACT_RUN_STAMP"
+    printf 'Written by `bin/restore-access.sh java --jssecacerts %s` on %s.\n\n' "$JSSE_MODE" "$(date)"
+    printf 'What each JDK trusted before this run, what it trusts now, and every entry\n'
+    printf 'that moved in either direction. The decision itself — what the capture holds\n'
+    printf 'and what it adds over stock — is the `restore-access-jdk-trust-diff` run;\n'
+    printf 'this is what came of it.\n\n'
+    printf '| | |\n| --- | --- |\n'
+    printf '| Mode | `%s` |\n' "$JSSE_MODE"
+    printf '| Captured stores read from | `%s/certs/java-security/` |\n' "$MNT"
+    if [[ "${kept:-0}" -gt 0 ]]; then
+      printf '| Trust stores replaced | %s, copied to `pre-existing/` beside this file |\n' "$kept"
+    else
+      printf '| Trust stores replaced | none — no JDK had a `jssecacerts` before this run |\n'
+    fi
+    printf '\n'
+    if [[ "$JSSE_MODE" == "copy" ]]; then
+      printf '> **`copy` was used.** Read the **Removed** table in each section below. It\n'
+      printf '> is the list of certificate authorities this JVM trusted before the run and\n'
+      printf '> does not trust now — public roots the JDK vendor ships that the captured\n'
+      printf '> store predates. Nothing else in this document is as consequential.\n\n'
+    fi
+  } > "$RESULT_MD"
+}
+
+# One section per JDK: identity, before/after counts, and the two diffs.
+jdk_result_section() {
+  # <name> <jdk-dir> <before-rows-file> <before-source-label> <dest> <backup-note>
+  local name="$1" jdk="$2" before="$3" beforesrc="$4" dest="$5" note="$6"
+  [[ -n "$RESULT_MD" ]] || return 0
+  local after n_before n_after jver
+  after="$(mktemp)"
+  jks_rows "$dest" | sort > "$after"
+  n_before="$(wc -l < "$before" | tr -d ' ')"
+  n_after="$(wc -l < "$after" | tr -d ' ')"
+  jver="$(jdk_release_version "$jdk")"
+
+  { printf -- '---\n\n## %s\n\n' "$name"
+    printf '| | |\n| --- | --- |\n'
+    printf '| Version | `%s` |\n' "${jver:-unknown}"
+    printf '| Trust store written | `%s` |\n' "$dest"
+    printf '| Compared against | %s |\n' "$beforesrc"
+    printf '| Entries before | %s |\n' "$n_before"
+    printf '| Entries now | %s |\n' "$n_after"
+    printf '| Backup | %s |\n' "$note"
+    printf '\n'
+  } >> "$RESULT_MD"
+
+  # Added. Read back from the INSTALLED file, so role and expiry describe what
+  # this JVM is actually trusting now rather than what was intended.
+  local addl reml
+  addl="$(comm -13 <(cut -f1 "$before" | sort -u) <(cut -f1 "$after" | sort -u))"
+  reml="$(comm -23 <(cut -f1 "$before" | sort -u) <(cut -f1 "$after" | sort -u))"
+
+  printf '### Added — what this JVM trusts now and did not before\n\n' >> "$RESULT_MD"
+  if [[ -z "$addl" ]]; then
+    printf 'Nothing. The store already carried every entry this run would have added.\n\n' >> "$RESULT_MD"
+  else
+    { printf '| Alias | Role | Subject | Issuer | Expires | Status |\n'
+      printf '| --- | --- | --- | --- | --- | --- |\n'
+      printf '%s\n' "$addl" | while IFS= read -r a; do
+        [[ -n "$a" ]] || continue
+        jks_alias_row "$dest" "$a" \
+          | awk -F'\t' '{ st = ($9 == "expired") ? "**EXPIRED**" : (($11 == "yes") ? "**expires within 30 days**" : "current")
+                          printf "| `%s` | %s | %s | %s | %s | %s |\n", $1, $10, $6, $7, $5, st }'
+      done
+      printf '\n'; } >> "$RESULT_MD"
+  fi
+
+  printf '### Removed — what this JVM trusted before and does not now\n\n' >> "$RESULT_MD"
+  if [[ -z "$reml" ]]; then
+    printf 'Nothing. Every entry the store held before is still there — this run only\n' >> "$RESULT_MD"
+    printf 'added.\n\n' >> "$RESULT_MD"
+  else
+    { printf 'Each of these was a trust anchor for this JVM and no longer is. Anything\n'
+      printf 'signed by one of them now fails to validate from this JDK.\n\n'
+      printf '| Alias | Owner | Issuer | Valid until |\n'
+      printf '| --- | --- | --- | --- |\n'
+      printf '%s\n' "$reml" | while IFS= read -r a; do
+        [[ -n "$a" ]] || continue
+        awk -F'\t' -v a="$a" '$1 == a { printf "| `%s` | %s | %s | %s |\n", $1, $2, $3, $4 }' "$before"
+      done
+      printf '\n'; } >> "$RESULT_MD"
+  fi
+  rm -f "$after"
+}
+
+jdk_result_finalize() {
+  # <installed> <done_count>
+  [[ -n "$RESULT_MD" ]] || return 0
+  if ! artifact_run_finalize "$RESULT_ROOT" "$JSSE_MODE into $2 of $1 JDK(s)"; then
+    warn "the result was written but could not be indexed"
+    return 0
+  fi
+  # Finalize renames the run out of its `.incomplete` staging directory and
+  # repoints ARTIFACT_RUN_DIR, so the path captured at begin time is stale by
+  # here. Re-derive it, or the run reports a path that no longer exists.
+  RESULT_DIR="$ARTIFACT_RUN_DIR"; RESULT_MD="$ARTIFACT_RUN_DIR/result.md"
+  ok "install recorded: $RESULT_MD"
 }
 
 step_java() {
@@ -1509,10 +1819,33 @@ step_java() {
     GATES=$((GATES + 1)); return 1
   fi
 
-  jdk_trust_comparison "$srcroot" "$jvmdir"
+  # Compare, or install -- never both. The comparison is the decision document
+  # and re-running it on the way into an install writes a third copy of a
+  # decision already made. An install writes what came of it instead.
+  if [[ -z "$JSSE_MODE" ]]; then
+    jdk_trust_comparison "$srcroot" "$jvmdir"
+  else
+    jdk_result_begin "$jvmdir"
+  fi
+
+  # Review, then act -- two invocations, not one prompt.
+  #
+  # Installing a JVM trust store is a decision with real consequences under
+  # either form, and the comparison is what makes it answerable. Asking for it
+  # at a confirmation prompt asked at the one moment the operator had least
+  # information: the report had just been written and not yet read. Naming the
+  # mode is now how you say yes, and there is no default that says it for you.
+  if [[ -z "$JSSE_MODE" ]]; then
+    echo ""
+    info "no --jssecacerts mode given, so nothing was installed. Read the comparison, then re-run with one:"
+    printf "    %s\n" "./bin/restore-access.sh java --jssecacerts merge   # stock cacerts + the added aliases (usual choice)"
+    printf "    %s\n" "./bin/restore-access.sh java --jssecacerts copy    # the captured store wholesale (same-week capture only)"
+    return 0
+  fi
 
   local installed=0 done_count=0
   local jdk name src dest cacerts added_file want_file have_file n_added n_stock n_result
+  local before_tmp before_src backup_note
   for jdk in "$jvmdir"/*.jdk; do
     [[ -d "$jdk" ]] || continue
     installed=$((installed + 1))
@@ -1591,12 +1924,28 @@ step_java() {
       GATES=$((GATES + 1)); rm -f "$added_file"; continue
     fi
 
+    # The before-state, captured while it still exists. Where no jssecacerts is
+    # present the baseline is cacerts, because that is what this JVM is actually
+    # trusting -- diffing against an empty file would report 150 additions that
+    # are not additions.
+    before_tmp="$(mktemp)"
+    if [[ -f "$dest" ]]; then
+      jks_rows "$dest" | sort > "$before_tmp"
+      before_src='the previous `jssecacerts`'
+    else
+      jks_rows "$cacerts" | sort > "$before_tmp"
+      before_src='this JDK'"'"'s stock `cacerts` — no `jssecacerts` existed, so that is what the JVM was using'
+    fi
+
     # jssecacerts REPLACES cacerts for the JVM rather than extending it, so the
     # file being overwritten is not recoverable from the JDK install. Back it up
     # before writing, every time.
+    backup_note='none needed — no `jssecacerts` existed'
     if [[ -f "$dest" ]]; then
-      sudo cp -p "$dest" "$dest.pre-reimage-$STAMP" \
-        && info "$name — previous file kept as jssecacerts.pre-reimage-$STAMP"
+      if sudo cp -p "$dest" "$dest.pre-reimage-$STAMP"; then
+        info "$name — previous file kept as jssecacerts.pre-reimage-$STAMP"
+        backup_note="\`jssecacerts.pre-reimage-$STAMP\` beside the JDK, and \`pre-existing/$name-jssecacerts\` in this run"
+      fi
     fi
 
     if [[ "$JSSE_MODE" == "copy" ]]; then
@@ -1650,7 +1999,9 @@ step_java() {
     else
       info "$name — installed store holds $n_dest trusted entries"
     fi
-    rm -f "$added_file"
+
+    jdk_result_section "$name" "$jdk" "$before_tmp" "$before_src" "$dest" "$backup_note"
+    rm -f "$added_file" "$before_tmp"
   done
 
   if (( installed == 0 )); then
@@ -1658,12 +2009,55 @@ step_java() {
     GATES=$((GATES + 1)); return 1
   fi
   $DRY_RUN || info "$done_count of $installed installed JDK(s) now carry the corporate trust store"
+  jdk_result_finalize "$installed" "$done_count"
 }
 
 # ---------------------------------------------------------------------------
-# Step 7 -- corp-ca
+# Step 7 -- tool-trust
 # ---------------------------------------------------------------------------
-step_corp_ca() {
+# The corporate root as the KEYCHAIN holds it, printed as PEM.
+#
+# Step 5 trusts the root in the keychain, so by the time Step 7 runs the keychain
+# is the better source than the image: it needs no DMG mounted, and it is the
+# copy the machine is actually using. Finding it is the same test Step 4 applies
+# to the image -- the self-signed CA that is NOT one of the built-in public roots
+# -- applied to what enrollment installed.
+#
+# The previous approach parsed a certificate name out of `security
+# dump-trust-settings -d` with a regex for a quoted string. That output does not
+# quote the name, so the regex matched nothing, the fallback produced an empty
+# file, and Step 7 reported "nothing exported" on a machine whose keychain held
+# exactly what it was looking for.
+keychain_corp_root() {
+  local sys_tmp tmp f fp
+  sys_tmp="$(mktemp)"
+  cert_public_root_fingerprints | sort -u > "$sys_tmp"
+  tmp="$(mktemp -d)"
+  {
+    security find-certificate -a -p 2>/dev/null || true
+    security find-certificate -a -p /Library/Keychains/System.keychain 2>/dev/null || true
+  } | awk -v d="$tmp" '
+      /BEGIN CERTIFICATE/ { if (out) close(out); n++; out = sprintf("%s/c%04d.pem", d, n) }
+      n > 0 { print > out }
+      END { if (out) close(out) }
+    '
+  for f in "$tmp"/*.pem; do
+    [[ -f "$f" ]] || continue
+    cert_is_root "$f" || continue
+    fp="$(openssl x509 -in "$f" -noout -fingerprint -sha256 2>/dev/null | sed 's/.*=//' | tr -d ':')"
+    [[ -n "$fp" ]] || continue
+    # `grep ... && continue` as a bare statement returns grep's non-zero status
+    # to errexit when it does not match, which is the common case here.
+    if grep -qx "$fp" "$sys_tmp"; then continue; fi
+    cat "$f"
+    rm -rf "$tmp"; rm -f "$sys_tmp"
+    return 0
+  done
+  rm -rf "$tmp"; rm -f "$sys_tmp"
+  return 1
+}
+
+step_tool_trust() {
   log_section "Step 7 — Trust the corporate CA outside the keychain"
 
   local staging="/tmp/corp-root-staging.pem"
@@ -1675,31 +2069,66 @@ step_corp_ca() {
     return 0
   fi
 
-  # Source A: the keychain, which needs no DMG and is the better source once
-  # Step 5 has run. Source B: the image. Neither writes $CA_BUNDLE directly --
-  # a redirect that truncates the bundle before discovering it has nothing to
-  # write is the failure this ordering exists to prevent.
+  # Three sources, tried in the order of how likely each is to be available at
+  # the moment this step runs -- which is not the order the code used to try.
+  #
+  #   1. --corp-cert PATH, when the operator names the file outright.
+  #   2. The keychain. Step 5 put the root there, and this step usually runs
+  #      after it, so the keychain is both the likelier source and the copy the
+  #      machine is really using. It needs no DMG mounted, which matters because
+  #      running `tool-trust` ALONE -- the normal way to redo one step -- has no
+  #      mounted image: $MNT lives in the process that mounted it.
+  #   3. The mounted image, for an ordered run that has one.
+  #
+  # Nothing writes $CA_BUNDLE directly. A redirect that truncates the bundle
+  # before discovering it has nothing to write is the failure this staging
+  # ordering exists to prevent.
   rm -f "$staging"
-  resolve_corp_cert || true
-  if [[ -n "$CORP_CERT" && -f "$CORP_CERT" ]]; then
-    openssl x509 -inform DER -in "$CORP_CERT" -out "$staging" 2>/dev/null \
-      || openssl x509 -inform PEM -in "$CORP_CERT" -out "$staging" 2>/dev/null || true
+  local src_used=""
+
+  if [[ -n "${CORP_CERT_OPT:-}" ]]; then
+    if [[ ! -f "$CORP_CERT_OPT" ]]; then
+      fail "--corp-cert names no such file: $CORP_CERT_OPT"
+      FAILURES=$((FAILURES + 1)); return 1
+    fi
+    openssl x509 -inform PEM -in "$CORP_CERT_OPT" -out "$staging" 2>/dev/null \
+      || openssl x509 -inform DER -in "$CORP_CERT_OPT" -out "$staging" 2>/dev/null || true
+    [[ -s "$staging" ]] && src_used="--corp-cert $CORP_CERT_OPT"
   fi
+
   if [[ ! -s "$staging" ]]; then
-    local cn
-    cn="$(security dump-trust-settings -d 2>/dev/null | sed -n 's/.*"\(.*\)".*/\1/p' | head -1 || true)"
-    [[ -n "$cn" ]] && security find-certificate -a -c "$cn" -p \
-      /Library/Keychains/System.keychain "$HOME/Library/Keychains/login.keychain-db" \
-      > "$staging" 2>/dev/null || true
+    keychain_corp_root > "$staging" 2>/dev/null || true
+    [[ -s "$staging" ]] && src_used="the login/System keychain"
+  fi
+
+  if [[ ! -s "$staging" ]]; then
+    resolve_corp_cert || true
+    if [[ -n "$CORP_CERT" && -f "$CORP_CERT" ]]; then
+      openssl x509 -inform PEM -in "$CORP_CERT" -out "$staging" 2>/dev/null \
+        || openssl x509 -inform DER -in "$CORP_CERT" -out "$staging" 2>/dev/null || true
+      [[ -s "$staging" ]] && src_used="the mounted image ($CORP_CERT)"
+    fi
   fi
 
   local count=0
   count="$(grep -c 'BEGIN CERTIFICATE' "$staging" 2>/dev/null)" || count=0
   if (( count == 0 )); then
-    fail "nothing exported — $CA_BUNDLE left alone"
-    info "run Step 4 first, or export by hand: see the runbook's Supplemental Reference"
+    fail "no corporate root found — $CA_BUNDLE left alone"
+    info "tried, in order:"
+    info "  --corp-cert    ${CORP_CERT_OPT:-not given}"
+    info "  the keychain   no self-signed CA there that is not already a built-in public root"
+    if [[ -n "$MNT" && -d "$MNT" ]]; then
+      info "  the image      mounted at $MNT, but no corporate root under certs/loose-candidates-selected/"
+    else
+      info "  the image      not mounted — running one step alone does not inherit a mount"
+    fi
+    info "fix by doing one of:"
+    printf "    %s\n" "./bin/restore-access.sh certs      # find and report the root, then re-run this step"
+    printf "    %s\n" "./bin/restore-access.sh tool-trust --corp-cert \"\$MNT/certs/loose-candidates-selected/<file>\""
+    printf "    %s\n" "./bin/restore-access.sh --from tool-trust   # mounts the image, then continues"
     FAILURES=$((FAILURES + 1)); return 1
   fi
+  info "corporate root taken from $src_used"
   if ! cert_is_root "$staging"; then
     fail "the exported certificate is not a root"
     FAILURES=$((FAILURES + 1)); return 1
@@ -1715,7 +2144,7 @@ step_corp_ca() {
   # Combining costs nothing when everything is intercepted and is the
   # difference between working and not when it isn't.
   local sysroots="/System/Library/Keychains/SystemRootCertificates.keychain"
-  local combined="/tmp/corp-root-combined-$STAMP.pem"
+  local combined="/tmp/system-and-corp-roots-$STAMP.pem"
   local syscount=0
   if [[ -f "$sysroots" ]] && security find-certificate -a -p "$sysroots" > "$combined" 2>/dev/null; then
     syscount="$(grep -c 'BEGIN CERTIFICATE' "$combined" 2>/dev/null)" || syscount=0
@@ -1740,22 +2169,81 @@ step_corp_ca() {
   mkdir -p "$(dirname "$CA_BUNDLE")"
   mv "$combined" "$CA_BUNDLE"
   rm -f "$staging"
-  ok "installed $CA_BUNDLE ($syscount system root(s) + $count corporate)"
+  ok "installed $CA_BUNDLE ($syscount system root(s) + $count corporate, from $src_used)"
 
   # One block, marker-guarded, so working the step twice does not append the
   # exports twice. The format string is single-quoted: $HOME reaches .zprofile
   # unexpanded and the file stays correct if the account moves.
-  if grep -q 'REIMAGE-CA-BUNDLE' "$HOME/.zprofile" 2>/dev/null; then
-    ok "~/.zprofile already carries the block"
+  #
+  # The guard checks the marker AND the path. Checking only the marker meant a
+  # block naming a different bundle -- after the path is changed in reimage.env,
+  # or renamed in this script -- reported "already carries the block" and left
+  # every tool exporting the old path. The step would then pass while the shell
+  # pointed somewhere else entirely, which is the worst combination available:
+  # a green run and a stale configuration.
+  #
+  # A stale block is reported, not rewritten. Editing an operator's shell profile
+  # in place is not something to do on inference, and the fix is one deletion.
+  #
+  # The test is the EXPORT LINE, not the marker comment. Keying on the marker
+  # meant that deleting the four exports and leaving the comment behind -- which
+  # is what "I removed the block" reasonably means -- still matched, so the step
+  # reported a stale block and wrote nothing, while telling the operator to
+  # delete a block they had already deleted. The export is the thing that has an
+  # effect; the comment only labels it.
+  local zp="$HOME/.zprofile"
+  if grep -Fq "export CURL_CA_BUNDLE=\"\$HOME/$CA_BUNDLE_REL\"" "$zp" 2>/dev/null; then
+    ok "~/.zprofile already carries the block, naming this bundle"
+  elif grep -q '^export CURL_CA_BUNDLE=' "$zp" 2>/dev/null; then
+    warn "~/.zprofile exports CURL_CA_BUNDLE with a DIFFERENT path than $CA_BUNDLE"
+    warn "delete these lines and re-run this step:"
+    grep -n '^export \(NODE_EXTRA_CA_CERTS\|CURL_CA_BUNDLE\|REQUESTS_CA_BUNDLE\|PIP_CERT\)=\|REIMAGE-CA-BUNDLE' \
+      "$zp" 2>/dev/null | sed 's/^/            /' || true
   else
+    # A marker comment with no exports under it is a leftover from a partial
+    # deletion. Harmless, and worth naming so the duplicate that is about to
+    # appear does not look like a bug.
+    if grep -q 'REIMAGE-CA-BUNDLE' "$zp" 2>/dev/null; then
+      info "~/.zprofile still has a REIMAGE-CA-BUNDLE comment with no exports under it — the old comment can be deleted"
+    fi
     {
-      printf '\n# REIMAGE-CA-BUNDLE — corporate TLS interception root (restore-access.md Step 7)\n'
+      printf '\n# REIMAGE-CA-BUNDLE — restore-access.md Step 7\n'
+      printf '# The full public trust store PLUS the corporate TLS interception root.\n'
+      printf '# Not a single root: these variables REPLACE a tool trust store rather\n'
+      printf '# than adding to it, so a one-certificate file breaks every public host.\n'
       local v
       for v in NODE_EXTRA_CA_CERTS CURL_CA_BUNDLE REQUESTS_CA_BUNDLE PIP_CERT; do
         printf 'export %s="$HOME/%s"\n' "$v" "$CA_BUNDLE_REL"
       done
-    } >> "$HOME/.zprofile"
+    } >> "$zp"
     ok "~/.zprofile block added"
+  fi
+
+  # Verify the claim rather than making it.
+  #
+  # What this catches is a BRANCH that declines to write while the step goes on
+  # to report success -- which is what the stale-block path did, warning twice
+  # and then letting the run finish green. It does not catch a failed append: a
+  # read-only or unwritable ~/.zprofile makes the redirect fail, and under
+  # `set -Eeuo pipefail` that aborts the run before reaching here, which is the
+  # correct and louder outcome.
+  #
+  # Same rule the rest of the phase follows: Step 6 counts the installed trust
+  # store rather than trusting the copy, and this step counts the bundle rather
+  # than trusting the concatenation.
+  if ! grep -Fq "export CURL_CA_BUNDLE=\"\$HOME/$CA_BUNDLE_REL\"" "$zp" 2>/dev/null; then
+    fail "~/.zprofile does not export this bundle — the step configured everything else and left the shell behind"
+    if grep -q '^export CURL_CA_BUNDLE=' "$zp" 2>/dev/null; then
+      info "a conflicting export is still there; delete the lines listed above, then re-run this step"
+    else
+      info "checked: $zp — no CA-bundle export of any kind is present"
+      info "add these four lines, then re-run this step to verify:"
+      local v
+      for v in NODE_EXTRA_CA_CERTS CURL_CA_BUNDLE REQUESTS_CA_BUNDLE PIP_CERT; do
+        printf '            export %s="$HOME/%s"\n' "$v" "$CA_BUNDLE_REL"
+      done
+    fi
+    FAILURES=$((FAILURES + 1))
   fi
   local v
   for v in NODE_EXTRA_CA_CERTS CURL_CA_BUNDLE REQUESTS_CA_BUNDLE PIP_CERT; do
@@ -1969,12 +2457,17 @@ run_step() {
     certs)        step_certs ;;
     trust)        step_trust ;;
     java)         step_java ;;
-    corp-ca)      step_corp_ca ;;
+    tool-trust)   step_tool_trust ;;
     dotfiles)     step_dotfiles ;;
     credentials)  step_credentials ;;
     finish)       step_finish ;;
   esac
 }
+
+if $PRINT_BUNDLE; then
+  printf '%s\n' "$CA_BUNDLE"
+  exit 0
+fi
 
 if $PRINT_MNT; then
   _m="$(find_mounted_image || true)"

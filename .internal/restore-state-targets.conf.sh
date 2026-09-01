@@ -33,7 +33,7 @@ tree@@~/.config/git/@@Step 3 — XDG-located Git config
 tree@@~/Library/Keychains/@@Steps 4-5 — user keychains; these churn on every access
 file@@/Library/Keychains/System.keychain@@Step 5 — system-domain trust, only if that form is used
 shallow@@$JAVA_HOME/lib/security/@@Step 6 — jssecacerts, pinned to the Phase 10A JDK
-tree@@~/.certs/@@Step 7 — corp-root.pem, the bundle non-keychain tools read
+tree@@~/.certs/@@Step 7 — system-and-corp-roots.pem, the bundle non-keychain tools read
 file@@~/.npmrc@@Step 7 — npm config set cafile
 file@@~/.config/pip/pip.conf@@Step 7 — pip config set global.cert
 file@@~/.zprofile@@Step 7 appends CA exports; Step 8 may merge over it

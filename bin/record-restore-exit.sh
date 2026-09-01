@@ -414,6 +414,25 @@ check_restore_access() {
     fi
   fi
 
+  # 2b -- host keys, which are the half of ~/.ssh that no key check covers.
+  #
+  # A private key with the right mode proves Step 3 copied identities. It says
+  # nothing about `known_hosts`, and the two fail differently: a missing key
+  # fails loudly at connect time, while a missing known_hosts succeeds after an
+  # interactive prompt. Phase 11B clones repositories in a loop, so that prompt
+  # arrives mid-run.
+  #
+  # WARN rather than FAIL: a machine with no SSH remotes to reach legitimately
+  # has no host keys, and `ssh` will still work once someone answers yes.
+  if [[ ! -s "$HOME/.ssh/known_hosts" ]]; then
+    record WARN "SSH host keys seeded" "no \`~/.ssh/known_hosts\` — every host prompts on first connect, including inside Phase 11B's clone loop; re-run \`./bin/restore-access.sh ssh\` to seed the aliases in \`~/.ssh/config\`"
+  else
+    local kh_lines kh_aliases
+    kh_lines="$(grep -c . "$HOME/.ssh/known_hosts" 2>/dev/null || echo 0)"
+    kh_aliases="$(awk '/^[Hh]ost /{for(i=2;i<=NF;i++) if($i !~ /[*?]/) n++} END{print n+0}' "$HOME/.ssh/config" 2>/dev/null || echo 0)"
+    record PASS "SSH host keys seeded" "$kh_lines host key(s) known, against $kh_aliases alias(es) in \`~/.ssh/config\`"
+  fi
+
   # 3 -- jssecacerts in the JDK that Phase 10A actually installed. Checked
   # against java_home rather than $JAVA_HOME: the variable is set inside Step 6's
   # shell and need not survive into this one, so its absence here means nothing.
@@ -430,14 +449,14 @@ check_restore_access() {
   # existence: `openssl x509 -inform DER` against a PEM input fails and still
   # creates the output file, so a zero-byte bundle looks staged and trusts
   # nothing.
-  if [[ ! -f "$HOME/.certs/corp-root.pem" ]]; then
-    record WARN "Corporate CA bundle present" "no \`~/.certs/corp-root.pem\` — correct only if this network does no TLS interception; see Step 7"
-  elif grep -q 'BEGIN CERTIFICATE' "$HOME/.certs/corp-root.pem" 2>/dev/null; then
+  if [[ ! -f "$HOME/.certs/system-and-corp-roots.pem" ]]; then
+    record WARN "Corporate CA bundle present" "no \`~/.certs/system-and-corp-roots.pem\` — correct only if this network does no TLS interception; see Step 7"
+  elif grep -q 'BEGIN CERTIFICATE' "$HOME/.certs/system-and-corp-roots.pem" 2>/dev/null; then
     local n
-    n="$(grep -c 'BEGIN CERTIFICATE' "$HOME/.certs/corp-root.pem" 2>/dev/null)"
-    record PASS "Corporate CA bundle present" "$n certificate(s) in \`~/.certs/corp-root.pem\`"
+    n="$(grep -c 'BEGIN CERTIFICATE' "$HOME/.certs/system-and-corp-roots.pem" 2>/dev/null)"
+    record PASS "Corporate CA bundle present" "$n certificate(s) in \`~/.certs/system-and-corp-roots.pem\`"
   else
-    record FAIL "Corporate CA bundle present" "\`~/.certs/corp-root.pem\` holds no certificate — the DER/PEM conversion in Step 7 failed and left an empty file"
+    record FAIL "Corporate CA bundle present" "\`~/.certs/system-and-corp-roots.pem\` holds no certificate — the DER/PEM conversion in Step 7 failed and left an empty file"
   fi
 
   # 5 -- the three stores Step 7 configures, tested against PUBLIC hosts on
@@ -514,7 +533,20 @@ check_restore_access() {
 
   record_manual "Step 2 was actually run" "\`./bin/restore-staged-loose.sh --apply\` ran with the image attached and reported every row \`RESTORED\` or \`EXISTS\`. The automated row above proves the destinations exist, not that this phase is why."
   record_manual "Internal root trusted; intermediates left on system defaults" "Always Trust belongs to the internal ROOT only. An intermediate should read \`Use System Defaults\` and \`This certificate is valid\` -- trusting it directly creates a second anchor that survives the root being revoked. Never a leaf. Answering \`none needed\` is a decision and counts."
-  record_manual "By-hand DMG categories walked" "Every row of restore-access.md's *DMG Categories Restored By Hand* is restored or consciously skipped. Once the image is detached and the drive retired they are gone."
+  # The by-hand categories have no script to check them, but most leave a
+  # destination behind. Listing which of those exist turns this row from an
+  # answer given by memory into one given against a listing -- without claiming
+  # the presence of a directory proves its contents were restored.
+  local bh_dest bh_have="" bh_miss=""
+  for bh_dest in "$HOME/.gnupg" "$HOME/.kube" "$HOME/.claude" "$HOME/.claude.json" \
+                 "$HOME/Library/Application Support/com.raycast.macos"; do
+    if [[ -e "$bh_dest" ]]; then
+      bh_have="$bh_have \`${bh_dest/#$HOME/~}\`"
+    else
+      bh_miss="$bh_miss \`${bh_dest/#$HOME/~}\`"
+    fi
+  done
+  record_manual "By-hand DMG categories walked" "Every row of restore-access.md's *DMG Categories Restored By Hand* is restored or consciously skipped. Once the image is detached and the drive retired they are gone. Destinations present:${bh_have:- none}. Absent:${bh_miss:- none} — absence is not proof one was skipped, and presence is not proof one was restored; both are here so this row is answered against a listing rather than from memory."
   record_manual "Shell config merged, not overwritten" "\`.zprofile\` still carries \`restore-runtime\`'s Homebrew and nvm bootstrap *and* Step 7's CA exports."
   record_manual "Licenses activated through supported flows" "No plaintext activation material left on disk outside the DMG."
 }

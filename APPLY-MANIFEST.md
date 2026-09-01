@@ -1,5 +1,35 @@
 # Apply Manifest
 
+**Revision 115** — supersedes Revision 114 and earlier. The phase's re-run guarantee gains its one exception: Step 3 restores an identity you deliberately deleted.
+
+**Revision 114** — supersedes Revision 113 and earlier. `known_hosts` stops being described as restored when it is rebuilt, and Step 12 counts it.
+
+**Revision 113** — supersedes Revision 112 and earlier. Phase 10A closes the completion-directory permissions Homebrew leaves open, and Step 6's two Pitfalls become the one thing they were always describing.
+
+**Revision 112** — supersedes Revision 111 and earlier. Step 8 says which of the two files in front of you cannot be replaced.
+
+**Revision 111** — supersedes Revision 110 and earlier. Step 7 confirms the `~/.zprofile` export is there instead of reporting that it wrote one.
+
+**Revision 110** — supersedes Revision 109 and earlier. Corrects Revision 108: `restore-runtime.md` did write to `restore-notes/`, until Revision 32 moved it.
+
+**Revision 109** — supersedes Revision 108 and earlier. The `~/.zprofile` guard tests the export line rather than the comment above it, so deleting the block actually lets the block be rewritten.
+
+**Revision 108** — supersedes Revision 107 and earlier. The two Phase 10 runbooks adopt the Primary/Related/Artifact-root form the other seventeen already use, and separate what they write from what they read.
+
+**Revision 107** — supersedes Revision 106 and earlier. Step 7's step name becomes `tool-trust`, which says who it is for rather than what it once wrote.
+
+**Revision 106** — supersedes Revision 105 and earlier. The CA bundle is named `system-and-corp-roots.pem`, and the prose that existed only to apologise for the old name is gone.
+
+**Revision 105** — supersedes Revision 104 and earlier. `bundle` joins `mnt` as a path query, four command blocks stop expanding a variable that was never in the operator's shell, and the `~/.zprofile` guard notices a stale path.
+
+**Revision 104** — supersedes Revision 103 and earlier. Step 7 says plainly that its output is a 159-certificate bundle and not the root its filename names.
+
+**Revision 103** — supersedes Revision 102 and earlier. Step 7 can find the corporate root when run on its own, which is the only way it was ever going to be run.
+
+**Revision 102** — supersedes Revision 101 and earlier. The install pass stops re-deriving the decision and records the outcome instead: what each JVM trusted before, what it trusts now, and what `copy` took away.
+
+**Revision 101** — supersedes Revision 100 and earlier. Step 6 becomes review-then-act, and the two aliases the operator did not recognise turn out to be pinned server certificates, one of them already expired.
+
 **Revision 100** — supersedes Revision 99 and earlier. Five runbooks get the enumerated steps the house rules always required, and a checker now enforces the rules that were drifting unnoticed.
 
 **Revision 99** — supersedes Revision 98 and earlier. The certificate report distinguishes a trust decision from chain-completion material, and draws the corporate chain as one picture.
@@ -256,6 +286,1098 @@ several separate rounds of work, and splicing them by hand is how the duplicate
 | `restore-intellij.sh` | `bin/restore-intellij.sh` |
 | `record-reimaged-system.sh` | `bin/record-reimaged-system.sh` |
 | `reimage-checklist.sh` | `bin/reimage-checklist.sh` |
+
+---
+
+## Revision 115 — re-running the step undoes the decision
+
+> I intentionally removed: [`id_rsa_shiva`, `id_rsa_work`, `known_hosts`,
+> `known_hosts.old`] but they are still in the secrets DMG
+
+That settles Revision 114's open question — the RSA retirement was deliberate,
+not an accident — and replaces it with a sharper one.
+
+`step_ssh` is `cp -R "$src"/. "$HOME/.ssh/"`. It copies the **whole** `ssh/`
+category, every time. So the retired keys return on the next Step 3 run: with the
+right mode, reported as a success, and indistinguishable in the output from an
+identity that was supposed to be there.
+
+That collides with something the phase advertises. Revision 91 gave
+`restore-access.md` a re-run guarantee — *"Re-running is safe"*, stated per step —
+and Step 3's row read *"Copies the same content and re-applies the modes; a
+partial run is completed."* True as far as it goes, and it describes only
+additions. **Re-running is not idempotent with respect to deletions**, and a
+deletion is exactly what a retirement is.
+
+### Why it cannot be fixed in the image
+
+The DMG is an encrypted, immutable capture of the machine before the erase, and
+the retired key is legitimately part of what that machine had. Editing it would
+falsify the capture, which Revision 112 has just finished arguing against for
+`home-files-backup/`. So the retirement lives only on the live Mac, and only
+until the next re-run.
+
+Which means the durable record has to be a **decision**, not an artifact:
+
+> Record it in `reimaged-system/restore-notes/` when you retire one.
+
+That is the category's stated purpose — a decision no artifact can hold,
+including a deliberate "not restored". Nothing automated can help: Step 12 counts
+private keys and checks their modes, and passes identically whether a key is
+absent because you retired it or because Step 3 never ran.
+
+New Pitfall in Step 3, and the re-run table's Step 3 row now carries the
+exception rather than implying there is none. `restore-access.md` is at 8
+Pitfalls against a budget of 8 — the `.zprofile` warning folded into prose in
+Revision 106 is what made room.
+
+`known_hosts` gets the same treatment in one sentence: deleting it is a
+reasonable choice, Revision 114's new Step 12 row will `WARN` about it on every
+close-out, and answering that row is where the operator says so. A `WARN` that
+recurs by design is better than a check that cannot tell a choice from a gap.
+
+### Not recorded in the runbook
+
+The four files arrived as chat attachments, two of them private keys. Reading
+them was unnecessary — the delta already named them — and they were not opened.
+Worth saying once, and not in a runbook, since it is about how the question was
+asked rather than about the phase: a private key pasted into a conversation is
+outside the encryption boundary the whole workflow exists to maintain. Retired
+keys make that harmless; the habit is what to avoid.
+
+---
+
+## Revision 114 — the half of `~/.ssh` that nothing was checking
+
+Read from the operator's own delta,
+`state/runs/restore-access-delta-20260831-215031`:
+
+```
+~/.ssh/known_hosts       ABSENT | present 600 efe9045f... | removed
+~/.ssh/known_hosts.old   ABSENT | present 600 b9b794f5... | removed
+```
+
+**Step 3 did not delete them.** `step_ssh` is `cp -R "$src"/. "$HOME/.ssh/"` — a
+copy cannot remove, so the delta's *"read this twice"* verdict resolves to "not
+the phase". But the file is absent *after* Step 3 ran, which means the DMG's
+`ssh/` category never carried one.
+
+`restore-access.md` claimed otherwise in three places — the Purpose summary, the
+input-evidence list, and the live-targets list all said Step 3 restores "keys,
+config, **known_hosts**". The step's own prose, two hundred lines away, said the
+opposite and was correct: the probe seeds host keys with `ssh-keyscan`, one per
+`Host` in `~/.ssh/config`. Three summaries describing an input, one body
+describing a rebuild, and no reader positioned to notice they disagree.
+
+All three corrected. Step 3 now states the mechanism where the consequence lands,
+including the edge that makes it matter: **only aliases get seeded.** A host
+reached by its real name is never probed, so its first connection prompts — and
+that prompt is harmless at a shell and expensive inside Phase 11B's clone loop,
+which is not waiting for an answer.
+
+### Step 12 counts it
+
+A private key with the right mode proves Step 3 copied identities and says
+nothing about host keys, and the two fail differently: a missing key fails loudly
+at connect time, a missing `known_hosts` succeeds after an interactive prompt.
+The exit criteria only tested the first.
+
+New automated row, **SSH host keys seeded**, reporting the count against the
+number of aliases in `~/.ssh/config` — so "12 host keys known, against 9 aliases"
+reads as complete and "0" does not. `WARN` rather than `FAIL`: a machine with no
+SSH remotes legitimately has none.
+
+### A correction, and a smaller fix than the one first proposed
+
+Reviewing this delta I claimed the by-hand DMG categories had "no row for any of
+them" and could close out green undone. **That was wrong.** `record-restore-exit.sh`
+has carried `record_manual "By-hand DMG categories walked"` all along. Checking
+before asserting would have cost one `grep`.
+
+The real weakness was narrower: that row is answered from memory, because a
+Manual row presents no evidence. It now lists which by-hand destinations exist —
+`~/.gnupg`, `~/.kube`, `~/.claude`, `~/.claude.json`, Raycast's support directory
+— and which do not, with both halves labelled as what they are: presence does not
+prove the contents were restored, and absence does not prove the category was
+skipped. It turns an answer given from memory into one given against a listing,
+which is all the automation available here is entitled to claim.
+
+### Not changed, having been checked
+
+- **`~/.kube/` and `~/.azure/` absent** is handled: `restore-home.md` (Phase 15)
+  restores `dotfiles/kube/` and `dotfiles/azure/` per subtree. The DMG's
+  `secrets-encrypted/kube/` is a different thing — credentials, not config — and
+  falls under the by-hand row above.
+- **`.gitconfig` created by Step 7** is safe. `restore-git.md` reads
+  `http.sslCAInfo` before its `cat >` rewrite and restores it after, so Phase 11A
+  cannot silently undo Step 7's trust configuration.
+- **Three RSA keys retired** (`id_rsa_shiva`, `id_rsa_work`) while the ed25519
+  identities remain. That reads as deliberate, and no check can tell a deliberate
+  retirement from an accident — the exit criteria passes identically either way.
+  It belongs in a `restore-notes/` entry, which is a decision the operator
+  records rather than a rule a script enforces.
+
+---
+
+## Revision 113 — a prompt at the top of every terminal, and the paste hazard nobody could have written down
+
+```
+zsh compinit: insecure directories, run compaudit for list.
+Ignore insecure directories and continue [y] or abort compinit [n]? y
+```
+
+`compinit` audits every directory on `FPATH` before loading completions from it
+and refuses any that is group- or world-writable, because everything on `FPATH`
+is **executed** in the shell. Homebrew creates its `share/` directories that way.
+Nothing in the workflow closed them, so the first shell config to put
+`$(brew --prefix)/share/zsh-completions` on `FPATH` produced a prompt at the top
+of every new terminal.
+
+Three commands, added to **Step 3**, next to the Homebrew install that creates the
+permissions:
+
+```
+compaudit
+compaudit | while IFS= read -r d; do chmod g-w,o-w "$d"; done
+rm -f "$HOME"/.zcompdump*
+```
+
+Placed there rather than where the prompt appears, because the prompt does not
+appear until a shell config reaches `FPATH` — Phase 10B Step 8 — by which point
+it is competing for attention with a dotfile merge.
+
+### The reason it is not merely cosmetic
+
+That prompt is an **interactive `read` running at shell startup**. Paste a
+multi-line block into a fresh terminal and its first line is consumed as the
+answer to "Ignore insecure directories?" instead of being run.
+
+This repo has documented zsh paste hazards since Revision 73 — `#` comments,
+unquoted globs, `!` history expansion, an interactive `read` *inside* a block.
+Every one of them is a property of the block. This one is a property of the
+**terminal the block is pasted into**, and arrives before the block is reached,
+so no amount of care in authoring a command block prevents it. A block that
+half-executes is worse than one that fails.
+
+Hence "fix it rather than silencing it". `compinit -u` skips the audit and is the
+common advice; it leaves both the executable-`FPATH` exposure and the paste
+hazard in place.
+
+### Two house-rule violations, created and then fixed in the same revision
+
+Worth recording because the checker did not catch either, and both were the kind
+a person writing quickly makes.
+
+**The fix was in two places at once.** The Step 3 instructions and a new
+Troubleshooting entry each carried the same three commands — which the authoring
+prompt forbids outright: *any Troubleshooting fix lives inline OR in the
+Troubleshooting section, never both.* Resolved by giving them different jobs: Step
+3 owns the fix, and the Troubleshooting entry points at it and adds only what is
+specific to hitting the prompt anyway — an ownership problem `chmod` cannot fix,
+and the case where a later phase adds a new `FPATH` entry. Step 3 gained a
+`[!bug]` pointer so the two are linked rather than parallel.
+
+**Step 6 was left with two Pitfalls**, which `verify-runbook-structure.sh` had
+been reporting as a WARN since Revision 100 and which this revision finally
+had reason to look at. They turned out to be one idea seen from both sides:
+
+> **You cannot tell direnv's real state by looking, and it misleads in both
+> directions.**
+
+*It can look broken when it is fine* — the Phase 8 `~/.zprofile` export persists
+after `cd`, so the round trip appears to fail while the hook is working. *And it
+can look fine when it is broken* — an unapproved `.envrc`, or a missing
+`reimage.env`. Merged under that lead, `restore-runtime.md` reports zero warnings
+for the first time.
+
+---
+
+## Revision 112 — the irreplaceable file was the one with no label
+
+> I edited some of these on artifact root instead of home.
+
+Step 8 hands the operator this:
+
+```
+git diff --no-index --color=always "$HOME/$F" \
+  "$REIMAGE_ARTIFACT_ROOT/home-files-backup/dotfiles/$F" | less -R
+```
+
+Two files with the same name, in one pager, and nothing anywhere in the step
+saying that the second one is the only surviving copy of the erased machine's
+shell configuration. The runbook said *"this step is a report"* and *"the merging
+is yours"*, which describes what the **script** does and says nothing about what
+the operator is about to do by hand.
+
+### What the Pitfall says
+
+`home-files-backup/dotfiles/` cannot be rebuilt. The DMG holds secrets, not shell
+config. A Time Machine snapshot has it only if Phase 5 ran and the disk is still
+around. `backup-home.md` runs *before* the erase, so the workflow has no path
+back to it — the machine it captured no longer exists.
+
+The framing that matters is not "be careful", which the reader already intends.
+It is that **both paths look alike**: same filename, same pager, and editing the
+wrong pane produces no error. The mistake is not a lapse in care, it is the
+absence of a distinguishing cue.
+
+And the consequence is quiet. **An edited capture keeps reporting, and keeps
+sounding certain.** After a `.zshrc` is edited on the backup side, the step still
+prints `DIFFERS` or `SAME`, and neither verdict is distinguishable from an honest
+one. The comparison becomes the operator's new configuration measured against
+itself — which is the failure this entire phase exists to prevent, arriving
+through the one file nobody thought to protect.
+
+Two smaller additions carry the same point in prose, where a callout would be
+overspending:
+
+- **The merge runs one way: backup → `$HOME`.** Stated before the diff command
+  rather than left implied.
+- **Which column is which.** Left is `$HOME`, right is the backup, and the left
+  one is what you are building. `git diff --no-index` does not label them.
+
+### `.zprofile` gains its second direction
+
+The existing `.zprofile` warning covered copying the backup *onto* the live file,
+which undoes Phase 10A's bootstrap and Step 7's CA block. The reverse turned out
+to be the one that happened, and is worse in a specific way: a live `.zprofile`
+copied *onto* the backup records `system-and-corp-roots.pem` — a file that did
+not exist until this phase ran — so the capture begins asserting something about
+the pre-image machine that was never true. A wrong artifact is worse than a
+missing one, because a missing one is visibly missing.
+
+That warning is now prose rather than its own callout, folded into the Pitfall's
+section. Step 8 had one Pitfall before this revision and has one after.
+
+### Budget
+
+`restore-access.md` now carries **8** Pitfalls against a budget of 8, which
+`./bin/verify-runbook-structure.sh` reports clean. The next one added to this
+file has to displace an existing one, which is the budget working rather than
+the budget being inconvenient.
+
+---
+
+## Revision 111 — the step reported success for a branch that wrote nothing
+
+The operator's block is in place. What is worth keeping from getting there is
+that the run which failed to write it **still finished green**.
+
+The stale-block path warned twice and fell through. Nothing incremented
+`FAILURES`, so the summary reported every step complete while the four exports
+the step exists to install were absent. The operator found out by looking, which
+is the part that should not have been necessary.
+
+### Confirm rather than claim
+
+`ok "~/.zprofile block added"` was printed by the branch that ran the append, not
+by anything that then looked at the file. The step now checks for the export
+afterwards and fails when it is missing:
+
+```
+FAIL  ~/.zprofile does not export this bundle — the step configured everything
+      else and left the shell behind
+INFO  a conflicting export is still there; delete the lines listed above, then
+      re-run this step
+```
+
+This is the rule the rest of the phase already follows and this branch had been
+exempt from: Step 6 counts the entries in the installed trust store rather than
+trusting the copy, and Step 7 counts the certificates in the bundle rather than
+trusting the concatenation.
+
+### What it catches, stated honestly
+
+The first version of the check claimed to catch a read-only `~/.zprofile`, a full
+disk, and a symlinked profile. Testing it on a read-only file produced **no
+output at all**: the failing redirect aborts the run under `set -Eeuo pipefail`
+long before the check is reached, which is the correct and louder outcome. The
+comment described protection the code does not provide.
+
+What it does catch is a *branch that declines to write while the step goes on to
+succeed* — a logic error, not an I/O error. That is exactly the failure that was
+reported, and the comment now says so.
+
+One diagnostic was also misattributed: on the stale-block path it printed *"the
+file exists and is writable, so the append itself is what failed"*, when no
+append had been attempted. It now distinguishes the two cases — a conflicting
+export still present, versus no CA-bundle export of any kind — and only offers
+the four lines to paste in the second.
+
+Verified on four fixtures: clean write, stale block, no profile, and a re-run
+against a current block. The stale case now ends `FAILURES=1`.
+
+---
+
+## Revision 110 — a correction, traced to the artifact that disproved it
+
+> Who is writing this ?
+> /Volumes/Data/.../reimaged-system/restore-notes/runtime-version-comparison-20260819-121523.md
+
+**Nothing is, any more.** `bin/compare-runtime-versions.sh` wrote it on
+2026-08-19 at 12:15:23, during the Phase 10A Step 10 run. That script no longer
+exists: **Revision 32** renamed it to `compare-restored-state.sh` and moved its
+output out of a flat `restore-notes/` file into the `comparisons/` run index,
+where it is now `comparisons/runs/restore-runtime-inventory-diff-<stamp>/`.
+
+Revision 32 also called this exact file by name, and left it deliberately:
+
+> the existing `runtime-version-comparison-20260819-121523.md` is now invisible
+> to that row. The Phase 10A exit already recorded with it and that artifact
+> stands … The old file is left in place — it is evidence of what was compared
+> on the 19th, not clutter.
+
+So it is a record of a real run under the old convention. Keeping it costs
+nothing and it is the only evidence of what that comparison found; deleting it is
+also defensible, since no recorder can see it. That is the operator's call, not a
+defect.
+
+### Revision 108 was wrong and this is the correction
+
+Two revisions ago, asked whether `restore-runtime.md` used `restore-notes/`, I
+answered:
+
+> the string does not appear in the file and did not before this revision
+
+The first half is true. **The second half is false**, and the file on the drive is
+what disproves it. `git log -S` puts `restore-notes` in `restore-runtime.md`
+across three commits, and at `721ac3b` line 762 read:
+
+```
+`reimaged-system/restore-notes/` and prints a one-line summary.
+```
+
+By `b801231` it was gone. So the operator's instinct — *"I think that's old and
+needs to be removed"* — was right on the history and only wrong about the
+timeline: the removal had already happened, in Revision 32, before I was asked.
+
+The mistake was one of method rather than of fact. I answered a question about
+what a file *used to do* by grepping the working tree, which can only report what
+it does now. A question containing "I think that's old" is a question about
+history, and history is in `git log -S` and in this manifest — both of which had
+the answer, and neither of which I opened.
+
+### `restore-notes/` is a live category
+
+Worth stating plainly, since two revisions have now circled it. Four things write
+there today, none of them Phase 10A:
+
+| Writer | What it puts there |
+|---|---|
+| `bin/restore-apps.sh` | `restore-apps-plan-<stamp>.md` — Phase 12 plan-note |
+| `bin/restore-docker.sh` | `restore-docker-plan-<stamp>.md` — Phase 12 plan-note |
+| `bin/restore-intellij.sh` | `restore-intellij-plan-<stamp>.md` — Phase 12 plan-note |
+| `restore-home.md` (by hand) | Phase 15's restore decisions, including every deliberate "not restored" |
+
+The distinction that decides where an artifact belongs: `comparisons/`,
+`boundaries/` and `state/` are run categories with an index, for things a script
+generates and a later script has to find. `restore-notes/` is for a working
+document a person edits — a plan-note they tick off, or a decision only they can
+record. The runtime version comparison moved because it is the first kind and had
+been filed as the second.
+
+That sentence is already in `restore-runtime.md`'s Bundle Layout as of Revision
+108, and it happens to still be correct — the reasoning behind it was just
+better than the claim I attached to it.
+
+---
+
+## Revision 109 — "delete the block and re-run" did not work when you deleted the block
+
+> The block didn't get created in `~/.zprofile`. I remove the block prior to the run
+
+Reproduced on the third fixture. The guard Revision 105 added tested the wrong
+thing:
+
+```
+if grep -q 'REIMAGE-CA-BUNDLE' "$HOME/.zprofile"; then    # the MARKER COMMENT
+  if grep -Fq "CURL_CA_BUNDLE=\"\$HOME/$CA_BUNDLE_REL\"" ...
+```
+
+Delete the four `export` lines and leave the comment above them — which is what
+"I removed the block" reasonably means, and what a careful person does when they
+are not sure how much of the surrounding text belongs to the tool — and the outer
+`grep` still matches. The inner test then fails, the step reports a stale block,
+writes nothing, and instructs the operator to delete a block they have already
+deleted. Unactionable advice on a step reporting success.
+
+### The export is the thing with an effect
+
+The comment only labels it. The guard now keys on the export line and has three
+states rather than two:
+
+| `~/.zprofile` contains | Result |
+|---|---|
+| `export CURL_CA_BUNDLE="$HOME/<this bundle>"` | `already carries the block, naming this bundle` |
+| `export CURL_CA_BUNDLE=` naming anything else | warn, and print the exact lines to delete |
+| no such export, marker comment or not | **write the block** |
+
+A leftover marker comment no longer blocks the write. It is reported as an
+`info` when one is found, because the file is about to hold two similar comments
+and the duplicate should not look like a bug.
+
+The stale-block warning also got more precise. `delete the block and re-run this
+step` assumed the operator and the script agreed on where the block starts and
+ends. They did not, which is the whole defect. It now prints the numbered lines —
+the marker and every matching export — under `delete these lines and re-run this
+step`.
+
+### Verified on four fixtures plus a re-run
+
+| Case | Before | After |
+|---|---|---|
+| no `~/.zprofile` at all | written | written |
+| `.zprofile` present, block fully removed | written | written |
+| **exports removed, comment left** | **warned, wrote nothing** | **written, comment noted** |
+| old block intact, stale path | warned | warned, with the lines to delete |
+| run twice against a current block | ok | ok — still idempotent |
+
+### The shape of this mistake
+
+Revision 105 added that guard to catch a real problem — a renamed bundle leaving
+the exports pointing at the old path — and the rename in Revision 106 is exactly
+what it was built for. It caught that case correctly. What it got wrong was the
+*recovery*, which is the path an operator only reaches once the guard has already
+fired, and which was therefore the least-exercised branch of a change made to
+improve reliability. The fixtures written for it covered the detection and not
+the way out.
+
+---
+
+## Revision 108 — the two runbooks that never got the standard header
+
+> restore-runtime.md and restore-access.md needs to follow under Artifact and
+> Script Locations: Primary script: / Related script: / Artifact root: Have a
+> Bundle Layout section but only where it writes.
+
+Seventeen runbooks use that form. These two did not — they had grown their own
+shapes (*"Scripts this runbook runs"*, *"This runbook is manual and does not run
+a fractogenesis-toolkit entrypoint"*) and nothing checked, which is the same
+drift Revision 100 found in step numbering.
+
+| | Primary | Related | Artifact root | Bundle Layout |
+|---|---|---|---|---|
+| `restore-access.md` | `bin/restore-access.sh` | 6, alphabetical | `reimaged-system/` | writes only |
+| `restore-runtime.md` | none — installs by hand | 5, alphabetical | `reimaged-system/` | writes only |
+
+`restore-runtime.md` keeps a `Primary script:` heading with `none` under it
+rather than dropping the heading. It really has no entrypoint — the phase
+installs Homebrew, the JDKs and Node by hand — but a reader scanning for the
+heading should find it answered rather than absent, and the five related scripts
+that record and compare are listed underneath where they belong. Two of them
+were not named anywhere in that section before: `prepare-artifact-root.py`, which
+Step 7 uses for `upsert-env`, and `init-shell-env.sh`, which Step 6 uses to
+remove the Phase 8 bridge.
+
+### Bundle Layout is writes only
+
+The instruction that made the split worth doing. Both files had reads and writes
+in one undifferentiated list of paths, so a tree that looked like the phase's
+output also contained the DMG categories it only ever mounts read-only.
+
+`restore-access.md` now names `reimaged-system/` as the artifact root, keeps the
+twenty-line `secrets-encrypted/` catalogue as **input evidence built by earlier
+phases**, and puts only the generated tree under **Bundle Layout**. The live
+targets it writes on the Mac itself — `~/.ssh/`, `~/.certs/`, `~/.zprofile` and
+the rest — stay in their own list, because they are neither artifacts nor inputs.
+
+### `restore-notes/` — the answer was no
+
+> Also does restore-runtime.md use restore-notes/ ? I think that's old and needs
+> to be removed I think it writes to
+> comparisons/official/restore-runtime-inventory-diff.txt now.
+
+`restore-runtime.md` never mentioned `restore-notes/`; the string does not appear
+in the file and did not before this revision. It already documented Step 10
+writing under `restore-runtime-inventory-diff`, exactly as expected. Nothing to
+remove.
+
+The category is not stale, either. `restore-home.md` (Phase 15) owns it and uses
+it as designed: that phase has no automated evidence, so a hand-written note
+recording each restore decision — including every deliberate "not restored" — is
+the only artifact it produces. `restore-access.md` uses it once, for Step 9's
+redacted activation notes.
+
+The Bundle Layout now says so in one sentence, so the next reader asking this
+question finds it answered in the file rather than having to grep for it:
+everything `restore-runtime.md` records is generated, so it goes where the run
+index can find it.
+
+### Also corrected
+
+The re-run guarantee table still quoted Step 7's old success message,
+`~/.zprofile already carries the block`. Revision 105 changed that message to
+`~/.zprofile already carries the block, naming this bundle` when it taught the
+guard to compare the path as well as the marker. A table quoting output verbatim
+is worth exactly as much as the quote is current.
+
+---
+
+## Revision 107 — `corp-ca` was a step name, not a filename
+
+> rename corp-ca too, will this be the name used for the bundle? or is it a
+> placeholder
+
+Neither. `corp-ca` was one of eleven **step names** — the token passed to
+`restore-access.sh` to run one step alone:
+
+```
+prereqs mount staged-loose ssh certs trust java corp-ca dotfiles credentials finish
+```
+
+It never named the bundle and was never a placeholder. But it was still worth
+changing, for a reason unrelated to the file: it described the step by the
+*certificate* it handles, while the step's actual job is to configure the tools
+that cannot read the keychain. Step 5 already trusts the corporate CA. Step 7
+exists because `npm`, `git`, `pip`, `curl`, Node and Python each carry their own
+trust store and none of them looks at what Step 5 did.
+
+`corp-ca` → **`tool-trust`**, which pairs with the step above it:
+
+| Step | Name | Makes this trust the root |
+|---|---|---|
+| 5 | `trust` | macOS — the keychain, and everything that reads it |
+| 7 | `tool-trust` | the tools that do not |
+
+Fourteen references across `bin/restore-access.sh` and `restore-access.md`,
+including `ALL_STEPS`, the dispatch arm, the `step_corp_ca` function, and the
+three recovery commands the Revision 103 failure message prints.
+
+### `ca-bundle` was the obvious name and is the wrong one
+
+Naming the step after what it produces would collide with the query added in
+Revision 105 — `./bin/restore-access.sh bundle` prints the bundle's path — and
+`ca-bundle` beside `bundle` is two near-identical tokens doing entirely different
+things, one a step and one a query. The operator had used `bundle` successfully
+minutes earlier, so churning it to make room would also have retracted something
+that had just been learned.
+
+Naming the step for its *audience* rather than its artifact avoids the collision
+and survives the next time the artifact is renamed — which, two revisions in, is
+not a hypothetical.
+
+### The old name fails loudly
+
+`corp-ca` is not aliased. `restore-access.sh` validates step names against
+`ALL_STEPS`, so the old token exits 2 with `ERROR: unknown step: corp-ca` and
+prints the current list. That is the right behaviour for a token typed from
+memory or copied out of an older note: a silent alias would leave two names in
+circulation and the runbook documenting only one.
+
+`--corp-cert` keeps its name. It names a certificate, which is exactly what it
+takes.
+
+---
+
+## Revision 106 — the name now says what is in the file
+
+> Rename to system-and-corp-roots.pem as well as the prose that reference it and
+> remove prose remarking about failures that will not exist soon.
+
+`~/.certs/corp-root.pem` → `~/.certs/system-and-corp-roots.pem`, in nine places
+across four files:
+
+| File | Occurrences |
+|---|---|
+| `bin/record-restore-exit.sh` | 6 — the exit-criteria row and its three verdict messages |
+| `bin/restore-access.sh` | 1 — `CA_BUNDLE_REL` |
+| `bin/compare-restored-state.sh` | 1 — the state probe |
+| `.internal/restore-state-targets.conf.sh` | 1 — the `~/.certs/` tree comment |
+
+Plus three in `restore-access.md`: the artifact tree, the source-versus-output
+table, and the Phase 11 state-comparison expectation.
+
+Two temporary files carried the old word and only one was wrong.
+`/tmp/corp-root-combined-$STAMP.pem` held the finished bundle and is now
+`/tmp/system-and-corp-roots-$STAMP.pem`. `/tmp/corp-root-staging.pem` genuinely
+holds the corporate root alone — it is the single certificate on its way into the
+bundle — so its name was already accurate and is unchanged. Renaming it for
+consistency would have made it lie.
+
+### Prose removed rather than rewritten
+
+The Pitfall added one revision ago — *"`corp-root.pem` is a misleading name for a
+file that is not a root"* — described a trap that the rename removes. Keeping it
+would leave the runbook warning about a filename the runbook no longer uses,
+which is how a document starts describing its own history instead of the work.
+Deleted, along with the sentence framing the two paths as things "the filename
+invites reading as alternatives".
+
+What survives is the part that is true independently of any name: the corporate
+root is an ingredient, the bundle is the output, and the output has to be a
+bundle because every consumer **replaces** its trust store with the file it is
+given rather than adding to it. One clause was added — *"The name says what is in
+it for that reason"* — which is the whole of what the deleted Pitfall was
+protecting, now costing a line instead of a callout.
+
+The `$CA_BUNDLE` explanation stays. That failure is not going away: `CA_BUNDLE`
+is internal to `restore-access.sh` by design, the `~/.zprofile` block exports the
+names the tools actually read, and a paste reaching for `$CA_BUNDLE` will keep
+expanding to the empty string.
+
+This entry and Revisions 104 and 105 keep their accounts of the old name. A
+manifest is the record of why a thing is the way it is, and the reasoning for a
+rename is worth more than the tidiness of pretending the old name never existed.
+
+### The migration this creates, and why it is not in the runbook
+
+An operator who ran Step 7 before this revision has a working
+`~/.certs/corp-root.pem`, four `~/.zprofile` exports naming it, and npm, git and
+pip configured to it. Re-running `corp-ca` builds the new file and rewrites the
+npm, git and pip settings unconditionally, so those three follow on their own.
+`~/.zprofile` does not: the guard added in Revision 105 detects that the block
+names a different path, reports it with the offending lines, and declines to edit
+the operator's shell profile on inference. Deleting the block and re-running is
+the fix; the old bundle can then be removed.
+
+That is a one-time transition for the machines that already ran the step, so it
+is a message to the operator rather than a permanent section in the runbook —
+which is the same rule this revision applied to the Pitfall it deleted.
+
+---
+
+## Revision 105 — the verification command I wrote did not work
+
+```
+% grep -c 'BEGIN CERTIFICATE' "$CA_BUNDLE"
+grep: : No such file or directory
+% source ~/.zprofile
+% grep -c 'BEGIN CERTIFICATE' "$CA_BUNDLE"
+grep: : No such file or directory
+```
+
+`CA_BUNDLE` is a variable **inside `restore-access.sh`**. The `~/.zprofile` block
+Step 7 writes exports `NODE_EXTRA_CA_CERTS`, `CURL_CA_BUNDLE`,
+`REQUESTS_CA_BUNDLE` and `PIP_CERT` — the names the tools actually read — and
+deliberately not a generic `CA_BUNDLE`. So the paste expanded to
+`grep -c 'BEGIN CERTIFICATE' ""`, and `source ~/.zprofile` could not help because
+the variable was never there to load. The error reads like a missing bundle
+rather than a missing variable, which is the part that wastes time.
+
+Four command blocks had this defect. Two were written in Revision 104, one hour
+earlier; the other two — the `UNABLE_TO_GET_ISSUER_CERT_LOCALLY` check and the
+bundle-rebuild block, both in Troubleshooting — have been wrong for far longer
+and had never been run, because reaching them requires a specific failure.
+
+### `bundle`, alongside `mnt`
+
+The script already answers "where is the mounted image" as a query, for exactly
+this reason. It now answers "where is the CA bundle" the same way:
+
+```
+BUNDLE="$(./bin/restore-access.sh bundle)"
+grep -c 'BEGIN CERTIFICATE' "$BUNDLE"
+```
+
+All four blocks resolve the path this way now. The rule this restates: a pasted
+block may only use variables it sets itself or asks a script for. `$MNT` earned
+its query the same way in an earlier revision, and `$CA_BUNDLE` is the second
+instance of one pattern.
+
+### A stale `~/.zprofile` block reported "already carries the block"
+
+The operator pasted their block, which exposed something worse than the wording:
+
+```
+if grep -q 'REIMAGE-CA-BUNDLE' "$HOME/.zprofile"; then
+  ok "~/.zprofile already carries the block"
+```
+
+Presence-only. A block naming a **different** path — after the bundle is moved in
+`reimage.env`, or renamed in this script — satisfies that test, so Step 7 reports
+success while every exported variable still points at the old file. A green run
+and a stale configuration is the worst pair available, and it is what any future
+rename of this file would have produced.
+
+The guard now checks the marker *and* the path, and a mismatch is reported rather
+than repaired: editing an operator's shell profile in place is not something to
+do on inference, and the fix is one deletion. It prints the offending lines.
+
+New blocks also carry an accurate comment. The old one read *"corporate TLS
+interception root"* — singular, and the same misnomer as the filename, sitting in
+the operator's own `.zprofile`. It now says the file is the full public trust
+store plus that root, and why it has to be.
+
+### Names for the bundle, since the current one is the root of all this
+
+Recorded rather than applied — the file is installed, named in four exports, and
+referenced in five places in the repo. The property a name has to carry is
+**completeness**, because the failure mode is someone shrinking it to one
+certificate.
+
+| Candidate | What the name asserts |
+|---|---|
+| `system-and-corp-roots.pem` | The whole public trust store plus the corporate root. Self-documenting, and the mistake becomes unsayable — nobody puts one certificate in a file called this. Longest. |
+| `full-ca-bundle.pem` | A complete bundle. "full" defeats the misconception directly, and it is short. |
+| `trust-store.pem` | The whole set a tool should trust. Matches the vocabulary Step 6 already uses for the JVM's `jssecacerts`, so the phase would say one thing. |
+| `ca-bundle.pem` | The conventional Unix name. Familiar, but silent about the corporate root being inside. |
+| `corp-ca-bundle.pem` | Smallest change from today. "bundle" fixes the plural; "corp" still suggests corporate-only contents. |
+
+`system-and-corp-roots.pem` is the recommendation, `full-ca-bundle.pem` the
+shorter alternative.
+
+Whichever is chosen, the rename is a coordinated change across
+`bin/restore-access.sh`, `bin/compare-restored-state.sh`,
+`bin/record-restore-exit.sh`, `.internal/restore-state-targets.conf.sh` and the
+runbook — and it needs the `~/.zprofile` guard fixed above, or the operator's
+block silently keeps naming the old path. The `REIMAGE-CA-BUNDLE` marker itself
+must not change: the guard finds the block by it.
+
+---
+
+## Revision 104 — `corp-root.pem` is not a root
+
+> The above output didn't use $MNT/certs/loose-candidates-selected/root-gaig-ca.pem
+> is that the one it's supposed to use instead of /Users/dkittrell/.certs/corp-root.pem
+
+They are not alternatives, and the filename is why that is not obvious.
+
+| Path | What it is | Holds |
+|---|---|---|
+| `certs/loose-candidates-selected/root-gaig-ca.pem` | a **source** — the corporate root as the image captured it | 1 certificate |
+| `~/.certs/corp-root.pem` | the **output** — the bundle Step 7 builds | 159: 158 system roots + that 1 corporate root |
+
+The step's own success line already says it — `158 system root(s) + 1 corporate` —
+but the filename says `corp-root.pem`, and a name is read more often than a log
+line. Nothing was wrong with the run.
+
+### Which source was used does not change what was produced
+
+The run reported `corporate root taken from the login/System keychain`. That is
+the same certificate the image file holds, and the phase's own evidence proves
+it: the Step 4 comparison matches on SHA-256, and
+`E0B9DF45968F5192425A88A5632C26F3E0EEDC8CD0D349F6F14E75E02453BB9D` appears in the
+`both` bucket with `certs/loose-candidates-selected/root-gaig-ca.pem` listed as
+one of its sources. Same certificate, two routes; Revision 103 made the shorter
+one work.
+
+### What the runbook now says
+
+A table separating source from output, and the reason the output has to be a
+bundle: every consumer Step 7 configures — `npm` cafile, `git` `http.sslCAInfo`,
+`pip` `global.cert`, `CURL_CA_BUNDLE`, `REQUESTS_CA_BUNDLE` — **replaces** its
+trust store with the named file rather than adding to it. A file holding the
+corporate root alone breaks every host the corporate CA did not issue.
+
+That is now a Pitfall, because the mistake it prevents is one an operator makes
+*while tidying up*: pointing `CA_BUNDLE` at the image file, or copying the source
+over the bundle, on the reasonable-sounding theory that a file called
+`corp-root.pem` ought to contain the corporate root. The symptom is diagnostic
+and worth writing down — public HTTPS starts failing while internal hosts keep
+working, and `npm` reports `UNABLE_TO_GET_ISSUER_CERT_LOCALLY` against
+`registry.npmjs.org`. Failing *outward only* is the signature.
+
+Plus the check that settles it in one line:
+
+```
+grep -c 'BEGIN CERTIFICATE' "$CA_BUNDLE"
+```
+
+A number in the 150s, not `1`.
+
+### The name was left alone, deliberately
+
+`corp-root.pem` is hardcoded in five places — `bin/restore-access.sh`,
+`bin/compare-restored-state.sh`, `bin/record-restore-exit.sh`,
+`.internal/restore-state-targets.conf.sh`, and the runbook's artifact tree — so
+renaming it is a coordinated change, not a typo fix. It is also already installed
+on this machine and already named in `~/.zprofile`, npm's cafile, git's
+`http.sslCAInfo` and pip's `global.cert`, all written minutes before the
+question was asked.
+
+Step 7 is idempotent and rewrites every one of those consumers, so a rename would
+apply cleanly on the next run — but it would strand the path recorded in the
+state captures already taken, and it changes a file the operator has working. It
+belongs in a decision, not in a revision that was asked a question. Noted here
+so the option is not lost.
+
+---
+
+## Revision 103 — a step that only worked in the one situation it was never in
+
+> In Step 7 I ran ./bin/restore-access.sh corp-ca and got an error ... FAIL
+> nothing exported ... Instead of corp-ca should this be $CORP_CERT
+
+`corp-ca` is right — it is the step name, and the argument is correct. The
+failure is real and it is mine.
+
+### Both sources were broken, in different ways
+
+**The image source cannot work when one step is run alone.** `$MNT` lives in the
+process that mounted the image, and `./bin/restore-access.sh corp-ca` is a new
+process with no mount. So `resolve_corp_cert` returned nothing — correctly.
+Running a single step is the normal way to redo one, so the source that only
+works inside an ordered run is the source that is least often available.
+
+**The keychain fallback never worked at all.** It tried to pull a certificate
+name out of `security dump-trust-settings -d` with:
+
+```
+sed -n 's/.*"\(.*\)".*/\1/p'
+```
+
+a regex for a quoted string. That output does not quote the name. The regex
+matched nothing, `cn` came back empty, the guarded `security find-certificate`
+never ran, and the staging file stayed empty — on a machine whose keychain held
+exactly the certificate it was looking for, put there by Step 5 two steps
+earlier.
+
+The comment above the code said *"Source A: the keychain, which needs no DMG and
+is the better source once Step 5 has run. Source B: the image."* The code tried
+the image first and the keychain second. The comment had the design right; the
+code had never implemented it.
+
+### Three sources, in the order availability actually falls
+
+| Order | Source | When it applies |
+|---|---|---|
+| 1 | `--corp-cert PATH` | The operator named the file. |
+| 2 | The login and System keychains | Usually — Step 5 put the root there, and it is the copy the machine is really using. |
+| 3 | The mounted image | An ordered run, which has a mount. |
+
+`keychain_corp_root` finds it the same way Step 4 finds it on the image: the
+self-signed CA that is **not** one of the built-in public roots. That test is
+already written and already correct, and it needs no `dump-trust-settings`
+parsing at all — which is the point, because the old approach depended on the
+human-readable formatting of a command's output, and that is not an interface.
+
+`--corp-cert PATH` is new and is kept in `CORP_CERT_OPT` rather than in
+`CORP_CERT`: one is what the operator asserted and the other is what the phase
+discovered, and conflating them loses which was which.
+
+### The failure now says what it tried
+
+The old message was `nothing exported` plus "run Step 4 first", which is advice
+that would not have helped — Step 4 pins the root in a process that has already
+exited. The step now names all three sources, what each one found, and the three
+commands that resolve it, picking the wording for the image line by whether a
+mount is actually present. It also reports which source it used on success,
+because "the bundle was built" and "the bundle was built from the copy you meant"
+are different claims.
+
+### Found while writing it
+
+```
+grep -qx "$fp" "$sys_tmp" && continue
+```
+
+as a bare statement returns grep's non-zero status when it does not match, which
+under this script's `set -Eeuo pipefail` aborts the run — and not matching is the
+common case, since most keychain roots are public ones being skipped past. The
+identical test inside `resolve_corp_cert` is safe only because it sits in an `if`
+condition. Rewritten as `if grep -qx ...; then continue; fi`.
+
+Verified on fixtures with `security` stubbed: a keychain holding one public root
+and one corporate root returns the corporate one; a keychain holding only public
+roots returns 1 cleanly, with the calling script still alive.
+
+---
+
+## Revision 102 — three runs of the same comparison, and none of them about what happened
+
+> Are repetitive in terms of the generated output, instead it would be more useful
+> to document the result of merge or copy compared to the original jssecacerts
+
+Revision 101 split Step 6 into compare and act but left both passes calling the
+same function, so all three invocations wrote a `restore-access-jdk-trust-diff`
+run: the same tables, the same counts, and nothing about what the install
+actually did. The decision was documented three times and the outcome not at all.
+
+### Two passes, two documents
+
+| Pass | Context | Holds |
+|---|---|---|
+| compare | `restore-access-jdk-trust-diff` | `comparison.md` — the decision |
+| install | `restore-access-jdk-trust-result` | `result.md` — the outcome |
+
+`result.md` is a before-and-after per JDK: identity and version, entries before
+and after, **Added** (what this JVM trusts now and did not before) and
+**Removed** (what it trusted before and does not now), plus where both backups
+went.
+
+Two details make it honest rather than merely present.
+
+**The Added table is read back from the installed file**, not from the capture,
+so role and expiry describe what the JVM is actually trusting rather than what
+the run intended to give it. A half-imported store shows as a half-imported
+store.
+
+**"Before" is the previous `jssecacerts` where one existed, and the JDK's stock
+`cacerts` where none did** — because that is what the JVM was really using. A
+diff against an empty file would report 150 additions that are not additions.
+
+### Removed is the section that justifies the change
+
+`copy`'s cost is not what it adds; it is what it drops, and no before-the-fact
+comparison shows that as concretely as a list of the authorities this JVM no
+longer trusts. Under `merge` the section reads "Nothing" — which is the claim
+`merge` makes about itself, now verified against the installed file rather than
+asserted.
+
+Verified on a fixture: a `copy` from a capture missing two Spanish public roots
+listed exactly those two under **Removed**; a later `merge` on the same JDK
+listed the same two under **Added**, coming back. The pair of runs is a history
+of what that JVM trusted and when.
+
+### Two bugs found by running it
+
+**The path printed after an install did not exist.** `artifact_run_finalize`
+renames the run out of its `.incomplete` staging directory and repoints
+`ARTIFACT_RUN_DIR`, so the path captured at begin time is stale by the time it is
+reported. The two older comparison functions happen to read `ARTIFACT_RUN_DIR`
+after finalizing and were never wrong; the new one saved it into a variable at
+the start, which is the version of the same code that is. Re-derived after
+finalize.
+
+**`result` was not a known run point**, so every install printed
+`context 'restore-access-jdk-trust-result' has no recognised point suffix;
+latest-wins applies`. Latest-wins is the correct behaviour for it — the newest
+install is the current state of the machine — so the fix is to declare it:
+`result` added to `ARTIFACT_RUNS_KNOWN_POINTS` in `.internal/artifact-runs.sh`.
+
+### The operator's `curl` check, on the host this all turns on
+
+```
+% curl -sS -o /dev/null -w '%{http_code}\n' https://ncube-combined-server.td.afg
+302
+```
+
+A pass: any status code means TLS validated, and 302 is a redirect, almost
+certainly to SSO. It also happens to be the single best piece of evidence for
+Revision 101's argument. `ncube-combined-server.td.afg` is covered by `*.td.afg`
+— the wildcard on the `ncube-server` entry that **expired on 2026-08-25** — and
+the host validates anyway, because macOS `curl` reads the keychain, `Root GAIG
+CA` is trusted there, and the server presents a *current* certificate chaining up
+through `Issuing-GAIG-CA01`.
+
+So the pinned leaf is not what makes that host work, and has not been for six
+days. The chain is. The JVM will reach the same host on the same terms once it
+trusts `issuing-gaig-ca01_20280630`, and will keep reaching it through every
+future renewal — which the pinned certificate, by construction, cannot.
+
+---
+
+## Revision 101 — the aliases that looked funny were not certificates of the kind they looked like
+
+> what are the 2nd and 3rd entries? `ncube-server` `oauth-server` I know these I
+> need to run my projects so they are needed but they look funny what are they
+> they don't look like the certificates I'm used to seeing like
+> CN=Issuing-GAIG-CA01
+
+They look different because they are a different kind of thing.
+
+| Alias | Subject | Issuer | Expires |
+|---|---|---|---|
+| `issuing-gaig-ca01_20280630` | `CN=Issuing-GAIG-CA01, DC=ga, DC=afginc, DC=com` | `CN=Root GAIG CA` | 2028-06-30 |
+| `ncube-server` | `CN=*.td.afg, O=Great American Insurance` | `CN=Issuing-GAIG-CA01` | **2026-08-25** |
+| `oauth-server` | `CN=*.cfnp-1.gaig.com, O=Great American Insurance` | `CN=Issuing-GAIG-CA01` | 2026-09-23 |
+
+The first is a CA. The other two are **wildcard server certificates** — one host
+each (well, one wildcard each), with an `EMAILADDRESS=`, an `OU=GAI IT Services`
+and a locality, because they were issued to identify a *server* rather than to
+sign anything. They are leaves.
+
+A leaf in a trust store is the fingerprint of an earlier workaround: someone hit
+a TLS failure against an internal service and imported that server's own
+certificate instead of the CA that issued it. Java accepts any
+`trustedCertEntry` as a trust anchor, so it works — which is why the workaround
+survives, and why it has to be redone at every renewal.
+
+**`ncube-server` expired on 2026-08-25, six days before this was read**, and
+`oauth-server` expires in twenty-three. An expired entry in a trust store is
+inert: importing it cannot make a connection succeed. The operator's belief that
+these are needed to run their projects is well founded and the conclusion does
+not follow — what is needed is the *issuer*, and the issuer is the first row in
+the same table, good until 2028. Trusting `Issuing-GAIG-CA01` covers `*.td.afg`,
+`*.cfnp-1.gaig.com`, and every other host it signs, through every renewal.
+
+That is now what the report says, per JDK, rather than something to be worked out
+by reading DNs.
+
+### Role and expiry, computed from the certificates themselves
+
+`keytool -list -v` gives alias, owner, issuer and dates, which is enough for the
+150-entry stock listing and not enough for the handful being decided. Each
+**added** alias is now exported and read through `cert_row_from_pem`, so the
+table carries `Role` and an expiry status — `**EXPIRED**`, `**expires within 30
+days**` (`openssl x509 -checkend 2592000`), or `current` — and the section grows
+two advisories when they apply: what a `leaf` row means, and what to do about
+dates.
+
+A fixture caught the role logic being wrong: a certificate with **no** Basic
+Constraints extension was classified `unknown`, when RFC 5280 §4.2.1.9 says an
+absent extension means *not a CA*. Anything that does not assert `CA:TRUE` is a
+leaf. The bucket named `unknown` had no advice attached to it, so exactly the
+rows most in need of explanation got none.
+
+Two advisory blocks were also printing to the terminal instead of into the
+report — a missing `>> "$md"` on a `printf` group. Caught by reading the
+generated file rather than the run output, which is the only way that class shows
+up.
+
+### Review, then act
+
+> I think this should just generate the compare artifact then after reviewing run
+> either `--jssecacerts merge` or `--jssecacerts copy`.
+
+Adopted. `--jssecacerts` no longer defaults to `merge`; with no mode, `java`
+compares, writes the artifact, and prints the two commands that would act.
+Naming a mode is how you say yes.
+
+The confirmation prompt it replaces asked for the decision at the one moment the
+operator had least information — the report had just been written and not yet
+read — which is the same defect Revision 99 fixed in that prompt's *wording* and
+did not fix in its *placement*.
+
+### Which JDK, and where
+
+Each per-JDK section now opens with the JDK's identity rather than a directory
+name: version from `Contents/Home/release`, the `Contents/Home` path, the
+`jssecacerts` path that would be written, the captured store's path on the image,
+and a marker on the one matching `REIMAGE_JDK_BASELINE`. Every installed JDK
+already got its own section; on a Mac with several, that was not enough to tell
+which section was about which.
+
+### Existing trust stores are backed up twice
+
+The compare pass copies every `jssecacerts` that already exists into
+`pre-existing/<jdk-name>-jssecacerts` inside the comparison run — before
+anything is installed, whichever mode is chosen later, and even if none is. The
+install pass still keeps `jssecacerts.pre-reimage-<stamp>` beside the JDK.
+
+They fail differently, which is why both: the sibling is what you reach for when
+reverting a bad install, and the run copy is what still exists after the JDK is
+upgraded or removed, which takes its whole directory and the sibling backup with
+it.
+
+### Two runbook fixes from the operator's terminal
+
+**The pin block chained three commands and made a bad path look like a bad
+certificate.**
+
+```
+ls -l "$CORP_CERT" && openssl x509 ... -inform PEM ... 2>/dev/null \
+  || openssl x509 ... -inform DER ...
+```
+
+`||` fires when *anything* to its left failed, a mistyped path included, so the
+DER attempt runs and prints a screen of `OSSL_DECODER` and `STORE routines`
+errors that read as a corrupt certificate. Suppressing the PEM form's errors to
+keep the chain readable makes it worse: the run that needed a diagnostic is the
+one whose diagnostic was discarded. Now three separate commands, PEM first, with
+the reason for not chaining them written down.
+
+**Step 5's troubleshooting pointer named a symptom the step could not produce.**
+*"If `curl` still fails against an internal endpoint after the trust change"* —
+but nothing in Step 5 ran `curl`, so the pointer dangled. The entry itself was
+correct and in the right place; what was missing was the verification it assumed.
+Step 5 now ends with one, and it is `curl`, because that is exactly the right
+test: macOS `curl` reads the keychain, so an internal host that failed before the
+trust change should succeed after it with no bundle and nothing from Step 7 in
+place. It also draws the Step 5 / Step 7 line concretely — `curl`, `git` and the
+browsers are finished once the keychain is right; npm, pip, `requests` and the
+JVM carry their own trust stores and need Step 7 regardless. The entry is
+retitled to name its cause rather than its symptom.
 
 ---
 

@@ -130,7 +130,7 @@ ARTIFACT_RUNS_FIRST_WINS_POINTS="before pre-restart"
 # delta joins one phase's own before- and after-state recordings -- what that
 # phase changed. Different questions, different lineages, and an official
 # pointer that flipped between them answered neither.
-ARTIFACT_RUNS_KNOWN_POINTS="before after entry exit pre-restart post-restart final diff delta"
+ARTIFACT_RUNS_KNOWN_POINTS="before after entry exit pre-restart post-restart final diff delta result"
 
 ARTIFACT_RUNS_MANIFEST_HEADING="# Artifact Runs"
 

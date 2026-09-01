@@ -102,37 +102,68 @@ The installs are script-free by design. Every install step is a small, standard 
 
 ## Artifact and Script Locations
 
-Every path this runbook reads or writes is defined here, once.
+Every path this runbook reads or writes is defined here, once. Later sections
+refer back to these names instead of redrawing them.
 
-This runbook is manual and does not run a fractogenesis-toolkit entrypoint:
+Primary script:
 
 ```text
-$FRACTOGENESIS_HOME/bin/    # no primary script — this runbook is executed by hand
+none — this runbook installs its toolchain by hand; the scripts below record and compare
 ```
 
-Input evidence used for comparison in Step 10:
+Related scripts, alphabetical:
+
+```text
+$FRACTOGENESIS_HOME/bin/compare-restored-state.sh      # entrypoint (Step 10 — version comparison against the captured inventories)
+$FRACTOGENESIS_HOME/bin/init-shell-env.sh              # entrypoint (Step 6 — removes the Phase 8 shell bridge)
+$FRACTOGENESIS_HOME/bin/prepare-artifact-root.py       # entrypoint (Step 7 — upsert-env, writes the JDK baseline into reimage.env)
+$FRACTOGENESIS_HOME/bin/record-restore-exit.sh         # entrypoint (Step 11 — exit boundary)
+$FRACTOGENESIS_HOME/bin/record-restore-prereqs.sh      # entrypoint (Step 0 — entry boundary)
+```
+
+Artifact root:
+
+```text
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/                # every artifact this runbook generates lands here
+```
+
+Input evidence used for comparison in Step 10, read and never written:
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/system-inventory/pre-image-YYYYMMDD-HHMMSS/
 $REIMAGE_ARTIFACT_ROOT/system-inventory/post-image-YYYYMMDD-HHMMSS/    # only present after Phase 13B
 ```
 
-Output written by Steps 0, 10, and 11:
-
-```text
-$REIMAGE_ARTIFACT_ROOT/reimaged-system/boundaries/     # Steps 0 and 11 — the entry and exit checklists
-$REIMAGE_ARTIFACT_ROOT/reimaged-system/comparisons/    # Step 10 — the version comparison
-```
-
-Both are run categories with the same shape: `runs/<context>-YYYYMMDD-HHMMSS/`
-holding that run's files, `official/<context>.txt` naming the newest run, and a
-`MANIFEST.md` indexing every completed run. Step 0 writes under the context
-`restore-runtime-entry` and Step 11 under `restore-runtime-exit`; Step 10 writes
-under `restore-runtime-inventory-diff`.
-
 The complete `system-inventory/` layout is defined once in the Master Directory Reference:
 
 [[master-directory-reference|Master Directory Reference]]
+
+### Bundle Layout
+
+Everything this runbook writes, under the artifact root named above. This tree is
+output only; the inputs are the `system-inventory/` captures listed above.
+
+```text
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/
+boundaries/MANIFEST.md                                           # index of every entry and exit run
+boundaries/official/restore-runtime-entry.txt                    # newest entry run
+boundaries/official/restore-runtime-exit.txt                     # newest exit run
+boundaries/runs/restore-runtime-entry-YYYYMMDD-HHMMSS/           # Step 0 — checklist.md
+boundaries/runs/restore-runtime-exit-YYYYMMDD-HHMMSS/            # Step 11 — checklist.md
+
+comparisons/MANIFEST.md                                          # index of every comparison
+comparisons/official/restore-runtime-inventory-diff.txt          # newest inventory diff
+comparisons/runs/restore-runtime-inventory-diff-YYYYMMDD-HHMMSS/ # Step 10 — comparison.md, vs the captured inventories
+```
+
+Both categories have the same shape: `runs/<context>-YYYYMMDD-HHMMSS/` holding
+that run's files, `official/<context>.txt` naming the newest run, and an
+append-only `MANIFEST.md` indexing every completed run.
+
+There is no `restore-notes/` in this phase. Phase 15 (`restore-home.md`) owns
+that category, where a hand-written note is the only artifact a step produces.
+Everything this runbook records is generated, so it goes to `boundaries/` and
+`comparisons/` where the run index can find it.
 
 ### Environment Variables
 
@@ -305,6 +336,41 @@ command -v brew
 brew --version
 ```
 
+**Close the completion-directory permissions now, before a shell config uses
+them.** Homebrew creates `share/` group-writable, and zsh's `compinit` refuses to
+load completions from any directory a second account could write to — everything
+on `FPATH` is executed in your shell. The result is a prompt at the top of every
+new terminal:
+
+```text
+zsh compinit: insecure directories, run compaudit for list.
+Ignore insecure directories and continue [y] or abort compinit [n]?
+```
+
+```bash
+compaudit
+```
+
+```bash
+compaudit | while IFS= read -r d; do chmod g-w,o-w "$d"; done
+```
+
+```bash
+rm -f "$HOME"/.zcompdump*
+```
+
+Open a new terminal to confirm the prompt is gone. Doing it here rather than
+when it appears is the cheaper order: the prompt only shows up once a shell
+config puts a Homebrew directory on `FPATH`, which is Phase 10B Step 8, by which
+point it is competing for attention with a dotfile merge.
+
+`compaudit` printing nothing while the prompt persists means the flagged
+directory is one that does not exist yet — `~/.docker/completions` is the usual
+one, and Phase 12 creates it. Harmless, and it resolves itself.
+
+> [!bug] Troubleshooting
+> If the prompt appears anyway, here or in a later phase, see [[#Every new terminal asks about insecure directories|Every new terminal asks about insecure directories]].
+
 A `Brewfile` may exist under the captured system inventory. Review it before considering `brew bundle` — do not blindly reinstall everything from an old Brewfile when some entries are now managed by IT or no longer needed.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -447,13 +513,9 @@ bash ./bin/init-shell-env.sh --remove
 exec zsh -l
 ```
 
-> [!warning] Pitfall
-> Do this before the round-trip check below, not after. The Phase 8 block exports
-> `FRACTOGENESIS_HOME` as a plain login-shell export, which direnv does not manage
-> and therefore never unloads. Leave it in place and `cd` out of the toolkit — the
-> value stubbornly persists, the round trip appears to fail, and you would spend
-> the next twenty minutes debugging a direnv hook that was working correctly the
-> whole time. Removing the block first is what makes the check mean anything.
+Do this before the round-trip check below, not after. The Phase 8 block exports
+`FRACTOGENESIS_HOME` as a plain login-shell export, which direnv does not manage
+and therefore never unloads.
 
 Approve the toolkit's `.envrc` and confirm the variable populates:
 
@@ -468,9 +530,17 @@ echo "$FRACTOGENESIS_HOME"
 `echo "$FRACTOGENESIS_HOME"` must print a resolved absolute path. `cd` out of the toolkit and back in — the value should disappear and reappear. That round trip is the proof the hook is live, not just that `direnv` is installed.
 
 > [!warning] Pitfall
-> **A direnv setup that is not working looks exactly like one that is.** Nothing
-> errors either way, so the two failures below are found by checking, not by
-> noticing.
+> **You cannot tell direnv's real state by looking, and it misleads in both
+> directions.** Nothing errors either way, so each case below is found by
+> checking rather than by noticing.
+>
+> **It can look broken when it is fine.** Leave the Phase 8 `~/.zprofile` block
+> in place and `cd` out of the toolkit: `FRACTOGENESIS_HOME` stubbornly persists,
+> because a plain login-shell export is not direnv's to unload. The round trip
+> appears to fail and you spend twenty minutes debugging a hook that was working
+> the whole time. Removing the block first is what makes the check mean anything.
+>
+> **And it can look fine when it is broken**, in two ways.
 >
 > A restored `.envrc` stays blocked until `direnv allow` is run **in that
 > directory**. direnv records approval by content hash on the machine, and a
@@ -1102,9 +1172,44 @@ The installers do X; these judgment calls stay with you.
 
 ## Troubleshooting
 
-Two install-time failures have fixes long enough to break the flow of the step that surfaces them. Each of those steps links in from a callout.
+Three install-time failures have fixes long enough to break the flow of the step that surfaces them. Each of those steps links in from a callout.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
+
+### Every new terminal asks about insecure directories
+
+```text
+zsh compinit: insecure directories, run compaudit for list.
+Ignore insecure directories and continue [y] or abort compinit [n]?
+```
+
+zsh's `compinit` audits every directory on `FPATH` before loading completions
+from it and refuses any that is group- or world-writable, because everything on
+`FPATH` is executed in your shell. Homebrew creates its `share/` directories that
+way.
+
+Seeing this means the permissions were never closed, or a directory has been
+added to `FPATH` since. The fix is three commands and it lives in
+[[#Step 3 — Install Homebrew|Step 3]] — run them there, then open a new terminal.
+
+Two things that step does not cover, because they only show up here:
+
+- **`compaudit` still lists something after the `chmod`.** The objection is
+  ownership rather than mode: it also refuses anything owned by neither you nor
+  root. Read `ls -ld` on it before taking ownership of something MDM placed
+  there.
+- **The prompt appeared long after Step 3.** Something put a new directory on
+  `FPATH` — a shell config merged in Phase 10B Step 8 is the usual cause. Rerun
+  the same three commands; nothing about them is one-time.
+
+**Fix it rather than silencing it.** `compinit -u` skips the audit, which is the
+common advice and the wrong trade. Beyond what the check is for, that prompt is
+an interactive `read` running at shell startup: paste a multi-line block into a
+fresh terminal and its first line is consumed as the answer instead of running.
+A command block that half-executes is worse than one that fails, and this is the
+only way it can happen before the block is even reached.
+
+[[#Step 4 — Update Homebrew and Run Diagnostics|⮕ Continue to Step 4 — Update Homebrew and Run Diagnostics]]
 
 ### `brew doctor` reports a stale `/usr/local` on Apple silicon
 
