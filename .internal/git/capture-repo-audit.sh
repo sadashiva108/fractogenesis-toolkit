@@ -55,9 +55,10 @@
 #   -h, --help                     Show this help.
 #
 # Output (written beneath --dest):
-#   MANIFEST.md
+#   MANIFEST.md          shared run index (artifact-runs.sh)
+#   repo-audit-index.md  per-run repository counts, this category only
 #       Append-only index of successful repository-audit runs.
-#   latest-run.txt
+#   official/<context>.txt
 #       Relative path to the newest successful run directory.
 #   runs/<context>-YYYYMMDD-HHMMSS/
 #       One self-contained audit run with stable filenames:
@@ -217,32 +218,49 @@ fi
 
 mkdir -p "$DEST/runs"
 
-MANIFEST_PATH="$DEST/MANIFEST.md"
-LATEST_RUN_PATH="$DEST/latest-run.txt"
-STAMP="$(date +%Y%m%d-%H%M%S)"
-RUN_ID="${CONTEXT}-${STAMP}"
-RUN_RELATIVE="runs/$RUN_ID"
-FINAL_RUN_DIR="$DEST/$RUN_RELATIVE"
-WORK_RUN_DIR="$DEST/runs/.${RUN_ID}.incomplete"
-
-if [[ -e "$FINAL_RUN_DIR" || -e "$WORK_RUN_DIR" ]]; then
-  echo "ERROR: repository-audit run directory already exists for this timestamp: $FINAL_RUN_DIR" >&2
-  exit 1
+# Staging, the atomic rename, the append-only index and the pointer were all
+# hand-rolled here first; `artifact-runs.sh` is that implementation extracted so
+# every producer shares one contract. This now calls it rather than carrying a
+# second copy that can drift from the original.
+#
+# The five domain columns the old manifest carried -- repositories, dirty,
+# local-only, stash, untracked -- have no home in the shared seven-column
+# schema, and squashing them into free text would lose a scannable index. They
+# keep their own file, `repo-audit-index.md`, which IS the old manifest: it was
+# renamed rather than regenerated, so every historical row survives verbatim.
+# Two indexes over one set of runs is a drift risk, and the mitigation is that
+# only this script writes either of them, in one place, at one moment.
+RUNS_LIB="$SCRIPT_DIR/../artifact-runs.sh"
+if [[ ! -f "$RUNS_LIB" ]]; then
+  echo "ERROR: shared run index not found: $RUNS_LIB" >&2
+  exit 2
 fi
+# shellcheck source=../artifact-runs.sh
+source "$RUNS_LIB"
 
-if [[ -e "$MANIFEST_PATH" ]] && ! grep -q '^# Repository Audit Runs$' "$MANIFEST_PATH" 2>/dev/null; then
-  echo "ERROR: existing manifest is not the canonical append-only repository-audit index:" >&2
-  echo "  $MANIFEST_PATH" >&2
+INDEX_PATH="$DEST/repo-audit-index.md"
+
+if [[ -e "$INDEX_PATH" ]] && ! grep -q '^# Repository Audit Index$' "$INDEX_PATH" 2>/dev/null; then
+  echo "ERROR: existing file is not the canonical repository-audit domain index:" >&2
+  echo "  $INDEX_PATH" >&2
   echo "Remove that file before running the current audit workflow." >&2
   exit 2
 fi
 
-mkdir "$WORK_RUN_DIR"
+if ! artifact_run_begin "$DEST" "$CONTEXT"; then
+  echo "ERROR: could not stage a repository-audit run under: $DEST" >&2
+  exit 1
+fi
+
+# Named for what the rest of this script already calls them, so the body below
+# is unchanged: it writes into the staging directory and reads the promoted one.
+RUN_ID="$ARTIFACT_RUN_ID"
+RUN_RELATIVE="$ARTIFACT_RUN_RELATIVE"
+WORK_RUN_DIR="$ARTIFACT_RUN_DIR"
+FINAL_RUN_DIR="$DEST/$RUN_RELATIVE"
 
 cleanup_incomplete_run() {
-  if [[ -d "$WORK_RUN_DIR" ]]; then
-    rm -rf "$WORK_RUN_DIR"
-  fi
+  artifact_run_abort
 }
 trap cleanup_incomplete_run EXIT
 trap 'exit 130' INT TERM
@@ -593,28 +611,33 @@ done < <(find_repos)
   echo "  ignored-files.tsv"
 } >> "$REPORT"
 
-mv "$WORK_RUN_DIR" "$FINAL_RUN_DIR"
+if [[ ! -e "$INDEX_PATH" ]]; then
+  cat > "$INDEX_PATH" <<'EOF'
+# Repository Audit Index
 
-if [[ ! -e "$MANIFEST_PATH" ]]; then
-  cat > "$MANIFEST_PATH" <<'EOF'
-# Repository Audit Runs
-
-This file is an append-only index of successful repository-audit runs.
+Append-only, and specific to this category: the per-run repository counts that
+the shared seven-column `MANIFEST.md` has no room for. `MANIFEST.md` is the
+authority on which runs exist and which is official; this file exists so those
+counts stay scannable side by side rather than buried in each run's report.
 
 | Completed | Context | Run | Repositories | Dirty repos | Local-only commit repos | Stash repos | Untracked repos | Summary |
 |---|---|---|---:|---:|---:|---:|---:|---|
 EOF
 fi
 
+# The domain row first: if finalize fails, an indexed run with no counts is
+# easier to spot and repair than counts pointing at a run nothing indexed.
 COMPLETED_AT="$(date '+%Y-%m-%d %H:%M:%S')"
 printf '| %s | `%s` | `%s` | %d | %d | %d | %d | %d | [Open report](%s/repo-audit-summary.txt) |\n' \
   "$COMPLETED_AT" "$CONTEXT" "$RUN_ID" \
   "$repo_count" "$dirty_repo_count" "$local_commit_repo_count" \
-  "$stash_repo_count" "$untracked_repo_count" "$RUN_RELATIVE" >> "$MANIFEST_PATH"
+  "$stash_repo_count" "$untracked_repo_count" "$RUN_RELATIVE" >> "$INDEX_PATH"
 
-LATEST_TEMP="$DEST/.latest-run.$$.tmp"
-printf '%s\n' "$RUN_RELATIVE" > "$LATEST_TEMP"
-mv "$LATEST_TEMP" "$LATEST_RUN_PATH"
+if ! artifact_run_finalize "$DEST" \
+     "$repo_count repos / $dirty_repo_count dirty / $local_commit_repo_count local-only / $stash_repo_count stash / $untracked_repo_count untracked"; then
+  echo "ERROR: the audit was written but could not be indexed." >&2
+  exit 1
+fi
 
 trap - EXIT INT TERM
 
@@ -633,6 +656,8 @@ echo "  $FINAL_RUN_DIR/untracked-nonignored.tsv"
 echo "  $FINAL_RUN_DIR/ignored-files.tsv"
 echo
 echo "Manifest:"
-echo "  $MANIFEST_PATH"
-echo "Latest-run pointer:"
-echo "  $LATEST_RUN_PATH"
+echo "  $DEST/MANIFEST.md"
+echo "Domain index:"
+echo "  $INDEX_PATH"
+echo "Official pointer:"
+echo "  $DEST/official/$CONTEXT.txt"

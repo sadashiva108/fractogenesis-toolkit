@@ -1,5 +1,9 @@
 # Apply Manifest
 
+**Revision 120** — supersedes Revision 119 and earlier. The repository audit joins the shared run index, and keeps the counts the shared schema has no room for.
+
+**Revision 119** — supersedes Revision 118 and earlier. The comparison stops asking a question the decisions log already answered.
+
 **Revision 118** — supersedes Revision 117 and earlier. Every `reimage.env` key gets one owning runbook, and the template stops asking for values it does not own.
 
 **Revision 117** — supersedes Revision 116 and earlier. The other side of the ledger: a decision the immutable image cannot carry.
@@ -255,6 +259,23 @@ several separate rounds of work, and splicing them by hand is how the duplicate
 `bootstrap.sh`, which chmods `bin/` on extract. Commit it with mode 100755 so
 `git archive` carries the bit onto the jump drive.
 
+`.internal/sign-offs.sh` is the exception to that: it is sourced, never executed,
+so it ships 100644 alongside `artifact-runs.sh` and `artifact-config.sh`. A
+foundation file with the executable bit set invites someone to run it, and it
+does nothing when run.
+
+## Delivery note — Revisions 116, 117 and 118 shipped together
+
+They were written in two concurrent sessions against one working tree and landed
+in a single commit, `bb7e2d5`, whose message names only Revision 118's change.
+Nothing is missing and nothing was overwritten — the three revisions below are
+the record — but `git log` alone will not show that the sign-off mechanism and
+the decisions log arrived in that commit, and a bisect will not separate them.
+Read this file, not the log, for what changed when.
+
+Revision 116 and 117 touched no file that Revision 118 touched, with one shared
+exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
+
 ---
 
 ## Modified — repo root
@@ -275,13 +296,18 @@ several separate rounds of work, and splicing them by hand is how the duplicate
 | `restore-home.md` | `restore-home.md` |
 | `restore-apps.md` | `restore-apps.md` |
 | `restore-intellij.md` | `restore-intellij.md` |
-| `restore-home.md` | `restore-home.md` |
 | `reimaged-system-checks.md` | `reimaged-system-checks.md` |
 | `reimage-prep-checks.md` | `reimage-prep-checks.md` |
 | `restore-docker.md` | `restore-docker.md` |
 | `restore-git.md` | `restore-git.md` |
 | `backup-repos.md` | `backup-repos.md` |
 | `reimage.env.example` | `reimage.env.example` |
+
+## Modified — `.internal/`
+
+| File | Destination |
+|---|---|
+| `capture-repo-audit.sh` | `.internal/git/capture-repo-audit.sh` |
 
 ## Modified — `references/`
 
@@ -313,8 +339,176 @@ several separate rounds of work, and splicing them by hand is how the duplicate
 | `restore-repos.sh` | `bin/restore-repos.sh` |
 | `record-restore-prereqs.sh` | `bin/record-restore-prereqs.sh` |
 | `record-restore-state.sh` | `bin/record-restore-state.sh` |
+| `backup-repos.sh` | `bin/backup-repos.sh` |
 | `setup-reimage-env.sh` | `bin/setup-reimage-env.sh` |
 | `compare-restored-state.sh` | `bin/compare-restored-state.sh` |
+
+---
+
+## Revision 120 — one index could not say which lineage it meant
+
+`repo-audit-reports/` was the pattern everything else copied. `artifact-runs.sh`
+says so in its own header — the staging directory, the atomic rename, the
+append-only manifest and the pointer were all worked out here first and then
+extracted. What did not get extracted was this category itself, so it kept a
+second copy of the machinery, and the two drifted in one specific way.
+
+The old `latest-run.txt` held a single pointer for two lineages. Its readers all
+accepted either prefix:
+
+```
+runs/pre-image-*|runs/post-image-*) ;;
+```
+
+which means the pointer answered "whichever ran last", not "the pre-image
+baseline". `artifact-runs.sh` already named this as a known defect. It was not
+hypothetical: `restore-repos.sh` reads that pointer to find the audit it
+restores *from*, and writes a `post-image-restore-*` run when it finishes. Run it
+twice and the second run's input is the first run's output — a restore restoring
+from a restore, with nothing to catch it.
+
+`official/pre-image.txt` and `official/post-image-restore.txt` are one pointer
+per lineage, and all four call sites now name the one they mean.
+
+### The five columns, and where they went
+
+The category's manifest was not the shared seven-column schema. It carried
+`Repositories | Dirty repos | Local-only commit repos | Stash repos | Untracked
+repos` — a per-run summary you can scan down. The shared schema has one free-text
+`Result` column and no room for them.
+
+They were not squashed into it. The old manifest was **renamed** to
+`repo-audit-index.md`, so every historical row survives verbatim with its
+columns intact, and `reindex-artifact-runs.sh` built the standard `MANIFEST.md`
+alongside it from the run directories. Two indexes over one set of runs is the
+drift risk this repo's conventions warn about; the mitigation is that a single
+script writes both, in one place, at one moment, and the domain row goes first —
+an indexed run missing its counts is easier to spot and repair than counts
+pointing at a run nothing indexed.
+
+`MANIFEST.md` remains the authority on which runs exist and which is official.
+`repo-audit-index.md` answers a different question, and says so at the top.
+
+### The run directories never moved
+
+This is what made the conversion safe to do mid-reimage. `runs/pre-image-*` and
+`runs/post-image-restore-*` are exactly where they were; only the index and the
+pointers changed. Nothing that resolves a run *path* needed touching, which is
+most of what reads this category.
+
+### Retrofit
+
+Four existing runs on the open artifact root — one pre-image audit from
+2026-08-16 and three post-image restores from 2026-08-25 — were indexed by
+`reindex-artifact-runs.sh`, which inserts in completion order rather than
+appending, so recovering an older run cannot make it official. Both pointers
+resolve to the newest run of their own lineage. The category held no pins, so
+the rebuild was purely computational.
+
+### Verification at time of delivery
+
+- `bash -n` clean on all five edited scripts; `verify-script-portability.sh`
+  clean against the Bash 3.2 / BSD floor; `verify-doc-paths.sh --all` clean;
+  `verify-runbook-structure.sh` unchanged at its pre-existing 30 FAIL / 5 WARN.
+- The retrofit was performed on the live category and inspected: 4 runs indexed,
+  2 lineages, `repo-audit-index.md` retaining its row and its columns.
+- `restore-repos.sh` run end to end against a scratch root: it resolved the
+  pre-image lineage by name, staged its own run, promoted it, indexed it,
+  advanced `official/post-image-restore.txt` without disturbing
+  `official/pre-image.txt`, and reported the promoted path rather than the
+  staging one.
+- Run on Linux with GNU coreutils and Bash 5.x. Not executed on the target Mac.
+
+### Known follow-ups, not applied
+
+- `repo-audit-reports/latest-run.txt` is now inert and should be deleted. It
+  could not be removed from here: the session's mount refuses deletion.
+- `time-machine/` and `system-inventory/` were scoped and deliberately not
+  converted. A Time Machine "operation" spans a dozen `run-time-machine.sh`
+  subcommand invocations over hours, and `artifact_run_begin`/`finalize` is
+  per-invocation, so grouping them needs a session anchor that does not exist
+  yet. `capture-system-inventory.sh --section` deliberately updates the latest
+  bundle **in place**, which is precisely what a run index exists to prevent;
+  converting it means choosing between that workflow and run immutability.
+- `managed-inventory/` is clean and unconverted. `backup-apps.sh` resolves its
+  newest bundle by glob, so moving directories into `runs/` breaks that read.
+
+---
+
+## Revision 119 — the comparison reads the other half of the ledger
+
+Revision 117 gave a deliberate difference somewhere to live. It left the loop
+open at the end that matters: `compare-restored-state.sh` still reported the
+retired SSH key as `**MISSING**` on every run, and finding out that it was
+deliberate meant knowing to go and ask. A reader who has to remember to check is
+a reader who eventually stops reading — and a comparison people skim is worse
+than one nobody runs, because it still looks like it is being watched.
+
+So the comparison reads `decisions.md` itself. A row covered by a decision now
+says so where the question is actually asked:
+
+```
+| Homebrew | `MISSING` | `Homebrew 6.0.16` | **MISSING** — **decided** |
+```
+
+### The marker is appended, never substituted
+
+The verdict still reads `**MISSING**`, because the row *is* missing — that is a
+fact about the machine, and a decision does not change it. `— **decided**` is a
+separate claim: somebody already weighed this. Replacing the verdict would hide
+a live finding behind a decision that might have been made about a different run
+entirely, and would make the comparison lie in exactly the direction nobody
+would check.
+
+### Two shapes of reference, and why the row label must match exactly
+
+`--excepts <lineage>` explains a comparison as a whole and lists the entry under
+a new `## Recorded Decisions` section. `--excepts <lineage>:<label>` names one
+row and marks it.
+
+The label match is exact, deliberately. A substring or fuzzy match would let a
+decision about `Java` silently excuse `JavaScript`, and an excuse applied to the
+wrong row is strictly worse than no excuse at all: it removes the one signal
+that would have surfaced the problem. An unmatched label simply does not mark
+anything, which is a visible failure rather than a quiet one.
+
+### A missing log is not an error
+
+Decisions are optional. A comparison that refused to run without a decisions log
+would be a worse tool than the one it replaced, so an absent or unreadable file
+leaves the output exactly as it was before this revision — no section, no
+markers, no legend line.
+
+### Stale text from Revision 116, found while here
+
+Three places still told the operator to answer Manual rows inside `checklist.md`,
+which Revision 116 had already moved: `restore-runtime.md` twice, including a
+Pitfall that prescribed carrying answers forward by hand, and
+`verify-reimaged-system.md` once. They are corrected to describe the sign-off.
+Instructions that describe a behaviour the code no longer has are worse than
+absent ones — they are followed.
+
+### Verification at time of delivery
+
+- `bash -n` clean; `verify-script-portability.sh` clean against the Bash 3.2 /
+  BSD floor; `verify-doc-paths.sh --all` clean; `verify-runbook-structure.sh`
+  unchanged at its pre-existing 30 FAIL / 5 WARN.
+- Exercised against a copy of this event's real `system-inventory/` bundle, so
+  the rows are the ones the phase actually produces. With a decision recorded
+  against `restore-runtime-inventory-diff:Homebrew`, exactly that row gained the
+  marker and the other four `**MISSING**` rows did not; the `Recorded Decisions`
+  section and the legend line both appeared. With the log removed, the output
+  contained no trace of either — same file as before the change.
+- Run on Linux with GNU coreutils and Bash 5.x. Not executed on the target Mac.
+
+### Known follow-ups, not applied
+
+- Nothing writes an `--excepts` reference for you. The row label has to be typed
+  to match, and a typo fails silently in the safe direction — the row is simply
+  not marked. A `--suggest` mode that offered the labels from the official run
+  would remove that entirely.
+- The run-index conversion of `time-machine/` and `repo-audit-reports/` remains
+  open, and the cost found while scoping it is recorded separately.
 
 ---
 

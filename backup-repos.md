@@ -235,7 +235,8 @@ Size audit:
 ```text
 size-audit-reports/
 ├── MANIFEST.md            # append-only index of successful runs
-├── latest-run.txt         # one relative run path, updated only on success
+├── official/              # one pointer per lineage, computed from MANIFEST.md
+├── repo-audit-index.md    # per-run repository counts, this category only
 └── runs/
     └── pre-image-backup-repos-YYYYMMDD-HHMMSS/
         └── size-audit-report.txt
@@ -246,7 +247,7 @@ Repository audit:
 ```text
 repo-audit-reports/
 ├── MANIFEST.md
-├── latest-run.txt
+├── official/pre-image.txt
 └── runs/
     └── pre-image-YYYYMMDD-HHMMSS/
         ├── repo-audit-summary.txt
@@ -609,7 +610,7 @@ Then refresh with `--preserve-selections`, so the regenerated superset inherits 
 Open the newest summary to review it:
 
 ```bash
-open "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/$(cat "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/latest-run.txt")/repo-audit-summary.txt"
+open "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/$(cat "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/official/pre-image.txt")/repo-audit-summary.txt"
 ```
 
 Act on what the audit surfaces — push feature branches, preserve uncommitted work or stashes on a `reimage/YYYYMMDD/…` branch, and decide what to do with untracked non-ignored files — before moving on. The ignored files it lists are handled by the path you choose next.

@@ -628,9 +628,10 @@ its Step 0; this is the other half of that pair.
 ```
 
 It writes `checklist.md` under `reimaged-system/boundaries/` with the context
-`verify-reimaged-system-exit`, and exits non-zero on any `FAIL`. The file holds
-two tables: **Automated**, and **Manual** — the rows it cannot answer, left as
-`TODO`.
+`verify-reimaged-system-exit`, and exits non-zero on any `FAIL`. That file holds
+the **Automated** rows. The rows it cannot answer go to a sign-off under
+`reimaged-system/sign-offs/`, which the run names at the end, because a rerun
+replaces the run directory and would take an answer with it.
 
 Every Automated row resolves through the run index rather than by looking for
 directories, so a bundle that exists on a Phase 8 fallback path but was never

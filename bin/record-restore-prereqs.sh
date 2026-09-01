@@ -623,18 +623,17 @@ check_restore_repos() {
   # 4 -- the audit pointer resolves to a run directory that is actually there.
   audit_root="${REIMAGE_ARTIFACT_ROOT:-/nonexistent}/repo-audit-reports"
   run_dir=""
-  if [[ -f "$audit_root/latest-run.txt" ]]; then
-    # The pointer stores a path relative to repo-audit-reports/ and may or may
-    # not carry the leading runs/ segment. bin/restore-repos.sh strips it and
-    # joins uniformly; do the same here, or this row disagrees with the script
-    # it is meant to gate.
-    n="$(tr -d '[:space:]' < "$audit_root/latest-run.txt" 2>/dev/null)"
-    run_dir="$audit_root/runs/${n#runs/}"
+  # `official/pre-image.txt` names the lineage this row is about. The pointer it
+  # replaced accepted either prefix and returned whichever ran last, so a
+  # post-image restore run could answer a question about the pre-image baseline.
+  n="$(artifact_run_official "$audit_root" "pre-image" 2>/dev/null || true)"
+  if [[ -n "$n" ]]; then
+    run_dir="$audit_root/$n"
   fi
   if [[ -n "$run_dir" && -d "$run_dir" ]]; then
     record PASS "Pre-image repository audit resolves" "\`$(basename "$run_dir")\`"
   else
-    record FAIL "Pre-image repository audit resolves" "\`$audit_root/latest-run.txt\` is missing or names a run that is not on disk — this phase has nothing to restore from"
+    record FAIL "Pre-image repository audit resolves" "\`$audit_root/official/pre-image.txt\` is missing or names a run that is not on disk — this phase has nothing to restore from"
     return 0
   fi
 

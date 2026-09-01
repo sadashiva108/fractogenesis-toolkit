@@ -395,23 +395,17 @@ newest_stamped_dir() {
   find "$dir" -maxdepth 1 -type d -name "$pattern" 2>/dev/null | sort | tail -1
 }
 
+# The old single `latest-run.txt` could not say WHICH lineage it wanted: it
+# accepted `runs/pre-image-*` or `runs/post-image-*` and returned whichever ran
+# last, so a post-image restore run silently became the answer to a question
+# about the pre-image baseline. `official/<context>.txt` is one pointer per
+# lineage, and this asks for the one it means.
 resolve_latest_repo_audit_run() {
   local audit_root="$1"
-  local pointer="$audit_root/latest-run.txt"
-  local run_relative=""
-  local run_dir=""
+  local run_relative="" run_dir=""
 
-  [[ -f "$pointer" ]] || return 1
-  IFS= read -r run_relative < "$pointer" || true
-
-  case "$run_relative" in
-    runs/pre-image-*|runs/post-image-*) ;;
-    *) return 1 ;;
-  esac
-
-  case "$run_relative" in
-    *..*|/*) return 1 ;;
-  esac
+  run_relative="$(artifact_run_official "$audit_root" "pre-image" 2>/dev/null || true)"
+  [[ -n "$run_relative" ]] || return 1
 
   run_dir="$audit_root/$run_relative"
   [[ -d "$run_dir" ]] || return 1
@@ -692,7 +686,7 @@ if [[ "$PHASE" == "pre" ]]; then
       record_check PASS "Stashes" "Latest audit reports none"
     fi
   else
-    record_check FAIL "Git audit report" "latest-run.txt does not resolve to a run containing repo-audit-summary.txt"
+    record_check FAIL "Git audit report" "`official/pre-image.txt` does not resolve to a run containing repo-audit-summary.txt"
     record_check SKIP "Local-only commits" "Skipped -- latest audit report unavailable"
     record_check SKIP "Stashes" "Skipped -- latest audit report unavailable"
   fi

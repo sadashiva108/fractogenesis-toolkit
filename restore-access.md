@@ -1464,6 +1464,7 @@ Rows worth understanding, because they are not the version comparison that
 | `correctly dropped` | An inverted row, and a **pass**. `http.sslverify = false` was recorded pre-image; carrying it forward would disable TLS verification for every Git HTTPS remote and undo Step 7. |
 | `**CARRIED FORWARD**` | That value came back. Remove it with `git config --global --unset http.sslverify`, and, if one internal host genuinely needs it, scope it to that host as [[restore-git#An internal Enterprise Server host fails TLS verification|restore-git.md → Troubleshooting]] describes. |
 | `**MISSING**` | Recorded pre-image, absent now. On this phase that is trust or identity, not a tool a later phase installs. |
+| `— **decided**` | Appended to whatever verdict precedes it. The difference is real and the verdict still says so; the marker adds that it was deliberately accepted and the reason is in `decisions.md`. A retired SSH key is the usual case: the DMG is immutable and legitimately still holds it, so this row would otherwise be flagged on every future run. Record one with `./bin/record-decision.sh --excepts restore-access-inventory-diff:<row>`. |
 
 `Git credential.helper` and `Git init.defaultBranch` reading `**MISSING**` here
 is expected: `restore-git.md` (Phase 11A) owns the global Git configuration and

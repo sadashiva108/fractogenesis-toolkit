@@ -56,9 +56,9 @@
 #                          A relative value is resolved against the current
 #                          directory, and a destination inside the repo
 #                          checkout is refused. Because the run then lives
-#                          outside repo-audit-reports/runs/, the
-#                          latest-post-image-restore.txt pointer is left
-#                          unchanged and Phase 14 keeps reading the previous
+#                          outside repo-audit-reports/runs/, it is not indexed
+#                          and official/post-image-restore.txt is left
+#                          unchanged, so Phase 14 keeps reading the previous
 #                          default-located run.
 #   --open                 Reveal the generated report in Finder on completion.
 #   -h, --help             Show this message and exit.
@@ -116,6 +116,14 @@ fi
 # run writes a newly stamped file, so a row answered inside one is not carried
 # into the next. The sign-off carries answers forward and records the run each
 # was answered against. See .internal/sign-offs.sh.
+RUNS_LIB="$REPO_ROOT/.internal/artifact-runs.sh"
+if [[ ! -f "$RUNS_LIB" ]]; then
+  echo "ERROR: shared run index not found: $RUNS_LIB" >&2
+  exit 2
+fi
+# shellcheck source=../.internal/artifact-runs.sh
+source "$RUNS_LIB"
+
 SIGNOFF_LIB="$REPO_ROOT/.internal/sign-offs.sh"
 if [[ ! -f "$SIGNOFF_LIB" ]]; then
   echo "ERROR: shared sign-off helper not found: $SIGNOFF_LIB" >&2
@@ -251,18 +259,20 @@ fi
 
 AUDIT_ROOT="$REIMAGE_ARTIFACT_ROOT/repo-audit-reports"
 RUNS_DIR="$AUDIT_ROOT/runs"
-LATEST_POINTER="$AUDIT_ROOT/latest-run.txt"
 
 if [[ -z "$INPUT_RUN" ]]; then
-  if [[ ! -f "$LATEST_POINTER" ]]; then
-    echo "ERROR: latest-run pointer not found: $LATEST_POINTER" >&2
+  # `pre-image` by name, not "whatever ran last". The pointer this replaced
+  # accepted either prefix, so a previous post-image restore run could become
+  # the input to the next one -- restoring from a restore.
+  INPUT_RUN="$(artifact_run_official "$AUDIT_ROOT" "pre-image" 2>/dev/null || true)"
+  if [[ -z "$INPUT_RUN" ]]; then
+    echo "ERROR: no official pre-image repository-audit run under: $AUDIT_ROOT" >&2
     echo "Phase 2A (backup-repos.md) must produce a pre-image audit before Phase 11B can restore from it." >&2
     exit 2
   fi
-  INPUT_RUN="$(tr -d '[:space:]' < "$LATEST_POINTER")"
-  validate_run_reference "latest-run pointer" "$INPUT_RUN" || exit 2
-  # latest-run.txt stores a path relative to repo-audit-reports/; strip a
-  # leading runs/ segment when present so we can join uniformly below.
+  validate_run_reference "official pre-image pointer" "$INPUT_RUN" || exit 2
+  # The pointer stores a path relative to repo-audit-reports/; strip the leading
+  # runs/ segment so we can join uniformly below.
   INPUT_RUN="${INPUT_RUN#runs/}"
 else
   validate_run_reference "--input-run" "$INPUT_RUN" || exit 2
@@ -287,9 +297,20 @@ fi
 
 STAGED_LIVE="$REIMAGE_ARTIFACT_ROOT/staged-ignored-files/live"
 
+# A default-located run is staged and indexed through the shared run index; an
+# --output run is not, because it lives outside runs/ and the index resolves
+# relative to the category root. `post-image-restore` is its own lineage, so
+# advancing it never disturbs `official/pre-image.txt`.
 OUTPUT_DIR_DEFAULTED=false
 if [[ -z "$OUTPUT_DIR" ]]; then
-  OUTPUT_DIR="$RUNS_DIR/post-image-restore-$STAMP"
+  if ! artifact_run_begin "$AUDIT_ROOT" "post-image-restore"; then
+    echo "ERROR: could not stage a run under: $AUDIT_ROOT" >&2
+    exit 2
+  fi
+  OUTPUT_DIR="$ARTIFACT_RUN_DIR"
+  # The run id owns the stamp from here on, so the sign-off and the run name
+  # cannot drift apart by a second.
+  STAMP="${ARTIFACT_RUN_ID#post-image-restore-}"
   OUTPUT_DIR_DEFAULTED=true
 fi
 
@@ -307,10 +328,9 @@ OUT="$OUTPUT_DIR"
 RAW_DIR="$OUT/raw"
 mkdir -p "$RAW_DIR"
 
-# The run directory this script already writes IS the run identity, so the
-# sign-off can name it exactly without the category being converted to the
-# shared run index. It sits beside runs/ rather than inside one, because a run
-# directory is replaced and an answered row must not be.
+# The sign-off is named for this run, which is what lets a carried answer say
+# which run it was answered against. It sits beside runs/ rather than inside
+# one, because a run directory is replaced and an answered row must not be.
 if ! signoff_begin "$AUDIT_ROOT/sign-offs" "post-image-restore" "post-image-restore-$STAMP"; then
   echo "ERROR: cannot open a sign-off under: $AUDIT_ROOT/sign-offs" >&2
   exit 2
@@ -820,16 +840,24 @@ Files:
 - raw/tracked-changes-input.tsv
 EOF
 
-# Pointer alongside (not replacing) the pre-image latest-run.txt owned by
-# Phase 2A. Distinct filename keeps ownership clear.
-# Only stamp it for a default-located run: the pointer is resolved relative to
-# repo-audit-reports/, so recording runs/post-image-restore-$STAMP after an
-# --output run elsewhere would leave Phase 14 pointed at a path that does not
-# exist.
+# Index this run in the shared category manifest. `post-image-restore` is its own
+# lineage, so `official/post-image-restore.txt` advances without disturbing
+# `official/pre-image.txt` -- the two questions no longer share one pointer.
+#
+# Only for a default-located run: an --output run lives outside runs/, and the
+# index resolves relative to repo-audit-reports/, so indexing it would leave a
+# pointer naming a path that is not there.
 if [[ "$OUTPUT_DIR_DEFAULTED" == true ]]; then
-  printf '%s\n' "runs/post-image-restore-$STAMP" > "$AUDIT_ROOT/latest-post-image-restore.txt"
+  if ! artifact_run_finalize "$AUDIT_ROOT" \
+       "$PRESENT_COUNT present / $NEEDS_CLONE_COUNT need clone / $CARRY_FORWARD_TOTAL carry-forward"; then
+    echo "ERROR: the report was written but could not be indexed." >&2
+    exit 2
+  fi
+  # Promoted: the staging path this script wrote into is now the run directory.
+  OUT="$AUDIT_ROOT/$ARTIFACT_RUN_RELATIVE"
+  REPORT_MD="$OUT/restore-status.md"
 else
-  echo "NOTE: --output was used; latest-post-image-restore.txt left unchanged." >&2
+  echo "NOTE: --output was used; the run was not indexed under $AUDIT_ROOT." >&2
 fi
 
 signoff_row "Rescue branches (\`reimage/YYYYMMDD/*\`) present on remote for every carry-forward row" "The pre-image audit recorded $CARRY_FORWARD_TOTAL carry-forward rows across $TOTAL repos; each must map to a pushed rescue branch or be intentionally discarded. Verify with \`git ls-remote origin 'reimage/*'\` per repo."

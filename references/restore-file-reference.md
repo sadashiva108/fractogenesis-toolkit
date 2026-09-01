@@ -99,8 +99,10 @@ $REIMAGE_ARTIFACT_ROOT/
 │   ├── runs/
 │   │   ├── pre-image-YYYYMMDD-HHMMSS/
 │   │   └── post-image-restore-YYYYMMDD-HHMMSS/
-│   ├── latest-run.txt
-│   └── latest-post-image-restore.txt
+│   ├── repo-audit-index.md
+│   └── official/
+│       ├── pre-image.txt
+│       └── post-image-restore.txt
 ├── gitignore-superset/
 ├── home-files-backup/
 │   ├── home/
@@ -198,7 +200,7 @@ Two `secrets-encrypted/` subtrees have dedicated restore consumers rather than a
 | Phase 10A — Restore Runtime Libraries | `system-inventory/pre-image-*/`, `system-inventory/post-image-*/`, `home-files-backup/dotfiles/` | usually notes only; later validated under `reimaged-system/`. Also retires the Phase 8 `~/.zprofile` bridge and hands config loading to direnv — see `references/toolkit-environment-reference.md` |
 | Phase 10B — Restore Access | `secrets-encrypted/`, `public-certs/`, `home-files-backup/dotfiles/` | `reimaged-system/restore-notes/`, `reimaged-system/sign-offs/restore-access-exit-*.md` |
 | Phase 11A — Restore Git | `secrets-encrypted/ssh/`, `secrets-encrypted/git/`, `toolkit-snapshot/latest-docs/` | dual `~/.gitconfig` + `~/.ssh/config` in place; validated end-to-end for work and personal identities |
-| Phase 11B — Restore Repositories | `repo-audit-reports/runs/pre-image-*/repos.tsv`, `staged-ignored-files/live/<label>/` | `repo-audit-reports/runs/post-image-restore-*/`, `repo-audit-reports/latest-post-image-restore.txt`, `repo-audit-reports/sign-offs/post-image-restore-*.md`, working repo checkouts |
+| Phase 11B — Restore Repositories | `repo-audit-reports/runs/pre-image-*/repos.tsv`, `staged-ignored-files/live/<label>/` | `repo-audit-reports/runs/post-image-restore-*/`, `repo-audit-reports/official/post-image-restore.txt`, `repo-audit-reports/sign-offs/post-image-restore-*.md`, working repo checkouts |
 | Phase 12 — Restore Apps | `app-settings-backup/`, `secrets-encrypted/`, `reimaged-system/restore-notes/` | `reimaged-system/restore-notes/restore-{apps,docker,intellij}-plan-*.md`, `reimaged-system/sign-offs/restore-{apps,docker,intellij}-*.md` |
 | Phase 13 — Post-Image Captures | matching Phase 4 capture outputs for comparison | `toolkit-snapshot/latest-docs/`, `toolkit-snapshot/pre-image-toolkit-snapshot-*/`, `toolkit-snapshot/latest-pre-image-toolkit-snapshot.txt`, `system-inventory/post-image-*/`, `managed-inventory/post-image-*/`, `performance-audit/post-image-performance-audit-*/`, `office-stability/post-reimage-*/` |
 | Phase 14 — Reimaged System Checks | everything needed for final validation context; every `reimaged-system/sign-offs/` file | `reimaged-system/checklists/reimage-checklist-*.md`, `reimaged-system/checklists/latest-reimage-checklist.txt`, `reimaged-system/sign-offs/reimaged-system-checks-*.md`, optional prose follow-up in `reimaged-system/restore-notes/` |

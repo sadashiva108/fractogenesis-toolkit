@@ -688,8 +688,59 @@ saw() {
   printf '%s\n' "$VERDICTS_SEEN" | grep -qxF "$1"
 }
 
+# ---------------------------------------------------------------------------
+# Recorded decisions
+#
+# A comparison that keeps reporting a difference someone already accepted trains
+# the reader to skim it, and skimming is how the one real finding gets missed.
+# `bin/record-decision.sh` writes the other half of that ledger -- an expired SSH
+# key deleted on purpose, against an immutable image that legitimately still
+# holds it. This reads it back, so an accepted difference says so in its own row
+# instead of waiting to be asked.
+#
+# Two shapes of reference are honoured. `--excepts <lineage>` explains the
+# comparison as a whole and is listed under its own heading; `--excepts
+# <lineage>:<label>` names one row and marks it. The label must match the row
+# exactly -- an approximate match would quietly excuse the wrong row, which is
+# strictly worse than excusing none.
+#
+# A missing or unreadable log is not an error. Decisions are optional, and a
+# comparison that refused to run without one would be worse than the problem.
+# ---------------------------------------------------------------------------
+DECIDED_LABELS=""
+DECISION_ENTRIES=""
+
+load_decisions() {
+  local log="${REIMAGE_ARTIFACT_ROOT:-/nonexistent}/reimaged-system/restore-notes/decisions.md"
+  [[ -f "$log" ]] || return 0
+
+  DECISION_ENTRIES="$(awk -v ctx="$RUN_CONTEXT" '
+    /^## / { heading = substr($0, 4) }
+    /^- \*\*Excepts:\*\*/ { if (index($0, ctx) > 0 && heading != "") print heading }
+  ' "$log" 2>/dev/null || true)"
+
+  # Refs are rendered as `code spans`, so odd-indexed backtick fields are the
+  # references themselves and even-indexed ones are the separators between them.
+  DECIDED_LABELS="$(awk -v ctx="$RUN_CONTEXT" '
+    /^- \*\*Excepts:\*\*/ {
+      n = split($0, part, "`")
+      for (i = 2; i <= n; i += 2) {
+        ref = part[i]
+        c = index(ref, ":")
+        if (c > 0 && substr(ref, 1, c - 1) == ctx) print substr(ref, c + 1)
+      }
+    }
+  ' "$log" 2>/dev/null || true)"
+  return 0
+}
+
+row_is_decided() {
+  [[ -n "$DECIDED_LABELS" ]] || return 1
+  printf '%s\n' "$DECIDED_LABELS" | grep -qxF -- "$1"
+}
+
 render_rows() {
-  local shown
+  local shown verdict
   while IFS=$'\t' read -r kind label live rec; do
     [[ -z "$label" ]] && continue
     # Presentation only. The verdict reads the raw value, because MISSING is the
@@ -698,7 +749,15 @@ render_rows() {
     # a false alarm in the worst direction.
     shown="$live"
     if [[ "$kind" == "absent" && "$live" == "MISSING" ]]; then shown="not set"; fi
-    printf '| %s | `%s` | `%s` | %s |\n' "$label" "$shown" "$rec" "$(verdict_for "$kind" "$live" "$rec")"
+    verdict="$(verdict_for "$kind" "$live" "$rec")"
+    # The marker is appended, never substituted. The verdict still says what the
+    # machine reports -- the row IS missing -- and `decided` only says someone
+    # already answered for it. Replacing the verdict would hide a finding behind
+    # a decision that may have been made about a different run.
+    if row_is_decided "$label"; then
+      verdict="$verdict — **decided**"
+    fi
+    printf '| %s | `%s` | `%s` | %s |\n' "$label" "$shown" "$rec" "$verdict"
   done <<< "$RESULTS"
 }
 
@@ -766,6 +825,17 @@ emit_note() {
   render_rows
   printf '\n'
 
+  if [[ -n "$DECISION_ENTRIES" ]]; then
+    printf '## Recorded Decisions\n\n'
+    printf 'These entries in `reimaged-system/restore-notes/decisions.md` name this\n'
+    printf 'comparison. A row marked **decided** above is covered by one of them.\n\n'
+    while IFS= read -r _entry; do
+      [[ -n "$_entry" ]] || continue
+      printf -- '- %s\n' "$_entry"
+    done <<< "$DECISION_ENTRIES"
+    printf '\nRead them in full with `./bin/record-decision.sh --check %s`.\n\n' "$RUN_CONTEXT"
+  fi
+
   printf '## How to read this\n\n'
   if [[ "$RUNBOOK" != "restore-runtime" ]]; then
     if saw '**MISSING**'; then printf -- '- **MISSING** means the capture recorded it and it is not here now — a step not yet run, or one that failed quietly.\n'; fi
@@ -785,6 +855,10 @@ emit_note() {
     if saw 'present'; then printf -- '- **present** means the capture listed it and it is here now. `06-homebrew.txt` records package names without versions, so presence is the only comparison it can support — a version column for those rows would read `no baseline` on every one.\n'; fi
     if saw 'expected later'; then printf -- '- **expected later** means a subsequent phase installs it. Docker Desktop arrives with \`restore-apps\`; its absence here is the sequence working, not a gap.\n'; fi
   fi
+  # Outside the branch: both comparison shapes can carry decided rows.
+  if [[ -n "$DECIDED_LABELS" ]]; then
+    printf -- '- **decided** means a row was deliberately accepted and the reason is recorded. The verdict beside it is unchanged and still true — the difference is real; what the marker adds is that someone already weighed it. Re-read the decision rather than the row if you are about to act on it.\n'
+  fi
   if [[ "$RUNBOOK" == "restore-runtime" ]]; then
     printf -- '- Comparison is on the version number, not the raw string, so `10.9.7` and `npm 10.9.7` count as the same. Both raw strings are shown so you can see what each side actually reported.\n'
   fi
@@ -800,6 +874,19 @@ emit_note() {
     fi
   fi
 }
+
+# Context: <phase>-<runbook>-diff. Latest-wins, because a rerun after fixing a
+# MISSING row is the newer truth -- unlike a `before` capture, where the first
+# run is the only honest one.
+# One lineage per baseline. Both wrote `-diff` until now, so the official
+# pointer named whichever ran last regardless of which question it answered.
+#
+# Derived here rather than beside artifact_run_begin because --dry-run renders
+# the note without ever staging a run, and the decisions lookup below needs the
+# lineage name in both paths.
+RUN_CONTEXT="${PHASE_RUNBOOK%.md}-inventory-diff"
+
+load_decisions
 
 if [[ "$DRY_RUN" == "true" ]]; then
   emit_note
@@ -822,13 +909,6 @@ if [[ -n "${REPO_ROOT:-}" && ( "$OUTPUT_ROOT" == "$REPO_ROOT" || "$OUTPUT_ROOT" 
   echo "ERROR: refusing to write output under the repo checkout: $OUTPUT_ROOT" >&2
   exit 2
 fi
-
-# Context: <phase>-<runbook>-diff. Latest-wins, because a rerun after fixing a
-# MISSING row is the newer truth -- unlike a `before` capture, where the first
-# run is the only honest one.
-# One lineage per baseline. Both wrote `-diff` until now, so the official
-# pointer named whichever ran last regardless of which question it answered.
-RUN_CONTEXT="${PHASE_RUNBOOK%.md}-inventory-diff"
 
 if ! artifact_run_begin "$OUTPUT_ROOT" "$RUN_CONTEXT"; then
   echo "ERROR: could not stage a run under: $OUTPUT_ROOT" >&2

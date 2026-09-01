@@ -1025,8 +1025,10 @@ bash bin/record-restore-exit.sh --runbook restore-runtime
 ```
 
 It writes `checklist.md` under `reimaged-system/boundaries/` and exits non-zero
-on any `FAIL`. The file holds two tables: **Automated**, the rows the script
-probed, and **Manual**, the rows it cannot answer, left as `TODO`.
+on any `FAIL`. That file holds the **Automated** rows — what the script probed.
+The rows it cannot answer go to a sign-off under `reimaged-system/sign-offs/`,
+which the run names at the end, because a rerun replaces the run directory and
+would take an answer with it.
 
 This is the exit half of a pair; `record-restore-prereqs.sh` is the entry half,
 run at each phase's Step 0. One check per boundary — Phase 10A's exit and Phase
@@ -1135,10 +1137,11 @@ need. If one turns out to be needed, install it and rerun rather than accepting
 the row.
 
 > [!warning] Pitfall
-> Each run writes its own dated directory, so a rerun does not update the file
-> you answered — it produces a new `checklist.md` with `TODO` in both rows again.
-> Answer the Manual rows in the last run you intend to keep, and carry the
-> answers forward if you rerun after answering.
+> A rerun carries your answers forward, but does not re-verify them. The new
+> sign-off copies each answer along with the run it was answered against, so a
+> row still naming an older run is *carried*: durable, but last checked against
+> a capture this run has replaced. Clear a row's `Answered against` cell to
+> re-affirm it on the next run.
 
 The exit criteria for this phase:
 

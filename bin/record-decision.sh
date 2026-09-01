@@ -22,10 +22,13 @@
 #
 # WHY `--excepts`. A decision that only a human can find is one a comparison
 # will re-flag every time it runs. Naming the lineage a decision excepts --
-# `comparisons/restore-access-inventory-diff` -- turns "why is this still
-# flagged?" into a lookup: `--check restore-access-inventory-diff`. The field is
-# free text on purpose; it records intent, and nothing here enforces that the
-# lineage exists, because a decision may well outlive the artifact it explains.
+# `restore-access-inventory-diff` -- turns "why is this still flagged?" into a
+# lookup: `--check restore-access-inventory-diff`. Adding a row label after a
+# colon goes further, and `compare-restored-state.sh` marks that row **decided**
+# in the comparison itself, which is where the question actually gets asked. The
+# field is free text on purpose; it records intent, and nothing here enforces
+# that the lineage exists, because a decision may well outlive the artifact it
+# explains.
 #
 # NOTHING IS EVER REWRITTEN. Entries are appended and never edited by this
 # script. Correcting a decision means appending the correction, the same rule
@@ -40,7 +43,8 @@
 #   ./bin/record-decision.sh \
 #     --runbook restore-access \
 #     --title "Retired id_rsa_shiva and id_rsa_work" \
-#     --excepts comparisons/restore-access-inventory-diff \
+#     --excepts restore-access-inventory-diff:id_rsa_shiva \
+#     --excepts restore-access-inventory-diff:id_rsa_work \
 #     --reason "Both keys were expired and unused. The DMG is immutable and
 #               still carries them, so the inventory diff will report them
 #               missing on every future run."
@@ -57,7 +61,14 @@
 #                       never a phase ordinal -- ordinals renumber.
 #   --title TEXT        One-line summary. Becomes the entry heading.
 #   --excepts REF       An artifact or lineage this decision explains away.
-#                       Repeatable. Optional.
+#                       Repeatable. Optional. Two shapes:
+#                         <lineage>          explains the whole comparison
+#                         <lineage>:<label>  explains one row, matched exactly
+#                       `compare-restored-state.sh` reads both: the first lists
+#                       the entry under Recorded Decisions, the second also marks
+#                       that row **decided**. The label must match the row text
+#                       exactly -- a near miss would excuse the wrong row, which
+#                       is worse than excusing none.
 #   --reason TEXT       The body. Omit to compose it on stdin.
 #   --artifact-root PATH  Override REIMAGE_ARTIFACT_ROOT for this invocation.
 #   --notes-root PATH   Directory holding decisions.md.

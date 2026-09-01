@@ -80,7 +80,7 @@ This runbook can be rerun. Each run writes a fresh timestamped bundle under `rep
 
 Read this before running anything. The phase is script-driven for the loop (repo enumeration, status classification, action-command emission) and human-driven for the judgment calls (which repos are actually still needed, whether a rescue branch should be merged or discarded, whether the reviewed kept ignored files still apply on the reimaged machine).
 
-`bin/restore-repos.sh` opens `repo-audit-reports/latest-run.txt`, walks the `repos.tsv` inside that pre-image run, and for each row it computes four things:
+`bin/restore-repos.sh` opens `repo-audit-reports/official/pre-image.txt`, walks the `repos.tsv` inside that pre-image run, and for each row it computes four things:
 
 1. whether the repo is currently on disk at the pre-image path;
 2. which SSH host alias to use for cloning (personal alias if the pre-image path was under `$GIT_PERSONAL_REPO_ROOT`, work alias otherwise);
@@ -123,7 +123,7 @@ $FRACTOGENESIS_HOME/bin/restore-repos.sh   # entrypoint
 Input evidence produced by Phase 2A:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/latest-run.txt
+$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/official/pre-image.txt
 $REIMAGE_ARTIFACT_ROOT/repo-audit-reports/runs/pre-image-YYYYMMDD-HHMMSS/
 ├── repos.tsv                   # inventory the script iterates
 ├── local-only-commits.tsv      # carry-forward: commits never pushed
@@ -139,7 +139,7 @@ Output written by this runbook:
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/repo-audit-reports/runs/post-image-restore-YYYYMMDD-HHMMSS/
-$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/latest-post-image-restore.txt   # pointer to the newest run
+$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/official/post-image-restore.txt   # pointer to the newest run
 ```
 
 The complete `repo-audit-reports/` and `staged-ignored-files/` layouts are defined once in the Master Directory Reference:
@@ -190,7 +190,7 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 
 - Your shell is at the toolkit root — `cd "$FRACTOGENESIS_HOME"` once for the session. Per the guide's [[reimaging-guide#Core Assumptions|Core Assumptions]], the commands below assume this and don't repeat it.
 - Phase 11A ([[restore-git|restore-git.md]]) closed out with both `ssh -T` identity checks passing. Repositories need the dual-identity `~/.gitconfig` and `~/.ssh/config` in place before any emitted clone command will authenticate correctly.
-- The external artifact volume is mounted and `reimage.env` resolves. `ls "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/latest-run.txt"` should print the pointer file.
+- The external artifact volume is mounted and `reimage.env` resolves. `ls "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/official/pre-image.txt"` should print the pointer file.
 - The pre-image `repos.tsv` has non-empty rows — this runbook cannot restore repositories that were never inventoried.
 
 > [!bug] Troubleshooting
@@ -346,7 +346,7 @@ $REIMAGE_ARTIFACT_ROOT/repo-audit-reports/runs/post-image-restore-YYYYMMDD-HHMMS
 Open it — the pointer file already carries the `runs/` segment, so it joins straight onto `repo-audit-reports/`:
 
 ```bash
-LATEST_RUN="$(cat "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/latest-post-image-restore.txt")"
+LATEST_RUN="$(cat "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/official/post-image-restore.txt")"
 open "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/$LATEST_RUN/restore-status.md"
 ```
 
@@ -365,7 +365,7 @@ open "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/$LATEST_RUN/restore-status.md"
 The script emits `clone-commands.sh` alongside the report. Open and review it before running anything:
 
 ```bash
-LATEST_RUN="$(cat "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/latest-post-image-restore.txt")"
+LATEST_RUN="$(cat "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/official/post-image-restore.txt")"
 open "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/$LATEST_RUN/clone-commands.sh"
 ```
 
@@ -518,7 +518,7 @@ Two paths — pick the one you settled on in the pre-flight.
 **Inspect-first path.** Open `rsync-ignored-files.sh` from the latest status bundle, review each block, and run selectively:
 
 ```bash
-LATEST_RUN="$(cat "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/latest-post-image-restore.txt")"
+LATEST_RUN="$(cat "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/official/post-image-restore.txt")"
 open "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/$LATEST_RUN/rsync-ignored-files.sh"
 bash "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/$LATEST_RUN/rsync-ignored-files.sh"
 ```

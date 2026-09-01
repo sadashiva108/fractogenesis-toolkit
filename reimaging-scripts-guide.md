@@ -129,7 +129,7 @@ export ONEDRIVE_DEST_SUBDIR="reimage-<asset-or-host>-<start-date>-open"
 | Phase 9 | Restart comparison | `verify-reimaged-system.md` | `record-reimaged-system.sh --context diff` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/comparisons/runs/verify-reimaged-system-restart-diff-*/` |
 | Phase 9 | Entry and exit boundary | `verify-reimaged-system.md` | `record-reimaged-system.sh --context entry\|exit` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/boundaries/runs/verify-reimaged-system-{entry,exit}-*/` |
 | any | Index relocated or migrated runs | `verify-reimaged-system.md` | `reindex-artifact-runs.sh` | rewrites `<category>/MANIFEST.md` and `<category>/official/` |
-| any | Record a decision no capture can hold | `restore-access.md`, `restore-home.md` | `record-decision.sh` | appends to `$REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/decisions.md` |
+| any | Record a decision no capture can hold | `restore-access.md`, `restore-home.md` | `record-decision.sh` | appends to `$REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/decisions.md`; `compare-restored-state.sh` reads it back and marks the covered rows **decided** |
 | Phase 9 | First-boot record twice around a stabilization restart | `verify-reimaged-system.md` | `record-reimaged-system.sh` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/restarts/runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/` |
 | Phase 10 | Runtime/access restore helpers | `restore-runtime.md`, `restore-access.md` | targeted manual checks; no single public restore script | selective restore from `home-files-backup/` and `secrets-encrypted/` |
 | Phase 11A | Git identity restore | `restore-git.md` | targeted manual writes to `~/.gitconfig`, `~/.ssh/config`, and the personal-root override; no toolkit script | consumes `secrets-encrypted/ssh/` and `secrets-encrypted/git/` restored in Phase 10B |
@@ -757,7 +757,7 @@ The generated bundle is written under:
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/repo-audit-reports/runs/post-image-restore-YYYYMMDD-HHMMSS/
-$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/latest-post-image-restore.txt
+$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/official/post-image-restore.txt
 ```
 
 [[#Table of Contents|⬆ Back to Table of Contents]]

@@ -500,8 +500,10 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 > ```text
 > $REIMAGE_ARTIFACT_ROOT/repo-audit-reports/
 > ├── MANIFEST.md
-> ├── latest-run.txt
-> ├── latest-post-image-restore.txt
+> ├── repo-audit-index.md
+> ├── official/
+> │   ├── pre-image.txt
+> │   └── post-image-restore.txt
 > └── runs/
 >     ├── pre-image-YYYYMMDD-HHMMSS/
 >     │   ├── repo-audit-summary.txt
