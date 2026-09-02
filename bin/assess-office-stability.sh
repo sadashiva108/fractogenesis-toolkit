@@ -13,7 +13,7 @@
 # Aggregate validator: it inspects the watcher directory, marker,
 # baseline bundles, and live Office/management state, and records every result
 # as a PASS / WARN / FAIL / SKIP check into a timestamped checklist bundle under
-# office-stability/checklists/ (report .md, README, and per-check evidence
+# office-stability/runs/<context>-<stamp>/ (report .md, README, and per-check evidence
 # files). It observes and reports only; it does not create the artifacts it is
 # meant to verify. Its findings roll up to the Phase 6B sign-off. See
 # capture-office-stability.md, Step 4.
@@ -39,9 +39,10 @@
 #   --office-watch-dir PATH   Local watcher directory.
 #                             Default: OFFICE_WATCH from shared config.
 #   --output-root PATH        Output root for the generated checklist bundle.
-#                             Default: <artifact-root>/office-stability/checklists,
-#                             falling back to <office-watch-dir>/checklists when
-#                             no artifact root is set. With neither set and no
+#                             Default: <artifact-root>/office-stability,
+#                             falling back to <office-watch-dir> when no
+#                             artifact root is set. The run is staged under
+#                             runs/ there. With neither set and no
 #                             --output-root, the run exits 2.
 #   --max-log-age-minutes N   Freshness threshold for the latest watcher log.
 #                             Default: 30.
@@ -210,7 +211,7 @@ done
 
 if [[ -z "$OUTPUT_ROOT" ]]; then
   # With neither value set the watcher-dir fallback would resolve to the
-  # absolute path /checklists. Require one of the pair rather than writing the
+  # absolute path. Require one of the pair rather than writing the
   # bundle to the filesystem root.
   if [[ -z "$REIMAGE_ARTIFACT_ROOT" && -z "$OFFICE_WATCH_DIR" ]]; then
     echo "ERROR: no output location could be resolved." >&2
@@ -512,55 +513,67 @@ else
   record_check FAIL "Office stability backup folder exists" "$OFFICE_BACKUP missing"
 fi
 
+# The evidence window lives in a run, resolved through its official pointer.
+# A directory walk of the category root finds nothing: the collector stages its
+# bundle under runs/ and the summary and ZIP travel inside it, so the bundle
+# name, the ZIP and the summary are all one lookup rather than three globs.
+evidence_run_dir() {
+  local context="$1" rel=""
+  rel="$(artifact_run_official "$OFFICE_BACKUP" "$context" 2>/dev/null || true)"
+  [[ -n "$rel" ]] || return 0
+  [[ -d "$OFFICE_BACKUP/$rel" ]] && printf '%s\n' "$OFFICE_BACKUP/$rel"
+  return 0
+}
+
+evidence_zip_in() {
+  local dir="$1"
+  [[ -n "$dir" ]] || return 0
+  find "$dir" -maxdepth 1 -type f -name '*-office-baseline-*.zip' 2>/dev/null | sort | tail -1
+  return 0
+}
+
+record_evidence_checks() {
+  local label="$1" context="$2" missing_hint="$3" zip_hint="$4"
+  local dir="" zip=""
+  dir="$(evidence_run_dir "$context")"
+  if [[ -n "$dir" ]]; then
+    record_check PASS "$label Office baseline run exists" "$(basename "$dir")"
+  else
+    record_check WARN "$label Office baseline run exists" "$missing_hint"
+  fi
+
+  zip="$(evidence_zip_in "$dir")"
+  if [[ -n "$zip" ]]; then
+    record_check PASS "$label Office baseline ZIP exists" "$(basename "$zip")"
+  else
+    record_check WARN "$label Office baseline ZIP exists" "$zip_hint"
+  fi
+}
+
 if [[ "$PHASE" == "pre-reimage" ]]; then
-  BASELINE_DIR="$(find "$OFFICE_BACKUP" -maxdepth 1 -type d -name 'pre-reimage-office-baseline-*' 2>/dev/null | sort | tail -1 || true)"
-  if [[ -n "$BASELINE_DIR" ]]; then
-    record_check PASS "Pre-reimage Office baseline directory exists" "$(basename "$BASELINE_DIR")"
-  else
-    record_check WARN "Pre-reimage Office baseline directory exists" "Not found; run capture-office-stability.sh --phase pre-reimage"
-  fi
-
-  BASELINE_ZIP="$(find "$OFFICE_BACKUP" -maxdepth 1 -type f -name 'pre-reimage-office-baseline-*.zip' 2>/dev/null | sort | tail -1 || true)"
-  if [[ -n "$BASELINE_ZIP" ]]; then
-    record_check PASS "Pre-reimage Office baseline ZIP exists" "$(basename "$BASELINE_ZIP")"
-  else
-    record_check WARN "Pre-reimage Office baseline ZIP exists" "Not found; run capture-office-stability.sh --phase pre-reimage"
-  fi
+  EVIDENCE_DIR="$(evidence_run_dir pre-image-office-stability-evidence)"
+  record_evidence_checks "Pre-image" pre-image-office-stability-evidence \
+    "Not found; run capture-office-stability.sh --phase pre-reimage" \
+    "Not found; run capture-office-stability.sh --phase pre-reimage"
 else
-  POST_BASELINE_DIR="$(find "$OFFICE_BACKUP" -maxdepth 1 -type d -name 'post-reimage-office-baseline-*' 2>/dev/null | sort | tail -1 || true)"
-  if [[ -n "$POST_BASELINE_DIR" ]]; then
-    record_check PASS "Post-reimage Office baseline directory exists" "$(basename "$POST_BASELINE_DIR")"
-  else
-    record_check WARN "Post-reimage Office baseline directory exists" "Not found; run capture-office-stability.sh --phase post-reimage"
-  fi
+  EVIDENCE_DIR="$(evidence_run_dir post-image-office-stability-evidence)"
+  record_evidence_checks "Post-image" post-image-office-stability-evidence \
+    "Not found; run capture-office-stability.sh --phase post-reimage" \
+    "Not found; rerun capture-office-stability.sh --phase post-reimage if a shareable ZIP is needed"
 
-  POST_BASELINE_ZIP="$(find "$OFFICE_BACKUP" -maxdepth 1 -type f -name 'post-reimage-office-baseline-*.zip' 2>/dev/null | sort | tail -1 || true)"
-  if [[ -n "$POST_BASELINE_ZIP" ]]; then
-    record_check PASS "Post-reimage Office baseline ZIP exists" "$(basename "$POST_BASELINE_ZIP")"
-  else
-    record_check WARN "Post-reimage Office baseline ZIP exists" "Not found; rerun capture-office-stability.sh --phase post-reimage if a shareable ZIP is needed"
-  fi
-
-  PRE_BASELINE_DIR="$(find "$OFFICE_BACKUP" -maxdepth 1 -type d -name 'pre-reimage-office-baseline-*' 2>/dev/null | sort | tail -1 || true)"
-  if [[ -n "$PRE_BASELINE_DIR" ]]; then
-    record_check PASS "Pre-reimage Office baseline directory exists for comparison" "$(basename "$PRE_BASELINE_DIR")"
-  else
-    record_check WARN "Pre-reimage Office baseline directory exists for comparison" "Not found; comparison can still proceed, but before/after confidence is reduced"
-  fi
-
-  PRE_BASELINE_ZIP="$(find "$OFFICE_BACKUP" -maxdepth 1 -type f -name 'pre-reimage-office-baseline-*.zip' 2>/dev/null | sort | tail -1 || true)"
-  if [[ -n "$PRE_BASELINE_ZIP" ]]; then
-    record_check PASS "Pre-reimage Office baseline ZIP exists for comparison" "$(basename "$PRE_BASELINE_ZIP")"
-  else
-    record_check WARN "Pre-reimage Office baseline ZIP exists for comparison" "Not found; only local folder comparison is available"
-  fi
+  record_evidence_checks "Pre-image" pre-image-office-stability-evidence \
+    "Not found; comparison can still proceed, but before/after confidence is reduced" \
+    "Not found; only local folder comparison is available"
 fi
 
-SUMMARY_FILE="$(find "$OFFICE_BACKUP" -maxdepth 1 -type f -name 'office-stability-summary-*.md' 2>/dev/null | sort | tail -1 || true)"
+SUMMARY_FILE=""
+if [[ -n "$EVIDENCE_DIR" && -f "$EVIDENCE_DIR/office-stability-summary.md" ]]; then
+  SUMMARY_FILE="$EVIDENCE_DIR/office-stability-summary.md"
+fi
 if [[ -n "$SUMMARY_FILE" ]]; then
-  record_check PASS "Office stability summary exists" "$(basename "$SUMMARY_FILE")"
+  record_check PASS "Office stability summary exists" "$(basename "$EVIDENCE_DIR")/office-stability-summary.md"
 else
-  record_check WARN "Office stability summary exists" "No office-stability-summary-*.md under $OFFICE_BACKUP"
+  record_check WARN "Office stability summary exists" "No office-stability-summary.md in the official evidence run under $OFFICE_BACKUP"
 fi
 
 SNAPSHOT_COUNT="$(find "$OFFICE_WATCH_DIR" "$OFFICE_BACKUP" -maxdepth 1 -type f -name 'workload-snapshot-*.txt' 2>/dev/null | wc -l | tr -d ' ')"

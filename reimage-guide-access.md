@@ -2,7 +2,7 @@
 
 # Guide Access on a Freshly Reimaged Mac
 
-**Last updated:** 2026-08-17
+**Last updated:** 2026-09-02
 
 Prove, before the Mac is erased, that `fractogenesis-toolkit` can actually be fetched onto a Mac with no Git, no SSH keys, and no prior checkout — once over the network with `curl` and `bootstrap.sh`, once from the jump drive with no network at all.
 
@@ -76,17 +76,28 @@ The two routes are tested in that order because the first is the one you would r
 
 ## Artifact and Script Locations
 
-Every path and directory tree this runbook uses is defined here, once. Later sections refer back to these names instead of redrawing them.
+Every path this runbook uses is defined here, once. Later sections refer back to these names instead of redrawing them.
 
-Scripts exercised, alphabetical:
+Primary script:
+
+```text
+$FRACTOGENESIS_HOME/bootstrap.sh                      # entrypoint — fetches and extracts the toolkit, from curl or from the jump drive
+```
+
+Related scripts, alphabetical:
 
 ```text
 $FRACTOGENESIS_HOME/bin/build-jump-drive-payload.sh   # entrypoint — builds the jump drive payload tarball
 $FRACTOGENESIS_HOME/bin/prepare-artifact-root.py      # entrypoint — run with --help only, as an execution smoke test
-$FRACTOGENESIS_HOME/bootstrap.sh                      # entrypoint — fetches and extracts the toolkit, from curl or from the jump drive
 ```
 
-This runbook writes nothing under `$REIMAGE_ARTIFACT_ROOT`. Its only outputs are throwaway, and the last step deletes them:
+Artifact root:
+
+```text
+$REIMAGE_ARTIFACT_ROOT/                               # untouched — this runbook writes no artifact
+```
+
+Throwaway paths the tests create, all removed by the last step:
 
 ```text
 /tmp/fractogenesis-toolkit-access-test/curl-kit           # curl test destination (FRACTOGENESIS_HOME override)

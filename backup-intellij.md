@@ -2,7 +2,7 @@
 
 # Backup IntelliJ
 
-**Last updated:** 2026-08-03
+**Last updated:** 2026-09-02
 
 The IntelliJ-specific companion to Backup Apps (Phase 2D). It preserves IDE state that Git remotes and project backups miss — Scratches, Consoles, global IDE config, plugins, and project-level `.idea` metadata across every project — while keeping credential-bearing files out of the plaintext backup and staging the ones you select into the encrypted secrets DMG instead.
 
@@ -16,7 +16,7 @@ The IntelliJ-specific companion to Backup Apps (Phase 2D). It preserves IDE stat
     - [[#Why HTTP Client Files Are Handled Separately|Why HTTP Client Files Are Handled Separately]]
     - [[#Terminology|Terminology]]
 - [[#Artifact and Script Locations|Artifact and Script Locations]]
-    - [[#Destination Rules|Destination Rules]]
+    - [[#Bundle Layout|Bundle Layout]]
     - [[#Environment Variables|Environment Variables]]
 - [[#Before You Run Anything|Before You Run Anything]]
     - [[#Prerequisites|Prerequisites]]
@@ -125,93 +125,81 @@ Every path and directory tree this runbook uses is defined here, once. Later sec
 Primary script:
 
 ```text
-$FRACTOGENESIS_HOME/bin/backup-apps.sh          # entrypoint — run with --intellij-only
+$FRACTOGENESIS_HOME/bin/backup-apps.sh                         # entrypoint -- run with --intellij-only
 ```
 
-Related scripts:
+Related scripts, alphabetical:
 
 ```text
-$FRACTOGENESIS_HOME/.internal/apps/backup-intellij-state.sh   # helper — invoked by backup-apps.sh
-$FRACTOGENESIS_HOME/bin/report-size-audit.sh                 # entrypoint — capacity check for the backup root
+$FRACTOGENESIS_HOME/.internal/apps/backup-intellij-state.sh    # helper -- invoked by backup-apps.sh
+$FRACTOGENESIS_HOME/bin/report-size-audit.sh                   # entrypoint -- capacity check for the backup root
 ```
 
-Artifact roots:
+Artifact root:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/               # non-secret IDE state
-$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/intellij/                 # staged secrets, packaged in Phase 3C
+$REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/           # non-secret IDE state
+$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/intellij/             # staged secrets, packaged in Phase 3C
+$REIMAGE_WORKSPACE_ROOT/intellij-review/                       # your reviewed selections, kept outside the artifact root
 ```
 
-Your reviewed selections live in the workspace, so they survive the artifact root and carry across reimages:
+### Bundle Layout
+
+Where each kind of IntelliJ artifact lands. Non-secret IDE state — scratches, consoles, the config copy, project `.idea` metadata, logs, manifests and the README — goes under `app-settings-backup/intellij/`, safe to inspect on the external drive. The manual settings ZIP sits in `manual-settings-export/` as a second, app-controlled restore path, and `restore-notes/` holds sanitized notes only, never secret values. A credential-like file matching your reviewed patterns is staged into `secrets-encrypted/intellij/` for the Phase 3C DMG, never left loose in `intellij/` and never in cloud storage. This runbook owns both `intellij/` layouts:
 
 ```text
-$REIMAGE_WORKSPACE_ROOT/intellij-review/intellij-secret-review-template.txt      # [x] = stage into the DMG
-$REIMAGE_WORKSPACE_ROOT/intellij-review/intellij-plaintext-exclude-list.txt      # noise dropped from the clear-text copy
+$REIMAGE_ARTIFACT_ROOT/
+├── app-settings-backup/
+│   ├── ...
+│   ├── intellij/
+│   │   ├── IntelliJIdeaYYYY.N/
+│   │   │   ├── config-copy/
+│   │   │   └── scratches-and-consoles/
+│   │   ├── logs/
+│   │   │   ├── IntelliJIdeaYYYY.N/
+│   │   │   └── system-cache-not-copied.txt
+│   │   ├── manifests/
+│   │   ├── manual-settings-export/
+│   │   │   └── IntelliJ-settings-YYYYMMDD-HHMMSS.zip
+│   │   ├── project-metadata/
+│   │   ├── README.md
+│   │   ├── restore-notes/
+│   │   └── secret-review/
+│   └── ...
+├── ...
+├── secrets-encrypted/
+│   ├── ...
+│   ├── intellij/
+│   │   ├── ide-config/
+│   │   │   └── IntelliJIdeaYYYY.N/
+│   │   │       └── options/
+│   │   └── projects/
+│   │       └── <project>/
+│   │           └── .idea/
+│   └── ...
+└── ...
 ```
 
-Seed them with `./bin/backup-apps.sh --init-intellij-review`, edit them in place, and every later run reads them from there — nothing to copy back before a rerun. This resolves the same way the staged-certs fragments do: the workspace copy wins when `$REIMAGE_WORKSPACE_ROOT/intellij-review/` exists.
+The staged secrets are split by the root each file came from, and paths under each bucket are relative to *that* root, so a restore is one substitution: `ide-config/` is relative to `~/Library/Application Support/JetBrains/`, and `projects/` is relative to `$GIT_WORK_REPO_ROOT`. An `other/` bucket appears only if a staged file came from neither root — it should stay empty.
 
-Each run also writes a copy of both files into the artifact root:
+Your reviewed selections live in the workspace instead, so they survive the artifact root and carry across reimages:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/secret-review/
+$REIMAGE_WORKSPACE_ROOT/
+├── ...
+├── intellij-review/
+│   ├── intellij-plaintext-exclude-list.txt
+│   └── intellij-secret-review-template.txt
+└── ...
 ```
 
-That copy is evidence, not a control surface — it records which patterns the capture obeyed so a restore months later can tell. Editing it changes nothing; the next run overwrites it from the workspace originals.
+`intellij-secret-review-template.txt` decides what is staged into the DMG — a checked `[x]` row stages that pattern — and `intellij-plaintext-exclude-list.txt` names the noise dropped from the clear-text copy. Seed them with `./bin/backup-apps.sh --init-intellij-review`, edit them in place, and every later run reads them from there, so there is nothing to copy back before a rerun. This resolves the same way the staged-certs fragments do: the workspace copy wins when `$REIMAGE_WORKSPACE_ROOT/intellij-review/` exists. With no `REIMAGE_WORKSPACE_ROOT` set, both files fall back to living in the artifact root and are seeded there on first capture; everything still works, but the selections die with the drive.
 
-> [!note]
-> With no `REIMAGE_WORKSPACE_ROOT` set, both files fall back to living in the artifact root and are seeded there on first capture. Everything still works, but the selections die with the drive.
+Each run also writes a copy of both files into `app-settings-backup/intellij/secret-review/`. That copy is evidence, not a control surface — it records which patterns the capture obeyed, so a restore months later can tell. Editing it changes nothing; the next run overwrites it from the workspace originals.
 
-This runbook owns both `intellij/` layouts; they are drawn here once and referenced elsewhere.
-
-The clear-text copy:
-
-```text
-$REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/
-├── IntelliJIdeaYYYY.N/
-│   ├── config-copy/
-│   └── scratches-and-consoles/
-├── logs/
-│   ├── IntelliJIdeaYYYY.N/
-│   └── system-cache-not-copied.txt
-├── manifests/
-├── manual-settings-export/
-│   └── IntelliJ-settings-YYYYMMDD-HHMMSS.zip
-├── project-metadata/
-├── restore-notes/
-├── secret-review/
-└── README.md
-```
-
-The staged secrets, split by the root each file came from. Paths under each
-bucket are relative to *that* root, so a restore is one substitution:
-
-```text
-$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/intellij/
-├── ide-config/                 # relative to ~/Library/Application Support/JetBrains/
-│   └── IntelliJIdeaYYYY.N/
-│       └── options/
-└── projects/                   # relative to $GIT_WORK_REPO_ROOT
-    └── <project>/
-        └── .idea/
-```
-
-An `other/` bucket appears only if a staged file came from neither root — it should stay empty.
-
-The complete `$REIMAGE_ARTIFACT_ROOT` map is defined once in the Master Directory Reference:
+The complete `$REIMAGE_ARTIFACT_ROOT` map is drawn once in the Master Directory Reference:
 
 [[master-directory-reference|Master Directory Reference]]
-
-### Destination Rules
-
-Where each kind of IntelliJ artifact goes.
-
-| Category | Destination | Rule |
-|---|---|---|
-| Non-secret IDE state | `app-settings-backup/intellij/` | Scratches, Consoles, config copy, project `.idea` metadata, logs, manifests, README. Safe to inspect locally on the external drive. |
-| Manual settings ZIP | `app-settings-backup/intellij/manual-settings-export/` | Exported from the IntelliJ UI; a clean second restore path. |
-| Restore notes | `app-settings-backup/intellij/restore-notes/` | Sanitized notes only — no secret values. |
-| Credential-like files matching your reviewed patterns | `secrets-encrypted/intellij/ide-config/` or `.../projects/`, by which root the file came from; packaged into the Phase 3C DMG | Staged only when checked in the review template. Never left loose in `intellij/` or in cloud storage. |
 
 ### Environment Variables
 
@@ -222,7 +210,7 @@ The `reimage.env` values this runbook depends on. Values are resolved and writte
 | `REIMAGE_ARTIFACT_ROOT` | Absolute path to the Phase 2 artifact root where `app-settings-backup/` and `secrets-encrypted/` live. |
 | `FRACTOGENESIS_HOME` | Absolute path to the toolkit repository root; entrypoints are run from here. |
 | `GIT_WORK_REPO_ROOT` | Work repository root. Also the default IntelliJ **projects root** scanned for project-level `.idea` metadata — the same value used by the Git repo backup, so set it once (e.g. `/Users/<user>/Development/IdeaProjects`). |
-| `REIMAGE_WORKSPACE_ROOT` | Optional. Local workspace where you can keep a persisted copy of your IntelliJ secret selections (`intellij-secrets/`) between reimages. Not required for the capture — the selections live on the artifact root. Resolved by `prepare-artifact-root.md`. |
+| `REIMAGE_WORKSPACE_ROOT` | Local workspace holding `intellij-review/`, the durable copy of your IntelliJ secret selections. Every run reads them from here; with the value unset both files fall back to the artifact root and die with the drive. Resolved by `prepare-artifact-root.md`. |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 

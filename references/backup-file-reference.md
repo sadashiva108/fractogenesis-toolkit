@@ -241,8 +241,10 @@ $REIMAGE_ARTIFACT_ROOT/
 │           ├── tmutil-status.txt
 │           └── volumes.txt
 ├── toolkit-snapshot/
-│   ├── latest-docs/
-│   └── pre-image-toolkit-snapshot-YYYYMMDD-HHMMSS/
+│   ├── official/
+│   │   └── pre-image-toolkit-snapshot.txt
+│   └── runs/
+│       └── pre-image-toolkit-snapshot-YYYYMMDD-HHMMSS/
 └── ...
 ```
 

@@ -2,7 +2,7 @@
 
 # Backup Home
 
-**Last updated:** 2026-08-16
+**Last updated:** 2026-09-02
 
 This runbook copies the home-directory files, dotfiles, and secret-bearing targets that a reimage would otherwise erase into `$REIMAGE_ARTIFACT_ROOT`, driven by `bin/backup-home.sh`.
 
@@ -18,6 +18,7 @@ The external artifact root is the authoritative copy. An optional OneDrive secon
     - [[#Terminology|Terminology]]
     - [[#Configuration Fragments and Run Modes|Configuration Fragments and Run Modes]]
 - [[#Artifact and Script Locations|Artifact and Script Locations]]
+    - [[#Bundle Layout|Bundle Layout]]
     - [[#Environment Variables|Environment Variables]]
 - [[#Before You Run Anything|Before You Run Anything]]
     - [[#Prerequisites|Prerequisites]]
@@ -132,24 +133,39 @@ External-only is the preferred first run because it fills the authoritative dest
 
 Every path and directory tree this runbook uses is defined here, once. Later sections refer back to these names instead of redrawing them.
 
-Primary scripts, alphabetical:
+Primary script:
 
 ```text
-$FRACTOGENESIS_HOME/bin/backup-home.sh              # entrypoint
-$FRACTOGENESIS_HOME/bin/report-size-audit.sh       # entrypoint
-$FRACTOGENESIS_HOME/bin/verify-artifact-config.sh   # entrypoint (aggregate validator)
+$FRACTOGENESIS_HOME/bin/backup-home.sh                        # entrypoint
 ```
 
-Artifact locations:
+Related scripts, alphabetical:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/home-files-backup/
-$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/
-$REIMAGE_ARTIFACT_ROOT/size-audit-reports/
-$ONEDRIVE_ROOT/$ONEDRIVE_DEST_SUBDIR/
+$FRACTOGENESIS_HOME/.internal/home/scan-archive-contents.sh   # helper -- Step 4 archive credential scan; safe to run standalone
+$FRACTOGENESIS_HOME/bin/report-size-audit.sh                  # entrypoint -- Step 3 capacity check for the backup root
+$FRACTOGENESIS_HOME/bin/verify-artifact-config.sh             # entrypoint -- Step 2 artifact-config fragment validator
 ```
 
-Subdirectories under `$REIMAGE_ARTIFACT_ROOT` this runbook's steps touch:
+Artifact root:
+
+```text
+$REIMAGE_ARTIFACT_ROOT/home-files-backup/                     # home targets and individual dotfiles
+$REIMAGE_ARTIFACT_ROOT/loose-secrets-reports/                 # the Step 4 archive content scan
+$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/                     # credential-shaped targets, staged for Phase 3C
+$REIMAGE_ARTIFACT_ROOT/size-audit-reports/                    # the Step 3 capacity check
+$ONEDRIVE_ROOT/$ONEDRIVE_DEST_SUBDIR/                         # optional secondary copy of the work-safe targets only
+```
+
+Input evidence built by earlier phases:
+
+```text
+$REIMAGE_WORKSPACE_ROOT/artifact-config/                      # written by prepare-artifact-root.md; the per-machine fragment set every run reads
+```
+
+### Bundle Layout
+
+The external artifact root is the authoritative destination and the only one drawn here. The OneDrive secondary receives just the narrower work-safe targets from `onedrive-targets.conf.sh`, mirrored under `$ONEDRIVE_ROOT/$ONEDRIVE_DEST_SUBDIR/`; the secrets-encrypted material never travels there. The `secrets-encrypted/` subdirectories shown are the destinations `secrets-targets.conf.sh` routes to, and the dotfiles landing in `home-files-backup/dotfiles/` are named in `external-dotfiles.conf.sh` — those fragments are the authoritative lists. Both the archive scan and the size audit are run-indexed under a `pre-image-backup-home` context, so same-day runs from other phases stay distinguishable:
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/
@@ -158,10 +174,19 @@ $REIMAGE_ARTIFACT_ROOT/
 │   ├── dotfiles/
 │   ├── home/
 │   └── MANIFEST.md
+├── loose-secrets-reports/
+│   ├── content-scans/
+│   │   ├── latest-run.txt
+│   │   ├── MANIFEST.md
+│   │   └── runs/
+│   │       └── pre-image-backup-home-<leg>-YYYYMMDD-HHMMSS/
+│   └── ...
 ├── secrets-encrypted/
 │   ├── ...
 │   ├── certs/
-│   │   └── java-security/
+│   │   ├── ...
+│   │   ├── java-security/
+│   │   └── ...
 │   ├── cli-credentials/
 │   ├── cloud/
 │   ├── docker/
@@ -170,13 +195,26 @@ $REIMAGE_ARTIFACT_ROOT/
 │   ├── kube/
 │   ├── package-managers/
 │   ├── postman/
-│   └── ssh/
+│   ├── ssh/
+│   └── ...
+├── size-audit-reports/
+│   ├── MANIFEST.md
+│   ├── official/
+│   │   ├── ...
+│   │   ├── pre-image-backup-home.txt
+│   │   └── ...
+│   ├── runs/
+│   │   ├── ...
+│   │   ├── pre-image-backup-home-YYYYMMDD-HHMMSS/
+│   │   │   └── size-audit-report.txt
+│   │   └── ...
+│   └── size-audit-index.md
 └── ...
 ```
 
-The `secrets-encrypted/` subdirectories shown are the destinations `secrets-targets.conf.sh` routes to; that fragment is the authoritative list. The dotfiles that land in `home-files-backup/dotfiles/` are named in `external-dotfiles.conf.sh`.
+`content-scans/` keeps its own bespoke index rather than the shared run index its parent category uses, which is why it carries a `latest-run.txt` where every other category resolves through `official/`.
 
-The complete layout of both trees, including the `home/` subtree and the `secrets-encrypted/` entries other phases add, is defined once in the Master Directory Reference:
+The complete layout of these trees, including the `home/` subtree and the `secrets-encrypted/` entries other phases add, is drawn once in the Master Directory Reference:
 
 [[master-directory-reference|Master Directory Reference]]
 
@@ -338,7 +376,7 @@ A compressed archive is opaque to every filename sweep in this workflow, so a cr
 .internal/home/scan-archive-contents.sh --context pre-image-backup-home
 ```
 
-The report lands under `loose-secrets-reports/content-scans/runs/<context>-<stamp>/`, beside the Phase 3B sweep's own reports, with a `MANIFEST.md` row and a `latest-run.txt` pointer. Give each run a sub-label so same-day scans stay distinguishable, the same way the size audit and the sweep do. `--dest` moves the report root, `--report FILE` writes one file to an explicit path without a manifest row, and `--no-report` prints to the terminal only.
+The report lands under `loose-secrets-reports/content-scans/runs/<context>-<stamp>/`, beside the Phase 3B sweep's own reports, with a `MANIFEST.md` row and a `latest-run.txt` pointer. `content-scans/` keeps its own bespoke index rather than the shared run index its parent category uses, so read `latest-run.txt` here and `official/<context>.txt` everywhere else. Give each run a sub-label so same-day scans stay distinguishable, the same way the size audit and the sweep do. `--dest` moves the report root, `--report FILE` writes one file to an explicit path without a manifest row, and `--no-report` prints to the terminal only.
 
 With no leg flag it scans **both legs**, the same convention as `bin/backup-home.sh` — `--external-only` and `--onedrive-only` narrow it to one, and passing both is an error rather than a merged scan.
 

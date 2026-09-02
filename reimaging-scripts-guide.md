@@ -104,18 +104,18 @@ export ONEDRIVE_DEST_SUBDIR="reimage-<asset-or-host>-<start-date>-open"
 | Phase | Purpose | Markdown guide | Primary script(s) | Generated output |
 |---|---|---|---|---|
 | Phase 1 | Prepare external artifact root | `reimaging-guide.md`, `prepare-artifact-root.md` | `prepare-artifact-root.py` plus guide-owned shell checks and directory creation | `reimage.env`, `$REIMAGE_ARTIFACT_ROOT/` structure, `$REIMAGE_ARTIFACT_ROOT/reimage-confirmation/it-reimage-confirmation-*.md` |
-| Phase 2A | Git repository backups | `backup-repos.md` | `backup-repos.sh` (public entrypoint), Git helpers under `scripts/helpers/git/` | `$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/`, `$REIMAGE_ARTIFACT_ROOT/gitignore-superset/`, `$REIMAGE_ARTIFACT_ROOT/staged-ignored-files/live/*` |
+| Phase 2A | Git repository backups | `backup-repos.md` | `backup-repos.sh` (public entrypoint), Git helpers under `.internal/git/` | `$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/`, `$REIMAGE_ARTIFACT_ROOT/gitignore-superset/`, `$REIMAGE_ARTIFACT_ROOT/staged-ignored-files/live/*` |
 | Phase 2B | Local files backup | `backup-home.md` | `backup-home.sh` | `$REIMAGE_ARTIFACT_ROOT/home-files-backup/` |
-| Phase 2D | Backup apps | `backup-apps.md` | `backup-apps.sh` (public entrypoint), `helpers/apps/backup-docker-settings.sh` and `helpers/apps/backup-intellij-scratches-consoles.sh` (internal helpers), plus app-controlled/manual exports for other apps | `$REIMAGE_ARTIFACT_ROOT/app-settings-backup/` plus matching `secrets-encrypted/` folders |
-| Phase 2D detail | IntelliJ companion flow | `backup-intellij.md` | `backup-apps.sh` (public IntelliJ path), `helpers/apps/backup-intellij-scratches-consoles.sh` (internal helper) | `$REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/` |
+| Phase 2D | Backup apps | `backup-apps.md` | `backup-apps.sh` (public entrypoint), `.internal/apps/backup-docker-settings.sh` and `.internal/apps/backup-intellij-state.sh` (internal helpers), plus app-controlled/manual exports for other apps | `$REIMAGE_ARTIFACT_ROOT/app-settings-backup/` plus matching `secrets-encrypted/` folders |
+| Phase 2D detail | IntelliJ companion flow | `backup-intellij.md` | `backup-apps.sh` (public IntelliJ path), `.internal/apps/backup-intellij-state.sh` (internal helper) | `$REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/` |
 | Phase 3A | Certificate and Keychain staging | `stage-certs-keychain.md` | `stage-certs-keychain.sh` | `$REIMAGE_ARTIFACT_ROOT/public-certs/`, `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/certs/`, `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/extra-secrets-certs-review/` |
 | Phase 3C | Encrypted secrets backup | `create-secrets-dmg.md` | `create-secrets-dmg.sh` | `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/all-secrets-*.dmg` |
 | Phase 5 | Time Machine backup/status | `run-time-machine.md` | `run-time-machine.sh`, `record-time-machine-evidence.sh` | `/Volumes/AppleBackups`, `$REIMAGE_ARTIFACT_ROOT/time-machine/`, `final-time-machine-checklist-*.md` |
-| Phase 4A | Toolkit snapshot capture | `capture-toolkit-snapshot.md` | `capture-toolkit-snapshot.sh` | `$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/pre-image-toolkit-snapshot-*/`, `$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/latest-docs/` |
+| Phase 4A | Toolkit snapshot capture | `capture-toolkit-snapshot.md` | `capture-toolkit-snapshot.sh` | `$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/runs/pre-image-toolkit-snapshot-*/`, `$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/official/pre-image-toolkit-snapshot.txt` |
 | Phase 4B | Pre-image system inventory evidence | `reimaging-guide.md` (Phase 4) | `capture-system-inventory.sh` | `$REIMAGE_ARTIFACT_ROOT/system-inventory/` |
 | Phase 2C | Pre-image company-managed inventory evidence | `reimaging-guide.md` (Phase 4), `capture-managed-inventory.md` | `capture-managed-inventory.sh` | `$REIMAGE_ARTIFACT_ROOT/managed-inventory/` |
-| Phase 4C | Pre-image performance evidence | `reimaging-guide.md` (Phase 4), `capture-performance-audit.md` | `capture-performance-audit.sh` | `$REIMAGE_ARTIFACT_ROOT/performance-audit/pre-image-*` |
-| Phase 4D | Pre-image Office stability evidence | `reimaging-guide.md` (Phase 4), `capture-office-stability.md` | `watch-office-today.sh `, `capture-workload-snapshot.sh`, `capture-office-stability.sh`, `office-stability-checklist.sh --phase pre-reimage` | `$REIMAGE_ARTIFACT_ROOT/office-stability/`, `$REIMAGE_ARTIFACT_ROOT/office-stability/checklists/` |
+| Phase 4C | Pre-image performance evidence | `reimaging-guide.md` (Phase 4), `capture-performance-audit.md` | `capture-performance-audit.sh` | `$REIMAGE_ARTIFACT_ROOT/performance-audit/runs/pre-image-performance-audit-<scenario>-*` |
+| Phase 4D | Pre-image Office stability evidence | `reimaging-guide.md` (Phase 4), `capture-office-stability.md` | `watch-office-today.sh `, `capture-workload-snapshot.sh`, `capture-office-stability.sh`, `assess-office-stability.sh --phase pre-reimage` | `$REIMAGE_ARTIFACT_ROOT/office-stability/runs/pre-image-office-stability-{evidence,assessment}-*/`, `$REIMAGE_ARTIFACT_ROOT/office-stability/sign-offs/` |
 | Phase 6A | Guide access validation (curl/jump drive) | `reimaging-guide.md`, `reimage-guide-access.md` | `bootstrap.sh`, `bin/build-jump-drive-payload.sh` | throwaway test installs only -- no `$REIMAGE_ARTIFACT_ROOT` output |
 | Phase 6B | Final pre-image validation | `reimaging-guide.md`, `reimage-prep-checks.md` | `bin/reimage-checklist.sh --phase pre --artifact-root ...` | `$REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/` |
 | Phase 10A | Restore-phase entry record | `restore-runtime.md` | `bin/record-restore-prereqs.sh` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/boundaries/runs/*-entry-*/` |
@@ -137,8 +137,8 @@ export ONEDRIVE_DEST_SUBDIR="reimage-<asset-or-host>-<start-date>-open"
 | Phase 12 | App restore | `restore-apps.md`, `restore-intellij.md`, `restore-docker.md` | `restore-apps.sh`, `restore-intellij.sh`, `restore-docker.sh` | restore-planning notes under `$REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/` plus app restore from `app-settings-backup/` and `secrets-encrypted/` |
 | Phase 13 | Post-image system inventory evidence | `capture-system-inventory.md` | `capture-system-inventory.sh` | `$REIMAGE_ARTIFACT_ROOT/system-inventory/runs/post-image-*` |
 | Phase 13 | Post-image company-managed inventory evidence | `capture-managed-inventory.md` | `capture-managed-inventory.sh --phase post-image` | `$REIMAGE_ARTIFACT_ROOT/managed-inventory/runs/post-image-*` |
-| Phase 13 | Post-image performance evidence | `capture-performance-audit.md` | `capture-performance-audit.sh` | `$REIMAGE_ARTIFACT_ROOT/performance-audit/post-image-*` |
-| Phase 13 | Post-image Office stability evidence | `capture-office-stability.md` | `capture-office-stability.sh`, `office-stability-checklist.sh --phase post-reimage` | `$REIMAGE_ARTIFACT_ROOT/office-stability/post-reimage-*`, `$REIMAGE_ARTIFACT_ROOT/office-stability/checklists/` |
+| Phase 13 | Post-image performance evidence | `capture-performance-audit.md` | `capture-performance-audit.sh` | `$REIMAGE_ARTIFACT_ROOT/performance-audit/runs/post-image-performance-audit-<scenario>-*` |
+| Phase 13 | Post-image Office stability evidence | `capture-office-stability.md` | `capture-office-stability.sh`, `assess-office-stability.sh --phase post-reimage` | `$REIMAGE_ARTIFACT_ROOT/office-stability/runs/post-image-office-stability-{evidence,assessment}-*/`, `$REIMAGE_ARTIFACT_ROOT/office-stability/sign-offs/` |
 | Phase 14 | Final post-image validation | `reimaged-system-checks.md` | `bin/reimage-checklist.sh --phase post` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/checklists/` |
 | Phase 16 | Post-image Time Machine backup | `run-time-machine.md` | `run-time-machine.sh`, `record-time-machine-evidence.sh` | `/Volumes/AppleBackups`, `$REIMAGE_ARTIFACT_ROOT/time-machine/` |
 
@@ -196,7 +196,7 @@ Current preferred script layout:
     ├── capture-performance-audit.sh
     ├── capture-system-inventory.sh
     ├── capture-workload-snapshot.sh
-    ├── office-stability-checklist.sh
+    ├── assess-office-stability.sh
     ├── restore-apps.sh
     ├── restore-docker.sh
     ├── restore-intellij.sh
@@ -300,18 +300,18 @@ Optional candidate-review pass in the same script:
 Common destinations:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/app-backups/MANIFEST.md
-$REIMAGE_ARTIFACT_ROOT/app-backups/candidate-review/app-backup-candidates-YYYYMMDD-HHMMSS/
-$REIMAGE_ARTIFACT_ROOT/app-backups/docker/
-$REIMAGE_ARTIFACT_ROOT/app-backups/vscode/
+$REIMAGE_ARTIFACT_ROOT/app-settings-backup/MANIFEST.md
+$REIMAGE_ARTIFACT_ROOT/app-settings-backup/candidate-review/app-backup-candidates-YYYYMMDD-HHMMSS/
+$REIMAGE_ARTIFACT_ROOT/app-settings-backup/docker/
+$REIMAGE_ARTIFACT_ROOT/app-settings-backup/vscode/
 $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/docker/config.json, if staged
-$REIMAGE_ARTIFACT_ROOT/app-backups/chrome/bookmarks_YYYYMMDD-HHMMSS.html
+$REIMAGE_ARTIFACT_ROOT/app-settings-backup/chrome/bookmarks_YYYYMMDD-HHMMSS.html
 $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/chrome/Chrome Passwords*.csv, if exported
-$REIMAGE_ARTIFACT_ROOT/app-backups/postman/collections/
-$REIMAGE_ARTIFACT_ROOT/app-backups/postman/environments-redacted/
+$REIMAGE_ARTIFACT_ROOT/app-settings-backup/postman/collections/
+$REIMAGE_ARTIFACT_ROOT/app-settings-backup/postman/environments-redacted/
 $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/postman/, for secret-bearing exports
-$REIMAGE_ARTIFACT_ROOT/app-backups/raycast/, if used
-$REIMAGE_ARTIFACT_ROOT/app-backups/obsidian/, if used
+$REIMAGE_ARTIFACT_ROOT/app-settings-backup/raycast/, if used
+$REIMAGE_ARTIFACT_ROOT/app-settings-backup/obsidian/, if used
 ```
 
 If Docker `config.json`, Chrome password CSVs, secret-bearing Postman exports, or Raycast secret exports are staged, rerun Phase 3B and then Phase 3C before final validation.
@@ -430,7 +430,7 @@ The final checklist, once the backup and any optional verification are complete:
 `pre-run` writes the timestamped bundle under:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/time-machine/pre-image-time-machine-status-YYYYMMDD-HHMMSS/
+$REIMAGE_ARTIFACT_ROOT/time-machine/runs/pre-image-status-bundle-YYYYMMDD-HHMMSS/
 ├── README.md
 ├── time-machine-pre-run.md
 ├── time-machine-status.md
@@ -452,7 +452,7 @@ Generated: <date>
 `final` writes the checklist directly under `$REIMAGE_ARTIFACT_ROOT/time-machine/`:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/time-machine/final-time-machine-checklist-YYYYMMDD-HHMMSS.md
+$REIMAGE_ARTIFACT_ROOT/time-machine/runs/pre-image-evidence-summary-YYYYMMDD-HHMMSS/evidence-summary.md
 ```
 
 The final checklist auto-fills Time Machine completion, targeted latest backup visibility, selected external data-volume exclusion, pre-run bundle presence, completion evidence presence, optional destination-volume verification, and optional targeted checksum evidence when present. It leaves human-only rows such as UI spot-check and final evidence review as `TODO`.
@@ -529,7 +529,7 @@ All pre-image captures are optional. Phase 4A is the lightweight toolkit snapsho
 The toolkit snapshot capture writes one timestamped toolkit snapshot bundle per run:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/pre-image-toolkit-snapshot-YYYYMMDD-HHMMSS/
+$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/runs/pre-image-toolkit-snapshot-YYYYMMDD-HHMMSS/
 ```
 
 It is safe to rerun. Existing filled IT confirmation copies are preserved under the stable manual area.
@@ -537,11 +537,12 @@ It is safe to rerun. Existing filled IT confirmation copies are preserved under 
 Quick validation:
 
 ```bash
-TOOLKIT_SNAPSHOT_CAPTURE="$(find "$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot" -maxdepth 1 -type d -name 'pre-image-toolkit-snapshot-*' -print 2>/dev/null | sort | tail -1)"
+TOOLKIT_SNAPSHOT_ROOT="$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot"
+TOOLKIT_SNAPSHOT_CAPTURE="$TOOLKIT_SNAPSHOT_ROOT/$(cat "$TOOLKIT_SNAPSHOT_ROOT/official/pre-image-toolkit-snapshot.txt")"
 
 printf 'Using toolkit snapshot capture: %s\n' "$TOOLKIT_SNAPSHOT_CAPTURE"
 test -f "$TOOLKIT_SNAPSHOT_CAPTURE/README.md" && echo "PASS: toolkit snapshot README captured"
-test -d "$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/latest-docs" && echo "PASS: workflow docs snapshot captured"
+test -d "$TOOLKIT_SNAPSHOT_CAPTURE/docs" && echo "PASS: workflow docs snapshot captured"
 ```
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -655,7 +656,7 @@ Pre-image Office baseline and checklist:
   --phase pre-reimage \
   --artifact-root "$REIMAGE_ARTIFACT_ROOT"
 
-./bin/office-stability-checklist.sh \
+./bin/assess-office-stability.sh \
   --phase pre-reimage \
   --artifact-root "$REIMAGE_ARTIFACT_ROOT"
 ```
@@ -667,7 +668,7 @@ Post-image Office comparison, or symptom recurrence:
   --phase post-reimage \
   --artifact-root "$REIMAGE_ARTIFACT_ROOT"
 
-./bin/office-stability-checklist.sh \
+./bin/assess-office-stability.sh \
   --phase post-reimage \
   --artifact-root "$REIMAGE_ARTIFACT_ROOT"
 ```
@@ -721,13 +722,13 @@ Phase 6B uses the unified pre-image validator. The post-image flow now has a ded
 The report is written to:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/reimage-checklist-YYYYMMDD-HHMMSS.md
-$REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/latest-reimage-checklist.txt
+$REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/runs/pre-image-YYYYMMDD-HHMMSS/reimage-checklist.md
+$REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/official/pre-image.txt
 ```
 
 Use the generated report as the primary Phase 6B checklist. Do not proceed to Phase 7 until `FAIL` items are resolved. Then use `reimage-prep-checks.md` only for the remaining manual sign-off rows.
 
-For toolkit-snapshot checks, the validator should discover the newest timestamped bundle directly from `toolkit-snapshot/pre-image-toolkit-snapshot-*`. VS Code local fallback state is validated from `app-settings-backup/vscode/`.
+For toolkit-snapshot checks, the validator resolves the bundle through `toolkit-snapshot/official/pre-image-toolkit-snapshot.txt` rather than taking the newest directory. VS Code local fallback state is validated from `app-settings-backup/vscode/`.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -829,7 +830,7 @@ The generated report is written under:
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/reimaged-system/checklists/reimage-checklist-YYYYMMDD-HHMMSS.md
-$REIMAGE_ARTIFACT_ROOT/reimaged-system/checklists/latest-reimage-checklist.txt
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/checklists/official/post-image.txt
 ```
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -964,7 +965,7 @@ Optional verification between `complete` and `final`:
 ./bin/capture-performance-audit.sh --output "$REIMAGE_ARTIFACT_ROOT/performance-audit" --phase pre-image --scenario clean-boot --sample-count 6 --sample-interval 30
 ./bin/capture-performance-audit.sh --output "$REIMAGE_ARTIFACT_ROOT/performance-audit" --phase pre-image --scenario normal-workload --sample-count 6 --sample-interval 30
 ./bin/capture-office-stability.sh --phase pre-reimage --artifact-root "$REIMAGE_ARTIFACT_ROOT"
-./bin/office-stability-checklist.sh --phase pre-reimage --artifact-root "$REIMAGE_ARTIFACT_ROOT"
+./bin/assess-office-stability.sh --phase pre-reimage --artifact-root "$REIMAGE_ARTIFACT_ROOT"
 ```
 
 **Phase 6 — final pre-image validation.** `reimage-prep-checks.md` is the manual
@@ -1019,7 +1020,7 @@ repository:
 ./bin/capture-system-inventory.sh
 ./bin/capture-performance-audit.sh --output "$REIMAGE_ARTIFACT_ROOT/performance-audit" --phase post-image --scenario normal-workload --sample-count 6 --sample-interval 30
 ./bin/capture-office-stability.sh --phase post-reimage --artifact-root "$REIMAGE_ARTIFACT_ROOT"
-./bin/office-stability-checklist.sh --phase post-reimage --artifact-root "$REIMAGE_ARTIFACT_ROOT"
+./bin/assess-office-stability.sh --phase post-reimage --artifact-root "$REIMAGE_ARTIFACT_ROOT"
 ```
 
 **Phase 14 — final post-image validation.**

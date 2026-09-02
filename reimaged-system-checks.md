@@ -2,7 +2,7 @@
 
 # Reimaged System Checks
 
-**Last updated:** 2026-09-01
+**Last updated:** 2026-09-02
 
 Run the final proof step for the rebuilt Mac: generate the Phase 14 automated checklist with `bin/reimage-checklist.sh --phase post`, resolve the remaining manual sign-off rows, and land the evidence next to the rest of the reimage artifacts. This is the phase where "the rebuild is trusted" transitions from a plan to a recorded fact, and it deliberately runs after every restore that is expected to produce evidence a script can validate.
 
@@ -13,6 +13,7 @@ Run the final proof step for the rebuilt Mac: generate the Phase 14 automated ch
 - [[#Purpose|Purpose]]
 - [[#How the Workflow Works|How the Workflow Works]]
 - [[#Artifact and Script Locations|Artifact and Script Locations]]
+    - [[#Bundle Layout|Bundle Layout]]
     - [[#Environment Variables|Environment Variables]]
 - [[#Before You Run Anything|Before You Run Anything]]
     - [[#Prerequisites|Prerequisites]]
@@ -42,7 +43,7 @@ Prove that the rebuilt Mac is usable for daily work and development, keep the fi
 
 **What it sets up**
 
-- **The post-image checklist bundle** — a timestamped `reimage-checklist-*.md` under `reimaged-system/checklists/` recording PASS, WARN, FAIL, or SKIP for every area automation can reach, plus the `latest-reimage-checklist.txt` pointer to the newest run.
+- **The post-image capstone** — `reimage-checklist.md` inside a timestamped run under `reimaged-system/checklists/runs/`, recording PASS, WARN, FAIL, or SKIP for every area automation can reach, with `official/post-image.txt` naming the current one.
 - **The closed manual sign-off areas** — Company Portal, internal access, OneDrive sync, Office stability, project readiness, and final cleanliness. The rows themselves are answered in `reimaged-system/sign-offs/`, which carries an answer forward between runs and records the run it was answered against; a decision that needs more room than a row — a deliberate skip and why — goes in `restore-notes/`.
 
 **What the rest of the workflow relies on it for**
@@ -98,45 +99,50 @@ Primary script:
 $FRACTOGENESIS_HOME/bin/reimage-checklist.sh          # entrypoint — aggregate validator (--phase post)
 ```
 
-Related script (Phase 9 initial post-image bundle; its `manual-captures-required.md` is the pre-flight for this phase):
+Related scripts, alphabetical:
 
 ```text
-$FRACTOGENESIS_HOME/bin/record-reimaged-system.sh     # entrypoint — owned by Phase 9
+$FRACTOGENESIS_HOME/bin/record-reimaged-system.sh     # entrypoint — owned by Phase 9; writes the pre-flight this phase reads
 ```
 
-Generated output roots:
+Artifact root:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/reimaged-system/checklists/reimage-checklist-YYYYMMDD-HHMMSS.md
-$REIMAGE_ARTIFACT_ROOT/reimaged-system/checklists/latest-reimage-checklist.txt
-$REIMAGE_ARTIFACT_ROOT/reimaged-system/sign-offs/reimaged-system-checks-YYYYMMDD-HHMMSS.md
-$REIMAGE_ARTIFACT_ROOT/reimaged-system/sign-offs/latest-reimaged-system-checks.txt
-$REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/                # optional prose notes
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/checklists/    # the post-image capstone, one lineage
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/sign-offs/     # its answered rows, and every other post-image phase's
 ```
 
-Pre-flight file written by Phase 9 (read, not written here):
+Input evidence built by earlier phases:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/reimaged-system/restarts/runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/manual-captures-required.md
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/restarts/runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/manual-captures-required.md   # written by verify-reimaged-system.md
+$REIMAGE_ARTIFACT_ROOT/                               # every category Phases 8-13 wrote; the validator resolves each through its official/ pointer
 ```
 
-Directory shape read and written by this runbook:
+### Bundle Layout
+
+One lineage, `post-image`, latest-wins — so rerunning the validator supersedes the previous capstone rather than adding a second one to answer. `sign-offs/` is a sibling of `checklists/`, not a child, because every post-image phase writes its answered rows there:
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/
 ├── ...
 ├── reimaged-system/
+│   ├── ...
 │   ├── checklists/
-│   │   ├── latest-reimage-checklist.txt
-│   │   └── reimage-checklist-YYYYMMDD-HHMMSS.md
-│   ├── restarts/runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/
-│   │   └── manual-captures-required.md
-│   ├── sign-offs/
-│   │   ├── latest-<runbook>.txt
-│   │   └── <runbook>-YYYYMMDD-HHMMSS.md
-│   └── restore-notes/
+│   │   ├── MANIFEST.md
+│   │   ├── official/
+│   │   │   └── post-image.txt
+│   │   └── runs/
+│   │       └── post-image-YYYYMMDD-HHMMSS/
+│   │           └── reimage-checklist.md
+│   ├── ...
+│   ├── restore-notes/
+│   └── sign-offs/
+│       └── reimaged-system-checks-YYYYMMDD-HHMMSS.md
 └── ...
 ```
+
+`restore-notes/` holds optional prose follow-up. The pre-image half of this validator is the same script under `--phase pre`, writing to `reimage-prep-checks/` — that half belongs to `reimage-prep-checks.md`.
 
 The complete `$REIMAGE_ARTIFACT_ROOT/reimaged-system/` layout is defined once in the Master Directory Reference:
 
@@ -272,10 +278,10 @@ Optional additions:
 The generated file lands at:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/reimaged-system/checklists/reimage-checklist-YYYYMMDD-HHMMSS.md
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/checklists/runs/post-image-YYYYMMDD-HHMMSS/reimage-checklist.md
 ```
 
-with `latest-reimage-checklist.txt` updated to point at the fresh run.
+with `official/post-image.txt` advanced onto the fresh run.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 

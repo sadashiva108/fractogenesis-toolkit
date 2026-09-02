@@ -2,7 +2,7 @@
 
 # Capture Performance Audit
 
-**Last updated:** 2026-08-17
+**Last updated:** 2026-09-02
 
 A repeatable, read-only performance baseline. It captures short-duration scenario bundles under named workloads so general workstation performance can be compared like-for-like across a reimage. Run it pre-image (Phase 4C) under one or more named scenarios, then run the same scenarios post-image (Phase 13D) so the two sets compare cleanly.
 
@@ -35,7 +35,7 @@ A repeatable, read-only performance baseline. It captures short-duration scenari
 > In Obsidian, these are internal heading links. Click in Reading View, or Cmd-click in Live Preview/editing mode.
 
 > [!info] Callout legend
-> This runbook uses Obsidian callouts so each type reads distinctly: `[!note]` an easily-missed fact · `[!warning]` Pitfall, a mistake you are likely to make here · `[!bug]` Troubleshooting, what to do when a step misbehaves.
+> Two kinds, used sparingly. `[!warning]` **Pitfall** — skipping it costs something you do not get back: state overwritten, a security boundary crossed, or a wrong result that stays quiet until a later phase. `[!bug]` **Troubleshooting** — what to do when a step misbehaves. Everything else is prose, in the paragraph that needed it. A box around an explanation only makes the explanation easier to skip.
 
 ---
 
@@ -128,37 +128,42 @@ Artifact root:
 $REIMAGE_ARTIFACT_ROOT/performance-audit/                     # all scenario bundles and the rollup summary land here
 ```
 
-> [!note]
-> `performance-audit/` is an optional capture root. `prepare-artifact-root.md` deliberately does not create it, because most reimages never run this capture — this runbook creates it on demand in Step 1.
+`performance-audit/` is an optional capture root. `prepare-artifact-root.md` deliberately does not create it, because most reimages never run this capture — this runbook creates it on demand in Step 1.
 
 ### Bundle Layout
 
-Each run writes one timestamped bundle whose name carries `<phase>` and `<scenario>`; the optional rollup summary writes under `rollup-summary/`:
+One lineage per scenario, so `clean-boot`, `normal-workload` and `active-dev` each keep their own `official/` pointer and never supersede one another. All are latest-wins, so rerunning a scenario replaces that scenario's current run and leaves the other two alone:
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/
 ├── ...
 ├── performance-audit/
-│   ├── <phase>-performance-audit-<scenario>-YYYYMMDD-HHMMSS/
-│   │   ├── README.md
-│   │   ├── manifest.txt
-│   │   ├── manual-observations.md
-│   │   ├── workload-reproduction-config.md
-│   │   ├── docker/
-│   │   ├── intellij/
-│   │   ├── logs/
-│   │   ├── mac-memory-health-output/
-│   │   ├── memory/
-│   │   ├── processes/
-│   │   ├── raw/
-│   │   ├── responsiveness/
-│   │   └── system/
-│   └── rollup-summary/
-│       └── <phase>-YYYYMMDD-HHMMSS/
-│           ├── performance-rollup-summary.md
-│           └── summary/
+│   ├── MANIFEST.md
+│   ├── official/
+│   │   └── <phase>-performance-audit-<scenario>.txt
+│   ├── rollup-summary/
+│   │   └── <phase>-YYYYMMDD-HHMMSS/
+│   │       ├── performance-rollup-summary.md
+│   │       └── summary/
+│   └── runs/
+│       └── <phase>-performance-audit-<scenario>-YYYYMMDD-HHMMSS/
+│           ├── README.md
+│           ├── manifest.txt
+│           ├── manual-observations.md
+│           ├── workload-reproduction-config.md
+│           ├── docker/
+│           ├── intellij/
+│           ├── logs/
+│           ├── mac-memory-health-output/
+│           ├── memory/
+│           ├── processes/
+│           ├── raw/
+│           ├── responsiveness/
+│           └── system/
 └── ...
 ```
+
+`rollup-summary/` is an optional quantitative view derived from the helper's own long-lived history rather than from these runs, so it sits beside the run index rather than inside it.
 
 The complete `$REIMAGE_ARTIFACT_ROOT/performance-audit/` layout is defined once in the Master Directory Reference:
 
@@ -189,8 +194,7 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 - `REIMAGE_ARTIFACT_ROOT` resolves and its destination volume is mounted (`reimage.env` produced by `prepare-artifact-root.md`) — unless you are staging locally under `REIMAGE_WORKSPACE_ROOT` first.
 - You are on the Mac being measured — the capture reports on the host it runs on.
 
-> [!note]
-> No admin privileges are required for the read-only samples. The `mac_memory_health.sh` helper and its longer history are optional; the scenario bundle still completes with live samples when the helper is absent.
+No admin privileges are required for the read-only samples. The `mac_memory_health.sh` helper and its longer history are optional; the scenario bundle still completes with live samples when the helper is absent.
 
 ### Confirm Your Intent
 
@@ -227,8 +231,7 @@ export PERFORMANCE_HISTORY_SOURCE="$HOME/Library/Logs/mac-memory-health"
 python3 bin/prepare-artifact-root.py upsert-env --env-file reimage.env "PERFORMANCE_HISTORY_SOURCE=$PERFORMANCE_HISTORY_SOURCE"
 ```
 
-> [!note]
-> With no `--output`, the capture defaults to `$REIMAGE_ARTIFACT_ROOT/performance-audit/`. Pass `--output "$REIMAGE_WORKSPACE_ROOT/performance-audit"` only when staging locally before the backup drive is mounted, or `--artifact-root PATH` to point at a different artifact root for one invocation. When you stage locally, create that destination the same way.
+With no `--output`, the capture defaults to `$REIMAGE_ARTIFACT_ROOT/performance-audit/`. Pass `--output "$REIMAGE_WORKSPACE_ROOT/performance-audit"` only when staging locally before the backup drive is mounted, or `--artifact-root PATH` to point at a different artifact root for one invocation. When you stage locally, create that destination the same way.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -250,7 +253,7 @@ For the post-image run (Phase 13D, after the new image settles), keep the same s
 ./bin/capture-performance-audit.sh --phase post-image --scenario normal-workload --sample-count 6 --sample-interval 30
 ```
 
-The script prints each area as it runs and finishes with the bundle path. It writes the samples, `manifest.txt`, and the auto-filled `manual-observations.md` / `workload-reproduction-config.md` under `performance-audit/<phase>-performance-audit-<scenario>-<stamp>/`.
+The script prints each area as it runs and finishes with the bundle path. It writes the samples, `manifest.txt`, and the auto-filled `manual-observations.md` / `workload-reproduction-config.md` into `performance-audit/runs/<phase>-performance-audit-<scenario>-<stamp>/`, then advances that scenario's `official/` pointer to it.
 
 If you staged a bundle under `REIMAGE_WORKSPACE_ROOT`, copy it into the artifact root before the Phase 6B (pre-image) or Phase 13 (post-image) sign-off:
 
@@ -267,10 +270,12 @@ cp -R "$REIMAGE_WORKSPACE_ROOT/performance-audit/." "$REIMAGE_ARTIFACT_ROOT/perf
 
 ### Step 3 — Verify Outputs
 
-Confirm the newest bundle landed and holds its sample directories and manifest:
+Confirm the run landed and holds its sample directories and manifest. Read the scenario's pointer rather than the newest directory, so a scenario you ran earlier is not what you inspect — set `SCENARIO` to the one you just captured:
 
 ```bash
-LATEST="$(ls -dt "$REIMAGE_ARTIFACT_ROOT"/performance-audit/*performance-audit-*/ | head -1)"
+SCENARIO="clean-boot"
+AUDIT_ROOT="$REIMAGE_ARTIFACT_ROOT/performance-audit"
+LATEST="$AUDIT_ROOT/$(cat "$AUDIT_ROOT/official/pre-image-performance-audit-$SCENARIO.txt")"
 echo "$LATEST"
 ls -1 "$LATEST"
 ```
@@ -282,7 +287,7 @@ sed -n '1,40p' "$LATEST/manual-observations.md"
 ```
 
 > [!warning] Pitfall
-> A bundle missing its sample directories means the run was interrupted. Rerun rather than trusting a partial bundle — each run writes a fresh timestamped directory, so a rerun overwrites nothing.
+> A bundle missing its sample directories means the run was interrupted. Rerun rather than trusting a partial bundle — each run writes a fresh timestamped directory and the interrupted one is discarded rather than indexed, so a rerun overwrites nothing.
 
 > [!bug] Troubleshooting
 > If the run finished but `logs/errors.log` holds warnings, see [[#The error log shows warnings but the run succeeded|The error log shows warnings but the run succeeded]].
@@ -359,8 +364,7 @@ Two optional pieces sit outside the scenario bundle and add longer-range context
 
 For a clean pre/post cutover, keep the final pre-image history window intact, archive it (for example under `REIMAGE_WORKSPACE_ROOT/performance-audit/history-archives/`), then start a fresh post-image series so the windows do not intermix. Use the most recent representative 7–14 days as the pre-image window and the first representative 2–7 days after setup settles as the post-image window.
 
-> [!note]
-> Only `mac_memory_health.sh` is external — it lives at `~/.local/bin/`, is not part of this toolkit, and may be absent. `generate-performance-rollup-summary.py` is an internal helper you run directly when you want the rollup; `capture-performance-audit.sh` never calls it, so it runs on your schedule rather than the capture's.
+Only `mac_memory_health.sh` is external — it lives at `~/.local/bin/`, is not part of this toolkit, and may be absent. `generate-performance-rollup-summary.py` is an internal helper you run directly when you want the rollup; `capture-performance-audit.sh` never calls it, so it runs on your schedule rather than the capture's.
 
 **Rollup summary (`.internal/performance/generate-performance-rollup-summary.py`).** When you have many diagnostic rollups over days or weeks, this produces a quantitative CSV package under `performance-audit/rollup-summary/<phase>-<stamp>/` (`performance-rollup-summary.md` plus a `summary/` of grouped app RSS/CPU/process-count pivots and health-window CSVs). It does not compute a single merged pre/post score — it produces structured inputs that make that follow-up analysis possible.
 

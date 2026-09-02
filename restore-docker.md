@@ -2,7 +2,7 @@
 
 # Restore Docker
 
-**Last updated:** 2026-09-01
+**Last updated:** 2026-09-02
 
 Restore Docker Desktop, resource tuning, registry credentials, and the local development container fleet on the reimaged Mac — Redis, RabbitMQ, Elasticsearch (+ Kibana), and MarkLogic (single-node with ml-gradle deployment). This is the dedicated Phase 12 Docker handoff; the companion script `bin/restore-docker.sh` writes a per-run plan-note that surveys the available pre-image sources, checks whether Docker Desktop and the daemon are up on the reimaged Mac, and provides the sign-off checklist.
 
@@ -13,6 +13,7 @@ Restore Docker Desktop, resource tuning, registry credentials, and the local dev
 - [[#Purpose|Purpose]]
 - [[#How the Workflow Works|How the Workflow Works]]
 - [[#Artifact and Script Locations|Artifact and Script Locations]]
+    - [[#Bundle Layout|Bundle Layout]]
     - [[#Environment Variables|Environment Variables]]
 - [[#Before You Run Anything|Before You Run Anything]]
     - [[#Prerequisites|Prerequisites]]
@@ -98,49 +99,61 @@ Every path and directory tree this runbook uses is defined here, once. Later ste
 Primary script:
 
 ```text
-$FRACTOGENESIS_HOME/bin/restore-docker.sh   # entrypoint
+$FRACTOGENESIS_HOME/bin/restore-docker.sh              # entrypoint — surveys the pre-image sources and emits the plan-note
 ```
 
-Artifact locations:
+Related scripts, alphabetical:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/app-settings-backup/docker/
-$MNT/docker/config.json                                    # inside the attached DMG, not beside it
-$REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/restore-docker-plan-*.md
-$REIMAGE_ARTIFACT_ROOT/reimaged-system/sign-offs/restore-docker-*.md
+docker                                                 # external helper — Docker Desktop's CLI, installed in Step 2
+docker compose                                         # external helper — brings each container stack up in Steps 8 and 9
+gradlew                                                # external helper — the ml-gradle wrapper inside the MarkLogic project, used in Step 10
 ```
 
-Directory shape this runbook reads (the full layout lives in [[master-directory-reference|Master Directory Reference]]):
+Artifact root:
+
+```text
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/                # every artifact this runbook generates lands here
+```
+
+Input evidence built by earlier phases:
+
+```text
+$REIMAGE_ARTIFACT_ROOT/app-settings-backup/docker/     # written by backup-apps.md — settings, daemon config, and the container and image inventories
+$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/docker/       # written by create-secrets-dmg.md — registry credentials, reachable only inside the attached image
+```
+
+`config.json` lives inside the attached image rather than beside it on the volume, so Step 5 reads it at the mount point the attach reports.
+
+### Bundle Layout
+
+Everything this runbook writes, under the artifact root named above. The pre-image sources it reads are listed in the block before this one and are not expanded here — `backup-apps.md` owns the `app-settings-backup/` layout and `create-secrets-dmg.md` owns `secrets-encrypted/`.
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/
 ├── ...
-├── app-settings-backup/
-│   └── docker/
-│       ├── compose-projects.txt
-│       ├── container-inventory.txt
-│       ├── contexts/
-│       ├── daemon.json
-│       ├── image-inventory.txt
-│       └── settings-store.json
-├── ...
 ├── reimaged-system/
+│   ├── ...
 │   ├── restore-notes/
 │   │   └── restore-docker-plan-YYYYMMDD-HHMMSS.md
-│   └── sign-offs/
-│       └── restore-docker-YYYYMMDD-HHMMSS.md
-├── ...
-└── secrets-encrypted/
-    └── docker/
-        └── config.json
+│   ├── sign-offs/
+│   │   └── restore-docker-YYYYMMDD-HHMMSS.md
+│   └── ...
+└── ...
 ```
 
-Project checkouts (post Phase 11B) referenced by the compose steps:
+Neither category is run-indexed, and that is deliberate. The plan-note is regenerable, so `restore-docker.sh` replaces it on every run; the sign-off holds the rows you answered and carries them forward, so nothing may replace it. This phase records no boundary, state or comparison run — Phase 12 closes on the plan-note sign-off, which Phase 14 `reimaged-system-checks.md` reads.
+
+Live project checkouts the compose steps run from, restored by `restore-repos.md` and never written by this runbook. The steps below reach them through a `WORKSPACE` variable you set to the directory holding your clones:
 
 ```text
-<workspace>/carrier-services-storage/src/main/docker/elastic/
-<workspace>/carrier-services-storage/src/main/docker/marklogic/
+$WORKSPACE/carrier-services-storage/src/main/docker/elastic/
+$WORKSPACE/carrier-services-storage/src/main/docker/marklogic/
 ```
+
+The full artifact-root map is defined once in the Master Directory Reference:
+
+[[master-directory-reference|Master Directory Reference]]
 
 ### Environment Variables
 

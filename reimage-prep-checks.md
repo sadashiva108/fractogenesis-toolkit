@@ -2,7 +2,7 @@
 
 # Reimage Preparation Checks
 
-**Last updated:** 2026-09-01
+**Last updated:** 2026-09-02
 
 The Phase 6B go / no-go gate before you erase the Mac. `reimage-checklist.sh --phase pre` proves as many prep items as automation can — backup roots, Git audit, secrets DMG, captures, cloud-folder evidence — and writes a timestamped report. You then complete the handful of rows automation cannot prove: IT approval, Time Machine, DMG password storage, and whether OneDrive/iCloud uploads have actually settled. Proceed to Phase 7 only when the report has zero FAILs and every manual row is signed off.
 
@@ -14,6 +14,7 @@ The Phase 6B go / no-go gate before you erase the Mac. `reimage-checklist.sh --p
 - [[#How the Workflow Works|How the Workflow Works]]
     - [[#Terminology|Terminology]]
 - [[#Artifact and Script Locations|Artifact and Script Locations]]
+    - [[#Bundle Layout|Bundle Layout]]
     - [[#Environment Variables|Environment Variables]]
 - [[#Before You Run Anything|Before You Run Anything]]
     - [[#Prerequisites|Prerequisites]]
@@ -43,7 +44,7 @@ Give yourself confidence, in one place, that the Mac's reimage preparation will 
 
 **What it sets up**
 
-- **The go / no-go report** — a timestamped `reimage-checklist-*.md` recording PASS, WARN, FAIL, or SKIP for every prep area automation can reach, plus the `latest-reimage-checklist.txt` pointer to the newest run.
+- **The go / no-go report** — `reimage-checklist.md` inside a timestamped run, recording PASS, WARN, FAIL, or SKIP for every prep area automation can reach, with `official/pre-image.txt` naming the current one.
 - **The pre-image manual sign-off note** — the written record of the rows the script leaves as `TODO`: IT approval, Time Machine, DMG password storage, and the cloud-sync confirmations.
 - **The decision itself** — proceed to Phase 7 (erase) or hold, evidenced rather than remembered.
 
@@ -64,7 +65,7 @@ Give yourself confidence, in one place, that the Mac's reimage preparation will 
 | | system, performance, and Office captures — the `capture-*` runbooks (Phase 4) |
 | | the post-image validation, the same script under `--phase post` — `reimaged-system-checks` (Phase 14) |
 
-This runbook is a validator: it reports on artifacts but never creates them. Rerun it as often as you like — each run writes a fresh timestamped report and refreshes `latest-reimage-checklist.txt`.
+This runbook is a validator: it reports on artifacts but never creates them. Rerun it as often as you like — each run writes a fresh timestamped run and advances the `pre-image` pointer onto it.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -104,14 +105,16 @@ Primary script:
 $FRACTOGENESIS_HOME/bin/reimage-checklist.sh    # entrypoint — aggregate validator (--phase pre)
 ```
 
-Generated report bundle:
+Artifact root:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/
-├── reimage-checklist-YYYYMMDD-HHMMSS.md
-├── latest-reimage-checklist.txt
-└── manual/
-    └── manual-app-export-and-sync-signoff-YYYYMMDD.md
+$REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/    # the pre-image capstone, its answered rows, and the manual notes it reads
+```
+
+Input evidence built by earlier phases:
+
+```text
+$REIMAGE_ARTIFACT_ROOT/    # every category Phases 0-6A wrote; the validator resolves each through its official/ pointer
 ```
 
 Template for the fuller manual sign-off note:
@@ -119,6 +122,34 @@ Template for the fuller manual sign-off note:
 ```text
 $FRACTOGENESIS_HOME/templates/app-backup-and-cloud-sync-signoff-template.md
 ```
+
+### Bundle Layout
+
+One lineage, `pre-image`, latest-wins — so rerunning the validator supersedes the previous capstone rather than adding a second one to answer. The rows only a person can close live in `sign-offs/`, outside the run, because a rerun replaces the run directory and would otherwise reset every answer:
+
+```text
+$REIMAGE_ARTIFACT_ROOT/
+├── ...
+├── reimage-prep-checks/
+│   ├── MANIFEST.md
+│   ├── manual/
+│   │   ├── loose-plaintext-cleanup-signoff-YYYYMMDD.md
+│   │   └── manual-export-pass-criteria-YYYYMMDD.md
+│   ├── official/
+│   │   └── pre-image.txt
+│   ├── runs/
+│   │   └── pre-image-YYYYMMDD-HHMMSS/
+│   │       └── reimage-checklist.md
+│   ├── secrets-dmg/
+│   │   ├── cleanup-YYYYMMDD-HHMMSS.md
+│   │   ├── dmg-validation-YYYYMMDD-HHMMSS.md
+│   │   └── staging-verification-YYYYMMDD-HHMMSS.md
+│   └── sign-offs/
+│       └── reimage-prep-checks-YYYYMMDD-HHMMSS.md
+└── ...
+```
+
+`manual/` and `secrets-dmg/` hold notes other phases wrote and this one reads; neither is a run lineage. The post-image capstone is the same script under `--phase post`, writing to `reimaged-system/checklists/` — that half belongs to `reimaged-system-checks.md`.
 
 The complete `$REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/` layout is defined once in the Master Directory Reference:
 
@@ -204,13 +235,12 @@ To point at a different artifact root or volume for one invocation, add `--artif
 > [!warning] Pitfall
 > `--workspace-root`, `--onedrive-root` git-status scanning, and `--internal-url` are post-image (`--phase post`) concerns. For the pre-image gate, the flags above are all you need — don't copy the Phase 14 invocation.
 
-The run writes the report and refreshes the latest-pointer:
+The run writes the report, indexes it, and advances the pointer:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/reimage-checklist-YYYYMMDD-HHMMSS.md
-$REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/latest-reimage-checklist.txt
+$REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/runs/pre-image-YYYYMMDD-HHMMSS/reimage-checklist.md
+$REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/official/pre-image.txt
 $REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/sign-offs/reimage-prep-checks-YYYYMMDD-HHMMSS.md
-$REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/sign-offs/latest-reimage-prep-checks.txt
 ```
 
 It exits `0` with no FAILs, `1` when one or more FAIL rows were recorded, and `2` on bad arguments or unloadable config.
@@ -241,8 +271,7 @@ Then complete the rows the script leaves as `TODO` — these are the manual veri
 
 Capture these in the sign-off note so the decision is written down, not just remembered; the note template and the copy-from-template command are kept under Supplemental Reference.
 
-> [!note]
-> Obsidian restore-*source* decisions themselves belong to [[backup-apps|Backup Apps]]; here you only confirm the vault is synced or copied.
+Obsidian restore-*source* decisions themselves belong to `backup-apps.md`; here you only confirm the vault is synced or copied.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -253,7 +282,8 @@ Capture these in the sign-off note so the decision is written down, not just rem
 Confirm the latest report is clean before you treat the gate as passed:
 
 ```bash
-tail -n 20 "$(cat "$REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/latest-reimage-checklist.txt")"
+PREP_ROOT="$REIMAGE_ARTIFACT_ROOT/reimage-prep-checks"
+tail -n 20 "$PREP_ROOT/$(cat "$PREP_ROOT/official/pre-image.txt")/reimage-checklist.md"
 ```
 
 The summary block must show `FAIL : 0`. Spot-check that the artifact root holds the major areas and the secrets staging looks right:

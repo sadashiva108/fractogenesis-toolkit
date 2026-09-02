@@ -2,7 +2,7 @@
 
 # Capture Office Stability
 
-**Last updated:** 2026-08-17
+**Last updated:** 2026-09-02
 
 Capture the evidence behind Outlook / OneNote instability when Office update churn or unexpected app closures are part of the reason this Mac is being reimaged. A continuous watcher logs the apps, their bundles, crash reports, and Microsoft update/management activity over days or weeks; a baseline collector then summarizes everything newer than a timestamp marker into a self-contained bundle. Run it pre-image (Phase 4D) to record the before picture, and again post-image (Phase 13E) to show whether the rebuilt Mac stayed stable.
 
@@ -24,7 +24,7 @@ Capture the evidence behind Outlook / OneNote instability when Office update chu
     - [[#Step 1 — Prepare a Clean Test Window|Step 1 — Prepare a Clean Test Window]]
     - [[#Step 2 — Exercise Office and Snapshot the Workload|Step 2 — Exercise Office and Snapshot the Workload]]
     - [[#Step 3 — Run the Baseline Collector|Step 3 — Run the Baseline Collector]]
-    - [[#Step 4 — Generate the Checklist Report|Step 4 — Generate the Checklist Report]]
+    - [[#Step 4 — Assess the Evidence|Step 4 — Assess the Evidence]]
     - [[#Step 5 — Verify Outputs|Step 5 — Verify Outputs]]
 - [[#Decisions|Decisions]]
 - [[#Troubleshooting|Troubleshooting]]
@@ -41,7 +41,7 @@ Capture the evidence behind Outlook / OneNote instability when Office update chu
 > In Obsidian, these are internal heading links. Click in Reading View, or Cmd-click in Live Preview/editing mode.
 
 > [!info] Callout legend
-> This runbook uses Obsidian callouts so each type reads distinctly: `[!note]` an easily-missed fact · `[!warning]` Pitfall, a mistake you are likely to make here · `[!bug]` Troubleshooting, what to do when a step misbehaves.
+> Two kinds, used sparingly. `[!warning]` **Pitfall** — skipping it costs something you do not get back: state overwritten, a security boundary crossed, or a wrong result that stays quiet until a later phase. `[!bug]` **Troubleshooting** — what to do when a step misbehaves. Everything else is prose, in the paragraph that needed it. A box around an explanation only makes the explanation easier to skip.
 
 ---
 
@@ -53,7 +53,7 @@ Preserve timestamped evidence that Outlook and OneNote close during managed Micr
 
 - **Timestamped baseline bundles** — one collector run per window under `office-stability/`, holding the numbered section files `00`–`08`, the run summary, and the evidence ZIP.
 - **The watcher record and its marker** — continuous bundle-watch logs and workload snapshots under `$OFFICE_WATCH`, anchored by `bundle-watch-start.marker` so every check reports only this window's evidence.
-- **The Office stability checklists** — generated pre-image and post-image sign-off reports under `office-stability/checklists/`.
+- **The Office stability assessment** — a generated pre-image and post-image verdict on that evidence, written as its own run under `office-stability/runs/` with its answered rows in `office-stability/sign-offs/`.
 
 **What the rest of the workflow relies on it for**
 
@@ -112,8 +112,7 @@ There is one capture flow, run at two capture depths. The depth is the only thin
 
 Every path and directory tree this runbook uses is defined here, once. Later sections refer back to these names instead of redrawing them.
 
-> [!note]
-> These entrypoints live in `bin/` and take `--artifact-root`. `--phase` accepts `pre-reimage`/`post-reimage` (pre-image/post-image are normalized to those).
+These entrypoints live in `bin/` and take `--artifact-root`. `--phase` accepts `pre-reimage`/`post-reimage`, and `pre-image`/`post-image` normalize to those; the run contexts they write always use the `pre-image` / `post-image` spelling, matching every other category in the artifact root.
 
 Primary script:
 
@@ -124,19 +123,18 @@ $FRACTOGENESIS_HOME/bin/capture-office-stability.sh    # entrypoint (baseline co
 Related scripts, alphabetical:
 
 ```text
+$FRACTOGENESIS_HOME/bin/assess-office-stability.sh     # entrypoint (evaluates the evidence window and renders the verdict)
 $FRACTOGENESIS_HOME/bin/capture-workload-snapshot.sh   # entrypoint (point-in-time workload snapshot)
-$FRACTOGENESIS_HOME/bin/office-stability-checklist.sh  # entrypoint (generates the sign-off checklist report)
 $FRACTOGENESIS_HOME/bin/watch-office-today.sh          # entrypoint (long-running Office watcher)
 ```
 
 Artifact root:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/office-stability/               # all generated Office evidence, bundles, and checklists land here
+$REIMAGE_ARTIFACT_ROOT/office-stability/               # both lineages land here: the evidence window and the assessment of it
 ```
 
-> [!note]
-> `office-stability/` is an optional capture root. `prepare-artifact-root.md` deliberately does not create it, because most reimages never run this capture — this runbook creates it on demand in Step 1.
+`office-stability/` is an optional capture root. `prepare-artifact-root.md` deliberately does not create it, because most reimages never run this capture — this runbook creates it on demand in Step 1.
 
 Local watcher directory (stays on the Mac; not on the backup volume):
 
@@ -146,29 +144,43 @@ $OFFICE_WATCH/                                          # live watcher logs, wor
 
 ### Bundle Layout
 
-Each collector run writes one timestamped bundle; the `pre-reimage` / `post-reimage` prefix comes from `--phase`:
+Two lineages share the category. The collector writes `<phase>-office-stability-evidence`, holding the numbered section files, the run summary and the evidence ZIP; the assessor writes `<phase>-office-stability-assessment`, holding its verdict and the per-check evidence behind it. `official/` names the current run of each, and both are latest-wins, so a rerun supersedes:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/office-stability/
-├── checklists/
-│   └── ...
-├── office-stability-summary-YYYYMMDD-HHMMSS.md
-├── post-reimage-office-baseline-YYYYMMDD-HHMMSS/
-│   └── ...
-└── pre-reimage-office-baseline-YYYYMMDD-HHMMSS/
-    ├── 00-baseline-window.txt
-    ├── 01-crash-reports-newer-than-marker.txt
-    ├── 02-office-bundle-status.txt
-    ├── 03-outlook-onenote-process-transitions.txt
-    ├── 04-watcher-installer-office-signals.txt
-    ├── 05-install-log-office-events-tail.txt
-    ├── 06-autoupdate-office-events-tail.txt
-    ├── 07-unified-log-office-since-marker.txt
-    ├── 08-watcher-running-status.txt
-    └── office-stability-summary.md
+$REIMAGE_ARTIFACT_ROOT/
+├── ...
+├── office-stability/
+│   ├── MANIFEST.md
+│   ├── official/
+│   │   ├── <phase>-office-stability-assessment.txt
+│   │   └── <phase>-office-stability-evidence.txt
+│   ├── runs/
+│   │   ├── <phase>-office-stability-assessment-YYYYMMDD-HHMMSS/
+│   │   │   ├── README.md
+│   │   │   ├── office-stability-assessment.md
+│   │   │   ├── logs/
+│   │   │   ├── processes/
+│   │   │   ├── system/
+│   │   │   └── watcher/
+│   │   └── <phase>-office-stability-evidence-YYYYMMDD-HHMMSS/
+│   │       ├── 00-baseline-window.txt
+│   │       ├── 01-crash-reports-newer-than-marker.txt
+│   │       ├── 02-office-bundle-status.txt
+│   │       ├── 03-outlook-onenote-process-transitions.txt
+│   │       ├── 04-watcher-installer-office-signals.txt
+│   │       ├── 05-install-log-office-events-tail.txt
+│   │       ├── 06-autoupdate-office-events-tail.txt
+│   │       ├── 07-unified-log-office-since-marker.txt
+│   │       ├── 08-watcher-running-status.txt
+│   │       ├── <phase>-office-baseline-YYYYMMDD-HHMMSS.zip
+│   │       └── office-stability-summary.md
+│   ├── sign-offs/
+│   │   └── <phase>-office-stability-assessment-YYYYMMDD-HHMMSS.md
+│   └── watcher-history/
+└── ...
 ```
 
-The complete `$REIMAGE_ARTIFACT_ROOT/office-stability/` layout (baseline `.zip`s and the full `checklists/` subtree) is defined once in the Master Directory Reference:
+`watcher-history/` holds evidence carried forward from an earlier Office incident and stays outside the run index. The complete `$REIMAGE_ARTIFACT_ROOT/office-stability/` layout is defined once in the Master Directory Reference:
 
 [[master-directory-reference|Master Directory Reference]]
 
@@ -298,22 +310,21 @@ At the end of the window, turn everything the watcher recorded into a structured
 
 It writes the numbered section files `00`–`08` and `office-stability-summary.md` into the bundle named under Artifact and Script Locations.
 
-> [!note]
-> If the unified-log pull is slow and you want a faster first pass, add `--skip-unified-log`; file `07-unified-log-office-since-marker.txt` then just records that it was skipped.
+If the unified-log pull is slow and you want a faster first pass, add `--skip-unified-log`; file `07-unified-log-office-since-marker.txt` then just records that it was skipped.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
 ---
 
-### Step 4 — Generate the Checklist Report
+### Step 4 — Assess the Evidence
 
-Turn the bundle into a readable sign-off report under `office-stability/checklists/`. Run this after the collector and before closing out the phase; `--open` opens the report when it finishes:
+The collector gathers the window; this evaluates it and renders a verdict as its own run under `office-stability/runs/`, resolving the evidence through its `official/` pointer rather than the newest directory. Run it after the collector and before closing out the phase; `--open` opens the report when it finishes:
 
 ```bash
-./bin/office-stability-checklist.sh --phase pre-reimage --artifact-root "$REIMAGE_ARTIFACT_ROOT" --open
+./bin/assess-office-stability.sh --phase pre-reimage --artifact-root "$REIMAGE_ARTIFACT_ROOT" --open
 ```
 
-This is Office-specific and runs separately from the general Phase 6B checklist; its findings roll up to that Phase 6B sign-off. A hand-tracked equivalent is kept in Supplemental Reference for when you are not generating the report.
+The rows only a person can answer are written to `office-stability/sign-offs/`, outside the run, so a rerun of the assessor cannot reset them. This is Office-specific and runs separately from the general Phase 6B checklist; its findings roll up to that Phase 6B sign-off. A hand-tracked equivalent is kept in Supplemental Reference for when you are not generating the report.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -324,7 +335,8 @@ This is Office-specific and runs separately from the general Phase 6B checklist;
 Confirm the bundle landed with all nine section files plus the summary:
 
 ```bash
-LATEST="$(ls -dt "$REIMAGE_ARTIFACT_ROOT"/office-stability/pre-reimage-office-baseline-*/ | head -1)"
+RUN="$(cat "$REIMAGE_ARTIFACT_ROOT/office-stability/official/pre-image-office-stability-evidence.txt")"
+LATEST="$REIMAGE_ARTIFACT_ROOT/office-stability/$RUN"
 echo "$LATEST"
 ls -1 "$LATEST"
 ```
@@ -520,7 +532,7 @@ Mitigation is limited on a managed Mac, but useful temporary steps: avoid reopen
 
 ### Final Pre-Reimage Checklist
 
-The generated report from `office-stability-checklist.sh --phase pre-reimage` is the preferred sign-off. This is the human-readable equivalent when you are tracking it by hand:
+The generated report from `assess-office-stability.sh --phase pre-reimage` is the preferred sign-off. This is the human-readable equivalent when you are tracking it by hand:
 
 ```text
 [ ] Watcher ran with an early marker before reimage
@@ -540,7 +552,7 @@ The generated report from `office-stability-checklist.sh --phase pre-reimage` is
 
 ### Post-Image Office Stability Checklist Template
 
-Use this after reimage when Outlook/OneNote stability still needs verifying. The generated report from `office-stability-checklist.sh --phase post-reimage` is preferred; this is the compact manual comparison template:
+Use this after reimage when Outlook/OneNote stability still needs verifying. The generated report from `assess-office-stability.sh --phase post-reimage` is preferred; this is the compact manual comparison template:
 
 ```text
 Post-Image Office Stability Sign-Off — YYYY-MM-DD

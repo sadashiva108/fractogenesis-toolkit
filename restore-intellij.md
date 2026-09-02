@@ -2,7 +2,7 @@
 
 # Restore IntelliJ
 
-**Last updated:** 2026-09-01
+**Last updated:** 2026-09-02
 
 Restore IntelliJ IDEA and per-project state on the reimaged Mac in a controlled sequence so imported settings, Scratches, project metadata, and HTTP Client environments end up in the right places without dragging stale machine-specific paths forward or leaking secret material into unencrypted storage. This is the dedicated Phase 12 IntelliJ handoff the umbrella app phase hands to; the companion script `bin/restore-intellij.sh` writes a per-run plan-note that surveys the available pre-image sources and provides the sign-off checklist.
 
@@ -13,6 +13,7 @@ Restore IntelliJ IDEA and per-project state on the reimaged Mac in a controlled 
 - [[#Purpose|Purpose]]
 - [[#How the Workflow Works|How the Workflow Works]]
 - [[#Artifact and Script Locations|Artifact and Script Locations]]
+    - [[#Bundle Layout|Bundle Layout]]
     - [[#Environment Variables|Environment Variables]]
 - [[#Before You Run Anything|Before You Run Anything]]
     - [[#Prerequisites|Prerequisites]]
@@ -100,58 +101,59 @@ Every path and directory tree this runbook uses is defined here, once. Later ste
 Primary script:
 
 ```text
-$FRACTOGENESIS_HOME/bin/restore-intellij.sh   # entrypoint
+$FRACTOGENESIS_HOME/bin/restore-intellij.sh            # entrypoint — surveys the pre-image sources and emits the plan-note
 ```
 
-Artifact locations:
+Related scripts, alphabetical:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/
-$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/intellij/
-$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/all-secrets-*.dmg
-$REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/restore-intellij-plan-*.md
-$REIMAGE_ARTIFACT_ROOT/reimaged-system/sign-offs/restore-intellij-*.md
+hdiutil                                                # external helper — attaches and detaches the IntelliJ installer image in Step 2 and the encrypted secrets image in Step 8
 ```
 
-Directory shape this runbook reads, alphabetized at every level. Omitted siblings are shown as `...`:
+Artifact root:
+
+```text
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/                # every artifact this runbook generates lands here
+```
+
+Input evidence built by earlier phases:
+
+```text
+$REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/   # written by backup-intellij.md — settings ZIP, scratches, project metadata, HTTP Client requests
+$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/all-secrets-YYYYMMDD-HHMMSS.dmg   # written by create-secrets-dmg.md — attach it to reach the category below
+$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/intellij/     # written by create-secrets-dmg.md — HTTP Client env files that carry real credentials
+```
+
+The complete `app-settings-backup/` and `secrets-encrypted/` layouts are defined once in the Master Directory Reference:
+
+[[master-directory-reference|Master Directory Reference]]
+
+### Bundle Layout
+
+Everything this runbook writes, under the artifact root named above. The pre-image sources it reads are listed in the block before this one and are not expanded here; this tree is output only.
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/
 ├── ...
-├── app-settings-backup/
-│   └── intellij/
-│       ├── IntelliJIdea20YY.N/
-│       │   ├── config-copy/
-│       │   └── scratches-and-consoles/
-│       ├── logs/
-│       ├── manifests/
-│       ├── manual-settings-export/
-│       │   └── IntelliJ-settings-YYYYMMDD-HHMMSS.zip
-│       ├── project-metadata/
-│       └── restore-notes/
-├── ...
 ├── reimaged-system/
+│   ├── ...
 │   ├── restore-notes/
 │   │   └── restore-intellij-plan-YYYYMMDD-HHMMSS.md
-│   └── sign-offs/
-│       └── restore-intellij-YYYYMMDD-HHMMSS.md
-├── ...
-└── secrets-encrypted/
-    ├── all-secrets-YYYYMMDD-HHMMSS.dmg
-    └── intellij/
+│   ├── sign-offs/
+│   │   └── restore-intellij-YYYYMMDD-HHMMSS.md
+│   └── ...
+└── ...
 ```
 
-The complete artifact-root layout is defined once in the Master Directory Reference:
+Neither category is run-indexed, and that is deliberate. The plan-note is regenerable, so `restore-intellij.sh` replaces it on every run; the sign-off holds the rows you answered and carries them forward, so nothing may replace it. This phase records no boundary, state or comparison run — Phase 12 closes on the plan-note sign-off, which Phase 14 `reimaged-system-checks.md` reads.
 
-[[master-directory-reference|Master Directory Reference]]
-
-Live IntelliJ paths on the reimaged Mac (targets, not backup sources):
+Live IntelliJ paths on the reimaged Mac. These are restore targets, not artifact locations, and nothing under `$REIMAGE_ARTIFACT_ROOT` mirrors them:
 
 ```text
-~/Library/Application Support/JetBrains/IntelliJIdea20YY.N/
-~/Library/Preferences/                     # com.jetbrains.* plists
-~/Library/Caches/JetBrains/
-~/Library/Logs/JetBrains/
+~/Library/Application Support/JetBrains/IntelliJIdea20YY.N/   # Steps 4-5 — imported settings, Scratches, IDE state
+~/Library/Caches/JetBrains/                                   # rebuilt by the IDE; never restored from backup
+~/Library/Logs/JetBrains/                                     # rebuilt by the IDE; read only when diagnosing a failed import
+~/Library/Preferences/                                        # com.jetbrains.* plists
 ```
 
 ### Environment Variables

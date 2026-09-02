@@ -2,7 +2,7 @@
 
 # Stage Certificates and Keychain
 
-**Last updated:** 2026-07-31
+**Last updated:** 2026-09-02
 
 Discover, review, and stage the certificate and macOS Keychain material worth preserving — into the temporary staging folders that Phase 3C packages into the encrypted secrets DMG. Inventory broadly; stage narrowly.
 
@@ -14,8 +14,7 @@ Discover, review, and stage the certificate and macOS Keychain material worth pr
 - [[#How the Workflow Works|How the Workflow Works]]
     - [[#Terminology|Terminology]]
 - [[#Artifact and Script Locations|Artifact and Script Locations]]
-    - [[#Artifact Locations|Artifact Locations]]
-    - [[#Workspace Layout|Workspace Layout]]
+    - [[#Bundle Layout|Bundle Layout]]
     - [[#Environment Variables|Environment Variables]]
 - [[#Before You Run Anything|Before You Run Anything]]
     - [[#Prerequisites|Prerequisites]]
@@ -123,47 +122,62 @@ The entrypoint has three subcommands:
 
 Every path and directory tree this runbook uses is defined here, once. Later sections refer back to these names instead of redrawing them.
 
-Primary script (entrypoint):
+Primary script:
 
 ```text
-$FRACTOGENESIS_HOME/bin/stage-certs-keychain.sh
+$FRACTOGENESIS_HOME/bin/stage-certs-keychain.sh                          # entrypoint
 ```
 
-Supporting helper (called by the entrypoint for staged-certs config init, normalized planning, TSV cleanup, hashing, and dedupe — do not run directly):
+Related scripts, alphabetical:
 
 ```text
-$FRACTOGENESIS_HOME/.internal/certs/prepare-certs-keychain-staging.py
+$FRACTOGENESIS_HOME/.internal/certs/collect-keychain-export-detail.py    # helper — builds the manual-export checklist, the export summary, and the public inventory
+$FRACTOGENESIS_HOME/.internal/certs/prepare-certs-keychain-staging.py    # helper — staged-certs config init, normalized planning, TSV cleanup, hashing, dedupe
 ```
 
-### Artifact Locations
+Artifact root:
 
-Two destinations, applied consistently:
+```text
+$REIMAGE_ARTIFACT_ROOT/public-certs/                                     # sanitized notes, inventories, decision logs, public-only convenience copies
+$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/                                # anything secret-bearing, possibly secret-bearing, local-only, or hard to recreate
+```
 
-| Location | Put this here | Do not put this here |
-|---|---|---|
-| `$REIMAGE_ARTIFACT_ROOT/public-certs/` | Sanitized notes, inventories, decision logs, public-only convenience copies | Private keys, `.p12`, `.pfx`, `.jks`, `.keystore`, `*.key`, or unreviewed cert material |
-| `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/certs/` | Anything secret-bearing, possibly secret-bearing, local-only, or hard to recreate | Passwords written in notes, filenames, or plaintext helper docs |
+Input evidence built by earlier phases:
 
-License keys and activation exports are not certificate material; stage them under `secrets-encrypted/licenses/`, owned by the broader secrets workflow.
+```text
+$REIMAGE_ARTIFACT_ROOT/gitignore-superset/                               # ignored-pattern superset from backup-repos.md; the plan reads it to tell generated noise from real material
+```
 
-The certs staging subtree this runbook's steps create and fill (the scan creates these automatically; the full `secrets-encrypted/` layout is defined once in the Master Directory Reference, not redrawn here):
+Both helpers are called by the entrypoint and are never run directly. Neither destination takes what belongs in the other. Private keys, `.p12`, `.pfx`, `.jks`, `.keystore`, `*.key`, and any unreviewed cert material stay out of `public-certs/`; passwords written into notes, filenames, or plaintext helper docs stay out of `secrets-encrypted/certs/`. License keys and activation exports are not certificate material at all — stage them under `secrets-encrypted/licenses/`, owned by the broader secrets workflow.
+
+### Bundle Layout
+
+The artifact root first, then the workspace root. The scan creates every artifact-root directory below automatically, so nothing there has to be made by hand:
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/
+├── ...
 ├── public-certs/
-│   └── certs/                          # keychain-detail → public export inventory
-└── secrets-encrypted/
-    ├── certs/
-    │   ├── keychain-manual-exports/     # your manual exports + keychain-detail export summary
-    │   ├── loose-candidates-selected/   # scan → staged loose selections
-    │   ├── project-local/               # scan → staged project-local selections
-    │   └── tool-local/                  # scan → staged tool-local selections
-    └── extra-secrets-certs-review/
-        ├── discovery/                   # scan → inventories + discovery reports
-        ├── plan/                        # plan → normalized plan, cleaned-inputs-*/, proposed-staged-certs/
-        ├── decisions/                   # plan + keychain-detail → checklist, cert restore notes
-        ├── state/                       # scan → staging-state pointer + secrets-dmg-rebuild marker
-        └── MANIFEST.md                  # live index, regenerated by scan/plan/keychain-detail
+│   └── certs/
+│       ├── keychain-cert-export-inventory-YYYYMMDD-HHMMSS.md   # keychain-detail → public export inventory
+│       └── ...
+├── ...
+├── secrets-encrypted/
+│   ├── ...
+│   ├── certs/
+│   │   ├── keychain-manual-exports/     # your manual exports + the keychain-detail export summary
+│   │   ├── loose-candidates-selected/   # scan → staged loose selections
+│   │   ├── project-local/               # scan → staged project-local selections
+│   │   └── tool-local/                  # scan → staged tool-local selections
+│   ├── ...
+│   ├── extra-secrets-certs-review/
+│   │   ├── decisions/                   # plan + keychain-detail → checklist, cert restore notes
+│   │   ├── discovery/                   # scan → inventories + discovery reports
+│   │   ├── MANIFEST.md                  # live index, regenerated by scan/plan/keychain-detail
+│   │   ├── plan/                        # plan → normalized plan, cleaned-inputs-*/, proposed-staged-certs/
+│   │   └── state/                       # scan → staging-state pointer + secrets-dmg-rebuild marker
+│   └── ...
+└── ...
 ```
 
 Which subcommand writes where:
@@ -175,7 +189,20 @@ Which subcommand writes where:
 | `keychain-detail` | Checklist → `.../decisions/`; export summary → `secrets-encrypted/certs/keychain-manual-exports/`; public inventory → `public-certs/certs/`. |
 | any of the above | Rewrites `extra-secrets-certs-review/MANIFEST.md` as a live index of the folder. |
 
-The complete `secrets-encrypted/` layout — including `certs/java-security/` (populated by `backup-home.md` / Phase 3C, not here) and the sibling app-secret folders — lives in:
+Your reviewed selections live under `$REIMAGE_WORKSPACE_ROOT` so they survive between reimages and reruns, outside both the repo and the external artifact root:
+
+```text
+$REIMAGE_WORKSPACE_ROOT/
+├── ...
+└── staged-certs/
+    ├── loose-candidates-selected.conf.sh
+    ├── project-local.conf.sh
+    └── tool-local.conf.sh
+```
+
+The committed defaults these are copied from live at `$FRACTOGENESIS_HOME/.internal/templates/staged-certs/`. The scan sources the workspace fragments directly every run, falling back to the committed templates when the workspace copy is absent; only the real files they point to are copied into `secrets-encrypted/certs/`. Nothing is copied back to the artifact root, so there is no generated copy to overwrite.
+
+The complete `secrets-encrypted/` layout — including `certs/java-security/`, populated by `backup-home.md` and Phase 3C rather than here, and the sibling app-secret folders — lives in:
 
 [[master-directory-reference|Master Directory Reference]]
 
@@ -190,19 +217,6 @@ The complete `secrets-encrypted/` layout — including `certs/java-security/` (p
 >   "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/certs/tool-local" \
 >   "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/extra-secrets-certs-review"/{discovery,plan,decisions,state}
 > ```
-
-### Workspace Layout
-
-Your reviewed selections live under `$REIMAGE_WORKSPACE_ROOT` so they survive between reimages and reruns, outside both the repo and the external artifact root:
-
-```text
-$REIMAGE_WORKSPACE_ROOT/staged-certs/
-├── loose-candidates-selected.conf.sh
-├── project-local.conf.sh
-└── tool-local.conf.sh
-```
-
-The committed defaults these are copied from live at `$FRACTOGENESIS_HOME/.internal/templates/staged-certs/`. The scan sources the workspace fragments directly every run (falling back to the committed templates when the workspace copy is absent); only the real files they point to are copied into `secrets-encrypted/certs/`. Nothing is copied back to the artifact root, so there is no generated copy to overwrite.
 
 ### Environment Variables
 
@@ -544,7 +558,7 @@ Important rules: compare by SHA-256 fingerprint (duplicate display names are com
 
 ### Generated Review Artifacts
 
-What the scan and plan write under `secrets-encrypted/extra-secrets-certs-review/` (and the certs staging folders). Each lands in a `discovery/`, `plan/`, `decisions/`, or `state/` subfolder — see [[#Artifact Locations|Artifact Locations]] for the routing. All are review inputs unless noted.
+What the scan and plan write under `secrets-encrypted/extra-secrets-certs-review/` (and the certs staging folders). Each lands in a `discovery/`, `plan/`, `decisions/`, or `state/` subfolder — see [[#Bundle Layout|Bundle Layout]] for the routing. All are review inputs unless noted.
 
 | Artifact | What it tells you | Default action |
 |---|---|---|

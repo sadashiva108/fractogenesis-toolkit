@@ -304,13 +304,25 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 > ```text
 > $REIMAGE_ARTIFACT_ROOT/loose-secrets-reports/
 > ├── MANIFEST.md
-> ├── latest-run.txt
+> ├── content-scans/
+> │   ├── MANIFEST.md
+> │   ├── latest-run.txt
+> │   └── runs/
+> │       └── <context>-YYYYMMDD-HHMMSS/
+> ├── findings-ledger.tsv
+> ├── loose-secrets-index.md
+> ├── official/
+> │   └── <context>.txt
+> ├── open-findings.md
 > └── runs/
->     ├── pre-image-YYYYMMDD-HHMMSS/
->     │   └── loose-secrets-report.txt
->     └── post-image-YYYYMMDD-HHMMSS/
->         └── ...
+>     └── <context>-YYYYMMDD-HHMMSS/
+>         ├── findings.tsv
+>         └── loose-secrets-report.txt
 > ```
+>
+> `<context>` is `pre-image` for the Phase 3B sweep and `pre-image-<label>` for a
+> re-check. `content-scans/` is written by `backup-home.md` and keeps its own
+> bespoke index rather than the shared one.
 
 > [!example]- `$REIMAGE_ARTIFACT_ROOT/managed-inventory/`
 > ```text
@@ -343,76 +355,81 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 > [!example]- `$REIMAGE_ARTIFACT_ROOT/office-stability/`
 > ```text
 > $REIMAGE_ARTIFACT_ROOT/office-stability/
-> ├── office-stability-summary-YYYYMMDD-HHMMSS.md
-> ├── pre-reimage-office-baseline-YYYYMMDD-HHMMSS/
-> │   ├── 00-baseline-window.txt
-> │   ├── 01-crash-reports-newer-than-marker.txt
-> │   ├── 02-office-bundle-status.txt
-> │   ├── 03-outlook-onenote-process-transitions.txt
-> │   ├── 04-watcher-installer-office-signals.txt
-> │   ├── 05-install-log-office-events-tail.txt
-> │   ├── 06-autoupdate-office-events-tail.txt
-> │   ├── 07-unified-log-office-since-marker.txt
-> │   ├── 08-watcher-running-status.txt
-> │   └── office-stability-summary.md
-> ├── pre-reimage-office-baseline-YYYYMMDD-HHMMSS.zip
-> ├── post-reimage-office-baseline-YYYYMMDD-HHMMSS/
-> │   └── ...
-> ├── post-reimage-office-baseline-YYYYMMDD-HHMMSS.zip
-> └── checklists/
->     ├── latest-pre-image-office-stability-checklist.txt
->     ├── latest-post-image-office-stability-checklist.txt
->     ├── pre-image-office-stability-checklist-YYYYMMDD-HHMMSS/
->     │   ├── README.md
->     │   ├── pre-image-office-stability-checklist.md
->     │   ├── logs/
->     │   │   ├── commands.log
->     │   │   └── errors.log
->     │   ├── watcher/
->     │   │   ├── marker-timestamp.txt
->     │   │   ├── watcher-running-processes.txt
->     │   │   ├── latest-watcher-tail-800.txt
->     │   │   └── watcher-installer-office-signals.txt
->     │   ├── processes/
->     │   │   └── outlook-onenote-process-transitions.txt
->     │   └── system/
->     │       ├── installer-update-management-processes.txt
->     │       ├── office-crash-reports-after-marker.txt
->     │       ├── office-bundle-status.txt
->     │       ├── install-log-office-events-tail.txt
->     │       └── autoupdate-office-events-tail.txt
->     └── post-image-office-stability-checklist-YYYYMMDD-HHMMSS/
->         └── ...
+> ├── MANIFEST.md
+> ├── official/
+> │   ├── <phase>-office-stability-assessment.txt
+> │   └── <phase>-office-stability-evidence.txt
+> ├── runs/
+> │   ├── <phase>-office-stability-assessment-YYYYMMDD-HHMMSS/
+> │   │   ├── README.md
+> │   │   ├── logs/
+> │   │   │   ├── commands.log
+> │   │   │   └── errors.log
+> │   │   ├── office-stability-assessment.md
+> │   │   ├── processes/
+> │   │   │   └── outlook-onenote-process-transitions.txt
+> │   │   ├── system/
+> │   │   │   ├── autoupdate-office-events-tail.txt
+> │   │   │   ├── install-log-office-events-tail.txt
+> │   │   │   ├── office-bundle-status.txt
+> │   │   │   └── office-crash-reports-after-marker.txt
+> │   │   └── watcher/
+> │   │       ├── latest-watcher-tail-800.txt
+> │   │       ├── marker-timestamp.txt
+> │   │       ├── watcher-installer-office-signals.txt
+> │   │       └── watcher-running-processes.txt
+> │   └── <phase>-office-stability-evidence-YYYYMMDD-HHMMSS/
+> │       ├── 00-baseline-window.txt
+> │       ├── 01-crash-reports-newer-than-marker.txt
+> │       ├── 02-office-bundle-status.txt
+> │       ├── 03-outlook-onenote-process-transitions.txt
+> │       ├── 04-watcher-installer-office-signals.txt
+> │       ├── 05-install-log-office-events-tail.txt
+> │       ├── 06-autoupdate-office-events-tail.txt
+> │       ├── 07-unified-log-office-since-marker.txt
+> │       ├── 08-watcher-running-status.txt
+> │       ├── <phase>-office-baseline-YYYYMMDD-HHMMSS.zip
+> │       └── office-stability-summary.md
+> ├── sign-offs/
+> │   └── <phase>-office-stability-assessment-YYYYMMDD-HHMMSS.md
+> └── watcher-history/
 > ```
+>
+> Two lineages: `capture-office-stability.sh` gathers the evidence window,
+> `assess-office-stability.sh` evaluates it. `watcher-history/` carries evidence
+> forward from an earlier Office incident and stays outside the run index.
 
 > [!example]- `$REIMAGE_ARTIFACT_ROOT/performance-audit/`
 > ```text
 > $REIMAGE_ARTIFACT_ROOT/performance-audit/
-> ├── pre-image-performance-audit-clean-boot-YYYYMMDD-HHMMSS/
-> ├── pre-image-performance-audit-normal-workload-YYYYMMDD-HHMMSS/
-> ├── pre-image-performance-audit-active-dev-YYYYMMDD-HHMMSS/
-> ├── post-image-performance-audit-clean-boot-YYYYMMDD-HHMMSS/
-> ├── post-image-performance-audit-normal-workload-YYYYMMDD-HHMMSS/
-> ├── post-image-performance-audit-active-dev-YYYYMMDD-HHMMSS/
+> ├── MANIFEST.md
+> ├── official/
+> │   └── <phase>-performance-audit-<scenario>.txt
 > ├── rollup-summary/
 > │   └── <phase>-YYYYMMDD-HHMMSS/
 > │       ├── performance-rollup-summary.md
 > │       └── summary/
-> └── <phase>-performance-audit-<scenario>-YYYYMMDD-HHMMSS/
->     ├── README.md
->     ├── manifest.txt
->     ├── manual-observations.md
->     ├── workload-reproduction-config.md
->     ├── docker/
->     ├── intellij/
->     ├── logs/
->     ├── mac-memory-health-output/
->     ├── memory/
->     ├── processes/
->     ├── raw/
->     ├── responsiveness/
->     └── system/
+> └── runs/
+>     └── <phase>-performance-audit-<scenario>-YYYYMMDD-HHMMSS/
+>         ├── README.md
+>         ├── docker/
+>         ├── intellij/
+>         ├── logs/
+>         ├── mac-memory-health-output/
+>         ├── manifest.txt
+>         ├── manual-observations.md
+>         ├── memory/
+>         ├── processes/
+>         ├── raw/
+>         ├── responsiveness/
+>         ├── system/
+>         └── workload-reproduction-config.md
 > ```
+>
+> `<scenario>` is one of `clean-boot`, `normal-workload`, `active-dev`, and each
+> is its own lineage with its own pointer. `rollup-summary/` derives from the
+> external helper's long-lived history rather than from these runs, so it sits
+> beside the index rather than inside it.
 
 > [!example]- `$REIMAGE_ARTIFACT_ROOT/public-certs/`
 > ```text
@@ -432,16 +449,30 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 > [!example]- `$REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/`
 > ```text
 > $REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/
-> ├── reimage-checklist-YYYYMMDD-HHMMSS.md
-> ├── latest-reimage-checklist.txt
-> └── manual/
->     └── manual-app-export-and-sync-signoff-YYYYMMDD.md
+> ├── MANIFEST.md
+> ├── manual/
+> │   ├── loose-plaintext-cleanup-signoff-YYYYMMDD.md
+> │   └── manual-export-pass-criteria-YYYYMMDD.md
+> ├── official/
+> │   └── pre-image.txt
+> ├── runs/
+> │   └── pre-image-YYYYMMDD-HHMMSS/
+> │       └── reimage-checklist.md
+> ├── secrets-dmg/
+> │   ├── cleanup-YYYYMMDD-HHMMSS.md
+> │   ├── dmg-validation-YYYYMMDD-HHMMSS.md
+> │   └── staging-verification-YYYYMMDD-HHMMSS.md
+> └── sign-offs/
+>     └── reimage-prep-checks-YYYYMMDD-HHMMSS.md
 > ```
+>
+> `manual/` and `secrets-dmg/` hold notes other phases wrote and Phase 6B reads;
+> neither is a run lineage. The post-image capstone is the same script under
+> `--phase post`, and lives under `reimaged-system/checklists/`.
 
 > [!example]- `$REIMAGE_ARTIFACT_ROOT/reimaged-system/`
 > ```text
 > $REIMAGE_ARTIFACT_ROOT/reimaged-system/
-> ├── enrollment/                       # Phase 8 screenshots only — the records live under restarts/
 > ├── boundaries/
 > │   ├── MANIFEST.md
 > │   ├── official/
@@ -449,36 +480,63 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 > │   └── runs/
 > │       └── <runbook>-<point>-YYYYMMDD-HHMMSS/
 > │           └── checklist.md
+> ├── checklists/
+> │   ├── MANIFEST.md
+> │   ├── official/
+> │   │   └── post-image.txt
+> │   └── runs/
+> │       └── post-image-YYYYMMDD-HHMMSS/
+> │           └── reimage-checklist.md
 > ├── comparisons/
 > │   ├── MANIFEST.md
 > │   ├── official/
-> │   │   └── <runbook>-inventory-diff.txt
+> │   │   └── <runbook>-<what>-diff.txt
 > │   └── runs/
-> │       └── <runbook>-inventory-diff-YYYYMMDD-HHMMSS/
+> │       └── <runbook>-<what>-diff-YYYYMMDD-HHMMSS/
 > │           ├── comparison.md
 > │           └── rows.tsv
-> ├── state/
+> ├── enrollment/                       # Phase 8 screenshots only — the records live under restarts/
 > ├── restarts/
-> ├── sign-offs/
-> │   ├── latest-<runbook>.txt
-> │   └── <runbook>-YYYYMMDD-HHMMSS.md
+> │   ├── MANIFEST.md
+> │   ├── official/
+> │   │   └── <runbook>-<point>.txt
+> │   └── runs/
+> │       └── <runbook>-<point>-YYYYMMDD-HHMMSS/
 > ├── restore-notes/
-> └── time-machine/
+> ├── sign-offs/
+> │   └── <run-id>.md
+> └── state/
+>     ├── MANIFEST.md
+>     ├── official/
+>     │   └── <runbook>-<point>.txt
+>     └── runs/
+>         └── <runbook>-<point>-YYYYMMDD-HHMMSS/
 > ```
 >
-> `boundaries/`, `comparisons/`, `state/` and `restarts/` are run categories with
+> `boundaries/`, `checklists/`, `comparisons/`, `state/` and `restarts/` are run categories with
 > one shape: `runs/<context>-YYYYMMDD-HHMMSS/` holding a single run's files,
 > `official/<context>.txt` naming the run that counts, and an append-only
 > `MANIFEST.md` indexing every completed run. Officialness is computed from the
 > manifest rather than stored there, so `official/` can be regenerated from it.
 > `boundaries/` uses the points `entry` and `exit` — one pair per runbook, written
-> by that runbook's Step 0 and its close-out.
+> by that runbook's Step 0 and its close-out. `state/` uses `before`, `after` and
+> `delta`; `restarts/` uses `initial`, `pre-restart` and `post-restart`. `before`
+> and `pre-restart` are **first-wins**: the first recording of that point stays
+> official, because a later one describes a machine the phase has already changed.
+> Every other point is latest-wins.
+>
+> `checklists/` holds the post-image capstone, written by
+> `bin/reimage-checklist.sh --phase post`. Its pre-image counterpart is the same
+> script under `--phase pre`, writing to `reimage-prep-checks/` at the artifact
+> root, because `reimaged-system/` is post-image by construction.
 >
 > Two categories are deliberately outside that shape, because a run category
 > replaces its contents and neither of these may be replaced.
 >
-> `sign-offs/` holds the rows a person answers, one file per runbook per run,
-> named for the run so `Answered against` in each row points at something real.
+> `sign-offs/` holds the rows a person answers, one file per run, named for the
+> run so `Answered against` in each row points at something real. A purely manual
+> artifact generated inside a run lands here too, whole, because a rerun replaces
+> the run directory and would take the answers with it.
 > A new run copies the previous file forward rather than starting blank, so an
 > answer survives a rerun and its age stays visible: a row still naming an older
 > run is *carried*, not re-verified. It is not run-indexed on purpose —
@@ -617,13 +675,17 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 > ```text
 > $REIMAGE_ARTIFACT_ROOT/size-audit-reports/
 > ├── MANIFEST.md
-> ├── latest-run.txt
-> └── runs/
->     ├── pre-image-YYYYMMDD-HHMMSS/
->     │   └── size-audit-report.txt
->     └── post-image-YYYYMMDD-HHMMSS/
->         └── ...
+> ├── official/
+> │   └── <context>.txt
+> ├── runs/
+> │   └── <context>-YYYYMMDD-HHMMSS/
+> │       └── size-audit-report.txt
+> └── size-audit-index.md
 > ```
+>
+> `<context>` names the phase and the caller — `pre-image-backup-repos`,
+> `pre-image-run-time-machine` — so a free-space check taken before one phase does
+> not supersede the check taken before another.
 
 > [!example]- `$REIMAGE_ARTIFACT_ROOT/staged-ignored-files/`
 > ```text
@@ -700,57 +762,102 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 > [!example]- `$REIMAGE_ARTIFACT_ROOT/time-machine/`
 > ```text
 > $REIMAGE_ARTIFACT_ROOT/time-machine/
-> ├── completion-check-YYYYMMDD-HHMMSS.md
-> ├── final-time-machine-checklist-YYYYMMDD-HHMMSS.md
-> ├── compare-YYYYMMDD-HHMMSS.txt
-> ├── logs-YYYYMMDD-HHMMSS.txt
-> ├── verifychecksums-YYYYMMDD-HHMMSS.txt
-> ├── diskutil-verifyvolume-applebackups-YYYYMMDD-HHMMSS.txt
-> ├── diagnose-YYYYMMDD-HHMMSS.txt
-> └── pre-image-time-machine-status-YYYYMMDD-HHMMSS/
->     ├── README.md
->     ├── time-machine-pre-run.md
->     ├── time-machine-status.md
->     └── raw/
->         ├── backup-root-spot-check.txt
->         ├── cloud-sync-process-hints.txt
->         ├── diskutil-applebackups.txt
->         ├── diskutil-applebackups-snapshots.txt
->         ├── diskutil-verifyvolume-applebackups.txt
->         ├── diskutil-data.txt
->         ├── tmutil-currentphase.txt
->         ├── tmutil-destinationinfo.txt
->         ├── tmutil-isexcluded-applebackups.txt
->         ├── tmutil-isexcluded-data.txt
->         ├── tmutil-latestbackup-targeted-applebackups.txt
->         ├── tmutil-latestbackup.txt
->         ├── tmutil-listbackups-targeted-applebackups.txt
->         ├── tmutil-listbackups.txt
->         ├── tmutil-status.txt
->         └── volumes.txt
+> ├── MANIFEST.md
+> ├── official/
+> │   ├── <phase>-compare.txt
+> │   ├── <phase>-completion-check.txt
+> │   ├── <phase>-diagnose.txt
+> │   ├── <phase>-diskutil-verify.txt
+> │   ├── <phase>-evidence-summary.txt
+> │   ├── <phase>-logs.txt
+> │   ├── <phase>-status-bundle.txt
+> │   ├── <phase>-status.txt
+> │   └── <phase>-verifychecksums.txt
+> ├── runs/
+> │   ├── <phase>-compare-YYYYMMDD-HHMMSS/
+> │   │   └── compare.txt
+> │   ├── <phase>-completion-check-YYYYMMDD-HHMMSS/
+> │   │   └── completion-check.md
+> │   ├── <phase>-diagnose-YYYYMMDD-HHMMSS/
+> │   │   └── diagnose.txt
+> │   ├── <phase>-diskutil-verify-YYYYMMDD-HHMMSS/
+> │   │   └── diskutil-verify.txt
+> │   ├── <phase>-evidence-summary-YYYYMMDD-HHMMSS/
+> │   │   └── evidence-summary.md
+> │   ├── <phase>-logs-YYYYMMDD-HHMMSS/
+> │   │   └── logs.txt
+> │   ├── <phase>-status-YYYYMMDD-HHMMSS/
+> │   │   └── status.txt
+> │   ├── <phase>-status-bundle-YYYYMMDD-HHMMSS/
+> │   │   ├── README.md
+> │   │   ├── raw/
+> │   │   │   ├── backup-root-spot-check.txt
+> │   │   │   ├── cloud-sync-process-hints.txt
+> │   │   │   ├── diskutil-applebackups-snapshots.txt
+> │   │   │   ├── diskutil-applebackups.txt
+> │   │   │   ├── diskutil-data.txt
+> │   │   │   ├── diskutil-verifyvolume-applebackups.txt
+> │   │   │   ├── tmutil-currentphase.txt
+> │   │   │   ├── tmutil-destinationinfo.txt
+> │   │   │   ├── tmutil-isexcluded-applebackups.txt
+> │   │   │   ├── tmutil-isexcluded-data.txt
+> │   │   │   ├── tmutil-latestbackup-targeted-applebackups.txt
+> │   │   │   ├── tmutil-latestbackup.txt
+> │   │   │   ├── tmutil-listbackups-targeted-applebackups.txt
+> │   │   │   ├── tmutil-listbackups.txt
+> │   │   │   ├── tmutil-status.txt
+> │   │   │   └── volumes.txt
+> │   │   ├── time-machine-pre-run.md
+> │   │   └── time-machine-status.md
+> │   └── <phase>-verifychecksums-YYYYMMDD-HHMMSS/
+> │       └── verifychecksums.txt
+> └── sign-offs/
+>     └── <phase>-evidence-summary-YYYYMMDD-HHMMSS.md
 > ```
+>
+> One lineage per subcommand, so each kind of evidence supersedes only its own
+> kind. `<phase>` is `pre-image` at Phase 5 and `post-image` at Phase 16 — both
+> halves share this category, which is why the context carries the phase and the
+> directory does not.
 >
 > Script ownership:
 >
 > ```text
 > bin/run-time-machine.sh   runtime operations: start, monitor, complete, logs, compare, verify, mount/unmount, diagnose, eject
-> bin/record-time-machine-evidence.sh  read-only captures: pre-run bundle, verify-volume, final checklist
+> bin/record-time-machine-evidence.sh  read-only captures: pre-run status bundle, verify-volume, evidence summary
 > ```
 
 > [!example]- `$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/`
 > ```text
 > $REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/
+> ├── MANIFEST.md
 > ├── README.md
-> ├── latest-docs/
-> │   ├── *.md
-> │   └── templates/
-> ├── latest-pre-image-toolkit-snapshot.txt
-> ├── latest-pre-image-toolkit-snapshot -> pre-image-toolkit-snapshot-YYYYMMDD-HHMMSS
-> └── pre-image-toolkit-snapshot-YYYYMMDD-HHMMSS/
->     ├── README.md
->     └── logs/
->         └── latest-aliases.txt
+> ├── official/
+> │   ├── <context>-toolkit-config.txt
+> │   └── <context>-toolkit-snapshot.txt
+> └── runs/
+>     ├── <context>-toolkit-config-YYYYMMDD-HHMMSS/
+>     │   ├── README.md
+>     │   ├── config/
+>     │   └── logs/
+>     └── <context>-toolkit-snapshot-YYYYMMDD-HHMMSS/
+>         ├── README.md
+>         ├── config/
+>         │   ├── SOURCES.txt
+>         │   ├── artifact-config/
+>         │   ├── reimage.env
+>         │   └── staged-certs/
+>         ├── docs/
+>         │   ├── templates/
+>         │   └── *.md
+>         └── logs/
+>             └── run-location.txt
 > ```
+>
+> There are no symlinks and no `latest-*.txt` in this category. The stable path a
+> restore-time reader needs is `official/<context>-toolkit-snapshot.txt`, a
+> one-line file holding `runs/<id>`, readable with `cat` on a Mac with nothing
+> installed — which is what the symlink was for.
 
 
 [[#Table of Contents|⬆ Back to Table of Contents]]

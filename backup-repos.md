@@ -18,9 +18,7 @@ Git remotes protect what you have committed and pushed. They do not protect loca
     - [[#Terminology|Terminology]]
     - [[#Files, Stages, and Modes|Files, Stages, and Modes]]
 - [[#Artifact and Script Locations|Artifact and Script Locations]]
-    - [[#Artifact Root Layout|Artifact Root Layout]]
-    - [[#Workspace Layout|Workspace Layout]]
-    - [[#Generated-Artifact Trees|Generated-Artifact Trees]]
+    - [[#Bundle Layout|Bundle Layout]]
 - [[#Before You Run Anything|Before You Run Anything]]
     - [[#Prerequisites|Prerequisites]]
     - [[#Why the Size Audit|Why the Size Audit]]
@@ -172,144 +170,115 @@ Every path and directory tree this runbook uses is defined here, once. Later sec
 Primary script:
 
 ```text
-$FRACTOGENESIS_HOME/bin/backup-repos.sh
+$FRACTOGENESIS_HOME/bin/backup-repos.sh                          # entrypoint
 ```
 
-Supporting helpers it calls:
+Related scripts, alphabetical:
 
 ```text
-$FRACTOGENESIS_HOME/.internal/git/capture-repo-audit.sh
-$FRACTOGENESIS_HOME/.internal/git/collect-gitignore-superset.sh
-$FRACTOGENESIS_HOME/.internal/git/stage-ignored-files.sh
-$FRACTOGENESIS_HOME/.internal/git/stage-selected-patterns.py
+$FRACTOGENESIS_HOME/.internal/git/capture-repo-audit.sh          # helper -- called by the entrypoint
+$FRACTOGENESIS_HOME/.internal/git/collect-gitignore-superset.sh  # helper -- called by the entrypoint
+$FRACTOGENESIS_HOME/.internal/git/stage-ignored-files.sh         # helper -- called by the entrypoint
+$FRACTOGENESIS_HOME/.internal/git/stage-selected-patterns.py     # helper -- called by the entrypoint
+$FRACTOGENESIS_HOME/bin/report-size-audit.sh                     # entrypoint -- capacity check, Step 3
 ```
 
-### Artifact Root Layout
+Artifact root:
 
-Generated Git artifacts live under `$REIMAGE_ARTIFACT_ROOT` in the standard shared layout:
+```text
+$REIMAGE_ARTIFACT_ROOT/gitignore-superset/       # the reviewable superset and your three review files
+$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/       # the repository audit; not a source backup
+$REIMAGE_ARTIFACT_ROOT/size-audit-reports/       # the capacity check that gates the phase
+$REIMAGE_ARTIFACT_ROOT/staged-ignored-files/     # the three staging modes and the files actually copied
+```
+
+`prepare-artifact-root.md` creates these top-level containers. `bin/backup-repos.sh` checks for `gitignore-superset/`, `repo-audit-reports/`, and `staged-ignored-files/` on startup and exits with a pointer back to that runbook if any is missing, rather than creating them silently. The `dryrun/`, `dryrun-filtered/`, and `live/` children under `staged-ignored-files/` are owned by this runbook's own scripts, so `bin/backup-repos.sh` creates those itself.
+
+### Bundle Layout
+
+Two of these four are run categories and two are not, and the difference is what a rerun does. `repo-audit-reports/` and `size-audit-reports/` index each run and compute an `official/` pointer, so a rerun supersedes without destroying. `gitignore-superset/` is a generated set you then edit by hand, and `staged-ignored-files/` is one workflow in three states — `dryrun/`, `dryrun-filtered/`, `live/` — rather than three runs, so both are rewritten in place:
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/
 ├── ...
 ├── gitignore-superset/
+│   ├── backup-exclude-list.txt                      # you edit this (Exclude)
+│   ├── gitignore-concatenated-with-sources.txt
+│   ├── gitignore-files-review.txt
+│   ├── gitignore-files.tsv
+│   ├── gitignore-pattern-sources-review.txt
+│   ├── gitignore-pattern-sources.tsv
+│   ├── gitignore-patterns-all-review.txt
+│   ├── gitignore-patterns-all.tsv
+│   ├── gitignore-patterns-superset-with-counts.tsv
+│   ├── gitignore-patterns-superset.txt
+│   ├── gitignore-review-template.txt                # you edit this (Select)
+│   ├── secrets-patterns.txt                         # you edit this (Route)
+│   ├── stale-ignore-entries.tsv
+│   └── summary.txt
+├── ...
 ├── repo-audit-reports/
+│   ├── MANIFEST.md
+│   ├── official/
+│   │   └── <context>.txt
+│   ├── repo-audit-index.md
+│   └── runs/
+│       └── <context>-YYYYMMDD-HHMMSS/
+│           ├── ignored-files.tsv
+│           ├── local-only-commits.tsv
+│           ├── repo-audit-summary.txt
+│           ├── repos.tsv
+│           ├── stashes.tsv
+│           ├── tracked-changes.tsv
+│           └── untracked-nonignored.tsv
+├── secrets-encrypted/
+│   ├── ...
+│   └── repos-gitignored/
+│       └── <repo-label>/<relative-path>
 ├── size-audit-reports/
+│   ├── MANIFEST.md
+│   ├── official/
+│   │   └── <context>.txt
+│   ├── runs/
+│   │   └── <context>-YYYYMMDD-HHMMSS/
+│   │       └── size-audit-report.txt
+│   └── size-audit-index.md
 ├── staged-ignored-files/
+│   ├── dryrun/                                      # Select only
+│   ├── dryrun-filtered/                             # Select + Exclude
+│   └── live/                                        # Select + Exclude + Route, files actually copied
+│       ├── candidates.tsv
+│       ├── copied.tsv
+│       ├── copy-failed.tsv
+│       ├── excluded.tsv
+│       ├── secrets-candidates.tsv
+│       ├── secrets-copied.tsv
+│       ├── secrets-copy-failed.tsv
+│       ├── skipped.tsv
+│       ├── summary.txt
+│       └── <repo-label>/<relative-path>
 └── ...
 ```
 
-`prepare-artifact-root.md` creates these top-level containers. `bin/backup-repos.sh` checks for `gitignore-superset/`, `repo-audit-reports/`, and `staged-ignored-files/` on startup and exits with a pointer back to that runbook if any is missing, rather than creating them silently.
+All three staging directories have the same shape. The `secrets-*.tsv` files appear only when `secrets-patterns.txt` is in use, and `copied.tsv` / `copy-failed.tsv` only under `--selected-copy`. Routed secret files are copied out to `secrets-encrypted/repos-gitignored/` so the Phase 3C DMG sweeps them, rather than kept beside the ordinary staged files.
 
-> [!note]
-> The `dryrun/`, `dryrun-filtered/`, and `live/` children under `staged-ignored-files/` are owned by this runbook's own scripts, so `bin/backup-repos.sh` creates those itself on startup.
+`repo-audit-index.md` and `size-audit-index.md` carry the per-run counts the shared manifest schema has no column for. What each gitignore-superset file is, and which three you edit, is under [[#Gitignore Superset Generated Files|Gitignore Superset Generated Files]].
 
-| Container | Holds |
-|---|---|
-| `gitignore-superset/` | The reviewable superset, your three review files, and the selection template. |
-| `repo-audit-reports/` | Append-only audit index, latest-run pointer, and timestamped run directories. Not a full source backup. |
-| `size-audit-reports/` | Append-only size-audit index, latest-run pointer, and timestamped colorized reports. |
-| `staged-ignored-files/` | Dry-run and final copies of the kept ignored files. |
-
-### Workspace Layout
-
-Your three review files can also be kept under `$REIMAGE_WORKSPACE_ROOT`, so a reviewed set survives between backup reruns without the only copy living on the external drive:
+Your three review files can also be kept under `$REIMAGE_WORKSPACE_ROOT`, so a reviewed set survives between backup reruns without the only copy living on the external drive. The Sequential Steps copy these in from the workspace at the start and back out to it at the end:
 
 ```text
 $REIMAGE_WORKSPACE_ROOT/
 ├── ...
-├── gitignore-superset/
-│   ├── backup-exclude-list.txt
-│   ├── gitignore-review-template.txt
-│   └── secrets-patterns.txt
-└── ...
-```
-
-The Sequential Steps copy these in from the workspace at the start and back out to it at the end.
-
-### Generated-Artifact Trees
-
-Each generated area uses a self-contained, timestamped run directory whose name owns the context and timestamp, with stable filenames inside.
-
-Size audit:
-
-```text
-size-audit-reports/
-├── MANIFEST.md            # append-only index of successful runs
-├── official/              # one pointer per lineage, computed from MANIFEST.md
-├── repo-audit-index.md    # per-run repository counts, this category only
-└── runs/
-    └── pre-image-backup-repos-YYYYMMDD-HHMMSS/
-        └── size-audit-report.txt
-```
-
-Repository audit:
-
-```text
-repo-audit-reports/
-├── MANIFEST.md
-├── official/pre-image.txt
-└── runs/
-    └── pre-image-YYYYMMDD-HHMMSS/
-        ├── repo-audit-summary.txt
-        ├── repos.tsv
-        ├── tracked-changes.tsv
-        ├── local-only-commits.tsv
-        ├── stashes.tsv
-        ├── untracked-nonignored.tsv
-        └── ignored-files.tsv
-```
-
-Gitignore superset (see [[#Gitignore Superset Generated Files|Gitignore Superset Generated Files]] for what each file is):
-
-```text
-gitignore-superset/
-├── summary.txt
-├── gitignore-files.tsv
-├── gitignore-files-review.txt
-├── gitignore-concatenated-with-sources.txt
-├── gitignore-patterns-all.tsv
-├── gitignore-patterns-all-review.txt
-├── gitignore-patterns-superset.txt
-├── gitignore-patterns-superset-with-counts.tsv
-├── gitignore-pattern-sources.tsv
-├── gitignore-pattern-sources-review.txt
-├── gitignore-review-template.txt   # you edit this (Select)
-├── backup-exclude-list.txt         # you edit this (Exclude)
-└── secrets-patterns.txt            # you edit this (Route)
-```
-
-Staged ignored files. Each stage directory has the same shape; the `secrets-*.tsv` files appear only when `secrets-patterns.txt` is in use, and the `copied`/`copy-failed` files only under `--selected-copy`. Routed secret files are copied out to `secrets-encrypted/repos-gitignored/` (so the Phase 3C DMG sweeps them), not kept beside the ordinary staged files:
-
-```text
-staged-ignored-files/
-├── dryrun/            # Select only
-├── dryrun-filtered/   # Select + Exclude
-└── live/              # Select + Exclude + Route, files actually copied
-    ├── summary.txt
-    ├── candidates.tsv            # backup candidates
-    ├── excluded.tsv
-    ├── skipped.tsv
-    ├── copied.tsv
-    ├── copy-failed.tsv
-    ├── secrets-candidates.tsv    # routed secrets → secrets-encrypted/repos-gitignored/
-    ├── secrets-copied.tsv
-    ├── secrets-copy-failed.tsv
-    └── <repo-label>/<relative-path>
-```
-
-The routed secret files themselves land under the encrypted-secrets root, where `create-secrets-dmg` sweeps them:
-
-```text
-secrets-encrypted/
-├── ...
-├── repos-gitignored/
-│   └── <repo-label>/<relative-path>
-└── ...
+└── gitignore-superset/
+    ├── backup-exclude-list.txt
+    ├── gitignore-review-template.txt
+    └── secrets-patterns.txt
 ```
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
 ---
+
 
 ### Environment Variables
 

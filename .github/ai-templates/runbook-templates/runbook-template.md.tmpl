@@ -113,38 +113,77 @@ Read this before running anything. State what the whole flow achieves before any
 
 Every path and directory tree this runbook uses is defined here, once. Later sections refer back to these names instead of redrawing them.
 
-Primary script(s), alphabetical (classify each as entrypoint / helper):
+Primary script:
 
 ```text
-$FRACTOGENESIS_HOME/bin/{{PRIMARY_SCRIPT}}   # entrypoint | helper
+$FRACTOGENESIS_HOME/bin/{{PRIMARY_SCRIPT}}          # entrypoint
 ```
 
-Artifact locations:
+Related scripts, alphabetical:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/{{ARTIFACT_PATHS}}
+$FRACTOGENESIS_HOME/.internal/{{HELPER}}            # helper -- called by the entrypoint
+{{EXTERNAL_TOOL}}                                   # external helper -- not part of this toolkit
+```
+
+Artifact root:
+
+```text
+$REIMAGE_ARTIFACT_ROOT/{{ARTIFACT_DIR}}/            # what this runbook writes here
+```
+
+Input evidence built by earlier phases:
+
+```text
+$REIMAGE_ARTIFACT_ROOT/{{INPUT_DIR}}/               # written by {{SOURCE_RUNBOOK}}.md
 ```
 
 <!--
-If a directory tree helps, show only the directories this runbook's steps touch,
-alphabetized at every level. Represent the rest of $REIMAGE_ARTIFACT_ROOT with a
-single `...` continuation entry immediately before the first shown directory and
-immediately after the last — the full layout stays in prepare-artifact-root.md /
-master-directory-reference.md. Omit the leading `...` only when the first shown
-directory is alphabetically first among all top-level directories; omit the
-trailing `...` only when the last shown directory is alphabetically last.
+The four labelled lines above are fixed, in this order, each introducing its own
+fenced block. Omit "Input evidence built by earlier phases:" when the runbook
+reads nothing an earlier phase produced; the other three always appear. Classify
+every entry in the first two blocks with a trailing comment: entrypoint, helper,
+external helper.
+-->
+
+### Bundle Layout
+
+<!--
+One tree per root here -- normally just $REIMAGE_ARTIFACT_ROOT/, and a second
+block only when the runbook genuinely writes into another root. Expand every
+directory this runbook WRITES INTO and nothing else -- a directory it merely
+reads is named in the labelled block above and is not expanded. Sort
+alphabetically at every level.
+
+Collapse omitted siblings AT EVERY LEVEL to a single `...` entry, one per
+contiguous run of omissions: before the first shown entry when it is not
+alphabetically first among its siblings, between two shown entries that are not
+adjacent, and after the last shown entry when it is not alphabetically last. A
+level where nothing is omitted gets no `...` at all.
+
+A run-indexed category has this shape. `official/` holds one pointer file per
+lineage; `MANIFEST.md` is append-only and owned by .internal/artifact-runs.sh;
+`sign-offs/` appears only where the phase has answered rows.
 -->
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/
 ├── ...
 ├── {{ARTIFACT_DIR}}/
-│   └── ...
+│   ├── MANIFEST.md
+│   ├── official/
+│   │   └── {{CONTEXT}}.txt
+│   ├── runs/
+│   │   └── {{CONTEXT}}-YYYYMMDD-HHMMSS/
+│   │       ├── README.md
+│   │       └── ...
+│   └── sign-offs/
+│       └── {{CONTEXT}}-YYYYMMDD-HHMMSS.md
 └── ...
 ```
 
 <!-- When another runbook owns the full layout of a tree this runbook only touches part of, link to it on its own line rather than redrawing it, e.g.:
-The complete {{DIR}}/ layout is defined once in the Master Directory Reference:
+The complete {{ARTIFACT_DIR}}/ layout is defined once in the Master Directory Reference:
 
 [[master-directory-reference|Master Directory Reference]]
 -->

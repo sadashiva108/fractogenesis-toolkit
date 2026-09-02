@@ -1013,8 +1013,9 @@ if [[ "$PHASE" == "pre" ]]; then
     record_check PASS "No active scripts in office-stability/" "Clean"
   fi
 
-  if dir_nonempty "$REIMAGE_ARTIFACT_ROOT/office-stability/checklists"; then
-    record_check PASS "Pre-image Office stability checklist generated" "checklists/ non-empty"
+  OFFICE_ASSESS_RUN="$(artifact_run_official "$OFFICE_DIR" "pre-image-office-stability-assessment" 2>/dev/null || true)"
+  if [[ -n "$OFFICE_ASSESS_RUN" && -f "$OFFICE_DIR/$OFFICE_ASSESS_RUN/office-stability-assessment.md" ]]; then
+    record_check PASS "Pre-image Office stability assessment generated" "$OFFICE_ASSESS_RUN"
   else
     record_check WARN "Pre-image Office stability assessment generated" "Run assess-office-stability.sh --phase pre-reimage"
   fi

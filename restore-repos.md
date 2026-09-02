@@ -2,7 +2,7 @@
 
 # Restore Repositories
 
-**Last updated:** 2026-09-01
+**Last updated:** 2026-09-02
 
 Consume the pre-image repository audit produced by Phase 2A to re-clone the tracked repositories onto the reimaged Mac, rsync the reviewed kept ignored files back into each working tree, and reconcile every pre-image carry-forward row (local-only commits, stashes, tracked changes) against the state of the freshly cloned repos. Runs after Phase 11A has wired up the dual-identity `~/.gitconfig` and `~/.ssh/config`, so every clone command emitted here already routes through the correct SSH key.
 
@@ -15,7 +15,7 @@ Consume the pre-image repository audit produced by Phase 2A to re-clone the trac
     - [[#Carry-Forward Model|Carry-Forward Model]]
     - [[#Terminology|Terminology]]
 - [[#Artifact and Script Locations|Artifact and Script Locations]]
-    - [[#Status Bundle Layout|Status Bundle Layout]]
+    - [[#Bundle Layout|Bundle Layout]]
     - [[#Environment Variables|Environment Variables]]
 - [[#Before You Run Anything|Before You Run Anything]]
     - [[#Prerequisites|Prerequisites]]
@@ -119,53 +119,109 @@ Every path and directory tree this runbook uses is defined here, once. Later sec
 Primary script:
 
 ```text
-$FRACTOGENESIS_HOME/bin/restore-repos.sh   # entrypoint
+$FRACTOGENESIS_HOME/bin/restore-repos.sh               # entrypoint — classifies every pre-image repo and emits the status bundle
 ```
 
-Input evidence produced by Phase 2A:
+Related scripts, alphabetical:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/official/pre-image.txt
-$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/runs/pre-image-YYYYMMDD-HHMMSS/
-├── repos.tsv                   # inventory the script iterates
-├── local-only-commits.tsv      # carry-forward: commits never pushed
-├── stashes.tsv                 # carry-forward: stash list
-├── tracked-changes.tsv         # carry-forward: modified tracked files
-├── untracked-nonignored.tsv    # informational; not a carry-forward
-└── ignored-files.tsv           # informational; the reviewed subset lives under staged-ignored-files/
-$REIMAGE_ARTIFACT_ROOT/staged-ignored-files/live/
-└── <label>/                    # reviewed kept ignored files per repo
+$FRACTOGENESIS_HOME/bin/init-shell-env.sh              # entrypoint (Step 4 — repoints the shell at the cloned toolkit)
+$FRACTOGENESIS_HOME/bin/prepare-artifact-root.py       # entrypoint (Step 0c — upsert-env, writes GIT_PERSONAL_GITHUB_OWNER into reimage.env)
+$FRACTOGENESIS_HOME/bin/record-restore-exit.sh         # entrypoint (Step 11 — exit boundary)
+$FRACTOGENESIS_HOME/bin/record-restore-prereqs.sh      # entrypoint (Step 0a — entry boundary)
+$FRACTOGENESIS_HOME/bin/record-restore-state.sh        # entrypoint (Step 0b before-state, Step 10 after-state and delta)
+direnv                                                 # external helper — Step 6 trusts each restored .envrc
+hdiutil                                                # external helper — Step 6 attaches and detaches the encrypted image
 ```
 
-Output written by this runbook:
+Artifact root:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/runs/post-image-restore-YYYYMMDD-HHMMSS/
-$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/official/post-image-restore.txt   # pointer to the newest run
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/                # boundary, state and sign-off records for this phase
+$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/             # the status bundle each run produces
 ```
 
-The complete `repo-audit-reports/` and `staged-ignored-files/` layouts are defined once in the Master Directory Reference:
+Input evidence built by earlier phases:
+
+```text
+$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/official/pre-image.txt            # written by backup-repos.md — names the pre-image run to read
+$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/runs/pre-image-YYYYMMDD-HHMMSS/   # written by backup-repos.md — the audit this phase consumes
+$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/repos-gitignored/                  # written by create-secrets-dmg.md — per-repo gitignored secrets, reachable only inside the attached image
+$REIMAGE_ARTIFACT_ROOT/staged-ignored-files/live/                           # written by backup-repos.md — one reviewed bundle of kept ignored files per repo label
+```
+
+Six files sit in that pre-image run. `repos.tsv` is the inventory the script iterates. `local-only-commits.tsv`, `stashes.tsv` and `tracked-changes.tsv` are the carry-forward rows Steps 7 and 8 reconcile. `untracked-nonignored.tsv` and `ignored-files.tsv` are informational — the reviewed subset of the latter is what became `staged-ignored-files/live/`.
+
+The complete `repo-audit-reports/`, `secrets-encrypted/` and `staged-ignored-files/` layouts are defined once in the Master Directory Reference:
 
 [[master-directory-reference|Master Directory Reference]]
 
-### Status Bundle Layout
+### Bundle Layout
 
-Each `post-image-restore-*` run is self-contained. Filenames inside are stable across runs.
+Everything this runbook writes, under the two roots named above. The pre-image audit it reads shares the `repo-audit-reports/` category but is a separate lineage, listed in the block before this one and not expanded here.
 
 ```text
-post-image-restore-YYYYMMDD-HHMMSS/
-├── restore-status.md            # human-readable report with the exit-criteria table
-├── clone-commands.sh            # one `git clone` per repo not yet at its routed destination
-├── rsync-ignored-files.sh       # one guarded `rsync` per repo with staged ignored files
-├── rsync-repos-gitignored.sh    # one guarded `rsync` per repo for the gitignored secrets in the DMG
-├── MANIFEST.txt                 # per-run file list; the category run index is `repo-audit-reports/MANIFEST.md`
-└── raw/
-    ├── status.tsv                     # per-repo classification (machine-readable)
-    ├── repos-input.tsv                # copy of the pre-image repos.tsv
-    ├── local-only-commits-input.tsv   # copy of the pre-image carry-forward rows
-    ├── stashes-input.tsv
-    └── tracked-changes-input.tsv
+$REIMAGE_ARTIFACT_ROOT/
+├── ...
+├── reimaged-system/
+│   ├── boundaries/
+│   │   ├── MANIFEST.md
+│   │   ├── official/
+│   │   │   ├── restore-repos-entry.txt
+│   │   │   └── restore-repos-exit.txt
+│   │   └── runs/
+│   │       ├── restore-repos-entry-YYYYMMDD-HHMMSS/
+│   │       │   └── checklist.md
+│   │       └── restore-repos-exit-YYYYMMDD-HHMMSS/
+│   │           └── checklist.md
+│   ├── ...
+│   ├── sign-offs/
+│   │   └── restore-repos-exit-YYYYMMDD-HHMMSS.md
+│   └── state/
+│       ├── MANIFEST.md
+│       ├── official/
+│       │   ├── restore-repos-after.txt
+│       │   ├── restore-repos-before.txt
+│       │   └── restore-repos-delta.txt
+│       └── runs/
+│           ├── restore-repos-after-YYYYMMDD-HHMMSS/
+│           │   ├── state.md
+│           │   └── state.tsv
+│           ├── restore-repos-before-YYYYMMDD-HHMMSS/
+│           │   ├── state.md
+│           │   └── state.tsv
+│           └── restore-repos-delta-YYYYMMDD-HHMMSS/
+│               └── delta.md
+├── repo-audit-reports/
+│   ├── MANIFEST.md
+│   ├── official/
+│   │   └── post-image-restore.txt
+│   ├── ...
+│   └── runs/
+│       └── post-image-restore-YYYYMMDD-HHMMSS/
+│           ├── MANIFEST.txt
+│           ├── clone-commands.sh
+│           ├── raw/
+│           │   ├── local-only-commits-input.tsv
+│           │   ├── repos-input.tsv
+│           │   ├── stashes-input.tsv
+│           │   ├── status.tsv
+│           │   └── tracked-changes-input.tsv
+│           ├── restore-status.md
+│           ├── rsync-ignored-files.sh
+│           └── rsync-repos-gitignored.sh
+└── ...
 ```
+
+`boundaries/`, `repo-audit-reports/` and `state/` share one shape: `runs/<context>-YYYYMMDD-HHMMSS/` holds a single run's files, `official/<context>.txt` names the run that counts, and an append-only `MANIFEST.md` indexes every completed run. To find a run, read the pointer under `official/` — there is no newest-directory rule and no `latest-*.txt`. Steps 5 and 6 do exactly that, reading `official/post-image-restore.txt` to locate the emitted command files.
+
+Which run a pointer names is decided per point. `before` is first-wins, because the earliest observation is the one that caught the empty clone roots; `after`, `delta`, `entry`, `exit` and `post-image-restore` are latest-wins, so re-running any of them replaces the earlier answer.
+
+`sign-offs/` is outside that shape on purpose. It holds the rows you answered at the exit boundary and carries them forward into the next run, so a latest-wins pointer must never be able to supersede it.
+
+Each `post-image-restore-*` run is self-contained and its filenames are stable across runs. `restore-status.md` is the human-readable report carrying the exit-criteria table; `clone-commands.sh` holds one `git clone` per repo not yet at its routed destination; `rsync-ignored-files.sh` holds one guarded `rsync` per repo with staged ignored files; `rsync-repos-gitignored.sh` holds one guarded `rsync` per repo for the gitignored secrets in the image. `MANIFEST.txt` lists that run's files, and is not the category run index — that is `repo-audit-reports/MANIFEST.md`. Under `raw/`, `status.tsv` is the machine-readable per-repo classification and the `*-input.tsv` files are copies of the pre-image rows, kept beside the output so a run can be read back without the audit that produced it.
+
+This runbook also writes into each cloned working tree — the kept ignored files in Step 5 and the per-repo secrets in Step 6. Those are not artifacts; they are the repositories being made whole at their original paths.
 
 ### Environment Variables
 

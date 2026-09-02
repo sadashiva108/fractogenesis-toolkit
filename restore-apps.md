@@ -2,7 +2,7 @@
 
 # Restore Apps
 
-**Last updated:** 2026-09-01
+**Last updated:** 2026-09-02
 
 Restore the day-to-day application layer on the reimaged Mac after the managed baseline, runtime, access, Git, and repository foundations are in place. This is the umbrella runbook for Phase 12: it walks the operator through the ordered install-and-restore sequence for Office, OneDrive, Chrome, Obsidian, Postman, VS Code, Raycast, Terminal, and the remaining daily tools, and hands off to dedicated runbooks for IntelliJ, Docker, and the late local-file restore. `bin/restore-apps.sh` writes a per-run plan-note that surveys the available pre-image backup sources and provides the sign-off checklist the operator ticks through by hand.
 
@@ -13,6 +13,7 @@ Restore the day-to-day application layer on the reimaged Mac after the managed b
 - [[#Purpose|Purpose]]
 - [[#How the Workflow Works|How the Workflow Works]]
 - [[#Artifact and Script Locations|Artifact and Script Locations]]
+    - [[#Bundle Layout|Bundle Layout]]
     - [[#Environment Variables|Environment Variables]]
 - [[#Before You Run Anything|Before You Run Anything]]
     - [[#Prerequisites|Prerequisites]]
@@ -104,62 +105,83 @@ Every path and directory tree this runbook uses is defined here, once. Later ste
 Primary script:
 
 ```text
-$FRACTOGENESIS_HOME/bin/restore-apps.sh                # entrypoint
+$FRACTOGENESIS_HOME/bin/restore-apps.sh                # entrypoint — surveys the pre-image sources and emits the plan-note
 ```
 
 Related scripts, alphabetical:
 
 ```text
-$FRACTOGENESIS_HOME/bin/capture-office-stability.sh    # entrypoint — owned by capture-office-stability.md; invoked in Step 13
-$FRACTOGENESIS_HOME/bin/office-stability-checklist.sh  # entrypoint — owned by capture-office-stability.md; invoked in Step 13
-$FRACTOGENESIS_HOME/bin/restore-docker.sh              # entrypoint — owned by restore-docker.md; invoked in Step 9
-$FRACTOGENESIS_HOME/bin/restore-intellij.sh            # entrypoint — owned by restore-intellij.md; invoked in Step 8
+$FRACTOGENESIS_HOME/bin/assess-office-stability.sh     # entrypoint (Step 13 — post-image assessment; owned by capture-office-stability.md)
+$FRACTOGENESIS_HOME/bin/capture-office-stability.sh    # entrypoint (Step 13 — post-image evidence window; owned by capture-office-stability.md)
+$FRACTOGENESIS_HOME/bin/record-restore-prereqs.sh      # entrypoint (Step 0a — entry boundary)
+$FRACTOGENESIS_HOME/bin/record-restore-state.sh        # entrypoint (Step 0b — before-state)
+$FRACTOGENESIS_HOME/bin/restore-docker.sh              # entrypoint (Step 9 — owned by restore-docker.md)
+$FRACTOGENESIS_HOME/bin/restore-intellij.sh            # entrypoint (Step 8 — owned by restore-intellij.md)
 ```
 
-Artifact locations:
+Artifact root:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/app-settings-backup/                                # Phase 2D outputs (per-app backups)
-$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/                                  # Phase 3A/3C outputs (mount before use)
-$REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/restore-apps-plan-*.md
-$REIMAGE_ARTIFACT_ROOT/reimaged-system/sign-offs/restore-apps-*.md
-$REIMAGE_ARTIFACT_ROOT/office-stability/post-reimage-*/                    # produced in Step 13
+$REIMAGE_ARTIFACT_ROOT/office-stability/               # Step 13 writes the post-image evidence and assessment runs here
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/                # every other artifact this runbook generates lands here
 ```
 
-Directories this runbook's steps read and write, alphabetized at every level. Omitted siblings are shown as `...`:
+Input evidence built by earlier phases:
+
+```text
+$REIMAGE_ARTIFACT_ROOT/app-settings-backup/            # written by backup-apps.md — the per-app settings this phase imports
+$REIMAGE_ARTIFACT_ROOT/office-stability/official/pre-image-office-stability-evidence.txt   # written by capture-office-stability.md — the baseline Step 13 measures against
+$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/              # written by create-secrets-dmg.md — mounted read-only for Postman, Docker and license material
+```
+
+### Bundle Layout
+
+Everything this runbook writes, under the two roots named above. The pre-image bundles it reads are listed in the block before this one and are not expanded here — `backup-apps.md` owns the `app-settings-backup/` layout and `create-secrets-dmg.md` owns `secrets-encrypted/`.
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/
-├── app-settings-backup/
-│   ├── ...
-│   ├── chrome/
-│   ├── docker/
-│   ├── intellij/
-│   ├── obsidian/
-│   ├── postman/
-│   ├── raycast/
-│   ├── terminal/
-│   ├── vscode/
-│   └── ...
 ├── ...
 ├── office-stability/
-│   └── post-reimage-office-baseline-YYYYMMDD-HHMMSS/
+│   ├── MANIFEST.md
+│   ├── official/
+│   │   ├── post-image-office-stability-assessment.txt
+│   │   └── post-image-office-stability-evidence.txt
+│   ├── runs/
+│   │   ├── post-image-office-stability-assessment-YYYYMMDD-HHMMSS/
+│   │   └── post-image-office-stability-evidence-YYYYMMDD-HHMMSS/
+│   ├── sign-offs/
+│   │   └── post-image-office-stability-assessment-YYYYMMDD-HHMMSS.md
+│   └── ...
 ├── ...
 ├── reimaged-system/
+│   ├── boundaries/
+│   │   ├── MANIFEST.md
+│   │   ├── official/
+│   │   │   └── restore-apps-entry.txt
+│   │   └── runs/
+│   │       └── restore-apps-entry-YYYYMMDD-HHMMSS/
+│   │           └── checklist.md
+│   ├── ...
 │   ├── restore-notes/
 │   │   └── restore-apps-plan-YYYYMMDD-HHMMSS.md
-│   └── sign-offs/
-│       └── restore-apps-YYYYMMDD-HHMMSS.md
-├── ...
-├── secrets-encrypted/
-│   ├── ...
-│   ├── docker/
-│   ├── intellij/
-│   ├── licenses/
-│   ├── postman/
-│   └── ...
+│   ├── sign-offs/
+│   │   └── restore-apps-YYYYMMDD-HHMMSS.md
+│   └── state/
+│       ├── MANIFEST.md
+│       ├── official/
+│       │   └── restore-apps-before.txt
+│       └── runs/
+│           └── restore-apps-before-YYYYMMDD-HHMMSS/
+│               ├── state.md
+│               └── state.tsv
 └── ...
 ```
+
+`boundaries/`, `office-stability/` and `state/` are run-indexed categories with one shape: `runs/<context>-YYYYMMDD-HHMMSS/` holds a single run's files, `official/<context>.txt` names the run that counts, and an append-only `MANIFEST.md` indexes every completed run. Read the pointer under `official/` to find a run; there is no newest-directory rule to apply and no `latest-*.txt` to follow.
+
+`restore-apps-entry` and `restore-apps-before` are the only boundary and state lineages this phase writes. It records no exit boundary and no after-state: Phase 12 closes on the plan-note sign-off, and Phase 14 `reimaged-system-checks.md` is what reads the outcome.
+
+`restore-notes/` and `sign-offs/` sit outside the run-index shape deliberately. The plan-note is regenerable, so `restore-apps.sh` replaces it on every run; the sign-off holds the rows you answered and carries them forward, so nothing may replace it.
 
 The complete `app-settings-backup/` layout and the full artifact-root map are defined once in the Master Directory Reference:
 
@@ -588,7 +610,7 @@ Capture the post-image Office stability baseline:
 
 ```bash
 ./bin/capture-office-stability.sh --phase post-reimage
-./bin/office-stability-checklist.sh --phase post-reimage
+./bin/assess-office-stability.sh --phase post-reimage
 ```
 
 Update [[capture-office-stability|capture-office-stability.md]] with the post-image result and mark the plan-note row.

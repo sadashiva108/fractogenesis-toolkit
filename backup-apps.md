@@ -2,7 +2,7 @@
 
 # Backup Apps
 
-**Last updated:** 2026-08-16
+**Last updated:** 2026-09-02
 
 Collect and stage application state — settings, exports, inventories, and profiles — for apps whose restore source is defined by the app itself, not by copying known local files. Some of this is automated by a script; much of it is manual, because the app's own UI owns the export, secret handling needs judgment, or the backup decision is really about app state, sync, or restore semantics. Not every app is covered, and not every covered app applies to your Mac — you decide which ones to back up.
 
@@ -18,7 +18,7 @@ Collect and stage application state — settings, exports, inventories, and prof
     - [[#Run Modes|Run Modes]]
     - [[#Terminology|Terminology]]
 - [[#Artifact and Script Locations|Artifact and Script Locations]]
-    - [[#Destination Rules|Destination Rules]]
+    - [[#Bundle Layout|Bundle Layout]]
     - [[#Environment Variables|Environment Variables]]
 - [[#Before You Run Anything|Before You Run Anything]]
     - [[#Prerequisites|Prerequisites]]
@@ -118,7 +118,7 @@ Coverage falls into three classes. The first two are the apps this runbook docum
 2. **Backed up manually** — the script may prepare a folder, but you perform the actual export from the app's UI.
 3. **Not covered** — no backup support here; the app is your responsibility.
 
-The table lists every covered app, how it is backed up, and whether it is in the common or optional group. The grouping is a hint for deciding, not a rule — the app you actually use is the one that matters. Destinations follow the [[#Destination Rules|Destination Rules]] and are not repeated per app.
+The table lists every covered app, how it is backed up, and whether it is in the common or optional group. The grouping is a hint for deciding, not a rule — the app you actually use is the one that matters. Destinations follow the sorting rule stated under Artifact and Script Locations and are not repeated per app.
 
 | App | How it is backed up | Group |
 |---|---|---|
@@ -188,29 +188,38 @@ Primary script:
 $FRACTOGENESIS_HOME/bin/backup-apps.sh          # entrypoint
 ```
 
-Related scripts:
+Related scripts, alphabetical:
 
 ```text
-$FRACTOGENESIS_HOME/.internal/apps/backup-docker-settings.sh              # helper — invoked by backup-apps.sh
-$FRACTOGENESIS_HOME/.internal/apps/backup-intellij-scratches-consoles.sh  # helper — invoked by backup-apps.sh
-$FRACTOGENESIS_HOME/.internal/apps/backup-app-config.sh                   # helper — registry-driven config capture (Claude, draw.io, Zoom, Mos, Wireshark)
-$FRACTOGENESIS_HOME/.internal/apps/app-selection.sh                       # helper — generates and reads the app-backup selection checklist
-$FRACTOGENESIS_HOME/bin/report-size-audit.sh                            # entrypoint — capacity check for the backup root
+$FRACTOGENESIS_HOME/.internal/apps/app-selection.sh                       # helper -- generates and reads the app-backup selection checklist
+$FRACTOGENESIS_HOME/.internal/apps/backup-app-config.sh                   # helper -- registry-driven config capture (Claude, draw.io, Zoom, Mos, Wireshark)
+$FRACTOGENESIS_HOME/.internal/apps/backup-docker-settings.sh              # helper -- invoked by backup-apps.sh
+$FRACTOGENESIS_HOME/.internal/apps/backup-intellij-scratches-consoles.sh  # helper -- invoked by backup-apps.sh
+$FRACTOGENESIS_HOME/bin/report-size-audit.sh                              # entrypoint -- capacity check for the backup root
 ```
 
-Artifact roots:
+Artifact root:
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/app-settings-backup/     # non-secret app artifacts
 $REIMAGE_ARTIFACT_ROOT/secrets-encrypted/       # secret-bearing app exports, staged for Phase 3C
+$REIMAGE_ARTIFACT_ROOT/size-audit-reports/      # the Step 2 capacity check against the backup root
 ```
 
-Directories this runbook's steps touch, alphabetized at every level. Omitted siblings are shown as `...`:
+Input evidence built by earlier phases:
+
+```text
+$REIMAGE_ARTIFACT_ROOT/managed-inventory/       # written by capture-managed-inventory.md; read through official/pre-image.txt
+```
+
+### Bundle Layout
+
+Every per-app export sorts its output by one rule. Anything safe in plaintext -- including redacted examples and inventories -- stays with its app under `app-settings-backup/<app>/`. Anything secret-bearing goes to `secrets-encrypted/<app>/`, where the consolidated secrets DMG is built later in Phase 3C. The capacity check writes into its own run-indexed category under the `pre-image-backup-apps` context, so it never supersedes the audits `backup-home` and `backup-repos` take against the same backup root:
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/
 ├── app-settings-backup/
-│   ├── app-backup-selection.md    # the Step 3 checklist Step 4 reads
+│   ├── app-backup-selection.md
 │   ├── bbedit/
 │   ├── candidate-review/
 │   ├── chrome/
@@ -219,9 +228,9 @@ $REIMAGE_ARTIFACT_ROOT/
 │   ├── drawio/
 │   ├── fiddler-everywhere/
 │   ├── imovie/
-│   ├── intellij/                  # full subtree drawn in backup-intellij.md
+│   ├── intellij/
 │   ├── MANIFEST.md
-│   ├── manual-unsupported/        # drop-folders for selected unsupported apps
+│   ├── manual-unsupported/
 │   │   └── <app>/
 │   ├── mos/
 │   ├── obsidian/
@@ -230,11 +239,13 @@ $REIMAGE_ARTIFACT_ROOT/
 │   ├── postman/
 │   │   ├── collections/
 │   │   ├── environments-redacted/
-│   │   └── inventory/
+│   │   ├── inventory/
+│   │   └── ...
 │   ├── raycast/
 │   ├── terminal/
 │   ├── tnas-pc/
 │   ├── vscode/
+│   │   ├── ...
 │   │   └── user/
 │   ├── wireshark/
 │   └── zoom/
@@ -250,26 +261,29 @@ $REIMAGE_ARTIFACT_ROOT/
 │   │   └── vault-if-export-allowed/
 │   ├── raycast/
 │   │   └── quicklinks-if-sensitive/
-│   ├── tnas-pc/
-│   └── ...
+│   └── tnas-pc/
+├── size-audit-reports/
+│   ├── MANIFEST.md
+│   ├── official/
+│   │   ├── ...
+│   │   ├── pre-image-backup-apps.txt
+│   │   └── ...
+│   ├── runs/
+│   │   ├── ...
+│   │   ├── pre-image-backup-apps-YYYYMMDD-HHMMSS/
+│   │   │   └── size-audit-report.txt
+│   │   └── ...
+│   └── size-audit-index.md
 └── ...
 ```
 
-Step 3's candidate review folds in the artifacts produced by the prior managed-inventory phase, resolving the run named by `managed-inventory/official/pre-image.txt`; that layout and the complete `$REIMAGE_ARTIFACT_ROOT` map are drawn once elsewhere:
+`app-backup-selection.md` is the checklist Step 3 generates and Step 4 reads back. The `intellij/` subtree is drawn in full by the runbook that owns it:
 
-[[backup-intellij|Backup IntelliJ]] — full `intellij/` subtree
+[[backup-intellij|Backup IntelliJ]]
 
-[[master-directory-reference|Master Directory Reference]] — complete artifact-root layout
+The complete `$REIMAGE_ARTIFACT_ROOT` layout is drawn once in the Master Directory Reference:
 
-### Destination Rules
-
-Where each kind of artifact goes. Every per-app export sorts its outputs by these three rules.
-
-| Category | Destination | Rule |
-|---|---|---|
-| Non-secret app exports | `$REIMAGE_ARTIFACT_ROOT/app-settings-backup/<app>/` | Default home for app artifacts that are safe in plaintext. |
-| Redacted examples and inventories | `$REIMAGE_ARTIFACT_ROOT/app-settings-backup/<app>/` | Keep with the owning app unless they are secret-bearing. |
-| Secret-bearing app exports | `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/<app>/` | Stage here; the consolidated secrets DMG is built later in Phase 3C. |
+[[master-directory-reference|Master Directory Reference]]
 
 ### Environment Variables
 
@@ -499,7 +513,7 @@ These exports must be triggered from each app's own UI — the script cannot per
 
 [[#macOS Passwords (Keychain-backed)|macOS Passwords]] is the exception: it is a system credential store, not an installed app, so it has no registry row, no Step 3 checklist entry, and no folder created for it. Nothing will remind you — decide it here or not at all.
 
-Each export sorts its outputs by the [[#Destination Rules|Destination Rules]]: reviewed non-secret material under `app-settings-backup/<app>/`, anything secret-bearing under `secrets-encrypted/<app>/`.
+Each export sorts its outputs the same way: reviewed non-secret material under `app-settings-backup/<app>/`, anything secret-bearing under `secrets-encrypted/<app>/`.
 
 > [!warning] Pitfall
 > **Nothing ever encrypts `app-settings-backup/`.** It is the plaintext tree: it leaves with the drive exactly as you wrote it, and Phase 3C encrypts only `secrets-encrypted/`. A credential left in the plaintext tree therefore crosses the erase in the clear, and once the DMG is built nothing goes back to look for it. Route anything credential-bearing to `secrets-encrypted/<app>/` instead, where it is staged for the Phase 3C build and counted as staged rather than loose by the Phase 3B sweep.
@@ -579,7 +593,7 @@ Before treating any collection or environment as non-secret, check it rather tha
 .internal/home/scan-postman-collections.py --context pre-image-postman
 ```
 
-The report lands under `loose-secrets-reports/content-scans/runs/<context>-<stamp>/` on the artifact root, with a `MANIFEST.md` row and a `latest-run.txt` pointer — the same run-directory convention the Phase 3B sweep and the size audit use.
+The report lands under `loose-secrets-reports/content-scans/runs/<context>-<stamp>/` on the artifact root, with a `MANIFEST.md` row and a `latest-run.txt` pointer. `content-scans/` keeps its own bespoke index rather than the shared run index its parent category uses, so read `latest-run.txt` here and `official/<context>.txt` everywhere else.
 
 It walks collections, environments and globals, reporting every secret-shaped key whose value is a literal rather than a reference, plus formats that are credentials whatever key they sit under — JWTs, PEM private-key blocks, `Authorization: Basic`/`Bearer` literals, `client_secret=` in a request body, and provider token prefixes. Values are never printed: findings give the key, the value's length, and a shape label such as `UUID`, `hex-32`, or `base64ish-16`. It is read-only and exits 1 when anything is found.
 

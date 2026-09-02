@@ -2,7 +2,7 @@
 
 # Restore Git
 
-**Last updated:** 2026-09-01
+**Last updated:** 2026-09-02
 
 Restore the Git identity plumbing on the reimaged Mac so both work and personal GitHub accounts route automatically based on where a repository lives on disk. This runbook wires up the dual-identity `~/.gitconfig` (work as default, `includeIf` override under the personal repo root), lays down the matching `~/.ssh/config` host aliases, validates both identities, and leaves you with a `git clone` template that Phase 11B then applies at scale against the pre-image repository audit. It does not enumerate a repo list, drive a clone loop, or restore preserved local branches or stashes — that carry-forward work belongs to Phase 11B.
 
@@ -15,6 +15,7 @@ Restore the Git identity plumbing on the reimaged Mac so both work and personal 
     - [[#Identity Design|Identity Design]]
     - [[#Terminology|Terminology]]
 - [[#Artifact and Script Locations|Artifact and Script Locations]]
+    - [[#Bundle Layout|Bundle Layout]]
     - [[#Environment Variables|Environment Variables]]
 - [[#Before You Run Anything|Before You Run Anything]]
     - [[#Prerequisites|Prerequisites]]
@@ -114,35 +115,104 @@ Work is the global default because most repos live outside the personal repo roo
 
 ## Artifact and Script Locations
 
-Every path this runbook reads or writes is defined here, once.
+Every path this runbook reads or writes is defined here, once. Later sections refer back to these names instead of redrawing them.
 
-This runbook is manual and does not run a fractogenesis-toolkit entrypoint:
+Primary script:
 
 ```text
-$FRACTOGENESIS_HOME/bin/    # no primary script — this runbook is executed by hand
+none — this runbook writes its identity files by hand; the scripts below record and compare
 ```
 
-Input material laid down by earlier phases (Phase 10B):
+Related scripts, alphabetical:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/ssh/    # SSH keys, mounted from all-secrets-*.dmg during restore-access
-$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/git/    # pre-image ~/.gitconfig and ~/.config/git/ (reference only; not blindly copied)
+$FRACTOGENESIS_HOME/bin/compare-restored-state.sh      # entrypoint (Step 8 — comparison against the pre-image inventory)
+$FRACTOGENESIS_HOME/bin/prepare-artifact-root.py       # entrypoint (Step 0c — upsert-env, writes the identity keys into reimage.env)
+$FRACTOGENESIS_HOME/bin/record-restore-exit.sh         # entrypoint (Step 9 — exit boundary)
+$FRACTOGENESIS_HOME/bin/record-restore-prereqs.sh      # entrypoint (Step 0a — entry boundary)
+$FRACTOGENESIS_HOME/bin/record-restore-state.sh        # entrypoint (Step 0b before-state, Step 8 after-state and delta)
 ```
 
-Live targets this runbook writes on the reimaged Mac:
+Artifact root:
 
 ```text
-~/.ssh/config                             # dual host aliases
-~/.gitconfig                              # work-default with includeIf for personal
-$GIT_PERSONAL_REPO_ROOT/.gitconfig        # personal identity override + core.sshCommand
-~/.config/git/config.local                # preferences overlay, loaded by the [include] in ~/.gitconfig
-$GIT_WORK_SSH_KEY, $GIT_PERSONAL_SSH_KEY  # permission-fixed, not restored here (Phase 10B owns restore)
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/                # every artifact this runbook generates lands here
 ```
 
-Machine-local values consumed from `reimage.env`:
+Input evidence built by earlier phases:
 
 ```text
-$FRACTOGENESIS_HOME/reimage.env    # sourced at the start of every step below
+$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/git/          # written by create-secrets-dmg.md — pre-image ~/.gitconfig and ~/.config/git/, read for reference and not copied forward
+$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/ssh/          # written by create-secrets-dmg.md — the keys restore-access.md put on disk; Step 2 only fixes their modes
+$REIMAGE_ARTIFACT_ROOT/system-inventory/runs/pre-image-YYYYMMDD-HHMMSS/   # written by capture-system-inventory.md — its 08-git.txt is what Step 8 compares against
+```
+
+The complete `secrets-encrypted/` and `system-inventory/` layouts are defined once in the Master Directory Reference:
+
+[[master-directory-reference|Master Directory Reference]]
+
+### Bundle Layout
+
+Everything this runbook writes, under the artifact root named above. The bundles it reads are listed in the block before this one and are not expanded here; this tree is output only.
+
+```text
+$REIMAGE_ARTIFACT_ROOT/
+├── ...
+├── reimaged-system/
+│   ├── boundaries/
+│   │   ├── MANIFEST.md
+│   │   ├── official/
+│   │   │   ├── restore-git-entry.txt
+│   │   │   └── restore-git-exit.txt
+│   │   └── runs/
+│   │       ├── restore-git-entry-YYYYMMDD-HHMMSS/
+│   │       │   └── checklist.md
+│   │       └── restore-git-exit-YYYYMMDD-HHMMSS/
+│   │           └── checklist.md
+│   ├── ...
+│   ├── comparisons/
+│   │   ├── MANIFEST.md
+│   │   ├── official/
+│   │   │   └── restore-git-inventory-diff.txt
+│   │   └── runs/
+│   │       └── restore-git-inventory-diff-YYYYMMDD-HHMMSS/
+│   │           ├── comparison.md
+│   │           └── rows.tsv
+│   ├── ...
+│   ├── sign-offs/
+│   │   └── restore-git-exit-YYYYMMDD-HHMMSS.md
+│   └── state/
+│       ├── MANIFEST.md
+│       ├── official/
+│       │   ├── restore-git-after.txt
+│       │   ├── restore-git-before.txt
+│       │   └── restore-git-delta.txt
+│       └── runs/
+│           ├── restore-git-after-YYYYMMDD-HHMMSS/
+│           │   ├── state.md
+│           │   └── state.tsv
+│           ├── restore-git-before-YYYYMMDD-HHMMSS/
+│           │   ├── state.md
+│           │   └── state.tsv
+│           └── restore-git-delta-YYYYMMDD-HHMMSS/
+│               └── delta.md
+└── ...
+```
+
+`boundaries/`, `comparisons/` and `state/` share one shape: `runs/<context>-YYYYMMDD-HHMMSS/` holds a single run's files, `official/<context>.txt` names the run that counts, and an append-only `MANIFEST.md` indexes every completed run. To find a run, read the pointer under `official/` — there is no newest-directory rule and no `latest-*.txt`.
+
+Which run a pointer names is decided per point rather than per category. `before` is first-wins, because the earliest observation is the one that caught the untouched machine; `after`, `delta`, `entry`, `exit` and the inventory diff are latest-wins, so re-running any of them replaces the earlier answer.
+
+`sign-offs/` is outside that shape on purpose. It holds the rows you answered at the exit boundary and carries them forward into the next run, so a latest-wins pointer must never be able to supersede it.
+
+Live targets this runbook writes on the reimaged Mac. Each names the step that writes it, because the `state/` captures above are only interpretable against this list — and `bin/record-restore-state.sh` walks exactly these paths:
+
+```text
+~/.ssh/config                             # Step 3 — dual host aliases, rewritten wholesale rather than appended to
+~/.gitconfig                              # Step 4 — work-default with includeIf for personal
+$GIT_PERSONAL_REPO_ROOT/.gitconfig        # Step 5 — personal identity override and core.sshCommand
+~/.config/git/config.local                # Step 6 — preferences overlay, loaded by the [include] in ~/.gitconfig
+$GIT_WORK_SSH_KEY, $GIT_PERSONAL_SSH_KEY  # Step 2 — permission-fixed only; restore-access.md put them on disk
 ```
 
 ### Environment Variables

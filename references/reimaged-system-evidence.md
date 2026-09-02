@@ -69,12 +69,12 @@ Do not manually duplicate the final validation report when reimage-checklist.sh 
 |---|---|---|---|
 | Phase 8 | Enrollment and stabilization | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/restarts/runs/enroll-and-stabilize-<point>-*` | Managed enrollment, profiles, security tools, macOS update state, and first stabilization review. |
 | Phase 9 | Initial captures and sanity checks | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/restarts/runs/verify-reimaged-system-<point>-*` | First post-image evidence bundle before deeper restore work, including restart and Time Machine planning notes. |
-| Phase 13A | Toolkit snapshot | `$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/post-image-toolkit-snapshot-*`, `$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/latest-docs/` | Final workflow-doc snapshot showing the workflow state actually used after rebuild. |
+| Phase 13A | Toolkit snapshot | `$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/runs/post-image-toolkit-snapshot-*`, `$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/official/post-image-toolkit-snapshot.txt` | Final workflow-doc snapshot showing the workflow state actually used after rebuild. |
 | Phase 13B | System inventory | `$REIMAGE_ARTIFACT_ROOT/system-inventory/runs/post-image-*` | Broad rebuilt-system snapshot for comparison against Phase 4B. |
 | Phase 13C | Company-managed inventory | `$REIMAGE_ARTIFACT_ROOT/managed-inventory/runs/post-image-*` | Managed apps, profiles, launch items, extensions, receipts, and managed preferences after enrollment. |
-| Phase 13D | Performance audit | `$REIMAGE_ARTIFACT_ROOT/performance-audit/post-image-*` | Scenario-based after-state performance bundles that match the pre-image scenarios. |
-| Phase 13E | Office stability | `$REIMAGE_ARTIFACT_ROOT/office-stability/post-reimage-*`, `checklists/post-image-office-stability-checklist-*` | Office stability baseline, watcher-derived evidence, and post-image comparison checklist output. |
-| Phase 14 | Reimaged system checks | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/checklists/reimage-checklist-*.md` | Final validation report plus the remaining manual sign-off rows before the rebuilt Mac is considered trusted. |
+| Phase 13D | Performance audit | `$REIMAGE_ARTIFACT_ROOT/performance-audit/runs/post-image-performance-audit-<scenario>-*` | Scenario-based after-state performance bundles that match the pre-image scenarios. |
+| Phase 13E | Office stability | `$REIMAGE_ARTIFACT_ROOT/office-stability/runs/post-image-office-stability-evidence-*`, `runs/post-image-office-stability-assessment-*` | Office stability baseline, watcher-derived evidence, and the post-image assessment of it. |
+| Phase 14 | Reimaged system checks | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/checklists/runs/post-image-*/reimage-checklist.md` | Final validation report plus the remaining manual sign-off rows before the rebuilt Mac is considered trusted. |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -91,25 +91,33 @@ $REIMAGE_ARTIFACT_ROOT/
 │   │   └── runs/enroll-and-stabilize-<point>-YYYYMMDD-HHMMSS/
 │   ├── restarts/official/verify-reimaged-system-<point>.txt
 │   ├── checklists/
-│   │   ├── reimage-checklist-YYYYMMDD-HHMMSS.md
-│   │   └── latest-reimage-checklist.txt
+│   │   ├── MANIFEST.md
+│   │   ├── official/
+│   │   │   └── post-image.txt
+│   │   └── runs/
+│   │       └── post-image-YYYYMMDD-HHMMSS/
+│   │           └── reimage-checklist.md
 │   ├── restarts/runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/
 │   ├── time-machine/
 │   ├── restarts/
 │   ├── sign-offs/
-│   │   ├── <runbook>-YYYYMMDD-HHMMSS.md
-│   │   └── latest-<runbook>.txt
+│   │   └── <run-id>.md
 │   └── restore-notes/
 │       └── decisions.md
 ├── office-stability/
-│   ├── office-stability-summary-YYYYMMDD-HHMMSS.md
-│   ├── post-reimage-office-baseline-YYYYMMDD-HHMMSS.zip
-│   ├── post-reimage-office-baseline-YYYYMMDD-HHMMSS/
-│   └── checklists/
-│       └── post-image-office-stability-checklist-YYYYMMDD-HHMMSS/
+│   ├── official/
+│   │   ├── post-image-office-stability-assessment.txt
+│   │   └── post-image-office-stability-evidence.txt
+│   ├── runs/
+│   │   ├── post-image-office-stability-assessment-YYYYMMDD-HHMMSS/
+│   │   └── post-image-office-stability-evidence-YYYYMMDD-HHMMSS/
+│   └── sign-offs/
+│       └── post-image-office-stability-assessment-YYYYMMDD-HHMMSS.md
 ├── toolkit-snapshot/
-│   ├── post-image-toolkit-snapshot-YYYYMMDD-HHMMSS/
-│   └── latest-docs/
+│   ├── official/
+│   │   └── post-image-toolkit-snapshot.txt
+│   └── runs/
+│       └── post-image-toolkit-snapshot-YYYYMMDD-HHMMSS/
 ├── system-inventory/
 │   └── runs/
 │       └── post-image-YYYYMMDD-HHMMSS/
@@ -245,8 +253,8 @@ cd "$FRACTOGENESIS_HOME"
 Destinations:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/post-image-toolkit-snapshot-YYYYMMDD-HHMMSS/
-$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/latest-docs/
+$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/runs/post-image-toolkit-snapshot-YYYYMMDD-HHMMSS/
+$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/official/post-image-toolkit-snapshot.txt
 ```
 
 Manual / fallback notes:
@@ -408,7 +416,7 @@ Script-generated evidence:
 cd "$FRACTOGENESIS_HOME"
 ./bin/capture-office-stability.sh --phase post-reimage --artifact-root "$REIMAGE_ARTIFACT_ROOT"
 
-./bin/office-stability-checklist.sh --phase post-reimage --artifact-root "$REIMAGE_ARTIFACT_ROOT" --open
+./bin/assess-office-stability.sh --phase post-reimage --artifact-root "$REIMAGE_ARTIFACT_ROOT" --open
 ```
 
 Destination root:
@@ -423,7 +431,7 @@ Primary post-image evidence types:
 |---|---|
 | Post-image Office baseline bundle | `post-reimage-office-baseline-YYYYMMDD-HHMMSS/` |
 | Zipped copy of the same baseline | `post-reimage-office-baseline-YYYYMMDD-HHMMSS.zip` |
-| Office comparison checklist report | `checklists/post-image-office-stability-checklist-YYYYMMDD-HHMMSS/` |
+| Office stability assessment | `runs/post-image-office-stability-assessment-YYYYMMDD-HHMMSS/office-stability-assessment.md` |
 | Summary copy | `office-stability-summary-YYYYMMDD-HHMMSS.md` |
 | Optional watcher-derived incident files | `workload-snapshot-*.txt`, `unified-log-office-*.txt`, `install-log-office-*.txt`, `latest-watcher-after-close-*.txt` |
 
@@ -431,7 +439,7 @@ Generated checklist bundle contents:
 
 ```text
 README.md
-post-image-office-stability-checklist.md
+post-image-office-stability-assessment.md
 logs/
 watcher/
 processes/
@@ -440,7 +448,7 @@ system/
 
 Manual / fallback notes:
 
-- Prefer the generated `post-image-office-stability-checklist.md` for actual sign-off; use the manual template only when you still need a compact summary.
+- Prefer the generated `post-image-office-stability-assessment.md` for actual sign-off; use the manual template only when you still need a compact summary.
 - Manual review still matters for whether Outlook and OneNote remain open during normal use, whether update/installer activity truly settled, and whether the rebuilt Mac is ready for IT escalation if the issue recurs.
 - If an incident happens again, capture the workload snapshot and latest watcher tail before reopening the apps, then regenerate the post-reimage baseline.
 
@@ -465,7 +473,7 @@ Actual output paths verified from `reimage-checklist.sh`:
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/reimaged-system/checklists/reimage-checklist-YYYYMMDD-HHMMSS.md
-$REIMAGE_ARTIFACT_ROOT/reimaged-system/checklists/latest-reimage-checklist.txt
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/checklists/official/post-image.txt
 ```
 
 Related `reimaged-system/` directories the script ensures exist:
@@ -514,7 +522,7 @@ Managed baseline and restart checkpoints:
 
 Final validation run:
   [ ] reimage-checklist.sh --phase post completed
-  [ ] latest-reimage-checklist.txt points to the intended final report
+  [ ] official/post-image.txt points to the intended final report
   [ ] sign-offs reviewed — no outstanding rows, and carried rows re-affirmed
   [ ] restore-notes reviewed for deferred/manual follow-up items
   Notes:

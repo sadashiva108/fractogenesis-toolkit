@@ -2,7 +2,7 @@
 
 # Stage Loose Secrets
 
-**Last updated:** 2026-08-16
+**Last updated:** 2026-09-02
 
 This runbook sweeps credential-shaped files that earlier phases left sitting in plaintext under `$REIMAGE_ARTIFACT_ROOT`, and moves them across the encryption boundary into `secrets-encrypted/` before Phase 3C builds the DMG.
 
@@ -18,6 +18,7 @@ It is the last gate before packaging. Everything staged deliberately by Phases 2
     - [[#What Counts as Credential-Shaped|What Counts as Credential-Shaped]]
     - [[#Terminology|Terminology]]
 - [[#Artifact and Script Locations|Artifact and Script Locations]]
+    - [[#Bundle Layout|Bundle Layout]]
     - [[#Environment Variables|Environment Variables]]
 - [[#Before You Run Anything|Before You Run Anything]]
     - [[#Prerequisites|Prerequisites]]
@@ -118,32 +119,70 @@ Being aggressive about shapes is safe here precisely because a match is *staged*
 
 ## Artifact and Script Locations
 
+Every path and directory tree this runbook uses is defined here, once. Later sections refer back to these names instead of redrawing them.
+
+Primary script:
+
 ```text
+$FRACTOGENESIS_HOME/bin/stage-loose-secrets.sh     # entrypoint — moves, dry-run by default
+```
+
+Related scripts, alphabetical:
+
+```text
+$FRACTOGENESIS_HOME/.internal/artifact-config.sh   # helper — SECRET_SHAPES_FLOOR and the predicate builder
 $FRACTOGENESIS_HOME/bin/report-loose-secrets.sh    # entrypoint — reports, never writes to what it scans
-$FRACTOGENESIS_HOME/bin/stage-loose-secrets.sh    # entrypoint — moves, dry-run by default
-$FRACTOGENESIS_HOME/.internal/artifact-config.sh  # SECRET_SHAPES_FLOOR and the predicate builder
 ```
+
+Artifact root:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/staged-loose/
-├── MANIFEST.tsv                       # when, source path, staged path
-└── <original-relative-path>           # e.g. home-files-backup/proj/id_rsa
-
-$REIMAGE_ARTIFACT_ROOT/loose-secrets-reports/
-├── open-findings.md                   # what is still unresolved, and for how many runs
-├── findings-ledger.tsv                # authoritative state behind open-findings.md
-├── MANIFEST.md                        # append-only index of completed checks
-├── latest-run.txt
-└── runs/<context>-YYYYMMDD-HHMMSS/
-    ├── loose-secrets-report.txt
-    └── findings.tsv
+$REIMAGE_ARTIFACT_ROOT/loose-secrets-reports/                # every sweep, its findings, and the standing ledger
+$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/staged-loose/       # where a staged secret is moved to
 ```
+
+Input evidence built by earlier phases:
+
+```text
+$REIMAGE_ARTIFACT_ROOT/    # every category Phases 0-3A wrote; the sweep scans the whole root for loose secrets
+```
+
+### Bundle Layout
+
+One lineage per sub-label, so a same-day re-check keeps its own pointer instead of overwriting the sweep it was checking. Every lineage is latest-wins. `open-findings.md` and `findings-ledger.tsv` are standing state that survives across runs, and `loose-secrets-index.md` carries the per-run finding counts the shared manifest schema has no column for:
+
+```text
+$REIMAGE_ARTIFACT_ROOT/
+├── ...
+├── loose-secrets-reports/
+│   ├── MANIFEST.md
+│   ├── content-scans/
+│   ├── findings-ledger.tsv
+│   ├── loose-secrets-index.md
+│   ├── official/
+│   │   └── <context>.txt
+│   ├── open-findings.md
+│   └── runs/
+│       └── <context>-YYYYMMDD-HHMMSS/
+│           ├── findings.tsv
+│           └── loose-secrets-report.txt
+├── ...
+├── secrets-encrypted/
+│   └── staged-loose/
+│       ├── MANIFEST.tsv
+│       └── <original-relative-path>
+└── ...
+```
+
+`<context>` is `pre-image` for the Phase 3B sweep, and `pre-image-<label>` for a re-check — `pre-image-after-backup-home`, `pre-image-final`. `staged-loose/MANIFEST.tsv` records when each file moved, from where, and to where; `content-scans/` is written by the Phase 2B home backup and belongs to `backup-home.md`.
 
 The complete artifact-root layout is defined once in the Master Directory Reference:
 
 [[master-directory-reference|Master Directory Reference]]
 
 ### Environment Variables
+
+The values this runbook depends on. `REIMAGE_ARTIFACT_ROOT` is resolved and written during `prepare-artifact-root.md`; the other two are composed by shared config.
 
 | Variable | Meaning |
 |---|---|

@@ -2,7 +2,7 @@
 
 # Enroll and Stabilize
 
-**Last updated:** 2026-09-01
+**Last updated:** 2026-09-02
 
 Bring the freshly reimaged Mac to a clean, trusted managed baseline before any restore work begins. This phase covers the human-driven work — completing MDM enrollment, installing and confirming the managed app set from both Intune assignment modes, applying required macOS updates, taking the first stabilization restart, and reconfirming afterward — and pairs it with `record-enrollment.sh`, which records read-only command evidence for each managed subsystem and prefills the Phase 8 exit-criteria table for the command-verifiable rows.
 
@@ -17,7 +17,7 @@ Bring the freshly reimaged Mac to a clean, trusted managed baseline before any r
     - [[#Run Order and When to Fill Rows|Run Order and When to Fill Rows]]
     - [[#Terminology|Terminology]]
 - [[#Artifact and Script Locations|Artifact and Script Locations]]
-    - [[#Record Bundle Layout|Record Bundle Layout]]
+    - [[#Bundle Layout|Bundle Layout]]
     - [[#Environment Variables|Environment Variables]]
 - [[#Before You Run Anything|Before You Run Anything]]
     - [[#Prerequisites|Prerequisites]]
@@ -204,38 +204,61 @@ $FRACTOGENESIS_HOME/bin/record-enrollment.sh    # entrypoint — records Phase 8
 Artifact root:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/reimaged-system/restarts/      # Steps 7 and 9 — the evidence either side of the restart
 $REIMAGE_ARTIFACT_ROOT/reimaged-system/boundaries/    # Steps 3 and 10 — the entry and exit checklists
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/restarts/      # Steps 7 and 9 — the evidence either side of the restart
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/sign-offs/     # the rows only a person can answer, kept outside the runs
 ```
 
-### Record Bundle Layout
-
-Both directories are run categories with one shape: `runs/<context>-YYYYMMDD-HHMMSS/` holding a single run's files, `official/<context>.txt` naming the run that counts, and an append-only `MANIFEST.md` indexing every completed run. Officialness is computed from the manifest rather than stored, so `official/` can be regenerated.
-
-This phase writes five contexts: `enroll-and-stabilize-entry` and `-exit` under `boundaries/`, and `-initial`, `-pre-restart` and `-post-restart` under `restarts/`. `restarts/` is shared with Phase 9, which writes `verify-reimaged-system-<point>` there — both phases capture the machine either side of a stabilization restart, so they are one lineage keyed by point rather than two categories that have to be read together.
+Input evidence built by earlier phases:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/reimaged-system/restarts/
-├── MANIFEST.md
-├── official/
-│   └── enroll-and-stabilize-<point>.txt
-└── runs/
-    └── enroll-and-stabilize-<point>-YYYYMMDD-HHMMSS/
-        ├── record.md
-        ├── rows.tsv
-        └── raw/
-            ├── 01-enrollment-status.txt
-            ├── 02-profiles-list.txt
-            ├── 03-filevault-status.txt
-            ├── 04-managed-apps.txt
-            ├── 05-managed-processes.txt
-            ├── 06-macos-version.txt
-            ├── 07-softwareupdate-list.txt
-            ├── 08-managed-app-expectations.txt
-            ├── 09-keychain-identities.txt
-            ├── 10-package-receipts.txt
-            ├── 11-launchd-components.txt
-            └── 12-system-extensions.txt
+$REIMAGE_ARTIFACT_ROOT/managed-inventory/official/pre-image.txt    # written by capture-managed-inventory.md; the managed-app set this phase checks against
+```
+
+### Bundle Layout
+
+Both categories have the shared shape: `runs/<context>-YYYYMMDD-HHMMSS/` holding one run's files, `official/<context>.txt` naming the run that counts, and an append-only `MANIFEST.md` indexing every completed run. Officialness is computed from the manifest rather than stored, so `official/` can be regenerated.
+
+This phase writes five contexts: `enroll-and-stabilize-entry` and `-exit` under `boundaries/`, and `-initial`, `-pre-restart` and `-post-restart` under `restarts/`. `-pre-restart` is **first-wins** — the first recording of that point stays official, because a later one describes a machine the phase has already changed. Every other point is latest-wins.
+
+`restarts/` is shared with Phase 9, which writes `verify-reimaged-system-<point>` there. Both phases capture the machine either side of a stabilization restart, so they are one category keyed by point rather than two that have to be read together:
+
+```text
+$REIMAGE_ARTIFACT_ROOT/
+├── ...
+├── reimaged-system/
+│   ├── boundaries/
+│   │   ├── MANIFEST.md
+│   │   ├── official/
+│   │   │   └── enroll-and-stabilize-<point>.txt
+│   │   └── runs/
+│   │       └── enroll-and-stabilize-<point>-YYYYMMDD-HHMMSS/
+│   │           └── checklist.md
+│   ├── ...
+│   ├── restarts/
+│   │   ├── MANIFEST.md
+│   │   ├── official/
+│   │   │   └── enroll-and-stabilize-<point>.txt
+│   │   └── runs/
+│   │       └── enroll-and-stabilize-<point>-YYYYMMDD-HHMMSS/
+│   │           ├── raw/
+│   │           │   ├── 01-enrollment-status.txt
+│   │           │   ├── 02-profiles-list.txt
+│   │           │   ├── 03-filevault-status.txt
+│   │           │   ├── 04-managed-apps.txt
+│   │           │   ├── 05-managed-processes.txt
+│   │           │   ├── 06-macos-version.txt
+│   │           │   ├── 07-softwareupdate-list.txt
+│   │           │   ├── 08-managed-app-expectations.txt
+│   │           │   ├── 09-keychain-identities.txt
+│   │           │   ├── 10-package-receipts.txt
+│   │           │   ├── 11-launchd-components.txt
+│   │           │   └── 12-system-extensions.txt
+│   │           ├── record.md
+│   │           └── rows.tsv
+│   └── sign-offs/
+│       └── enroll-and-stabilize-<point>-YYYYMMDD-HHMMSS.md
+└── ...
 ```
 
 `record.md` reports what the machine said; `rows.tsv` carries the same verdicts tab-separated. Step 9 reads the second, not the first — a table meant for a person and a table meant for a script have different jobs, and reparsing Markdown to get a verdict is how they drift apart.

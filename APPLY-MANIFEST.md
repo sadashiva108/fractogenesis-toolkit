@@ -1,5 +1,7 @@
 # Apply Manifest
 
+**Revision 140** — supersedes Revision 139 and earlier. Every runbook and reference is drawn in the run-index layout, the authoring prompt gains the rules that keep it that way, and two scripts stop looking for evidence where it no longer is.
+
 **Revision 139** — supersedes Revision 138 and earlier. Three usage blocks stop naming phases the code has not dispatched on for two revisions, a purely manual artifact gets a rule of its own, and the first-wins rule gains its exception.
 
 **Revision 138** — supersedes Revision 137 and earlier. The evidence half of the migration: nine pre-image categories become indexed runs, and the one script whose context would have been converted into the wrong name is fixed first.
@@ -386,6 +388,140 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `setup-reimage-env.sh` | `bin/setup-reimage-env.sh` |
 | `compare-restored-state.sh` | `bin/compare-restored-state.sh` |
 | `capture-office-stability.sh` | `bin/capture-office-stability.sh` |
+| `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
+
+---
+
+## Revision 140 — the documentation catches up with the run index
+
+Revisions 116–139 moved every producer and then every artifact onto the shared
+run index. The runbooks and references still drew the layout that preceded it:
+flat timestamped bundles at a category root, `latest-*.txt` pointers, two
+symlinks, and a `checklists/` directory that no longer exists. A reader following
+those documents would look for files that are not there.
+
+This revision brings all 27 runbooks, 11 references and both guides onto the
+current layout, and writes the rules that keep them there into the authoring
+prompt and template so the next runbook is not drawn the old way.
+
+### `## Artifact and Script Locations` gets a fixed shape
+
+Four labelled lines, in this order, each introducing its own fenced block:
+
+```
+Primary script:
+Related scripts, alphabetical:
+Artifact root:
+Input evidence built by earlier phases:
+```
+
+The fourth is omitted only where a runbook reads nothing an earlier phase
+produced; the other three always appear. Every entry in the first two blocks is
+classified — `entrypoint`, `helper`, or `external helper`.
+
+**Input evidence is the new one, and it is the one that pays.** Before this, a
+directory a runbook merely *read* sat in the same block as the ones it wrote, and
+the tree below expanded both. That is how four different runbooks came to redraw
+`app-settings-backup/`, each slightly differently, and how a rename in one place
+left three stale copies. A read dependency is now named, attributed to the
+runbook that owns it, and never expanded.
+
+Then two subsections: `### Bundle Layout`, holding the runbook's tree, and
+`### Environment Variables`. Eleven runbooks had no `Bundle Layout` heading at
+all; five had trees under names of their own (`Destination Rules`,
+`Artifact Locations`, `Workspace Layout`, `Record Bundle Layout`,
+`Status Bundle Layout`, `Category Layout`, `Generated-Artifact Trees`), and
+`backup-repos.md` had six trees across three subsections.
+
+### One tree per root, and `...` means "there is more here"
+
+A tree expands only what the runbook **writes into**, alphabetized at every
+level, with omitted siblings collapsed to a single `...` — one per contiguous run
+of omissions, before the first shown entry when it is not alphabetically first,
+between two shown entries that are not adjacent, and after the last when it is
+not alphabetically last.
+
+The point is that a reader can tell an excerpt from a complete listing without
+opening the master reference to find out. `toolkit-snapshot/` is alphabetically
+last in the artifact root, so its tree ends without a trailing `...` and that
+absence is information.
+
+A second tree block appears only where a runbook genuinely writes into a second
+root — `backup-intellij.md`, `stage-certs-keychain.md` and `backup-repos.md`
+write to `$REIMAGE_WORKSPACE_ROOT` as well.
+
+### Every capture category is drawn in the run-index shape
+
+```text
+<category>/
+├── MANIFEST.md          append-only; the library owns it
+├── official/            one pointer per lineage, named for the context
+│   └── <context>.txt    holds runs/<id>
+├── runs/
+│   └── <context>-YYYYMMDD-HHMMSS/
+└── sign-offs/           answered rows, outside the runs a rerun replaces
+```
+
+Which means a runbook no longer tells anyone to take the newest directory, follow
+a `latest-*.txt`, or dereference a symlink — none of those exist. It says to read
+the pointer. Every `ls -dt … | head -1` and `find … | sort | tail -1` in a
+verification step is now a `cat` of `official/<context>.txt`.
+
+`capture-toolkit-snapshot.md` needed the most rewriting for this, because
+`latest-docs` was load-bearing in its narrative: it was the stable path for
+reading the runbooks off the drive on a rebuilt Mac with no Git access. That
+argument survives intact, with `official/pre-image-toolkit-snapshot.txt` doing
+the work — a one-line file, read with `cat`, on a Mac with nothing installed.
+
+### Two scripts were reading a layout that is no longer there
+
+Not documentation. Both would have reported a clean run as missing evidence.
+
+**`assess-office-stability.sh`** walked the category root with five
+`-maxdepth 1` globs for `pre-reimage-office-baseline-*`, its `.zip`, and
+`office-stability-summary-*.md`. Since Revision 135 the collector stages that
+bundle under `runs/` and the ZIP and summary travel inside it, so all five checks
+returned WARN against evidence that was present and correct. It now resolves the
+evidence run through `artifact_run_official` — one lookup replacing three globs —
+and its usage text stops naming a `checklists/` output root it no longer uses.
+
+**`reimage-checklist.sh`** tested `office-stability/checklists/` for non-emptiness
+to decide whether the Phase 4D assessment had been generated. Revision 137
+retired that directory. The row now resolves
+`pre-image-office-stability-assessment` and checks for the report inside it.
+
+### Names, phases and paths corrected in prose
+
+`office-stability-checklist.sh` → `assess-office-stability.sh` throughout, and
+`capture-office-stability-baseline.sh`, a name that has not existed for some
+time, with it. `reimaging-scripts-guide.md` pointed at `scripts/helpers/git/` and
+`helpers/apps/backup-intellij-scratches-consoles.sh`; the helpers live in
+`.internal/git/` and `.internal/apps/backup-intellij-state.sh`. It also wrote
+`$REIMAGE_ARTIFACT_ROOT/app-backups/` eight times for a directory called
+`app-settings-backup/`. Two phase labels named the wrong half: Phase 13A is the
+`post-image` toolkit snapshot, not a second `pre-image` one.
+
+### One category still keeps the old shape, deliberately
+
+`loose-secrets-reports/content-scans/` has its own `MANIFEST.md` and a
+hand-written `latest-run.txt`, one level below a parent that now has `official/`.
+The Revision 138 conversion worked category by category at the top level and did
+not descend. `backup-home.md` and `backup-apps.md` now state that exception in
+prose rather than claiming it follows the same convention as its neighbours, and
+`docs/gaps/content-scans-keeps-a-bespoke-index.md` carries the two design
+questions that have to be answered before it is converted.
+
+### Verification
+
+`verify-doc-paths.sh --all` is **0 MISSING / 0 ANCHOR BROKEN** across 1106
+anchors — the Revision 137 regression is closed, since the guide no longer cites
+a renamed script. `verify-runbook-structure.sh` improves from 29 FAIL to **25**;
+the remainder are pre-existing `[!note]`, `PITFALL` and `LEGEND` findings in
+sections this pass did not open. `bash -n` clean on both edited scripts, and
+`verify-script-portability.sh` holds at 74 clean / 0 WARN / 0 FAIL.
+
+**Linux, Bash 5.x.** `shellcheck` unavailable; `/bin/bash -n` under macOS Bash
+3.2 is owed here as on Revisions 116–139.
 
 ---
 

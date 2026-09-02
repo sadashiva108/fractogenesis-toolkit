@@ -127,8 +127,12 @@ $REIMAGE_ARTIFACT_ROOT/
 │   │   ├── official/
 │   │   └── runs/enroll-and-stabilize-<point>-YYYYMMDD-HHMMSS/
 │   ├── checklists/
-│   │   ├── reimage-checklist-YYYYMMDD-HHMMSS.md
-│   │   └── latest-reimage-checklist.txt
+│   │   ├── MANIFEST.md
+│   │   ├── official/
+│   │   │   └── post-image.txt
+│   │   └── runs/
+│   │       └── post-image-YYYYMMDD-HHMMSS/
+│   │           └── reimage-checklist.md
 │   ├── restarts/runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/
 │   │   ├── README.md
 │   │   ├── checklist.md
@@ -175,10 +179,10 @@ $REIMAGE_ARTIFACT_ROOT/
 │       ├── pre-image-YYYYMMDD-HHMMSS/
 │       └── post-image-YYYYMMDD-HHMMSS/
 ├── toolkit-snapshot/
-│   ├── latest-pre-image-toolkit-snapshot -> pre-image-toolkit-snapshot-YYYYMMDD-HHMMSS/
-│   ├── latest-pre-image-toolkit-snapshot.txt
-│   ├── pre-image-toolkit-snapshot-YYYYMMDD-HHMMSS/
-│   └── latest-docs/
+│   ├── official/
+│   │   └── pre-image-toolkit-snapshot.txt
+│   └── runs/
+│       └── pre-image-toolkit-snapshot-YYYYMMDD-HHMMSS/
 └── public-certs/
 ```
 
@@ -201,11 +205,11 @@ Two `secrets-encrypted/` subtrees have dedicated restore consumers rather than a
 | Phase 9 — Initial Captures and Sanity Checks | prepared external root, optional `reimaged-system/restore-notes/` | `reimaged-system/restarts/` (runs, `official/`, `MANIFEST.md`), `reimaged-system/boundaries/`, `reimaged-system/restore-notes/` |
 | Phase 10A — Restore Runtime Libraries | `system-inventory/runs/pre-image-*/`, `system-inventory/runs/post-image-*/`, `home-files-backup/dotfiles/` | usually notes only; later validated under `reimaged-system/`. Also retires the Phase 8 `~/.zprofile` bridge and hands config loading to direnv — see `references/toolkit-environment-reference.md` |
 | Phase 10B — Restore Access | `secrets-encrypted/`, `public-certs/`, `home-files-backup/dotfiles/` | `reimaged-system/restore-notes/`, `reimaged-system/sign-offs/restore-access-exit-*.md` |
-| Phase 11A — Restore Git | `secrets-encrypted/ssh/`, `secrets-encrypted/git/`, `toolkit-snapshot/latest-docs/` | dual `~/.gitconfig` + `~/.ssh/config` in place; validated end-to-end for work and personal identities |
+| Phase 11A — Restore Git | `secrets-encrypted/ssh/`, `secrets-encrypted/git/`, `toolkit-snapshot/official/pre-image-toolkit-snapshot.txt` | dual `~/.gitconfig` + `~/.ssh/config` in place; validated end-to-end for work and personal identities |
 | Phase 11B — Restore Repositories | `repo-audit-reports/runs/pre-image-*/repos.tsv`, `staged-ignored-files/live/<label>/` | `repo-audit-reports/runs/post-image-restore-*/`, `repo-audit-reports/official/post-image-restore.txt`, `reimaged-system/sign-offs/post-image-restore-*.md`, working repo checkouts |
 | Phase 12 — Restore Apps | `app-settings-backup/`, `secrets-encrypted/`, `reimaged-system/restore-notes/` | `reimaged-system/restore-notes/restore-{apps,docker,intellij}-plan-*.md`, `reimaged-system/sign-offs/restore-{apps,docker,intellij}-*.md` |
-| Phase 13 — Post-Image Captures | matching Phase 4 capture outputs for comparison | `toolkit-snapshot/latest-docs/`, `toolkit-snapshot/pre-image-toolkit-snapshot-*/`, `toolkit-snapshot/latest-pre-image-toolkit-snapshot.txt`, `system-inventory/runs/post-image-*/`, `managed-inventory/runs/post-image-*/`, `performance-audit/post-image-performance-audit-*/`, `office-stability/post-reimage-*/` |
-| Phase 14 — Reimaged System Checks | everything needed for final validation context; every `reimaged-system/sign-offs/` file | `reimaged-system/checklists/reimage-checklist-*.md`, `reimaged-system/checklists/latest-reimage-checklist.txt`, `reimaged-system/sign-offs/reimaged-system-checks-*.md`, optional prose follow-up in `reimaged-system/restore-notes/` |
+| Phase 13 — Post-Image Captures | matching Phase 4 capture outputs for comparison | `toolkit-snapshot/runs/post-image-toolkit-snapshot-*/`, `system-inventory/runs/post-image-*/`, `managed-inventory/runs/post-image-*/`, `performance-audit/runs/post-image-performance-audit-*/`, `office-stability/runs/post-image-office-stability-*/` |
+| Phase 14 — Reimaged System Checks | everything needed for final validation context; every `reimaged-system/sign-offs/` file | `reimaged-system/checklists/runs/post-image-*/reimage-checklist.md`, `reimaged-system/checklists/official/post-image.txt`, `reimaged-system/sign-offs/reimaged-system-checks-*.md`, optional prose follow-up in `reimaged-system/restore-notes/` |
 | Phase 15 — Restore Home | `home-files-backup/home/`, `home-files-backup/dotfiles/`, optionally `staged-ignored-files/live/` | `reimaged-system/restore-notes/decisions.md`; optional final notes under `reimaged-system/restore-notes/` |
 | Phase 16 — Post-Image Time Machine | the rebuilt Mac itself; `$EXTERNAL_APPLE_BACKUPS_VOLUME` as destination | `time-machine/` completion, verification, and log artifacts |
 
@@ -272,7 +276,7 @@ Use these during [[restore-git|restore-git.md]] and later repository reconstruct
 | `gitignore-superset/` | Context for what was intentionally excluded or handled separately |
 | `secrets-encrypted/ssh/` | Work/personal SSH keys and config inputs |
 | `secrets-encrypted/git/` | Private Git config or credential-bearing Git material |
-| `toolkit-snapshot/latest-docs/` | Fallback copy of the workflow docs so `fractogenesis-toolkit` can be restored first |
+| `toolkit-snapshot/official/pre-image-toolkit-snapshot.txt` → `runs/<id>/docs/` | Fallback copy of the workflow docs so `fractogenesis-toolkit` can be restored first |
 
 Restore `fractogenesis-toolkit` early so the active runbooks are available locally for the remaining phases.
 
@@ -321,11 +325,11 @@ These are the Phase 13 comparison outputs created after the rebuilt Mac is subst
 
 | Capture | Destination |
 |---|---|
-| Toolkit snapshot | `toolkit-snapshot/latest-docs/`, `toolkit-snapshot/pre-image-toolkit-snapshot-YYYYMMDD-HHMMSS/`, and `toolkit-snapshot/latest-pre-image-toolkit-snapshot.txt` |
+| Toolkit snapshot | `toolkit-snapshot/official/pre-image-toolkit-snapshot.txt` and the `toolkit-snapshot/runs/pre-image-toolkit-snapshot-YYYYMMDD-HHMMSS/` it names |
 | System inventory | `system-inventory/runs/post-image-YYYYMMDD-HHMMSS/` |
 | Company-managed inventory | `managed-inventory/runs/post-image-YYYYMMDD-HHMMSS/` |
-| Performance audit | `performance-audit/post-image-performance-audit-<scenario>-YYYYMMDD-HHMMSS/` |
-| Office stability | `office-stability/post-reimage-office-baseline-YYYYMMDD-HHMMSS/` and `office-stability/checklists/` |
+| Performance audit | `performance-audit/runs/post-image-performance-audit-<scenario>-YYYYMMDD-HHMMSS/` |
+| Office stability | `office-stability/runs/post-image-office-stability-evidence-YYYYMMDD-HHMMSS/` and `office-stability/runs/post-image-office-stability-assessment-YYYYMMDD-HHMMSS/` |
 
 Use these as the **after** side of the comparison against Phase 4, not as replacements for the original pre-image evidence.
 
@@ -339,7 +343,7 @@ Phase 14 writes the final rebuilt-system sign-off artifacts under:
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/reimaged-system/checklists/reimage-checklist-YYYYMMDD-HHMMSS.md
-$REIMAGE_ARTIFACT_ROOT/reimaged-system/checklists/latest-reimage-checklist.txt
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/checklists/official/post-image.txt
 ```
 
 Unlike the initial checklist bundle, Phase 14 does not currently generate a separate root-level `manual-captures-required.md`. Keep unresolved manual follow-up in `reimaged-system/restore-notes/` or `reimaged-system-evidence.md`.

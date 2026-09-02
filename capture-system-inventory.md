@@ -129,10 +129,9 @@ Primary script:
 $FRACTOGENESIS_HOME/bin/capture-system-inventory.sh    # entrypoint
 ```
 
-> [!note]
-> The individual commands behind each section file are documented under Supplemental Reference, for rerunning or troubleshooting a single section by hand.
+The individual commands behind each section file are documented under Supplemental Reference, for rerunning or troubleshooting a single section by hand.
 
-Related scripts:
+Related scripts, alphabetical:
 
 ```text
 $FRACTOGENESIS_HOME/bin/report-size-audit.sh          # entrypoint — capacity check for the artifact root
@@ -144,52 +143,46 @@ Artifact root:
 $REIMAGE_ARTIFACT_ROOT/system-inventory/               # the run category; all bundles land under its runs/
 ```
 
-### Category Layout
+### Bundle Layout
 
-`system-inventory/` is a run category. Bundles live under `runs/`, `MANIFEST.md` is the append-only index of completed runs, and each file under `official/` names the current bundle for one context:
+One lineage per context: `pre-image` from Phase 4B and `post-image` from Phase 13B. Both are latest-wins, so a rerun of either supersedes that context's current bundle and leaves the other alone. The `<context>` prefix comes from `--context` (default `pre-image`):
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/system-inventory/
-├── MANIFEST.md                         # append-only index; one row per completed run
-├── official/
-│   ├── pre-image.txt                   # → runs/pre-image-YYYYMMDD-HHMMSS
-│   └── post-image.txt                  # → runs/post-image-YYYYMMDD-HHMMSS (after Phase 13B)
-└── runs/
-    └── <context>-YYYYMMDD-HHMMSS/      # one bundle; see Bundle Layout
+$REIMAGE_ARTIFACT_ROOT/
+├── ...
+├── system-inventory/
+│   ├── MANIFEST.md
+│   ├── official/
+│   │   ├── post-image.txt
+│   │   └── pre-image.txt
+│   └── runs/
+│       └── <context>-YYYYMMDD-HHMMSS/
+│           ├── 01-hardware.txt
+│           ├── 02-macos.txt
+│           ├── 03-disk.txt
+│           ├── 04-display.txt
+│           ├── 05-apps.txt
+│           ├── 06-homebrew.txt
+│           ├── 07-shell.txt
+│           ├── 08-git.txt
+│           ├── 09-python.txt
+│           ├── 10-java.txt
+│           ├── 11-node.txt
+│           ├── 12-docker.txt
+│           ├── 13-network.txt
+│           ├── 14-cloud.txt
+│           ├── 15-env.txt
+│           ├── 16-certs.txt
+│           ├── Brewfile
+│           ├── MANIFEST.txt
+│           └── dotfiles/
+└── ...
 ```
 
-`MANIFEST.md` is the source of truth and is never edited by hand; the pointers under `official/` are a derived cache. Regenerate them rather than writing one:
+Each file under `official/` holds one line naming the current bundle for that context, as `runs/<context>-YYYYMMDD-HHMMSS`. `MANIFEST.md` is the source of truth and is never edited by hand; the pointers are a derived cache, so regenerate them rather than writing one:
 
 ```bash
 ./bin/reindex-artifact-runs.sh --category "$REIMAGE_ARTIFACT_ROOT/system-inventory"
-```
-
-### Bundle Layout
-
-Each run writes one timestamped bundle under `runs/`. The `<context>` prefix comes from `--context` (default `pre-image`):
-
-```text
-$REIMAGE_ARTIFACT_ROOT/system-inventory/runs/
-└── <context>-YYYYMMDD-HHMMSS/
-    ├── MANIFEST.txt
-    ├── Brewfile
-    ├── dotfiles/
-    ├── 01-hardware.txt
-    ├── 02-macos.txt
-    ├── 03-disk.txt
-    ├── 04-display.txt
-    ├── 05-apps.txt
-    ├── 06-homebrew.txt
-    ├── 07-shell.txt
-    ├── 08-git.txt
-    ├── 09-python.txt
-    ├── 10-java.txt
-    ├── 11-node.txt
-    ├── 12-docker.txt
-    ├── 13-network.txt
-    ├── 14-cloud.txt
-    ├── 15-env.txt
-    └── 16-certs.txt
 ```
 
 The complete `$REIMAGE_ARTIFACT_ROOT/system-inventory/` layout is defined once in the Master Directory Reference:

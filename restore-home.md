@@ -2,7 +2,7 @@
 
 # Restore Home
 
-**Last updated:** 2026-08-17
+**Last updated:** 2026-09-02
 
 Restore selected personal-home content from the plain-text `home-files-backup/` bundle produced by Phase 2B, after the rebuilt Mac has already proved itself for normal development and daily use. This is the intentionally-latest phase: nothing about the reimaged system's stability, security posture, or clean-baseline claim should depend on any file restored here. The runbook is manual and does not run a fractogenesis-toolkit entrypoint — every restore is a small, deliberate `rsync` or per-file merge that the operator justifies against a specific need.
 
@@ -13,6 +13,7 @@ Restore selected personal-home content from the plain-text `home-files-backup/` 
 - [[#Purpose|Purpose]]
 - [[#How the Workflow Works|How the Workflow Works]]
 - [[#Artifact and Script Locations|Artifact and Script Locations]]
+    - [[#Bundle Layout|Bundle Layout]]
     - [[#Environment Variables|Environment Variables]]
 - [[#Before You Run Anything|Before You Run Anything]]
     - [[#Prerequisites|Prerequisites]]
@@ -90,60 +91,57 @@ The dated shortlist note is a different thing and stays a different file. It is 
 
 Every path this runbook uses is defined here, once. Later steps refer back to these names instead of restating them.
 
-Primary script: none. This phase runs no toolkit entrypoint; every command below is a plain shell command you run by hand.
-
-Primary source bundle:
+Primary script:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/home-files-backup/home/
-$REIMAGE_ARTIFACT_ROOT/home-files-backup/dotfiles/
+none — this phase runs no toolkit entrypoint; every restore is a plain shell command you run by hand
 ```
 
-Optional source for repo-specific ignored files that were never committed:
+Related scripts, alphabetical:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/staged-ignored-files/live/
+$FRACTOGENESIS_HOME/bin/record-decision.sh             # entrypoint — appends each deliberate "not restored" to decisions.md
+diff                                                   # external helper — Step 4 compares a backed-up dotfile against the live one before merging
+rsync                                                  # external helper — Steps 3 and 4 copy with an explicit flag set, never rsync -a
 ```
 
-Restore notes (this runbook writes here):
+Artifact root:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/restore-home-YYYYMMDD.md
-$REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/decisions.md
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/                # every artifact this runbook generates lands here
 ```
 
-Directory shape read by this runbook:
+Input evidence built by earlier phases:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/
-├── ...
-├── home-files-backup/
-│   ├── MANIFEST.md
-│   ├── dotfiles/
-│   │   └── ...
-│   └── home/
-│       ├── Desktop/
-│       ├── Documents/
-│       ├── Movies/
-│       ├── Music/
-│       ├── Pictures/
-│       ├── config-files-backups/
-│       └── scripts/
-├── ...
-├── reimaged-system/
-│   └── restore-notes/
-│       ├── restore-home-YYYYMMDD.md
-│       └── decisions.md
-├── ...
-├── staged-ignored-files/
-│   └── live/
-│       └── <label>/
-└── ...
+$REIMAGE_ARTIFACT_ROOT/home-files-backup/MANIFEST.md   # written by backup-home.md — what the bundle actually holds, read in Step 2
+$REIMAGE_ARTIFACT_ROOT/home-files-backup/dotfiles/     # written by backup-home.md — shell and CLI config, merged file by file in Step 4
+$REIMAGE_ARTIFACT_ROOT/home-files-backup/home/         # written by backup-home.md — the personal-home subfolders Step 3 restores from
 ```
 
 The complete `home-files-backup/` layout, including the full dotfiles inventory, is defined once in the Master Directory Reference:
 
 [[master-directory-reference|Master Directory Reference]]
+
+### Bundle Layout
+
+Everything this runbook writes, under the artifact root named above. The bundle it restores from is listed in the block before this one and is not expanded here — `backup-home.md` owns that layout.
+
+```text
+$REIMAGE_ARTIFACT_ROOT/
+├── ...
+├── reimaged-system/
+│   ├── ...
+│   ├── restore-notes/
+│   │   ├── decisions.md
+│   │   └── restore-home-YYYYMMDD.md
+│   └── ...
+└── ...
+```
+
+Two files, and they hold different kinds of record. `restore-home-YYYYMMDD.md` is this pass's worksheet: the shortlist you drew in Step 2, and what you actually restored against it. `decisions.md` is one append-only file for the whole reimage event, carrying each deliberate "not restored" — a decision is not superseded by a later decision the way a capture is superseded by a later capture, so there is nothing to date and nothing to point an `official/` pointer at.
+
+Neither is run-indexed, so this phase writes no `MANIFEST.md`, no `official/` pointer and no `runs/` directory. Phase 15 has no automated evidence: the notes are the artifact.
 
 ### Environment Variables
 

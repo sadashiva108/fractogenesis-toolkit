@@ -2,7 +2,7 @@
 
 # Create Secrets DMG
 
-**Last updated:** 2026-08-17
+**Last updated:** 2026-09-02
 
 Package every credential-bearing file that must survive the reimage into one AES-256 encrypted DMG, prove the restore copy is inside the mounted image, and only then remove the loose plaintext staging. Build once, at the end of manual secret collection.
 
@@ -14,6 +14,7 @@ Package every credential-bearing file that must survive the reimage into one AES
 - [[#How the Workflow Works|How the Workflow Works]]
     - [[#Terminology|Terminology]]
 - [[#Artifact and Script Locations|Artifact and Script Locations]]
+    - [[#Bundle Layout|Bundle Layout]]
     - [[#Environment Variables|Environment Variables]]
 - [[#Before You Run Anything|Before You Run Anything]]
     - [[#Prerequisites|Prerequisites]]
@@ -119,47 +120,71 @@ The phase runs as four subcommands of the same entrypoint. Each check reads what
 
 Every path and directory tree this runbook uses is defined here, once. Later sections refer back to these names instead of redrawing them.
 
-Primary script (entrypoint):
+Primary script:
 
 ```text
-$FRACTOGENESIS_HOME/bin/create-secrets-dmg.sh
+$FRACTOGENESIS_HOME/bin/create-secrets-dmg.sh                  # entrypoint
 ```
 
-Related script (entrypoint; rerun by the build for the Phase 3A review refresh unless `--skip-cert-review`):
+Related scripts, alphabetical:
 
 ```text
-$FRACTOGENESIS_HOME/bin/stage-certs-keychain.sh
+$FRACTOGENESIS_HOME/bin/stage-certs-keychain.sh                # entrypoint — the build reruns its review refresh unless --skip-cert-review
 ```
 
-Artifact locations — everything this phase reads and writes lives under one tree:
+Artifact root:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/
+$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/                      # the encrypted DMG, its manifest and category sidecar, and the generated restore notes
 ```
 
-The build writes these outputs there (timestamped unless noted):
+Input evidence built by earlier phases:
 
 ```text
-all-secrets-YYYYMMDD-HHMMSS.dmg              # the encrypted restore artifact — keep
-all-secrets-YYYYMMDD-HHMMSS-manifest.txt     # source paths included — keep
-RESTORE-README.md                            # generated restore notes — keep
-java-jssecacerts-inventory-YYYYMMDD-HHMMSS.md  # discovered jssecacerts sources — keep
+$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/certs/                # cert and Keychain material staged by stage-certs-keychain.md
+$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/intellij/             # IDE secrets staged by backup-intellij.md
+$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/repos-gitignored/     # routed ignored secrets staged by backup-repos.md
+$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/staged-loose/         # loose plaintext staged by stage-loose-secrets.md
 ```
 
-The `verify-staging`, `validate`, and `cleanup` subcommands write timestamped reports (never overwritten) to:
+The remaining category folders under `secrets-encrypted/` — `chrome/`, `cli-credentials/`, `cloud/`, `docker/`, `gnupg/`, `kube/`, `postman/`, `raycast/`, `ssh/` and the rest — arrive either from `backup-home.md` or from manual staging during Phase 3. The build sweeps every category it finds, and picks up the common credential files (`~/.git-credentials`, `~/.npmrc`, `~/.pypirc`, `~/.m2/settings.xml` and their siblings) from your home directory directly, so those need no staging folder of their own.
+
+Active scripts stay in Git under `$FRACTOGENESIS_HOME/bin/`. Never copy script source to `$REIMAGE_ARTIFACT_ROOT`, and never store the DMG password in the repo, a note, a filename, a script, or the artifact root — only in an approved password manager.
+
+### Bundle Layout
+
+The build writes its outputs beside the staging categories it consumes. The `verify-staging`, `validate`, and `cleanup` subcommands write timestamped reports under `reimage-prep-checks/secrets-dmg/`, which are never overwritten, so every attempt stays on the record:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/secrets-dmg/
+$REIMAGE_ARTIFACT_ROOT/
+├── ...
+├── reimage-prep-checks/
+│   ├── ...
+│   ├── secrets-dmg/
+│   │   ├── cleanup-YYYYMMDD-HHMMSS.md
+│   │   ├── dmg-validation-YYYYMMDD-HHMMSS.md
+│   │   └── staging-verification-YYYYMMDD-HHMMSS.md
+│   └── ...
+├── ...
+├── secrets-encrypted/
+│   ├── all-secrets-YYYYMMDD-HHMMSS-categories.txt      # one line per category that made it into the image
+│   ├── all-secrets-YYYYMMDD-HHMMSS-manifest.txt        # source paths included
+│   ├── all-secrets-YYYYMMDD-HHMMSS.dmg                 # the encrypted restore artifact
+│   ├── ...
+│   ├── java-jssecacerts-inventory-YYYYMMDD-HHMMSS.md   # discovered jssecacerts sources
+│   ├── ...
+│   ├── RESTORE-README.md                               # generated restore notes
+│   └── ...
+└── ...
 ```
 
-The full `secrets-encrypted/` layout — the loose staging subfolders this phase consumes and cleans up (`certs/`, `chrome/`, `postman/`, `raycast/`, `extra-secrets-certs-review/`, and the rest) — is defined once in the Master Directory Reference, not redrawn here:
+The build assembles the image from a temporary `staging-YYYYMMDD-HHMMSS/` directory beside these files and removes it once the DMG is written, so nothing between runs is left half-staged.
+
+The full `secrets-encrypted/` layout — the loose staging subfolders this phase consumes and cleans up (`certs/`, `chrome/`, `postman/`, `raycast/`, `extra-secrets-certs-review/`, and the rest) — is defined once in the Master Directory Reference:
 
 [[master-directory-reference|Master Directory Reference]]
 
 For how a category comes to exist — the `SECRETS_TARGETS` row that puts a file into one, why the first path segment *is* the DMG category that `validate` and `cleanup` operate on, and how manual staging categories such as `postman/` and `raycast/` work — see [[artifact-config-reference|Artifact Config Reference]].
-
-> [!note]
-> Active scripts stay in Git under `$FRACTOGENESIS_HOME/bin/`. Never copy script source to `$REIMAGE_ARTIFACT_ROOT`, and never store the DMG password in the repo, a note, a filename, a script, or the artifact root — only in an approved password manager.
 
 ### Environment Variables
 

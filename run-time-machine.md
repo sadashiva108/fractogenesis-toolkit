@@ -39,6 +39,7 @@ Run and validate a Time Machine backup before a Mac reimage — the broad, whole
     - [[#Full vs Incremental|Full vs Incremental]]
     - [[#Terminology|Terminology]]
 - [[#Artifact and Script Locations|Artifact and Script Locations]]
+    - [[#Bundle Layout|Bundle Layout]]
     - [[#Environment Variables|Environment Variables]]
 - [[#Before You Run Anything|Before You Run Anything]]
     - [[#Prerequisites|Prerequisites]]
@@ -157,54 +158,88 @@ There is no `tmutil startbackup --full` flag; do not force a full backup just be
 
 Every path and directory tree this runbook uses is defined here, once. Later sections refer back to these names instead of redrawing them.
 
-Primary and related scripts (alphabetical; each classified):
+Primary script:
+
+```text
+$FRACTOGENESIS_HOME/bin/run-time-machine.sh                # entrypoint — Time Machine runtime driver
+```
+
+Related scripts, alphabetical:
 
 ```text
 $FRACTOGENESIS_HOME/bin/record-time-machine-evidence.sh    # entrypoint — read-only evidence capture
 $FRACTOGENESIS_HOME/bin/report-size-audit.sh               # entrypoint — capacity check for the Time Machine destination
-$FRACTOGENESIS_HOME/bin/run-time-machine.sh                # entrypoint — Time Machine runtime driver
 ```
 
-Evidence is written under the artifact root; this is the layout this runbook owns:
+Artifact root:
+
+```text
+$REIMAGE_ARTIFACT_ROOT/time-machine/                       # every Time Machine lineage, pre-image and post-image alike
+```
+
+### Bundle Layout
+
+`time-machine/` holds one lineage per subcommand, not one directory per run of the phase, so each kind of evidence supersedes only its own kind. Every lineage is latest-wins: rerunning `status` replaces the current status run and leaves the completion check alone. Both halves of the workflow share the category — Phase 5 writes `pre-image-*` and Phase 16 writes `post-image-*` — which is why the context carries the phase and the directory does not:
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/
 ├── ...
 ├── time-machine/
-│   ├── compare-YYYYMMDD-HHMMSS.txt
-│   ├── completion-check-YYYYMMDD-HHMMSS.md
-│   ├── diagnose-YYYYMMDD-HHMMSS.txt
-│   ├── diskutil-verifyvolume-applebackups-YYYYMMDD-HHMMSS.txt
-│   ├── final-time-machine-checklist-YYYYMMDD-HHMMSS.md
-│   ├── sign-offs/
-│   │   ├── run-time-machine-YYYYMMDD-HHMMSS.md
-│   │   └── latest-run-time-machine.txt
-│   ├── logs-YYYYMMDD-HHMMSS.txt
-│   ├── pre-image-time-machine-status-YYYYMMDD-HHMMSS/
-│   │   ├── README.md
-│   │   ├── raw/
-│   │   │   ├── backup-root-spot-check.txt
-│   │   │   ├── cloud-sync-process-hints.txt
-│   │   │   ├── diskutil-applebackups-snapshots.txt
-│   │   │   ├── diskutil-applebackups.txt
-│   │   │   ├── diskutil-data.txt
-│   │   │   ├── diskutil-verifyvolume-applebackups.txt
-│   │   │   ├── tmutil-currentphase.txt
-│   │   │   ├── tmutil-destinationinfo.txt
-│   │   │   ├── tmutil-isexcluded-applebackups.txt
-│   │   │   ├── tmutil-isexcluded-data.txt
-│   │   │   ├── tmutil-latestbackup-targeted-applebackups.txt
-│   │   │   ├── tmutil-latestbackup.txt
-│   │   │   ├── tmutil-listbackups-targeted-applebackups.txt
-│   │   │   ├── tmutil-listbackups.txt
-│   │   │   ├── tmutil-status.txt
-│   │   │   └── volumes.txt
-│   │   ├── time-machine-pre-run.md
-│   │   └── time-machine-status.md
-│   ├── status-YYYYMMDD-HHMMSS.txt
-│   └── verifychecksums-YYYYMMDD-HHMMSS.txt
+│   ├── MANIFEST.md
+│   ├── official/
+│   │   ├── <phase>-compare.txt
+│   │   ├── <phase>-completion-check.txt
+│   │   ├── <phase>-diagnose.txt
+│   │   ├── <phase>-diskutil-verify.txt
+│   │   ├── <phase>-evidence-summary.txt
+│   │   ├── <phase>-logs.txt
+│   │   ├── <phase>-status-bundle.txt
+│   │   ├── <phase>-status.txt
+│   │   └── <phase>-verifychecksums.txt
+│   ├── runs/
+│   │   ├── <phase>-compare-YYYYMMDD-HHMMSS/
+│   │   │   └── compare.txt
+│   │   ├── <phase>-completion-check-YYYYMMDD-HHMMSS/
+│   │   │   └── completion-check.md
+│   │   ├── <phase>-diagnose-YYYYMMDD-HHMMSS/
+│   │   │   └── diagnose.txt
+│   │   ├── <phase>-diskutil-verify-YYYYMMDD-HHMMSS/
+│   │   │   └── diskutil-verify.txt
+│   │   ├── <phase>-evidence-summary-YYYYMMDD-HHMMSS/
+│   │   │   └── evidence-summary.md
+│   │   ├── <phase>-logs-YYYYMMDD-HHMMSS/
+│   │   │   └── logs.txt
+│   │   ├── <phase>-status-YYYYMMDD-HHMMSS/
+│   │   │   └── status.txt
+│   │   ├── <phase>-status-bundle-YYYYMMDD-HHMMSS/
+│   │   │   ├── README.md
+│   │   │   ├── raw/
+│   │   │   │   ├── backup-root-spot-check.txt
+│   │   │   │   ├── cloud-sync-process-hints.txt
+│   │   │   │   ├── diskutil-applebackups-snapshots.txt
+│   │   │   │   ├── diskutil-applebackups.txt
+│   │   │   │   ├── diskutil-data.txt
+│   │   │   │   ├── diskutil-verifyvolume-applebackups.txt
+│   │   │   │   ├── tmutil-currentphase.txt
+│   │   │   │   ├── tmutil-destinationinfo.txt
+│   │   │   │   ├── tmutil-isexcluded-applebackups.txt
+│   │   │   │   ├── tmutil-isexcluded-data.txt
+│   │   │   │   ├── tmutil-latestbackup-targeted-applebackups.txt
+│   │   │   │   ├── tmutil-latestbackup.txt
+│   │   │   │   ├── tmutil-listbackups-targeted-applebackups.txt
+│   │   │   │   ├── tmutil-listbackups.txt
+│   │   │   │   ├── tmutil-status.txt
+│   │   │   │   └── volumes.txt
+│   │   │   ├── time-machine-pre-run.md
+│   │   │   └── time-machine-status.md
+│   │   └── <phase>-verifychecksums-YYYYMMDD-HHMMSS/
+│   │       └── verifychecksums.txt
+│   └── sign-offs/
+│       └── <phase>-evidence-summary-YYYYMMDD-HHMMSS.md
 └── ...
 ```
+
+`<phase>` is `pre-image` at Phase 5 and `post-image` at Phase 16. The rows only a person can answer live in `sign-offs/`, outside the runs, so rerunning the evidence summary cannot reset them.
 
 The complete `$REIMAGE_ARTIFACT_ROOT` layout is defined once in the Master Directory Reference:
 
@@ -220,8 +255,7 @@ The `reimage.env` values this runbook depends on. Values are resolved and writte
 | `EXTERNAL_DATA_VOLUME` | The mounted external volume holding the artifact root (e.g. `/Volumes/Data`). Excluded from Time Machine. |
 | `EXTERNAL_APPLE_BACKUPS_VOLUME` | The dedicated Time Machine destination volume (e.g. `/Volumes/AppleBackups`). |
 
-> [!note]
-> The external data volume and the Time Machine destination may be separate APFS volumes on one physical drive, or on two drives. Ejecting either volume unmounts the whole physical drive when they share one.
+The external data volume and the Time Machine destination may be separate APFS volumes on one physical drive, or on two drives. Ejecting either volume unmounts the whole physical drive when they share one.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -405,7 +439,7 @@ System Settings → General → Time Machine → Browse Backups
 
 Record the verified end state and confirm what changed since the previous backup. Run this only after the backup is complete and Time Machine is stopped.
 
-Capture APFS volume verification, then the final read-only checklist bundle:
+Capture APFS volume verification, then the read-only evidence summary that closes the phase:
 
 ```bash
 ./bin/record-time-machine-evidence.sh verify-volume --open
@@ -418,7 +452,7 @@ Compare the latest backup to the previous one:
 ./bin/run-time-machine.sh compare --open
 ```
 
-The compare helper mounts previous and latest APFS snapshots read-only as needed, picks a useful compare target, writes output under `time-machine/`, and unmounts anything it mounted. Interpret the prefixes: `+` added, `-` removed, `!` changed since the previous backup.
+The compare helper mounts previous and latest APFS snapshots read-only as needed, picks a useful compare target, writes `compare.txt` into its own run under `time-machine/runs/`, and unmounts anything it mounted. Interpret the prefixes: `+` added, `-` removed, `!` changed since the previous backup.
 
 > [!bug] Troubleshooting
 > If compare reports `Must specify at least one item inside a backup`, that is a usage error rather than corruption — see [[#`tmutil compare` reports "Must specify at least one item inside a backup"|`tmutil compare` reports "Must specify at least one item inside a backup"]].
@@ -502,7 +536,7 @@ Treat the backup as acceptable for pre-image safety when the destination is corr
 
 ### `verifychecksums` reports `error 257`, `?` entries, or `POSIXError Code=22`
 
-These come from restricted or unreadable system paths while walking the snapshot; they are not mismatches. The helper appends a verification summary to `verifychecksums-YYYYMMDD-HHMMSS.txt`. If it shows zero `MISMATCH`/`FAILED` lines, corroborate with the completion evidence, targeted `latestbackup`/`listbackups`, the APFS snapshot list, `diskutil verifyVolume`, the completion-window logs, and a Time Machine UI spot check. Only `MISMATCH`/`FAILED` are real corruption indicators.
+These come from restricted or unreadable system paths while walking the snapshot; they are not mismatches. The helper appends a verification summary to the run's `verifychecksums.txt`. If it shows zero `MISMATCH`/`FAILED` lines, corroborate with the completion evidence, targeted `latestbackup`/`listbackups`, the APFS snapshot list, `diskutil verifyVolume`, the completion-window logs, and a Time Machine UI spot check. Only `MISMATCH`/`FAILED` are real corruption indicators.
 
 [[#Step 5 — Capture Post-Run Evidence and Compare|⮕ Continue to Step 5 — Capture Post-Run Evidence and Compare]]
 
@@ -718,7 +752,7 @@ Longer material most runs will not need, kept out of the main flow.
 |---|---|
 | Capture lightweight pre-run evidence | `./bin/record-time-machine-evidence.sh pre-run --open` |
 | Capture focused APFS destination verification | `./bin/record-time-machine-evidence.sh verify-volume --open` |
-| Capture the final read-only checklist bundle | `./bin/record-time-machine-evidence.sh final --open` |
+| Capture the read-only evidence summary | `./bin/record-time-machine-evidence.sh final --open` |
 
 ### Raw Command Equivalents
 

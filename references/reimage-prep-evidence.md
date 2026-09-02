@@ -54,7 +54,7 @@ Examples:
 Do not manually retype system inventory if capture-system-inventory.sh generated a complete folder.
 Do not manually recreate managed-app/profile evidence if capture-managed-inventory.sh generated the bundle.
 Do not manually recreate performance summaries if capture-performance-audit.sh generated the scenario bundle.
-Do not manually recreate Office watcher/baseline evidence if capture-office-stability-baseline.sh and office-stability-checklist.sh --phase pre-reimage generated the reports.
+Do not manually recreate Office watcher/baseline evidence if capture-office-stability.sh and assess-office-stability.sh --phase pre-reimage generated the reports.
 Do not manually recreate the Phase 6 checklist when reimage-checklist.sh already generated the final report.
 ```
 
@@ -66,10 +66,10 @@ Do not manually recreate the Phase 6 checklist when reimage-checklist.sh already
 
 | Phase | Capture | Primary destination | Purpose |
 |---|---|---|---|
-| Phase 4A | Toolkit snapshot | `$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/pre-image-toolkit-snapshot-*`, `$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/latest-docs/` | Current reimage workflow docs and lightweight toolkit snapshot context that should travel with the capture set. |
+| Phase 4A | Toolkit snapshot | `$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/runs/pre-image-toolkit-snapshot-*`, `$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot/official/pre-image-toolkit-snapshot.txt` | Current reimage workflow docs and lightweight toolkit snapshot context that should travel with the capture set. |
 | Phase 4B | System inventory | `$REIMAGE_ARTIFACT_ROOT/system-inventory/runs/pre-image-*` | Broad workstation rebuild context: hardware, macOS, apps, toolchains, shell, Git, network, cloud, and certificates. |
 | Phase 2C | Company-managed inventory | `$REIMAGE_ARTIFACT_ROOT/managed-inventory/runs/pre-image-*` | Managed apps, profiles, background services, system extensions, package receipts, and managed preferences. |
-| Phase 4C | Performance audit | `$REIMAGE_ARTIFACT_ROOT/performance-audit/pre-image-*` | Scenario-based performance baselines and optional historical trend summaries/charts. |
+| Phase 4C | Performance audit | `$REIMAGE_ARTIFACT_ROOT/performance-audit/runs/pre-image-performance-audit-<scenario>-*` | Scenario-based performance baselines and optional historical trend summaries/charts. |
 | Phase 4D | Office stability | `$REIMAGE_ARTIFACT_ROOT/office-stability/` | Office-specific baseline bundles, watcher-derived evidence, incident captures, and Office checklist output. |
 | Phase 6 | Reimage preparation checks | `$REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/` | Final go / no-go validation, readable checklist output, and remaining manual sign-off rows before erase. |
 
@@ -102,8 +102,8 @@ $REIMAGE_ARTIFACT_ROOT/
 │   ├── pre-reimage-office-baseline-YYYYMMDD-HHMMSS/
 │   ├── post-reimage-office-baseline-YYYYMMDD-HHMMSS/
 │   └── checklists/
-│       ├── pre-image-office-stability-checklist-YYYYMMDD-HHMMSS/
-│       └── post-image-office-stability-checklist-YYYYMMDD-HHMMSS/
+│       ├── pre-image-office-stability-assessment-YYYYMMDD-HHMMSS/
+│       └── post-image-office-stability-assessment-YYYYMMDD-HHMMSS/
 ├── time-machine/
 │   ├── completion-check-YYYYMMDD-HHMMSS.md
 │   ├── final-time-machine-checklist-YYYYMMDD-HHMMSS.md
@@ -117,11 +117,19 @@ $REIMAGE_ARTIFACT_ROOT/
 │       ├── time-machine-status.md
 │       └── raw/
 ├── reimage-prep-checks/
-│   ├── reimage-checklist-YYYYMMDD-HHMMSS.md
-│   └── latest-reimage-checklist.txt
+│   ├── MANIFEST.md
+│   ├── official/
+│   │   └── pre-image.txt
+│   ├── runs/
+│   │   └── pre-image-YYYYMMDD-HHMMSS/
+│   │       └── reimage-checklist.md
+│   └── sign-offs/
+│       └── reimage-prep-checks-YYYYMMDD-HHMMSS.md
 ├── toolkit-snapshot/
-│   ├── pre-image-toolkit-snapshot-YYYYMMDD-HHMMSS/
-│   └── latest-docs/
+│   ├── official/
+│   │   └── pre-image-toolkit-snapshot.txt
+│   └── runs/
+│       └── pre-image-toolkit-snapshot-YYYYMMDD-HHMMSS/
 ├── system-inventory/
 │   ├── MANIFEST.md
 │   ├── official/
@@ -158,8 +166,8 @@ chmod +x scripts/capture-toolkit-snapshot.sh
 Destinations:
 
 ```text
-$BACKUP_ROOT/toolkit-snapshot/pre-image-toolkit-snapshot-YYYYMMDD-HHMMSS/
-$BACKUP_ROOT/toolkit-snapshot/latest-docs/
+$BACKUP_ROOT/toolkit-snapshot/runs/pre-image-toolkit-snapshot-YYYYMMDD-HHMMSS/
+$BACKUP_ROOT/toolkit-snapshot/official/pre-image-toolkit-snapshot.txt
 ```
 
 Typical contents:
@@ -357,11 +365,11 @@ Script-generated evidence:
 ```bash
 cd "$REIMAGE_ROOT"
 source ./reimage.env
-chmod +x scripts/capture-office-stability-baseline.sh scripts/office-stability-checklist.sh
+chmod +x scripts/capture-office-stability.sh scripts/assess-office-stability.sh
 
-./bin/capture-office-stability-baseline.sh   --phase pre-reimage   --artifact-root "$BACKUP_ROOT"
+./bin/capture-office-stability.sh   --phase pre-reimage   --artifact-root "$BACKUP_ROOT"
 
-./bin/office-stability-checklist.sh   --phase pre-reimage   --artifact-root "$BACKUP_ROOT"   --open
+./bin/assess-office-stability.sh   --phase pre-reimage   --artifact-root "$BACKUP_ROOT"   --open
 ```
 
 Destination root:
@@ -376,7 +384,7 @@ Primary evidence types:
 |---|---|
 | Pre-image Office baseline bundle | `pre-reimage-office-baseline-YYYYMMDD-HHMMSS/` |
 | Zipped copy of the same baseline | `pre-reimage-office-baseline-YYYYMMDD-HHMMSS.zip` |
-| Office checklist report | `checklists/pre-image-office-stability-checklist-YYYYMMDD-HHMMSS/` |
+| Office stability assessment | `runs/pre-image-office-stability-assessment-YYYYMMDD-HHMMSS/office-stability-assessment.md` |
 | Incident workload snapshot | `workload-snapshot-YYYYMMDD-HHMMSS.txt` |
 | Focused log extracts | `unified-log-office-*.txt`, `install-log-office-*.txt`, `latest-watcher-after-close-*.txt` |
 | Consolidated watcher evidence ZIP | `ms-office-stability-watch-evidence-YYYYMMDD-HHMMSS.zip` |
@@ -401,8 +409,8 @@ Local live watcher files stay on the Mac under `$OFFICE_WATCH/`; the external ba
 Manual / fallback notes:
 
 - Manual rows are needed only for conclusions the scripts cannot prove, such as whether the evidence is ready for IT, whether Outlook/OneNote should be reopened, and the final Office stability conclusion.
-- Prefer the generated `pre-image-office-stability-checklist.md` for actual sign-off; use the checklist template from the runbook only when a compact human summary is still useful.
-- If Outlook or OneNote closes unexpectedly, capture the workload snapshot, save the latest watcher tail, and then rerun `capture-office-stability-baseline.sh` before reopening the apps.
+- Prefer the generated `pre-image-office-stability-assessment.md` for actual sign-off; use the checklist template from the runbook only when a compact human summary is still useful.
+- If Outlook or OneNote closes unexpectedly, capture the workload snapshot, save the latest watcher tail, and then rerun `capture-office-stability.sh` before reopening the apps.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -430,7 +438,7 @@ Generated output:
 
 ```text
 $BACKUP_ROOT/reimage-prep-checks/reimage-checklist-YYYYMMDD-HHMMSS.md
-$BACKUP_ROOT/reimage-prep-checks/latest-reimage-checklist.txt
+$BACKUP_ROOT/reimage-prep-checks/official/pre-image.txt
 ```
 
 Use the generated report as the actual Phase 6 evidence. This reference exists for the manual sign-off rows and fallback interpretation that remain after reviewing that report.
@@ -503,10 +511,10 @@ Optional evidence and integrity spot checks:
 
 Notes:
 
-- `record-time-machine-evidence.sh pre-run --open` creates the pre-backup evidence bundle under `$REIMAGE_ARTIFACT_ROOT/time-machine/pre-image-time-machine-status-YYYYMMDD-HHMMSS/`.
+- `record-time-machine-evidence.sh pre-run --open` creates the pre-backup evidence bundle under `$REIMAGE_ARTIFACT_ROOT/time-machine/runs/pre-image-status-bundle-YYYYMMDD-HHMMSS/`.
 - `time-machine-pre-run.md` intentionally keeps the older minimal layout: Destination, Latest Backup, Backup List, and Exclusions.
 - The pre-run bundle does not include a manual sign-off template.
-- `record-time-machine-evidence.sh final --open` writes `$REIMAGE_ARTIFACT_ROOT/time-machine/final-time-machine-checklist-YYYYMMDD-HHMMSS.md`, auto-filling Time Machine checks that the script can prove.
+- `record-time-machine-evidence.sh final --open` writes `$REIMAGE_ARTIFACT_ROOT/time-machine/runs/pre-image-evidence-summary-YYYYMMDD-HHMMSS/evidence-summary.md`, auto-filling the Time Machine checks the script can prove and putting the rest in `time-machine/sign-offs/`.
 - `record-time-machine-evidence.sh verify-volume --open` creates a standalone focused APFS destination-volume verification file.
 - `run-time-machine.sh complete` records the latest backup timestamp and recommends a separate log command instead of embedding noisy logs.
 - `run-time-machine.sh compare --compare-path /Users/...` resolves APFS Time Machine `Data/Users/...` paths and treats explicit compare paths strictly.

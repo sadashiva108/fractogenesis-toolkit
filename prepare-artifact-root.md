@@ -2,7 +2,7 @@
 
 # Prepare Artifact Root
 
-**Last updated:** 2026-08-13
+**Last updated:** 2026-09-02
 
 Run-book for preparing the external backup/capture location before running pre-image backups, evidence captures, validation scripts, restore steps, and post-image comparison captures.
 
@@ -14,6 +14,8 @@ Recommended path: create the local `reimage.env` file first, then source it in e
 
 - [[#Purpose|Purpose]]
 - [[#Artifact and Script Locations|Artifact and Script Locations]]
+    - [[#Bundle Layout|Bundle Layout]]
+    - [[#Environment Variables|Environment Variables]]
 - [[#Before You Run Anything|Before You Run Anything]]
     - [[#Preparation Sequence|Preparation Sequence]]
     - [[#Repo, Workspace, and External Drive Boundary|Repo, Workspace, and External Drive Boundary]]
@@ -83,11 +85,42 @@ The root houses everything later phases generate: the reimage plan copy, app bac
 
 ## Artifact and Script Locations
 
-These are the standard top-level folders this phase creates — the ones
-needed on every reimage run, regardless of symptoms or which situational
-phases apply. Folders tied to a situational capture, such as a performance
-or Office-stability symptom, are created later by that phase's own script
-when it actually runs, not here. 
+Every path and directory tree this runbook uses is defined here, once. Later sections refer back to these names instead of redrawing them.
+
+Primary script:
+
+```text
+$FRACTOGENESIS_HOME/bin/prepare-artifact-root.py      # entrypoint — invoked via subcommands, e.g. `python3 bin/prepare-artifact-root.py init-reimage-env`, never bare
+```
+
+Related scripts, alphabetical:
+
+```text
+$FRACTOGENESIS_HOME/.internal/artifact-config.sh      # helper — sourced by the backup scripts, never run directly
+$FRACTOGENESIS_HOME/.internal/load-reimage-config.sh  # helper — sourced loader every entrypoint runs first, never run directly
+$FRACTOGENESIS_HOME/bin/check-reimage-env.sh          # entrypoint — reports whether reimage.env already exists, never writes
+$FRACTOGENESIS_HOME/bin/setup-reimage-env.sh          # entrypoint — creates reimage.env, fully resolved, in one pass
+```
+
+Artifact root:
+
+```text
+$REIMAGE_ARTIFACT_ROOT/                               # created here; every later phase writes beneath it
+```
+
+Input evidence built by earlier phases:
+
+```text
+$REIMAGE_WORKSPACE_ROOT/reimage-confirmation/it-reimage-confirmation-YYYYMMDD.md   # filled during Phase 0; copied into the artifact root by Step 11
+```
+
+`$FRACTOGENESIS_HOME` above is reference notation showing where these files live, not a literal path you can use from a fresh terminal — direnv only populates it once you have already `cd`ed into the repo. Per the guide's [[reimaging-guide#Core Assumptions|Core Assumptions]], you `cd` into the repository root once at the start of a session, which is what populates it.
+
+The scripts self-locate relative to their own position in the repo, so nothing needs to be told where the repo is and there is no `REIMAGE_ROOT`-equivalent variable to keep in sync. For what that does and does not mean in practice, and how `FRACTOGENESIS_PARENT`, `FRACTOGENESIS_HOME` and `$HOME` relate to each other, see [[#Repo Path Variables and Self-Locating Scripts|Repo Path Variables and Self-Locating Scripts]] — detail, not required reading.
+
+### Bundle Layout
+
+These are the standard top-level folders this phase creates: the ones needed on every reimage run, regardless of symptoms or which situational phases apply. Two entries are listed for completeness but are not created here — a situational capture root is created by its own phase's script when that capture actually runs. Child directories belong to the runbook or script that fills them, and each is drawn in that runbook's own Bundle Layout:
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/
@@ -96,8 +129,11 @@ $REIMAGE_ARTIFACT_ROOT/
 ├── home-files-backup/
 ├── loose-secrets-reports/
 ├── managed-inventory/
+├── office-stability/           # not created here — capture-office-stability.md creates it on demand
+├── performance-audit/          # not created here — capture-performance-audit.md creates it on demand
 ├── public-certs/
 ├── reimage-confirmation/
+│   └── it-reimage-confirmation-YYYYMMDD.md
 ├── reimage-prep-checks/
 ├── reimaged-system/
 ├── repo-audit-reports/
@@ -108,30 +144,44 @@ $REIMAGE_ARTIFACT_ROOT/
 ├── time-machine/
 └── toolkit-snapshot/
 ```
-See [Master Directory Reference](./references/master-directory-reference.md) for the full tree with per-folder descriptions.
 
-Script locations:
+`reimage-confirmation/` is the one folder this phase puts a file into rather than only creating: Step 11 copies the filled Phase 0 IT confirmation in from the workspace. Every other folder is created empty here.
 
-```text
-$FRACTOGENESIS_HOME/bin/                          # entrypoints -- run directly
-$FRACTOGENESIS_HOME/bin/check-reimage-env.sh      # diagnostic -- reports whether reimage.env already exists, never writes
-$FRACTOGENESIS_HOME/bin/setup-reimage-env.sh      # creates reimage.env, fully resolved, in one pass
-$FRACTOGENESIS_HOME/bin/prepare-artifact-root.py  # invoked via subcommands, e.g. `python3 bin/prepare-artifact-root.py init-reimage-env` -- not run bare
-$FRACTOGENESIS_HOME/.internal/                    # sourced-only helpers, never run directly
-$FRACTOGENESIS_HOME/.internal/artifact-config.sh  # sourced by backup scripts, never run directly
-```
+The full tree with per-folder descriptions is defined once in the Master Directory Reference:
 
-`$FRACTOGENESIS_HOME` above is reference notation showing where these files live, not a literal path you can use from a fresh terminal -- direnv only populates it once you've already `cd`ed into the repo. Per the guide's [[reimaging-guide#Core Assumptions|Core Assumptions]], you `cd` into the repository root once at the start of a session, which is what populates `$FRACTOGENESIS_HOME`.
+[[master-directory-reference|Master Directory Reference]]
 
-Both self-locate relative to their own position in the repo — nothing needs to be told where the repo is; there's no `REIMAGE_ROOT`-equivalent variable to keep in sync. For what that does and doesn't mean in practice, and how `FRACTOGENESIS_PARENT`/`FRACTOGENESIS_HOME`/`$HOME` relate to each other, see [[#Repo Path Variables and Self-Locating Scripts|Repo Path Variables and Self-Locating Scripts]] in the supplemental reference at the end of this guide -- not required reading to continue, only if you want the detail.
+This runbook references three directory locations in total, but only two of them are storage roles in the sense of holding files this workflow *generates*. The third — this repo checkout, `FRACTOGENESIS_HOME` — holds tracked source instead (scripts, docs, config templates), and is listed so the boundary is explicit, not because anything is generated into it:
 
-This guide references three directory locations in total, but only two of them are "storage roles" in the sense of holding files this workflow *generates*. The third -- this repo checkout, i.e. `FRACTOGENESIS_HOME` -- holds tracked source instead (scripts, docs, config templates), and is listed below only so the boundary is explicit, not because anything gets generated into it:
+| Path name | Location | Role | What belongs there |
+| --- | --- | --- | --- |
+| `REIMAGE_WORKSPACE_ROOT` | Local workspace | Local-only staging and reusable config area outside this repo. | IT reimage confirmation working copy, reusable artifact-config workspace copies, staged chart/history artifacts, and other local files that may be reused across backup reruns before copying to the external drive. |
+| `REIMAGE_ARTIFACT_ROOT` | External artifact root | Generated artifacts, logs, inventories, encrypted bundles, manual notes, validation reports, and post-image evidence. | The active reimage artifact tree under the selected external data volume. |
+| *(no variable — self-locating)* | This repo checkout (`FRACTOGENESIS_HOME`) | Tracked source of truth: entrypoint scripts, sourced-only helpers, this guide, and config templates. Not a destination for generated artifacts. | `bin/`, `.internal/`, `reimage.env.example`, this guide's own `.md` files. `reimage.env` also lives here, but its *contents* are machine-local, not tracked. |
 
-| Path name                | Location                     | Role                                                                                                                  | What belongs there                                                                                                                                                                                                 |
-| ------------------------ | ---------------------------- | --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `REIMAGE_WORKSPACE_ROOT` | Local workspace              | Local-only staging and reusable config area outside this repo.                                                | IT reimage confirmation working copy, reusable artifact-config workspace copies, staged chart/history artifacts, and other local files that may be reused across backup reruns before copying to the external drive. |
-| `REIMAGE_ARTIFACT_ROOT`            | External artifact root | Generated artifacts, logs, inventories, encrypted bundles, manual notes, validation reports, and post-image evidence. | The active reimage artifact tree under the selected external data volume.                                                                                                                                    |
-| *(no variable -- self-locating)* | This repo checkout (`FRACTOGENESIS_HOME`) | Tracked source of truth: entrypoint scripts, sourced-only helpers, this guide, and config templates. Not a destination for generated artifacts. | `bin/`, `.internal/`, `reimage.env.example`, this guide's own `.md` files. `reimage.env` also lives here, but its *contents* are machine-local, not tracked. |
+### Environment Variables
+
+The `reimage.env` keys this runbook resolves and writes. Every later runbook reads them from here; a key another runbook owns is added to `reimage.env` by that runbook, not left blank in `reimage.env.example` for someone to fill in early.
+
+| Variable | Meaning |
+|---|---|
+| `EXTERNAL_DATA_VOLUME` | The mounted external volume the artifact root is created under. Chosen in Step 2, confirmed writable in Step 3. |
+| `EXTERNAL_APPLE_BACKUPS_VOLUME` | Optional. Dedicated Time Machine destination volume, when one is used instead of the data volume. |
+| `JUMP_DRIVE_VOLUME` | Mount path of the small dedicated jump drive used as the no-network bootstrap fallback. Recorded here for reference; not read by the preparation scripts. |
+| `TOOLKIT_GITHUB_ACCOUNT` | GitHub account the toolkit is cloned and bootstrapped from, so runbooks build clone and bootstrap URLs from it rather than hardcoding an account. |
+| `ASSET_OR_HOST` | Asset tag or hostname used in the artifact root name. |
+| `REIMAGE_START_DATE` | Date the reimage effort started, `YYYYMMDD`, used in the artifact root name. |
+| `REIMAGE_ARTIFACT_ROOT` | Absolute path to the artifact root for this reimage event. Resolved by `setup-reimage-env.sh` in Step 4 from the volume and naming-convention values above; created in Step 7. |
+| `REIMAGE_WORKSPACE_ROOT` | Optional local staging and reusable config area outside the repo and outside the external drive. |
+| `PERFORMANCE_HISTORY_SOURCE` | Optional. Long-lived `mac_memory_health.sh` output directory read by the performance rollup summary. |
+| `OFFICE_WATCH` | Optional. Watch directory used by the Office stability capture. |
+| `ONEDRIVE_FOLDER_NAME` | Optional. Name of the OneDrive sync folder. |
+| `ONEDRIVE_PARENT_DIR` | Optional. Directory the OneDrive sync folder lives under. Blank uses the macOS default, `$HOME/Library/CloudStorage`. |
+| `ONEDRIVE_ROOT` | Optional. Resolved absolute path to the OneDrive sync root. |
+| `ONEDRIVE_DEST_SUBDIR` | Optional. OneDrive subfolder the artifact copy is placed under; defaults to the artifact root's basename. |
+| `FRACTOGENESIS_HOME` | Absolute path to the toolkit repository root; entrypoints are run from here. Set by your shell startup / `.envrc`, not stored in `reimage.env`. |
+
+The secrets DMG password is deliberately absent from `reimage.env`. That file sits in plaintext on the artifact volume beside the DMG and on the jump drive, and is sourced into the environment of every script in the workflow, so storing the password there would defeat the encryption it protects. Keep it in your password manager and record only the entry name.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 

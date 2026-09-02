@@ -16,7 +16,6 @@ A read-only record of what a company-managed Mac has under management — MDM en
     - [[#Read-Only Guarantee|Read-Only Guarantee]]
     - [[#Terminology|Terminology]]
 - [[#Artifact and Script Locations|Artifact and Script Locations]]
-    - [[#Category Layout|Category Layout]]
     - [[#Bundle Layout|Bundle Layout]]
     - [[#Environment Variables|Environment Variables]]
 - [[#Before You Run Anything|Before You Run Anything]]
@@ -128,7 +127,7 @@ Primary script:
 $FRACTOGENESIS_HOME/bin/capture-managed-inventory.sh    # entrypoint — runs every section in one pass
 ```
 
-Related scripts:
+Related scripts, alphabetical:
 
 ```text
 $FRACTOGENESIS_HOME/bin/report-size-audit.sh           # entrypoint — capacity check for the artifact root
@@ -140,44 +139,38 @@ Artifact root:
 $REIMAGE_ARTIFACT_ROOT/managed-inventory/               # the run category; all bundles land under its runs/
 ```
 
-### Category Layout
+### Bundle Layout
 
-`managed-inventory/` is a run category. Bundles live under `runs/`, `MANIFEST.md` is the append-only index of completed runs, and each file under `official/` names the current run for one context:
+One lineage per context: `pre-image` from Phase 2C and `post-image` from Phase 13C. Both are latest-wins, so a rerun of either supersedes that context's current bundle and leaves the other alone. The `<context>` prefix comes from `--context` (default `pre-image`), and is also the run's lineage:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/managed-inventory/
-├── MANIFEST.md                         # append-only index; one row per completed run
-├── official/
-│   ├── pre-image.txt                   # → runs/pre-image-YYYYMMDD-HHMMSS
-│   └── post-image.txt                  # → runs/post-image-YYYYMMDD-HHMMSS (after Phase 13C)
-└── runs/
-    └── <context>-YYYYMMDD-HHMMSS/      # one bundle; see Bundle Layout
+$REIMAGE_ARTIFACT_ROOT/
+├── ...
+├── managed-inventory/
+│   ├── MANIFEST.md
+│   ├── official/
+│   │   ├── post-image.txt
+│   │   └── pre-image.txt
+│   └── runs/
+│       └── <context>-YYYYMMDD-HHMMSS/
+│           ├── 01-enrollment-status.txt
+│           ├── 02-profiles-configuration.txt
+│           ├── 03-installed-app-bundles.txt
+│           ├── 04-installed-package-receipts.txt
+│           ├── 05-background-managed-components.txt
+│           ├── 06-managed-preference-payloads.txt
+│           ├── 07-company-filter-pass.txt
+│           └── MANIFEST.txt
+└── ...
 ```
 
-`MANIFEST.md` is the source of truth and is never edited by hand; the pointers under `official/` are a derived cache. If one goes missing or names a run that is not on disk, regenerate them rather than writing one:
+Each file under `official/` holds one line naming the current run for that context, as `runs/<context>-YYYYMMDD-HHMMSS`. `MANIFEST.md` is the source of truth and is never edited by hand; the pointers are a derived cache, so if one goes missing or names a run that is not on disk, regenerate them rather than writing one:
 
 ```bash
 ./bin/reindex-artifact-runs.sh --category "$REIMAGE_ARTIFACT_ROOT/managed-inventory"
 ```
 
 A directory whose name still carries a `.incomplete` suffix is a capture that died part way through. It is deliberately not indexed and not official — delete it, or leave it; no reader will see it.
-
-### Bundle Layout
-
-Each run writes one timestamped bundle under `runs/`. The `<context>` prefix comes from `--context` (default `pre-image`), and is also the run's lineage:
-
-```text
-$REIMAGE_ARTIFACT_ROOT/managed-inventory/runs/
-└── <context>-YYYYMMDD-HHMMSS/
-    ├── 01-enrollment-status.txt
-    ├── 02-profiles-configuration.txt
-    ├── 03-installed-app-bundles.txt
-    ├── 04-installed-package-receipts.txt
-    ├── 05-background-managed-components.txt
-    ├── 06-managed-preference-payloads.txt
-    ├── 07-company-filter-pass.txt
-    └── MANIFEST.txt                    # this bundle's own file list, run id, and context
-```
 
 The bundle's `MANIFEST.txt` describes one capture; the category's `MANIFEST.md` indexes them all. They are different files answering different questions, and the bundle keeps its own so a directory copied off the drive still says what it is.
 

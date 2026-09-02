@@ -2,7 +2,7 @@
 
 # Verify Reimaged System
 
-**Last updated:** 2026-09-01
+**Last updated:** 2026-09-02
 
 Reconnect the external artifact drive, prove the freshly reimaged Mac is basically usable, and record the first-boot evidence twice around a stabilization restart before deeper restore work begins. This phase pairs the human-driven day-one checks — network, browser, terminal, displays, peripherals, audio — with `record-reimaged-system.sh`, which records the same 14 read-only signals into two comparable evidence bundles, and hands off to Phase 10 once the pair is clean. This phase installs nothing managed: the managed app set belongs to Phase 8, and arriving here with it incomplete invalidates the bundle comparison the phase is built around.
 
@@ -198,7 +198,7 @@ Primary script:
 $FRACTOGENESIS_HOME/bin/record-reimaged-system.sh    # entrypoint — records one first-boot evidence bundle per invocation
 ```
 
-Related script:
+Related scripts, alphabetical:
 
 ```text
 $FRACTOGENESIS_HOME/bin/record-enrollment.sh    # entrypoint — Phase 8 enrollment record; run before this phase
@@ -207,76 +207,94 @@ $FRACTOGENESIS_HOME/bin/record-enrollment.sh    # entrypoint — Phase 8 enrollm
 Artifact root:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/reimaged-system/restarts/      # Steps 2 and 5 — the first-boot bundles either side of the restart
 $REIMAGE_ARTIFACT_ROOT/reimaged-system/boundaries/    # Steps 0 and 7 — the entry and exit checklists
 $REIMAGE_ARTIFACT_ROOT/reimaged-system/comparisons/   # Step 6 — the diff across the pair
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/restarts/      # Steps 2 and 5 — the first-boot bundles either side of the restart
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/sign-offs/     # the rows only a person can answer, kept outside the runs
 ```
 
-All three are run categories with one shape: `runs/<context>-YYYYMMDD-HHMMSS/` holding a single run's files, `official/<context>.txt` naming the run that counts, and an append-only `MANIFEST.md` indexing every completed run.
+Input evidence built by earlier phases:
 
-`restarts/` is shared with Phase 8, which writes `enroll-and-stabilize-<point>` there. Both phases capture the machine either side of a stabilization restart, so they are one lineage keyed by point — which is what lets Step 0 ask after Phase 8's post-restart record without knowing where Phase 8 chose to put it.
+```text
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/restarts/official/enroll-and-stabilize-post-restart.txt   # written by enroll-and-stabilize.md; Step 0 gates on it
+```
 
 ### Bundle Layout
 
-Each run is named `verify-reimaged-system-<point>-YYYYMMDD-HHMMSS`: the runbook name leads, the point follows it, and the stamp trails. `bin/reimage-checklist.sh` extracts that trailing stamp to compare bundle age against the Time Machine backup, and resolves the bundle itself through `official/<context>.txt` rather than globbing for it.
+All four are run categories with one shape: `runs/<context>-YYYYMMDD-HHMMSS/` holding a single run's files, `official/<context>.txt` naming the run that counts, and an append-only `MANIFEST.md` indexing every completed run. `-pre-restart` is **first-wins** — the first recording of that point stays official, because a later one describes a machine the phase has already changed. Every other point is latest-wins.
 
-> [!warning] Pitfall
-> Because the label precedes the timestamp, bundle names no longer sort
-> chronologically once more than one label is in use: `post-restart` sorts
-> before `pre-restart` whatever their timestamps. Pick a latest bundle by
-> modification time (`ls -1dt`) or glob one label at a time; never lexically
-> sort the mixed set and take the last entry.
+`restarts/` is shared with Phase 8, which writes `enroll-and-stabilize-<point>` there. Both phases capture the machine either side of a stabilization restart, so they are one category keyed by point — which is what lets Step 0 ask after Phase 8's post-restart record without knowing where Phase 8 chose to put it.
+
+A run is named `verify-reimaged-system-<point>-YYYYMMDD-HHMMSS`: the runbook name leads, the point follows, and the stamp trails. Because the point precedes the stamp, run names do not sort chronologically once more than one point is in use — `post-restart` sorts before `pre-restart` whatever their timestamps. That is why every reader resolves a run through `official/<context>.txt`, which names one run per point and answers the question directly. `bin/reimage-checklist.sh` reads the pointer and then extracts the trailing stamp to compare bundle age against the Time Machine backup:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/reimaged-system/restarts/
-├── MANIFEST.md
-├── official/
-│   └── verify-reimaged-system-<point>.txt
-└── runs/
-    └── verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/
-│   ├── README.md
-│   ├── checklist.md
-│   ├── restart-checkpoints.md
-│   ├── time-machine-plan.md
-│   ├── manual-captures-required.md
-│   ├── raw/
-│   │   ├── applications-managed.txt
-│   │   ├── artifact-root-spotcheck.txt
-│   │   ├── brew-version.txt
-│   │   ├── computer-name.txt
-│   │   ├── date.txt
-│   │   ├── filevault.txt
-│   │   ├── git-version.txt
-│   │   ├── hardware.txt
-│   │   ├── host-name.txt
-│   │   ├── hostname.txt
-│   │   ├── local-host-name.txt
-│   │   ├── managed-processes.txt
-│   │   ├── network-github.txt
-│   │   ├── network-microsoft.txt
-│   │   ├── network-ping.txt
-│   │   ├── profiles-enrollment.txt
-│   │   ├── profiles-list.txt
-│   │   ├── softwareupdate-list.txt
-│   │   ├── sw_vers.txt
-│   │   ├── time-machine-destination.txt
-│   │   ├── time-machine-latest.txt
-│   │   ├── uname.txt
-│   │   ├── volumes.txt
-│   │   ├── whoami.txt
-│   │   └── xcode-select.txt
-│   ├── logs/
-│   │   ├── commands.log
-│   │   └── errors.log
-│   └── checks/
-├── boundaries/
-├── comparisons/
-├── state/
-├── restarts/
-├── sign-offs/
-├── restore-notes/
-└── time-machine/
+$REIMAGE_ARTIFACT_ROOT/
+├── ...
+├── reimaged-system/
+│   ├── boundaries/
+│   │   ├── MANIFEST.md
+│   │   ├── official/
+│   │   │   └── verify-reimaged-system-<point>.txt
+│   │   └── runs/
+│   │       └── verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/
+│   │           └── checklist.md
+│   ├── ...
+│   ├── comparisons/
+│   │   ├── MANIFEST.md
+│   │   ├── official/
+│   │   │   └── verify-reimaged-system-restart-diff.txt
+│   │   └── runs/
+│   │       └── verify-reimaged-system-restart-diff-YYYYMMDD-HHMMSS/
+│   │           └── comparison.md
+│   ├── ...
+│   ├── restarts/
+│   │   ├── MANIFEST.md
+│   │   ├── official/
+│   │   │   └── verify-reimaged-system-<point>.txt
+│   │   └── runs/
+│   │       └── verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/
+│   │           ├── README.md
+│   │           ├── checklist.md
+│   │           ├── checks/
+│   │           ├── logs/
+│   │           │   ├── commands.log
+│   │           │   └── errors.log
+│   │           ├── manual-captures-required.md
+│   │           ├── raw/
+│   │           │   ├── applications-managed.txt
+│   │           │   ├── artifact-root-spotcheck.txt
+│   │           │   ├── brew-version.txt
+│   │           │   ├── computer-name.txt
+│   │           │   ├── date.txt
+│   │           │   ├── filevault.txt
+│   │           │   ├── git-version.txt
+│   │           │   ├── hardware.txt
+│   │           │   ├── host-name.txt
+│   │           │   ├── hostname.txt
+│   │           │   ├── local-host-name.txt
+│   │           │   ├── managed-processes.txt
+│   │           │   ├── network-github.txt
+│   │           │   ├── network-microsoft.txt
+│   │           │   ├── network-ping.txt
+│   │           │   ├── profiles-enrollment.txt
+│   │           │   ├── profiles-list.txt
+│   │           │   ├── softwareupdate-list.txt
+│   │           │   ├── sw_vers.txt
+│   │           │   ├── time-machine-destination.txt
+│   │           │   ├── time-machine-latest.txt
+│   │           │   ├── uname.txt
+│   │           │   ├── volumes.txt
+│   │           │   ├── whoami.txt
+│   │           │   └── xcode-select.txt
+│   │           ├── restart-checkpoints.md
+│   │           └── time-machine-plan.md
+│   └── sign-offs/
+│       ├── verify-reimaged-system-<point>-YYYYMMDD-HHMMSS.md
+│       └── verify-reimaged-system-restart-checkpoints-YYYYMMDD-HHMMSS.md
+└── ...
 ```
+
+`manual-captures-required.md`, `restart-checkpoints.md` and `time-machine-plan.md` are regenerated on every run, so a rerun resets anything written into them. The answerable copy of the restart checkpoints therefore lives in `sign-offs/`, outside the runs, and that is the copy to fill in.
 
 The complete `$REIMAGE_ARTIFACT_ROOT/reimaged-system/` layout is defined once in the Master Directory Reference:
 

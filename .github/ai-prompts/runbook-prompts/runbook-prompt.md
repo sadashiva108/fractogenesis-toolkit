@@ -44,7 +44,7 @@ Contents entry when it does not.
 5. `## Table of Contents`
 6. `## Purpose` — lead sentences + two labelled lists + an ownership table (see below).
 7. `## How the Workflow Works` (optional) — the concepts and the *why*: what the flow achieves and why each part exists, plus `### Terminology` (optional) and any run-mode table. Kept shallow; depth goes to Supplemental Reference.
-8. `## Artifact and Script Locations` — the single home for every directory tree, with `### Environment Variables`.
+8. `## Artifact and Script Locations` — the single home for every directory tree, with `### Bundle Layout` and `### Environment Variables` (see below).
 9. `## Before You Run Anything` — a lean pre-flight checklist only: `### Prerequisites` and `### Confirm Your Intent`. No conceptual "why" here, and no commands: Prerequisites *declares* what must be true, and the command that *verifies* it is Step 0 under Sequential Steps. Actions belong in steps.
 10. `## Sequential Steps`
 11. `## Decisions` (optional) — genuine judgment calls only.
@@ -91,6 +91,87 @@ subsections: `### Prerequisites` (is the reader set up — mounted volume, resol
 env, tools) and `### Confirm Your Intent` (what the reader means this run to do —
 which mode/path, which options, whether to dry-run first). Keep it brief enough
 that someone in a hurry still reads it.
+
+### Artifact and Script Locations has a fixed shape
+
+The section opens with four labelled lines, in this order, each introducing its own
+fenced `text` block:
+
+```
+Primary script:
+Related scripts, alphabetical:
+Artifact root:
+Input evidence built by earlier phases:
+```
+
+Omit **Input evidence built by earlier phases:** when the runbook reads nothing an
+earlier phase produced. The other three always appear, in this order, even when a
+block holds one line. Every entry in the first two blocks carries a trailing
+comment classifying it — `entrypoint`, `helper`, or `external helper`.
+
+Then two subsections, in this order:
+
+- `### Bundle Layout` — the runbook's one directory tree.
+- `### Environment Variables` — the `reimage.env` keys the scripts require.
+
+A runbook that writes no artifact at all has no `### Bundle Layout`; everything
+else has exactly one.
+
+### Trees: expand what the runbook writes, collapse everything else
+
+**One tree per root, under `### Bundle Layout`** — normally just
+`$REIMAGE_ARTIFACT_ROOT/`, and a second block only when the runbook genuinely
+writes into another root such as `$REIMAGE_WORKSPACE_ROOT/`. Within a tree,
+expand every directory this runbook **writes into** and nothing else. A directory
+it merely reads is named in the *Input evidence* block above and is never
+expanded — the runbook that writes it owns its tree.
+
+Sort alphabetically at every level, then collapse omitted siblings **at every
+level** to a single `...` entry — one per contiguous run of omissions, wherever
+it falls:
+
+- `...` immediately **before** the first shown entry, when that entry is not
+  alphabetically first among its siblings at that level.
+- `...` **between** two shown entries that are not adjacent among their siblings.
+- `...` immediately **after** the last shown entry, when that entry is not
+  alphabetically last among its siblings at that level.
+- A level where nothing is omitted gets no `...` at all, and two shown entries
+  that are genuinely adjacent get none between them.
+
+One `...` stands for any number of omitted siblings, so a gap of one and a gap of
+nine look the same. The reader needs to know the listing is an excerpt and where
+the gaps are, not how wide each gap is.
+
+This holds under `$REIMAGE_ARTIFACT_ROOT/` and under every directory below it, and
+under any other root the runbook shows. The point is that a reader can tell at a
+glance whether they are looking at a complete listing or an excerpt, without
+opening the master reference to find out.
+
+### The run-index shape is the layout for every capture category
+
+Capture and record entrypoints write through `.internal/artifact-runs.sh`, so a
+category is not a pile of timestamped bundles. It is:
+
+```text
+<category>/
+├── MANIFEST.md          append-only; the library owns it -- never hand-edited
+├── official/            one pointer file per lineage, named for the context
+│   └── <context>.txt    contains the run id the point rule resolves to
+├── runs/
+│   └── <context>-YYYYMMDD-HHMMSS/
+└── sign-offs/           answered rows, outside the runs a rerun replaces
+```
+
+`<context>` is `<phase>-<what>-<point>` — the runbook stem, never a phase ordinal,
+and never the category directory repeated. Officialness is **computed** from the
+manifest by the point rule, not stored: `before` and `pre-restart` are first-wins,
+everything else is latest-wins. So a runbook never tells the reader to read the
+newest directory, or to follow a `latest-*.txt`, or to dereference a symlink —
+those do not exist. It tells them to read the pointer under `official/`.
+
+A category with its own domain columns keeps them in `<domain>-index.md` beside
+`MANIFEST.md` rather than bending the shared schema. `sign-offs/` appears only
+where the phase has answered rows.
 
 ### The Decisions section is judgment calls only
 
@@ -492,17 +573,14 @@ Filling rules and constraints
 - Do not add legacy/compatibility shims — prefer a single authoritative path. If compatibility is required, add an explicit short rationale and keep scope narrow.
 - Ensure all paths are shown relative to the repository root and use $REIMAGE_ARTIFACT_ROOT or $REIMAGE_WORKSPACE_ROOT placeholders for artifact locations.
 - Do not prefix command blocks with `cd "$FRACTOGENESIS_HOME"`. The repo-root working directory is stated once in `reimaging-guide.md` → Core Assumptions and restated in the runbook's Prerequisites; command blocks start at the command. Keep a literal `cd` only where a command must run from a different directory, and say why.
-- If adding a directory tree, include only subdirectories relevant to the runbook steps.
+- If adding a directory tree, include only subdirectories relevant to the runbook steps, following the tree rules above.
 - Use the RUNBOOK_SHORT_DESC to craft the 1–3 sentence Purpose lead, followed by the two labelled lists and the ownership table (see The Purpose section).
-- Populate "Artifact and Script Locations" with PRIMARY_SCRIPT, RELATED_SCRIPTS, ARTIFACT_PATHS, and the Environment Variables subsection, and treat that section as the single home for every directory tree the runbook uses.
+- Populate "Artifact and Script Locations" with the four fixed labelled lines, then `### Bundle Layout` and `### Environment Variables`, and treat that section as the single home for every directory tree the runbook uses.
 - List PRIMARY_SCRIPTS, RELATED_SCRIPTS, and any other enumerated runbook or script references in alphabetical order.
-- If adding a directory tree, include only subdirectories relevant to the
-  runbook steps, sorted alphabetically at every level. Represent omitted
-  siblings with a single `...` entry immediately before the first included
-  entry and immediately after the last — except omit the leading `...` when
-  the first included entry is alphabetically first among the root's
-  top-level directories, and omit the trailing `...` when the last included
-  entry is alphabetically last.
+- Directory trees follow "Trees: expand what the runbook writes, collapse
+  everything else" above: one tree, under `### Bundle Layout`, expanding only
+  what the runbook writes into, alphabetized at every level, with `...`
+  collapsing omitted siblings at every level.
 - When a runbook's title or script names change, include a "Renaming considerations" bullet that documents the proposed name change and reason.
 - If multiple scripts exist, classify each as "entrypoint", "helper", or "deprecated/throwaway" in Artifact and Script Locations.
 
@@ -559,7 +637,8 @@ Validation checklist (run after generating the filled runbook)
 - [ ] Section order matches the Canonical section order; deleted optional sections are gone from both the body and the TOC.
 - [ ] Purpose uses the lead + two labelled lists (what it sets up / what downstream relies on it for) + an ownership table; that table is the only place sibling cross-references live (no separate Related Guides or see-also section).
 - [ ] The "why" lives in How the Workflow Works; Before You Run Anything is a lean checklist (Prerequisites + Confirm Your Intent) with no conceptual background.
-- [ ] Artifact and Script Locations includes an Environment Variables subsection listing the required reimage.env keys.
+- [ ] Artifact and Script Locations opens with the four labelled lines in order — Primary script / Related scripts, alphabetical / Artifact root / Input evidence built by earlier phases — the fourth omitted only when the runbook reads nothing an earlier phase produced, and each entry in the first two blocks classified as entrypoint, helper, or external helper.
+- [ ] Artifact and Script Locations carries `### Bundle Layout` (unless the runbook writes no artifact) and `### Environment Variables`, in that order.
 - [ ] Decisions, if present, holds genuine judgment calls only; manual verifications live in the relevant verify step, and intent lives in Confirm Your Intent.
 - [ ] TOC links resolve to headings present in the file, using Obsidian wiki-link form.
 - [ ] The "In Obsidian, these are internal heading links" note and the callout legend are present under the TOC.
@@ -577,7 +656,10 @@ Validation checklist (run after generating the filled runbook)
 - [ ] No absolute personal paths or secrets introduced.
 - [ ] Commands shown are syntactically valid and minimal, each preceded by a one-line purpose.
 - [ ] Pasted command blocks are zsh-safe: no `#` comments trailing or whole-line, no bare `<placeholder>` the shell would read as redirection, and no unquoted glob metacharacters or bare `*` patterns whose non-match would abort the line, and no `exit` or `return … || exit` that would close the operator's terminal.
-- [ ] Every directory tree appears once, under Artifact and Script Locations; no tree is redrawn elsewhere.
+- [ ] Every directory tree appears once, under `### Bundle Layout`; no tree is redrawn elsewhere.
+- [ ] The tree expands only the directory this runbook writes into; a directory it merely reads is named in the Input evidence block, not expanded.
+- [ ] Every level of every tree is alphabetized, and omitted siblings are collapsed to a single `...` before the first shown entry when it is not alphabetically first, and after the last when it is not alphabetically last.
+- [ ] Capture and record categories are drawn in the run-index shape — `MANIFEST.md`, `official/<context>.txt`, `runs/<context>-YYYYMMDD-HHMMSS/`, and `sign-offs/` where the phase has answered rows. No `latest-*.txt`, no symlink, and no instruction to take the newest directory.
 - [ ] Reason-before-command holds: no runnable command precedes the rationale a reader needs to run it correctly.
 - [ ] A Worked Example appears only when a concept is hard without one.
 - [ ] Every section ends with a back-link then a `---` divider: parent/main sections link to the Table of Contents, routed sub-sections to their routing index (immediate parent when nested deeper).
