@@ -1,5 +1,7 @@
 # Apply Manifest
 
+**Revision 138** — supersedes Revision 137 and earlier. The evidence half of the migration: nine pre-image categories become indexed runs, and the one script whose context would have been converted into the wrong name is fixed first.
+
 **Revision 137** — supersedes Revision 136 and earlier. The Office-stability pair say which is which, and Phase 15 gets the boundary that closes the chain.
 
 **Revision 136** — supersedes Revision 135 and earlier. The boundary chain closes at both ends, a lineage can be retired, and caller environment beats `reimage.env` for every key.
@@ -381,6 +383,113 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `backup-repos.sh` | `bin/backup-repos.sh` |
 | `setup-reimage-env.sh` | `bin/setup-reimage-env.sh` |
 | `compare-restored-state.sh` | `bin/compare-restored-state.sh` |
+| `capture-office-stability.sh` | `bin/capture-office-stability.sh` |
+
+---
+
+## Revision 138 — the evidence catches up with the producers
+
+Revisions 116–137 converted the producers. Every capture script now opens a run,
+writes into it, and finalizes it into a shared `MANIFEST.md` with a computed
+`official/` pointer. None of that reached the evidence already on the volume:
+nine pre-image categories still held flat files, bespoke manifests, symlinks and
+`latest-*.txt` pointers written before the library existed.
+
+This revision is the other half. The repository change is one line of logic; the
+work is on the artifact root, and it is recorded here because a reader who
+diffs the volume against Revision 137 needs to know it was deliberate.
+
+### The one script change, made first and for that reason
+
+`capture-office-stability.sh` derived its run context from its internal `PHASE`
+label, which is `pre-reimage` / `post-reimage`. Every other category in the tree
+spells the phase `pre-image` / `post-image`, and its own sibling
+`assess-office-stability.sh` already did. Left alone, the conversion would have
+produced `pre-reimage-office-stability-evidence` — the only lineage in the tree
+spelling the phase differently, in the same `MANIFEST.md` as its correctly-named
+sibling.
+
+| | Before | After |
+|---|---|---|
+| context | `${PHASE_SAFE}-office-stability-evidence` | `${RUN_PHASE}-office-stability-evidence` |
+| resolves to | `pre-reimage-…` / `post-reimage-…` | `pre-image-…` / `post-image-…` |
+
+`PHASE` keeps its own spelling: it is the script's user-facing `--phase` value and
+appears in filenames the runbook cites. Only the run context is normalised.
+
+Ordering was the point. A context is baked into a run's manifest rows and its
+`official/` filename, so converting first and renaming after would have meant
+migrating the same category twice.
+
+### The conversion, category by category
+
+A full backup was taken first: `_pre-conversion-backup-20260902/` at the artifact
+root, 201M, `rsync -a` so modification times survive. It is on the same volume, so
+it protects against a bad conversion and not against losing the volume.
+
+| Category | What it was | Result |
+|---|---|---|
+| `size-audit-reports/` | 9 runs, bespoke `# Size Audit Runs` manifest, no `official/` | manifest renamed `size-audit-index.md`, reindexed — 9 runs, 7 pointers |
+| `loose-secrets-reports/` | 15 runs, `# Loose Secret Checks` manifest, no `official/` | renamed `loose-secrets-index.md`, reindexed — 15 runs, 11 pointers |
+| `toolkit-snapshot/` | 1 flat bundle, 2 symlinks, a `latest-*.txt` | wrapped into `runs/`, pointers deleted — 1 run, 1 pointer |
+| `performance-audit/` | 3 flat bundles, one per scenario | 3 lineages — 3 runs, 3 pointers |
+| `office-stability/` | evidence bundle + its `.zip` + a loose summary at the category root; assessment bundle under `checklists/` | 2 runs, 2 pointers, 1 sign-off; `checklists/` removed |
+| `time-machine/` | 5 flat files, 1 bundle, 1 verify file, 1 checklist | 7 runs, 7 pointers, 1 sign-off |
+| `reimage-prep-checks/` | 11 dated capstones + a `latest-*.txt` | 11 runs, 1 pointer, 11 sign-offs |
+
+`repo-audit-reports/`, `system-inventory/` and `managed-inventory/` were already
+converted by Revisions 120, 121 and 127 and were left alone.
+
+**Run identity was preserved everywhere.** `reindex-artifact-runs.sh` derives the
+manifest's Completed column from the run-id stamp rather than the directory's
+mtime, which is what makes a 2026-08-17 capture stay a 2026-08-17 capture through
+a conversion performed in September. Every wrapped file kept the stamp it was
+named with.
+
+### 24 mixed-mode artifacts were split
+
+An artifact holding both automated rows and answered rows cannot live in a run
+directory, because a rerun replaces the directory and takes the answers with it.
+`docs/architecture/sign-off-consolidation.md` §3 specifies the split; this pass
+performed it on 24 of the 35 artifacts that ledger identified: 16 boundary runs,
+6 restart runs, the Time Machine evidence summary and the office-stability
+assessment.
+
+Answers were carried over verbatim — no row was re-verified, and each extracted
+file names the run it came from in an **Answered against** column with a note
+saying so. `reimaged-system/sign-offs/` now holds 25 answered files.
+
+### What was deliberately not touched
+
+- **Phase 11B onward.** `restore-repos.md` and every phase after it will be run
+  by the operator, who will produce those captures directly. The only exception
+  taken here was an existing artifact that needed a split.
+- **Six `manual-captures-required.md` files** inside `verify-reimaged-system`
+  restart runs. They are purely manual rather than mixed, so the split rule does
+  not reach them, but they still sit inside replaceable run directories. Noted for
+  a decision, not acted on.
+- **Two Phase 12 plan notes** (`restore-docker-plan-*`, `restore-intellij-plan-*`).
+- **`home-files-backup/home/reimage-workspace/`.** It contains a June 2026
+  office-stability bundle that pattern-matches a convertible artifact. It is
+  backed-up user data and nothing under it was read, moved or rewritten.
+- **Pins, exceptions and retirements** (E1–E7 in the migration ledger). None was
+  applied; they are reviewed together in a later pass.
+
+### Verification
+
+Every category was converted one at a time and verified before the next was
+started: run count, pointer count, and a resolution check that each `official/`
+pointer names a run that exists. A closing sweep confirmed no answerable manual
+row remains inside any run directory apart from the four items listed above.
+
+`bash -n` clean on `bin/capture-office-stability.sh`. Portability, doc-paths and
+runbook-structure lints are unchanged from Revision 137, including the one
+deliberate `verify-doc-paths.sh` MISSING that Revision 137 recorded as owed.
+
+**No re-run was possible from this session.** The producers still owing a
+post-image re-run need `tmutil`, `diskutil`, `log` and the mounted volume, which
+means macOS. Those rows are handed back with their commands in
+`docs/ledgers/artifact-conversion-2026-09-02.md`.
 
 ---
 

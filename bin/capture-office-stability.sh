@@ -492,7 +492,13 @@ if [[ -n "$REIMAGE_ARTIFACT_ROOT" ]]; then
   # `assess-office-stability.sh` evaluates it, and both write into this category.
   # Two lineages a reader can tell apart at a glance is the whole point of
   # naming them for what they hold.
-  if ! artifact_run_begin "$OFFICE_BACKUP" "${PHASE_SAFE}-office-stability-evidence"; then
+  # `pre-image` / `post-image`, not this script's internal `pre-reimage` label.
+  # Every other category in the artifact root uses the former, and a context is
+  # read beside its siblings in one MANIFEST.md -- an odd one out here would be
+  # the only lineage in the tree spelling the phase differently.
+  RUN_PHASE="pre-image"
+  [[ "$PHASE" == "pre-reimage" ]] || RUN_PHASE="post-image"
+  if ! artifact_run_begin "$OFFICE_BACKUP" "${RUN_PHASE}-office-stability-evidence"; then
     echo "ERROR: could not stage a run under: $OFFICE_BACKUP" >&2
     exit 1
   fi
