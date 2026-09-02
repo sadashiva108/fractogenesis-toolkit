@@ -120,6 +120,14 @@ ARTIFACT_CONFIG_REQUIRE_REIMAGE_ARTIFACT_ROOT=false
 # shellcheck source=../.internal/load-reimage-config.sh
 source "$CONFIG_LOADER"
 
+RUNS_LIB="$REPO_ROOT/.internal/artifact-runs.sh"
+if [[ ! -f "$RUNS_LIB" ]]; then
+  echo "ERROR: shared run index not found: $RUNS_LIB" >&2
+  exit 2
+fi
+# shellcheck source=../.internal/artifact-runs.sh
+source "$RUNS_LIB"
+
 usage() {
   sed -n '/^# --- BEGIN USAGE ---$/,/^# --- END USAGE ---$/p' "$0" \
     | sed '1d;$d;s/^# //;s/^#$//'
@@ -472,21 +480,37 @@ fi
 
 if [[ -n "$REIMAGE_ARTIFACT_ROOT" ]]; then
   OFFICE_BACKUP="$REIMAGE_ARTIFACT_ROOT/office-stability"
-  # The header documents exit 1 when the artifact-root copy fails, so collect
-  # every failure instead of letting individual copies fail silently.
+
+  # This capture stages locally under the watch directory and is PROMOTED here,
+  # which is why the run is staged at copy time rather than at capture time: the
+  # local bundle is the working copy and the artifact root is the record. The
+  # zip and the rendered summary go inside the run with the evidence they
+  # describe, instead of beside it at the category root where every previous run
+  # left its own pair and nothing said which summary went with which bundle.
   COPY_FAILED=0
-  mkdir -p "$OFFICE_BACKUP" || COPY_FAILED=1
-  if [[ "$COPY_FAILED" -eq 0 ]]; then
-    rsync -a "$OUTDIR/" "$OFFICE_BACKUP/$(basename "$OUTDIR")/" || COPY_FAILED=1
-    if [[ -f "$ZIP" ]]; then
-      cp "$ZIP" "$OFFICE_BACKUP/" || COPY_FAILED=1
-    fi
-    cp "$SUMMARY" "$OFFICE_BACKUP/office-stability-summary-$TS.md" || COPY_FAILED=1
+  if ! artifact_run_begin "$OFFICE_BACKUP" "${PHASE_SAFE}-office-stability"; then
+    echo "ERROR: could not stage a run under: $OFFICE_BACKUP" >&2
+    exit 1
   fi
+  rsync -a "$OUTDIR/" "$ARTIFACT_RUN_DIR/" || COPY_FAILED=1
+  if [[ -f "$ZIP" ]]; then
+    cp "$ZIP" "$ARTIFACT_RUN_DIR/" || COPY_FAILED=1
+  fi
+  cp "$SUMMARY" "$ARTIFACT_RUN_DIR/office-stability-summary.md" || COPY_FAILED=1
+
   if [[ "$COPY_FAILED" -ne 0 ]]; then
+    artifact_run_abort
     echo "ERROR: copying evidence outputs to $OFFICE_BACKUP failed; the local bundle at $OUTDIR is intact." >&2
     exit 1
   fi
-  echo "Copied evidence outputs to: $OFFICE_BACKUP"
+
+  if ! artifact_run_finalize "$OFFICE_BACKUP" "phase $PHASE"; then
+    echo "ERROR: the evidence was copied but could not be indexed under: $OFFICE_BACKUP" >&2
+    echo "Repair the index with: ./bin/reindex-artifact-runs.sh --category \"$OFFICE_BACKUP\"" >&2
+    exit 1
+  fi
+
+  echo "Copied evidence outputs to: $ARTIFACT_RUN_FINAL_DIR"
+  echo "Run:                        $ARTIFACT_RUN_ID"
   echo "Note: scripts were not copied to the artifact root."
 fi

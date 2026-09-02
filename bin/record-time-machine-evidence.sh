@@ -124,6 +124,53 @@ fi
 # shellcheck source=../.internal/sign-offs.sh
 source "$SIGNOFF_LIB"
 
+# Evidence written here joins the shared run index. Each subcommand stages a run
+# and the EXIT trap at the dispatch finalizes or discards it.
+RUNS_LIB="$REPO_ROOT/.internal/artifact-runs.sh"
+if [[ ! -f "$RUNS_LIB" ]]; then
+  echo "ERROR: shared run index not found: $RUNS_LIB" >&2
+  exit 2
+fi
+# shellcheck source=../.internal/artifact-runs.sh
+source "$RUNS_LIB"
+
+# Phase 5 writes pre-image, Phase 16 post-image, into the same category.
+CONTEXT="pre-image"
+
+TM_CATEGORY_ROOT=""
+TM_RUN_ACTIVE=false
+ARTIFACT_OUT=""
+
+# Not a path-returning function, for the reason run-time-machine.sh documents:
+# artifact_run_begin sets shell variables and a command substitution discards
+# them. Call it, then read ARTIFACT_OUT.
+begin_artifact() {
+  local kind="$1" leaf="${2:-}"
+  TM_CATEGORY_ROOT="$REIMAGE_ARTIFACT_ROOT/time-machine"
+  if ! artifact_run_begin "$TM_CATEGORY_ROOT" "${CONTEXT}-${kind}"; then
+    echo "ERROR: could not stage a run under: $TM_CATEGORY_ROOT" >&2
+    exit 2
+  fi
+  TM_RUN_ACTIVE=true
+  if [[ -n "$leaf" ]]; then
+    ARTIFACT_OUT="$ARTIFACT_RUN_DIR/$leaf"
+  else
+    ARTIFACT_OUT="$ARTIFACT_RUN_DIR"
+  fi
+}
+
+tm_finalize_or_abort() {
+  local rc=$?
+  [[ "$TM_RUN_ACTIVE" == true ]] || return 0
+  TM_RUN_ACTIVE=false
+  if [[ "$rc" -eq 0 ]]; then
+    artifact_run_finalize "$TM_CATEGORY_ROOT" "" "" || true
+  else
+    artifact_run_abort
+  fi
+  return 0
+}
+
 usage() {
   sed -n '/^# --- BEGIN USAGE ---$/,/^# --- END USAGE ---$/p' "$0" \
     | sed '1d;$d;s/^# //;s/^#$//'
@@ -438,10 +485,20 @@ capture_time_machine_raw_bundle() {
 # split into arguments and every optional-evidence row reported TODO/N-A even when
 # the files existed. Names are timestamped YYYYMMDD-HHMMSS, so a lexicographic
 # sort is chronological — same form used for pre_run_bundle below.
-latest_matching_file() {
-  local name_pattern="$1"
-  find "$REIMAGE_ARTIFACT_ROOT/time-machine" -maxdepth 1 -type f -name "$name_pattern" -print 2>/dev/null \
-    | sort | tail -1
+# Resolves the official run of one lineage and returns the file inside it.
+#
+# This replaced a `-maxdepth 1` glob over the category root. The glob could not
+# express WHICH phase it wanted: Phase 16 runs the same subcommands into the same
+# category, so after a post-image pass the pre-image summary would have read
+# Phase 16's completion check and filed it under Phase 5. The pointer names a
+# lineage, and the lineage carries the phase.
+artifact_run_file() {
+  local context="$1" leaf="$2" run=""
+  run="$(artifact_run_official "$REIMAGE_ARTIFACT_ROOT/time-machine" "$context" 2>/dev/null || true)"
+  [[ -n "$run" ]] || return 0
+  local candidate="$REIMAGE_ARTIFACT_ROOT/time-machine/$run/$leaf"
+  [[ -e "$candidate" ]] && printf '%s\n' "$candidate"
+  return 0
 }
 
 status_for_text_file() {
@@ -461,17 +518,22 @@ capture_final_checklist() {
   require_paths
   local stamp out tm_status_text tm_running targeted_latest latest_status backup_completed data_excluded_status data_excluded_text
   local verify_volume_file verify_volume_status checksum_file checksum_status completion_file completion_status
-  local pre_run_bundle pre_run_status latest_path
+  local pre_run_bundle pre_run_status latest_path _pre_run_rel
 
   stamp="$(stamp_now)"
-  out="$REIMAGE_ARTIFACT_ROOT/time-machine/final-time-machine-checklist-$stamp.md"
-  mkdir -p "$REIMAGE_ARTIFACT_ROOT/time-machine"
+  # Named evidence-summary, not checklist. Once the rows a person answers move to
+  # the sign-off, nothing left in this file is a checklist -- there is nothing to
+  # tick. It is a roll-up of statuses derived from the other five artifacts, and
+  # `summary` is the word this repo already uses for that.
+  begin_artifact evidence-summary evidence-summary.md
+  out="$ARTIFACT_OUT"
 
-  # Sibling of the evidence it summarises, and named for the runbook rather than
-  # for this script: `run-time-machine.md` is the phase an operator remembers.
-  # Opened before the heredoc so SIGNOFF_FILE resolves inside it.
+  # The rows a person answers leave the run: a run directory is replaced on every
+  # rerun and an answered row must not be. Named for the lineage it belongs to,
+  # so a carried answer can say which run it was answered against. Opened before
+  # the heredoc so SIGNOFF_FILE resolves inside it.
   if ! signoff_begin "$REIMAGE_ARTIFACT_ROOT/time-machine/sign-offs" \
-                     "run-time-machine" "run-time-machine-$stamp"; then
+                     "${CONTEXT}-evidence-summary" "${CONTEXT}-evidence-summary-$stamp"; then
     echo "ERROR: cannot open a sign-off under: $REIMAGE_ARTIFACT_ROOT/time-machine/sign-offs" >&2
     return 1
   fi
@@ -505,22 +567,24 @@ capture_final_checklist() {
     data_excluded_status="CHECK"
   fi
 
-  completion_file="$(latest_matching_file 'completion-check-*.md')"
+  completion_file="$(artifact_run_file "${CONTEXT}-completion-check" completion-check.md)"
   completion_status="$(status_for_text_file "$completion_file")"
 
-  verify_volume_file="$(latest_matching_file 'diskutil-verifyvolume-applebackups-*.txt')"
+  verify_volume_file="$(artifact_run_file "${CONTEXT}-diskutil-verify" diskutil-verify.txt)"
   verify_volume_status="N/A"
   if [[ -n "$verify_volume_file" ]]; then
     verify_volume_status="$(status_for_text_file "$verify_volume_file")"
   fi
 
-  checksum_file="$(latest_matching_file 'verifychecksums-*.txt')"
+  checksum_file="$(artifact_run_file "${CONTEXT}-verifychecksums" verifychecksums.txt)"
   checksum_status="N/A"
   if [[ -n "$checksum_file" ]]; then
     checksum_status="$(status_for_text_file "$checksum_file")"
   fi
 
-  pre_run_bundle="$(find "$REIMAGE_ARTIFACT_ROOT/time-machine" -maxdepth 1 -type d -name 'pre-image-time-machine-status-*' -print 2>/dev/null | sort | tail -1)"
+  pre_run_bundle=""
+  _pre_run_rel="$(artifact_run_official "$REIMAGE_ARTIFACT_ROOT/time-machine" "${CONTEXT}-status-bundle" 2>/dev/null || true)"
+  [[ -n "$_pre_run_rel" ]] && pre_run_bundle="$REIMAGE_ARTIFACT_ROOT/time-machine/$_pre_run_rel"
   pre_run_status="TODO"
   if [[ -n "$pre_run_bundle" && -f "$pre_run_bundle/time-machine-pre-run.md" && -d "$pre_run_bundle/raw" ]]; then
     pre_run_status="PASS"
@@ -595,8 +659,8 @@ capture_pre_run() {
   require_paths
   local stamp out
   stamp="$(stamp_now)"
-  out="$REIMAGE_ARTIFACT_ROOT/time-machine/pre-image-time-machine-status-$stamp"
-  mkdir -p "$out"
+  begin_artifact status-bundle
+  out="$ARTIFACT_OUT"
 
   capture_time_machine_raw_bundle "$out"
   write_pre_run_snapshot_markdown "$out"
@@ -625,7 +689,8 @@ capture_verify_volume() {
   require_paths
   local stamp out tm_running
   stamp="$(stamp_now)"
-  out="$REIMAGE_ARTIFACT_ROOT/time-machine/diskutil-verifyvolume-applebackups-$stamp.txt"
+  begin_artifact diskutil-verify diskutil-verify.txt
+  out="$ARTIFACT_OUT"
 
   tm_running="NO"
   if tm_is_running; then
@@ -671,12 +736,21 @@ while [[ $# -gt 0 ]]; do
       require_option_value "$1" "${2:-}"; EXTERNAL_DATA_VOLUME="$2"; shift 2 ;;
     --time-machine-dest)
       require_option_value "$1" "${2:-}"; TIME_MACHINE_DEST="$2"; shift 2 ;;
+    --context)
+      require_option_value "$1" "${2:-}"
+      case "$2" in
+        pre-image|post-image) ;;
+        *) err "--context must be 'pre-image' or 'post-image', got: $2"; usage >&2; exit 2 ;;
+      esac
+      CONTEXT="$2"; shift 2 ;;
     --open) OPEN_AFTER=true; shift ;;
     --version) echo "$SCRIPT_VERSION"; exit 0 ;;
     -h|--help) usage; exit 0 ;;
     *) err "Unknown argument: $1"; usage; exit 2 ;;
   esac
 done
+
+trap tm_finalize_or_abort EXIT
 
 case "$COMMAND" in
   version) echo "$SCRIPT_VERSION" ;;

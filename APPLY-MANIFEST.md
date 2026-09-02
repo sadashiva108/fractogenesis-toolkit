@@ -1,5 +1,7 @@
 # Apply Manifest
 
+**Revision 135** — supersedes Revision 134 and earlier. Every remaining capture producer writes into the shared run index.
+
 **Revision 134** — supersedes Revision 133 and earlier. The Phase 11B sign-off joins every other post-image answered row.
 
 **Revision 133** — supersedes Revision 132 and earlier. Two more homes under `docs/`, because a design record and a ledger are not features.
@@ -375,6 +377,114 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `backup-repos.sh` | `bin/backup-repos.sh` |
 | `setup-reimage-env.sh` | `bin/setup-reimage-env.sh` |
 | `compare-restored-state.sh` | `bin/compare-restored-state.sh` |
+
+---
+
+## Revision 135 — the last producers stop naming their own files
+
+Seven categories still wrote flat timestamped artifacts at their category root,
+each with its own idea of what "the latest one" meant: a `latest-run.txt`, a
+`latest-*.txt`, a pair of symlinks, or nothing at all. Nine scripts now stage a
+run, write into it, and let `artifact-runs.sh` promote and index it.
+
+Full per-script account, verification and open items:
+`docs/ledgers/capture-script-refactor-2026-09-02.md`.
+
+### The call sites changed shape, not just the helper
+
+`run-time-machine.sh` computed its output path with
+`out="$(artifact_path status txt)"`. `artifact_run_begin` sets shell variables
+and a command substitution runs in a subshell that discards them, so a
+path-returning helper cannot stage a run the caller is able to finalize. Six call
+sites became `begin_artifact status txt; out="$ARTIFACT_OUT"`. This is the part
+of the conversion that does not generalise from the earlier ones, and it is why
+this category was deferred twice.
+
+One EXIT trap at the dispatch covers every subcommand, because the `case` is the
+last statement in the file and exactly one command runs per invocation. **Exit
+status 3 finalizes rather than aborts**: `verify-latest` returns 3 on a checksum
+mismatch, and a run that reported findings is a completed run — discarding it
+would throw away the only record of the mismatch.
+
+### The read-backs are the point
+
+`record-time-machine-evidence.sh final` resolved four of the other script's
+artifacts with `-maxdepth 1` globs over the category root. A glob cannot say
+which phase it wants, and Phase 16 runs the same subcommands into the same
+category — so after a post-image pass, regenerating the Phase 5 summary would
+have read Phase 16's completion check and filed it under Phase 5.
+
+They now resolve `official/<phase>-<kind>.txt`. The lineage carries the phase,
+which is the whole reason the contexts have one.
+
+### What the run id is not
+
+Time Machine hands out a backup identity, and using it as the run id was
+tempting. It is recorded in the manifest `Note` instead, best-effort, because
+after a FAILED backup `tmutil latestbackup` returns the previous SUCCESSFUL one:
+as an identity that files a failure diagnosis under a backup that worked, and
+nothing downstream could detect it. As a note it is an annotation a reader can
+weigh.
+
+### Domain columns survive the move
+
+`loose-secrets-reports/` and `size-audit-reports/` are the two categories this
+library was extracted from, so each carried its own copy of the pattern. Their
+per-run counts — outside/inside, and three byte totals — have no column in the
+shared schema, so they move to `loose-secrets-index.md` and `size-audit-index.md`
+beside the run index. Same treatment `repo-audit-reports/` got in Revision 120,
+and the same consequence: **both will refuse to run until their existing
+`MANIFEST.md` is renamed**, and both now say so with the command to fix it.
+
+### Two things kept on purpose
+
+`toolkit-snapshot/latest-docs` stays. The stored `latest-*.txt` pointers and the
+`latest-<context>-toolkit-*` symlinks are gone — a stored pointer beside a
+computed one can only ever disagree with it — but `latest-docs` answers a
+different question: it is a stable filesystem path to the runbooks for a reader
+that has nothing to resolve a pointer with, which is every phase from 8 onward.
+It is now derived from the official run rather than from whichever ran last.
+
+And the capstone checklist is run-indexed, per the decision recorded this
+session. Latest-wins needs no argument here: a capstone is regenerated until it
+is green and the newest is the record. **Phase 14 has not run**, so the
+post-image capstone lands indexed from its first run rather than being
+retrofitted.
+
+### One reader fixed while it was open
+
+`reimage-checklist.sh` resolved the toolkit snapshot through a `latest-*`
+symlink, which named whichever run wrote last — and a `--config-only` refresh is
+its own lineage. It now resolves `official/pre-image-toolkit-snapshot`, so a
+config refresh cannot answer a row that is about the full snapshot.
+
+`office-stability-checklist.sh` also stopped emitting its manual items as
+`record_check WARN` rows inside the automated table. They were answered rows
+wearing an automated verdict, returning as WARN on every run however often they
+were answered. They are `signoff_row` calls now — it was the last checklist
+producer that had not adopted `sign-offs.sh`.
+
+### Validation
+
+`bash -n` clean on all 43 `bin/*.sh`. `verify-script-portability.sh` 74 clean /
+2 suppressed / 0 WARN / 0 FAIL. `verify-doc-paths.sh --all` 0 MISSING / 0 ANCHOR
+BROKEN. `verify-runbook-structure.sh` 29 FAIL / 5 WARN across 27 documents,
+unchanged — no runbook was edited, which is also the largest known gap this
+change leaves: the runbooks and reference trees still draw the flat layouts.
+
+All 16 new contexts were checked against `_artifact_runs_point_of` and resolve to
+`unknown` → latest-wins, correct for every one; none accidentally ends in a
+reserved point word. The library bracket was exercised end to end against a
+scratch category: three lineages staged and finalized, a second run advanced only
+its own pointer, an aborted run left no `.incomplete`, and the `Note` column
+carried through.
+
+**All of it ran on Linux with Bash 5.x**, and none of these scripts can be
+executed there — they need `tmutil`, `diskutil`, `log` and a mounted artifact
+volume. What is verified is syntax, portability, the point rules, and the library
+contract. `/bin/bash -n` on the target Mac is owed here and on Revisions 116–134.
+
+**No artifact or evidence on the volume was touched.**
 
 ---
 

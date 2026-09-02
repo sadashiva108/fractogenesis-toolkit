@@ -91,6 +91,14 @@ ARTIFACT_CONFIG_REQUIRE_REIMAGE_ARTIFACT_ROOT=false
 # shellcheck source=../.internal/load-reimage-config.sh
 source "$CONFIG_LOADER"
 
+RUNS_LIB="$REPO_ROOT/.internal/artifact-runs.sh"
+if [[ ! -f "$RUNS_LIB" ]]; then
+  echo "ERROR: shared run index not found: $RUNS_LIB" >&2
+  exit 2
+fi
+# shellcheck source=../.internal/artifact-runs.sh
+source "$RUNS_LIB"
+
 VERSION="1.0.5"
 SCRIPT_NAME="$(basename "$0")"
 START_EPOCH="$(date +%s)"
@@ -99,6 +107,10 @@ START_EPOCH="$(date +%s)"
 # Defaults and command-line state
 # ---------------------------------------------------------------------------
 OUTPUT_ROOT=""
+# Tracked separately from OUTPUT_ROOT because the default is filled in later:
+# by the time the run is staged, "was --output given" can no longer be inferred
+# from the variable being non-empty.
+OUTPUT_ROOT_EXPLICIT=false
 SAMPLE_COUNT=3
 PHASE_LABEL="pre-image"
 SCENARIO_LABEL="normal-workload"
@@ -139,6 +151,7 @@ while [[ $# -gt 0 ]]; do
     --output)
       require_option_value "$1" "${2:-}"
       OUTPUT_ROOT="$2"
+      OUTPUT_ROOT_EXPLICIT=true
       shift 2
       ;;
     --sample-count)
@@ -295,8 +308,42 @@ if [[ -z "$SCENARIO_SAFE" ]]; then
   exit 2
 fi
 
-RUN_ID="${PHASE_SAFE}-performance-audit-${SCENARIO_SAFE}-$(date +%Y%m%d-%H%M%S)"
-AUDIT_DIR="$OUTPUT_ROOT/$RUN_ID"
+# One lineage per phase AND scenario. `artifact-runs.sh` names this category by
+# name as one where the pre/post prefix is the only discriminator -- but the
+# scenario matters just as much here: clean-boot, normal-workload and active-dev
+# answer different questions, and a single pointer across them would name
+# whichever ran last regardless of which question it answered.
+RUN_CONTEXT="${PHASE_SAFE}-performance-audit-${SCENARIO_SAFE}"
+
+# --output writes outside the category, so it is deliberately not indexed:
+# the index resolves relative to the category root and a pointer into an
+# elsewhere-path would name something that is not there.
+INDEXED=false
+CATEGORY_ROOT=""
+if [[ "$OUTPUT_ROOT_EXPLICIT" != true ]]; then
+  CATEGORY_ROOT="$OUTPUT_ROOT"
+  if ! artifact_run_begin "$CATEGORY_ROOT" "$RUN_CONTEXT"; then
+    echo "ERROR: could not stage a run under: $CATEGORY_ROOT" >&2
+    exit 2
+  fi
+  RUN_ID="$ARTIFACT_RUN_ID"
+  AUDIT_DIR="$ARTIFACT_RUN_DIR"
+  INDEXED=true
+else
+  RUN_ID="${RUN_CONTEXT}-$(date +%Y%m%d-%H%M%S)"
+  AUDIT_DIR="$OUTPUT_ROOT/$RUN_ID"
+fi
+
+# A performance audit that dies mid-sample has captured a machine in a state the
+# bundle does not describe. Discard rather than leave it looking like a run.
+cleanup_performance_audit_run() {
+  if [[ "$INDEXED" == true ]]; then
+    artifact_run_abort
+  fi
+  return 0
+}
+trap cleanup_performance_audit_run EXIT
+trap 'exit 130' INT TERM
 LOG_DIR="$AUDIT_DIR/logs"
 RAW_DIR="$AUDIT_DIR/raw"
 SYSTEM_DIR="$AUDIT_DIR/system"
@@ -1057,8 +1104,22 @@ main() {
   create_summary
   create_manifest
 
+  if [[ "$INDEXED" == true ]]; then
+    trap - EXIT INT TERM
+    if ! artifact_run_finalize "$CATEGORY_ROOT" "$SAMPLE_COUNT sample(s) / scenario $SCENARIO_LABEL"; then
+      echo "ERROR: the bundle was written but could not be indexed under: $CATEGORY_ROOT" >&2
+      echo "Repair the index with: ./bin/reindex-artifact-runs.sh --category \"$CATEGORY_ROOT\"" >&2
+      exit 2
+    fi
+    AUDIT_DIR="$ARTIFACT_RUN_FINAL_DIR"
+    SUMMARY="$AUDIT_DIR/README.md"
+  fi
+
   log "Done. Audit bundle: $AUDIT_DIR"
   log "Start here: $SUMMARY"
+  if [[ "$INDEXED" == true ]]; then
+    log "Run: $ARTIFACT_RUN_ID (official for context '$RUN_CONTEXT')"
+  fi
   if [[ -s "$ERROR_LOG" ]]; then
     log "Some commands reported errors or unavailable data. Review: $ERROR_LOG"
   fi

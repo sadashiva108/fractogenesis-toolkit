@@ -6,9 +6,16 @@
 # confirm it finished, mount and checksum the resulting snapshot, compare it
 # against the previous backup, and eject the destination safely.
 #
-# Runbook: run-time-machine.md (Phase 5). This does not replace Time Machine —
-# it wraps tmutil, diskutil, and log, and writes evidence under
-# $REIMAGE_ARTIFACT_ROOT/time-machine/.
+# Runbook: run-time-machine.md (Phase 5 pre-image, Phase 16 post-image). This
+# does not replace Time Machine — it wraps tmutil, diskutil, and log, and writes
+# evidence under $REIMAGE_ARTIFACT_ROOT/time-machine/, one indexed run per
+# artifact-writing invocation. Contexts are <phase>-<subcommand>:
+# pre-image-status, post-image-verifychecksums, and so on.
+#
+# Six of the eleven subcommands write: status, logs, completion-check (from
+# `complete`), compare, verifychecksums (from `verify-latest`), and diagnose.
+# start, monitor, mount-latest, unmount-latest and eject write no artifact and
+# stage no run.
 #
 # Read-only evidence bundles are record-time-machine-evidence.sh's job, not this
 # one. That script is the other bin/ entrypoint run-time-machine.md owns.
@@ -42,6 +49,10 @@
 #
 # Options:
 #   --artifact-root PATH       Override REIMAGE_ARTIFACT_ROOT from shared config.
+#   --context NAME             pre-image (default) or post-image. Phase 5 and
+#                              Phase 16 run the same subcommands into the same
+#                              category, so the context carries the phase and
+#                              each lineage keeps its own official pointer.
 #   --time-machine-dest PATH   Time Machine destination mount.
 #                              Default: $EXTERNAL_APPLE_BACKUPS_VOLUME.
 #   --external-data-root PATH  Manual/evidence volume to verify as excluded.
@@ -128,6 +139,17 @@ ARTIFACT_CONFIG_REQUIRE_REIMAGE_ARTIFACT_ROOT=false
 # shellcheck source=../.internal/load-reimage-config.sh
 source "$CONFIG_LOADER"
 
+# Evidence written here joins the shared run index. Every artifact-writing
+# subcommand stages a run, writes into it, and the single EXIT trap at the
+# dispatch finalizes or discards it -- see .internal/artifact-runs.sh.
+RUNS_LIB="$REPO_ROOT/.internal/artifact-runs.sh"
+if [[ ! -f "$RUNS_LIB" ]]; then
+  echo "ERROR: shared run index not found: $RUNS_LIB" >&2
+  exit 2
+fi
+# shellcheck source=../.internal/artifact-runs.sh
+source "$RUNS_LIB"
+
 # ── Defaults and command-line state ──────────────────────────────────────────
 # No hardcoded volume fallback: the destination comes from shared config or
 # --time-machine-dest. A baked-in /Volumes/<name> would silently target the
@@ -147,6 +169,11 @@ VERIFY_PATH=""
 FULL_SNAPSHOT=false
 MOUNT_IF_NEEDED=false
 PHYSICAL_DISK=""
+# Phase 5 and Phase 16 run the same subcommands into the same category, so the
+# context carries the phase. `time-machine/` holds both phases side by side,
+# which is the exception artifact-runs.sh names to its own "do not repeat the
+# directory in the context" rule.
+CONTEXT="pre-image"
 COMMAND=""
 
 usage() {
@@ -221,10 +248,68 @@ require_external_data_volume() {
   fi
 }
 
-artifact_path() {
-  local prefix="$1" ext="${2:-md}"
+# Stage a run and set ARTIFACT_OUT to the file to write inside it.
+#
+# This is NOT called inside a command substitution, and that is the whole reason
+# it is not a path-returning function any more. artifact_run_begin sets shell
+# variables; a subshell discards them, so `out="$(artifact_path status txt)"`
+# would stage a run the caller could never finalize. The call sites therefore
+# read:
+#
+#   begin_artifact status txt; out="$ARTIFACT_OUT"
+#
+# The run id already carries the stamp, so the file inside is named for its kind
+# without one: runs/pre-image-status-20260902-101500/status.txt.
+TM_CATEGORY_ROOT=""
+TM_RUN_ACTIVE=false
+ARTIFACT_OUT=""
+
+begin_artifact() {
+  local kind="$1" ext="${2:-md}"
   require_artifact_root
-  printf '%s/time-machine/%s-%s.%s\n' "$REIMAGE_ARTIFACT_ROOT" "$prefix" "$(date +%Y%m%d-%H%M%S)" "$ext"
+  TM_CATEGORY_ROOT="$REIMAGE_ARTIFACT_ROOT/time-machine"
+  if ! artifact_run_begin "$TM_CATEGORY_ROOT" "${CONTEXT}-${kind}"; then
+    err "could not stage a run under: $TM_CATEGORY_ROOT"
+    exit 2
+  fi
+  TM_RUN_ACTIVE=true
+  ARTIFACT_OUT="$ARTIFACT_RUN_DIR/${kind}.${ext}"
+}
+
+# Grouping, best-effort, in the manifest Note rather than in the run id.
+#
+# Two artifacts describe the same backup exactly when tmutil reports the same
+# latest backup, so recording that stamp keeps an operation recoverable by
+# grouping manifest rows on it. It is deliberately NOT the run id: after a FAILED
+# backup tmutil returns the PREVIOUS successful one, which would file a failure
+# diagnosis under a backup that succeeded. As a note it is an annotation a reader
+# can weigh; as an identity it would be a silent lie.
+tm_backup_note() {
+  local stamp=""
+  stamp="$(backup_stamp_from_value "$(targeted_latest_timestamp)" 2>/dev/null || true)"
+  if [[ -z "$stamp" ]]; then
+    stamp="$(backup_stamp_from_value "$(latest_backup)" 2>/dev/null || true)"
+  fi
+  [[ -n "$stamp" ]] && printf 'backup %s' "$stamp"
+  return 0
+}
+
+# One trap covers every command: the dispatch case is the last statement in the
+# file and exactly one command runs per invocation.
+#
+# Exit status 3 FINALIZES. verify-latest returns 3 when checksums mismatch, and a
+# run that reported findings is still a completed run -- the findings are the
+# evidence. Aborting would discard the only record of the mismatch.
+tm_finalize_or_abort() {
+  local rc=$?
+  [[ "$TM_RUN_ACTIVE" == true ]] || return 0
+  TM_RUN_ACTIVE=false
+  if [[ "$rc" -eq 0 || "$rc" -eq 3 ]]; then
+    artifact_run_finalize "$TM_CATEGORY_ROOT" "" "$(tm_backup_note)" || true
+  else
+    artifact_run_abort
+  fi
+  return 0
 }
 
 maybe_open() {
@@ -605,7 +690,7 @@ monitor_backup() {
 
 capture_status() {
   need_cmd tmutil
-  local out; out="$(artifact_path status txt)"
+  local out; begin_artifact status txt; out="$ARTIFACT_OUT"
   {
     date
     tmutil status 2>&1 || true
@@ -615,7 +700,7 @@ capture_status() {
 }
 
 capture_logs() {
-  local out; out="$(artifact_path logs txt)"
+  local out; begin_artifact logs txt; out="$ARTIFACT_OUT"
   if ! command -v log >/dev/null 2>&1; then
     err "macOS log command not found"
     exit 127
@@ -649,7 +734,7 @@ capture_complete() {
   need_cmd diskutil
   require_external_data_volume
   local out latest targeted_latest completion_stamp completion_datetime completion_source completion_log_start completion_log_end list_count
-  out="$(artifact_path completion-check md)"
+  begin_artifact completion-check md; out="$ARTIFACT_OUT"
   latest="$(latest_backup)"
   targeted_latest="$(targeted_latest_timestamp)"
 
@@ -799,7 +884,7 @@ run_compare() {
   is_helper_mount_active "$previous_mount" && previous_was_mounted=true
   is_helper_mount_active "$latest_mount" && latest_was_mounted=true
 
-  out="$(artifact_path compare txt)"
+  begin_artifact compare txt; out="$ARTIFACT_OUT"
   {
     printf 'Previous stamp: %s\n' "$previous_stamp"
     printf 'Latest stamp  : %s\n' "$latest_stamp"
@@ -1060,7 +1145,7 @@ verify_latest() {
     exit 2
   fi
 
-  out="$(artifact_path verifychecksums txt)"
+  begin_artifact verifychecksums txt; out="$ARTIFACT_OUT"
   {
     echo "# Time Machine Checksum Verification"
     echo "Generated   : $(date)"
@@ -1131,7 +1216,7 @@ verify_latest() {
 
 capture_diagnose() {
   local out
-  out="$(artifact_path diagnose txt)"
+  begin_artifact diagnose txt; out="$ARTIFACT_OUT"
   {
     echo "# Time Machine Diagnostics"
     echo "Generated: $(date)"
@@ -1196,6 +1281,13 @@ while [[ $# -gt 0 ]]; do
     # empty disk identifier and reached diskutil.
     --artifact-root)
       require_option_value "$1" "${2:-}"; REIMAGE_ARTIFACT_ROOT="$2"; shift 2 ;;
+    --context)
+      require_option_value "$1" "${2:-}"
+      case "$2" in
+        pre-image|post-image) ;;
+        *) err "--context must be 'pre-image' or 'post-image', got: $2"; usage >&2; exit 2 ;;
+      esac
+      CONTEXT="$2"; shift 2 ;;
     --time-machine-dest)
       require_option_value "$1" "${2:-}"; TIME_MACHINE_DEST="$2"; shift 2 ;;
     --external-data-root)
@@ -1237,6 +1329,8 @@ while [[ $# -gt 0 ]]; do
 done
 
 resolve_external_data_volume
+
+trap tm_finalize_or_abort EXIT
 
 case "$COMMAND" in
   # start/monitor/logs/diagnose talk to the running Time Machine service and

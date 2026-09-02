@@ -102,7 +102,7 @@ fi
 source "$RUNS_LIB"
 
 # The Manual Sign-Off rows leave the report. A report is regenerable -- this
-# script is rerun freely and `latest-reimage-checklist.txt` moves to the newest
+# script is rerun freely and `official/<phase>.txt` moves to the newest
 # one -- so a row answered inside it is lost the next time it runs. The sign-off
 # carries answers forward. See .internal/sign-offs.sh.
 SIGNOFF_LIB="$REPO_ROOT/.internal/sign-offs.sh"
@@ -256,7 +256,6 @@ if [[ -z "$OUTPUT_ROOT" ]]; then
   fi
 fi
 
-REPORT_FILE="$OUTPUT_ROOT/reimage-checklist-${TIMESTAMP}.md"
 if [[ -z "$OUTPUT_ROOT" ]]; then
   echo "ERROR: output root resolved to an empty path; refusing to write the checklist." >&2
   exit 2
@@ -267,6 +266,33 @@ if ! mkdir -p "$OUTPUT_ROOT" 2>/dev/null; then
   echo "ERROR: cannot create output root: $OUTPUT_ROOT" >&2
   exit 2
 fi
+
+# The capstone is run-indexed like everything else.
+#
+# It is regenerated until it is green and the newest one is the record, which is
+# exactly latest-wins -- so `official/<phase>.txt` answers "which checklist
+# closed this half of the workflow" without anyone maintaining a pointer file.
+# The two halves are separate lineages in separate categories, so a post-image
+# run can never displace the pre-image record of a machine that no longer exists.
+CHECKLIST_CONTEXT="pre-image"
+[[ "$PHASE" == "pre" ]] || CHECKLIST_CONTEXT="post-image"
+
+if ! artifact_run_begin "$OUTPUT_ROOT" "$CHECKLIST_CONTEXT"; then
+  echo "ERROR: could not stage a run under: $OUTPUT_ROOT" >&2
+  echo "If MANIFEST.md here predates the run index, rebuild with:" >&2
+  echo "  ./bin/reindex-artifact-runs.sh --category \"$OUTPUT_ROOT\"" >&2
+  exit 2
+fi
+REPORT_FILE="$ARTIFACT_RUN_DIR/reimage-checklist.md"
+
+# A checklist that died part way through has not checked what it claims to have
+# checked, and this is the artifact a whole phase is signed off against.
+cleanup_reimage_checklist_run() {
+  artifact_run_abort
+  return 0
+}
+trap cleanup_reimage_checklist_run EXIT
+trap 'exit 130' INT TERM
 
 # ---------------------------------------------------------------------------
 # Configured workspace roots (post only)
@@ -348,10 +374,10 @@ record_check() {
 # ---------------------------------------------------------------------------
 dir_nonempty() {
   local dir="$1"
-  # -L so a symlinked directory is followed. The toolkit snapshot publishes
-  # latest-docs and latest-pre-image-toolkit-snapshot as symlinks into the
-  # timestamped bundle; without -L, find refuses to descend and a populated
-  # snapshot reported "Empty or missing".
+  # -L so a symlinked directory is followed. The toolkit snapshot still publishes
+  # latest-docs as a symlink into the official run -- a stable path for readers
+  # that have nothing to resolve a pointer with -- and without -L, find refuses
+  # to descend and a populated snapshot reported "Empty or missing".
   [[ -d "$dir" ]] && [[ -n "$(find -L "$dir" -maxdepth 3 -type f 2>/dev/null | head -1)" ]]
 }
 
@@ -1035,10 +1061,17 @@ if [[ "$PHASE" == "pre" ]]; then
     record_check WARN "toolkit-snapshot/latest-docs" "Empty or missing"
   fi
 
-  if dir_nonempty "$TOOLKIT_SNAPSHOT_ROOT/latest-pre-image-toolkit-snapshot/config"; then
-    record_check PASS "toolkit-snapshot/latest .../config" "$(du -sh "$TOOLKIT_SNAPSHOT_ROOT/latest-pre-image-toolkit-snapshot/config/" 2>/dev/null | cut -f1)"
+  # Resolved through the run index rather than through a `latest-*` symlink.
+  # The symlink named whichever run wrote last, which for this category is not
+  # the same question: a --config-only refresh is its own lineage and must not
+  # displace the full snapshot this row is about.
+  TS_RUN="$(artifact_run_official "$TOOLKIT_SNAPSHOT_ROOT" "pre-image-toolkit-snapshot" 2>/dev/null || true)"
+  if [[ -n "$TS_RUN" ]] && dir_nonempty "$TOOLKIT_SNAPSHOT_ROOT/$TS_RUN/config"; then
+    record_check PASS "toolkit-snapshot config captured" "$(basename "$TS_RUN") — $(du -sh "$TOOLKIT_SNAPSHOT_ROOT/$TS_RUN/config/" 2>/dev/null | cut -f1)"
+  elif [[ -n "$TS_RUN" ]]; then
+    record_check WARN "toolkit-snapshot config captured" "$(basename "$TS_RUN") has no populated \`config/\`"
   else
-    record_check WARN "toolkit-snapshot/latest .../config" "Empty or missing"
+    record_check WARN "toolkit-snapshot config captured" "no official \`pre-image-toolkit-snapshot\` run under \`toolkit-snapshot/\` — repair with: ./bin/reindex-artifact-runs.sh --category \"\$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot\""
   fi
 
   REIMAGE_CONFIRMATION_DIR="$REIMAGE_ARTIFACT_ROOT/reimage-confirmation"
@@ -1741,17 +1774,24 @@ if [[ ! -s "$REPORT_FILE" ]]; then
   echo "ERROR: checklist report was not written: $REPORT_FILE" >&2
   exit 2
 fi
+
+trap - EXIT INT TERM
+if ! artifact_run_finalize "$OUTPUT_ROOT" "$PASS pass / $WARN warn / $FAIL fail / $SKIP skip"; then
+  echo "ERROR: the checklist was written but could not be indexed under: $OUTPUT_ROOT" >&2
+  echo "Repair the index with: ./bin/reindex-artifact-runs.sh --category \"$OUTPUT_ROOT\"" >&2
+  exit 2
+fi
+REPORT_FILE="$ARTIFACT_RUN_FINAL_DIR/reimage-checklist.md"
+
 declare_signoff_rows
 signoff_finalize "$([[ "$PHASE" == "pre" ]] && printf 'Phase 6' || printf 'Phase 14')" "$REPORT_FILE"
 
 printf "  Report written to:\n  %s\n\n" "$REPORT_FILE"
+printf "  Run:\n  %s\n\n" "$ARTIFACT_RUN_ID"
 printf "  Sign-off:\n  %s\n\n" "$SIGNOFF_FILE"
 
-# Latest-pointer convenience file
-printf '%s\n' "$REPORT_FILE" > "$OUTPUT_ROOT/latest-reimage-checklist.txt" 2>/dev/null || true
-
 if [[ "$OPEN_RESULT" == "true" ]]; then
-  open "$OUTPUT_ROOT" 2>/dev/null || true
+  open "$ARTIFACT_RUN_FINAL_DIR" 2>/dev/null || true
 fi
 
 # Exit non-zero if any failures

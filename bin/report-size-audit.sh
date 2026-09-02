@@ -114,6 +114,18 @@ ARTIFACT_CONFIG_REQUIRE_REIMAGE_ARTIFACT_ROOT=false
 # shellcheck source=../.internal/load-reimage-config.sh
 source "$CONFIG_LOADER"
 
+# The other category the shared run index was extracted from. Its bespoke copy
+# of the pattern is gone; the library owns staging, the manifest and the
+# pointer, and the size columns the shared schema has no room for move into
+# their own index beside it.
+RUNS_LIB="$REPO_ROOT/.internal/artifact-runs.sh"
+if [[ ! -f "$RUNS_LIB" ]]; then
+  echo "ERROR: shared run index not found: $RUNS_LIB" >&2
+  exit 2
+fi
+# shellcheck source=../.internal/artifact-runs.sh
+source "$RUNS_LIB"
+
 # Display-only fallback. The shared loader does not define a generic CONFIG
 # variable; show the effective artifact-config source when available.
 CONFIG="${CONFIG:-${ARTIFACT_CONFIG_SOURCE_DIR:-$CONFIG_LOADER}}"
@@ -347,39 +359,26 @@ list_dir_contents() {
 # interrupted run never lands in the manifest.
 SAVE_REPORT=false
 if [[ -n "$REPORT_DEST" ]]; then
-  mkdir -p "$REPORT_DEST/runs"
+  INDEX_PATH="$REPORT_DEST/size-audit-index.md"
 
-  MANIFEST_PATH="$REPORT_DEST/MANIFEST.md"
-  LATEST_RUN_PATH="$REPORT_DEST/latest-run.txt"
-  STAMP="$(date +%Y%m%d-%H%M%S)"
-  RUN_ID="${REPORT_CONTEXT}-${STAMP}"
-  RUN_RELATIVE="runs/$RUN_ID"
-  FINAL_RUN_DIR="$REPORT_DEST/$RUN_RELATIVE"
-  WORK_RUN_DIR="$REPORT_DEST/runs/.${RUN_ID}.incomplete"
-
-  if [[ -e "$FINAL_RUN_DIR" || -e "$WORK_RUN_DIR" ]]; then
-    echo "ERROR: size-audit run directory already exists for this timestamp: $FINAL_RUN_DIR" >&2
-    exit 1
-  fi
-
-  if [[ -e "$MANIFEST_PATH" ]] && ! grep -q '^# Size Audit Runs$' "$MANIFEST_PATH" 2>/dev/null; then
-    echo "ERROR: existing manifest is not the canonical append-only size-audit index:" >&2
-    echo "  $MANIFEST_PATH" >&2
-    echo "Remove that file before running the current size-audit workflow." >&2
+  if ! artifact_run_begin "$REPORT_DEST" "$REPORT_CONTEXT"; then
+    echo "ERROR: could not stage a run under: $REPORT_DEST" >&2
+    echo "If MANIFEST.md here is the pre-conversion '# Size Audit Runs' index," >&2
+    echo "rename it to size-audit-index.md, then rebuild with:" >&2
+    echo "  ./bin/reindex-artifact-runs.sh --category \"$REPORT_DEST\"" >&2
     exit 2
   fi
-
-  mkdir "$WORK_RUN_DIR"
+  RUN_ID="$ARTIFACT_RUN_ID"
+  RUN_RELATIVE="$ARTIFACT_RUN_RELATIVE"
 
   cleanup_incomplete_size_audit_run() {
-    if [[ -d "$WORK_RUN_DIR" ]]; then
-      rm -rf "$WORK_RUN_DIR"
-    fi
+    artifact_run_abort
+    return 0
   }
   trap cleanup_incomplete_size_audit_run EXIT
   trap 'exit 130' INT TERM
 
-  REPORT="$WORK_RUN_DIR/size-audit-report.txt"
+  REPORT="$ARTIFACT_RUN_DIR/size-audit-report.txt"
   # ANSI color codes are captured on purpose so the same severity colors read
   # the same way later. View with `less -R` or `cat` in a terminal; a raw
   # dump (e.g. `cat -v`) will show the escape codes literally instead.
@@ -394,13 +393,16 @@ fi
 finalize_size_audit_report() {
   [[ "$SAVE_REPORT" == true ]] || return 0
 
-  mv "$WORK_RUN_DIR" "$FINAL_RUN_DIR"
+  # Three byte totals the shared schema has no column for, kept in a domain
+  # index beside the run index rather than flattened into the Note.
+  if [[ ! -e "$INDEX_PATH" ]]; then
+    cat > "$INDEX_PATH" <<'EOF'
+# Size Audit Index
 
-  if [[ ! -e "$MANIFEST_PATH" ]]; then
-    cat > "$MANIFEST_PATH" <<'EOF'
-# Size Audit Runs
+Append-only, and specific to this category: the per-run byte totals the shared
+run index has no columns for. `MANIFEST.md` beside this file is the canonical
+run index; this one only adds what that schema cannot carry.
 
-This file is an append-only index of successful backup-size-audit runs.
 Reports keep their original ANSI color codes — use `less -R` or `cat` in a
 terminal to view them with the severity colors intact.
 
@@ -413,19 +415,24 @@ EOF
   printf '| %s | `%s` | `%s` | %s | %s | %s | [Open report](%s/size-audit-report.txt) |\n' \
     "$COMPLETED_AT" "$REPORT_CONTEXT" "$RUN_ID" \
     "$(bytes_to_human "${total_bytes:-0}")" "$(bytes_to_human "${skip_bytes:-0}")" "$(bytes_to_human "${od_total:-0}")" \
-    "$RUN_RELATIVE" >> "$MANIFEST_PATH"
+    "$RUN_RELATIVE" >> "$INDEX_PATH"
 
-  LATEST_TEMP="$REPORT_DEST/.latest-run.$$.tmp"
-  printf '%s\n' "$RUN_RELATIVE" > "$LATEST_TEMP"
-  mv "$LATEST_TEMP" "$LATEST_RUN_PATH"
+  local saved_dir="$ARTIFACT_RUN_FINAL_DIR"
+  if ! artifact_run_finalize "$REPORT_DEST" \
+       "$(bytes_to_human "${total_bytes:-0}") external / $(bytes_to_human "${skip_bytes:-0}") skipped"; then
+    echo "WARNING: the report was written but could not be indexed." >&2
+    echo "  Repair with: ./bin/reindex-artifact-runs.sh --category \"$REPORT_DEST\"" >&2
+  fi
+  SAVE_REPORT=false
 
   trap - EXIT INT TERM
 
   echo ""
   echo -e "${DIM}Report saved (ANSI color codes intact):${RST}"
-  echo -e "${DIM}  $FINAL_RUN_DIR/size-audit-report.txt${RST}"
-  echo -e "${DIM}Manifest:    $MANIFEST_PATH${RST}"
-  echo -e "${DIM}Latest-run:  $LATEST_RUN_PATH${RST}"
+  echo -e "${DIM}  $saved_dir/size-audit-report.txt${RST}"
+  echo -e "${DIM}Run index:    $REPORT_DEST/MANIFEST.md${RST}"
+  echo -e "${DIM}Domain index: $INDEX_PATH${RST}"
+  echo -e "${DIM}Official:     $REPORT_DEST/official/$REPORT_CONTEXT.txt${RST}"
 }
 
 # ── Header ────────────────────────────────────────────────────────────────────

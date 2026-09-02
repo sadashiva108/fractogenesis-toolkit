@@ -296,6 +296,19 @@ ALLOWED_EVIDENCE_PRED=(
 
 SECRETS_DIR="$REIMAGE_ARTIFACT_ROOT/secrets-encrypted"
 
+# This category is one of the two the shared run index was EXTRACTED FROM, so it
+# carried its own copy of the pattern: staging directory, manifest, latest-run
+# pointer. That copy is gone; the library owns it now, and the domain counts the
+# shared schema has no room for move into their own index beside it -- the same
+# treatment repo-audit-reports/ got.
+RUNS_LIB="$REPO_ROOT/.internal/artifact-runs.sh"
+if [[ ! -f "$RUNS_LIB" ]]; then
+  echo "ERROR: shared run index not found: $RUNS_LIB" >&2
+  exit 2
+fi
+# shellcheck source=../.internal/artifact-runs.sh
+source "$RUNS_LIB"
+
 # ---------------------------------------------------------------------------
 # Report capture (loose-secrets-reports)
 #
@@ -323,8 +336,8 @@ cleanup_loose_secrets_run() {
   if [[ -n "${FINDINGS_TSV:-}" && -f "$FINDINGS_TSV" ]]; then
     rm -f "$FINDINGS_TSV"
   fi
-  if [[ -n "${WORK_RUN_DIR:-}" && -d "$WORK_RUN_DIR" ]]; then
-    rm -rf "$WORK_RUN_DIR"
+  if [[ "${SAVE_REPORT:-false}" == true ]]; then
+    artifact_run_abort
   fi
   return 0
 }
@@ -339,35 +352,22 @@ if [[ -n "$REPORT_DEST" ]]; then
     exit 2
   fi
 
-  MANIFEST_PATH="$REPORT_DEST/MANIFEST.md"
-  LATEST_RUN_PATH="$REPORT_DEST/latest-run.txt"
-  STAMP="$(date +%Y%m%d-%H%M%S)"
-  RUN_ID="${REPORT_CONTEXT}-${STAMP}"
-  RUN_RELATIVE="runs/$RUN_ID"
-  FINAL_RUN_DIR="$REPORT_DEST/$RUN_RELATIVE"
-  WORK_RUN_DIR="$REPORT_DEST/runs/.${RUN_ID}.incomplete"
+  INDEX_PATH="$REPORT_DEST/loose-secrets-index.md"
 
-  if [[ -e "$FINAL_RUN_DIR" || -e "$WORK_RUN_DIR" ]]; then
-    echo "ERROR: loose-secrets run directory already exists for this timestamp: $FINAL_RUN_DIR" >&2
+  if ! artifact_run_begin "$REPORT_DEST" "$REPORT_CONTEXT"; then
+    echo "ERROR: could not stage a run under: $REPORT_DEST" >&2
+    echo "If MANIFEST.md here is the pre-conversion '# Loose Secret Checks' index," >&2
+    echo "rename it to loose-secrets-index.md, then rebuild with:" >&2
+    echo "  ./bin/reindex-artifact-runs.sh --category \"$REPORT_DEST\"" >&2
     exit 2
   fi
-
-  if [[ -e "$MANIFEST_PATH" ]] && ! grep -q '^# Loose Secret Checks$' "$MANIFEST_PATH" 2>/dev/null; then
-    echo "ERROR: existing manifest is not the canonical append-only loose-secrets index:" >&2
-    echo "  $MANIFEST_PATH" >&2
-    echo "Remove that file before running the current loose-secrets check." >&2
-    exit 2
-  fi
-
-  if ! mkdir "$WORK_RUN_DIR"; then
-    echo "ERROR: cannot create run directory: $WORK_RUN_DIR" >&2
-    exit 2
-  fi
+  RUN_ID="$ARTIFACT_RUN_ID"
+  RUN_RELATIVE="$ARTIFACT_RUN_RELATIVE"
 
   LEDGER_PATH="$REPORT_DEST/findings-ledger.tsv"
   OPEN_FINDINGS_PATH="$REPORT_DEST/open-findings.md"
 
-  REPORT="$WORK_RUN_DIR/loose-secrets-report.txt"
+  REPORT="$ARTIFACT_RUN_DIR/loose-secrets-report.txt"
   # ANSI color codes are captured on purpose so the same severity colors read
   # the same way later. View with `less -R` or `cat` in a terminal; a raw
   # dump (e.g. `cat -v`) will show the escape codes literally instead.
@@ -383,18 +383,21 @@ finalize_loose_secrets_report() {
 
   [[ "$SAVE_REPORT" == true ]] || return 0
 
-  if ! mv "$WORK_RUN_DIR" "$FINAL_RUN_DIR"; then
-    echo "WARNING: could not promote the run directory; this run was not indexed." >&2
-    echo "  $WORK_RUN_DIR -> $FINAL_RUN_DIR" >&2
-    return 0
-  fi
+  cp "$FINDINGS_TSV" "$ARTIFACT_RUN_DIR/findings.tsv"
 
-  if [[ ! -e "$MANIFEST_PATH" ]]; then
-    cat > "$MANIFEST_PATH" <<'EOF'
-# Loose Secret Checks
+  # The outside/inside counts are this category's own question and the shared
+  # schema has no column for them, so they go in a domain index beside the run
+  # index rather than being squeezed into the Note. Append-only, same as the
+  # manifest, and specific to loose-secret checks.
+  if [[ ! -e "$INDEX_PATH" ]]; then
+    cat > "$INDEX_PATH" <<'EOF'
+# Loose Secret Check Index
 
-This file is an append-only index of completed loose-plaintext-secret checks.
-A run with findings is still a completed run — the findings are the evidence.
+Append-only, and specific to this category: the per-run counts of
+credential-shaped files found outside and inside `secrets-encrypted/`, which the
+shared run index has no column for. `MANIFEST.md` beside this file is the
+canonical run index; this one only adds what that schema cannot carry.
+
 Reports keep their original ANSI color codes — use `less -R` or `cat` in a
 terminal to view them with the severity colors intact.
 
@@ -406,23 +409,25 @@ EOF
   printf '| %s | `%s` | `%s` | %s | %s | %s | [Open report](%s/loose-secrets-report.txt) |\n' \
     "$(date '+%Y-%m-%d %H:%M:%S')" "$REPORT_CONTEXT" "$RUN_ID" \
     "$outside_count" "$inside_count" "$result" \
-    "$RUN_RELATIVE" >> "$MANIFEST_PATH"
-
-  LATEST_TEMP="$REPORT_DEST/.latest-run.$$.tmp"
-  printf '%s\n' "$RUN_RELATIVE" > "$LATEST_TEMP"
-  mv "$LATEST_TEMP" "$LATEST_RUN_PATH"
-
-  cp "$FINDINGS_TSV" "$FINAL_RUN_DIR/findings.tsv"
+    "$RUN_RELATIVE" >> "$INDEX_PATH"
 
   update_findings_ledger
+
+  local saved_dir="$ARTIFACT_RUN_FINAL_DIR"
+  if ! artifact_run_finalize "$REPORT_DEST" "$outside_count outside / $inside_count inside / $result"; then
+    echo "WARNING: the report was written but could not be indexed." >&2
+    echo "  Repair with: ./bin/reindex-artifact-runs.sh --category \"$REPORT_DEST\"" >&2
+  fi
+  SAVE_REPORT=false
 
   trap - EXIT INT TERM
   cleanup_loose_secrets_run
 
   echo -e "${DIM}Report saved (ANSI color codes intact):${RST}"
-  echo -e "${DIM}  $FINAL_RUN_DIR/loose-secrets-report.txt${RST}"
-  echo -e "${DIM}Manifest:      $MANIFEST_PATH${RST}"
-  echo -e "${DIM}Latest-run:    $LATEST_RUN_PATH${RST}"
+  echo -e "${DIM}  $saved_dir/loose-secrets-report.txt${RST}"
+  echo -e "${DIM}Run index:     $REPORT_DEST/MANIFEST.md${RST}"
+  echo -e "${DIM}Domain index:  $INDEX_PATH${RST}"
+  echo -e "${DIM}Official:      $REPORT_DEST/official/$REPORT_CONTEXT.txt${RST}"
   echo -e "${DIM}Open findings: $OPEN_FINDINGS_PATH${RST}"
   echo ""
 }

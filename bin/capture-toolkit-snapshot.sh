@@ -84,6 +84,14 @@ ARTIFACT_CONFIG_REQUIRE_REIMAGE_ARTIFACT_ROOT=false
 # shellcheck source=../.internal/load-reimage-config.sh
 source "$CONFIG_LOADER"
 
+RUNS_LIB="$REPO_ROOT/.internal/artifact-runs.sh"
+if [[ ! -f "$RUNS_LIB" ]]; then
+  echo "ERROR: shared run index not found: $RUNS_LIB" >&2
+  exit 2
+fi
+# shellcheck source=../.internal/artifact-runs.sh
+source "$RUNS_LIB"
+
 # ── Colors and section helpers (shared house style) ─────────────────────────
 RED='\033[0;31m'; YEL='\033[1;33m'; GRN='\033[0;32m'; CYN='\033[0;36m'
 BLD='\033[1m'; DIM='\033[2m'; RST='\033[0m'
@@ -200,21 +208,47 @@ TOOLKIT_SNAPSHOT_ROOT="$REIMAGE_ARTIFACT_ROOT/toolkit-snapshot"
 if [[ "$CONFIG_ONLY" == true ]]; then
   RUN_KIND="config"
   RUN_KIND_TITLE="Config"
-  OUT="$TOOLKIT_SNAPSHOT_ROOT/${CONTEXT}-toolkit-config-$STAMP"
-  POINTER_FILE="$TOOLKIT_SNAPSHOT_ROOT/latest-${CONTEXT}-toolkit-config.txt"
-  ALIAS_NAME="latest-${CONTEXT}-toolkit-config"
+  RUN_CONTEXT="${CONTEXT}-toolkit-config"
 else
   RUN_KIND="snapshot"
   RUN_KIND_TITLE="Snapshot"
-  OUT="$TOOLKIT_SNAPSHOT_ROOT/${CONTEXT}-toolkit-snapshot-$STAMP"
-  POINTER_FILE="$TOOLKIT_SNAPSHOT_ROOT/latest-${CONTEXT}-toolkit-snapshot.txt"
-  ALIAS_NAME="latest-${CONTEXT}-toolkit-snapshot"
+  RUN_CONTEXT="${CONTEXT}-toolkit-snapshot"
 fi
+
+# Four lineages share this root: a full snapshot and a --config-only refresh,
+# each pre-image and post-image. Each keeps its own official pointer, so a
+# config refresh never displaces the full snapshot an operator is reading from.
+#
+# The latest-*.txt pointer files and the latest-<context>-toolkit-* symlinks are
+# gone: officialness is COMPUTED from the manifest now, and a second stored
+# pointer beside a computed one can only ever disagree with it. `latest-docs`
+# stays -- see refresh_latest_alias.
+if ! artifact_run_begin "$TOOLKIT_SNAPSHOT_ROOT" "$RUN_CONTEXT"; then
+  echo "ERROR: could not stage a run under: $TOOLKIT_SNAPSHOT_ROOT" >&2
+  exit 2
+fi
+OUT="$ARTIFACT_RUN_DIR"
+
+# A snapshot that dies part way through is not a snapshot. Discarding the
+# staging directory is what makes "every run under runs/ is complete" true.
+cleanup_toolkit_snapshot_run() {
+  artifact_run_abort
+  return 0
+}
+trap cleanup_toolkit_snapshot_run EXIT
+trap 'exit 130' INT TERM
 
 DOCS_DEST="$OUT/docs"
 CONFIG_DEST="$OUT/config"
 mkdir -p "$OUT/logs" "$CONFIG_DEST"
 
+# `latest-docs` is kept, and it is NOT a competing pointer.
+#
+# The run index answers "which run is official"; this answers "give me a stable
+# filesystem path to the runbooks". Restore-time readers follow it when the
+# toolkit itself is not yet on the machine and there is nothing available to
+# resolve a pointer with -- which is the situation Phase 8 onward is in. It is
+# derived from the official run rather than from whichever run wrote last.
 refresh_latest_alias() {
   local alias_name="$1"
   local target_rel="$2"
@@ -254,7 +288,7 @@ if [[ "$CONFIG_ONLY" != true ]]; then
 
   # One stable path for restore-time readers, so a bare Mac does not have to
   # resolve the newest timestamp by hand.
-  refresh_latest_alias "latest-docs" "$(basename "$OUT")/docs"
+  refresh_latest_alias "latest-docs" "$ARTIFACT_RUN_RELATIVE/docs"
   printf "  ${DIM}   latest-docs -> %s/docs${RST}\n" "$(basename "$OUT")"
 fi
 
@@ -360,9 +394,9 @@ Config-only refreshes, written when fragments change partway through a run:
 Each bundle is self-contained and is never rewritten by a later run. Latest
 pointers and convenience symlinks:
 
-- \`latest-<context>-toolkit-snapshot.txt\` and \`latest-<context>-toolkit-snapshot\`
-- \`latest-<context>-toolkit-config.txt\` and \`latest-<context>-toolkit-config\`
-- \`latest-docs\` -> the newest full snapshot's \`docs/\`, a stable path to read
+- \`official/<context>-toolkit-snapshot.txt\` and \`official/<context>-toolkit-config.txt\`
+  -- computed from \`MANIFEST.md\`, one pointer per lineage
+- \`latest-docs\` -> the official full snapshot's \`docs/\`, a stable path to read
   the runbooks from on a freshly reimaged Mac
 
 The timestamped bundle is the source of truth. The aliases exist for validation
@@ -401,13 +435,24 @@ This is not the encrypted secrets backup. Credential-bearing files belong in the
 consolidated secrets DMG workflow.
 EOF
 
-printf '%s\n' "$OUT" > "$POINTER_FILE"
-refresh_latest_alias "$ALIAS_NAME" "$(basename "$OUT")"
+# Promote and index before writing the alias: the alias has to name the final
+# run directory, not the .incomplete staging path it is called from.
+trap - EXIT INT TERM
+RESULT_SUMMARY="$RUN_KIND"
+if [[ "$CONFIG_ONLY" != true ]]; then
+  RESULT_SUMMARY="$RUN_KIND / $DOCS_COUNT doc file(s)"
+fi
+if ! artifact_run_finalize "$TOOLKIT_SNAPSHOT_ROOT" "$RESULT_SUMMARY"; then
+  echo "ERROR: the bundle was written but could not be indexed under: $TOOLKIT_SNAPSHOT_ROOT" >&2
+  echo "Repair the index with: ./bin/reindex-artifact-runs.sh --category \"$TOOLKIT_SNAPSHOT_ROOT\"" >&2
+  exit 2
+fi
+OUT="$ARTIFACT_RUN_FINAL_DIR"
 
 cat > "$OUT/logs/latest-aliases.txt" <<EOF
 Bundle:         $OUT
-Pointer file:   $POINTER_FILE
-Alias:          $TOOLKIT_SNAPSHOT_ROOT/$ALIAS_NAME
+Run:            $ARTIFACT_RUN_ID
+Official:       $TOOLKIT_SNAPSHOT_ROOT/official/$RUN_CONTEXT.txt
 Docs alias:     $TOOLKIT_SNAPSHOT_ROOT/latest-docs
 EOF
 
@@ -424,7 +469,7 @@ if [[ "$CONFIG_ONLY" != true ]]; then
   printf "  %-22s  %s file(s)\n" "Docs captured:" "$DOCS_COUNT"
 fi
 printf "  %-22s  %s / %s\n" "Config origin:" "$ARTIFACT_CONFIG_ORIGIN" "$STAGED_CERTS_ORIGIN"
-printf "  %-22s  %s\n" "Latest pointer:" "$POINTER_FILE"
+printf "  %-22s  %s\n" "Run:" "$ARTIFACT_RUN_ID"
 echo ""
 if [[ "$ARTIFACT_CONFIG_ORIGIN" == "committed-template" || "$STAGED_CERTS_ORIGIN" == "committed-template" ]]; then
   echo -e "  ${RED}Config fell back to committed templates — this run did not use this Mac's fragments.${RST}"

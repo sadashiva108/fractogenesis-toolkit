@@ -87,7 +87,23 @@ ARTIFACT_CONFIG_REQUIRE_REIMAGE_ARTIFACT_ROOT=false
 # computed. This is the one place the validator aborts instead of recording a
 # row -- same form as reimage-checklist.sh.
 # shellcheck source=../.internal/load-reimage-config.sh
-if ! source "$CONFIG_LOADER"; then
+if ! source "$CONFIG_LOADER"
+
+RUNS_LIB="$REPO_ROOT/.internal/artifact-runs.sh"
+if [[ ! -f "$RUNS_LIB" ]]; then
+  echo "ERROR: shared run index not found: $RUNS_LIB" >&2
+  exit 2
+fi
+# shellcheck source=../.internal/artifact-runs.sh
+source "$RUNS_LIB"
+
+SIGNOFF_LIB="$REPO_ROOT/.internal/sign-offs.sh"
+if [[ ! -f "$SIGNOFF_LIB" ]]; then
+  echo "ERROR: shared sign-off helper not found: $SIGNOFF_LIB" >&2
+  exit 2
+fi
+# shellcheck source=../.internal/sign-offs.sh
+source "$SIGNOFF_LIB"; then
   echo "ERROR: shared reimage configuration could not be loaded." >&2
   exit 2
 fi
@@ -194,10 +210,16 @@ if [[ -z "$OUTPUT_ROOT" ]]; then
     echo "Set REIMAGE_ARTIFACT_ROOT or OFFICE_WATCH (or pass --artifact-root, --office-watch-dir, or --output-root)." >&2
     exit 2
   fi
+  # The category root, not a `checklists/` subdirectory. What this writes is an
+  # evidence bundle -- system state, process transitions, watcher output, a
+  # command log -- with a rendered report on top that is a VIEW of the bundle
+  # rather than the artifact. Those are runs, and they belong beside the other
+  # runs of this category. `checklists/` is reserved for the two capstone lists
+  # that close a whole pre-image or post-image half.
   if [[ -n "$REIMAGE_ARTIFACT_ROOT" ]]; then
-    OUTPUT_ROOT="$REIMAGE_ARTIFACT_ROOT/office-stability/checklists"
+    OUTPUT_ROOT="$REIMAGE_ARTIFACT_ROOT/office-stability"
   else
-    OUTPUT_ROOT="$OFFICE_WATCH_DIR/checklists"
+    OUTPUT_ROOT="$OFFICE_WATCH_DIR"
   fi
 fi
 
@@ -208,17 +230,28 @@ if [[ "$PHASE" == "pre-reimage" ]]; then
   REPORT_FILENAME="pre-image-office-stability-checklist.md"
   REPORT_TITLE="Pre-Image Office Stability Checklist Report"
   README_TITLE="Pre-Image Office Stability Checklist Bundle"
-  LATEST_POINTER="$OUTPUT_ROOT/latest-pre-image-office-stability-checklist.txt"
+  RUN_CONTEXT="pre-image-office-stability-checks"
 else
   BANNER_TITLE="Phase 13E -- Office Stability Post-Image Checklist"
   RUN_SLUG="post-image-office-stability-checklist"
   REPORT_FILENAME="post-image-office-stability-checklist.md"
   REPORT_TITLE="Post-Image Office Stability Checklist Report"
   README_TITLE="Post-Image Office Stability Checklist Bundle"
-  LATEST_POINTER="$OUTPUT_ROOT/latest-post-image-office-stability-checklist.txt"
+  RUN_CONTEXT="post-image-office-stability-checks"
 fi
 
-OUT="$OUTPUT_ROOT/$RUN_SLUG-$TS"
+if ! artifact_run_begin "$OUTPUT_ROOT" "$RUN_CONTEXT"; then
+  echo "ERROR: could not stage a run under: $OUTPUT_ROOT" >&2
+  exit 2
+fi
+OUT="$ARTIFACT_RUN_DIR"
+
+cleanup_office_checks_run() {
+  artifact_run_abort
+  return 0
+}
+trap cleanup_office_checks_run EXIT
+trap 'exit 130' INT TERM
 LOG_DIR="$OUT/logs"
 WATCHER_DIR="$OUT/watcher"
 PROCESS_DIR="$OUT/processes"
@@ -652,18 +685,28 @@ else
   record_check SKIP "No active scripts copied to office-stability" "Skipped; office backup dir missing"
 fi
 
-record_section "Manual Sign-Off Needed"
+# The rows a person answers leave the report.
+#
+# They used to be `record_check WARN` rows inside the automated table, which made
+# them answered rows wearing an automated verdict: they came back as WARN on
+# every run however many times they had been answered, because a rerun writes a
+# fresh report and nothing carried an answer forward. The sign-off carries them,
+# and records which run each was answered against.
+if ! signoff_begin "$OUTPUT_ROOT/sign-offs" "$RUN_CONTEXT" "$ARTIFACT_RUN_ID"; then
+  echo "ERROR: cannot open a sign-off under: $OUTPUT_ROOT/sign-offs" >&2
+  exit 2
+fi
 
 if [[ "$PHASE" == "pre-reimage" ]]; then
-  record_check WARN "IT escalation summary reviewed" "Manual: confirm Suggested IT Ticket still matches evidence"
-  record_check WARN "Preimage conclusion recorded" "Manual: record current conclusion in capture-office-stability.md or work log"
-  record_check WARN "Decision made about reopening Office" "Manual: do not reopen immediately after closure if evidence is needed"
-  record_check WARN "Evidence bundle ready to send to IT" "Manual: confirm ZIP and summaries are ready to share"
+  signoff_row "IT escalation summary reviewed" "Confirm the Suggested IT Ticket still matches the evidence in this bundle."
+  signoff_row "Pre-image conclusion recorded" "Record the current conclusion in capture-office-stability.md or the work log."
+  signoff_row "Decision made about reopening Office" "Do not reopen immediately after closure if the evidence window is still needed."
+  signoff_row "Evidence bundle ready to send to IT" "Confirm the ZIP and summaries are ready to share."
 else
-  record_check WARN "Managed Office install state reviewed" "Manual: confirm Office came only from the intended managed channel and settled before testing"
-  record_check WARN "Post-image conclusion recorded" "Manual: record whether the original symptom is gone, unchanged, or still under investigation"
-  record_check WARN "Normal-use observation completed" "Manual: confirm whether Outlook and OneNote remain open during normal use"
-  record_check WARN "Evidence bundle ready for IT if symptom recurred" "Manual: confirm summary, baseline ZIPs, and signal files are ready to share"
+  signoff_row "Managed Office install state reviewed" "Confirm Office came only from the intended managed channel and settled before testing."
+  signoff_row "Post-image conclusion recorded" "Record whether the original symptom is gone, unchanged, or still under investigation."
+  signoff_row "Normal-use observation completed" "Confirm whether Outlook and OneNote remain open during normal use."
+  signoff_row "Evidence bundle ready for IT if symptom recurred" "Confirm the summary, baseline ZIPs, and signal files are ready to share."
 fi
 
 cat > "$README" <<EOF_README
@@ -793,8 +836,15 @@ EOF_TEMPLATE
   printf "\n*Report generated by \`%s\` at %s*\n" "$SCRIPT_NAME" "$TS"
 } > "$REPORT_FILE"
 
-mkdir -p "$OUTPUT_ROOT" 2>/dev/null || true
-printf '%s\n' "$OUT" > "$LATEST_POINTER" 2>/dev/null || true
+trap - EXIT INT TERM
+if ! artifact_run_finalize "$OUTPUT_ROOT" "$PASS pass / $WARN warn / $FAIL fail / $SKIP skip"; then
+  echo "ERROR: the bundle was written but could not be indexed under: $OUTPUT_ROOT" >&2
+  echo "Repair the index with: ./bin/reindex-artifact-runs.sh --category \"$OUTPUT_ROOT\"" >&2
+  exit 2
+fi
+OUT="$ARTIFACT_RUN_FINAL_DIR"
+REPORT_FILE="$OUT/$REPORT_FILENAME"
+signoff_finalize "$PHASE" "$REPORT_FILE"
 
 printf "\n"
 printf "%b+--------------------------------------------------------------+%b\n" "$BOLD" "$RESET"
@@ -807,6 +857,7 @@ printf "  %bFAIL%b : %d\n" "$RED" "$RESET" "$FAIL"
 printf "  SKIP : %d\n" "$SKIP"
 printf "\n"
 printf "  Report written to:\n  %s\n\n" "$REPORT_FILE"
+printf "  Rows you answer:\n  %s\n\n" "$SIGNOFF_FILE"
 
 if [[ "$OPEN_RESULT" == "true" ]]; then
   open "$OUT" 2>/dev/null || true
