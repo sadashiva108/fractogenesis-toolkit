@@ -213,7 +213,6 @@ checks/
 Related `reimaged-system/` paths created or reused by the script:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/reimaged-system/time-machine/
 $REIMAGE_ARTIFACT_ROOT/reimaged-system/restarts/
 $REIMAGE_ARTIFACT_ROOT/reimaged-system/sign-offs/
 $REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/
@@ -472,7 +471,6 @@ $REIMAGE_ARTIFACT_ROOT/reimaged-system/checklists/latest-reimage-checklist.txt
 Related `reimaged-system/` directories the script ensures exist:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/reimaged-system/time-machine/
 $REIMAGE_ARTIFACT_ROOT/reimaged-system/restarts/
 $REIMAGE_ARTIFACT_ROOT/reimaged-system/sign-offs/
 $REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/

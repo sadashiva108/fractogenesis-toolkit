@@ -692,13 +692,19 @@ if ! mkdir -p "$OUT/logs" "$OUT/raw"; then
 fi
 
 # Pre-create the sibling reimaged-system subfolders when writing to the
-# artifact tree so later phases (restore notes, restart notes, Time Machine
-# planning) have somewhere to land without extra shell work.
+# artifact tree so later phases (Phase 14's checklist, restart notes, restore
+# notes) have somewhere to land without extra shell work.
+#
+# `reimaged-system/time-machine/` is deliberately NOT among them. Post-image
+# Time Machine evidence goes in the root-level `time-machine/` category
+# alongside the pre-image runs, the same way every `capture-` category holds
+# both phases -- which is what makes the phase discriminator in its contexts
+# necessary. A second, always-empty directory here only invited the question of
+# which one Phase 16 writes to.
 if [[ -n "${REIMAGE_ARTIFACT_ROOT:-}" && -d "${REIMAGE_ARTIFACT_ROOT:-}" \
       && "$OUTPUT_ROOT" == "$REIMAGE_ARTIFACT_ROOT/reimaged-system" ]]; then
   mkdir -p \
     "$REIMAGE_ARTIFACT_ROOT/reimaged-system/checklists" \
-    "$REIMAGE_ARTIFACT_ROOT/reimaged-system/time-machine" \
     "$REIMAGE_ARTIFACT_ROOT/reimaged-system/restarts" \
     "$REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes" 2>/dev/null || true
 fi

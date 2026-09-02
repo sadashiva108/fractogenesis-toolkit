@@ -30,7 +30,9 @@ Consume the pre-image repository audit produced by Phase 2A to re-clone the trac
     - [[#Step 6 — Restore Per-Repo Gitignored Secrets from the DMG|Step 6 — Restore Per-Repo Gitignored Secrets from the DMG]]
     - [[#Step 7 — Reconcile Rescue Branches|Step 7 — Reconcile Rescue Branches]]
     - [[#Step 8 — Reconcile Stashes and Tracked Changes|Step 8 — Reconcile Stashes and Tracked Changes]]
-    - [[#Step 9 — Rerun the Status Report and Close the Exit Criteria|Step 9 — Rerun the Status Report and Close the Exit Criteria]]
+    - [[#Step 9 — Rerun the Status Report|Step 9 — Rerun the Status Report]]
+    - [[#Step 10 — Record the After-State and Delta|Step 10 — Record the After-State and Delta]]
+    - [[#Step 11 — Close Out the Exit Criteria|Step 11 — Close Out the Exit Criteria]]
 - [[#Decisions|Decisions]]
 - [[#Troubleshooting|Troubleshooting]]
 - [[#Supplemental Reference|Supplemental Reference]]
@@ -66,7 +68,7 @@ Restore the *content* side of the Git story: get every repository that existed o
 | This runbook owns | Owned elsewhere |
 |---|---|
 | reading the pre-image `repo-audit-reports/runs/pre-image-*/repos.tsv` inventory and classifying each repo (present / needs clone / ignored bundle available / carry-forward pending) | the pre-image push of rescue branches, stash preservation, and the reviewed kept ignored files — `backup-repos` (Phase 2A) |
-| emitting `git clone` commands that route through the correct dual-identity host alias | dual-identity `~/.gitconfig`, `~/.ssh/config`, and the clone command template itself — `restore-git` (Phase 11A) |
+| routing each repository to the root that matches its remote host, and emitting the `git clone` command for it | dual-identity `~/.gitconfig`, `~/.ssh/config`, and the SSH routing hosts the clones authenticate through — `restore-git` (Phase 11A) |
 | rsyncing `$REIMAGE_ARTIFACT_ROOT/staged-ignored-files/live/<label>/` back into each cloned working tree | the encrypted secret ignored files under `secrets-encrypted/repos-gitignored/`, which come back with the DMG — `restore-access` (Phase 10B) |
 | the timestamped restore-status bundle under `repo-audit-reports/runs/post-image-restore-*/`, its exit-criteria table, and the Phase 11B sign-off | IDE-specific repo state such as IntelliJ project files and the VS Code workspace — `restore-intellij` and `restore-apps` (Phase 12) |
 
@@ -82,12 +84,12 @@ Read this before running anything. The phase is script-driven for the loop (repo
 
 `bin/restore-repos.sh` opens `repo-audit-reports/official/pre-image.txt`, walks the `repos.tsv` inside that pre-image run, and for each row it computes four things:
 
-1. whether the repo is currently on disk at the pre-image path;
-2. which SSH host alias to use for cloning (personal alias if the pre-image path was under `$GIT_PERSONAL_REPO_ROOT`, work alias otherwise);
+1. which root the repo belongs in, decided by its `origin` remote's **host**: `$GIT_PERSONAL_GITHUB_HOST` with an owner matching `$GIT_PERSONAL_GITHUB_OWNER` routes personal, `$GIT_WORK_GITHUB_HOST` routes work, and anything else routes work with the reason printed above its clone command;
+2. whether the repo is already on disk at that routed destination — `$GIT_WORK_REPO_ROOT/<label>` or `$GIT_PERSONAL_REPO_ROOT/<label>` — which is what decides whether a clone command is emitted for it;
 3. whether a `staged-ignored-files/live/<label>/` directory exists for this repo (kept ignored files ready to rsync back);
 4. how many carry-forward rows the pre-image audit recorded (local-only commits + stashes + tracked changes).
 
-The script writes those results into a `restore-status.md` report plus a machine-readable `raw/status.tsv`, and it writes two ready-to-run helper scripts — `clone-commands.sh` and `rsync-ignored-files.sh` — that you review, edit if needed, and run selectively. It never autonomously clones a repository, because a stale pre-image inventory would silently repopulate repos you no longer want.
+The script writes those results into a `restore-status.md` report plus a machine-readable `raw/status.tsv`, and it writes three ready-to-run helper scripts — `clone-commands.sh`, `rsync-ignored-files.sh` and `rsync-repos-gitignored.sh` — that you review, edit if needed, and run selectively. Every destination in all three is the routed clone path, and both rsync scripts guard on it: a block whose repository is not cloned yet skips itself rather than letting `rsync -a` create the directory and drop the bundle outside any repository. It never autonomously clones a repository, because a stale pre-image inventory would silently repopulate repos you no longer want.
 
 ### Carry-Forward Model
 
@@ -153,9 +155,10 @@ Each `post-image-restore-*` run is self-contained. Filenames inside are stable a
 ```text
 post-image-restore-YYYYMMDD-HHMMSS/
 ├── restore-status.md            # human-readable report with the exit-criteria table
-├── clone-commands.sh            # one `git clone` per repo not yet on disk
-├── rsync-ignored-files.sh       # one `rsync` per repo with staged ignored files
-├── MANIFEST.txt
+├── clone-commands.sh            # one `git clone` per repo not yet at its routed destination
+├── rsync-ignored-files.sh       # one guarded `rsync` per repo with staged ignored files
+├── rsync-repos-gitignored.sh    # one guarded `rsync` per repo for the gitignored secrets in the DMG
+├── MANIFEST.txt                 # per-run file list; the category run index is `repo-audit-reports/MANIFEST.md`
 └── raw/
     ├── status.tsv                     # per-repo classification (machine-readable)
     ├── repos-input.tsv                # copy of the pre-image repos.tsv
@@ -166,17 +169,17 @@ post-image-restore-YYYYMMDD-HHMMSS/
 
 ### Environment Variables
 
-The `reimage.env` values this runbook depends on. `REIMAGE_ARTIFACT_ROOT` is resolved during `prepare-artifact-root.md`, the repository roots during [[backup-repos|backup-repos.md]] Step 1, and the host aliases during [[restore-git|restore-git.md]] Step 0c. `GIT_PERSONAL_GITHUB_OWNER` is written **by this runbook**, in Step 0c. Who owns which key, across every phase: [[references/environment-variable-reference|Environment Variable Reference]].
+The `reimage.env` values this runbook depends on. `REIMAGE_ARTIFACT_ROOT` is resolved during `prepare-artifact-root.md`, the repository roots during [[backup-repos|backup-repos.md]] Step 1, and the SSH routing hosts during [[restore-git|restore-git.md]] Step 0c. `GIT_PERSONAL_GITHUB_OWNER` is written **by this runbook**, in Step 0c. Who owns which key, across every phase: [[references/environment-variable-reference|Environment Variable Reference]].
 
 | Variable | Meaning |
 |---|---|
 | `FRACTOGENESIS_HOME` | Toolkit root; where `reimage.env` lives. Until this phase it points at the `curl` or jump-drive install from Phase 8, not a clone — see [[#Step 4 — Repoint at the Cloned Toolkit|Step 4 — Repoint at the Cloned Toolkit]]. |
 | `REIMAGE_ARTIFACT_ROOT` | Artifact root where Phase 2A wrote the pre-image audit and where this runbook writes its status bundle. Must be mounted; the script fails fast if it is not. |
-| `GIT_WORK_REPO_ROOT` | Directory holding work repos. Repos whose pre-image path was not under `$GIT_PERSONAL_REPO_ROOT` clone into here. |
-| `GIT_PERSONAL_REPO_ROOT` | Directory holding personal repos. Repos whose pre-image path was under here clone through the personal SSH host alias. |
-| `GIT_WORK_GITHUB_HOST` | SSH host alias for work clones. Emitted in the clone commands. |
-| `GIT_PERSONAL_GITHUB_HOST` | SSH host alias for personal clones. Rewrites `git@github.com:` in the pre-image remote URL when routing to personal. |
-| `GIT_PERSONAL_GITHUB_OWNER` | Optional. The GitHub account that owns your personal repositories. `bin/restore-repos.sh` rewrites a clone URL to `$GIT_PERSONAL_GITHUB_HOST` **only** when the URL's owner matches this, so a work-org repository sitting under the personal root is never handed a personal SSH alias. Blank means never rewrite — every candidate is flagged for review in Step 2 instead. Written **by this runbook**, in Step 0c; it is not in `reimage.env.example` and no earlier phase sets it. |
+| `GIT_WORK_REPO_ROOT` | Directory holding work repos. A repository whose `origin` host is `$GIT_WORK_GITHUB_HOST` clones into here, and so does one whose host matches neither routing host — with the reason printed above its clone command. |
+| `GIT_PERSONAL_REPO_ROOT` | Directory holding personal repos. A repository clones into here only when its `origin` host is `$GIT_PERSONAL_GITHUB_HOST` *and* its owner matches `$GIT_PERSONAL_GITHUB_OWNER`. The pre-image directory is not consulted: it says nothing about who owns the remote, and the root a repository sits under is what `includeIf` uses to decide its commit identity. |
+| `GIT_WORK_GITHUB_HOST` | Host of the work Git server. A repository whose `origin` URL names this host routes to `$GIT_WORK_REPO_ROOT`. |
+| `GIT_PERSONAL_GITHUB_HOST` | The personal **SSH routing host** — the `Host` name written in `~/.ssh/config` by [[restore-git|restore-git.md]] Step 3 and typed in personal clone URLs. It is a real server name under the direct scheme and an alias only when both accounts live on one server, which is the case `GIT_PERSONAL_GITHUB_HOSTNAME` exists for. This runbook rewrites a URL onto it only when all three hold: the URL is `git@github.com:`, this value is *not* `github.com`, and the owner matches `$GIT_PERSONAL_GITHUB_OWNER`. Set to `github.com` it routes directly and no rewrite can fire — which is the scheme working, not a fault. |
+| `GIT_PERSONAL_GITHUB_OWNER` | Optional. The GitHub account that owns your personal repositories. `bin/restore-repos.sh` rewrites a clone URL onto `$GIT_PERSONAL_GITHUB_HOST` **only** when the URL's owner matches this, so a work-org repository is never routed onto the personal SSH routing host and handed the personal key. Blank means never rewrite — every candidate is flagged for review in Step 2 instead. Written **by this runbook**, in Step 0c; it is not in `reimage.env.example` and no earlier phase sets it. |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -231,14 +234,16 @@ drift. The last three read the pre-image audit itself, and they exist because
 `bin/restore-repos.sh` is read-only and always produces a status bundle — a run
 against an empty or damaged audit looks exactly like a clean one.
 
-**Audit remote URLs are URLs** is the row to read twice. `capture-repo-audit.sh`
-builds that column from `git remote -v`, whose output is *itself* tab-separated,
-and writes it into a TSV unsquashed — so the URL can land in a later column and
-leave the remote *name* where the URL belongs. `restore-repos.sh` feeds that
-field to `rewrite_remote_for_host`, so a damaged column surfaces as clone
-commands that are malformed rather than as an error. When this row FAILs, read
-the real URLs out of `repo-audit-summary.txt` before trusting anything in
-`clone-commands.sh`.
+**Audit remote URLs are URLs** is the row to read twice, and it exists because
+this exact damage happened. `capture-repo-audit.sh` built that column from
+`git remote -v`, whose output is *itself* tab-separated, and wrote it into a TSV
+unsquashed — so the URL landed in a later column and left the remote *name* where
+the URL belongs. `restore-repos.sh` feeds that field to `extract_remote_url`, so
+a damaged column surfaces as clone commands that are missing or malformed rather
+than as an error. The capture is fixed forward, but a run captured before the fix
+carries the damage forever. When this row FAILs, read the real URLs out of that
+run's `repo-audit-summary.txt`, which records `git remote -v` verbatim, before
+trusting anything in `clone-commands.sh`.
 
 The two WARN rows name repositories that need a decision rather than a fix. A
 repository with **no remote** cannot be cloned by anything — its only copy is
@@ -277,14 +282,15 @@ against the after-state is then literally the list of what this phase restored.
 > `restore-git` Step 7 records as restored content.
 
 **0c — record the personal-repo owner.** `bin/restore-repos.sh` rewrites a clone
-URL to `$GIT_PERSONAL_GITHUB_HOST` only when the URL's owner matches
-`GIT_PERSONAL_GITHUB_OWNER`. That match is what keeps a work-org repository
-sitting under the personal root from being handed a personal SSH alias. It is the
-only `reimage.env` key this phase owns, no earlier phase sets it, and Step 1 is
-the first thing that reads it.
+URL onto `$GIT_PERSONAL_GITHUB_OWNER`'s SSH routing host only when the URL's
+owner matches `GIT_PERSONAL_GITHUB_OWNER`. That match is what keeps a work-org
+repository from being routed onto the personal routing host and offered the
+personal key. It is the only `reimage.env` key this phase owns, no earlier phase
+sets it, and Step 1 is the first thing that reads it.
 
-Blank is a valid answer and means *never rewrite*: every repository that would
-have routed personal is flagged for review in Step 2 instead. Skip this on a Mac
+Blank is a valid answer and means *never rewrite*: a repository still routes on
+its remote host, but every one that routes personal on the host alone carries a
+`# REVIEW:` line saying the owner was not checked, for you to read in Step 2. Skip this on a Mac
 with no personal identity — 0a's *Clone roots set and distinct* row has already
 established there is no personal root, and an owner without a root routes
 nothing.
@@ -373,8 +379,8 @@ For each block, decide:
 
 - **Keep** — the repo is still relevant. Leave the command as-is.
 - **Skip** — the repo is archived or no longer needed. Delete the block or comment it out.
-- **Redirect** — the pre-image parent directory no longer applies. Change the `cd` target to a new directory.
-- **Reroute** — the URL uses the wrong host alias (rare — the script rewrites `git@github.com:` when routing to personal). Fix by hand.
+- **Redirect** — the routed root is not where you want this one. Change the `cd` target, and move the block if it should sit under the other root.
+- **Reroute** — the block carries a `# REVIEW:` line saying the remote host matched neither routing host, or matched the personal routing host under somebody else's owner. Decide the root by hand and move the block.
 
 > [!warning] Pitfall
 > The script only rewrites `git@github.com:` when routing to the personal host. It leaves HTTPS URLs and non-github remotes alone, so a pre-image HTTPS clone URL produces a clone that authenticates from the OS keychain rather than your restored SSH key.
@@ -396,8 +402,7 @@ bash "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/$LATEST_RUN/clone-commands.sh"
 
 `clone-commands.sh` is written with `set -euo pipefail`, so the first `git clone` failure stops the batch and the clones above it stay done. Fix that repo — a stale remote URL is the usual cause — then delete the command blocks that already succeeded and rerun the tail.
 
-> [!bug] Troubleshooting
-> If the batch stops because a clone target directory already exists, see [[#`clone-commands.sh` stops at the first repo because the target directory already exists|`clone-commands.sh` stops at the first repo because the target directory already exists]].
+A repository already present at its clone destination is not in the batch at all: Step 1 asks whether `$GIT_WORK_REPO_ROOT/<label>` or `$GIT_PERSONAL_REPO_ROOT/<label>` already contains a `.git` directory, and emits a clone command only when it does not. So a rerun after a partial batch emits only what is still missing.
 
 **Cloning one repository by hand.** The batch is the normal path, but a single repo clones directly — proving the identity plumbing end to end, or picking up one you need before the rest are ready. Naming the destination rather than `cd`-ing into the root keeps the shell where it started, so a directory-scoped `direnv` does not unload `reimage.env` mid-block:
 
@@ -634,7 +639,7 @@ Note the intentional-discard cases in the restore notes.
 
 ---
 
-### Step 9 — Rerun the Status Report and Close the Exit Criteria
+### Step 9 — Rerun the Status Report
 
 Run the script one more time to write a fresh bundle that reflects the post-clone reality:
 
@@ -642,20 +647,78 @@ Run the script one more time to write a fresh bundle that reflects the post-clon
 ./bin/restore-repos.sh
 ```
 
-Open the new report and confirm the exit criteria:
+The rerun is what turns the emitted actions back into evidence. `Needs clone` counts repositories still missing from their routed root, and `Ignored bundles applied` against `Ignored bundles available` says whether the reviewed kept files landed. Both are prefilled into the report's own Exit Criteria table with a heuristic verdict, so read that table rather than keeping a second copy here — the boundary itself is recorded in Step 11, and a table maintained in two places is how the two come to disagree.
 
-| Check | Verification mode | How to verify | Expected |
-|---|---|---|---|
-| Pre-image inventory read | Command | `repos.tsv` produced status rows | PASS |
-| Every tracked repo present on disk | Mixed | rerun shows `Needs clone: 0` | PASS |
-| Every staged ignored bundle applied | Mixed | rerun shows `Ignored bundles applied` equals `Ignored bundles available` | PASS |
-| Rescue branches accounted for | Manual | rescue-branch reconciliation outcome recorded per repo | Every repo with carry-forward > 0 closed as merged / cherry-picked / intentionally discarded |
-| Personal repos route via personal SSH host alias | Manual | `git remote -v` in each personal clone | Remote uses `$GIT_PERSONAL_GITHUB_HOST` |
+```bash
+LATEST_RUN="$(cat "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/official/post-image-restore.txt")"
+open "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/$LATEST_RUN/restore-status.md"
+```
+
+The rows a person answers are not in the report. They live in the sign-off beside `runs/`, which carries an answer forward and records the run it was answered against — a report is replaced by the next run, an answer written into one is not.
 
 > [!bug] Troubleshooting
-> If `git remote -v` in a personal clone prints the default `github.com` host, see [[#A repo cloned successfully but `git remote -v` shows the default `github.com` for a personal repo|A repo cloned successfully but `git remote -v` shows the default `github.com` for a personal repo]].
+> If a clone's `git remote -v` does not show the transport you expected, see [[#A clone kept the pre-image HTTPS remote where you expected SSH|A clone kept the pre-image HTTPS remote where you expected SSH]].
 
-Once every row is closed, Phase 11B is complete and the workflow moves on to Phase 12.
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
+### Step 10 — Record the After-State and Delta
+
+Step 0b recorded the clone roots before this phase filled them. This step records them as they now stand, and joins the two.
+
+There is no `compare-restored-state.sh` pass for this phase. The comparison this runbook needs is against the pre-image repository audit, not against a system inventory, and Step 9 has just made it — `restore-status.md` *is* the comparison.
+
+**1. Capture the after-state.** The pair to Step 0b — same script, same runbook, the other point:
+
+```bash
+./bin/record-restore-state.sh --runbook restore-repos --point after --dry-run
+./bin/record-restore-state.sh --runbook restore-repos --point after
+```
+
+`after` is latest-wins, so re-running it after a late clone replaces the earlier capture rather than being ignored — the opposite of `before`, which is first-wins because the earliest observation is the one that caught the empty roots.
+
+**2. Join the two recordings.** `delta` is a third point on the same script. It walks nothing — it joins the official before-state and after-state and records what this phase changed on disk:
+
+```bash
+./bin/record-restore-state.sh --runbook restore-repos --point delta --dry-run
+./bin/record-restore-state.sh --runbook restore-repos --point delta
+```
+
+Step 0b promised this: the before-state is two empty roots, so the delta against the after-state is literally the list of repositories this phase restored. Expect every clone as **added**. **removed** is the verdict to read twice — this phase restores, and should not be deleting anything from either root.
+
+It is its own point rather than a side effect of `--point after` because a run directory should hold one kind of thing, and re-running it is how you rebuild the delta when either side is re-recorded.
+
+[[#Table of Contents|⬆ Back to Table of Contents]]
+
+---
+
+### Step 11 — Close Out the Exit Criteria
+
+Step 0a recorded whether this phase was allowed to start. This step records whether it finished. Skip it and nothing anywhere says so — a question that gets asked days later, when the answer is no longer reconstructable.
+
+**1. Run the exit checklist.** It answers "did this phase finish", against the same boundary index Step 0a wrote its entry record into:
+
+```bash
+./bin/record-restore-exit.sh --runbook restore-repos --dry-run
+./bin/record-restore-exit.sh --runbook restore-repos
+```
+
+Read the rows rather than the exit status. It records `PASS`, `WARN`, `FAIL` and `MANUAL`, and a `MANUAL` row is a question only you can answer — not a failure, and not a pass either.
+
+The checklist covers what this phase produced: both clone roots exist, how many repositories are on disk, and whether each one sits under the root matching its remote host — the row nothing else in the workflow catches, because the root is what `includeIf` uses to decide which identity authors a commit. Its manual rows ask whether the repositories left unrestored were a decision, whether carry-forward was reconciled for what *was* restored, and what became of the repositories with no remote. There is no second table to tick in this runbook: the checklist is the table, and keeping a copy here is how the two drift apart.
+
+`bin/record-restore-prereqs.sh` and `bin/record-restore-exit.sh` are one pair per phase boundary, not one per runbook. This phase runs the `11B` entry check at Step 0 and the `11B` exit check here; it never runs Phase 12's entry check, and never re-runs its own entry check at the end.
+
+**2. Confirm both boundary records landed.** One file answers whether the phase both started and finished:
+
+```bash
+sed -n '1,40p' "$REIMAGE_ARTIFACT_ROOT/reimaged-system/boundaries/MANIFEST.md"
+```
+
+You are looking for a `restore-repos-entry-*` row and a `restore-repos-exit-*` row. An entry with no exit is the signature of a phase that was walked but never closed out.
+
+With both recorded, Phase 11B is complete and the workflow moves on to Phase 12.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -678,7 +741,7 @@ The script classifies and emits uniformly; these judgment calls stay with you.
 
 ## Troubleshooting
 
-Four failures land here rather than inline: each either spans more than one step or has a fix long enough to break the flow of the step that surfaces it. The step that surfaces each one links in from a callout.
+Three failures land here rather than inline: each either spans more than one step or has a fix long enough to break the flow of the step that surfaces it. The step that surfaces each one links in from a callout.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -688,21 +751,19 @@ The artifact volume is not mounted, or the environment was not loaded. `ls "$REI
 
 [[#Step 1 — Produce the Initial Status Report|⮕ Continue to Step 1 — Produce the Initial Status Report]]
 
-### `clone-commands.sh` stops at the first repo because the target directory already exists
+### A clone kept the pre-image HTTPS remote where you expected SSH
 
-`git clone` refuses to write into a non-empty directory. Either the repo was already restored by an earlier run of this workflow, or the target directory has stale content. Confirm which, delete the empty stub if that is the cause, then delete the command blocks that already succeeded and rerun the tail of the batch.
+This is the normal outcome, not a fault. The script restores the transport the pre-image audit recorded, and it rewrites a URL onto `$GIT_PERSONAL_GITHUB_HOST` only when the URL is already `git@github.com:`, that routing host is an alias — a name other than `github.com` — and the owner matches `$GIT_PERSONAL_GITHUB_OWNER`. Where the recorded remotes are HTTPS, or the personal routing host routes directly at `github.com`, there is no rewrite path to take. Both are true here.
 
-[[#Step 3 — Execute the Clone Commands|⮕ Continue to Step 3 — Execute the Clone Commands]]
-
-### A repo cloned successfully but `git remote -v` shows the default `github.com` for a personal repo
-
-The pre-image inventory recorded an HTTPS URL, so the script did not rewrite it to the personal host alias. Fix by hand:
+Whether to convert is a decision, not a repair — see the Pitfall in Step 2 on SSH reachability before converting toward it. If you do convert:
 
 ```bash
-git remote set-url origin "git@${GIT_PERSONAL_GITHUB_HOST}:<personal-username>/<repo>.git"
+git remote set-url origin "git@${GIT_PERSONAL_GITHUB_HOST}:<owner>/<repo>.git"
 ```
 
-[[#Step 9 — Rerun the Status Report and Close the Exit Criteria|⮕ Continue to Step 9 — Rerun the Status Report and Close the Exit Criteria]]
+Confirm SSH actually reaches that host first; an unreachable SSH remote produces a clone that can neither fetch nor push, and the failure arrives one repository at a time.
+
+[[#Step 9 — Rerun the Status Report|⮕ Continue to Step 9 — Rerun the Status Report]]
 
 ### `--apply-ignored-files` says "yes" but no files appear in the working tree
 
@@ -720,11 +781,11 @@ Longer material most runs will not need, kept out of the main flow.
 
 | Column | Values | Meaning |
 |---|---|---|
-| `path_present` | `yes` / `no` | Whether the pre-image path currently exists as a `.git`-containing directory. |
+| `path_present` | `yes` / `no` | Whether the routed clone destination — `<clone_target_root>/<label>` — currently exists as a `.git`-containing directory. Not the pre-image path, which does not exist on a reimaged Mac. |
 | `ignored_files_available` | `yes` / `no` | Whether `staged-ignored-files/live/<label>/` exists for this repo. |
 | `ignored_files_applied` | `unknown` / `yes` / `skipped` / `failed` | Result of the optional interactive rsync. `unknown` when the run did not use `--apply-ignored-files`. |
 | `carry_forward_rows` | integer | Sum of `local_only_commit_count + stash_count + tracked_change_count` from the pre-image row. Rows requiring rescue-branch reconciliation. |
-| `clone_host` | SSH host alias | Which `~/.ssh/config` `Host` entry the emitted clone command will use. |
+| `clone_host` | host name | The `origin` remote's host, which is what routed this repository to `clone_target_root`. `<none>` for a repository the audit recorded with no remote. |
 
 ### Reading the Pre-Image TSVs
 

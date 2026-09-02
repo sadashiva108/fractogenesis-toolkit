@@ -1,5 +1,7 @@
 # Apply Manifest
 
+**Revision 131** — supersedes Revision 130 and earlier. Phase 11B's automated path runs for the first time: the audit stops writing tabs into a TSV, the emitted commands stop aiming at a machine that no longer exists, and the phase gains a recorded finish line.
+
 **Revision 130** — supersedes Revision 129 and earlier. The documentation lint stops counting the notes nobody ships.
 
 **Revision 129** — supersedes Revision 128 and earlier. The Phase 6B repository-audit row stops failing a manifest that is exactly correct.
@@ -367,6 +369,260 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `backup-repos.sh` | `bin/backup-repos.sh` |
 | `setup-reimage-env.sh` | `bin/setup-reimage-env.sh` |
 | `compare-restored-state.sh` | `bin/compare-restored-state.sh` |
+
+---
+
+## Revision 131 — the phase that emitted nothing, and where it was aiming
+
+Phase 11B has been run three times. Every run produced a `clone-commands.sh` with
+**0** clone lines and **27** `no remote URL recorded` comments, and every run
+emitted `rsync` commands pointing at `/Users/dkittrell/Development/...` — a
+directory tree that does not exist on the reimaged Mac and that `rsync -a` would
+have created. `bin/record-restore-prereqs.sh` caught the first half on
+2026-08-25 and recorded `Audit remote URLs are URLs — FAIL`. The phase proceeded
+anyway and nine repositories were cloned by hand.
+
+This revision fixes both, and three smaller things that fall out of them.
+
+### The capture wrote two defects into one cell
+
+`.internal/git/capture-repo-audit.sh` built the `remote_urls` column with:
+
+```bash
+git -C "$repo" remote -v | awk '!seen[$0]++' | paste -sd '; ' -
+```
+
+**Tabs.** `git remote -v` emits `name<TAB>url (fetch)`. That cell is written into
+a tab-separated file, so every remote line contributed two extra columns and
+shifted every field to its right. Column 4 held `origin` — the remote *name* —
+and the URL sat where `status_summary` belongs. `extract_remote_url()` returned
+empty for 27 of 27 repositories, and `local_only_commit_count`, `stash_count` and
+`tracked_change_count` were read from shifted columns, which is why
+`ingestion-related: 38` appeared in `restore-status.md` as carry-forward. It was
+column drift, not 38 pieces of unpreserved work.
+
+**Delimiters.** `paste` cycles through the characters of `-d`, so `'; '`
+separated the first pair of lines with `;` and the second with a space. A
+repository with two remotes produced `a_fetch;a_push b_fetch;b_push`, and
+`extract_remote_url` — which splits on `;` — saw two remote lines glued into one
+segment. Its `^origin.*\(fetch\)` test could then never match a repository whose
+`origin` was not first alphabetically.
+
+`carrier-services-storage` is that repository. Its remotes are `omkara`, `orah`,
+`origin`, and the consumer resolved it to `omkara` —
+`github.com/sadashiva108/dotfiles.git`. Under the host routing introduced below,
+that would have cloned a personal `dotfiles` repository into the personal root
+under the name `carrier-services-storage`.
+
+Both are one line now:
+
+```bash
+git -C "$repo" remote -v | tr '\t' ' ' | awk '!seen[$0]++' | paste -sd ';' -
+```
+
+No consumer changed. `extract_remote_url` splits on `;` and then on whitespace,
+and one `name url (fetch)` per segment is exactly what it expects.
+
+> The delimiter half is a deviation from the plan, which specified the `tr` alone
+> and would have left `carrier-services-storage` resolving to the wrong
+> repository. It was raised as a decision and the answer was to fix it at the
+> source rather than teach a consumer to unpick the join.
+
+### Three interlocking defects in the emitter, and why they are one change
+
+`bin/restore-repos.sh` asked every question at the **pre-image** path — the path
+the repository occupied on a machine that has been erased. Routing decides
+`CLONE_TARGET_ROOT`, and the other two answers depend on it, so they are one
+edit.
+
+**Routing is by remote host now, not by pre-image directory.** `restore-repos.md`
+Step 3 already stated the rule in prose — *"which root a repo belongs in is
+decided by its remote host, not by where it lived pre-image"* — and
+`bin/record-restore-exit.sh` row 3 grades against it. The script was the only
+thing still routing by directory, and since the pre-image roots
+(`Development/...`) sit under neither configured root, it sent all 27
+repositories to the work side by accident rather than by decision. A repository
+now routes personal only when its `origin` host is `GIT_PERSONAL_GITHUB_HOST`,
+that host is not also the work host, and the owner matches
+`GIT_PERSONAL_GITHUB_OWNER`. Anything else routes work **and says why**, as a
+`# REVIEW:` line above its clone command: a silent default here is how a
+repository ends up under the root that authors its commits with the wrong
+identity.
+
+**Presence is asked at the clone destination.** `classify_repo()` tested
+`$repo_path/.git`, which on a reimaged Mac is permanently absent — so
+`PATH_PRESENT` was pinned to `no`, `Needs clone: 0` was unreachable,
+`--apply-ignored-files` was gated on a condition that could never hold and
+silently did nothing for every repository, and `IGNORED_FILES_COMPLETE` could
+never become true. The phase had no reachable exit criterion. It now tests
+`$CLONE_TARGET_ROOT/$label/.git`.
+
+**Both rsync scripts target the clone, and guard on it.** They aimed at
+`$repo_path/`. `rsync-repos-gitignored.sh` carries DMG-decrypted credentials, so
+running it would have written cleartext secrets into a resurrected
+`Development/` tree, outside every repository, where nothing later in the
+workflow looks. Aiming them at `$CLONE_DEST` is half the fix; the other half is
+that a destination which does not exist is now a **skip**, not a `mkdir`. Every
+emitted block tests `[ -d "<dest>/.git" ]` first. The interactive
+`--apply-ignored-files` path was aimed at the same wrong place and moves with
+them.
+
+There is now one destination variable, `CLONE_DEST`, and the clone, both rsync
+scripts and the presence test all read it, so they cannot disagree again.
+
+**The `cat-file` proof was malformed.** `head` holds a decorated log line —
+`33264a7 (HEAD -> master, origin/master, origin/HEAD) added gateway-monitoring…`
+— and the whole line was passed to `git cat-file -e '<...>^{commit}'`. Only the
+leading token is a revision. It is now taken alone and validated as hex, so the
+row that proves you cloned the right remote can actually pass.
+
+### The evidence could not be re-captured, so it was re-derived
+
+The pre-image machine is gone; the audit cannot be re-run. But
+`capture-repo-audit.sh` writes `git remote -v` verbatim into
+`repo-audit-summary.txt` — 60 URL lines across 27 repositories, all recoverable.
+
+Of the four options put to the owner, **(ii)** was chosen: write a corrected run
+as a new indexed `pre-image-*` run and pin it, which touches no existing
+evidence. On the artifact volume:
+
+- `repo-audit-reports/runs/pre-image-20260901-234636/` — `repos.tsv` rebuilt from
+  the summary, every other file copied from the source run, plus
+  `RE-DERIVATION.md` and the derivation script that produced it.
+- `official/pin` — pinned via `artifact_run_set_official`, with the reason
+  recorded in `MANIFEST.md` and `PINNED-OFFICIAL.txt`, so a later `reindex`
+  cannot silently prefer another run.
+- `pre-image-20260816-035617` is untouched and stays as the capture of record.
+
+The derivation proves itself before writing: for every row it first reconstructs
+the *damaged* cell from the summary — same tabs, same cycling delimiter — and
+requires a byte-exact match against the damaged file before it will emit a
+corrected one. All 27 rows matched. 25 repaired, 2 left alone (`<none>` carries
+no tabs and was never damaged).
+
+The derivation script lives in the run directory rather than in `bin/` or
+`.internal/`. It repairs one dataset once; a permanent parser for a one-time data
+defect is the liability option (iii) was rejected for.
+
+**Result, measured:** `clone-commands.sh` now holds **25** clone lines and **2**
+`no remote URL recorded` comments — `engagements` and `ingestion-related`, which
+have no remote and cannot be cloned by anything. `restore-status.md` reports 315
+carry-forward rows read from the correct columns. `carrier-services-storage`
+resolves to `github.gaig.com/MarkLogic/…` and routes work;
+`fractogenesis-toolkit` resolves to `github.com/sadashiva108/…` and routes
+personal. No emitted script contains a `Development/` path.
+
+### The phase gains a finish line
+
+`restore-repos.md` invoked exactly two recorders — the entry check and
+`--point before` — and nothing else. No `after`, no `delta`, no
+`record-restore-exit.sh`, where `restore-git.md` and `restore-access.md` invoke
+all three. The missing pair was not a skipped step; the runbook never called for
+one. Step 0b even promised the result — *"the delta against the after-state is
+then literally the list of what this phase restored"* — of a delta nobody took.
+The `exit` run that exists on disk was taken by hand, outside the runbook.
+
+Following `restore-access.md` and `restore-runtime.md`, which both end with a
+comparison step and then a standalone close-out:
+
+- **Step 9** is now *Rerun the Status Report* only.
+- **Step 10 — Record the After-State and Delta.** There is no
+  `compare-restored-state.sh` pass for this phase, and the step says so: the
+  comparison this runbook needs is against the pre-image audit, not a system
+  inventory, and Step 9 has just made it.
+- **Step 11 — Close Out the Exit Criteria.**
+
+Every recorder block carries its `--dry-run` line above the real one. Appending
+renumbered nothing.
+
+### One exit table, not two
+
+Step 9 carried its own exit-criteria table, `record-restore-exit.sh` carried a
+different one, and the runbook's was the one never recorded. The recorder owns
+the boundary, so the duplicate is gone — the same call Revision 126 made for
+`restore-git`, and the reason `restore-access.md` Step 12 says *"the checklist is
+the table"*.
+
+The transport rows went with it, because they asked a question this machine
+cannot answer yes to. All 27 pre-image remotes are HTTPS,
+`GIT_PERSONAL_GITHUB_HOST` is `github.com`, and `rewrite_remote_for_host` is
+gated on `"$host" != "github.com"` — so no rewrite path can ever fire, and
+*"Personal repos route via the personal SSH host alias"* was an expectation, not
+a criterion. The sign-off row it fed now asks the question the recorder actually
+grades: **every clone sits under the root matching its SSH routing host**. The
+troubleshooting entry that treated a surviving HTTPS remote as a fault now says
+plainly that it is the normal outcome, and that converting toward SSH is a
+decision with a reachability test attached.
+
+### The vocabulary follows Revision 126
+
+Revision 126 renamed the comparison row to **SSH routing hosts** for a stated
+reason: a `Host` block is a real hostname by default and an *alias* only when
+`Host` and `HostName` differ, so "aliases" named the exception as though it were
+the rule. `restore-git-inventory-diff-20260901-153521` is that row in the field,
+reading `github.com,github.gaig.com` — two routing hosts, neither of them an
+alias.
+
+Phase 11B was still using the older word throughout, including in the sign-off
+row a person actually answers, which is how the two halves of one story come to
+read as two different stories. `restore-repos.md` and `bin/restore-repos.sh` now
+say *routing host*, and reserve *alias* for the one case that earns it: both
+accounts on one server, which is what `GIT_PERSONAL_GITHUB_HOSTNAME` exists for.
+`GIT_PERSONAL_GITHUB_HOST` set to `github.com` is documented as the direct scheme
+working rather than as a fault — a routing host, not an alias, and nothing to
+rewrite.
+
+### A blank owner stops routing silently
+
+Step 0c has always said a blank `GIT_PERSONAL_GITHUB_OWNER` means *never
+rewrite*, and promised the candidates are flagged for review in Step 2 instead.
+Under directory routing that was true by accident. Under host routing a blank
+owner would have routed every personal-host repository to the personal root with
+nothing printed, so the promise is now kept explicitly: those blocks carry a
+`# REVIEW:` line saying the repository routed on the host alone and the owner was
+not checked.
+
+### Retired
+
+*"`clone-commands.sh` stops at the first repo because the target directory
+already exists"* documented a symptom of the presence test as if it were normal
+behaviour. With presence asked at the clone destination, a repository already on
+disk is never emitted as a clone command. The Troubleshooting section is three
+entries, and Step 3 explains the rerun behaviour in prose instead.
+
+### Reconciled with what the script writes
+
+The Status Bundle Layout omitted `rsync-repos-gitignored.sh`, which Step 6 uses.
+It listed `MANIFEST.txt`, which the script does write — no run *on disk* has one
+because all three existing runs stop before reaching it, which is its own
+finding, parked. Both are now listed. `"Neither file is executable by default"`
+in the report template said two where there are three, and the runbook said
+`two ready-to-run helper scripts` in the same way.
+
+### Validation
+
+`bash -n` clean on both edited scripts. `verify-script-portability.sh` 74 clean /
+0 WARN / 0 FAIL. `verify-runbook-structure.sh` 209 PASS / 5 WARN / 29 FAIL across
+27 documents — **identical to the pre-change baseline measured in this tree**,
+`restore-repos.md`'s only failure being the pre-existing `NO-NOTE`.
+`verify-doc-paths.sh --all` 716 OK / 0 MISSING / 0 ANCHOR BROKEN / 1096 ANCHOR
+OK, against a baseline of 713 OK / 0 / 0 / 1095 measured by restoring the three
+edited files in a scratch copy and re-running — the +3 is new path references,
+not a repair.
+
+`bin/restore-repos.sh` was additionally executed end to end against a **scratch
+artifact root** holding a copy of the re-derived run, so the emitted output could
+be inspected without writing a run, a sign-off or a pointer onto the artifact
+volume. Every figure quoted above under *Result, measured* comes from that run.
+
+**All of it ran on Linux with Bash 5.x.** `shellcheck` was not available.
+`/bin/bash -n` against real macOS Bash 3.2 is owed on this file along with
+Revisions 116–130 — and matters more here than usual: see the parked note on
+every existing bundle stopping before its report, which does **not** reproduce on
+Linux.
+
+The re-derived run is the official `pre-image` input, but a real status bundle
+has not been written on the Mac. `restore-repos.md` Step 1 is what produces one.
 
 ---
 

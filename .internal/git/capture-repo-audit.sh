@@ -426,7 +426,23 @@ while IFS= read -r repo; do
   head_line="$(git -C "$repo" log -1 --oneline --decorate 2>/dev/null || true)"
   [[ -n "$head_line" ]] || head_line="<no commits>"
 
-  remotes="$(git -C "$repo" remote -v 2>/dev/null | awk '!seen[$0]++' | paste -sd '; ' - || true)"
+  # Two things this line has to get right, because the cell lands in a
+  # tab-separated file that bin/restore-repos.sh parses.
+  #
+  # `git remote -v` emits `name<TAB>url (fetch)`, so the embedded tabs are
+  # squashed to spaces before the lines are joined -- otherwise every remote
+  # contributes two extra columns and shifts every field to its right.
+  #
+  # And the join delimiter is a single `;`, not `'; '`: `paste` CYCLES through
+  # the characters of -d, so `'; '` separates the first pair with `;` and the
+  # second with a space. A repository with two remotes then produced
+  # `a_fetch;a_push b_fetch;b_push`, and a consumer splitting on `;` got two
+  # remote lines glued into one segment -- which is how a repository whose
+  # first remote is not `origin` resolved to the wrong URL entirely.
+  #
+  # `extract_remote_url()` splits on `;` and then on whitespace, so one
+  # `name url (fetch)` per segment is exactly what the consumer expects.
+  remotes="$(git -C "$repo" remote -v 2>/dev/null | tr '\t' ' ' | awk '!seen[$0]++' | paste -sd ';' - || true)"
   [[ -n "$remotes" ]] || remotes="<none>"
 
   status_short="$(git -C "$repo" status -sb 2>/dev/null || true)"

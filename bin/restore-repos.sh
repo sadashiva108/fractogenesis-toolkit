@@ -391,32 +391,90 @@ numeric_or_zero() {
   esac
 }
 
+route_root() {
+  # Resolve the configured root for one side of the routing decision. Falls back
+  # to the work root, and finally to the pre-image parent directory, which is
+  # what this script used before it routed by host.
+  local side="$1" repo_path="$2"
+  if [[ "$side" == "personal" && -n "$PERSONAL_ROOT" ]]; then
+    printf '%s' "$PERSONAL_ROOT"
+    return 0
+  fi
+  if [[ -n "$WORK_ROOT" ]]; then
+    printf '%s' "$WORK_ROOT"
+    return 0
+  fi
+  dirname "$repo_path"
+}
+
 classify_repo() {
-  # Sets globals: PATH_PRESENT, CLONE_HOST, CLONE_TARGET_ROOT, IGN_AVAILABLE,
-  # IGN_APPLIED, CARRY_FORWARD_ROWS. Reads: repo_path, label, remote_url,
-  # local_commit_count, stash_count, tracked_change_count.
+  # Sets globals: PATH_PRESENT, CLONE_HOST, CLONE_TARGET_ROOT, CLONE_DEST,
+  # ROUTE_REVIEW, IGN_AVAILABLE, IGN_APPLIED, CARRY_FORWARD_ROWS.
+  # Reads: repo_path, label, remote_url, local_commit_count, stash_count,
+  # tracked_change_count.
   local repo_path="$1"
   local remote_url="$2"
+  local host owner
 
-  if [[ -d "$repo_path/.git" ]]; then
+  host="$(remote_host "$remote_url")"
+  owner="$(remote_owner "$remote_url")"
+  ROUTE_REVIEW=""
+
+  # Route by the remote HOST, not by the directory the repo occupied on the
+  # pre-image machine. restore-repos.md Step 3 already states the rule -- "which
+  # root a repo belongs in is decided by its remote host, not by where it lived
+  # pre-image" -- and bin/record-restore-exit.sh row 3 grades against it. The
+  # pre-image directory says nothing about who owns the remote, and on a
+  # reimaged Mac those directories are not under either configured root, so
+  # directory routing sent every repository to the work side by accident rather
+  # than by decision.
+  if [[ -z "$host" ]]; then
+    # No remote at all. Nothing can clone it, so it never reaches the clone
+    # list; the work root is named only so the report has a column to print.
+    CLONE_HOST="<none>"
+    CLONE_TARGET_ROOT="$(route_root work "$repo_path")"
+    ROUTE_REVIEW="no remote recorded in the pre-image audit -- this repository cannot be cloned"
+  elif [[ -n "$PERSONAL_HOST" && "$host" == "$PERSONAL_HOST" && "$host" != "$WORK_HOST" \
+          && ( -z "${GIT_PERSONAL_GITHUB_OWNER:-}" || "$owner" == "${GIT_PERSONAL_GITHUB_OWNER}" ) ]]; then
+    CLONE_HOST="$PERSONAL_HOST"
+    CLONE_TARGET_ROOT="$(route_root personal "$repo_path")"
+    if [[ -z "${GIT_PERSONAL_GITHUB_OWNER:-}" ]]; then
+      # Routed on the host alone. Step 0c calls a blank owner a decision meaning
+      # "never rewrite", and promises the candidates are flagged for review
+      # instead -- this is that flag. Without it a blank owner routes silently.
+      ROUTE_REVIEW="routed personal on the SSH routing host alone; GIT_PERSONAL_GITHUB_OWNER is unset, so the owner ${owner:-unknown} was not checked"
+    fi
+  elif [[ -n "$WORK_HOST" && "$host" == "$WORK_HOST" ]]; then
+    CLONE_HOST="$WORK_HOST"
+    CLONE_TARGET_ROOT="$(route_root work "$repo_path")"
+  else
+    # An unrecognised host, or the personal host carrying somebody else's owner.
+    # Both land on the work root, and both say why: a silent default here is how
+    # a repository ends up under the root that authors its commits with the
+    # wrong identity.
+    CLONE_HOST="$host"
+    CLONE_TARGET_ROOT="$(route_root work "$repo_path")"
+    if [[ -n "$PERSONAL_HOST" && "$host" == "$PERSONAL_HOST" ]]; then
+      ROUTE_REVIEW="remote host is the personal host but the owner is ${owner:-unknown}, not GIT_PERSONAL_GITHUB_OWNER (${GIT_PERSONAL_GITHUB_OWNER:-unset}) -- routed to the work root"
+    else
+      ROUTE_REVIEW="remote host $host matches neither GIT_WORK_GITHUB_HOST nor GIT_PERSONAL_GITHUB_HOST -- routed to the work root"
+    fi
+  fi
+
+  # Where this run would put the repository. Every destination below -- the
+  # clone, both rsync scripts, and the presence test -- is this one path, so
+  # they cannot disagree.
+  CLONE_DEST="$CLONE_TARGET_ROOT/$label"
+
+  # Presence is asked at the clone destination, not at the pre-image path. The
+  # pre-image path does not exist on a reimaged Mac, so testing it pinned
+  # PATH_PRESENT to "no" forever: `Needs clone: 0` was unreachable,
+  # --apply-ignored-files silently did nothing, and IGNORED_FILES_COMPLETE could
+  # never become true.
+  if [[ -d "$CLONE_DEST/.git" ]]; then
     PATH_PRESENT="yes"
   else
     PATH_PRESENT="no"
-  fi
-
-  # Route by original repo location on the pre-image machine.
-  if [[ -n "$PERSONAL_ROOT" && "$repo_path" == "$PERSONAL_ROOT"/* ]]; then
-    CLONE_HOST="$PERSONAL_HOST"
-    CLONE_TARGET_ROOT="$PERSONAL_ROOT"
-  else
-    CLONE_HOST="$WORK_HOST"
-    if [[ -n "$WORK_ROOT" ]]; then
-      CLONE_TARGET_ROOT="$WORK_ROOT"
-    else
-      # Fall back to the pre-image parent directory when GIT_WORK_REPO_ROOT
-      # is unset.
-      CLONE_TARGET_ROOT="$(dirname "$repo_path")"
-    fi
   fi
 
   # staged-ignored-files/live/<basename(repo)>/
@@ -438,15 +496,28 @@ classify_repo() {
   CARRY_FORWARD_ROWS="$carry"
 }
 
-# Rewrite remote_url with the personal host alias when routing to personal.
-# Returns the owner segment of a github SSH or HTTPS URL, or "" if not github.
+# Returns the host of a git remote URL, or "" when it cannot be determined.
+# Handles scheme://[user@]host[:port]/path and the scp-like user@host:path form.
+remote_host() {
+  local url="$1" rest=""
+  case "$url" in
+    *://*)  rest="${url#*://}" ;;
+    *@*:*)  rest="${url#*@}"; printf '%s' "${rest%%:*}"; return 0 ;;
+    *)      printf ''; return 0 ;;
+  esac
+  rest="${rest#*@}"     # drop any userinfo
+  rest="${rest%%/*}"    # drop the path
+  printf '%s' "${rest%%:*}"   # drop any port
+}
+
+# Returns the owner segment of a git remote URL, or "" when it has none.
+# Host-agnostic: the same shape answers for github.com and an Enterprise host.
 remote_owner() {
   local url="$1" rest=""
   case "$url" in
-    git@github.com:*)             rest="${url#git@github.com:}" ;;
-    https://github.com/*)         rest="${url#https://github.com/}" ;;
-    ssh://git@github.com/*)       rest="${url#ssh://git@github.com/}" ;;
-    *) printf ''; return 0 ;;
+    *://*)  rest="${url#*://}"; rest="${rest#*@}"; rest="${rest#*/}" ;;
+    *@*:*)  rest="${url#*:}" ;;
+    *)      printf ''; return 0 ;;
   esac
   printf '%s' "${rest%%/*}"
 }
@@ -454,15 +525,16 @@ remote_owner() {
 rewrite_remote_for_host() {
   local url="$1"
   local host="$2"
-  # Routing to the personal host alias is decided by the pre-image DIRECTORY the
-  # repo sat in, which says nothing about who owns the remote. Swapping only the
-  # host while keeping the path produced
+  # Routing decides the ROOT; this decides the URL, and they are not the same
+  # question. A repository can route personal on its host and still not want its
+  # URL rewritten. Swapping only the host while keeping the path produced
   #   git@github-personal:<work-org>/<repo>.git
   # -- a personal key pointed at the work org's repo, which either fails auth or,
   # worse, silently resolves to a different account's repo of the same name.
   # So rewrite ONLY when the URL's owner really is the personal account.
-  # GIT_PERSONAL_GITHUB_OWNER unset => never rewrite; the emitted command carries
-  # a REVIEW comment with the aliased form so the operator can decide.
+  # GIT_PERSONAL_GITHUB_OWNER unset => never rewrite. classify_repo() prints a
+  # REVIEW line naming the owner it saw, so an operator who disagrees with the
+  # routing has what they need to move the block by hand.
   local owner
   owner="$(remote_owner "$url")"
   if [[ "$url" == git@github.com:* && "$host" != "github.com" \
@@ -601,26 +673,33 @@ do
     if [[ -n "$clone_url" ]]; then
       {
         echo "# $label"
+        if [[ -n "$ROUTE_REVIEW" ]]; then
+          echo "# REVIEW: $ROUTE_REVIEW"
+        fi
         if [[ "$clone_url" != "$remote_url" ]]; then
-          echo "# routed to the personal host alias (owner matches GIT_PERSONAL_GITHUB_OWNER)"
-        elif [[ "$CLONE_HOST" != "github.com" && "$remote_url" == git@github.com:* ]]; then
-          echo "# REVIEW: pre-image directory says personal, but the remote owner is"
-          echo "#   $(remote_owner "$remote_url") -- not GIT_PERSONAL_GITHUB_OWNER (${GIT_PERSONAL_GITHUB_OWNER:-unset})."
-          echo "#   Left on github.com. If it really is yours, use instead:"
-          echo "#   git clone \"git@$CLONE_HOST:${remote_url#git@github.com:}\""
+          echo "# remote rewritten onto the personal SSH routing host (owner matches GIT_PERSONAL_GITHUB_OWNER)"
         fi
         echo "cd \"$CLONE_TARGET_ROOT\" && git clone \"$clone_url\""
-        emit_extra_remotes "$remotes" "$CLONE_TARGET_ROOT/$label"
+        emit_extra_remotes "$remotes" "$CLONE_DEST"
         if [[ -n "$branch" && "$branch" != "-" ]]; then
-          echo "git -C \"$CLONE_TARGET_ROOT/$label\" checkout \"$branch\" 2>/dev/null || \\"
+          echo "git -C \"$CLONE_DEST\" checkout \"$branch\" 2>/dev/null || \\"
           echo "  echo \"WARN: $label -- pre-image branch '$branch' not found in the clone\""
         fi
         # The pre-image HEAD is the cheapest possible proof you cloned the right
         # remote. A repo whose personal remote was ahead of its work remote
         # clones "successfully" from the stale one and looks fine until much later.
-        if [[ -n "$head_line" && "$head_line" != "-" ]]; then
-          echo "git -C \"$CLONE_TARGET_ROOT/$label\" cat-file -e '$head_line^{commit}' 2>/dev/null || \\"
-          echo "  echo \"WARN: $label -- pre-image HEAD $head_line absent; wrong remote, or unpushed work\""
+        #
+        # `head` holds a decorated one-line log entry -- SHA, ref decorations and
+        # the subject -- so only its leading token is a revision. Passing the
+        # whole line produced a malformed `cat-file -e` argument that failed for
+        # every repository and reported the failure as a missing commit.
+        head_sha="${head_line%% *}"
+        case "$head_sha" in
+          ''|*[!0-9a-fA-F]*) head_sha="" ;;
+        esac
+        if [[ -n "$head_sha" ]]; then
+          echo "git -C \"$CLONE_DEST\" cat-file -e '$head_sha^{commit}' 2>/dev/null || \\"
+          echo "  echo \"WARN: $label -- pre-image HEAD $head_sha absent; wrong remote, or unpushed work\""
         fi
         echo ""
       } >> "$CLONE_CMDS"
@@ -636,9 +715,17 @@ do
     IGN_AVAILABLE_COUNT=$((IGN_AVAILABLE_COUNT + 1))
     {
       echo "# $label"
-      echo "rsync -a --stats \\"
-      echo "  \"$STAGED_LIVE/$label/\" \\"
-      echo "  \"$repo_path/\""
+      # Guarded on the clone destination, not merely written to it: `rsync -a`
+      # CREATES a missing destination, so an unguarded command aimed at a repo
+      # that has not been cloned yet materialises a tree outside every
+      # repository and drops the bundle into it.
+      echo "if [ -d \"$CLONE_DEST/.git\" ]; then"
+      echo "  rsync -a --stats \\"
+      echo "    \"$STAGED_LIVE/$label/\" \\"
+      echo "    \"$CLONE_DEST/\""
+      echo "else"
+      echo "  echo \"skip: $label -- not cloned yet at $CLONE_DEST\""
+      echo "fi"
       echo ""
     } >> "$RSYNC_CMDS"
   fi
@@ -650,10 +737,16 @@ do
     {
       echo "# $label"
       echo "SRC=\"\$DMG_MOUNT/repos-gitignored/$label\""
-      echo "if [ -d \"\$SRC\" ]; then"
-      echo "  rsync -a --stats \"\$SRC/\" \"$repo_path/\""
-      echo "else"
+      echo "if [ ! -d \"\$SRC\" ]; then"
       echo "  echo \"skip: $label -- not present in the image\""
+      echo "elif [ ! -d \"$CLONE_DEST/.git\" ]; then"
+      # These are decrypted credentials. An unguarded `rsync -a` at a
+      # destination that does not exist would create it and leave them in the
+      # clear outside every repository, where nothing later in the workflow
+      # looks for them.
+      echo "  echo \"skip: $label -- not cloned yet at $CLONE_DEST\""
+      echo "else"
+      echo "  rsync -a --stats \"\$SRC/\" \"$CLONE_DEST/\""
       echo "fi"
       echo ""
     } >> "$GITIGNORED_CMDS"
@@ -671,12 +764,12 @@ do
         && "$IGN_AVAILABLE" == "yes" ]]; then
     printf '\nApply staged ignored files for %s?\n' "$label"
     printf '  source: %s/%s/\n' "$STAGED_LIVE" "$label"
-    printf '  target: %s/\n' "$repo_path"
+    printf '  target: %s/\n' "$CLONE_DEST"
     printf '  proceed? [y/N]: '
     read -r reply < /dev/tty || reply=""
     case "$reply" in
       y|Y|yes|YES)
-        if rsync -a --stats "$STAGED_LIVE/$label/" "$repo_path/"; then
+        if rsync -a --stats "$STAGED_LIVE/$label/" "$CLONE_DEST/"; then
           IGN_APPLIED="yes"
           IGN_APPLIED_COUNT=$((IGN_APPLIED_COUNT + 1))
         else
@@ -790,8 +883,8 @@ cat >> "$REPORT_MD" <<EOF
 - \`rsync-ignored-files.sh\` — one \`rsync\` per repo with staged ignored files available.
 - \`rsync-repos-gitignored.sh\` — one guarded \`rsync\` per repo for the gitignored SECRETS held in \`secrets-encrypted/repos-gitignored/\`. Attach the DMG first; blocks for repos the image does not carry skip themselves.
 
-Neither file is executable by default. Both carry fully resolved paths and URLs,
-so they run in a plain shell with no configuration sourced first:
+None of the three is executable by default. All three carry fully resolved paths
+and URLs, so they run in a plain shell with no configuration sourced first:
 
 \`\`\`bash
 cat "$OUT/clone-commands.sh"
@@ -808,8 +901,11 @@ bash "$OUT/clone-commands.sh"
    \`git ls-remote origin 'reimage/*'\` inside the clone to confirm the
    pre-image rescue branch is present, then merge or cherry-pick back into
    the intended branch.
-4. Verify personal repos have the personal host alias in their remote URL
-   (\`git remote -v\`), not the default \`github.com\`.
+4. Confirm each clone sits under the root matching its remote host — the root is
+   what \`includeIf\` uses to decide which identity authors a commit, so a
+   misplaced clone commits under the wrong address and offers the wrong key.
+   Blocks carrying a \`# REVIEW:\` line in \`clone-commands.sh\` are the ones to
+   check first.
 5. Rerun this script after cloning to update the exit-criteria table.
 
 ## Raw Evidence Files
@@ -861,7 +957,7 @@ else
 fi
 
 signoff_row "Rescue branches (\`reimage/YYYYMMDD/*\`) present on remote for every carry-forward row" "The pre-image audit recorded $CARRY_FORWARD_TOTAL carry-forward rows across $TOTAL repos; each must map to a pushed rescue branch or be intentionally discarded. Verify with \`git ls-remote origin 'reimage/*'\` per repo."
-signoff_row "Personal repos route via the personal SSH host alias" "Fill after cloning. Verify with \`git remote -v\` on each personal repo."
+signoff_row "Every clone sits under the root matching its SSH routing host" "Fill after cloning. The root decides identity through \`includeIf\`, so a repository under the wrong one commits with the wrong address and offers the wrong key. Verify with \`git -C <repo> remote get-url origin\` against the root it sits in, and against the routing hosts \`restore-git\` wrote into \`~/.ssh/config\`. Transport is a separate question and not this row's: this run restores the transport the pre-image audit recorded, and a URL is rewritten onto \`GIT_PERSONAL_GITHUB_HOST\` only when that routing host is an alias — a name other than \`github.com\` — and the URL is already \`git@github.com:\`."
 signoff_finalize "Phase 11B" "$REPORT_MD"
 
 echo ""

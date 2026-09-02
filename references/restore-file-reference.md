@@ -198,7 +198,7 @@ Two `secrets-encrypted/` subtrees have dedicated restore consumers rather than a
 | Phase | Main sources under `$REIMAGE_ARTIFACT_ROOT` | Main outputs under `$REIMAGE_ARTIFACT_ROOT` |
 |---|---|---|
 | Phase 8 — Enroll and Stabilize | none required beyond `reimage.env`; optional mounted artifact root | `reimaged-system/restarts/runs/enroll-and-stabilize-<point>-*/`, `reimaged-system/boundaries/runs/enroll-and-stabilize-{entry,exit}-*/`, `reimaged-system/sign-offs/enroll-and-stabilize-{entry,exit}-*.md` |
-| Phase 9 — Initial Captures and Sanity Checks | prepared external root, optional `reimaged-system/restore-notes/` | `reimaged-system/restarts/` (runs, `official/`, `MANIFEST.md`), `reimaged-system/boundaries/`, `reimaged-system/restore-notes/`, `reimaged-system/time-machine/` |
+| Phase 9 — Initial Captures and Sanity Checks | prepared external root, optional `reimaged-system/restore-notes/` | `reimaged-system/restarts/` (runs, `official/`, `MANIFEST.md`), `reimaged-system/boundaries/`, `reimaged-system/restore-notes/` |
 | Phase 10A — Restore Runtime Libraries | `system-inventory/runs/pre-image-*/`, `system-inventory/runs/post-image-*/`, `home-files-backup/dotfiles/` | usually notes only; later validated under `reimaged-system/`. Also retires the Phase 8 `~/.zprofile` bridge and hands config loading to direnv — see `references/toolkit-environment-reference.md` |
 | Phase 10B — Restore Access | `secrets-encrypted/`, `public-certs/`, `home-files-backup/dotfiles/` | `reimaged-system/restore-notes/`, `reimaged-system/sign-offs/restore-access-exit-*.md` |
 | Phase 11A — Restore Git | `secrets-encrypted/ssh/`, `secrets-encrypted/git/`, `toolkit-snapshot/latest-docs/` | dual `~/.gitconfig` + `~/.ssh/config` in place; validated end-to-end for work and personal identities |
@@ -230,7 +230,7 @@ These paths are used before deeper restore work begins.
 | Decisions no capture can hold, whole event | `reimaged-system/restore-notes/decisions.md` |
 | Manual early restore notes | `reimaged-system/restore-notes/` |
 | Restart notes or checkpoints | `reimaged-system/restarts/` |
-| First post-image backup notes | `reimaged-system/time-machine/` |
+| First post-image backup notes | `time-machine/` — the root-level category, alongside the pre-image runs |
 
 Phase 8 can also stage locally under `REIMAGE_WORKSPACE_ROOT/` when the external drive is not mounted yet. Phase 9 Step 1 copies those runs into `$REIMAGE_ARTIFACT_ROOT/reimaged-system/` and reindexes the destination category, since a copied run carries no index row of its own.
 
@@ -348,7 +348,6 @@ Related manual-note locations:
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/
-$REIMAGE_ARTIFACT_ROOT/reimaged-system/time-machine/
 $REIMAGE_ARTIFACT_ROOT/reimaged-system/restarts/
 ```
 
