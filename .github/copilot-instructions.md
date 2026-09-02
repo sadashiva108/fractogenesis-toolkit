@@ -64,14 +64,27 @@ Purpose
 
 4b) docs/ -- parked work, not repository content
 
-Three directories, tracked but with their contents gitignored. They exist so a
+Five directories, tracked but with their contents gitignored. They exist so a
 note has an obvious home and does not become a line in a chat log nobody reads
 again.
 
-- docs/features/ -- ideas and features to build later.
+- docs/architecture/ -- design records: how one mechanism works and why it was
+                    built that way. Options, the alternatives rejected and the
+                    reason, the decision, the scope, the plan. A record without
+                    its rejected alternatives is an assertion, not a decision.
+- docs/features/ -- ideas and features to build later. What to build, not how.
 - docs/gaps/     -- defects and must-dos found while working on something else,
                     parked so the current task stays finished.
+- docs/ledgers/  -- dated statements of what exists, what is stale and what is
+                    owed. A ledger is read to decide what to do next and is
+                    replaced wholesale when it is re-derived; a gap is read once
+                    and closed.
 - docs/sessions/ -- session handoffs, and the prompts that start the next session.
+
+The line between architecture and features is what the document answers. "We
+should index the time-machine category" is a feature; "here are the four ways to
+index it, why three were rejected, and what the chosen one touches" is
+architecture.
 
 Rules for an AI session:
 - WRITE here rather than widening the task. Finding a second defect while fixing

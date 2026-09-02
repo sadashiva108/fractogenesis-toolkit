@@ -1,5 +1,7 @@
 # Apply Manifest
 
+**Revision 133** — supersedes Revision 132 and earlier. Two more homes under `docs/`, because a design record and a ledger are not features.
+
 **Revision 132** — supersedes Revision 131 and earlier. Post-image Time Machine evidence has one home, and the empty second one stops implying otherwise.
 
 **Revision 131** — supersedes Revision 130 and earlier. Phase 11B's automated path runs for the first time: the audit stops writing tabs into a TSV, the emitted commands stop aiming at a machine that no longer exists, and the phase gains a recorded finish line.
@@ -371,6 +373,83 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `backup-repos.sh` | `bin/backup-repos.sh` |
 | `setup-reimage-env.sh` | `bin/setup-reimage-env.sh` |
 | `compare-restored-state.sh` | `bin/compare-restored-state.sh` |
+
+---
+
+## Revision 133 — a design record is not a feature, and a ledger is not a gap
+
+Revision 128 gave parked work three homes: `docs/features/` for ideas,
+`docs/gaps/` for defects found while doing something else, `docs/sessions/` for
+handoffs. Two kinds of document have since accumulated in `features/` that are
+neither.
+
+### What was in the wrong place
+
+`time-machine-run-index-conversion.md` is not a feature. A feature says *"we
+should index the time-machine category"*. That document says *"here are four ways
+to index it, here is why three were rejected, here is what the chosen one
+touches"* — and its own opening explains why the distinction matters:
+
+> The outcome without the rejected alternatives is not a decision, it is an
+> assertion.
+
+`sign-off-consolidation.md` is the same kind. And the evidence conformance
+tables are a third kind again: a dated statement of what exists, what is stale
+and what is owed, read to decide what to do next and replaced wholesale when
+re-derived. A gap is read once and closed; a ledger is consulted repeatedly and
+goes out of date rather than getting fixed.
+
+### Two directories
+
+- **`docs/architecture/`** — design records. Options, the alternatives rejected
+  and the reason, the decision, the scope, the plan.
+- **`docs/ledgers/`** — dated statements of state and what is owed.
+
+`docs/features/` goes back to what §4b already said it was: what to build, not
+how. The section now carries the test in one line — *"we should index the
+time-machine category" is a feature; "here are the four ways to index it, why
+three were rejected, and what the chosen one touches" is architecture.*
+
+### `architecture`, not `design`
+
+Both names were on the table. Two sessions were running, and the other one had
+already created `docs/architecture/` and written into it. Consolidating onto the
+existing directory cost one `mv`; keeping both would have cost a permanent
+ambiguity about which held what — the duplicated-path outcome this repo's
+conventions reject by default. The name that already had a file in it won.
+
+### The `.gitignore` shape is unchanged, only extended
+
+Still `docs/*` plus per-directory `!` and `<dir>/*` rules rather than a bare
+`docs/`, for the reason the file already documents against `.idea/*`: git does
+not descend into a directory excluded wholesale, so the `!` lines would never be
+consulted. Five directories now, each with its `.gitkeep`, which is what actually
+carries them into a fresh clone. `docs/architecture/` had none — it was created
+by hand mid-session — so its contents would have vanished from a clone while
+appearing to be tracked.
+
+### Validation
+
+`verify-doc-paths.sh --all` 0 MISSING / 0 ANCHOR BROKEN, after repointing every
+cross-reference to the three moved documents — five files held them, including
+two session handoffs and the brief that starts the next session. A stale path in
+a working note silently misdirects the next session, which is the reason that
+lint exists.
+
+`verify-script-portability.sh` 74 clean / 0 WARN / 0 FAIL.
+`verify-runbook-structure.sh` 29 FAIL / 5 WARN across 27 documents, unchanged —
+no runbook was touched. `git check-ignore` confirms both new directories ignore
+their contents and keep their `.gitkeep`.
+
+The `OK` total moved 713 → 716 because `copilot-instructions.md` gained
+references to the two new directories. That is the count behaving as
+Revision 130 described: legitimate growth whenever a tracked document gains a
+reference, which is why a session brief should quote `MISSING` and
+`ANCHOR BROKEN` and not this number.
+
+**All of it ran on Linux with Bash 5.x.** `shellcheck` was not available.
+`/bin/bash -n` against real macOS Bash 3.2 is owed on Revisions 116–132; this
+revision edits no script.
 
 ---
 

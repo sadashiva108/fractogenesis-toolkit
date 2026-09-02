@@ -49,21 +49,27 @@ __pycache__/
 
 # docs/ -- working notes, not repository content (yet)
 #
-# The three directories are tracked so a fresh clone has somewhere to put a note
+# The five directories are tracked so a fresh clone has somewhere to put a note
 # and every AI session finds the same layout; what goes IN them is local until
 # the owner decides otherwise. Deciding later is a one-line change: delete the
-# three `docs/<dir>/*` lines to start tracking their contents.
+# `docs/<dir>/*` lines to start tracking their contents.
 #
 # Written as `docs/*` plus per-directory rules rather than `docs/`, for the same
 # reason as `.idea/*` above: git does not descend into a directory excluded
 # wholesale, so the `!` lines below would never be consulted.
 docs/*
+!docs/architecture/
 !docs/features/
 !docs/gaps/
+!docs/ledgers/
 !docs/sessions/
+docs/architecture/*
 docs/features/*
 docs/gaps/*
+docs/ledgers/*
 docs/sessions/*
+!docs/architecture/.gitkeep
 !docs/features/.gitkeep
 !docs/gaps/.gitkeep
+!docs/ledgers/.gitkeep
 !docs/sessions/.gitkeep
