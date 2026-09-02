@@ -1,5 +1,7 @@
 # Apply Manifest
 
+**Revision 132** — supersedes Revision 131 and earlier. Post-image Time Machine evidence has one home, and the empty second one stops implying otherwise.
+
 **Revision 131** — supersedes Revision 130 and earlier. Phase 11B's automated path runs for the first time: the audit stops writing tabs into a TSV, the emitted commands stop aiming at a machine that no longer exists, and the phase gains a recorded finish line.
 
 **Revision 130** — supersedes Revision 129 and earlier. The documentation lint stops counting the notes nobody ships.
@@ -369,6 +371,67 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `backup-repos.sh` | `bin/backup-repos.sh` |
 | `setup-reimage-env.sh` | `bin/setup-reimage-env.sh` |
 | `compare-restored-state.sh` | `bin/compare-restored-state.sh` |
+
+---
+
+## Revision 132 — one place for post-image Time Machine evidence
+
+`bin/record-reimaged-system.sh` pre-created four sibling directories under
+`reimaged-system/` so later phases had somewhere to land. Three of them are
+written: `checklists/` by Phase 14, `restarts/` by the recorder itself,
+`restore-notes/` by the decisions log and the Phase 12 plan notes. The fourth,
+`time-machine/`, never was. It was scaffolded for "Time Machine planning" and
+nothing ever planned there.
+
+### Why an empty directory was not harmless
+
+It was read, by this session, as evidence of an intended design: that post-image
+Time Machine evidence belongs under `reimaged-system/`, where everything is
+post-image by construction and a phase discriminator in the context name would be
+unnecessary. That reading was wrong, but it was not unreasonable — an empty
+directory with a category's name is a claim about where something goes.
+
+It mattered because the queued `time-machine/` conversion turns on exactly that
+question. `docs/features/time-machine-run-index-conversion.md` settles its
+context naming on `pre-image-status` / `post-image-status` **because** the
+category holds both phases side by side, which is the one exception
+`artifact-runs.sh` names to its "do not repeat the directory in the context"
+rule. Had the post-image side landed under `reimaged-system/` instead, the two
+phases would not be side by side, the exception would not apply, and the bare
+subcommand contexts would have been correct.
+
+### The decision
+
+The root-level `time-machine/` holds post-image evidence alongside pre-image, the
+same way every `capture-` category does — one category per kind of evidence,
+both phases in it, the phase carried in the context name. `run-time-machine.sh`
+and `record-time-machine-evidence.sh` are the same producers in Phase 16 as in
+Phase 5, and a producer that writes to two different roots depending on when it
+runs is the thing the run index exists to avoid.
+
+So the conversion design is confirmed rather than reopened, and the directory
+that suggested otherwise is gone: dropped from the `mkdir -p` list, with the
+reasoning left at the line so it is not re-added, and removed from
+`references/reimaged-system-evidence.md` (two path blocks) and
+`references/restore-file-reference.md` (a Phase 9 output row, a first-post-image-
+backup row now pointing at the root-level category, and a manual-note path
+block).
+
+The empty directory was also removed from the artifact root at the owner's
+request. It held nothing.
+
+### Validation
+
+`bash -n` clean. `verify-doc-paths.sh --all` 0 MISSING / 0 ANCHOR BROKEN.
+`verify-script-portability.sh` 74 clean / 0 WARN / 0 FAIL.
+`verify-runbook-structure.sh` unchanged against its baseline — no runbook was
+touched. `grep` confirms no reference to `reimaged-system/time-machine` remains
+outside this change log, which quotes paths as they were and is excluded from the
+doc lint for that reason.
+
+**All of it ran on Linux with Bash 5.x.** `shellcheck` was not available.
+`/bin/bash -n` against real macOS Bash 3.2 is owed on this file along with
+Revisions 116–131.
 
 ---
 
