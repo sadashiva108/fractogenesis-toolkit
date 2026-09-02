@@ -34,7 +34,7 @@ The same runbooks and scripts run from any of these. What changes is where `$FRA
 
 | Instance | `$FRACTOGENESIS_HOME` | When it is the active one | Has `.git`? |
 |---|---|---|---|
-| Git clone | wherever you cloned, e.g. `$GIT_PERSONAL_REPO_ROOT/fractogenesis-toolkit` | Pre-image, and again from Phase 11B onward | Yes |
+| Git clone | wherever you cloned, e.g. `$LOCAL_PERSONAL_REPO_ROOT/fractogenesis-toolkit` | Pre-image, and again from Phase 11B onward | Yes |
 | `curl` install | whatever `FRACTOGENESIS_HOME` was exported to in Phase 8 Step 1; `$HOME/fractogenesis-toolkit` if that export was skipped | Phase 8 through Phase 11B, when the network is up | No |
 | Jump-drive install | same default; set by `bootstrap.sh` | Phase 8 through Phase 11B, when there is no network yet | No |
 
@@ -188,7 +188,7 @@ Both installs share three properties worth keeping in mind while you use one:
 
 ## Moving Between Instances
 
-Phase 11B clones the toolkit into `$GIT_PERSONAL_REPO_ROOT`, because the toolkit lives under the personal repo root like any other repo. That clone is a *different instance* from the one you have been running since Phase 8, and switching to it is a deliberate act.
+Phase 11B clones the toolkit into `$LOCAL_PERSONAL_REPO_ROOT`, because the toolkit lives under the personal repo root like any other repo. That clone is a *different instance* from the one you have been running since Phase 8, and switching to it is a deliberate act.
 
 ```bash
 # Capture the current root first: after the repoint below, FRACTOGENESIS_HOME
@@ -197,14 +197,14 @@ TOOLKIT_BOOTSTRAP="$FRACTOGENESIS_HOME"
 
 # 1. Carry reimage.env across -- it is gitignored, so the clone does not have it.
 cp "$TOOLKIT_BOOTSTRAP/reimage.env" \
-   "$GIT_PERSONAL_REPO_ROOT/fractogenesis-toolkit/reimage.env"
+   "$LOCAL_PERSONAL_REPO_ROOT/fractogenesis-toolkit/reimage.env"
 
 # 2. Repoint the shell. init-shell-env.sh self-locates, so running it from the
 #    clone rewrites the profile block to point at the clone.
-bash "$GIT_PERSONAL_REPO_ROOT/fractogenesis-toolkit/bin/init-shell-env.sh"
+bash "$LOCAL_PERSONAL_REPO_ROOT/fractogenesis-toolkit/bin/init-shell-env.sh"
 
 # 3. Approve .envrc in the clone, if direnv is already installed.
-cd "$GIT_PERSONAL_REPO_ROOT/fractogenesis-toolkit" && direnv allow
+cd "$LOCAL_PERSONAL_REPO_ROOT/fractogenesis-toolkit" && direnv allow
 
 # 4. Only once the above is confirmed working, remove the bootstrap copy.
 rm -rf "$TOOLKIT_BOOTSTRAP"

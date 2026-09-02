@@ -606,10 +606,10 @@ check_restore_repos() {
     record FAIL "\`restore-git\` closed out" "no official \`restore-git-exit\` run under \`boundaries/\` — run \`./bin/record-restore-exit.sh --runbook restore-git\` at the end of \`restore-git\`"
   fi
 
-  # 3 -- clone roots. GIT_WORK_REPO_ROOT is required: unset, every repository
+  # 3 -- clone roots. LOCAL_WORK_REPO_ROOT is required: unset, every repository
   # falls back to its pre-image parent directory.
   #
-  # GIT_PERSONAL_REPO_ROOT is OPTIONAL and all-or-nothing with the personal
+  # LOCAL_PERSONAL_REPO_ROOT is OPTIONAL and all-or-nothing with the personal
   # identity restore-git recorded, matching backup-repos.md and the
   # `Identity values recorded in reimage.env` row in record-restore-exit.sh. A
   # Mac with no personal identity has no personal root, and that is a PASS --
@@ -626,18 +626,18 @@ check_restore_repos() {
     eval "pv=\${$pk:-}"
     [[ -z "$pv" ]] || pers_ident="set"
   done
-  if [[ -z "${GIT_WORK_REPO_ROOT:-}" ]]; then
-    record FAIL "Clone roots set and distinct" "\`GIT_WORK_REPO_ROOT\` is unset in \`reimage.env\` — every repository would fall back to its pre-image parent directory. \`backup-repos\` Step 1 records it."
-  elif [[ -n "${GIT_PERSONAL_REPO_ROOT:-}" && "${GIT_WORK_REPO_ROOT%/}" == "${GIT_PERSONAL_REPO_ROOT%/}" ]]; then
-    record FAIL "Clone roots set and distinct" "both roots are \`${GIT_WORK_REPO_ROOT%/}\` — \`includeIf\` would apply the personal identity to every repository"
-  elif [[ -n "${GIT_PERSONAL_REPO_ROOT:-}" && -z "$pers_ident" ]]; then
-    record FAIL "Clone roots set and distinct" "\`GIT_PERSONAL_REPO_ROOT\` is \`${GIT_PERSONAL_REPO_ROOT%/}\` but no \`GIT_PERSONAL_*\` identity was recorded — repositories would clone into a root \`includeIf\` never matches and commit under the work identity. Either record the identity in \`restore-git\` Step 0c or clear the root."
-  elif [[ -z "${GIT_PERSONAL_REPO_ROOT:-}" && -n "$pers_ident" ]]; then
-    record FAIL "Clone roots set and distinct" "a personal identity is recorded but \`GIT_PERSONAL_REPO_ROOT\` is empty — \`includeIf\` has no \`gitdir:\` to match and nothing can route to the personal host. \`backup-repos\` Step 1 records that root."
-  elif [[ -z "${GIT_PERSONAL_REPO_ROOT:-}" ]]; then
-    record PASS "Clone roots set and distinct" "\`${GIT_WORK_REPO_ROOT%/}\`; no personal root and no personal identity — every repository clones under the work root"
+  if [[ -z "${LOCAL_WORK_REPO_ROOT:-}" ]]; then
+    record FAIL "Clone roots set and distinct" "\`LOCAL_WORK_REPO_ROOT\` is unset in \`reimage.env\` — every repository would fall back to its pre-image parent directory. \`backup-repos\` Step 1 records it."
+  elif [[ -n "${LOCAL_PERSONAL_REPO_ROOT:-}" && "${LOCAL_WORK_REPO_ROOT%/}" == "${LOCAL_PERSONAL_REPO_ROOT%/}" ]]; then
+    record FAIL "Clone roots set and distinct" "both roots are \`${LOCAL_WORK_REPO_ROOT%/}\` — \`includeIf\` would apply the personal identity to every repository"
+  elif [[ -n "${LOCAL_PERSONAL_REPO_ROOT:-}" && -z "$pers_ident" ]]; then
+    record FAIL "Clone roots set and distinct" "\`LOCAL_PERSONAL_REPO_ROOT\` is \`${LOCAL_PERSONAL_REPO_ROOT%/}\` but no \`GIT_PERSONAL_*\` identity was recorded — repositories would clone into a root \`includeIf\` never matches and commit under the work identity. Either record the identity in \`restore-git\` Step 0c or clear the root."
+  elif [[ -z "${LOCAL_PERSONAL_REPO_ROOT:-}" && -n "$pers_ident" ]]; then
+    record FAIL "Clone roots set and distinct" "a personal identity is recorded but \`LOCAL_PERSONAL_REPO_ROOT\` is empty — \`includeIf\` has no \`gitdir:\` to match and nothing can route to the personal host. \`backup-repos\` Step 1 records that root."
+  elif [[ -z "${LOCAL_PERSONAL_REPO_ROOT:-}" ]]; then
+    record PASS "Clone roots set and distinct" "\`${LOCAL_WORK_REPO_ROOT%/}\`; no personal root and no personal identity — every repository clones under the work root"
   else
-    record PASS "Clone roots set and distinct" "\`${GIT_WORK_REPO_ROOT%/}\` and \`${GIT_PERSONAL_REPO_ROOT%/}\`"
+    record PASS "Clone roots set and distinct" "\`${LOCAL_WORK_REPO_ROOT%/}\` and \`${LOCAL_PERSONAL_REPO_ROOT%/}\`"
   fi
 
   # 4 -- the audit pointer resolves to a run directory that is actually there.

@@ -302,8 +302,8 @@ TARGETS
 
 targets_restore_repos() {
   cat <<'TARGETS'
-shallow@@$GIT_WORK_REPO_ROOT/@@Clone destination for work repositories — one row each
-shallow@@$GIT_PERSONAL_REPO_ROOT/@@Clone destination for personal repositories — one row each
+shallow@@$LOCAL_WORK_REPO_ROOT/@@Clone destination for work repositories — one row each
+shallow@@$LOCAL_PERSONAL_REPO_ROOT/@@Clone destination for personal repositories — one row each
 TARGETS
 }
 
@@ -312,7 +312,7 @@ targets_restore_git() {
 file@@~/.gitconfig@@Step 4 — the global identity, written wholesale
 tree@@~/.config/git/@@Step 6 — XDG config and config.local
 file@@~/.ssh/config@@Step 3 — rewritten wholesale, not appended
-file@@$GIT_PERSONAL_REPO_ROOT/.gitconfig@@Step 5 — personal-root override reached by includeIf
+file@@$LOCAL_PERSONAL_REPO_ROOT/.gitconfig@@Step 5 — personal-root override reached by includeIf
 TARGETS
 }
 
@@ -330,7 +330,7 @@ targets_restore_access() {
 # which is a confident wrong answer about a path nothing ever looked at.
 #
 # Every $NAME a spec carries is substituted, not one hardcoded variable. The
-# table above uses $JAVA_HOME, $GIT_WORK_REPO_ROOT and $GIT_PERSONAL_REPO_ROOT;
+# table above uses $JAVA_HOME, $LOCAL_WORK_REPO_ROOT and $LOCAL_PERSONAL_REPO_ROOT;
 # the original single-variable form resolved the latter two to their own literal
 # text and then reported `absent` for a path nobody had looked at -- a wrong
 # answer that reads exactly like a correct one. The expansion loop itself lives

@@ -372,8 +372,8 @@ printf "repo_path\tlabel\tpath_present\tremote_url\tclone_host\tclone_target_roo
 #  10 ignored_count
 
 # Derived Git roots from reimage.env (may be empty if not set).
-WORK_ROOT="${GIT_WORK_REPO_ROOT:-}"
-PERSONAL_ROOT="${GIT_PERSONAL_REPO_ROOT:-}"
+WORK_ROOT="${LOCAL_WORK_REPO_ROOT:-}"
+PERSONAL_ROOT="${LOCAL_PERSONAL_REPO_ROOT:-}"
 WORK_HOST="${GIT_WORK_GITHUB_HOST:-github.com}"
 PERSONAL_HOST="${GIT_PERSONAL_GITHUB_HOST:-github-personal}"
 
@@ -620,7 +620,7 @@ GITIGNORED_CMDS="$OUT/rsync-repos-gitignored.sh"
   echo ""
   echo "# Neither clone root is guaranteed to exist on a freshly reimaged Mac;"
   echo "# without this the first 'cd' fails and set -e kills the whole batch."
-  echo "mkdir -p \"$GIT_WORK_REPO_ROOT\" \"$GIT_PERSONAL_REPO_ROOT\""
+  echo "mkdir -p \"$LOCAL_WORK_REPO_ROOT\" \"$LOCAL_PERSONAL_REPO_ROOT\""
   echo ""
 } > "$CLONE_CMDS"
 {
@@ -825,11 +825,46 @@ fi
 # ---------------------------------------------------------------------------
 # Generate the Markdown report
 # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# Report cells, computed BEFORE the here-document
+#
+# Nothing below may contain a command substitution once it reaches the
+# here-document. A nested `$( ... $( ... ) ... )` inside an unquoted heredoc is
+# the one construct that separates this script's report from its command files,
+# and all three post-image-restore runs on the artifact volume have a 0-byte
+# `restore-status.md` beside three complete command files. Bash 3.2's
+# here-document parser handles nested substitution poorly, and under `set -u`
+# an expansion error in a non-interactive shell is fatal: the redirect creates
+# and truncates the file, the expansion dies, and nothing after it runs. That is
+# exactly the state on disk.
+#
+# `bash -n` cannot see it and the portability lint cannot see it -- its rules are
+# per-line regexes and this one needs heredoc context. So the rule is structural:
+# compute the cell, then interpolate the variable.
+# ---------------------------------------------------------------------------
+REPORT_GENERATED="$(date)"
+REPORT_SCRIPT="$(basename "$0")"
+
+if [[ "$DUPLICATE_LABEL_COUNT" -eq 0 ]]; then
+  DUP_STATUS="PASS"
+  DUP_NOTE="Bundle labels are unique."
+else
+  DUP_STATUS="WARN"
+  # Deliberately unquoted: the guard's value is a newline-separated list and the
+  # note wants it space-separated on one line.
+  # shellcheck disable=SC2086
+  DUP_NOTE="Shared bundle label(s): $(printf '%s ' $DUPLICATE_LABELS). Reconcile by hand before running the rsync commands."
+fi
+
+REPOS_INDEX_STATUS="$(status_pass_warn "$REPOS_INDEX_OK")"
+CLONES_STATUS="$(status_pass_warn "$CLONES_COMPLETE")"
+IGNORED_STATUS="$(status_pass_warn "$IGNORED_FILES_COMPLETE")"
+
 cat > "$REPORT_MD" <<EOF
 # Restore Repositories Status Report
 
-Generated: $(date)
-Script: $(basename "$0")
+Generated: $REPORT_GENERATED
+Script: $REPORT_SCRIPT
 Output directory: $OUT
 Source pre-image audit run: $INPUT_RUN
 Repositories in inventory: $TOTAL
@@ -855,10 +890,10 @@ remote before reimage. See \`restore-repos.md\` for the full runbook.
 
 | Check | Verification mode | How to verify | Status | Notes |
 |---|---|---|---|---|
-| No duplicate repo basenames | Command | \`cut -f1 repos.tsv | xargs -n1 basename | sort | uniq -d\` is empty | $( [[ "$DUPLICATE_LABEL_COUNT" -eq 0 ]] && echo 'PASS' || echo 'WARN' ) | $( [[ "$DUPLICATE_LABEL_COUNT" -eq 0 ]] && echo 'Bundle labels are unique.' || echo "Shared bundle label(s): $(printf '%s ' $DUPLICATE_LABELS). Reconcile by hand before running the rsync commands." ) |
-| Pre-image repo inventory read successfully | Command | \`repos.tsv\` produced status rows | $(status_pass_warn "$REPOS_INDEX_OK") | See \`raw/repos-input.tsv\`. |
-| Every tracked repo is present on disk | Mixed | \`git clone\` output from \`clone-commands.sh\` succeeded for each entry | $(status_pass_warn "$CLONES_COMPLETE") | Emitted commands to \`clone-commands.sh\`; run manually and rerun this script to confirm. |
-| Every staged ignored bundle applied | Mixed | \`rsync-ignored-files.sh\` executed or \`--apply-ignored-files\` used | $(status_pass_warn "$IGNORED_FILES_COMPLETE") | Emitted commands to \`rsync-ignored-files.sh\`; review before running. |
+| No duplicate repo basenames | Command | \`cut -f1 repos.tsv | xargs -n1 basename | sort | uniq -d\` is empty | $DUP_STATUS | $DUP_NOTE |
+| Pre-image repo inventory read successfully | Command | \`repos.tsv\` produced status rows | $REPOS_INDEX_STATUS | See \`raw/repos-input.tsv\`. |
+| Every tracked repo is present on disk | Mixed | \`git clone\` output from \`clone-commands.sh\` succeeded for each entry | $CLONES_STATUS | Emitted commands to \`clone-commands.sh\`; run manually and rerun this script to confirm. |
+| Every staged ignored bundle applied | Mixed | \`rsync-ignored-files.sh\` executed or \`--apply-ignored-files\` used | $IGNORED_STATUS | Emitted commands to \`rsync-ignored-files.sh\`; review before running. |
 
 ## Manual Sign-Off
 
@@ -928,8 +963,8 @@ EOF
 
 cat > "$OUT/MANIFEST.txt" <<EOF
 # Restore Repositories Status Manifest
-Generated: $(date)
-Script: $(basename "$0")
+Generated: $REPORT_GENERATED
+Script: $REPORT_SCRIPT
 Output directory: $OUT
 Source pre-image audit run: $INPUT_RUN
 

@@ -79,7 +79,7 @@ Read this before running anything. IntelliJ keeps state in two very different pl
 
 The work is part automated and part manual. `backup-apps.sh --intellij-only` runs the scriptable capture; a manual settings ZIP export from IntelliJ's own UI is a second, cleaner restore path that is usually easier to import after reimage than hand-restoring individual config files. Do both — the ZIP is not a substitute for the scripted capture, and the scripted capture does not produce the ZIP.
 
-The preferred path is the entrypoint: `backup-apps.sh --intellij-only`. It self-locates, loads shared config, and invokes the internal helper — which auto-detects the active IntelliJ config directory (the most recently modified one) and receives the projects root from `GIT_WORK_REPO_ROOT`. Running the helper directly is possible but reserved for standalone or troubleshooting use (see [[#Run the Helper Standalone|Run the Helper Standalone]]).
+The preferred path is the entrypoint: `backup-apps.sh --intellij-only`. It self-locates, loads shared config, and invokes the internal helper — which auto-detects the active IntelliJ config directory (the most recently modified one) and receives the projects root from `LOCAL_WORK_REPO_ROOT`. Running the helper directly is possible but reserved for standalone or troubleshooting use (see [[#Run the Helper Standalone|Run the Helper Standalone]]).
 
 ### What Gets Backed Up
 
@@ -108,7 +108,7 @@ IntelliJ HTTP Client environment files (`http-client.env.json`, `http-client.pri
 | Active config directory | The JetBrains config dir for the running IDE version, e.g. `~/Library/Application Support/JetBrains/IntelliJIdea2026.1`. Auto-detected as the most recently modified `IntelliJIdea*`/`IdeaIC*` directory (override with `IDE_PRODUCT`). |
 | Special Files and Folders | IntelliJ's `Help → Diagnostic Tools → Special Files and Folders` screen, which reports the active config, logs, plugins, and Project BasePath. |
 | Project BasePath | The path of the *currently open* project/window. It changes with focus, so it is not what the backup scans. |
-| Projects root | The broader directory tree the capture scans for project-level `.idea` metadata (default from `GIT_WORK_REPO_ROOT`), covering all projects. |
+| Projects root | The broader directory tree the capture scans for project-level `.idea` metadata (default from `LOCAL_WORK_REPO_ROOT`), covering all projects. |
 | HTTP Client env files | `http-client.env.json` / `http-client.private.env.json` — credential-bearing, routed to the encrypted secrets flow. |
 | Secret review template | `intellij-secret-review-template.txt` under `$REIMAGE_WORKSPACE_ROOT/intellij-review/`. `[x]`-checked patterns are staged into the encrypted secrets tree; nothing is preselected. |
 | Plaintext exclude list | `intellij-plaintext-exclude-list.txt` in the same folder. One pattern per line; drops noise (e.g. `httpRequests/`, `shelf/`) from the clear-text copy. Same file format as `gitignore-superset/backup-exclude-list.txt`, but a separate file with a separate purpose. |
@@ -180,7 +180,7 @@ $REIMAGE_ARTIFACT_ROOT/
 └── ...
 ```
 
-The staged secrets are split by the root each file came from, and paths under each bucket are relative to *that* root, so a restore is one substitution: `ide-config/` is relative to `~/Library/Application Support/JetBrains/`, and `projects/` is relative to `$GIT_WORK_REPO_ROOT`. An `other/` bucket appears only if a staged file came from neither root — it should stay empty.
+The staged secrets are split by the root each file came from, and paths under each bucket are relative to *that* root, so a restore is one substitution: `ide-config/` is relative to `~/Library/Application Support/JetBrains/`, and `projects/` is relative to `$LOCAL_WORK_REPO_ROOT`. An `other/` bucket appears only if a staged file came from neither root — it should stay empty.
 
 Your reviewed selections live in the workspace instead, so they survive the artifact root and carry across reimages:
 
@@ -209,7 +209,7 @@ The `reimage.env` values this runbook depends on. Values are resolved and writte
 |---|---|
 | `REIMAGE_ARTIFACT_ROOT` | Absolute path to the Phase 2 artifact root where `app-settings-backup/` and `secrets-encrypted/` live. |
 | `FRACTOGENESIS_HOME` | Absolute path to the toolkit repository root; entrypoints are run from here. |
-| `GIT_WORK_REPO_ROOT` | Work repository root. Also the default IntelliJ **projects root** scanned for project-level `.idea` metadata — the same value used by the Git repo backup, so set it once (e.g. `/Users/<user>/Development/IdeaProjects`). |
+| `LOCAL_WORK_REPO_ROOT` | Work repository root. Also the default IntelliJ **projects root** scanned for project-level `.idea` metadata — the same value used by the Git repo backup, so set it once (e.g. `/Users/<user>/Development/IdeaProjects`). |
 | `REIMAGE_WORKSPACE_ROOT` | Local workspace holding `intellij-review/`, the durable copy of your IntelliJ secret selections. Every run reads them from here; with the value unset both files fall back to the artifact root and die with the drive. Resolved by `prepare-artifact-root.md`. |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -233,7 +233,7 @@ A short pre-flight: confirm you are set up, then confirm what this run is for.
 ### Confirm Your Intent
 
 - Whether IntelliJ applies to this Mac and you want to preserve IDE state — skip it if Settings Sync or another source already covers it.
-- Which **projects root** to scan for project `.idea` metadata — normally `GIT_WORK_REPO_ROOT`.
+- Which **projects root** to scan for project `.idea` metadata — normally `LOCAL_WORK_REPO_ROOT`.
 - Whether to also export the settings ZIP (recommended — it is the easiest restore path) and whether you need the optional captures (all config dirs, shelves, or the system cache).
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -325,9 +325,9 @@ Two things decide what this run produces, and both are settled before the comman
 
 **IntelliJ must be quit.** The Step 1 check is the same one the script runs. If the script finds it running it warns, writes `manifests/ide-was-running-during-capture.txt`, and carries on — so an open IDE does not stop you, it just makes the result untrustworthy. Quit it now rather than rerunning later.
 
-**Which projects get scanned.** The entrypoint defaults the projects root to `GIT_WORK_REPO_ROOT` and the helper auto-detects the active IntelliJ config directory, so neither is passed below.
+**Which projects get scanned.** The entrypoint defaults the projects root to `LOCAL_WORK_REPO_ROOT` and the helper auto-detects the active IntelliJ config directory, so neither is passed below.
 
-- [[#Work Repositories Only|Work Repositories Only]] — every IntelliJ project lives under `GIT_WORK_REPO_ROOT`.
+- [[#Work Repositories Only|Work Repositories Only]] — every IntelliJ project lives under `LOCAL_WORK_REPO_ROOT`.
 - [[#Projects Outside the Work Root|Projects Outside the Work Root]] — you also keep personal or other projects elsewhere.
 
 #### Work Repositories Only
@@ -363,7 +363,7 @@ Optional passthrough flags, when they apply:
 
 ```text
 --intellij-all-config-dirs        back up every IntelliJIdea*/IdeaIC* config dir, not just the active one
---intellij-projects-root PATH     scan a different projects root (default: GIT_WORK_REPO_ROOT)
+--intellij-projects-root PATH     scan a different projects root (default: LOCAL_WORK_REPO_ROOT)
 --intellij-projects-max-depth N   change the .idea scan depth (default 6)
 --intellij-skip-project-scan      skip the project-level .idea scan
 --intellij-include-shelf          include .idea/shelf folders (skipped by default)
@@ -520,7 +520,7 @@ The single source for the capture logic is the helper; running it directly is th
 ```bash
 .internal/apps/backup-intellij-state.sh \
   --artifact-root "$REIMAGE_ARTIFACT_ROOT" \
-  --projects-root "$GIT_WORK_REPO_ROOT"
+  --projects-root "$LOCAL_WORK_REPO_ROOT"
 ```
 
 Run standalone, the helper has no baked-in projects-root default, so pass `--projects-root` (or export `INTELLIJ_PROJECTS_ROOT`) for the project-level scan; the active config directory is still auto-detected. The secret review files are written under the artifact root, so no extra flag is needed to enable staging.

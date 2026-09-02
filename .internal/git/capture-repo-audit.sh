@@ -23,8 +23,8 @@
 #   ./.internal/git/capture-repo-audit.sh
 #
 #   ./.internal/git/capture-repo-audit.sh \
-#     --root "$GIT_WORK_REPO_ROOT" \
-#     --root "$GIT_PERSONAL_REPO_ROOT" \
+#     --root "$LOCAL_WORK_REPO_ROOT" \
+#     --root "$LOCAL_PERSONAL_REPO_ROOT" \
 #     --dest "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports"
 #
 #   ./.internal/git/capture-repo-audit.sh \
@@ -36,8 +36,8 @@
 # Options:
 #   --root <dir>                  Root directory to crawl for Git repos.
 #                                 Can be passed multiple times.
-#                                 Default: configured GIT_WORK_REPO_ROOT and
-#                                 GIT_PERSONAL_REPO_ROOT values.
+#                                 Default: configured LOCAL_WORK_REPO_ROOT and
+#                                 LOCAL_PERSONAL_REPO_ROOT values.
 #   --dest <dir>                  Repository-audit root directory.
 #                                 Default: $REIMAGE_ARTIFACT_ROOT/repo-audit-reports.
 #                                 Required when REIMAGE_ARTIFACT_ROOT is not set.
@@ -183,18 +183,18 @@ case "$CONTEXT" in
 esac
 
 if [[ ${#ROOTS[@]} -eq 0 ]]; then
-  if [[ -n "${GIT_WORK_REPO_ROOT:-}" && -d "${GIT_WORK_REPO_ROOT:-}" ]]; then
-    ROOTS+=("$GIT_WORK_REPO_ROOT")
+  if [[ -n "${LOCAL_WORK_REPO_ROOT:-}" && -d "${LOCAL_WORK_REPO_ROOT:-}" ]]; then
+    ROOTS+=("$LOCAL_WORK_REPO_ROOT")
   fi
 
-  if [[ -n "${GIT_PERSONAL_REPO_ROOT:-}" && -d "${GIT_PERSONAL_REPO_ROOT:-}" ]]; then
-    ROOTS+=("$GIT_PERSONAL_REPO_ROOT")
+  if [[ -n "${LOCAL_PERSONAL_REPO_ROOT:-}" && -d "${LOCAL_PERSONAL_REPO_ROOT:-}" ]]; then
+    ROOTS+=("$LOCAL_PERSONAL_REPO_ROOT")
   fi
 fi
 
 if [[ ${#ROOTS[@]} -eq 0 ]]; then
   echo "ERROR: No Git repository roots configured." >&2
-  echo "Set GIT_WORK_REPO_ROOT and/or GIT_PERSONAL_REPO_ROOT in reimage.env, or pass --root <dir>." >&2
+  echo "Set LOCAL_WORK_REPO_ROOT and/or LOCAL_PERSONAL_REPO_ROOT in reimage.env, or pass --root <dir>." >&2
   exit 2
 fi
 

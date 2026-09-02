@@ -288,10 +288,10 @@ The `reimage.env` values this runbook depends on. The first two are resolved dur
 |---|---|
 | `FRACTOGENESIS_HOME` | Repository root for this toolkit checkout; where `reimage.env` lives. Set by your shell startup / `.envrc`, not stored in `reimage.env`. |
 | `REIMAGE_ARTIFACT_ROOT` | Artifact root for this reimage event; where every audit, superset and staged tree below is written. |
-| `GIT_WORK_REPO_ROOT` | Resolved absolute path to the parent directory holding work/corporate repositories — a folder of repos, not a single repo. Required. Phase 11B clones back into it, and `record-restore-prereqs.sh --runbook restore-repos` fails when it is unset, because every repository would otherwise fall back to its pre-image parent directory. |
-| `GIT_PERSONAL_REPO_ROOT` | Resolved absolute path to the parent directory holding personal/reference repositories. Optional, and all-or-nothing with the `GIT_PERSONAL_*` identity `restore-git.md` records: a Mac with no separate personal identity leaves both blank. Set one without the other and Phase 11B either clones into a root `includeIf` never matches, or has nowhere to write the personal override. Must differ from `GIT_WORK_REPO_ROOT` — equal roots make `includeIf` apply the personal identity to every repository. |
+| `LOCAL_WORK_REPO_ROOT` | Resolved absolute path to the parent directory holding work/corporate repositories — a folder of repos, not a single repo. Required. Phase 11B clones back into it, and `record-restore-prereqs.sh --runbook restore-repos` fails when it is unset, because every repository would otherwise fall back to its pre-image parent directory. |
+| `LOCAL_PERSONAL_REPO_ROOT` | Resolved absolute path to the parent directory holding personal/reference repositories. Optional, and all-or-nothing with the `GIT_PERSONAL_*` identity `restore-git.md` records: a Mac with no separate personal identity leaves both blank. Set one without the other and Phase 11B either clones into a root `includeIf` never matches, or has nowhere to write the personal override. Must differ from `LOCAL_WORK_REPO_ROOT` — equal roots make `includeIf` apply the personal identity to every repository. |
 
-Keep both as resolved absolute paths. A literal `$HOME/...` or `${GIT_WORK_REPO_ROOT:-...}` in `reimage.env` goes stale or fails under `set -u`.
+Keep both as resolved absolute paths. A literal `$HOME/...` or `${LOCAL_WORK_REPO_ROOT:-...}` in `reimage.env` goes stale or fails under `set -u`.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -303,14 +303,14 @@ Each part below answers *why* a step exists before the Sequential Steps show *ho
 
 ### Prerequisites
 
-This runbook assumes the external artifact volume, `$REIMAGE_ARTIFACT_ROOT`, the standard generated-artifact folders, and `reimage.env` are already in place. The Git repository roots (`GIT_WORK_REPO_ROOT`, `GIT_PERSONAL_REPO_ROOT`) are set by this runbook's first step.
+This runbook assumes the external artifact volume, `$REIMAGE_ARTIFACT_ROOT`, the standard generated-artifact folders, and `reimage.env` are already in place. The Git repository roots (`LOCAL_WORK_REPO_ROOT`, `LOCAL_PERSONAL_REPO_ROOT`) are set by this runbook's first step.
 
 | Item | Location |
 |---|---|
 | Workflow docs and scripts | `$FRACTOGENESIS_HOME` |
 | Generated Git artifacts | `$REIMAGE_ARTIFACT_ROOT` |
 | Local machine-specific values | `$FRACTOGENESIS_HOME/reimage.env` |
-| Git repository roots | `GIT_WORK_REPO_ROOT`, `GIT_PERSONAL_REPO_ROOT` |
+| Git repository roots | `LOCAL_WORK_REPO_ROOT`, `LOCAL_PERSONAL_REPO_ROOT` |
 
 > [!bug] Troubleshooting
 > If a root path does not exist, fix `reimage.env` before continuing. The entrypoint refuses to run against a missing root rather than silently skipping it.
@@ -367,7 +367,7 @@ Define the local repository root directories in `reimage.env` before running the
 
 These values tell the Git helper scripts where to search for repositories. They should point to parent folders that contain one or more Git repositories, not necessarily to a single repo.
 
-You do **not** need both roots. `GIT_WORK_REPO_ROOT` is required and should point to your existing work/corporate repo path. `GIT_PERSONAL_REPO_ROOT` is optional and can stay blank when you do not maintain a separate personal/reference repo area on this Mac.
+You do **not** need both roots. `LOCAL_WORK_REPO_ROOT` is required and should point to your existing work/corporate repo path. `LOCAL_PERSONAL_REPO_ROOT` is optional and can stay blank when you do not maintain a separate personal/reference repo area on this Mac.
 
 If you do set it, it is all-or-nothing with the `GIT_PERSONAL_*` identity that [[restore-git|restore-git.md]] Step 0c records: a personal root with no identity clones into a directory `includeIf` never matches, so those commits land under the *work* identity, and an identity with no root leaves that runbook's override at `/.gitconfig`. `record-restore-prereqs.sh --runbook restore-repos` fails on either half. Leaving both blank is a complete, valid answer.
 
@@ -375,32 +375,32 @@ Common examples:
 
 | Variable                 | Purpose                                        | Example shape                            |
 | ------------------------ | ---------------------------------------------- | ---------------------------------------- |
-| `GIT_WORK_REPO_ROOT`     | Work/corporate development repositories.       | `/Users/<user>/Development/IdeaProjects` |
-| `GIT_PERSONAL_REPO_ROOT` | Personal/reference/documentation repositories. | `/Users/<user>/Development/personal`     |
+| `LOCAL_WORK_REPO_ROOT`     | Work/corporate development repositories.       | `/Users/<user>/Development/IdeaProjects` |
+| `LOCAL_PERSONAL_REPO_ROOT` | Personal/reference/documentation repositories. | `/Users/<user>/Development/personal`     |
 
-Keep these values in `reimage.env` as resolved absolute paths. Do not write literal values such as `$HOME/path/to/repos` or `${GIT_WORK_REPO_ROOT:-...}` into `reimage.env`; those can become stale or fail under `set -u`.
+Keep these values in `reimage.env` as resolved absolute paths. Do not write literal values such as `$HOME/path/to/repos` or `${LOCAL_WORK_REPO_ROOT:-...}` into `reimage.env`; those can become stale or fail under `set -u`.
 
 **These should already exist on disk as folders containing your cloned repos.** This guide doesn't create them -- it only points the Git helper scripts at them and validates that they're really there further down in this same step. If a path you set here doesn't exist yet, that's very likely a typo, not something to paper over; the validation below is specifically designed to catch that and tell you.
 
-Set the values in the current shell first, using real paths for this Mac. **Export these under their final names directly** -- `GIT_WORK_REPO_ROOT` and `GIT_PERSONAL_REPO_ROOT`, matching every other export in this guide -- not a separately-named staging variable:
+Set the values in the current shell first, using real paths for this Mac. **Export these under the names `reimage.env` will carry** -- `LOCAL_WORK_REPO_ROOT` and `LOCAL_PERSONAL_REPO_ROOT` -- not a separately-named staging variable, so the upsert below writes what you just checked. They are `LOCAL_` rather than `GIT_` because they are directories on this Mac, not anything GitHub knows about, and because they may legitimately differ before and after a reimage:
 
 ```bash
-export GIT_WORK_REPO_ROOT="$HOME/path/to/work/repos"
+export LOCAL_WORK_REPO_ROOT="$HOME/path/to/work/repos"
 
-export GIT_PERSONAL_REPO_ROOT=""
+export LOCAL_PERSONAL_REPO_ROOT=""
 ```
 
 Only if you intentionally use a second personal/reference repo root, set it instead of leaving it blank:
 
 ```bash
-export GIT_PERSONAL_REPO_ROOT="$HOME/path/to/personal/repos"
+export LOCAL_PERSONAL_REPO_ROOT="$HOME/path/to/personal/repos"
 ```
 
 `bin/prepare-artifact-root.py upsert-env` accepts any `KEY=VALUE` pair it's given, including an empty `VALUE` -- it does not check that the value is non-empty before writing it, so a typo'd or unset shell variable on the next line gets written into `reimage.env` silently, with no error at all. Guard against that here, before it can happen, rather than relying on catching it downstream:
 
 ```bash
-if [ -z "$GIT_WORK_REPO_ROOT" ]; then
-  printf 'ERROR: GIT_WORK_REPO_ROOT is empty -- the export above did not take.\n'
+if [ -z "$LOCAL_WORK_REPO_ROOT" ]; then
+  printf 'ERROR: LOCAL_WORK_REPO_ROOT is empty -- the export above did not take.\n'
   printf 'Fix it before continuing; do not run upsert-env with an empty value.\n'
 fi
 ```
@@ -418,8 +418,8 @@ Write the resolved Git root values into `reimage.env`:
 python3 bin/prepare-artifact-root.py \
   upsert-env \
   --env-file reimage.env \
-  "GIT_WORK_REPO_ROOT=${GIT_WORK_REPO_ROOT%/}" \
-  "GIT_PERSONAL_REPO_ROOT=${GIT_PERSONAL_REPO_ROOT%/}"
+  "LOCAL_WORK_REPO_ROOT=${LOCAL_WORK_REPO_ROOT%/}" \
+  "LOCAL_PERSONAL_REPO_ROOT=${LOCAL_PERSONAL_REPO_ROOT%/}"
 ```
 
 After updating `reimage.env`, source it again in the current terminal. This is required because updating the file does not automatically update variables that are already loaded in an open shell.
@@ -433,10 +433,10 @@ set +a
 Confirm the loaded values and make sure they are resolved paths, not literal shell variables:
 
 ```bash
-printf 'GIT_WORK_REPO_ROOT=%s\n' "${GIT_WORK_REPO_ROOT:-}"
-printf 'GIT_PERSONAL_REPO_ROOT=%s\n' "${GIT_PERSONAL_REPO_ROOT:-}"
+printf 'LOCAL_WORK_REPO_ROOT=%s\n' "${LOCAL_WORK_REPO_ROOT:-}"
+printf 'LOCAL_PERSONAL_REPO_ROOT=%s\n' "${LOCAL_PERSONAL_REPO_ROOT:-}"
 
-case "${GIT_WORK_REPO_ROOT:-}${GIT_PERSONAL_REPO_ROOT:-}" in
+case "${LOCAL_WORK_REPO_ROOT:-}${LOCAL_PERSONAL_REPO_ROOT:-}" in
   *'$'*)
     echo "ERROR: Git root values contain literal shell variable text. Rewrite them as resolved absolute paths."
     exit 2
@@ -447,13 +447,13 @@ esac
 Validate the roots before continuing. The scripts support either the work root alone or both roots together, but the work root should exist before you continue:
 
 ```bash
-if [[ -z "${GIT_WORK_REPO_ROOT:-}" ]]; then
-  echo "GIT_WORK_REPO_ROOT is not set."
-  echo "Add GIT_WORK_REPO_ROOT to reimage.env, then source it again."
+if [[ -z "${LOCAL_WORK_REPO_ROOT:-}" ]]; then
+  echo "LOCAL_WORK_REPO_ROOT is not set."
+  echo "Add LOCAL_WORK_REPO_ROOT to reimage.env, then source it again."
   exit 2
 fi
 
-for root in "${GIT_WORK_REPO_ROOT:-}" "${GIT_PERSONAL_REPO_ROOT:-}"; do
+for root in "${LOCAL_WORK_REPO_ROOT:-}" "${LOCAL_PERSONAL_REPO_ROOT:-}"; do
   [[ -z "$root" ]] && continue
 
   if [[ -d "$root" ]]; then
@@ -487,8 +487,8 @@ Confirm the paths resolved:
 
 ```bash
 printf 'REIMAGE_ARTIFACT_ROOT=%s\n' "$REIMAGE_ARTIFACT_ROOT"
-printf 'GIT_WORK_REPO_ROOT=%s\n' "${GIT_WORK_REPO_ROOT:-}"
-printf 'GIT_PERSONAL_REPO_ROOT=%s\n' "${GIT_PERSONAL_REPO_ROOT:-}"
+printf 'LOCAL_WORK_REPO_ROOT=%s\n' "${LOCAL_WORK_REPO_ROOT:-}"
+printf 'LOCAL_PERSONAL_REPO_ROOT=%s\n' "${LOCAL_PERSONAL_REPO_ROOT:-}"
 ```
 
 [[#Table of Contents|⬆ Back to Table of Contents]]

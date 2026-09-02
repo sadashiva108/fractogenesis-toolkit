@@ -384,7 +384,7 @@ It reports only. Resolving a hit means editing a fragment: a `SECRETS_TARGETS` r
 
 Each is guarded so it expands to empty when its input is unset, rather than resolving to a filesystem-root path.
 
-What *does* belong in `reimage.env`: `REIMAGE_ARTIFACT_ROOT`, `REIMAGE_WORKSPACE_ROOT`, `ONEDRIVE_ROOT`, `GIT_WORK_REPO_ROOT`, and the other machine-specific absolute paths. `reimage.env` holds **resolved absolute values only**, and is never committed — only `reimage.env.example` is.
+What *does* belong in `reimage.env`: `REIMAGE_ARTIFACT_ROOT`, `REIMAGE_WORKSPACE_ROOT`, `ONEDRIVE_ROOT`, `LOCAL_WORK_REPO_ROOT`, and the other machine-specific absolute paths. `reimage.env` holds **resolved absolute values only**, and is never committed — only `reimage.env.example` is.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 

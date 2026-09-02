@@ -1,5 +1,11 @@
 # Apply Manifest
 
+**Revision 144** — supersedes Revision 143 and earlier. The two repository roots stop claiming to be something GitHub knows about.
+
+**Revision 143** — supersedes Revision 142 and earlier. Phase 11B's clone plan gets its declared form, seeded and commented, ahead of the code that reads it.
+
+**Revision 142** — supersedes Revision 141 and earlier. The status report stops being written by a construct that has produced three empty files.
+
 **Revision 141** — supersedes Revision 140 and earlier. The content scans join the run index they were nested beside, and the two scanners can find their configuration again.
 
 **Revision 140** — supersedes Revision 139 and earlier. Every runbook and reference is drawn in the run-index layout, the authoring prompt gains the rules that keep it that way, and two scripts stop looking for evidence where it no longer is.
@@ -394,6 +400,297 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `scan-archive-contents.sh` | `.internal/home/scan-archive-contents.sh` |
 | `scan-postman-collections.py` | `.internal/home/scan-postman-collections.py` |
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
+
+---
+
+## Revision 144 — a path is not a remote
+
+`GIT_WORK_REPO_ROOT` and `GIT_PERSONAL_REPO_ROOT` become `LOCAL_WORK_REPO_ROOT`
+and `LOCAL_PERSONAL_REPO_ROOT`. 240 occurrences across 26 files.
+
+### Why the prefix was wrong
+
+Every other `GIT_*` key describes Git or GitHub itself — an identity, an SSH key,
+a routing host, a default branch, the account that owns your repositories. Those
+are the same on any machine that authenticates as you.
+
+These two are **directories on one Mac**. They are where clones land, and they are
+what `includeIf` matches on to decide which identity authors a commit. They are
+also the only two keys in the file that may legitimately hold different values
+before and after a reimage, because where repositories live is a choice the
+rebuild gets to remake — and the shared `GIT_` prefix implied the opposite.
+
+The prefix is the question a key answers: *where on disk*, against *who am I and
+where do I push*. A path named `GIT_` invites the reading that it is something
+GitHub knows about, which is how a folder came to sound like a remote.
+
+### Three places that needed more than the token
+
+**`backup-repos.md` Step 1** told the reader to export under the final names
+"matching every other export in this guide". That claim stopped being true the
+moment these two carried a different prefix, so it is replaced by the reason:
+export under the names `reimage.env` will carry, so the upsert writes what was
+just checked — and they are `LOCAL_` because they are directories on this Mac.
+
+**`reimage.env`'s section comment** read *"Git repository roots for
+backup-git-repository.md"* — a runbook that no longer exists under that name, and
+a description that called filesystem paths Git roots. Both corrected.
+
+**`references/environment-variable-reference.md`** gains the distinction as
+prose, once, where key naming is already owned. Without it the next reader sees
+one `LOCAL_*` pair beside eleven `GIT_*` keys and reads it as a rename someone
+abandoned half way.
+
+### Scope
+
+`APPLY-MANIFEST.md` is excluded — 15 occurrences left as they are. It quotes
+names as they were at the time of a revision, which is the stated reason it is
+excluded from the doc lint, and retro-editing it would make earlier entries
+describe a tree that never existed. Working notes under `docs/` are excluded for
+the same reason, except the live clone-plan design, which describes what is being
+built rather than what happened.
+
+The uncommitted `reimage.env` on this machine was renamed too. It is gitignored,
+but it is the file every script actually reads: leaving it would have left every
+consumer looking for a key that no longer exists.
+
+No compatibility shim, no alias, no fallback to the old names. The repository's
+rule is that a replaced path gets its references updated rather than both forms
+kept, and a shim on an environment variable is the kind that survives for years.
+
+### Validation
+
+`bash -n` clean on every edited shell file; `bin/prepare-artifact-root.py` parses.
+`verify-script-portability.sh` 79 clean / 0 WARN / 0 FAIL.
+`verify-runbook-structure.sh` 213 PASS / 5 WARN / 25 FAIL across 27 documents —
+unchanged, though five runbooks were edited. `verify-doc-paths.sh --all` 753 OK /
+0 MISSING / 0 ANCHOR BROKEN / 1106 ANCHOR OK.
+
+A grep across the whole tree finds no `GIT_*_REPO_ROOT` outside `APPLY-MANIFEST.md`
+and `docs/`.
+
+Proven functionally rather than only textually: `bin/restore-repos.sh` was run end
+to end against a scratch artifact root and both roots resolve — the emitted batch
+opens with `mkdir -p "/Users/dkittrell/workspace/orah" "/Users/dkittrell/workspace/shiva"`
+and clones into them, with a 7845-byte report identical to the pre-rename run.
+
+**All of it ran on Linux with Bash 5.x.** `shellcheck` was not available.
+`/bin/bash -n` against real macOS Bash 3.2 is owed on the twelve edited scripts
+along with Revisions 116–143.
+
+---
+
+## Revision 143 — the contract, before the thing that reads it
+
+`.internal/templates/repo-plan/` is new: four seeded fragments that declare which
+repositories Phase 11B clones, where they land, and where their post-clone
+content comes from. They join `artifact-config/`, `gitignore-superset/` and
+`staged-certs/` as the fourth template set, with the same semantics — seeded once
+into `$REIMAGE_WORKSPACE_ROOT/repo-plan/`, never overwritten, surviving the
+reimage because the workspace root does.
+
+**Nothing reads them yet.** That is the point of shipping them alone.
+
+### Why the contract lands first
+
+Phase 11B today clones the pre-image inventory verbatim: every repository, into
+one of two roots, under its own basename. That is wrong in three ways the owner
+had to state before any of it could be built — not every repository is still
+wanted, they do not all belong in a flat root, and cloning is only the first of
+four things a working tree needs.
+
+Those three facts took three sittings to pin down, and the design changed
+materially each time. The fragment shape moved from delimited rows to named keys
+after a `paste` delimiter defect showed what a shifted positional field costs.
+`LABEL` became `REPO_NAME` once it was clear the same word was naming three
+different things. And the claim that IntelliJ project keys "cannot be derived" —
+which the first draft built the whole map fragment around — turned out to be
+false: the key is the repository's pre-image path minus the projects root the
+capture walked, which demoted that fragment from mechanism to override.
+
+A contract that changed that much under review is worth freezing on its own, so
+the loader can be reviewed against something already agreed rather than against a
+moving target.
+
+### The four fragments
+
+| File | Declares |
+|---|---|
+| `repo-candidates-selected.conf.sh` | which repositories to clone, from which remote, and where they land |
+| `repo-candidates-excluded.conf.sh` | which are deliberately not being restored, and why |
+| `repo-rehydration-sources.conf.sh` | where post-clone content comes from, and how each source is keyed |
+| `repo-rehydration-map.conf.sh` | the keys the derivation gets wrong — normally empty |
+
+Entries are **named-key function calls**, not delimited rows:
+
+```bash
+repo_plan_add \
+  REPO_NAME=example-service \
+  LOCAL_REPO_PATH="$GIT_WORK_REPO_ROOT/example-group/example-service"
+```
+
+Order-free, blank-tolerant, extensible without rewriting existing entries, and a
+typo becomes an error naming the repository rather than a silently shifted value.
+Only `REPO_NAME` is required; a repository going to its routed root under its own
+name is one line. Sourced rather than parsed, so `$GIT_WORK_REPO_ROOT/…` expands
+— which a flat TSV could not give, and which is the whole reason a destination
+column is usable at all.
+
+`repo-rehydration-map.conf.sh` leads by saying it should be **empty**, and lists
+the four cases that earn an override: a source with no derivation, a bundle
+belonging to a grouping project rather than a repository, a repository whose path
+moved between the audit and the reimage, and a bundle not shaped like a
+repository root.
+
+### What the fragments say that the script would otherwise have to be read for
+
+Each header carries the reasoning at the point of use rather than in a document
+beside it. The routing rule is stated where a destination is edited:
+
+> the `origin` remote's HOST decides […] The pre-image directory is never
+> consulted — it says nothing about who owns the remote, and the root is what
+> `includeIf` uses to decide commit identity.
+
+`repo-candidates-excluded.conf.sh` says why it is not the same as leaving an
+entry out: `bin/record-restore-exit.sh` carries a manual row asking whether
+unrestored repositories were a decision, and absence cannot answer it.
+
+### No personal data
+
+Every example is commented out and generic. The templates are committed; the
+filled copy is the operator's and lives in the workspace root, which is why that
+directory exists.
+
+### Still to come, and deliberately not here
+
+The loader that defines `repo_plan_add`, `repo_plan_exclude`, `repo_source_add`
+and `repo_map_add`; `init-repo-plan-config` to seed the workspace copy;
+`--emit-plan` to pre-fill a proposal from the audit; and the `--hydrate` path
+that reads all four and acts. The command surface and both open decisions —
+`hydrated.md` as the per-run record, and `repo-restore-index.md` as the cross-run
+one — are settled and recorded in `docs/architecture/restore-repos-clone-plan.md`.
+
+These templates also quote `GIT_WORK_REPO_ROOT` and `GIT_PERSONAL_REPO_ROOT`. If
+those are renamed to `LOCAL_*_REPO_ROOT`, these four files are four more sites in
+that sweep.
+
+### Validation
+
+`bash -n` clean on all four fragments. `verify-script-portability.sh` 79 clean /
+0 WARN / 0 FAIL — up from 75, the four new files scanned and clean.
+`verify-doc-paths.sh --all` 753 OK / 0 MISSING / 0 ANCHOR BROKEN / 1106 ANCHOR
+OK. `verify-runbook-structure.sh` unchanged at 213 PASS / 5 WARN / 25 FAIL across
+27 documents — no runbook was touched, and this revision changes no behaviour,
+because nothing sources these files yet.
+
+**All of it ran on Linux with Bash 5.x.** `shellcheck` was not available.
+`/bin/bash -n` against real macOS Bash 3.2 is owed on these files along with
+Revisions 116–142.
+
+---
+
+## Revision 142 — a report that three runs failed to write
+
+Every `post-image-restore` run on the artifact volume has a **0-byte**
+`restore-status.md`. All three. Beside them, `raw/status.tsv`,
+`clone-commands.sh`, `rsync-ignored-files.sh` and `rsync-repos-gitignored.sh` are
+complete. The classification loop finished every time; the report never started.
+
+### What the evidence says
+
+The version that produced those bundles is `72f9f92` (2026-08-17). Extracted and
+run against a scratch artifact root carrying the same damaged audit and the same
+`latest-run.txt` pointer, on Linux with Bash 5.1.16, it ran to completion:
+
+| File | Reproduced here | On the volume |
+|---|---|---|
+| `raw/status.tsv` | 4182 | 4182 |
+| `clone-commands.sh` | 2797 | 2797 |
+| `rsync-repos-gitignored.sh` | 7933 | 7933 |
+| `rsync-ignored-files.sh` | 5019 | 4887 |
+| `restore-status.md` | **8175** | **0** |
+| `MANIFEST.txt` | **524** | **absent** |
+
+Three byte-identical. The fourth differs by exactly **132 bytes** — 22 rsync
+blocks times the 6-character difference between the scratch
+`staged-ignored-files/live` path and the volume's. Same output, one path
+substituted.
+
+So the code is not defective as Bash 5.x executes it, and the divergence begins
+at exactly one command:
+
+```bash
+cat > "$REPORT_MD" <<EOF
+```
+
+The file exists at 0 bytes, so the redirect was performed and the file truncated.
+The failure is during heredoc **expansion**, not parsing — a parse failure leaves
+no file at all.
+
+### The one construct that separates the report from the command files
+
+The three command files are written with plain `{ echo …; } > file` and contain
+no command substitution. The report heredoc was the only place in the script with
+a **nested command substitution inside an unquoted here-document**:
+
+```bash
+$( [[ "$DUPLICATE_LABEL_COUNT" -eq 0 ]] && echo 'Bundle labels are unique.' \
+   || echo "Shared bundle label(s): $(printf '%s ' $DUPLICATE_LABELS). …" )
+```
+
+Bash 3.2's here-document parser handles nested `$( )` poorly; it was reworked in
+4.x. Under `set -u` with no `set -e`, an expansion error in a non-interactive
+shell is fatal and exits immediately — file created, nothing written, nothing
+after it executed. Which is the state on disk.
+
+This is a suspect identified by elimination, not a confirmed cause: egress here
+blocks `ftp.gnu.org`, so a real Bash 3.2 could not be built to run it under. What
+is established is identical inputs, identical output up to that command, and one
+construct in it that no other output path uses.
+
+### The rule, which is structural rather than a fix to one line
+
+Every report cell is now computed into a variable **before** the here-document,
+and the heredoc interpolates variables only. `REPORT_GENERATED`,
+`REPORT_SCRIPT`, `DUP_STATUS`, `DUP_NOTE`, `REPOS_INDEX_STATUS`,
+`CLONES_STATUS`, `IGNORED_STATUS`. Both heredocs — the report and
+`MANIFEST.txt` — now contain zero `$(`.
+
+That is deliberately broader than the defect. `$(date)` and `$(basename "$0")`
+are not nested and were never suspects, but a rule stated as "no command
+substitution in a here-document" is one a reader can apply without knowing which
+nesting depth is safe on which shell.
+
+The reasoning sits at the hoist rather than in a changelog, because the next
+person to add a report row is the one who needs it.
+
+### Why neither existing check would have caught it
+
+`bash -n` parses clean — the construct is valid Bash, and the failure is at
+expansion. `verify-script-portability.sh` evaluates a table of per-line regexes,
+and this defect depends on the line sitting between `<<EOF` and its terminator.
+It sits in the gap between the two checks, which is the gap the portability lint
+exists to close. Parked as a candidate rule under `docs/gaps/`.
+
+### Validation
+
+`bash -n` clean. `verify-script-portability.sh` 75 clean / 0 WARN / 0 FAIL.
+`verify-runbook-structure.sh` 213 PASS / 5 WARN / 25 FAIL across 27 documents,
+unchanged — no runbook was touched. `verify-doc-paths.sh --all` 753 OK / 0
+MISSING / 0 ANCHOR BROKEN / 1106 ANCHOR OK.
+
+Executed end to end against a **scratch artifact root**, so no run, sign-off or
+pointer was written to the volume: `restore-status.md` 7845 bytes, `MANIFEST.txt`
+535 bytes, 25 clone lines, and the exit-criteria table renders identically to the
+pre-change output. The `WARN` branch of `DUP_NOTE` has no duplicate basenames in
+the real data to exercise it, so it was run separately against a synthetic
+two-entry list.
+
+**All of it ran on Linux with Bash 5.x.** `shellcheck` was not available.
+`/bin/bash -n` against real macOS Bash 3.2 is owed on this file along with
+Revisions 116–141 — and matters more here than usual, because the defect this
+revision addresses is one only that shell exhibits. The next
+`restore-repos.md` Step 1 run on the Mac is the test.
 
 ---
 

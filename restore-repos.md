@@ -85,7 +85,7 @@ Read this before running anything. The phase is script-driven for the loop (repo
 `bin/restore-repos.sh` opens `repo-audit-reports/official/pre-image.txt`, walks the `repos.tsv` inside that pre-image run, and for each row it computes four things:
 
 1. which root the repo belongs in, decided by its `origin` remote's **host**: `$GIT_PERSONAL_GITHUB_HOST` with an owner matching `$GIT_PERSONAL_GITHUB_OWNER` routes personal, `$GIT_WORK_GITHUB_HOST` routes work, and anything else routes work with the reason printed above its clone command;
-2. whether the repo is already on disk at that routed destination — `$GIT_WORK_REPO_ROOT/<label>` or `$GIT_PERSONAL_REPO_ROOT/<label>` — which is what decides whether a clone command is emitted for it;
+2. whether the repo is already on disk at that routed destination — `$LOCAL_WORK_REPO_ROOT/<label>` or `$LOCAL_PERSONAL_REPO_ROOT/<label>` — which is what decides whether a clone command is emitted for it;
 3. whether a `staged-ignored-files/live/<label>/` directory exists for this repo (kept ignored files ready to rsync back);
 4. how many carry-forward rows the pre-image audit recorded (local-only commits + stashes + tracked changes).
 
@@ -231,9 +231,9 @@ The `reimage.env` values this runbook depends on. `REIMAGE_ARTIFACT_ROOT` is res
 |---|---|
 | `FRACTOGENESIS_HOME` | Toolkit root; where `reimage.env` lives. Until this phase it points at the `curl` or jump-drive install from Phase 8, not a clone — see [[#Step 4 — Repoint at the Cloned Toolkit|Step 4 — Repoint at the Cloned Toolkit]]. |
 | `REIMAGE_ARTIFACT_ROOT` | Artifact root where Phase 2A wrote the pre-image audit and where this runbook writes its status bundle. Must be mounted; the script fails fast if it is not. |
-| `GIT_WORK_REPO_ROOT` | Directory holding work repos. A repository whose `origin` host is `$GIT_WORK_GITHUB_HOST` clones into here, and so does one whose host matches neither routing host — with the reason printed above its clone command. |
-| `GIT_PERSONAL_REPO_ROOT` | Directory holding personal repos. A repository clones into here only when its `origin` host is `$GIT_PERSONAL_GITHUB_HOST` *and* its owner matches `$GIT_PERSONAL_GITHUB_OWNER`. The pre-image directory is not consulted: it says nothing about who owns the remote, and the root a repository sits under is what `includeIf` uses to decide its commit identity. |
-| `GIT_WORK_GITHUB_HOST` | Host of the work Git server. A repository whose `origin` URL names this host routes to `$GIT_WORK_REPO_ROOT`. |
+| `LOCAL_WORK_REPO_ROOT` | Directory holding work repos. A repository whose `origin` host is `$GIT_WORK_GITHUB_HOST` clones into here, and so does one whose host matches neither routing host — with the reason printed above its clone command. |
+| `LOCAL_PERSONAL_REPO_ROOT` | Directory holding personal repos. A repository clones into here only when its `origin` host is `$GIT_PERSONAL_GITHUB_HOST` *and* its owner matches `$GIT_PERSONAL_GITHUB_OWNER`. The pre-image directory is not consulted: it says nothing about who owns the remote, and the root a repository sits under is what `includeIf` uses to decide its commit identity. |
+| `GIT_WORK_GITHUB_HOST` | Host of the work Git server. A repository whose `origin` URL names this host routes to `$LOCAL_WORK_REPO_ROOT`. |
 | `GIT_PERSONAL_GITHUB_HOST` | The personal **SSH routing host** — the `Host` name written in `~/.ssh/config` by [[restore-git|restore-git.md]] Step 3 and typed in personal clone URLs. It is a real server name under the direct scheme and an alias only when both accounts live on one server, which is the case `GIT_PERSONAL_GITHUB_HOSTNAME` exists for. This runbook rewrites a URL onto it only when all three hold: the URL is `git@github.com:`, this value is *not* `github.com`, and the owner matches `$GIT_PERSONAL_GITHUB_OWNER`. Set to `github.com` it routes directly and no rewrite can fire — which is the scheme working, not a fault. |
 | `GIT_PERSONAL_GITHUB_OWNER` | Optional. The GitHub account that owns your personal repositories. `bin/restore-repos.sh` rewrites a clone URL onto `$GIT_PERSONAL_GITHUB_HOST` **only** when the URL's owner matches this, so a work-org repository is never routed onto the personal SSH routing host and handed the personal key. Blank means never rewrite — every candidate is flagged for review in Step 2 instead. Written **by this runbook**, in Step 0c; it is not in `reimage.env.example` and no earlier phase sets it. |
 
@@ -316,8 +316,8 @@ recording the clone destinations as they stand before this phase fills them:
 ./bin/record-restore-state.sh --runbook restore-repos --point before
 ```
 
-Two targets, both walked at depth 1: `$GIT_WORK_REPO_ROOT/` and
-`$GIT_PERSONAL_REPO_ROOT/`. Depth 1 rather than a full walk because the question
+Two targets, both walked at depth 1: `$LOCAL_WORK_REPO_ROOT/` and
+`$LOCAL_PERSONAL_REPO_ROOT/`. Depth 1 rather than a full walk because the question
 is *which repositories exist*, not what is inside them — a recursive capture of
 27 checkouts would hash tens of thousands of files to answer a question that is
 one row per repository. The before-state is normally two empty roots; the delta
@@ -354,8 +354,8 @@ nothing.
 ```bash
 export GIT_PERSONAL_GITHUB_OWNER="your-personal-github-account"
 
-if [ -n "$GIT_PERSONAL_GITHUB_OWNER" ] && [ -z "${GIT_PERSONAL_REPO_ROOT:-}" ]; then
-  printf 'REFUSING to write. An owner is set but GIT_PERSONAL_REPO_ROOT is empty,\n'
+if [ -n "$GIT_PERSONAL_GITHUB_OWNER" ] && [ -z "${LOCAL_PERSONAL_REPO_ROOT:-}" ]; then
+  printf 'REFUSING to write. An owner is set but LOCAL_PERSONAL_REPO_ROOT is empty,\n'
   printf 'so no repository can route to the personal host regardless of the owner.\n'
   printf 'Leave the owner blank, or record the root in backup-repos and source\n'
   printf 'reimage.env again.\n'
@@ -449,7 +449,7 @@ For each block, decide:
 
 ### Step 3 — Execute the Clone Commands
 
-Source `reimage.env` first so `$GIT_WORK_REPO_ROOT` and friends resolve, then run the reviewed clone script:
+Source `reimage.env` first so `$LOCAL_WORK_REPO_ROOT` and friends resolve, then run the reviewed clone script:
 
 ```bash
 source ./reimage.env
@@ -458,7 +458,7 @@ bash "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/$LATEST_RUN/clone-commands.sh"
 
 `clone-commands.sh` is written with `set -euo pipefail`, so the first `git clone` failure stops the batch and the clones above it stay done. Fix that repo — a stale remote URL is the usual cause — then delete the command blocks that already succeeded and rerun the tail.
 
-A repository already present at its clone destination is not in the batch at all: Step 1 asks whether `$GIT_WORK_REPO_ROOT/<label>` or `$GIT_PERSONAL_REPO_ROOT/<label>` already contains a `.git` directory, and emits a clone command only when it does not. So a rerun after a partial batch emits only what is still missing.
+A repository already present at its clone destination is not in the batch at all: Step 1 asks whether `$LOCAL_WORK_REPO_ROOT/<label>` or `$LOCAL_PERSONAL_REPO_ROOT/<label>` already contains a `.git` directory, and emits a clone command only when it does not. So a rerun after a partial batch emits only what is still missing.
 
 **Cloning one repository by hand.** The batch is the normal path, but a single repo clones directly — proving the identity plumbing end to end, or picking up one you need before the rest are ready. Naming the destination rather than `cd`-ing into the root keeps the shell where it started, so a directory-scoped `direnv` does not unload `reimage.env` mid-block:
 
@@ -466,7 +466,7 @@ A repository already present at its clone destination is not in the batch at all
 source ./reimage.env
 
 REPO_PATH="replace-with-owner/repo"
-git clone "git@${GIT_WORK_GITHUB_HOST}:${REPO_PATH}.git" "$GIT_WORK_REPO_ROOT/${REPO_PATH##*/}"
+git clone "git@${GIT_WORK_GITHUB_HOST}:${REPO_PATH}.git" "$LOCAL_WORK_REPO_ROOT/${REPO_PATH##*/}"
 ```
 
 For a personal repo, both variables change:
@@ -475,10 +475,10 @@ For a personal repo, both variables change:
 source ./reimage.env
 
 REPO_PATH="replace-with-owner/repo"
-git clone "git@${GIT_PERSONAL_GITHUB_HOST}:${REPO_PATH}.git" "$GIT_PERSONAL_REPO_ROOT/${REPO_PATH##*/}"
+git clone "git@${GIT_PERSONAL_GITHUB_HOST}:${REPO_PATH}.git" "$LOCAL_PERSONAL_REPO_ROOT/${REPO_PATH##*/}"
 ```
 
-**Which root a repo belongs in is decided by its remote host, not by where it lived pre-image.** A repository on the corporate Enterprise server belongs under `$GIT_WORK_REPO_ROOT` even if it sat in the personal directory before — an old directory named for its contents rather than an identity will have collected both. Clone one of those under the personal root and `includeIf` authors its commits with the personal address and `core.sshCommand` offers the personal key, which the Enterprise host rejects.
+**Which root a repo belongs in is decided by its remote host, not by where it lived pre-image.** A repository on the corporate Enterprise server belongs under `$LOCAL_WORK_REPO_ROOT` even if it sat in the personal directory before — an old directory named for its contents rather than an identity will have collected both. Clone one of those under the personal root and `includeIf` authors its commits with the personal address and `core.sshCommand` offers the personal key, which the Enterprise host rejects.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -487,7 +487,7 @@ git clone "git@${GIT_PERSONAL_GITHUB_HOST}:${REPO_PATH}.git" "$GIT_PERSONAL_REPO
 ### Step 4 — Repoint at the Cloned Toolkit
 
 `clone-commands.sh` clones every repo from the pre-image inventory, and the
-toolkit is one of them — it lives under `$GIT_PERSONAL_REPO_ROOT` like any other
+toolkit is one of them — it lives under `$LOCAL_PERSONAL_REPO_ROOT` like any other
 personal repo. So the previous step has just produced a **second** copy of the
 toolkit, and `$FRACTOGENESIS_HOME` still points at the first.
 
@@ -502,7 +502,7 @@ copy:
 
 ```bash
 TOOLKIT_BOOTSTRAP="$FRACTOGENESIS_HOME"
-TOOLKIT_CLONE="$GIT_PERSONAL_REPO_ROOT/fractogenesis-toolkit"
+TOOLKIT_CLONE="$LOCAL_PERSONAL_REPO_ROOT/fractogenesis-toolkit"
 ```
 
 **1. Carry `reimage.env` across.** It is gitignored, so the clone does not have it:
@@ -631,7 +631,7 @@ hdiutil detach "$MNT"
 **5. Trust any restored `.envrc`.** `direnv` blocks an `.envrc` it has not been told to trust, and does so silently as far as the shell is concerned:
 
 ```bash
-cd "$GIT_WORK_REPO_ROOT/<repo>" && direnv allow
+cd "$LOCAL_WORK_REPO_ROOT/<repo>" && direnv allow
 ```
 
 > [!warning] Pitfall
@@ -653,7 +653,7 @@ cd "$GIT_WORK_REPO_ROOT/<repo>" && direnv allow
 For each repo with `carry-forward rows > 0` in the status report, confirm the pre-image rescue branch made it onto the remote before reimage:
 
 ```bash
-cd "$GIT_WORK_REPO_ROOT/<repo>"
+cd "$LOCAL_WORK_REPO_ROOT/<repo>"
 git fetch origin 'refs/heads/reimage/*:refs/remotes/origin/reimage/*'
 git branch -r | grep reimage/ || echo "no rescue branches found on remote"
 ```

@@ -16,7 +16,7 @@
 #   workspace-level files.
 #
 # Default roots:
-#   GIT_WORK_REPO_ROOT and GIT_PERSONAL_REPO_ROOT from reimage.env.
+#   LOCAL_WORK_REPO_ROOT and LOCAL_PERSONAL_REPO_ROOT from reimage.env.
 #   Pass --root more than once to override them for a specific run.
 #
 # Default output:
@@ -172,17 +172,17 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ ${#ROOTS[@]} -eq 0 ]]; then
-  if [[ -n "${GIT_WORK_REPO_ROOT:-}" ]]; then
-    ROOTS+=("$GIT_WORK_REPO_ROOT")
+  if [[ -n "${LOCAL_WORK_REPO_ROOT:-}" ]]; then
+    ROOTS+=("$LOCAL_WORK_REPO_ROOT")
   fi
-  if [[ -n "${GIT_PERSONAL_REPO_ROOT:-}" ]]; then
-    ROOTS+=("$GIT_PERSONAL_REPO_ROOT")
+  if [[ -n "${LOCAL_PERSONAL_REPO_ROOT:-}" ]]; then
+    ROOTS+=("$LOCAL_PERSONAL_REPO_ROOT")
   fi
 fi
 
 if [[ ${#ROOTS[@]} -eq 0 ]]; then
   echo "ERROR: no Git roots are configured." >&2
-  echo "Set GIT_WORK_REPO_ROOT and/or GIT_PERSONAL_REPO_ROOT in reimage.env," >&2
+  echo "Set LOCAL_WORK_REPO_ROOT and/or LOCAL_PERSONAL_REPO_ROOT in reimage.env," >&2
   echo "or pass one or more --root <dir> arguments." >&2
   exit 2
 fi

@@ -861,7 +861,7 @@ Exporting one of these in your shell before creating `reimage.env` no longer cap
 
 | Variable | Set in | In the template? |
 |---|---|---|
-| `GIT_WORK_REPO_ROOT`, `GIT_PERSONAL_REPO_ROOT` | [[backup-repos\|backup-repos.md]] (Phase 2A) Step 1 | No |
+| `LOCAL_WORK_REPO_ROOT`, `LOCAL_PERSONAL_REPO_ROOT` | [[backup-repos\|backup-repos.md]] (Phase 2A) Step 1 | No |
 | `PERFORMANCE_HISTORY_SOURCE` | [[capture-performance-audit\|capture-performance-audit.md]] (Phase 4C) | Yes, blank |
 | `OFFICE_WATCH` | [[capture-office-stability\|capture-office-stability.md]] (Phase 4D) | Yes, blank |
 | `REIMAGE_JDK_BASELINE`, `JAVA_HOME` | [[restore-runtime\|restore-runtime.md]] (Phase 10A) Step 7 | No |

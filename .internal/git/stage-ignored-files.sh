@@ -11,7 +11,7 @@
 #
 # Default behavior:
 #   - Dry run only.
-#   - Searches roots from GIT_WORK_REPO_ROOT and GIT_PERSONAL_REPO_ROOT in reimage.env.
+#   - Searches roots from LOCAL_WORK_REPO_ROOT and LOCAL_PERSONAL_REPO_ROOT in reimage.env.
 #   - Falls back to ~/Development when no Git roots are configured.
 #   - Writes to $REIMAGE_ARTIFACT_ROOT/staged-ignored-files/live when --copy is used.
 #   - Skips common generated/heavy folders like node_modules, target, build, .gradle, .venv.
@@ -31,7 +31,7 @@
 # Options:
 #   --root <dir>       Root directory to crawl for Git repos.
 #                      Can be passed multiple times.
-#                      Default: GIT_WORK_REPO_ROOT and GIT_PERSONAL_REPO_ROOT
+#                      Default: LOCAL_WORK_REPO_ROOT and LOCAL_PERSONAL_REPO_ROOT
 #                      from reimage.env when set; otherwise ~/Development.
 #   --dest <dir>       Destination staging directory.
 #                      Default: $REIMAGE_ARTIFACT_ROOT/staged-ignored-files/live.
@@ -127,12 +127,12 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ ${#ROOTS[@]} -eq 0 ]]; then
-  if [[ -n "${GIT_WORK_REPO_ROOT:-}" && -d "${GIT_WORK_REPO_ROOT:-}" ]]; then
-    ROOTS+=("$GIT_WORK_REPO_ROOT")
+  if [[ -n "${LOCAL_WORK_REPO_ROOT:-}" && -d "${LOCAL_WORK_REPO_ROOT:-}" ]]; then
+    ROOTS+=("$LOCAL_WORK_REPO_ROOT")
   fi
 
-  if [[ -n "${GIT_PERSONAL_REPO_ROOT:-}" && -d "${GIT_PERSONAL_REPO_ROOT:-}" ]]; then
-    ROOTS+=("$GIT_PERSONAL_REPO_ROOT")
+  if [[ -n "${LOCAL_PERSONAL_REPO_ROOT:-}" && -d "${LOCAL_PERSONAL_REPO_ROOT:-}" ]]; then
+    ROOTS+=("$LOCAL_PERSONAL_REPO_ROOT")
   fi
 fi
 
@@ -142,7 +142,7 @@ fi
 
 if [[ ${#ROOTS[@]} -eq 0 ]]; then
   echo "ERROR: No Git repository roots found." >&2
-  echo "Set GIT_WORK_REPO_ROOT and/or GIT_PERSONAL_REPO_ROOT in reimage.env, or pass --root <dir>." >&2
+  echo "Set LOCAL_WORK_REPO_ROOT and/or LOCAL_PERSONAL_REPO_ROOT in reimage.env, or pass --root <dir>." >&2
   exit 2
 fi
 

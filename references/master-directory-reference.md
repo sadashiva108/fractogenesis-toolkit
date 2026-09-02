@@ -666,7 +666,7 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 > ├── gnupg/
 > ├── intellij/                                # staged by backup-intellij (Phase 2D); buckets named for the root each file came from
 > │   ├── ide-config/                          # relative to ~/Library/Application Support/JetBrains/
-> │   └── projects/                            # relative to $GIT_WORK_REPO_ROOT
+> │   └── projects/                            # relative to $LOCAL_WORK_REPO_ROOT
 > ├── kube/
 > │   └── config
 > ├── licenses/                              # created by create-secrets-dmg (Phase 3C); manual freeform staging

@@ -222,11 +222,11 @@ if [[ ! -d "$REIMAGE_ARTIFACT_ROOT" ]]; then
 fi
 
 if [[ ${#ROOTS[@]} -eq 0 ]]; then
-  if [[ -n "${GIT_WORK_REPO_ROOT:-}" && -d "${GIT_WORK_REPO_ROOT:-}" ]]; then
-    ROOTS+=("$GIT_WORK_REPO_ROOT")
+  if [[ -n "${LOCAL_WORK_REPO_ROOT:-}" && -d "${LOCAL_WORK_REPO_ROOT:-}" ]]; then
+    ROOTS+=("$LOCAL_WORK_REPO_ROOT")
   fi
-  if [[ -n "${GIT_PERSONAL_REPO_ROOT:-}" && -d "${GIT_PERSONAL_REPO_ROOT:-}" ]]; then
-    ROOTS+=("$GIT_PERSONAL_REPO_ROOT")
+  if [[ -n "${LOCAL_PERSONAL_REPO_ROOT:-}" && -d "${LOCAL_PERSONAL_REPO_ROOT:-}" ]]; then
+    ROOTS+=("$LOCAL_PERSONAL_REPO_ROOT")
   fi
 fi
 
@@ -235,7 +235,7 @@ fi
 # and never walks a repository, so it does not need the roots.
 if [[ ${#ROOTS[@]} -eq 0 && "$MODE" != "stale-ignore-scan" ]]; then
   echo "ERROR: No Git repository roots found." >&2
-  echo "Set GIT_WORK_REPO_ROOT and/or GIT_PERSONAL_REPO_ROOT in reimage.env, or pass --root <dir>." >&2
+  echo "Set LOCAL_WORK_REPO_ROOT and/or LOCAL_PERSONAL_REPO_ROOT in reimage.env, or pass --root <dir>." >&2
   exit 2
 fi
 

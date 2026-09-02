@@ -55,7 +55,7 @@
 #   --projects-root PATH      Root containing all IntelliJ projects
 #                              to scan for project-level .idea metadata. No
 #                              baked-in default: the entrypoint supplies it from
-#                              GIT_WORK_REPO_ROOT; for standalone use, pass this
+#                              LOCAL_WORK_REPO_ROOT; for standalone use, pass this
 #                              flag (or export INTELLIJ_PROJECTS_ROOT). When
 #                              unset, the project-level scan is skipped.
 #                              This is intentionally broader than IntelliJ's
@@ -123,7 +123,7 @@ SKIP_PROJECT_SCAN=0
 INCLUDE_SHELF=0
 PROJECTS_MAX_DEPTH=6
 # No baked-in default: the entrypoint passes --projects-root from
-# GIT_WORK_REPO_ROOT, and standalone callers pass it (or export
+# LOCAL_WORK_REPO_ROOT, and standalone callers pass it (or export
 # INTELLIJ_PROJECTS_ROOT). When empty, the project-level scan is skipped.
 PROJECTS_ROOT="${INTELLIJ_PROJECTS_ROOT:-}"
 # Durable review-selection directory. The entrypoint passes --review-dir from
@@ -493,7 +493,7 @@ load_intellij_secret_patterns() {
 # containing "/" is matched as a path suffix; everything else as a basename.
 # The patterns that describe IntelliJ's OWN files. Used for the project scan,
 # which walks $PROJECTS_ROOT -- the same tree backup-repos.sh walks, since the
-# entrypoint defaults it to $GIT_WORK_REPO_ROOT.
+# entrypoint defaults it to $LOCAL_WORK_REPO_ROOT.
 #
 # The generic half of the seed list (*credential*, *secret*, *.pem, *.key, ...)
 # matches ordinary repo files. Those are gitignored, so Phase 2A stages them

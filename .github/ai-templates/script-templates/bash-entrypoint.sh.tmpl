@@ -195,8 +195,8 @@ if [[ ${#ROOTS[@]} -eq 0 ]]; then
   # operation. Do not hardcode user-specific workspace paths.
   #
   # Example for Git-oriented entrypoints:
-  # [[ -n "${GIT_WORK_REPO_ROOT:-}" && -d "${GIT_WORK_REPO_ROOT:-}" ]] && ROOTS+=("$GIT_WORK_REPO_ROOT")
-  # [[ -n "${GIT_PERSONAL_REPO_ROOT:-}" && -d "${GIT_PERSONAL_REPO_ROOT:-}" ]] && ROOTS+=("$GIT_PERSONAL_REPO_ROOT")
+  # [[ -n "${LOCAL_WORK_REPO_ROOT:-}" && -d "${LOCAL_WORK_REPO_ROOT:-}" ]] && ROOTS+=("$LOCAL_WORK_REPO_ROOT")
+  # [[ -n "${LOCAL_PERSONAL_REPO_ROOT:-}" && -d "${LOCAL_PERSONAL_REPO_ROOT:-}" ]] && ROOTS+=("$LOCAL_PERSONAL_REPO_ROOT")
   :
 fi
 

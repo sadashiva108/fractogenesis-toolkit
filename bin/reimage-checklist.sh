@@ -43,8 +43,8 @@
 #                                        $REIMAGE_ARTIFACT_ROOT/reimaged-system/checklists  (post)
 #   --workspace-root PATH       Workspace root to scan for Git repo status.
 #                               Can be repeated. (post only)
-#                               Default: configured GIT_WORK_REPO_ROOT and
-#                                        GIT_PERSONAL_REPO_ROOT when set.
+#                               Default: configured LOCAL_WORK_REPO_ROOT and
+#                                        LOCAL_PERSONAL_REPO_ROOT when set.
 #   --onedrive-root PATH        Override ONEDRIVE_ROOT from reimage.env. (post only)
 #   --internal-url URL          Optional internal URL to verify VPN/network. (post only)
 #   --no-color                  Disable colored terminal output.
@@ -301,8 +301,8 @@ trap 'exit 130' INT TERM
 # roots loaded from reimage.env. Do not invent broad development-directory defaults:
 # missing configured roots are useful post-image findings and should be reported.
 if [[ "$PHASE" == "post" && ${#WORKSPACE_ROOTS[@]} -eq 0 ]]; then
-  append_unique_workspace_root "${GIT_WORK_REPO_ROOT:-}"
-  append_unique_workspace_root "${GIT_PERSONAL_REPO_ROOT:-}"
+  append_unique_workspace_root "${LOCAL_WORK_REPO_ROOT:-}"
+  append_unique_workspace_root "${LOCAL_PERSONAL_REPO_ROOT:-}"
 fi
 
 # ---------------------------------------------------------------------------
@@ -1719,15 +1719,15 @@ declare_signoff_rows() {
     signoff_row "Postman collections/environments imported" "Confirm in Postman UI"
     signoff_row "Chrome JSON Formatter and important extensions restored" "Confirm in Chrome extension UI"
     signoff_row "Display arrangement, scaling, keyboard, mouse, audio correct" "Confirm physically"
-    if [[ -n "${GIT_WORK_REPO_ROOT:-}" ]]; then
-      signoff_row "Work Git identity confirmed" "$GIT_WORK_REPO_ROOT; verify git config user.email"
+    if [[ -n "${LOCAL_WORK_REPO_ROOT:-}" ]]; then
+      signoff_row "Work Git identity confirmed" "$LOCAL_WORK_REPO_ROOT; verify git config user.email"
     else
-      signoff_row "Work Git identity confirmed" "GIT_WORK_REPO_ROOT is not configured; verify git config user.email in an actual work repo"
+      signoff_row "Work Git identity confirmed" "LOCAL_WORK_REPO_ROOT is not configured; verify git config user.email in an actual work repo"
     fi
-    if [[ -n "${GIT_PERSONAL_REPO_ROOT:-}" ]]; then
-      signoff_row "Personal Git identity confirmed, if personal repos are used" "$GIT_PERSONAL_REPO_ROOT; verify git config user.email"
+    if [[ -n "${LOCAL_PERSONAL_REPO_ROOT:-}" ]]; then
+      signoff_row "Personal Git identity confirmed, if personal repos are used" "$LOCAL_PERSONAL_REPO_ROOT; verify git config user.email"
     else
-      signoff_row "Personal Git identity confirmed, if personal repos are used" "GIT_PERSONAL_REPO_ROOT is not configured"
+      signoff_row "Personal Git identity confirmed, if personal repos are used" "LOCAL_PERSONAL_REPO_ROOT is not configured"
     fi
     signoff_row "Personal SSH (github-personal) authenticated" "ssh -T git@github-personal"
     signoff_row "SSH key fingerprints match GitHub Settings" "ssh-keygen -lf against both keys"

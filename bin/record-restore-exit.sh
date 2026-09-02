@@ -650,8 +650,8 @@ check_restore_git() {
     record FAIL "Identity values recorded in \`reimage.env\`" "required and empty: \`$missing_env\` — Step 0c writes these. \`restore-repos\` reads the host alias from here rather than re-deriving it, so an empty one surfaces a phase later as a clone routed to the wrong identity."
   elif [[ -n "$pers_set" && -n "$pers_blank" ]]; then
     record FAIL "Identity values recorded in \`reimage.env\`" "the personal identity is half-filled — set: \`$pers_set\`; blank: \`$pers_blank\`. Fill all four or clear all four; Step 5 writes an override with an empty field otherwise and Git accepts it without complaint."
-  elif [[ -n "$pers_set" && -z "${GIT_PERSONAL_REPO_ROOT:-}" ]]; then
-    record FAIL "Identity values recorded in \`reimage.env\`" "a personal identity is set but \`GIT_PERSONAL_REPO_ROOT\` is empty — \`includeIf\` has no \`gitdir:\` to match and Step 5 would write to \`/.gitconfig\`. That value comes from \`backup-repos\`."
+  elif [[ -n "$pers_set" && -z "${LOCAL_PERSONAL_REPO_ROOT:-}" ]]; then
+    record FAIL "Identity values recorded in \`reimage.env\`" "a personal identity is set but \`LOCAL_PERSONAL_REPO_ROOT\` is empty — \`includeIf\` has no \`gitdir:\` to match and Step 5 would write to \`/.gitconfig\`. That value comes from \`backup-repos\`."
   elif [[ -z "$pers_set" ]]; then
     record PASS "Identity values recorded in \`reimage.env\`" "work identity complete; no personal identity configured — the personal halves of Steps 3, 5 and 6 do not apply"
   else
@@ -726,7 +726,7 @@ check_restore_repos() {
   # 1 -- both clone roots exist. mkdir -p in the generated clone script creates
   # them, so an absent root means no clone from this phase has ever run.
   bad=""
-  for root in "${GIT_WORK_REPO_ROOT:-}" "${GIT_PERSONAL_REPO_ROOT:-}"; do
+  for root in "${LOCAL_WORK_REPO_ROOT:-}" "${LOCAL_PERSONAL_REPO_ROOT:-}"; do
     [[ -n "$root" && -d "$root" ]] || bad="${bad:+$bad; }\`${root:-<unset>}\`"
   done
   if [[ -z "$bad" ]]; then
@@ -738,7 +738,7 @@ check_restore_repos() {
   # 2 -- how many repositories are actually here. Reported, not graded: the
   # count that is "right" is a decision this recorder cannot make.
   n=0
-  for root in "${GIT_WORK_REPO_ROOT:-}" "${GIT_PERSONAL_REPO_ROOT:-}"; do
+  for root in "${LOCAL_WORK_REPO_ROOT:-}" "${LOCAL_PERSONAL_REPO_ROOT:-}"; do
     [[ -n "$root" && -d "$root" ]] || continue
     while IFS= read -r repo; do
       [[ -n "$repo" ]] && n=$((n + 1))
@@ -753,9 +753,9 @@ EOF
   # address and offers the personal key. This is the row that catches it, and
   # nothing else in the workflow does.
   bad=""
-  for root in "${GIT_WORK_REPO_ROOT:-}" "${GIT_PERSONAL_REPO_ROOT:-}"; do
+  for root in "${LOCAL_WORK_REPO_ROOT:-}" "${LOCAL_PERSONAL_REPO_ROOT:-}"; do
     [[ -n "$root" && -d "$root" ]] || continue
-    if [[ "$root" == "${GIT_PERSONAL_REPO_ROOT:-}" ]]; then
+    if [[ "$root" == "${LOCAL_PERSONAL_REPO_ROOT:-}" ]]; then
       want_host="${GIT_PERSONAL_GITHUB_HOST:-}"; label="personal"
     else
       want_host="${GIT_WORK_GITHUB_HOST:-}"; label="work"

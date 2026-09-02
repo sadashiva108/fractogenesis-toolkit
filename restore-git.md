@@ -96,7 +96,7 @@ Almost every write in this runbook uses values from `reimage.env`. Git config fi
 | Context | Email | SSH Key | GitHub Host Alias |
 |---|---|---|---|
 | Default work repos | `$GIT_WORK_EMAIL` | `$GIT_WORK_SSH_KEY` | `$GIT_WORK_GITHUB_HOST` |
-| Personal repos under `$GIT_PERSONAL_REPO_ROOT` | `$GIT_PERSONAL_EMAIL` | `$GIT_PERSONAL_SSH_KEY` | `$GIT_PERSONAL_GITHUB_HOST` |
+| Personal repos under `$LOCAL_PERSONAL_REPO_ROOT` | `$GIT_PERSONAL_EMAIL` | `$GIT_PERSONAL_SSH_KEY` | `$GIT_PERSONAL_GITHUB_HOST` |
 
 Work is the global default because most repos live outside the personal repo root; setting work as the default means `includeIf` only has to fire for the exception, not the rule.
 
@@ -104,8 +104,8 @@ Work is the global default because most repos live outside the personal repo roo
 
 | Term | Meaning |
 |---|---|
-| Work identity | The default identity: `$GIT_WORK_NAME` / `$GIT_WORK_EMAIL`, using `$GIT_WORK_SSH_KEY`, cloned via `$GIT_WORK_GITHUB_HOST`. Applies to any repo not under `$GIT_PERSONAL_REPO_ROOT`. |
-| Personal identity | The override: `$GIT_PERSONAL_NAME` / `$GIT_PERSONAL_EMAIL`, using `$GIT_PERSONAL_SSH_KEY`, cloned via `$GIT_PERSONAL_GITHUB_HOST`. Applies only inside `$GIT_PERSONAL_REPO_ROOT`. |
+| Work identity | The default identity: `$GIT_WORK_NAME` / `$GIT_WORK_EMAIL`, using `$GIT_WORK_SSH_KEY`, cloned via `$GIT_WORK_GITHUB_HOST`. Applies to any repo not under `$LOCAL_PERSONAL_REPO_ROOT`. |
+| Personal identity | The override: `$GIT_PERSONAL_NAME` / `$GIT_PERSONAL_EMAIL`, using `$GIT_PERSONAL_SSH_KEY`, cloned via `$GIT_PERSONAL_GITHUB_HOST`. Applies only inside `$LOCAL_PERSONAL_REPO_ROOT`. |
 | `includeIf gitdir:...` | A Git config directive that pulls in another config file only when the current repo's `.git` directory lives under a specific path. How the personal identity activates without manual switching. |
 | Host entry | An `~/.ssh/config` `Host` block that forces a specific `IdentityFile` for one server. `Host` is the name you type; `HostName` is where SSH actually connects. When the two identities live on different servers — a GitHub Enterprise instance and public GitHub — each block names its own real host, and the two values must match or SSH connects to the wrong server. |
 
@@ -210,7 +210,7 @@ Live targets this runbook writes on the reimaged Mac. Each names the step that w
 ```text
 ~/.ssh/config                             # Step 3 — dual host aliases, rewritten wholesale rather than appended to
 ~/.gitconfig                              # Step 4 — work-default with includeIf for personal
-$GIT_PERSONAL_REPO_ROOT/.gitconfig        # Step 5 — personal identity override and core.sshCommand
+$LOCAL_PERSONAL_REPO_ROOT/.gitconfig        # Step 5 — personal identity override and core.sshCommand
 ~/.config/git/config.local                # Step 6 — preferences overlay, loaded by the [include] in ~/.gitconfig
 $GIT_WORK_SSH_KEY, $GIT_PERSONAL_SSH_KEY  # Step 2 — permission-fixed only; restore-access.md put them on disk
 ```
@@ -229,8 +229,8 @@ The five work-and-default keys are required. The four `GIT_PERSONAL_*` identity 
 | `GIT_WORK_EMAIL` | Author email for the default work identity. |
 | `GIT_PERSONAL_NAME` | Optional. Author name for the personal identity override. |
 | `GIT_PERSONAL_EMAIL` | Optional. Author email for the personal identity override. |
-| `GIT_WORK_REPO_ROOT` | Directory holding work repos. Repos here inherit the global work identity. |
-| `GIT_PERSONAL_REPO_ROOT` | Directory holding personal repos. `includeIf` fires only for repos under this path. |
+| `LOCAL_WORK_REPO_ROOT` | Directory holding work repos. Repos here inherit the global work identity. |
+| `LOCAL_PERSONAL_REPO_ROOT` | Directory holding personal repos. `includeIf` fires only for repos under this path. |
 | `GIT_WORK_GITHUB_HOST` | Host SSH connects to for work clones — a GitHub Enterprise instance such as `github.example.com`, or `github.com` when there is no Enterprise instance. Written as both `Host` and `HostName` in `~/.ssh/config`, so it must resolve. |
 | `GIT_PERSONAL_GITHUB_HOST` | Optional. The name written as `Host` in `~/.ssh/config` and typed in personal clone URLs, usually `github.com`. When both accounts live on one server, set this to an alias such as `github.com-personal` and put the real server in `GIT_PERSONAL_GITHUB_HOSTNAME`. |
 | `GIT_PERSONAL_GITHUB_HOSTNAME` | Optional. The server SSH actually connects to for personal clones, written as `HostName`. Leave blank unless `GIT_PERSONAL_GITHUB_HOST` is an alias; blank means `HostName` takes the `Host` value. Whatever is in effect must resolve. |
@@ -401,8 +401,8 @@ elif [ -n "$_pers_set" ] && [ -n "$_pers_blank" ]; then
   printf '  set:   %s\n' "$_pers_set"
   printf '  blank: %s\n' "$_pers_blank"
   printf 'Fill the blanks, or clear all four to skip the personal identity.\n'
-elif [ -n "$_pers_set" ] && [ -z "${GIT_PERSONAL_REPO_ROOT:-}" ]; then
-  printf 'REFUSING to write. A personal identity is set but GIT_PERSONAL_REPO_ROOT is empty.\n'
+elif [ -n "$_pers_set" ] && [ -z "${LOCAL_PERSONAL_REPO_ROOT:-}" ]; then
+  printf 'REFUSING to write. A personal identity is set but LOCAL_PERSONAL_REPO_ROOT is empty.\n'
   printf 'includeIf would have no gitdir: to match and Step 5 would write to /.gitconfig.\n'
   printf 'That value comes from backup-repos; set it there and source reimage.env again.\n'
 else
@@ -605,8 +605,8 @@ cat > ~/.gitconfig <<EOF
     name = ${GIT_WORK_NAME}
     email = ${GIT_WORK_EMAIL}
 
-[includeIf "gitdir:${GIT_PERSONAL_REPO_ROOT%/}/"]
-    path = ${GIT_PERSONAL_REPO_ROOT%/}/.gitconfig
+[includeIf "gitdir:${LOCAL_PERSONAL_REPO_ROOT%/}/"]
+    path = ${LOCAL_PERSONAL_REPO_ROOT%/}/.gitconfig
 
 [init]
     defaultBranch = ${GIT_DEFAULT_BRANCH:-main}
@@ -636,7 +636,7 @@ git config --global --get-all include.path
 git config --global --get-regexp '^includeif\.'
 ```
 
-The first prints `~/.config/git/config.local`. The second prints one `includeif.gitdir:...` key whose path is `$GIT_PERSONAL_REPO_ROOT` with a trailing slash, and whose value is the override file under that root. Neither file exists yet, and that is correct — the overlay is seeded in Step 6 and the override written in Step 5. What is being checked here is that the directives point where they were meant to, while the values are still in the shell that wrote them.
+The first prints `~/.config/git/config.local`. The second prints one `includeif.gitdir:...` key whose path is `$LOCAL_PERSONAL_REPO_ROOT` with a trailing slash, and whose value is the override file under that root. Neither file exists yet, and that is correct — the overlay is seeded in Step 6 and the override written in Step 5. What is being checked here is that the directives point where they were meant to, while the values are still in the shell that wrote them.
 
 > [!bug] Troubleshooting
 > If that check comes back empty on a Mac that *does* sit behind corporate TLS interception, or an internal Enterprise Server host later refuses to verify, see [[#An internal Enterprise Server host fails TLS verification|An internal Enterprise Server host fails TLS verification]].
@@ -647,7 +647,7 @@ The first prints `~/.config/git/config.local`. The second prints one `includeif.
 
 ### Step 5 — Write the Personal-Root .gitconfig Override
 
-This file activates only for repositories under `$GIT_PERSONAL_REPO_ROOT`. It changes the identity *and* pins the personal SSH key via `core.sshCommand`, so even if `~/.ssh/config` were misconfigured, personal repos would still send the right key. That pin is per repository, not per remote: `-F /dev/null` also stops SSH reading `~/.ssh/config` at all, so a repository under this root that gains a second remote on the work host sends the personal key there too. Which is a judgment call rather than a fault; the mechanics, and what it takes to make one repository serve both accounts properly, are in [[#One Repository, Two Remotes|One Repository, Two Remotes]].
+This file activates only for repositories under `$LOCAL_PERSONAL_REPO_ROOT`. It changes the identity *and* pins the personal SSH key via `core.sshCommand`, so even if `~/.ssh/config` were misconfigured, personal repos would still send the right key. That pin is per repository, not per remote: `-F /dev/null` also stops SSH reading `~/.ssh/config` at all, so a repository under this root that gains a second remote on the work host sends the personal key there too. Which is a judgment call rather than a fault; the mechanics, and what it takes to make one repository serve both accounts properly, are in [[#One Repository, Two Remotes|One Repository, Two Remotes]].
 
 The pin governs SSH only. A remote on an `https://` URL never invokes `ssh`, so `core.sshCommand` is inert for it and the key it names is never offered — those remotes authenticate from the credential helper instead. Identity is unaffected either way, because `includeIf` matches on the repository's path and knows nothing about protocol.
 
@@ -656,9 +656,9 @@ The trailing `cat` is not decoration. Git ignores a missing include file silentl
 ```bash
 source ./reimage.env
 
-mkdir -p "$GIT_PERSONAL_REPO_ROOT"
+mkdir -p "$LOCAL_PERSONAL_REPO_ROOT"
 
-cat > "$GIT_PERSONAL_REPO_ROOT/.gitconfig" <<EOF
+cat > "$LOCAL_PERSONAL_REPO_ROOT/.gitconfig" <<EOF
 [user]
     name = ${GIT_PERSONAL_NAME}
     email = ${GIT_PERSONAL_EMAIL}
@@ -666,7 +666,7 @@ cat > "$GIT_PERSONAL_REPO_ROOT/.gitconfig" <<EOF
     sshCommand = ssh -i ${GIT_PERSONAL_SSH_KEY} -F /dev/null
 EOF
 
-cat "$GIT_PERSONAL_REPO_ROOT/.gitconfig"
+cat "$LOCAL_PERSONAL_REPO_ROOT/.gitconfig"
 ```
 
 The `cat` must echo real values. An empty name or email means `reimage.env` did not load — the block was run from somewhere other than the repository root — and the file was written with the identity blank rather than not written at all, which Git will happily include.
@@ -678,20 +678,20 @@ Validate the conditional include fires from inside a personal repo:
 ```bash
 source ./reimage.env
 
-if [ -z "${GIT_PERSONAL_REPO_ROOT:-}" ]; then
-  printf 'ERROR: GIT_PERSONAL_REPO_ROOT is not set in reimage.env. backup-repos.md Step 1 records it.\n'
-elif [ ! -d "$GIT_PERSONAL_REPO_ROOT" ]; then
-  printf 'ERROR: GIT_PERSONAL_REPO_ROOT is %s, which does not exist.\n' "$GIT_PERSONAL_REPO_ROOT"
+if [ -z "${LOCAL_PERSONAL_REPO_ROOT:-}" ]; then
+  printf 'ERROR: LOCAL_PERSONAL_REPO_ROOT is not set in reimage.env. backup-repos.md Step 1 records it.\n'
+elif [ ! -d "$LOCAL_PERSONAL_REPO_ROOT" ]; then
+  printf 'ERROR: LOCAL_PERSONAL_REPO_ROOT is %s, which does not exist.\n' "$LOCAL_PERSONAL_REPO_ROOT"
 else
-  scratch="$(mktemp -d "$GIT_PERSONAL_REPO_ROOT/.identity-check.XXXXXX")"
+  scratch="$(mktemp -d "$LOCAL_PERSONAL_REPO_ROOT/.identity-check.XXXXXX")"
   ( cd "$scratch" && git init -q && git config --show-origin user.email )
   rm -rf "$scratch"
 fi
 ```
 
-`--show-origin` names the file the value came from, which is the whole question here. Expect `file:$GIT_PERSONAL_REPO_ROOT/.gitconfig` followed by `$GIT_PERSONAL_EMAIL`. An origin of `~/.gitconfig` with a work address means the include did not fire — either the override file is missing, or the `gitdir:` pattern does not match this path. Without `--show-origin` those two causes look identical.
+`--show-origin` names the file the value came from, which is the whole question here. Expect `file:$LOCAL_PERSONAL_REPO_ROOT/.gitconfig` followed by `$GIT_PERSONAL_EMAIL`. An origin of `~/.gitconfig` with a work address means the include did not fire — either the override file is missing, or the `gitdir:` pattern does not match this path. Without `--show-origin` those two causes look identical.
 
-The `cd` is inside a subshell and there is no `cd ~`, so the shell you are typing in never leaves the repository root. That matters for more than tidiness: a directory-scoped environment loader such as `direnv` unloads `reimage.env` the moment you leave, which empties `$GIT_PERSONAL_REPO_ROOT` and makes the cleanup on the next line silently skip. `direnv: unloading` printed by this block is that unload happening inside the subshell, and is expected. The guards exist for the same reason — with no root set, a scratch directory would be created at the filesystem root, and `git init` would otherwise run in whatever directory you happened to be standing in.
+The `cd` is inside a subshell and there is no `cd ~`, so the shell you are typing in never leaves the repository root. That matters for more than tidiness: a directory-scoped environment loader such as `direnv` unloads `reimage.env` the moment you leave, which empties `$LOCAL_PERSONAL_REPO_ROOT` and makes the cleanup on the next line silently skip. `direnv: unloading` printed by this block is that unload happening inside the subshell, and is expected. The guards exist for the same reason — with no root set, a scratch directory would be created at the filesystem root, and `git init` would otherwise run in whatever directory you happened to be standing in.
 
 `mktemp -d` names the scratch repository rather than a fixed path. A fixed name cannot be removed safely: `mkdir -p` succeeds silently on a directory that already exists, so a real repository of that name would be written into and then deleted by a step that only reads a value. If a run is interrupted before the `rm`, a `.identity-check.*` directory is left under the personal root — remove it, because the Phase 11B audit counts any `.git` under a clone root as a repository.
 
@@ -814,17 +814,17 @@ That pair proves access rather than naming the account, which is as far as the b
 > [!bug] Troubleshooting
 > If one host authenticates and the other returns `Permission denied (publickey)`, see [[#`ssh -T` returns "Permission denied (publickey)" for one host but not the other|`ssh -T` returns "Permission denied (publickey)" for one host but not the other]].
 
-Spot-check the work root. Run this from the repository root like every other block here — the block enters `$GIT_WORK_REPO_ROOT` itself, so your working directory does not need to be there and should not be, because `source ./reimage.env` resolves against this checkout. No work repository is cloned yet, since Phase 11B does that after this phase, so the block makes a scratch repository under the root and reads the identity from inside it. The value it prints is the one that applies at `$GIT_WORK_REPO_ROOT`, not the one that applies where your shell is standing:
+Spot-check the work root. Run this from the repository root like every other block here — the block enters `$LOCAL_WORK_REPO_ROOT` itself, so your working directory does not need to be there and should not be, because `source ./reimage.env` resolves against this checkout. No work repository is cloned yet, since Phase 11B does that after this phase, so the block makes a scratch repository under the root and reads the identity from inside it. The value it prints is the one that applies at `$LOCAL_WORK_REPO_ROOT`, not the one that applies where your shell is standing:
 
 ```bash
 source ./reimage.env
 
-if [ -z "${GIT_WORK_REPO_ROOT:-}" ]; then
-  printf 'ERROR: GIT_WORK_REPO_ROOT is not set in reimage.env. backup-repos.md Step 1 records it.\n'
-elif [ ! -d "$GIT_WORK_REPO_ROOT" ]; then
-  printf 'ERROR: GIT_WORK_REPO_ROOT is %s, which does not exist.\n' "$GIT_WORK_REPO_ROOT"
+if [ -z "${LOCAL_WORK_REPO_ROOT:-}" ]; then
+  printf 'ERROR: LOCAL_WORK_REPO_ROOT is not set in reimage.env. backup-repos.md Step 1 records it.\n'
+elif [ ! -d "$LOCAL_WORK_REPO_ROOT" ]; then
+  printf 'ERROR: LOCAL_WORK_REPO_ROOT is %s, which does not exist.\n' "$LOCAL_WORK_REPO_ROOT"
 else
-  scratch="$(mktemp -d "$GIT_WORK_REPO_ROOT/.identity-check.XXXXXX")"
+  scratch="$(mktemp -d "$LOCAL_WORK_REPO_ROOT/.identity-check.XXXXXX")"
   ( cd "$scratch" && git init -q && git config --show-origin user.email )
   rm -rf "$scratch"
 fi
@@ -833,25 +833,25 @@ fi
 Expect one line: an origin of `~/.gitconfig` and `$GIT_WORK_EMAIL`. This path is outside the personal root, so the global default applies and `includeIf` must not fire — an origin pointing at the personal-root file here means the `gitdir:` pattern is too broad.
 
 > [!warning] Pitfall
-> `mktemp -d` is what keeps this safe to run. A fixed scratch name such as `$GIT_WORK_REPO_ROOT/test` cannot be created safely: `mkdir -p` succeeds silently when the directory already exists, so a real repository of that name would be written into and then deleted by a step whose only job is to read a value. `mktemp -d` cannot collide with anything you own, so the `rm -rf` only ever removes what the block just made.
+> `mktemp -d` is what keeps this safe to run. A fixed scratch name such as `$LOCAL_WORK_REPO_ROOT/test` cannot be created safely: `mkdir -p` succeeds silently when the directory already exists, so a real repository of that name would be written into and then deleted by a step whose only job is to read a value. `mktemp -d` cannot collide with anything you own, so the `rm -rf` only ever removes what the block just made.
 
-Spot-check the personal root the same way. Where a real repository already sits under `$GIT_PERSONAL_REPO_ROOT`, `git config --show-origin user.email` inside it answers this without a scratch repository at all; the block covers the case where nothing is cloned there yet:
+Spot-check the personal root the same way. Where a real repository already sits under `$LOCAL_PERSONAL_REPO_ROOT`, `git config --show-origin user.email` inside it answers this without a scratch repository at all; the block covers the case where nothing is cloned there yet:
 
 ```bash
 source ./reimage.env
 
-if [ -z "${GIT_PERSONAL_REPO_ROOT:-}" ]; then
-  printf 'ERROR: GIT_PERSONAL_REPO_ROOT is not set in reimage.env. backup-repos.md Step 1 records it.\n'
-elif [ ! -d "$GIT_PERSONAL_REPO_ROOT" ]; then
-  printf 'ERROR: GIT_PERSONAL_REPO_ROOT is %s, which does not exist.\n' "$GIT_PERSONAL_REPO_ROOT"
+if [ -z "${LOCAL_PERSONAL_REPO_ROOT:-}" ]; then
+  printf 'ERROR: LOCAL_PERSONAL_REPO_ROOT is not set in reimage.env. backup-repos.md Step 1 records it.\n'
+elif [ ! -d "$LOCAL_PERSONAL_REPO_ROOT" ]; then
+  printf 'ERROR: LOCAL_PERSONAL_REPO_ROOT is %s, which does not exist.\n' "$LOCAL_PERSONAL_REPO_ROOT"
 else
-  scratch="$(mktemp -d "$GIT_PERSONAL_REPO_ROOT/.identity-check.XXXXXX")"
+  scratch="$(mktemp -d "$LOCAL_PERSONAL_REPO_ROOT/.identity-check.XXXXXX")"
   ( cd "$scratch" && git init -q && git config --show-origin user.email )
   rm -rf "$scratch"
 fi
 ```
 
-Expect an origin of `$GIT_PERSONAL_REPO_ROOT/.gitconfig` and `$GIT_PERSONAL_EMAIL`. A work address means the override is missing or the `includeIf` path does not match — Git ignores a missing include file silently, so this check is what catches it.
+Expect an origin of `$LOCAL_PERSONAL_REPO_ROOT/.gitconfig` and `$GIT_PERSONAL_EMAIL`. A work address means the override is missing or the `includeIf` path does not match — Git ignores a missing include file silently, so this check is what catches it.
 
 Both blocks print `direnv: unloading` on a Mac using direnv. That is the subshell leaving this checkout, and it is expected. It does mean nothing inside the parentheses can reference a `reimage.env` value, so keep the subshell to `git` calls that read configuration already on disk.
 
@@ -860,7 +860,7 @@ Do not move on until every spot-check prints the expected value. A silent mismat
 Each block removes its own scratch repository. If one is interrupted between `mktemp` and `rm`, a `.identity-check.*` directory survives — remove it. The Phase 11B repository audit discovers repositories with `find <root> -type d -name .git`, so an abandoned scratch repo in a clone root is counted as a real one by that audit and by every comparison built on it. The name is deliberately self-identifying for exactly that reason.
 
 > [!bug] Troubleshooting
-> If the personal spot-check prints the work identity, see [[#`git config user.email` returns the wrong identity inside `$GIT_PERSONAL_REPO_ROOT`|`git config user.email` returns the wrong identity inside `$GIT_PERSONAL_REPO_ROOT`]].
+> If the personal spot-check prints the work identity, see [[#`git config user.email` returns the wrong identity inside `$LOCAL_PERSONAL_REPO_ROOT`|`git config user.email` returns the wrong identity inside `$LOCAL_PERSONAL_REPO_ROOT`]].
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -974,7 +974,7 @@ The commands do X; these judgment calls stay with you.
 |---|---|
 | Whether the restored SSH keys are still the current identity or a rotated-out prior key. | Depends on rotation history the artifact drive does not carry. If unsure, generate a new key and register it upstream rather than restoring an old one. |
 | Which protocol each identity uses. | SSH keeps identity routing in this runbook's hands and is unaffected by TLS interception, so it is preferred where it works. Whether it works is a property of the network, can differ between the two identities, and can change when you move between networks. Where SSH is blocked, that identity's remotes use HTTPS with a personal access token; `includeIf` still supplies the right author either way. Troubleshooting carries the switch. |
-| Whether a repository under `$GIT_PERSONAL_REPO_ROOT` should also carry a work remote. | Keys can be routed per remote; authorship cannot — one commit carries one name and email to both. Either one address is verified on both accounts, or one side's commits arrive unattributed, or the two are really two repositories. Supplemental Reference walks the configuration for each. |
+| Whether a repository under `$LOCAL_PERSONAL_REPO_ROOT` should also carry a work remote. | Keys can be routed per remote; authorship cannot — one commit carries one name and email to both. Either one address is verified on both accounts, or one side's commits arrive unattributed, or the two are really two repositories. Supplemental Reference walks the configuration for each. |
 | Whether to reinstate `git-together` and `alias git=git-together`. | Legacy workaround; only worth it if the workflow still uses paired commits. See Supplemental Reference. |
 | Which repositories are worth re-cloning right now versus later. | Depends on immediate work priorities; this runbook is deliberately silent about the list. |
 
@@ -1004,12 +1004,12 @@ If the file is missing, restore it from the encrypted secrets DMG the way Phase 
 
 [[#Step 7 — Validate Both Identities|⮕ Continue to Step 7 — Validate Both Identities]]
 
-### `git config user.email` returns the wrong identity inside `$GIT_PERSONAL_REPO_ROOT`
+### `git config user.email` returns the wrong identity inside `$LOCAL_PERSONAL_REPO_ROOT`
 
 Almost always the `includeIf` path is missing the trailing slash. Re-read `~/.gitconfig` and confirm the line reads exactly:
 
 ```ini
-[includeIf "gitdir:${GIT_PERSONAL_REPO_ROOT%/}/"]
+[includeIf "gitdir:${LOCAL_PERSONAL_REPO_ROOT%/}/"]
 ```
 
 Without the trailing slash, the include may not fire for nested repos. Re-run Step 4.
@@ -1101,7 +1101,7 @@ Longer material most runs will not need, kept out of the main flow.
 
 ### One Repository, Two Remotes
 
-A repository under `$GIT_PERSONAL_REPO_ROOT` that also pushes to the work host crosses both identities at once. Two things decide what happens, they are decided at different moments, and only one of them is per-remote.
+A repository under `$LOCAL_PERSONAL_REPO_ROOT` that also pushes to the work host crosses both identities at once. Two things decide what happens, they are decided at different moments, and only one of them is per-remote.
 
 | | Decided | Per-remote? |
 |---|---|---|
@@ -1157,12 +1157,12 @@ Set both `user.name` and `user.email` together when you pin. Setting only the em
 
 ### Optional Maintenance — Update All Local Repos
 
-Once several repos are cloned back under `$GIT_WORK_REPO_ROOT` and `$GIT_PERSONAL_REPO_ROOT`, use this to rebase-pull all of them at once instead of doing it repo by repo. This is a maintenance helper, not a one-time restore requirement.
+Once several repos are cloned back under `$LOCAL_WORK_REPO_ROOT` and `$LOCAL_PERSONAL_REPO_ROOT`, use this to rebase-pull all of them at once instead of doing it repo by repo. This is a maintenance helper, not a one-time restore requirement.
 
 ```bash
 source ./reimage.env
 
-for repo_root in "$GIT_WORK_REPO_ROOT" "$GIT_PERSONAL_REPO_ROOT"; do
+for repo_root in "$LOCAL_WORK_REPO_ROOT" "$LOCAL_PERSONAL_REPO_ROOT"; do
   [[ -d "$repo_root" ]] || continue
   find "$repo_root" -maxdepth 3 -type d -name ".git" | while read -r gitdir; do
     repo="$(dirname "$gitdir")"

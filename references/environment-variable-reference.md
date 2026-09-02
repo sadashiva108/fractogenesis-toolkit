@@ -65,8 +65,8 @@ None of these appear in `reimage.env.example`. They do not exist in `reimage.env
 
 | Variable | Written by | Step |
 |---|---|---|
-| `GIT_WORK_REPO_ROOT` | [[backup-repos\|backup-repos.md]] (Phase 2A) | Step 1 |
-| `GIT_PERSONAL_REPO_ROOT` | [[backup-repos\|backup-repos.md]] (Phase 2A) | Step 1 |
+| `LOCAL_WORK_REPO_ROOT` | [[backup-repos\|backup-repos.md]] (Phase 2A) | Step 1 |
+| `LOCAL_PERSONAL_REPO_ROOT` | [[backup-repos\|backup-repos.md]] (Phase 2A) | Step 1 |
 | `REIMAGE_JDK_BASELINE` | [[restore-runtime\|restore-runtime.md]] (Phase 10A) | Step 7 |
 | `JAVA_HOME` | [[restore-runtime\|restore-runtime.md]] (Phase 10A) | Step 7 |
 | `GIT_WORK_NAME`, `GIT_WORK_EMAIL`, `GIT_WORK_SSH_KEY`, `GIT_WORK_GITHUB_HOST`, `GIT_DEFAULT_BRANCH` | [[restore-git\|restore-git.md]] (Phase 11A) | Step 0c |
@@ -145,11 +145,28 @@ Two properties matter. It refuses to write **either** key when **either** is emp
 
 Three shapes, and they are not interchangeable:
 
+### `LOCAL_` and `GIT_` are not the same kind of key
+
+`LOCAL_WORK_REPO_ROOT` and `LOCAL_PERSONAL_REPO_ROOT` are **directories on this
+Mac** — where clones land, and what `includeIf` matches on to decide which
+identity authors a commit. They are also the two keys that may legitimately hold
+different values before and after a reimage, because where repositories live is a
+choice the rebuild gets to remake.
+
+Every remaining `GIT_*` key describes Git or GitHub itself: an identity, an SSH
+key, a routing host, a default branch, an account that owns repositories. Those
+are the same on any machine that authenticates as you.
+
+The prefix is the question each key answers — *where on disk* against *who am I
+and where do I push*. A path named `GIT_` invites the reading that it is
+something GitHub knows about, which is how it came to sound like a remote rather
+than a folder.
+
 | Shape | Meaning | Example |
 |---|---|---|
-| Required | The step refuses to write without it. | `GIT_WORK_EMAIL`, `GIT_WORK_REPO_ROOT` |
+| Required | The step refuses to write without it. | `GIT_WORK_EMAIL`, `LOCAL_WORK_REPO_ROOT` |
 | Optional | Blank is a decision with a defined meaning. | `GIT_PERSONAL_GITHUB_OWNER` — blank means *never rewrite a clone URL*; `GIT_PERSONAL_GITHUB_HOSTNAME` — blank means *`HostName` inherits the `Host` value* |
-| All-or-nothing group | Fill every member or leave every member blank. Half a group is never right. | The four `GIT_PERSONAL_*` identity keys, together with `GIT_PERSONAL_REPO_ROOT` |
+| All-or-nothing group | Fill every member or leave every member blank. Half a group is never right. | The four `GIT_PERSONAL_*` identity keys, together with `LOCAL_PERSONAL_REPO_ROOT` |
 
 The personal Git group is the worked example. A Mac with no separate personal identity leaves all five blank, and that is a `PASS` at every boundary. A half-filled group is what fails quietly: an identity with no root leaves `restore-git.md` Step 5's override at `/.gitconfig`, and a root with no identity clones into a directory `includeIf` never matches, so those commits land under the **work** identity and nothing reports it until someone else notices the author line.
 

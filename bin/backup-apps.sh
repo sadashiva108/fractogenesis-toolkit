@@ -668,9 +668,9 @@ INTELLIJ_HELPER="$(dirname "$SCRIPT_DIR")/.internal/apps/backup-intellij-state.s
 INTELLIJ_HELPER_ARGS=(--artifact-root "$REIMAGE_ARTIFACT_ROOT")
 # Default the IntelliJ projects root to the configured work-repo root when the
 # caller did not pass --intellij-projects-root, mirroring how backup-repos.sh
-# defaults --root to GIT_WORK_REPO_ROOT.
-if [[ -z "$INTELLIJ_PROJECTS_ROOT" && -n "${GIT_WORK_REPO_ROOT:-}" ]]; then
-  INTELLIJ_PROJECTS_ROOT="$GIT_WORK_REPO_ROOT"
+# defaults --root to LOCAL_WORK_REPO_ROOT.
+if [[ -z "$INTELLIJ_PROJECTS_ROOT" && -n "${LOCAL_WORK_REPO_ROOT:-}" ]]; then
+  INTELLIJ_PROJECTS_ROOT="$LOCAL_WORK_REPO_ROOT"
 fi
 if [[ -n "$INTELLIJ_PROJECTS_ROOT" ]]; then
   INTELLIJ_HELPER_ARGS+=(--projects-root "$INTELLIJ_PROJECTS_ROOT")
