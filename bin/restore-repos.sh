@@ -115,7 +115,8 @@ fi
 # Manual rows leave the generated artifact. This script is rerun freely and each
 # run writes a newly stamped file, so a row answered inside one is not carried
 # into the next. The sign-off carries answers forward and records the run each
-# was answered against. See .internal/sign-offs.sh.
+# was answered against, and lands in reimaged-system/sign-offs/ with every other
+# post-image answered row. See .internal/sign-offs.sh.
 RUNS_LIB="$REPO_ROOT/.internal/artifact-runs.sh"
 if [[ ! -f "$RUNS_LIB" ]]; then
   echo "ERROR: shared run index not found: $RUNS_LIB" >&2
@@ -329,10 +330,18 @@ RAW_DIR="$OUT/raw"
 mkdir -p "$RAW_DIR"
 
 # The sign-off is named for this run, which is what lets a carried answer say
-# which run it was answered against. It sits beside runs/ rather than inside
+# which run it was answered against. It sits outside runs/ rather than inside
 # one, because a run directory is replaced and an answered row must not be.
-if ! signoff_begin "$AUDIT_ROOT/sign-offs" "post-image-restore" "post-image-restore-$STAMP"; then
-  echo "ERROR: cannot open a sign-off under: $AUDIT_ROOT/sign-offs" >&2
+#
+# It lives under reimaged-system/ rather than beside the category it reports on.
+# Phase 11B is a post-image phase, and every post-image answered row is in
+# reimaged-system/sign-offs/ -- the boundary recorders', the first-boot bundles',
+# the Phase 12 plan-notes'. repo-audit-reports/ is shared with the PRE-image
+# audit, so a sign-off there would be the one post-image answer a reader has to
+# know to look for somewhere else.
+SIGNOFF_ROOT="$REIMAGE_ARTIFACT_ROOT/reimaged-system/sign-offs"
+if ! signoff_begin "$SIGNOFF_ROOT" "post-image-restore" "post-image-restore-$STAMP"; then
+  echo "ERROR: cannot open a sign-off under: $SIGNOFF_ROOT" >&2
   exit 2
 fi
 

@@ -53,7 +53,7 @@ Restore the *content* side of the Git story: get every repository that existed o
 **What it sets up**
 
 - **The restore-status bundle** — a timestamped `post-image-restore-*` run under `repo-audit-reports/runs/` holding `restore-status.md`, the machine-readable `raw/status.tsv`, and copies of the pre-image inputs it classified against.
-- **The Phase 11B sign-off** — `repo-audit-reports/sign-offs/post-image-restore-YYYYMMDD-HHMMSS.md`, holding the two rows only you can answer. It sits beside `runs/` rather than inside one, because a run directory is replaced on every rerun and an answered row must not be.
+- **The Phase 11B sign-off** — `reimaged-system/sign-offs/post-image-restore-YYYYMMDD-HHMMSS.md`, holding the two rows only you can answer. It sits outside the run directory because a run is replaced on every rerun and an answered row must not be, and under `reimaged-system/` because that is where every post-image answered row lives — `repo-audit-reports/` is shared with the pre-image audit.
 - **Reviewable action files** — `clone-commands.sh` and `rsync-ignored-files.sh`, emitted per run so you decide which repositories are cloned and which kept ignored files are rsynced back, rather than the script deciding for you.
 - **The restored working trees** — every tracked repository back on disk under the correct Git root, with its `staged-ignored-files/live/<label>/` bundle rsynced into place.
 - **A closed carry-forward ledger** — every pre-image rescue branch, stash, and tracked change either merged, cherry-picked, left as a branch with a note, or explicitly discarded.

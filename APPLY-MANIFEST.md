@@ -1,5 +1,7 @@
 # Apply Manifest
 
+**Revision 134** — supersedes Revision 133 and earlier. The Phase 11B sign-off joins every other post-image answered row.
+
 **Revision 133** — supersedes Revision 132 and earlier. Two more homes under `docs/`, because a design record and a ledger are not features.
 
 **Revision 132** — supersedes Revision 131 and earlier. Post-image Time Machine evidence has one home, and the empty second one stops implying otherwise.
@@ -373,6 +375,64 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `backup-repos.sh` | `bin/backup-repos.sh` |
 | `setup-reimage-env.sh` | `bin/setup-reimage-env.sh` |
 | `compare-restored-state.sh` | `bin/compare-restored-state.sh` |
+
+---
+
+## Revision 134 — one place a person looks for an answered row
+
+`bin/restore-repos.sh` opened its sign-off under
+`repo-audit-reports/sign-offs/`. Every other post-image producer opens one under
+`reimaged-system/sign-offs/`: both boundary recorders, the first-boot bundles,
+the Phase 12 plan-notes, and the Phase 14 checklist.
+
+### Why the odd one out was odd
+
+The script's own comment defends the part that was right — the sign-off sits
+outside `runs/` rather than inside one, because a run directory is replaced on
+every rerun and an answered row must not be. It says nothing about the root,
+because the root was never a decision; the category the script writes its
+evidence into was simply the nearest place to put it.
+
+`repo-audit-reports/` is shared with the **pre-image** audit. So the one Phase 11B
+answered row would have been the one post-image answer a reader has to know to go
+looking for somewhere else — and the reader most likely to look is the one
+checking whether a phase was closed out properly, months later, from the
+`reimaged-system/sign-offs/` directory that holds all the others.
+
+### The moment mattered more than the change
+
+`repo-audit-reports/sign-offs/` **has never existed**. The three
+`post-image-restore-*` bundles on the artifact root predate `sign-offs.sh`
+entirely and were recovered by reindex, so no run has yet reached the
+`signoff_begin` call. That made this a one-line change and a documentation pass.
+
+Once Phase 11B runs successfully it becomes a migration: a directory to move, a
+`latest-*.txt` pointer to repoint, and an answered row that must not be lost in
+transit. A concurrent session is actively working that phase toward its first
+successful run, so the cheap version of this change had a short life.
+
+### What changed
+
+`bin/restore-repos.sh` — `SIGNOFF_ROOT` named explicitly rather than derived from
+`$AUDIT_ROOT`, with the reasoning at the line so the next reader does not have to
+reconstruct why a repository-audit script writes into `reimaged-system/`.
+`restore-repos.md` — the *What it sets up* bullet. 
+`references/restore-file-reference.md` — the Phase 11B outputs row.
+
+The sign-off's file name, its `post-image-restore` context, and its carry-forward
+behaviour are unchanged. Only the directory moved.
+
+### Validation
+
+`bash -n` clean. `verify-script-portability.sh` 74 clean / 0 WARN / 0 FAIL.
+`verify-doc-paths.sh --all` 0 MISSING / 0 ANCHOR BROKEN.
+`verify-runbook-structure.sh` 29 FAIL / 5 WARN across 27 documents — unchanged;
+the runbook edit was one bullet in a prose section. `grep` confirms no reference
+to `repo-audit-reports/sign-offs` remains outside this change log.
+
+**All of it ran on Linux with Bash 5.x.** `shellcheck` was not available.
+`/bin/bash -n` against real macOS Bash 3.2 is owed on this file along with
+Revisions 116–132.
 
 ---
 
