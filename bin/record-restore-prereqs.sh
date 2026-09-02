@@ -156,14 +156,19 @@ if [[ -z "${RUNBOOK:-}" ]]; then
   exit 2
 fi
 
-case "$RUNBOOK" in
-  restore-runtime) PHASE_RUNBOOK="restore-runtime.md" ;;
-  restore-access) PHASE_RUNBOOK="restore-access.md" ;;
-  restore-git)    PHASE_RUNBOOK="restore-git.md" ;;
-  restore-repos)  PHASE_RUNBOOK="restore-repos.md" ;;
-  restore-apps)   PHASE_RUNBOOK="restore-apps.md" ;;
+# One list, used by the required-argument error, the guard and the hint.
+#
+# Two literals drifted apart here: the case dispatched on five runbooks while the
+# hint advertised two, so running it for restore-git, restore-repos or
+# restore-apps -- each of which works -- told the operator their own phase was
+# unsupported. Revision 126 fixed the same defect in record-restore-exit.sh; this
+# is the shape that stops it recurring.
+SUPPORTED_RUNBOOKS="restore-runtime restore-access restore-git restore-repos restore-apps restore-home"
+
+case " $SUPPORTED_RUNBOOKS " in
+  *" $RUNBOOK "*) PHASE_RUNBOOK="$RUNBOOK.md" ;;
   *) echo "ERROR: no prerequisite checks defined for runbook: $RUNBOOK" >&2
-     echo "HINT:  supported runbooks: restore-runtime, restore-access. Others are added as their runbooks are reached." >&2
+     echo "HINT:  supported runbooks: $SUPPORTED_RUNBOOKS. Others are added as their runbooks are reached." >&2
      exit 2 ;;
 esac
 
@@ -383,7 +388,20 @@ check_restore_runtime() {
 # when either changes.
 # ---------------------------------------------------------------------------
 check_restore_access() {
-  local out
+  local out b_root b_run
+
+  # 1 -- did Phase 10A finish? The chain runs 10A -> 10B -> 11A -> 11B -> 12 and
+  # this was the one link missing: 11A, 11B and 12 each check their predecessor,
+  # 10B did not. Phase 10B depends on the toolchain 10A installs -- the Java
+  # lookup below fails outright without it -- so the dependency was already real,
+  # just unstated.
+  b_root="${REIMAGE_ARTIFACT_ROOT:-/nonexistent}/reimaged-system/boundaries"
+  b_run="$(artifact_run_official "$b_root" "restore-runtime-exit" 2>/dev/null)"
+  if [[ -n "$b_run" ]]; then
+    record PASS "\`restore-runtime\` closed out" "\`$(basename "$b_run")\`"
+  else
+    record FAIL "\`restore-runtime\` closed out" "no official \`restore-runtime-exit\` run under \`boundaries/\` — this phase configures trust for a toolchain Phase 10A installs, and every check below assumes it is there"
+  fi
 
   # 1 -- Java lookup. The single most consequential row here, and the one that
   # fails silently. restore-access.md Step 6 runs
@@ -735,6 +753,86 @@ check_restore_apps() {
     record WARN "Encrypted secrets DMG" "currently attached — mount only when a step asks, and eject when done; it holds plaintext"
   else
     record PASS "Encrypted secrets DMG" "not attached, which is correct at phase entry — steps mount it as needed"
+  fi
+}
+
+# ---------------------------------------------------------------------------
+# restore-home prerequisites
+#
+# Derived one for one from restore-home.md -> Prerequisites. Phase 15 is the
+# bulk-content phase and the last one that writes to $HOME, so every row here is
+# about something that must already be true before anything is copied in volume.
+#
+# `restore-intellij` and `restore-docker` get no boundary of their own: they are
+# expanded sections of restore-apps.md rather than phases, and Phase 12's
+# boundary covers them.
+# ---------------------------------------------------------------------------
+check_restore_home() {
+  local b_root c_root b_run n
+
+  if [[ -n "${FRACTOGENESIS_HOME:-}" && -d "${FRACTOGENESIS_HOME:-}/bin" ]]; then
+    record PASS "Toolkit root resolves" "\`$FRACTOGENESIS_HOME\`"
+  else
+    record FAIL "Toolkit root resolves" "\`FRACTOGENESIS_HOME\` unset or has no \`bin/\`"
+  fi
+
+  b_root="${REIMAGE_ARTIFACT_ROOT:-/nonexistent}/reimaged-system/boundaries"
+
+  # 1 -- Phase 12 closed out. The chain link: 15 is the next phase with a
+  # boundary of its own, so without this the chain stops at 12.
+  b_run="$(artifact_run_official "$b_root" "restore-apps-exit" 2>/dev/null)"
+  if [[ -n "$b_run" ]]; then
+    record PASS "\`restore-apps\` closed out" "\`$(basename "$b_run")\`"
+  else
+    record WARN "\`restore-apps\` closed out" "no official \`restore-apps-exit\` run — Phase 12 has no fixed finish line and returning for more apps later is expected, so this is a WARN; what it should not be is unnoticed"
+  fi
+
+  # 2 -- Phase 14 is the row the runbook leads with. Restoring bulk home content
+  # onto a system nobody has validated means a later failure cannot be told apart
+  # from something Phase 15 brought back with it.
+  c_root="${REIMAGE_ARTIFACT_ROOT:-/nonexistent}/reimaged-system/checklists"
+  b_run="$(artifact_run_official "$c_root" "post-image" 2>/dev/null)"
+  if [[ -n "$b_run" ]]; then
+    record PASS "Phase 14 checks recorded" "\`$(basename "$b_run")\`"
+  else
+    record FAIL "Phase 14 checks recorded" "no official \`post-image\` run under \`reimaged-system/checklists/\` — \`restore-home.md\` Prerequisites require Phase 14 complete and clean before bulk home content is touched"
+  fi
+
+  # 3 -- the two phases that already own dotfiles this one must not overwrite.
+  for c_root in restore-access-exit restore-git-exit; do
+    b_run="$(artifact_run_official "$b_root" "$c_root" 2>/dev/null)"
+    if [[ -n "$b_run" ]]; then
+      record PASS "\`${c_root%-exit}\` closed out" "\`$(basename "$b_run")\` — do not restore over what it wrote"
+    else
+      record FAIL "\`${c_root%-exit}\` closed out" "no official \`$c_root\` run — that phase owns credential-bearing dotfiles and the Git identity, and Phase 15 must merge around them rather than onto them"
+    fi
+  done
+
+  # 4 -- the backup this phase reads. Absent, every rsync in it copies nothing
+  # and reports success.
+  c_root="${REIMAGE_ARTIFACT_ROOT:-/nonexistent}/home-files-backup"
+  n=0
+  for b_run in "$c_root/home" "$c_root/dotfiles"; do
+    [[ -d "$b_run" ]] && n=$((n + 1))
+  done
+  if [[ "$n" -eq 2 ]]; then
+    record PASS "Home backup reachable" "\`home/\` and \`dotfiles/\` present under \`home-files-backup/\`"
+  else
+    record FAIL "Home backup reachable" "$n of 2 present under \`$c_root\` — an rsync from a missing source copies nothing and exits 0"
+  fi
+
+  # 5 -- TCC. macOS denies Terminal access to ~/Documents and ~/Desktop until it
+  # is granted, and the failure mode is the quiet one the runbook warns about:
+  # rsync keeps going, prints "Operation not permitted", and exits 23 with a
+  # partial tree. A read probe observes it without creating anything.
+  n=0
+  for b_run in "$HOME/Documents" "$HOME/Desktop"; do
+    ls "$b_run" >/dev/null 2>&1 && n=$((n + 1))
+  done
+  if [[ "$n" -eq 2 ]]; then
+    record PASS "Terminal can reach ~/Documents and ~/Desktop" "both readable — Full Disk Access appears granted"
+  else
+    record FAIL "Terminal can reach ~/Documents and ~/Desktop" "$n of 2 readable — grant Full Disk Access (System Settings → Privacy & Security) before Step 3, or rsync will report \`Operation not permitted\` and exit 23 with a partial tree"
   fi
 }
 

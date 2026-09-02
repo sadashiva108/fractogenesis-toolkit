@@ -100,6 +100,11 @@
 #   artifact_run_clear_official "$CATEGORY_ROOT" "<context>" "<reason>"
 #   artifact_runs_rebuild "$CATEGORY_ROOT"                   # regenerate pointers
 #
+#   artifact_run_retire_lineage "$CATEGORY_ROOT" "<context>" "<reason>"
+#   artifact_run_reopen_lineage "$CATEGORY_ROOT" "<context>" "<reason>"
+#   #   A retired lineage keeps its runs and loses its pointer, and a rebuild
+#   #   leaves it retired. For a context whose producer no longer exists.
+#
 # Points and their rules:
 #
 #   before, pre-restart                            first completed run wins
@@ -496,8 +501,82 @@ artifact_run_clear_official() {
 # manifest that was regenerated from `runs/`.
 # ---------------------------------------------------------------------------
 
+# Retire a lineage: keep its runs, stop publishing a pointer for it.
+#
+# For a context whose producer is gone. `restore-runtime-version-comparison` is
+# the case that prompted it: a one-off note migrated into a `comparisons/`
+# category by an early revision, so the category advertises a lineage nothing
+# will ever write to again, and `official/` says it is current.
+#
+# Deleting the pointer by hand does not work -- officialness is COMPUTED, so the
+# next `artifact_runs_rebuild` puts it straight back. The manifest has to carry
+# the fact, which is the same reason a pin is a row rather than a file.
+#
+# The runs stay. Retiring a lineage is a statement about what is current, not
+# about what happened.
+artifact_run_retire_lineage() {
+  local category_root="$1" context="$2" reason="$3"
+  local manifest point retired
+
+  if [ -z "${category_root:-}" ] || [ -z "${context:-}" ]; then
+    _artifact_runs_err "artifact_run_retire_lineage <category-root> <context> <reason>"
+    return 2
+  fi
+  if [ -z "${reason:-}" ]; then
+    _artifact_runs_err "a reason is required, the same as for setting a pin"
+    return 2
+  fi
+
+  manifest="$(_artifact_runs_manifest_path "$category_root")"
+  if [ ! -f "$manifest" ]; then
+    _artifact_runs_err "no manifest in $category_root; nothing to retire"
+    return 1
+  fi
+
+  retired="$(_artifact_runs_rows_for "$manifest" "$context" retire | tail -1)"
+  if [ -n "$retired" ] && [ "$retired" != "(reopened)" ]; then
+    _artifact_runs_err "'$context' is already retired"
+    return 1
+  fi
+
+  point="$(_artifact_runs_point_of "$context")"
+  _artifact_runs_append_row "$manifest" retire "$context" "$point" "(retired)" "—" "$reason"
+  rm -f "$(_artifact_runs_official_path "$category_root" "$context")"
+  _artifact_runs_note "retired '$context'; its runs stay indexed and it no longer has a pointer"
+  return 0
+}
+
+# Undo a retirement. Same shape as clearing a pin: a later row wins, and the
+# default rule applies again from then on.
+artifact_run_reopen_lineage() {
+  local category_root="$1" context="$2" reason="$3"
+  local manifest point retired
+
+  if [ -z "${category_root:-}" ] || [ -z "${context:-}" ]; then
+    _artifact_runs_err "artifact_run_reopen_lineage <category-root> <context> <reason>"
+    return 2
+  fi
+  if [ -z "${reason:-}" ]; then
+    _artifact_runs_err "a reason is required, the same as for retiring"
+    return 2
+  fi
+
+  manifest="$(_artifact_runs_manifest_path "$category_root")"
+  retired="$(_artifact_runs_rows_for "$manifest" "$context" retire | tail -1)"
+  if [ -z "$retired" ] || [ "$retired" = "(reopened)" ]; then
+    _artifact_runs_err "'$context' is not retired; nothing to reopen"
+    return 1
+  fi
+
+  point="$(_artifact_runs_point_of "$context")"
+  _artifact_runs_append_row "$manifest" retire "$context" "$point" "(reopened)" "—" "$reason"
+  _artifact_runs_note "reopened '$context'; the default rule applies again"
+  artifact_runs_rebuild "$category_root" >/dev/null
+  return 0
+}
+
 artifact_runs_rebuild() {
-  local category_root="$1" manifest contexts context runs official pinned marker rebuilt=0
+  local category_root="$1" manifest contexts context runs official pinned retired marker rebuilt=0
 
   if [ -z "${category_root:-}" ] || [ ! -d "${category_root:-}" ]; then
     _artifact_runs_err "artifact_runs_rebuild <category-root>"
@@ -516,6 +595,17 @@ artifact_runs_rebuild() {
   for context in $contexts; do
     runs="$(_artifact_runs_rows_for "$manifest" "$context" run)"
     [ -n "$runs" ] || continue
+
+    # A retired lineage keeps its runs and loses its pointer. Without this a
+    # rebuild resurrects the pointer of every context that ever had a run,
+    # because officialness is computed from the manifest -- so a lineage whose
+    # producer no longer exists could not be retired at all, only deleted by
+    # hand and then silently recreated by the next repair command.
+    retired="$(_artifact_runs_rows_for "$manifest" "$context" retire | tail -1)"
+    if [ -n "$retired" ] && [ "$retired" != "(reopened)" ]; then
+      rm -f "$(_artifact_runs_official_path "$category_root" "$context")"
+      continue
+    fi
 
     pinned="$(_artifact_runs_rows_for "$manifest" "$context" pin | tail -1)"
     if [ -n "$pinned" ] && [ "$pinned" != "(cleared)" ]; then

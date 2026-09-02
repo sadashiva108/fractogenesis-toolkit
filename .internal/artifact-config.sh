@@ -36,6 +36,13 @@
 # Configuration precedence:
 #   1. Values already present in the caller environment.
 #   2. Values loaded from reimage.env.
+#
+#   Rule 1 holds for every key reimage.env sets, by set-ness rather than by
+#   non-emptiness: an exported empty value is a value. The exception is the
+#   handful of keys this file resolves and defaults by name -- REIMAGE_ARTIFACT_ROOT,
+#   the external volumes, the ONEDRIVE_* group and ARTIFACT_CONFIG_DIR -- where a
+#   caller value wins only when it is non-empty, so an accidentally-blank export
+#   cannot erase a default the whole workflow depends on.
 #   3. Defaults defined by this file.
 #
 # Artifact-config fragment precedence:
@@ -104,6 +111,12 @@ _artifact_config_main() {
   local config_path
   local fragment
   local preset_artifact_config_dir
+  local _ac_named_presets _ac_preserved _ac_name _ac_value _ac_isset _ac_line
+
+  # The keys resolved by name below. Excluded from the generic preservation so
+  # their existing `:-` semantics -- caller, then reimage.env, then a default --
+  # are not changed by this.
+  _ac_named_presets="REIMAGE_ENV ARTIFACT_CONFIG_REQUIRE_REIMAGE_ARTIFACT_ROOT REIMAGE_WORKSPACE_ROOT EXTERNAL_DATA_VOLUME EXTERNAL_APPLE_BACKUPS_VOLUME REIMAGE_ARTIFACT_ROOT OFFICE_WATCH ONEDRIVE_PARENT_DIR ONEDRIVE_FOLDER_NAME ONEDRIVE_PREFERRED_ROOT ONEDRIVE_ROOT ONEDRIVE_DEST_SUBDIR ARTIFACT_CONFIG_DIR"
   local preset_external_apple_backups_volume
   local preset_external_data_volume
   local preset_office_watch
@@ -147,6 +160,49 @@ _artifact_config_main() {
   preset_onedrive_dest_subdir="${ONEDRIVE_DEST_SUBDIR:-}"
   preset_artifact_config_dir="${ARTIFACT_CONFIG_DIR:-}"
 
+  # Caller values for every OTHER key reimage.env sets.
+  #
+  # The named presets above cover the keys this file resolves and default. Every
+  # other key -- GIT_*, and anything an operator adds -- was simply overwritten
+  # by sourcing, because reimage.env assigns with a plain `export NAME=value`.
+  # So the documented rule "values already present in the caller environment win"
+  # held only for the listed names, and the keys people override for one
+  # invocation are mostly not on that list.
+  #
+  # Set-ness, not non-emptiness: an exported empty value IS present in the
+  # caller environment, and `GIT_PERSONAL_GITHUB_OWNER= ./bin/restore-repos.sh`
+  # means "no personal owner for this run", which the `:-` idiom above cannot
+  # express.
+  #
+  # Bash 3.2: no associative arrays, so the saved values are a newline-delimited
+  # NAME=VALUE list. A caller value containing a newline is not preserved --
+  # reimage.env holds resolved single-line paths and identifiers by convention,
+  # and silently truncating one would be worse than leaving it to reimage.env.
+  _ac_preserved=""
+  if [ -f "${REIMAGE_ENV:-$repo_root/reimage.env}" ]; then
+    while IFS= read -r _ac_name; do
+      [ -n "$_ac_name" ] || continue
+      case " $_ac_named_presets " in
+        *" $_ac_name "*) continue ;;
+      esac
+      eval "_ac_isset=\${$_ac_name+set}"
+      [ "$_ac_isset" = set ] || continue
+      eval "_ac_value=\$$_ac_name"
+      # A literal newline in the pattern. `$(printf '\n')` would strip it and
+      # leave an empty pattern, which matches every value -- so the guard would
+      # skip every key instead of only multi-line ones.
+      case "$_ac_value" in
+        *'
+'*) continue ;;
+      esac
+      _ac_preserved="${_ac_preserved}${_ac_name}=${_ac_value}
+"
+    done <<EOF
+$(sed -n 's/^[[:space:]]*\(export[[:space:]][[:space:]]*\)\{0,1\}\([A-Za-z_][A-Za-z0-9_]*\)=.*/\2/p' \
+    "${REIMAGE_ENV:-$repo_root/reimage.env}" 2>/dev/null | sort -u)
+EOF
+  fi
+
   resolved_reimage_env="${preset_reimage_env:-$repo_root/reimage.env}"
   REIMAGE_ENV="$resolved_reimage_env"
 
@@ -161,6 +217,20 @@ _artifact_config_main() {
       echo "ERROR: failed to source REIMAGE_ENV: $resolved_reimage_env" >&2
       return 2
     fi
+  fi
+
+  # Re-apply the caller values captured above. Immediately after sourcing, so a
+  # key restored here is what the resolution below sees.
+  if [ -n "$_ac_preserved" ]; then
+    while IFS= read -r _ac_line; do
+      [ -n "$_ac_line" ] || continue
+      _ac_name="${_ac_line%%=*}"
+      _ac_value="${_ac_line#*=}"
+      eval "$_ac_name=\$_ac_value"
+      export "${_ac_name?}"
+    done <<EOF
+$_ac_preserved
+EOF
   fi
 
   # Keep the effective source path stable even if reimage.env contains a stale

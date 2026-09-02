@@ -53,7 +53,7 @@
 #                         unmounted volume.
 #   --office-watch-dir PATH
 #                         Local watcher directory for this invocation; overrides
-#                         OFFICE_WATCH. Parity with office-stability-checklist.sh.
+#                         OFFICE_WATCH. Parity with assess-office-stability.sh.
 #   --skip-unified-log    Skip the slow `log show` unified-log pull; file 07 then
 #                         records that it was skipped (fast incident baseline).
 #   -h, --help            Show this message and exit.
@@ -134,7 +134,7 @@ usage() {
 }
 
 # Normalize --phase to the office workflow's canonical set so the collector and
-# office-stability-checklist.sh agree on bundle prefixes (the checklist's `find`
+# assess-office-stability.sh agree on bundle prefixes (the checklist's `find`
 # looks for pre-reimage-*/post-reimage-* bundles). Identical mapping to the
 # checklist. Returns 1 for anything outside the accepted set.
 normalize_phase() {
@@ -488,7 +488,11 @@ if [[ -n "$REIMAGE_ARTIFACT_ROOT" ]]; then
   # describe, instead of beside it at the category root where every previous run
   # left its own pair and nothing said which summary went with which bundle.
   COPY_FAILED=0
-  if ! artifact_run_begin "$OFFICE_BACKUP" "${PHASE_SAFE}-office-stability"; then
+  # `-evidence`, not a bare `-office-stability`: this script gathers the window,
+  # `assess-office-stability.sh` evaluates it, and both write into this category.
+  # Two lineages a reader can tell apart at a glance is the whole point of
+  # naming them for what they hold.
+  if ! artifact_run_begin "$OFFICE_BACKUP" "${PHASE_SAFE}-office-stability-evidence"; then
     echo "ERROR: could not stage a run under: $OFFICE_BACKUP" >&2
     exit 1
   fi

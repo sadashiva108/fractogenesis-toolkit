@@ -31,7 +31,7 @@
 # Options:
 #   --office-watch-dir PATH
 #                         Local watcher directory for this invocation; overrides
-#                         OFFICE_WATCH. Parity with office-stability-checklist.sh.
+#                         OFFICE_WATCH. Parity with assess-office-stability.sh.
 #   --open                Open the snapshot when it is written. Off by default:
 #                         this runs repeatedly during the measured window, and
 #                         opening a window changes what the next snapshot sees.

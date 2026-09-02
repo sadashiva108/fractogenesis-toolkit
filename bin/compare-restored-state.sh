@@ -58,7 +58,8 @@
 #
 # Options:
 #   --runbook NAME        Which phase to compare. Required.
-#                         Supported: restore-runtime, restore-access
+#                         Supported: restore-runtime, restore-access,
+#                         restore-git.
 #   --inventory NAME      Named inventory bundle under system-inventory/runs/.
 #                         Default: the run named by
 #                         system-inventory/official/pre-image.txt.
@@ -164,13 +165,17 @@ usage() {
 # Phases are added as their runbooks are reached, the same way the boundary
 # recorders do it, so each probe set is written against a runbook someone has
 # actually just followed rather than all of them guessed at once.
+# One list, for the same reason record-restore-prereqs.sh has one: the case
+# dispatched on three runbooks while every message named two, so
+# `--runbook restore-git` -- which restore-git.md Step 8 tells you to run --
+# reported itself unsupported.
+SUPPORTED_RUNBOOKS="restore-runtime restore-access restore-git"
+
 resolve_runbook() {
-  case "$1" in
-    restore-runtime) PHASE_RUNBOOK="restore-runtime.md" ;;
-    restore-access)  PHASE_RUNBOOK="restore-access.md" ;;
-    restore-git)     PHASE_RUNBOOK="restore-git.md" ;;
+  case " $SUPPORTED_RUNBOOKS " in
+    *" $1 "*) PHASE_RUNBOOK="$1.md" ;;
     *) echo "ERROR: no probe set defined for runbook: $1" >&2
-       echo "HINT:  supported runbooks: restore-runtime, restore-access." >&2
+       echo "HINT:  supported runbooks: $SUPPORTED_RUNBOOKS." >&2
        return 2 ;;
   esac
   return 0
@@ -234,7 +239,7 @@ INVENTORY_PARENT="$REIMAGE_ARTIFACT_ROOT/system-inventory"
 # being able to say it once a --section refresh could add another, and would say
 # the wrong thing entirely if a post-image bundle ever sorted last.
 if [[ -z "${RUNBOOK:-}" ]]; then
-  echo "ERROR: --runbook is required. Supported: restore-runtime, restore-access" >&2
+  echo "ERROR: --runbook is required. Supported: $SUPPORTED_RUNBOOKS" >&2
   usage >&2
   exit 2
 fi

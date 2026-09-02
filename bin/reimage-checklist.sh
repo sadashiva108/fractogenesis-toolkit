@@ -374,10 +374,10 @@ record_check() {
 # ---------------------------------------------------------------------------
 dir_nonempty() {
   local dir="$1"
-  # -L so a symlinked directory is followed. The toolkit snapshot still publishes
-  # latest-docs as a symlink into the official run -- a stable path for readers
-  # that have nothing to resolve a pointer with -- and without -L, find refuses
-  # to descend and a populated snapshot reported "Empty or missing".
+  # -L so a symlinked directory is followed. Nothing in the artifact root
+  # publishes symlinks any more -- toolkit-snapshot was the last -- but a user
+  # may still symlink a category onto another volume, and without -L find
+  # refuses to descend and a populated directory reports "Empty or missing".
   [[ -d "$dir" ]] && [[ -n "$(find -L "$dir" -maxdepth 3 -type f 2>/dev/null | head -1)" ]]
 }
 
@@ -1016,7 +1016,7 @@ if [[ "$PHASE" == "pre" ]]; then
   if dir_nonempty "$REIMAGE_ARTIFACT_ROOT/office-stability/checklists"; then
     record_check PASS "Pre-image Office stability checklist generated" "checklists/ non-empty"
   else
-    record_check WARN "Pre-image Office stability checklist generated" "Run office-stability-checklist.sh --phase pre-reimage"
+    record_check WARN "Pre-image Office stability assessment generated" "Run assess-office-stability.sh --phase pre-reimage"
   fi
 
   # -------------------------------------------------------------------------
@@ -1055,10 +1055,16 @@ if [[ "$PHASE" == "pre" ]]; then
   #
   # Stable hand-maintained/export folders stay directly under
   # app-settings-backup/ and are checked separately.
-  if dir_nonempty "$TOOLKIT_SNAPSHOT_ROOT/latest-docs"; then
-    record_check PASS "toolkit-snapshot/latest-docs" "$(du -sh "$TOOLKIT_SNAPSHOT_ROOT/latest-docs/" 2>/dev/null | cut -f1)"
+  # Resolved through the pointer. The `latest-docs` symlink this row used to
+  # follow is gone -- a symlink cannot express first-wins, cannot be pinned, and
+  # does not survive the copy this bundle exists to be part of.
+  TS_DOCS_RUN="$(artifact_run_official "$TOOLKIT_SNAPSHOT_ROOT" "pre-image-toolkit-snapshot" 2>/dev/null || true)"
+  if [[ -n "$TS_DOCS_RUN" ]] && dir_nonempty "$TOOLKIT_SNAPSHOT_ROOT/$TS_DOCS_RUN/docs"; then
+    record_check PASS "toolkit-snapshot docs captured" "$(basename "$TS_DOCS_RUN") — $(du -sh "$TOOLKIT_SNAPSHOT_ROOT/$TS_DOCS_RUN/docs/" 2>/dev/null | cut -f1)"
+  elif [[ -n "$TS_DOCS_RUN" ]]; then
+    record_check WARN "toolkit-snapshot docs captured" "$(basename "$TS_DOCS_RUN") has no populated \`docs/\` — a --config-only run is its own lineage and should not be answering this row"
   else
-    record_check WARN "toolkit-snapshot/latest-docs" "Empty or missing"
+    record_check WARN "toolkit-snapshot docs captured" "no official \`pre-image-toolkit-snapshot\` run under \`toolkit-snapshot/\`"
   fi
 
   # Resolved through the run index rather than through a `latest-*` symlink.

@@ -45,6 +45,8 @@
 #
 # Options:
 #   --runbook NAME         Which phase's exit criteria to record. Required.
+#                          Supported: restore-runtime, restore-access,
+#                          restore-git, restore-repos, restore-apps.
 #                         Supported: 10A, 10B
 #   --artifact-root PATH  Override REIMAGE_ARTIFACT_ROOT from shared config.
 #   --output-root PATH    Category root for the run. A relative value is
@@ -141,8 +143,10 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+SUPPORTED_RUNBOOKS="restore-runtime restore-access restore-git restore-repos restore-apps restore-home"
+
 if [[ -z "${RUNBOOK:-}" ]]; then
-  echo "ERROR: --runbook is required. Supported: restore-runtime, restore-access, restore-git, restore-repos" >&2
+  echo "ERROR: --runbook is required. Supported: $SUPPORTED_RUNBOOKS" >&2
   usage >&2
   exit 2
 fi
@@ -152,8 +156,10 @@ case "$RUNBOOK" in
   restore-access) PHASE_RUNBOOK="restore-access.md";  PHASE_NEXT="restore-git.md" ;;
   restore-git)    PHASE_RUNBOOK="restore-git.md";     PHASE_NEXT="restore-repos.md" ;;
   restore-repos)  PHASE_RUNBOOK="restore-repos.md";   PHASE_NEXT="restore-apps.md" ;;
+  restore-apps)   PHASE_RUNBOOK="restore-apps.md";    PHASE_NEXT="restore-home.md" ;;
+  restore-home)   PHASE_RUNBOOK="restore-home.md";    PHASE_NEXT="run-time-machine.md" ;;
   *) echo "ERROR: no exit criteria defined for runbook: $RUNBOOK" >&2
-     echo "HINT:  supported runbooks: restore-runtime, restore-access, restore-git, restore-repos. Others are added as their runbooks are reached." >&2
+     echo "HINT:  supported runbooks: $SUPPORTED_RUNBOOKS. Others are added as their runbooks are reached." >&2
      exit 2 ;;
 esac
 
@@ -777,6 +783,148 @@ EOF
   record_manual "Repositories left unrestored are a decision" "The pre-image audit inventoried more repositories than are on disk. Every one not restored is deliberate — needed later, obsolete, or unreachable — rather than overlooked. Returning for more later is expected; leaving without deciding is what this row prevents."
   record_manual "Carry-forward reconciled for what was restored" "Stashes, local-only commits, and kept ignored files recorded in the pre-image audit are restored into each cloned repository, or consciously dropped. This applies only to the repositories actually present."
   record_manual "Repositories with no remote are resolved" "Any repository the audit recorded with no remote cannot be cloned by anything. Each is recovered from Time Machine or the home backup, or deliberately let go."
+}
+
+# ---------------------------------------------------------------------------
+# restore-apps exit criteria
+#
+# Phase 12 has no fixed finish line, the same property check_restore_repos()
+# names: the operator restores the apps they need now and returns for the rest,
+# so "every app is back" is the wrong question. The right one is whether what IS
+# restored is usable, and whether what is NOT has been decided rather than
+# forgotten. The automated rows check presence and handoff; the manual rows carry
+# the decisions.
+#
+# Deliberately NOT checked: whether a sync-backed app has finished syncing, or
+# whether a licensed app is activated. Both are true only after a person has
+# looked, and a row that guesses at them would report PASS on an app that is
+# signed out.
+# ---------------------------------------------------------------------------
+check_restore_apps() {
+  local notes_root app_root n missing app plan
+
+  # 1 -- applications actually on disk. Reported, not graded: the count that is
+  # "right" is a decision this recorder cannot make.
+  app_root="/Applications"
+  n=0
+  if [[ -d "$app_root" ]]; then
+    while IFS= read -r app; do
+      [[ -n "$app" ]] && n=$((n + 1))
+    done <<EOF
+$(find "$app_root" -maxdepth 1 -type d -name '*.app' 2>/dev/null)
+EOF
+  fi
+  record PASS "Applications present" "$n bundle(s) under \`$app_root\`"
+
+  # 2 -- the apps whose steps most runs reach first. Absent ones are named here
+  # rather than discovered one step at a time, and this mirrors the entry
+  # check's core-category row so entry and exit ask the same question of the
+  # same list.
+  missing=""
+  for app in "IntelliJ IDEA" "Docker" "Visual Studio Code" "Obsidian" "Postman"; do
+    [[ -d "$app_root/$app.app" ]] || missing="${missing:+$missing, }$app"
+  done
+  if [[ -z "$missing" ]]; then
+    record PASS "Core applications restored" "IntelliJ IDEA, Docker, VS Code, Obsidian, Postman all present"
+  else
+    record WARN "Core applications restored" "not installed: $missing — deliberate is fine, but it is a decision rather than a step still pending"
+  fi
+
+  # 3 -- the two companion runbooks hand off through plan notes. A handoff with
+  # no note is the case this catches: the step was reached, the note was never
+  # generated, and the phase looks finished from Phase 12's side alone.
+  notes_root="${REIMAGE_ARTIFACT_ROOT:-/nonexistent}/reimaged-system/restore-notes"
+  missing=""
+  for plan in restore-intellij restore-docker; do
+    if [[ -z "$(find "$notes_root" -maxdepth 1 -type f -name "${plan}-plan-*.md" -print -quit 2>/dev/null)" ]]; then
+      missing="${missing:+$missing, }$plan"
+    fi
+  done
+  if [[ -z "$missing" ]]; then
+    record PASS "Companion handoffs recorded" "plan notes present for \`restore-intellij\` and \`restore-docker\`"
+  else
+    record WARN "Companion handoffs recorded" "no plan note under \`restore-notes/\` for: $missing — Steps 8 and 9 hand off to those runbooks, and the note is what records that the handoff happened"
+  fi
+
+  # 4 -- same rule as every other phase that mounts it: it holds plaintext and
+  # several Phase 12 steps attach it, so leaving it attached at the phase end is
+  # the state this row exists to catch.
+  if find /Volumes -maxdepth 1 -type d -name 'all-secrets-*' 2>/dev/null | grep -q .; then
+    record FAIL "Secrets DMG detached" "an \`all-secrets\` image is still attached — it holds plaintext credentials; eject before leaving this phase"
+  else
+    record PASS "Secrets DMG detached" "no \`all-secrets\` image attached"
+  fi
+
+  record_manual "Applications left unrestored are a decision" "The pre-image inventory covered more applications than are on disk. Every one not restored is deliberate — replaced, obsolete, or no longer licensed — rather than overlooked. Returning for more later is expected; leaving without deciding is what this row prevents."
+  record_manual "Sync-backed applications signed in and settled" "Chrome, Obsidian, VS Code Settings Sync, OneDrive and Teams restore by signing in rather than by copy. Confirm each is signed into the right account and has finished its first sync, which no check here can see."
+  record_manual "Licensed or activated applications confirmed" "Any application needing a licence key, activation, or a seat assignment is working, or is recorded as waiting on IT."
+}
+
+# ---------------------------------------------------------------------------
+# restore-home exit criteria
+#
+# Phase 15 is deliberate and selective: the runbook's own instruction is "do not
+# restore anything not on the list". So "is everything back" is the wrong
+# question here for a second reason -- not only is there no fixed finish line,
+# there is a shortlist, and the operator is the only one who knows what was on
+# it. The automated rows check what CAN be seen from outside that decision: that
+# the phase left a record, that access was not silently denied, and that the
+# restore did not bring duplicates with it.
+#
+# The four rows from restore-home.md Step 6's validation table are manual, and
+# they belong in the sign-off rather than in this report for the usual reason: a
+# rerun writes a fresh run directory and an answered row must survive it.
+# ---------------------------------------------------------------------------
+check_restore_home() {
+  local notes_root note n d dupes
+
+  # 1 -- the restore note. Step 2 starts it and Step 6 fills it in; it is the
+  # only record of what was deliberately left behind, which is the half of this
+  # phase no artifact can reconstruct later.
+  notes_root="${REIMAGE_ARTIFACT_ROOT:-/nonexistent}/reimaged-system/restore-notes"
+  note="$(find "$notes_root" -maxdepth 1 -type f -name 'restore-home-*.md' -print 2>/dev/null | sort | tail -1)"
+  if [[ -n "$note" ]]; then
+    record PASS "Restore note written" "\`$(basename "$note")\`"
+  else
+    record FAIL "Restore note written" "no \`restore-home-*.md\` under \`restore-notes/\` — what was restored is recoverable from the filesystem, what was deliberately skipped is not"
+  fi
+
+  # 2 -- TCC again, at the other end. Checked at entry because a denial would
+  # make Step 3 partial; checked here because a denial that appeared DURING the
+  # phase produces exactly the same partial tree with a zero exit from the
+  # runbook's point of view.
+  n=0
+  for d in "$HOME/Documents" "$HOME/Desktop"; do
+    ls "$d" >/dev/null 2>&1 && n=$((n + 1))
+  done
+  if [[ "$n" -eq 2 ]]; then
+    record PASS "Terminal reached ~/Documents and ~/Desktop" "both readable throughout"
+  else
+    record FAIL "Terminal reached ~/Documents and ~/Desktop" "$n of 2 readable — any rsync that reported \`Operation not permitted\` copied a partial tree and must be re-run after granting Full Disk Access"
+  fi
+
+  # 3 -- OneDrive conflict copies. The runbook names this as the thing to watch
+  # for, and it is the one item in its validation table a check can actually see:
+  # OneDrive names them predictably.
+  dupes=""
+  for d in "$HOME/Documents" "$HOME/Desktop"; do
+    [[ -d "$d" ]] || continue
+    while IFS= read -r note; do
+      [[ -n "$note" ]] && dupes="${dupes:+$dupes; }$(basename "$note")"
+    done <<EOF
+$(find "$d" -maxdepth 3 \( -name '*conflicted copy*' -o -name '*-conflict-*' -o -name '* (1).*' \) -print 2>/dev/null | head -10)
+EOF
+  done
+  if [[ -z "$dupes" ]]; then
+    record PASS "No conflict copies under Documents or Desktop" "nothing matching OneDrive's conflict naming, to depth 3"
+  else
+    record WARN "No conflict copies under Documents or Desktop" "$dupes — review before signing off; a conflict copy is a sync collision, not a restore"
+  fi
+
+  record_manual "Restored folders were selected intentionally" "Everything copied back was on the Step 2 shortlist. Bulk content that was not on it stayed on the drive."
+  record_manual "Dotfile merges were reviewed, not blindly copied" "Step 4 merged selectively. Nothing overwrote what \`restore-access\` or \`restore-git\` already wrote — the SSH material, the certificates, or the dual-identity \`~/.gitconfig\`."
+  record_manual "Required personal files are back in place" "The files this machine actually needs are present and open correctly."
+  record_manual "Obsolete or risky content was left out on purpose" "Old clutter and anything carrying PII this device should not hold was deliberately not restored, rather than missed."
 }
 
 "check_${RUNBOOK//-/_}"

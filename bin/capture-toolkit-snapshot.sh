@@ -13,7 +13,7 @@
 #
 # Each run writes a self-contained timestamped bundle under toolkit-snapshot/
 # holding docs/ and config/, so a later run never overwrites an earlier run's
-# record. A latest-docs symlink at the toolkit-snapshot root gives restore-time
+# record. The official pointer at the toolkit-snapshot root gives restore-time
 # readers one stable path into the newest docs/ without hunting for a timestamp.
 #
 # Non-secret reference material only. It does not replace the encrypted secrets
@@ -49,7 +49,7 @@
 #                         <context>-toolkit-config-<stamp>/ directory. Use after
 #                         editing artifact-config or staged-certs fragments
 #                         partway through a multi-day run. Leaves the docs
-#                         snapshot and its latest-docs symlink untouched.
+#                         snapshot untouched -- it is its own lineage.
 #   --open                Open the snapshot bundle in Finder after completion.
 #   -h, --help            Show this message and exit.
 #
@@ -219,10 +219,10 @@ fi
 # each pre-image and post-image. Each keeps its own official pointer, so a
 # config refresh never displaces the full snapshot an operator is reading from.
 #
-# The latest-*.txt pointer files and the latest-<context>-toolkit-* symlinks are
-# gone: officialness is COMPUTED from the manifest now, and a second stored
-# pointer beside a computed one can only ever disagree with it. `latest-docs`
-# stays -- see refresh_latest_alias.
+# The latest-*.txt pointer files and every symlink are gone: officialness is
+# COMPUTED from the manifest now, and a second stored pointer beside a computed
+# one can only ever disagree with it. See the note above refresh-free reading,
+# below.
 if ! artifact_run_begin "$TOOLKIT_SNAPSHOT_ROOT" "$RUN_CONTEXT"; then
   echo "ERROR: could not stage a run under: $TOOLKIT_SNAPSHOT_ROOT" >&2
   exit 2
@@ -242,24 +242,22 @@ DOCS_DEST="$OUT/docs"
 CONFIG_DEST="$OUT/config"
 mkdir -p "$OUT/logs" "$CONFIG_DEST"
 
-# `latest-docs` is kept, and it is NOT a competing pointer.
+# No symlinks. `latest-docs` and the two `latest-<context>-toolkit-*` aliases are
+# gone, and this was the last category publishing any.
 #
-# The run index answers "which run is official"; this answers "give me a stable
-# filesystem path to the runbooks". Restore-time readers follow it when the
-# toolkit itself is not yet on the machine and there is nothing available to
-# resolve a pointer with -- which is the situation Phase 8 onward is in. It is
-# derived from the official run rather than from whichever run wrote last.
-refresh_latest_alias() {
-  local alias_name="$1"
-  local target_rel="$2"
-  local alias_path="$TOOLKIT_SNAPSHOT_ROOT/$alias_name"
-
-  if [[ -L "$alias_path" || ! -e "$alias_path" ]]; then
-    ln -sfn "$target_rel" "$alias_path" 2>/dev/null || true
-  else
-    echo "NOTE: leaving existing non-symlink in place: $alias_path" >&2
-  fi
-}
+# A symlink cannot express first-wins, cannot be pinned, and does not survive a
+# copy -- `rsync` without `-l` writes a broken link or a second full copy of the
+# tree, and this bundle exists to be copied. It was also a second pointer beside
+# a computed one, which can only ever disagree with it.
+#
+# The stable path a restore-time reader needs is still there and needs no
+# tooling to follow: `official/<context>-toolkit-snapshot.txt` is a one-line text
+# file holding `runs/<id>`, so
+#
+#   cat "$ROOT/toolkit-snapshot/official/pre-image-toolkit-snapshot.txt"
+#
+# names the run, and `<that>/docs` is the docs directory. That works on a Mac
+# with nothing installed, which is what the symlink was for.
 
 echo ""
 hr
@@ -286,10 +284,7 @@ if [[ "$CONFIG_ONLY" != true ]]; then
   DOCS_COUNT="$(find "$DOCS_DEST" -type f -name '*.md' | wc -l | tr -d ' ')"
   printf "  ${GRN}✓  %-30s  %s file(s)${RST}\n" "docs/" "$DOCS_COUNT"
 
-  # One stable path for restore-time readers, so a bare Mac does not have to
-  # resolve the newest timestamp by hand.
-  refresh_latest_alias "latest-docs" "$ARTIFACT_RUN_RELATIVE/docs"
-  printf "  ${DIM}   latest-docs -> %s/docs${RST}\n" "$(basename "$OUT")"
+  printf "  ${DIM}   docs at %s/docs${RST}\n" "$ARTIFACT_RUN_RELATIVE"
 fi
 
 # ---------------------------------------------------------------------------
@@ -396,7 +391,7 @@ pointers and convenience symlinks:
 
 - \`official/<context>-toolkit-snapshot.txt\` and \`official/<context>-toolkit-config.txt\`
   -- computed from \`MANIFEST.md\`, one pointer per lineage
-- \`latest-docs\` -> the official full snapshot's \`docs/\`, a stable path to read
+- no symlinks: read \`official/<context>-toolkit-snapshot.txt\` and join \`/docs\`
   the runbooks from on a freshly reimaged Mac
 
 The timestamped bundle is the source of truth. The aliases exist for validation
@@ -420,7 +415,7 @@ $(if [[ "$CONFIG_ONLY" != true ]]; then
     printf '%s\n' "- \`docs/\` — the runbooks and templates as they stood for this run."
   else
     printf '%s\n' "- No \`docs/\` — this was a --config-only refresh. The docs snapshot from the"
-    printf '%s\n' "  most recent full run is unchanged and still reachable through latest-docs."
+    printf '%s\n' "  most recent full run is unchanged and is still the official snapshot lineage."
   fi)
 
 ## Why this bundle exists
@@ -449,11 +444,13 @@ if ! artifact_run_finalize "$TOOLKIT_SNAPSHOT_ROOT" "$RESULT_SUMMARY"; then
 fi
 OUT="$ARTIFACT_RUN_FINAL_DIR"
 
-cat > "$OUT/logs/latest-aliases.txt" <<EOF
-Bundle:         $OUT
-Run:            $ARTIFACT_RUN_ID
-Official:       $TOOLKIT_SNAPSHOT_ROOT/official/$RUN_CONTEXT.txt
-Docs alias:     $TOOLKIT_SNAPSHOT_ROOT/latest-docs
+cat > "$OUT/logs/run-location.txt" <<EOF
+Bundle:    $OUT
+Run:       $ARTIFACT_RUN_ID
+Official:  $TOOLKIT_SNAPSHOT_ROOT/official/$RUN_CONTEXT.txt
+
+To find this category's current bundle with no tooling:
+  cat "$TOOLKIT_SNAPSHOT_ROOT/official/$RUN_CONTEXT.txt"
 EOF
 
 # ---------------------------------------------------------------------------

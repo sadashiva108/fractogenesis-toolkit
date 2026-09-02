@@ -1,5 +1,9 @@
 # Apply Manifest
 
+**Revision 137** — supersedes Revision 136 and earlier. The Office-stability pair say which is which, and Phase 15 gets the boundary that closes the chain.
+
+**Revision 136** — supersedes Revision 135 and earlier. The boundary chain closes at both ends, a lineage can be retired, and caller environment beats `reimage.env` for every key.
+
 **Revision 135** — supersedes Revision 134 and earlier. Every remaining capture producer writes into the shared run index.
 
 **Revision 134** — supersedes Revision 133 and earlier. The Phase 11B sign-off joins every other post-image answered row.
@@ -377,6 +381,221 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `backup-repos.sh` | `bin/backup-repos.sh` |
 | `setup-reimage-env.sh` | `bin/setup-reimage-env.sh` |
 | `compare-restored-state.sh` | `bin/compare-restored-state.sh` |
+
+---
+
+## Revision 137 — a name that says which of the two it is
+
+Two scripts write into `office-stability/`. One gathers the marker-bounded
+evidence window; the other evaluates it and renders a verdict. They were called
+`capture-office-stability.sh` and `office-stability-checklist.sh`, and their run
+contexts were `<phase>-office-stability` and `<phase>-office-stability-checks` —
+close enough that a reader has to open both to find out which is which.
+
+`checklist` was also the wrong word twice over. It is now reserved for the two
+capstone lists that close a whole pre-image or post-image half of the workflow,
+and what this script produces is neither a capstone nor a list of things a person
+ticks.
+
+| | Before | After |
+|---|---|---|
+| script | `bin/office-stability-checklist.sh` | **`bin/assess-office-stability.sh`** |
+| context | `<phase>-office-stability-checks` | `<phase>-office-stability-assessment` |
+| sibling context | `<phase>-office-stability` | `<phase>-office-stability-evidence` |
+
+`assess-` is a new verb in a repository that has been careful about its verbs,
+and it earns its place: `capture-` is taken by the sibling that does the
+gathering, and the distinction between gathering a window and judging it is the
+one the old names lost. The report file inside a run drops its phase prefix —
+the run id already carries the phase — and is simply `office-stability-assessment.md`.
+
+Nothing has run under either context, so this cost a rename and no migration.
+
+### Phase 15 gets a boundary, and the chain reaches the end
+
+`restore-home` had no boundary at all. Adding one closes the sequence that
+Revision 136 opened at the front: **10A → 10B → 11A → 11B → 12 → 15**, each phase
+checking that its predecessor finished.
+
+`check_restore_home()` in `record-restore-prereqs.sh` is derived one for one from
+`restore-home.md` → Prerequisites, and two of its rows are the interesting ones:
+
+**Phase 14 must be recorded.** Restoring bulk home content onto a system nobody
+has validated means a later failure cannot be told apart from something Phase 15
+brought back with it. It resolves `official/post-image` under
+`reimaged-system/checklists/` — the capstone Revision 135 made resolvable.
+
+**Terminal must be able to read `~/Documents` and `~/Desktop`.** This is the
+quiet one. macOS denies access until Full Disk Access is granted, and the runbook
+already documents the failure: `rsync` keeps going, prints
+`Operation not permitted`, and exits 23 with a **partial tree**. A read probe
+observes it without creating anything, and it is checked again at the exit
+because a denial that appears *during* the phase produces the same partial tree.
+
+`check_restore_home()` in `record-restore-exit.sh` follows the shape the other
+open-ended phases use. Phase 15 is doubly open-ended — no fixed finish line, and
+a deliberate shortlist only the operator knows — so the automated rows check what
+can be seen from outside that decision: the restore note exists, access was not
+denied, and no OneDrive conflict copies came back with the content. The four rows
+from the runbook's own Step 6 validation table are manual and live in the
+sign-off, where a rerun cannot reset them.
+
+`restore-intellij` and `restore-docker` get no boundary, deliberately: they are
+expanded sections of `restore-apps.md` rather than phases, and Phase 12's
+boundary covers them.
+
+### One lint went backwards, on purpose
+
+`verify-doc-paths.sh --all` reports **1 MISSING**, not 0: `reimaging-guide.md`
+cites `bin/office-stability-checklist.sh` by path. Six more documents name the old
+script or its old bundle names in prose. Runbooks and references were out of
+scope for this pass, so the citation stands until they are updated, and the fix
+is a single filename in that guide.
+
+This is a real regression in a check that was clean, and it is recorded here
+rather than worked around so that the next session reads it as owed work and not
+as a new defect. Everything else is at baseline: `bash -n` clean across all 43
+`bin/*.sh` and every `.internal/` shell file, portability 74 clean / 0 WARN /
+0 FAIL, runbook structure unchanged at 29 FAIL / 5 WARN across 27 documents.
+
+All four new contexts resolve to `unknown` → latest-wins, and `restore-home-entry`
+and `restore-home-exit` resolve to `entry` and `exit`, which is what puts them in
+`boundaries/` alongside every other phase pair.
+
+**All of it ran on Linux with Bash 5.x.** `shellcheck` was not available.
+`/bin/bash -n` on the target Mac is owed here and on Revisions 116–136.
+
+**No artifact or evidence on the volume was touched.**
+
+---
+
+## Revision 136 — four rules that were true of some things become true of all of them
+
+Four small changes with one shape in common: a rule the repository already
+documented held for part of its subject and not the rest, and the part it missed
+was the part people hit. Full per-item status and follow-ups:
+`docs/ledgers/script-conformance-2026-09-02.md`.
+
+### A recorder that told you your own phase was unsupported
+
+Revision 126 fixed this once, in `record-restore-exit.sh`: a `case` dispatching
+on four runbooks while every message named two. The identical defect sat in two
+siblings — `record-restore-prereqs.sh` dispatched on five and advertised two, and
+`compare-restored-state.sh` dispatched on three and advertised two in three
+separate places, so `restore-git.md` Step 8 tells you to run a command whose own
+`--help` says it is unsupported.
+
+Both now derive every message from a single `SUPPORTED_RUNBOOKS` string, which is
+the shape `record-restore-state.sh` already used and the reason it never drifted.
+
+### A chain that was open at both ends
+
+`record-restore-prereqs.sh` gates 11A on `restore-access-exit`, 11B on
+`restore-git-exit` and 12 on `restore-repos-exit`. Two links were missing.
+
+**10B did not check that 10A finished.** `check_restore_access()` opened on Java
+resolution — which fails outright without the toolchain 10A installs, so the
+dependency was already real and merely unstated. It now resolves
+`restore-runtime-exit` first, and a missing one is a `FAIL` for the same reason
+the other three are.
+
+**Phase 12 could not be closed at all.** `record-restore-exit.sh` had no
+`check_restore_apps()`, so `--runbook restore-apps` exited 2 and nothing
+downstream could ever ask whether Phase 12 finished. It has one now, modelled on
+`check_restore_repos()` because Phase 12 has the same property that function
+names: the operator restores what they need now and returns for the rest, so
+"every app is back" is the wrong question. Four automated rows — applications on
+disk, the core five, the two companion plan notes that record the IntelliJ and
+Docker handoffs, and the secrets DMG detached — and three manual ones for the
+decisions.
+
+Deliberately not automated: whether a sync-backed app has finished syncing, or
+whether a licensed app is activated. Both are true only after a person has
+looked, and a row that guessed would report `PASS` on an app that is signed out.
+
+### A lineage that could not be retired
+
+`comparisons/official/restore-runtime-version-comparison.txt` names a lineage
+nothing writes: a one-off note migrated into the category by an early revision.
+Deleting the pointer does not work, and this is the part worth stating —
+**officialness is computed, so the next `artifact_runs_rebuild` puts it straight
+back.** There was no way to say "this lineage is closed"; only to delete a file
+and have a repair command silently undo it.
+
+`.internal/artifact-runs.sh` gains `artifact_run_retire_lineage` and
+`artifact_run_reopen_lineage`, and `artifact_runs_rebuild` now honours a `retire`
+row. The runs stay indexed — retiring a lineage is a statement about what is
+current, not about what happened — and the mechanism is a manifest row for
+exactly the reason a pin is one.
+
+Exercised against a scratch category: retire removed the pointer, a rebuild left
+it removed, the runs stayed, reopen restored it, and a second retire was refused.
+
+### A precedence rule that held for thirteen keys
+
+`.internal/artifact-config.sh` and the authoring prompt both document, without
+qualification: *values already present in the caller environment* beat
+`reimage.env`. It captured a **fixed list** of names into `preset_*` locals and
+re-applied them after sourcing, so every key not on that list — every `GIT_*`
+key, and anything an operator adds — was overwritten by the plain
+`export NAME=value` in `reimage.env`.
+
+It held for the artifact root and the external volumes, which are the keys anyone
+checking the rule would test. It did not hold for the keys anyone overriding for
+one invocation would use.
+
+Caller values for every other key `reimage.env` sets are now captured
+generically, before sourcing, and re-applied immediately after — by **set-ness,
+not non-emptiness**, because `GIT_PERSONAL_GITHUB_OWNER= ./bin/restore-repos.sh`
+means *no personal owner for this run* and the `:-` idiom cannot express it.
+That was the exact case the Phase 11B session had to work around with
+`REIMAGE_ENV=` pointing at an edited copy.
+
+Bash 3.2, so the saved values are a newline-delimited `NAME=VALUE` list and a
+caller value containing a newline is skipped rather than truncated. The thirteen
+named keys keep their existing `:-` semantics, so an accidentally-blank export
+cannot erase a default the whole workflow depends on — and the header now says
+so instead of claiming a rule with an unstated exception.
+
+Verified against a fixture `reimage.env` across five cases: no override, a
+non-empty caller value, an **empty** caller value, a second `GIT_*` key, and an
+empty value for a named key.
+
+### The last symlinks in the artifact root
+
+Revision 135 retired `toolkit-snapshot`'s two `latest-*.txt` files and its two
+`latest-<context>-toolkit-*` symlinks but kept `latest-docs`, on the argument
+that a restore-time reader with nothing installed needs a stable path.
+
+That argument does not survive the objection: a symlink cannot express
+first-wins, cannot be pinned, and does not survive the copy this bundle exists to
+be part of — `rsync` without `-l` writes either a broken link or a second full
+copy of the docs tree. And it was a second pointer beside a computed one.
+
+The affordance it provided is still there and still needs no tooling:
+`official/<context>-toolkit-snapshot.txt` is a one-line text file holding
+`runs/<id>`, so `cat` names the run and `<that>/docs` is the directory. Each run
+now carries `logs/run-location.txt` spelling that out. `reimage-checklist.sh`
+resolves the pointer for both toolkit rows rather than following a link.
+
+**No category in the artifact root publishes a symlink any more.**
+
+### Validation
+
+`bash -n` clean on all 43 `bin/*.sh` and every `.internal/` shell file.
+`verify-script-portability.sh` 74 clean / 0 WARN / 0 FAIL.
+`verify-doc-paths.sh --all` 0 MISSING / 0 ANCHOR BROKEN.
+`verify-runbook-structure.sh` 29 FAIL / 5 WARN across 27 documents, unchanged —
+no runbook was edited, and the runbooks now trail these scripts in several
+places, listed in the report.
+
+**All of it ran on Linux with Bash 5.x.** `shellcheck` was not available. The two
+behavioural changes — the retire mechanism and the precedence fix — were
+exercised against scratch fixtures rather than reasoned about, because both
+change what every other script sees. `/bin/bash -n` on the target Mac is owed
+here and on Revisions 116–135.
+
+**No artifact or evidence on the volume was touched.**
 
 ---
 

@@ -1,9 +1,16 @@
 #!/usr/bin/env bash
 # =============================================================================
-# office-stability-checklist.sh
+# assess-office-stability.sh
 #
-# Office Stability Checklist generator (Phase 4D pre-image / Phase 13E
-# post-image). Aggregate validator: it inspects the watcher directory, marker,
+# Office Stability assessment (Phase 4D pre-image / Phase 13E post-image).
+#
+# Named for what it does rather than for its output's shape. Its sibling
+# `capture-office-stability.sh` GATHERS the marker-bounded evidence window; this
+# one EVALUATES it and renders a verdict. Neither produces a "checklist" -- that
+# word is reserved for the two capstone lists that close a whole pre-image or
+# post-image half of the workflow.
+#
+# Aggregate validator: it inspects the watcher directory, marker,
 # baseline bundles, and live Office/management state, and records every result
 # as a PASS / WARN / FAIL / SKIP check into a timestamped checklist bundle under
 # office-stability/checklists/ (report .md, README, and per-check evidence
@@ -16,13 +23,13 @@
 #
 # Usage:
 #   cd <repo-root>
-#   chmod +x bin/office-stability-checklist.sh
+#   chmod +x bin/assess-office-stability.sh
 #
 #   # Pre-image checklist
-#   ./bin/office-stability-checklist.sh --phase pre-reimage --artifact-root "$REIMAGE_ARTIFACT_ROOT"
+#   ./bin/assess-office-stability.sh --phase pre-reimage --artifact-root "$REIMAGE_ARTIFACT_ROOT"
 #
 #   # Post-image checklist, opened when finished
-#   ./bin/office-stability-checklist.sh --phase post-reimage --artifact-root "$REIMAGE_ARTIFACT_ROOT" --open
+#   ./bin/assess-office-stability.sh --phase post-reimage --artifact-root "$REIMAGE_ARTIFACT_ROOT" --open
 #
 # Options:
 #   --phase PHASE             One of: pre-reimage, pre-image, post-reimage, post-image.
@@ -108,7 +115,7 @@ source "$SIGNOFF_LIB"; then
   exit 2
 fi
 
-SCRIPT_NAME="${REIMAGE_SCRIPT_DISPLAY_NAME:-office-stability-checklist.sh}"
+SCRIPT_NAME="${REIMAGE_SCRIPT_DISPLAY_NAME:-assess-office-stability.sh}"
 PHASE="pre-reimage"
 REIMAGE_ARTIFACT_ROOT="${REIMAGE_ARTIFACT_ROOT:-}"
 OFFICE_WATCH_DIR="${OFFICE_WATCH_DIR:-${OFFICE_WATCH:-}}"
@@ -225,19 +232,17 @@ fi
 
 TS="$(date +%Y%m%d-%H%M%S)"
 if [[ "$PHASE" == "pre-reimage" ]]; then
-  BANNER_TITLE="Phase 4D -- Office Stability Pre-Image Checklist"
-  RUN_SLUG="pre-image-office-stability-checklist"
-  REPORT_FILENAME="pre-image-office-stability-checklist.md"
-  REPORT_TITLE="Pre-Image Office Stability Checklist Report"
-  README_TITLE="Pre-Image Office Stability Checklist Bundle"
-  RUN_CONTEXT="pre-image-office-stability-checks"
+  BANNER_TITLE="Phase 4D -- Office Stability Pre-Image Assessment"
+  REPORT_FILENAME="office-stability-assessment.md"
+  REPORT_TITLE="Pre-Image Office Stability Assessment"
+  README_TITLE="Pre-Image Office Stability Assessment Bundle"
+  RUN_CONTEXT="pre-image-office-stability-assessment"
 else
-  BANNER_TITLE="Phase 13E -- Office Stability Post-Image Checklist"
-  RUN_SLUG="post-image-office-stability-checklist"
-  REPORT_FILENAME="post-image-office-stability-checklist.md"
-  REPORT_TITLE="Post-Image Office Stability Checklist Report"
-  README_TITLE="Post-Image Office Stability Checklist Bundle"
-  RUN_CONTEXT="post-image-office-stability-checks"
+  BANNER_TITLE="Phase 13E -- Office Stability Post-Image Assessment"
+  REPORT_FILENAME="office-stability-assessment.md"
+  REPORT_TITLE="Post-Image Office Stability Assessment"
+  README_TITLE="Post-Image Office Stability Assessment Bundle"
+  RUN_CONTEXT="post-image-office-stability-assessment"
 fi
 
 if ! artifact_run_begin "$OUTPUT_ROOT" "$RUN_CONTEXT"; then
