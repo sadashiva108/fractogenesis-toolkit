@@ -219,7 +219,7 @@ Which run a pointer names is decided per point. `before` is first-wins, because 
 
 `sign-offs/` is outside that shape on purpose. It holds the rows you answered at the exit boundary and carries them forward into the next run, so a latest-wins pointer must never be able to supersede it.
 
-Each `post-image-restore-*` run is self-contained and its filenames are stable across runs. `restore-status.md` is the human-readable report carrying the exit-criteria table; `clone-commands.sh` holds one `git clone` per repo not yet at its routed destination; `rsync-ignored-files.sh` holds one guarded `rsync` per repo with staged ignored files; `rsync-repos-gitignored.sh` holds one guarded `rsync` per repo for the gitignored secrets in the image. `MANIFEST.txt` lists that run's files, and is not the category run index — that is `repo-audit-reports/MANIFEST.md`. Under `raw/`, `status.tsv` is the machine-readable per-repo classification and the `*-input.tsv` files are copies of the pre-image rows, kept beside the output so a run can be read back without the audit that produced it.
+Each `post-image-restore-*` run is self-contained and its filenames are stable across runs. `restore-status.md` is the human-readable report carrying the exit-criteria table; `clone-commands.sh` holds one `git clone` per repo not yet at its routed destination; `rsync-ignored-files.sh` holds one guarded `rsync` per repo with staged ignored files; `rsync-repos-gitignored.sh` holds one guarded `rsync` per repo for the gitignored secrets in the image. `MANIFEST.txt` lists that run's files, and is not the category run index — that is `repo-audit-reports/MANIFEST.md`. `plan-proposed/` appears only when `--emit-plan` was passed: four files mirroring the clone-plan fragments, filled in from the audit and routed the way that run routed. It is a proposal to review and copy across, never the plan itself — the plan lives in the workspace and no run writes there. Under `raw/`, `status.tsv` is the machine-readable per-repo classification and the `*-input.tsv` files are copies of the pre-image rows, kept beside the output so a run can be read back without the audit that produced it.
 
 This runbook also writes into each cloned working tree — the kept ignored files in Step 5 and the per-repo secrets in Step 6. Those are not artifacts; they are the repositories being made whole at their original paths.
 
@@ -377,6 +377,29 @@ grep -E '^(export )?GIT_PERSONAL_GITHUB_OWNER=' reimage.env
 blank owner is a decision, not an omission. What it cannot tell you is whether
 the account you typed is the right one; Step 2 is where that shows up, as a clone
 command routed to the wrong host.
+
+**0d — initialize the clone plan.** First run or new workspace only — copy the
+fragments that say which repositories to clone, where each lands, and where its
+post-clone content comes from:
+
+```bash
+./bin/restore-repos.sh init-repo-plan-config
+```
+
+This writes `repo-candidates-selected.conf.sh`,
+`repo-candidates-excluded.conf.sh`, `repo-rehydration-sources.conf.sh` and
+`repo-rehydration-map.conf.sh` into `$REIMAGE_WORKSPACE_ROOT/repo-plan/`.
+
+Init skips files that already exist and will not overwrite your entries unless
+you pass `--force`. If the fragments are already there from a prior reimage, skip
+this step — Step 1 proposes a filled-in plan from the audit for you to copy
+across, and the workspace copy is never written by a run.
+
+A freshly seeded plan declares nothing, and a run reads it without complaint:
+every repository comes back `unreviewed` and nothing is cloned. The script warns
+on stderr when it falls back to the committed templates, which is the case worth
+noticing — it means the workspace directory is missing, not that the phase has
+nothing to do.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 

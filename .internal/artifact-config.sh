@@ -54,6 +54,11 @@
 # staging entrypoint and the toolkit snapshot agree on which copy a run reads):
 #   1. $REIMAGE_WORKSPACE_ROOT/staged-certs when that directory exists.
 #   2. Committed templates under .internal/templates/staged-certs.
+#
+# Repo-plan fragment precedence (identical shape):
+#   1. $REIMAGE_WORKSPACE_ROOT/repo-plan when that directory exists.
+#   2. Committed templates under .internal/templates/repo-plan.
+# Seed the durable copy with: ./bin/restore-repos.sh init-repo-plan-config
 # Resolution only -- this file does not source staged-certs fragments, and
 # deliberately does not warn about the fallback, because most callers never read
 # them. bin/stage-certs-keychain.sh warns when the fallback actually matters.
@@ -76,6 +81,7 @@
 #   ONEDRIVE_*
 #   ARTIFACT_CONFIG_*
 #   STAGED_CERTS_*
+#   REPO_PLAN_TEMPLATE_DIR, REPO_PLAN_WORKSPACE_DIR, REPO_PLAN_SOURCE_DIR
 #   INTELLIJ_REVIEW_WORKSPACE_DIR
 #   INTELLIJ_REVIEW_SOURCE_DIR
 #   MANUAL_POSTMAN_STAGE
@@ -336,6 +342,18 @@ EOF
     INTELLIJ_REVIEW_SOURCE_DIR="$INTELLIJ_REVIEW_WORKSPACE_DIR"
   else
     INTELLIJ_REVIEW_SOURCE_DIR=""
+  fi
+
+  # Repo-plan fragments. Same shape as staged-certs, and resolved here for the
+  # same reason: more than one caller needs to agree on which copy a run reads.
+  # Resolution only -- this file does not source them. .internal/git/repo-plan.sh
+  # defines the functions they call and loads them.
+  REPO_PLAN_TEMPLATE_DIR="$this_dir/templates/repo-plan"
+  REPO_PLAN_WORKSPACE_DIR="${REIMAGE_WORKSPACE_ROOT:+$REIMAGE_WORKSPACE_ROOT/repo-plan}"
+  if [[ -n "$REPO_PLAN_WORKSPACE_DIR" && -d "$REPO_PLAN_WORKSPACE_DIR" ]]; then
+    REPO_PLAN_SOURCE_DIR="$REPO_PLAN_WORKSPACE_DIR"
+  else
+    REPO_PLAN_SOURCE_DIR="$REPO_PLAN_TEMPLATE_DIR"
   fi
 
   if [[ ! -d "$ARTIFACT_CONFIG_SOURCE_DIR" ]]; then

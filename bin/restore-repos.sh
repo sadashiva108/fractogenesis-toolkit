@@ -40,8 +40,23 @@
 #   # Point at a specific pre-image audit run instead of the latest.
 #   ./bin/restore-repos.sh --input-run pre-image-YYYYMMDD-HHMMSS
 #
+#   # Seed the durable clone plan into $REIMAGE_WORKSPACE_ROOT/repo-plan/.
+#   # Existing files are kept; --force overwrites them.
+#   ./bin/restore-repos.sh init-repo-plan-config
+#
+#   # Propose a filled-in plan from the pre-image audit, into the run bundle.
+#   # Never writes to the workspace: review it, then copy what you want across.
+#   ./bin/restore-repos.sh --emit-plan
+#
 #   # Reveal the generated report in Finder after completion.
 #   ./bin/restore-repos.sh --open
+#
+# Commands:
+#   init-repo-plan-config  Copy the committed clone-plan templates into
+#                          $REIMAGE_WORKSPACE_ROOT/repo-plan/ and exit. A file
+#                          that is already there is kept, because it holds your
+#                          answers; --force overwrites. The workspace copy is
+#                          what a run reads, and it survives the reimage.
 #
 # Options:
 #   --artifact-root PATH   Override REIMAGE_ARTIFACT_ROOT from shared config.
@@ -60,6 +75,13 @@
 #                          and official/post-image-restore.txt is left
 #                          unchanged, so Phase 14 keeps reading the previous
 #                          default-located run.
+#   --emit-plan            Also write a proposed plan under plan-proposed/ in
+#                          the run bundle, filled in from the pre-image audit:
+#                          one entry per repository, routed the way this run
+#                          routed it. It is a proposal, not the plan — the
+#                          workspace copy is never written by a run.
+#   --force                With init-repo-plan-config only: overwrite plan
+#                          fragments that already exist in the workspace.
 #   --open                 Reveal the generated report in Finder on completion.
 #   -h, --help             Show this message and exit.
 #
@@ -153,13 +175,29 @@ require_option_value() {
 # Defaults and command-line parsing
 # ---------------------------------------------------------------------------
 STAMP="$(date +%Y%m%d-%H%M%S)"
+REPORT_GENERATED="$(date)"
 OUTPUT_DIR=""
 INPUT_RUN=""
 APPLY_IGNORED_FILES=false
 OPEN_RESULT=false
+INIT_PLAN_CONFIG=false
+FORCE_INIT=false
+EMIT_PLAN=false
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    init-repo-plan-config|init-repo-plan)
+      INIT_PLAN_CONFIG=true
+      shift
+      ;;
+    --force)
+      FORCE_INIT=true
+      shift
+      ;;
+    --emit-plan)
+      EMIT_PLAN=true
+      shift
+      ;;
     --artifact-root)
       require_option_value "$1" "${2:-}"
       REIMAGE_ARTIFACT_ROOT="$2"
@@ -252,6 +290,57 @@ validate_run_reference() {
       ;;
   esac
 }
+
+# ---------------------------------------------------------------------------
+# init-repo-plan-config
+#
+# Seeds the durable plan and exits. Deliberately ahead of the artifact-root
+# check below: seeding writes to the workspace, not the artifact volume, and
+# refusing to seed because a drive is unplugged would be a rule with no reason
+# behind it.
+# ---------------------------------------------------------------------------
+if [[ "$INIT_PLAN_CONFIG" == true ]]; then
+  PLAN_LIB="$REPO_ROOT/.internal/git/repo-plan.sh"
+  if [[ ! -f "$PLAN_LIB" ]]; then
+    echo "ERROR: clone-plan library not found: $PLAN_LIB" >&2
+    exit 2
+  fi
+  # shellcheck source=../.internal/git/repo-plan.sh
+  source "$PLAN_LIB"
+
+  if [[ -z "${REIMAGE_WORKSPACE_ROOT:-}" ]]; then
+    echo "ERROR: REIMAGE_WORKSPACE_ROOT is not set, so there is nowhere durable to seed." >&2
+    echo "The plan is a declaration, not evidence: it lives in the workspace so it survives the reimage." >&2
+    echo "Record the workspace root in reimage.env, then rerun." >&2
+    exit 2
+  fi
+
+  echo "Seeding the clone plan"
+  echo "  from: ${REPO_PLAN_TEMPLATE_DIR:-<unresolved>}"
+  echo "  into: ${REPO_PLAN_WORKSPACE_DIR:-<unresolved>}"
+  echo ""
+  if ! repo_plan_init_workspace \
+        "${REPO_PLAN_TEMPLATE_DIR:-}" "${REPO_PLAN_WORKSPACE_DIR:-}" "$FORCE_INIT"; then
+    exit 2
+  fi
+  echo ""
+  echo "Edit those four files, then rerun this script to read them."
+  exit 0
+fi
+
+# REPO_PLAN_SOURCE_DIR is resolved by .internal/artifact-config.sh. This is the
+# entrypoint where the fallback actually costs something, so it is the one that
+# warns about it -- the same division stage-certs-keychain.sh uses.
+#
+# The fallback does not fail, and that is the problem. Every entry in the
+# committed templates is commented out, so a run against them loads clean,
+# reports every repository as unreviewed, and clones nothing. That reads as
+# "this phase has nothing to do" rather than "you are reading the wrong file".
+if [[ "${REPO_PLAN_SOURCE_DIR:-}" == "${REPO_PLAN_TEMPLATE_DIR:-}" && -n "${REPO_PLAN_WORKSPACE_DIR:-}" ]]; then
+  echo "WARNING: REIMAGE_WORKSPACE_ROOT is set but $REPO_PLAN_WORKSPACE_DIR does not exist —" >&2
+  echo "         falling back to the committed clone-plan templates, which declare nothing." >&2
+  echo "         Run: ./bin/restore-repos.sh init-repo-plan-config" >&2
+fi
 
 if [[ -z "${REIMAGE_ARTIFACT_ROOT:-}" || ! -d "$REIMAGE_ARTIFACT_ROOT" ]]; then
   echo "ERROR: REIMAGE_ARTIFACT_ROOT is not set or not a directory. Reconnect the artifact volume and rerun." >&2
@@ -357,6 +446,22 @@ REPORT_MD="$OUT/restore-status.md"
 printf "repo_path\tlabel\tpath_present\tremote_url\tclone_host\tclone_target_root\tignored_files_available\tignored_files_applied\tcarry_forward_rows\n" > "$STATUS_TSV"
 
 # ---------------------------------------------------------------------------
+# Proposal staging
+#
+# A proposal is written into the RUN, never into the workspace. The workspace
+# copy holds the operator's answers; a run that could overwrite it would make
+# every answer provisional.
+# ---------------------------------------------------------------------------
+PROPOSED_DIR="$OUT/plan-proposed"
+PROPOSED_SELECTED="$PROPOSED_DIR/.selected.body"
+PROPOSED_EXCLUDED="$PROPOSED_DIR/.excluded.body"
+if [[ "$EMIT_PLAN" == true ]]; then
+  mkdir -p "$PROPOSED_DIR"
+  : > "$PROPOSED_SELECTED"
+  : > "$PROPOSED_EXCLUDED"
+fi
+
+# ---------------------------------------------------------------------------
 # Per-repo classification
 # ---------------------------------------------------------------------------
 # repos.tsv columns:
@@ -391,6 +496,19 @@ extract_remote_url() {
     url="$(printf '%s\n' "$remotes" | tr ';' '\n' | awk 'NF>=2{print $2; exit}')"
   fi
   printf '%s' "$url"
+}
+
+extract_remote_name() {
+  # The name of the remote extract_remote_url picked, so a proposal can state
+  # REMOTE_NAME rather than leaving the reader to infer it. Same order of
+  # preference, so the two always agree.
+  local remotes="$1"
+  local name
+  name="$(printf '%s\n' "$remotes" | tr ';' '\n' | awk '/^ *origin[[:space:]]+.*\(fetch\)/{print $1; exit}')"
+  if [[ -z "$name" ]]; then
+    name="$(printf '%s\n' "$remotes" | tr ';' '\n' | awk 'NF>=2{print $1; exit}')"
+  fi
+  printf '%s' "$name"
 }
 
 numeric_or_zero() {
@@ -796,7 +914,143 @@ do
     "$CLONE_HOST" "$CLONE_TARGET_ROOT" \
     "$IGN_AVAILABLE" "$IGN_APPLIED" "$CARRY_FORWARD_ROWS" >> "$STATUS_TSV"
 
+  # Proposal rows, collected here because this is where routing is already
+  # decided. A repository with no remote cannot be cloned by anything, so it is
+  # proposed commented-out with the reason rather than as a live entry — the
+  # decision is the operator's, and a silent live entry would pre-empt it.
+  if [[ "$EMIT_PLAN" == true ]]; then
+    remote_name="$(extract_remote_name "$remotes")"
+    if [[ -n "$remote_url" ]]; then
+      {
+        printf 'repo_plan_add \\\n'
+        printf '  REPO_NAME=%s \\\n' "$label"
+        printf '  REMOTE_NAME=%s \\\n' "${remote_name:-origin}"
+        printf '  REMOTE_FETCH_URL=%s \\\n' "$remote_url"
+        printf '  LOCAL_REPO_PATH="%s"\n\n' "$CLONE_DEST"
+      } >> "$PROPOSED_SELECTED"
+    else
+      {
+        printf '# %s -- no remote recorded in the pre-image audit.\n' "$label"
+        printf '# Nothing can clone it. Recover it from a backup and adopt it here, or\n'
+        printf '# move it to repo-candidates-excluded.conf.sh with a reason.\n'
+        printf '# repo_plan_add REPO_NAME=%s LOCAL_REPO_PATH="%s"\n\n' "$label" "$CLONE_DEST"
+      } >> "$PROPOSED_SELECTED"
+      printf '# repo_plan_exclude REPO_NAME=%s REASON="no remote recorded; only copy is the backup"\n' \
+        "$label" >> "$PROPOSED_EXCLUDED"
+    fi
+  fi
+
 done < "$REPOS_TSV"
+
+# ---------------------------------------------------------------------------
+# Write the proposal
+#
+# Four files mirroring the four fragments, so a reviewer can diff a proposal
+# against their own copy file by file rather than reading a single blob.
+# ---------------------------------------------------------------------------
+emit_plan_proposal() {
+  local sel="$PROPOSED_DIR/repo-candidates-selected.proposed.conf.sh"
+  local exc="$PROPOSED_DIR/repo-candidates-excluded.proposed.conf.sh"
+  local src="$PROPOSED_DIR/repo-rehydration-sources.proposed.conf.sh"
+  local map="$PROPOSED_DIR/repo-rehydration-map.proposed.conf.sh"
+  local banner projects_root ij_readme
+
+  banner="# PROPOSED -- generated by restore-repos.sh on $REPORT_GENERATED
+# Source pre-image audit run: $INPUT_RUN
+#
+# This is a proposal, not the plan. The plan is
+#   \$REIMAGE_WORKSPACE_ROOT/repo-plan/
+# and no run ever writes there. Review this, copy across what you agree with,
+# and edit the rest -- the point of the plan is the decisions it records, and a
+# generated file has made none of them."
+
+  {
+    printf '%s\n#\n' "$banner"
+    printf '# One entry per repository the audit inventoried, routed the way this run\n'
+    printf '# routed it: LOCAL_REPO_PATH is the destination that routing produced, not a\n'
+    printf '# preference. Change it where a repository belongs somewhere else.\n\n'
+    cat "$PROPOSED_SELECTED"
+  } > "$sel"
+
+  {
+    printf '%s\n#\n' "$banner"
+    printf '# Nothing is proposed for exclusion outright -- leaving a repository out is a\n'
+    printf '# decision, and this file is where the reason lives.\n'
+    printf '#\n# The entries below are the repositories the audit recorded with NO REMOTE.\n'
+    printf '# They are commented out because "cannot be cloned" and "should not be\n'
+    printf '# restored" are different findings, and only you can turn one into the other.\n\n'
+    if [[ -s "$PROPOSED_EXCLUDED" ]]; then
+      cat "$PROPOSED_EXCLUDED"
+    else
+      printf '# (every repository in this audit has a remote)\n'
+    fi
+  } > "$exc"
+
+  # Sources are proposed only where the root is actually on this artifact root,
+  # so a proposal cannot invent a source that has nothing behind it.
+  ij_readme="$REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/README.md"
+  projects_root=""
+  if [[ -f "$ij_readme" ]]; then
+    projects_root="$(awk '/Projects root scanned/{f=1;next} f&&/^\//{print;exit}' "$ij_readme" 2>/dev/null || true)"
+  fi
+
+  {
+    printf '%s\n\n' "$banner"
+    if [[ -d "$REIMAGE_ARTIFACT_ROOT/staged-ignored-files/live" ]]; then
+      printf 'repo_source_add \\\n  ARTIFACT_TYPE=ignored-files \\\n'
+      printf '  ARTIFACT_ROOT="$REIMAGE_ARTIFACT_ROOT/staged-ignored-files/live" \\\n'
+      printf '  KEYED_BY=repo-name \\\n  REQUIRES=artifact-root \\\n  MODE=merge \\\n'
+      printf '  DESCRIPTION="Reviewed kept ignored files from the backup phase"\n\n'
+    fi
+    if [[ -d "$REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/project-metadata" ]]; then
+      if [[ -n "$projects_root" ]]; then
+        printf 'repo_source_add \\\n  ARTIFACT_TYPE=project-metadata \\\n'
+        printf '  ARTIFACT_ROOT="$REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/project-metadata" \\\n'
+        printf '  KEYED_BY=pre-image-path \\\n  PATH_ROOT=%s \\\n' "$projects_root"
+        printf '  REQUIRES=artifact-root \\\n  MODE=merge \\\n'
+        printf '  DESCRIPTION="Per-project IDE metadata, keyed by path under the projects root"\n\n'
+      else
+        printf '# project-metadata is present but the projects root it was captured from\n'
+        printf '# could not be read from app-settings-backup/intellij/README.md.\n'
+        printf '# KEYED_BY=pre-image-path needs it: the key is each audit path with that\n'
+        printf '# prefix removed. Fill PATH_ROOT in and uncomment.\n'
+        printf '# repo_source_add ARTIFACT_TYPE=project-metadata \\\n'
+        printf '#   ARTIFACT_ROOT="$REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/project-metadata" \\\n'
+        printf '#   KEYED_BY=pre-image-path PATH_ROOT=<projects root> \\\n'
+        printf '#   REQUIRES=artifact-root MODE=merge\n\n'
+      fi
+    fi
+    printf '# Sources inside the encrypted image cannot be probed from here -- it is not\n'
+    printf '# attached. ARTIFACT_ROOT is single-quoted so $DMG_MOUNT stays literal and is\n'
+    printf '# substituted when the image is mounted.\n'
+    printf 'repo_source_add \\\n  ARTIFACT_TYPE=repo-secrets \\\n'
+    printf "  ARTIFACT_ROOT='\$DMG_MOUNT/repos-gitignored' \\\\\n"
+    printf '  KEYED_BY=repo-name \\\n  REQUIRES=dmg \\\n  MODE=merge \\\n'
+    printf '  DESCRIPTION="Gitignored secret-shaped files from the secrets image"\n\n'
+    printf '# Proposed as MODE=report: its layout has not been inspected, and a source\n'
+    printf '# that merges an unknown shape into a working tree is worse than one that\n'
+    printf '# lists what it found.\n'
+    printf 'repo_source_add \\\n  ARTIFACT_TYPE=intellij-secrets \\\n'
+    printf "  ARTIFACT_ROOT='\$DMG_MOUNT/intellij' \\\\\n"
+    printf '  KEYED_BY=declared \\\n  REQUIRES=dmg \\\n  MODE=report \\\n'
+    printf '  DESCRIPTION="IntelliJ HTTP Client environment files from the secrets image"\n'
+  } > "$src"
+
+  {
+    printf '%s\n#\n' "$banner"
+    printf '# Empty on purpose. Keys are derived: a repo-name source finds its bundle by\n'
+    printf '# REPO_NAME, and a pre-image-path source by the audit path minus PATH_ROOT.\n'
+    printf '# Add an entry only where the derivation is wrong -- a bundle belonging to a\n'
+    printf '# grouping project rather than one repository, a repository whose path moved\n'
+    printf '# since the audit, or a source with no derivation at all.\n'
+  } > "$map"
+
+  rm -f "$PROPOSED_SELECTED" "$PROPOSED_EXCLUDED"
+}
+
+if [[ "$EMIT_PLAN" == true ]]; then
+  emit_plan_proposal
+fi
 
 # ---------------------------------------------------------------------------
 # Heuristic verdicts for the Phase 11B exit-criteria rows
@@ -842,7 +1096,7 @@ fi
 # per-line regexes and this one needs heredoc context. So the rule is structural:
 # compute the cell, then interpolate the variable.
 # ---------------------------------------------------------------------------
-REPORT_GENERATED="$(date)"
+REPORT_GENERATED="${REPORT_GENERATED:-$(date)}"
 REPORT_SCRIPT="$(basename "$0")"
 
 if [[ "$DUPLICATE_LABEL_COUNT" -eq 0 ]]; then

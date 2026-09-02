@@ -1,5 +1,9 @@
 # Apply Manifest
 
+**Revision 146** — supersedes Revision 145 and earlier. The clone plan gets a step that sets it up and a run that proposes one, and neither can write over your answers.
+
+**Revision 145** — supersedes Revision 144 and earlier. The clone plan gains the code that reads it, and a typo in it stops being a silently shifted value.
+
 **Revision 144** — supersedes Revision 143 and earlier. The two repository roots stop claiming to be something GitHub knows about.
 
 **Revision 143** — supersedes Revision 142 and earlier. Phase 11B's clone plan gets its declared form, seeded and commented, ahead of the code that reads it.
@@ -400,6 +404,210 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `scan-archive-contents.sh` | `.internal/home/scan-archive-contents.sh` |
 | `scan-postman-collections.py` | `.internal/home/scan-postman-collections.py` |
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
+
+---
+
+## Revision 146 — twenty-seven rows nobody should type
+
+Two halves of the same problem. `restore-repos.md` gains **Step 0d**, which sets
+the clone plan up; `bin/restore-repos.sh` gains **`--emit-plan`**, which fills one
+in from the pinned pre-image audit so the operator edits a draft rather than a
+blank file.
+
+### Step 0d, and where the check belongs
+
+`prepare-artifact-root.md` Step 9 does this for the artifact-config fragments at
+length: two routes, a file count, and a check that the loader resolved to the
+workspace rather than the templates. `stage-certs-keychain.md` Step 2 does the
+same job in six lines — the command, what it writes, and a note that init skips
+existing files unless `--force`.
+
+The difference is not house style. `stage-certs-keychain.sh` **warns on stderr**
+when the fallback happens, so its runbook does not have to teach the check. Step
+0d is written in the short shape and `bin/restore-repos.sh` gained the matching
+warning, because a check the code performs beats a check the reader is asked to
+remember.
+
+The fallback is worth warning about here for a reason particular to this plan:
+every entry in the committed templates is commented out, so a run against them
+loads clean, reports every repository as `unreviewed`, and clones nothing. That
+reads as *this phase has nothing to do* rather than *you are reading the wrong
+file*. The warning names the missing workspace directory and the command that
+creates it.
+
+It is `0d` rather than a numbered step because of the rule Step 0 exists for: it
+**gates rather than advances** and is **rerunnable at any point**. Making it a
+step would also have renumbered eleven others, and those numbers are cited from
+five other documents — `restore-access.md` links to *Step 3 — Execute the Clone
+Commands*, `restore-runtime.md` and `toolkit-environment-reference.md` to Step 4,
+`restore-file-reference.md` to Step 5 — plus seventeen cross-references inside
+the runbook itself. A structural preference is not worth thirty broken citations.
+
+The `> [!note]` that carries the `--force` caveat in `stage-certs-keychain.md` is
+prose here. That callout type is a standing lint finding, and copying it would
+have added a sixth to this runbook.
+
+### `--emit-plan`
+
+Writes four files under `plan-proposed/` in the run bundle, mirroring the four
+fragments so a reviewer diffs file against file rather than reading one blob.
+**Never into the workspace**: the workspace copy holds the operator's answers,
+and a run that could overwrite it would make every answer provisional. Every
+generated file says so in its own header.
+
+Measured against the pinned audit: **25 live entries and 2 commented ones**.
+`engagements` and `ingestion-related` have no remote, so nothing can clone them —
+they are proposed commented-out with the reason, and mirrored into the excluded
+proposal, also commented. *Cannot be cloned* and *should not be restored* are
+different findings, and only a person turns one into the other.
+
+Sources are proposed **only where the root is on this artifact root**, so a
+proposal cannot invent one with nothing behind it. `project-metadata` needs the
+projects root the capture walked, and `--emit-plan` reads it out of
+`app-settings-backup/intellij/README.md` rather than asking — on this volume that
+resolves to `/Users/dkittrell/Development/IdeaProjects`, which is precisely the
+prefix `KEYED_BY=pre-image-path` subtracts. When the README cannot be read it
+emits the entry commented, with the reason, rather than guessing.
+
+The two sources inside the encrypted image cannot be probed — it is not attached
+— so they are proposed with `ARTIFACT_ROOT` **single-quoted**, keeping
+`$DMG_MOUNT` literal until the image is mounted. `intellij-secrets` is proposed
+`MODE=report`: its layout has not been inspected, and a source that merges an
+unknown shape into a working tree is worse than one that lists what it found.
+
+`repo_plan_add` gained `extract_remote_name`, a companion to `extract_remote_url`
+with the same order of preference, so a proposal can state `REMOTE_NAME` rather
+than leave the reader to infer it. Three repositories here need it —
+`fractogenesis-toolkit` on `shiva`, `enterprise-search` on `orah`,
+`carrier-services-storage` on `omkara`.
+
+### Proven by round trip, not by inspection
+
+The proposal was adopted verbatim into a scratch workspace and loaded back
+through `repo-plan.sh`: **25 selected, 4 sources, 0 map entries, 0 warnings**.
+`$REIMAGE_ARTIFACT_ROOT` expanded, `$DMG_MOUNT` stayed literal, and
+`fractogenesis-toolkit` resolved to remote `shiva` under the personal root. The
+emitter and the reader agree because one produced what the other accepted, which
+is a stronger claim than either passing its own tests.
+
+### Validation
+
+`bash -n` clean. `verify-script-portability.sh` 80 clean / 0 WARN / 0 FAIL.
+`verify-runbook-structure.sh` 213 PASS / 5 WARN / 25 FAIL across 27 documents —
+unchanged, with `restore-repos.md`'s only finding the pre-existing `NO-NOTE`.
+`verify-doc-paths.sh --all` 756 OK / 0 MISSING / 0 ANCHOR BROKEN.
+
+A run without `--emit-plan` was confirmed to write no `plan-proposed/` directory.
+Everything ran against a **scratch artifact root**; no run, pointer or sign-off
+was written to the volume.
+
+**All of it ran on Linux with Bash 5.x.** `shellcheck` was not available.
+`/bin/bash -n` against real macOS Bash 3.2 is owed here along with Revisions
+116–145.
+
+---
+
+## Revision 145 — the reader, and what it refuses
+
+Revision 143 shipped four clone-plan fragments with nothing reading them. This is
+the reader: `.internal/git/repo-plan.sh`, the `REPO_PLAN_*` resolution in
+`.internal/artifact-config.sh`, and `./bin/restore-repos.sh init-repo-plan-config`
+to seed the durable copy.
+
+Nothing acts on the plan yet — `--emit-plan` and `--hydrate` are still to come.
+What exists now is: the plan can be seeded, loaded, and **rejected**.
+
+### Validation is the reason the fragments are function calls
+
+The plan could have been delimited rows, matching `external-targets.conf.sh`. It
+is named-key function calls instead, and the difference is entirely in what
+happens when someone gets it wrong.
+
+```text
+repo-plan: repo_plan_add: unknown key REMOTE_URL (repository: ingestion)
+```
+
+A positional field cannot say that. This phase already spent Revision 131
+recovering from a shifted column that read as data for two weeks — a remote name
+sitting where a URL belonged, which produced 0 clone commands and no error. The
+plan is the same kind of surface, hand-edited, and it gets a reader that refuses
+rather than proceeds.
+
+**Errors accumulate.** A plan with four mistakes reports four and exits once; it
+does not report the first and make the operator rerun to find the second.
+
+### What it refuses, and why each one is not tidiness
+
+Per declaration: an unknown key, a missing `REPO_NAME`, an exclusion with no
+`REASON`, and `KEYED_BY` / `REQUIRES` / `MODE` outside their allowed values. Also
+`KEYED_BY=pre-image-path` without `PATH_ROOT` — the key is the audit path with a
+prefix removed, and without the prefix there is nothing to remove.
+
+Across the plan, four checks that need the whole thing:
+
+| Refused | What it prevents |
+|---|---|
+| The same `REPO_NAME` selected twice | The later entry silently wins every lookup |
+| A repository both selected and excluded | Whichever the code consults first decides — an answer nobody chose |
+| Two repositories sharing one `LOCAL_REPO_PATH` | The second clone fails on a non-empty destination, and reads as a conflict rather than a plan error |
+| A map entry naming an `ARTIFACT_TYPE` no source declares | Restores nothing, silently |
+
+One case is a **warning** rather than an error: a map entry for a repository that
+is not selected. That is dead configuration today and a typo more often than
+not — but a repository can legitimately be mapped before it is selected, and
+saying so is more useful than refusing to run.
+
+An exclusion without a reason is refused for the same purpose the file exists.
+`bin/record-restore-exit.sh` asks whether unrestored repositories were a
+decision; an exclusion nobody explained cannot answer it, and three weeks later
+is indistinguishable from an omission.
+
+### Seeding
+
+`init-repo-plan-config` copies the committed templates into
+`$REIMAGE_WORKSPACE_ROOT/repo-plan/`, **keeps** any file already there, and
+overwrites only with `--force` — the same semantics as
+`stage-certs-keychain.sh init-staged-certs-config`, because the workspace copy
+holds the operator's answers and a run must never write over them.
+
+It is handled before the artifact-root check, deliberately: seeding writes to the
+workspace, not the artifact volume, and refusing to seed because a drive is
+unplugged would be a rule with nothing behind it.
+
+An unset `REIMAGE_WORKSPACE_ROOT` is refused with the reason rather than a path
+error — the plan is declaration, not evidence, and the workspace is where a
+declaration survives the reimage.
+
+### Bash 3.2
+
+No associative arrays, so the plan is held in **parallel indexed arrays** with
+the index as the join, documented in the library header as the public output.
+`repo_plan_index` and `repo_source_index` do the lookups a hash would have. Every
+array is initialised by `repo_plan_reset` before use, so `${#arr[@]}` under
+`set -u` is never asked of an unset name.
+
+The library is sourced and sets no shell options: `bin/restore-repos.sh` is an
+aggregate validator that deliberately omits `set -e`, and a sourced file that
+changes its caller's strict mode is the loader anti-pattern this repository names.
+
+### Validation
+
+`bash -n` clean on all three edited or added files.
+`verify-script-portability.sh` 80 clean / 0 WARN / 0 FAIL — up from 79, the new
+library scanned and clean. `verify-runbook-structure.sh` 213 PASS / 5 WARN / 25
+FAIL, unchanged; no runbook was touched. `verify-doc-paths.sh --all` 753 OK / 0
+MISSING / 0 ANCHOR BROKEN.
+
+Exercised against nine hand-built plans covering each refusal above, plus the
+warning-only path, an empty plan, `REPO_PLAN_STRICT`, a missing fragment and a
+missing directory. Seeding was run three times against a scratch workspace —
+into an empty directory, again to confirm existing files are kept, and with
+`--force` to confirm an operator edit is overwritten only when asked.
+
+**All of it ran on Linux with Bash 5.x.** `shellcheck` was not available.
+`/bin/bash -n` against real macOS Bash 3.2 is owed on these files along with
+Revisions 116–144, and the parallel-array idiom is exactly the kind of thing that
+shell judges differently.
 
 ---
 
