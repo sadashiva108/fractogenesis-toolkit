@@ -304,25 +304,36 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 > ```text
 > $REIMAGE_ARTIFACT_ROOT/loose-secrets-reports/
 > ├── MANIFEST.md
-> ├── content-scans/
-> │   ├── MANIFEST.md
-> │   ├── latest-run.txt
-> │   └── runs/
-> │       └── <context>-YYYYMMDD-HHMMSS/
+> ├── content-scan-index.md
 > ├── findings-ledger.tsv
 > ├── loose-secrets-index.md
 > ├── official/
 > │   └── <context>.txt
 > ├── open-findings.md
 > └── runs/
->     └── <context>-YYYYMMDD-HHMMSS/
->         ├── findings.tsv
->         └── loose-secrets-report.txt
+>     ├── <context>-YYYYMMDD-HHMMSS/
+>     │   ├── findings.tsv
+>     │   └── loose-secrets-report.txt
+>     ├── <context>-<leg>-YYYYMMDD-HHMMSS/
+>     │   └── archive-content-scan.md
+>     └── <context>-<leg>-YYYYMMDD-HHMMSS/
+>         └── postman-export-scan.md
 > ```
 >
-> `<context>` is `pre-image` for the Phase 3B sweep and `pre-image-<label>` for a
-> re-check. `content-scans/` is written by `backup-home.md` and keeps its own
-> bespoke index rather than the shared one.
+> Three producers, one run index. `report-loose-secrets.sh` runs the Phase 3B
+> filename sweep as `pre-image`, or `pre-image-<label>` for a re-check.
+> `scan-archive-contents.sh` and `scan-postman-collections.py` read *inside*
+> files — archive members and Postman exports — which the filename sweep cannot
+> see, and write `pre-image-backup-home-<leg>` and `pre-image-postman-<leg>`,
+> where `<leg>` is `external` or `onedrive`. Each leg is its own lineage because
+> the two prune sets differ, and a pointer resolving to whichever ran last would
+> answer neither question.
+>
+> Two domain indexes sit beside the shared one, because the two kinds of run
+> count different things: `loose-secrets-index.md` carries the sweep's outside
+> and inside counts, `content-scan-index.md` carries the scan type, the leg and
+> the scanned/with-findings counts. Only the sweep feeds `findings-ledger.tsv`
+> and `open-findings.md`, which is what the Phase 6B gate reads.
 
 > [!example]- `$REIMAGE_ARTIFACT_ROOT/managed-inventory/`
 > ```text

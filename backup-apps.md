@@ -593,7 +593,7 @@ Before treating any collection or environment as non-secret, check it rather tha
 .internal/home/scan-postman-collections.py --context pre-image-postman
 ```
 
-The report lands under `loose-secrets-reports/content-scans/runs/<context>-<stamp>/` on the artifact root, with a `MANIFEST.md` row and a `latest-run.txt` pointer. `content-scans/` keeps its own bespoke index rather than the shared run index its parent category uses, so read `latest-run.txt` here and `official/<context>.txt` everywhere else.
+Each leg lands as its own run under `loose-secrets-reports/runs/<context>-<leg>-<stamp>/` on the artifact root, where `<leg>` is `external` or `onedrive`, with a `MANIFEST.md` row, a `content-scan-index.md` row and an `official/<context>-<leg>.txt` pointer — the same run index every other category uses.
 
 It walks collections, environments and globals, reporting every secret-shaped key whose value is a literal rather than a reference, plus formats that are credentials whatever key they sit under — JWTs, PEM private-key blocks, `Authorization: Basic`/`Bearer` literals, `client_secret=` in a request body, and provider token prefixes. Values are never printed: findings give the key, the value's length, and a shape label such as `UUID`, `hex-32`, or `base64ish-16`. It is read-only and exits 1 when anything is found.
 

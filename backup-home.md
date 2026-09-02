@@ -175,12 +175,14 @@ $REIMAGE_ARTIFACT_ROOT/
 │   ├── home/
 │   └── MANIFEST.md
 ├── loose-secrets-reports/
-│   ├── content-scans/
-│   │   ├── latest-run.txt
-│   │   ├── MANIFEST.md
-│   │   └── runs/
-│   │       └── pre-image-backup-home-<leg>-YYYYMMDD-HHMMSS/
-│   └── ...
+│   ├── ...
+│   ├── content-scan-index.md
+│   ├── official/
+│   │   └── pre-image-backup-home-<leg>.txt
+│   ├── ...
+│   └── runs/
+│       └── pre-image-backup-home-<leg>-YYYYMMDD-HHMMSS/
+│           └── archive-content-scan.md
 ├── secrets-encrypted/
 │   ├── ...
 │   ├── certs/
@@ -212,7 +214,7 @@ $REIMAGE_ARTIFACT_ROOT/
 └── ...
 ```
 
-`content-scans/` keeps its own bespoke index rather than the shared run index its parent category uses, which is why it carries a `latest-run.txt` where every other category resolves through `official/`.
+`<leg>` is `external` or `onedrive`. Each leg is its own lineage with its own pointer, because the two prune sets differ: an archive that would be pushed to corporate cloud storage is a different decision from one that only reaches the artifact drive, and a single pointer resolving to whichever leg ran last would answer neither question. `content-scan-index.md` carries the scan type, the leg and the two counts, which the shared manifest schema has no column for.
 
 The complete layout of these trees, including the `home/` subtree and the `secrets-encrypted/` entries other phases add, is drawn once in the Master Directory Reference:
 
@@ -376,7 +378,7 @@ A compressed archive is opaque to every filename sweep in this workflow, so a cr
 .internal/home/scan-archive-contents.sh --context pre-image-backup-home
 ```
 
-The report lands under `loose-secrets-reports/content-scans/runs/<context>-<stamp>/`, beside the Phase 3B sweep's own reports, with a `MANIFEST.md` row and a `latest-run.txt` pointer. `content-scans/` keeps its own bespoke index rather than the shared run index its parent category uses, so read `latest-run.txt` here and `official/<context>.txt` everywhere else. Give each run a sub-label so same-day scans stay distinguishable, the same way the size audit and the sweep do. `--dest` moves the report root, `--report FILE` writes one file to an explicit path without a manifest row, and `--no-report` prints to the terminal only.
+Each leg lands as its own run under `loose-secrets-reports/runs/<context>-<leg>-<stamp>/`, beside the Phase 3B sweep's own reports, with a `MANIFEST.md` row, a `content-scan-index.md` row and an `official/<context>-<leg>.txt` pointer. Give each run a sub-label so same-day scans stay distinguishable, the same way the size audit and the sweep do. `--dest` moves the report root, `--report FILE` writes one file to an explicit path without a manifest row, and `--no-report` prints to the terminal only.
 
 With no leg flag it scans **both legs**, the same convention as `bin/backup-home.sh` — `--external-only` and `--onedrive-only` narrow it to one, and passing both is an error rather than a merged scan.
 

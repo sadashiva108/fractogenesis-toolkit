@@ -15,9 +15,9 @@
 #
 # --- BEGIN USAGE ---
 # Usage:
-#   .internal/scan-archive-contents.sh [--external-only | --onedrive-only]
-#                                      [--root PATH]... [--context LABEL]
-#                                      [--dest DIR] [--all]
+#   .internal/home/scan-archive-contents.sh [--external-only | --onedrive-only]
+#                                           [--root PATH]... [--context LABEL]
+#                                           [--dest DIR] [--all]
 #
 # Options:
 #   --external-only Scan only the external drive leg: every source in
@@ -46,7 +46,10 @@
 #                   Default: pre-image. Same convention as the Phase 3B sweep,
 #                   so same-day runs stay distinguishable in MANIFEST.md.
 #   --dest DIR      Report root. Default:
-#                   $REIMAGE_ARTIFACT_ROOT/loose-secrets-reports/content-scans
+#                   $REIMAGE_ARTIFACT_ROOT/loose-secrets-reports
+#                   The run's context gets the leg appended, so a both-legs run
+#                   produces <context>-external and <context>-onedrive as two
+#                   separate indexed runs.
 #   --report FILE   Write to this exact path instead of a run directory. For a
 #                   one-off; no MANIFEST row is written.
 #   --no-report     Terminal only; write nothing.
@@ -62,7 +65,9 @@
 set -uo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$HERE/.." && pwd)"
+# .internal/home/<this file> -- two levels up is the repository root. One level
+# reaches .internal/, and every join below adds ".internal" again.
+REPO_ROOT="$(cd "$HERE/../.." && pwd)"
 
 usage() {
   sed -n '/^# --- BEGIN USAGE ---$/,/^# --- END USAGE ---$/p' "${BASH_SOURCE[0]}" \
@@ -90,6 +95,14 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+RUNS_LIB="$REPO_ROOT/.internal/artifact-runs.sh"
+if [[ ! -f "$RUNS_LIB" ]]; then
+  echo "ERROR: shared run index not found: $RUNS_LIB" >&2
+  exit 2
+fi
+# shellcheck source=../artifact-runs.sh
+source "$RUNS_LIB"
+
 if [[ -f "$REPO_ROOT/.internal/load-reimage-config.sh" ]]; then
   # shellcheck disable=SC1091
   source "$REPO_ROOT/.internal/load-reimage-config.sh" || exit 2
@@ -109,40 +122,36 @@ if $USE_TARGETS && $USE_ONEDRIVE; then
   exit 2
 fi
 
-# No leg flag and no --root means BOTH legs, mirroring bin/backup-home.sh. Run
-# them as two child invocations sharing one run directory rather than
-# restructuring the single-leg scan: each leg has its own roots, its own prune
-# set and its own counters, so two clean passes are more trustworthy than one
-# pass juggling two sets of state.
-if ! $USE_TARGETS && ! $USE_ONEDRIVE && (( ${#ROOTS[@]} == 0 )) && [[ -z "${_SCAN_RUN_DIR:-}" ]]; then
-  SHARED_DIR=""
-  if ! $NO_REPORT && [[ -z "$REPORT" ]]; then
-    if [[ -z "$DEST_ROOT" && -n "${REIMAGE_ARTIFACT_ROOT:-}" ]]; then
-      DEST_ROOT="$REIMAGE_ARTIFACT_ROOT/loose-secrets-reports/content-scans"
-    fi
-    if [[ -n "$DEST_ROOT" ]]; then
-      SHARED_DIR="$DEST_ROOT/runs/${REPORT_CONTEXT}-$(date '+%Y%m%d-%H%M%S')"
-      mkdir -p "$SHARED_DIR" || { echo "ERROR: cannot create $SHARED_DIR" >&2; exit 2; }
-    fi
-  fi
+# No leg flag and no --root means BOTH legs, mirroring bin/backup-home.sh. Each
+# leg is its own indexed run: they have different roots, different prune sets
+# and different counters, so a merged result would mean nothing, and a lineage
+# per leg is what lets `official/<context>-onedrive.txt` answer "what would be
+# pushed to corporate cloud storage" without also answering the other question.
+if ! $USE_TARGETS && ! $USE_ONEDRIVE && (( ${#ROOTS[@]} == 0 )); then
   child=( --context "$REPORT_CONTEXT" )
   [[ -n "$DEST_ROOT" ]] && child+=( --dest "$DEST_ROOT" )
   $NO_REPORT && child+=( --no-report )
   $SHOW_ALL  && child+=( --all )
   rc_a=0; rc_b=0
-  _SCAN_RUN_DIR="$SHARED_DIR" bash "${BASH_SOURCE[0]}" --external-only "${child[@]}" || rc_a=$?
-  _SCAN_RUN_DIR="$SHARED_DIR" bash "${BASH_SOURCE[0]}" --onedrive-only "${child[@]}" || rc_b=$?
+  bash "${BASH_SOURCE[0]}" --external-only "${child[@]}" || rc_a=$?
+  bash "${BASH_SOURCE[0]}" --onedrive-only "${child[@]}" || rc_b=$?
   (( rc_b > rc_a )) && rc_a="$rc_b"
   exit "$rc_a"
 fi
 
+# The leg is part of the run's identity, not a column inside it: two legs
+# answer two questions, and a pointer that resolved to whichever ran last would
+# answer neither reliably.
 LEG=""
+RUN_CONTEXT="$REPORT_CONTEXT"
 if $USE_TARGETS || $USE_ONEDRIVE; then
   if $USE_ONEDRIVE; then
     LEG="OneDrive leg (ONEDRIVE_TARGETS)"
+    RUN_CONTEXT="${REPORT_CONTEXT}-onedrive"
     _tvar=ONEDRIVE_TARGETS
   else
     LEG="external drive leg (EXTERNAL_TARGETS)"
+    RUN_CONTEXT="${REPORT_CONTEXT}-external"
     _tvar=EXTERNAL_TARGETS
   fi
   if ! declare -p "$_tvar" >/dev/null 2>&1; then
@@ -363,32 +372,27 @@ else
 fi
 (( UNREADABLE > 0 )) && printf "  ${YEL}%d archive(s) had no reader available and were not scanned.${RST}\n" "$UNREADABLE"
 
-# Resolve where the report goes. Default is a run directory beside the Phase 3B
-# sweep's own reports: both answer "is credential material sitting in the
-# clear?", so keeping them under one artifact folder means one place to look,
-# and loose-secrets-reports/ is already an expected artifact folder.
+# Resolve where the report goes. Default is a run in the Phase 3B sweep's own
+# category: both answer "is credential material sitting in the clear?", the
+# contexts do not collide, and one MANIFEST.md over both means one place to
+# look rather than an index nested inside an index.
 RUN_DIR=""
 if ! $NO_REPORT && [[ -z "$REPORT" ]]; then
   if [[ -z "$DEST_ROOT" ]]; then
     if [[ -n "${REIMAGE_ARTIFACT_ROOT:-}" ]]; then
-      DEST_ROOT="$REIMAGE_ARTIFACT_ROOT/loose-secrets-reports/content-scans"
+      DEST_ROOT="$REIMAGE_ARTIFACT_ROOT/loose-secrets-reports"
     else
       printf "  ${YEL}!  REIMAGE_ARTIFACT_ROOT unset and no --dest given; no report written.${RST}\n" >&2
     fi
   fi
-  if [[ -n "${_SCAN_RUN_DIR:-}" ]]; then
-    RUN_DIR="$_SCAN_RUN_DIR"
-  elif [[ -n "$DEST_ROOT" ]]; then
-    RUN_DIR="$DEST_ROOT/runs/${REPORT_CONTEXT}-$(date '+%Y%m%d-%H%M%S')"
-    mkdir -p "$RUN_DIR" || { echo "ERROR: cannot create $RUN_DIR" >&2; exit 2; }
-  fi
-  if [[ -n "$RUN_DIR" ]]; then
-    # One file per leg, so a both-legs run writes two into the same directory.
-    case "$LEG" in
-      *ONEDRIVE*) REPORT="$RUN_DIR/archive-content-scan-onedrive.md" ;;
-      *EXTERNAL*) REPORT="$RUN_DIR/archive-content-scan-external.md" ;;
-      *)          REPORT="$RUN_DIR/archive-content-scan.md" ;;
-    esac
+  if [[ -n "$DEST_ROOT" ]]; then
+    if ! artifact_run_begin "$DEST_ROOT" "$RUN_CONTEXT"; then
+      echo "ERROR: could not stage a run under: $DEST_ROOT" >&2
+      exit 2
+    fi
+    RUN_DIR="$ARTIFACT_RUN_DIR"
+    # The run id carries the leg, so the file inside does not repeat it.
+    REPORT="$RUN_DIR/archive-content-scan.md"
   fi
 fi
 
@@ -415,31 +419,48 @@ if [[ -n "$REPORT" ]]; then
     echo "- archives with no reader available: $UNREADABLE"
     [[ -s "$FOUND" ]] && cat "$FOUND"
   } > "$REPORT"
-  printf "  ${DIM}Report: %s${RST}\n" "$REPORT"
 
-  # MANIFEST + latest-run pointer, mirroring the Phase 3B sweep's convention.
-  # Only for a run directory: --report is an explicit one-off and should not
-  # append history.
+  # The scan type, the leg and the two counts are this category's own question
+  # and the shared schema has no column for them, so they go in a domain index
+  # beside the run index -- the same treatment the filename sweep's outside and
+  # inside counts get in loose-secrets-index.md. --report is an explicit one-off
+  # and appends no history.
   if [[ -n "$RUN_DIR" ]]; then
-    [[ -n "$DEST_ROOT" ]] || DEST_ROOT="$(dirname "$(dirname "$RUN_DIR")")"
-    MANIFEST="$DEST_ROOT/MANIFEST.md"
-    if [[ ! -f "$MANIFEST" ]]; then
+    CONTENT_INDEX="$DEST_ROOT/content-scan-index.md"
+    if [[ ! -f "$CONTENT_INDEX" ]]; then
       {
-        echo "# Content Scan Runs"
+        echo "# Content Scan Index"
         echo ""
-        echo "Scans that read *inside* files rather than matching filenames:"
-        echo "archives (\`scan-archive-contents.sh\`) and Postman exports"
-        echo "(\`scan-postman-collections.py\`). The filename sweep that produced"
-        echo "\`../open-findings.md\` cannot see either."
+        echo "Append-only, and specific to the scans that read *inside* files"
+        echo "rather than matching filenames: archives"
+        echo "(\`scan-archive-contents.sh\`) and Postman exports"
+        echo "(\`scan-postman-collections.py\`). The filename sweep that produces"
+        echo "\`open-findings.md\` cannot see either, so nothing here feeds that"
+        echo "ledger or the Phase 6B gate that reads it."
         echo ""
-        echo "| Finished | Context | Scan | Leg | Scanned | With findings | Run |"
-        echo "|---|---|---|---|---:|---:|---|"
-      } > "$MANIFEST"
+        echo "\`MANIFEST.md\` beside this file is the canonical run index; this one"
+        echo "only adds what that schema cannot carry."
+        echo ""
+        echo "| Completed | Context | Run | Scan | Leg | Scanned | With findings | Report |"
+        echo "|---|---|---|---|---|---:|---:|---|"
+      } > "$CONTENT_INDEX"
     fi
-    printf '| %s | %s | archives | %s | %d | %d | `%s` |\n' \
-      "$(date '+%Y-%m-%d %H:%M:%S')" "$REPORT_CONTEXT" "${LEG:-artifact root}" \
-      "$SCANNED" "$HITS" "$(basename "$RUN_DIR")" >> "$MANIFEST"
-    printf '%s\n' "$RUN_DIR" > "$DEST_ROOT/latest-run.txt"
+    printf '| %s | `%s` | `%s` | archives | %s | %d | %d | [Open report](%s/archive-content-scan.md) |\n' \
+      "$(date '+%Y-%m-%d %H:%M:%S')" "$RUN_CONTEXT" "$ARTIFACT_RUN_ID" \
+      "${LEG:-artifact root}" "$SCANNED" "$HITS" "$ARTIFACT_RUN_RELATIVE" >> "$CONTENT_INDEX"
+
+    # Reported after the promotion, so the path printed is the one that exists.
+    if artifact_run_finalize "$DEST_ROOT" "$SCANNED scanned / $HITS with findings"; then
+      printf "  ${DIM}Report:        %s${RST}\n" "$ARTIFACT_RUN_FINAL_DIR/archive-content-scan.md"
+      printf "  ${DIM}Run index:     %s${RST}\n" "$DEST_ROOT/MANIFEST.md"
+      printf "  ${DIM}Domain index:  %s${RST}\n" "$CONTENT_INDEX"
+      printf "  ${DIM}Official:      %s${RST}\n" "$DEST_ROOT/official/$RUN_CONTEXT.txt"
+    else
+      echo "WARNING: the report was written but could not be indexed." >&2
+      echo "  Repair with: ./bin/reindex-artifact-runs.sh --category \"$DEST_ROOT\"" >&2
+    fi
+  else
+    printf "  ${DIM}Report: %s${RST}\n" "$REPORT"
   fi
 fi
 

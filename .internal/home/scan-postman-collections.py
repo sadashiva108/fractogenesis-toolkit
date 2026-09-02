@@ -32,15 +32,18 @@ Options:
                   by EXTERNAL_EXCLUDES and ONEDRIVE_EXTRA_EXCLUDES.
 
                   With neither flag, BOTH legs run -- the same convention as
-                  bin/backup-home.sh, whose modes these mirror. Each leg gets
-                  its own report and its own MANIFEST row.
+                  bin/backup-home.sh, whose modes these mirror. Each leg is its
+                  own indexed run with its own official/ pointer.
   --root PATH     Scan this directory, ignoring the target lists entirely.
                   Repeatable, and it suppresses the both-legs default. Use it
                   to verify the artifact root after a run.
   --context LABEL Sub-label for this run's directory under the report root.
                   Default: pre-image.
   --dest DIR      Report root. Default:
-                  $REIMAGE_ARTIFACT_ROOT/loose-secrets-reports/content-scans
+                  $REIMAGE_ARTIFACT_ROOT/loose-secrets-reports
+                  The run's context gets the leg appended, so a both-legs run
+                  produces <context>-external and <context>-onedrive as two
+                  separate indexed runs.
   --report FILE   Write to this exact path instead of a run directory. For a
                   one-off; no MANIFEST row is written.
   --no-report     Terminal only; write nothing.
@@ -60,7 +63,80 @@ import re
 import subprocess
 import sys
 
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# .internal/home/<this file> -- three levels up is the repository root. Two
+# levels reaches .internal/, and every join below adds ".internal" again.
+REPO_ROOT = os.path.dirname(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+
+# ---------------------------------------------------------------------------
+# Shared run index
+#
+# `.internal/artifact-runs.sh` is a sourced Bash library: artifact_run_begin
+# sets shell variables the caller reads, which Python cannot receive. Rather
+# than reimplement the point rules, the manifest format and the pointer
+# computation here -- a second implementation that could only ever drift from
+# the first -- these call `.internal/artifact-run-cli.sh`, which is the same
+# library behind a command line.
+# ---------------------------------------------------------------------------
+
+RUN_CLI = os.path.join(REPO_ROOT, ".internal", "artifact-run-cli.sh")
+
+
+def run_begin(category_root, context):
+    """Stage a run and return the staging directory to write into."""
+    if not os.path.exists(RUN_CLI):
+        die("ERROR: cannot find .internal/artifact-run-cli.sh (run from the repo)")
+    r = subprocess.run(
+        ["bash", RUN_CLI, "begin", "--category", category_root, "--context", context],
+        stdout=subprocess.PIPE, text=True)
+    if r.returncode != 0 or not r.stdout.strip():
+        die("ERROR: could not stage a run under: %s" % category_root)
+    return r.stdout.strip()
+
+
+def run_finalize(category_root, run_dir, result):
+    """Promote and index a staged run. Returns runs/<id>, or "" on failure."""
+    r = subprocess.run(
+        ["bash", RUN_CLI, "finalize", "--category", category_root,
+         "--run-dir", run_dir, "--result", result],
+        stdout=subprocess.PIPE, text=True)
+    if r.returncode != 0:
+        sys.stderr.write("WARNING: the report was written but could not be indexed.\n")
+        sys.stderr.write("  Repair with: ./bin/reindex-artifact-runs.sh --category \"%s\"\n"
+                         % category_root)
+        return ""
+    return r.stdout.strip()
+
+
+CONTENT_INDEX_HEADER = """# Content Scan Index
+
+Append-only, and specific to the scans that read *inside* files rather than
+matching filenames: archives (`scan-archive-contents.sh`) and Postman exports
+(`scan-postman-collections.py`). The filename sweep that produces
+`open-findings.md` cannot see either, so nothing here feeds that ledger or the
+Phase 6B gate that reads it.
+
+`MANIFEST.md` beside this file is the canonical run index; this one only adds
+what that schema cannot carry.
+
+| Completed | Context | Run | Scan | Leg | Scanned | With findings | Report |
+|---|---|---|---|---|---:|---:|---|
+"""
+
+
+def write_content_scan_row(category_root, context, run_id, scan, leg,
+                           scanned, findings):
+    """Append this run's domain columns to content-scan-index.md."""
+    index = os.path.join(category_root, "content-scan-index.md")
+    if not os.path.exists(index):
+        with open(index, "w", encoding="utf-8") as fh:
+            fh.write(CONTENT_INDEX_HEADER)
+    with open(index, "a", encoding="utf-8") as fh:
+        fh.write("| %s | `%s` | `%s` | %s | %s | %d | %d | "
+                 "[Open report](runs/%s/postman-export-scan.md) |\n"
+                 % (datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    context, run_id, scan, leg, scanned, findings, run_id))
 
 
 def die(message):
@@ -267,43 +343,35 @@ def main():
                  "a leading dot, or whitespace: %s" % args.context)
 
     # No leg flag and no --root means BOTH legs, mirroring bin/backup-home.sh.
-    # Two child invocations sharing one run directory: each leg has its own
-    # roots, prune set and counters, so two clean passes beat one pass juggling
-    # two sets of state.
-    if not args.targets and not args.onedrive and not args.root \
-            and not os.environ.get("_SCAN_RUN_DIR"):
-        shared = ""
-        dest = args.dest or ""
-        if not args.no_report and not args.report:
-            if not dest:
-                ar = os.environ.get("REIMAGE_ARTIFACT_ROOT", "")
-                if not ar:
-                    _, _, ar = config_roots("external")
-                if ar:
-                    dest = os.path.join(ar.rstrip("/"), "loose-secrets-reports", "content-scans")
-            if dest:
-                stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-                shared = os.path.join(dest, "runs", "%s-%s" % (args.context, stamp))
-                os.makedirs(shared, exist_ok=True)
+    # Each leg is its own indexed run: different roots, different prune sets and
+    # different counters, so a merged result would mean nothing, and a lineage
+    # per leg is what lets official/<context>-onedrive.txt answer "what would be
+    # pushed to corporate cloud storage" without also answering the other
+    # question.
+    if not args.targets and not args.onedrive and not args.root:
         child = ["--context", args.context]
-        if dest:
-            child += ["--dest", dest]
+        if args.dest:
+            child += ["--dest", args.dest]
         if args.no_report:
             child.append("--no-report")
         if args.all:
             child.append("--all")
-        env = dict(os.environ, _SCAN_RUN_DIR=shared)
         rc = 0
         for flag in ("--external-only", "--onedrive-only"):
-            r = subprocess.run([sys.executable, os.path.abspath(__file__), flag] + child, env=env)
+            r = subprocess.run([sys.executable, os.path.abspath(__file__), flag] + child)
             rc = max(rc, r.returncode)
         return rc
 
+    # The leg is part of the run's identity, not a column inside it: two legs
+    # answer two questions, and a pointer that resolved to whichever ran last
+    # would answer neither reliably.
     prunes, leg = [], ""
+    run_context = args.context
     roots = [r.rstrip("/") for r in args.root]
     if args.targets or args.onedrive:
         mode = "onedrive" if args.onedrive else "external"
         leg = "OneDrive leg (ONEDRIVE_TARGETS)" if args.onedrive else "external drive leg (EXTERNAL_TARGETS)"
+        run_context = "%s-%s" % (args.context, mode)
         derived, prunes, _ = config_roots(mode)
         roots = derived + roots
     if not roots:
@@ -370,9 +438,10 @@ def main():
     if unreadable:
         print("  %d file(s) could not be parsed." % unreadable)
 
-    # Default the report into a run directory beside the Phase 3B sweep's own
-    # reports. Both answer "is credential material sitting in the clear?", so
-    # one artifact folder holds both, and loose-secrets-reports/ already exists.
+    # Default the report into a run in the Phase 3B sweep's own category. Both
+    # answer "is credential material sitting in the clear?", the contexts do not
+    # collide, and one MANIFEST.md over both means one place to look rather than
+    # an index nested inside an index.
     run_dir = ""
     dest_root = args.dest or ""
     if not args.no_report and not args.report:
@@ -381,22 +450,11 @@ def main():
             if not ar:
                 _, _, ar = config_roots("external")
             if ar:
-                dest_root = os.path.join(ar.rstrip("/"), "loose-secrets-reports", "content-scans")
-        shared = os.environ.get("_SCAN_RUN_DIR", "")
-        if shared:
-            run_dir = shared
-        elif dest_root:
-            stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-            run_dir = os.path.join(dest_root, "runs", "%s-%s" % (args.context, stamp))
-            os.makedirs(run_dir, exist_ok=True)
-        if run_dir:
-            if not dest_root:
-                dest_root = os.path.dirname(os.path.dirname(run_dir))
-            # One file per leg, so a both-legs run writes two here.
-            name = ("postman-export-scan-onedrive.md" if args.onedrive
-                    else "postman-export-scan-external.md" if args.targets
-                    else "postman-export-scan.md")
-            args.report = os.path.join(run_dir, name)
+                dest_root = os.path.join(ar.rstrip("/"), "loose-secrets-reports")
+        if dest_root:
+            run_dir = run_begin(dest_root, run_context)
+            # The run id carries the leg, so the file inside does not repeat it.
+            args.report = os.path.join(run_dir, "postman-export-scan.md")
         else:
             print("  !  REIMAGE_ARTIFACT_ROOT unset and no --dest given; no report written.")
 
@@ -417,28 +475,31 @@ def main():
             fh.write("- exports with literal values: %d\n" % hits)
             fh.write("- exports that could not be parsed: %d\n" % unreadable)
             fh.write("\n".join(report_blocks) + "\n")
-        print("  Report: %s" % args.report)
 
-        # MANIFEST + latest-run pointer, mirroring the sweep's convention. Only
-        # for a run directory: --report is an explicit one-off, not history.
+        # The scan type, the leg and the two counts are this category's own
+        # question and the shared schema has no column for them, so they go in a
+        # domain index beside the run index -- the same treatment the filename
+        # sweep's outside and inside counts get in loose-secrets-index.md.
+        # --report is an explicit one-off and appends no history.
         if run_dir:
-            manifest = os.path.join(dest_root, "MANIFEST.md")
-            if not os.path.exists(manifest):
-                with open(manifest, "w", encoding="utf-8") as fh:
-                    fh.write("# Content Scan Runs\n\n"
-                             "Scans that read *inside* files rather than matching filenames:\n"
-                             "archives (`scan-archive-contents.sh`) and Postman exports\n"
-                             "(`scan-postman-collections.py`). The filename sweep that produced\n"
-                             "`../open-findings.md` cannot see either.\n\n"
-                             "| Finished | Context | Scan | Leg | Scanned | With findings | Run |\n"
-                             "|---|---|---|---|---:|---:|---|\n")
-            with open(manifest, "a", encoding="utf-8") as fh:
-                fh.write("| %s | %s | postman | %s | %d | %d | `%s` |\n"
-                         % (datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                            args.context, leg or "artifact root", len(files), hits,
-                            os.path.basename(run_dir)))
-            with open(os.path.join(dest_root, "latest-run.txt"), "w", encoding="utf-8") as fh:
-                fh.write(run_dir + "\n")
+            run_id = os.path.basename(run_dir).lstrip(".")
+            if run_id.endswith(".incomplete"):
+                run_id = run_id[:-len(".incomplete")]
+            write_content_scan_row(
+                dest_root, run_context, run_id, "postman",
+                leg or "artifact root", len(files), hits)
+            relative = run_finalize(
+                dest_root, run_dir,
+                "%d scanned / %d with findings" % (len(files), hits))
+            if relative:
+                print("  Report:        %s" % os.path.join(dest_root, relative,
+                                                           "postman-export-scan.md"))
+                print("  Run index:     %s" % os.path.join(dest_root, "MANIFEST.md"))
+                print("  Domain index:  %s" % os.path.join(dest_root, "content-scan-index.md"))
+                print("  Official:      %s"
+                      % os.path.join(dest_root, "official", run_context + ".txt"))
+        else:
+            print("  Report: %s" % args.report)
 
     return 1 if hits else 0
 

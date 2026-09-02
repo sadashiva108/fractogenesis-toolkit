@@ -156,7 +156,7 @@ $REIMAGE_ARTIFACT_ROOT/
 ├── ...
 ├── loose-secrets-reports/
 │   ├── MANIFEST.md
-│   ├── content-scans/
+│   ├── content-scan-index.md
 │   ├── findings-ledger.tsv
 │   ├── loose-secrets-index.md
 │   ├── official/
@@ -174,7 +174,9 @@ $REIMAGE_ARTIFACT_ROOT/
 └── ...
 ```
 
-`<context>` is `pre-image` for the Phase 3B sweep, and `pre-image-<label>` for a re-check — `pre-image-after-backup-home`, `pre-image-final`. `staged-loose/MANIFEST.tsv` records when each file moved, from where, and to where; `content-scans/` is written by the Phase 2B home backup and belongs to `backup-home.md`.
+`<context>` is `pre-image` for the Phase 3B sweep, and `pre-image-<label>` for a re-check — `pre-image-after-backup-home`, `pre-image-final`. `staged-loose/MANIFEST.tsv` records when each file moved, from where, and to where.
+
+The category also holds the content scans, which read *inside* files rather than matching filenames: `pre-image-backup-home-<leg>` from `backup-home.md` and `pre-image-postman-<leg>` from `backup-apps.md`, each writing `archive-content-scan.md` or `postman-export-scan.md` into its run. They share this `MANIFEST.md` and `official/` but keep their own domain columns in `content-scan-index.md`, and — unlike the sweep — they do not feed `findings-ledger.tsv` or `open-findings.md`, so nothing they report reaches the Phase 6B gate.
 
 The complete artifact-root layout is defined once in the Master Directory Reference:
 

@@ -1,5 +1,7 @@
 # Apply Manifest
 
+**Revision 141** — supersedes Revision 140 and earlier. The content scans join the run index they were nested beside, and the two scanners can find their configuration again.
+
 **Revision 140** — supersedes Revision 139 and earlier. Every runbook and reference is drawn in the run-index layout, the authoring prompt gains the rules that keep it that way, and two scripts stop looking for evidence where it no longer is.
 
 **Revision 139** — supersedes Revision 138 and earlier. Three usage blocks stop naming phases the code has not dispatched on for two revisions, a purely manual artifact gets a rule of its own, and the first-wins rule gains its exception.
@@ -286,6 +288,7 @@ several separate rounds of work, and splicing them by hand is how the duplicate
 
 | File | Destination |
 |---|---|
+| `artifact-run-cli.sh` | `.internal/artifact-run-cli.sh` |
 | `toolkit-environment-reference.md` | `references/toolkit-environment-reference.md` |
 | `init-shell-env.sh` | `bin/init-shell-env.sh` |
 | `compare-runtime-versions.sh` | `bin/compare-runtime-versions.sh` |
@@ -388,7 +391,142 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `setup-reimage-env.sh` | `bin/setup-reimage-env.sh` |
 | `compare-restored-state.sh` | `bin/compare-restored-state.sh` |
 | `capture-office-stability.sh` | `bin/capture-office-stability.sh` |
+| `scan-archive-contents.sh` | `.internal/home/scan-archive-contents.sh` |
+| `scan-postman-collections.py` | `.internal/home/scan-postman-collections.py` |
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
+
+---
+
+## Revision 141 — one run index over the whole category
+
+`loose-secrets-reports/` carried two conventions one level apart. The category
+had `MANIFEST.md`, `official/` and `runs/` after Revision 138; the
+`content-scans/` directory inside it had its own `MANIFEST.md`, its own `runs/`
+and a hand-written `latest-run.txt` — the shape the shared library replaced. The
+Revision 138 conversion worked category by category at the top level and never
+descended.
+
+It was also the last `latest-*.txt` in the tree, which made the rule every other
+runbook now states — read the pointer under `official/` — untrue by exactly one
+exception, and forced two runbooks to carve that exception out in prose.
+
+### The nesting was the only thing making this look like two categories
+
+Nothing blocked the merge, and the reasons are worth recording because they are
+the test for the next one:
+
+- **The contexts do not collide.** `pre-image-backup-home-external` and
+  `pre-image-backup-home-onedrive` against the sweep's `pre-image`,
+  `pre-image-final`, `pre-image-post-cleanup` and the rest. Neither trailing word
+  is a reserved point suffix, so both resolve to `unknown` → latest-wins, which
+  is what they want.
+- **Nothing outside the two writers named the path.** `reimage-checklist.sh`
+  reads `open-findings.md` at the category root, not runs.
+- **The category already spans phases.** `pre-image-after-backup-home` was
+  sitting in the parent, written by Phase 2B into a category Phase 3B owns. The
+  "different phase" argument for keeping content scans separate did not survive
+  contact with the data.
+
+| | Before | After |
+|---|---|---|
+| runs | `content-scans/runs/<context>-<stamp>/` | `runs/<context>-<leg>-<stamp>/` |
+| index | `content-scans/MANIFEST.md` | the category's `MANIFEST.md` |
+| pointer | `content-scans/latest-run.txt` | `official/<context>-<leg>.txt` |
+| report | `archive-content-scan-external.md` | `archive-content-scan.md` |
+
+Two runs moved with their stamps intact; `reindex-artifact-runs.sh` picked them
+up and the category went to 17 runs / 13 pointers.
+
+### The leg becomes part of the run's identity
+
+A both-legs invocation used to create **one** run directory, write two reports
+into it, and append **two** manifest rows naming the same directory. Under a
+shared index that is one run with two identities.
+
+Each leg is now its own run. The external leg and the OneDrive leg have
+different roots, different prune sets and different counters — the scripts said
+so themselves, in the comment explaining why they never merged their results —
+and an archive that would be pushed to corporate cloud storage is a different
+decision from one that only reaches the artifact drive. A single pointer
+resolving to whichever leg ran last would answer neither question.
+
+So the `_SCAN_RUN_DIR` shared-directory mechanism is gone from both scripts, and
+with it the only reason they had to invoke themselves with a smuggled
+environment variable. The leg moved out of the report filename and into the run
+id: `archive-content-scan-external.md` inside
+`pre-image-backup-home-<stamp>/` became `archive-content-scan.md` inside
+`pre-image-backup-home-external-<stamp>/`.
+
+### Two domain indexes, not one widened table
+
+The counts did **not** merge. The sweep counts credential-shaped files found
+outside and inside `secrets-encrypted/`; a content scan counts archives examined
+and archives holding a credential-shaped member. One table carrying both would
+leave four of its columns blank on every row — a schema pretending two questions
+are one.
+
+`content-scan-index.md` sits beside `loose-secrets-index.md` instead, the same
+relationship `repo-audit-index.md` and `size-audit-index.md` have with their own
+categories. The shared `MANIFEST.md` stays the single run index over all three
+producers, which is the part that had to be one thing.
+
+It also gave somewhere to write the fact that matters most about these runs:
+**only the sweep feeds `findings-ledger.tsv` and `open-findings.md`**, which is
+what the Phase 6B gate reads. That was previously implied by the separate
+directory and is now stated in the index header.
+
+### `.internal/artifact-run-cli.sh` — the library, for producers that are not Bash
+
+`artifact_run_begin` sets shell variables in its caller, which a command
+substitution discards and another language cannot receive at all. The Postman
+scanner is Python, so it had two options: reimplement the point rules, the
+manifest format and the pointer computation — a second implementation that could
+only ever drift from the first — or reach the library some other way.
+
+The new helper is that other way: `begin` prints the staging directory,
+`finalize` promotes and indexes it, `abort` discards it, `official` resolves a
+pointer. `finalize` rebuilds the library's run variables from the staging
+directory's own name, `.<context>-<stamp>.incomplete`, which is why it takes the
+path `begin` printed rather than a run id.
+
+### Both scanners had been moved and neither could find its configuration
+
+Not a consequence of this change — it was already true, and the conversion is
+what surfaced it.
+
+`.internal/home/scan-archive-contents.sh` and
+`.internal/home/scan-postman-collections.py` each computed the repository root
+two levels up from their own file. From `.internal/home/` that reaches
+`.internal/`, and both then join `.internal` again, so each looked for
+`<repo>/.internal/.internal/load-reimage-config.sh`.
+
+The two failed differently, which is why only one of them was visible:
+
+| | Guard | Result |
+|---|---|---|
+| `scan-archive-contents.sh` | `if [[ -f … ]]` | ran on without the artifact-config fragments, silently |
+| `scan-postman-collections.py` | `die()` | exited 2 on its documented invocation |
+
+Which is why the volume holds two archive runs and **no Postman run at all**.
+`backup-apps.md` Step has been telling the operator to run a command that could
+not work. Both roots now climb three levels, and the archive scanner's usage
+block stops naming `.internal/scan-archive-contents.sh`, a path it left when it
+moved into `home/`.
+
+### Verification
+
+Both scanners exercised end to end against scratch categories: staged run,
+report written, domain row appended, run promoted, pointer resolved. The CLI
+exercised on its own first — `begin` → write → `finalize` → `official` — before
+either producer was pointed at it.
+
+`bash -n` clean on the CLI and the archive scanner; `ast.parse` clean on the
+Postman scanner. `verify-script-portability.sh` 0 WARN / 0 FAIL.
+`verify-doc-paths.sh --all` 0 MISSING / 0 ANCHOR BROKEN.
+`verify-runbook-structure.sh` unchanged at 25 FAIL.
+
+**Linux, Bash 5.x.** `shellcheck` unavailable; `/bin/bash -n` under macOS Bash
+3.2 is owed here as on Revisions 116–140.
 
 ---
 
