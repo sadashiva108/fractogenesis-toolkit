@@ -46,8 +46,8 @@
 # Options:
 #   --runbook NAME         Which phase's exit criteria to record. Required.
 #                          Supported: restore-runtime, restore-access,
-#                          restore-git, restore-repos, restore-apps.
-#                         Supported: 10A, 10B
+#                          restore-git, restore-repos, restore-apps,
+#                          restore-home.
 #   --artifact-root PATH  Override REIMAGE_ARTIFACT_ROOT from shared config.
 #   --output-root PATH    Category root for the run. A relative value is
 #                         resolved against the current directory, and a

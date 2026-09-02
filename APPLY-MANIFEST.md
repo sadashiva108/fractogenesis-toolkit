@@ -1,5 +1,7 @@
 # Apply Manifest
 
+**Revision 139** — supersedes Revision 138 and earlier. Three usage blocks stop naming phases the code has not dispatched on for two revisions, a purely manual artifact gets a rule of its own, and the first-wins rule gains its exception.
+
 **Revision 138** — supersedes Revision 137 and earlier. The evidence half of the migration: nine pre-image categories become indexed runs, and the one script whose context would have been converted into the wrong name is fixed first.
 
 **Revision 137** — supersedes Revision 136 and earlier. The Office-stability pair say which is which, and Phase 15 gets the boundary that closes the chain.
@@ -384,6 +386,104 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `setup-reimage-env.sh` | `bin/setup-reimage-env.sh` |
 | `compare-restored-state.sh` | `bin/compare-restored-state.sh` |
 | `capture-office-stability.sh` | `bin/capture-office-stability.sh` |
+
+---
+
+## Revision 139 — a script is not a changelog, and "manual" is not a filename
+
+Three usage blocks advertised **phase ordinals** for an option that takes a
+runbook name, in two cases directly beneath the correct list.
+
+| File | Removed | Now says |
+|---|---|---|
+| `record-restore-exit.sh` | `Supported: 10A, 10B` | its five names, plus `restore-home` — which Revision 137 added to the code and not to the text |
+| `record-restore-prereqs.sh` | `Supported: 10A, 10B` | all six names |
+| `record-restore-state.sh` | `Supported: 10B` | all four names |
+
+Under the stray line in `record-restore-prereqs.sh` was the defect Revision 136
+was written to end. Its required-argument error hardcoded
+
+```
+Supported: restore-runtime, restore-access
+```
+
+while `SUPPORTED_RUNBOOKS` listed six. Invoking it with no `--runbook` — which is
+how an operator discovers the option — told them that four of their own phases do
+not exist. That is the failure Revision 126 fixed in the sibling script and
+Revision 136 was meant to make structurally impossible; it survived because the
+consolidation reached the guard and the hint and not the required-argument error.
+It now reads `$SUPPORTED_RUNBOOKS`, like every other message in the file — with
+the declaration moved above the required-argument check, because under
+`set -u` the fix as first written aborted on an unbound variable before it could
+print anything. Caught by running each of the three with no arguments, which is
+the one path a syntax check does not exercise.
+
+The comment above that variable cited Revision 126 as history. A script is not a
+place to keep a change log: what replaced it states the failure mode the shape
+prevents, and does not date itself.
+
+**Scoped and deliberately not done.** Roughly 40 comments across `bin/` take the
+form *"it used to X"* or *"an earlier revision Y"*. Those are rationale by
+contrast — they explain the current shape by naming the shape that failed, and
+they are still true of the code as it stands. Only genuinely stale text was
+removed here: a line contradicting the line above it, and a revision number cited
+as a change record.
+
+### D7 — a purely manual artifact moves, and the test is a status column
+
+A split exists because a mixed-mode artifact has an automated half that has to
+stay with its run. An artifact that is **only** answered rows has no such half, so
+the whole file moves to `sign-offs/` and nothing is left behind.
+
+The test is an answerable status column, not the word "manual" in the filename —
+and in the `verify-reimaged-system` restart bundles those two things point at
+different files.
+
+| File | Answerable rows | Verdict |
+|---|---|---|
+| `restart-checkpoints.md` | 6, all `TODO` | **moves** |
+| `manual-captures-required.md` | 0 — columns are *Area · Manual Item · Why Manual* | **stays** |
+
+`manual-captures-required.md` holds no answer. It enumerates the manual rows of
+`checklist.md` with a one-line reason each cannot be scripted, is regenerated
+identically every run, and six documents cite it at its in-run path as Phase 14's
+pre-flight input. Revision 138 recorded it as an open question on the strength of
+its name; opening it settled the question the other way.
+
+`restart-checkpoints.md` is byte-identical across the runs sharing a generator
+version, and its rows are phase-level rather than run-level, so **one** sign-off
+carries them — taken from the post-restart bundle, which `verify-reimaged-system.md`
+already designates as the sign-off bundle. All six rows moved as `TODO`; nothing
+was answered or re-verified. The copies left behind are generated companions like
+`README.md` and `time-machine-plan.md`, holding nothing a rerun could destroy.
+
+### D8 — the artifact root is the scope boundary
+
+Conversion and re-run apply to `$REIMAGE_ARTIFACT_ROOT` and nowhere else.
+
+`home-files-backup/home/reimage-workspace/` holds a 2026-06-30 office-stability
+bundle that pattern-matches a convertible artifact exactly. It is restored home
+content that happens to contain artifact-shaped files. The rule that excludes it
+is **positional** rather than a judgement about what the file looks like, which is
+what makes it safe to apply without opening the file.
+
+### The first-wins rule gains the exception it was missing
+
+Revision 138's conversion notes said never to re-record a `before` or
+`pre-restart`. That is too strong, and the correction matters because it is the
+rule that governs the two pinned runs.
+
+The rule is about **state**, not the clock. A `before` taken after the phase
+changed what it measures is well-formed and wrong: the library indexes it, refuses
+to advance the pointer, and leaves a run that reads as a baseline and is not one.
+But where the state the point describes is still observable unchanged — the phase
+has not run against those targets, or the conditions are provably the same — a new
+run records the *same* moment and is legitimate. Where it is better than a
+defective first run, the pin moves to it deliberately, with the reason recorded in
+`PINNED-OFFICIAL.txt`. That is what a pin is for.
+
+Both pinned `pre-restart` runs are that class: the defaults counted raw captures
+the script had not yet written, and a comparable state was still there to record.
 
 ---
 

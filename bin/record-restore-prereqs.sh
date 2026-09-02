@@ -62,7 +62,9 @@
 #
 # Options:
 #   --runbook NAME         Which phase's prerequisites to check. Required.
-#                         Supported: 10A, 10B
+#                         Supported: restore-runtime, restore-access,
+#                         restore-git, restore-repos, restore-apps,
+#                         restore-home.
 #   --artifact-root PATH  Override REIMAGE_ARTIFACT_ROOT from shared config.
 #   --output-root PATH    Category root for the run. A relative value is
 #                         resolved against the current directory, and a
@@ -150,20 +152,18 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+# One list, used by the required-argument error, the guard and the hint.
+#
+# A second literal cannot drift from this one, which is the failure mode a hardcoded
+# hint invites: it advertises a shorter list than the case accepts and tells an
+# operator their own phase is unsupported.
+SUPPORTED_RUNBOOKS="restore-runtime restore-access restore-git restore-repos restore-apps restore-home"
+
 if [[ -z "${RUNBOOK:-}" ]]; then
-  echo "ERROR: --runbook is required. Supported: restore-runtime, restore-access" >&2
+  echo "ERROR: --runbook is required. Supported: $SUPPORTED_RUNBOOKS" >&2
   usage >&2
   exit 2
 fi
-
-# One list, used by the required-argument error, the guard and the hint.
-#
-# Two literals drifted apart here: the case dispatched on five runbooks while the
-# hint advertised two, so running it for restore-git, restore-repos or
-# restore-apps -- each of which works -- told the operator their own phase was
-# unsupported. Revision 126 fixed the same defect in record-restore-exit.sh; this
-# is the shape that stops it recurring.
-SUPPORTED_RUNBOOKS="restore-runtime restore-access restore-git restore-repos restore-apps restore-home"
 
 case " $SUPPORTED_RUNBOOKS " in
   *" $RUNBOOK "*) PHASE_RUNBOOK="$RUNBOOK.md" ;;

@@ -75,7 +75,8 @@
 #
 # Options:
 #   --runbook NAME         Which phase's target set to capture. Required.
-#                         Supported: 10B
+#                         Supported: restore-access, restore-git,
+#                         restore-repos, restore-apps.
 #   --point POINT         before | after | delta. Default: before.
 #
 #                         `before` and `after` are captures: they walk the
