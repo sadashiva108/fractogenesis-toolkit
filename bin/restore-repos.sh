@@ -6,19 +6,20 @@
 #
 # Reads the most recent pre-image repository audit produced by Phase 2A
 # (backup-repos.md), classifies every tracked repo against the current state
-# of the reimaged Mac, and emits a per-repo restore-status report along with
-# ready-to-run `git clone` and `rsync` commands the operator executes by hand.
+# of the reimaged Mac, and writes a per-repo restore-status report. With
+# --hydrate it also acts: clone what the plan selected and is absent, then
+# merge each declared rehydration source into the working tree.
 #
 # This file is intended for bin/. It is the post-image counterpart to
 # bin/backup-repos.sh: that script writes repo-audit-reports/runs/pre-image-*,
 # this one consumes the latest such run and writes
 # repo-audit-reports/runs/post-image-restore-*.
 #
-# This is an aggregate validator: it records evidence and prints action items,
-# it does not autonomously clone repositories or overwrite working trees. The
-# only mutating operation it performs is an opt-in rsync of pre-image kept
-# ignored files back into repos already present on disk, and only when
-# --apply-ignored-files is passed and the operator confirms each repo.
+# Without --hydrate it is an aggregate validator: it records evidence and
+# reports what it would do, and touches nothing. With --hydrate the mutating
+# operations are bounded by the clone plan under $REIMAGE_WORKSPACE_ROOT: a
+# repository the plan did not select is never cloned, and a working tree whose
+# origin disagrees with the plan is reported as a conflict and left alone.
 #
 # --- BEGIN USAGE ---
 # Usage:
@@ -30,9 +31,15 @@
 #   # $REIMAGE_ARTIFACT_ROOT/repo-audit-reports/runs/post-image-restore-*.
 #   ./bin/restore-repos.sh
 #
-#   # Apply staged-ignored-files/live/<label>/ back into each repo already
-#   # present on disk, prompting Y/n per repo before rsyncing.
-#   ./bin/restore-repos.sh --apply-ignored-files
+#   # Clone what is missing and merge every rehydration source.
+#   ./bin/restore-repos.sh --hydrate
+#
+#   # Show what that would do, writing nothing.
+#   ./bin/restore-repos.sh --hydrate --dry-run
+#
+#   # Just the cloner, or just one source.
+#   ./bin/restore-repos.sh --hydrate --stage clone
+#   ./bin/restore-repos.sh --hydrate --stage ignored-files
 #
 #   # Override the artifact root for this invocation.
 #   ./bin/restore-repos.sh --artifact-root /path/to/reimage-artifact-root
@@ -65,8 +72,17 @@
 #                          Must name a pre-image-* or post-image-* run; values
 #                          containing .. or starting with / are rejected. The
 #                          same guards apply to latest-run.txt's contents.
-#   --apply-ignored-files  Rsync staged-ignored-files/live/<label>/ into each
-#                          repo present on disk, prompting Y/n per repo.
+#   --hydrate              Act: clone what is absent, then merge each declared
+#                          rehydration source. Without it the run is read-only
+#                          and reports what it would do.
+#   --dry-run              Write nothing anywhere: no run is staged, no sign-off
+#                          is opened, no index moves. The report and hydrated.md
+#                          are composed and printed to stdout instead. Composes
+#                          with --hydrate to show what hydrating would do.
+#                          Refused with --output or --emit-plan, which write.
+#   --stage NAME           Repeatable. Run only the named stage: `clone`, or any
+#                          ARTIFACT_TYPE from repo-rehydration-sources.conf.sh.
+#                          Omitted, every stage runs.
 #   --output DIR           Exact output directory for the generated report.
 #                          A relative value is resolved against the current
 #                          directory, and a destination inside the repo
@@ -86,8 +102,8 @@
 #   -h, --help             Show this message and exit.
 #
 # Requires:
-#   rsync   Used only by --apply-ignored-files and by the emitted
-#           rsync-ignored-files.sh commands.
+#   rsync   Used by --hydrate to merge a rehydration source into a working
+#           tree. Not needed for a run without --hydrate.
 #
 # Configuration precedence:
 #   1. Explicit command-line options for this invocation.
@@ -178,7 +194,9 @@ STAMP="$(date +%Y%m%d-%H%M%S)"
 REPORT_GENERATED="$(date)"
 OUTPUT_DIR=""
 INPUT_RUN=""
-APPLY_IGNORED_FILES=false
+HYDRATE=false
+DRY_RUN=false
+STAGES=""
 OPEN_RESULT=false
 INIT_PLAN_CONFIG=false
 FORCE_INIT=false
@@ -208,9 +226,18 @@ while [[ $# -gt 0 ]]; do
       INPUT_RUN="$2"
       shift 2
       ;;
-    --apply-ignored-files)
-      APPLY_IGNORED_FILES=true
+    --hydrate)
+      HYDRATE=true
       shift
+      ;;
+    --dry-run)
+      DRY_RUN=true
+      shift
+      ;;
+    --stage)
+      require_option_value "$1" "${2:-}"
+      STAGES="${STAGES}${STAGES:+ }$2"
+      shift 2
       ;;
     --output)
       require_option_value "$1" "${2:-}"
@@ -232,6 +259,20 @@ while [[ $# -gt 0 ]]; do
       ;;
   esac
 done
+
+# --dry-run means what it means in every other script here: nothing is written
+# anywhere. Two options ask for the opposite, so they are refused rather than
+# silently ignored -- a flag that appears to have been honoured and was not is
+# the failure this phase keeps meeting.
+if [[ "$DRY_RUN" == true && -n "$OUTPUT_DIR" ]]; then
+  echo "ERROR: --dry-run writes nothing, so --output has nowhere to write to." >&2
+  exit 2
+fi
+if [[ "$DRY_RUN" == true && "$EMIT_PLAN" == true ]]; then
+  echo "ERROR: --dry-run writes nothing, and --emit-plan exists to write a file." >&2
+  echo "Run --emit-plan on its own; it never touches the workspace plan." >&2
+  exit 2
+fi
 
 # ---------------------------------------------------------------------------
 # Resolve inputs (pre-image audit) and outputs
@@ -392,7 +433,18 @@ STAGED_LIVE="$REIMAGE_ARTIFACT_ROOT/staged-ignored-files/live"
 # relative to the category root. `post-image-restore` is its own lineage, so
 # advancing it never disturbs `official/pre-image.txt`.
 OUTPUT_DIR_DEFAULTED=false
-if [[ -z "$OUTPUT_DIR" ]]; then
+DRY_RUN_TMP=""
+if [[ "$DRY_RUN" == true ]]; then
+  # The report is still composed, because a dry run whose output you cannot read
+  # tells you nothing. It is composed somewhere the operator's evidence is not:
+  # no run is staged, so no run id is consumed and no pointer moves.
+  DRY_RUN_TMP="$(mktemp -d "${TMPDIR:-/tmp}/restore-repos-dryrun.XXXXXX")" || {
+    echo "ERROR: could not create a scratch directory for --dry-run." >&2
+    exit 2
+  }
+  trap 'rm -rf "$DRY_RUN_TMP"' EXIT
+  OUTPUT_DIR="$DRY_RUN_TMP"
+elif [[ -z "$OUTPUT_DIR" ]]; then
   if ! artifact_run_begin "$AUDIT_ROOT" "post-image-restore"; then
     echo "ERROR: could not stage a run under: $AUDIT_ROOT" >&2
     exit 2
@@ -428,10 +480,16 @@ mkdir -p "$RAW_DIR"
 # the Phase 12 plan-notes'. repo-audit-reports/ is shared with the PRE-image
 # audit, so a sign-off there would be the one post-image answer a reader has to
 # know to look for somewhere else.
+#
+# A dry run does not open one. A sign-off carries answers forward across runs,
+# so one opened by a rehearsal would ask the operator to answer for work that
+# did not happen.
 SIGNOFF_ROOT="$REIMAGE_ARTIFACT_ROOT/reimaged-system/sign-offs"
-if ! signoff_begin "$SIGNOFF_ROOT" "post-image-restore" "post-image-restore-$STAMP"; then
-  echo "ERROR: cannot open a sign-off under: $SIGNOFF_ROOT" >&2
-  exit 2
+if [[ "$DRY_RUN" != true ]]; then
+  if ! signoff_begin "$SIGNOFF_ROOT" "post-image-restore" "post-image-restore-$STAMP"; then
+    echo "ERROR: cannot open a sign-off under: $SIGNOFF_ROOT" >&2
+    exit 2
+  fi
 fi
 
 # Preserve the pre-image inputs alongside the report for provenance.
@@ -594,10 +652,8 @@ classify_repo() {
   CLONE_DEST="$CLONE_TARGET_ROOT/$label"
 
   # Presence is asked at the clone destination, not at the pre-image path. The
-  # pre-image path does not exist on a reimaged Mac, so testing it pinned
-  # PATH_PRESENT to "no" forever: `Needs clone: 0` was unreachable,
-  # --apply-ignored-files silently did nothing, and IGNORED_FILES_COMPLETE could
-  # never become true.
+  # pre-image path does not exist on a reimaged Mac, so a presence test against
+  # it answers "no" for every repository forever, whatever is on disk.
   if [[ -d "$CLONE_DEST/.git" ]]; then
     PATH_PRESENT="yes"
   else
@@ -717,62 +773,92 @@ if [[ -n "$DUPLICATE_LABELS" ]]; then
   echo "WARNING: $DUPLICATE_LABEL_COUNT repo basename(s) appear more than once." >&2
   echo "Staged bundles are keyed by basename, so these share one bundle:" >&2
   printf '%s\n' "$DUPLICATE_LABELS" | sed 's/^/  - /' >&2
-  echo "Reconcile these by hand before running the emitted rsync commands." >&2
+  echo "Reconcile these by hand before hydrating: one bundle cannot serve two." >&2
   echo "" >&2
 fi
 
-# Build clone-commands and rsync-commands as here-doc-friendly text lines
-# collected in temporary files (avoids Bash 3.2 array-under-set-u pitfalls).
-CLONE_CMDS="$OUT/clone-commands.sh"
-RSYNC_CMDS="$OUT/rsync-ignored-files.sh"
-GITIGNORED_CMDS="$OUT/rsync-repos-gitignored.sh"
-{
-  echo "#!/usr/bin/env bash"
-  echo "# Generated by restore-repos.sh on $(date)"
-  echo "# Source repo-audit run: $INPUT_RUN"
-  echo "# Review each command before running. This script does NOT autorun."
-  echo "set -euo pipefail"
-  echo ""
-  echo "# Every path and URL below is already resolved, so this script needs no"
-  echo "# reimage.env and runs in a plain shell."
-  echo ""
-  echo "# Neither clone root is guaranteed to exist on a freshly reimaged Mac;"
-  echo "# without this the first 'cd' fails and set -e kills the whole batch."
-  echo "mkdir -p \"$LOCAL_WORK_REPO_ROOT\" \"$LOCAL_PERSONAL_REPO_ROOT\""
-  echo ""
-} > "$CLONE_CMDS"
-{
-  echo "#!/usr/bin/env bash"
-  echo "# Generated by restore-repos.sh on $(date)"
-  echo "# Rsync pre-image kept ignored files back into cloned repos."
-  echo "# Review each command before running. This script does NOT autorun."
-  echo "set -euo pipefail"
-  echo ""
-} > "$RSYNC_CMDS"
-{
-  echo "#!/usr/bin/env bash"
-  echo "# Generated by restore-repos.sh on $(date)"
-  echo "# Restore per-repo gitignored SECRETS from secrets-encrypted/repos-gitignored/."
-  echo "# These live inside the encrypted DMG, so it must be attached first."
-  echo "# Review each command before running. This script does NOT autorun."
-  echo "set -euo pipefail"
-  echo ""
-  echo "# Locate the mounted image by content, not by volume name -- the volname"
-  echo "# used at hdiutil create time need not match the .dmg filename."
-  echo 'DMG_MOUNT="${DMG_MOUNT:-}"'
-  echo 'if [ -z "$DMG_MOUNT" ]; then'
-  echo '  for c in /Volumes/*/repos-gitignored; do'
-  echo '    [ -d "$c" ] && DMG_MOUNT="$(dirname "$c")" && break'
-  echo '  done'
-  echo 'fi'
-  echo 'if [ -z "$DMG_MOUNT" ]; then'
-  echo '  echo "ERROR: secrets DMG is not attached (no /Volumes/*/repos-gitignored found)." >&2'
-  echo '  echo "Attach it first -- see restore-access.md Step 1 -- or set DMG_MOUNT=/Volumes/<name>." >&2'
-  echo '  exit 2'
-  echo 'fi'
-  echo 'echo "Using image at: $DMG_MOUNT"'
-  echo ""
-} > "$GITIGNORED_CMDS"
+# ---------------------------------------------------------------------------
+# The plan, and the stages this run will run
+#
+# The plan is read at run time and this script does the work. A bundle holds a
+# record of what happened, not a script to be edited and rerun: an emitted
+# script is a snapshot of a plan, and the next run overwrites every hand edit
+# made to it. The durable, editable copy is the plan itself, in the workspace.
+# ---------------------------------------------------------------------------
+PLAN_LIB="$REPO_ROOT/.internal/git/repo-plan.sh"
+HYDRATE_LIB="$REPO_ROOT/.internal/git/repo-hydrate.sh"
+for lib in "$PLAN_LIB" "$HYDRATE_LIB"; do
+  if [[ ! -f "$lib" ]]; then
+    echo "ERROR: required library not found: $lib" >&2
+    exit 2
+  fi
+done
+# shellcheck source=../.internal/git/repo-plan.sh
+source "$PLAN_LIB"
+# shellcheck source=../.internal/git/repo-hydrate.sh
+source "$HYDRATE_LIB"
+
+if ! repo_plan_load "${REPO_PLAN_SOURCE_DIR:-}"; then
+  echo "ERROR: the clone plan did not load. Nothing was written." >&2
+  exit 2
+fi
+
+plan_w=0
+while [[ "$plan_w" -lt "${#REPO_PLAN_WARNINGS[@]}" ]]; do
+  echo "WARNING: ${REPO_PLAN_WARNINGS[$plan_w]}" >&2
+  plan_w=$((plan_w + 1))
+done
+
+# `clone` is a stage like any source, so "run only the cloner" and "run only one
+# source" are one mechanism rather than two flags.
+ALL_STAGES="clone"
+stage_i=0
+while [[ "$stage_i" -lt "${#REPO_SRC_TYPE[@]}" ]]; do
+  ALL_STAGES="$ALL_STAGES ${REPO_SRC_TYPE[$stage_i]}"
+  stage_i=$((stage_i + 1))
+done
+[[ -n "$STAGES" ]] || STAGES="$ALL_STAGES"
+
+for stage_want in $STAGES; do
+  stage_found=false
+  for stage_have in $ALL_STAGES; do
+    [[ "$stage_want" == "$stage_have" ]] && stage_found=true
+  done
+  if [[ "$stage_found" != true ]]; then
+    echo "ERROR: unknown stage: $stage_want" >&2
+    echo "Stages available from this plan: $ALL_STAGES" >&2
+    exit 2
+  fi
+done
+
+stage_selected() {
+  local want="$1" have
+  for have in $STAGES; do
+    [[ "$want" == "$have" ]] && return 0
+  done
+  return 1
+}
+
+# Per-repository, per-stage outcomes. A file rather than arrays because both
+# hydrated.md and the domain index read it back, and one of them counts.
+HYDRATION_TSV="$RAW_DIR/hydration.tsv"
+printf 'repo\tstage\toutcome\tdetail\n' > "$HYDRATION_TSV"
+
+if [[ "$HYDRATE" == true && "$DRY_RUN" == true ]]; then
+  HYDRATE_MODE_LABEL="hydrate --dry-run"
+elif [[ "$HYDRATE" == true ]]; then
+  HYDRATE_MODE_LABEL="hydrate"
+elif [[ "$DRY_RUN" == true ]]; then
+  HYDRATE_MODE_LABEL="report --dry-run"
+else
+  HYDRATE_MODE_LABEL="report"
+fi
+
+PLANNED_COUNT=0
+EXCLUDED_COUNT=0
+UNREVIEWED_COUNT=0
+CLONED_COUNT=0
+CONFLICT_COUNT=0
 
 # Read repos.tsv, skipping the header row.
 first=true
@@ -793,120 +879,125 @@ do
 
   clone_url="$(rewrite_remote_for_host "$remote_url" "$CLONE_HOST")"
 
+  # -----------------------------------------------------------------
+  # Join the audit row against the plan
+  #
+  # The audit says what existed. The plan says what is wanted and where. A
+  # repository in neither the selected nor the excluded fragment is UNREVIEWED:
+  # reported every run, never cloned, never silently skipped. A default action
+  # here is how a repository nobody decided about goes missing.
+  # -----------------------------------------------------------------
+  plan_idx=""
+  plan_state="unreviewed"
+  if plan_idx="$(repo_plan_index "$label" 2>/dev/null)"; then
+    plan_state="planned"
+  else
+    plan_idx=""
+    excl_i=0
+    while [[ "$excl_i" -lt "${#REPO_EXCL_NAME[@]}" ]]; do
+      if [[ "${REPO_EXCL_NAME[$excl_i]}" == "$label" ]]; then
+        plan_state="excluded"
+        break
+      fi
+      excl_i=$((excl_i + 1))
+    done
+  fi
+
+  hydrate_url="$clone_url"
+  hydrate_dest="$CLONE_DEST"
+  if [[ -n "$plan_idx" ]]; then
+    PLANNED_COUNT=$((PLANNED_COUNT + 1))
+    [[ -n "${REPO_PLAN_URL[$plan_idx]}" ]]  && hydrate_url="${REPO_PLAN_URL[$plan_idx]}"
+    [[ -n "${REPO_PLAN_PATH[$plan_idx]}" ]] && hydrate_dest="${REPO_PLAN_PATH[$plan_idx]}"
+  elif [[ "$plan_state" == "excluded" ]]; then
+    EXCLUDED_COUNT=$((EXCLUDED_COUNT + 1))
+  else
+    UNREVIEWED_COUNT=$((UNREVIEWED_COUNT + 1))
+  fi
+
+  # classify_repo asked whether the repository is present at the ROUTED
+  # destination. When the plan names its own LOCAL_REPO_PATH that is a different
+  # directory, and presence has to be asked where the repository is actually
+  # going -- otherwise `Present on disk` reports on a path this run will never
+  # touch, and the clone stage and the count disagree about the same repository.
+  if [[ -n "$plan_idx" && "$hydrate_dest" != "$CLONE_DEST" ]]; then
+    if [[ -d "$hydrate_dest/.git" ]]; then
+      PATH_PRESENT="yes"
+    else
+      PATH_PRESENT="no"
+    fi
+  fi
+
+  head_sha="${head_line%% *}"
+  case "$head_sha" in
+    ''|*[!0-9a-fA-F]*) head_sha="" ;;
+  esac
+
   if [[ "$PATH_PRESENT" == "yes" ]]; then
     PRESENT_COUNT=$((PRESENT_COUNT + 1))
   else
     NEEDS_CLONE_COUNT=$((NEEDS_CLONE_COUNT + 1))
-    if [[ -n "$clone_url" ]]; then
-      {
-        echo "# $label"
-        if [[ -n "$ROUTE_REVIEW" ]]; then
-          echo "# REVIEW: $ROUTE_REVIEW"
-        fi
-        if [[ "$clone_url" != "$remote_url" ]]; then
-          echo "# remote rewritten onto the personal SSH routing host (owner matches GIT_PERSONAL_GITHUB_OWNER)"
-        fi
-        echo "cd \"$CLONE_TARGET_ROOT\" && git clone \"$clone_url\""
-        emit_extra_remotes "$remotes" "$CLONE_DEST"
-        if [[ -n "$branch" && "$branch" != "-" ]]; then
-          echo "git -C \"$CLONE_DEST\" checkout \"$branch\" 2>/dev/null || \\"
-          echo "  echo \"WARN: $label -- pre-image branch '$branch' not found in the clone\""
-        fi
-        # The pre-image HEAD is the cheapest possible proof you cloned the right
-        # remote. A repo whose personal remote was ahead of its work remote
-        # clones "successfully" from the stale one and looks fine until much later.
-        #
-        # `head` holds a decorated one-line log entry -- SHA, ref decorations and
-        # the subject -- so only its leading token is a revision. Passing the
-        # whole line produced a malformed `cat-file -e` argument that failed for
-        # every repository and reported the failure as a missing commit.
-        head_sha="${head_line%% *}"
-        case "$head_sha" in
-          ''|*[!0-9a-fA-F]*) head_sha="" ;;
-        esac
-        if [[ -n "$head_sha" ]]; then
-          echo "git -C \"$CLONE_DEST\" cat-file -e '$head_sha^{commit}' 2>/dev/null || \\"
-          echo "  echo \"WARN: $label -- pre-image HEAD $head_sha absent; wrong remote, or unpushed work\""
-        fi
-        echo ""
-      } >> "$CLONE_CMDS"
-    else
-      {
-        echo "# $label -- no remote URL recorded in pre-image audit; clone manually."
-        echo ""
-      } >> "$CLONE_CMDS"
-    fi
   fi
-
   if [[ "$IGN_AVAILABLE" == "yes" ]]; then
     IGN_AVAILABLE_COUNT=$((IGN_AVAILABLE_COUNT + 1))
-    {
-      echo "# $label"
-      # Guarded on the clone destination, not merely written to it: `rsync -a`
-      # CREATES a missing destination, so an unguarded command aimed at a repo
-      # that has not been cloned yet materialises a tree outside every
-      # repository and drops the bundle into it.
-      echo "if [ -d \"$CLONE_DEST/.git\" ]; then"
-      echo "  rsync -a --stats \\"
-      echo "    \"$STAGED_LIVE/$label/\" \\"
-      echo "    \"$CLONE_DEST/\""
-      echo "else"
-      echo "  echo \"skip: $label -- not cloned yet at $CLONE_DEST\""
-      echo "fi"
-      echo ""
-    } >> "$RSYNC_CMDS"
   fi
-
-  # repos-gitignored/ is inside the DMG and cannot be probed from here, so emit
-  # a guarded block for every repo and let the generated script skip the ones
-  # the image does not carry.
-  if [[ -n "$label" ]]; then
-    {
-      echo "# $label"
-      echo "SRC=\"\$DMG_MOUNT/repos-gitignored/$label\""
-      echo "if [ ! -d \"\$SRC\" ]; then"
-      echo "  echo \"skip: $label -- not present in the image\""
-      echo "elif [ ! -d \"$CLONE_DEST/.git\" ]; then"
-      # These are decrypted credentials. An unguarded `rsync -a` at a
-      # destination that does not exist would create it and leave them in the
-      # clear outside every repository, where nothing later in the workflow
-      # looks for them.
-      echo "  echo \"skip: $label -- not cloned yet at $CLONE_DEST\""
-      echo "else"
-      echo "  rsync -a --stats \"\$SRC/\" \"$CLONE_DEST/\""
-      echo "fi"
-      echo ""
-    } >> "$GITIGNORED_CMDS"
-  fi
-
   if [[ "$(numeric_or_zero "$CARRY_FORWARD_ROWS")" -gt 0 ]]; then
     CARRY_FORWARD_TOTAL=$((CARRY_FORWARD_TOTAL + CARRY_FORWARD_ROWS))
   fi
 
-  # ---------------------------------------------------------------
-  # Optional: apply staged ignored files with per-repo confirmation
-  # ---------------------------------------------------------------
-  if [[ "$APPLY_IGNORED_FILES" == "true" \
-        && "$PATH_PRESENT" == "yes" \
-        && "$IGN_AVAILABLE" == "yes" ]]; then
-    printf '\nApply staged ignored files for %s?\n' "$label"
-    printf '  source: %s/%s/\n' "$STAGED_LIVE" "$label"
-    printf '  target: %s/\n' "$CLONE_DEST"
-    printf '  proceed? [y/N]: '
-    read -r reply < /dev/tty || reply=""
-    case "$reply" in
-      y|Y|yes|YES)
-        if rsync -a --stats "$STAGED_LIVE/$label/" "$CLONE_DEST/"; then
-          IGN_APPLIED="yes"
-          IGN_APPLIED_COUNT=$((IGN_APPLIED_COUNT + 1))
+  # Only a planned repository is acted on. Excluded and unreviewed ones are
+  # recorded with the reason and left alone.
+  if [[ "$plan_state" != "planned" ]]; then
+    if [[ "$plan_state" == "excluded" ]]; then
+      hyd_detail="excluded: ${REPO_EXCL_REASON[$excl_i]}"
+    else
+      hyd_detail="in the audit but in neither plan fragment -- select it or exclude it with a reason"
+    fi
+    printf '%s\t%s\t%s\t%s\n' "$label" "plan" "$plan_state" "$hyd_detail" >> "$HYDRATION_TSV"
+  else
+    # A clone-stage conflict quarantines the repository for the rest of the run.
+    # The working tree on disk is not the one the plan describes, and a source
+    # merged into it would be written into a repository nobody declared. The
+    # clone stage refuses to touch it; the source stages have to refuse for the
+    # same reason, or the refusal is only half kept.
+    repo_conflicted=false
+    if stage_selected clone; then
+      if [[ "$HYDRATE" == true ]]; then
+        repo_hydrate_clone "$label" "$hydrate_url" "$hydrate_dest" \
+          "$branch" "$head_sha" "$remotes" "$DRY_RUN"
+      else
+        # No --hydrate: report the state without acting, using the same
+        # resolution the acting path would use.
+        repo_hydrate_clone "$label" "$hydrate_url" "$hydrate_dest" \
+          "$branch" "$head_sha" "$remotes" "true"
+        case "$HYDRATE_OUTCOME" in
+          would-clone) HYDRATE_OUTCOME="needs-clone"; HYDRATE_DETAIL="absent at $hydrate_dest" ;;
+        esac
+      fi
+      case "$HYDRATE_OUTCOME" in
+        cloned)   CLONED_COUNT=$((CLONED_COUNT + 1)) ;;
+        conflict) CONFLICT_COUNT=$((CONFLICT_COUNT + 1)); repo_conflicted=true ;;
+      esac
+      printf '%s\t%s\t%s\t%s\n' "$label" "clone" "$HYDRATE_OUTCOME" "$HYDRATE_DETAIL" >> "$HYDRATION_TSV"
+    fi
+
+    src_i=0
+    while [[ "$src_i" -lt "${#REPO_SRC_TYPE[@]}" ]]; do
+      if stage_selected "${REPO_SRC_TYPE[$src_i]}"; then
+        if [[ "$repo_conflicted" == true ]]; then
+          HYDRATE_OUTCOME="skipped"
+          HYDRATE_DETAIL="the clone stage reported a conflict; nothing is merged into a tree the plan does not describe"
+        elif [[ "$HYDRATE" == true ]]; then
+          repo_hydrate_source "$label" "$src_i" "$hydrate_dest" "$repo_path" "$DRY_RUN"
         else
-          IGN_APPLIED="failed"
+          repo_hydrate_source "$label" "$src_i" "$hydrate_dest" "$repo_path" "true"
         fi
-        ;;
-      *)
-        IGN_APPLIED="skipped"
-        ;;
-    esac
+        printf '%s\t%s\t%s\t%s\n' \
+          "$label" "${REPO_SRC_TYPE[$src_i]}" "$HYDRATE_OUTCOME" "$HYDRATE_DETAIL" >> "$HYDRATION_TSV"
+        [[ "$HYDRATE_OUTCOME" == "applied" ]] && IGN_APPLIED_COUNT=$((IGN_APPLIED_COUNT + 1))
+      fi
+      src_i=$((src_i + 1))
+    done
   fi
 
   printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" \
@@ -1072,7 +1163,7 @@ CLONES_COMPLETE="false"
 IGNORED_FILES_COMPLETE="false"
 if [[ "$IGN_AVAILABLE_COUNT" -eq 0 ]]; then
   IGNORED_FILES_COMPLETE="true"
-elif [[ "$APPLY_IGNORED_FILES" == "true" && "$IGN_APPLIED_COUNT" -eq "$IGN_AVAILABLE_COUNT" ]]; then
+elif [[ "$HYDRATE" == true && "$IGN_APPLIED_COUNT" -ge "$IGN_AVAILABLE_COUNT" ]]; then
   IGNORED_FILES_COMPLETE="true"
 fi
 
@@ -1098,6 +1189,21 @@ fi
 # ---------------------------------------------------------------------------
 REPORT_GENERATED="${REPORT_GENERATED:-$(date)}"
 REPORT_SCRIPT="$(basename "$0")"
+# A default-located run is composed in a staging directory and promoted after
+# the report is written, so every path the report quotes is the promoted one --
+# a reader who copies a path out of the report must get one that exists.
+if [[ "$OUTPUT_DIR_DEFAULTED" == true ]]; then
+  REPORT_OUT="$ARTIFACT_RUN_FINAL_DIR"
+else
+  REPORT_OUT="$OUT"
+fi
+# A dry run opens no sign-off, so the report says so rather than printing the
+# blank line an unset path would leave behind.
+if [[ "$DRY_RUN" == true ]]; then
+  SIGNOFF_LOCATION="(none — --dry-run opens no sign-off)"
+else
+  SIGNOFF_LOCATION="$SIGNOFF_FILE"
+fi
 
 if [[ "$DUPLICATE_LABEL_COUNT" -eq 0 ]]; then
   DUP_STATUS="PASS"
@@ -1119,7 +1225,7 @@ cat > "$REPORT_MD" <<EOF
 
 Generated: $REPORT_GENERATED
 Script: $REPORT_SCRIPT
-Output directory: $OUT
+Output directory: $REPORT_OUT
 Source pre-image audit run: $INPUT_RUN
 Repositories in inventory: $TOTAL
 
@@ -1146,8 +1252,8 @@ remote before reimage. See \`restore-repos.md\` for the full runbook.
 |---|---|---|---|---|
 | No duplicate repo basenames | Command | \`cut -f1 repos.tsv | xargs -n1 basename | sort | uniq -d\` is empty | $DUP_STATUS | $DUP_NOTE |
 | Pre-image repo inventory read successfully | Command | \`repos.tsv\` produced status rows | $REPOS_INDEX_STATUS | See \`raw/repos-input.tsv\`. |
-| Every tracked repo is present on disk | Mixed | \`git clone\` output from \`clone-commands.sh\` succeeded for each entry | $CLONES_STATUS | Emitted commands to \`clone-commands.sh\`; run manually and rerun this script to confirm. |
-| Every staged ignored bundle applied | Mixed | \`rsync-ignored-files.sh\` executed or \`--apply-ignored-files\` used | $IGNORED_STATUS | Emitted commands to \`rsync-ignored-files.sh\`; review before running. |
+| Every tracked repo is present on disk | Command | \`Present\` in the per-repo table below is \`yes\` for every row | $CLONES_STATUS | Run \`--hydrate\` to clone what the plan selected, then rerun to confirm. |
+| Every staged ignored bundle applied | Command | \`hydrated.md\` records an outcome for every repository with a bundle available | $IGNORED_STATUS | Run \`--hydrate --stage ignored-files\`. |
 
 ## Manual Sign-Off
 
@@ -1156,7 +1262,7 @@ directory, so an answer recorded here would not reach the next one. They live in
 the sign-off, which carries answers forward and records the run each was
 answered against:
 
-    $SIGNOFF_FILE
+    $SIGNOFF_LOCATION
 
 ## Per-Repo Status
 
@@ -1175,26 +1281,23 @@ done < "$STATUS_TSV"
 
 cat >> "$REPORT_MD" <<EOF
 
-## Emitted Action Files
+## What This Run Did
 
-- \`clone-commands.sh\` — one \`git clone\` per repo not present. Review, then run selectively.
-- \`rsync-ignored-files.sh\` — one \`rsync\` per repo with staged ignored files available.
-- \`rsync-repos-gitignored.sh\` — one guarded \`rsync\` per repo for the gitignored SECRETS held in \`secrets-encrypted/repos-gitignored/\`. Attach the DMG first; blocks for repos the image does not carry skip themselves.
-
-None of the three is executable by default. All three carry fully resolved paths
-and URLs, so they run in a plain shell with no configuration sourced first:
+Cloning and rehydration are this script's own work, driven by the clone plan in
+\`$REPO_PLAN_SOURCE_DIR\`. The record is \`hydrated.md\` beside this file: one
+row per repository per stage, naming the stages this run was not asked to run.
 
 \`\`\`bash
-cat "$OUT/clone-commands.sh"
-bash "$OUT/clone-commands.sh"
+cat "$REPORT_OUT/hydrated.md"
 \`\`\`
 
 ## Manual Follow-Up
 
-1. Review \`clone-commands.sh\`, adjust any repos whose remote was rewritten
-   from the pre-image URL, and run selectively.
-2. Review \`rsync-ignored-files.sh\` and run selectively — or rerun this
-   script with \`--apply-ignored-files\` to walk repos interactively.
+1. Resolve every \`conflict\` row in \`hydrated.md\` by hand. A conflict means the
+   working tree on disk disagrees with the plan; nothing was written to it.
+2. Select or exclude every \`unreviewed\` repository in the plan, then rerun —
+   an unreviewed repository is in the audit and in neither fragment, so it was
+   not cloned.
 3. For each repo with \`carry-forward rows > 0\`, run
    \`git ls-remote origin 'reimage/*'\` inside the clone to confirm the
    pre-image rescue branch is present, then merge or cherry-pick back into
@@ -1202,8 +1305,7 @@ bash "$OUT/clone-commands.sh"
 4. Confirm each clone sits under the root matching its remote host — the root is
    what \`includeIf\` uses to decide which identity authors a commit, so a
    misplaced clone commits under the wrong address and offers the wrong key.
-   Blocks carrying a \`# REVIEW:\` line in \`clone-commands.sh\` are the ones to
-   check first.
+   Rows whose \`Clone host\` and root disagree are the ones to check first.
 5. Rerun this script after cloning to update the exit-criteria table.
 
 ## Raw Evidence Files
@@ -1213,25 +1315,7 @@ bash "$OUT/clone-commands.sh"
 - \`raw/local-only-commits-input.tsv\` — pre-image carry-forward checklist rows
 - \`raw/stashes-input.tsv\` — pre-image stash rows
 - \`raw/tracked-changes-input.tsv\` — pre-image tracked change rows
-EOF
-
-cat > "$OUT/MANIFEST.txt" <<EOF
-# Restore Repositories Status Manifest
-Generated: $REPORT_GENERATED
-Script: $REPORT_SCRIPT
-Output directory: $OUT
-Source pre-image audit run: $INPUT_RUN
-
-Files:
-- restore-status.md
-- clone-commands.sh
-- rsync-ignored-files.sh
-- rsync-repos-gitignored.sh
-- raw/status.tsv
-- raw/repos-input.tsv
-- raw/local-only-commits-input.tsv
-- raw/stashes-input.tsv
-- raw/tracked-changes-input.tsv
+- \`raw/hydration.tsv\` — one row per repository per stage, read back by \`hydrated.md\`
 EOF
 
 # Index this run in the shared category manifest. `post-image-restore` is its own
@@ -1250,29 +1334,144 @@ if [[ "$OUTPUT_DIR_DEFAULTED" == true ]]; then
   # Promoted: the staging path this script wrote into is now the run directory.
   OUT="$AUDIT_ROOT/$ARTIFACT_RUN_RELATIVE"
   REPORT_MD="$OUT/restore-status.md"
-else
+  # Everything still to be written or read has to follow the run to its promoted
+  # path. hydrated.md is composed after this point and reads hydration.tsv back;
+  # left pointing at the staging directory it produced a report with an empty
+  # table and no error, which is the failure mode this phase keeps meeting.
+  RAW_DIR="$OUT/raw"
+  HYDRATION_TSV="$RAW_DIR/hydration.tsv"
+elif [[ "$DRY_RUN" != true ]]; then
   echo "NOTE: --output was used; the run was not indexed under $AUDIT_ROOT." >&2
 fi
 
+if [[ "$DRY_RUN" != true ]]; then
 signoff_row "Rescue branches (\`reimage/YYYYMMDD/*\`) present on remote for every carry-forward row" "The pre-image audit recorded $CARRY_FORWARD_TOTAL carry-forward rows across $TOTAL repos; each must map to a pushed rescue branch or be intentionally discarded. Verify with \`git ls-remote origin 'reimage/*'\` per repo."
 signoff_row "Every clone sits under the root matching its SSH routing host" "Fill after cloning. The root decides identity through \`includeIf\`, so a repository under the wrong one commits with the wrong address and offers the wrong key. Verify with \`git -C <repo> remote get-url origin\` against the root it sits in, and against the routing hosts \`restore-git\` wrote into \`~/.ssh/config\`. Transport is a separate question and not this row's: this run restores the transport the pre-image audit recorded, and a URL is rewritten onto \`GIT_PERSONAL_GITHUB_HOST\` only when that routing host is an alias — a name other than \`github.com\` — and the URL is already \`git@github.com:\`."
-signoff_finalize "Phase 11B" "$REPORT_MD"
+fi
+# ---------------------------------------------------------------------------
+# hydrated.md -- what this run did
+#
+# Written on every run, including one that hydrated nothing. "Nothing happened"
+# and "nothing needed to happen" are different answers, and a file that appears
+# only when work was done cannot tell them apart. The stages this run was not
+# asked to run are named for the same reason: a partial run should read as
+# partial rather than as a run that found nothing to do.
+# ---------------------------------------------------------------------------
+HYDRATED_MD="$OUT/hydrated.md"
+{
+  printf '# Repositories Hydrated\n\n'
+  printf 'Generated: %s\n' "$REPORT_GENERATED"
+  printf 'Source pre-image audit run: %s\n' "$INPUT_RUN"
+  printf 'Clone plan: %s\n' "${REPO_PLAN_SOURCE_DIR:-<unresolved>}"
+  printf 'Mode: %s\n\n' "$HYDRATE_MODE_LABEL"
+  printf 'Stages run: %s\n' "$STAGES"
+  if [[ "$STAGES" != "$ALL_STAGES" ]]; then
+    printf 'Stages NOT run this time: ' 
+    for stage_have in $ALL_STAGES; do
+      stage_selected "$stage_have" || printf '%s ' "$stage_have"
+    done
+    printf '\n'
+  fi
+  printf '\n## Summary\n\n| | Count |\n|---|---:|\n'
+  printf '| Repositories in the audit | %s |\n' "$TOTAL"
+  printf '| Planned | %s |\n' "$PLANNED_COUNT"
+  printf '| Excluded, with a reason | %s |\n' "$EXCLUDED_COUNT"
+  printf '| **Unreviewed** | **%s** |\n' "$UNREVIEWED_COUNT"
+  printf '| Cloned this run | %s |\n' "$CLONED_COUNT"
+  printf '| Already present | %s |\n' "$PRESENT_COUNT"
+  printf '| **Conflicts, untouched** | **%s** |\n' "$CONFLICT_COUNT"
+  printf '\n## Per repository\n\n| Repository | Stage | Outcome | Detail |\n|---|---|---|---|\n'
+  tail -n +2 "$HYDRATION_TSV" | while IFS=$'\t' read -r h_repo h_stage h_out h_detail; do
+    printf '| %s | %s | `%s` | %s |\n' "$h_repo" "$h_stage" "$h_out" "$h_detail"
+  done
+} > "$HYDRATED_MD"
+
+# ---------------------------------------------------------------------------
+# MANIFEST.txt -- what is in this bundle
+#
+# Written last, and the file list is read off the bundle rather than declared:
+# four of the inputs are copied only when the pre-image run carried them, and
+# hydrated.md is composed after promotion. A declared list names files that are
+# not there, and a manifest that misdescribes its own bundle is worse than none.
+# ---------------------------------------------------------------------------
+{
+  printf '# Restore Repositories Status Manifest\n'
+  printf 'Generated: %s\n' "$REPORT_GENERATED"
+  printf 'Script: %s\n' "$REPORT_SCRIPT"
+  printf 'Output directory: %s\n' "$REPORT_OUT"
+  printf 'Source pre-image audit run: %s\n\n' "$INPUT_RUN"
+  printf 'Files:\n'
+  # find, not a glob: raw/ is a level down, and MANIFEST.txt does not list
+  # itself. Sorted so two runs of the same shape produce the same manifest.
+  find "$OUT" -type f ! -name 'MANIFEST.txt' | sed "s|^$OUT/|- |" | LC_ALL=C sort
+} > "$OUT/MANIFEST.txt"
+
+# ---------------------------------------------------------------------------
+# repo-restore-index.md -- the domain index
+#
+# One row per run, beside MANIFEST.md and repo-audit-index.md. The shared
+# manifest schema has no columns for these counts, and Revision 141 settled what
+# to do about that: a domain index beside the manifest rather than a widened one.
+# Its value is across runs -- a phase walked over several sittings needs "am I
+# getting closer" answered without opening each bundle in turn.
+# ---------------------------------------------------------------------------
+if [[ "$OUTPUT_DIR_DEFAULTED" == true && "$DRY_RUN" != true ]]; then
+  RESTORE_INDEX="$AUDIT_ROOT/repo-restore-index.md"
+  if [[ ! -e "$RESTORE_INDEX" ]]; then
+    {
+      printf '# Repository Restore Index\n\n'
+      printf 'Append-only, and specific to this category: the per-run restore counts the\n'
+      printf 'shared seven-column `MANIFEST.md` has no room for. `MANIFEST.md` is the\n'
+      printf 'authority on which runs exist and which is official; this file exists so\n'
+      printf 'progress across sittings stays scannable rather than buried in each bundle.\n\n'
+      printf '| Completed | Run | Mode | Planned | Cloned | Present | Conflict | Unreviewed | Stages |\n'
+      printf '|---|---|---|---:|---:|---:|---:|---:|---|\n'
+    } > "$RESTORE_INDEX"
+  fi
+  if grep -q '^# Repository Restore Index$' "$RESTORE_INDEX" 2>/dev/null; then
+    printf '| %s | `%s` | %s | %d | %d | %d | %d | %d | %s |\n' \
+      "$(date '+%Y-%m-%d %H:%M:%S')" "post-image-restore-$STAMP" "$HYDRATE_MODE_LABEL" \
+      "$PLANNED_COUNT" "$CLONED_COUNT" "$PRESENT_COUNT" "$CONFLICT_COUNT" "$UNREVIEWED_COUNT" \
+      "$STAGES" >> "$RESTORE_INDEX"
+  else
+    echo "WARNING: $RESTORE_INDEX is not a restore index; leaving it alone." >&2
+  fi
+fi
+
+if [[ "$DRY_RUN" != true ]]; then
+  signoff_finalize "Phase 11B" "$REPORT_MD"
+fi
 
 echo ""
 echo "Restore repositories report complete."
 echo "  Total repos in inventory: $TOTAL"
 echo "  Present on disk:          $PRESENT_COUNT"
 echo "  Needs clone:              $NEEDS_CLONE_COUNT"
-echo "  Ignored bundles available: $IGN_AVAILABLE_COUNT"
-if [[ "$APPLY_IGNORED_FILES" == "true" ]]; then
-  echo "  Ignored bundles applied:   $IGN_APPLIED_COUNT"
-fi
+echo "  Planned / excluded / unreviewed: $PLANNED_COUNT / $EXCLUDED_COUNT / $UNREVIEWED_COUNT"
+echo "  Cloned this run:          $CLONED_COUNT"
+echo "  Conflicts (untouched):    $CONFLICT_COUNT"
 echo "  Carry-forward rows total: $CARRY_FORWARD_TOTAL"
+echo "  Mode:                     $HYDRATE_MODE_LABEL"
+echo "  Stages:                   $STAGES"
+if [[ "$UNREVIEWED_COUNT" -gt 0 ]]; then
+  echo ""
+  echo "  $UNREVIEWED_COUNT repository/repositories are in the audit and in neither plan fragment."
+  echo "  They were not cloned. Select them, or exclude them with a reason:"
+  echo "    ${REPO_PLAN_SOURCE_DIR:-<unresolved>}"
+fi
 echo ""
-echo "Report → $REPORT_MD"
-echo "Clone commands → $OUT/clone-commands.sh"
-echo "Rsync commands → $OUT/rsync-ignored-files.sh"
-echo "Gitignored secrets → $OUT/rsync-repos-gitignored.sh (needs the DMG attached)"
+if [[ "$DRY_RUN" == true ]]; then
+  echo "----- restore-status.md -----"
+  cat "$REPORT_MD"
+  echo ""
+  echo "----- hydrated.md -----"
+  cat "$HYDRATED_MD"
+  echo ""
+  echo "(--dry-run: nothing written)"
+else
+  echo "Report → $REPORT_MD"
+  echo "What happened → $HYDRATED_MD"
+fi
 
 if [[ "$OPEN_RESULT" == "true" ]]; then
   # Never let a Finder reveal decide the run's exit status: over SSH, or on a

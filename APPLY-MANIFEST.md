@@ -1,5 +1,7 @@
 # Apply Manifest
 
+**Revision 147** — supersedes Revision 146 and earlier. The clone plan gets the run that acts on it, a record of what that run did, and a `--dry-run` that means what it says everywhere else.
+
 **Revision 146** — supersedes Revision 145 and earlier. The clone plan gets a step that sets it up and a run that proposes one, and neither can write over your answers.
 
 **Revision 145** — supersedes Revision 144 and earlier. The clone plan gains the code that reads it, and a typo in it stops being a silently shifted value.
@@ -404,6 +406,156 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `scan-archive-contents.sh` | `.internal/home/scan-archive-contents.sh` |
 | `scan-postman-collections.py` | `.internal/home/scan-postman-collections.py` |
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
+
+---
+
+## Revision 147 — the run that acts, and the record it leaves
+
+Revisions 143 through 146 built the clone plan, the code that reads it, the step
+that sets it up and the run that proposes one. This is the run that acts on it.
+
+`bin/restore-repos.sh` gains **`--hydrate`**, **`--dry-run`** and a repeatable
+**`--stage`**; the bundle gains **`hydrated.md`**; `repo-audit-reports/` gains
+**`repo-restore-index.md`**. `.internal/git/repo-hydrate.sh` is new — the two
+actions, `repo_hydrate_clone` and `repo_hydrate_source`, kept out of the
+entrypoint so the entrypoint reads as classification and dispatch.
+
+### The three emitted scripts are gone
+
+`clone-commands.sh`, `rsync-ignored-files.sh` and `rsync-repos-gitignored.sh`
+were a snapshot of a plan, written into a run bundle, meant to be reviewed by
+hand and then run. Two things were wrong with that. A hand edit to an emitted
+script was overwritten by the next run, because the next run emits it again. And
+the emitted file drifted from the thing it was a snapshot of the moment either
+changed — which is how `rsync-repos-gitignored.sh` came to target a path that
+does not exist on any machine, a standing warning in this session's rules.
+
+The plan is read at run time now and this script does the work. The durable,
+editable copy is the plan itself, in `$REIMAGE_WORKSPACE_ROOT/repo-plan/`, and
+the bundle holds a record of what happened rather than a script to be edited.
+
+`--apply-ignored-files` is `--hydrate --stage ignored-files`. Every reference to
+the old flag and the three scripts is gone from `bin/restore-repos.sh`, including
+the ones inside the generated report: the *Emitted Action Files* section, two
+Manual Follow-Up items, and two Exit Criteria rows that told the operator to
+verify a run of a file that is no longer written.
+
+### `clone` is a stage like any other
+
+`--stage` takes `clone` or any `ARTIFACT_TYPE` from
+`repo-rehydration-sources.conf.sh`, and repeats. "Run only the cloner" and "run
+only one source" are one mechanism rather than two flags, and an unknown stage
+name is refused with the list this plan actually offers rather than a fixed one.
+
+Omitted, every stage runs. `hydrated.md` names the stages a run was **not** asked
+to run, because a partial run should read as partial rather than as a run that
+found nothing to do.
+
+### A clone-stage conflict quarantines the repository
+
+A repository present on disk whose `origin` disagrees with the plan is a
+`conflict`: the clone stage refuses to touch it. The source stages now refuse
+for the same reason, reporting `skipped` with the reason rather than merging.
+
+Found by running it: a conflicted `alpha` was left alone by the cloner and then
+had its `.env` rsynced into it by the next stage. Half a refusal is not one. The
+working tree is not the one the plan describes, so nothing is written into it,
+whichever stage is asking.
+
+### `--dry-run` writes nothing, the way it does in seven other scripts
+
+It did not. It staged a run, opened a sign-off, wrote a bundle and advanced
+`official/post-image-restore.txt` — everything except touching a repository.
+`backup-home.sh`, `capture-system-state.sh`, `compare-restored-state.sh`,
+`init-shell-env.sh`, `record-restore-prereqs.sh` and `record-restore-exit.sh` all
+mean the same thing by the flag: *print the result; write nothing*. A flag that
+means something different in one script out of eight is a trap, not a variation.
+
+It now composes the report in a scratch directory it removes on exit, prints
+`restore-status.md` and `hydrated.md` to stdout, and ends with
+`(--dry-run: nothing written)` like its siblings. No run id is consumed, no
+pointer moves, no sign-off is opened — a sign-off carries answers forward across
+runs, so one opened by a rehearsal asks the operator to answer for work that did
+not happen.
+
+`--dry-run` with `--output` or `--emit-plan` is refused. Both exist to write a
+file, and a flag that appears to have been honoured and was not is exactly the
+failure this phase keeps meeting.
+
+Proven by comparing the artifact tree before and against after: byte-identical,
+no clone, no scratch directory left behind.
+
+### `hydrated.md`, and why it is written on every run
+
+One row per repository per stage: outcome and detail. Written even when nothing
+happened, because *nothing happened* and *nothing needed to happen* are different
+answers and a file that appears only when work was done cannot tell them apart.
+
+Named for what it records rather than for whether it is the first time. There is
+no first drink; every one after is a rehydration.
+
+### `repo-restore-index.md`
+
+One row per run beside `MANIFEST.md` and `repo-audit-index.md`: mode, planned,
+cloned, present, conflict, unreviewed, stages. Revision 141 settled what to do
+when the shared seven-column schema has no room for a category's columns — a
+sibling index rather than a widened manifest — and this is the second
+application of it. Its value is across runs: a phase walked over several sittings
+needs *am I getting closer* answered without opening each bundle in turn.
+
+Not written by a dry run, and not by an `--output` run, for the same reason
+neither is indexed.
+
+### Two path bugs, both the same shape
+
+A default-located run is composed in `.<id>.incomplete` and promoted afterwards,
+and twice something outlived the promotion pointing at the staging path.
+
+`HYDRATION_TSV` was one. `hydrated.md` is composed after `artifact_run_finalize`
+and reads the TSV back; left pointing at the staging directory it produced a
+report with an empty table **and no error**. `RAW_DIR` and `HYDRATION_TSV` are
+reassigned at the promotion.
+
+`restore-status.md` and `MANIFEST.txt` were the other, less harmfully: both
+printed `Output directory:` as the `.incomplete` path, and the report's
+`cat` example quoted a path that no longer existed by the time anyone read it.
+Both now use `ARTIFACT_RUN_FINAL_DIR`, which `artifact_run_begin` sets — a reader
+who copies a path out of the report must get one that exists.
+
+`MANIFEST.txt` is also written last and lists the files it finds rather than the
+files it expects. Four of the pre-image inputs are copied only when the audit
+carried them, so the declared list named files that were not there.
+
+### `PATH_PRESENT` at the planned destination
+
+Revision 131 moved the presence test from the pre-image path to the routed clone
+destination. A plan entry can override that destination with `LOCAL_REPO_PATH`,
+and the test was still asking at the routed default — so a repository the plan
+places elsewhere reported absent, and the cloner tried to clone over it. Presence
+is now recomputed when the plan's destination differs from the routed one.
+
+### Validation
+
+`bash -n` clean on all three files. `verify-script-portability.sh` 81 clean /
+0 WARN / 0 FAIL. `verify-runbook-structure.sh` 213 PASS / 5 WARN / 25 FAIL across
+27 documents — unchanged. `verify-doc-paths.sh --all` 757 OK / 0 MISSING /
+0 ANCHOR BROKEN.
+
+Functionally exercised end to end against a scratch artifact root with a real
+bare git remote: clone, rehydrate, idempotent rerun (`present`), `--stage clone`
+leaving the source unapplied, `--stage ignored-files` applying it, conflict
+detection, conflict quarantine, both refusals, and a no-flag run that reported
+`would-apply` without applying. Nothing ran against the operator's volume.
+
+**All of it ran on Linux with Bash 5.x.** `shellcheck` was not available.
+`/bin/bash -n` against real macOS Bash 3.2 is owed here along with Revisions
+116–146.
+
+### Still owed
+
+`restore-repos.md` Steps 2, 3, 5 and 6 and its Bundle Layout still describe the
+three emitted scripts. The runbook is a separate change and is not in this
+revision.
 
 ---
 
