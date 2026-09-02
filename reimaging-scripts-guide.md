@@ -2,7 +2,7 @@
 
 # Reimaging Scripts Guide
 
-**Last updated:** 2026-08-13
+**Last updated:** 2026-09-02
 
 Use this as the script index for the Mac reimage workflow. The Markdown runbooks explain the workflow; this guide maps each phase to the scripts that generate backups, evidence captures, and validation checklists.
 
@@ -752,7 +752,7 @@ $REIMAGE_ARTIFACT_ROOT/reimaged-system/restarts/runs/verify-reimaged-system-<poi
 ./bin/restore-repos.sh --open
 ```
 
-Reads the latest pre-image `repo-audit-reports/runs/pre-image-*/repos.tsv`, classifies each repo's current state on disk, and emits reviewable `clone-commands.sh` and `rsync-ignored-files.sh` action files. The operator reviews and runs them selectively; the script does not autonomously clone. Pass `--apply-ignored-files` to interactively rsync `staged-ignored-files/live/<label>/` into each cloned working tree.
+Reads the official pre-image `repo-audit-reports/runs/pre-image-*/repos.tsv`, classifies each repo's current state on disk, and writes a status bundle. With no flags it reports and touches nothing. `--hydrate` acts on the clone plan in `$REIMAGE_WORKSPACE_ROOT/repo-plan/`: clone what the plan selected and is absent, then merge each declared rehydration source into the working tree. `--stage NAME` repeats and restricts the run to `clone` or one source; `--dry-run` prints the result and writes nothing. It acts on the plan rather than the inventory, so a repository in the audit and in neither plan fragment is reported and left alone.
 
 The generated bundle is written under:
 
@@ -999,11 +999,12 @@ plumbing:
 ./bin/restore-repos.sh --open
 ```
 
-Optionally, interactively rsync reviewed kept-ignored files into each cloned
-repository:
+Clone what the plan selected, then merge the reviewed kept-ignored files into
+each cloned repository:
 
 ```bash
-./bin/restore-repos.sh --apply-ignored-files --open
+./bin/restore-repos.sh --hydrate --stage clone
+./bin/restore-repos.sh --hydrate --stage ignored-files --open
 ```
 
 **Phase 12 — restore helpers.**

@@ -1,6 +1,6 @@
 # Mac Reimaging Guide
 
-**Last updated:** 2026-08-16
+**Last updated:** 2026-09-02
 
 This is the canonical top-level guide for the Mac reimage workflow.
 
@@ -781,7 +781,7 @@ Primary guide: [[restore-git|restore-git.md]]
 
 ### Phase 11B — Restore Repositories
 
-**Restore Repositories** consumes the pre-image repository audit produced by Phase 2A to re-clone the tracked repositories, rsync the reviewed kept ignored files back into each working tree, and reconcile every pre-image carry-forward row (local-only commits, stashes, tracked changes) against the state of the freshly cloned repos. `bin/restore-repos.sh` reads the pre-image `repos.tsv`, classifies each repo's current status on disk, and emits `clone-commands.sh` and `rsync-ignored-files.sh` action files the operator reviews and runs selectively. The script does not autonomously clone; a stale pre-image inventory would silently repopulate repos no longer wanted.
+**Restore Repositories** consumes the pre-image repository audit produced by Phase 2A to re-clone the tracked repositories, rsync the reviewed kept ignored files back into each working tree, and reconcile every pre-image carry-forward row (local-only commits, stashes, tracked changes) against the state of the freshly cloned repos. `bin/restore-repos.sh` reads the pre-image `repos.tsv`, classifies each repo's current status on disk, and — with `--hydrate` — clones and rehydrates against a clone plan the operator writes in `$REIMAGE_WORKSPACE_ROOT/repo-plan/`. Without that flag it reports and touches nothing. It acts on the plan rather than the inventory; a stale pre-image inventory acted on verbatim would silently repopulate repos no longer wanted.
 
 Primary guide: [[restore-repos|restore-repos.md]]
 

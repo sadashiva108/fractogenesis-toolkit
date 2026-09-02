@@ -2,7 +2,7 @@
 
 # Restore Access
 
-**Last updated:** 2026-09-01
+**Last updated:** 2026-09-02
 
 Restore the identity, trust, and credential layer on the reimaged Mac after the runtime toolchain is in place — SSH keys and Git access, certificates and keychains, Java trust overrides pinned to the JDK from Phase 10A, shell and CLI configuration, and license or activation material. Everything here comes out of the encrypted secrets DMG and the reviewed dotfiles bundle built during the pre-image phases. Most of it is manual — small copies, `security` commands, and Keychain Access actions — but four steps are scripted: Step 0 and the closing step run the boundary recorders in `bin/`, Step 2 runs `bin/restore-staged-loose.sh`, and `bin/restore-access.sh` can drive the whole phase.
 
@@ -597,7 +597,7 @@ rewrites `~/.ssh/config` wholesale in Phase 11A, and a name that differs from th
 one the image carried was never probed here. Re-run the probe after that rewrite
 rather than assuming this step covered it. That prompt is
 harmless at a shell and expensive inside
-[[restore-repos#Step 3 — Execute the Clone Commands|Phase 11B's clone loop]], which
+[[restore-repos#Step 3 — Clone the Selected Repositories|Phase 11B's clone loop]], which
 is not waiting for an answer. If `git clone` stalls on an unfamiliar host later,
 this is why.
 

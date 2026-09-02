@@ -575,6 +575,7 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 > $REIMAGE_ARTIFACT_ROOT/repo-audit-reports/
 > ├── MANIFEST.md
 > ├── repo-audit-index.md
+> ├── repo-restore-index.md
 > ├── official/
 > │   ├── pre-image.txt
 > │   └── post-image-restore.txt
@@ -588,9 +589,11 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 >     │   ├── untracked-nonignored.tsv
 >     │   └── ignored-files.tsv
 >     └── post-image-restore-YYYYMMDD-HHMMSS/
->         ├── restore-status.md
->         ├── clone-commands.sh
->         └── rsync-ignored-files.sh
+>         ├── MANIFEST.txt
+>         ├── hydrated.md
+>         ├── plan-proposed/
+>         ├── raw/
+>         └── restore-status.md
 > ```
 
 > [!example]- `$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/`

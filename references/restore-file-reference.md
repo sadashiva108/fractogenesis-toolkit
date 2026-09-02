@@ -191,7 +191,7 @@ Not every restore uses every category. Treat this as the full restore/capture ma
 Two `secrets-encrypted/` subtrees have dedicated restore consumers rather than a manual copy-back:
 
 - `secrets-encrypted/staged-loose/` is consumed by `bin/restore-staged-loose.sh`, driven from [[restore-access|restore-access.md]] (Phase 10B). It reads `MANIFEST.tsv` and returns each file to the original path it was staged from.
-- `secrets-encrypted/repos-gitignored/` is consumed by the generated `rsync-repos-gitignored.sh` action file, run from [[restore-repos|restore-repos.md]] Step 5 (Phase 11B) with the DMG attached. These files are deliberately *not* under `staged-ignored-files/live/`.
+- `secrets-encrypted/repos-gitignored/` is a rehydration source in the Phase 11B clone plan, merged into each cloned working tree by `./bin/restore-repos.sh --hydrate --stage repo-secrets` with the DMG attached — [[restore-repos|restore-repos.md]] Step 6. These files are deliberately *not* under `staged-ignored-files/live/`.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 

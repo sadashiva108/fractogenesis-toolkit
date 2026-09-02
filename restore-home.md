@@ -374,7 +374,7 @@ Categories to consider:
 | `~/Downloads` | Usually skip. Restore individual files by hand if still needed. |
 | `~/Library/Application Support/…` | Routed through the app-specific runbooks (`restore-apps.md`, `restore-docker.md`, `restore-intellij.md`). Never bulk-restore here. |
 | Anything credential-shaped (`.env`, `.keystore`, keys, tokens) | Restore only from `secrets-encrypted/` (Phase 10B), never from `home-files-backup/`. |
-| Repo-scoped ignored files that never committed | Restored by Phase 11B (`bin/restore-repos.sh --apply-ignored-files`) from `staged-ignored-files/live/`, not here. |
+| Repo-scoped ignored files that never committed | Restored by Phase 11B (`bin/restore-repos.sh --hydrate --stage ignored-files`) from `staged-ignored-files/live/`, not here. |
 | Old machine-specific tool state you no longer use | Leave behind on purpose. Record the decision in the restore note. |
 
 If a genuinely useful file only shows up under `~/Library/Application Support/…` in the bundle, restore it via the matching app runbook so the app-specific validation catches it.
@@ -459,7 +459,7 @@ Every earlier restore phase either produces evidence a script can validate (Phas
 
 ### Relationship to Phase 11B — Restore Repositories
 
-Repo-scoped ignored files (`.env`, local build outputs the operator explicitly kept, IDE-scratch files that are gitignored but valuable) are Phase 11B's problem, not Phase 15's. They flow from `staged-ignored-files/live/<label>/` into the cloned working tree via `bin/restore-repos.sh --apply-ignored-files`. If Phase 15 finds such a file under `home-files-backup/` (misclassified during Phase 2B), route it through Phase 11B by hand rather than copying it into `$HOME` here.
+Repo-scoped ignored files (`.env`, local build outputs the operator explicitly kept, IDE-scratch files that are gitignored but valuable) are Phase 11B's problem, not Phase 15's. They flow from `staged-ignored-files/live/<label>/` into the cloned working tree via `bin/restore-repos.sh --hydrate --stage ignored-files`. If Phase 15 finds such a file under `home-files-backup/` (misclassified during Phase 2B), route it through Phase 11B by hand rather than copying it into `$HOME` here.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 

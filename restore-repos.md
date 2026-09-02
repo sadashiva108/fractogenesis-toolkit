@@ -4,7 +4,7 @@
 
 **Last updated:** 2026-09-02
 
-Consume the pre-image repository audit produced by Phase 2A to re-clone the tracked repositories onto the reimaged Mac, rsync the reviewed kept ignored files back into each working tree, and reconcile every pre-image carry-forward row (local-only commits, stashes, tracked changes) against the state of the freshly cloned repos. Runs after Phase 11A has wired up the dual-identity `~/.gitconfig` and `~/.ssh/config`, so every clone command emitted here already routes through the correct SSH key.
+Consume the pre-image repository audit produced by Phase 2A to re-clone the tracked repositories onto the reimaged Mac, rsync the reviewed kept ignored files back into each working tree, and reconcile every pre-image carry-forward row (local-only commits, stashes, tracked changes) against the state of the freshly cloned repos. Runs after Phase 11A has wired up the dual-identity `~/.gitconfig` and `~/.ssh/config`, so every clone this phase performs already routes through the correct SSH key.
 
 ---
 
@@ -23,8 +23,8 @@ Consume the pre-image repository audit produced by Phase 2A to re-clone the trac
 - [[#Sequential Steps|Sequential Steps]]
     - [[#Step 0 — Record Prerequisites and the Before-State|Step 0 — Record Prerequisites and the Before-State]]
     - [[#Step 1 — Produce the Initial Status Report|Step 1 — Produce the Initial Status Report]]
-    - [[#Step 2 — Review the Emitted Clone Commands|Step 2 — Review the Emitted Clone Commands]]
-    - [[#Step 3 — Execute the Clone Commands|Step 3 — Execute the Clone Commands]]
+    - [[#Step 2 — Review the Plan Against the Report|Step 2 — Review the Plan Against the Report]]
+    - [[#Step 3 — Clone the Selected Repositories|Step 3 — Clone the Selected Repositories]]
     - [[#Step 4 — Repoint at the Cloned Toolkit|Step 4 — Repoint at the Cloned Toolkit]]
     - [[#Step 5 — Restore Staged Ignored Files|Step 5 — Restore Staged Ignored Files]]
     - [[#Step 6 — Restore Per-Repo Gitignored Secrets from the DMG|Step 6 — Restore Per-Repo Gitignored Secrets from the DMG]]
@@ -37,6 +37,7 @@ Consume the pre-image repository audit produced by Phase 2A to re-clone the trac
 - [[#Troubleshooting|Troubleshooting]]
 - [[#Supplemental Reference|Supplemental Reference]]
     - [[#Per-Repo Status Categories|Per-Repo Status Categories]]
+    - [[#Hydration Outcomes|Hydration Outcomes]]
     - [[#Reading the Pre-Image TSVs|Reading the Pre-Image TSVs]]
 
 > In Obsidian, these are internal heading links. Click in Reading View, or Cmd-click in Live Preview/editing mode.
@@ -52,9 +53,10 @@ Restore the *content* side of the Git story: get every repository that existed o
 
 **What it sets up**
 
+- **The clone plan** — four fragments in `$REIMAGE_WORKSPACE_ROOT/repo-plan/` saying which repositories come back, where each goes, and what is merged into it after cloning. You write it once in Step 0d; every run reads it. It is the only durable, editable thing here — a run bundle is replaced, the plan is not.
 - **The restore-status bundle** — a timestamped `post-image-restore-*` run under `repo-audit-reports/runs/` holding `restore-status.md`, the machine-readable `raw/status.tsv`, and copies of the pre-image inputs it classified against.
 - **The Phase 11B sign-off** — `reimaged-system/sign-offs/post-image-restore-YYYYMMDD-HHMMSS.md`, holding the two rows only you can answer. It sits outside the run directory because a run is replaced on every rerun and an answered row must not be, and under `reimaged-system/` because that is where every post-image answered row lives — `repo-audit-reports/` is shared with the pre-image audit.
-- **Reviewable action files** — `clone-commands.sh` and `rsync-ignored-files.sh`, emitted per run so you decide which repositories are cloned and which kept ignored files are rsynced back, rather than the script deciding for you.
+- **The record of what each run did** — `hydrated.md` in the bundle, one row per repository per stage, plus a row in `repo-audit-reports/repo-restore-index.md` so progress across several sittings is scannable without opening each bundle.
 - **The restored working trees** — every tracked repository back on disk under the correct Git root, with its `staged-ignored-files/live/<label>/` bundle rsynced into place.
 - **A closed carry-forward ledger** — every pre-image rescue branch, stash, and tracked change either merged, cherry-picked, left as a branch with a note, or explicitly discarded.
 
@@ -68,7 +70,7 @@ Restore the *content* side of the Git story: get every repository that existed o
 | This runbook owns | Owned elsewhere |
 |---|---|
 | reading the pre-image `repo-audit-reports/runs/pre-image-*/repos.tsv` inventory and classifying each repo (present / needs clone / ignored bundle available / carry-forward pending) | the pre-image push of rescue branches, stash preservation, and the reviewed kept ignored files — `backup-repos` (Phase 2A) |
-| routing each repository to the root that matches its remote host, and emitting the `git clone` command for it | dual-identity `~/.gitconfig`, `~/.ssh/config`, and the SSH routing hosts the clones authenticate through — `restore-git` (Phase 11A) |
+| routing each repository to the root that matches its remote host, and cloning it there | dual-identity `~/.gitconfig`, `~/.ssh/config`, and the SSH routing hosts the clones authenticate through — `restore-git` (Phase 11A) |
 | rsyncing `$REIMAGE_ARTIFACT_ROOT/staged-ignored-files/live/<label>/` back into each cloned working tree | the encrypted secret ignored files under `secrets-encrypted/repos-gitignored/`, which come back with the DMG — `restore-access` (Phase 10B) |
 | the timestamped restore-status bundle under `repo-audit-reports/runs/post-image-restore-*/`, its exit-criteria table, and the Phase 11B sign-off | IDE-specific repo state such as IntelliJ project files and the VS Code workspace — `restore-intellij` and `restore-apps` (Phase 12) |
 
@@ -89,7 +91,13 @@ Read this before running anything. The phase is script-driven for the loop (repo
 3. whether a `staged-ignored-files/live/<label>/` directory exists for this repo (kept ignored files ready to rsync back);
 4. how many carry-forward rows the pre-image audit recorded (local-only commits + stashes + tracked changes).
 
-The script writes those results into a `restore-status.md` report plus a machine-readable `raw/status.tsv`, and it writes three ready-to-run helper scripts — `clone-commands.sh`, `rsync-ignored-files.sh` and `rsync-repos-gitignored.sh` — that you review, edit if needed, and run selectively. Every destination in all three is the routed clone path, and both rsync scripts guard on it: a block whose repository is not cloned yet skips itself rather than letting `rsync -a` create the directory and drop the bundle outside any repository. It never autonomously clones a repository, because a stale pre-image inventory would silently repopulate repos you no longer want.
+The script writes those results into a `restore-status.md` report plus a machine-readable `raw/status.tsv`. Whether it also *acts* on them is `--hydrate`. Without it the run is read-only: it reports what it would do and touches nothing.
+
+What it may act on is not the inventory — it is the clone plan you wrote in Step 0d. The audit says what existed; the plan says what comes back. A repository in the audit and in neither plan fragment is `unreviewed`: it is reported, and it is not cloned. That is deliberate, because a stale pre-image inventory acted on verbatim would silently repopulate repositories you no longer want.
+
+A run has **stages**. `clone` is one; each rehydration source in the plan — the reviewed kept ignored files, the gitignored secrets in the encrypted image, IDE project metadata — is another. `--stage NAME` repeats and restricts the run to what you name; omitted, every stage runs. Cloning restores what Git tracked, and each stage puts back one class of thing Git ignored.
+
+Every destination is the same routed clone path, computed once, and every stage guards on it: a source whose repository is not cloned yet reports `pending` rather than letting `rsync -a` create the directory and drop the bundle outside any repository. A repository already on disk whose `origin` disagrees with the plan is a `conflict` — nothing is written into it by any stage.
 
 ### Carry-Forward Model
 
@@ -102,7 +110,10 @@ Restoring is then a two-step reconciliation: `git clone` gets the mainline back,
 | Term | Meaning |
 |---|---|
 | Pre-image audit run | A timestamped `repo-audit-reports/runs/pre-image-YYYYMMDD-HHMMSS/` bundle produced by Phase 2A. Contains `repos.tsv` and the carry-forward TSVs. |
-| Post-image restore run | A timestamped `repo-audit-reports/runs/post-image-restore-YYYYMMDD-HHMMSS/` bundle produced by this runbook. Contains the status report and emitted action-command scripts. |
+| Post-image restore run | A timestamped `repo-audit-reports/runs/post-image-restore-YYYYMMDD-HHMMSS/` bundle produced by this runbook. Contains the status report, `hydrated.md`, and copies of the pre-image rows it classified against. |
+| Clone plan | The four fragments under `$REIMAGE_WORKSPACE_ROOT/repo-plan/`: which repositories are selected, which are excluded and why, where content comes back from after cloning, and per-repository overrides. Seeded by `init-repo-plan-config` in Step 0d and read by every run. It lives in the workspace, not in a bundle, because it survives the reimage and no run may write over your answers. |
+| Stage | One unit of restoring work, named by `--hydrate --stage`. `clone` is a stage; so is each `ARTIFACT_TYPE` in the plan's rehydration sources — `ignored-files`, `repo-secrets`, `project-metadata`. |
+| Hydration | Cloning a repository and merging each declared source into its working tree. Recorded in `hydrated.md`, one row per repository per stage. |
 | Label | The basename of a repo path — `basename $REPO_PATH` — used by `backup-repos.md` as the directory name under `staged-ignored-files/live/`. |
 | Carry-forward row | A row in `local-only-commits.tsv`, `stashes.tsv`, or `tracked-changes.tsv` from the pre-image run. Each row represents a change the remote does not carry and that must be preserved via a rescue branch or explicitly discarded. |
 | Rescue branch | A `reimage/YYYYMMDD/*` branch created and pushed pre-image by Phase 2A to preserve carry-forward material. Restored by fetching `refs/heads/reimage/*` after clone. |
@@ -196,32 +207,51 @@ $REIMAGE_ARTIFACT_ROOT/
 │   ├── MANIFEST.md
 │   ├── official/
 │   │   └── post-image-restore.txt
+│   ├── repo-restore-index.md
 │   ├── ...
 │   └── runs/
 │       └── post-image-restore-YYYYMMDD-HHMMSS/
 │           ├── MANIFEST.txt
-│           ├── clone-commands.sh
+│           ├── hydrated.md
+│           ├── plan-proposed/
+│           │   ├── repo-candidates-excluded.proposed.conf.sh
+│           │   ├── repo-candidates-selected.proposed.conf.sh
+│           │   ├── repo-rehydration-map.proposed.conf.sh
+│           │   └── repo-rehydration-sources.proposed.conf.sh
 │           ├── raw/
+│           │   ├── hydration.tsv
 │           │   ├── local-only-commits-input.tsv
 │           │   ├── repos-input.tsv
 │           │   ├── stashes-input.tsv
 │           │   ├── status.tsv
 │           │   └── tracked-changes-input.tsv
-│           ├── restore-status.md
-│           ├── rsync-ignored-files.sh
-│           └── rsync-repos-gitignored.sh
+│           └── restore-status.md
 └── ...
 ```
 
-`boundaries/`, `repo-audit-reports/` and `state/` share one shape: `runs/<context>-YYYYMMDD-HHMMSS/` holds a single run's files, `official/<context>.txt` names the run that counts, and an append-only `MANIFEST.md` indexes every completed run. To find a run, read the pointer under `official/` — there is no newest-directory rule and no `latest-*.txt`. Steps 5 and 6 do exactly that, reading `official/post-image-restore.txt` to locate the emitted command files.
+The clone plan is not in that tree. It lives in the workspace, outside the artifact root:
+
+```text
+$REIMAGE_WORKSPACE_ROOT/repo-plan/
+├── repo-candidates-excluded.conf.sh
+├── repo-candidates-selected.conf.sh
+├── repo-rehydration-map.conf.sh
+└── repo-rehydration-sources.conf.sh
+```
+
+`boundaries/`, `repo-audit-reports/` and `state/` share one shape: `runs/<context>-YYYYMMDD-HHMMSS/` holds a single run's files, `official/<context>.txt` names the run that counts, and an append-only `MANIFEST.md` indexes every completed run. To find a run, read the pointer under `official/` — there is no newest-directory rule and no `latest-*.txt`. Steps 1 and 9 do exactly that, reading `official/post-image-restore.txt` to locate the run they just wrote.
 
 Which run a pointer names is decided per point. `before` is first-wins, because the earliest observation is the one that caught the empty clone roots; `after`, `delta`, `entry`, `exit` and `post-image-restore` are latest-wins, so re-running any of them replaces the earlier answer.
 
 `sign-offs/` is outside that shape on purpose. It holds the rows you answered at the exit boundary and carries them forward into the next run, so a latest-wins pointer must never be able to supersede it.
 
-Each `post-image-restore-*` run is self-contained and its filenames are stable across runs. `restore-status.md` is the human-readable report carrying the exit-criteria table; `clone-commands.sh` holds one `git clone` per repo not yet at its routed destination; `rsync-ignored-files.sh` holds one guarded `rsync` per repo with staged ignored files; `rsync-repos-gitignored.sh` holds one guarded `rsync` per repo for the gitignored secrets in the image. `MANIFEST.txt` lists that run's files, and is not the category run index — that is `repo-audit-reports/MANIFEST.md`. `plan-proposed/` appears only when `--emit-plan` was passed: four files mirroring the clone-plan fragments, filled in from the audit and routed the way that run routed. It is a proposal to review and copy across, never the plan itself — the plan lives in the workspace and no run writes there. Under `raw/`, `status.tsv` is the machine-readable per-repo classification and the `*-input.tsv` files are copies of the pre-image rows, kept beside the output so a run can be read back without the audit that produced it.
+Each `post-image-restore-*` run is self-contained and its filenames are stable across runs. `restore-status.md` is the human-readable report carrying the exit-criteria table. `hydrated.md` is what that run *did*: one row per repository per stage, with the stages it was not asked to run named explicitly, so a partial run reads as partial rather than as a run that found nothing to do. It is written on every run, including one that hydrated nothing — *nothing happened* and *nothing needed to happen* are different answers. `MANIFEST.txt` lists that run's files, and is not the category run index — that is `repo-audit-reports/MANIFEST.md`.
 
-This runbook also writes into each cloned working tree — the kept ignored files in Step 5 and the per-repo secrets in Step 6. Those are not artifacts; they are the repositories being made whole at their original paths.
+`repo-restore-index.md` sits beside `MANIFEST.md` rather than inside any run: one append-only row per run carrying the counts the shared seven-column manifest has no room for — mode, planned, cloned, present, conflict, unreviewed, stages. `MANIFEST.md` stays the authority on which runs exist and which one counts; this file exists so a phase walked over several sittings answers *am I getting closer* without opening each bundle in turn.
+
+`plan-proposed/` appears only when `--emit-plan` was passed: four files mirroring the clone-plan fragments, filled in from the audit and routed the way that run routed. It is a proposal to review and copy across, never the plan itself — the plan lives in the workspace and no run writes there. Under `raw/`, `status.tsv` is the machine-readable per-repo classification, `hydration.tsv` is the row-per-stage record `hydrated.md` is composed from, and the `*-input.tsv` files are copies of the pre-image rows, kept beside the output so a run can be read back without the audit that produced it.
+
+This runbook also writes into each cloned working tree — the clone itself in Step 3, the kept ignored files in Step 5, and the per-repo secrets in Step 6. Those are not artifacts; they are the repositories being made whole at their original paths.
 
 ### Environment Variables
 
@@ -231,6 +261,8 @@ The `reimage.env` values this runbook depends on. `REIMAGE_ARTIFACT_ROOT` is res
 |---|---|
 | `FRACTOGENESIS_HOME` | Toolkit root; where `reimage.env` lives. Until this phase it points at the `curl` or jump-drive install from Phase 8, not a clone — see [[#Step 4 — Repoint at the Cloned Toolkit|Step 4 — Repoint at the Cloned Toolkit]]. |
 | `REIMAGE_ARTIFACT_ROOT` | Artifact root where Phase 2A wrote the pre-image audit and where this runbook writes its status bundle. Must be mounted; the script fails fast if it is not. |
+| `REIMAGE_WORKSPACE_ROOT` | Where the clone plan lives, in `repo-plan/`. Set during `prepare-artifact-root.md`. If it resolves to nothing the run falls back to the committed templates, whose entries are all commented out — a run against those loads clean, reports every repository `unreviewed`, and clones nothing. The script warns on stderr when that happens; Step 0d is what prevents it. |
+| `DMG_MOUNT` | Not from `reimage.env`. Set in the shell for Step 6 only, naming the attached secrets image. A rehydration source that needs the image and does not find it is recorded `blocked`, not failed — attach it later and rerun that stage. |
 | `LOCAL_WORK_REPO_ROOT` | Directory holding work repos. A repository whose `origin` host is `$GIT_WORK_GITHUB_HOST` clones into here, and so does one whose host matches neither routing host — with the reason printed above its clone command. |
 | `LOCAL_PERSONAL_REPO_ROOT` | Directory holding personal repos. A repository clones into here only when its `origin` host is `$GIT_PERSONAL_GITHUB_HOST` *and* its owner matches `$GIT_PERSONAL_GITHUB_OWNER`. The pre-image directory is not consulted: it says nothing about who owns the remote, and the root a repository sits under is what `includeIf` uses to decide its commit identity. |
 | `GIT_WORK_GITHUB_HOST` | Host of the work Git server. A repository whose `origin` URL names this host routes to `$LOCAL_WORK_REPO_ROOT`. |
@@ -257,12 +289,13 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 
 ### Confirm Your Intent
 
-- Are you doing a **full first-time restore** (Steps 1 through 7 in order) or a **rerun** to update the status table after cloning some repos by hand? Both are safe; a rerun writes a fresh timestamped bundle and shows fewer `Needs clone` rows.
-- Do you want to **rsync ignored files interactively** during this run (`--apply-ignored-files`), or **inspect the emitted `rsync-ignored-files.sh` first** and run it later? Interactive is faster; inspect-first is safer when you are unsure whether some kept ignored files are still appropriate on the reimaged machine.
-- Which **subset of repositories** do you actually want back? The default clone list mirrors the pre-image inventory verbatim. If a repo is stale or archived, delete its line from `clone-commands.sh` before running it rather than cloning and then removing.
+- Are you doing a **full first-time restore** (Steps 1 through 8 in order) or a **rerun** to update the status table after cloning some repos by hand? Both are safe; a rerun writes a fresh timestamped bundle and shows fewer `Needs clone` rows.
+- Which **subset of repositories** do you actually want back? That question is the clone plan, and Step 0d is where you answer it. A repository in the audit and in neither plan fragment is `unreviewed` and is not cloned, so "I have not decided yet" is a state the run reports rather than one it acts on.
+- Do you want to do the whole restore in **one pass** (`--hydrate`) or **one stage at a time** (`--hydrate --stage clone`, then a stage per source)? One pass is fewer commands; stage-at-a-time lets you confirm the clones landed under the right roots before anything is merged into them, and is the safer order the first time through.
+- Do you want to **see what a run would do before it does it**? `--dry-run` composes the report and `hydrated.md`, prints both, and writes nothing anywhere — no run, no sign-off, no pointer moved.
 
 > [!warning] Pitfall
-> The script's classification depends on the pre-image `repos.tsv` reflecting reality *at that moment*. If you moved or deleted repos between the pre-image audit and the reimage, the emitted actions will still assume the old layout — review before executing.
+> The script's classification depends on the pre-image `repos.tsv` reflecting reality *at that moment*. If you moved or deleted repos between the pre-image audit and the reimage, the routing and the destinations still assume the old layout — review the report before hydrating.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -270,7 +303,7 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 
 ## Sequential Steps
 
-Run these in order. The status report has to exist before you can review the action files, the action files have to be reviewed before they are executed, and the exit criteria can only be closed after a rerun confirms the state after cloning and rsyncing.
+Run these in order. The plan has to exist before a run can act on it, the report has to exist before you can review the plan against it, the clones have to land before anything can be merged into them, and the exit criteria can only be closed after a rerun confirms the state.
 
 ### Step 0 — Record Prerequisites and the Before-State
 
@@ -287,19 +320,19 @@ questions and only one of them can be taken late.
 
 The first four rows are derived from *Prerequisites* above, so the two cannot
 drift. The last three read the pre-image audit itself, and they exist because
-`bin/restore-repos.sh` is read-only and always produces a status bundle — a run
-against an empty or damaged audit looks exactly like a clean one.
+`bin/restore-repos.sh` always produces a status bundle — a run against an empty
+or damaged audit looks exactly like a clean one.
 
 **Audit remote URLs are URLs** is the row to read twice, and it exists because
 this exact damage happened. `capture-repo-audit.sh` built that column from
 `git remote -v`, whose output is *itself* tab-separated, and wrote it into a TSV
 unsquashed — so the URL landed in a later column and left the remote *name* where
 the URL belongs. `restore-repos.sh` feeds that field to `extract_remote_url`, so
-a damaged column surfaces as clone commands that are missing or malformed rather
-than as an error. The capture is fixed forward, but a run captured before the fix
+a damaged column surfaces as clone URLs that are missing or malformed rather than
+as an error. The capture is fixed forward, but a run captured before the fix
 carries the damage forever. When this row FAILs, read the real URLs out of that
-run's `repo-audit-summary.txt`, which records `git remote -v` verbatim, before
-trusting anything in `clone-commands.sh`.
+run's `repo-audit-summary.txt`, which records `git remote -v` verbatim, and put
+them in the plan's `REMOTE_FETCH_URL` before hydrating anything.
 
 The two WARN rows name repositories that need a decision rather than a fix. A
 repository with **no remote** cannot be cloned by anything — its only copy is
@@ -407,7 +440,7 @@ nothing to do.
 
 ### Step 1 — Produce the Initial Status Report
 
-Run the script with no extra flags to write the first status bundle. This is a read-only pass — no clones happen, no ignored files are rsynced.
+Run the script with no extra flags to write the first status bundle. This is a read-only pass — no clones happen, nothing is merged into any working tree. What it produces is the report you review the plan against in Step 2.
 
 Preview the flags first:
 
@@ -435,8 +468,13 @@ LATEST_RUN="$(cat "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/official/post-image
 open "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/$LATEST_RUN/restore-status.md"
 ```
 
-> [!note]
-> The pre-image inventory is what the script trusts. If a repo was created after Phase 2A ran, it won't appear here — clone it by hand later. If a repo was deleted after Phase 2A ran but is still in the TSV, the emitted clone command will re-create it; delete that line from `clone-commands.sh` in the next step.
+Open `hydrated.md` beside it. On a read-only run every row is what *would* happen — `needs-clone`, `would-apply`, `pending` — which is the same list Step 3 will act on:
+
+```bash
+open "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/$LATEST_RUN/hydrated.md"
+```
+
+The pre-image inventory is what the script classifies against. A repository created after Phase 2A ran does not appear here at all — clone it by hand later. One deleted after Phase 2A ran is still in the TSV and will be proposed for cloning, which is what the plan's excluded fragment is for.
 
 > [!bug] Troubleshooting
 > If the run stops with `REIMAGE_ARTIFACT_ROOT is not set or not a directory`, see [[#`bin/restore-repos.sh` exits with "REIMAGE_ARTIFACT_ROOT is not set or not a directory"|`bin/restore-repos.sh` exits with "REIMAGE_ARTIFACT_ROOT is not set or not a directory"]].
@@ -445,43 +483,59 @@ open "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/$LATEST_RUN/restore-status.md"
 
 ---
 
-### Step 2 — Review the Emitted Clone Commands
+### Step 2 — Review the Plan Against the Report
 
-The script emits `clone-commands.sh` alongside the report. Open and review it before running anything:
+Step 0d wrote the plan; Step 1 has just reported what a run against it would do. This step reconciles the two, and the number to read first is **unreviewed**. It counts repositories the audit found and the plan does not mention, and every one of them will be skipped until you say otherwise:
 
 ```bash
 LATEST_RUN="$(cat "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/official/post-image-restore.txt")"
-open "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/$LATEST_RUN/clone-commands.sh"
+grep -A 12 '^## Summary' "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/$LATEST_RUN/hydrated.md"
 ```
 
-For each block, decide:
+Then open the plan itself and resolve them:
 
-- **Keep** — the repo is still relevant. Leave the command as-is.
-- **Skip** — the repo is archived or no longer needed. Delete the block or comment it out.
-- **Redirect** — the routed root is not where you want this one. Change the `cd` target, and move the block if it should sit under the other root.
-- **Reroute** — the block carries a `# REVIEW:` line saying the remote host matched neither routing host, or matched the personal routing host under somebody else's owner. Decide the root by hand and move the block.
+```bash
+open "$REIMAGE_WORKSPACE_ROOT/repo-plan/"
+```
+
+For each repository, decide:
+
+- **Select** — it is still relevant. `repo_plan_add` in `repo-candidates-selected.conf.sh`, with `REMOTE_FETCH_URL` and, when the routed default is wrong, `LOCAL_REPO_PATH`.
+- **Exclude** — archived, superseded, or deliberately not coming back. `repo_plan_exclude` in `repo-candidates-excluded.conf.sh`, **with a reason**. The reason is the point: an excluded repository with no reason is indistinguishable next year from one nobody looked at.
+- **Reroute** — the report's `Clone host` is a host that matched neither routing host, or matched the personal routing host under somebody else's owner. Decide the root by hand and set `LOCAL_REPO_PATH` on the selected entry.
+
+`--emit-plan` fills a proposal in from the audit rather than leaving you to type it — see Step 0d. A proposal is written into the run bundle under `plan-proposed/` and never into the workspace, so adopting one is a copy you perform deliberately.
 
 > [!warning] Pitfall
 > The script only rewrites `git@github.com:` when routing to the personal host. It leaves HTTPS URLs and non-github remotes alone, so a pre-image HTTPS clone URL produces a clone that authenticates from the OS keychain rather than your restored SSH key.
 >
-> Which protocol is correct here is a decision, not a default. The audit records the protocol the *pre-image* machine used, on whatever network it was on. If SSH to that host is blocked from where you are now — a corporate network commonly permits it to an internal Enterprise Server while blocking it to the public internet — an `ssh` URL restored faithfully produces a clone that cannot fetch or push, and the failure arrives one repository at a time inside the clone batch. Confirm SSH reaches each host before converting toward it, and leave HTTPS in place where it does not.
+> Which protocol is correct here is a decision, not a default. The audit records the protocol the *pre-image* machine used, on whatever network it was on. If SSH to that host is blocked from where you are now — a corporate network commonly permits it to an internal Enterprise Server while blocking it to the public internet — an `ssh` URL restored faithfully produces a clone that cannot fetch or push, and the failure arrives one repository at a time. Confirm SSH reaches each host before converting toward it, and leave HTTPS in place where it does not. `REMOTE_FETCH_URL` in the plan is where you record the answer, so it is made once rather than per run.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
 ---
 
-### Step 3 — Execute the Clone Commands
+### Step 3 — Clone the Selected Repositories
 
-Source `reimage.env` first so `$LOCAL_WORK_REPO_ROOT` and friends resolve, then run the reviewed clone script:
+Rehearse first. `--dry-run` composes the same report and `hydrated.md`, prints both, and writes nothing anywhere:
 
 ```bash
-source ./reimage.env
-bash "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/$LATEST_RUN/clone-commands.sh"
+./bin/restore-repos.sh --hydrate --stage clone --dry-run
 ```
 
-`clone-commands.sh` is written with `set -euo pipefail`, so the first `git clone` failure stops the batch and the clones above it stay done. Fix that repo — a stale remote URL is the usual cause — then delete the command blocks that already succeeded and rerun the tail.
+Then run it for real:
 
-A repository already present at its clone destination is not in the batch at all: Step 1 asks whether `$LOCAL_WORK_REPO_ROOT/<label>` or `$LOCAL_PERSONAL_REPO_ROOT/<label>` already contains a `.git` directory, and emits a clone command only when it does not. So a rerun after a partial batch emits only what is still missing.
+```bash
+./bin/restore-repos.sh --hydrate --stage clone
+```
+
+`--stage clone` restricts the run to the cloner, so the clones land and nothing is merged into them yet. `hydrated.md` names the stages that did *not* run, so a partial run reads as partial rather than as one that found nothing to do. Steps 5 and 6 are the remaining stages; run them once you have confirmed the clones sit where you meant.
+
+A repository already present at its destination is `present`, not re-cloned: the run asks whether that path already contains a `.git` directory. So a rerun after a partial pass acts only on what is still missing, and rerunning is always safe.
+
+A repository present at its destination whose `origin` is *not* the planned URL is a `conflict`. Nothing is cloned over it and — since a working tree that disagrees with the plan is not the one the plan describes — no later stage merges anything into it either. Resolve those by hand before rerunning.
+
+A clone that fails is recorded `failed` with the git error and the run continues to the next repository, so one bad remote does not strand the rest. Fix it and rerun; the repositories already cloned come back as `present`.
 
 **Cloning one repository by hand.** The batch is the normal path, but a single repo clones directly — proving the identity plumbing end to end, or picking up one you need before the rest are ready. Naming the destination rather than `cd`-ing into the root keeps the shell where it started, so a directory-scoped `direnv` does not unload `reimage.env` mid-block:
 
@@ -509,10 +563,10 @@ git clone "git@${GIT_PERSONAL_GITHUB_HOST}:${REPO_PATH}.git" "$LOCAL_PERSONAL_RE
 
 ### Step 4 — Repoint at the Cloned Toolkit
 
-`clone-commands.sh` clones every repo from the pre-image inventory, and the
-toolkit is one of them — it lives under `$LOCAL_PERSONAL_REPO_ROOT` like any other
-personal repo. So the previous step has just produced a **second** copy of the
-toolkit, and `$FRACTOGENESIS_HOME` still points at the first.
+Step 3 clones every repository the plan selected, and the toolkit is one of them
+— it lives under `$LOCAL_PERSONAL_REPO_ROOT` like any other personal repo. So the
+previous step has just produced a **second** copy of the toolkit, and
+`$FRACTOGENESIS_HOME` still points at the first.
 
 Left alone, that is a quiet trap: you read a runbook from one copy, edit it, and
 commit from the other. Only the clone has `.git`, so only the clone can commit —
@@ -593,27 +647,32 @@ rm -rf "$TOOLKIT_BOOTSTRAP"
 
 ### Step 5 — Restore Staged Ignored Files
 
-Two paths — pick the one you settled on in the pre-flight.
+`ignored-files` is a stage. It merges `staged-ignored-files/live/<label>/` into each cloned working tree, for every repository the plan selected.
 
-**Interactive path (preferred when you trust the reviewed set).** Rerun the script with `--apply-ignored-files`. It prompts Y/n per repo before rsyncing:
+See what it would do first:
 
 ```bash
-./bin/restore-repos.sh --apply-ignored-files
+./bin/restore-repos.sh --hydrate --stage ignored-files --dry-run
 ```
 
-**Inspect-first path.** Open `rsync-ignored-files.sh` from the latest status bundle, review each block, and run selectively:
+Then run it:
+
+```bash
+./bin/restore-repos.sh --hydrate --stage ignored-files
+```
+
+Read the per-repository table in `hydrated.md` afterwards. `applied` is the merge; `pending` means that repository is not cloned yet, so there was nowhere to merge into; `skipped` means no bundle exists for it, or the clone stage reported a conflict for it.
 
 ```bash
 LATEST_RUN="$(cat "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/official/post-image-restore.txt")"
-open "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/$LATEST_RUN/rsync-ignored-files.sh"
-bash "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/$LATEST_RUN/rsync-ignored-files.sh"
+open "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/$LATEST_RUN/hydrated.md"
 ```
 
 > [!note]
 > Kept ignored files that were routed to `secrets-encrypted/repos-gitignored/` by Phase 2A are *not* under `staged-ignored-files/live/` — they are inside the encrypted DMG and are restored by Step 6 below, which needs the image attached.
 
 > [!bug] Troubleshooting
-> If the interactive run reports a repo applied but the files are not in the working tree, see [[#`--apply-ignored-files` says "yes" but no files appear in the working tree|`--apply-ignored-files` says "yes" but no files appear in the working tree]].
+> If a repository is recorded `applied` but the files are not in the working tree, see [[#A repository is recorded `applied` but no files appear in the working tree|A repository is recorded `applied` but no files appear in the working tree]].
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -623,32 +682,34 @@ bash "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/$LATEST_RUN/rsync-ignored-files.
 
 Phase 2A routed secret-shaped gitignored files — `.env`, `secrets/`, `gradle.properties` with real passwords — to `secrets-encrypted/repos-gitignored/<label>/` rather than to `staged-ignored-files/live/`, so the Phase 3C DMG would encrypt them. Step 5 does not touch those: they are inside the image, and until this step runs, every cloned repo is missing exactly the files it cannot start without.
 
-Step 1 emitted `rsync-repos-gitignored.sh` alongside the other command files. It carries one guarded block per repo; blocks for repos the image does not carry skip themselves, so it is safe to run whole.
+`repo-secrets` is a stage like `ignored-files`, with one difference: its source root is inside the encrypted image, so the plan stores it as the literal `$DMG_MOUNT/repos-gitignored` and the run substitutes the mount point you give it. A run that cannot find the image records every repository `blocked` rather than failing — attach it later and rerun this stage.
 
 **1. Attach the secrets DMG** if it is not still mounted from Phase 10B. Capture the real mount point rather than globbing the filename — the volume name comes from `-volname` at build time:
 
 ```bash
 DMG="$(ls -1 "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/"all-secrets-*.dmg | sort | tail -1)"
-MNT="$(hdiutil attach "$DMG" | awk -F'\t' '/\/Volumes\//{print $NF}' | tail -1)"
-echo "$MNT"
+export DMG_MOUNT="$(hdiutil attach "$DMG" | awk -F'\t' '/\/Volumes\//{print $NF}' | tail -1)"
+echo "$DMG_MOUNT"
 ```
 
-**2. Read the emitted commands before running them:**
+The variable is exported because the run reads it from the environment; confirm the path printed is the image and not some other mounted volume before continuing.
+
+**2. See what it would restore, without restoring it:**
 
 ```bash
-cat "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/$LATEST_RUN/rsync-repos-gitignored.sh"
+./bin/restore-repos.sh --hydrate --stage repo-secrets --dry-run
 ```
 
-**3. Run it.** It locates the image itself by looking for `/Volumes/*/repos-gitignored`; set `DMG_MOUNT` explicitly if more than one image is attached:
+**3. Run it:**
 
 ```bash
-bash "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/$LATEST_RUN/rsync-repos-gitignored.sh"
+./bin/restore-repos.sh --hydrate --stage repo-secrets
 ```
 
 **4. Detach the image as soon as the copy finishes** — these are live credentials on a mounted volume:
 
 ```bash
-hdiutil detach "$MNT"
+hdiutil detach "$DMG_MOUNT"
 ```
 
 **5. Trust any restored `.envrc`.** `direnv` blocks an `.envrc` it has not been told to trust, and does so silently as far as the shell is concerned:
@@ -658,14 +719,14 @@ cd "$LOCAL_WORK_REPO_ROOT/<repo>" && direnv allow
 ```
 
 > [!warning] Pitfall
-> The bundle label is `basename` of the repo path. Two repos sharing a basename across the work and personal roots collapse to one bundle, and the emitted script would copy it into both — potentially putting work credentials into a repo you push publicly. Check before running:
+> The bundle label is `basename` of the repo path. Two repos sharing a basename across the work and personal roots collapse to one bundle, and a `repo-name`-keyed source would merge it into both — potentially putting work credentials into a repo you push publicly. The run warns when it sees a shared label. Check before running:
 >
 > ```bash
 > cut -f1 "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/$LATEST_RUN/raw/repos-input.tsv" \
 >   | xargs -n1 basename | sort | uniq -d
 > ```
 >
-> Anything printed needs its two blocks reconciled by hand before you run the script.
+> Anything printed needs reconciling by hand before this stage runs — give one of the two an explicit entry in `repo-rehydration-map.conf.sh`, or exclude it.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -726,7 +787,15 @@ Run the script one more time to write a fresh bundle that reflects the post-clon
 ./bin/restore-repos.sh
 ```
 
-The rerun is what turns the emitted actions back into evidence. `Needs clone` counts repositories still missing from their routed root, and `Ignored bundles applied` against `Ignored bundles available` says whether the reviewed kept files landed. Both are prefilled into the report's own Exit Criteria table with a heuristic verdict, so read that table rather than keeping a second copy here — the boundary itself is recorded in Step 11, and a table maintained in two places is how the two come to disagree.
+No `--hydrate`: this is a read-only pass whose job is to observe, not to act.
+
+The rerun is what turns the restoring work back into evidence. `Needs clone` counts repositories still missing from their routed root, and `Ignored bundles applied` against `Ignored bundles available` says whether the reviewed kept files landed. Both are prefilled into the report's own Exit Criteria table with a heuristic verdict, so read that table rather than keeping a second copy here — the boundary itself is recorded in Step 11, and a table maintained in two places is how the two come to disagree.
+
+`repo-restore-index.md` is the other thing to read here, because it is the only view across sittings — every run this phase has made, with what each one cloned and what each one left `unreviewed`:
+
+```bash
+open "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/repo-restore-index.md"
+```
 
 ```bash
 LATEST_RUN="$(cat "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/official/post-image-restore.txt")"
@@ -820,7 +889,7 @@ The script classifies and emits uniformly; these judgment calls stay with you.
 
 ## Troubleshooting
 
-Three failures land here rather than inline: each either spans more than one step or has a fix long enough to break the flow of the step that surfaces it. The step that surfaces each one links in from a callout.
+Four failures land here rather than inline: each either spans more than one step or has a fix long enough to break the flow of the step that surfaces it. The step that surfaces each one links in from a callout.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -829,6 +898,27 @@ Three failures land here rather than inline: each either spans more than one ste
 The artifact volume is not mounted, or the environment was not loaded. `ls "$REIMAGE_ARTIFACT_ROOT"` and reconnect the drive.
 
 [[#Step 1 — Produce the Initial Status Report|⮕ Continue to Step 1 — Produce the Initial Status Report]]
+
+### Every repository is reported `unreviewed` and nothing clones
+
+The run loaded the committed templates instead of your plan. Every entry in the
+templates is commented out, so the plan parses cleanly, selects nothing, and the
+run reports each repository as in-the-audit-and-in-neither-fragment. It looks
+exactly like a phase with nothing to do.
+
+The script warns on stderr when it falls back — `REIMAGE_WORKSPACE_ROOT is set
+but .../repo-plan does not exist`. Confirm which directory it read, and seed it
+if that is the templates directory:
+
+```bash
+./bin/restore-repos.sh --hydrate --dry-run 2>&1 | head -3
+./bin/restore-repos.sh init-repo-plan-config
+```
+
+If the workspace copy exists and repositories are still `unreviewed`, they are
+genuinely unreviewed — go back to Step 2 and select or exclude each one.
+
+[[#Step 2 — Review the Plan Against the Report|⮕ Continue to Step 2 — Review the Plan Against the Report]]
 
 ### A clone kept the pre-image HTTPS remote where you expected SSH
 
@@ -844,7 +934,7 @@ Confirm SSH actually reaches that host first; an unreachable SSH remote produces
 
 [[#Step 9 — Rerun the Status Report|⮕ Continue to Step 9 — Rerun the Status Report]]
 
-### `--apply-ignored-files` says "yes" but no files appear in the working tree
+### A repository is recorded `applied` but no files appear in the working tree
 
 `rsync -a` respects existing files with newer mtimes. If a clean clone already carries the file with a newer timestamp than the pre-image copy, rsync leaves it alone. Verify with `rsync --dry-run -av` before assuming loss.
 
@@ -862,9 +952,31 @@ Longer material most runs will not need, kept out of the main flow.
 |---|---|---|
 | `path_present` | `yes` / `no` | Whether the routed clone destination — `<clone_target_root>/<label>` — currently exists as a `.git`-containing directory. Not the pre-image path, which does not exist on a reimaged Mac. |
 | `ignored_files_available` | `yes` / `no` | Whether `staged-ignored-files/live/<label>/` exists for this repo. |
-| `ignored_files_applied` | `unknown` / `yes` / `skipped` / `failed` | Result of the optional interactive rsync. `unknown` when the run did not use `--apply-ignored-files`. |
+| `ignored_files_applied` | `unknown` / `applied` / `skipped` / `pending` / `failed` | Outcome of the `ignored-files` stage for this repository. `unknown` when that stage did not run — which is different from it running and restoring nothing. |
 | `carry_forward_rows` | integer | Sum of `local_only_commit_count + stash_count + tracked_change_count` from the pre-image row. Rows requiring rescue-branch reconciliation. |
 | `clone_host` | host name | The `origin` remote's host, which is what routed this repository to `clone_target_root`. `<none>` for a repository the audit recorded with no remote. |
+
+### Hydration Outcomes
+
+The `Outcome` column in `hydrated.md`, and the vocabulary the exit-criteria rows are read against. Every outcome is recorded per repository per stage, so one repository can be `present` for `clone` and `blocked` for `repo-secrets` in the same run.
+
+| Outcome | Stage | Meaning |
+|---|---|---|
+| `cloned` | clone | The repository was not there and now is. |
+| `present` | clone | Already at the planned destination with a matching `origin`. Nothing was done, and nothing needed to be. |
+| `would-clone` | clone | `--dry-run`, or a run without `--hydrate`. The clone command that would have run is in the detail column. |
+| `needs-clone` | clone | A run without `--hydrate`: absent at the destination. The read-only wording of `would-clone`. |
+| `conflict` | clone | Something is at the destination whose `origin` is not the planned URL. Nothing was written, and every later stage skips this repository for the rest of the run. |
+| `no-url` | clone | The plan selected it but gave no `REMOTE_FETCH_URL`, and the audit recorded no remote. Nothing can clone it; it is a backup-recovery question, not a restore one. |
+| `applied` | source | The source was merged into the working tree. |
+| `would-apply` | source | `--dry-run`, or a run without `--hydrate`. The `rsync` that would have run is in the detail column. |
+| `reported` | source | `MODE=report`: what exists was listed and nothing was restored. The honest setting for a source whose layout has not been inspected. |
+| `pending` | source | The repository is not cloned yet, so there is nowhere to merge into. Run the `clone` stage first. |
+| `blocked` | source | The source needs the secrets image and `DMG_MOUNT` is not set, or its root does not exist. Attach it and rerun this stage. |
+| `skipped` | source | No bundle exists for this repository under the source root, or the clone stage reported a conflict for it. |
+| `failed` | either | The `git` or `rsync` command returned non-zero. The error is in the detail column; the run continued to the next repository. |
+| `excluded` | plan | The plan excludes it, with the reason in the detail column. |
+| `unreviewed` | plan | In the audit and in neither plan fragment. Not cloned. Select it or exclude it with a reason. |
 
 ### Reading the Pre-Image TSVs
 

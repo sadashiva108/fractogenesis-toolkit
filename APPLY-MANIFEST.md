@@ -1,5 +1,7 @@
 # Apply Manifest
 
+**Revision 148** — supersedes Revision 147 and earlier. The runbook and five other documents stop describing three scripts that are no longer written.
+
 **Revision 147** — supersedes Revision 146 and earlier. The clone plan gets the run that acts on it, a record of what that run did, and a `--dry-run` that means what it says everywhere else.
 
 **Revision 146** — supersedes Revision 145 and earlier. The clone plan gets a step that sets it up and a run that proposes one, and neither can write over your answers.
@@ -309,6 +311,12 @@ several separate rounds of work, and splicing them by hand is how the duplicate
 | `sign-offs.sh` | `.internal/sign-offs.sh` |
 | `record-decision.sh` | `bin/record-decision.sh` |
 | `environment-variable-reference.md` | `references/environment-variable-reference.md` |
+| `repo-plan.sh` | `.internal/git/repo-plan.sh` |
+| `repo-hydrate.sh` | `.internal/git/repo-hydrate.sh` |
+| `repo-candidates-selected.conf.sh` | `.internal/templates/repo-plan/repo-candidates-selected.conf.sh` |
+| `repo-candidates-excluded.conf.sh` | `.internal/templates/repo-plan/repo-candidates-excluded.conf.sh` |
+| `repo-rehydration-sources.conf.sh` | `.internal/templates/repo-plan/repo-rehydration-sources.conf.sh` |
+| `repo-rehydration-map.conf.sh` | `.internal/templates/repo-plan/repo-rehydration-map.conf.sh` |
 
 `init-shell-env.sh` needs no `chmod +x` if it reaches a Mac through
 `bootstrap.sh`, which chmods `bin/` on extract. Commit it with mode 100755 so
@@ -317,7 +325,10 @@ several separate rounds of work, and splicing them by hand is how the duplicate
 `.internal/sign-offs.sh` is the exception to that: it is sourced, never executed,
 so it ships 100644 alongside `artifact-runs.sh` and `artifact-config.sh`. A
 foundation file with the executable bit set invites someone to run it, and it
-does nothing when run.
+does nothing when run. `.internal/git/repo-plan.sh` and
+`.internal/git/repo-hydrate.sh` ship 100644 for the same reason, and so do the
+four `repo-plan/` templates, which are sourced through the workspace copy
+`init-repo-plan-config` makes.
 
 ## Delivery note — Revisions 116, 117 and 118 shipped together
 
@@ -406,6 +417,128 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `scan-archive-contents.sh` | `.internal/home/scan-archive-contents.sh` |
 | `scan-postman-collections.py` | `.internal/home/scan-postman-collections.py` |
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
+
+---
+
+## Revision 148 — the runbook catches up with the script
+
+Revision 147 removed `clone-commands.sh`, `rsync-ignored-files.sh` and
+`rsync-repos-gitignored.sh` from `bin/restore-repos.sh` and left every document
+still telling the operator to open and run them. This is the other half: 26
+references in `restore-repos.md` and 8 across five other documents.
+
+Revision 147 shipped as `e879a8d` with that debt named in its own entry. This
+pays it. Between the two commits the runbook walked the operator through
+reviewing files nothing writes, which is the state this revision exists to end
+before the phase is run for real.
+
+### `restore-repos.md`
+
+Two steps are renamed for what they now do:
+
+| Was | Is |
+|---|---|
+| Step 2 — Review the Emitted Clone Commands | Step 2 — Review the Plan Against the Report |
+| Step 3 — Execute the Clone Commands | Step 3 — Clone the Selected Repositories |
+
+Step 3's heading is cited by `restore-access.md`, which is updated with it. Step
+4's heading is cited from two more documents and is unchanged, so the numbering
+holds — the constraint Revision 146 recorded when it chose `0d` over a renumber.
+
+**Step 2** was *review the emitted script and delete the blocks you do not
+want*. It is now *reconcile the plan against the report*, and the number it opens
+with is `unreviewed` — repositories the audit found and the plan does not
+mention, every one of which is skipped until a person says otherwise. Select,
+exclude with a reason, or reroute; three verbs matching the three plan fragments.
+
+**Step 3** is `--hydrate --stage clone`, rehearsed with `--dry-run` first. It
+gains what the old batch could not say: `present` is not re-cloned, `conflict` is
+not written over and is quarantined from every later stage, and `failed` does not
+strand the repositories behind it.
+
+**Step 5** is `--hydrate --stage ignored-files`. The two paths it used to
+offer — interactive versus inspect-the-emitted-script — are one path now, so the
+pre-flight question that asked you to choose between them is replaced by one
+worth asking: whole run, or a stage at a time.
+
+**Step 6** is `--hydrate --stage repo-secrets`, and `DMG_MOUNT` is now
+**exported** rather than captured into a local `MNT`, because the run reads it
+from the environment to expand a root the plan stores literal. A stage that
+cannot find the image records `blocked`, not failed.
+
+**Step 9** gains `repo-restore-index.md`, which is the only view across sittings
+and therefore the one worth opening at the end rather than in the middle.
+
+New in *Supplemental Reference*: **Hydration Outcomes**, the fifteen values the
+`Outcome` column can take, which stage each belongs to, and what each means. The
+exit-criteria rows are read against this vocabulary and it was nowhere written
+down.
+
+New in *Troubleshooting*: **every repository is reported `unreviewed` and nothing
+clones** — the templates-fallback case. It is the failure most likely to be
+misread as success, because a plan of entirely commented-out entries parses
+cleanly and selects nothing. Revision 146 added the stderr warning; this is where
+a reader who missed it lands.
+
+The Bundle Layout tree drops the three scripts and gains `hydrated.md`,
+`plan-proposed/`, `raw/hydration.tsv` and `repo-restore-index.md`, plus a second
+tree for the plan itself — it is the one thing this phase depends on that does
+not live under the artifact root. `REIMAGE_WORKSPACE_ROOT` and `DMG_MOUNT` join
+the environment table for the same reason.
+
+### The other five documents
+
+| Document | Change |
+|---|---|
+| `restore-access.md` | The Step 3 anchor follows its rename. |
+| `restore-home.md` | Two `--apply-ignored-files` citations become `--hydrate --stage ignored-files`. |
+| `references/restore-file-reference.md` | `repos-gitignored/` is a rehydration source now, not an emitted script, and it is Step 6 rather than Step 5 — the step number was already wrong. |
+| `references/master-directory-reference.md` | The `repo-audit-reports/` collapsible gains `repo-restore-index.md` and the current bundle contents. |
+| `reimaging-guide.md`, `reimaging-scripts-guide.md` | The Phase 11B summaries describe hydrating against a plan rather than emitting scripts. |
+
+### Two counters that had stopped meaning one thing
+
+Found while reading the script against the runbook, not by a test.
+
+`IGN_APPLIED_COUNT` incremented on any source stage reporting `applied`. With one
+source type that was correct; with three it is not — a `repo-secrets` merge
+inflated *Staged ignored files applied this run*, which is measured against
+`IGN_AVAILABLE_COUNT`, which counts only `staged-ignored-files/live/`. It drives
+an exit-criteria row, so the row could pass on the strength of a different
+source's work.
+
+`ignored_files_applied` in `status.tsv` was never assigned after Revision 147 and
+read `unknown` on every row. Both now come from the `ignored-files` stage
+specifically. `unknown` still means *that stage did not run*, which is a different
+answer from *it ran and restored nothing*.
+
+### Six files added to the Created table
+
+`repo-plan.sh`, `repo-hydrate.sh` and the four `repo-plan/` templates shipped in
+Revisions 143, 145 and 147 without reaching the *Created* table at the top of
+this file. That table is the apply list, not a per-revision record, so an apply
+from it would have missed six files the phase does not run without. Added, with
+the mode note they share with `sign-offs.sh`. No prose in an earlier entry was
+touched.
+
+### Validation
+
+`bash -n` clean. `verify-script-portability.sh` 81 clean / 0 WARN / 0 FAIL.
+`verify-runbook-structure.sh` 213 PASS / 5 WARN / 25 FAIL across 27 documents —
+back to baseline; `restore-repos.md`'s only finding is the pre-existing
+`NO-NOTE`, down from five callouts to four. `verify-doc-paths.sh --all` 757 OK /
+0 MISSING / 0 ANCHOR BROKEN, with 1107 anchors resolving including the two
+renamed step headings.
+
+An unbalanced code fence was introduced and caught by the structure lint — 94
+fences, odd, so the document would have rendered as code from the Bundle Layout
+onward. Fixed before this entry was written.
+
+The counter fix was exercised with a second rehydration source configured: two
+`applied` outcomes in `hydrated.md`, *Staged ignored files applied this run* = 1.
+
+**All of it ran on Linux with Bash 5.x.** `/bin/bash -n` against real macOS Bash
+3.2 is owed here along with Revisions 116–147.
 
 ---
 

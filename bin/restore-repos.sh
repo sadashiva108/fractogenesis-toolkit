@@ -667,6 +667,9 @@ classify_repo() {
     IGN_AVAILABLE="no"
   fi
 
+  # Overwritten by the ignored-files stage below when that stage runs. Stays
+  # "unknown" when it did not -- which is the honest answer, and different from
+  # "it ran and restored nothing".
   IGN_APPLIED="unknown"
 
   local carry=0
@@ -994,7 +997,17 @@ do
         fi
         printf '%s\t%s\t%s\t%s\n' \
           "$label" "${REPO_SRC_TYPE[$src_i]}" "$HYDRATE_OUTCOME" "$HYDRATE_DETAIL" >> "$HYDRATION_TSV"
-        [[ "$HYDRATE_OUTCOME" == "applied" ]] && IGN_APPLIED_COUNT=$((IGN_APPLIED_COUNT + 1))
+        # The two ignored-files counters answer a question about ONE source:
+        # `staged-ignored-files/live/`, which is what IGN_AVAILABLE was measured
+        # against. Every source type reaches this line, so counting any of them
+        # here would let a repo-secrets merge report staged ignored files as
+        # restored -- and drive the exit-criteria row that says so.
+        if [[ "${REPO_SRC_TYPE[$src_i]}" == "ignored-files" ]]; then
+          IGN_APPLIED="$HYDRATE_OUTCOME"
+          if [[ "$HYDRATE_OUTCOME" == "applied" ]]; then
+            IGN_APPLIED_COUNT=$((IGN_APPLIED_COUNT + 1))
+          fi
+        fi
       fi
       src_i=$((src_i + 1))
     done
