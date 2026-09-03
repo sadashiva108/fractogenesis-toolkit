@@ -1,5 +1,7 @@
 # Apply Manifest
 
+**Revision 177** — supersedes Revision 176 and earlier. A session closes, its five open findings go back to unowned, and the trailer turns out not to enumerate a session's commits.
+
 **Revision 176** — supersedes Revision 175 and earlier. A commit message the owner asks for is short, and is written so the shell cannot break it.
 
 **Revision 175** — supersedes Revision 174 and earlier. One session becomes one bundle: two brief bundles are absorbed and removed, the indexes say which kind of bundle they list, and the owner column names the session.
@@ -475,6 +477,69 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
 
 ---
+
+## Revision 177 — a session closes, and its open findings do not go with it
+
+`phase-11b-hydrate-and-bookends-20260903-141500` is `closed` by the owner. It is
+the whole of `session_019yzcjm2QneJ5ymVEQDi1bu` — three briefs, Revisions 131,
+142–159, 167, 170, 171, 175 and 176 — and it writes the `final-summary.md` that
+`closed` requires.
+
+### Five open findings, unowned rather than carried
+
+The bundle owned seven findings; five are `unresolved`. Closing it with those five
+still listed against it would recreate, in the same evening, the defect Revision
+175 removed: a bundle that has stopped, holding findings nobody is working.
+
+So `0008`, `0011`, `0016`, `0017` and `0015` are unowned — their INDEX rows read
+`—`, and they appear in no session's manifest. **Unassigned is not abandoned.**
+Four are `restore-repos` readings and one is the portability lint's blind spot;
+none is urgent, and each is a complete reading that the next owner can pick up
+cold, which is what a findings bundle is for.
+
+They stay listed in the closed bundle's `findings-manifest.md`, with a note saying
+why they are unowned. That table is the record of what this session found; the
+INDEX row is the record of who is working it. Those are different questions and
+the two files answer one each.
+
+The two `resolved` findings, `0006` and `0020`, stay owned here. A resolved finding
+needs nobody.
+
+### The trailer finds a session; it does not enumerate one
+
+`0027` finding 7 rests on the harness writing a `Claude-Session` trailer into every
+commit, which is how two bundles recorded as "not recoverable" were recovered in
+Revision 167. Closing this session tested that claim against its own fifteen
+commits, and it does not fully hold:
+
+- `a1c2f33` carries no trailer at all.
+- `0a3da17` carries one that is **truncated** —
+  `session_019yzcjm2QneJ5ymVEQDi1`, missing the final `bu` — so
+  `git log --grep=<full id>` silently does not match it.
+
+`git log --grep` therefore returns 13 of 15. The distinction worth keeping is that
+the trailer is reliable for *identifying* a session and unreliable for *counting*
+its work: grep a prefix, then verify, and never treat the count as complete. That
+belongs in `0027`, which this session does not own — it is recorded in the final
+summary and here.
+
+### Also recorded at closing
+
+`/bin/bash -n` against real macOS Bash 3.2 remains owed for Revisions 116–176 —
+the largest thing this session leaves undone, and unreachable from the Linux VM it
+ran in. `bookends/MANIFEST.md` still has no rename row, which is an evidence write.
+The scratch-and-refresh discipline lives only in the prompt written for the
+incoming session, because the Revision 177 that would have put it in
+`.github/copilot-instructions.md` was rolled back before it was committed — this
+entry takes that number.
+
+### Validation
+
+Documentation lint: **774 OK, 0 MISSING, 0 ANCHOR BROKEN**. Runbook structure
+**213 PASS / 5 WARN / 25 FAIL** across 27 documents, unchanged. Script portability
+**81 clean / 0 WARN / 0 FAIL**, unchanged. No script changed; every write is a
+record write under `docs/`. Composed in a scratch copy refreshed from the live tree
+immediately before applying; header re-read at apply time, 176 was highest.
 
 ## Revision 176 — a commit message that is short, and that pastes
 

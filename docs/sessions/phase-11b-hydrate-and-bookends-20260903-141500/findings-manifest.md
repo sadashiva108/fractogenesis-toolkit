@@ -47,3 +47,15 @@ Revision 167, at the owner's request and with the explicit instruction not to
 address it. Recording a finding and owning one are different acts: recording is
 the reading, owning is a commitment to work it. The owner assigns ownership and
 has not assigned this one — `0027`'s index row reads `—` and that is correct.
+
+## At closing, 2026-09-03
+
+This session is `closed`. Its two `resolved` findings — `0006` and `0020` — stay
+listed above; a resolved finding needs nobody.
+
+The five `unresolved` ones — `0008`, `0011`, `0015`, `0016`, `0017` — were
+**unowned** by the owner at closing and their INDEX rows read `—`. A closed bundle
+has, by its own state, stopped, and leaving an open finding under one is the defect
+Revision 175 removed from the two `restore-repos` bundles. They are unassigned, not
+abandoned. They remain in the table above because this session found and held them,
+and the table is the record of that.
