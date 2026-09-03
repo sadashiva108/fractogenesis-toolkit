@@ -37,7 +37,7 @@ Single source of truth for the phase guides used across the pre-image stage (Pha
 | File | Purpose |
 |---|---|
 | `reimaging-guide.md` | Canonical workflow sequence and checkpoint map for the full pre-image process. |
-| `backup-strategy-guide.md` | Backup strategy, destination boundaries, cloud-copy safety, and handling rules. |
+| `backup-strategy-guide.md` | Backup strategy, destination bookends, cloud-copy safety, and handling rules. |
 | `backup-file-reference.md` | File and directory reference for Phase 2 backup artifacts under `$REIMAGE_ARTIFACT_ROOT` (this file). |
 | `backup-repos.md` | Git audit, backup branches, stashes, `.gitignore` superset, dry runs, and selected ignored-file backup. |
 | `backup-home.md` | Scripted home-directory and secrets-encrypted backup workflow and output review. |

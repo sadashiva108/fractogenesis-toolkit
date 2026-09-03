@@ -1177,7 +1177,7 @@ verify_latest() {
   status=${PIPESTATUS[0]}
   set -e
 
-  # BSD grep does not implement the GNU \b word boundary, so '^(MISMATCH|FAILED)\b'
+  # BSD grep does not implement the GNU \b word bookend, so '^(MISMATCH|FAILED)\b'
   # silently matches nothing on macOS and a corrupt backup reports PASS. Anchor on
   # whitespace or end of line instead, which both BSD and GNU ERE support.
   mismatch_failed_count="$(grep -Ec '^(MISMATCH|FAILED)([[:space:]]|$)' "$out" 2>/dev/null || true)"

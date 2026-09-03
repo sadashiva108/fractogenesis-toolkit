@@ -77,7 +77,7 @@ Read this before running anything. Reimage prep is spread across many independen
 
 The flow is script-first and one-directional. `reimage-checklist.sh --phase pre` walks every prep area, writes a PASS/WARN/FAIL/SKIP row per check into a Markdown report, and exits non-zero if any **FAIL** is present. You read that report, fix any FAIL by rerunning the phase that owns it, then hand-confirm the rows automation cannot reach. The preferred path is the single script run; the individual sync commands kept under Supplemental Reference are only for the cloud checks the script can evidence but not prove.
 
-One boundary matters throughout: for cloud folders the script confirms a local folder and an upload marker exist — that is *evidence*, not *proof* that the cloud copy is current. Proof is a manual row.
+One bookend matters throughout: for cloud folders the script confirms a local folder and an upload marker exist — that is *evidence*, not *proof* that the cloud copy is current. Proof is a manual row.
 
 The same script serves Phase 14 with `--phase post`; that run belongs to a different runbook. This runbook is `--phase pre` only.
 

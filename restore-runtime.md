@@ -117,8 +117,8 @@ Related scripts, alphabetical:
 $FRACTOGENESIS_HOME/bin/compare-restored-state.sh      # entrypoint (Step 10 — version comparison against the captured inventories)
 $FRACTOGENESIS_HOME/bin/init-shell-env.sh              # entrypoint (Step 6 — removes the Phase 8 shell bridge)
 $FRACTOGENESIS_HOME/bin/prepare-artifact-root.py       # entrypoint (Step 7 — upsert-env, writes the JDK baseline into reimage.env)
-$FRACTOGENESIS_HOME/bin/record-restore-exit.sh         # entrypoint (Step 11 — exit boundary)
-$FRACTOGENESIS_HOME/bin/record-restore-prereqs.sh      # entrypoint (Step 0 — entry boundary)
+$FRACTOGENESIS_HOME/bin/record-restore-exit.sh         # entrypoint (Step 11 — exit bookend)
+$FRACTOGENESIS_HOME/bin/record-restore-prereqs.sh      # entrypoint (Step 0 — entry bookend)
 ```
 
 Artifact root:
@@ -145,11 +145,11 @@ output only; the inputs are the `system-inventory/` captures listed above.
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/reimaged-system/
-boundaries/MANIFEST.md                                           # index of every entry and exit run
-boundaries/official/restore-runtime-entry.txt                    # newest entry run
-boundaries/official/restore-runtime-exit.txt                     # newest exit run
-boundaries/runs/restore-runtime-entry-YYYYMMDD-HHMMSS/           # Step 0 — checklist.md
-boundaries/runs/restore-runtime-exit-YYYYMMDD-HHMMSS/            # Step 11 — checklist.md
+bookends/MANIFEST.md                                           # index of every entry and exit run
+bookends/official/restore-runtime-entry.txt                    # newest entry run
+bookends/official/restore-runtime-exit.txt                     # newest exit run
+bookends/runs/restore-runtime-entry-YYYYMMDD-HHMMSS/           # Step 0 — bookend.md
+bookends/runs/restore-runtime-exit-YYYYMMDD-HHMMSS/            # Step 11 — bookend.md
 
 comparisons/MANIFEST.md                                          # index of every comparison
 comparisons/official/restore-runtime-inventory-diff.txt          # newest inventory diff
@@ -164,7 +164,7 @@ There is no `restore-notes/` or `sign-offs/` entry in this phase. Phase 15
 (`restore-home.md`) owns the prose category, where a hand-written note is the
 only artifact a step produces; `sign-offs/` belongs to the phases that ask a
 person to answer rows, and this one asks none.
-Everything this runbook records is generated, so it goes to `boundaries/` and
+Everything this runbook records is generated, so it goes to `bookends/` and
 `comparisons/` where the run index can find it.
 
 ### Environment Variables
@@ -175,7 +175,7 @@ The `reimage.env` values this runbook depends on. `REIMAGE_ARTIFACT_ROOT` is res
 |---|---|
 | `REIMAGE_ARTIFACT_ROOT` | Artifact root for this reimage event; used to locate the captured system inventory for version comparison. |
 | `FRACTOGENESIS_HOME` | Repository root for this toolkit checkout; used only to keep command examples portable. Set by your shell startup / `.envrc`, not stored in `reimage.env`. |
-| `REIMAGE_JDK_BASELINE` | The JDK major this machine is pinned to. Named once in Step 7 and never retyped: that step's `brew install openjdk@…`, its symlink, and its `java_home -v` verification all read it, and its write guard refuses to record an empty one. Phase 10B writes the `jssecacerts` trust override into whichever JDK resolves through it, so on a multi-JDK machine this is what decides which one gets the corporate trust. Not a version this toolkit hardcodes anywhere — the checks report which path resolved rather than asserting a number, so nothing goes stale when the baseline moves. The boundary recorders tolerate a blank and fall back to the machine's default JDK, which is right on a machine with one installed; Step 7 itself does not. |
+| `REIMAGE_JDK_BASELINE` | The JDK major this machine is pinned to. Named once in Step 7 and never retyped: that step's `brew install openjdk@…`, its symlink, and its `java_home -v` verification all read it, and its write guard refuses to record an empty one. Phase 10B writes the `jssecacerts` trust override into whichever JDK resolves through it, so on a multi-JDK machine this is what decides which one gets the corporate trust. Not a version this toolkit hardcodes anywhere — the checks report which path resolved rather than asserting a number, so nothing goes stale when the baseline moves. The bookend recorders tolerate a blank and fall back to the machine's default JDK, which is right on a machine with one installed; Step 7 itself does not. |
 | `JAVA_HOME` | Resolved from `REIMAGE_JDK_BASELINE` through `/usr/libexec/java_home` in Step 7, exported there, and written to `reimage.env` in the same block, so a new terminal or a later phase does not rediscover it. The one key here that must never be present-but-empty: unlike the `REIMAGE_*` keys, the shell and every JVM tool already read `JAVA_HOME`, so `export JAVA_HOME=` overwrites a working value with an empty string the moment `reimage.env` is sourced. Step 7's guard is what prevents that — it refuses to write **either** key when **either** one is empty, rather than recording half a pair. A convenience in any case: every step that needs it re-derives it from the baseline rather than trusting the stored path, which goes stale when the JDK is reinstalled. |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -225,7 +225,7 @@ bash bin/record-restore-prereqs.sh --runbook restore-runtime --help
 bash bin/record-restore-prereqs.sh --runbook restore-runtime
 ```
 
-It records the result under `reimaged-system/boundaries/` and exits non-zero
+It records the result under `reimaged-system/bookends/` and exits non-zero
 only on `FAIL`, writing this phase's entry half under the context
 `restore-runtime-entry`.
 
@@ -588,7 +588,7 @@ brew install git
 ```
 
 **Name the JDK major once.** Every command below reads it, `reimage.env` carries
-it, and Phase 10B's trust-store step and both boundary recorders read it back —
+it, and Phase 10B's trust-store step and both bookend recorders read it back —
 so it is chosen here and never retyped. Substitute the major your projects need:
 
 ```bash
@@ -1024,14 +1024,14 @@ bash bin/compare-restored-state.sh --runbook restore-runtime
 bash bin/record-restore-exit.sh --runbook restore-runtime
 ```
 
-It writes `checklist.md` under `reimaged-system/boundaries/` and exits non-zero
+It writes `bookend.md` under `reimaged-system/bookends/` and exits non-zero
 on any `FAIL`. That file holds the **Automated** rows — what the script probed.
 The rows it cannot answer go to a sign-off under `reimaged-system/sign-offs/`,
 which the run names at the end, because a rerun replaces the run directory and
 would take an answer with it.
 
 This is the exit half of a pair; `record-restore-prereqs.sh` is the entry half,
-run at each phase's Step 0. One check per boundary — Phase 10A's exit and Phase
+run at each phase's Step 0. One check per bookend — Phase 10A's exit and Phase
 10B's entry are separate questions asked by separate runbooks, rather than one
 runbook reaching across into the next.
 
@@ -1122,7 +1122,7 @@ npm --version
 #### Answer the Manual Rows
 
 Nothing re-probes these and no later phase collects them: you answer them by
-editing `checklist.md` itself. Replace each `TODO` with the answer and put the reasoning in Notes. `yes` and `accepted`
+editing `bookend.md` itself. Replace each `TODO` with the answer and put the reasoning in Notes. `yes` and `accepted`
 close a row, and so does `no` when `no` is the considered answer — the check is
 for rows nobody looked at.
 

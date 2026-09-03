@@ -2,7 +2,7 @@
 # =============================================================================
 # record-restore-state.sh
 #
-# Records what is on the machine at a restore phase's boundary, so the phase's
+# Records what is on the machine at a restore phase's bookend, so the phase's
 # own before and after can be compared. Writes hashes, never contents.
 #
 # WHY THIS EXISTS. Phase 10A's before-state is permanently gone, which is why
@@ -21,7 +21,7 @@
 #   With JAVA_HOME empty, "$JAVA_HOME/lib/security" collapses to
 #   "/lib/security" -- a path that genuinely does not exist. Recording `absent`
 #   there is a confident wrong answer about something that was never tested,
-#   and at a `before` boundary an empty JAVA_HOME is the NORMAL state, because
+#   and at a `before` bookend an empty JAVA_HOME is the NORMAL state, because
 #   restore-access.md Step 6 is what sets it.
 #
 #   unreadable separates "this file is not there" from "this file is there and
@@ -36,7 +36,7 @@
 # tells the reader to run it directly -- which is the graduation rule in
 # `.github/guides/script-types-and-locations.md` verbatim. It was first drafted
 # under `.internal/restore/` on the strength of a carve-out that kept the
-# boundary recorders there. That carve-out has since been removed, its two
+# bookend recorders there. That carve-out has since been removed, its two
 # factual premises having failed when measured, and the recorders now sit in
 # `bin/` beside this file.
 #
@@ -51,7 +51,7 @@
 #
 # SHARED SCAFFOLDING, DEFERRED. Its option parsing, `absolute_path`, the
 # repo-checkout guard, and the artifact_run_begin / finalize bracket duplicate
-# the two boundary recorders now beside it in `bin/`. It does NOT duplicate
+# the two bookend recorders now beside it in `bin/`. It does NOT duplicate
 # `record` / `record_manual` -- there is no PASS/WARN/FAIL model here at all,
 # only rows of observed state. So the extraction candidate is narrower than
 # `script-types-and-locations.md` anticipated when it said "extract when a third
@@ -206,7 +206,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-# Runbooks are added to this list as they are reached, the same way the boundary
+# Runbooks are added to this list as they are reached, the same way the bookend
 # recorders and the comparison do it, so each target set is written against a
 # runbook someone has actually just followed. One list, checked in one place:
 # the runbook name IS the artifact name, so there is no second table to drift.
@@ -518,7 +518,7 @@ emit_note() {
   if [[ "$n_unresolved" -gt 0 ]]; then
     printf '## Unresolved — nothing was checked here\n\n'
     printf 'A variable in the target expanded empty, so the path was never tested.\n'
-    printf 'This is **not** the same as absent, and at a `before` boundary it is often\n'
+    printf 'This is **not** the same as absent, and at a `before` bookend it is often\n'
     printf 'the correct state: `JAVA_HOME` is set by `restore-access.md` Step 6, so an\n'
     printf 'empty one here means Step 6 has not run yet.\n\n'
     printf '| Target | Detail |\n| --- | --- |\n'
@@ -543,7 +543,7 @@ emit_note() {
 
   printf '## How to read this\n\n'
   printf -- '- A directory always gets its own row, before the rows for what is inside it. A present-but-EMPTY directory therefore shows one row and no children — which is a different fact from a directory nobody looked at, and the reason the distinction is drawn.\n'
-  printf -- '- **absent** at a `before` boundary is the expected state for most of these. The phase is what creates them; the point of recording it is so the after-state has something to differ from.\n'
+  printf -- '- **absent** at a `before` bookend is the expected state for most of these. The phase is what creates them; the point of recording it is so the after-state has something to differ from.\n'
   printf -- '- `~/Library/Keychains/` churns on every keychain access, so its hashes differing between before and after proves nothing on its own. Read the file list rather than the hashes there.\n'
   printf -- '- Full detail is in `state.tsv` beside this file. Columns: `target state kind mode size mtime sha256 path`, tab-separated, path last.\n'
   printf -- '- Contents are never recorded. A SHA-256 is enough to tell whether a key changed and carries nothing back.\n'

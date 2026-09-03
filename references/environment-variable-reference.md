@@ -168,7 +168,7 @@ than a folder.
 | Optional | Blank is a decision with a defined meaning. | `GIT_PERSONAL_GITHUB_OWNER` — blank means *never rewrite a clone URL*; `GIT_PERSONAL_GITHUB_HOSTNAME` — blank means *`HostName` inherits the `Host` value* |
 | All-or-nothing group | Fill every member or leave every member blank. Half a group is never right. | The four `GIT_PERSONAL_*` identity keys, together with `LOCAL_PERSONAL_REPO_ROOT` |
 
-The personal Git group is the worked example. A Mac with no separate personal identity leaves all five blank, and that is a `PASS` at every boundary. A half-filled group is what fails quietly: an identity with no root leaves `restore-git.md` Step 5's override at `/.gitconfig`, and a root with no identity clones into a directory `includeIf` never matches, so those commits land under the **work** identity and nothing reports it until someone else notices the author line.
+The personal Git group is the worked example. A Mac with no separate personal identity leaves all five blank, and that is a `PASS` at every bookend. A half-filled group is what fails quietly: an identity with no root leaves `restore-git.md` Step 5's override at `/.gitconfig`, and a root with no identity clones into a directory `includeIf` never matches, so those commits land under the **work** identity and nothing reports it until someone else notices the author line.
 
 Both directions are checked — in `check_restore_git()` in `bin/record-restore-exit.sh`, and again in `check_restore_repos()` in `bin/record-restore-prereqs.sh`.
 
@@ -182,16 +182,16 @@ Optional does not mean unchecked. `check_restore_git()` reads the `Host` block b
 
 ## Where a Key Gets Checked
 
-A phase has two boundaries, and a key belongs to exactly one of them.
+A phase has two bookends, and a key belongs to exactly one of them.
 
 | Recorder | Asks | A key belongs here when |
 |---|---|---|
 | `bin/record-restore-prereqs.sh` (entry, Step 0a) | May this phase start? | An **earlier** phase wrote it. |
 | `bin/record-restore-exit.sh` (exit, final step) | Did this phase do what it promised? | **This** phase wrote it. |
 
-A row over a value the phase itself records can only ever fail at entry — a scheduled false alarm, and the mirror of the failure the entry recorder exists to prevent ("recording `PASS` for something nobody verified"). `restore-git`'s identity keys are checked at exit for exactly this reason; its entry checklist does not mention them.
+A row over a value the phase itself records can only ever fail at entry — a scheduled false alarm, and the mirror of the failure the entry recorder exists to prevent ("recording `PASS` for something nobody verified"). `restore-git`'s identity keys are checked at exit for exactly this reason; its entry bookend does not mention them.
 
-The recorders overlap without duplicating. Where the same subject is checked on both sides it is renamed, not repeated — `restore-access` entry has *Identity SSH keys restored and tight*, its exit has *SSH private keys restored and tight*. One check per boundary; a phase never runs the next phase's entry check.
+The recorders overlap without duplicating. Where the same subject is checked on both sides it is renamed, not repeated — `restore-access` entry has *Identity SSH keys restored and tight*, its exit has *SSH private keys restored and tight*. One check per bookend; a phase never runs the next phase's entry check.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 

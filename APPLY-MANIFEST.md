@@ -1,5 +1,7 @@
 # Apply Manifest
 
+**Revision 156** — supersedes Revision 155 and earlier. `reimaged-system/boundaries/` becomes `bookends/`, its record becomes `bookend.md`, and the concept renames with them.
+
 **Revision 155** — supersedes Revision 154 and earlier. The toolkit repoint has one copy of its commands, and three citations of a renumbered Phase 8 step are corrected.
 
 **Revision 154** — supersedes Revision 153 and earlier. The carry-forward sign-off row stops asking about repositories the plan excludes, and says which of its rows a rescue branch could carry.
@@ -431,6 +433,113 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `scan-archive-contents.sh` | `.internal/home/scan-archive-contents.sh` |
 | `scan-postman-collections.py` | `.internal/home/scan-postman-collections.py` |
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
+
+---
+
+## Revision 156 — `boundaries` becomes `bookends`, and the record inside stops calling itself a checklist
+
+A phase has two of these and only ever two: one at each end. "Boundary" names a
+single line; "bookends" names a pair, which is what entry and exit actually are.
+And the record inside was called `checklist.md`, a word the workflow already
+spends on two other things — the pre- and post-image capstones, and colloquially
+on anything with rows.
+
+    reimaged-system/boundaries/runs/<run>/checklist.md
+    reimaged-system/bookends/runs/<run>/bookend.md
+
+`bookends/` holding `bookend.md` follows the shape already in the tree:
+`comparisons/` holds `comparison.md`. Plural category, singular record.
+
+### The concept renamed too, not just the path
+
+154 occurrences of `boundaries` and 153 more of the singular `boundary` — the
+second number is why. `boundary` is used in prose across 39 files: *entry
+boundary*, *exit boundary*, *the boundary recorders*, *one check per boundary*,
+*the boundary chain closes at both ends*. Renaming the directory and leaving the
+prose would have produced `bookends/` holding what every runbook calls the
+boundary record, which is a fresh instance of the mismatch this removes.
+
+**20 occurrences were deliberately left alone.** `security boundary` and
+`encryption boundary` are the ordinary English word and have nothing to do with
+phase entry and exit — `stage-loose-secrets.md` alone has four, and the whole
+loose-secrets phase is built on the encryption boundary as a concept. They were
+shielded before the substitution ran and verified intact after.
+
+`APPLY-MANIFEST.md` was excluded. It has 40 more, and it is the committed record
+of what was true when each revision shipped; a revision that says `boundaries/`
+is not wrong, it is dated.
+
+### One filename, two categories, and only one of them renamed
+
+`checklist.md` was written into two different places, and they are not the same
+kind of file:
+
+| | Renamed | Why |
+|---|---|---|
+| `bookends/runs/<run>/checklist.md` | → `bookend.md` | Automatic PASS/WARN/FAIL. Holds nothing a person writes, since Revision 116 moved those rows to `sign-offs/`. |
+| `restarts/runs/<run>/checklist.md` | **kept** | Automatic rows **plus 3–4 `TODO` rows a person still answers**, in all six runs on the volume. |
+
+The restart records never got Revision 116's migration. Renaming them now would
+put a new name on a file that is still wrong in the way the old name described —
+they have to lose their human rows to `sign-offs/` first, and then they are the
+same kind of file as a bookend and can take the same name. That is a separate
+change and it is not made here.
+
+### The reader that would have gone quiet
+
+`bin/reindex-artifact-runs.sh` reads the record by name and greps it for the
+PASS/WARN/FAIL counts that go into every `MANIFEST.md`. After a rename it would
+have found no `checklist.md` in any bookend run, reported `—` for all 36, and
+**failed nothing** — the counts would simply have become em dashes. It now looks
+for `bookend.md` first and `checklist.md` second, which is also what the split
+above requires: two categories, two names, one reader.
+
+That file belongs to the run-index session. It was edited because leaving it
+would have broken it, and the alternative — renaming without it — is worse than
+either. `.internal/artifact-runs.sh`, `reimaging-scripts-guide.md` and
+`references/master-directory-reference.md` are on that side too and carried the
+word; all four are flagged here rather than silently claimed.
+
+### The evidence on the volume moved with it
+
+36 records renamed, the category directory renamed, and two classes of stale
+internal reference repaired: 24 bookend records citing `boundaries/MANIFEST.md`,
+and 20 sign-offs whose `Plan` field named the old category. Nothing was deleted.
+`_pre-conversion-backup-20260902/` and `toolkit-snapshot/` were left untouched —
+both are frozen copies of an earlier state, and rewriting a snapshot is how a
+snapshot stops being one.
+
+Fixing those sign-off paths surfaced a defect that is **not** fixed here:
+they cite `runs/.<id>.incomplete`, the pre-promotion staging path, exactly as
+`bin/restore-repos.sh` did before Revision 150. Four more scripts have it.
+Parked at `docs/gaps/bookend-signoffs-cite-the-staging-path.md`.
+
+### What is still called a checklist, and correctly
+
+- **The capstones** — `bin/reimage-checklist.sh` and the `reimage-checklist.md`
+  it writes at each end of the workflow. This is the meaning the word is
+  reserved for.
+- **The restarts bundle** — `restarts/runs/<run>/checklist.md`, six runs,
+  pending the migration above.
+- **`keychain-manual-export-checklist-<stamp>.md`** under `public-certs/certs/` —
+  a genuine hand-worked checklist from Phase 3A, unrelated to any of this.
+
+### Validation
+
+`bash -n` clean across all 12 changed scripts; `py_compile` clean on
+`.internal/ai-scripts/update-references.py`. `verify-script-portability.sh` 81
+clean / 0 WARN / 0 FAIL. `verify-runbook-structure.sh` 213 PASS / 5 WARN / 25
+FAIL across 27 documents and `verify-doc-paths.sh --all` 758 OK / 0 MISSING /
+0 ANCHOR BROKEN — both exactly at baseline, which is the result that matters for
+a rename: 37 files changed and not one documented path stopped resolving.
+
+Exercised functionally against a **scratch artifact root**:
+`record-restore-prereqs.sh --runbook restore-repos` wrote
+`reimaged-system/bookends/runs/restore-repos-entry-*/bookend.md`, indexed it into
+`bookends/MANIFEST.md`, and moved `bookends/official/restore-repos-entry.txt`.
+
+**All of it ran on Linux with Bash 5.x.** `/bin/bash -n` against real macOS Bash
+3.2 is owed here along with Revisions 116–155.
 
 ---
 

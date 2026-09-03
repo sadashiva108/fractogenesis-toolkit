@@ -129,7 +129,7 @@ The filled IT confirmation is written to `$REIMAGE_WORKSPACE_ROOT/reimage-confir
 and copied into the artifact root by Phase 1. Long-running performance and Office
 evidence stages locally the same way. `record-enrollment.sh` falls back to
 `$REIMAGE_WORKSPACE_ROOT/` when the drive is not mounted, creating the same
-`restarts/` and `boundaries/` categories under it. In every case
+`restarts/` and `bookends/` categories under it. In every case
 the workspace is authoritative only until the artifact root is available; after
 that the artifact root is.
 
@@ -488,13 +488,13 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 > [!example]- `$REIMAGE_ARTIFACT_ROOT/reimaged-system/`
 > ```text
 > $REIMAGE_ARTIFACT_ROOT/reimaged-system/
-> ├── boundaries/
+> ├── bookends/
 > │   ├── MANIFEST.md
 > │   ├── official/
 > │   │   └── <runbook>-<point>.txt
 > │   └── runs/
 > │       └── <runbook>-<point>-YYYYMMDD-HHMMSS/
-> │           └── checklist.md
+> │           └── bookend.md
 > ├── checklists/
 > │   ├── MANIFEST.md
 > │   ├── official/
@@ -527,12 +527,12 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 >         └── <runbook>-<point>-YYYYMMDD-HHMMSS/
 > ```
 >
-> `boundaries/`, `checklists/`, `comparisons/`, `state/` and `restarts/` are run categories with
+> `bookends/`, `checklists/`, `comparisons/`, `state/` and `restarts/` are run categories with
 > one shape: `runs/<context>-YYYYMMDD-HHMMSS/` holding a single run's files,
 > `official/<context>.txt` naming the run that counts, and an append-only
 > `MANIFEST.md` indexing every completed run. Officialness is computed from the
 > manifest rather than stored there, so `official/` can be regenerated from it.
-> `boundaries/` uses the points `entry` and `exit` — one pair per runbook, written
+> `bookends/` uses the points `entry` and `exit` — one pair per runbook, written
 > by that runbook's Step 0 and its close-out. `state/` uses `before`, `after` and
 > `delta`; `restarts/` uses `initial`, `pre-restart` and `post-restart`. `before`
 > and `pre-restart` are **first-wins**: the first recording of that point stays

@@ -3,7 +3,7 @@
 # sign-offs.sh
 #
 # Shared machinery for the rows only a person can answer. Every producer that
-# emits a checklist has some: `record_manual` rows in the boundary recorders,
+# emits a checklist has some: `record_manual` rows in the bookend recorders,
 # the `## Manual` blocks in the first-boot bundles, the `## Sign-Off Checklist`
 # tail of each Phase 12 plan-note. This file owns where those rows live, how an
 # answer survives the next run, and how a reader tells a fresh answer from one
@@ -16,7 +16,7 @@
 # consequence plainly: "a rerun does not update the file you answered -- it
 # produces a new checklist.md with every Manual row back at TODO". Extracting
 # the rows into `reimaged-system/sign-offs/` is what makes rerunning a capture
-# safe, which is the same reason `boundaries/` keeps entry and exit apart.
+# safe, which is the same reason `bookends/` keeps entry and exit apart.
 #
 # WHY NOT RUN-INDEX THIS CATEGORY. `artifact-runs.sh` already solves durable
 # selection, and pinning a run with `artifact_run_set_official` would survive a
@@ -52,7 +52,7 @@
 #
 # CLASSIFICATION: foundation file, sourced only. It sits at the `.internal/`
 # root beside `artifact-runs.sh` and the config loaders, for the same reason:
-# its callers span the boundary recorders, the first-boot bundles, and the
+# its callers span the bookend recorders, the first-boot bundles, and the
 # Phase 12 restore scripts, and no one domain owns it. Like those it must not
 # set shell options or call `exit`; it returns status instead. See
 # `.github/guides/script-types-and-locations.md`.

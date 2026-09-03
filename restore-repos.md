@@ -138,8 +138,8 @@ Related scripts, alphabetical:
 ```text
 $FRACTOGENESIS_HOME/bin/init-shell-env.sh              # entrypoint (Step 4 — repoints the shell at the cloned toolkit)
 $FRACTOGENESIS_HOME/bin/prepare-artifact-root.py       # entrypoint (Step 0c — upsert-env, writes GIT_PERSONAL_GITHUB_OWNER into reimage.env)
-$FRACTOGENESIS_HOME/bin/record-restore-exit.sh         # entrypoint (Step 11 — exit boundary)
-$FRACTOGENESIS_HOME/bin/record-restore-prereqs.sh      # entrypoint (Step 0a — entry boundary)
+$FRACTOGENESIS_HOME/bin/record-restore-exit.sh         # entrypoint (Step 11 — exit bookend)
+$FRACTOGENESIS_HOME/bin/record-restore-prereqs.sh      # entrypoint (Step 0a — entry bookend)
 $FRACTOGENESIS_HOME/bin/record-restore-state.sh        # entrypoint (Step 0b before-state, Step 10 after-state and delta)
 direnv                                                 # external helper — Step 6 trusts each restored .envrc
 hdiutil                                                # external helper — Step 6 attaches and detaches the encrypted image
@@ -148,7 +148,7 @@ hdiutil                                                # external helper — Ste
 Artifact root:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/reimaged-system/                # boundary, state and sign-off records for this phase
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/                # bookend, state and sign-off records for this phase
 $REIMAGE_ARTIFACT_ROOT/repo-audit-reports/             # the status bundle each run produces
 ```
 
@@ -175,16 +175,16 @@ Everything this runbook writes, under the two roots named above. The pre-image a
 $REIMAGE_ARTIFACT_ROOT/
 ├── ...
 ├── reimaged-system/
-│   ├── boundaries/
+│   ├── bookends/
 │   │   ├── MANIFEST.md
 │   │   ├── official/
 │   │   │   ├── restore-repos-entry.txt
 │   │   │   └── restore-repos-exit.txt
 │   │   └── runs/
 │   │       ├── restore-repos-entry-YYYYMMDD-HHMMSS/
-│   │       │   └── checklist.md
+│   │       │   └── bookend.md
 │   │       └── restore-repos-exit-YYYYMMDD-HHMMSS/
-│   │           └── checklist.md
+│   │           └── bookend.md
 │   ├── ...
 │   ├── sign-offs/
 │   │   └── restore-repos-exit-YYYYMMDD-HHMMSS.md
@@ -239,11 +239,11 @@ $REIMAGE_WORKSPACE_ROOT/repo-plan/
 └── repo-rehydration-sources.conf.sh
 ```
 
-`boundaries/`, `repo-audit-reports/` and `state/` share one shape: `runs/<context>-YYYYMMDD-HHMMSS/` holds a single run's files, `official/<context>.txt` names the run that counts, and an append-only `MANIFEST.md` indexes every completed run. To find a run, read the pointer under `official/` — there is no newest-directory rule and no `latest-*.txt`. Steps 1 and 9 do exactly that, reading `official/post-image-restore.txt` to locate the run they just wrote.
+`bookends/`, `repo-audit-reports/` and `state/` share one shape: `runs/<context>-YYYYMMDD-HHMMSS/` holds a single run's files, `official/<context>.txt` names the run that counts, and an append-only `MANIFEST.md` indexes every completed run. To find a run, read the pointer under `official/` — there is no newest-directory rule and no `latest-*.txt`. Steps 1 and 9 do exactly that, reading `official/post-image-restore.txt` to locate the run they just wrote.
 
 Which run a pointer names is decided per point. `before` is first-wins, because the earliest observation is the one that caught the empty clone roots; `after`, `delta`, `entry`, `exit` and `post-image-restore` are latest-wins, so re-running any of them replaces the earlier answer.
 
-`sign-offs/` is outside that shape on purpose. It holds the rows you answered at the exit boundary and carries them forward into the next run, so a latest-wins pointer must never be able to supersede it.
+`sign-offs/` is outside that shape on purpose. It holds the rows you answered at the exit bookend and carries them forward into the next run, so a latest-wins pointer must never be able to supersede it.
 
 Each `post-image-restore-*` run is self-contained and its filenames are stable across runs. `restore-status.md` is the human-readable report carrying the exit-criteria table. `hydrated.md` is what that run *did*: one row per repository per stage, with the stages it was not asked to run named explicitly, so a partial run reads as partial rather than as a run that found nothing to do. It is written on every run, including one that hydrated nothing — *nothing happened* and *nothing needed to happen* are different answers. `MANIFEST.txt` lists that run's files, and is not the category run index — that is `repo-audit-reports/MANIFEST.md`.
 
@@ -312,7 +312,7 @@ Two recordings, both taken before anything is cloned. They answer different
 questions and only one of them can be taken late.
 
 **0a — may this phase start?** Writes a checklist under
-`reimaged-system/boundaries/` and exits non-zero only on `FAIL`:
+`reimaged-system/bookends/` and exits non-zero only on `FAIL`:
 
 ```bash
 ./bin/record-restore-prereqs.sh --runbook restore-repos --dry-run
@@ -859,7 +859,7 @@ Run the script one more time to write a fresh bundle that reflects the post-clon
 
 No `--hydrate`: this is a read-only pass whose job is to observe, not to act.
 
-The rerun is what turns the restoring work back into evidence. `Needs clone` counts repositories still missing from their routed root, and `Ignored bundles applied` against `Ignored bundles available` says whether the reviewed kept files landed. Both are prefilled into the report's own Exit Criteria table with a heuristic verdict, so read that table rather than keeping a second copy here — the boundary itself is recorded in Step 11, and a table maintained in two places is how the two come to disagree.
+The rerun is what turns the restoring work back into evidence. `Needs clone` counts repositories still missing from their routed root, and `Ignored bundles applied` against `Ignored bundles available` says whether the reviewed kept files landed. Both are prefilled into the report's own Exit Criteria table with a heuristic verdict, so read that table rather than keeping a second copy here — the bookend itself is recorded in Step 11, and a table maintained in two places is how the two come to disagree.
 
 `repo-restore-index.md` is the other thing to read here, because it is the only view across sittings — every run this phase has made, with what each one cloned and what each one left `unreviewed`:
 
@@ -915,7 +915,7 @@ It is its own point rather than a side effect of `--point after` because a run d
 
 Step 0a recorded whether this phase was allowed to start. This step records whether it finished. Skip it and nothing anywhere says so — a question that gets asked days later, when the answer is no longer reconstructable.
 
-**1. Run the exit checklist.** It answers "did this phase finish", against the same boundary index Step 0a wrote its entry record into:
+**1. Run the exit bookend.** It answers "did this phase finish", against the same bookend index Step 0a wrote its entry record into:
 
 ```bash
 ./bin/record-restore-exit.sh --runbook restore-repos --dry-run
@@ -924,14 +924,14 @@ Step 0a recorded whether this phase was allowed to start. This step records whet
 
 Read the rows rather than the exit status. It records `PASS`, `WARN`, `FAIL` and `MANUAL`, and a `MANUAL` row is a question only you can answer — not a failure, and not a pass either.
 
-The checklist covers what this phase produced: both clone roots exist, how many repositories are on disk, and whether each one sits under the root matching its remote host — the row nothing else in the workflow catches, because the root is what `includeIf` uses to decide which identity authors a commit. Its manual rows ask whether the repositories left unrestored were a decision, whether carry-forward was reconciled for what *was* restored, and what became of the repositories with no remote. There is no second table to tick in this runbook: the checklist is the table, and keeping a copy here is how the two drift apart.
+The bookend covers what this phase produced: both clone roots exist, how many repositories are on disk, and whether each one sits under the root matching its remote host — the row nothing else in the workflow catches, because the root is what `includeIf` uses to decide which identity authors a commit. Its manual rows ask whether the repositories left unrestored were a decision, whether carry-forward was reconciled for what *was* restored, and what became of the repositories with no remote. There is no second table to tick in this runbook: the bookend is the table, and keeping a copy here is how the two drift apart.
 
-`bin/record-restore-prereqs.sh` and `bin/record-restore-exit.sh` are one pair per phase boundary, not one per runbook. This phase runs the `11B` entry check at Step 0 and the `11B` exit check here; it never runs Phase 12's entry check, and never re-runs its own entry check at the end.
+`bin/record-restore-prereqs.sh` and `bin/record-restore-exit.sh` are one pair per phase bookend, not one per runbook. This phase runs the `11B` entry check at Step 0 and the `11B` exit check here; it never runs Phase 12's entry check, and never re-runs its own entry check at the end.
 
-**2. Confirm both boundary records landed.** One file answers whether the phase both started and finished:
+**2. Confirm both bookend records landed.** One file answers whether the phase both started and finished:
 
 ```bash
-sed -n '1,40p' "$REIMAGE_ARTIFACT_ROOT/reimaged-system/boundaries/MANIFEST.md"
+sed -n '1,40p' "$REIMAGE_ARTIFACT_ROOT/reimaged-system/bookends/MANIFEST.md"
 ```
 
 You are looking for a `restore-repos-entry-*` row and a `restore-repos-exit-*` row. An entry with no exit is the signature of a phase that was walked but never closed out.

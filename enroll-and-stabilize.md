@@ -57,7 +57,7 @@ Establish a clean, managed, and stable macOS baseline before restoring runtime t
   modes (Required push and Available catalog), required macOS updates applied,
   and the whole thing confirmed to survive the first stabilization restart.
 - **Indexed evidence runs** — one run per `record-enrollment.sh` capture under `reimaged-system/restarts/`, holding the twelve raw evidence files, `record.md`, and `rows.tsv`.
-- **An entry and an exit checklist** — under `reimaged-system/boundaries/`, recording what was decided about that evidence rather than what it says.
+- **An entry and an exit bookend** — under `reimaged-system/bookends/`, recording what was decided about that evidence rather than what it says.
 - **The closed-out Phase 8 exit-criteria table** — prefilled with heuristic verdicts on the command-verifiable rows and finished by hand for the manual-judgment rows.
 
 **What the rest of the workflow relies on it for**
@@ -183,7 +183,7 @@ apart at a glance rather than by comparing timestamps.
 | Pre-restart record | The Phase 8 record captured before the stabilization restart. |
 | Post-restart record | The Phase 8 record captured after the stabilization restart; used as the sign-off record. |
 | Record bundle | One indexed run holding the twelve raw files, `record.md`, and `rows.tsv`. |
-| Point | The `--context` value, which becomes the run's point and completes its name: `enroll-and-stabilize-pre-restart-YYYYMMDD-HHMMSS`. `pre-restart` and `post-restart` for the pair around the restart, `initial` when omitted. `entry` and `exit` select the boundary modes instead of a capture. |
+| Point | The `--context` value, which becomes the run's point and completes its name: `enroll-and-stabilize-pre-restart-YYYYMMDD-HHMMSS`. `pre-restart` and `post-restart` for the pair around the restart, `initial` when omitted. `entry` and `exit` select the bookend modes instead of a capture. |
 | Required assignment | An Intune app assignment that installs itself after enrollment, asynchronously. |
 | Available assignment | An Intune app assignment that appears in the Company Portal **Apps** tab and installs only when you click Install. It never arrives on its own. |
 
@@ -198,13 +198,13 @@ Every path and directory tree this runbook uses is defined here, once. Later sec
 Primary script:
 
 ```text
-$FRACTOGENESIS_HOME/bin/record-enrollment.sh    # entrypoint — records Phase 8 evidence, and its entry and exit boundaries
+$FRACTOGENESIS_HOME/bin/record-enrollment.sh    # entrypoint — records Phase 8 evidence, and its entry and exit bookends
 ```
 
 Artifact root:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/reimaged-system/boundaries/    # Steps 3 and 10 — the entry and exit checklists
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/bookends/    # Steps 3 and 10 — the entry and exit bookends
 $REIMAGE_ARTIFACT_ROOT/reimaged-system/restarts/      # Steps 7 and 9 — the evidence either side of the restart
 $REIMAGE_ARTIFACT_ROOT/reimaged-system/sign-offs/     # the rows only a person can answer, kept outside the runs
 ```
@@ -219,7 +219,7 @@ $REIMAGE_ARTIFACT_ROOT/managed-inventory/official/pre-image.txt    # written by 
 
 Both categories have the shared shape: `runs/<context>-YYYYMMDD-HHMMSS/` holding one run's files, `official/<context>.txt` naming the run that counts, and an append-only `MANIFEST.md` indexing every completed run. Officialness is computed from the manifest rather than stored, so `official/` can be regenerated.
 
-This phase writes five contexts: `enroll-and-stabilize-entry` and `-exit` under `boundaries/`, and `-initial`, `-pre-restart` and `-post-restart` under `restarts/`. `-pre-restart` is **first-wins** — the first recording of that point stays official, because a later one describes a machine the phase has already changed. Every other point is latest-wins.
+This phase writes five contexts: `enroll-and-stabilize-entry` and `-exit` under `bookends/`, and `-initial`, `-pre-restart` and `-post-restart` under `restarts/`. `-pre-restart` is **first-wins** — the first recording of that point stays official, because a later one describes a machine the phase has already changed. Every other point is latest-wins.
 
 `restarts/` is shared with Phase 9, which writes `verify-reimaged-system-<point>` there. Both phases capture the machine either side of a stabilization restart, so they are one category keyed by point rather than two that have to be read together:
 
@@ -227,13 +227,13 @@ This phase writes five contexts: `enroll-and-stabilize-entry` and `-exit` under 
 $REIMAGE_ARTIFACT_ROOT/
 ├── ...
 ├── reimaged-system/
-│   ├── boundaries/
+│   ├── bookends/
 │   │   ├── MANIFEST.md
 │   │   ├── official/
 │   │   │   └── enroll-and-stabilize-<point>.txt
 │   │   └── runs/
 │   │       └── enroll-and-stabilize-<point>-YYYYMMDD-HHMMSS/
-│   │           └── checklist.md
+│   │           └── bookend.md
 │   ├── ...
 │   ├── restarts/
 │   │   ├── MANIFEST.md
@@ -267,7 +267,7 @@ The complete `$REIMAGE_ARTIFACT_ROOT/reimaged-system/` layout is defined once in
 
 [[master-directory-reference|Master Directory Reference]]
 
-When the artifact volume is not yet mounted, the script falls back to `$REIMAGE_WORKSPACE_ROOT/` and then to `~/Desktop/reimaged-system-artifacts/`, creating the same `restarts/` and `boundaries/` categories under whichever it lands on. The full precedence is spelled out under Supplemental Reference.
+When the artifact volume is not yet mounted, the script falls back to `$REIMAGE_WORKSPACE_ROOT/` and then to `~/Desktop/reimaged-system-artifacts/`, creating the same `restarts/` and `bookends/` categories under whichever it lands on. The full precedence is spelled out under Supplemental Reference.
 
 ### Environment Variables
 
@@ -275,7 +275,7 @@ The `reimage.env` values this runbook depends on. Values are resolved and writte
 
 | Variable | Meaning |
 |---|---|
-| `REIMAGE_ARTIFACT_ROOT` | Absolute path to the artifact root where `reimaged-system/restarts/` and `reimaged-system/boundaries/` live. Optional here — the script falls back if it is unset or unmounted. |
+| `REIMAGE_ARTIFACT_ROOT` | Absolute path to the artifact root where `reimaged-system/restarts/` and `reimaged-system/bookends/` live. Optional here — the script falls back if it is unset or unmounted. |
 | `REIMAGE_WORKSPACE_ROOT` | Absolute path to a local workspace used as the intermediate fallback; the categories land under `$REIMAGE_WORKSPACE_ROOT/` when the artifact root is not available. |
 | `FRACTOGENESIS_HOME` | Absolute path to the toolkit repository root; entrypoints are run from here. Set by your shell startup / `.envrc`, not stored in `reimage.env`. |
 
@@ -302,7 +302,7 @@ onward.
   channel for managed apps, and its **Apps** tab is where Available assignments
   are found. Nothing else in this phase substitutes for it.
 
-`REIMAGE_ARTIFACT_ROOT` and the external artifact volume are *not* required at this point. `record-enrollment.sh` falls back to `$REIMAGE_WORKSPACE_ROOT/` and then to `~/Desktop/reimaged-system-artifacts/`, creating the same `restarts/` and `boundaries/` categories under whichever it lands on, so Phase 8 can complete before the external drive is reconnected in Phase 9.
+`REIMAGE_ARTIFACT_ROOT` and the external artifact volume are *not* required at this point. `record-enrollment.sh` falls back to `$REIMAGE_WORKSPACE_ROOT/` and then to `~/Desktop/reimaged-system-artifacts/`, creating the same `restarts/` and `bookends/` categories under whichever it lands on, so Phase 8 can complete before the external drive is reconnected in Phase 9.
 
 > [!bug] Troubleshooting
 > If the script errors with "shared config loader not found", the toolkit was placed in the wrong location or is a partial extract — re-run bootstrap and confirm `$FRACTOGENESIS_HOME/.internal/load-reimage-config.sh` exists before continuing.
@@ -547,7 +547,7 @@ The block is a bridge, not the permanent arrangement. direnv arrives in Phase 10
 and takes over from `.envrc`; remove the block then. Full picture:
 [[toolkit-environment-reference|Toolkit Environment Reference]].
 
-**Record the entry boundary.** Every other runbook records its entry conditions
+**Record the entry bookend.** Every other runbook records its entry conditions
 at Step 0. This one cannot: Phase 8 begins on a Mac with no toolkit on it, and
 `$FRACTOGENESIS_HOME` and `reimage.env` are what Steps 2 and 3 just created. Here
 is the first moment there is anything to run, and the rows are about what was
@@ -557,11 +557,11 @@ true before the phase started as much as what these two steps established:
 ./bin/record-enrollment.sh --context entry
 ```
 
-It writes `checklist.md` under `reimaged-system/boundaries/` with the context
+It writes `bookend.md` under `reimaged-system/bookends/` with the context
 `enroll-and-stabilize-entry`, and exits non-zero on any `FAIL`. A `FAIL` on
 network or Company Portal stops the phase — enrollment, managed installs and
 macOS updates each need both. Two rows are left `TODO`; answer them in that file
-as described in Step 10, which explains the mechanics once for both boundaries.
+as described in Step 10, which explains the mechanics once for both bookends.
 
 The artifact root row is expected to be `WARN` here. The external volume is not
 reconnected until Phase 9 Step 1, so this checklist lands on the workspace or
@@ -873,7 +873,7 @@ phase: Phase 9 verifies its own entry conditions in its Step 0.
 ./bin/record-enrollment.sh --context exit
 ```
 
-It writes `checklist.md` under `reimaged-system/boundaries/` with the context
+It writes `bookend.md` under `reimaged-system/bookends/` with the context
 `enroll-and-stabilize-exit`, and exits non-zero on any `FAIL`. The file holds two
 tables: **Automated**, and **Manual** — the rows it cannot answer, left as `TODO`.
 
@@ -1127,7 +1127,7 @@ softwareupdate --list 2>/dev/null || true
 | 2 | Artifact root unavailable, `REIMAGE_WORKSPACE_ROOT` set and directory exists | `$REIMAGE_WORKSPACE_ROOT/` |
 | 3 | Neither of the above | `~/Desktop/reimaged-system-artifacts/` |
 
-The `restarts/` and `boundaries/` categories are created under whichever tier wins, so a fallback run is a complete, indexed category rather than a loose directory.
+The `restarts/` and `bookends/` categories are created under whichever tier wins, so a fallback run is a complete, indexed category rather than a loose directory.
 
 The script refuses to write output under the toolkit repo checkout as a safety invariant — a record landing inside the working tree almost always signals an unset or relative root variable, not a real destination.
 

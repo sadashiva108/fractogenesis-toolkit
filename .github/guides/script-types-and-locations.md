@@ -62,7 +62,7 @@ that calls it. `home/` holds both content scanners — `scan-archive-contents.sh
 and `scan-postman-collections.py` — because they scan the artifact root the same
 way and co-own one output, even though `backup-apps.md` invokes the second one.
 Splitting a pair like that across two domains to match their callers would put a
-shared output contract on either side of a directory boundary.
+shared output contract on either side of a directory bookend.
 
 **A helper graduates to `bin/` only when it becomes user-facing** — that is,
 when a runbook tells the reader to run it directly. Until then it stays in
@@ -71,7 +71,7 @@ when a runbook tells the reader to run it directly. Until then it stays in
 **Runbook and executable share a name.** `bin/backup-home.sh` pairs with
 `backup-home.md` at the repo root.
 
-**Boundary recorders come in pairs.** `bin/record-restore-prereqs.sh` and
+**Bookend recorders come in pairs.** `bin/record-restore-prereqs.sh` and
 `bin/record-restore-exit.sh` are entry and exit for the same phase. They share
 option parsing, path guards, and row recording.
 

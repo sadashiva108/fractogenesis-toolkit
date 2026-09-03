@@ -62,7 +62,7 @@
 #   mnt           Not a step: print the mounted image's path and exit.
 #
 #   finish        Eject the DMG, capture the after-state, compare against the
-#                 captured inventories, record the exit checklist
+#                 captured inventories, record the exit bookend
 #                 (Steps 10 through 12)
 #
 # Options:
@@ -2396,9 +2396,9 @@ step_finish() {
     return 0
   fi
 
-  # Eject FIRST. The exit checklist tests that the secrets DMG is detached, so
+  # Eject FIRST. The exit bookend tests that the secrets DMG is detached, so
   # running it before the eject fails a row that is not wrong yet -- and a
-  # checklist that reports a failure it caused itself trains the reader to
+  # bookend that reports a failure it caused itself trains the reader to
   # discount it.
   [[ -n "$MNT" ]] || MNT="$(find_mounted_image || true)"
   if [[ -z "$MNT" ]]; then
@@ -2437,12 +2437,12 @@ step_finish() {
 
   # Step 12.
   if [[ -f "$rec" ]]; then
-    bash "$rec" --runbook restore-access || warn "exit checklist reported findings — read the rows before signing off"
+    bash "$rec" --runbook restore-access || warn "exit bookend reported findings — read the rows before signing off"
   else
     fail "not found: $rec"; FAILURES=$((FAILURES + 1))
   fi
 
-  info "boundaries/MANIFEST.md should now hold an entry row and an exit row for this phase"
+  info "bookends/MANIFEST.md should now hold an entry row and an exit row for this phase"
 }
 
 # ---------------------------------------------------------------------------

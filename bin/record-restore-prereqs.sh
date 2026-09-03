@@ -6,7 +6,7 @@
 # actually met, and writes the result as a dated evidence artifact.
 #
 # Named record-, not check-: it does not only decide pass or fail, it writes a
-# checklist under the artifact root that later phases and a future reader can
+# bookend under the artifact root that later phases and a future reader can
 # consult. That matches record-enrollment.sh and record-reimaged-system.sh,
 # where the artifact is the point and the verdict is a summary of it.
 #
@@ -69,14 +69,14 @@
 #   --output-root PATH    Category root for the run. A relative value is
 #                         resolved against the current directory, and a
 #                         destination inside the repo checkout is refused.
-#                         Default: <artifact-root>/reimaged-system/boundaries
-#   --dry-run             Print the checklist; write nothing.
-#   --open                Reveal the generated checklist in Finder.
+#                         Default: <artifact-root>/reimaged-system/bookends
+#   --dry-run             Print the bookend; write nothing.
+#   --open                Reveal the generated bookend in Finder.
 #   -h, --help            Show this message and exit.
 #
 # Output location:
-#   <artifact-root>/reimaged-system/boundaries/runs/post-image-<runbook>-entry-<stamp>/
-#     checklist.md
+#   <artifact-root>/reimaged-system/bookends/runs/post-image-<runbook>-entry-<stamp>/
+#     bookend.md
 #   indexed in that category's MANIFEST.md, with official/ naming the newest run.
 #   Entry and exit share one category so a single index answers whether a phase
 #   both started and finished.
@@ -300,14 +300,14 @@ check_restore_runtime() {
   # Each source produces a row whether or not its pointer resolves. An earlier
   # revision iterated `for f in "$rec" ...` and skipped empty entries, so a
   # missing or unreadable `latest-*` pointer produced no row at all -- "could
-  # not check" rendered as silence, in a checklist whose entire purpose is
+  # not check" rendered as silence, in a bookend whose entire purpose is
   # recording that every question was asked.
   #
-  # Both sign-offs are read from `boundaries/`, not from the evidence bundles,
+  # Both sign-offs are read from `bookends/`, not from the evidence bundles,
   # and through the run index rather than a `latest-*.txt` pointer. Two separate
   # reasons, both learned here:
   #
-  # An evidence run records what the machine reported; the exit checklist
+  # An evidence run records what the machine reported; the exit bookend
   # records what a person decided about it, and only the second can be
   # "complete". Reading the bundle asked the wrong artifact -- and because
   # rerunning a capture brings its unanswered rows back, a bundle could never
@@ -315,21 +315,21 @@ check_restore_runtime() {
   #
   # A single pointer cannot name several lineages, and these categories have
   # several: restarts/ carries initial, pre-restart and post-restart;
-  # boundaries/ carries entry and exit per runbook. `official/<context>.txt`
+  # bookends/ carries entry and exit per runbook. `official/<context>.txt`
   # answers per lineage, which is what the question actually is.
-  local n label src boundaries_root exit_run
-  boundaries_root="${REIMAGE_ARTIFACT_ROOT:-/nonexistent}/reimaged-system/boundaries"
+  local n label src bookends_root exit_run
+  bookends_root="${REIMAGE_ARTIFACT_ROOT:-/nonexistent}/reimaged-system/bookends"
 
   for label in "\`enroll-and-stabilize\`" "\`verify-reimaged-system\`"; do
     case "$label" in
-      *enroll-and-stabilize*) exit_run="$(artifact_run_official "$boundaries_root" "enroll-and-stabilize-exit" 2>/dev/null)" ;;
-      *)                      exit_run="$(artifact_run_official "$boundaries_root" "verify-reimaged-system-exit" 2>/dev/null)" ;;
+      *enroll-and-stabilize*) exit_run="$(artifact_run_official "$bookends_root" "enroll-and-stabilize-exit" 2>/dev/null)" ;;
+      *)                      exit_run="$(artifact_run_official "$bookends_root" "verify-reimaged-system-exit" 2>/dev/null)" ;;
     esac
     src=""
-    [[ -n "$exit_run" ]] && src="$boundaries_root/$exit_run/checklist.md"
+    [[ -n "$exit_run" ]] && src="$bookends_root/$exit_run/bookend.md"
 
     if [[ -z "$src" ]]; then
-      record WARN "Sign-off complete: $label" "no official \`-exit\` run under \`boundaries/\` — the close-out has not been recorded, so this row is unchecked rather than clean"
+      record WARN "Sign-off complete: $label" "no official \`-exit\` run under \`bookends/\` — the close-out has not been recorded, so this row is unchecked rather than clean"
       continue
     fi
     if [[ ! -f "$src" ]]; then
@@ -379,7 +379,7 @@ check_restore_runtime() {
 # Run by `restore-access.md` Step 0, and only there. An earlier revision had
 # `restore-runtime.md` Step 11 run this too, on the reasoning that 10A's exit and
 # 10B's entry are one question asked from either side. That was corrected: one
-# check per boundary, a phase never runs the next phase's entry check. Step 11
+# check per bookend, a phase never runs the next phase's entry check. Step 11
 # now calls record-restore-exit.sh --runbook restore-runtime instead.
 #
 # The rows below therefore overlap check_restore_runtime() in record-restore-exit.sh without
@@ -395,12 +395,12 @@ check_restore_access() {
   # 10B did not. Phase 10B depends on the toolchain 10A installs -- the Java
   # lookup below fails outright without it -- so the dependency was already real,
   # just unstated.
-  b_root="${REIMAGE_ARTIFACT_ROOT:-/nonexistent}/reimaged-system/boundaries"
+  b_root="${REIMAGE_ARTIFACT_ROOT:-/nonexistent}/reimaged-system/bookends"
   b_run="$(artifact_run_official "$b_root" "restore-runtime-exit" 2>/dev/null)"
   if [[ -n "$b_run" ]]; then
     record PASS "\`restore-runtime\` closed out" "\`$(basename "$b_run")\`"
   else
-    record FAIL "\`restore-runtime\` closed out" "no official \`restore-runtime-exit\` run under \`boundaries/\` — this phase configures trust for a toolchain Phase 10A installs, and every check below assumes it is there"
+    record FAIL "\`restore-runtime\` closed out" "no official \`restore-runtime-exit\` run under \`bookends/\` — this phase configures trust for a toolchain Phase 10A installs, and every check below assumes it is there"
   fi
 
   # 1 -- Java lookup. The single most consequential row here, and the one that
@@ -531,7 +531,7 @@ echo "Checking ${PHASE_RUNBOOK%.md} prerequisites..." >&2
 # cannot drift.
 #
 # The identity values are deliberately NOT checked here. Step 0c of that runbook
-# is what records them, so at this boundary they are unset by definition and a
+# is what records them, so at this bookend they are unset by definition and a
 # row over them could only ever FAIL -- a scheduled false alarm, which is the
 # mirror of the failure this recorder exists to prevent. They are checked at the
 # other end, by check_restore_git() in record-restore-exit.sh, which also
@@ -551,15 +551,15 @@ check_restore_git() {
     record FAIL "Toolkit root resolves" "\`FRACTOGENESIS_HOME\` unset or has no \`bin/\`"
   fi
 
-  # 2 -- Phase 10B actually closed out, not merely "was worked on". The boundary
+  # 2 -- Phase 10B actually closed out, not merely "was worked on". The bookend
   # index answers this; an entry with no exit is a phase walked and abandoned.
   local b_root b_run
-  b_root="${REIMAGE_ARTIFACT_ROOT:-/nonexistent}/reimaged-system/boundaries"
+  b_root="${REIMAGE_ARTIFACT_ROOT:-/nonexistent}/reimaged-system/bookends"
   b_run="$(artifact_run_official "$b_root" "restore-access-exit" 2>/dev/null)"
   if [[ -n "$b_run" ]]; then
     record PASS "\`restore-access\` closed out" "\`$(basename "$b_run")\`"
   else
-    record FAIL "\`restore-access\` closed out" "no official \`restore-access-exit\` run under \`boundaries/\` — run \`./bin/record-restore-exit.sh --runbook restore-access\` at the end of \`restore-access\`"
+    record FAIL "\`restore-access\` closed out" "no official \`restore-access-exit\` run under \`bookends/\` — run \`./bin/record-restore-exit.sh --runbook restore-access\` at the end of \`restore-access\`"
   fi
 
   # 3 -- git itself. Loud if absent, but the row is free and Step 1 assumes it.
@@ -598,12 +598,12 @@ check_restore_repos() {
 
   # 2 -- restore-git closed out. An entry with no exit is a phase walked and
   # abandoned; the identity plumbing this phase depends on may be half-written.
-  b_root="${REIMAGE_ARTIFACT_ROOT:-/nonexistent}/reimaged-system/boundaries"
+  b_root="${REIMAGE_ARTIFACT_ROOT:-/nonexistent}/reimaged-system/bookends"
   b_run="$(artifact_run_official "$b_root" "restore-git-exit" 2>/dev/null)"
   if [[ -n "$b_run" ]]; then
     record PASS "\`restore-git\` closed out" "\`$(basename "$b_run")\`"
   else
-    record FAIL "\`restore-git\` closed out" "no official \`restore-git-exit\` run under \`boundaries/\` — run \`./bin/record-restore-exit.sh --runbook restore-git\` at the end of \`restore-git\`"
+    record FAIL "\`restore-git\` closed out" "no official \`restore-git-exit\` run under \`bookends/\` — run \`./bin/record-restore-exit.sh --runbook restore-git\` at the end of \`restore-git\`"
   fi
 
   # 3 -- clone roots. LOCAL_WORK_REPO_ROOT is required: unset, every repository
@@ -718,12 +718,12 @@ check_restore_apps() {
     record FAIL "Toolkit root resolves" "\`FRACTOGENESIS_HOME\` unset or has no \`bin/\`"
   fi
 
-  b_root="${REIMAGE_ARTIFACT_ROOT:-/nonexistent}/reimaged-system/boundaries"
+  b_root="${REIMAGE_ARTIFACT_ROOT:-/nonexistent}/reimaged-system/bookends"
   b_run="$(artifact_run_official "$b_root" "restore-repos-exit" 2>/dev/null)"
   if [[ -n "$b_run" ]]; then
     record PASS "\`restore-repos\` closed out" "\`$(basename "$b_run")\`"
   else
-    record FAIL "\`restore-repos\` closed out" "no official \`restore-repos-exit\` run under \`boundaries/\` — several steps here depend on repository checkouts, and IntelliJ project paths resolve to nothing without them"
+    record FAIL "\`restore-repos\` closed out" "no official \`restore-repos-exit\` run under \`bookends/\` — several steps here depend on repository checkouts, and IntelliJ project paths resolve to nothing without them"
   fi
 
   app_root="${REIMAGE_ARTIFACT_ROOT:-/nonexistent}/app-settings-backup"
@@ -763,9 +763,9 @@ check_restore_apps() {
 # bulk-content phase and the last one that writes to $HOME, so every row here is
 # about something that must already be true before anything is copied in volume.
 #
-# `restore-intellij` and `restore-docker` get no boundary of their own: they are
+# `restore-intellij` and `restore-docker` get no bookend of their own: they are
 # expanded sections of restore-apps.md rather than phases, and Phase 12's
-# boundary covers them.
+# bookend covers them.
 # ---------------------------------------------------------------------------
 check_restore_home() {
   local b_root c_root b_run n
@@ -776,10 +776,10 @@ check_restore_home() {
     record FAIL "Toolkit root resolves" "\`FRACTOGENESIS_HOME\` unset or has no \`bin/\`"
   fi
 
-  b_root="${REIMAGE_ARTIFACT_ROOT:-/nonexistent}/reimaged-system/boundaries"
+  b_root="${REIMAGE_ARTIFACT_ROOT:-/nonexistent}/reimaged-system/bookends"
 
   # 1 -- Phase 12 closed out. The chain link: 15 is the next phase with a
-  # boundary of its own, so without this the chain stops at 12.
+  # bookend of its own, so without this the chain stops at 12.
   b_run="$(artifact_run_official "$b_root" "restore-apps-exit" 2>/dev/null)"
   if [[ -n "$b_run" ]]; then
     record PASS "\`restore-apps\` closed out" "\`$(basename "$b_run")\`"
@@ -866,12 +866,12 @@ emit() {
   printf '## How to read this\n\n'
   # Phase-agnostic on purpose. An earlier revision hardcoded "Both FAIL rows here
   # fail quietly" and named Phase 10A's Step 9 and Step 10 -- text that stayed put
-  # when --runbook restore-access was added, so a 10B checklist described 10A's rows. Counts
+  # when --runbook restore-access was added, so a 10B bookend described 10A's rows. Counts
   # and reasons come from the rows themselves now.
   printf -- '- **FAIL** (%s here) means the phase cannot proceed correctly. Every FAIL row in this recorder is a condition that fails *quietly* if unchecked — that is why it is checked at all, rather than left to the step that would trip over it.\n' "$fail_count"
   printf -- '- **WARN** (%s here) means proceed with a known limit, stated in the row itself.\n' "$warn_count"
   printf -- '- A completed sign-off means every row was *answered*, not that every answer was `yes`. A row closed as `no` or `known-blocked` is a decision, and counts as answered.\n\n'
-  printf -- 'This is the entry half of a pair. `record-restore-exit.sh --runbook %s` is the exit half, run at the phase final step. Both index into `boundaries/MANIFEST.md`, so one file shows whether a phase both started and finished.\n' "${PHASE_RUNBOOK%.md}"
+  printf -- 'This is the entry half of a pair. `record-restore-exit.sh --runbook %s` is the exit half, run at the phase final step. Both index into `bookends/MANIFEST.md`, so one file shows whether a phase both started and finished.\n' "${PHASE_RUNBOOK%.md}"
 }
 
 if [[ "$DRY_RUN" == "true" ]]; then
@@ -884,18 +884,18 @@ fi
 
 if [[ -z "${REIMAGE_ARTIFACT_ROOT:-}" || ! -d "${REIMAGE_ARTIFACT_ROOT:-}" ]]; then
   echo "" >&2
-  echo "NOTE: artifact root unavailable, so no checklist was written." >&2
+  echo "NOTE: artifact root unavailable, so no bookend was written." >&2
   echo "      Rerun with --dry-run to see the result, or reconnect the drive." >&2
   [[ "$fail_count" -eq 0 ]] || exit 1
   exit 0
 fi
 
-# One category for both boundaries. Entry and exit are the same question asked
+# One category for both bookends. Entry and exit are the same question asked
 # from either side of a phase, so they belong under one index where a runbook's
 # pair sits adjacent -- rather than in two sibling directories that have to be
 # read together to see whether a phase both started and finished.
 if [[ -z "$OUTPUT_ROOT" ]]; then
-  OUTPUT_ROOT="$REIMAGE_ARTIFACT_ROOT/reimaged-system/boundaries"
+  OUTPUT_ROOT="$REIMAGE_ARTIFACT_ROOT/reimaged-system/bookends"
 fi
 OUTPUT_ROOT="$(absolute_path "$OUTPUT_ROOT")"
 
@@ -914,10 +914,10 @@ if ! artifact_run_begin "$OUTPUT_ROOT" "$RUN_CONTEXT"; then
   exit 2
 fi
 
-CHECK_FILE="$ARTIFACT_RUN_DIR/checklist.md"
+CHECK_FILE="$ARTIFACT_RUN_DIR/bookend.md"
 
 if ! emit > "$CHECK_FILE"; then
-  echo "ERROR: could not write the checklist: $CHECK_FILE" >&2
+  echo "ERROR: could not write the bookend: $CHECK_FILE" >&2
   artifact_run_abort
   exit 2
 fi
@@ -930,10 +930,10 @@ if ! artifact_run_finalize "$OUTPUT_ROOT" \
   exit 2
 fi
 
-CHECK_FILE="$ARTIFACT_RUN_DIR/checklist.md"
+CHECK_FILE="$ARTIFACT_RUN_DIR/bookend.md"
 
 echo "" >&2
-echo "Checklist → $CHECK_FILE" >&2
+echo "Bookend → $CHECK_FILE" >&2
 printf '%s pass · %s warn · %s fail\n' "$pass_count" "$warn_count" "$fail_count" >&2
 echo "Run indexed at: $OUTPUT_ROOT/MANIFEST.md" >&2
 

@@ -67,8 +67,8 @@
 #   ./bin/record-enrollment.sh --context pre-restart     # Step 6
 #   ./bin/record-enrollment.sh --context post-restart    # Step 8
 #
-#   # Boundary modes. These capture no evidence: they record what was decided
-#   # about it, into reimaged-system/boundaries/.
+#   # Bookend modes. These capture no evidence: they record what was decided
+#   # about it, into reimaged-system/bookends/.
 #   ./bin/record-enrollment.sh --context entry           # Step 2
 #   ./bin/record-enrollment.sh --context exit            # Step 9
 #
@@ -84,8 +84,8 @@
 #                         managed-inventory/official/pre-image.txt.
 #   --context LABEL       The run's point. Conventional values are pre-restart
 #                         and post-restart; omitted, the run is `initial`.
-#                         `entry` and `exit` select the boundary modes instead
-#                         of an evidence capture -- see Boundary modes below.
+#                         `entry` and `exit` select the bookend modes instead
+#                         of an evidence capture -- see Bookend modes below.
 #                         Letters, digits, dot, underscore, and hyphen only.
 #   --open                Reveal the generated record in Finder on completion.
 #   -h, --help            Show this message and exit.
@@ -119,11 +119,11 @@
 #        as a final fallback so Phase 8 can complete on a bare Mac before the
 #        external artifact volume is reconnected.
 #
-# Boundary modes:
-#   `--context entry` and `--context exit` write a checklist to
-#   reimaged-system/boundaries/ under enroll-and-stabilize-{entry,exit}, in the
+# Bookend modes:
+#   `--context entry` and `--context exit` write a bookend to
+#   reimaged-system/bookends/ under enroll-and-stabilize-{entry,exit}, in the
 #   same category and grammar the restore phases use. They probe nothing that an
-#   evidence run already recorded: the exit checklist reads the official
+#   evidence run already recorded: the exit bookend reads the official
 #   post-restart run's rows.tsv, so it cannot disagree with the record it cites.
 #
 #   Entry is recorded after Step 2, not at Step 0. Phase 8 starts on a Mac with
@@ -131,9 +131,9 @@
 #   2 create, and this script is not on the machine before them.
 #
 # Exit status:
-#   0  Evidence recorded successfully, or the boundary has no FAIL row.
+#   0  Evidence recorded successfully, or the bookend has no FAIL row.
 #   1  Evidence capture ran but a generated file could not be written; or, in a
-#      boundary mode, the checklist was written and carries at least one FAIL.
+#      bookend mode, the bookend was written and carries at least one FAIL.
 #   2  Usage, configuration, or prerequisite error.
 # --- END USAGE ---
 # =============================================================================
@@ -177,7 +177,7 @@ fi
 source "$RUNS_LIB"
 
 # Manual rows leave the run directory. `artifact_run_begin` stages a NEW run on
-# every invocation, so a row answered inside checklist.md is replaced by a fresh
+# every invocation, so a row answered inside bookend.md is replaced by a fresh
 # `TODO` the next time this script is run -- the failure verify-reimaged-system.md
 # warns about. The sign-off carries answers forward instead, and stamps each with
 # the run it was answered against. See .internal/sign-offs.sh.
@@ -334,12 +334,12 @@ if [[ -n "${REPO_ROOT:-}" && ( "$OUTPUT_DIR" == "$REPO_ROOT" || "$OUTPUT_DIR" ==
 fi
 
 # ---------------------------------------------------------------------------
-# Boundary modes: --context entry and --context exit
+# Bookend modes: --context entry and --context exit
 #
 # These do not capture evidence. They record what was decided about it, into
-# reimaged-system/boundaries/ under enroll-and-stabilize-{entry,exit}, the same
+# reimaged-system/bookends/ under enroll-and-stabilize-{entry,exit}, the same
 # category and grammar the restore phases use. Kept in this script rather than a
-# new one because the questions are Phase 8's and the exit checklist is built
+# new one because the questions are Phase 8's and the exit bookend is built
 # from this script's own rows.tsv -- splitting them would mean two files sharing
 # one definition of what a Phase 8 row means.
 #
@@ -351,8 +351,8 @@ fi
 # Self-contained helpers: the evidence path's status_pass_warn and friends are
 # defined further down, after this dispatch point, so nothing here may call them.
 # ---------------------------------------------------------------------------
-BOUNDARY_ROWS=""
-BOUNDARY_MANUAL=""
+BOOKEND_ROWS=""
+BOOKEND_MANUAL=""
 b_pass=0; b_warn=0; b_fail=0
 
 b_record() {
@@ -361,20 +361,20 @@ b_record() {
     WARN) b_warn=$(( b_warn + 1 )) ;;
     FAIL) b_fail=$(( b_fail + 1 )) ;;
   esac
-  BOUNDARY_ROWS="${BOUNDARY_ROWS}| ${2} | \`${1}\` | ${3} |"$'\n'
+  BOOKEND_ROWS="${BOOKEND_ROWS}| ${2} | \`${1}\` | ${3} |"$'\n'
   printf '  %-5s %s\n' "$1" "$2" >&2
 }
 
 # Collected as item<TAB>note rather than as a rendered markdown row, because
-# these are replayed into the sign-off and no longer written into checklist.md.
-# `b_manual` runs inside boundary_entry/boundary_exit, which execute before
+# these are replayed into the sign-off and no longer written into bookend.md.
+# `b_manual` runs inside bookend_entry/bookend_exit, which execute before
 # `artifact_run_begin` assigns the run id the sign-off is named for, so the rows
 # have to be held until then rather than emitted as they are declared.
 b_manual() {
-  BOUNDARY_MANUAL="${BOUNDARY_MANUAL}${1}"$'\t'"${2}"$'\n'
+  BOOKEND_MANUAL="${BOOKEND_MANUAL}${1}"$'\t'"${2}"$'\n'
 }
 
-boundary_entry() {
+bookend_entry() {
   local out
 
   if [[ -n "${FRACTOGENESIS_HOME:-}" && -d "${FRACTOGENESIS_HOME:-}" ]]; then
@@ -417,7 +417,7 @@ boundary_entry() {
   b_manual "Cheatsheet or jump drive was available" "One of the two is required: the emailed cheatsheet carries \`TOOLKIT_GITHUB_ACCOUNT\` for the network route, the Phase 6A jump drive carries \`bootstrap.sh\` and the \`reimage.env\` copy."
 }
 
-boundary_exit() {
+bookend_exit() {
   local restarts_root pr_run pr_dir rows check status detail
 
   restarts_root="$OUTPUT_ROOT/restarts"
@@ -438,7 +438,7 @@ boundary_exit() {
   fi
 
   # The verdicts come from the post-restart run's rows.tsv rather than being
-  # re-probed here: this checklist is a statement about the recorded evidence,
+  # re-probed here: this bookend is a statement about the recorded evidence,
   # and re-probing would let it disagree with the record it cites.
   rows="$pr_dir/rows.tsv"
   if [[ -f "$rows" ]]; then
@@ -480,20 +480,20 @@ boundary_exit() {
 }
 
 if [[ "${CONTEXT_LABEL:-}" == "entry" || "${CONTEXT_LABEL:-}" == "exit" ]]; then
-  BOUNDARY_ROOT="$OUTPUT_ROOT/boundaries"
-  [[ -n "$OUTPUT_DIR_EXPLICIT" ]] && BOUNDARY_ROOT="$OUTPUT_DIR_EXPLICIT"
+  BOOKEND_ROOT="$OUTPUT_ROOT/bookends"
+  [[ -n "$OUTPUT_DIR_EXPLICIT" ]] && BOOKEND_ROOT="$OUTPUT_DIR_EXPLICIT"
 
-  echo "Recording the Phase 8 $CONTEXT_LABEL boundary ..." >&2
-  if [[ "$CONTEXT_LABEL" == "entry" ]]; then boundary_entry; else boundary_exit; fi
+  echo "Recording the Phase 8 $CONTEXT_LABEL bookend ..." >&2
+  if [[ "$CONTEXT_LABEL" == "entry" ]]; then bookend_entry; else bookend_exit; fi
 
-  if ! artifact_run_begin "$BOUNDARY_ROOT" "enroll-and-stabilize-$CONTEXT_LABEL"; then
-    echo "ERROR: cannot stage a boundary run under: $BOUNDARY_ROOT" >&2
+  if ! artifact_run_begin "$BOOKEND_ROOT" "enroll-and-stabilize-$CONTEXT_LABEL"; then
+    echo "ERROR: cannot stage a bookend run under: $BOOKEND_ROOT" >&2
     exit 2
   fi
 
-  BOUNDARY_FILE="$ARTIFACT_RUN_DIR/checklist.md"
+  BOOKEND_FILE="$ARTIFACT_RUN_DIR/bookend.md"
 
-  # Opened before the checklist is written so SIGNOFF_FILE resolves for the
+  # Opened before the bookend is written so SIGNOFF_FILE resolves for the
   # pointer below. The sign-off is named for this run, which is what lets a
   # carried answer say which run it was given against.
   SIGNOFF_ROOT="$OUTPUT_ROOT/sign-offs"
@@ -509,9 +509,9 @@ if [[ "${CONTEXT_LABEL:-}" == "entry" || "${CONTEXT_LABEL:-}" == "exit" ]]; then
     printf 'Pairs with [[enroll-and-stabilize|enroll-and-stabilize.md]].\n\n'
     printf '## Automated\n\n'
     printf '| Check | Result | Detail |\n| --- | --- | --- |\n'
-    printf '%s' "$BOUNDARY_ROWS"
+    printf '%s' "$BOOKEND_ROWS"
     printf '\n**%s pass · %s warn · %s fail**\n\n' "$b_pass" "$b_warn" "$b_fail"
-    if [[ -n "$BOUNDARY_MANUAL" ]]; then
+    if [[ -n "$BOOKEND_MANUAL" ]]; then
       printf '## Manual\n\n'
       printf 'The rows a person answers are not in this file. Rerunning this script\n'
       printf 'stages a new run directory, so an answer recorded here would come back\n'
@@ -524,22 +524,22 @@ if [[ "${CONTEXT_LABEL:-}" == "entry" || "${CONTEXT_LABEL:-}" == "exit" ]]; then
     printf '## How to read this\n\n'
     printf -- '- **FAIL** (%s here) means the phase is not finished. Resolve before starting the next one.\n' "$b_fail"
     printf -- '- **WARN** (%s here) means proceed with a known limit, named in the row.\n' "$b_warn"
-    printf -- '- The Automated rows restate what the recorded evidence says; they do not re-probe the machine, so this checklist cannot disagree with the run it cites.\n'
-  } > "$BOUNDARY_FILE" || { artifact_run_abort; echo "ERROR: could not write $BOUNDARY_FILE" >&2; exit 2; }
+    printf -- '- The Automated rows restate what the recorded evidence says; they do not re-probe the machine, so this bookend cannot disagree with the run it cites.\n'
+  } > "$BOOKEND_FILE" || { artifact_run_abort; echo "ERROR: could not write $BOOKEND_FILE" >&2; exit 2; }
 
   while IFS=$'\t' read -r _signoff_item _signoff_note; do
     [[ -n "$_signoff_item" ]] || continue
     signoff_row "$_signoff_item" "$_signoff_note"
-  done <<< "$BOUNDARY_MANUAL"
-  signoff_finalize "Phase 8" "$BOUNDARY_FILE"
+  done <<< "$BOOKEND_MANUAL"
+  signoff_finalize "Phase 8" "$BOOKEND_FILE"
 
-  if ! artifact_run_finalize "$BOUNDARY_ROOT" "$b_pass pass / $b_warn warn / $b_fail fail"; then
-    echo "ERROR: the checklist was written but could not be indexed." >&2
+  if ! artifact_run_finalize "$BOOKEND_ROOT" "$b_pass pass / $b_warn warn / $b_fail fail"; then
+    echo "ERROR: the bookend was written but could not be indexed." >&2
     exit 2
   fi
 
   echo "" >&2
-  echo "Checklist → $ARTIFACT_RUN_DIR/checklist.md" >&2
+  echo "Bookend → $ARTIFACT_RUN_DIR/bookend.md" >&2
   printf '%s pass · %s warn · %s fail\n' "$b_pass" "$b_warn" "$b_fail" >&2
   echo "Answer the Manual rows in the sign-off: $SIGNOFF_FILE" >&2
   [[ "$b_fail" -eq 0 ]] || exit 1
@@ -982,7 +982,7 @@ else
   # an absent entry is deliberate -- a superseded management stack, a repackaged
   # component, a version-pinned receipt -- or a genuine gap needing a ticket is
   # exactly the judgement `record_manual` exists for. This run supplies the
-  # evidence; the exit checklist asks the question.
+  # evidence; the exit bookend asks the question.
   #
   # What CAN be answered here is whether the question has already been answered.
   # This row asks "is the managed application set accounted for", and an absence
@@ -1141,7 +1141,7 @@ Script: $(basename "$0")
 Context: ${CONTEXT_LABEL:-(none supplied)}
 Output directory: $OUT
 
-This is the Phase 8 evidence bundle for one side of the stabilization restart. It records what the machine reported, not whether the phase passed: the verdict is the exit checklist under \`reimaged-system/boundaries/\`, built by \`record-enrollment.sh --context exit\` from the official post-restart run. Keeping them apart means rerunning a capture never silently discards an answered row, and an answered row never has to be copied forward into a newer record. See \`enroll-and-stabilize.md\` for the full runbook.
+This is the Phase 8 evidence bundle for one side of the stabilization restart. It records what the machine reported, not whether the phase passed: the verdict is the exit bookend under \`reimaged-system/bookends/\`, built by \`record-enrollment.sh --context exit\` from the official post-restart run. Keeping them apart means rerunning a capture never silently discards an answered row, and an answered row never has to be copied forward into a newer record. See \`enroll-and-stabilize.md\` for the full runbook.
 
 ## What This Run Observed
 
@@ -1157,7 +1157,7 @@ This is the Phase 8 evidence bundle for one side of the stabilization restart. I
 | Keychain identities | $(status_pass_warn "$IDENTITIES_OK") | $IDENTITY_TOTAL valid, $IDENTITY_SSL ssl-client. See \`raw/09-keychain-identities.txt\`. Fingerprints differ from the pre-image set — MDM re-issues these rather than restoring them. |
 | Post-restart health | $(status_pass_warn "$POST_RESTART_OK") | Meaningful only on a \`--context post-restart\` run. |
 
-\`rows.tsv\` beside this file carries the same verdicts tab-separated, which is what the exit checklist reads rather than reparsing this table.
+\`rows.tsv\` beside this file carries the same verdicts tab-separated, which is what the exit bookend reads rather than reparsing this table.
 
 ## Review While the Evidence Is Fresh
 
@@ -1167,7 +1167,7 @@ This is the Phase 8 evidence bundle for one side of the stabilization restart. I
 3. Compare the identity count against the pre-image record. Expect the same
    number and shape with different fingerprints.
 
-Anything that needs a decision rather than a look is asked once, in the exit checklist.
+Anything that needs a decision rather than a look is asked once, in the exit bookend.
 
 ## Raw Evidence Files
 
@@ -1185,7 +1185,7 @@ Anything that needs a decision rather than a look is asked once, in the exit che
 - \`raw/12-system-extensions.txt\`
 EOF
 
-# The verdicts, tab-separated, so the exit checklist reads a table rather than
+# The verdicts, tab-separated, so the exit bookend reads a table rather than
 # reparsing Markdown -- the same split comparison.md / rows.tsv already uses.
 ROWS_FILE="$OUT/rows.tsv"
 {

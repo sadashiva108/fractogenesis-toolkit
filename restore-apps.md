@@ -113,7 +113,7 @@ Related scripts, alphabetical:
 ```text
 $FRACTOGENESIS_HOME/bin/assess-office-stability.sh     # entrypoint (Step 13 — post-image assessment; owned by capture-office-stability.md)
 $FRACTOGENESIS_HOME/bin/capture-office-stability.sh    # entrypoint (Step 13 — post-image evidence window; owned by capture-office-stability.md)
-$FRACTOGENESIS_HOME/bin/record-restore-prereqs.sh      # entrypoint (Step 0a — entry boundary)
+$FRACTOGENESIS_HOME/bin/record-restore-prereqs.sh      # entrypoint (Step 0a — entry bookend)
 $FRACTOGENESIS_HOME/bin/record-restore-state.sh        # entrypoint (Step 0b — before-state)
 $FRACTOGENESIS_HOME/bin/restore-docker.sh              # entrypoint (Step 9 — owned by restore-docker.md)
 $FRACTOGENESIS_HOME/bin/restore-intellij.sh            # entrypoint (Step 8 — owned by restore-intellij.md)
@@ -154,13 +154,13 @@ $REIMAGE_ARTIFACT_ROOT/
 │   └── ...
 ├── ...
 ├── reimaged-system/
-│   ├── boundaries/
+│   ├── bookends/
 │   │   ├── MANIFEST.md
 │   │   ├── official/
 │   │   │   └── restore-apps-entry.txt
 │   │   └── runs/
 │   │       └── restore-apps-entry-YYYYMMDD-HHMMSS/
-│   │           └── checklist.md
+│   │           └── bookend.md
 │   ├── ...
 │   ├── restore-notes/
 │   │   └── restore-apps-plan-YYYYMMDD-HHMMSS.md
@@ -177,9 +177,9 @@ $REIMAGE_ARTIFACT_ROOT/
 └── ...
 ```
 
-`boundaries/`, `office-stability/` and `state/` are run-indexed categories with one shape: `runs/<context>-YYYYMMDD-HHMMSS/` holds a single run's files, `official/<context>.txt` names the run that counts, and an append-only `MANIFEST.md` indexes every completed run. Read the pointer under `official/` to find a run; there is no newest-directory rule to apply and no `latest-*.txt` to follow.
+`bookends/`, `office-stability/` and `state/` are run-indexed categories with one shape: `runs/<context>-YYYYMMDD-HHMMSS/` holds a single run's files, `official/<context>.txt` names the run that counts, and an append-only `MANIFEST.md` indexes every completed run. Read the pointer under `official/` to find a run; there is no newest-directory rule to apply and no `latest-*.txt` to follow.
 
-`restore-apps-entry` and `restore-apps-before` are the only boundary and state lineages this phase writes. It records no exit boundary and no after-state: Phase 12 closes on the plan-note sign-off, and Phase 14 `reimaged-system-checks.md` is what reads the outcome.
+`restore-apps-entry` and `restore-apps-before` are the only bookend and state lineages this phase writes. It records no exit bookend and no after-state: Phase 12 closes on the plan-note sign-off, and Phase 14 `reimaged-system-checks.md` is what reads the outcome.
 
 `restore-notes/` and `sign-offs/` sit outside the run-index shape deliberately. The plan-note is regenerable, so `restore-apps.sh` replaces it on every run; the sign-off holds the rows you answered and carries them forward, so nothing may replace it.
 
@@ -233,7 +233,7 @@ Two recordings, both taken before any application is installed or configured.
 They answer different questions and only one of them can be taken late.
 
 **0a — may this phase start?** Writes a checklist under
-`reimaged-system/boundaries/` and exits non-zero only on `FAIL`:
+`reimaged-system/bookends/` and exits non-zero only on `FAIL`:
 
 ```bash
 ./bin/record-restore-prereqs.sh --runbook restore-apps --dry-run

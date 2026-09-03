@@ -210,7 +210,7 @@ while IFS= read -r doc; do
   else
     # consecutive from 1, and an em dash rather than a hyphen
     # A runbook may open at Step 0 -- the ones that record a prerequisite and
-    # before-state boundary do -- so the first number sets the start and the
+    # before-state bookend do -- so the first number sets the start and the
     # rest must follow it consecutively.
     bad_seq="$(grep '^### Step ' "$steps_tmp" \
       | awk 'NR == 1 { want = $3 + 0

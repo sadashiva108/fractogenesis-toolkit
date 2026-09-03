@@ -118,16 +118,16 @@ export ONEDRIVE_DEST_SUBDIR="reimage-<asset-or-host>-<start-date>-open"
 | Phase 4D | Pre-image Office stability evidence | `reimaging-guide.md` (Phase 4), `capture-office-stability.md` | `watch-office-today.sh `, `capture-workload-snapshot.sh`, `capture-office-stability.sh`, `assess-office-stability.sh --phase pre-reimage` | `$REIMAGE_ARTIFACT_ROOT/office-stability/runs/pre-image-office-stability-{evidence,assessment}-*/`, `$REIMAGE_ARTIFACT_ROOT/office-stability/sign-offs/` |
 | Phase 6A | Guide access validation (curl/jump drive) | `reimaging-guide.md`, `reimage-guide-access.md` | `bootstrap.sh`, `bin/build-jump-drive-payload.sh` | throwaway test installs only -- no `$REIMAGE_ARTIFACT_ROOT` output |
 | Phase 6B | Final pre-image validation | `reimaging-guide.md`, `reimage-prep-checks.md` | `bin/reimage-checklist.sh --phase pre --artifact-root ...` | `$REIMAGE_ARTIFACT_ROOT/reimage-prep-checks/` |
-| Phase 10A | Restore-phase entry record | `restore-runtime.md` | `bin/record-restore-prereqs.sh` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/boundaries/runs/*-entry-*/` |
-| Phase 10A | Restore-phase exit record | `restore-runtime.md` | `bin/record-restore-exit.sh` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/boundaries/runs/*-exit-*/` |
+| Phase 10A | Restore-phase entry record | `restore-runtime.md` | `bin/record-restore-prereqs.sh` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/bookends/runs/*-entry-*/` |
+| Phase 10A | Restore-phase exit record | `restore-runtime.md` | `bin/record-restore-exit.sh` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/bookends/runs/*-exit-*/` |
 | Phase 10A | Restored-state comparison | `restore-runtime.md` | `bin/compare-restored-state.sh` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/comparisons/runs/*-inventory-diff-*/` |
 | Phase 10B | Restored-state comparison | `restore-access.md` | `bin/compare-restored-state.sh --runbook restore-access` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/comparisons/runs/*-inventory-diff-*/` |
 | Phase 10B | Phase delta | `restore-access.md` | `bin/record-restore-state.sh --runbook restore-access --point after` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/state/runs/*-after-*/delta.md` |
 | Phase 8 | Toolkit install and shell environment | `enroll-and-stabilize.md` | `bootstrap.sh`, `bin/init-shell-env.sh` | `~/.zprofile` block; `$FRACTOGENESIS_HOME/reimage.env` restored from the jump drive |
 | Phase 8 | Enrollment/stabilization record | `enroll-and-stabilize.md` | `record-enrollment.sh` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/restarts/runs/enroll-and-stabilize-<point>-*/`, falling back to `$REIMAGE_WORKSPACE_ROOT/` or `~/Desktop/reimaged-system-artifacts/` |
-| Phase 8 | Entry and exit boundary | `enroll-and-stabilize.md` | `record-enrollment.sh --context entry\|exit` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/boundaries/runs/enroll-and-stabilize-{entry,exit}-*/` |
+| Phase 8 | Entry and exit bookend | `enroll-and-stabilize.md` | `record-enrollment.sh --context entry\|exit` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/bookends/runs/enroll-and-stabilize-{entry,exit}-*/` |
 | Phase 9 | Restart comparison | `verify-reimaged-system.md` | `record-reimaged-system.sh --context diff` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/comparisons/runs/verify-reimaged-system-restart-diff-*/` |
-| Phase 9 | Entry and exit boundary | `verify-reimaged-system.md` | `record-reimaged-system.sh --context entry\|exit` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/boundaries/runs/verify-reimaged-system-{entry,exit}-*/` |
+| Phase 9 | Entry and exit bookend | `verify-reimaged-system.md` | `record-reimaged-system.sh --context entry\|exit` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/bookends/runs/verify-reimaged-system-{entry,exit}-*/` |
 | any | Index relocated or migrated runs | `verify-reimaged-system.md` | `reindex-artifact-runs.sh` | rewrites `<category>/MANIFEST.md` and `<category>/official/` |
 | any | Record a decision no capture can hold | `restore-access.md`, `restore-home.md` | `record-decision.sh` | appends to `$REIMAGE_ARTIFACT_ROOT/reimaged-system/restore-notes/decisions.md`; `compare-restored-state.sh` reads it back and marks the covered rows **decided** |
 | Phase 9 | First-boot record twice around a stabilization restart | `verify-reimaged-system.md` | `record-reimaged-system.sh` | `$REIMAGE_ARTIFACT_ROOT/reimaged-system/restarts/runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/` |
@@ -975,7 +975,7 @@ sign-off reference for the rows this does not cover:
 ./bin/reimage-checklist.sh --phase pre --artifact-root "$REIMAGE_ARTIFACT_ROOT" --open
 ```
 
-Post-image (Phases 8–14). The boundary recorders that bracket each phase are not
+Post-image (Phases 8–14). The bookend recorders that bracket each phase are not
 listed here — each runbook's Step 0 and close-out own those.
 
 **Phase 8 — enroll and stabilize.**

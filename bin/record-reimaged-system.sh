@@ -7,7 +7,7 @@
 # personal apps, running managed processes, volumes, Time Machine destination,
 # software updates, brew/git/xcode presence, optional network reachability),
 # stamps PASS/WARN/TODO on the automated rows, and writes a first-boot
-# evidence bundle plus companion planning documents (initial checklist,
+# evidence bundle plus companion planning documents (initial bookend,
 # restart checkpoints, Time Machine plan, manual captures).
 #
 # Meant to run twice: once after Phase 8 completes and the external artifact
@@ -50,8 +50,8 @@
 #                         first-boot bundle. Overrides the default layout.
 #   --context LABEL       The run's point. Conventional values are pre-restart
 #                         and post-restart; omitted, the run is `initial`.
-#                         `entry` and `exit` select the boundary modes instead
-#                         of a first-boot capture -- see Boundary modes below.
+#                         `entry` and `exit` select the bookend modes instead
+#                         of a first-boot capture -- see Bookend modes below.
 #                         Letters, digits, dot, underscore, and hyphen only.
 #   --no-network          Skip network reachability probes.
 #   --open                Reveal the generated bundle in Finder on completion.
@@ -82,16 +82,16 @@
 #        lands at reimaged-system/restarts/runs/verify-reimaged-system-initial-<stamp>/,
 #        matching the layout documented in references/master-directory-reference.md.
 #   2. ~/Desktop/reimaged-system-artifacts/
-#        as a fallback so the checklist can complete on a bare Mac before the
+#        as a fallback so the bookend can complete on a bare Mac before the
 #        external artifact volume is reconnected.
 #
-# Boundary modes:
-#   `--context entry` and `--context exit` write a checklist to
-#   reimaged-system/boundaries/ under verify-reimaged-system-{entry,exit}, in
+# Bookend modes:
+#   `--context entry` and `--context exit` write a bookend to
+#   reimaged-system/bookends/ under verify-reimaged-system-{entry,exit}, in
 #   the same category and grammar the restore phases use, so one index answers
 #   "did this phase both start and finish" for every phase in the workflow.
 #
-#   Entry reads Phase 8's exit checklist rather than re-deriving whether
+#   Entry reads Phase 8's exit bookend rather than re-deriving whether
 #   enrollment finished: the pair exists so each phase asks the phase before it
 #   whether it closed out, instead of reaching into its evidence.
 #
@@ -109,7 +109,7 @@
 # --- END USAGE ---
 # =============================================================================
 
-# Aggregate validator/checklist strict mode.
+# Aggregate validator/bookend strict mode.
 # NOTE: intentionally NOT set -e. Failed individual checks are converted into
 # PASS/WARN/TODO records rather than aborting the run, so a single unavailable
 # subsystem cannot cost the whole first-boot bundle. Every read-only command
@@ -138,7 +138,7 @@ source "$CONFIG_LOADER"
 # Shared run index. The first-boot bundles are indexed runs under
 # reimaged-system/restarts/ rather than directories at the reimaged-system/
 # root, so this script brackets its work with artifact_run_begin / finalize the
-# way the boundary recorders and the comparison do.
+# way the bookend recorders and the comparison do.
 RUNS_LIB="$REPO_ROOT/.internal/artifact-runs.sh"
 if [[ ! -f "$RUNS_LIB" ]]; then
   echo "ERROR: shared run index not found: $RUNS_LIB" >&2
@@ -148,7 +148,7 @@ fi
 source "$RUNS_LIB"
 
 # Manual rows leave the run directory. `artifact_run_begin` stages a NEW run on
-# every invocation, so a row answered inside checklist.md is replaced by a fresh
+# every invocation, so a row answered inside bookend.md is replaced by a fresh
 # `TODO` the next time this script is run -- the failure verify-reimaged-system.md
 # warns about. The sign-off carries answers forward instead, and stamps each with
 # the run it was answered against. See .internal/sign-offs.sh.
@@ -307,22 +307,22 @@ STAMP="$(date +%Y%m%d-%H%M%S)"
 # `initial`, which is NOT a known point and therefore indexes as `unknown` --
 # the honest answer, since nothing recorded which side of a restart it was on.
 # ---------------------------------------------------------------------------
-# Boundary modes: --context entry and --context exit
+# Bookend modes: --context entry and --context exit
 #
 # These capture no first-boot evidence. They record what was decided about it,
-# into reimaged-system/boundaries/ under verify-reimaged-system-{entry,exit} --
+# into reimaged-system/bookends/ under verify-reimaged-system-{entry,exit} --
 # the same category and grammar the restore phases use, so one place answers
 # "did this phase both start and finish" for every phase.
 #
-# The entry mode reads Phase 8's exit checklist. That is the pair doing its job:
+# The entry mode reads Phase 8's exit bookend. That is the pair doing its job:
 # Phase 9 does not re-derive whether enrollment finished, it asks whether the
 # phase that owned that question closed it out.
 #
 # Self-contained helpers: the bundle path's row machinery is template-driven and
 # defined further down, so nothing here may use it.
 # ---------------------------------------------------------------------------
-BOUNDARY_ROWS=""
-BOUNDARY_MANUAL=""
+BOOKEND_ROWS=""
+BOOKEND_MANUAL=""
 b_pass=0; b_warn=0; b_fail=0
 
 b_record() {
@@ -331,28 +331,28 @@ b_record() {
     WARN) b_warn=$(( b_warn + 1 )) ;;
     FAIL) b_fail=$(( b_fail + 1 )) ;;
   esac
-  BOUNDARY_ROWS="${BOUNDARY_ROWS}| ${2} | \`${1}\` | ${3} |"$'\n'
+  BOOKEND_ROWS="${BOOKEND_ROWS}| ${2} | \`${1}\` | ${3} |"$'\n'
   printf '  %-5s %s\n' "$1" "$2" >&2
 }
 
 # Collected as item<TAB>note rather than as a rendered markdown row, because
-# these are replayed into the sign-off and no longer written into checklist.md.
-# `b_manual` runs inside boundary_entry/boundary_exit, which execute before
+# these are replayed into the sign-off and no longer written into bookend.md.
+# `b_manual` runs inside bookend_entry/bookend_exit, which execute before
 # `artifact_run_begin` assigns the run id the sign-off is named for, so the rows
 # have to be held until then rather than emitted as they are declared.
 b_manual() {
-  BOUNDARY_MANUAL="${BOUNDARY_MANUAL}${1}"$'\t'"${2}"$'\n'
+  BOOKEND_MANUAL="${BOOKEND_MANUAL}${1}"$'\t'"${2}"$'\n'
 }
 
-# Unanswered rows in a generated checklist: `TODO` in the Status column.
+# Unanswered rows in a generated bookend: `TODO` in the Status column.
 b_todo_count() {
   grep -c '| `TODO` |' "$1" 2>/dev/null || true
 }
 
-boundary_entry() {
-  local boundaries_root restarts_root run f n
+bookend_entry() {
+  local bookends_root restarts_root run f n
 
-  boundaries_root="$OUTPUT_ROOT/boundaries"
+  bookends_root="$OUTPUT_ROOT/bookends"
   restarts_root="$OUTPUT_ROOT/restarts"
 
   if [[ -n "${FRACTOGENESIS_HOME:-}" && -d "${FRACTOGENESIS_HOME:-}" ]]; then
@@ -369,11 +369,11 @@ boundary_entry() {
 
   # Phase 8's close-out, not Phase 8's evidence. A recorded exit is the only
   # thing that says a person looked at what Phase 8 produced.
-  run="$(artifact_run_official "$boundaries_root" "enroll-and-stabilize-exit" 2>/dev/null || true)"
+  run="$(artifact_run_official "$bookends_root" "enroll-and-stabilize-exit" 2>/dev/null || true)"
   f=""
-  [[ -n "$run" ]] && f="$boundaries_root/$run/checklist.md"
+  [[ -n "$run" ]] && f="$bookends_root/$run/bookend.md"
   if [[ -z "$f" || ! -f "$f" ]]; then
-    b_record FAIL "Phase 8 closed out" "no official \`enroll-and-stabilize-exit\` run under \`boundaries/\` — Phase 8 has not signed off, so nothing establishes that enrollment and the managed app set are settled"
+    b_record FAIL "Phase 8 closed out" "no official \`enroll-and-stabilize-exit\` run under \`bookends/\` — Phase 8 has not signed off, so nothing establishes that enrollment and the managed app set are settled"
   else
     n="$(b_todo_count "$f")"
     if [[ "${n:-0}" -eq 0 ]]; then
@@ -400,7 +400,7 @@ boundary_entry() {
   b_manual "Nothing this Mac needs is still installable" "The Company Portal Apps tab shows no Required or Available assignment this machine needs that has not been installed. Phase 8 Step 4 owns finishing that."
 }
 
-boundary_exit() {
+bookend_exit() {
   local restarts_root comparisons_root pre post f n pre_stamp post_stamp
 
   restarts_root="$OUTPUT_ROOT/restarts"
@@ -451,9 +451,9 @@ boundary_exit() {
   if [[ -n "$f" && -f "$f" ]]; then
     n="$(b_todo_count "$f")"
     if [[ "${n:-0}" -eq 0 ]]; then
-      b_record PASS "Post-restart checklist answered" "no unanswered rows in \`$(basename "$post")\`"
+      b_record PASS "Post-restart bookend answered" "no unanswered rows in \`$(basename "$post")\`"
     else
-      b_record WARN "Post-restart checklist answered" "$n unanswered row(s) in \`$(basename "$post")/checklist.md\` — this step is the only one that fills them"
+      b_record WARN "Post-restart bookend answered" "$n unanswered row(s) in \`$(basename "$post")/checklist.md\` — this step is the only one that fills them"
     fi
   fi
 
@@ -465,13 +465,13 @@ boundary_exit() {
 # ---------------------------------------------------------------------------
 # Comparison mode: --context diff
 #
-# Reads the two official first-boot bundles and reports how their checklist rows
-# changed across the restart. A raw `diff -u` of two checklists is technically
+# Reads the two official first-boot bundles and reports how their bookend rows
+# changed across the restart. A raw `diff -u` of two bookends is technically
 # complete and practically unreadable: it interleaves reordered rows, evidence
 # paths and timestamps with the handful of verdicts that actually moved.
 #
 # Writes to comparisons/ under verify-reimaged-system-restart-diff, which is the
-# run the exit checklist looks for when it asks whether the pair was compared.
+# run the exit bookend looks for when it asks whether the pair was compared.
 # ---------------------------------------------------------------------------
 if [[ "${CONTEXT_LABEL:-}" == "diff" ]]; then
   RESTARTS_ROOT="$OUTPUT_ROOT/restarts"
@@ -490,12 +490,12 @@ if [[ "${CONTEXT_LABEL:-}" == "diff" ]]; then
     fi
   done
 
-  # A checklist row is `| <check> | `<STATUS>` | <evidence> |`. The backticked
+  # A bookend row is `| <check> | `<STATUS>` | <evidence> |`. The backticked
   # status in field 3 is what separates a check row from the Item/Location and
   # heading tables in the same file, so parse on that rather than on position.
   #
   # The status set is NOT the four the script writes. Manual rows are answered by
-  # hand, so a post-restart checklist carries `yes`, `no`, `accepted` and the like
+  # hand, so a post-restart bookend carries `yes`, `no`, `accepted` and the like
   # where the generated file had `TODO`. Matching only PASS/WARN/FAIL/TODO made
   # every answered row invisible on one side and reported it as dropped -- the
   # comparison said fifteen rows disappeared across a restart that changed none.
@@ -603,19 +603,19 @@ if [[ "${CONTEXT_LABEL:-}" == "diff" ]]; then
 fi
 
 if [[ "${CONTEXT_LABEL:-}" == "entry" || "${CONTEXT_LABEL:-}" == "exit" ]]; then
-  BOUNDARY_ROOT="$OUTPUT_ROOT/boundaries"
+  BOOKEND_ROOT="$OUTPUT_ROOT/bookends"
 
-  echo "Recording the Phase 9 $CONTEXT_LABEL boundary ..." >&2
-  if [[ "$CONTEXT_LABEL" == "entry" ]]; then boundary_entry; else boundary_exit; fi
+  echo "Recording the Phase 9 $CONTEXT_LABEL bookend ..." >&2
+  if [[ "$CONTEXT_LABEL" == "entry" ]]; then bookend_entry; else bookend_exit; fi
 
-  if ! artifact_run_begin "$BOUNDARY_ROOT" "verify-reimaged-system-$CONTEXT_LABEL"; then
-    echo "ERROR: cannot stage a boundary run under: $BOUNDARY_ROOT" >&2
+  if ! artifact_run_begin "$BOOKEND_ROOT" "verify-reimaged-system-$CONTEXT_LABEL"; then
+    echo "ERROR: cannot stage a bookend run under: $BOOKEND_ROOT" >&2
     exit 2
   fi
 
-  BOUNDARY_FILE="$ARTIFACT_RUN_DIR/checklist.md"
+  BOOKEND_FILE="$ARTIFACT_RUN_DIR/bookend.md"
 
-  # Opened before the checklist is written so SIGNOFF_FILE resolves for the
+  # Opened before the bookend is written so SIGNOFF_FILE resolves for the
   # pointer below. The sign-off is named for this run, which is what lets a
   # carried answer say which run it was given against.
   SIGNOFF_ROOT="$OUTPUT_ROOT/sign-offs"
@@ -631,9 +631,9 @@ if [[ "${CONTEXT_LABEL:-}" == "entry" || "${CONTEXT_LABEL:-}" == "exit" ]]; then
     printf 'Pairs with [[verify-reimaged-system|verify-reimaged-system.md]].\n\n'
     printf '## Automated\n\n'
     printf '| Check | Result | Detail |\n| --- | --- | --- |\n'
-    printf '%s' "$BOUNDARY_ROWS"
+    printf '%s' "$BOOKEND_ROWS"
     printf '\n**%s pass · %s warn · %s fail**\n\n' "$b_pass" "$b_warn" "$b_fail"
-    if [[ -n "$BOUNDARY_MANUAL" ]]; then
+    if [[ -n "$BOOKEND_MANUAL" ]]; then
       printf '## Manual\n\n'
       printf 'The rows a person answers are not in this file. Rerunning this script\n'
       printf 'stages a new run directory, so an answer recorded here would come back\n'
@@ -647,21 +647,21 @@ if [[ "${CONTEXT_LABEL:-}" == "entry" || "${CONTEXT_LABEL:-}" == "exit" ]]; then
     printf -- '- **FAIL** (%s here) means the phase is not finished. Resolve before starting the next one.\n' "$b_fail"
     printf -- '- **WARN** (%s here) means proceed with a known limit, named in the row.\n' "$b_warn"
     printf -- '- Every row is resolved through the run index, so a bundle that exists under a fallback path but was never relocated reads as absent — which is what it is, from here.\n'
-  } > "$BOUNDARY_FILE" || { artifact_run_abort; echo "ERROR: could not write $BOUNDARY_FILE" >&2; exit 2; }
+  } > "$BOOKEND_FILE" || { artifact_run_abort; echo "ERROR: could not write $BOOKEND_FILE" >&2; exit 2; }
 
   while IFS=$'\t' read -r _signoff_item _signoff_note; do
     [[ -n "$_signoff_item" ]] || continue
     signoff_row "$_signoff_item" "$_signoff_note"
-  done <<< "$BOUNDARY_MANUAL"
-  signoff_finalize "Phase 9" "$BOUNDARY_FILE"
+  done <<< "$BOOKEND_MANUAL"
+  signoff_finalize "Phase 9" "$BOOKEND_FILE"
 
-  if ! artifact_run_finalize "$BOUNDARY_ROOT" "$b_pass pass / $b_warn warn / $b_fail fail"; then
-    echo "ERROR: the checklist was written but could not be indexed." >&2
+  if ! artifact_run_finalize "$BOOKEND_ROOT" "$b_pass pass / $b_warn warn / $b_fail fail"; then
+    echo "ERROR: the bookend was written but could not be indexed." >&2
     exit 2
   fi
 
   echo "" >&2
-  echo "Checklist → $ARTIFACT_RUN_DIR/checklist.md" >&2
+  echo "Bookend → $ARTIFACT_RUN_DIR/bookend.md" >&2
   printf '%s pass · %s warn · %s fail\n' "$b_pass" "$b_warn" "$b_fail" >&2
   echo "Answer the Manual rows in the sign-off: $SIGNOFF_FILE" >&2
   [[ "$b_fail" -eq 0 ]] || exit 1
@@ -692,7 +692,7 @@ if ! mkdir -p "$OUT/logs" "$OUT/raw"; then
 fi
 
 # Pre-create the sibling reimaged-system subfolders when writing to the
-# artifact tree so later phases (Phase 14's checklist, restart notes, restore
+# artifact tree so later phases (Phase 14's bookend, restart notes, restore
 # notes) have somewhere to land without extra shell work.
 #
 # `reimaged-system/time-machine/` is deliberately NOT among them. Post-image
@@ -961,7 +961,7 @@ Nothing in this file runs during Phase 9. The post-image Time Machine backup is
 Phase 16, taken after Phase 15 — Restore Home, and owned by `run-time-machine.md`.
 These are the notes to carry into it.
 
-Keep Time Machine backups on the dedicated Apple backups partition ($EXTERNAL_APPLE_BACKUPS_VOLUME when defined). Keep workflow evidence and generated checklists under the artifact-root partition ($EXTERNAL_DATA_VOLUME / $REIMAGE_ARTIFACT_ROOT).
+Keep Time Machine backups on the dedicated Apple backups partition ($EXTERNAL_APPLE_BACKUPS_VOLUME when defined). Keep workflow evidence and generated bookends under the artifact-root partition ($EXTERNAL_DATA_VOLUME / $REIMAGE_ARTIFACT_ROOT).
 
 Recommended reimaged-system Time Machine checkpoints:
 
@@ -1040,7 +1040,7 @@ cannot be answered truthfully in a pre-restart bundle.
 EOF_MANUAL_FIRST_BOOT
 
 # ---------------------------------------------------------------------------
-# Generate the initial checklist and README summary
+# Generate the initial bookend and README summary
 # ---------------------------------------------------------------------------
 sed_escape() {
   printf '%s' "$1" | sed 's/[\\&|]/\\&/g'
@@ -1056,7 +1056,7 @@ replace_token() {
 }
 
 cat > "$CHECKLIST" <<'EOF_CHECKLIST'
-# Reimaged System Initial Checklist
+# Reimaged System Initial Bookend
 
 Generated: __GENERATED_DATE__
 
@@ -1074,13 +1074,13 @@ __OUT__
 
 | Item | Location |
 |---|---|
-| Checklist runbook | `verify-reimaged-system.md` |
+| Bookend runbook | `verify-reimaged-system.md` |
 | Script | `bin/record-reimaged-system.sh` |
 | Generated evidence bundle | `__OUTPUT_ROOT__/restarts/runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/` |
 | Preferred generated-artifact root | `__ARTIFACT_ROOT__/reimaged-system/` when the artifact drive is mounted |
 | Local fallback if the artifact drive is unavailable | `~/Desktop/reimaged-system-artifacts/` |
 
-Keep active scripts in the toolkit checkout. Store generated evidence, checklist reports, and reimaged-system comparison outputs under the artifact root.
+Keep active scripts in the toolkit checkout. Store generated evidence, bookend reports, and reimaged-system comparison outputs under the artifact root.
 
 ## Automated Checks
 
@@ -1101,7 +1101,7 @@ Keep active scripts in the toolkit checkout. Store generated evidence, checklist
 | Homebrew available (installed in Phase 10A) | `__BREW_STATUS__` | `raw/brew-version.txt` |
 | Network check | `__NETWORK_STATUS__` | `raw/network-github.txt` |
 
-## Manual First-Boot Checklist
+## Manual First-Boot Bookend
 
 > Fill these in the **post-restart** bundle only. A rerun regenerates this file
 > and resets every row, so answers written into a pre-restart bundle are lost.
@@ -1132,7 +1132,7 @@ Keep active scripts in the toolkit checkout. Store generated evidence, checklist
    `enroll-and-stabilize.md` Step 4 and rerun this script **before** restarting —
    this bundle is the pre-restart baseline the comparison depends on.
 3. Restart once after managed enrollment, the managed app set, and security tools are all stable.
-4. Rerun this script after the restart, compare results, and complete the manual checklist in that newer bundle.
+4. Rerun this script after the restart, compare results, and complete the manual bookend in that newer bundle.
 5. Do **not** take a Time Machine backup here. The post-image backup is Phase 16,
    after Phase 15 restores your home directory — a backup taken now would capture
    a machine holding nothing that re-enrolling could not reproduce, and would miss
@@ -1201,7 +1201,7 @@ CHECKLIST="$OUT/checklist.md"
 
 echo ""
 echo "First-boot evidence bundle written: $OUT"
-echo "Open checklist: $CHECKLIST"
+echo "Open bookend: $CHECKLIST"
 echo "Run indexed at: $RUN_CATEGORY_ROOT/MANIFEST.md"
 
 if [[ "$OPEN_RESULT" == "true" ]]; then

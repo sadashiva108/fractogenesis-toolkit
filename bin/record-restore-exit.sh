@@ -14,7 +14,7 @@
 # written down.
 #
 # WHY A SECOND SCRIPT RATHER THAN EXTENDING THE COMPARISON. Phase 10A already
-# writes an indexed comparison run, and the exit checklist could have been
+# writes an indexed comparison run, and the exit bookend could have been
 # appended there. Entry and exit are genuinely different questions, though, and a
 # file named for a version comparison that also carries a phase sign-off
 # understates its own contents -- while renaming it would break the glob that
@@ -52,14 +52,14 @@
 #   --output-root PATH    Category root for the run. A relative value is
 #                         resolved against the current directory, and a
 #                         destination inside the repo checkout is refused.
-#                         Default: <artifact-root>/reimaged-system/boundaries
-#   --dry-run             Print the checklist; write nothing.
-#   --open                Reveal the generated checklist in Finder.
+#                         Default: <artifact-root>/reimaged-system/bookends
+#   --dry-run             Print the bookend; write nothing.
+#   --open                Reveal the generated bookend in Finder.
 #   -h, --help            Show this message and exit.
 #
 # Output location:
-#   <artifact-root>/reimaged-system/boundaries/runs/post-image-<runbook>-exit-<stamp>/
-#     checklist.md
+#   <artifact-root>/reimaged-system/bookends/runs/post-image-<runbook>-exit-<stamp>/
+#     bookend.md
 #   indexed in that category's MANIFEST.md, with official/ naming the newest run.
 #   Entry and exit share one category so a single index answers whether a phase
 #   both started and finished.
@@ -101,7 +101,7 @@ fi
 source "$RUNS_LIB"
 
 # Manual rows leave the run directory. `artifact_run_begin` stages a NEW run on
-# every invocation, so a row answered inside checklist.md comes back as a fresh
+# every invocation, so a row answered inside bookend.md comes back as a fresh
 # `TODO` the next time this runs -- the failure verify-reimaged-system.md warns
 # about. The sign-off carries answers forward and stamps each with the run it
 # was answered against. See .internal/sign-offs.sh.
@@ -201,7 +201,7 @@ record() {
 
 # Rows only a person can answer. Collected as item<TAB>note and replayed into
 # the sign-off once the run id exists; they are no longer rendered into
-# checklist.md, because that file is replaced on every run.
+# bookend.md, because that file is replaced on every run.
 record_manual() {
   MANUAL_ROWS="${MANUAL_ROWS}${1}"$'\t'"${2}"$'\n'
 }
@@ -338,7 +338,7 @@ check_restore_runtime() {
   # v26.7.0. The row was green because a file was present.
   #
   # Time cannot answer it: that stale comparison was four minutes older than the
-  # checklist citing it, and a comparison being older than its exit checklist is
+  # bookend citing it, and a comparison being older than its exit bookend is
   # the normal ordering. What went stale was the content.
   #
   # Delegated to compare-restored-state.sh --reprobe rather than re-probing
@@ -360,7 +360,7 @@ check_restore_runtime() {
       *)
         # Could not ask the question -- no rows.tsv, or the probe set refused.
         # A manual row rather than a pass or a fail: scoring "could not check"
-        # as either is how a checklist starts lying.
+        # as either is how a bookend starts lying.
         record_manual "Runtime comparison still current" "Freshness could not be computed automatically ($(printf '%s' "$rp_out" | grep -m1 ERROR | sed 's/^ERROR: //')). Confirm by eye that \`$(basename "$cmp_run")\` still describes this machine before accepting it."
         ;;
     esac
@@ -517,7 +517,7 @@ check_restore_access() {
   # The DMG's own build manifest sits beside the image and is readable WITHOUT
   # the password. Filtering it to the `staged-loose/` rows yields the exact
   # destination list Step 2 is responsible for -- checkable after the image is
-  # detached, which is when this checklist runs.
+  # detached, which is when this bookend runs.
   #
   # Presence is necessary, not sufficient: a destination can exist because it
   # was never swept, or because something else recreated it. The Manual row
@@ -620,7 +620,7 @@ check_restore_git() {
 
   # The values Step 0c wrote into reimage.env. An exit row and not an entry row
   # on purpose: at entry they are unset by definition -- 0c is what sets them --
-  # and a row that can only FAIL at the boundary it is checked at is a scheduled
+  # and a row that can only FAIL at the bookend it is checked at is a scheduled
   # false alarm, not a check. `upsert-env` writes an empty value without
   # complaining, so "the key is present in reimage.env" is not the question;
   # "it carries a value" is.
@@ -961,8 +961,8 @@ emit() {
   printf '## How to read this\n\n'
   printf -- '- **FAIL** (%s here) means the phase is not finished. Resolve before starting %s.\n' "$fail_count" "$PHASE_NEXT"
   printf -- '- **WARN** (%s here) means proceed with a known limit, named in the row.\n' "$warn_count"
-  printf -- '- This is the exit half of a pair. The entry half is `record-restore-prereqs.sh --runbook %s`, run at the phase Step 0. One check per boundary, not one per runbook.\n' "${PHASE_RUNBOOK%.md}"
-  printf -- '- Both halves index into `boundaries/MANIFEST.md`, so one file shows whether a phase both started and finished.\n'
+  printf -- '- This is the exit half of a pair. The entry half is `record-restore-prereqs.sh --runbook %s`, run at the phase Step 0. One check per bookend, not one per runbook.\n' "${PHASE_RUNBOOK%.md}"
+  printf -- '- Both halves index into `bookends/MANIFEST.md`, so one file shows whether a phase both started and finished.\n'
 }
 
 if [[ "$DRY_RUN" == "true" ]]; then
@@ -975,18 +975,18 @@ fi
 
 if [[ -z "${REIMAGE_ARTIFACT_ROOT:-}" || ! -d "${REIMAGE_ARTIFACT_ROOT:-}" ]]; then
   echo "" >&2
-  echo "NOTE: artifact root unavailable, so no checklist was written." >&2
+  echo "NOTE: artifact root unavailable, so no bookend was written." >&2
   echo "      Rerun with --dry-run to see the result, or reconnect the drive." >&2
   [[ "$fail_count" -eq 0 ]] || exit 1
   exit 0
 fi
 
-# One category for both boundaries. Entry and exit are the same question asked
+# One category for both bookends. Entry and exit are the same question asked
 # from either side of a phase, so they belong under one index where a runbook's
 # pair sits adjacent -- rather than in two sibling directories that have to be
 # read together to see whether a phase both started and finished.
 if [[ -z "$OUTPUT_ROOT" ]]; then
-  OUTPUT_ROOT="$REIMAGE_ARTIFACT_ROOT/reimaged-system/boundaries"
+  OUTPUT_ROOT="$REIMAGE_ARTIFACT_ROOT/reimaged-system/bookends"
 fi
 OUTPUT_ROOT="$(absolute_path "$OUTPUT_ROOT")"
 
@@ -1005,9 +1005,9 @@ if ! artifact_run_begin "$OUTPUT_ROOT" "$RUN_CONTEXT"; then
   exit 2
 fi
 
-CHECK_FILE="$ARTIFACT_RUN_DIR/checklist.md"
+CHECK_FILE="$ARTIFACT_RUN_DIR/bookend.md"
 
-# Sibling of the boundaries category, not inside it: a sign-off outlives the run
+# Sibling of the bookends category, not inside it: a sign-off outlives the run
 # it was opened for, so it must not sit in a directory a later run replaces.
 # Opened before `emit` so SIGNOFF_FILE resolves for the pointer in the Manual
 # section, and named for this run so a carried answer says which run it answered.
@@ -1019,7 +1019,7 @@ if ! signoff_begin "$SIGNOFF_ROOT" "$RUN_CONTEXT" "$ARTIFACT_RUN_ID"; then
 fi
 
 if ! emit > "$CHECK_FILE"; then
-  echo "ERROR: could not write the checklist: $CHECK_FILE" >&2
+  echo "ERROR: could not write the bookend: $CHECK_FILE" >&2
   artifact_run_abort
   exit 2
 fi
@@ -1038,10 +1038,10 @@ if ! artifact_run_finalize "$OUTPUT_ROOT" \
   exit 2
 fi
 
-CHECK_FILE="$ARTIFACT_RUN_DIR/checklist.md"
+CHECK_FILE="$ARTIFACT_RUN_DIR/bookend.md"
 
 echo "" >&2
-echo "Checklist → $CHECK_FILE" >&2
+echo "Bookend → $CHECK_FILE" >&2
 printf '%s pass · %s warn · %s fail\n' "$pass_count" "$warn_count" "$fail_count" >&2
 echo "Answer the Manual rows in the sign-off before starting $PHASE_NEXT:" >&2
 echo "  $SIGNOFF_FILE" >&2

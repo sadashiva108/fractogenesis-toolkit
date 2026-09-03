@@ -4,7 +4,7 @@
 
 **Last updated:** 2026-09-02
 
-Restore the identity, trust, and credential layer on the reimaged Mac after the runtime toolchain is in place — SSH keys and Git access, certificates and keychains, Java trust overrides pinned to the JDK from Phase 10A, shell and CLI configuration, and license or activation material. Everything here comes out of the encrypted secrets DMG and the reviewed dotfiles bundle built during the pre-image phases. Most of it is manual — small copies, `security` commands, and Keychain Access actions — but four steps are scripted: Step 0 and the closing step run the boundary recorders in `bin/`, Step 2 runs `bin/restore-staged-loose.sh`, and `bin/restore-access.sh` can drive the whole phase.
+Restore the identity, trust, and credential layer on the reimaged Mac after the runtime toolchain is in place — SSH keys and Git access, certificates and keychains, Java trust overrides pinned to the JDK from Phase 10A, shell and CLI configuration, and license or activation material. Everything here comes out of the encrypted secrets DMG and the reviewed dotfiles bundle built during the pre-image phases. Most of it is manual — small copies, `security` commands, and Keychain Access actions — but four steps are scripted: Step 0 and the closing step run the bookend recorders in `bin/`, Step 2 runs `bin/restore-staged-loose.sh`, and `bin/restore-access.sh` can drive the whole phase.
 
 ---
 
@@ -112,8 +112,8 @@ Related scripts, alphabetical:
 
 ```text
 $FRACTOGENESIS_HOME/bin/compare-restored-state.sh      # entrypoint (Step 11 — compares both baselines)
-$FRACTOGENESIS_HOME/bin/record-restore-exit.sh         # entrypoint (Step 12 — exit boundary)
-$FRACTOGENESIS_HOME/bin/record-restore-prereqs.sh      # entrypoint (Step 0a — entry boundary)
+$FRACTOGENESIS_HOME/bin/record-restore-exit.sh         # entrypoint (Step 12 — exit bookend)
+$FRACTOGENESIS_HOME/bin/record-restore-prereqs.sh      # entrypoint (Step 0a — entry bookend)
 $FRACTOGENESIS_HOME/bin/record-restore-state.sh        # entrypoint (Step 0b before-state, Step 11 after-state)
 $FRACTOGENESIS_HOME/bin/restore-staged-loose.sh        # entrypoint (Step 2 — inverse of stage-loose-secrets.sh)
 $FRACTOGENESIS_HOME/bin/stage-loose-secrets.sh         # entrypoint (Step 2 — re-sweeps plaintext back behind encryption)
@@ -179,12 +179,12 @@ listed separately in the section before this one; this tree is output only.
 
 ```text
 $REIMAGE_ARTIFACT_ROOT/reimaged-system/
-boundaries/MANIFEST.md                                           # index of every entry and exit run
-boundaries/official/restore-access-entry.txt                     # newest entry run
-boundaries/official/restore-access-exit.txt                      # newest exit run
+bookends/MANIFEST.md                                           # index of every entry and exit run
+bookends/official/restore-access-entry.txt                     # newest entry run
+bookends/official/restore-access-exit.txt                      # newest exit run
 sign-offs/restore-access-exit-YYYYMMDD-HHMMSS.md                 # Step 12 — the rows you answer
-boundaries/runs/restore-access-entry-YYYYMMDD-HHMMSS/            # Step 0a — checklist.md
-boundaries/runs/restore-access-exit-YYYYMMDD-HHMMSS/             # Step 12 — checklist.md
+bookends/runs/restore-access-entry-YYYYMMDD-HHMMSS/            # Step 0a — bookend.md
+bookends/runs/restore-access-exit-YYYYMMDD-HHMMSS/             # Step 12 — bookend.md
 
 state/MANIFEST.md                                                # index of every state capture
 state/official/restore-access-before.txt                         # FIRST before run — first-wins
@@ -322,7 +322,7 @@ Two recordings, both taken before anything is mounted or written. They answer
 different questions and only one of them can be taken late.
 
 **0a — may this phase start?** Writes a checklist under
-`reimaged-system/boundaries/` and exits non-zero only on `FAIL`.
+`reimaged-system/bookends/` and exits non-zero only on `FAIL`.
 
 ```bash
 bash bin/record-restore-prereqs.sh --runbook restore-access --dry-run
@@ -1511,12 +1511,12 @@ Step 0a recorded whether this phase was allowed to start. This step records
 whether it finished. Skip it and nothing anywhere says so — a question that gets
 asked days later, when the answer is no longer reconstructable.
 
-It runs **after** Step 10, not before it: the exit checklist tests that the
+It runs **after** Step 10, not before it: the exit bookend tests that the
 secrets DMG is detached, so running it earlier fails a row that is not actually
 wrong yet.
 
-**1. Run the exit checklist.** It answers "did this phase finish", against the
-same boundary index that Step 0a wrote its entry record into:
+**1. Run the exit bookend.** It answers "did this phase finish", against the
+same bookend index that Step 0a wrote its entry record into:
 
 ```bash
 ./bin/record-restore-exit.sh --runbook restore-access --dry-run
@@ -1531,19 +1531,19 @@ The checklist covers what this phase's steps produced: SSH key modes, the
 corporate CA bundle, Git and Node and Python over HTTPS, the Java trust
 override, the shell-config merge, the by-hand DMG categories, licenses, the
 staged-loose destinations, and the DMG being detached. There is no separate
-table to tick here — the checklist is the table, and keeping a second copy in
+table to tick here — the bookend is the table, and keeping a second copy in
 the runbook is how the two drift apart.
 
 `bin/record-restore-prereqs.sh` and `bin/record-restore-exit.sh` are one pair per
-phase boundary, not one per runbook. This phase runs the `10B` entry check at
+phase bookend, not one per runbook. This phase runs the `10B` entry check at
 Step 0 and the `10B` exit check here; it never runs Phase 11A's entry check, and
 never re-runs its own entry check at the end.
 
-**2. Confirm both boundary records landed.** One file answers whether the phase
+**2. Confirm both bookend records landed.** One file answers whether the phase
 both started and finished:
 
 ```bash
-sed -n '1,40p' "$REIMAGE_ARTIFACT_ROOT/reimaged-system/boundaries/MANIFEST.md"
+sed -n '1,40p' "$REIMAGE_ARTIFACT_ROOT/reimaged-system/bookends/MANIFEST.md"
 ```
 
 You are looking for a `restore-access-entry-*` row and a
@@ -1745,7 +1745,7 @@ the answer is HTTPS remotes for that host. Nothing else in this phase depends
 on it — Steps 4 through 9 reach no remote at all.
 
 Neither failure blocks the rest of this phase. Steps 4 through 9 touch no
-remote, and the exit checklist tests HTTPS reachability separately.
+remote, and the exit bookend tests HTTPS reachability separately.
 
 [[#Step 4 — Restore Certificates and Keychain Material|⮕ Continue to Step 4 — Restore Certificates and Keychain Material]]
 

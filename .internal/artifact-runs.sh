@@ -10,7 +10,7 @@
 # already implemented it carefully -- `.incomplete` staging with an atomic
 # rename, a manifest header sentinel, a temp-then-mv pointer write, and one
 # finalize function called from every clean exit -- and `report-size-audit.sh`
-# mirrors it. This file is that implementation extracted so the boundary
+# mirrors it. This file is that implementation extracted so the bookend
 # recorders, the first-boot bundles, and any later producer share one contract
 # instead of reimplementing it. The hard parts are unchanged; only the callers
 # are new.
@@ -35,7 +35,7 @@
 # actually called.
 #
 # The same holds INSIDE the documents a run contains, not just in its directory
-# name: the boundary recorders, the state recorder and the comparison all title
+# name: the bookend recorders, the state recorder and the comparison all title
 # their output by runbook and carry the phase only as context sourced from the
 # invocation, where it records what was true at run time rather than asserting
 # something that can go stale.

@@ -23,7 +23,7 @@
 # was true once restore-access and restore-apps needed it. Per
 # `.github/guides/script-types-and-locations.md`, a helper that several phases
 # share stays in `.internal/` even though a runbook names it -- the same carve-out
-# that keeps the boundary recorders there.
+# that keeps the bookend recorders there.
 #
 # Runbook/phase context: restore-runtime.md (Phase 10A) Step 10, and the
 # equivalent step in each later restore runbook. The step it replaced listed
@@ -87,12 +87,12 @@
 #   2  Usage, configuration, or prerequisite error.
 #
 # Note it does NOT exit non-zero on a MISSING row. A missing tool is a finding to
-# read, not a failure of the comparison, and the boundary recorders are what turn
+# read, not a failure of the comparison, and the bookend recorders are what turn
 # findings into a phase verdict.
 #
 # FRESHNESS (`--reprobe`)
 #
-# A phase's exit checklist cites a comparison, and until now it only checked that
+# A phase's exit bookend cites a comparison, and until now it only checked that
 # one EXISTED. That is not the same question. On this repo a nine-pass sign-off
 # cited a comparison recording Node `v24.19.0` against a `v26.0.0` baseline --
 # the regression -- while the machine had already been fixed to `v26.7.0`. The
@@ -100,7 +100,7 @@
 #
 # Time cannot answer it. The stale comparison was four minutes older than the
 # checklist that cited it, well inside any sane age window, and a comparison
-# being older than its exit checklist is the NORMAL ordering. What actually went
+# being older than its exit bookend is the NORMAL ordering. What actually went
 # stale was the content: the comparison stopped describing the machine.
 #
 # So `--reprobe` re-runs the probes now and diffs them against what the official
@@ -162,7 +162,7 @@ usage() {
     | sed '1d;$d;s/^# //;s/^#$//'
 }
 
-# Phases are added as their runbooks are reached, the same way the boundary
+# Phases are added as their runbooks are reached, the same way the bookend
 # recorders do it, so each probe set is written against a runbook someone has
 # actually just followed rather than all of them guessed at once.
 # One list, for the same reason record-restore-prereqs.sh has one: the case

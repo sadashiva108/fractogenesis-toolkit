@@ -80,7 +80,7 @@ require_option_value() {
   fi
 }
 
-# Section markers — the machine-readable boundaries parsing relies on.
+# Section markers — the machine-readable bookends parsing relies on.
 AUTO_BEGIN='<!-- AUTOMATIC:BEGIN -->'
 AUTO_END='<!-- AUTOMATIC:END -->'
 BOTH_BEGIN='<!-- BOTH:BEGIN -->'

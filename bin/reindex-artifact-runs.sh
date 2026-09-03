@@ -97,11 +97,20 @@ fi
 # A run's result is recoverable from what it wrote. Reading it keeps a recovered
 # row as informative as one written at the time, rather than a bare em dash.
 result_for() {
-  local dir="$1" p w f
-  if [[ -f "$dir/checklist.md" ]]; then
-    p="$(grep -c '| `PASS` |' "$dir/checklist.md" 2>/dev/null || true)"
-    w="$(grep -c '| `WARN` |' "$dir/checklist.md" 2>/dev/null || true)"
-    f="$(grep -c '| `FAIL` |' "$dir/checklist.md" 2>/dev/null || true)"
+  local dir="$1" p w f rows=""
+  # Two filenames, because two categories write this shape. Bookend runs write
+  # bookend.md; restart runs still write checklist.md, and will until their
+  # human-answered rows move to sign-offs/ the way Revision 116 moved the
+  # bookends'. Reading only one name would report every run of the other
+  # category as `—` without failing, which is the quietest way to lose a count.
+  for rows in "$dir/bookend.md" "$dir/checklist.md"; do
+    [[ -f "$rows" ]] && break
+    rows=""
+  done
+  if [[ -n "$rows" ]]; then
+    p="$(grep -c '| `PASS` |' "$rows" 2>/dev/null || true)"
+    w="$(grep -c '| `WARN` |' "$rows" 2>/dev/null || true)"
+    f="$(grep -c '| `FAIL` |' "$rows" 2>/dev/null || true)"
     printf '%s pass / %s warn / %s fail' "${p:-0}" "${w:-0}" "${f:-0}"
     return 0
   fi

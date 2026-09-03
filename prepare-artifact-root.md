@@ -18,7 +18,7 @@ Recommended path: create the local `reimage.env` file first, then source it in e
     - [[#Environment Variables|Environment Variables]]
 - [[#Before You Run Anything|Before You Run Anything]]
     - [[#Preparation Sequence|Preparation Sequence]]
-    - [[#Repo, Workspace, and External Drive Boundary|Repo, Workspace, and External Drive Boundary]]
+    - [[#Repo, Workspace, and External Drive Bookend|Repo, Workspace, and External Drive Bookend]]
     - [[#Artifact Root Naming Convention|Artifact Root Naming Convention]]
     - [[#About artifact-config.sh|About artifact-config.sh]]
 - [[#Sequential Steps|Sequential Steps]]
@@ -151,7 +151,7 @@ The full tree with per-folder descriptions is defined once in the Master Directo
 
 [[master-directory-reference|Master Directory Reference]]
 
-This runbook references three directory locations in total, but only two of them are storage roles in the sense of holding files this workflow *generates*. The third — this repo checkout, `FRACTOGENESIS_HOME` — holds tracked source instead (scripts, docs, config templates), and is listed so the boundary is explicit, not because anything is generated into it:
+This runbook references three directory locations in total, but only two of them are storage roles in the sense of holding files this workflow *generates*. The third — this repo checkout, `FRACTOGENESIS_HOME` — holds tracked source instead (scripts, docs, config templates), and is listed so the bookend is explicit, not because anything is generated into it:
 
 | Path name | Location | Role | What belongs there |
 | --- | --- | --- | --- |
@@ -218,9 +218,9 @@ Troubleshooting is intentionally at the end. Specific steps link to the relevant
 
 ---
 
-### Repo, Workspace, and External Drive Boundary
+### Repo, Workspace, and External Drive Bookend
 
-Keep these boundaries clear before creating directories.
+Keep these bookends clear before creating directories.
 
 #### This repo
 
@@ -1460,7 +1460,7 @@ Background material that earlier steps link to but don't require you to read to 
 
 "Self-locate" only means the scripts find their own code (`bin/`, `.internal/`) from `bin/prepare-artifact-root.py`'s own file path, no matter how it's invoked. It does **not** mean the commands in this guide can be run from any directory. Every command in this guide that references `reimage.env`, `reimage.env.example`, or `--env-file reimage.env` uses a path relative to the repo root, so the current working directory still has to *be* the repo root (or you have to pass an absolute path) for those relative references to resolve. `export` commands themselves attach to the shell session, not to a directory, so they survive a `cd` -- but this guide keeps you in the repo root the whole time anyway, since that's also where the relative `reimage.env` lives. 
 
-`bin/setup-reimage-env.sh` is a concrete example of this boundary: it explicitly checks that `reimage.env.example` exists in the current directory before doing anything else, precisely because it expects to be run from the repo root -- run it from anywhere else and it refuses to proceed rather than silently failing later. 
+`bin/setup-reimage-env.sh` is a concrete example of this bookend: it explicitly checks that `reimage.env.example` exists in the current directory before doing anything else, precisely because it expects to be run from the repo root -- run it from anywhere else and it refuses to proceed rather than silently failing later. 
 
 #### Path variable definitions
 

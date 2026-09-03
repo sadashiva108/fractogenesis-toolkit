@@ -88,7 +88,7 @@ Two checks run before any copy, for one reason: they catch a full or unmounted d
 
 ### The Two Destinations
 
-The backup has one authoritative destination and one optional secondary destination. The difference is a safety boundary, not a convenience.
+The backup has one authoritative destination and one optional secondary destination. The difference is a safety bookend, not a convenience.
 
 | Destination | What it receives | Status |
 |---|---|---|

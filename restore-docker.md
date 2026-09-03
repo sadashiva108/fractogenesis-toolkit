@@ -142,7 +142,7 @@ $REIMAGE_ARTIFACT_ROOT/
 └── ...
 ```
 
-Neither category is run-indexed, and that is deliberate. The plan-note is regenerable, so `restore-docker.sh` replaces it on every run; the sign-off holds the rows you answered and carries them forward, so nothing may replace it. This phase records no boundary, state or comparison run — Phase 12 closes on the plan-note sign-off, which Phase 14 `reimaged-system-checks.md` reads.
+Neither category is run-indexed, and that is deliberate. The plan-note is regenerable, so `restore-docker.sh` replaces it on every run; the sign-off holds the rows you answered and carries them forward, so nothing may replace it. This phase records no bookend, state or comparison run — Phase 12 closes on the plan-note sign-off, which Phase 14 `reimaged-system-checks.md` reads.
 
 Live project checkouts the compose steps run from, restored by `restore-repos.md` and never written by this runbook. The steps below reach them through a `WORKSPACE` variable you set to the directory holding your clones:
 

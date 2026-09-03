@@ -1039,17 +1039,17 @@ def main():
                 chunk = re.sub(pattern, _ext_repl, chunk)
             return chunk
 
-        boundaries: List[Tuple[int, int]] = []
+        bookends: List[Tuple[int, int]] = []
         for cm in CODE_FENCE_RE.finditer(src):
-            boundaries.append((cm.start(), cm.end()))
+            bookends.append((cm.start(), cm.end()))
         for cm in LINK_RE.finditer(src):
-            boundaries.append((cm.start(), cm.end()))
+            bookends.append((cm.start(), cm.end()))
         for cm in LINK_WIKI.finditer(src):
-            boundaries.append((cm.start(), cm.end()))
-        boundaries.sort()
+            bookends.append((cm.start(), cm.end()))
+        bookends.sort()
         # Merge overlaps so we don't re-process spliced regions.
         merged: List[Tuple[int, int]] = []
-        for s, e in boundaries:
+        for s, e in bookends:
             if merged and s <= merged[-1][1]:
                 merged[-1] = (merged[-1][0], max(merged[-1][1], e))
             else:
@@ -1197,7 +1197,7 @@ def main():
             # (c) tokenized derivative e.g. `Restore Git` -> `Restore Repos`.
             # Skip when the stem is unchanged (identity in the derivative)
             # so we never trigger a spurious case rewrite. For single-word
-            # stems, tighten the boundary so we don't match inside filenames
+            # stems, tighten the bookend so we don't match inside filenames
             # like `bootstrap.sh` or `bootstrap-cheatsheet.md`.
             new_stem = Path(mv).stem
             if words and stem.lower() != new_stem.lower():

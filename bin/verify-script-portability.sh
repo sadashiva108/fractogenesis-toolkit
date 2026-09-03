@@ -187,7 +187,7 @@ require_option_value() {
 #
 # Regexes are matched with `grep -nE` against a comment-blanked copy of the
 # file. `[^;|&#]*` inside a command rule keeps the match from wandering across a
-# pipe or a statement boundary into an unrelated command's flags.
+# pipe or a statement bookend into an unrelated command's flags.
 # ---------------------------------------------------------------------------
 read_rules() {
   cat <<'RULES'
@@ -218,7 +218,7 @@ GNU-TAC@@FAIL@@(^|[^[:alnum:]_/])tac([[:space:]]|$)@@`tac` is GNU-only. Use `tai
 GNU-HEADNEG@@FAIL@@head[[:space:]]+-n[[:space:]]+-[0-9]@@`head -n -N` (drop last N) is GNU-only.
 GNU-LONGOPT@@FAIL@@(^|[^[:alnum:]_/])(cp|du|ls|rm|wc)[^;|&#]*[[:space:]]--(parents|max-depth|color|reflink|preserve|time-style)@@GNU long option with no BSD equivalent.
 BSD-READLINKF@@WARN@@(^|[^[:alnum:]_/])readlink[[:space:]]+-f([[:space:]]|$)@@`readlink -f` needs macOS 12.3+. Prefer the `cd`/`pwd` self-location idiom used elsewhere in this repo.
-BSD-REALPATH@@WARN@@(^|[^[:alnum:]_/])realpath([[:space:]]|$)@@`realpath` needs macOS 12.3+. The repo has a portable `absolute_path` helper in the `bin/` boundary recorders.
+BSD-REALPATH@@WARN@@(^|[^[:alnum:]_/])realpath([[:space:]]|$)@@`realpath` needs macOS 12.3+. The repo has a portable `absolute_path` helper in the `bin/` bookend recorders.
 BSD-TIMEOUT@@WARN@@(^|[^[:alnum:]_/])timeout[[:space:]]@@`timeout` is not on stock macOS (it is `gtimeout` from coreutils). Use a per-command timeout flag such as `curl -m`.
 BSD-XARGSR@@WARN@@(^|[^[:alnum:]_/])xargs[^;|&#]*[[:space:]]-[A-Za-z]*r([[:space:]]|$)@@`xargs -r` is GNU. BSD xargs already skips empty input, so the flag is unrecognised rather than needed.
 BSD-NEWERMT@@WARN@@find[^;|&#]*[[:space:]]-newermt([[:space:]]|$)@@`find -newermt` support varies on BSD find. Compare against a reference file with `-newer`.

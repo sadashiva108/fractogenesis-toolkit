@@ -128,8 +128,8 @@ Related scripts, alphabetical:
 ```text
 $FRACTOGENESIS_HOME/bin/compare-restored-state.sh      # entrypoint (Step 8 — comparison against the pre-image inventory)
 $FRACTOGENESIS_HOME/bin/prepare-artifact-root.py       # entrypoint (Step 0c — upsert-env, writes the identity keys into reimage.env)
-$FRACTOGENESIS_HOME/bin/record-restore-exit.sh         # entrypoint (Step 9 — exit boundary)
-$FRACTOGENESIS_HOME/bin/record-restore-prereqs.sh      # entrypoint (Step 0a — entry boundary)
+$FRACTOGENESIS_HOME/bin/record-restore-exit.sh         # entrypoint (Step 9 — exit bookend)
+$FRACTOGENESIS_HOME/bin/record-restore-prereqs.sh      # entrypoint (Step 0a — entry bookend)
 $FRACTOGENESIS_HOME/bin/record-restore-state.sh        # entrypoint (Step 0b before-state, Step 8 after-state and delta)
 ```
 
@@ -159,16 +159,16 @@ Everything this runbook writes, under the artifact root named above. The bundles
 $REIMAGE_ARTIFACT_ROOT/
 ├── ...
 ├── reimaged-system/
-│   ├── boundaries/
+│   ├── bookends/
 │   │   ├── MANIFEST.md
 │   │   ├── official/
 │   │   │   ├── restore-git-entry.txt
 │   │   │   └── restore-git-exit.txt
 │   │   └── runs/
 │   │       ├── restore-git-entry-YYYYMMDD-HHMMSS/
-│   │       │   └── checklist.md
+│   │       │   └── bookend.md
 │   │       └── restore-git-exit-YYYYMMDD-HHMMSS/
-│   │           └── checklist.md
+│   │           └── bookend.md
 │   ├── ...
 │   ├── comparisons/
 │   │   ├── MANIFEST.md
@@ -199,11 +199,11 @@ $REIMAGE_ARTIFACT_ROOT/
 └── ...
 ```
 
-`boundaries/`, `comparisons/` and `state/` share one shape: `runs/<context>-YYYYMMDD-HHMMSS/` holds a single run's files, `official/<context>.txt` names the run that counts, and an append-only `MANIFEST.md` indexes every completed run. To find a run, read the pointer under `official/` — there is no newest-directory rule and no `latest-*.txt`.
+`bookends/`, `comparisons/` and `state/` share one shape: `runs/<context>-YYYYMMDD-HHMMSS/` holds a single run's files, `official/<context>.txt` names the run that counts, and an append-only `MANIFEST.md` indexes every completed run. To find a run, read the pointer under `official/` — there is no newest-directory rule and no `latest-*.txt`.
 
 Which run a pointer names is decided per point rather than per category. `before` is first-wins, because the earliest observation is the one that caught the untouched machine; `after`, `delta`, `entry`, `exit` and the inventory diff are latest-wins, so re-running any of them replaces the earlier answer.
 
-`sign-offs/` is outside that shape on purpose. It holds the rows you answered at the exit boundary and carries them forward into the next run, so a latest-wins pointer must never be able to supersede it.
+`sign-offs/` is outside that shape on purpose. It holds the rows you answered at the exit bookend and carries them forward into the next run, so a latest-wins pointer must never be able to supersede it.
 
 Live targets this runbook writes on the reimaged Mac. Each names the step that writes it, because the `state/` captures above are only interpretable against this list — and `bin/record-restore-state.sh` walks exactly these paths:
 
@@ -301,7 +301,7 @@ Two recordings, both taken before anything is written. They answer different
 questions and only one of them can be taken late.
 
 **0a — may this phase start?** Writes a checklist under
-`reimaged-system/boundaries/` and exits non-zero only on `FAIL`:
+`reimaged-system/bookends/` and exits non-zero only on `FAIL`:
 
 ```bash
 ./bin/record-restore-prereqs.sh --runbook restore-git --dry-run
@@ -487,7 +487,7 @@ ssh-keygen -lf "$GIT_PERSONAL_SSH_KEY.pub"
 
 Compare each against the account it belongs to, signed in as that account. A browser holds one GitHub session per profile, so open the second account in a separate profile or a private window rather than assuming the settings page in front of you belongs to the account you mean. The work fingerprint is checked on `$GIT_WORK_GITHUB_HOST` and the personal one on `$GIT_PERSONAL_GITHUB_HOST`; nothing in the output above says which is which.
 
-Getting that wrong is not a filing error. A public key can be registered on only one account per GitHub installation, so a personal key added to a work account on the same installation makes the personal account reject it with `Key is already in use` until it is removed from the other one — which reads as a broken key rather than a misplaced one, and sends people to a personal access token for a problem a token does not solve. Across separate installations, an Enterprise Server instance and `github.com`, the namespaces do not overlap and the same key can sit on both. Avoid that too: one private key that opens both your personal account and your employer's systems is a boundary worth keeping.
+Getting that wrong is not a filing error. A public key can be registered on only one account per GitHub installation, so a personal key added to a work account on the same installation makes the personal account reject it with `Key is already in use` until it is removed from the other one — which reads as a broken key rather than a misplaced one, and sends people to a personal access token for a problem a token does not solve. Across separate installations, an Enterprise Server instance and `github.com`, the namespaces do not overlap and the same key can sit on both. Avoid that too: one private key that opens both your personal account and your employer's systems is a bookend worth keeping.
 
 > [!warning] Pitfall
 > Do not record the real expected fingerprints in this runbook or any committed markdown. Keep them in an approved encrypted backup or password manager and compare against the live output above.
@@ -948,11 +948,11 @@ identically for an unregistered key and for the wrong key, and an HTTPS
 credential authenticates as the token's owner whatever username is stored beside
 it.
 
-Confirm both boundary records landed. One file answers whether the phase both
+Confirm both bookend records landed. One file answers whether the phase both
 started and finished:
 
 ```bash
-sed -n '1,40p' "$REIMAGE_ARTIFACT_ROOT/reimaged-system/boundaries/MANIFEST.md"
+sed -n '1,40p' "$REIMAGE_ARTIFACT_ROOT/reimaged-system/bookends/MANIFEST.md"
 ```
 
 You are looking for a `restore-git-entry-*` row and a `restore-git-exit-*` row.

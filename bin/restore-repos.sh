@@ -476,7 +476,7 @@ mkdir -p "$RAW_DIR"
 #
 # It lives under reimaged-system/ rather than beside the category it reports on.
 # Phase 11B is a post-image phase, and every post-image answered row is in
-# reimaged-system/sign-offs/ -- the boundary recorders', the first-boot bundles',
+# reimaged-system/sign-offs/ -- the bookend recorders', the first-boot bundles',
 # the Phase 12 plan-notes'. repo-audit-reports/ is shared with the PRE-image
 # audit, so a sign-off there would be the one post-image answer a reader has to
 # know to look for somewhere else.

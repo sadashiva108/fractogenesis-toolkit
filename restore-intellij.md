@@ -145,7 +145,7 @@ $REIMAGE_ARTIFACT_ROOT/
 └── ...
 ```
 
-Neither category is run-indexed, and that is deliberate. The plan-note is regenerable, so `restore-intellij.sh` replaces it on every run; the sign-off holds the rows you answered and carries them forward, so nothing may replace it. This phase records no boundary, state or comparison run — Phase 12 closes on the plan-note sign-off, which Phase 14 `reimaged-system-checks.md` reads.
+Neither category is run-indexed, and that is deliberate. The plan-note is regenerable, so `restore-intellij.sh` replaces it on every run; the sign-off holds the rows you answered and carries them forward, so nothing may replace it. This phase records no bookend, state or comparison run — Phase 12 closes on the plan-note sign-off, which Phase 14 `reimaged-system-checks.md` reads.
 
 Live IntelliJ paths on the reimaged Mac. These are restore targets, not artifact locations, and nothing under `$REIMAGE_ARTIFACT_ROOT` mirrors them:
 

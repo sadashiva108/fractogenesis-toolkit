@@ -49,7 +49,7 @@ Single source of truth for the phase guides used across the post-image stage (Ph
 | `restore-home.md` | Late, selective home-file restore after the clean rebuild is already validated. |
 | `run-time-machine.md` | Pre-image (Phase 5) and post-image (Phase 16) Time Machine passes. |
 | `references/toolkit-environment-reference.md` | How `$FRACTOGENESIS_HOME`, `reimage.env`, and `.envrc` behave across a clone, a `curl` install, and a jump-drive install, and which mechanism loads them at each stage. |
-| `references/environment-variable-reference.md` | Which runbook owns each `reimage.env` key and when it is written; why most keys are absent from `reimage.env.example`; the write guard, the optional and all-or-nothing shapes, and which boundary recorder checks a key. |
+| `references/environment-variable-reference.md` | Which runbook owns each `reimage.env` key and when it is written; why most keys are absent from `reimage.env.example`; the write guard, the optional and all-or-nothing shapes, and which bookend recorder checks a key. |
 | `reimaging-scripts-guide.md` | Supporting command reference for automation used during restore, post-image capture, and validation. |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -122,7 +122,7 @@ $REIMAGE_ARTIFACT_ROOT/
 │   ├── post-image-performance-audit-<scenario>-YYYYMMDD-HHMMSS/
 │   └── rollup-summary/
 ├── reimaged-system/
-│   ├── boundaries/
+│   ├── bookends/
 │   │   ├── MANIFEST.md
 │   │   ├── official/<runbook>-<point>.txt
 │   │   └── runs/<runbook>-<point>-YYYYMMDD-HHMMSS/
@@ -196,8 +196,8 @@ Two `secrets-encrypted/` subtrees have dedicated restore consumers rather than a
 
 | Phase | Main sources under `$REIMAGE_ARTIFACT_ROOT` | Main outputs under `$REIMAGE_ARTIFACT_ROOT` |
 |---|---|---|
-| Phase 8 — Enroll and Stabilize | none required beyond `reimage.env`; optional mounted artifact root | `reimaged-system/restarts/runs/enroll-and-stabilize-<point>-*/`, `reimaged-system/boundaries/runs/enroll-and-stabilize-{entry,exit}-*/`, `reimaged-system/sign-offs/enroll-and-stabilize-{entry,exit}-*.md` |
-| Phase 9 — Initial Captures and Sanity Checks | prepared external root, optional `reimaged-system/restore-notes/` | `reimaged-system/restarts/` (runs, `official/`, `MANIFEST.md`), `reimaged-system/boundaries/`, `reimaged-system/restore-notes/` |
+| Phase 8 — Enroll and Stabilize | none required beyond `reimage.env`; optional mounted artifact root | `reimaged-system/restarts/runs/enroll-and-stabilize-<point>-*/`, `reimaged-system/bookends/runs/enroll-and-stabilize-{entry,exit}-*/`, `reimaged-system/sign-offs/enroll-and-stabilize-{entry,exit}-*.md` |
+| Phase 9 — Initial Captures and Sanity Checks | prepared external root, optional `reimaged-system/restore-notes/` | `reimaged-system/restarts/` (runs, `official/`, `MANIFEST.md`), `reimaged-system/bookends/`, `reimaged-system/restore-notes/` |
 | Phase 10A — Restore Runtime Libraries | `system-inventory/runs/pre-image-*/`, `system-inventory/runs/post-image-*/`, `home-files-backup/dotfiles/` | usually notes only; later validated under `reimaged-system/`. Also retires the Phase 8 `~/.zprofile` bridge and hands config loading to direnv — see `references/toolkit-environment-reference.md` |
 | Phase 10B — Restore Access | `secrets-encrypted/`, `public-certs/`, `home-files-backup/dotfiles/` | `reimaged-system/restore-notes/`, `reimaged-system/sign-offs/restore-access-exit-*.md` |
 | Phase 11A — Restore Git | `secrets-encrypted/ssh/`, `secrets-encrypted/git/`, `toolkit-snapshot/official/pre-image-toolkit-snapshot.txt` | dual `~/.gitconfig` + `~/.ssh/config` in place; validated end-to-end for work and personal identities |
@@ -229,7 +229,7 @@ These paths are used before deeper restore work begins.
 | Decisions no capture can hold, whole event | `reimaged-system/restore-notes/decisions.md` |
 | Manual early restore notes | `reimaged-system/restore-notes/` |
 | Restart notes or checkpoints | `reimaged-system/restarts/` |
-| Entry and exit boundary records, per runbook | `reimaged-system/boundaries/runs/<runbook>-{entry,exit}-YYYYMMDD-HHMMSS/`, `reimaged-system/boundaries/official/<runbook>-<point>.txt` |
+| Entry and exit bookend records, per runbook | `reimaged-system/bookends/runs/<runbook>-{entry,exit}-YYYYMMDD-HHMMSS/`, `reimaged-system/bookends/official/<runbook>-<point>.txt` |
 | Before, after and delta state captures | `reimaged-system/state/runs/<runbook>-<point>-YYYYMMDD-HHMMSS/`, `reimaged-system/state/official/<runbook>-<point>.txt` |
 | Restored-vs-baseline comparisons | `reimaged-system/comparisons/runs/<runbook>-<what>-diff-YYYYMMDD-HHMMSS/`, `reimaged-system/comparisons/official/<runbook>-<what>-diff.txt` |
 | Post-image capstone checklist | `reimaged-system/checklists/runs/post-image-YYYYMMDD-HHMMSS/reimage-checklist.md`, `reimaged-system/checklists/official/post-image.txt` |

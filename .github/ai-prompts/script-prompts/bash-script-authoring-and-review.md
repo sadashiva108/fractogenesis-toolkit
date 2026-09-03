@@ -163,7 +163,7 @@ Also run `shellcheck` when available, but do not make it an undeclared runtime d
 
 - Preserve existing behavior unless the task explicitly requests a behavior change.
 - Point out bugs separately from formatting inconsistencies.
-- Never copy secret-bearing ignored files merely because they matched an include pattern; preserve the workflow’s later encrypted-secrets handling and review boundaries.
+- Never copy secret-bearing ignored files merely because they matched an include pattern; preserve the workflow’s later encrypted-secrets handling and review bookends.
 - Use dry-run-first behavior for copying/staging operations unless the runbook explicitly says otherwise.
 - Validate that destination paths are beneath the intended artifact root when that is a safety invariant.
 - Refuse to write generated output inside the repo checkout. Resolve external destinations (artifact root, OneDrive root) and confirm the resolved path is not `REPO_ROOT` or a path under it before writing — a copy under the working tree is not a real backup and usually signals an unset or relative root variable. See the OneDrive guard in `backup-home.sh`.

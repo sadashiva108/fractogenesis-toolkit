@@ -59,9 +59,9 @@ with it.
 
 - **The reconnected artifact root** — the external artifact drive brought back online and spot-checked, so Phase 9 and later evidence lands under `reimaged-system/` instead of the Desktop fallback.
 - **Two first-boot evidence bundles** — a pre-restart and a post-restart run under `reimaged-system/restarts/`, each holding `checklist.md`, the companion planning documents, `raw/`, and `logs/`.
-- **An entry and an exit checklist** — under `reimaged-system/boundaries/`, recording what was decided about that evidence rather than what it says.
+- **An entry and an exit bookend** — under `reimaged-system/bookends/`, recording what was decided about that evidence rather than what it says.
 - **The pre/post-restart comparison** — the row-by-row read across the second stabilization restart that names anything which regressed.
-- **The `reimaged-system/` working subfolders** — `boundaries/`, `comparisons/`, `state/`, `restarts/`, `sign-offs/`, `restore-notes/`, and `time-machine/`, written into by later phases. Everything the post-image half produces lands under `reimaged-system/`; unlike the pre-image phases, it adds no new top-level directories to the artifact root.
+- **The `reimaged-system/` working subfolders** — `bookends/`, `comparisons/`, `state/`, `restarts/`, `sign-offs/`, `restore-notes/`, and `time-machine/`, written into by later phases. Everything the post-image half produces lands under `reimaged-system/`; unlike the pre-image phases, it adds no new top-level directories to the artifact root.
 
 **What the rest of the workflow relies on it for**
 
@@ -81,7 +81,7 @@ with it.
 | | the post-image Time Machine backup — `run-time-machine` (Phase 16), after Restore Home |
 | | post-image managed-inventory comparison — `capture-managed-inventory` (Phase 13C) |
 | relocating any Phase 8 record that landed on a fallback path | the managed application set and its Company Portal installs — `enroll-and-stabilize` (Phase 8 Step 4) |
-| the `reimaged-system/` subfolders used by later phases (`boundaries`, `comparisons`, `state`, `restarts`, `sign-offs`, `restore-notes`, `time-machine`) | the final validated sign-off — its `reimage-checklist.sh --phase post` bundle and the resolution of the manual rows this phase only enumerates — `reimaged-system-checks` (Phase 14) |
+| the `reimaged-system/` subfolders used by later phases (`bookends`, `comparisons`, `state`, `restarts`, `sign-offs`, `restore-notes`, `time-machine`) | the final validated sign-off — its `reimage-checklist.sh --phase post` bundle and the resolution of the manual rows this phase only enumerates — `reimaged-system-checks` (Phase 14) |
 
 This runbook can be rerun. Each run of `record-reimaged-system.sh` writes a fresh indexed run and moves that point's `official/` pointer, so a later run does not overwrite the pre-restart bundle you use for comparison — and a rerun of one point never disturbs the other.
 
@@ -178,7 +178,7 @@ discovering the flag after a bundle has gone to the wrong place.
 | Term | Meaning |
 |---|---|
 | First-boot bundle | One indexed run, `restarts/runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/`, produced by `record-reimaged-system.sh`. |
-| Point | The `--context` value, which becomes the run's point and completes its name: `verify-reimaged-system-pre-restart-YYYYMMDD-HHMMSS`. `pre-restart` and `post-restart` for the pair around the restart, `initial` when omitted. `entry` and `exit` select the boundary modes instead of a capture. |
+| Point | The `--context` value, which becomes the run's point and completes its name: `verify-reimaged-system-pre-restart-YYYYMMDD-HHMMSS`. `pre-restart` and `post-restart` for the pair around the restart, `initial` when omitted. `entry` and `exit` select the bookend modes instead of a capture. |
 | Pre-restart bundle | The first-boot bundle written before the second stabilization restart. |
 | Post-restart bundle | The first-boot bundle written after the second stabilization restart; the sign-off bundle. |
 | Second stabilization restart | The Phase 9 restart taken after the pre-restart bundle, distinct from the Phase 8 first stabilization restart. |
@@ -207,7 +207,7 @@ $FRACTOGENESIS_HOME/bin/record-enrollment.sh    # entrypoint — Phase 8 enrollm
 Artifact root:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/reimaged-system/boundaries/    # Steps 0 and 7 — the entry and exit checklists
+$REIMAGE_ARTIFACT_ROOT/reimaged-system/bookends/    # Steps 0 and 7 — the entry and exit bookends
 $REIMAGE_ARTIFACT_ROOT/reimaged-system/comparisons/   # Step 6 — the diff across the pair
 $REIMAGE_ARTIFACT_ROOT/reimaged-system/restarts/      # Steps 2 and 5 — the first-boot bundles either side of the restart
 $REIMAGE_ARTIFACT_ROOT/reimaged-system/sign-offs/     # the rows only a person can answer, kept outside the runs
@@ -231,13 +231,13 @@ A run is named `verify-reimaged-system-<point>-YYYYMMDD-HHMMSS`: the runbook nam
 $REIMAGE_ARTIFACT_ROOT/
 ├── ...
 ├── reimaged-system/
-│   ├── boundaries/
+│   ├── bookends/
 │   │   ├── MANIFEST.md
 │   │   ├── official/
 │   │   │   └── verify-reimaged-system-<point>.txt
 │   │   └── runs/
 │   │       └── verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/
-│   │           └── checklist.md
+│   │           └── bookend.md
 │   ├── ...
 │   ├── comparisons/
 │   │   ├── MANIFEST.md
@@ -373,12 +373,12 @@ anything is captured. The rows are cheap and one of them is not obvious:
 ./bin/record-reimaged-system.sh --context entry
 ```
 
-It writes `checklist.md` under `reimaged-system/boundaries/` with the context
+It writes `bookend.md` under `reimaged-system/bookends/` with the context
 `verify-reimaged-system-entry`, and exits non-zero on any `FAIL`.
 
 The row that matters is **Phase 8 closed out**. It reads Phase 8's exit
 checklist — not Phase 8's evidence — and `FAIL`s when no
-`enroll-and-stabilize-exit` run exists. That is the boundary pair working as
+`enroll-and-stabilize-exit` run exists. That is the bookend pair working as
 designed: this phase does not re-derive whether enrollment finished, it asks
 whether the phase that owned that question signed off on it. A `WARN` there means
 the checklist exists with rows nobody answered, which is worth clearing before
@@ -408,12 +408,12 @@ find "$REIMAGE_ARTIFACT_ROOT/reimaged-system" -maxdepth 2 -type d 2>/dev/null | 
 ```
 
 If Phase 8 landed on either fallback path, its runs are sitting in a `restarts/`
-and a `boundaries/` category there. Copy the run directories across, then rebuild
+and a `bookends/` category there. Copy the run directories across, then rebuild
 the destination index so the relocated runs are known to it:
 
 ```bash
 for TIER in "$REIMAGE_WORKSPACE_ROOT" "$HOME/Desktop/reimaged-system-artifacts"; do
-  for CATEGORY in restarts boundaries; do
+  for CATEGORY in restarts bookends; do
     if [ -d "$TIER/$CATEGORY/runs" ]; then
       mkdir -p "$REIMAGE_ARTIFACT_ROOT/reimaged-system/$CATEGORY/runs"
       cp -Rp "$TIER/$CATEGORY/runs/"enroll-and-stabilize-* \
@@ -429,7 +429,7 @@ pointers:
 
 ```bash
 ./bin/reindex-artifact-runs.sh --category "$REIMAGE_ARTIFACT_ROOT/reimaged-system/restarts"
-./bin/reindex-artifact-runs.sh --category "$REIMAGE_ARTIFACT_ROOT/reimaged-system/boundaries"
+./bin/reindex-artifact-runs.sh --category "$REIMAGE_ARTIFACT_ROOT/reimaged-system/bookends"
 ```
 
 > [!note]
@@ -589,7 +589,7 @@ Each run writes a fresh timestamped bundle, so the pre-restart bundle from Step 
 
 ### Step 6 — Compare the Two Bundles
 
-Compare the checklist rows across the restart:
+Compare the bookend rows across the restart:
 
 ```bash
 ./bin/record-reimaged-system.sh --context diff
@@ -645,7 +645,7 @@ its Step 0; this is the other half of that pair.
 ./bin/record-reimaged-system.sh --context exit
 ```
 
-It writes `checklist.md` under `reimaged-system/boundaries/` with the context
+It writes `bookend.md` under `reimaged-system/bookends/` with the context
 `verify-reimaged-system-exit`, and exits non-zero on any `FAIL`. That file holds
 the **Automated** rows. The rows it cannot answer go to a sign-off under
 `reimaged-system/sign-offs/`, which the run names at the end, because a rerun
