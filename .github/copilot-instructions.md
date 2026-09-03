@@ -51,6 +51,8 @@ Purpose
   - Do not run `git commit`, `git push`, `git add`, or any history-rewriting command. Write the files, report what changed and what you validated, and stop there.
   - Because the owner always commits, the working-tree diff is the review surface. Keep it clean: edit files in place rather than leaving `.bak` copies, timestamped duplicates, `.incoming` staging files, or parallel "new" versions beside the originals.
   - Do not change file modes as a side effect of an edit. When a write drops the executable bit on a `bin/` script, restore it (`chmod 755`) so the diff carries content changes only.
+  - When the owner asks you to write the commit message, keep it **short**: a subject line under about 70 characters, then a body of one or two short paragraphs saying what changed and why. `APPLY-MANIFEST.md` is where the reasoning lives; the message names the revision and points at it rather than restating it. If the first draft runs long, cut it before offering it — the owner should not have to ask twice.
+  - Write the message so it pastes safely. Wrap it for `git commit -m '...'` in **single** quotes and use no single quotes inside it; prefer backticks to double quotes when quoting a name. If the message genuinely needs double quotes, say so as you give it and remind the owner that `git commit` on its own opens an editor and `git commit -F -` reads a paste, both of which avoid shell quoting entirely. A message that breaks the shell gets pasted twice and can land with the terminal's own prompt and error text inside it.
 
 4) Files and docs to read first (AI sessions)
 - README.md

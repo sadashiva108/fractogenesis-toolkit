@@ -1,5 +1,7 @@
 # Apply Manifest
 
+**Revision 176** — supersedes Revision 175 and earlier. A commit message the owner asks for is short, and is written so the shell cannot break it.
+
 **Revision 175** — supersedes Revision 174 and earlier. One session becomes one bundle: two brief bundles are absorbed and removed, the indexes say which kind of bundle they list, and the owner column names the session.
 
 **Revision 174** — supersedes Revision 173 and earlier. A third findings tree for the rules themselves, and the six this session had left owed to them.
@@ -473,6 +475,62 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
 
 ---
+
+## Revision 176 — a commit message that is short, and that pastes
+
+### What happened
+
+Revision 175's commit message was offered long, the owner asked for it shorter,
+and the shorter version contained `"Findings Bundles"` and `"Session Bundles"`.
+Pasted into `git commit -m "..."` the inner double quotes closed the shell string
+early and git read the remainder as pathspecs.
+
+The commit that eventually landed carries the terminal's own prompt and timestamp
+as its subject line — `% git commit -m "docs: one session, one bundle` — with
+git's two `error: pathspec ...` messages embedded above the body. It is already on
+`origin/main`. Nothing about the tree is wrong; the permanent record of that
+change is simply mislabelled, and repairing it needs a force-push past a
+concurrent session.
+
+Two failures, one after the other: a message longer than asked for, and a message
+that could not be pasted. Both are avoidable by rule.
+
+### The rules
+
+`.github/copilot-instructions.md` section 3, under *Version control (applies to
+every AI session)*, gains two bullets:
+
+**Short by default.** A subject under about 70 characters and one or two short
+paragraphs. `APPLY-MANIFEST.md` holds the reasoning; the message names the
+revision and points at it. Cut a long draft before offering it — the owner should
+not have to ask twice.
+
+**Paste-safe by construction.** Wrap for `git commit -m '...'` in single quotes
+with no single quotes inside, and prefer backticks over double quotes when quoting
+a name. If double quotes are genuinely needed, say so while offering the message
+and name the two ways round it: `git commit` alone opens an editor, and
+`git commit -F -` reads a paste. Neither goes through shell quoting.
+
+The second rule is about a failure mode worth naming: a message that breaks the
+shell does not fail cleanly. It gets pasted a second time, and the second attempt
+can carry the first one's error output into the repository, which is exactly what
+happened here.
+
+### Note on ownership and gating
+
+`.github/copilot-instructions.md` is held by the concurrent session and is a
+**toolkit write** under Revision 169's vocabulary, not a record write. It was made
+at the owner's direct instruction, which is not the same as a session deciding on
+its own that a rule needs changing — the `resolving` gate governs work on a
+findings bundle, not an instruction from the owner. Recorded here so the holding
+session sees it.
+
+### Validation
+
+Documentation lint: **774 OK, 0 MISSING, 0 ANCHOR BROKEN**. Runbook structure
+**213 PASS / 5 WARN / 25 FAIL** across 27 documents, unchanged. Script portability
+**81 clean / 0 WARN / 0 FAIL**, unchanged. No script changed. Composed in a copy
+outside the connected folders; header re-read at apply time, 175 was highest.
 
 ## Revision 175 — one session, one bundle
 
