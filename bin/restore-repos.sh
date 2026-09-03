@@ -764,6 +764,15 @@ NEEDS_CLONE_COUNT=0
 IGN_AVAILABLE_COUNT=0
 IGN_APPLIED_COUNT=0
 CARRY_FORWARD_TOTAL=0
+# Carry-forward split by whether this run is restoring the repository, and by
+# kind. The lump sum answers no question a person can act on: an unpushed commit
+# needs a rescue branch, an uncommitted tracked change was never going to have
+# one, and neither matters at all for a repository the plan excluded.
+CARRY_FORWARD_PLANNED=0
+CARRY_FORWARD_COMMITS=0
+CARRY_FORWARD_STASHES=0
+CARRY_FORWARD_TRACKED=0
+CARRY_FORWARD_PLANNED_REPOS=0
 
 # ---------------------------------------------------------------------------
 # Duplicate-basename guard
@@ -969,6 +978,14 @@ do
 
   if [[ -n "$REMOTE_NAME_REVIEW" ]]; then
     ROUTE_REVIEW="${ROUTE_REVIEW:+$ROUTE_REVIEW; }$REMOTE_NAME_REVIEW"
+  fi
+
+  if [[ "$plan_state" == "planned" && "$(numeric_or_zero "$CARRY_FORWARD_ROWS")" -gt 0 ]]; then
+    CARRY_FORWARD_PLANNED=$((CARRY_FORWARD_PLANNED + CARRY_FORWARD_ROWS))
+    CARRY_FORWARD_PLANNED_REPOS=$((CARRY_FORWARD_PLANNED_REPOS + 1))
+    CARRY_FORWARD_COMMITS=$((CARRY_FORWARD_COMMITS + $(numeric_or_zero "$local_commit_count")))
+    CARRY_FORWARD_STASHES=$((CARRY_FORWARD_STASHES + $(numeric_or_zero "$stash_count")))
+    CARRY_FORWARD_TRACKED=$((CARRY_FORWARD_TRACKED + $(numeric_or_zero "$tracked_change_count")))
   fi
 
   hydrate_url="$clone_url"
@@ -1421,7 +1438,7 @@ elif [[ "$DRY_RUN" != true ]]; then
 fi
 
 if [[ "$DRY_RUN" != true ]]; then
-signoff_row "Rescue branches (\`reimage/YYYYMMDD/*\`) present on remote for every carry-forward row" "The pre-image audit recorded $CARRY_FORWARD_TOTAL carry-forward rows across $TOTAL repos; each must map to a pushed rescue branch or be intentionally discarded. Verify with \`git ls-remote origin 'reimage/*'\` per repo."
+signoff_row "Rescue branches (\`reimage/YYYYMMDD/*\`) present on remote for every carry-forward row this run restores" "$CARRY_FORWARD_PLANNED carry-forward row(s) across $CARRY_FORWARD_PLANNED_REPOS of the $PLANNED_COUNT repositories this plan restores: $CARRY_FORWARD_COMMITS local-only commit(s), $CARRY_FORWARD_STASHES stash(es), $CARRY_FORWARD_TRACKED uncommitted tracked change(s). Only the commits and stashes can be on a rescue branch; verify those with \`git ls-remote origin 'reimage/*'\` in each clone. Tracked changes were uncommitted at capture, so a rescue branch carries them only if Phase 2A committed them into one — where it did not, they are gone and this row records that as a decision. The audit recorded $CARRY_FORWARD_TOTAL rows across all $TOTAL repositories; the difference belongs to repositories the plan excludes or has not reviewed, and exclusion with a reason is already the decision for those."
 signoff_row "Every clone sits under the root matching its SSH routing host" "Fill after cloning. The root decides identity through \`includeIf\`, so a repository under the wrong one commits with the wrong address and offers the wrong key. Verify with \`git -C <repo> remote get-url origin\` against the root it sits in, and against the routing hosts \`restore-git\` wrote into \`~/.ssh/config\`. Transport is a separate question and not this row's: this run restores the transport the pre-image audit recorded, and a URL is rewritten onto \`GIT_PERSONAL_GITHUB_HOST\` only when that routing host is an alias — a name other than \`github.com\` — and the URL is already \`git@github.com:\`."
 fi
 # ---------------------------------------------------------------------------

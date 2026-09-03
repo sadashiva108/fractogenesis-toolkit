@@ -1,5 +1,7 @@
 # Apply Manifest
 
+**Revision 154** — supersedes Revision 153 and earlier. The carry-forward sign-off row stops asking about repositories the plan excludes, and says which of its rows a rescue branch could carry.
+
 **Revision 153** — supersedes Revision 152 and earlier. The status report stops restating the sign-off's rows and names where they actually live.
 
 **Revision 152** — supersedes Revision 151 and earlier. Step 1 quotes the summary the script prints now, and names both files the run writes.
@@ -427,6 +429,69 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `scan-archive-contents.sh` | `.internal/home/scan-archive-contents.sh` |
 | `scan-postman-collections.py` | `.internal/home/scan-postman-collections.py` |
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
+
+---
+
+## Revision 154 — the carry-forward row asks about repositories this run restores
+
+The Phase 11B sign-off's first row read: *the pre-image audit recorded 315
+carry-forward rows across 27 repos; each must map to a pushed rescue branch or
+be intentionally discarded.* Both halves of that were wrong for the plan in
+front of it.
+
+**It counted repositories the plan excludes.** Of 315 rows, 195 belong to one
+selected repository, 79 to repositories excluded with a reason, and 40 to two
+that are still unreviewed. The row asked a person to account for all of them.
+For an excluded repository the accounting is already done — `repo_plan_exclude`
+with a REASON *is* the intentional discard, recorded in a file that survives the
+run. Asking again in a sign-off makes the same decision twice and leaves the
+second copy `TODO` forever.
+
+**It called all 315 rows the same thing.** They are three kinds, and only two of
+them can be on a rescue branch. A local-only commit can; a stash can; an
+uncommitted change to a tracked file could not have been pushed anywhere, and
+survives only if Phase 2A committed it into the rescue branch on the way past.
+On the pinned audit the split is 3 commits, 1 stash, and 311 tracked changes —
+so `git ls-remote origin 'reimage/*'`, the verification the row named, was the
+right check for four rows out of 315.
+
+The row now scopes to what the plan restores and states the composition. Against
+the current plan it reads: *195 carry-forward row(s) across 1 of the 6
+repositories this plan restores: 0 local-only commit(s), 0 stash(es), 195
+uncommitted tracked change(s)* — which tells the operator immediately that
+`ls-remote` will find nothing, because there is nothing of that kind to find.
+
+It still reports the full 315 across all 27 in its last sentence, and says where
+the difference went. Dropping the number entirely would hide that the audit saw
+more than the plan acts on.
+
+The report's Summary keeps the unscoped total. That table is the state capture —
+what the audit recorded, measured against the machine — and narrowing it would
+make the report disagree with the audit it cites. Scoping belongs to the sign-off,
+because scoping is what the plan does and the sign-off is where a person answers.
+
+### Not changed: the sign-off header says `Plan`
+
+`signoff_finalize` labels its second argument `Plan`, and every caller passes its
+own evidence file — so Phase 11B's sign-off header reads
+`Plan: .../restore-status.md`. That is the report, not a plan, and now that this
+phase has a real clone plan in `$REIMAGE_WORKSPACE_ROOT/repo-plan/` the word
+points at the wrong one of two things. It is what sent a reader from the sign-off
+to `restore-status.md` looking for a row that is not there.
+
+`.internal/sign-offs.sh` is shared by six phases and the label appears in every
+sign-off already written, so renaming it is a workflow-level naming decision
+rather than a fix, and it is not made here.
+
+### Validation
+
+Exercised end to end against a **scratch artifact root** holding a copy of the
+pinned audit, with a real (non-dry) run: the sign-off carries the rescoped row
+with the split above. `bash -n` clean. `verify-script-portability.sh` 81 clean /
+0 WARN / 0 FAIL, `verify-runbook-structure.sh` 213 PASS / 5 WARN / 25 FAIL,
+`verify-doc-paths.sh --all` 759 OK / 0 MISSING / 0 ANCHOR BROKEN — unchanged.
+
+**Ran on Linux with Bash 5.x.**
 
 ---
 
