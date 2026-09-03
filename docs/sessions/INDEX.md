@@ -16,6 +16,19 @@ the state and the counts and points at both rather than restating them.
 
 ---
 
+## State key
+
+| | |
+|---|---|
+| `unclaimed` | No AI session owns it. The prompt is written and waiting. |
+| `owned` | An AI session owns it — `Claude` or `Copilot`, with when ownership began. `metadata.md` carries the identifier and the environment it ran in. |
+| `handoff` | The work is passing between sessions. Covers the bundle being handed over **and** a continuation prepared by a running session, until it is owned. Each handover leaves its own `handoff-<stamp>.md`. |
+| `closed` | Complete. `final-summary.md` lists every commit hash and revision the session contributed. |
+| `withdrawn` | The owner pivoted, or chose to leave findings unresolved. `final-summary.md` is required here too, and records what the work reached and why it stopped. |
+
+Full definitions, the transitions and what each state requires:
+[`docs/legend.md`](../legend.md).
+
 ## Bundles
 
 | Bundle | State | Owner and when | Findings | Notes |
