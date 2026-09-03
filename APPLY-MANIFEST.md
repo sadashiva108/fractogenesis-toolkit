@@ -1,5 +1,7 @@
 # Apply Manifest
 
+**Revision 171** — supersedes Revision 170 and earlier. What a shared working tree costs is read and parked as finding 0028, and the entry that records it is the first composed outside the tree it lands in.
+
 **Revision 170** — supersedes Revision 169 and earlier. The seven findings of two closed session bundles merge into the still-running session that recorded them, and that session gets a prompt written forward rather than backward.
 
 **Revision 169** — supersedes Revision 168 and earlier. Finding 1 of bundle `0001` is fully decided, and the three kinds of write get names.
@@ -463,6 +465,75 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
 
 ---
+
+## Revision 171 — the shared working tree gets read, and this entry is composed outside it
+
+### Finding 0028
+
+`docs/cross-cutting-findings/0028-sessions-write-into-the-tree-the-owner-commits-from/`,
+`unresolved`, **unowned** — recorded at the owner's request with no ownership
+attached, as `0027` was.
+
+Six findings, every one evidenced from 2026-09-03 rather than argued. Two are
+high. Finding 1: both sessions edited `APPLY-MANIFEST.md` and
+`docs/sessions/INDEX.md` in one sitting, so neither session's work could be
+committed alone — `git add <path>` takes the whole file, and the commit that
+resulted attributes two sessions' work to one. Finding 2: a revision's validation
+block is measured on a tree that also holds the other session's uncommitted work,
+so the numbers are true of the tree and not attributable to the revision claiming
+them. Findings 3 through 6 cover the missing review boundary, the cost of backing
+out one session's change, this session amending a revision the owner had already
+committed, and the gap between naming the write kinds and saying where a write is
+composed.
+
+### What it does not claim
+
+The revision-number collision is **not** a finding here. It is already recorded in
+`docs/ideas/knowing-when-it-is-safe-to-write.md` with three candidate shapes, and
+giving it a second home would be the duplication this repository avoids. The
+bundle cites it and says the two should be resolved together.
+
+Finding 2 does not restate `0026` either. That bundle made the same argument on
+2026-09-01 — *"the honest response, 'the count moved and I did not cause it', is
+indistinguishable from not having looked"* — about a different cause: the
+scanner's scope, closed by Revision 130 by pruning `docs/`. Pruning a directory
+does not reach an attribution problem, because the concurrent session edits
+`.github/`, `bin/` and `docs/legend.md` too. `0026` is `resolved` and cannot carry
+this; its still-undecided option (iii) is flagged as something to decide alongside
+this bundle. All 27 existing bundles were checked for overlap; those two are the
+only ones, and both are cited rather than repeated.
+
+The artifact volume is scoped out. A session has no write permission to it by
+default and the owner grants it one session at a time, so evidence writes are
+already serialised — by permission, per run. Recorded in finding 6 as the shape
+tracked files lack.
+
+### Composed outside the tree, which is the finding taking its own advice
+
+Everything above was written in a copy of the repository outside the connected
+folders, validated there, and applied here only on the owner's word. The measured
+cost is in the bundle: the three validators self-locate from `BASH_SOURCE` and
+none invokes git, so a plain copy validates identically — 5.8M and 0.15s without
+`.git`, 22M and 0.54s with it, and with `.git` the copy yields a patch that
+`git apply --check` accepted against this repository with the working tree left
+untouched.
+
+This entry's number was taken from the header at apply time rather than at write
+time, which is the second shape in
+`docs/ideas/knowing-when-it-is-safe-to-write.md`. No collision was possible,
+because no number was held while the other session could take it.
+
+### Validation
+
+Run in the scratch copy, against this change alone and nothing else — which is the
+first validation block in this manifest that can honestly say so. Documentation
+lint: **774 OK, 121 WARN, 0 MISSING, 0 ANCHOR BROKEN**. Runbook structure **213
+PASS / 5 WARN / 25 FAIL** across 27 documents, unchanged. Script portability **81
+clean / 0 WARN / 0 FAIL**, unchanged. No script changed; every write is a record
+write under `docs/`. Linux VM, Bash 5.1.
+
+**`/bin/bash -n` against real macOS Bash 3.2 remains owed for Revisions 116–171.**
+No scratch arrangement reaches it.
 
 ## Revision 170 — seven findings follow the session that can still act
 
