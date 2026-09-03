@@ -29,6 +29,32 @@ how far that reading has been taken, never how anyone feels about it.
                                      │
                                      └─▶ superseded (from any status)
 
+    └── any session may write ──┘└────── the owner only ──────────┘
+
+## Who may write to a findings bundle
+
+**While a bundle is `unresolved`, any session may contribute to it** — add a
+finding, add detail to one, correct one, or remove one that does not hold. A
+reading is not diminished by a second reader, and a session that spots something
+while working elsewhere should be able to put it where it belongs rather than
+open a near-duplicate bundle beside it.
+
+**From `in progress` onward, only the owner writes to the bundle.** Deciding is
+where a second hand does damage: a finding altered after a decision was taken
+against it leaves the decision standing on something that has changed, and
+`decisions.md` records reasoning against findings as they were read.
+
+Two consequences worth stating:
+
+- **Recording a bundle and owning one are different acts.** A session may record
+  a bundle it will never own; the owner assigns ownership, and an unowned bundle
+  sits at `unresolved` with `—` in its index Session column. Contribution does
+  not create ownership and never has.
+- **Moving a bundle to `in progress` closes it to everyone else.** That is a real
+  cost and the reason not to move it early: an owner who takes a bundle in
+  progress on day one gets exclusivity and loses every other session's eyes on
+  the reading.
+
 **A bundle advances when its first finding advances, and reaches `resolved` only
 when its last one does.** `findings.md` carries a per-finding status table: one
 row moving to `in progress` moves the bundle, because work has started and a

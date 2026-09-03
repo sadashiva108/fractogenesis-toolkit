@@ -20,7 +20,7 @@ the state and the counts and points at both rather than restating them.
 
 | Bundle | State | Owner and when | Findings | Notes |
 |---|---|---|---|---|
-| [`restore-apps-outstanding-20260903-000000`](restore-apps-outstanding-20260903-000000/) | `owned` | Claude, 2026-09-03 | [1](restore-apps-outstanding-20260903-000000/findings-manifest.md) | Eight parked items from Revisions 143–155, then `restore-apps.md`. Produced finding `0001`; Revisions 160–166, 168–169 |
+| [`restore-apps-outstanding-20260903-000000`](restore-apps-outstanding-20260903-000000/) | `owned` | Claude, 2026-09-03 | [3](restore-apps-outstanding-20260903-000000/findings-manifest.md) | Eight parked items from Revisions 143–155, then `restore-apps.md`. Produced finding `0001`; assigned `0027` and `0028` on 2026-09-03. Revisions 160–166, 168–169, 172 |
 | [`phase-11b-hydrate-and-bookends-20260903-141500`](phase-11b-hydrate-and-bookends-20260903-141500/) | `owned` | Claude, 2026-09-02 | [7](phase-11b-hydrate-and-bookends-20260903-141500/findings-manifest.md) | Revisions 147–159 and 167. Same session as the two `restore-repos-*` bundles, whose seven findings merged here 2026-09-03 |
 | [`run-index-design-20260901-000000`](run-index-design-20260901-000000/) | `handoff` | last owned 2026-09-02 | [14](run-index-design-20260901-000000/findings-manifest.md) | Items 1–3 done, **resume at item 4**. Two handoffs; the later one is where to start |
 | [`restore-repos-refactor-20260902-000000`](restore-repos-refactor-20260902-000000/) | `closed` | — | — | Revision 131. Carries the Phase 11B plan it executed. Its six findings merged into `phase-11b-hydrate-and-bookends-20260903-141500` |

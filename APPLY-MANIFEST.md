@@ -1,5 +1,7 @@
 # Apply Manifest
 
+**Revision 172** — supersedes Revision 171 and earlier. An unresolved bundle is open to every session and a bundle in progress is closed to all but its owner; `0027` and `0028` get an owner.
+
 **Revision 171** — supersedes Revision 170 and earlier. What a shared working tree costs is read and parked as finding 0028, and the entry that records it is the first composed outside the tree it lands in.
 
 **Revision 170** — supersedes Revision 169 and earlier. The seven findings of two closed session bundles merge into the still-running session that recorded them, and that session gets a prompt written forward rather than backward.
@@ -465,6 +467,66 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
 
 ---
+
+## Revision 172 — an unresolved bundle is everyone's, a bundle in progress is its owner's
+
+### The rule
+
+**While a bundle is `unresolved`, any session may contribute to it** — add a
+finding, add detail, correct one, remove one that does not hold. **From
+`in progress` onward, only the owner writes to it.**
+
+Owner, 2026-09-03. It settles a question the tree had already answered in
+practice and the rules had not: `session_019yzcjm2QneJ5ymVEQDi1bu` recorded `0027`
+and `0028` while owning neither, and corrected two instances inside `0027` in
+Revision 167 — legitimate under this rule, and unaddressed by anything written
+before it.
+
+The line falls where a second hand starts doing damage. A reading is not
+diminished by a second reader, and a session that spots something while working
+elsewhere should put it where it belongs rather than open a near-duplicate bundle
+beside it. Deciding is different: `decisions.md` records reasoning against
+findings *as they were read*, so a finding altered after a decision was taken
+against it leaves that decision standing on something that has moved.
+
+Two consequences are recorded with it in `docs/legend.md`. **Recording a bundle
+and owning one are different acts** — that distinction existed only in one
+session's `findings-manifest.md` prose until now, which is the drift this
+architecture exists to prevent, arriving on day two. And **moving a bundle to
+`in progress` closes it to everyone else**, which is a reason not to move one
+early: exclusivity is bought by giving up every other session's eyes on the
+reading.
+
+### `0027` and `0028` get an owner
+
+Both were recorded by `phase-11b-hydrate-and-bookends-20260903-141500`, which was
+told not to address them, and both sat at `—` in their Session column. The owner
+assigned them to `restore-apps-outstanding-20260903-000000` on 2026-09-03, which
+now holds three bundles: `0001` at `in progress`, these two at `unresolved`.
+
+Recorded in the assignee's `findings-manifest.md`, which is authoritative, with
+both index rows pointing back.
+
+**Five of `0027`'s seven findings are defects in this session's own work** —
+finding 1 is the §4b/§4c contradiction Revision 164 created, and 3, 4, 5 and 7
+follow from the Revision 162 migration and the Revision 165 metadata. That is
+written into the manifest rather than left for a later reader to notice, because
+whoever weighs those decisions should know the deciding session is not neutral
+about them.
+
+### Validation, and this time it is attributable
+
+**774 OK / 0 MISSING / 0 ANCHOR BROKEN**; runbook structure **213 PASS / 5 WARN /
+25 FAIL** across 27 documents; script portability **81 clean / 0 WARN / 0 FAIL**.
+No script changed.
+
+`git status` was empty before the first write of this revision and no other
+session held work in the tree, so these numbers belong to this revision alone —
+which `0028` finding 2 says of no revision written today. It is a property of the
+sitting rather than of the arrangement, and does not close that finding.
+
+Linux, Bash 5.x. `/bin/bash -n` against real macOS Bash 3.2 remains owed for
+Revisions 116 through 172.
 
 ## Revision 171 — the shared working tree gets read, and this entry is composed outside it
 
