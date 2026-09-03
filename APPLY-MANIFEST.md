@@ -1,5 +1,7 @@
 # Apply Manifest
 
+**Revision 151** — supersedes Revision 150 and earlier. Two keys a real `reimage.env` sets were not named anywhere in the example; both are now.
+
 **Revision 150** — supersedes Revision 149 and earlier. Three clone-plan fields that were stored and never read now do what they say, a clone stops keeping the fork and throwing the org away, and the field whose name did not say which machine it meant is renamed.
 
 **Revision 149** — supersedes Revision 148 and earlier. The two references that draw `reimaged-system/` agree with each other and with the drive.
@@ -421,6 +423,43 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `scan-archive-contents.sh` | `.internal/home/scan-archive-contents.sh` |
 | `scan-postman-collections.py` | `.internal/home/scan-postman-collections.py` |
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
+
+---
+
+## Revision 151 — every key a real `reimage.env` sets is named in the example
+
+Revision 150 added `PRE_IMAGE_PROJECTS_ROOT` to `reimage.env.example`'s list of
+keys another runbook records. Checking that list against an actual filled-in
+`reimage.env` — rather than against itself — found a second key missing.
+
+`GIT_PERSONAL_GITHUB_HOSTNAME` has been written by `restore-git.md` Step 0c
+since Revision 136 and was never listed. It is the one key of that step that a
+reader is most likely to go looking for, because blank is its normal value: the
+question it answers is *do my two identities live on the same server*, and a
+reader who cannot find it in the example has no way to tell whether blank means
+*not applicable* or *nobody has filled this in yet*.
+
+Both keys now carry the note they need. The hostname stands outside its step's
+all-or-nothing personal group — blank means `HostName` inherits the `Host`
+value. `PRE_IMAGE_PROJECTS_ROOT` is a path on the machine **before** the reimage
+and will not exist on the restored one, which is worth saying in a file that is
+otherwise entirely paths on this Mac.
+
+Neither is added as a live key, and that is the file's own rule rather than a
+judgement call: `reimage.env.example` carries only what `prepare-artifact-root.md`
+establishes, because a blank several phases before the runbook that owns it reads
+as *fill me in now*. The list is how the other keys are documented; the list was
+what had the hole.
+
+### Validation
+
+Checked by enumerating every `export` in a real `reimage.env` and confirming each
+resolves to a line in the example: complete, where before it was missing one.
+`bash -n reimage.env.example` clean. `verify-script-portability.sh` 81 clean /
+0 WARN / 0 FAIL, `verify-runbook-structure.sh` 213 PASS / 5 WARN / 25 FAIL,
+`verify-doc-paths.sh --all` 759 OK / 0 MISSING / 0 ANCHOR BROKEN — all unchanged.
+
+**Ran on Linux with Bash 5.x.**
 
 ---
 
