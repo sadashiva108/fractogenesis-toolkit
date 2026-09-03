@@ -98,12 +98,11 @@ fi
 # row as informative as one written at the time, rather than a bare em dash.
 result_for() {
   local dir="$1" p w f rows=""
-  # Two filenames, because two categories write this shape. Bookend runs write
-  # bookend.md; restart runs still write checklist.md, and will until their
-  # human-answered rows move to sign-offs/ the way Revision 116 moved the
-  # bookends'. Reading only one name would report every run of the other
-  # category as `—` without failing, which is the quietest way to lose a count.
-  for rows in "$dir/bookend.md" "$dir/checklist.md"; do
+  # Two filenames, because two categories write this shape: bookend runs write
+  # bookend.md, restart runs write record.md. Reading only one name would report
+  # every run of the other category as `—` without failing, which is the
+  # quietest way to lose a count.
+  for rows in "$dir/bookend.md" "$dir/record.md"; do
     [[ -f "$rows" ]] && break
     rows=""
   done

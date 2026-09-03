@@ -14,7 +14,7 @@
 # thing in the artifact that cannot be recomputed, and the run directory is the
 # one place guaranteed to be replaced. `verify-reimaged-system.md` states the
 # consequence plainly: "a rerun does not update the file you answered -- it
-# produces a new checklist.md with every Manual row back at TODO". Extracting
+# produces a new record.md with every Manual row back at TODO". Extracting
 # the rows into `reimaged-system/sign-offs/` is what makes rerunning a capture
 # safe, which is the same reason `bookends/` keeps entry and exit apart.
 #

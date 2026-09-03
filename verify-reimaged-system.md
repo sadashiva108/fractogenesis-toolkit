@@ -58,7 +58,7 @@ with it.
 **What it sets up**
 
 - **The reconnected artifact root** — the external artifact drive brought back online and spot-checked, so Phase 9 and later evidence lands under `reimaged-system/` instead of the Desktop fallback.
-- **Two first-boot evidence bundles** — a pre-restart and a post-restart run under `reimaged-system/restarts/`, each holding `checklist.md`, the companion planning documents, `raw/`, and `logs/`.
+- **Two first-boot evidence bundles** — a pre-restart and a post-restart run under `reimaged-system/restarts/`, each holding `record.md`, the companion planning documents, `raw/`, and `logs/`.
 - **An entry and an exit bookend** — under `reimaged-system/bookends/`, recording what was decided about that evidence rather than what it says.
 - **The pre/post-restart comparison** — the row-by-row read across the second stabilization restart that names anything which regressed.
 - **The `reimaged-system/` working subfolders** — `bookends/`, `comparisons/`, `state/`, `restarts/`, `sign-offs/`, `restore-notes/`, and `time-machine/`, written into by later phases. Everything the post-image half produces lands under `reimaged-system/`; unlike the pre-image phases, it adds no new top-level directories to the artifact root.
@@ -100,7 +100,7 @@ The preferred path is script-first: run the script before the restart, do the hu
 Each `record-reimaged-system.sh` run writes one timestamped bundle containing:
 
 ```text
-checklist.md               automated rows with PASS/WARN; manual rows live in sign-offs/
+record.md               automated rows with PASS/WARN; manual rows live in sign-offs/
 README.md                          bundle summary and reading order
 restart-checkpoints.md             planned restart points across restore phases
 time-machine-plan.md               notes for the Phase 16 backup; nothing runs here
@@ -132,7 +132,7 @@ The script asserts fixed verdicts on what a command can prove; the rest stays a 
 | Row group | What the script does | What you do |
 |---|---|---|
 | Automated | Records the raw command output and stamps `PASS` / `WARN` / `TODO` on 14 rows. | Read the raw file for context on any `WARN`. |
-| Manual | Nothing. The row is left as `TODO` in `checklist.md` and enumerated in `manual-captures-required.md`. | Sign the row after the UI, peripheral, or restart observation. |
+| Manual | Nothing. The row is left as `TODO` in `record.md` and enumerated in `manual-captures-required.md`. | Sign the row after the UI, peripheral, or restart observation. |
 
 `WARN` is not the same as `FAIL`: it means the command ran and the recorded output did not obviously match the expected pattern. `TODO` on an automated row means the check was skipped (for example, no `--artifact-root` was in scope) or its precondition was not met.
 
@@ -150,7 +150,7 @@ the record — each run writes a fresh timestamped bundle, and Step 6 compares
 the two most recent.
 
 **Answer the manual rows against the post-restart bundle.** They live in the
-sign-off under `reimaged-system/sign-offs/`, not in `checklist.md`, and a rerun
+sign-off under `reimaged-system/sign-offs/`, not in `record.md`, and a rerun
 copies your answers forward rather than resetting them. Step 5 produces the
 sign-off bundle and Step 8 is where its rows get answered. *Second
 stabilization restart completed* in particular cannot honestly be answered in
@@ -182,7 +182,7 @@ discovering the flag after a bundle has gone to the wrong place.
 | Pre-restart bundle | The first-boot bundle written before the second stabilization restart. |
 | Post-restart bundle | The first-boot bundle written after the second stabilization restart; the sign-off bundle. |
 | Second stabilization restart | The Phase 9 restart taken after the pre-restart bundle, distinct from the Phase 8 first stabilization restart. |
-| Companion documents | The four Markdown files (`restart-checkpoints.md`, `time-machine-plan.md`, `manual-captures-required.md`, `README.md`) written alongside `checklist.md` in each bundle. |
+| Companion documents | The four Markdown files (`restart-checkpoints.md`, `time-machine-plan.md`, `manual-captures-required.md`, `README.md`) written alongside `record.md` in each bundle. |
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -254,7 +254,7 @@ $REIMAGE_ARTIFACT_ROOT/
 │   │   └── runs/
 │   │       └── verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/
 │   │           ├── README.md
-│   │           ├── checklist.md
+│   │           ├── record.md
 │   │           ├── checks/
 │   │           ├── logs/
 │   │           │   ├── commands.log
@@ -488,7 +488,7 @@ Run it, labelling it as the pre-restart bundle. With no `--output-root`, the scr
 > `post-reimage-*`, and the `pre-image-*` repo-audit runs.
 > `bin/reimage-checklist.sh` resolves this run through the index rather than a glob, with a leading
 > wildcard, so labelled and unlabelled bundles are both found. The label is
-> also written inside `checklist.md`, so a bundle stays self-describing even if
+> also written inside `record.md`, so a bundle stays self-describing even if
 > it is later moved or renamed.
 
 
@@ -504,7 +504,7 @@ If Step 1 could not bring the artifact root online (network-only workspace, VPN 
 ./bin/record-reimaged-system.sh --context pre-restart --output-root ~/Desktop/reimaged-system-artifacts/first-boot
 ```
 
-The script emits `checklist.md` with automated rows prefilled, three companion planning documents, a `raw/` directory of read-only command captures, and a `logs/` directory. It indexes the run and moves `official/verify-reimaged-system-post-restart.txt` to it.
+The script emits `record.md` with automated rows prefilled, three companion planning documents, a `raw/` directory of read-only command captures, and a `logs/` directory. It indexes the run and moves `official/verify-reimaged-system-post-restart.txt` to it.
 
 > [!warning] Pitfall
 > Do not answer the manual rows yet. The restart rows cannot be answered
@@ -589,7 +589,7 @@ Each run writes a fresh timestamped bundle, so the pre-restart bundle from Step 
 
 ### Step 6 — Compare the Two Bundles
 
-Compare the bookend rows across the restart:
+Compare the recorded rows across the restart:
 
 ```bash
 ./bin/record-reimaged-system.sh --context diff
@@ -619,7 +619,7 @@ like `yes, with exception` reads as good rather than as a change of state — so
 row you answered by hand does not surface as a regression.
 
 > [!note]
-> A raw `diff -u` of the two `checklist.md` files still works and is sometimes
+> A raw `diff -u` of the two `record.md` files still works and is sometimes
 > what you want, but it interleaves reordered rows, evidence paths and timestamps
 > with the handful of verdicts that actually moved. That is why this step is a
 > comparison rather than a diff.
@@ -684,7 +684,7 @@ you remember doing.
 
 > [!warning] Pitfall
 > Each run writes its own dated directory, so a rerun does not update the file you
-> answered — it produces a new `checklist.md` with every Manual row back at
+> answered — it produces a new `record.md` with every Manual row back at
 > `TODO`. Answer them in the last run you intend to keep.
 
 The exit criteria for this phase, and where each is settled:
@@ -768,14 +768,14 @@ Longer material most runs will not need, kept out of the main flow.
 
 ### Companion Documents in the Bundle
 
-Each `record-reimaged-system.sh` run emits four planning documents alongside `checklist.md`. They are seeded from templates in the script and are safe to edit inside the bundle — they are per-run notes, not global toolkit files.
+Each `record-reimaged-system.sh` run emits four planning documents alongside `record.md`. They are seeded from templates in the script and are safe to edit inside the bundle — they are per-run notes, not global toolkit files.
 
 | File | What it is for |
 |---|---|
 | `README.md` | Bundle summary and reading order for someone opening the bundle cold. |
 | `restart-checkpoints.md` | Suggested restart checkpoints across the remaining restore phases, not just this one. Update the `TODO` rows as you take each restart. |
 | `time-machine-plan.md` | Forward-looking notes for the Phase 16 backup: the exclusion gate (resolved artifact volume, `tmutil isexcluded` verification, and refusal to start a backup unless it reports `[Excluded]`) and the anti-patterns to avoid (OneDrive sync in flight, Docker restore in flight). Nothing in it runs during Phase 9. |
-| `manual-captures-required.md` | Enumeration of the manual rows in `checklist.md` with a one-line reason each cannot be scripted. |
+| `manual-captures-required.md` | Enumeration of the manual rows in `record.md` with a one-line reason each cannot be scripted. |
 
 ### Manual Review Focus
 

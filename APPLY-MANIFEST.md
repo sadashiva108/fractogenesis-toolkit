@@ -1,5 +1,7 @@
 # Apply Manifest
 
+**Revision 157** — supersedes Revision 156 and earlier. The restart capture's record becomes `record.md`, and the fourteen places Revision 156 called one a bookend are corrected.
+
 **Revision 156** — supersedes Revision 155 and earlier. `reimaged-system/boundaries/` becomes `bookends/`, its record becomes `bookend.md`, and the concept renames with them.
 
 **Revision 155** — supersedes Revision 154 and earlier. The toolkit repoint has one copy of its commands, and three citations of a renumbered Phase 8 step are corrected.
@@ -433,6 +435,115 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `scan-archive-contents.sh` | `.internal/home/scan-archive-contents.sh` |
 | `scan-postman-collections.py` | `.internal/home/scan-postman-collections.py` |
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
+
+---
+
+## Revision 157 — the restart capture gets its own noun, and Revision 156's over-reach is reversed
+
+Revision 156 renamed `boundaries/` to `bookends/` and its record to `bookend.md`.
+It also swapped the word `checklist` for `bookend` in fourteen places that had
+nothing to do with a bookend, and one of them was flatly wrong. This is both
+halves: the rename Revision 156 left undone, and the damage it did on the way.
+
+### Three nouns, and which is which
+
+| | Is | Name |
+|---|---|---|
+| A phase's entry and exit pair | two records, one at each end | `bookends/` · `bookend.md` |
+| One run of a first-boot observation | a bundle: a record, three planning documents, `raw/`, `logs/` | a **capture** |
+| The rows inside one capture | one file | `record.md` |
+
+`initial`, `pre-restart` and `post-restart` are three points inside one restart,
+not a pair around a phase. Calling that a bookend is the mistake Revision 156
+made, and it is why `restarts/` is a separate category in the first place.
+
+### `record.md` is not a new name
+
+`restarts/` already held nine `enroll-and-stabilize-*` runs written as
+`record.md` + `rows.tsv` by `record-enrollment.sh`, which calls it *the rendered
+record* in its own header. Alongside them sat six `verify-reimaged-system-*` runs
+holding `checklist.md`. **Two names for one shape, in one category, on the same
+disk.** Every producer in the family is `record-*.sh`. This finishes a convention
+rather than inventing one; after it, `restarts/runs/` holds fifteen `record.md`
+and nothing else of that kind.
+
+### The fourteen, reversed
+
+Nine were the script's own template text for the restart record — the H1 it
+emits (`# Reimaged System Initial Bookend`), its Artifact Policy row, its manual
+section heading, and the line it prints on completion (`Open bookend:` pointing
+at `$CHECKLIST`). Four more described the restart comparison: *how their bookend
+rows changed across the restart*, *a raw `diff -u` of two bookends*. One was in
+`verify-reimaged-system.md` Step 6, which compares two captures.
+
+**And one was simply wrong.** `record-reimaged-system.sh:695` read *later phases
+(Phase 14's checklist, …)* and Revision 156 made it *Phase 14's bookend*. Phase
+14 is `reimaged-system-checks.md` and its output is `reimage-checklist.md` — the
+capstone. The substitution shielded the *filename* but not the word standing
+alone, so it broke the one distinction the rename existed to protect. Restored.
+
+Three needed a ruling rather than a reversal:
+
+- `:85` — *so the checklist can complete on a bare Mac*, two lines under the path
+  it lands at. That is the whole bundle, not one file in it: **capture**.
+- `:112` — *Aggregate validator/checklist strict mode*, a comment on the `set`
+  flags and true of both modes. The second noun is dropped rather than replaced.
+- `:454/:456` — the row label. It is written **into** a bookend but asks about a
+  restart record, and `:456` prints that record's path. A row label names its
+  subject: **`Post-restart record answered`**.
+
+### Surface
+
+Writer `bin/record-reimaged-system.sh:714` and `:1200`, with `$CHECKLIST`
+becoming `$RECORD` and the heredoc sentinel with it. Readers at `:450` and
+`:482–487`. Twelve references in `verify-reimaged-system.md`, one each in
+`references/restore-file-reference.md`, `references/reimaged-system-evidence.md`
+and `.internal/sign-offs.sh`.
+
+`bin/reindex-artifact-runs.sh` reads `bookend.md` then `record.md`. Its comment
+no longer describes a pending migration, because there is not one. That file
+belongs to the run-index session and has now been edited twice — Revision 156 and
+here — both times because leaving it would have silently zeroed the PASS/WARN/FAIL
+counts in every `MANIFEST.md` rather than failing.
+
+### The volume
+
+Six records renamed. Eleven companion documents inside those captures repointed,
+and 28 artifacts across `bookends/` and `sign-offs/` whose text named the old
+filename — path-aware, so a reference under `bookends/` became `bookend.md` and
+one under `restarts/` became `record.md`. `_pre-conversion-backup-20260902/` and
+`toolkit-snapshot/` untouched.
+
+The eleven `reimage-checklist.md` capstones are intact and were never in scope.
+
+### Validation
+
+`bash -n` clean. `verify-script-portability.sh` 81 clean / 0 WARN / 0 FAIL,
+`verify-runbook-structure.sh` 213 PASS / 5 WARN / 25 FAIL, `verify-doc-paths.sh
+--all` 758 OK / 0 MISSING / 0 ANCHOR BROKEN — all at baseline.
+
+Exercised against a **scratch artifact root**: `--context pre-restart` wrote
+`restarts/runs/verify-reimaged-system-pre-restart-*/record.md` with the H1
+`# Reimaged System Initial Record`, and `--context exit` wrote
+`bookends/runs/verify-reimaged-system-exit-*/bookend.md`. Both categories, one
+run, correct names.
+
+**All of it ran on Linux with Bash 5.x.** `/bin/bash -n` against real macOS Bash
+3.2 is owed here along with Revisions 116–156.
+
+### Not in this revision
+
+F2 and F4 in `bin/record-reimaged-system.sh` — the script still emits a 15-row
+manual `TODO` table into a run directory that a rerun replaces, which the
+2026-09-02 conversion removed from all six captures on the volume; and
+`b_todo_count` counts `TODO` across the whole file, so automated rows fire a WARN
+that says a person left them unanswered. Both are behaviour, not naming, and both
+are cleaner now that the file has one name for one thing.
+
+`bookends/MANIFEST.md` still carries no rename row. Eleven of its rows already
+say `migrated from` in the Note column, so the mechanism exists; recording that
+the category was `boundaries/` and its record `checklist.md` until 2026-09-03
+would make every sign-off written before today traceable.
 
 ---
 

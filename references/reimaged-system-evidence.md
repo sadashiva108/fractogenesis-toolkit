@@ -209,7 +209,7 @@ Typical contents verified from `record-reimaged-system.sh`:
 
 ```text
 README.md
-checklist.md
+record.md
 restart-checkpoints.md
 time-machine-plan.md
 manual-captures-required.md

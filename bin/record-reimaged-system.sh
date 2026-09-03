@@ -7,7 +7,7 @@
 # personal apps, running managed processes, volumes, Time Machine destination,
 # software updates, brew/git/xcode presence, optional network reachability),
 # stamps PASS/WARN/TODO on the automated rows, and writes a first-boot
-# evidence bundle plus companion planning documents (initial bookend,
+# evidence bundle plus companion planning documents (initial record,
 # restart checkpoints, Time Machine plan, manual captures).
 #
 # Meant to run twice: once after Phase 8 completes and the external artifact
@@ -82,7 +82,7 @@
 #        lands at reimaged-system/restarts/runs/verify-reimaged-system-initial-<stamp>/,
 #        matching the layout documented in references/master-directory-reference.md.
 #   2. ~/Desktop/reimaged-system-artifacts/
-#        as a fallback so the bookend can complete on a bare Mac before the
+#        as a fallback so the capture can complete on a bare Mac before the
 #        external artifact volume is reconnected.
 #
 # Bookend modes:
@@ -109,7 +109,7 @@
 # --- END USAGE ---
 # =============================================================================
 
-# Aggregate validator/bookend strict mode.
+# Aggregate validator strict mode.
 # NOTE: intentionally NOT set -e. Failed individual checks are converted into
 # PASS/WARN/TODO records rather than aborting the run, so a single unavailable
 # subsystem cannot cost the whole first-boot bundle. Every read-only command
@@ -344,7 +344,7 @@ b_manual() {
   BOOKEND_MANUAL="${BOOKEND_MANUAL}${1}"$'\t'"${2}"$'\n'
 }
 
-# Unanswered rows in a generated bookend: `TODO` in the Status column.
+# Unanswered rows in a generated record: `TODO` in the Status column.
 b_todo_count() {
   grep -c '| `TODO` |' "$1" 2>/dev/null || true
 }
@@ -447,13 +447,13 @@ bookend_exit() {
   fi
 
   f=""
-  [[ -n "$post" ]] && f="$restarts_root/$post/checklist.md"
+  [[ -n "$post" ]] && f="$restarts_root/$post/record.md"
   if [[ -n "$f" && -f "$f" ]]; then
     n="$(b_todo_count "$f")"
     if [[ "${n:-0}" -eq 0 ]]; then
-      b_record PASS "Post-restart bookend answered" "no unanswered rows in \`$(basename "$post")\`"
+      b_record PASS "Post-restart record answered" "no unanswered rows in \`$(basename "$post")\`"
     else
-      b_record WARN "Post-restart bookend answered" "$n unanswered row(s) in \`$(basename "$post")/checklist.md\` — this step is the only one that fills them"
+      b_record WARN "Post-restart record answered" "$n unanswered row(s) in \`$(basename "$post")/record.md\` — this step is the only one that fills them"
     fi
   fi
 
@@ -465,8 +465,8 @@ bookend_exit() {
 # ---------------------------------------------------------------------------
 # Comparison mode: --context diff
 #
-# Reads the two official first-boot bundles and reports how their bookend rows
-# changed across the restart. A raw `diff -u` of two bookends is technically
+# Reads the two official first-boot captures and reports how their recorded rows
+# changed across the restart. A raw `diff -u` of two records is technically
 # complete and practically unreadable: it interleaves reordered rows, evidence
 # paths and timestamps with the handful of verdicts that actually moved.
 #
@@ -479,23 +479,23 @@ if [[ "${CONTEXT_LABEL:-}" == "diff" ]]; then
 
   PRE_RUN="$(artifact_run_official "$RESTARTS_ROOT" "verify-reimaged-system-pre-restart" 2>/dev/null || true)"
   POST_RUN="$(artifact_run_official "$RESTARTS_ROOT" "verify-reimaged-system-post-restart" 2>/dev/null || true)"
-  PRE_FILE="${PRE_RUN:+$RESTARTS_ROOT/$PRE_RUN/checklist.md}"
-  POST_FILE="${POST_RUN:+$RESTARTS_ROOT/$POST_RUN/checklist.md}"
+  PRE_FILE="${PRE_RUN:+$RESTARTS_ROOT/$PRE_RUN/record.md}"
+  POST_FILE="${POST_RUN:+$RESTARTS_ROOT/$POST_RUN/record.md}"
 
   for _side in "PRE:$PRE_FILE" "POST:$POST_FILE"; do
     if [[ -z "${_side#*:}" || ! -f "${_side#*:}" ]]; then
-      echo "ERROR: no official ${_side%%:*}-restart bundle with a checklist.md under $RESTARTS_ROOT" >&2
+      echo "ERROR: no official ${_side%%:*}-restart bundle with a record.md under $RESTARTS_ROOT" >&2
       echo "ERROR: record it with: ./bin/record-reimaged-system.sh --context pre-restart|post-restart" >&2
       exit 2
     fi
   done
 
-  # A bookend row is `| <check> | `<STATUS>` | <evidence> |`. The backticked
+  # A recorded row is `| <check> | `<STATUS>` | <evidence> |`. The backticked
   # status in field 3 is what separates a check row from the Item/Location and
   # heading tables in the same file, so parse on that rather than on position.
   #
   # The status set is NOT the four the script writes. Manual rows are answered by
-  # hand, so a post-restart bookend carries `yes`, `no`, `accepted` and the like
+  # hand, so a post-restart record carries `yes`, `no`, `accepted` and the like
   # where the generated file had `TODO`. Matching only PASS/WARN/FAIL/TODO made
   # every answered row invisible on one side and reported it as dropped -- the
   # comparison said fifteen rows disappeared across a restart that changed none.
@@ -692,7 +692,7 @@ if ! mkdir -p "$OUT/logs" "$OUT/raw"; then
 fi
 
 # Pre-create the sibling reimaged-system subfolders when writing to the
-# artifact tree so later phases (Phase 14's bookend, restart notes, restore
+# artifact tree so later phases (Phase 14's checklist, restart notes, restore
 # notes) have somewhere to land without extra shell work.
 #
 # `reimaged-system/time-machine/` is deliberately NOT among them. Post-image
@@ -711,7 +711,7 @@ fi
 
 COMMAND_LOG="$OUT/logs/commands.log"
 ERROR_LOG="$OUT/logs/errors.log"
-CHECKLIST="$OUT/checklist.md"
+RECORD="$OUT/record.md"
 SUMMARY="$OUT/README.md"
 
 : > "$COMMAND_LOG"
@@ -961,7 +961,7 @@ Nothing in this file runs during Phase 9. The post-image Time Machine backup is
 Phase 16, taken after Phase 15 — Restore Home, and owned by `run-time-machine.md`.
 These are the notes to carry into it.
 
-Keep Time Machine backups on the dedicated Apple backups partition ($EXTERNAL_APPLE_BACKUPS_VOLUME when defined). Keep workflow evidence and generated bookends under the artifact-root partition ($EXTERNAL_DATA_VOLUME / $REIMAGE_ARTIFACT_ROOT).
+Keep Time Machine backups on the dedicated Apple backups partition ($EXTERNAL_APPLE_BACKUPS_VOLUME when defined). Keep workflow evidence and generated captures under the artifact-root partition ($EXTERNAL_DATA_VOLUME / $REIMAGE_ARTIFACT_ROOT).
 
 Recommended reimaged-system Time Machine checkpoints:
 
@@ -1020,7 +1020,7 @@ cat > "$OUT/manual-captures-required.md" <<'EOF_MANUAL_FIRST_BOOT'
 The record-reimaged-system script captures command output and app/process evidence, but these items still require human confirmation.
 
 **Fill these in the post-restart bundle only.** Each run of the script
-regenerates `checklist.md` with every manual row reset, so answers
+regenerates `record.md` with every manual row reset, so answers
 written into the pre-restart bundle are discarded by the next run. The
 post-restart bundle is the sign-off bundle; its rows are answered in
 `verify-reimaged-system.md` Step 7. Note in particular that the restart row
@@ -1040,7 +1040,7 @@ cannot be answered truthfully in a pre-restart bundle.
 EOF_MANUAL_FIRST_BOOT
 
 # ---------------------------------------------------------------------------
-# Generate the initial bookend and README summary
+# Generate the initial record and README summary
 # ---------------------------------------------------------------------------
 sed_escape() {
   printf '%s' "$1" | sed 's/[\\&|]/\\&/g'
@@ -1055,8 +1055,8 @@ replace_token() {
   sed -i.bak "s|$token|$escaped|g" "$file" && rm -f "$file.bak"
 }
 
-cat > "$CHECKLIST" <<'EOF_CHECKLIST'
-# Reimaged System Initial Bookend
+cat > "$RECORD" <<'EOF_RECORD'
+# Reimaged System Initial Record
 
 Generated: __GENERATED_DATE__
 
@@ -1074,13 +1074,13 @@ __OUT__
 
 | Item | Location |
 |---|---|
-| Bookend runbook | `verify-reimaged-system.md` |
+| Capture runbook | `verify-reimaged-system.md` |
 | Script | `bin/record-reimaged-system.sh` |
 | Generated evidence bundle | `__OUTPUT_ROOT__/restarts/runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/` |
 | Preferred generated-artifact root | `__ARTIFACT_ROOT__/reimaged-system/` when the artifact drive is mounted |
 | Local fallback if the artifact drive is unavailable | `~/Desktop/reimaged-system-artifacts/` |
 
-Keep active scripts in the toolkit checkout. Store generated evidence, bookend reports, and reimaged-system comparison outputs under the artifact root.
+Keep active scripts in the toolkit checkout. Store generated evidence, capture records, and reimaged-system comparison outputs under the artifact root.
 
 ## Automated Checks
 
@@ -1101,7 +1101,7 @@ Keep active scripts in the toolkit checkout. Store generated evidence, bookend r
 | Homebrew available (installed in Phase 10A) | `__BREW_STATUS__` | `raw/brew-version.txt` |
 | Network check | `__NETWORK_STATUS__` | `raw/network-github.txt` |
 
-## Manual First-Boot Bookend
+## Manual First-Boot Record
 
 > Fill these in the **post-restart** bundle only. A rerun regenerates this file
 > and resets every row, so answers written into a pre-restart bundle are lost.
@@ -1132,35 +1132,35 @@ Keep active scripts in the toolkit checkout. Store generated evidence, bookend r
    `enroll-and-stabilize.md` Step 4 and rerun this script **before** restarting —
    this bundle is the pre-restart baseline the comparison depends on.
 3. Restart once after managed enrollment, the managed app set, and security tools are all stable.
-4. Rerun this script after the restart, compare results, and complete the manual bookend in that newer bundle.
+4. Rerun this script after the restart, compare results, and complete the manual rows in that newer capture.
 5. Do **not** take a Time Machine backup here. The post-image backup is Phase 16,
    after Phase 15 restores your home directory — a backup taken now would capture
    a machine holding nothing that re-enrolling could not reproduce, and would miss
    the home files entirely. Until then the pre-image Time Machine chain is the
    fallback.
 
-EOF_CHECKLIST
+EOF_RECORD
 
-replace_token "$CHECKLIST" "__GENERATED_DATE__" "$(date)"
-replace_token "$CHECKLIST" "__SCRIPT_NAME__" "$SCRIPT_NAME"
-replace_token "$CHECKLIST" "__CONTEXT__" "${CONTEXT_LABEL:-(none supplied)}"
-replace_token "$CHECKLIST" "__OUT__" "$OUT"
-replace_token "$CHECKLIST" "__OUTPUT_ROOT__" "$OUTPUT_ROOT"
-replace_token "$CHECKLIST" "__ARTIFACT_ROOT__" "${REIMAGE_ARTIFACT_ROOT:-<unset>}"
-replace_token "$CHECKLIST" "__MDM_STATUS__" "$MDM_STATUS"
-replace_token "$CHECKLIST" "__FILEVAULT_STATUS__" "$FILEVAULT_STATUS"
-replace_token "$CHECKLIST" "__COMPANY_PORTAL_STATUS__" "$COMPANY_PORTAL_STATUS"
-replace_token "$CHECKLIST" "__ZSCALER_STATUS__" "$ZSCALER_STATUS"
-replace_token "$CHECKLIST" "__CROWDSTRIKE_APP_STATUS__" "$CROWDSTRIKE_APP_STATUS"
-replace_token "$CHECKLIST" "__CROWDSTRIKE_PROC_STATUS__" "$CROWDSTRIKE_PROC_STATUS"
-replace_token "$CHECKLIST" "__OFFICE_STATUS__" "$OFFICE_STATUS"
-replace_token "$CHECKLIST" "__ONEDRIVE_STATUS__" "$ONEDRIVE_STATUS"
-replace_token "$CHECKLIST" "__CHROME_STATUS__" "$CHROME_STATUS"
-replace_token "$CHECKLIST" "__ARTIFACT_ROOT_STATUS__" "$ARTIFACT_ROOT_STATUS"
-replace_token "$CHECKLIST" "__TM_DEST_STATUS__" "$TM_DEST_STATUS"
-replace_token "$CHECKLIST" "__GIT_STATUS__" "$GIT_STATUS"
-replace_token "$CHECKLIST" "__BREW_STATUS__" "$BREW_STATUS"
-replace_token "$CHECKLIST" "__NETWORK_STATUS__" "$NETWORK_STATUS"
+replace_token "$RECORD" "__GENERATED_DATE__" "$(date)"
+replace_token "$RECORD" "__SCRIPT_NAME__" "$SCRIPT_NAME"
+replace_token "$RECORD" "__CONTEXT__" "${CONTEXT_LABEL:-(none supplied)}"
+replace_token "$RECORD" "__OUT__" "$OUT"
+replace_token "$RECORD" "__OUTPUT_ROOT__" "$OUTPUT_ROOT"
+replace_token "$RECORD" "__ARTIFACT_ROOT__" "${REIMAGE_ARTIFACT_ROOT:-<unset>}"
+replace_token "$RECORD" "__MDM_STATUS__" "$MDM_STATUS"
+replace_token "$RECORD" "__FILEVAULT_STATUS__" "$FILEVAULT_STATUS"
+replace_token "$RECORD" "__COMPANY_PORTAL_STATUS__" "$COMPANY_PORTAL_STATUS"
+replace_token "$RECORD" "__ZSCALER_STATUS__" "$ZSCALER_STATUS"
+replace_token "$RECORD" "__CROWDSTRIKE_APP_STATUS__" "$CROWDSTRIKE_APP_STATUS"
+replace_token "$RECORD" "__CROWDSTRIKE_PROC_STATUS__" "$CROWDSTRIKE_PROC_STATUS"
+replace_token "$RECORD" "__OFFICE_STATUS__" "$OFFICE_STATUS"
+replace_token "$RECORD" "__ONEDRIVE_STATUS__" "$ONEDRIVE_STATUS"
+replace_token "$RECORD" "__CHROME_STATUS__" "$CHROME_STATUS"
+replace_token "$RECORD" "__ARTIFACT_ROOT_STATUS__" "$ARTIFACT_ROOT_STATUS"
+replace_token "$RECORD" "__TM_DEST_STATUS__" "$TM_DEST_STATUS"
+replace_token "$RECORD" "__GIT_STATUS__" "$GIT_STATUS"
+replace_token "$RECORD" "__BREW_STATUS__" "$BREW_STATUS"
+replace_token "$RECORD" "__NETWORK_STATUS__" "$NETWORK_STATUS"
 
 cat > "$SUMMARY" <<'EOF_SUMMARY'
 # Reimaged System First-Boot Evidence Bundle
@@ -1169,7 +1169,7 @@ Generated: __GENERATED_DATE__
 
 Open first:
 
-- `checklist.md`
+- `record.md`
 - `restart-checkpoints.md`
 - `time-machine-plan.md`
 - `manual-captures-required.md`
@@ -1186,9 +1186,9 @@ replace_token "$SUMMARY" "__GENERATED_DATE__" "$(date)"
 # initial, pre-restart, post-restart -- and naming whichever ran last is
 # precisely the bug that made verify-reimaged-system.md Step 6 hand-roll its own
 # prefix-filtered selection. `official/<context>.txt` answers per lineage.
-RUN_PASS="$(grep -c '`PASS`' "$CHECKLIST" 2>/dev/null || true)"
-RUN_WARN="$(grep -c '`WARN`' "$CHECKLIST" 2>/dev/null || true)"
-RUN_TODO="$(grep -c '`TODO`' "$CHECKLIST" 2>/dev/null || true)"
+RUN_PASS="$(grep -c '`PASS`' "$RECORD" 2>/dev/null || true)"
+RUN_WARN="$(grep -c '`WARN`' "$RECORD" 2>/dev/null || true)"
+RUN_TODO="$(grep -c '`TODO`' "$RECORD" 2>/dev/null || true)"
 
 if ! artifact_run_finalize "$RUN_CATEGORY_ROOT" \
      "${RUN_PASS:-0} pass / ${RUN_WARN:-0} warn / ${RUN_TODO:-0} todo"; then
@@ -1197,11 +1197,11 @@ if ! artifact_run_finalize "$RUN_CATEGORY_ROOT" \
 fi
 # finalize promotes the staging directory, so the paths must be re-derived.
 OUT="$ARTIFACT_RUN_DIR"
-CHECKLIST="$OUT/checklist.md"
+RECORD="$OUT/record.md"
 
 echo ""
 echo "First-boot evidence bundle written: $OUT"
-echo "Open bookend: $CHECKLIST"
+echo "Open record: $RECORD"
 echo "Run indexed at: $RUN_CATEGORY_ROOT/MANIFEST.md"
 
 if [[ "$OPEN_RESULT" == "true" ]]; then
