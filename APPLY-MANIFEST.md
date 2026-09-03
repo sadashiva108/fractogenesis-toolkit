@@ -1,5 +1,7 @@
 # Apply Manifest
 
+**Revision 175** — supersedes Revision 174 and earlier. One session becomes one bundle: two brief bundles are absorbed and removed, the indexes say which kind of bundle they list, and the owner column names the session.
+
 **Revision 174** — supersedes Revision 173 and earlier. A third findings tree for the rules themselves, and the six this session had left owed to them.
 
 **Revision 173** — supersedes Revision 172 and earlier. The statuses and states are on the indexes, an overtaken bundle is superseded rather than edited, bundles can point at each other, and the owner's override is written down.
@@ -471,6 +473,113 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
 
 ---
+
+## Revision 175 — one session, one bundle
+
+### What was wrong
+
+`session_019yzcjm2QneJ5ymVEQDi1bu` had three session bundles.
+`restore-repos-refactor-20260902-000000` and
+`restore-repos-clone-plan-20260902-000000` were two briefs of the same
+conversation, converted from loose files in Revision 162;
+`phase-11b-hydrate-and-bookends-20260903-141500` was created in Revision 167 for
+the work that ran past both prompts.
+
+Splitting one session across three bundles put findings under owners that had, by
+their own `closed` state, stopped. Revision 170 moved the findings and left the
+bundles, which fixed the symptom. The owner's call is that the split itself was
+the defect.
+
+### The absorption
+
+Both bundles are removed. Nothing they held was discarded — eight documents moved
+into the surviving bundle under names saying which brief each came from:
+
+| Now | Was |
+|---|---|
+| `restore-repos-phase-11b-plan.md` | `restore-repos-refactor-…/restore-repos-phase-11b-plan.md` |
+| `handoff-20260902-000000.md` | `restore-repos-refactor-…/handoff-20260902-000000.md` |
+| `prompt-restore-repos-refactor.md` | `restore-repos-refactor-…/prompt.md` |
+| `prompt-restore-repos-clone-plan.md` | `restore-repos-clone-plan-…/prompt.md` |
+| `metadata-restore-repos-refactor.md` | `restore-repos-refactor-…/metadata.md` |
+| `metadata-restore-repos-clone-plan.md` | `restore-repos-clone-plan-…/metadata.md` |
+| `brief-summary-restore-repos-refactor.md` | `restore-repos-refactor-…/final-summary.md` |
+| `brief-summary-restore-repos-clone-plan.md` | `restore-repos-clone-plan-…/final-summary.md` |
+
+Two renames carry an argument. `final-summary.md` is reserved by §4d for a session
+reaching `closed` or `withdrawn`; these record the end of a *brief*, and the
+session is `owned` and still running, so `brief-summary-` says what they are. The
+two `findings-manifest.md` files were not carried at all — Revision 170 had already
+reduced them to pointers at the surviving manifest, which is authoritative.
+
+### Twenty-five citations, and the three that cross a line
+
+Eighteen citations across the tree named the removed directories by path, and
+seven more sat *inside the moved documents*, pointing at their own former
+locations. All twenty-five were repointed. The self-references were nearly missed:
+the documentation lint reported `0 MISSING` throughout, and they were found by
+grepping the moved files directly.
+
+Three of the eighteen are in files this session does not own, and are recorded
+here so the owning session can review or reverse them. All three are mechanical
+path repoints with no content decision:
+
+- `docs/cross-cutting-findings/0027-…/findings.md` — four citations, two anchored
+  to `metadata.md:10` of a deleted bundle. Owned by
+  `restore-apps-outstanding-20260903-000000`.
+- `docs/sessions/restore-apps-outstanding-20260903-000000/prompt.md:239` — one
+  path, in that session's own prompt.
+- `docs/sessions/run-index-design-20260901-000000/handoff-20260902-000000.md:4` —
+  one wikilink. **§4d says a handoff is never edited afterwards.** It was edited,
+  because the alternative was a permanently dangling link in a record whose value
+  is that it stays accurate. That is a rule bent knowingly, not overlooked.
+
+### The indexes say which kind of bundle they list
+
+`Bundles` was the heading over both kinds, and the owner read a session table as a
+findings table because of it. Eleven findings indexes now head their table
+**`Findings Bundles`**; `docs/sessions/INDEX.md` heads its **`Session Bundles`**.
+The session table's column stays `Bundle`, since the heading now supplies the kind.
+
+### The owner column names the session
+
+Each row carries the session identifier beside the assistant, copied from that
+bundle's `metadata.md`, which stays authoritative. The bundle name is what tells
+one session from another; the identifier is what a reader *uses* — it is the
+string in the `Claude-Session` trailer, so a row goes straight to
+`git log --grep=<id>` and becomes that session's commits.
+
+`restore-git-phase-11a-20260901-155433` reads `id not recorded`, deliberately not
+"unrecoverable". It predates the trailer convention and has never been searched
+for. Asserting unrecoverability without naming the searches that came back empty
+is finding `0027`, which was raised over exactly this wording on two other bundles.
+
+### Composed outside the tree, and rebased twice
+
+Written in a copy outside the connected folders. **Rebased twice mid-task** — the
+concurrent session committed `c139dfe`, `29d3201` and Revisions 172–174 while this
+was being composed, and the first patch derived from the stale copy would have
+reverted `docs/instruction-set-findings/` and finding `0029`. It was caught by
+reading the patch's file list, not by any tool.
+
+That is a gap in `0028`'s own proposal, and it belongs to whoever resolves that
+bundle: composing outside the tree removes interleaving but introduces a staleness
+window, and a stale patch reverting committed work is worse than a merge conflict
+because git raises no objection. The rule that answers it is to re-copy scratch
+immediately before deriving the patch, never at task start.
+
+The revision number was taken from the header at apply time; 174 was highest.
+
+### Validation
+
+Measured in the scratch copy against this change alone, then again here after
+applying. Documentation lint: **774 OK, 0 MISSING, 0 ANCHOR BROKEN**, unchanged
+across a change that moved eight files and deleted twelve. Runbook structure
+**213 PASS / 5 WARN / 25 FAIL** across 27 documents, unchanged. Script portability
+**81 clean / 0 WARN / 0 FAIL**, unchanged. No script changed; every write is a
+record write under `docs/`. Linux VM, Bash 5.1.
+
+**`/bin/bash -n` against real macOS Bash 3.2 remains owed for Revisions 116–175.**
 
 ## Revision 174 — a tree for findings about the rules, and six of them
 

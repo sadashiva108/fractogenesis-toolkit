@@ -85,8 +85,8 @@ fast pass to circle back on. Not contended, but flag rather than edit.
   callers now share. `docs/runbook-findings/reimage-prep-checks/0019-reimage-checklist-repo-audit-manifest-header/findings.md`
   is closed. Uncommitted, awaiting the owner.
 - **Item 1 — Restore Repositories.** Plan, retrofit analysis and re-run ledger in
-  `docs/sessions/restore-repos-refactor-20260902-000000/restore-repos-phase-11b-plan.md`. Handed off to the session
-  below via `docs/sessions/restore-repos-refactor-20260902-000000/prompt.md`. Six gaps parked
+  `docs/sessions/phase-11b-hydrate-and-bookends-20260903-141500/restore-repos-phase-11b-plan.md`. Handed off to the session
+  below via `docs/sessions/phase-11b-hydrate-and-bookends-20260903-141500/prompt-restore-repos-refactor.md`. Six gaps parked
   under `docs/*-findings/`. No manifest revision — the session wrote only to `docs/`,
   which is gitignored, and that is correct.
 
@@ -139,8 +139,8 @@ still a figure that changes legitimately whenever a runbook gains a reference.
 
 ## Restore Repositories Refactor
 
-Prompt: `docs/sessions/restore-repos-refactor-20260902-000000/prompt.md`.
-Plan: `docs/sessions/restore-repos-refactor-20260902-000000/restore-repos-phase-11b-plan.md`.
+Prompt: `docs/sessions/phase-11b-hydrate-and-bookends-20260903-141500/prompt-restore-repos-refactor.md`.
+Plan: `docs/sessions/phase-11b-hydrate-and-bookends-20260903-141500/restore-repos-phase-11b-plan.md`.
 
 ### Owns
 

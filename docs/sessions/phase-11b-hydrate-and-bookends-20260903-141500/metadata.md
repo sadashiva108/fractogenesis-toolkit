@@ -13,17 +13,40 @@ Transcript: `https://claude.ai/code/session_019yzcjm2QneJ5ymVEQDi1bu`
 
 ## Why this bundle exists
 
-The same session owns two earlier bundles —
-`restore-repos-refactor-20260902-000000` and
-`restore-repos-clone-plan-20260902-000000` — and both are correctly `closed`:
-their briefs finished. The session did not. Everything from Revision 147 onward
-was done under directions given turn by turn rather than under either prompt, and
-had no bundle at all until this one.
+**This bundle is the whole session.** `session_019yzcjm2QneJ5ymVEQDi1bu` ran
+under three briefs: `restore-repos-refactor-20260902-000000`,
+`restore-repos-clone-plan-20260902-000000`, and then no brief at all — everything
+from Revision 147 onward came turn by turn from the owner. Revision 162 had
+converted the first two into their own session bundles, and this one was created
+in Revision 167 for the work that belonged to neither.
 
-That gap is worth naming rather than papering over. The bundle-per-brief shape
+On 2026-09-03 the owner removed that split. One session is one bundle. The two
+brief bundles are gone and their documents are here, under names that say which
+brief each came from:
+
+| File | Was |
+|---|---|
+| `prompt-restore-repos-refactor.md` | `restore-repos-refactor-20260902-000000/prompt.md` |
+| `prompt-restore-repos-clone-plan.md` | `restore-repos-clone-plan-20260902-000000/prompt.md` |
+| `metadata-restore-repos-refactor.md` | `restore-repos-refactor-20260902-000000/metadata.md` |
+| `metadata-restore-repos-clone-plan.md` | `restore-repos-clone-plan-20260902-000000/metadata.md` |
+| `brief-summary-restore-repos-refactor.md` | `restore-repos-refactor-20260902-000000/final-summary.md` |
+| `brief-summary-restore-repos-clone-plan.md` | `restore-repos-clone-plan-20260902-000000/final-summary.md` |
+| `handoff-20260902-000000.md` | `restore-repos-refactor-20260902-000000/handoff-20260902-000000.md` |
+| `restore-repos-phase-11b-plan.md` | `restore-repos-refactor-20260902-000000/restore-repos-phase-11b-plan.md` |
+
+The two `final-summary.md` files were renamed rather than kept: that name is
+reserved for a session reaching `closed` or `withdrawn`, and this session is
+`owned` and still running. What they record is the end of a brief, not the end of
+a session, so `brief-summary-` says what they are. The two `findings-manifest.md`
+files were not carried — they had been reduced to pointers at this manifest, and
+this one is authoritative.
+
+The gap that produced the split is still worth naming. The bundle-per-brief shape
 assumes a session ends when its brief does. This one outlived two, and the
 architecture has no state for *still running, past the prompt that started it* —
-so the work was invisible to `docs/sessions/` while it was happening.
+so the work was invisible to `docs/sessions/` while it was happening. That is
+recorded in finding `0027`, which this session does not own.
 
 `prompt.md` was written on 2026-09-03, at the owner's request, part-way through
 the session it briefs. It is **forward-looking, not a reconstruction**: it covers

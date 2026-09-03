@@ -6,7 +6,7 @@ Copy everything below the rule into a new session.
 
 Working in **fractogenesis-toolkit**. This session is **Restore Repositories
 Refactor**. It executes the plan in
-`docs/sessions/restore-repos-refactor-20260902-000000/restore-repos-phase-11b-plan.md`, which a prior session produced
+`docs/sessions/phase-11b-hydrate-and-bookends-20260903-141500/restore-repos-phase-11b-plan.md`, which a prior session produced
 and I approved. A second session, **Run-index design and evidence conformance**,
 is running concurrently — the ownership split is in
 `docs/sessions/session-responsibilities.md`. Read that before your first edit.
@@ -24,7 +24,7 @@ reading the files.
 
 Once both are there, read in this order:
 
-1. `docs/sessions/restore-repos-refactor-20260902-000000/restore-repos-phase-11b-plan.md` — the plan. Its §1 table has a
+1. `docs/sessions/phase-11b-hydrate-and-bookends-20260903-141500/restore-repos-phase-11b-plan.md` — the plan. Its §1 table has a
    numbered change per row, the runbook step each is felt at, and the entrypoint
    the runbook actually calls.
 2. `docs/runbook-findings/restore-repos/0020-repo-audit-tsv-column-shift/findings.md` and

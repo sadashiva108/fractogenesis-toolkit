@@ -70,7 +70,7 @@ lines across 27 repositories, all recoverable, including the two repositories
 with no remote and the two spanning both hosts.
 
 Four options with their costs are in
-`docs/sessions/restore-repos-refactor-20260902-000000/restore-repos-phase-11b-plan.md` → Decision A. The recommendation
+`docs/sessions/phase-11b-hydrate-and-bookends-20260903-141500/restore-repos-phase-11b-plan.md` → Decision A. The recommendation
 is to write a corrected run as a new indexed `pre-image-*` run carrying a
 manifest note that it is a re-derivation, and pin it — which touches no existing
 evidence and keeps the immutability rule intact.

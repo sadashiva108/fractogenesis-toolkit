@@ -82,8 +82,8 @@ that choice is defensible only because the architecture record breaks the tie.
 | Session bundle | Where it appears | Conformant |
 |---|---|---|
 | `restore-apps-outstanding-20260903-000000` | item 1 of the reading order (`prompt.md:25`) | yes |
-| `restore-repos-clone-plan-20260902-000000` | item 3 of 6 (`prompt.md:26`) | no |
-| `restore-repos-refactor-20260902-000000` | item 4 of 5 (`prompt.md:34`) | no |
+| `restore-repos-clone-plan-20260902-000000` (absorbed; now `docs/sessions/phase-11b-hydrate-and-bookends-20260903-141500/prompt-restore-repos-clone-plan.md`) | item 3 of 6 (line 26) | no |
+| `restore-repos-refactor-20260902-000000` (absorbed; now `docs/sessions/phase-11b-hydrate-and-bookends-20260903-141500/prompt-restore-repos-refactor.md`) | item 4 of 5 (line 34) | no |
 | `run-index-design-20260901-000000` | no reading order; buried in a ground-rules bullet (`prompt.md:33`) | no |
 | `restore-git-phase-11a-20260901-155433` | cited only as *why the file exists*; `prompt.md:13` sends the reader to `restore-git.md` first | no |
 
@@ -135,8 +135,8 @@ claim to define the same lifecycle.
 
 ### 7 — two identifiers recorded as unrecoverable are recoverable
 
-`docs/sessions/restore-repos-refactor-20260902-000000/metadata.md:10` and
-`docs/sessions/restore-repos-clone-plan-20260902-000000/metadata.md:10` both record
+`docs/sessions/phase-11b-hydrate-and-bookends-20260903-141500/metadata-restore-repos-refactor.md:10` and
+`docs/sessions/phase-11b-hydrate-and-bookends-20260903-141500/metadata-restore-repos-clone-plan.md:10` both record
 the session id as **not recoverable**, on the reasoning that the session "left none
 in anything it wrote."
 

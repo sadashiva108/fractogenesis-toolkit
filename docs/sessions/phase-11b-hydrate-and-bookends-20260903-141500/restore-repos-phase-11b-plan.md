@@ -9,7 +9,7 @@ conformance"), 2026-09-01, against the repo and the artifact volume
 `/Volumes/Data/reimage-CVG-0002160-500-20260816-open`.
 
 Execution of this plan belongs to a separate session — see
-`docs/sessions/restore-repos-refactor-20260902-000000/prompt.md` and
+`docs/sessions/phase-11b-hydrate-and-bookends-20260903-141500/prompt-restore-repos-refactor.md` and
 `docs/sessions/session-responsibilities.md`.
 
 ---

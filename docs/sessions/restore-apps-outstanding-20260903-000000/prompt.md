@@ -236,7 +236,7 @@ anything. Specifically:
   `bin/restore-apps.sh` writes.
 
 Give me a numbered list of findings with the file and step each is felt at, the
-way `docs/sessions/restore-repos-refactor-20260902-000000/restore-repos-phase-11b-plan.md` is laid out, and let me pick
+way `docs/sessions/phase-11b-hydrate-and-bookends-20260903-141500/restore-repos-phase-11b-plan.md` is laid out, and let me pick
 what gets done. Park anything out of scope in `docs/*-findings/`.
 
 ## 5. Review `.github/` and `.claude/` against what they describe

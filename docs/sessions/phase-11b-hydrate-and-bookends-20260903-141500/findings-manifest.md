@@ -22,7 +22,9 @@ All seven were recorded by this same session under two earlier briefs, and were
 listed in the manifests of the bundles those briefs produced — `0006`, `0008`,
 `0011`, `0016`, `0017` and `0020` under `restore-repos-refactor-20260902-000000`,
 `0015` under `restore-repos-clone-plan-20260902-000000`. The owner merged them
-here on 2026-09-03.
+here on 2026-09-03, and on the same day the two closed bundles were absorbed into
+this one — their documents are the `prompt-`, `metadata-` and `brief-summary-`
+files beside this manifest.
 
 Ownership had followed the brief a finding was recorded under. That rule fails
 when a session outlives its briefs, which this one did: both of those bundles are

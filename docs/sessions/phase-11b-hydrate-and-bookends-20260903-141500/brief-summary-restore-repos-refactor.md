@@ -16,7 +16,7 @@ reconstructed during the Revision 162 conversion rather than written at the time
 ## What it left behind
 
 `handoff-20260902-000000.md` beside this file, and
-`docs/sessions/restore-repos-refactor-20260902-000000/restore-repos-phase-11b-plan.md` — the plan it executed, written for it by the
+`docs/sessions/phase-11b-hydrate-and-bookends-20260903-141500/restore-repos-phase-11b-plan.md` — the plan it executed, written for it by the
 run-index session. Findings `0006`, `0008`, `0011`, `0016` and `0017` are in its
 manifest; `0008`, `0011`, `0016` and `0017` are still `unresolved` and are
 Phase 11B's to answer.

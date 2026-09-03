@@ -28,7 +28,7 @@ last. The owner may override any rule; a revision carrying an overridden change
 says so. Full definitions, the transitions and the write rules:
 [`docs/legend.md`](../../legend.md).
 
-## Bundles
+## Findings Bundles
 
 | # | Bundle | Subject | Findings | Status | Session | Notes |
 |---:|---|---|---:|---|---|---|

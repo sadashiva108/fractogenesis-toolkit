@@ -14,6 +14,19 @@ owns and `metadata.md` for who and what has owned it — assistant, session
 identifier, model and the environment it actually ran in. The table below carries
 the state and the counts and points at both rather than restating them.
 
+**The Owner column carries the session identifier as well as the assistant.** The
+bundle name already tells one session from another — that is what it is for. The
+identifier is here because it is what you actually use: it is the string in the
+`Claude-Session` trailer, so a row can be taken straight to
+`git log --grep=<id>` and turned into the commits that session made, without
+opening `metadata.md` first. `metadata.md` stays authoritative; this is a copy for
+reach.
+
+`id not recorded` on the Phase 11A bundle means exactly that, and is not a claim
+that the identifier is unrecoverable. That bundle predates the trailer convention
+and has never been searched for. Asserting unrecoverability without naming the
+searches that came back empty is finding `0027`.
+
 ---
 
 ## State key
@@ -29,21 +42,30 @@ the state and the counts and points at both rather than restating them.
 Full definitions, the transitions and what each state requires:
 [`docs/legend.md`](../legend.md).
 
-## Bundles
+## Session Bundles
 
 | Bundle | State | Owner and when | Findings | Notes |
 |---|---|---|---|---|
-| [`restore-apps-outstanding-20260903-000000`](restore-apps-outstanding-20260903-000000/) | `owned` | Claude, 2026-09-03 | [4](restore-apps-outstanding-20260903-000000/findings-manifest.md) | Eight parked items from Revisions 143–155, then `restore-apps.md`. Produced finding `0001`; assigned `0027` and `0028` on 2026-09-03. Revisions 160–166, 168–169, 172 |
-| [`phase-11b-hydrate-and-bookends-20260903-141500`](phase-11b-hydrate-and-bookends-20260903-141500/) | `owned` | Claude, 2026-09-02 | [7](phase-11b-hydrate-and-bookends-20260903-141500/findings-manifest.md) | Revisions 147–159 and 167. Same session as the two `restore-repos-*` bundles, whose seven findings merged here 2026-09-03 |
-| [`run-index-design-20260901-000000`](run-index-design-20260901-000000/) | `handoff` | last owned 2026-09-02 | [14](run-index-design-20260901-000000/findings-manifest.md) | Items 1–3 done, **resume at item 4**. Two handoffs; the later one is where to start |
-| [`restore-repos-refactor-20260902-000000`](restore-repos-refactor-20260902-000000/) | `closed` | — | — | Revision 131. Carries the Phase 11B plan it executed. Its six findings merged into `phase-11b-hydrate-and-bookends-20260903-141500` |
-| [`restore-repos-clone-plan-20260902-000000`](restore-repos-clone-plan-20260902-000000/) | `closed` | — | — | Revisions 143–150, and `docs/architecture/restore-repos-clone-plan.md`. Its finding merged into `phase-11b-hydrate-and-bookends-20260903-141500` |
-| [`restore-git-phase-11a-20260901-155433`](restore-git-phase-11a-20260901-155433/) | `closed` | — | — | Phase 11A, driven interactively. No prompt survives; the transcript is the record |
+| [`restore-apps-outstanding-20260903-000000`](restore-apps-outstanding-20260903-000000/) | `owned` | Claude · `session_016EbjB7M527qEFqZFzpv2C9`, since 2026-09-03 | [4](restore-apps-outstanding-20260903-000000/findings-manifest.md) | Eight parked items from Revisions 143–155, then `restore-apps.md`. Produced finding `0001`; assigned `0027` and `0028` on 2026-09-03. Revisions 160–166, 168–169, 172 |
+| [`phase-11b-hydrate-and-bookends-20260903-141500`](phase-11b-hydrate-and-bookends-20260903-141500/) | `owned` | Claude · `session_019yzcjm2QneJ5ymVEQDi1bu`, since 2026-09-02 | [7](phase-11b-hydrate-and-bookends-20260903-141500/findings-manifest.md) | Revisions 131, 142–159 and 167. **The whole session.** Absorbed its two earlier briefs on 2026-09-03 — their prompts, metadata, summaries, handoff and the Phase 11B plan are here, and so are all seven findings |
+| [`run-index-design-20260901-000000`](run-index-design-20260901-000000/) | `handoff` | last Claude · `01KcZvrKMgfenhrT9DvxW9Jk`, to 2026-09-02 | [14](run-index-design-20260901-000000/findings-manifest.md) | Items 1–3 done, **resume at item 4**. Two handoffs; the later one is where to start |
+| [`restore-git-phase-11a-20260901-155433`](restore-git-phase-11a-20260901-155433/) | `closed` | Claude, to 2026-09-01 · id not recorded | — | Phase 11A, driven interactively. No prompt survives; the transcript is the record |
 
-**`-000000` in a stamp means the start time was not recoverable.** These five
-bundles were converted from loose files in Revision 162, and only the Phase 11A
-transcript carried a usable timestamp. A bundle created from now on stamps the
-moment it was made.
+**`-000000` in a stamp means the start time was not recoverable.** Five bundles
+were converted from loose files in Revision 162 and only the Phase 11A transcript
+carried a usable timestamp; three of those five remain. A bundle created from now
+on stamps the moment it was made.
+
+**One session, one bundle.** `restore-repos-refactor-20260902-000000` and
+`restore-repos-clone-plan-20260902-000000` were removed on 2026-09-03. They were
+two briefs of the conversation that also produced
+`phase-11b-hydrate-and-bookends-20260903-141500` — one session throughout,
+`session_019yzcjm2QneJ5ymVEQDi1bu` — and splitting one session across three
+bundles put findings under owners that had, by their own `closed` state, stopped.
+Their documents were not discarded: the Phase 11B plan, both prompts, both
+metadata records, both final summaries and the handoff are in that bundle under
+`prompt-`, `metadata-` and `brief-summary-` names. Revision 162 created them from
+loose files; this removes the split it introduced.
 
 ---
 
@@ -63,6 +85,10 @@ each bundle's `findings-manifest.md`. Design that outlives a session moves to
 `docs/architecture/`; recurring tallies to `docs/ledgers/`.
 
 ## A note on the old paths
+
+`APPLY-MANIFEST.md` also names the two removed bundles in eight places, by the
+paths they had when those revisions were written. Those citations are correct as
+history and are not repaired, for the same reason the three below are not.
 
 `APPLY-MANIFEST.md` cites three of these files by the paths they had before the
 conversion — `next-session-prompt-run-index.md`, `run-index-2026-09-01.md` and

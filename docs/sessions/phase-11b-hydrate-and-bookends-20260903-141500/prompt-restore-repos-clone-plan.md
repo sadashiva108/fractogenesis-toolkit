@@ -19,7 +19,7 @@ correctly end with no revision at all.
 
 ## Reading order
 
-1. `docs/sessions/restore-repos-refactor-20260902-000000/handoff-20260902-000000.md` — the handoff you are resuming.
+1. `docs/sessions/phase-11b-hydrate-and-bookends-20260903-141500/handoff-20260902-000000.md` — the handoff you are resuming.
 2. `docs/architecture/restore-repos-clone-plan.md` — **the design you are building.**
    It is complete enough to implement from. Its *Open decisions* section is your
    first agenda item.
