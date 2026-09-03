@@ -1,5 +1,7 @@
 # Apply Manifest
 
+**Revision 153** — supersedes Revision 152 and earlier. The status report stops restating the sign-off's rows and names where they actually live.
+
 **Revision 152** — supersedes Revision 151 and earlier. Step 1 quotes the summary the script prints now, and names both files the run writes.
 
 **Revision 151** — supersedes Revision 150 and earlier. Two keys a real `reimage.env` sets were not named anywhere in the example; both are now.
@@ -425,6 +427,65 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `scan-archive-contents.sh` | `.internal/home/scan-archive-contents.sh` |
 | `scan-postman-collections.py` | `.internal/home/scan-postman-collections.py` |
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
+
+---
+
+## Revision 153 — the status report stops restating the sign-off
+
+`restore-status.md` is an automated capture. It carried three pieces of content
+that a person is meant to act on, and two of them were the sign-off's own rows
+written out a second time.
+
+*Manual Follow-Up* item 3 — *for each repo with carry-forward rows > 0, run
+`git ls-remote origin 'reimage/*'`* — is sign-off row 1. Item 4 — *confirm each
+clone sits under the root matching its remote host, because `includeIf`* — is
+sign-off row 2. Items 1, 2 and 5 restated what `hydrated.md` and the runbook
+already say. The whole section is gone.
+
+The opening paragraph told the reader to *complete the remaining rescue-branch
+and carry-forward rows by hand* in a file that does not contain them, and that a
+rerun overwrites. It now says what the file is: a state capture, re-derived every
+run, not to be edited.
+
+*Manual Sign-Off* becomes **Where the Answers Live** and names both siblings
+once — the sign-off and `hydrated.md` — because a reader who opens the report
+first needs to be told where the rest is, and that is the whole job of the
+section. The separate *What This Run Did* block, which pointed at `hydrated.md`
+a second time, folds into it.
+
+What replaces it is the one thing the report could not say before: **The Plan
+This Run Read**, naming the workspace directory the run was driven by. The
+report measures the audit against the machine; the plan decides what happens
+about it, and a reader looking at 19 excluded repositories should be able to see
+which file said so.
+
+The duplication mattered because of which copy is authoritative. A run directory
+is replaced by the next run — that is what the sign-off exists to survive — so
+an instruction restated inside one is the copy that silently goes away, and the
+two rows it duplicated are the only rows in this phase a machine cannot answer.
+
+`bin/reimage-checklist.sh` made this same move already and its comment states the
+rule: *the Manual Sign-Off rows leave the report … a row answered inside it is
+lost the next time it runs*. It still prints a `## Manual Sign-Off` heading with
+the same three-sentence explanation this revision replaced. That file belongs to
+the run-index work and is not touched here.
+
+### Validation
+
+Both `signoff_row` calls are unchanged, and a real run was confirmed to write the
+sign-off to `reimaged-system/sign-offs/` with both rows intact — the content was
+removed from the report only, not from the workflow. The report's sections are
+now Summary, Exit Criteria, Where the Answers Live, Per-Repo Status, The Plan
+This Run Read, Raw Evidence Files.
+
+`bash -n` clean. `verify-script-portability.sh` 81 clean / 0 WARN / 0 FAIL,
+`verify-runbook-structure.sh` 213 PASS / 5 WARN / 25 FAIL,
+`verify-doc-paths.sh --all` 759 OK / 0 MISSING / 0 ANCHOR BROKEN — all unchanged.
+
+The real run wrote to a **scratch artifact root** holding a copy of the pinned
+audit; every check against the operator's volume used `--dry-run`.
+
+**Ran on Linux with Bash 5.x.**
 
 ---
 

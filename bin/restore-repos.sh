@@ -1315,11 +1315,14 @@ Output directory: $REPORT_OUT
 Source pre-image audit run: $INPUT_RUN
 Repositories in inventory: $TOTAL
 
-Use this report as the Phase 11B evidence bundle. The command-verifiable rows
-are prefilled with a heuristic PASS/WARN verdict. Complete the remaining
-rescue-branch and carry-forward rows by hand after cloning the repos and
-verifying each pre-image \`reimage/YYYYMMDD/*\` rescue branch reached its
-remote before reimage. See \`restore-repos.md\` for the full runbook.
+Phase 11B's state capture: what the pre-image audit recorded, measured against
+this machine. Every row here is written by the script and re-derived on each
+run, so nothing in this file should be edited — an edit is replaced by the next
+run without warning.
+
+The rows a person answers are in the sign-off, and what this run did is in
+\`hydrated.md\`; both are named under *Where the Answers Live* below.
+\`restore-repos.md\` is the runbook.
 
 ## Summary
 
@@ -1341,14 +1344,20 @@ remote before reimage. See \`restore-repos.md\` for the full runbook.
 | Every tracked repo is present on disk | Command | \`Present\` in the per-repo table below is \`yes\` for every row | $CLONES_STATUS | Run \`--hydrate\` to clone what the plan selected, then rerun to confirm. |
 | Every staged ignored bundle applied | Command | \`hydrated.md\` records an outcome for every repository with a bundle available | $IGNORED_STATUS | Run \`--hydrate --stage ignored-files\`. |
 
-## Manual Sign-Off
+## Where the Answers Live
 
-The rows a person answers are not in this report. Each run writes a new run
-directory, so an answer recorded here would not reach the next one. They live in
-the sign-off, which carries answers forward and records the run each was
-answered against:
+A run directory is replaced by the next run, so nothing answered by hand is kept
+here. Two files hold the rest, and each is the only place its content lives:
+
+Sign-off — the rows a person answers. Carries answers forward across runs and
+records which run each was answered against:
 
     $SIGNOFF_LOCATION
+
+\`hydrated.md\` — what this run did, or on a read-only run what it would do.
+One row per repository per stage:
+
+    $REPORT_OUT/hydrated.md
 
 ## Per-Repo Status
 
@@ -1367,32 +1376,13 @@ done < "$STATUS_TSV"
 
 cat >> "$REPORT_MD" <<EOF
 
-## What This Run Did
+## The Plan This Run Read
 
-Cloning and rehydration are this script's own work, driven by the clone plan in
-\`$REPO_PLAN_SOURCE_DIR\`. The record is \`hydrated.md\` beside this file: one
-row per repository per stage, naming the stages this run was not asked to run.
+    $REPO_PLAN_SOURCE_DIR
 
-\`\`\`bash
-cat "$REPORT_OUT/hydrated.md"
-\`\`\`
-
-## Manual Follow-Up
-
-1. Resolve every \`conflict\` row in \`hydrated.md\` by hand. A conflict means the
-   working tree on disk disagrees with the plan; nothing was written to it.
-2. Select or exclude every \`unreviewed\` repository in the plan, then rerun —
-   an unreviewed repository is in the audit and in neither fragment, so it was
-   not cloned.
-3. For each repo with \`carry-forward rows > 0\`, run
-   \`git ls-remote origin 'reimage/*'\` inside the clone to confirm the
-   pre-image rescue branch is present, then merge or cherry-pick back into
-   the intended branch.
-4. Confirm each clone sits under the root matching its remote host — the root is
-   what \`includeIf\` uses to decide which identity authors a commit, so a
-   misplaced clone commits under the wrong address and offers the wrong key.
-   Rows whose \`Clone host\` and root disagree are the ones to check first.
-5. Rerun this script after cloning to update the exit-criteria table.
+Cloning and rehydration are driven by it, not by the inventory above. A
+repository in the audit and in neither plan fragment is \`unreviewed\`: reported,
+never cloned.
 
 ## Raw Evidence Files
 
