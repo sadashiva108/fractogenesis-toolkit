@@ -90,7 +90,12 @@ _hydrate_key_for() {
 }
 
 repo_hydrate_clone() {
+  # $2 is the URL to pull bytes from -- the plan's REMOTE_NAME or REMOTE_FETCH_URL
+  # when it named one, otherwise the audit's origin. $8 is what `origin` must be
+  # in the finished clone. The two differ whenever the plan clones from a fork,
+  # and keeping them separate is what stops the fork from becoming origin.
   local repo="$1" url="$2" dest="$3" branch="$4" head_sha="$5" remotes="$6" dry="$7"
+  local origin_url="${8:-$2}"
   local have parent name
 
   HYDRATE_OUTCOME=""; HYDRATE_DETAIL=""
@@ -102,13 +107,17 @@ repo_hydrate_clone() {
   fi
 
   if [ -d "$dest/.git" ]; then
+    # Compared against origin_url, not the clone URL: a finished clone's origin
+    # is the audit's origin even when the bytes came from a fork, so comparing
+    # against the fork would report `conflict` on every rerun of a plan that
+    # names one.
     have="$(git -C "$dest" remote get-url origin 2>/dev/null || true)"
-    if [ "$have" = "$url" ]; then
+    if [ "$have" = "$origin_url" ]; then
       HYDRATE_OUTCOME="present"
       HYDRATE_DETAIL="already cloned, origin matches"
     else
       HYDRATE_OUTCOME="conflict"
-      HYDRATE_DETAIL="a repository is there whose origin is ${have:-<none>}, not the planned URL"
+      HYDRATE_DETAIL="a repository is there whose origin is ${have:-<none>}, not the planned $origin_url"
     fi
     return 0
   fi
@@ -146,6 +155,13 @@ repo_hydrate_clone() {
   # in for three days -- it would move them off their branch. The remote-adds are
   # idempotent and could run either way; the checkout decides the rule, so all of
   # it stays inside the clone.
+  #
+  # The remote set is restored VERBATIM from the audit, names and all, including
+  # the one named origin. `git clone <fork-url>` names the fork `origin`, and
+  # skipping the literal name `origin` here -- as this loop used to -- left a
+  # clone whose origin AND whose fork remote both pointed at the fork, with the
+  # real origin dropped. `git fetch origin` then quietly hit the fork. Which
+  # remote the bytes came from is not which remote the repository belongs to.
   printf '%s\n' "$remotes" | tr ';' '\n' | while IFS= read -r line; do
     case "$line" in
       *"(fetch)"*) ;;
@@ -153,12 +169,21 @@ repo_hydrate_clone() {
     esac
     name="$(printf '%s' "$line" | awk '{print $1}')"
     [ -n "$name" ] || continue
-    [ "$name" = "origin" ] && continue
     set -- $line
     [ "$#" -ge 2 ] || continue
     git -C "$dest" remote add "$name" "$2" 2>/dev/null \
       || git -C "$dest" remote set-url "$name" "$2" 2>/dev/null || true
   done
+
+  # An explicit REMOTE_FETCH_URL names a URL the audit never recorded, so no
+  # loop above can have set it. It is the repository's origin by declaration.
+  if [ -n "$origin_url" ]; then
+    have="$(git -C "$dest" remote get-url origin 2>/dev/null || true)"
+    if [ "$have" != "$origin_url" ]; then
+      git -C "$dest" remote add origin "$origin_url" 2>/dev/null \
+        || git -C "$dest" remote set-url origin "$origin_url" 2>/dev/null || true
+    fi
+  fi
 
   if [ -n "$branch" ] && [ "$branch" != "-" ] && [ "$branch" != "<detached-or-unknown>" ]; then
     if ! git -C "$dest" checkout "$branch" >/dev/null 2>&1; then

@@ -188,7 +188,7 @@ repo_source_add() {
       ARTIFACT_TYPE) type="$value" ;;
       ARTIFACT_ROOT) root="$value" ;;
       KEYED_BY)      keyed="$value" ;;
-      PATH_ROOT)     pathroot="$value" ;;
+      PRE_IMAGE_ROOT) pathroot="$value" ;;
       REQUIRES)      requires="$value" ;;
       MODE)          mode="$value" ;;
       DESCRIPTION)   desc="$value" ;;
@@ -219,7 +219,7 @@ repo_source_add() {
   fi
   # A path-keyed source without the root to subtract cannot derive anything.
   if [ "$keyed" = "pre-image-path" ] && [ -z "$pathroot" ]; then
-    _repo_plan_fail "repo_source_add: KEYED_BY=pre-image-path needs PATH_ROOT -- the key is the audit path with that prefix removed (source: $type)"
+    _repo_plan_fail "repo_source_add: KEYED_BY=pre-image-path needs PRE_IMAGE_ROOT -- the key is the audit path with that prefix removed (source: $type)"
   fi
 
   REPO_SRC_TYPE[${#REPO_SRC_TYPE[@]}]="$type"
@@ -302,6 +302,22 @@ repo_plan_validate() {
     while [ "$j" -lt "${#REPO_PLAN_NAME[@]}" ]; do
       if [ "${REPO_PLAN_NAME[$i]}" = "${REPO_PLAN_NAME[$j]}" ]; then
         _repo_plan_fail "selected twice: ${REPO_PLAN_NAME[$i]} -- one entry per repository"
+      fi
+      j=$((j + 1))
+    done
+    i=$((i + 1))
+  done
+
+  # Duplicate REPO_NAME in the excluded fragment. Harmless to the run -- the
+  # first match wins and the reasons usually agree -- but a repository listed
+  # twice is a file that has been edited twice without being read, and the
+  # second reason is the one nobody will ever see.
+  i=0
+  while [ "$i" -lt "${#REPO_EXCL_NAME[@]}" ]; do
+    j=$((i + 1))
+    while [ "$j" -lt "${#REPO_EXCL_NAME[@]}" ]; do
+      if [ "${REPO_EXCL_NAME[$i]}" = "${REPO_EXCL_NAME[$j]}" ]; then
+        _repo_plan_fail "excluded twice: ${REPO_EXCL_NAME[$i]} -- one entry per repository"
       fi
       j=$((j + 1))
     done

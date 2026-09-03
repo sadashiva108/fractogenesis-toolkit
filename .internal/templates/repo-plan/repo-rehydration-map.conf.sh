@@ -3,7 +3,7 @@
 #
 # Most keys are derived, not declared. A source with KEYED_BY=repo-name finds
 # its bundle by the repository's name; one with KEYED_BY=pre-image-path finds it
-# by the audit's path minus PATH_ROOT. Both are right for the great majority of
+# by the audit's path minus PRE_IMAGE_ROOT. Both are right for the great majority of
 # repositories, and this file should be EMPTY on a machine where they hold.
 #
 # It exists for the cases the derivation gets wrong:

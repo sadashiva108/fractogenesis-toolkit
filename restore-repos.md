@@ -262,6 +262,7 @@ The `reimage.env` values this runbook depends on. `REIMAGE_ARTIFACT_ROOT` is res
 | `FRACTOGENESIS_HOME` | Toolkit root; where `reimage.env` lives. Until this phase it points at the `curl` or jump-drive install from Phase 8, not a clone — see [[#Step 4 — Repoint at the Cloned Toolkit|Step 4 — Repoint at the Cloned Toolkit]]. |
 | `REIMAGE_ARTIFACT_ROOT` | Artifact root where Phase 2A wrote the pre-image audit and where this runbook writes its status bundle. Must be mounted; the script fails fast if it is not. |
 | `REIMAGE_WORKSPACE_ROOT` | Where the clone plan lives, in `repo-plan/`. Set during `prepare-artifact-root.md`. If it resolves to nothing the run falls back to the committed templates, whose entries are all commented out — a run against those loads clean, reports every repository `unreviewed`, and clones nothing. The script warns on stderr when that happens; Step 0d is what prevents it. |
+| `PRE_IMAGE_PROJECTS_ROOT` | The projects root the IntelliJ capture walked **on the pre-image machine** — the prefix the `project-metadata` source subtracts from each audit path to get its key. Written **by this runbook**, in Step 0d. It is a pre-image path and will not exist on the reimaged Mac; that is expected, because nothing resolves it against this disk. `app-settings-backup/intellij/README.md` records the value the capture actually used, under *Projects root scanned for project-level IntelliJ metadata*. |
 | `DMG_MOUNT` | Not from `reimage.env`. Set in the shell for Step 6 only, naming the attached secrets image. A rehydration source that needs the image and does not find it is recorded `blocked`, not failed — attach it later and rerun that stage. |
 | `LOCAL_WORK_REPO_ROOT` | Directory holding work repos. A repository whose `origin` host is `$GIT_WORK_GITHUB_HOST` clones into here, and so does one whose host matches neither routing host — with the reason printed above its clone command. |
 | `LOCAL_PERSONAL_REPO_ROOT` | Directory holding personal repos. A repository clones into here only when its `origin` host is `$GIT_PERSONAL_GITHUB_HOST` *and* its owner matches `$GIT_PERSONAL_GITHUB_OWNER`. The pre-image directory is not consulted: it says nothing about who owns the remote, and the root a repository sits under is what `includeIf` uses to decide its commit identity. |
@@ -379,7 +380,8 @@ sets it, and Step 1 is the first thing that reads it.
 
 Blank is a valid answer and means *never rewrite*: a repository still routes on
 its remote host, but every one that routes personal on the host alone carries a
-`# REVIEW:` line saying the owner was not checked, for you to read in Step 2. Skip this on a Mac
+`REVIEW:` note on its clone row in `hydrated.md` saying the owner was not
+checked, for you to read in Step 2. Skip this on a Mac
 with no personal identity — 0a's *Clone roots set and distinct* row has already
 established there is no personal root, and an owner without a root routes
 nothing.
@@ -433,6 +435,48 @@ every repository comes back `unreviewed` and nothing is cloned. The script warns
 on stderr when it falls back to the committed templates, which is the case worth
 noticing — it means the workspace directory is missing, not that the phase has
 nothing to do.
+
+**Record the projects root the fragments expand.**
+`repo-rehydration-sources.conf.sh` is sourced, so `$PRE_IMAGE_PROJECTS_ROOT`
+inside it expands from the environment. Unset, it expands to nothing, and a
+source that subtracts an empty prefix matches no repository and restores no IDE
+metadata — silently, because every row simply reads `skipped`.
+
+It is a **pre-image** path: it names a directory that does not exist on this Mac,
+and nothing resolves it against this disk. Read the value the capture actually
+used rather than reconstructing it, then record it:
+
+```bash
+grep -A 2 'Projects root scanned' \
+  "$REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/README.md"
+```
+
+```bash
+export PRE_IMAGE_PROJECTS_ROOT="paste-the-path-printed-above"
+
+python3 bin/prepare-artifact-root.py \
+  upsert-env \
+  --env-file reimage.env \
+  "PRE_IMAGE_PROJECTS_ROOT=$PRE_IMAGE_PROJECTS_ROOT"
+```
+
+Confirm what landed, rather than trusting the write:
+
+```bash
+grep -E '^(export )?PRE_IMAGE_PROJECTS_ROOT=' reimage.env
+```
+
+Set it to the projects root itself, never to a directory inside it. Everything
+below the root becomes the key, so a repository at
+`<root>/apicoe/enterprise-search` keys as `apicoe/enterprise-search` and its
+bundle is found at that path. A deeper value looks like it narrows the source to
+the repositories you care about and instead removes them: the ones in other
+subtrees stop matching the prefix entirely, and the ones under it get a key with
+the group segment missing, which matches nothing.
+
+Skip this only if the plan declares no `KEYED_BY=pre-image-path` source. The
+reader refuses a source that needs `PRE_IMAGE_ROOT` and has none, so a plan that
+needs the value and lacks it fails loudly rather than restoring nothing.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 

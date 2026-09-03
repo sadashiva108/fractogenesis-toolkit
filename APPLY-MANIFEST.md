@@ -1,5 +1,9 @@
 # Apply Manifest
 
+**Revision 150** — supersedes Revision 149 and earlier. Three clone-plan fields that were stored and never read now do what they say, a clone stops keeping the fork and throwing the org away, and the field whose name did not say which machine it meant is renamed.
+
+**Revision 149** — supersedes Revision 148 and earlier. The two references that draw `reimaged-system/` agree with each other and with the drive.
+
 **Revision 148** — supersedes Revision 147 and earlier. The runbook and five other documents stop describing three scripts that are no longer written.
 
 **Revision 147** — supersedes Revision 146 and earlier. The clone plan gets the run that acts on it, a record of what that run did, and a `--dry-run` that means what it says everywhere else.
@@ -417,6 +421,253 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `scan-archive-contents.sh` | `.internal/home/scan-archive-contents.sh` |
 | `scan-postman-collections.py` | `.internal/home/scan-postman-collections.py` |
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
+
+---
+
+## Revision 150 — three fields that were written down and never read
+
+The clone plan gained its fields over Revisions 143 through 147. Filling one in
+for real, against the actual audit, found that three of them went nowhere.
+
+### `REMOTE_NAME` selected nothing
+
+`repo_plan_add REMOTE_NAME=shiva` was parsed, validated, stored in
+`REPO_PLAN_REMOTE[]` — and never read. Only `REMOTE_FETCH_URL` reached the
+cloner. So a plan that named a remote got the audit's default one, silently, and
+looked from the outside exactly like a plan that had worked.
+
+It matters more than a wrong URL. `reference-vault` has two remotes: `origin` on
+the enterprise server and `shiva` on `github.com`. Routing reads the URL's host,
+so ignoring `REMOTE_NAME` sent it to the **work root** — where `includeIf`
+authors its commits with the work address and offers the work key, for a personal
+repository.
+
+`extract_remote_url_named` resolves a named remote out of the audit's own
+remotes column, and the plan join now happens **before** `classify_repo` so the
+chosen remote decides the root as well as the URL. Three sources, most specific
+first: an explicit `REMOTE_FETCH_URL`, then `REMOTE_NAME`, then the audit's
+default.
+
+An explicit `REMOTE_FETCH_URL` is now used verbatim rather than passed through
+`rewrite_remote_for_host`. Someone who wrote the URL out has answered the
+question the rewrite exists to ask.
+
+Moving the join above `classify_repo` broke `--emit-plan` on the first attempt,
+which is worth recording because the failure was invisible in the diff. The
+proposal writes `REMOTE_NAME` and `REMOTE_FETCH_URL` together; the URL started
+following the resolved plan while the name kept coming from `extract_remote_name`
+on the raw audit. Against a workspace that already had a plan, that emitted
+`REMOTE_NAME=origin` beside the `orah` fork's URL. A proposal naming one remote
+and quoting another's is worse than either alone — it reads as reviewed and is
+self-contradictory. Name and URL are resolved together now, in one place, and
+the emitter takes both from there.
+
+A `REMOTE_NAME` the audit never recorded falls back to the default so the run
+still reports — and says so, because that is the case that would otherwise look
+identical to the bug this revision fixes.
+
+### The clone kept the fork and threw the org away
+
+`REMOTE_NAME` working exposed the thing downstream of it. After cloning, the
+audit's other remotes are re-added to the new working tree, and that loop chose
+what to skip by the literal name `origin` rather than by which remote the bytes
+had just come from.
+
+With `REMOTE_NAME` inert that was correct by accident: the clone was always from
+`origin`, so skipping `origin` skipped the one git had already created. The
+moment a plan could name a fork, the same line produced this:
+
+    origin  -> the fork      (git clone <fork-url> named it that)
+    orah    -> the fork      (re-added from the audit)
+
+The org remote, gone. `git fetch origin` quietly hitting a personal fork, in a
+repository that looks correctly restored, for as long as nobody runs
+`git remote -v`. It is the failure mode that would have survived longest of
+anything in this phase, because every visible signal says success.
+
+The remote set is now restored **verbatim** from the audit — every name, every
+URL, `origin` included. `repo_hydrate_clone` takes the expected origin as its
+own argument, separate from the URL it clones from, and the two differ exactly
+when a plan names a fork. Which remote the bytes came from is not which remote
+the repository belongs to, and the code now says so in two places instead of
+conflating them in one.
+
+An explicit `REMOTE_FETCH_URL` is the one case where they are the same by
+declaration: a URL the audit never recorded is a statement that the repository
+now lives there, so it becomes origin.
+
+`REMOTE_NAME` still decides routing. Naming a remote is a claim about whose
+repository this is, and the root is what `includeIf` reads to pick the identity
+that authors its commits — so the claim has to reach it.
+
+### A named fork made every rerun report a conflict
+
+Same root cause, second symptom. The presence test compared the working tree's
+`origin` against the URL the run would clone from. Under a plan naming a fork
+those are different by design, so a correctly restored repository came back
+`conflict` on every rerun — and a `conflict` now quarantines it from every
+rehydration stage, so the sources would have stopped applying too.
+
+It compares against the expected origin now. Proven by cloning from a fork and
+rerunning: `present`, and the sources ran.
+
+### `ROUTE_REVIEW` was computed in five places and displayed in none
+
+It carried the reason a repository was routed where it was when the answer was
+not obvious: no remote at all, an unrecognised host, the personal host under
+somebody else's owner. It reached the operator on a `# REVIEW:` line inside
+`clone-commands.sh`, and Revision 147 deleted that file without rehoming its one
+output. Five carefully worded diagnostics, including *this repository cannot be
+cloned*, went to nothing for three revisions.
+
+It is on the clone row in `hydrated.md` now:
+
+    | engagements | clone | `no-url` | no remote recorded; nothing can clone it
+      -- REVIEW: no remote recorded in the pre-image audit -- this repository
+      cannot be cloned |
+
+### A repository could be excluded twice
+
+`repo_plan_validate` refused a repository selected twice, and a repository both
+selected and excluded, but not one excluded twice. Harmless to the run — the
+first match wins and the reasons usually agree — but a duplicate is a file
+edited twice without being read, and the second reason is the one nobody will
+ever see. Now refused with the same wording as its sibling.
+
+### `PATH_ROOT` is `PRE_IMAGE_ROOT`
+
+`PATH_ROOT` did not say which machine's path it meant, and on a reimaged Mac
+that is the only thing worth saying about it: the value names a directory that
+no longer exists and is never resolved against this disk. It is a prefix
+subtracted from recorded paths, nothing more.
+
+`PRE_IMAGE_PATH` was considered and rejected. `KEYED_BY=pre-image-path` already
+uses that phrase for the repository's own audit path, so the two senses would
+have collided inside a single call.
+
+The field is deliberately general rather than named for the projects root: it
+takes the new `$PRE_IMAGE_PROJECTS_ROOT` as its value today, and a future source
+keyed by some other captured root needs no new field.
+
+### `PRE_IMAGE_PROJECTS_ROOT`
+
+New in `reimage.env`, owned by `restore-repos.md` Step 0d, listed in
+`reimage.env.example` among the keys another runbook records. The projects root
+the IntelliJ capture walked, on the pre-image machine.
+
+Step 0d records it the way Step 0c records the personal-repo owner — read the
+value out of `app-settings-backup/intellij/README.md`, `upsert-env` it into
+`reimage.env`, `grep` it back rather than trusting the write. Reading it beats
+reconstructing it: the README states the root the capture actually used, and a
+reconstructed one that is merely plausible fails silently.
+
+Unset, it expands to nothing inside the sourced fragment, and a source
+subtracting an empty prefix matches nothing and restores nothing — every row
+reads `skipped` and the run looks clean. That is the case the step exists to
+prevent.
+
+The value has to be the projects root itself, and the template now says so with
+the reason. A deeper value is the natural mistake — it looks like it narrows the
+source to the repositories you care about, and instead it removes them. Measured
+against the real audit: `PRE_IMAGE_ROOT=<projects root>` gives 18 bundles found
+and 5 honestly absent across the 23 repositories under it. `<projects
+root>/apicoe` gives **zero** — the 11 repositories in the other subtrees get no
+key at all, and the 12 under `apicoe` get a key with the group segment missing,
+which matches nothing because `project-metadata/` mirrors the tree below the
+root.
+
+### Validation
+
+`bash -n` clean on all three. `verify-script-portability.sh` 81 clean / 0 WARN /
+0 FAIL. `verify-runbook-structure.sh` 213 PASS / 5 WARN / 25 FAIL across 27
+documents, and `verify-doc-paths.sh --all` 759 OK / 0 MISSING / 0 ANCHOR BROKEN
+— all unchanged.
+
+The remote-set reconstruction was exercised on real local bare repositories
+rather than in the report: an org, a fork, and a third URL the audit never
+recorded. Cloning from the fork leaves `origin` on the org and `orah` on the
+fork; cloning without a `REMOTE_NAME` leaves the identical set; an explicit
+`REMOTE_FETCH_URL` becomes origin. Rerunning the fork case reports `present`.
+
+Exercised against the **live artifact root** with a real 27-repository audit,
+using `--dry-run`, which writes nothing: 6 planned / 14 excluded / 7 unreviewed
+/ 0 plan warnings. `reference-vault` resolved through `REMOTE_NAME=shiva` to
+`github.com/sadashiva108` and to the **personal** root; `enterprise-search`
+resolved through `REMOTE_NAME=orah` to the fork rather than the upstream. Both
+new guards were provoked deliberately and both fired. `--emit-plan` still
+round-trips, now emitting `PRE_IMAGE_ROOT`.
+
+**All of it ran on Linux with Bash 5.x.** `/bin/bash -n` against real macOS Bash
+3.2 is owed here along with Revisions 116–149.
+
+---
+
+## Revision 149 — two references say what is actually on the drive
+
+`reimaged-system/` is documented in two places, and both had drifted from the
+directory itself.
+
+### `enrollment/` is not there
+
+`master-directory-reference.md` listed `reimaged-system/enrollment/`, annotated
+*Phase 8 screenshots only — the records live under restarts/*. The annotation was
+already saying it held nothing anyone reads. `record-enrollment.sh` writes its
+runs into `reimaged-system/restarts/`; the `enrollment/` directory it can fall
+back to is `$REIMAGE_WORKSPACE_ROOT/enrollment/`, on the workspace, which
+`verify-reimaged-system.md` documents and this reference already covers in its
+workspace-versus-artifact-root section. Removed. The drive has six directories
+under `reimaged-system/` and this was not one of them.
+
+### `restore-file-reference.md` was three revisions behind
+
+Its `reimaged-system/` tree listed `restarts/` **three times** — once as a run
+category, once flattened as `restarts/runs/verify-reimaged-system-*`, once bare
+at the end — and was missing `boundaries/`, `comparisons/` and `state/`
+altogether, which are three of the six directories actually on the drive. It also
+carried `time-machine/` as a child, when that is a top-level category at the
+artifact root.
+
+The tree is now the same six directories the master reference draws, in the same
+shape: `MANIFEST.md`, `official/<context>.txt`, `runs/<context>-YYYYMMDD-HHMMSS/`.
+The per-file detail of the Phase 9 bundle that had been flattened into the tree
+was not lost — it is in the *Need / Source or destination* table below it, with
+full paths, which is where a lookup reference wants it.
+
+Four rows were added to that table for the categories the tree had been missing,
+plus the post-image capstone.
+
+`sign-offs/` was documented as `<runbook>-YYYYMMDD-HHMMSS.md` alongside a
+`latest-<runbook>.txt` pointer. There is no such pointer and there is deliberately
+no such pointer: officialness under `official/` is computed latest-wins, so
+keeping an answered file authoritative by pointer would depend on remembering to
+pin it after every edit — the failure sign-offs exist to prevent. The row now
+says `<run-id>.md`, one file per run, and carries the reason.
+
+### `repo-plan/` joins the machine-customized config table
+
+Same class as `artifact-config/` and `staged-certs/`: a template shipped in
+`.internal/templates/`, seeded into the workspace, read from there, and falling
+back to the committed copy with a warning. It was the only one of the four
+missing from that table, and it is the sharpest case of why the warning exists —
+every entry in its templates is commented out, so a run against them parses
+cleanly, selects nothing, and reports every repository unreviewed, which reads as
+a phase with nothing to do rather than as a plan that was never seeded.
+
+### Validation
+
+`verify-doc-paths.sh --all` 759 OK / 0 MISSING / 0 ANCHOR BROKEN, with WARN down
+from 129 to 125 — the four that cleared were bare filenames in the removed
+flattened tree, each still named with a full path in the table below it.
+`verify-runbook-structure.sh` 213 PASS / 5 WARN / 25 FAIL across 27 documents,
+unchanged. No script changed, so no `bash -n` or portability run applies.
+
+The six directories were read off the mounted artifact root rather than inferred:
+`boundaries`, `comparisons`, `restarts`, `restore-notes`, `sign-offs`, `state`.
+`checklists/` is kept in both references though it is not on the drive — it is
+the post-image capstone's output root, created by `bin/reimage-checklist.sh
+--phase post` when Phase 14 runs, and `bin/record-restore-prereqs.sh` reads it.
+
+**Ran on Linux with Bash 5.x.**
 
 ---
 

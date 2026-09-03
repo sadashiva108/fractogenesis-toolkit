@@ -544,6 +544,17 @@ PERSONAL_HOST="${GIT_PERSONAL_GITHUB_HOST:-github-personal}"
 WORK_ROOT="${WORK_ROOT%/}"
 PERSONAL_ROOT="${PERSONAL_ROOT%/}"
 
+extract_remote_url_named() {
+  # The fetch URL of one NAMED remote, or empty when the audit recorded no such
+  # remote for this repository. Separate from extract_remote_url because "no
+  # remote by that name" has to be distinguishable from "the default one": a
+  # plan that names a remote the audit never saw is a plan error, and silently
+  # falling back to origin is how a repository gets cloned from the wrong side.
+  local remotes="$1" want="$2"
+  printf '%s\n' "$remotes" | tr ';' '\n' \
+    | awk -v n="$want" '$1 == n && /\(fetch\)/ {print $2; exit}'
+}
+
 extract_remote_url() {
   # Given the raw remote_urls field, return the first origin fetch URL, or
   # any URL if origin fetch is not present.
@@ -876,11 +887,6 @@ do
 
   TOTAL=$((TOTAL + 1))
   label="$(basename "$repo_path")"
-  remote_url="$(extract_remote_url "$remotes")"
-
-  classify_repo "$repo_path" "$remote_url"
-
-  clone_url="$(rewrite_remote_for_host "$remote_url" "$CLONE_HOST")"
 
   # -----------------------------------------------------------------
   # Join the audit row against the plan
@@ -889,6 +895,12 @@ do
   # repository in neither the selected nor the excluded fragment is UNREVIEWED:
   # reported every run, never cloned, never silently skipped. A default action
   # here is how a repository nobody decided about goes missing.
+  #
+  # This runs BEFORE classify_repo because the plan can change which remote the
+  # repository comes from, and the root a repository lands in is decided by that
+  # remote's host. Routing on the audit's default remote and then cloning from a
+  # different one puts the clone under the root that authors its commits with
+  # the wrong identity -- the exact failure host-based routing exists to prevent.
   # -----------------------------------------------------------------
   plan_idx=""
   plan_state="unreviewed"
@@ -906,11 +918,63 @@ do
     done
   fi
 
+  # Which remote this repository comes from. Three sources, most specific first:
+  # an explicit REMOTE_FETCH_URL, a REMOTE_NAME resolved against the audit's own
+  # remotes, then the audit's default (origin, or the first one recorded).
+  remote_url=""
+  remote_name=""
+  # What `origin` must be in the finished clone. Normally the audit's origin --
+  # the repository's home -- even when the plan pulls the bytes from a fork.
+  # An explicit REMOTE_FETCH_URL replaces it, because a URL the audit never
+  # recorded is a declaration that this is where the repository now lives.
+  origin_url="$(extract_remote_url "$remotes")"
+  PLAN_URL_EXPLICIT=false
+  REMOTE_NAME_REVIEW=""
+  if [[ -n "$plan_idx" ]]; then
+    if [[ -n "${REPO_PLAN_URL[$plan_idx]}" ]]; then
+      remote_url="${REPO_PLAN_URL[$plan_idx]}"
+      remote_name="${REPO_PLAN_REMOTE[$plan_idx]}"
+      origin_url="$remote_url"
+      PLAN_URL_EXPLICIT=true
+    elif [[ -n "${REPO_PLAN_REMOTE[$plan_idx]}" ]]; then
+      remote_url="$(extract_remote_url_named "$remotes" "${REPO_PLAN_REMOTE[$plan_idx]}")"
+      remote_name="${REPO_PLAN_REMOTE[$plan_idx]}"
+      if [[ -z "$remote_url" ]]; then
+        remote_name=""
+        # Named a remote the audit does not carry. Fall back so the run still
+        # reports, but say so -- a silently ignored REMOTE_NAME looks exactly
+        # like one that worked.
+        REMOTE_NAME_REVIEW="the plan names remote '${REPO_PLAN_REMOTE[$plan_idx]}', which the audit did not record for this repository -- using the default remote instead"
+      fi
+    fi
+  fi
+  # Name and URL are resolved together, always. They are two halves of one
+  # answer -- which remote this repository comes from -- and --emit-plan writes
+  # both into a proposal. A proposal naming one remote and quoting another's URL
+  # is worse than either alone: it reads as reviewed and is self-contradictory.
+  if [[ -z "$remote_url" ]]; then
+    remote_url="$origin_url"
+    remote_name="$(extract_remote_name "$remotes")"
+  fi
+
+  classify_repo "$repo_path" "$remote_url"
+
+  # An explicit REMOTE_FETCH_URL is used verbatim: the operator wrote the URL
+  # they want, and rewriting it would answer a question they already answered.
+  if [[ "$PLAN_URL_EXPLICIT" == true ]]; then
+    clone_url="$remote_url"
+  else
+    clone_url="$(rewrite_remote_for_host "$remote_url" "$CLONE_HOST")"
+  fi
+
+  if [[ -n "$REMOTE_NAME_REVIEW" ]]; then
+    ROUTE_REVIEW="${ROUTE_REVIEW:+$ROUTE_REVIEW; }$REMOTE_NAME_REVIEW"
+  fi
+
   hydrate_url="$clone_url"
   hydrate_dest="$CLONE_DEST"
   if [[ -n "$plan_idx" ]]; then
     PLANNED_COUNT=$((PLANNED_COUNT + 1))
-    [[ -n "${REPO_PLAN_URL[$plan_idx]}" ]]  && hydrate_url="${REPO_PLAN_URL[$plan_idx]}"
     [[ -n "${REPO_PLAN_PATH[$plan_idx]}" ]] && hydrate_dest="${REPO_PLAN_PATH[$plan_idx]}"
   elif [[ "$plan_state" == "excluded" ]]; then
     EXCLUDED_COUNT=$((EXCLUDED_COUNT + 1))
@@ -967,12 +1031,12 @@ do
     if stage_selected clone; then
       if [[ "$HYDRATE" == true ]]; then
         repo_hydrate_clone "$label" "$hydrate_url" "$hydrate_dest" \
-          "$branch" "$head_sha" "$remotes" "$DRY_RUN"
+          "$branch" "$head_sha" "$remotes" "$DRY_RUN" "$origin_url"
       else
         # No --hydrate: report the state without acting, using the same
         # resolution the acting path would use.
         repo_hydrate_clone "$label" "$hydrate_url" "$hydrate_dest" \
-          "$branch" "$head_sha" "$remotes" "true"
+          "$branch" "$head_sha" "$remotes" "true" "$origin_url"
         case "$HYDRATE_OUTCOME" in
           would-clone) HYDRATE_OUTCOME="needs-clone"; HYDRATE_DETAIL="absent at $hydrate_dest" ;;
         esac
@@ -981,7 +1045,17 @@ do
         cloned)   CLONED_COUNT=$((CLONED_COUNT + 1)) ;;
         conflict) CONFLICT_COUNT=$((CONFLICT_COUNT + 1)); repo_conflicted=true ;;
       esac
-      printf '%s\t%s\t%s\t%s\n' "$label" "clone" "$HYDRATE_OUTCOME" "$HYDRATE_DETAIL" >> "$HYDRATION_TSV"
+      # ROUTE_REVIEW is why this repository was routed the way it was, when the
+      # answer was not obvious: no remote at all, an unrecognised host, the
+      # personal host under somebody else's owner, a REMOTE_NAME the audit does
+      # not carry. It used to ride on a `# REVIEW:` line in the emitted clone
+      # script; with that gone it belongs on the clone row, which is the only
+      # place a reader now looks to find out what this run decided.
+      clone_detail="$HYDRATE_DETAIL"
+      if [[ -n "$ROUTE_REVIEW" ]]; then
+        clone_detail="${clone_detail:+$clone_detail -- }REVIEW: $ROUTE_REVIEW"
+      fi
+      printf '%s\t%s\t%s\t%s\n' "$label" "clone" "$HYDRATE_OUTCOME" "$clone_detail" >> "$HYDRATION_TSV"
     fi
 
     src_i=0
@@ -1023,7 +1097,6 @@ do
   # proposed commented-out with the reason rather than as a live entry — the
   # decision is the operator's, and a silent live entry would pre-empt it.
   if [[ "$EMIT_PLAN" == true ]]; then
-    remote_name="$(extract_remote_name "$remotes")"
     if [[ -n "$remote_url" ]]; then
       {
         printf 'repo_plan_add \\\n'
@@ -1110,17 +1183,17 @@ emit_plan_proposal() {
       if [[ -n "$projects_root" ]]; then
         printf 'repo_source_add \\\n  ARTIFACT_TYPE=project-metadata \\\n'
         printf '  ARTIFACT_ROOT="$REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/project-metadata" \\\n'
-        printf '  KEYED_BY=pre-image-path \\\n  PATH_ROOT=%s \\\n' "$projects_root"
+        printf '  KEYED_BY=pre-image-path \\\n  PRE_IMAGE_ROOT=%s \\\n' "$projects_root"
         printf '  REQUIRES=artifact-root \\\n  MODE=merge \\\n'
         printf '  DESCRIPTION="Per-project IDE metadata, keyed by path under the projects root"\n\n'
       else
         printf '# project-metadata is present but the projects root it was captured from\n'
         printf '# could not be read from app-settings-backup/intellij/README.md.\n'
         printf '# KEYED_BY=pre-image-path needs it: the key is each audit path with that\n'
-        printf '# prefix removed. Fill PATH_ROOT in and uncomment.\n'
+        printf '# prefix removed. Fill PRE_IMAGE_ROOT in and uncomment.\n'
         printf '# repo_source_add ARTIFACT_TYPE=project-metadata \\\n'
         printf '#   ARTIFACT_ROOT="$REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/project-metadata" \\\n'
-        printf '#   KEYED_BY=pre-image-path PATH_ROOT=<projects root> \\\n'
+        printf '#   KEYED_BY=pre-image-path PRE_IMAGE_ROOT=<projects root> \\\n'
         printf '#   REQUIRES=artifact-root MODE=merge\n\n'
       fi
     fi
@@ -1143,7 +1216,7 @@ emit_plan_proposal() {
   {
     printf '%s\n#\n' "$banner"
     printf '# Empty on purpose. Keys are derived: a repo-name source finds its bundle by\n'
-    printf '# REPO_NAME, and a pre-image-path source by the audit path minus PATH_ROOT.\n'
+    printf '# REPO_NAME, and a pre-image-path source by the audit path minus PRE_IMAGE_ROOT.\n'
     printf '# Add an entry only where the derivation is wrong -- a bundle belonging to a\n'
     printf '# grouping project rather than one repository, a repository whose path moved\n'
     printf '# since the audit, or a source with no derivation at all.\n'

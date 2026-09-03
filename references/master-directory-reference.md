@@ -87,15 +87,19 @@ artifact root.**
 | `artifact-config/` | `.internal/templates/artifact-config/` | `$REIMAGE_WORKSPACE_ROOT/artifact-config/` | `prepare-artifact-root.py init-artifact-config` |
 | `staged-certs/` | `.internal/templates/staged-certs/` | `$REIMAGE_WORKSPACE_ROOT/staged-certs/` | `stage-certs-keychain.sh init-staged-certs-config` |
 | `intellij-review/` | none — generated from seed lists | `$REIMAGE_WORKSPACE_ROOT/intellij-review/` | `backup-apps.sh --init-intellij-review` |
+| `repo-plan/` | `.internal/templates/repo-plan/` | `$REIMAGE_WORKSPACE_ROOT/repo-plan/` | `restore-repos.sh init-repo-plan-config` |
 
 These get copied or generated into the workspace once and are edited for this Mac.
 The first two ship as generic templates with example paths and cannot live on the
 artifact root because they are read *before it exists* — `EXPECTED_ARTIFACT_FOLDERS`
 is what Phase 1 uses to create it. All three resolvers prefer the workspace copy.
 
-`artifact-config/` and `staged-certs/` fall back to the committed templates and warn
-when `REIMAGE_WORKSPACE_ROOT` is set but the directory is missing, because a silent
-fallback means running against generic example targets.
+`artifact-config/`, `staged-certs/` and `repo-plan/` fall back to the committed
+templates and warn when `REIMAGE_WORKSPACE_ROOT` is set but the directory is
+missing, because a silent fallback means running against generic example targets.
+`repo-plan/` is the sharpest case: every entry in its templates is commented out,
+so a run against them parses cleanly, selects nothing, and reports every
+repository unreviewed — which reads as a phase with nothing to do.
 
 `intellij-review/` differs on both counts, deliberately. There is no committed
 template tier: both files are generated from the seed lists in
@@ -506,7 +510,6 @@ Not every run creates every folder immediately. Some folders are phase-specific,
 > │       └── <runbook>-<what>-diff-YYYYMMDD-HHMMSS/
 > │           ├── comparison.md
 > │           └── rows.tsv
-> ├── enrollment/                       # Phase 8 screenshots only — the records live under restarts/
 > ├── restarts/
 > │   ├── MANIFEST.md
 > │   ├── official/

@@ -122,33 +122,28 @@ $REIMAGE_ARTIFACT_ROOT/
 │   ├── post-image-performance-audit-<scenario>-YYYYMMDD-HHMMSS/
 │   └── rollup-summary/
 ├── reimaged-system/
-│   ├── restarts/
+│   ├── boundaries/
 │   │   ├── MANIFEST.md
-│   │   ├── official/
-│   │   └── runs/enroll-and-stabilize-<point>-YYYYMMDD-HHMMSS/
+│   │   ├── official/<runbook>-<point>.txt
+│   │   └── runs/<runbook>-<point>-YYYYMMDD-HHMMSS/
 │   ├── checklists/
 │   │   ├── MANIFEST.md
-│   │   ├── official/
-│   │   │   └── post-image.txt
-│   │   └── runs/
-│   │       └── post-image-YYYYMMDD-HHMMSS/
-│   │           └── reimage-checklist.md
-│   ├── restarts/runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/
-│   │   ├── README.md
-│   │   ├── checklist.md
-│   │   ├── manual-captures-required.md
-│   │   ├── restart-checkpoints.md
-│   │   ├── time-machine-plan.md
-│   │   ├── checks/
-│   │   ├── logs/
-│   │   └── raw/
-│   ├── restarts/official/verify-reimaged-system-<point>.txt
-│   ├── sign-offs/
-│   │   ├── <runbook>-YYYYMMDD-HHMMSS.md
-│   │   └── latest-<runbook>.txt
-│   ├── restore-notes/
+│   │   ├── official/post-image.txt
+│   │   └── runs/post-image-YYYYMMDD-HHMMSS/
+│   ├── comparisons/
+│   │   ├── MANIFEST.md
+│   │   ├── official/<runbook>-<what>-diff.txt
+│   │   └── runs/<runbook>-<what>-diff-YYYYMMDD-HHMMSS/
 │   ├── restarts/
-│   └── time-machine/
+│   │   ├── MANIFEST.md
+│   │   ├── official/<runbook>-<point>.txt
+│   │   └── runs/<runbook>-<point>-YYYYMMDD-HHMMSS/
+│   ├── restore-notes/
+│   ├── sign-offs/<run-id>.md
+│   └── state/
+│       ├── MANIFEST.md
+│       ├── official/<runbook>-<point>.txt
+│       └── runs/<runbook>-<point>-YYYYMMDD-HHMMSS/
 ├── secrets-encrypted/
 │   ├── all-secrets-YYYYMMDD-HHMMSS.dmg
 │   ├── all-secrets-YYYYMMDD-HHMMSS-manifest.txt
@@ -230,10 +225,14 @@ These paths are used before deeper restore work begins.
 | Initial bundle summary and checklist | `reimaged-system/restarts/runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/README.md`, `reimaged-system/restarts/runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/checklist.md` |
 | Initial bundle manual follow-up files | `reimaged-system/restarts/runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/manual-captures-required.md`, `reimaged-system/restarts/runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/restart-checkpoints.md`, `reimaged-system/restarts/runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/time-machine-plan.md` |
 | Initial bundle raw evidence folders | `reimaged-system/restarts/runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/raw/`, `reimaged-system/restarts/runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/logs/` |
-| Rows a person answers, per runbook | `reimaged-system/sign-offs/<runbook>-YYYYMMDD-HHMMSS.md`, `reimaged-system/sign-offs/latest-<runbook>.txt` |
+| Rows a person answers, per run | `reimaged-system/sign-offs/<run-id>.md` — one file per run, named for it, so `Answered against` in each row points at something real. Not run-indexed and no `latest-*` pointer: a new run copies the previous file forward, so an answer survives a rerun and a row still naming an older run reads as *carried* rather than re-verified. |
 | Decisions no capture can hold, whole event | `reimaged-system/restore-notes/decisions.md` |
 | Manual early restore notes | `reimaged-system/restore-notes/` |
 | Restart notes or checkpoints | `reimaged-system/restarts/` |
+| Entry and exit boundary records, per runbook | `reimaged-system/boundaries/runs/<runbook>-{entry,exit}-YYYYMMDD-HHMMSS/`, `reimaged-system/boundaries/official/<runbook>-<point>.txt` |
+| Before, after and delta state captures | `reimaged-system/state/runs/<runbook>-<point>-YYYYMMDD-HHMMSS/`, `reimaged-system/state/official/<runbook>-<point>.txt` |
+| Restored-vs-baseline comparisons | `reimaged-system/comparisons/runs/<runbook>-<what>-diff-YYYYMMDD-HHMMSS/`, `reimaged-system/comparisons/official/<runbook>-<what>-diff.txt` |
+| Post-image capstone checklist | `reimaged-system/checklists/runs/post-image-YYYYMMDD-HHMMSS/reimage-checklist.md`, `reimaged-system/checklists/official/post-image.txt` |
 | First post-image backup notes | `time-machine/` — the root-level category, alongside the pre-image runs |
 
 Phase 8 can also stage locally under `REIMAGE_WORKSPACE_ROOT/` when the external drive is not mounted yet. Phase 9 Step 1 copies those runs into `$REIMAGE_ARTIFACT_ROOT/reimaged-system/` and reindexes the destination category, since a copied run carries no index row of its own.

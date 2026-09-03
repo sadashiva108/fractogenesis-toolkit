@@ -16,11 +16,17 @@
 # KEYED_BY       How a repository's bundle is found under ARTIFACT_ROOT:
 #                  repo-name       the bundle directory is REPO_NAME
 #                  pre-image-path  the audit's pre-image path, relative to
-#                                  PATH_ROOT
+#                                  PRE_IMAGE_ROOT
 #                  declared        no derivation; reachable only through
 #                                  repo-rehydration-map.conf.sh
-# PATH_ROOT      Required when KEYED_BY=pre-image-path. The root the capture
-#                walked, stripped from the audit path to give the key.
+# PRE_IMAGE_ROOT Required when KEYED_BY=pre-image-path. The root the capture
+#                walked, ON THE PRE-IMAGE MACHINE, stripped from the audit path
+#                to give the key. Everything below it is the key, so a repo at
+#                <root>/apicoe/enterprise-search keys as apicoe/enterprise-search
+#                and the bundle is looked for at that path under ARTIFACT_ROOT.
+#                Set it to the root itself, never to a directory inside it: a
+#                deeper value drops the repositories in the other subtrees, which
+#                have no key at all and are skipped.
 # REQUIRES       artifact-root | dmg. A dmg source with no image attached is
 #                recorded `blocked`, not failed -- attach it later and rerun.
 # MODE           merge   rsync -a into the repository
@@ -52,7 +58,7 @@
 #   ARTIFACT_TYPE=project-metadata \
 #   ARTIFACT_ROOT="$REIMAGE_ARTIFACT_ROOT/app-settings-backup/intellij/project-metadata" \
 #   KEYED_BY=pre-image-path \
-#   PATH_ROOT="<the projects root the capture walked>" \
+#   PRE_IMAGE_ROOT="$PRE_IMAGE_PROJECTS_ROOT" \
 #   REQUIRES=artifact-root \
 #   MODE=merge \
 #   DESCRIPTION="Per-project IDE metadata, keyed by path under the projects root"
