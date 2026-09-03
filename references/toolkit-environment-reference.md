@@ -190,33 +190,31 @@ Both installs share three properties worth keeping in mind while you use one:
 
 Phase 11B clones the toolkit into `$LOCAL_PERSONAL_REPO_ROOT`, because the toolkit lives under the personal repo root like any other repo. That clone is a *different instance* from the one you have been running since Phase 8, and switching to it is a deliberate act.
 
-```bash
-# Capture the current root first: after the repoint below, FRACTOGENESIS_HOME
-# names the clone and this is the only handle left on the bootstrap copy.
-TOOLKIT_BOOTSTRAP="$FRACTOGENESIS_HOME"
+Four things have to happen, and the commands are in
+[[restore-repos#Step 4 — Repoint at the Cloned Toolkit|restore-repos.md Step 4]]:
+carry `reimage.env` across, repoint the shell, approve `.envrc` in the clone, and
+remove the bootstrap copy last. What follows is why each is there, not how.
 
-# 1. Carry reimage.env across -- it is gitignored, so the clone does not have it.
-cp "$TOOLKIT_BOOTSTRAP/reimage.env" \
-   "$LOCAL_PERSONAL_REPO_ROOT/fractogenesis-toolkit/reimage.env"
+`reimage.env` is the one file the clone cannot have. It is gitignored, so it
+exists in exactly one place on this Mac until it is copied — and the failure of
+skipping it is not a missing-file error. Every `bin/` script starts failing to
+resolve `REIMAGE_ARTIFACT_ROOT`, in the middle of Phase 11B, where that reads as
+a repository-restore problem rather than as the copy that did not happen.
 
-# 2. Repoint the shell. init-shell-env.sh self-locates, so running it from the
-#    clone rewrites the profile block to point at the clone.
-bash "$LOCAL_PERSONAL_REPO_ROOT/fractogenesis-toolkit/bin/init-shell-env.sh"
+The shell repoint is `bin/init-shell-env.sh` run *from the clone*: it
+self-locates, so where it runs from is what it writes. Once direnv is active from
+[[restore-runtime#Step 6 — Install direnv and Restore the Repo Environment Hook|Phase 10A Step 6]]
+the profile block is already gone and `.envrc` does this on `cd`, so the repoint
+is a matter of approving the clone rather than rewriting a profile.
 
-# 3. Approve .envrc in the clone, if direnv is already installed.
-cd "$LOCAL_PERSONAL_REPO_ROOT/fractogenesis-toolkit" && direnv allow
+`.envrc` needs no copying — it is in the clone already. It does need approving:
+direnv's approval list is machine-local and keyed by content hash and path, so a
+byte-identical file at a new path is a new approval.
 
-# 4. Only once the above is confirmed working, remove the bootstrap copy.
-rm -rf "$TOOLKIT_BOOTSTRAP"
-```
-
-`.envrc` needs no copying — it is in the clone already. It does need approving: direnv's approval list is machine-local and keyed by content hash and path.
-
-> [!warning] Pitfall
-> Repointing without step 1 leaves the clone with no `reimage.env`, and every `bin/` script starts failing to resolve `REIMAGE_ARTIFACT_ROOT` — in the middle of Phase 11B, where it reads as a repo-restore problem rather than a missing file.
-
-> [!warning] Pitfall
-> Do step 4 last and only after confirming the clone works. Deleting the bootstrap copy first destroys the only copy of `reimage.env` on the machine if step 1 did not land.
+Removing the bootstrap copy is last, and only after a fresh login shell confirms
+the clone resolves. Deleting it first destroys the only copy of `reimage.env` on
+the machine if the copy did not land, leaving the jump drive as the only source.
+Step 4 carries the confirmation commands that make *confirmed* mean something.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
 
@@ -231,7 +229,7 @@ This reference describes how the environment behaves. It deliberately does not d
 | Which runbook owns each `reimage.env` key, and when each is written | [[environment-variable-reference\|Environment Variable Reference]] |
 | Creating `reimage.env` for a new reimage event, and first-time direnv setup | [[prepare-artifact-root|prepare-artifact-root.md]] (Phase 1) |
 | Building the jump-drive payload, and **proving** both the curl and jump-drive routes work | [[reimage-guide-access|reimage-guide-access.md]] (Phase 6A) |
-| Installing the toolkit after the erase, and restoring the shell environment | [[enroll-and-stabilize|enroll-and-stabilize.md]] (Phase 8, Steps 1–2) |
+| Installing the toolkit after the erase, and restoring the shell environment | [[enroll-and-stabilize|enroll-and-stabilize.md]] (Phase 8, Steps 2–3) |
 | Installing direnv on the rebuilt Mac | [[restore-runtime|restore-runtime.md]] (Phase 10A) |
 | Cloning the toolkit into the personal repo root, and the repoint that follows | [[restore-repos#Step 4 — Repoint at the Cloned Toolkit|restore-repos.md]] (Phase 11B, Step 4) |
 | Why the toolkit is fetched rather than cloned on a bare Mac | [[restore-strategy-guide|restore-strategy-guide.md]] |

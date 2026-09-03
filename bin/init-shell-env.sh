@@ -7,7 +7,7 @@
 # sources reimage.env, so every new Terminal starts with the workflow's
 # configuration already loaded.
 #
-# Runbook/phase context: enroll-and-stabilize.md (Phase 8), Step 2 — run once,
+# Runbook/phase context: enroll-and-stabilize.md (Phase 8), Step 3 — run once,
 # immediately after bootstrap.sh has put the toolkit on disk and reimage.env
 # has been copied back from the jump drive or the artifact volume.
 #
@@ -139,7 +139,7 @@ END_MARK="# <<< fractogenesis-toolkit reimage env <<<"
 
 read -r -d '' BLOCK <<EOF || true
 $BEGIN_MARK
-# Added by bin/init-shell-env.sh (enroll-and-stabilize.md, Phase 8 Step 2).
+# Added by bin/init-shell-env.sh (enroll-and-stabilize.md, Phase 8 Step 3).
 # Remove with: bash "\$FRACTOGENESIS_HOME/bin/init-shell-env.sh" --remove
 export FRACTOGENESIS_HOME="$REPO_ROOT"
 if [ -f "\$FRACTOGENESIS_HOME/reimage.env" ]; then

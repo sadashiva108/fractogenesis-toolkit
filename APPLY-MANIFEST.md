@@ -1,5 +1,7 @@
 # Apply Manifest
 
+**Revision 155** — supersedes Revision 154 and earlier. The toolkit repoint has one copy of its commands, and three citations of a renumbered Phase 8 step are corrected.
+
 **Revision 154** — supersedes Revision 153 and earlier. The carry-forward sign-off row stops asking about repositories the plan excludes, and says which of its rows a rescue branch could carry.
 
 **Revision 153** — supersedes Revision 152 and earlier. The status report stops restating the sign-off's rows and names where they actually live.
@@ -429,6 +431,57 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `scan-archive-contents.sh` | `.internal/home/scan-archive-contents.sh` |
 | `scan-postman-collections.py` | `.internal/home/scan-postman-collections.py` |
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
+
+---
+
+## Revision 155 — one copy of the repoint, and three step numbers that moved
+
+`restore-repos.md` Step 4 repoints the shell from the Phase 8 bootstrap install
+to the Phase 11B clone. `references/toolkit-environment-reference.md` carried the
+same four moves as a runnable block — and had already drifted from them.
+
+Step 4 gained a fresh login shell and three confirmation commands
+(`FRACTOGENESIS_HOME`, `REIMAGE_ARTIFACT_ROOT`, `git status`) before its
+`rm -rf`. The reference's copy still ended at *only once the above is confirmed
+working, remove the bootstrap copy*, without saying how to confirm — in front of
+an `rm -rf` of the only directory holding `reimage.env`. The doc that was less
+safe was the one nobody would think to update, because it disclaims owning the
+procedure in its own closing line: *this reference describes how the environment
+behaves. It deliberately does not duplicate the procedures that create or prove
+it.* Its *Owned Elsewhere* table already names Step 4 as the owner.
+
+The block is now prose: what each of the four moves is for and what breaks
+without it, with the commands one link away. The two Pitfalls fold into it,
+because both were explaining a numbered step in a list that is no longer there.
+The reasoning is worth keeping and is what a reference is for — copying
+`reimage.env` first is not obvious until you know that skipping it surfaces as
+`REIMAGE_ARTIFACT_ROOT` failing to resolve mid-phase, which reads as a
+repository problem rather than a missing file.
+
+### Three citations of a step that was renumbered
+
+`enroll-and-stabilize.md` Step 1 is *Reach Your Cheatsheet and Password Manager*;
+the toolkit install is Step 2 and the shell environment is Step 3. Three places
+still cited the numbering from before that:
+
+- `toolkit-environment-reference.md` *Owned Elsewhere* — "Phase 8, Steps 1–2"
+- `bin/init-shell-env.sh` header — "Phase 8, Step 2"
+- `bin/init-shell-env.sh` — the marker comment it writes into the shell profile,
+  "enroll-and-stabilize.md, Phase 8 Step 2"
+
+The third is the one worth fixing: it is written into `~/.zprofile` on the
+reimaged Mac and read months later by someone trying to find out what put it
+there.
+
+### Validation
+
+`bash -n` clean. `verify-doc-paths.sh --all` 758 OK / 0 MISSING / 0 ANCHOR
+BROKEN, with anchors up from 1107 to 1108 — the prose adds resolving links to
+Step 4 and to Phase 10A Step 6 where the removed block had none, and one path
+reference left with the block. `verify-runbook-structure.sh` 213 PASS / 5 WARN /
+25 FAIL and `verify-script-portability.sh` 81 clean / 0 FAIL, both unchanged.
+
+**Ran on Linux with Bash 5.x.**
 
 ---
 
