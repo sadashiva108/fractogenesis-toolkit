@@ -1,0 +1,135 @@
+
+
+Session handoff — Phase 11A (restore-git), 2026-09-01
+Written to be read alongside the other session's notes before starting a new one.
+Scope boundary, stated first: this session did not do the run-index / "runs refactor" work. That is session 013NFVJsYps4NbcG5UQTAm5U. Everything in the Run index part below is read back out of the repository, not reported from memory of doing it — treat it as a survey to check against their notes, not as a second account of the same work.
+
+1. What this session changed
+Three manifest revisions, all Phase 11A. All committed except the last two files.
+Revision 123 — the phase stops overwriting what it does not own
+File
+Change
+restore-git.md Step 3
+Reads ~/.ssh/config before truncating it. Phase 10B restores that file from the DMG; Step 3 replaced it wholesale with no record, so a jump host or extra Host block vanished silently.
+restore-git.md Step 3
+Direct-host vs alias presented as a decision with costs. GIT_PERSONAL_GITHUB_HOSTNAME added so the alias the docs already promised can actually be written — the heredoc previously put the same value in Host and HostName, so an alias produced a HostName DNS cannot resolve.
+restore-git.md Step 4
+"Authored, not restored" rationale. [include] path = ~/.config/git/config.local added first in the heredoc.
+restore-git.md Step 6
+Was a second copy of the identity; now the preferences overlay (aliases, pager, signing, LFS) that nothing in the runbook rewrites. Removes the duplicate-identity mirror and its "do not let them fight" Pitfall.
+restore-git.md Step 7
+Guard named the wrong cause (run this from the repository root for a missing reimage.env key). Scratch repo used a fixed name with an unguarded rm -rf, which would delete a real repository called test under either clone root. Now mktemp -d.
+restore-git.md Step 5
+Carried the identical scratch-repo defect; same fix.
+bin/record-restore-exit.sh
+New row: Personal SSH host resolves to a real server — parses the written Host block and fails when an alias has nothing real behind it.
+references/environment-variable-reference.md
+New key documented as Optional, explicitly outside the all-or-nothing GIT_PERSONAL_* group, with the reason.
+Revision 125 — the transport is not a given, and neither is the trust
+Driven by an actual walk of Step 7 on the corporate network.
+File
+Change
+restore-git.md Step 2
+Says which account to be signed into when comparing key fingerprints, and that a public key can sit on only one account per GitHub installation.
+restore-git.md Step 7
+Both hosts prompt for authenticity on a fresh Mac. An authenticity prompt is not an auth failure. Internal host verifies against the pre-image known_hosts on the artifact drive; github.com against GitHub's published keys.
+restore-git.md Troubleshooting
+New section SSH is blocked on this network — both symptoms, one cause, and the HTTPS + PAT switch.
+restore-git.md Step 5
+core.sshCommand governs SSH only; inert for https:// remotes.
+restore-git.md Decisions
+Protocol-per-identity row; dual-remote row.
+restore-git.md Supplemental Reference
+New One Repository, Two Remotes — authentication is per-remote, authorship is not.
+restore-access.md
+The ssh-keyscan probe covers the Host names present at probe time; Phase 11A rewrites them afterwards. Re-run the probe after that rewrite.
+restore-repos.md
+Its Pitfall told you to convert HTTPS URLs to SSH. The audit records the pre-image machine's protocol on whatever network it was on.
+Revision 126 — one identity per block, and a check that matches the transport
+File
+Change
+restore-git.md Step 7
+Both ssh -T calls were in one block — a prompt in a pasted block is answered by the next line. Now one block per identity, plus an HTTPS pair (credential readback + git ls-remote against a private repo, with GIT_TERMINAL_PROMPT=0 so it fails instead of hanging).
+bin/record-restore-exit.sh
+Both identities validated no longer claims ssh -T on both hosts; names the check per transport.
+bin/record-restore-exit.sh
+Usage strings advertised only restore-runtime, restore-access while dispatching on four runbooks — running it bare told you your own phase was unsupported.
+bin/capture-system-inventory.sh
+08-git.txt now also captures ~/.ssh/config and a normalized ssh.hosts= line. Section retitled Git and SSH routing.
+bin/compare-restored-state.sh
+presence SSH host aliases configured 2 recorded → probe_value SSH routing hosts. The old row compared a count of Host lines against whether 08-git.txt contained user.name=; that file never captured ~/.ssh/config, so the row could not disagree with anything.
+.internal/ssh-host-list.sh
+New. Sourced by both scripts so the derivation exists once. [Hh]ost[[:space:]] excludes HostName; multi-pattern Host lines split; LC_ALL=C sort so a locale difference between the pre-image and restored Macs cannot fake a mismatch.
+capture-system-inventory.md
+08 section description updated to match.
+
+2. Run index / runs refactor — survey, not authorship
+Attribution: Revisions 119, 120, 121 and 127 are the other session's. What follows is what the repository shows, for comparing against their notes.
+Revisions that moved a category onto the shared run index
+Revision
+Category
+120
+Repository audit (backup-repos) — joins the run index, keeps counts the shared schema has no room for
+121
+Managed inventory (capture-managed-inventory) — and its three readers stop taking whichever bundle sorted last
+127
+System inventory (capture-system-inventory) — and refreshing one section copies the bundle forward instead of editing it
+Revisions 119 and 122 are adjacent but are about the decisions log (record-decision.sh), not the run index.
+Categories the code already resolves through artifact_run_official
+Read from bin/*.sh. Fifteen scripts source .internal/artifact-runs.sh: backup-apps, backup-repos, capture-managed-inventory, capture-system-inventory, capture-system-state, compare-restored-state, record-enrollment, record-reimaged-system, record-restore-exit, record-restore-prereqs, record-restore-state, reimage-checklist, reindex-artifact-runs, restore-access, restore-repos.
+Pointers resolved by name:
+	•	restarts/ — enroll-and-stabilize-{pre,post}-restart, verify-reimaged-system-{pre,post}-restart
+	•	boundaries/ — {restore-access,restore-git,restore-repos,enroll-and-stabilize,verify-reimaged-system}-exit
+	•	comparisons/ — restore-runtime-inventory-diff, verify-reimaged-system-restart-diff
+	•	restore-state — <runbook>-before, <runbook>-after
+	•	repository audit and managed inventory — pre-image
+	•	system inventory — Revision 127
+What I could not determine
+Which categories remain unconverted, and how many existing runs on the drive still need indexing. The artifact root lives on the external volume, which this session could not reach — only the repository folder was connected. This is the honest gap in the survey, and the other session may already have the answer.
+Run this on the Mac with the drive mounted to close it:
+source ./reimage.env
+
+for c in "$REIMAGE_ARTIFACT_ROOT"/*/ "$REIMAGE_ARTIFACT_ROOT"/reimaged-system/*/; do
+  [ -d "$c" ] || continue
+  if [ -d "${c}runs" ]; then
+    printf 'indexed      %s\n' "$c"
+  else
+    printf 'NOT indexed  %s\n' "$c"
+  fi
+done
+Then, per indexed category, see whether any run is missing a row:
+./bin/reindex-artifact-runs.sh --category "$REIMAGE_ARTIFACT_ROOT/<category>" --dry-run
+--dry-run prints the rows it would add and writes nothing. Rows are inserted in completion order rather than appended, because officialness for a latest-wins point is the last matching row in file order — appending a recovered older run below a newer one would make the older one official.
+
+3. What to re-run
+Excluding enroll-and-stabilize (already done) and treating restore-git as about to close.
+restore-git — one command
+./bin/compare-restored-state.sh --runbook restore-git --dry-run
+./bin/compare-restored-state.sh --runbook restore-git
+Only the comparison changed in the last batch. Expect the new row SSH routing hosts to read not recorded on the inventory side — your pre-image bundle predates the ssh.hosts= line and capture-system-inventory.sh is a pre-image script, so this event can never have it. That is correct, not a finding; it resolves at the next reimage.
+record-restore-state.sh --point after / --point delta are not needed — neither script changed and the machine state has not moved since your last capture.
+record-restore-exit.sh --runbook restore-git is needed only if your exit run predates the Both identities validated rewording. check_restore_git() has no comparison row, so a fresh comparison does not oblige a fresh exit. Check the rendered checklist for the phrase "on the transport its remotes actually use" — if it is there, you already have it.
+Everything else
+Nothing. No other runbook's recorder changed this session. restore-access.md and restore-repos.md gained prose only.
+
+4. Outstanding
+Needs a decision or an action from you
+	•	b3493e5 swept up four of this session's uncommitted files — .internal/ssh-host-list.sh, bin/capture-system-inventory.sh, bin/compare-restored-state.sh, bin/record-restore-exit.sh — under a message describing the system-inventory run-index conversion. No revision-number collision resulted, but that commit does not describe most of what it contains.
+	•	Uncommitted: APPLY-MANIFEST.md (Revision 126 extended) and capture-system-inventory.md.
+	•	An earlier collision was resolved forward: two Revision 123 entries existed. The later-committed one (Chrome / enroll-and-stabilize Step 5) was renumbered 124. Worth confirming the other session agrees.
+	•	SSH from a non-corporate network is untested. One ssh -T git@github.com from a phone hotspot with Zscaler off decides whether HTTPS-for-personal is permanent or an office-network fact.
+	•	The three record-decision.sh invocations for the seven managed-app absences — verify they landed on the open artifact root with ./bin/record-decision.sh --check enroll-and-stabilize-managed-apps.
+	•	The 2026-08-19 Microsoft 365 Copilot ticket was likely raised against expected behaviour. Its conclusion has never been read back.
+Known follow-ups recorded in the manifest, not applied
+	•	bin/restore-access.sh still probes known_hosts once, in Phase 10B. The re-run after Phase 11A rewrites ~/.ssh/config is an instruction, not automation, and Step 12's SSH host keys seeded row still counts against the aliases present when it ran.
+	•	bin/restore-repos.sh rewrites git@github.com: toward the personal host and has no notion of a host being unreachable. Protocol per identity is a human decision the script cannot see.
+	•	Nothing in the artifact root records which protocol each identity settled on. claude/git-transport-and-identity-2026-09-01.md is the interim answer.
+	•	reimaging-scripts-guide.md's .internal/ tree is illustrative and stale — it predates artifact-runs.sh, state-walk.sh, sign-offs.sh, restore/ and now ssh-host-list.sh. verify-doc-paths.sh passes because nothing links into it.
+
+5. Verification state
+	•	verify-doc-paths.sh — clean.
+	•	verify-runbook-structure.sh — 29 FAIL / 5 WARN, unchanged from the start of the session. restore-git.md was moved into the clear (it had one [!note] and a legend advertising a forbidden type).
+	•	bash -n and verify-script-portability.sh — clean on every edited script and on .internal/ssh-host-list.sh, against the Bash 3.2 / BSD floor.
+	•	ssh_host_list exercised against an alias block, a direct-host block and an absent file; the full comparison path simulated with a fabricated 08-git.txt.
+	•	All of it ran on Linux with GNU coreutils and Bash 5.x. shellcheck was not available. Nothing was executed on the target Mac.
+

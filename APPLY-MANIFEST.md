@@ -1,5 +1,13 @@
 # Apply Manifest
 
+**Revision 163** — supersedes Revision 162 and earlier. `docs/features/` becomes `docs/ideas/`, and the line between an idea and a finding is drawn on whether the thing exists yet.
+
+**Revision 162** — supersedes Revision 161 and earlier. `docs/gaps/` is retired into 25 findings bundles, the loose session files become five session bundles, both vocabularies get one legend, the runbook-versus-cross-cutting line is drawn on functional impact, and all of `docs/` becomes tracked.
+
+**Revision 161** — supersedes Revision 160 and earlier. A session becomes a bundle named for its scope and the moment it was made, carrying its prompt, the findings it owns, its handovers and its final summary, under five states that each name what they owe.
+
+**Revision 160** — supersedes Revision 159 and earlier. Findings get two tracked homes under `docs/`, a numbered-directory shape that holds a reading and what came of it, and a five-state lifecycle.
+
 **Revision 159** — supersedes Revision 158 and earlier. Prose stops calling a bookend or a capture a checklist, `checks/` leaves the documentation that invented it, and the sign-offs stop citing a staging path.
 
 **Revision 158** — supersedes Revision 157 and earlier. The first-boot capture routes its manual rows to the sign-off, and the count that grades them stops counting rows nobody can answer.
@@ -441,6 +449,426 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
 
 ---
+
+## Revision 163 — `features/` becomes `ideas/`, and stops collecting work on things that exist
+
+`docs/features/` was described as *"ideas and features to build later. What to
+build, not how."* — which sounds like a boundary and is not one. "Feature" is
+what most repositories call any unit of work, so refactors, renames, layout
+reorganisations and script improvements all read as candidates for it. The
+directory has stayed empty since it was created, and everything that might have
+gone there went to `docs/gaps/` instead, which is how one directory ended up
+holding 25 notes and the other none.
+
+### The line, stated as a test
+
+**An idea is something that does not exist yet.** A new script, a new
+sub-command on an existing one, a new runbook, a new reference, a new artifact
+pattern or layout.
+
+**Anything about work already here is a finding** — a fix, a refactor, a rename,
+a layout reorganisation, prose that needs correcting, a script that needs
+improving — however large, and it belongs in a bundle under 4c. Size is not the
+test and neither is effort. The whole `boundaries` → `bookends` rename was a
+finding. So is "these six scripts should be restructured".
+
+    "the toolkit should have a command that reconciles rescue branches"  -> idea
+    "the rescue-branch step names the wrong path"                        -> finding
+
+### And the line to architecture, restated
+
+`docs/architecture/` was distinguished from `features/` by what the document
+answers, and that still holds against `ideas/`: *"we should index the
+time-machine category"* is an idea; *"here are the four ways to index it, why
+three were rejected, and what the chosen one touches"* is architecture. What is
+new is the second half — **an idea that has been designed becomes an
+architecture record and does not stay in both.** Two homes for one proposal is
+how a rejected alternative gets re-proposed.
+
+### What moved
+
+The directory and its `.gitkeep`; it was otherwise empty. Section 4b's bullet,
+the paragraph that drew the old line, `docs/INDEX.md`'s row, and
+`session-responsibilities.md`'s ownership line.
+
+One live document pointed at it: the run-index session's prompt, in
+`docs/sessions/run-index-design-20260901-000000/prompt.md`, which asks its items
+3 through 5 for *"one design record each under `docs/features/`"*. Those five
+references now name `docs/architecture/` — a design record with rejected
+alternatives is architecture under the line above, so this is a correction rather
+than a rename. That session is `handoff` and its next owner will read that prompt
+cold, which is why it was not left to be discovered.
+
+Two mentions were deliberately left alone: finding `0026`'s text, which is a
+dated reading of what the lint counted at the time.
+
+### Validation
+
+`bash -n` not applicable — no script changed. Documentation lint after:
+**0 MISSING, 0 ANCHOR BROKEN**. Runbook structure **213 PASS / 5 WARN / 25
+FAIL** across 27 documents, unchanged. Script portability **0 WARN / 0 FAIL**,
+unchanged. Checks ran on Linux with Bash 5.x; nothing verified against macOS
+stock Bash 3.2.
+
+## Revision 162 — `docs/gaps/` retires into findings bundles, and `docs/` becomes tracked
+
+Revisions 160 and 161 built the bundle shape. This moves the existing notes into
+it, retires the directory they came from, and stops pretending `docs/` is
+scratch.
+
+### Where a finding belongs
+
+The line is **where the ramifications are functionally impactful**, not where
+they are incidentally impactful because a shared script needs refactoring.
+Scripts and artifacts are covered by their owning runbook, under the naming
+convention this repository already keeps: `backup-repos.md` owns
+`bin/backup-repos.sh` and the `staged-ignored-files/` it writes. A finding is
+cross-cutting only when the change is broad and agnostic to any particular
+runbook, and may affect more than one.
+
+That test moved four notes off the shared-machinery pile and one onto it:
+`reimage-checklist-repo-audit-manifest-header` is a Phase 6B row, not a
+`reimage-checklist.sh` finding; `orphaned-comparison-lineage-runtime-version-comparison`
+is `restore-runtime`'s lineage, not the run index's; `content-scans-keeps-a-bespoke-index`
+is `stage-loose-secrets`' category; `staged-ignored-files-live-parent-root-bundles`
+belongs to the runbook that writes the artifact. Only
+`docker-capture-empty-section-passes-unnoticed` went the other way — its own
+note says neither runbook is missing anything, and it spans the capture,
+`backup-apps`, Phase 6B and the post-image comparison.
+
+Eleven bundles are cross-cutting, fourteen belong to nine runbooks, and
+`restore-repos` accounts for seven of those on its own.
+
+### Eleven were already closed, and now say so in the bundle shape
+
+A `**Status: CLOSED**` line in a parked note named the revision that closed it.
+Each of those bundles gains a `resolutions.md` stating it in the shape 4c
+defines, with `STATUS-resolved` on the directory. Commit hashes are given where
+the log makes them unambiguous; for the older revisions the commit messages
+describe the change without naming a revision number, so the manifest entry is
+the record and the resolution says so rather than guessing.
+
+Two more were closed in fact and never marked: `boundary-runs-name-their-record-a-checklist`
+by Revisions 156 through 159, and `bookend-signoffs-cite-the-staging-path` by
+Revision 159. Both are recorded `resolved` here.
+
+### All of `docs/` is tracked
+
+The `docs/*` block leaves `.gitignore` entirely. These notes reach a fresh clone
+now, which is what makes a findings bundle worth writing: a reading nobody else
+can see is a chat log with a filename.
+
+**Writing one still takes no manifest revision.** The manifest records what the
+workflow does; a note *about* the workflow is not a change to it, and charging a
+revision for parking a note makes the parking rule expensive exactly where it
+needs to be cheap. Adding or moving one of the `docs/` directories, or changing
+the rules in 4b through 4d, is a change to the instruction set and does take one
+— as this entry is.
+
+Section 4b's framing inverts with it: seven directories with gitignored contents
+becomes six tracked ones, and *"these files are NOT tracked"* becomes the rule
+above.
+
+### The mapping, so a citation that no longer resolves can be traced
+
+`APPLY-MANIFEST.md` cites twelve of these notes by their old paths and is never
+retro-edited, so those citations now name files that are not there. That is the
+failure `0009` describes, and the fix it proposes is to record what the thing
+used to be called in the file that holds the record. Here it is:
+
+| Was | Is |
+|---|---|
+| `docs/gaps/bookend-signoffs-cite-the-staging-path.md` | `docs/cross-cutting-findings/0002-bookend-signoffs-cite-the-staging-path/findings.md` |
+| `docs/gaps/boundary-recorder-coverage-is-uneven.md` | `docs/cross-cutting-findings/0003-boundary-recorder-coverage-is-uneven/findings.md` |
+| `docs/gaps/boundary-runs-name-their-record-a-checklist.md` | `docs/cross-cutting-findings/0004-boundary-runs-name-their-record-a-checklist/findings.md` |
+| `docs/gaps/boundary-runs-recorded-long-after-their-phase.md` | `docs/cross-cutting-findings/0005-boundary-runs-recorded-long-after-their-phase/findings.md` |
+| `docs/gaps/caller-environment-precedence-covers-only-listed-keys.md` | `docs/cross-cutting-findings/0006-caller-environment-precedence-covers-only-listed-keys/findings.md` |
+| `docs/gaps/dated-artifacts-cite-run-ids-a-rename-breaks.md` | `docs/cross-cutting-findings/0009-dated-artifacts-cite-run-ids-a-rename-breaks/findings.md` |
+| `docs/gaps/docker-capture-empty-section-passes-unnoticed.md` | `docs/cross-cutting-findings/0010-docker-capture-empty-section-passes-unnoticed/findings.md` |
+| `docs/gaps/internal-restore-directory-empty.md` | `docs/cross-cutting-findings/0012-internal-restore-directory-empty/findings.md` |
+| `docs/gaps/portability-lint-cannot-see-heredoc-context.md` | `docs/cross-cutting-findings/0015-portability-lint-cannot-see-heredoc-context/findings.md` |
+| `docs/gaps/recorder-usage-strings-understate-supported-runbooks.md` | `docs/cross-cutting-findings/0018-recorder-usage-strings-understate-supported-runbooks/findings.md` |
+| `docs/gaps/verify-doc-paths-counts-gitignored-docs.md` | `docs/cross-cutting-findings/0026-verify-doc-paths-counts-gitignored-docs/findings.md` |
+| `docs/gaps/staged-ignored-files-live-parent-root-bundles.md` | `docs/runbook-findings/backup-repos/0025-staged-ignored-files-live-parent-root-bundles/findings.md` |
+| `docs/gaps/office-stability-checklists-are-evidence-bundles.md` | `docs/runbook-findings/capture-office-stability/0013-office-stability-checklists-are-evidence-bundles/findings.md` |
+| `docs/gaps/reimage-checklist-repo-audit-manifest-header.md` | `docs/runbook-findings/reimage-prep-checks/0019-reimage-checklist-repo-audit-manifest-header/findings.md` |
+| `docs/gaps/restore-access-exit-predates-its-own-state-walk.md` | `docs/runbook-findings/restore-access/0021-restore-access-exit-predates-its-own-state-walk/findings.md` |
+| `docs/gaps/restore-docker-stack-differs-from-pre-image.md` | `docs/runbook-findings/restore-docker/0024-restore-docker-stack-differs-from-pre-image/findings.md` |
+| `docs/gaps/carrier-services-storage-foreign-remote.md` | `docs/runbook-findings/restore-repos/0008-carrier-services-storage-foreign-remote/findings.md` |
+| `docs/gaps/emit-extra-remotes-readds-the-clone-url.md` | `docs/runbook-findings/restore-repos/0011-emit-extra-remotes-readds-the-clone-url/findings.md` |
+| `docs/gaps/post-image-restore-per-run-manifest.md` | `docs/runbook-findings/restore-repos/0016-post-image-restore-per-run-manifest/findings.md` |
+| `docs/gaps/post-image-restore-runs-truncated.md` | `docs/runbook-findings/restore-repos/0017-post-image-restore-runs-truncated/findings.md` |
+| `docs/gaps/repo-audit-tsv-column-shift.md` | `docs/runbook-findings/restore-repos/0020-repo-audit-tsv-column-shift/findings.md` |
+| `docs/gaps/restore-repos-missing-exit-recorder-steps.md` | `docs/runbook-findings/restore-repos/0022-restore-repos-missing-exit-recorder-steps/findings.md` |
+| `docs/gaps/restore-repos-rsync-targets-pre-image-path.md` | `docs/runbook-findings/restore-repos/0023-restore-repos-rsync-targets-pre-image-path/findings.md` |
+| `docs/gaps/orphaned-comparison-lineage-runtime-version-comparison.md` | `docs/runbook-findings/restore-runtime/0014-orphaned-comparison-lineage-runtime-version-comparison/findings.md` |
+| `docs/gaps/content-scans-keeps-a-bespoke-index.md` | `docs/runbook-findings/stage-loose-secrets/0007-content-scans-keeps-a-bespoke-index/findings.md` |
+
+Every live citation under `docs/`, plus `.claude/CLAUDE.md` and this repository's
+own instructions, was repointed — 23 files. `docs/gaps/INDEX.md` is retired with
+the directory; the two findings indexes replace it and are per-scope rather than
+one file grouping everything by subject.
+
+### The loose session files become bundles too
+
+Revision 161 left them alone. That was the wrong call for the same reason the gap
+notes were the wrong call: two shapes for one thing, and an index explaining
+which is which forever. Ten files become five bundles.
+
+| Was | Is |
+|---|---|
+| `docs/sessions/next-session-prompt-run-index.md` | `docs/sessions/run-index-design-20260901-000000/prompt.md` |
+| `docs/sessions/run-index-2026-09-01.md` | `docs/sessions/run-index-design-20260901-000000/handoff-20260901-222913.md` |
+| `docs/sessions/run-index-2026-09-02.md` | `docs/sessions/run-index-design-20260901-000000/handoff-20260902-000000.md` |
+| `docs/sessions/prior-phase-evidence-map.md` | `docs/sessions/run-index-design-20260901-000000/prior-phase-evidence-map.md` |
+| `docs/sessions/restore-repos-refactor-prompt.md` | `docs/sessions/restore-repos-refactor-20260902-000000/prompt.md` |
+| `docs/sessions/restore-repos-refactor-2026-09-02.md` | `docs/sessions/restore-repos-refactor-20260902-000000/handoff-20260902-000000.md` |
+| `docs/sessions/restore-repos-phase-11b-plan.md` | `docs/sessions/restore-repos-refactor-20260902-000000/restore-repos-phase-11b-plan.md` |
+| `docs/sessions/restore-repos-clone-plan-prompt.md` | `docs/sessions/restore-repos-clone-plan-20260902-000000/prompt.md` |
+| `docs/sessions/restore-git-2026-09-01.txt` | `docs/sessions/restore-git-phase-11a-20260901-155433/transcript-20260901-155433.txt` |
+| `docs/sessions/restore-apps-and-outstanding-prompt.md` | `docs/sessions/restore-apps-outstanding-20260903-000000/prompt.md` |
+
+`session-responsibilities.md` stays loose on purpose: it describes the
+relationship *between* concurrent sessions, so it belongs to none of them.
+
+Four of the five could not have their start time recovered — the citation
+repointing earlier in this revision had already rewritten their mtimes — so they
+are stamped `-000000`, a visible marker of *date known, time not*. Only the
+Phase 11A transcript kept a usable one.
+
+Ownership of findings was reconstructed from the `**Found:**` line each note
+carries, which names the session that recorded it, and written into each
+bundle's `findings-manifest.md`: fourteen for the run-index session, five for the
+refactor, one each for the clone-plan and restore-apps sessions. Where a session
+found a note and another owned it — `0020` — the manifest of the owner carries
+it and the finder's says so.
+
+Phase 11A left no prompt: it was driven interactively. Its bundle carries a
+`prompt.md` that says exactly that, because the shape requires one and a missing
+file explains nothing.
+
+### One legend for both vocabularies
+
+`docs/legend.md` defines the five findings statuses and the five session states
+side by side, with what each produces and how the two lifecycles meet. Sections
+4c and 4d keep what each state *requires* — those are instructions — and point at
+the legend for what each state *means*. Neither an index nor the instruction set
+restates the definitions, so there is one place to change them.
+
+Seeing the two together is the point: `unresolved → in progress → resolving →
+resolved` and `unclaimed → owned → handoff → closed` are parallel lifecycles that
+meet at exactly one place, the pointer between a session's
+`findings-manifest.md` and a bundle's index row. Every findings index now carries
+a Session column populated from those manifests.
+
+### Validation
+
+`bash -n` not applicable — no script changed. Documentation lint after:
+**0 MISSING, 0 ANCHOR BROKEN**. Runbook structure **213 PASS / 5 WARN /
+25 FAIL** across 27 documents, unchanged. Script portability **0 WARN / 0 FAIL**,
+unchanged. All checks ran on Linux with Bash 5.x; nothing here was verified
+against macOS stock Bash 3.2.
+
+**One thing to notice when committing.** `docs/gaps/.gitkeep` was tracked and is
+deleted in the working tree, so `git status` shows it as `D` and a normal
+`git add -A` stages the removal; nothing needs `git rm`. The five surviving
+`docs/<dir>/.gitkeep` files are now redundant — every directory has tracked
+contents — and can be dropped in the same commit or left alone. They were left
+in place rather than removed on the owner's behalf.
+
+## Revision 161 — a session becomes a bundle, and both bundle kinds wear their state
+
+Revision 160 gave findings a bundle. A session is the other half of the same
+problem: it starts from a prompt, owns findings, leaves handovers, and ends with
+a summary — and those were unrelated files in one flat directory, with nothing
+tying them together and nothing saying whether anyone was working on it.
+
+### The bundle, and why its name has no number in it
+
+    docs/sessions/<title>-<stamp>/
+    |-- STATE-<state>            required, always
+    |-- prompt.md                required, always
+    |-- findings-manifest.md     required once the session owns a finding
+    |-- handoff-<stamp>.md       one per handover, never edited afterwards
+    `-- final-summary.md         written at `closed` or `withdrawn`
+
+`<title>` is a short readable scope so the directory says what it is at a glance;
+`<stamp>` is `YYYYMMDD-HHMMSS`, which makes the name unique without a counter.
+
+An earlier draft of this revision numbered the folder after the finding it
+worked. That was wrong: a session routinely owns several bundles, and one number
+in a directory name cannot say so. The ownership record moves to
+`findings-manifest.md` inside the bundle — one row per finding, with its number,
+path, kind, status and what this session owes it. That file is authoritative;
+`docs/sessions/INDEX.md` carries the count and points at it rather than
+restating the list, so the two cannot drift apart. Each findings bundle's own
+index row names the session working it, which is the other half of the pointer.
+
+The name is fixed at creation, for the reason in
+`docs/gaps/dated-artifacts-cite-run-ids-a-rename-breaks.md`: by the time a
+session has produced anything, its path is cited by prompts, handoffs and index
+rows.
+
+### A prompt is always required, and where it comes from
+
+A session is more than a prompt, but there is no session bundle without one.
+Either the owner writes it by hand, or a running session writes it for a
+successor — and that second case has two shapes, which is what separates two of
+the states:
+
+- **`unclaimed`** — preparation for work with no scheduled start. The owner does
+  not yet know when or by whom it will be picked up.
+- **`handoff`** — a continuation of what the writing session is doing now.
+
+In both cases the prompt is finished before it is needed. The session that wrote
+it will not be there to explain it, and the owner may pick it up days later.
+Every prompt names `.github/copilot-instructions.md` as required reading before
+anything else; a prompt that omits it is incomplete.
+
+### Five states, and what each one owes
+
+`unclaimed` · `owned` · `handoff` · `closed` · `withdrawn`.
+
+**`owned`** records `Claude` or `Copilot` — the two assistants approved for this
+work — with whatever session identifier is available and when ownership was
+established.
+
+**`handoff` leaves a document, not just a status change.** `handoff-<stamp>.md`
+carries progress, exactly where the work stopped, every assumption the outgoing
+session held, and the resources the next one needs — folders to connect, volumes
+to mount, revisions to read. There may be several, one per handover, none ever
+edited afterwards. The outgoing bundle and the continuation each name the other.
+
+**`closed` leaves `final-summary.md`**, listing every commit hash and manifest
+revision the session contributed across all of its owners, so a contribution is
+readable from one file rather than reconstructed from `git log` by date range.
+
+**`withdrawn` leaves `final-summary.md` too, and it matters most there.** Work
+may well have been done before the owner pivoted or decided to leave findings
+unresolved. What the session reached, which findings are still open and at what
+status, what was assumed, and why it stopped — all of it has to be written down,
+because a withdrawn session that recorded nothing is indistinguishable from one
+that did nothing, and the findings it abandons are the ones somebody picks up
+cold.
+
+### Both bundle kinds carry a tag
+
+A findings bundle gains `STATUS-<status>`; a session bundle carries
+`STATE-<state>`. One marker file, renamed as the bundle moves, so `ls` answers
+the question without opening an index or a document.
+
+It is a marker file and deliberately **not** a suffix on the directory name. The
+directory name is what prompts, indexes and other documents cite, and renaming it
+on every transition is the same failure named above. The INDEX.md row stays
+authoritative; the tag is a convenience that must agree with it.
+
+### The existing session files
+
+This revision applied the bundle shape to new sessions only and left the loose
+files in place, on the grounds that `APPLY-MANIFEST.md` cites three of them by
+full path. **Revision 162 converts them anyway**, for the reason it converts the
+gap notes: two shapes for one thing is worse than a traceable rename, and the
+mapping goes in the manifest so a citation that no longer resolves can be
+followed. Read 162 for what actually happened.
+
+### Validation
+
+`bash -n` not applicable — no script changed. Documentation lint after:
+**0 MISSING, 0 ANCHOR BROKEN**. Runbook structure **213 PASS / 5 WARN / 25
+FAIL** across 27 documents, unchanged. Script portability **0 WARN / 0 FAIL**,
+unchanged. `git ls-files --others --exclude-standard docs/` still lists only the
+two `.gitkeep` files — no findings or session content becomes tracked by this
+change.
+
+All checks ran on Linux with Bash 5.x. Nothing here was verified against macOS
+stock Bash 3.2.
+
+## Revision 160 — findings get a home, a shape and a lifecycle
+
+`docs/gaps/` holds one-line-to-one-page defects parked so the current task stays
+finished. It is the wrong shape for a *review*: a deliberate reading of
+something that already exists, producing ten findings at once, which is then
+worked through over several sittings and ends in a set of commits. Those were
+becoming `docs/sessions/` files, where they sort by session rather than by
+subject and nothing records whether they were acted on.
+
+### Two directories, and the line between them
+
+- `docs/runbook-findings/<runbook>/` — findings felt in one runbook.
+- `docs/cross-cutting-findings/` — findings felt in shared machinery.
+
+The test is where the **fix** lands, not where the finding was noticed. A defect
+in `.internal/sign-offs.sh` found while reading `restore-repos.md` is
+cross-cutting, because six phases share the file.
+
+Both are tracked by name with their contents gitignored, exactly like the five
+directories already there. `.gitignore` gains the same three lines each that
+`architecture/`, `features/`, `gaps/`, `ledgers/` and `sessions/` carry — the
+negation, the contents rule, and the `.gitkeep` exception — placed
+alphabetically among them. Section 4b's count moves from five to seven, and the
+`.gitignore` comment with it.
+
+### A bundle is a numbered directory, not a file
+
+This is the exception to 4b's *one file per item, named for the thing rather
+than the date*, and it is deliberate. A finding accumulates two more documents
+as it is worked, and the three are only legible together:
+
+    <NNNN>-<slug>/
+    |-- findings.md      the reading
+    |-- decisions.md     what was decided, and what was rejected
+    `-- resolutions.md   what was done, with commit hash and revision
+
+`findings.md` is written once and corrected only for accuracy — never rewritten
+to match what was later decided, which is the difference between a record and a
+rationalisation.
+
+Numbers are one sequence across both directories, so `finding 0007` names a
+bundle without needing its scope. Four digits, never reused, never renumbered:
+a renumber breaks every session prompt already written against the old number,
+which is the failure `docs/gaps/dated-artifacts-cite-run-ids-a-rename-breaks.md`
+describes from the artifact side.
+
+### Five states, and what each one produces
+
+`unresolved` → `in progress` → `resolving` → `resolved`, plus `superseded`.
+
+The middle two are separate on purpose. `in progress` is *deciding* — the
+findings are reviewed and decisions made, ending in `decisions.md`. `resolving`
+begins only once those decisions are finalized, and is *doing* — ending in
+`resolutions.md`, which names the commit hash and the manifest revision that
+carried each one. Collapsing them is how work starts before the decision behind
+it is settled, and how a resolution ends up with nothing recording why it was
+the right one.
+
+A bundle holds the earlier status while any finding in it is still open.
+
+### Handing a bundle to another session
+
+The prompt goes in `docs/sessions/` and names the finding number and its path in
+its opening lines, so the session picking it up reads the bundle rather than a
+summary of it, and knows from the path whether one runbook owns it.
+
+### What this revision does not do
+
+No findings content becomes tracked. Only the two `.gitkeep` files are added by
+this change; every bundle under them stays local, like every other `docs/` note.
+The first bundle — `docs/runbook-findings/restore-apps/0001-restore-repos-evidence/`,
+a review of Phase 11B's evidence recorded 2026-09-03 — exists on the owner's
+disk and is not part of this diff.
+
+### Validation
+
+`bash -n` not applicable — no script changed. Documentation lint after:
+**0 MISSING, 0 ANCHOR BROKEN** (762 OK, a figure that moves whenever a document
+gains a reference and is not a baseline). Runbook structure **213 PASS / 5 WARN /
+25 FAIL** across 27 documents, unchanged. Script portability **0 WARN / 0 FAIL**,
+unchanged. `git check-ignore` confirms the two `.gitkeep` files are no longer
+ignored and that `INDEX.md` and the bundle contents still are; `git ls-files
+--others --exclude-standard docs/` lists the two keeps and nothing else.
+
+All checks ran on Linux with Bash 5.x. Nothing here was verified against macOS
+stock Bash 3.2.
 
 ## Revision 159 — the prose catches up with the tree, and two records stop disagreeing with it
 
