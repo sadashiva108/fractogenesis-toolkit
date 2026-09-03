@@ -1,6 +1,6 @@
 # Mac Reimaging Guide
 
-**Last updated:** 2026-09-02
+**Last updated:** 2026-09-03
 
 This is the canonical top-level guide for the Mac reimage workflow.
 
@@ -715,7 +715,7 @@ Primary guide: [[enroll-and-stabilize|enroll-and-stabilize.md]]
 
 ## Phase 9 — Initial Captures and Sanity Checks
 
-**Initial Captures and Sanity Checks** is the first post-enrollment verification phase after the managed baseline is stable. It reconnects the backup and capture root, records the first post-image checklist evidence, and confirms that the rebuilt Mac is basically usable before deeper restore work begins. The focus is on validating backup-root visibility, rerunning the initial checklist around a restart, and checking core day-one usability such as browser, network, terminal, display, keyboard, mouse, and audio so later restore phases start from a known-good state.
+**Initial Captures and Sanity Checks** is the first post-enrollment verification phase after the managed baseline is stable. It reconnects the backup and capture root, records the first post-image capture evidence, and confirms that the rebuilt Mac is basically usable before deeper restore work begins. The focus is on validating backup-root visibility, rerunning the initial capture around a restart, and checking core day-one usability such as browser, network, terminal, display, keyboard, mouse, and audio so later restore phases start from a known-good state.
 
 Primary guide: [[verify-reimaged-system|verify-reimaged-system.md]]
 

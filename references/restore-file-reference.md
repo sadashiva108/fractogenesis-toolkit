@@ -220,7 +220,7 @@ These paths are used before deeper restore work begins.
 |---|---|
 | Enrollment record run | `reimaged-system/restarts/runs/enroll-and-stabilize-<point>-YYYYMMDD-HHMMSS/` |
 | Enrollment official-run pointer | `reimaged-system/restarts/official/enroll-and-stabilize-<point>.txt` |
-| First post-image checklist bundle root | `reimaged-system/restarts/runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/` |
+| First post-image capture bundle root | `reimaged-system/restarts/runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/` |
 | Official-run pointer per point | `reimaged-system/restarts/official/verify-reimaged-system-<point>.txt` |
 | Initial capture summary and record | `reimaged-system/restarts/runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/README.md`, `reimaged-system/restarts/runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/record.md` |
 | Initial bundle manual follow-up files | `reimaged-system/restarts/runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/manual-captures-required.md`, `reimaged-system/restarts/runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/restart-checkpoints.md`, `reimaged-system/restarts/runs/verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/time-machine-plan.md` |
@@ -345,7 +345,7 @@ $REIMAGE_ARTIFACT_ROOT/reimaged-system/checklists/reimage-checklist-YYYYMMDD-HHM
 $REIMAGE_ARTIFACT_ROOT/reimaged-system/checklists/official/post-image.txt
 ```
 
-Unlike the initial checklist bundle, Phase 14 does not currently generate a separate root-level `manual-captures-required.md`. Keep unresolved manual follow-up in `reimaged-system/restore-notes/` or `reimaged-system-evidence.md`.
+Unlike the initial capture bundle, Phase 14 does not currently generate a separate root-level `manual-captures-required.md`. Keep unresolved manual follow-up in `reimaged-system/restore-notes/` or `reimaged-system-evidence.md`.
 
 Related manual-note locations:
 

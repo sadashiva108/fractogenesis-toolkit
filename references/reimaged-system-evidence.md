@@ -36,7 +36,7 @@ This file complements [[reimaging-guide|./restore-file-reference.md]] for restor
 Use this file when:
 
 ```text
-a generated post-image checklist leaves a manual row TODO
+a generated post-image artifact points at a sign-off row you have not answered
 you need a compact reference for what each post-image phase generated
 a script could run but still needs human interpretation before final sign-off
 a script could not run and you need a grounded fallback note
@@ -54,7 +54,7 @@ Examples:
 
 ```text
 Do not manually recreate enrollment command output if record-enrollment.sh generated the bundle.
-Do not manually rewrite the initial first-boot checklist if record-reimaged-system.sh generated it twice around the restart.
+Do not manually rewrite the initial first-boot record if record-reimaged-system.sh generated it twice around the restart.
 Do not manually rebuild system/managed/performance/Office comparison bundles if the Phase 13 scripts generated them.
 Do not manually duplicate the final validation report when reimage-checklist.sh --phase post already generated the final checklist.
 ```
@@ -230,7 +230,7 @@ $REIMAGE_ARTIFACT_ROOT/reimaged-system/restarts/official/verify-reimaged-system-
 Manual / fallback notes:
 
 - Run the script twice around the planned restart and compare the two generated bundles for regressions.
-- The manual checklist still owns first-boot confirmation items such as Company Portal UI state, real internal-site reachability, Chrome/Terminal/display/peripheral usability, and whether the second stabilization restart actually happened.
+- The sign-off still owns first-boot confirmation items such as Company Portal UI state, real internal-site reachability, Chrome/Terminal/display/peripheral usability, and whether the second stabilization restart actually happened.
 - If the external drive is temporarily unavailable, the runbook documents a local `--output-root` fallback; copy that bundle back under `$REIMAGE_ARTIFACT_ROOT/reimaged-system/` later.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -340,7 +340,7 @@ MANIFEST.txt
 
 Manual / fallback notes:
 
-- There is no separate fallback checklist for this capture.
+- There is no separate fallback record for this capture.
 - Add a short comparison note only if a managed-state difference still needs explanation after reviewing the generated bundle.
 - This is the most precise post-image record of expected MDM profiles, managed apps, receipts, launch items, system extensions, and managed preference payloads.
 
@@ -435,7 +435,7 @@ Primary post-image evidence types:
 | Summary copy | `office-stability-summary-YYYYMMDD-HHMMSS.md` |
 | Optional watcher-derived incident files | `workload-snapshot-*.txt`, `unified-log-office-*.txt`, `install-log-office-*.txt`, `latest-watcher-after-close-*.txt` |
 
-Generated checklist bundle contents:
+Generated capture bundle contents:
 
 ```text
 README.md
@@ -516,7 +516,7 @@ Post-Image Final Manual Sign-Off — YYYY-MM-DD
 
 Managed baseline and restart checkpoints:
   [ ] Phase 8 enrollment capture reviewed
-  [ ] Phase 9 initial checklist rerun after restart
+  [ ] Phase 9 initial capture rerun after restart
   [ ] Required managed apps/security tools remained stable after restart
   Notes:
 

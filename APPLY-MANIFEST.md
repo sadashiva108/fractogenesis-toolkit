@@ -1,5 +1,9 @@
 # Apply Manifest
 
+**Revision 159** — supersedes Revision 158 and earlier. Prose stops calling a bookend or a capture a checklist, `checks/` leaves the documentation that invented it, and the sign-offs stop citing a staging path.
+
+**Revision 158** — supersedes Revision 157 and earlier. The first-boot capture routes its manual rows to the sign-off, and the count that grades them stops counting rows nobody can answer.
+
 **Revision 157** — supersedes Revision 156 and earlier. The restart capture's record becomes `record.md`, and the fourteen places Revision 156 called one a bookend are corrected.
 
 **Revision 156** — supersedes Revision 155 and earlier. `reimaged-system/boundaries/` becomes `bookends/`, its record becomes `bookend.md`, and the concept renames with them.
@@ -435,6 +439,257 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `scan-archive-contents.sh` | `.internal/home/scan-archive-contents.sh` |
 | `scan-postman-collections.py` | `.internal/home/scan-postman-collections.py` |
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
+
+---
+
+## Revision 159 — the prose catches up with the tree, and two records stop disagreeing with it
+
+Revisions 156 through 158 renamed a category, two artifacts and a concept.
+This closes what they left behind: prose still calling a bookend or a capture a
+checklist, two gap notes that no longer describe the tree, and a path defect in
+the sign-off producers that Revision 158's new sign-off would have inherited.
+
+### `checklist` now means one thing
+
+The word is reserved for the pre- and post-image capstones —
+`bin/reimage-checklist.sh` and the `reimage-checklist.md` it writes. Everywhere
+else it had been standing in for a bookend or a capture record, and after three
+revisions of renaming the artifacts it was the only place the old vocabulary
+survived.
+
+`verify-reimaged-system.md` carried eleven, and they were not all the same
+mistake. *"the 14 read-only command outputs the checklist reads from"* is the
+record. *"add `--no-network` so the checklist row is stamped `INFO`"* is a row in
+that record. *"It reads Phase 8's exit checklist"* is a bookend. *"The
+post-restart checklist has no unanswered rows"* was an exit-criteria row about
+rows that Revision 158 moved into the sign-off, so it is now *"The post-restart
+sign-off has no outstanding rows"*.
+
+Five runbooks opened Step 0a with *"Writes a checklist under
+`reimaged-system/bookends/`"*. `restore-runtime.md` Step 11 said *"run the
+checklist"* four times about `record-restore-exit.sh`.
+`enroll-and-stabilize.md` had four more, including a close-out line that has the
+same correction as `verify-reimaged-system.md`'s.
+
+**What was deliberately left alone matters as much.** The app-backup selection
+checklist, the keychain manual-export checklist, the Office stability checklists,
+the Time Machine final checklist, the runbook prompt's own validation checklist,
+and the `Aggregate validator/checklist` script class are all genuine checklists
+with nothing to do with this. Revision 156 over-reached by substituting on the
+word alone; this pass classified every occurrence by what it points at.
+
+### `checks/` was documented and never existed
+
+`verify-reimaged-system.md` drew `checks/` in the bundle layout and again in the
+directory tree, described as *reserved for future automated cross-checks*.
+`bin/record-reimaged-system.sh:705` says the opposite in its own comment:
+
+    # `checks/` is deliberately absent. All six migrated bundles carried one and
+    # every one was empty -- nothing has ever written into it.
+
+Removed from both places. A reserved directory nothing reserves is a promise the
+tree does not keep.
+
+### The sign-offs stop citing a directory that never survives the run
+
+Filed as `docs/gaps/bookend-signoffs-cite-the-staging-path.md` during Revision
+156 and fixed here. `artifact_run_begin` stages a run at `runs/.<id>.incomplete`
+and promotes it afterwards; three scripts passed `ARTIFACT_RUN_DIR` to
+`signoff_finalize`, so twenty sign-offs on the volume name a path that stopped
+existing the moment the run finished. All four call sites take
+`ARTIFACT_RUN_FINAL_DIR`, which `artifact_run_begin` sets at staging time — the
+rule Revision 150 settled for `bin/restore-repos.sh`.
+
+Two corrections to the note as filed. `bin/record-restore-prereqs.sh` does not
+call `signoff_finalize` at all, so it was three producers rather than four. And a
+fourth call site appeared after the note was written: Revision 158 gave the
+capture path a sign-off of its own, which inherited the defect the same day it
+was created.
+
+Verified by running the capture against a scratch artifact root — the `Plan`
+field names a path that resolves, with no `.incomplete` in it.
+
+### Two gap notes that had stopped being true
+
+`boundary-runs-name-their-record-a-checklist.md` proposed four options and closed
+with a rule: *"existing runs are evidence and are not renamed in place — new runs
+take the new name and the old ones keep theirs."* The owner decided the opposite,
+and in-place is what shipped: 36 bookend records, 6 capture records, 11 companion
+documents, 28 artifacts repointed. Left as written the note argued against the
+tree, which is worse than being merely stale. It now records what was chosen, why
+in-place beat a permanent two-name fallback in `bin/reindex-artifact-runs.sh`, and
+why `_pre-conversion-backup-20260902/` keeps both old names.
+
+Both notes are closed and both are marked closed in `docs/gaps/INDEX.md`;
+the second was never indexed at all.
+
+### One-off — `enroll-and-stabilize.md` Step 1
+
+The step said Safari *"is enough for both"* and offered Chrome as a reorder that
+*"costs nothing"*. That is true when mail opens in a browser and the vault has a
+usable web login, and false in the case most likely to occur: a LastPass vault
+reached through the Chrome extension, or a Gmail account reached through a Chrome
+profile. Neither is available in Safari on a fresh Mac, which makes Chrome a
+prerequisite for Step 1 rather than a convenience.
+
+The step now says which case is which, and names the consequence that has teeth:
+the **secrets DMG password**. Phase 10B cannot open the encrypted image without
+it, and a vault that cannot be reached from this Mac leaves the drive mounted and
+unreadable with no way forward from inside the phase. Work it out before a prompt
+is waiting.
+
+### Nothing left to rename
+
+Every `checklist.md` on the live artifact root is gone; every `boundaries/`
+directory with it. What remains is inside `_pre-conversion-backup-20260902/`,
+which keeps both old names on purpose — it preserves the state before the
+2026-09-02 sign-off conversion and is cited as a diff source by the gap note
+above.
+
+### Validation
+
+`bash -n` clean. `verify-script-portability.sh` 81 clean / 0 WARN / 0 FAIL,
+`verify-runbook-structure.sh` 213 PASS / 5 WARN / 25 FAIL across 27 documents,
+`verify-doc-paths.sh --all` 758 OK / 0 MISSING / 0 ANCHOR BROKEN — all at
+baseline across a pass that touched twelve documents and four scripts.
+
+**All of it ran on Linux with Bash 5.x.** `/bin/bash -n` against real macOS Bash
+3.2 is owed here along with Revisions 116–158.
+
+### Still open
+
+`bookends/MANIFEST.md` has no rename row. Four of its rows already carry
+`migrated from` in the Note column, so the mechanism exists and costs one line —
+it is a write to the operator's artifact root and waits on their word.
+
+---
+
+## Revision 158 — the first-boot capture stops writing rows it cannot keep
+
+Two defects in `bin/record-reimaged-system.sh`, and they are the same defect at
+two removes: a file that mixes rows a machine answers with rows a person answers,
+in a directory that is replaced on every run.
+
+### F2 — the script was re-creating what the conversion removed
+
+Revision 116 established the rule and this same script already follows it on its
+bookend path: the rows a person answers go to `reimaged-system/sign-offs/`,
+because a run directory is replaced on every invocation and an answer written
+into one is lost.
+
+The capture path never got that change. It emitted a fifteen-row `TODO` table
+into the run directory under an instruction to fill it in:
+
+    > Fill these in the **post-restart** bundle only. A rerun regenerates this
+    > file and resets every row, so answers written into a pre-restart bundle
+    > are lost.
+
+On 2026-09-02 all six captures on the volume had those rows lifted out by hand
+into `reimaged-system/sign-offs/verify-reimaged-system-*.md`, each answer carried
+with its `Answered against` stamp. **The producer was not updated**, so the next
+`--context initial|pre-restart|post-restart` run would have written the table
+straight back — into the directory the conversion had just emptied.
+
+The capture now opens a sign-off beside the run, emits the fifteen rows into it
+through `signoff_row`, and the record carries the pointer paragraph the converted
+artifacts already carry. `signoff_begin` copies the previous run's file forward,
+so an answer given against an earlier capture survives the next one — which is
+the whole point, and was the one property the table could never have.
+
+The row wording is unchanged so a carried answer still matches its item.
+`manual-captures-required.md` keeps its enumeration and loses its instruction: it
+says where the rows are answered instead of telling the reader to answer them in
+a file that no longer holds them. That also closes the standing item that a purely
+manual artifact was living inside a run directory.
+
+### F4 — a WARN that fired against rows nobody could answer
+
+`b_todo_count()` was `grep -c '| \`TODO\` |'` over an entire generated file. The
+Automated table uses the same cell shape, so a probe that could not answer counted
+as a person who had not looked, and the caller then said so:
+
+    WARN — Post-restart bookend answered — 3 unanswered row(s) in
+    verify-reimaged-system-post-restart-20260819-013423/checklist.md —
+    this step is the only one that fills them
+
+Three rows, all automated, in a file that had held no human rows since the
+conversion. The message named a step that could not have filled them.
+
+It is `b_outstanding_count()` now, and it counts where answers actually live:
+`signoff_outstanding` from `.internal/sign-offs.sh`, which was already written and
+already returns exactly this. An absent sign-off returns non-zero and is reported
+as absent rather than silently as zero outstanding — the failure mode a bare
+`grep -c` had no way to distinguish.
+
+Both call sites move with it: the entry mode reads the `enroll-and-stabilize-exit`
+sign-off, the exit mode reads `verify-reimaged-system-post-restart`.
+
+Doing F2 first is what makes F4 clean rather than merely narrower. After F2 there
+are no human rows in the record at all, so counting `TODO` across it is
+unambiguously the wrong question rather than an imprecise one, and `RUN_TODO` in
+the manifest row now means *probes that could not answer*, which is worth
+recording.
+
+### Proven by running it, both directions
+
+Against a **scratch artifact root**: `--context post-restart` wrote a capture
+whose `record.md` holds **zero** manual `TODO` rows and a resolving pointer, and a
+sign-off holding **15 total — 15 outstanding**. The seven `TODO`s left in the
+record are all automated managed-app probes, which is the F4 case in the same
+run.
+
+Then the exit bookend, twice. With the sign-off untouched:
+
+    | Post-restart rows answered | `WARN` | 15 outstanding row(s) in the
+      `verify-reimaged-system-post-restart` sign-off — this step is the only one
+      that fills them |
+
+With all fifteen answered: `PASS`. Before this revision the same two runs would
+have reported seven and seven, both of them automated rows, and neither number
+would have changed when a person answered anything.
+
+### Documentation caught up with the producer
+
+`verify-reimaged-system.md` already said the rows live in the sign-off — the
+conversion updated the runbook and not the script, which is how the two came
+apart. Two places still described the old behaviour: the Manual row of the
+row-types table, and a Pitfall warning that a rerun *"produces a new `record.md`
+with every Manual row back at `TODO`"*. That is no longer true, and the Pitfall
+now says what actually matters — a carried answer is durable but not re-verified.
+
+`.internal/sign-offs.sh` quoted that same sentence as its justification. It still
+quotes it, marked as the condition that existed when the rows were written into
+the run, because the sentence is why the mechanism exists and deleting it would
+lose the reason.
+
+### Ownership
+
+`bin/reindex-artifact-runs.sh` and `bin/record-reimaged-system.sh` move to the
+owner's side in `docs/sessions/session-responsibilities.md`. The first was edited
+in Revisions 156 and 157 because it reads the per-run record by filename for the
+counts in every `MANIFEST.md` — either rename would have turned every row of the
+renamed category into a bare `—` without failing. The second follows because F2
+and F4 live in it.
+
+### Validation
+
+`bash -n` clean. `verify-script-portability.sh` 81 clean / 0 WARN / 0 FAIL,
+`verify-runbook-structure.sh` 213 PASS / 5 WARN / 25 FAIL, `verify-doc-paths.sh
+--all` 758 OK / 0 MISSING / 0 ANCHOR BROKEN — all at baseline.
+
+Nothing was written to the operator's artifact root; every run above used a
+scratch root.
+
+**All of it ran on Linux with Bash 5.x.** `/bin/bash -n` against real macOS Bash
+3.2 is owed here along with Revisions 116–157.
+
+### Confirmed while testing, not fixed
+
+The capture's sign-off carries `Plan: …/.<id>.incomplete/record.md` — the
+pre-promotion staging path. That is
+`docs/gaps/bookend-signoffs-cite-the-staging-path.md`, filed against the bookend
+recorders in Revision 156; the capture path has it too. Same one-line fix in each,
+and still a separate change.
 
 ---
 

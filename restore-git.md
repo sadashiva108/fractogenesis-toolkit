@@ -2,7 +2,7 @@
 
 # Restore Git
 
-**Last updated:** 2026-09-02
+**Last updated:** 2026-09-03
 
 Restore the Git identity plumbing on the reimaged Mac so both work and personal GitHub accounts route automatically based on where a repository lives on disk. This runbook wires up the dual-identity `~/.gitconfig` (work as default, `includeIf` override under the personal repo root), lays down the matching `~/.ssh/config` host aliases, validates both identities, and leaves you with a `git clone` template that Phase 11B then applies at scale against the pre-image repository audit. It does not enumerate a repo list, drive a clone loop, or restore preserved local branches or stashes — that carry-forward work belongs to Phase 11B.
 
@@ -300,7 +300,7 @@ Every step begins with `source ./reimage.env` — Git config files do not reliab
 Two recordings, both taken before anything is written. They answer different
 questions and only one of them can be taken late.
 
-**0a — may this phase start?** Writes a checklist under
+**0a — may this phase start?** Writes a bookend under
 `reimaged-system/bookends/` and exits non-zero only on `FAIL`:
 
 ```bash

@@ -344,9 +344,23 @@ b_manual() {
   BOOKEND_MANUAL="${BOOKEND_MANUAL}${1}"$'\t'"${2}"$'\n'
 }
 
-# Unanswered rows in a generated record: `TODO` in the Status column.
-b_todo_count() {
-  grep -c '| `TODO` |' "$1" 2>/dev/null || true
+# Rows a person still owes, counted in the sign-off rather than in the record.
+#
+# This used to grep `| `TODO` |` across a whole generated file. The Automated
+# rows use the same cell shape, so a probe that could not answer -- `Git
+# available`, `Network check` -- counted as a person who had not looked, and the
+# caller then reported "N unanswered row(s) ... this step is the only one that
+# fills them" about rows no step can fill. Against the official post-restart
+# capture that was three rows, every one of them automated.
+#
+# `signoff_outstanding` prints one line per row still at `TODO` in the latest
+# sign-off for a context -- the only place answers are kept, and the only place
+# the question is answerable. An absent sign-off returns non-zero, which the
+# caller reports as absent rather than as zero outstanding.
+b_outstanding_count() {
+  local root="$1" context="$2" out
+  out="$(signoff_outstanding "$root" "$context" 2>/dev/null)" || return 1
+  printf '%s' "$out" | grep -c . 2>/dev/null || true
 }
 
 bookend_entry() {
@@ -375,11 +389,14 @@ bookend_entry() {
   if [[ -z "$f" || ! -f "$f" ]]; then
     b_record FAIL "Phase 8 closed out" "no official \`enroll-and-stabilize-exit\` run under \`bookends/\` — Phase 8 has not signed off, so nothing establishes that enrollment and the managed app set are settled"
   else
-    n="$(b_todo_count "$f")"
-    if [[ "${n:-0}" -eq 0 ]]; then
-      b_record PASS "Phase 8 closed out" "\`$(basename "$run")\`, no unanswered rows"
+    if n="$(b_outstanding_count "$OUTPUT_ROOT/sign-offs" "enroll-and-stabilize-exit")"; then
+      if [[ "${n:-0}" -eq 0 ]]; then
+        b_record PASS "Phase 8 closed out" "\`$(basename "$run")\`, no outstanding rows in its sign-off"
+      else
+        b_record WARN "Phase 8 closed out" "$n outstanding row(s) in the \`enroll-and-stabilize-exit\` sign-off — answer them before relying on this phase's baseline"
+      fi
     else
-      b_record WARN "Phase 8 closed out" "\`$(basename "$run")\` has $n unanswered row(s) — answer them before relying on this phase's baseline"
+      b_record WARN "Phase 8 closed out" "\`$(basename "$run")\` exists but no \`enroll-and-stabilize-exit\` sign-off does — the rows a person answers were never opened"
     fi
   fi
 
@@ -449,11 +466,14 @@ bookend_exit() {
   f=""
   [[ -n "$post" ]] && f="$restarts_root/$post/record.md"
   if [[ -n "$f" && -f "$f" ]]; then
-    n="$(b_todo_count "$f")"
-    if [[ "${n:-0}" -eq 0 ]]; then
-      b_record PASS "Post-restart record answered" "no unanswered rows in \`$(basename "$post")\`"
+    if n="$(b_outstanding_count "$OUTPUT_ROOT/sign-offs" "verify-reimaged-system-post-restart")"; then
+      if [[ "${n:-0}" -eq 0 ]]; then
+        b_record PASS "Post-restart rows answered" "no outstanding rows in the \`verify-reimaged-system-post-restart\` sign-off"
+      else
+        b_record WARN "Post-restart rows answered" "$n outstanding row(s) in the \`verify-reimaged-system-post-restart\` sign-off — this step is the only one that fills them"
+      fi
     else
-      b_record WARN "Post-restart record answered" "$n unanswered row(s) in \`$(basename "$post")/record.md\` — this step is the only one that fills them"
+      b_record WARN "Post-restart rows answered" "\`$(basename "$post")\` exists but no \`verify-reimaged-system-post-restart\` sign-off does"
     fi
   fi
 
@@ -653,7 +673,12 @@ if [[ "${CONTEXT_LABEL:-}" == "entry" || "${CONTEXT_LABEL:-}" == "exit" ]]; then
     [[ -n "$_signoff_item" ]] || continue
     signoff_row "$_signoff_item" "$_signoff_note"
   done <<< "$BOOKEND_MANUAL"
-  signoff_finalize "Phase 9" "$BOOKEND_FILE"
+  # ARTIFACT_RUN_FINAL_DIR, not ARTIFACT_RUN_DIR: the run is staged at
+  # runs/.<id>.incomplete and promoted afterwards, so a path quoted for a
+  # reader has to be the promoted one. Revision 150 settled this in
+  # bin/restore-repos.sh; the sign-offs already on the volume carry the
+  # staging path because these four did not follow it.
+  signoff_finalize "Phase 9" "$ARTIFACT_RUN_FINAL_DIR/bookend.md"
 
   if ! artifact_run_finalize "$BOOKEND_ROOT" "$b_pass pass / $b_warn warn / $b_fail fail"; then
     echo "ERROR: the bookend was written but could not be indexed." >&2
@@ -713,6 +738,21 @@ COMMAND_LOG="$OUT/logs/commands.log"
 ERROR_LOG="$OUT/logs/errors.log"
 RECORD="$OUT/record.md"
 SUMMARY="$OUT/README.md"
+
+# The rows a person answers go to the sign-off, not into the record. Revision 116
+# established the rule for the bookend path in this same script: a run directory
+# is replaced on every invocation, so an answer written into one is lost the next
+# time the script runs. The capture path kept emitting a 15-row `TODO` table into
+# the run directory anyway, under an instruction telling the operator to fill it
+# in -- which is why the 2026-09-02 conversion had to lift those rows out of all
+# six captures on the volume by hand. Opened here so SIGNOFF_FILE resolves for
+# the pointer the record carries in place of the table.
+SIGNOFF_ROOT="$OUTPUT_ROOT/sign-offs"
+if ! signoff_begin "$SIGNOFF_ROOT" "$RUN_CONTEXT" "$ARTIFACT_RUN_ID"; then
+  artifact_run_abort
+  echo "ERROR: cannot open a sign-off under: $SIGNOFF_ROOT" >&2
+  exit 2
+fi
 
 : > "$COMMAND_LOG"
 : > "$ERROR_LOG"
@@ -1019,12 +1059,15 @@ cat > "$OUT/manual-captures-required.md" <<'EOF_MANUAL_FIRST_BOOT'
 
 The record-reimaged-system script captures command output and app/process evidence, but these items still require human confirmation.
 
-**Fill these in the post-restart bundle only.** Each run of the script
-regenerates `record.md` with every manual row reset, so answers
-written into the pre-restart bundle are discarded by the next run. The
-post-restart bundle is the sign-off bundle; its rows are answered in
-`verify-reimaged-system.md` Step 7. Note in particular that the restart row
-cannot be answered truthfully in a pre-restart bundle.
+**This file enumerates; it does not collect.** The rows are answered in the
+sign-off under `reimaged-system/sign-offs/`, which carries an answer forward
+across runs and records the run it was given against. Nothing is written back
+into this bundle — a rerun stages a new run directory, so an answer left here
+would be discarded by the next one.
+
+Answer them in the **post-restart** sign-off. The restart row in particular
+cannot be answered truthfully before the restart has happened.
+`verify-reimaged-system.md` Step 7 is where that is done.
 
 | Area | Manual Item | Why Manual |
 |---|---|---|
@@ -1101,29 +1144,17 @@ Keep active scripts in the toolkit checkout. Store generated evidence, capture r
 | Homebrew available (installed in Phase 10A) | `__BREW_STATUS__` | `raw/brew-version.txt` |
 | Network check | `__NETWORK_STATUS__` | `raw/network-github.txt` |
 
-## Manual First-Boot Record
+## Manual First-Boot Rows
 
-> Fill these in the **post-restart** bundle only. A rerun regenerates this file
-> and resets every row, so answers written into a pre-restart bundle are lost.
-> See `verify-reimaged-system.md` Step 7.
+The rows a person answers are not in this file. Rerunning this script stages a
+new run directory, so an answer recorded here would come back as a fresh `TODO`.
+They live in the sign-off, which carries answers forward and records the run each
+was answered against:
 
-| Check | Status | Notes |
-|---|---|---|
-| Mac restarted after erase | `TODO` |  |
-| Wi-Fi connected | `TODO` |  |
-| Microsoft 365 / O365 sign-in completed | `TODO` |  |
-| Company Portal signed in | `TODO` |  |
-| Device shows registered / compliant | `TODO` |  |
-| Required profiles/certificates visible | `TODO` |  |
-| VPN or Zscaler works for internal sites | `TODO` |  |
-| Managed app set installed from the Company Portal Apps tab (Phase 8 Step 5) | `TODO` |  |
-| macOS updates checked/applied | `TODO` |  |
-| Second stabilization restart completed | `TODO` |  |
-| External artifact drive reconnected after enrollment stabilized | `TODO` |  |
-| Chrome opens and can reach an internal site | `TODO` | Bookmarks, profiles and saved passwords arrive in restore-apps.md (Phase 12), not here. |
-| Terminal opens and `echo $SHELL` is the expected login shell | `TODO` | Profile, font and window size arrive in restore-apps.md (Phase 12), not here. |
-| Display/keyboard/mouse basics work | `TODO` |  |
-| Ready to move to Phase 10 runtime environment restore | `TODO` |  |
+    __SIGNOFF_FILE__
+
+A row closed as `no` or `accepted` is a decision and counts as answered; the
+check is for rows nobody looked at.
 
 ## Recommended Next Actions
 
@@ -1141,6 +1172,7 @@ Keep active scripts in the toolkit checkout. Store generated evidence, capture r
 
 EOF_RECORD
 
+replace_token "$RECORD" "__SIGNOFF_FILE__" "$SIGNOFF_FILE"
 replace_token "$RECORD" "__GENERATED_DATE__" "$(date)"
 replace_token "$RECORD" "__SCRIPT_NAME__" "$SCRIPT_NAME"
 replace_token "$RECORD" "__CONTEXT__" "${CONTEXT_LABEL:-(none supplied)}"
@@ -1186,8 +1218,36 @@ replace_token "$SUMMARY" "__GENERATED_DATE__" "$(date)"
 # initial, pre-restart, post-restart -- and naming whichever ran last is
 # precisely the bug that made verify-reimaged-system.md Step 6 hand-roll its own
 # prefix-filtered selection. `official/<context>.txt` answers per lineage.
+# The fifteen rows a person answers. They were a table inside the record until
+# this revision; the wording is unchanged so a carried answer still matches its
+# item. `signoff_begin` copies the previous run's file forward, so an answer
+# given against an earlier capture survives this one.
+signoff_row "Mac restarted after erase" ""
+signoff_row "Wi-Fi connected" ""
+signoff_row "Microsoft 365 / O365 sign-in completed" ""
+signoff_row "Company Portal signed in" ""
+signoff_row "Device shows registered / compliant" ""
+signoff_row "Required profiles/certificates visible" ""
+signoff_row "VPN or Zscaler works for internal sites" ""
+signoff_row "Managed app set installed from the Company Portal Apps tab (Phase 8 Step 5)" ""
+signoff_row "macOS updates checked/applied" ""
+signoff_row "Second stabilization restart completed" ""
+signoff_row "External artifact drive reconnected after enrollment stabilized" ""
+signoff_row "Chrome opens and can reach an internal site" "Bookmarks, profiles and saved passwords arrive in restore-apps.md (Phase 12), not here."
+signoff_row "Terminal opens and the login shell is the expected one" "Profile, font and window size arrive in restore-apps.md (Phase 12), not here."
+signoff_row "Display/keyboard/mouse basics work" ""
+signoff_row "Ready to move to Phase 10 runtime environment restore" ""
+# ARTIFACT_RUN_FINAL_DIR, not ARTIFACT_RUN_DIR: the run is staged at
+# runs/.<id>.incomplete and promoted afterwards, so a path quoted for a
+# reader has to be the promoted one. Revision 150 settled this in
+# bin/restore-repos.sh; the sign-offs already on the volume carry the
+# staging path because these four did not follow it.
+signoff_finalize "Phase 9" "$ARTIFACT_RUN_FINAL_DIR/record.md"
+
 RUN_PASS="$(grep -c '`PASS`' "$RECORD" 2>/dev/null || true)"
 RUN_WARN="$(grep -c '`WARN`' "$RECORD" 2>/dev/null || true)"
+# Automated rows only now -- the manual ones are in the sign-off. A `TODO` here
+# is a probe that could not answer, not a person who has not looked.
 RUN_TODO="$(grep -c '`TODO`' "$RECORD" 2>/dev/null || true)"
 
 if ! artifact_run_finalize "$RUN_CATEGORY_ROOT" \

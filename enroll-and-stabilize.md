@@ -2,7 +2,7 @@
 
 # Enroll and Stabilize
 
-**Last updated:** 2026-09-02
+**Last updated:** 2026-09-03
 
 Bring the freshly reimaged Mac to a clean, trusted managed baseline before any restore work begins. This phase covers the human-driven work — completing MDM enrollment, installing and confirming the managed app set from both Intune assignment modes, applying required macOS updates, taking the first stabilization restart, and reconfirming afterward — and pairs it with `record-enrollment.sh`, which records read-only command evidence for each managed subsystem and prefills the Phase 8 exit-criteria table for the command-verifiable rows.
 
@@ -350,12 +350,23 @@ jump drive built in Phase 6A is the alternative and carries the same values plus
 **Open your password manager** in the same session. Phase 8 and Phase 10B both
 ask for credentials that are not on this machine and not on the artifact drive.
 
-Safari is on every fresh Mac and is enough for both. If your mail or your vault
-is reachable more easily in another browser — a Gmail account, or a vault whose
-extension you rely on — install Google Chrome from Company Portal first, which is
-[[#Step 5 — Install and Confirm Required and Available Managed Apps|Step 5]], and
-come back here. That reorders two steps and costs nothing, since enrollment does
-not depend on anything in Step 2 or Step 3.
+Safari is on every fresh Mac and is enough for both **if** your mail opens in a
+browser and your vault has a usable web login.
+
+**It is not enough when your vault is reached through a browser extension.** A
+LastPass vault used through the Chrome extension is not available in Safari on a
+fresh Mac, and neither is a Gmail account you normally reach through a Chrome
+profile. In that case Chrome is a prerequisite for this step, not a convenience:
+install it from Company Portal —
+[[#Step 5 — Install and Confirm Required and Available Managed Apps|Step 5]] —
+sign in to the extension, and come back here. Reordering those two steps costs
+nothing, because enrollment does not depend on anything in Step 2 or Step 3.
+
+Work out which case you are in *before* you need a password, not while a prompt
+is waiting. The one that bites is the **secrets DMG password**: Phase 10B cannot
+open the encrypted image without it, and if it lives in a vault you cannot reach
+from this Mac, the drive is mounted and unreadable with no way forward from
+inside the phase.
 
 Neither the cheatsheet nor the vault is stored on the artifact drive on purpose:
 the drive is not mounted yet at this point in the phase, and a credential that
@@ -564,7 +575,7 @@ macOS updates each need both. Two rows are left `TODO`; answer them in that file
 as described in Step 10, which explains the mechanics once for both bookends.
 
 The artifact root row is expected to be `WARN` here. The external volume is not
-reconnected until Phase 9 Step 1, so this checklist lands on the workspace or
+reconnected until Phase 9 Step 1, so this bookend lands on the workspace or
 Desktop fallback along with everything else this phase writes.
 
 [[#Table of Contents|⬆ Back to Table of Contents]]
@@ -880,7 +891,7 @@ tables: **Automated**, and **Manual** — the rows it cannot answer, left as `TO
 The Automated rows are not fresh probes. They restate the verdicts the Step 9 run
 recorded, read from that run's `rows.tsv`, which the script finds through
 `official/enroll-and-stabilize-post-restart.txt`. There is no pointer to walk and
-no way to sign off against the Step 7 record by accident, and a checklist built
+no way to sign off against the Step 7 record by accident, and a bookend built
 this way cannot disagree with the evidence it cites.
 
 A `FAIL` on **Post-restart baseline recorded** means Step 9 has not run since the
@@ -932,9 +943,9 @@ The exit criteria for this phase, and where each is settled:
 | Both baselines recorded, bracketing the restart | Automated, from the run index |
 | Company Portal state, security tooling, the restart itself, identity re-issue | Manual, answered here |
 
-Once the checklist has no `FAIL` and no unanswered `TODO`, move to
+Once the bookend has no `FAIL` and its sign-off no outstanding rows, move to
 [[verify-reimaged-system|verify-reimaged-system.md]]. Its Step 0 reads this
-checklist rather than re-deriving any of it, which is the reason to finish it here
+bookend rather than re-deriving any of it, which is the reason to finish it here
 rather than carrying an open row forward.
 
 > [!bug] Troubleshooting

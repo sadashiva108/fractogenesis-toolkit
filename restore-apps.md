@@ -2,7 +2,7 @@
 
 # Restore Apps
 
-**Last updated:** 2026-09-02
+**Last updated:** 2026-09-03
 
 Restore the day-to-day application layer on the reimaged Mac after the managed baseline, runtime, access, Git, and repository foundations are in place. This is the umbrella runbook for Phase 12: it walks the operator through the ordered install-and-restore sequence for Office, OneDrive, Chrome, Obsidian, Postman, VS Code, Raycast, Terminal, and the remaining daily tools, and hands off to dedicated runbooks for IntelliJ, Docker, and the late local-file restore. `bin/restore-apps.sh` writes a per-run plan-note that surveys the available pre-image backup sources and provides the sign-off checklist the operator ticks through by hand.
 
@@ -232,7 +232,7 @@ Run these in order. Each numbered step corresponds to a row (or row group) in th
 Two recordings, both taken before any application is installed or configured.
 They answer different questions and only one of them can be taken late.
 
-**0a — may this phase start?** Writes a checklist under
+**0a — may this phase start?** Writes a bookend under
 `reimaged-system/bookends/` and exits non-zero only on `FAIL`:
 
 ```bash

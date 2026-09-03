@@ -2,7 +2,7 @@
 
 # Restore Runtime
 
-**Last updated:** 2026-09-01
+**Last updated:** 2026-09-03
 
 Rebuild the non-secret runtime and toolchain layer on the reimaged Mac — Xcode Command Line Tools, Homebrew, Java and the JVM build tools, Node via `nvm`, and the platform CLIs — before any secret material or repository work begins. This runbook is manual by design; every install is `xcode-select`, `brew`, or `nvm` and there is no fractogenesis-toolkit entrypoint to drive it. The captured pre-image and post-image system inventories from Phases 4B and 13B are the reference for what "restored" means here.
 
@@ -1007,18 +1007,18 @@ Confirm what this phase produced. This is a close-out, not a check of the next
 phase: Phase 10B verifies its own entry conditions in its Step 0, the same way
 this runbook did in Step 0.
 
-Three parts, in this order: record the comparison for real, run the checklist,
-then answer by hand the rows the checklist could not.
+Three parts, in this order: record the comparison for real, run the exit
+bookend, then answer by hand the rows it could not.
 
 **First, put the comparison on disk.** `--dry-run` writes nothing, so a Step 10
-that ended on the dry run gives the checklist a `FAIL` it cannot resolve on its
+that ended on the dry run gives the bookend a `FAIL` it cannot resolve on its
 own. Running this again when it has already been recorded is harmless:
 
 ```bash
 bash bin/compare-restored-state.sh --runbook restore-runtime
 ```
 
-**Then run the checklist.**
+**Then run the exit bookend.**
 
 ```bash
 bash bin/record-restore-exit.sh --runbook restore-runtime
@@ -1074,7 +1074,7 @@ Homebrew says so itself — and a deprecated cask is a note to revisit rather th
 a blocker.
 
 *Row: Java resolves via java_home.* The major comes from `REIMAGE_JDK_BASELINE`,
-the same key the checklist reads, so both ask about the same JDK.
+the same key the bookend reads, so both ask about the same JDK.
 
 ```bash
 /usr/libexec/java_home -v "${REIMAGE_JDK_BASELINE:-21}"

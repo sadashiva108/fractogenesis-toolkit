@@ -1028,7 +1028,12 @@ while IFS=$'\t' read -r _signoff_item _signoff_note; do
   [[ -n "$_signoff_item" ]] || continue
   signoff_row "$_signoff_item" "$_signoff_note"
 done <<< "$MANUAL_ROWS"
-signoff_finalize "" "$CHECK_FILE"
+# ARTIFACT_RUN_FINAL_DIR, not ARTIFACT_RUN_DIR: the run is staged at
+# runs/.<id>.incomplete and promoted afterwards, so a path quoted for a
+# reader has to be the promoted one. Revision 150 settled this in
+# bin/restore-repos.sh; the sign-offs already on the volume carry the
+# staging path because these four did not follow it.
+signoff_finalize "" "$ARTIFACT_RUN_FINAL_DIR/bookend.md"
 
 # The result summary lands in the manifest row, so the index answers "did this
 # phase pass" without opening the run.

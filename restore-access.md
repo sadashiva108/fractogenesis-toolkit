@@ -2,7 +2,7 @@
 
 # Restore Access
 
-**Last updated:** 2026-09-02
+**Last updated:** 2026-09-03
 
 Restore the identity, trust, and credential layer on the reimaged Mac after the runtime toolchain is in place — SSH keys and Git access, certificates and keychains, Java trust overrides pinned to the JDK from Phase 10A, shell and CLI configuration, and license or activation material. Everything here comes out of the encrypted secrets DMG and the reviewed dotfiles bundle built during the pre-image phases. Most of it is manual — small copies, `security` commands, and Keychain Access actions — but four steps are scripted: Step 0 and the closing step run the bookend recorders in `bin/`, Step 2 runs `bin/restore-staged-loose.sh`, and `bin/restore-access.sh` can drive the whole phase.
 
@@ -321,7 +321,7 @@ that step alone once you have passed it.
 Two recordings, both taken before anything is mounted or written. They answer
 different questions and only one of them can be taken late.
 
-**0a — may this phase start?** Writes a checklist under
+**0a — may this phase start?** Writes a bookend under
 `reimaged-system/bookends/` and exits non-zero only on `FAIL`.
 
 ```bash
@@ -1527,7 +1527,7 @@ Read the rows rather than the exit status. It records `PASS`, `WARN`, `FAIL` and
 `MANUAL`, and a `MANUAL` row is a question only you can answer — it is not a
 failure, and it is not a pass either. Every `FAIL` names what to re-run.
 
-The checklist covers what this phase's steps produced: SSH key modes, the
+The bookend covers what this phase's steps produced: SSH key modes, the
 corporate CA bundle, Git and Node and Python over HTTPS, the Java trust
 override, the shell-config merge, the by-hand DMG categories, licenses, the
 staged-loose destinations, and the DMG being detached. There is no separate

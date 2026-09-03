@@ -2,7 +2,7 @@
 
 # Verify Reimaged System
 
-**Last updated:** 2026-09-02
+**Last updated:** 2026-09-03
 
 Reconnect the external artifact drive, prove the freshly reimaged Mac is basically usable, and record the first-boot evidence twice around a stabilization restart before deeper restore work begins. This phase pairs the human-driven day-one checks — network, browser, terminal, displays, peripherals, audio — with `record-reimaged-system.sh`, which records the same 14 read-only signals into two comparable evidence bundles, and hands off to Phase 10 once the pair is clean. This phase installs nothing managed: the managed app set belongs to Phase 8, and arriving here with it incomplete invalidates the bundle comparison the phase is built around.
 
@@ -105,10 +105,9 @@ README.md                          bundle summary and reading order
 restart-checkpoints.md             planned restart points across restore phases
 time-machine-plan.md               notes for the Phase 16 backup; nothing runs here
 manual-captures-required.md        rows only a human can close
-raw/*.txt                          the 14 read-only command outputs the checklist reads from
+raw/*.txt                          the 14 read-only command outputs the record reads from
 logs/commands.log                  every command the script ran
 logs/errors.log                    stderr collected during the run
-checks/                            reserved for future automated cross-checks
 ```
 
 The 14 automated rows cover: identity (`whoami`, hostname), managed baseline (`profiles`, `fdesetup`, Company Portal / CrowdStrike / Zscaler presence), common apps (Office, OneDrive, Chrome), plumbing (Time Machine destination, volumes, `sw_vers`, `softwareupdate --list`), platform tools (Homebrew, Git, `xcode-select`), and — unless `--no-network` — network reachability to `github.com` and `login.microsoftonline.com`.
@@ -132,7 +131,7 @@ The script asserts fixed verdicts on what a command can prove; the rest stays a 
 | Row group | What the script does | What you do |
 |---|---|---|
 | Automated | Records the raw command output and stamps `PASS` / `WARN` / `TODO` on 14 rows. | Read the raw file for context on any `WARN`. |
-| Manual | Nothing. The row is left as `TODO` in `record.md` and enumerated in `manual-captures-required.md`. | Sign the row after the UI, peripheral, or restart observation. |
+| Manual | Nothing. The row is opened as `TODO` in the run's sign-off under `reimaged-system/sign-offs/`, and enumerated in `manual-captures-required.md`. | Sign the row after the UI, peripheral, or restart observation. |
 
 `WARN` is not the same as `FAIL`: it means the command ran and the recorded output did not obviously match the expected pattern. `TODO` on an automated row means the check was skipped (for example, no `--artifact-root` was in scope) or its precondition was not met.
 
@@ -255,7 +254,6 @@ $REIMAGE_ARTIFACT_ROOT/
 │   │       └── verify-reimaged-system-<point>-YYYYMMDD-HHMMSS/
 │   │           ├── README.md
 │   │           ├── record.md
-│   │           ├── checks/
 │   │           ├── logs/
 │   │           │   ├── commands.log
 │   │           │   └── errors.log
@@ -351,7 +349,7 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
   distinguishable on disk and Step 6 can select them by name rather than by
   recency. The flag is optional; Step 6 falls back to the two most recent
   bundles when it is not used.
-- Whether the network probes should run. On a captive portal or intentionally offline session, add `--no-network` so the checklist row is stamped `INFO` instead of `WARN`.
+- Whether the network probes should run. On a captive portal or intentionally offline session, add `--no-network` so the record row is stamped `INFO` instead of `WARN`.
 - That you are **not** about to fill manual rows. They belong in the Step 5
   bundle and are answered in Step 8; anything written earlier is regenerated
   away.
@@ -377,16 +375,16 @@ It writes `bookend.md` under `reimaged-system/bookends/` with the context
 `verify-reimaged-system-entry`, and exits non-zero on any `FAIL`.
 
 The row that matters is **Phase 8 closed out**. It reads Phase 8's exit
-checklist — not Phase 8's evidence — and `FAIL`s when no
+bookend — not Phase 8's evidence — and `FAIL`s when no
 `enroll-and-stabilize-exit` run exists. That is the bookend pair working as
 designed: this phase does not re-derive whether enrollment finished, it asks
 whether the phase that owned that question signed off on it. A `WARN` there means
-the checklist exists with rows nobody answered, which is worth clearing before
-you build a baseline on top of it.
+the bookend exists but its sign-off still has rows nobody answered, which is
+worth clearing before you build a baseline on top of it.
 
 > [!note]
 > The artifact root row is expected to be `WARN` at this point. Step 1 is what
-> reconnects the volume; this checklist lands on the Desktop fallback and is
+> reconnects the volume; this bookend lands on the Desktop fallback and is
 > relocated with everything else.
 
 Two rows are left `TODO`. Answer them in that file the same way Step 7 describes.
@@ -524,7 +522,7 @@ The script emits `record.md` with automated rows prefilled, three companion plan
 
 ### Step 3 — Review Manual First-Boot Areas
 
-Focus on what the checklist cannot prove. The companion
+Focus on what the record cannot prove. The companion
 `manual-captures-required.md` inside the bundle enumerates these. Restore only
 low-risk UI defaults needed to keep working — anything requiring secrets,
 certificates, or repositories waits for Phase 10+.
@@ -555,7 +553,7 @@ Restart the Mac. This is the Phase 9 restart, distinct from the Phase 8 first st
 Before restarting, confirm:
 
 ```text
-the pre-restart bundle was written and its checklist opened cleanly
+the pre-restart bundle was written and its record opened cleanly
 no manual restore work in progress (browser sync, OneDrive initial sync, Docker install) will be interrupted
 you are ready to rerun the same commands after login
 ```
@@ -611,7 +609,7 @@ is empty it says so, which is a stronger statement than an empty diff.
 | improved | Was `TODO`, `WARN` or `FAIL`; now passes. The expected direction. |
 | answered | Was `TODO`; now carries a considered `no` or a qualified answer. |
 | changed | Moved between two non-passing states. |
-| new / dropped | Present on one side only — usually a checklist that changed shape between runs, not a machine that did. |
+| new / dropped | Present on one side only — usually a record that changed shape between runs, not a machine that did. |
 | unchanged | Same on both sides. Counted, and listed in `rows.tsv`. |
 
 `PASS` and a hand-written `yes` mean the same thing here, and a qualified answer
@@ -683,9 +681,11 @@ mouse and audio — the Step 3 review, recorded here rather than left as somethi
 you remember doing.
 
 > [!warning] Pitfall
-> Each run writes its own dated directory, so a rerun does not update the file you
-> answered — it produces a new `record.md` with every Manual row back at
-> `TODO`. Answer them in the last run you intend to keep.
+> Each run writes its own dated directory, and `record.md` inside it is replaced
+> wholesale. Your answers are not in there — they are in the sign-off, which a
+> rerun copies forward with the run each was answered against. A row still naming
+> an older run is *carried*, not re-verified: re-read it rather than assuming it
+> still holds.
 
 The exit criteria for this phase, and where each is settled:
 
@@ -695,10 +695,10 @@ The exit criteria for this phase, and where each is settled:
 | Both first-boot bundles recorded | Automated, from the run index |
 | The post-restart bundle genuinely follows the restart | Automated, by stamp comparison |
 | The two bundles were compared | Automated, from the run index |
-| The post-restart checklist has no unanswered rows | Automated |
+| The post-restart sign-off has no outstanding rows | Automated |
 | Regressions, managed app set, first-boot basics | Manual, answered here |
 
-Once the checklist has no `FAIL` and no unanswered `TODO`, move to
+Once the exit bookend has no `FAIL` and the sign-off no outstanding rows, move to
 [[restore-runtime|restore-runtime.md]]. Its Step 0 re-verifies what it needs from
 its own side.
 

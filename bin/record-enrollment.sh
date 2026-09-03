@@ -531,7 +531,12 @@ if [[ "${CONTEXT_LABEL:-}" == "entry" || "${CONTEXT_LABEL:-}" == "exit" ]]; then
     [[ -n "$_signoff_item" ]] || continue
     signoff_row "$_signoff_item" "$_signoff_note"
   done <<< "$BOOKEND_MANUAL"
-  signoff_finalize "Phase 8" "$BOOKEND_FILE"
+  # ARTIFACT_RUN_FINAL_DIR, not ARTIFACT_RUN_DIR: the run is staged at
+  # runs/.<id>.incomplete and promoted afterwards, so a path quoted for a
+  # reader has to be the promoted one. Revision 150 settled this in
+  # bin/restore-repos.sh; the sign-offs already on the volume carry the
+  # staging path because these four did not follow it.
+  signoff_finalize "Phase 8" "$ARTIFACT_RUN_FINAL_DIR/bookend.md"
 
   if ! artifact_run_finalize "$BOOKEND_ROOT" "$b_pass pass / $b_warn warn / $b_fail fail"; then
     echo "ERROR: the bookend was written but could not be indexed." >&2

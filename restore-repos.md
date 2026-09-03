@@ -2,7 +2,7 @@
 
 # Restore Repositories
 
-**Last updated:** 2026-09-02
+**Last updated:** 2026-09-03
 
 Consume the pre-image repository audit produced by Phase 2A to re-clone the tracked repositories onto the reimaged Mac, rsync the reviewed kept ignored files back into each working tree, and reconcile every pre-image carry-forward row (local-only commits, stashes, tracked changes) against the state of the freshly cloned repos. Runs after Phase 11A has wired up the dual-identity `~/.gitconfig` and `~/.ssh/config`, so every clone this phase performs already routes through the correct SSH key.
 
@@ -311,7 +311,7 @@ Run these in order. The plan has to exist before a run can act on it, the report
 Two recordings, both taken before anything is cloned. They answer different
 questions and only one of them can be taken late.
 
-**0a — may this phase start?** Writes a checklist under
+**0a — may this phase start?** Writes a bookend under
 `reimaged-system/bookends/` and exits non-zero only on `FAIL`:
 
 ```bash
