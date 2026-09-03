@@ -16,6 +16,6 @@ answers the status without opening anything. The row here is authoritative.
 
 ## Bundles
 
-| # | Bundle | Finding | Status | Session | Notes |
-|---:|---|---|---|---|---|
-| 0024 | [0024-restore-docker-stack-differs-from-pre-image](0024-restore-docker-stack-differs-from-pre-image/) | The running Docker stack is not the one `restore-docker.md` restores | `unresolved` | — | — |
+| # | Bundle | Subject | Findings | Status | Session | Notes |
+|---:|---|---|---:|---|---|---|
+| 0024 | [0024-restore-docker-stack-differs-from-pre-image](0024-restore-docker-stack-differs-from-pre-image/) | The running Docker stack is not the one `restore-docker.md` restores | 1 | `unresolved` | — | — |

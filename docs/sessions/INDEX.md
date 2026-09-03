@@ -10,8 +10,9 @@ section 4d. **What the states mean is in [`docs/legend.md`](../legend.md)**,
 alongside the findings statuses. This file carries the rows.
 
 `findings-manifest.md` inside a bundle is authoritative for what that session
-owns; the table below carries the count and points at it rather than restating
-the list.
+owns and `metadata.md` for who and what has owned it — assistant, session
+identifier, model and the environment it actually ran in. The table below carries
+the state and the counts and points at both rather than restating them.
 
 ---
 

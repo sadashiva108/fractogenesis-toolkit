@@ -104,11 +104,16 @@ Rules for an AI session:
   unreviewable one. Park it as a findings bundle (4c) and say so in the summary.
 - READ the findings indexes and docs/sessions/ before starting work in an area --
   the answer to "why is this half-done" is often already written down.
-- These files ARE tracked and reach a fresh clone. Writing one is still not a
-  change to the workflow, so it does NOT take an APPLY-MANIFEST.md revision:
-  the manifest records what the workflow does, and a note about the workflow is
-  not a change to it. Adding or moving one of these DIRECTORIES, or changing the
-  rules in 4b through 4d, is a change to the instruction set and does take one.
+- These files ARE tracked and reach a fresh clone, so writing one IS a
+  repository change and takes an APPLY-MANIFEST.md revision like any other.
+  Revision 162 exempted them, on the reasoning that a note about the workflow is
+  not a change to the workflow. That reasoning was load-bearing only while the
+  contents were gitignored and invisible to the diff; once they are under version
+  control the owner reviews them, and anything the owner reviews belongs in the
+  record of what changed.
+  A revision covers a CHANGE, not a file: a session that parks three notes in one
+  sitting writes one entry naming all three, the same way a revision that edits
+  nine documents is one entry. Parking stays cheap; it stops being invisible.
   Anything that must be true for the workflow to work still belongs in the
   runbook it concerns, not in a note.
 - One file per item, named for the thing rather than the date. A dated filename
@@ -199,6 +204,8 @@ session almost always ends up with more than one document.
     docs/sessions/<title>-<stamp>/
     |-- STATE-<state>            the tag, as in 4c. Required, always.
     |-- prompt.md                what starts the session. Required, always.
+    |-- metadata.md              who and what has owned it. Required from
+    |                            `owned` onward.
     |-- findings-manifest.md     the bundles this session owns. Required once it
     |                            owns one.
     |-- handoff-<stamp>.md       one per handover; never edited afterwards.
@@ -241,12 +248,18 @@ AND WHAT EACH MEANS ARE DEFINED IN `docs/legend.md`, beside the findings
 statuses. What each state REQUIRES is here:
 
 - `unclaimed` -- `prompt.md` and the tag. Nothing else.
-- `owned` -- record in the INDEX.md row which assistant owns it (`Claude` or
-  `Copilot`; those are the two approved) with whatever session identifier is
-  available, and the date and time ownership was established. An unidentifiable
-  session is still `owned`: write what is known rather than leaving the row
-  blank. An owned session that is not yet complete also lists the loose
-  `docs/sessions/` files it depends on, by path.
+- `owned` -- `metadata.md`, and the assistant and date in the INDEX.md row.
+  `metadata.md` is authoritative for WHO and WHAT: one row per owner, with the
+  assistant (`Claude` or `Copilot`; those are the two approved), its session
+  identifier and transcript link where the tool exposes one, the model it was
+  configured for, the environment it actually ran in, and the dates it held the
+  bundle. A bundle handed on has several rows; none is ever edited once the
+  ownership it records has ended.
+  The environment field is not decoration. This workflow targets macOS stock Bash
+  3.2, an AI session almost never runs there, and a claim validated on Linux is a
+  different claim -- `metadata.md` is where that is on the record rather than
+  remembered. An unidentifiable session is still `owned`: write what is known and
+  say what is not.
 - `handoff` -- `handoff-<stamp>.md`, plus the date and time the owner decided to
   hand off and, once known, the incoming assistant. The document carries:
   progress so far, exactly where the work stopped, every assumption the outgoing

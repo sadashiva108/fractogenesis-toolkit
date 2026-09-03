@@ -1,9 +1,11 @@
 # docs/ — map
 
 Parked work. **All of `docs/` is tracked** as of Revision 162 — these files reach
-a fresh clone. Writing one is still not a change to the workflow and takes no
-manifest revision; anything that must be *true* for the workflow to work belongs
-in the runbook it concerns, not in a note.
+a fresh clone, so writing one is a repository change and takes an
+`APPLY-MANIFEST.md` revision like any other (Revision 164). One revision covers
+one change, not one file: notes parked in the same sitting share an entry.
+Anything that must be *true* for the workflow to work belongs in the runbook it
+concerns, not in a note.
 
 | Directory | Holds | Index |
 |---|---|---|

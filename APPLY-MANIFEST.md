@@ -1,5 +1,9 @@
 # Apply Manifest
 
+**Revision 165** — supersedes Revision 164 and earlier. A session records its own identity and environment, and the indexes stop calling a bundle a finding.
+
+**Revision 164** — supersedes Revision 163 and earlier. Parked notes take a revision now that they are version-controlled, and the bundle structure gets the architecture record that explains why it is shaped as it is.
+
 **Revision 163** — supersedes Revision 162 and earlier. `docs/features/` becomes `docs/ideas/`, and the line between an idea and a finding is drawn on whether the thing exists yet.
 
 **Revision 162** — supersedes Revision 161 and earlier. `docs/gaps/` is retired into 25 findings bundles, the loose session files become five session bundles, both vocabularies get one legend, the runbook-versus-cross-cutting line is drawn on functional impact, and all of `docs/` becomes tracked.
@@ -449,6 +453,156 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
 
 ---
+
+## Revision 165 — a session says who it was, and a bundle stops being called a finding
+
+### `metadata.md`
+
+A session bundle recorded its state and what it owned, and nothing about itself.
+Who ran it, under what identifier, and — the part this workflow cares about most
+— **where it actually ran**.
+
+`metadata.md` is now required from `owned` onward and is authoritative for who
+and what: one row per owner, with the assistant (`Claude` or `Copilot`), its
+session identifier and transcript link where the tool exposes one, the model it
+was configured for, the environment it ran in, and the dates it held the bundle.
+A bundle handed on has several rows and none is edited once the ownership it
+records has ended.
+
+The environment field is the reason this is worth a file rather than a line in an
+index row. This workflow targets macOS stock Bash 3.2; an AI session almost never
+runs there; a check that passed on Linux with Bash 5.x is a different claim, and
+the repository has said so in its instructions for some time while relying on
+each session to remember. It is now on the record per session. The restore-apps
+bundle's own metadata states plainly that `/bin/bash -n` against real 3.2 is owed
+for Revisions 116 through 165 and that nothing it validated was validated on the
+target platform.
+
+It also closes the traceability chain in both directions: a commit carries the
+session identifier in its `Claude-Session` trailer, the identifier names the
+bundle, and the bundle names the findings.
+
+Five files were written. Two carry a real identifier — this session's, and the
+run-index session's, which survives only because that session wrote it into
+`session-responsibilities.md` and into the `**Found:**` line of every note it
+parked, which is also how its findings were attributed in Revision 162. The other
+three record the identifier as **not recoverable** rather than guessing: those
+sessions predate the practice and left none.
+
+### A bundle is not a finding
+
+The indexes and manifests had a column headed `Finding` holding the bundle's
+title, which quietly implies one finding per bundle. `0001` holds ten; the
+twenty-five converted from parked notes hold one each.
+
+That column is now **Subject** — what the reading was of — with a **Findings**
+count beside it, taken from the per-finding status table inside `findings.md`; a
+bundle with no such table holds one by definition. Fourteen files: ten indexes
+and four session manifests.
+
+The distinction is not pedantry. `resolved` means every finding in the bundle has
+a resolution, so a reader who takes a bundle for a finding will close one that is
+nine-tenths open. `docs/architecture/findings-and-sessions.md` gains a section
+4a saying so, and section 8 gains the metadata point.
+
+### Validation
+
+`bash -n` not applicable — no script changed. Documentation lint after:
+**0 MISSING, 0 ANCHOR BROKEN**. Runbook structure **213 PASS / 5 WARN / 25
+FAIL** across 27 documents, unchanged. Script portability **0 WARN / 0 FAIL**,
+unchanged. Checks ran on Linux with Bash 5.x — see the note above about what that
+does and does not establish.
+
+## Revision 164 — a tracked note is a repository change, and the structure explains itself
+
+### The exemption goes
+
+Revision 162 tracked all of `docs/` and, in the same breath, exempted its
+contents from needing a manifest revision — on the reasoning that the manifest
+records what the workflow *does*, and a note about the workflow is not a change
+to it.
+
+That reasoning was load-bearing only while the contents were gitignored. A
+gitignored note never reached the diff, so exempting it changed nothing; the
+exemption was describing a fact about the tooling and dressing it as a principle.
+Now the notes are under version control, the owner reviews every one of them, and
+anything the owner reviews belongs in the record of what changed. The exemption
+is removed.
+
+**One revision covers one change, not one file.** A session that parks three
+notes in a sitting writes one entry naming all three, the same way a revision
+that edits nine documents is one entry — this revision covers two new documents
+and a rule change. Parking stays cheap; it stops being invisible.
+
+### The architecture record
+
+`docs/architecture/findings-and-sessions.md`. The bundle structure has been built
+over four revisions in response to one request after another, and its reasoning
+was spread across those entries — which is the wrong place for it, because a
+change log is read forwards by date and a design is read backwards by question.
+
+It covers the problem the structure solves, the two objects, why a bundle is a
+directory, why findings carry numbers and sessions carry timestamps, why the
+pointer between them runs both ways, why `in progress` and `resolving` are
+separate, why the status is duplicated into a tag file, and what the whole thing
+costs. Alternatives rejected are gathered in one table, including the two this
+work got wrong first: session folders numbered after a finding, and leaving the
+loose session files unmigrated.
+
+It is written to be read by someone who has never seen this repository, because
+the structure is meant to be reused and nothing in it is specific to reimaging a
+Mac.
+
+Its section 8 is the part worth arguing with: **an AI session's memory is the
+filesystem.** Anything not written to it did not happen, and anything written
+ambiguously is interpreted differently by the next session. Every convention here
+follows from that, including the one that says a reading is written once and
+never rewritten to match what was later decided — a structural defence against a
+failure mode specific to this kind of collaborator.
+
+Section 11 asks which assistant capabilities could carry the structure, under a
+constraint stated before the list: sessions here are Claude or Copilot, so
+anything named there is an accelerator and must degrade to *a session reads the
+instructions and does it by hand*. An accelerator that becomes load-bearing has
+turned a portable structure into a single-assistant one. Six are named —
+write-time enforcement of the invariants the design currently leaves to
+discipline, packaging the mechanical half of creating a bundle, the
+plan-then-execute behaviour that already matches the `in progress` / `resolving`
+split, parallel reading with a real merge, workspace-level conventions, and a
+sweep that notices a bundle nobody has touched. One is ruled out: a service
+fronting the indexes, which would make the filesystem-is-the-memory property
+conditional on tooling.
+
+Four questions are recorded open rather than answered: whether this belongs
+inside a project repository at all given that none of it is project-specific;
+what would ever be gitignored again if it stays; where a finding whose subject is
+not the project goes; and the Cowork constraint that a session working in the
+repository has these conventions in context automatically and would not if they
+moved out. That last one is tooling rather than architecture, but it is the
+constraint most likely to decide the first in practice.
+
+### The first idea
+
+`docs/ideas/external-findings.md`, and the first thing in that directory since
+Revision 163 defined it. An ad-hoc investigation arrived from a colleague — an
+ingestion application's log volumes — and there was nowhere in `docs/` for it:
+both findings trees are scoped to this workflow, and filing it in either would
+make both indexes lie about their scope.
+
+It separates the session, which the existing shape already handles with an empty
+`findings-manifest.md`, from the subject, which has none; and it puts the
+constraint that decides the question where it belongs — this repository pushes to
+a personal account, so the question is not where an external finding goes but how
+much of one may exist here at all. Four shapes are sketched without choosing,
+which is what keeps it an idea rather than an architecture record.
+
+### Validation
+
+`bash -n` not applicable — no script changed. Documentation lint after:
+**0 MISSING, 0 ANCHOR BROKEN**. Runbook structure **213 PASS / 5 WARN / 25
+FAIL** across 27 documents, unchanged. Script portability **0 WARN / 0 FAIL**,
+unchanged. Checks ran on Linux with Bash 5.x; nothing verified against macOS
+stock Bash 3.2.
 
 ## Revision 163 — `features/` becomes `ideas/`, and stops collecting work on things that exist
 

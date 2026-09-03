@@ -16,6 +16,6 @@ answers the status without opening anything. The row here is authoritative.
 
 ## Bundles
 
-| # | Bundle | Finding | Status | Session | Notes |
-|---:|---|---|---|---|---|
-| 0021 | [0021-restore-access-exit-predates-its-own-state-walk](0021-restore-access-exit-predates-its-own-state-walk/) | The Phase 10B exit was recorded a week before the evidence it stands on | `unresolved` | [`run-index-design-20260901-000000`](../../../sessions/run-index-design-20260901-000000/) | — |
+| # | Bundle | Subject | Findings | Status | Session | Notes |
+|---:|---|---|---:|---|---|---|
+| 0021 | [0021-restore-access-exit-predates-its-own-state-walk](0021-restore-access-exit-predates-its-own-state-walk/) | The Phase 10B exit was recorded a week before the evidence it stands on | 1 | `unresolved` | [`run-index-design-20260901-000000`](../../../sessions/run-index-design-20260901-000000/) | — |

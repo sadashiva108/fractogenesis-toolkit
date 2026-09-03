@@ -16,6 +16,6 @@ answers the status without opening anything. The row here is authoritative.
 
 ## Bundles
 
-| # | Bundle | Finding | Status | Session | Notes |
-|---:|---|---|---|---|---|
-| 0014 | [0014-orphaned-comparison-lineage-runtime-version-comparison](0014-orphaned-comparison-lineage-runtime-version-comparison/) | `restore-runtime-version-comparison` is a lineage with no producer | `unresolved` | [`run-index-design-20260901-000000`](../../../sessions/run-index-design-20260901-000000/) | — |
+| # | Bundle | Subject | Findings | Status | Session | Notes |
+|---:|---|---|---:|---|---|---|
+| 0014 | [0014-orphaned-comparison-lineage-runtime-version-comparison](0014-orphaned-comparison-lineage-runtime-version-comparison/) | `restore-runtime-version-comparison` is a lineage with no producer | 1 | `unresolved` | [`run-index-design-20260901-000000`](../../../sessions/run-index-design-20260901-000000/) | — |

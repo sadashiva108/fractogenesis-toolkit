@@ -6,9 +6,9 @@ restating the list. Each bundle's own index row names this session in return.
 
 Statuses are defined in [`docs/legend.md`](../../legend.md).
 
-| # | Bundle | Kind | Finding | Status |
-|---:|---|---|---|---|
-| 0015 | `docs/cross-cutting-findings/0015-portability-lint-cannot-see-heredoc-context/` | cross-cutting | The portability lint cannot see a defect that needs heredoc context | `unresolved` |
+| # | Bundle | Kind | Subject | Findings | Status |
+|---:|---|---|---|---:|---|
+| 0015 | `docs/cross-cutting-findings/0015-portability-lint-cannot-see-heredoc-context/` | cross-cutting | The portability lint cannot see a defect that needs heredoc context | 1 | `unresolved` |
 
 Ownership was reconstructed during the Revision 162 conversion from the
 `**Found:**` line each note carries, which names the session that recorded it.

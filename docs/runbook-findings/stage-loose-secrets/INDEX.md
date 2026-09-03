@@ -16,6 +16,6 @@ answers the status without opening anything. The row here is authoritative.
 
 ## Bundles
 
-| # | Bundle | Finding | Status | Session | Notes |
-|---:|---|---|---|---|---|
-| 0007 | [0007-content-scans-keeps-a-bespoke-index](0007-content-scans-keeps-a-bespoke-index/) | `content-scans/` looks like a run category and is not one | `resolved` | [`run-index-design-20260901-000000`](../../../sessions/run-index-design-20260901-000000/) | closed by Revision 141 |
+| # | Bundle | Subject | Findings | Status | Session | Notes |
+|---:|---|---|---:|---|---|---|
+| 0007 | [0007-content-scans-keeps-a-bespoke-index](0007-content-scans-keeps-a-bespoke-index/) | `content-scans/` looks like a run category and is not one | 1 | `resolved` | [`run-index-design-20260901-000000`](../../../sessions/run-index-design-20260901-000000/) | closed by Revision 141 |
