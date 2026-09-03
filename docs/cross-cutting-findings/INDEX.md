@@ -26,10 +26,11 @@ tag that disagrees with it is a bug in whoever moved the bundle last.
 | `in progress` | The owner is reviewing and deciding. Produces `decisions.md`. **Only the owner writes from here on.** |
 | `resolving` | Every finding decided; the decided work is being carried out. Produces `resolutions.md`. |
 | `resolved` | Every finding has a resolution recorded. |
-| `superseded` | A later bundle replaces this reading. The row names which. |
+| `superseded` | A later bundle replaces this reading — including a bundle overtaken while `in progress`. The row names which; the replacement carries `Relates to`. |
 
 A bundle advances with its first finding and reaches `resolved` only with its
-last. Full definitions, the transitions and the write rules:
+last. The owner may override any rule; a revision carrying an overridden change
+says so. Full definitions, the transitions and the write rules:
 [`docs/legend.md`](../legend.md).
 
 ## Bundles

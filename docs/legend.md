@@ -23,7 +23,7 @@ how far that reading has been taken, never how anyone feels about it.
 | `in progress` | The findings are being reviewed and decisions being made for resolutions. | `decisions.md` |
 | `resolving` | Begins **only** once **every** finding in the bundle has a decision recorded in `decisions.md`. The decided work is being carried out. | `resolutions.md` |
 | `resolved` | Every finding in the bundle has a resolution recorded in `resolutions.md`. | — |
-| `superseded` | A later bundle replaces this reading. The row names which. | — |
+| `superseded` | A later bundle replaces this reading. The row names which, and the replacement carries `Relates to`. | — |
 
     unresolved ──▶ in progress ──▶ resolving ──▶ resolved
                                      │
@@ -75,6 +75,58 @@ interact, and building the first before the tenth is decided is how a fix gets
 made twice, or made in a shape the later decision would not have chosen.
 
 ---
+
+## When something overtakes a bundle already in progress
+
+`in progress` closes a bundle to every session but its owner, which leaves a
+second session with something that bears on it — new evidence, an idea that
+changes a problem statement — with nowhere to put it.
+
+**Mark the bundle `superseded` and open a new one carrying the merged reading.**
+The superseded row names its replacement; the replacement carries a `Relates to`
+line naming what it replaces. Nothing is edited inside a bundle whose decisions
+have been taken against it as it was read, which is the property `in progress`
+exists to protect.
+
+The cost is real and belongs in the new bundle's `decisions.md`: **decisions do
+not carry forward by themselves.** Every decision taken in the superseded bundle
+is re-affirmed against the merged reading or explicitly dropped, because a
+decision reached against seven findings may not hold against nine.
+
+This is expected to be rare. By the time an owner starts a bundle they are
+usually satisfied with its problem statements, and a contribution that genuinely
+changes one after that is the exception rather than the working case.
+
+## `Relates to`
+
+A bundle may name another it bears on, without either replacing the other, as a
+line in `findings.md`'s header beside `Found`, `Severity` and `Scope`:
+
+    **Relates to:** `0028` — its finding 2 is the same baseline problem this
+    bundle's finding 6 reaches from the other side.
+
+It is a pointer and nothing more: it creates no ownership, moves no status, and
+obliges nobody. It exists because two readings of one mechanism from different
+angles are common, and a reader who finds one should be able to find the other.
+`superseded` uses the same line to name what it replaced.
+
+## The owner's override
+
+**The owner may override any rule here, at their discretion.** A session may not
+invoke this on its own behalf and may not infer it; it acts on an override only
+when the owner gives one.
+
+The case it exists for is the one that has already occurred: a change the owner
+has already decided, with no finding behind it and nothing to discuss, which the
+lifecycle would delay without adding anything. Routing a settled decision through
+a bundle, a reading and a decisions document produces paperwork, not judgement.
+
+**A revision carrying an overridden change says so, and says what was
+overridden.** That is the whole discipline: the override is not a loophole
+because it is never silent, and a reader can always tell a change that followed
+from a finding from one the owner simply directed. Revisions 166 and 168 changed
+section 4c on the owner's word with no finding behind them, and did not say so;
+they are the reason this is written down.
 
 ## Session states
 

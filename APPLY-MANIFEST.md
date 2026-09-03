@@ -1,5 +1,9 @@
 # Apply Manifest
 
+**Revision 174** — supersedes Revision 173 and earlier. A third findings tree for the rules themselves, and the six this session had left owed to them.
+
+**Revision 173** — supersedes Revision 172 and earlier. The statuses and states are on the indexes, an overtaken bundle is superseded rather than edited, bundles can point at each other, and the owner's override is written down.
+
 **Revision 172** — supersedes Revision 171 and earlier. An unresolved bundle is open to every session and a bundle in progress is closed to all but its owner; `0027` and `0028` get an owner.
 
 **Revision 171** — supersedes Revision 170 and earlier. What a shared working tree costs is read and parked as finding 0028, and the entry that records it is the first composed outside the tree it lands in.
@@ -467,6 +471,156 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
 
 ---
+
+## Revision 174 — a tree for findings about the rules, and six of them
+
+### `docs/instruction-set-findings/`
+
+Two trees sorted findings by where in the *workflow* they land. Neither fits a
+defect in the rules a session works under: `runbook-findings/` is keyed to a
+runbook stem, and `cross-cutting-findings/` means the workflow's shared machinery
+— recorders, the run index, the lints, the artifact layout.
+
+The third tree takes findings whose subject is `.github/copilot-instructions.md`,
+`.claude/CLAUDE.md`, the prompts and templates, and `docs/legend.md` while it
+carries rules the instruction set has not adopted. The test is the one the other
+two already use: where the ramifications are functionally felt. **A defect in
+`bin/reindex-artifact-runs.sh` is cross-cutting; a defect in the rule that says
+when a session may edit it belongs here.**
+
+Numbering stays one sequence across all three, so a finding number still names a
+bundle without needing its tree.
+
+### Bundle `0029`, and why it is a self-report
+
+Six findings, all from this session's own outstanding items rather than a fresh
+reading, and **five of them are rules this session wrote into `docs/legend.md`
+and did not carry into the instruction set** — each time with a line saying the
+adoption was owed. Six such lines across five revisions is a pattern rather than
+a backlog, which is what finding 5 is about.
+
+- **1** — the write categories, the contribution rule, supersession-on-overtake,
+  `Relates to` and the owner's override exist only in `legend.md`. A session that
+  reads what it is told to read learns none of the five. The contribution rule is
+  the sharpest instance: it governs whether a session may write to a bundle it
+  does not own, which every concurrent session hits.
+- **2** — `resolving`'s gate and the bundle-advance rule are in §4c *and* in
+  `legend.md`, in different prose, with nothing keeping them in step. This is the
+  one place `0029` touches `0027`, whose finding 6 is the same failure on the
+  session-state side; they should be decided together.
+- **3** — §4b's directory count has been wrong after four of the last six
+  revisions that touched `docs/`, and this revision makes it wrong again. A
+  number in a sentence is maintained by whoever adds a directory, and nothing
+  checks it.
+- **4** — `docs/architecture/findings-and-sessions.md` names two findings trees
+  and gives a two-way test.
+- **5** — nothing tells a session that `legend.md` is normative. Both indexes
+  present it as a place to look things up. That is how five rules ended up
+  somewhere sessions are not told to look, and the honest answer today is that a
+  session learns the rules by being told in conversation — the failure this
+  architecture exists to remove.
+- **6** — Revision 162 moved the state definitions to `legend.md` and left the
+  per-state requirements in §4d, so §4d says what `handoff` requires without
+  saying what it means.
+
+Owned by `restore-apps-outstanding-20260903-000000`, which now holds four
+bundles: `0001` in progress, `0027`, `0028` and `0029` unresolved.
+
+### Nothing is fixed here
+
+Every fix in `0029` is a toolkit write, and the bundle is `unresolved`. This
+revision records the reading and nothing else — which is also why §4b still says
+six directories while there are seven: correcting it is finding 3.
+
+### Validation
+
+**774 OK / 0 MISSING / 0 ANCHOR BROKEN**; structure **213 PASS / 5 WARN / 25
+FAIL** across 27 documents; portability **81 clean / 0 WARN / 0 FAIL**. No script
+changed, no other session in the tree, so the numbers are attributable. Linux,
+Bash 5.x; `/bin/bash -n` against macOS Bash 3.2 remains owed for Revisions 116
+through 174.
+
+## Revision 173 — the keys move to the indexes, and the owner's override is written down
+
+### The vocabularies are where they are used
+
+`docs/legend.md` held both, and every index pointed at it. A reader scanning a
+table of bundles had to leave the table to find out what `in progress` meant,
+which is the kind of friction that ends with nobody looking it up at all.
+
+Each of the ten findings indexes now carries a five-row status key above its
+bundle table, and `docs/sessions/INDEX.md` a five-row state key above its
+bundles. Compact: the value, what it means, and — for the two statuses where it
+governs behaviour — who may write. `docs/legend.md` stays authoritative for the
+transitions, what each state produces, the write categories and the rules below.
+
+### A bundle overtaken while in progress is superseded, not edited
+
+`in progress` closes a bundle to every session but its owner. That leaves a
+second session with something bearing on it — new evidence, an idea that changes
+a problem statement — with nowhere to put it.
+
+Owner, 2026-09-03: mark the bundle `superseded`, and open a new one carrying the
+merged reading. Nothing is edited inside a bundle whose decisions were taken
+against it as it was read, which is exactly the property `in progress` protects.
+
+The cost belongs in the new bundle's `decisions.md`: **decisions do not carry
+forward by themselves.** Each is re-affirmed against the merged reading or
+explicitly dropped, because a decision reached against seven findings may not
+hold against nine.
+
+Expected to be rare, and the owner's own reasoning for why is worth keeping: by
+the time an owner starts a bundle they are usually satisfied with its problem
+statements, so a contribution that genuinely changes one after that is the
+exception rather than the working case.
+
+### `Relates to`
+
+A bundle may name another it bears on, without either replacing the other, as a
+header line in `findings.md` beside `Found`, `Severity` and `Scope`. It creates
+no ownership, moves no status and obliges nobody — it exists because two readings
+of one mechanism from different angles are common, and a reader who finds one
+should be able to find the other. `superseded` uses the same line to name what it
+replaced.
+
+`0027` and `0028` are the first pair that wants it; neither carries one yet.
+
+### The owner's override
+
+**The owner may override any rule, at their discretion.** A session may not
+invoke this for itself and may not infer it; it acts on an override only when the
+owner gives one.
+
+The case it exists for has already happened. The owner's words: *there were no
+findings involved, I already knew what I wanted, and I did not want the lack of
+having it holding up other work.* Routing a settled decision through a bundle, a
+reading and a decisions document produces paperwork rather than judgement.
+
+**A revision carrying an overridden change says so, and says what was
+overridden.** That is the entire discipline, and it is what stops the hatch
+becoming the default route: the override is never silent, so a reader can always
+separate a change that followed from a finding from one the owner directed.
+
+Revisions 166 and 168 changed section 4c on the owner's word, with no finding
+behind them, and said nothing about it — which under the rules as they stood was
+either a violation or an unwritten exception. They are the reason this is written
+down, and this entry is the record they should have carried.
+
+### Not done here
+
+The instruction set still says none of this. Sections 4b through 4d are toolkit
+writes, and `0027` finding 1 is a live finding about those very sections in a
+bundle this session owns at `unresolved` — so editing them now would be working a
+finding before deciding it. `docs/legend.md` carries the rules until `0027` is
+decided.
+
+### Validation
+
+**774 OK / 0 MISSING / 0 ANCHOR BROKEN**; structure **213 PASS / 5 WARN / 25
+FAIL** across 27 documents; portability **81 clean / 0 WARN / 0 FAIL**. No script
+changed. No other session held work in the tree while this was written, so the
+numbers are attributable to this revision. Linux, Bash 5.x; `/bin/bash -n`
+against macOS Bash 3.2 remains owed for Revisions 116 through 173.
 
 ## Revision 172 — an unresolved bundle is everyone's, a bundle in progress is its owner's
 

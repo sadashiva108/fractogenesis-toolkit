@@ -15,9 +15,10 @@ concerns, not in a note.
 | `sessions/` | Session prompts, the plans they execute, and the handoffs they leave. | [[docs/sessions/INDEX\|sessions/INDEX.md]] |
 | `ideas/` | Things that do not exist yet: a new script or sub-command, a new runbook or reference, a new artifact pattern or layout. Not fixes, refactors, renames or prose corrections — those are findings. Currently empty. | — |
 | `runbook-findings/` | Findings whose ramifications are functionally felt in one runbook, including its scripts and artifacts. One directory per runbook stem, each with its own index. Bundles hold `findings.md`, then `decisions.md`, then `resolutions.md`. | one per runbook: `backup-repos`, `capture-office-stability`, `reimage-prep-checks`, `restore-access`, `restore-apps`, `restore-docker`, `restore-repos`, `restore-runtime`, `stage-loose-secrets` |
+| `instruction-set-findings/` | Findings about the rules a session works under — the instruction set, the prompts and templates, and `legend.md` while it carries rules the instruction set has not adopted. Same numbered shape; one sequence shared with the other two. | [[docs/instruction-set-findings/INDEX\|instruction-set-findings/INDEX.md]] |
 | `cross-cutting-findings/` | Findings whose impact is broad and agnostic to any one runbook, and may affect more than one — not merely findings that touch a shared script. Same numbered shape; one sequence shared with `runbook-findings/`. | [[docs/cross-cutting-findings/INDEX\|cross-cutting-findings/INDEX.md]] |
 
-All six directories and everything in them are tracked. `docs/gaps/` was retired
+All seven directories and everything in them are tracked. `docs/gaps/` was retired
 in Revision 162: its 25 notes became findings bundles under the two directories
 above.
 
