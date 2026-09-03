@@ -6,9 +6,20 @@ restating the list. Each bundle's own index row names this session in return.
 
 Statuses are defined in [`docs/legend.md`](../../legend.md).
 
-| # | Bundle | Kind | Subject | Findings | Status |
-|---:|---|---|---|---:|---|
-| 0015 | `docs/cross-cutting-findings/0015-portability-lint-cannot-see-heredoc-context/` | cross-cutting | The portability lint cannot see a defect that needs heredoc context | 1 | `unresolved` |
+**This bundle owns no findings.**
 
-Ownership was reconstructed during the Revision 162 conversion from the
-`**Found:**` line each note carries, which names the session that recorded it.
+The one it held — `0015-portability-lint-cannot-see-heredoc-context` — was merged
+into
+[`phase-11b-hydrate-and-bookends-20260903-141500`](../phase-11b-hydrate-and-bookends-20260903-141500/findings-manifest.md)
+by the owner on 2026-09-03, where it is listed. It is still `unresolved`, and
+this bundle is `closed`: its brief finished, so it cannot work it. The merged-into
+bundle is the same session — `session_019yzcjm2QneJ5ymVEQDi1bu` — still running
+past the brief that started it.
+
+Ownership was originally reconstructed during the Revision 162 conversion from
+the `**Found:**` line each note carries, which names the session that recorded
+it. That line is unchanged and still names this session's conversation; what
+moved is which bundle answers for the work.
+
+This file exists while empty on purpose. An absent manifest is ambiguous — it
+reads the same whether a bundle owns nothing or nobody wrote one.

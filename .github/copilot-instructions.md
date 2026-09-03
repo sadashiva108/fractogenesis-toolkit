@@ -168,8 +168,18 @@ finding inside it. THE FIVE STATUSES AND WHAT EACH MEANS ARE DEFINED IN
 both vocabularies, so a reader sees the two lifecycles side by side. Do not
 restate them here or in an index.
 
-A bundle holds the earlier status while any finding in it is still open. Partial
-progress belongs in the INDEX.md Notes column, not in a softened status.
+`resolving` HAS A GATE: it may not begin until EVERY finding in the bundle has a
+decision recorded in `decisions.md`, and nothing outside `docs/` is written
+before it -- no script, no runbook, no artifact. Findings in one bundle bear on
+each other, and building the fix for the first before the tenth is decided is how
+a fix gets made twice, or made in a shape the later decision would not have
+chosen.
+
+A bundle ADVANCES when its FIRST finding advances and reaches `resolved` only
+when its LAST one does. One row moving to `in progress` moves the bundle: work
+has started, and a reader has to be able to see that. The bundle may not be
+`resolved` while any row is not. Which findings sit where belongs in the INDEX.md
+Notes column, not in a softened bundle status.
 
 Each bundle's INDEX.md row also names the session bundle working it, when one
 is; the other half of that pointer is the session's own `findings-manifest.md`

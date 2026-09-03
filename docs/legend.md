@@ -21,7 +21,7 @@ how far that reading has been taken, never how anyone feels about it.
 |---|---|---|
 | `unresolved` | Recorded. Nothing has been decided or changed. | `findings.md` |
 | `in progress` | The findings are being reviewed and decisions being made for resolutions. | `decisions.md` |
-| `resolving` | Begins **only** once the decisions reached during `in progress` are made and finalized in `decisions.md`. The decided work is being carried out. | `resolutions.md` |
+| `resolving` | Begins **only** once **every** finding in the bundle has a decision recorded in `decisions.md`. The decided work is being carried out. | `resolutions.md` |
 | `resolved` | Every finding in the bundle has a resolution recorded in `resolutions.md`. | — |
 | `superseded` | A later bundle replaces this reading. The row names which. | — |
 
@@ -29,15 +29,24 @@ how far that reading has been taken, never how anyone feels about it.
                                      │
                                      └─▶ superseded (from any status)
 
-A bundle holds the earlier status while any finding in it is still open —
-`findings.md` carries a per-finding status table, and the bundle cannot be
-`resolved` while a row in it is not. Partial progress goes in the INDEX.md Notes
-column rather than into a softened status.
+**A bundle advances when its first finding advances, and reaches `resolved` only
+when its last one does.** `findings.md` carries a per-finding status table: one
+row moving to `in progress` moves the bundle, because work has started and a
+reader needs to see that; the bundle cannot be `resolved` while any row is not.
+Which findings are where goes in the INDEX.md Notes column rather than into a
+softened bundle status.
 
 `in progress` and `resolving` are separate on purpose. The first is deciding;
 the second is doing. Collapsing them is how work starts before the decision
 behind it is settled, and how a resolution ends up with nothing recording why it
 was the right one.
+
+**The gate is the whole bundle, not one finding.** `resolving` waits until every
+finding has a decision, and nothing outside `docs/` is written before it — no
+script, no runbook, no artifact. Findings in one bundle bear on each other: a
+reading that turns up ten problems in one mechanism will have fixes that
+interact, and building the first before the tenth is decided is how a fix gets
+made twice, or made in a shape the later decision would not have chosen.
 
 ---
 
@@ -67,6 +76,33 @@ and then the part that matters more: what the work reached, which findings are
 still open and at what status, what was assumed, and why it stopped. A withdrawn
 session that recorded nothing is indistinguishable from one that did nothing,
 and the findings it leaves behind are the ones somebody picks up cold.
+
+---
+
+## Write categories
+
+Which files a session may touch depends on the bundle's status, so the three
+kinds are named rather than left to judgement.
+
+| Category | What | When |
+|---|---|---|
+| **record write** | anything under `docs/` — readings, decisions, resolutions, indexes, session bundles, this file | any status. It is how deciding gets recorded, so it is never gated |
+| **toolkit write** | any other tracked file: `bin/`, `.internal/`, the runbooks, `references/`, `templates/`, `.github/`, `.claude/`, the root scripts and env examples | **only during `resolving`**, after every finding in the bundle has a decision |
+| **evidence write** | anything under `$REIMAGE_ARTIFACT_ROOT` or `$REIMAGE_WORKSPACE_ROOT` | never, unless the owner has said so for that specific run. A decision to change a script is not a decision to touch the volume |
+
+`APPLY-MANIFEST.md` sits outside `docs/` but accompanies **both** record and
+toolkit writes — every change of either kind takes a revision — so it is not a
+toolkit write and is not gated.
+
+The three fail differently, which is why the distinction is worth a name. A
+record write that turns out wrong is edited. A toolkit write that turns out wrong
+has to be found, reverted and re-reviewed. An evidence write that turns out wrong
+may be unrecoverable: the artifact root holds dated records of a machine that no
+longer exists in that state.
+
+`.github/copilot-instructions.md` sections 4b through 4d predate this vocabulary
+and say the same things at greater length. Adopting these three words there is
+itself a toolkit write, and is owed.
 
 ---
 

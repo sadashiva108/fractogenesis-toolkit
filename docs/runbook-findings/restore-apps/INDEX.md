@@ -18,4 +18,4 @@ answers the status without opening anything. The row here is authoritative.
 
 | # | Bundle | Subject | Findings | Status | Session | Notes |
 |---:|---|---|---:|---|---|---|
-| 0001 | [0001-restore-repos-evidence](0001-restore-repos-evidence/) | Phase 11B evidence review — what `restore-repos` actually left behind | 10 | `unresolved` | [`restore-apps-outstanding-20260903-000000`](../../../sessions/restore-apps-outstanding-20260903-000000/) | Recorded 2026-09-03. 10 findings: 1–3 block a truthful Phase 12 entry, 4–5 are shared-machinery defects, 6–7 answer the two unreviewed repositories |
+| 0001 | [0001-restore-repos-evidence](0001-restore-repos-evidence/) | Phase 11B evidence review — what `restore-repos` actually left behind | 10 | `in progress` | [`restore-apps-outstanding-20260903-000000`](../../../sessions/restore-apps-outstanding-20260903-000000/) | Recorded 2026-09-03. 10 findings: 1–3 block a truthful Phase 12 entry, 4–5 are shared-machinery defects, 6–7 answer the two unreviewed repositories |

@@ -41,21 +41,28 @@ there plus the six clones. What has **not** run is `ignored-files` (Step 5) and
 
 ## Finding status
 
-The bundle is `resolved` only when every row here is. A row moves when its
-resolution is recorded in `resolutions.md`, not when the work feels done.
+The bundle advances when its first row advances and reaches `resolved` only when
+its last one does, and a row moves to `resolved` when its resolution is recorded
+in `resolutions.md` — not when the work feels done.
 
-| # | Finding | Status |
-|---:|---|---|
-| 1 | The official run reports `repo-secrets` as blocked, although it succeeded | `unresolved` |
-| 2 | Step 5 and the `project-metadata` stage were never applied | `unresolved` |
-| 3 | The exit bookend reads clean on a phase with two WARN exit criteria | `unresolved` |
-| 4 | Four sign-offs on the volume were written by scratch runs | `unresolved` |
-| 5 | Every bookend sign-off written since 2026-09-01 cites a staging path | `unresolved` |
-| 6 | The status report blanks the carry-forward count for two repositories | `unresolved` |
-| 7 | The two unreviewed repositories are Time Machine or nothing | `unresolved` |
-| 8 | `reference-vault` cloned with a warning nobody has acted on | `unresolved` |
-| 9 | All six clones came back on HTTPS | `unresolved` |
-| 10 | All three exit sign-off rows are outstanding | `unresolved` |
+**`resolving` cannot begin until every row reads `yes` under Decided.** Findings
+in one bundle bear on each other, and nothing outside `docs/` is written until
+the last of them is settled. A row reads `yes` only when nothing about that
+finding is still open. Finding 1 reads `yes`: six decisions, 1.1 through 1.6,
+with nothing outstanding. `decisions.md` carries the detail.
+
+| # | Finding | Decided | Status |
+|---:|---|---|---|
+| 1 | The official run reports `repo-secrets` as blocked, although it succeeded | yes | `in progress` |
+| 2 | Step 5 and the `project-metadata` stage were never applied | — | `unresolved` |
+| 3 | The exit bookend reads clean on a phase with two WARN exit criteria | — | `unresolved` |
+| 4 | Four sign-offs on the volume were written by scratch runs | — | `unresolved` |
+| 5 | Every bookend sign-off written since 2026-09-01 cites a staging path | — | `unresolved` |
+| 6 | The status report blanks the carry-forward count for two repositories | — | `unresolved` |
+| 7 | The two unreviewed repositories are Time Machine or nothing | — | `unresolved` |
+| 8 | `reference-vault` cloned with a warning nobody has acted on | — | `unresolved` |
+| 9 | All six clones came back on HTTPS | — | `unresolved` |
+| 10 | All three exit sign-off rows are outstanding | — | `unresolved` |
 
 ---
 

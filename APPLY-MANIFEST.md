@@ -1,5 +1,15 @@
 # Apply Manifest
 
+**Revision 170** — supersedes Revision 169 and earlier. The seven findings of two closed session bundles merge into the still-running session that recorded them, and that session gets a prompt written forward rather than backward.
+
+**Revision 169** — supersedes Revision 168 and earlier. Finding 1 of bundle `0001` is fully decided, and the three kinds of write get names.
+
+**Revision 168** — supersedes Revision 167 and earlier. `resolving` waits for the whole bundle, not one finding, and nothing outside `docs/` is written before it.
+
+**Revision 167** — supersedes Revision 166 and earlier. The findings-and-sessions architecture is read against the tree it describes and parked as finding 0027, a session recovers the identifier two bundles call unrecoverable, and the work that belonged to no bundle gets one.
+
+**Revision 166** — supersedes Revision 165 and earlier. Bundle `0001` opens: finding 1 is decided as a reporting defect, the fix is to derive a stage's outcome rather than remember it, and a bundle now advances with its first finding.
+
 **Revision 165** — supersedes Revision 164 and earlier. A session records its own identity and environment, and the indexes stop calling a bundle a finding.
 
 **Revision 164** — supersedes Revision 163 and earlier. Parked notes take a revision now that they are version-controlled, and the bundle structure gets the architecture record that explains why it is shaped as it is.
@@ -453,6 +463,450 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
 
 ---
+
+## Revision 170 — seven findings follow the session that can still act
+
+### The merge
+
+`restore-repos-refactor-20260902-000000` owned six findings — `0006`, `0008`,
+`0011`, `0016`, `0017`, `0020`. `restore-repos-clone-plan-20260902-000000` owned
+one, `0015`. Both bundles are `closed`. Five of the seven are `unresolved`.
+
+A closed bundle has finished its brief and cannot work anything, so those five
+findings were listed against an owner that had, by its own recorded state,
+stopped. Nothing would have moved them; the manifest said who *had* found them,
+not who *would* answer for them.
+
+The owner merged all seven into
+`docs/sessions/phase-11b-hydrate-and-bookends-20260903-141500/`, which is `owned`
+and is **the same session** — `session_019yzcjm2QneJ5ymVEQDi1bu` recorded every
+one of them, under three briefs. That is what makes this a consolidation rather
+than a transfer: no finding changed hands between conversations, and every
+bundle's `**Found:**` line is untouched and still correct.
+
+Ownership had followed the brief a finding was recorded under. The rule reads
+well until a session outlives its briefs, which this one did. Ownership follows
+the session that can still act.
+
+### One owner per finding, both ways
+
+The two closed manifests now list nothing and point here, so a finding appears
+under exactly one owner. They are not deleted — an absent manifest is ambiguous,
+reading the same whether a bundle owns nothing or nobody wrote one — and each
+records what it held, where it went and why.
+
+The return pointer moved with it. Seven rows across
+`docs/cross-cutting-findings/INDEX.md` and
+`docs/runbook-findings/restore-repos/INDEX.md` named a closed bundle in their
+Session column; all seven now name `phase-11b`. `docs/sessions/INDEX.md` carries
+the counts: `7` here, `—` on both closed bundles.
+
+`0027-findings-architecture-conformance` is **not** part of the merge. It stays
+`unresolved` and unowned. It was recorded by this session at the owner's request
+with the instruction not to address it, and ownership is the owner's to assign.
+
+### A prompt written forward, not backward
+
+Revision 167 created this bundle without a `prompt.md` and said why: §4d requires
+one always, no prompt started the span from Revision 147 to 167, and a
+reconstruction would satisfy the rule by inventing the artifact it asks for.
+
+The owner asked for one. It is written **forward** — it briefs the seven findings
+just merged in and the two debts the session carries, and its first paragraph says
+plainly that it is not a reconstruction. It opens with
+`.github/copilot-instructions.md` as item 1 of the reading order, which is exactly
+what finding 2 of `0027` says four of five existing prompts fail to do.
+
+This conforms to the letter of §4d and does not close the gap behind it: the
+architecture still assumes a bundle begins with a brief, and this one began in the
+middle of a conversation. Recorded in the bundle's `metadata.md` and in `0027`
+finding 7, whose "cannot honestly have one" clause is corrected here.
+
+### Validation
+
+No script changed — every write in this revision is a record write under `docs/`,
+which Revision 169 defines as ungated. Documentation lint: **0 MISSING, 0 ANCHOR
+BROKEN**. Runbook structure **213 PASS / 5 WARN / 25 FAIL** across 27 documents,
+unchanged. Script portability **0 WARN / 0 FAIL**, unchanged. Linux VM, Bash 5.1.
+
+Header re-read immediately before writing, per the failure recorded in Revision
+167 and in `docs/ideas/knowing-when-it-is-safe-to-write.md`: 169 was highest,
+this is 170. Revision 167 is still uncommitted and this entry sits above it.
+
+Written while the concurrent session held `.github/copilot-instructions.md`,
+`docs/legend.md`, `docs/runbook-findings/restore-apps/` and its own bundle.
+Nothing here touches those; `docs/runbook-findings/restore-repos/INDEX.md` and
+`docs/cross-cutting-findings/INDEX.md` are this session's.
+
+## Revision 169 — finding 1 is decided, and a write gets a category
+
+### Decision 1.6, and finding 1 closes
+
+How strict the comparison is depends on the gap between the stages. Owner,
+2026-09-03: `sha256` when they ran close together, presence when they did not. A
+clone and a hydrate minutes apart should be byte-identical to their source; a
+clone from two weeks ago whose secrets are hydrated today sits in a working tree
+that has had a fortnight to drift legitimately.
+
+Rendered without a time window, because a threshold in hours ages badly and would
+have to be tuned: compare by `sha256`, and on a mismatch read the destination
+file's modification time. Unmodified since the run that put it there — the
+mismatch is real, record `differs`. Modified since — the drift is expected,
+record `hydrated` and note the time. That is per file rather than per run, which
+is finer than the rule as stated and faithful to it.
+
+Finding 1 now reads `yes` under Decided: six decisions, 1.1 through 1.6. Nine
+findings to go before this bundle may enter `resolving`, and no toolkit file is
+touched until then.
+
+### Three kinds of write, named
+
+The rule in Revision 168 — *nothing outside `docs/` is written before
+`resolving`* — was immediately ambiguous in use: `APPLY-MANIFEST.md` is outside
+`docs/`, and recording the decision that gates the rule requires writing it.
+
+`docs/legend.md` now names three categories. A **record write** is anything under
+`docs/` and is never gated, because it is how deciding gets recorded. A
+**toolkit write** is any other tracked file — `bin/`, `.internal/`, the runbooks,
+`references/`, `templates/`, `.github/`, `.claude/` — and waits for `resolving`.
+An **evidence write** is the artifact root or the workspace root, and never
+happens without the owner saying so for that specific run: a decision to change a
+script is not a decision to touch the volume.
+
+`APPLY-MANIFEST.md` accompanies both record and toolkit writes and is gated by
+neither.
+
+They are worth distinguishing because they fail differently. A record write that
+is wrong gets edited. A toolkit write that is wrong has to be found, reverted and
+re-reviewed. An evidence write that is wrong may be unrecoverable — the artifact
+root holds dated records of a machine that no longer exists in that state.
+
+Sections 4b through 4d say the same things at greater length and should adopt the
+three words. That is a toolkit write, so it waits.
+
+### Two collisions, and an idea about them
+
+Both happened in one sitting, with two sessions in the tree.
+
+**Two Revision 167s existed at once.** This session wrote 167 and left it
+uncommitted; the concurrent session re-read the header, correctly saw 166 as the
+highest, and took 167 too. Both followed the rule exactly. The rule cannot work
+while entries are uncommitted, because an uncommitted entry is not in the header
+the other session reads. This session's entry renumbered forward to 168, per the
+Revision 123 precedent.
+
+**A session bundle was created twice.** This session was asked to create one for
+the concurrent session and did, in the same minute that session created its own
+under a different name. The duplicate was deleted; `0027` points at the one its
+own session made.
+
+`docs/ideas/knowing-when-it-is-safe-to-write.md` records both, what exists today
+— `session-responsibilities.md`, stale since 2026-09-01, and `git status`, which
+is the only mechanism that actually worked — and the shapes worth considering:
+numbering at commit rather than at write, a helper that scans entries rather than
+the header, bundles declaring the files they hold. It is an idea, not a decision,
+and it interacts with `0027`.
+
+### Validation
+
+No script changed, and none will while bundle `0001` is undecided. Documentation
+lint: **0 MISSING, 0 ANCHOR BROKEN**. Runbook structure **213 PASS / 5 WARN / 25
+FAIL** across 27 documents, unchanged. Script portability **0 WARN / 0 FAIL**,
+unchanged. Linux, Bash 5.x.
+
+Written while a concurrent session held `.github/copilot-instructions.md`,
+`docs/cross-cutting-findings/INDEX.md` and its own bundles. Nothing here touches
+those.
+
+## Revision 168 — `resolving` is gated on the bundle, not on a finding
+
+Renumbered from 167 after a collision: another session took that number while
+this entry was written and uncommitted, and the precedent set when two sessions
+collided on Revision 123 is that the later one moves forward. Nothing was lost;
+both entries were in the file at once, which is the failure
+`docs/ideas/knowing-when-it-is-safe-to-write.md` is about.
+
+Revision 160 said `resolving` begins once *the decisions reached during
+`in progress` are made and finalized*. Read one way that is per finding, and
+Revision 166 read it that way — finding 1 was decided and the obvious next move
+was to start changing `bin/restore-repos.sh`.
+
+The owner stopped it, and the reason generalises: **findings in one bundle bear
+on each other.** Bundle `0001` is a reading of one mechanism that turned up ten
+problems, and findings 1, 2 and 3 all touch how a run reports what a phase
+achieved. Deciding finding 1 alone and building its fix is how a fix gets made
+twice, or made in a shape finding 3's decision would not have chosen.
+
+So the gate is the whole bundle: `resolving` may not begin until every finding
+has a decision in `decisions.md`, and **nothing outside `docs/` is written before
+it** — no script, no runbook, no artifact. Recorded in `docs/legend.md` and in
+section 4c.
+
+### The gate is visible where the work is
+
+`findings.md`'s per-finding table gains a **Decided** column, so the gate can be
+read at a glance rather than inferred from `decisions.md`. A row reads `yes` only
+when nothing about that finding is still open.
+
+Finding 1 therefore reads `—` and not `yes`, which is the column doing its job on
+the first day: four of its decisions are made and one sub-decision is not.
+
+### Finding 1, decision 1.5
+
+An unreachable source is recorded, not refused. `--hydrate` runs the stage and
+records `unknown`. Refusing would make an unattached image an error for a phase
+with several other stages to get on with, and the run would then say nothing
+about the stage at all — which is the failure this finding is about.
+
+### Finding 1, the open sub-decision restated
+
+Presence or `sha256`. The two differ only when a file exists but has changed, and
+the argument turned on which kind of drift is expected. A truncated `rsync`
+argues for `sha256`. A credential rotated in the clone after the restore argues
+against: the file is then correctly different from an August backup, and
+`sha256` would alarm on every run forever.
+
+The `sha256` precedent in `compare-restored-state.sh` compares the machine at two
+points in time, where drift is a finding. This compares a restore source against
+a live working tree, where drift is expected. The standing proposal is therefore
+presence for the outcome with a `sha256` mismatch recorded in the detail — the
+truncation signal survives on the run right after hydrating, when nothing should
+have drifted, without a permanent false alarm afterwards.
+
+### Validation
+
+`bash -n` not applicable — no script changed, and under the rule this revision
+records none will be until bundle `0001` is fully decided. Documentation lint:
+**0 MISSING, 0 ANCHOR BROKEN**. Runbook structure **213 PASS / 5 WARN / 25
+FAIL** across 27 documents, unchanged. Script portability **0 WARN / 0 FAIL**,
+unchanged. Linux, Bash 5.x.
+
+## Revision 167 — the new documentation architecture, read against the tree it describes
+
+The owner asked for a review of `docs/architecture/findings-and-sessions.md` and
+the `docs/` structure it specifies. This is the reading, parked as
+`docs/cross-cutting-findings/0027-findings-architecture-conformance/`. Nothing it
+found is fixed here; the owner asked for it recorded, not addressed.
+
+### Why this entry exists at all
+
+Because §4b and §4c disagree about whether it should, which is the bundle's own
+first finding.
+
+`.github/copilot-instructions.md:107` says writing under `docs/` "IS a repository
+change and takes an APPLY-MANIFEST.md revision like any other," and that Revision
+162's exemption "is removed." Nineteen lines later, `:126` says a findings bundle
+"touches no tracked file and takes no manifest revision." Findings bundles live in
+two of the six directories the first rule governs, and no carve-out exists in
+either section.
+
+`docs/architecture/findings-and-sessions.md:211` breaks the tie — *"Since Revision
+164, every parked note takes a manifest revision"* — so this entry follows §4b.
+The choice is defensible only because the architecture record is there to settle
+it, which is precisely the problem: two sessions reading the same instruction file
+can park the same bundle and disagree about whether the manifest should mention it,
+and both are obeying it.
+
+### What the bundle contains
+
+Seven findings, all `unresolved`. One is high; the rest are mechanical.
+
+The high one is the contradiction above. It matters more than its size because of
+which rule it is — a session meets it the first time it parks anything, the two
+readings are equally defensible, and the divergence is invisible until someone
+compares a commit's manifest entry against its diff.
+
+The others: four of five `prompt.md` files omit the reading §4d makes mandatory
+"regardless of state"; `docs/sessions/INDEX.md` shows five findings for a manifest
+listing six; `docs/INDEX.md` calls `ideas/` empty when Revision 164 put a file in
+it; all ten `resolved` bundles lack the `decisions.md` the legend requires, for a
+stated and sound reason the rules do not carve out; and the legend and the
+architecture record draw the session-state graph differently.
+
+### The seventh, which came out of checking a different question
+
+The owner asked whether this session appears among the five in `docs/sessions/`.
+Two bundles — `restore-repos-refactor-20260902-000000` and
+`restore-repos-clone-plan-20260902-000000` — record their session id as **not
+recoverable**, on the reasoning that the session "left none in anything it wrote."
+
+It left ten. Every commit from `e879a8d` to `a2342d1` carries
+`Claude-Session: …/session_019yzcjm2QneJ5ymVEQDi1bu` in its trailer, which
+`git log --grep` returns in one command. Both bundles are that session's two
+briefs, which is why neither can be told apart by id alone.
+
+The instances matter less than the property: `metadata.md` asserts
+unrecoverability without recording what was searched. A trailer the harness writes
+is not something a session "wrote" in the sense the note means, and that is how a
+mechanical, greppable record went unexamined. A future `not recoverable` should
+name the searches that came back empty.
+
+### What is conformant, recorded because the defect list is not a verdict
+
+All six directories exist and none is empty. Twenty-six bundles numbered
+`0001`–`0026`, four-digit, unique across both findings directories, no gaps and no
+duplicates — one sequence, as specified. All 26 status tags agree with their index
+rows and all 5 state tags with `docs/sessions/INDEX.md`. The two-way pointer
+between a bundle's index row and a session's `findings-manifest.md` holds in both
+directions but for the one count. `docs/gaps/` is fully retired, with no live
+citation and nothing existing in both places. Every path cited in §§1–6 resolves,
+including the two bundles cited by name.
+
+For a structure this new, carrying 26 bundles and 5 session directories, that is a
+close fit. The defects are in the rules and the indexes, not in the bundles.
+
+### The session that recorded finding 7 acted on it
+
+Finding 7 says two bundles assert an unrecoverable identifier that is one `git
+log --grep` away. The owner asked for that corrected rather than only recorded,
+so both `metadata.md` files now carry `session_019yzcjm2QneJ5ymVEQDi1bu`, the
+transcript link, the model and the environment — and, in place of the paragraph
+claiming unrecoverability, the command that recovers it and the date it was run.
+
+The finding stays `unresolved`. Correcting two instances is not the same as
+fixing the rule that produced them: `metadata.md` may still assert
+unrecoverability without naming what was searched.
+
+### A bundle for work that had none
+
+Correcting the identity exposed a gap the review had not looked for. Both of this
+session's bundles are `closed` and both are correctly closed — their briefs
+finished. The session did not. Revisions 147 through 159 and 167 were done under
+directions given turn by turn, and belonged to no bundle at all.
+
+`docs/sessions/phase-11b-hydrate-and-bookends-20260903-141500/` is that bundle,
+`owned`, carrying the metadata and a manifest that records it owns no findings.
+
+**It has no `prompt.md`, and §4d requires one always.** No prompt started this
+span, and writing a reconstruction would satisfy the rule by inventing the
+artifact it asks for. The omission is recorded in the bundle's own metadata and
+folded into finding 7, because the shape assumes a session ends when its brief
+does — this one outlived two, and there is no state for *still running, past the
+prompt that started it*. While that was true the work was invisible to
+`docs/sessions/` as it happened.
+
+### Two indexes reconciled
+
+`docs/sessions/INDEX.md` showed `[5]` for a manifest listing six — finding 3.
+Corrected to 6, and finding 3 stays `unresolved` for the same reason as 7: the
+count is right now, and nothing stops the next one drifting.
+
+`0027`'s row keeps `—` in the Session column, and this session's manifest records
+that it owns no findings. The bundle was recorded here at the owner's request and
+with the instruction not to address it; ownership is a commitment to work a
+finding and is the owner's to assign, which they have not. Naming this session in
+that row — as a first pass of this revision did — would have read as claimed by
+whoever happened to write it down.
+
+The manifest exists while empty on purpose. An absent one is ambiguous: it reads
+the same whether a session owns nothing or nobody wrote it.
+
+### A note on this revision's own number
+
+This entry was first written as **Revision 160** against a header that said 159.
+Between reading it and writing, the concurrent session shipped 160 through 166, so
+the number was taken by the time the text landed and the entry had to be backed
+out and renumbered.
+
+`.github/copilot-instructions.md` already warns about exactly this — take the next
+free number immediately before writing, because another session may have taken the
+one you saw. The warning is correct and was not followed closely enough: the header
+was read at the start of the work rather than at the moment of writing, and an hour
+passed between them. Recorded because the failure is invisible in the result — a
+renumbered entry looks identical to one that was right the first time.
+
+All seven findings were re-verified against the tree as it stood after Revision
+166 before this entry was rewritten. All seven still hold.
+
+### Validation
+
+No script changed. `verify-doc-paths.sh --all` 758 OK / 0 MISSING / 0 ANCHOR
+BROKEN and `verify-runbook-structure.sh` 213 PASS / 5 WARN / 25 FAIL, both at
+baseline. The bundle count in `docs/cross-cutting-findings/INDEX.md` matches the
+directories on disk.
+
+`0027` was taken immediately before writing, per §4c.
+
+**Ran on Linux with Bash 5.x.**
+
+---
+
+## Revision 166 — the first bundle opens, and a stage stops being remembered
+
+The first use of the lifecycle rather than a change to it. Bundle `0001` moves
+`unresolved` → `in progress` and gains `decisions.md`; no script has changed yet,
+because `resolving` may not begin until the decisions are finalized and two of
+them are not.
+
+### Finding 1 is a reporting defect, and that is now evidenced
+
+`post-image-restore-20260903-004412` — the official run — records `repo-secrets`
+as `blocked` for all six hydrated repositories, where the run 18 minutes earlier
+recorded `applied`. The question was whether the record was wrong or the work
+was.
+
+The owner ran the comparison on the Mac with the image attached, deriving the
+file list from the image rather than assuming a shape: **22 of 22 files present
+in the clones.** The work succeeded. The first attempt at that check looked for
+`.env` files and would have reported `ingestion` missing, because its secrets are
+`ci/credentials.yml` and two `application-ncube-client.yml` — which is why the
+list is derived and why the result is written into `decisions.md` rather than
+left in a conversation.
+
+### Derive the outcome, do not remember it
+
+Two options that had looked strongest were rejected: carrying outcomes forward in
+`hydrated.md`, which destroys the one property that makes the file worth having —
+that it says what a single run did — and a cumulative phase-state file, which is
+more machinery than the problem needs.
+
+What the image's contents made obvious is that **every stage's outcome is
+re-derivable from its source and its destination**: the clone from the remote,
+`ignored-files` from `staged-ignored-files/live/`, `project-metadata` from the
+IntelliJ backup, `repo-secrets` from the attached image. So the phase does not
+need memory, it needs a comparison — the idiom the workflow already prefers in
+`compare-restored-state.sh`, the state walk and the before/after delta, all of
+which derive rather than remember and compare by `sha256` rather than by
+presence.
+
+The rerun at Step 9 then stops destroying the record, because there is no
+remembered record to destroy.
+
+A run that cannot reach a source reports `unknown` — *not evaluated* — rather
+than `blocked`. It is the one situation where the record should say nothing
+rather than something false.
+
+### `applied` becomes `hydrated`
+
+The flag is `--hydrate`, the helper is `.internal/git/repo-hydrate.sh`, the file
+is `hydrated.md`; `applied` was the one word in the family that did not match.
+`would-apply` becomes `would-hydrate` with it. The set after this finding is
+resolved is `hydrated`, `would-hydrate`, `missing`, `unknown`, `pending`,
+`skipped`; `blocked` retires, because under a verify model there is no acting to
+be blocked and its only case is exactly `unknown`.
+
+Nothing is renamed on the volume. Every run that says `applied` or `blocked` is
+dated evidence, and the revision number is what lets a reader date the
+vocabulary.
+
+### The bundle-advance rule, corrected on first use
+
+Revision 160 said *a bundle holds the earlier status while any finding in it is
+still open*. Applied literally to a bundle of ten with one finding in progress,
+that keeps the bundle `unresolved` — so nobody can see that work has started. The
+rule was written with `resolved` in mind and stated too broadly.
+
+It now reads: **a bundle advances when its first finding advances, and reaches
+`resolved` only when its last one does.** Corrected in `docs/legend.md` and in
+section 4c, and the per-finding table in `findings.md` says so too.
+
+### Validation
+
+`bash -n` not applicable — no script changed. Documentation lint after:
+**0 MISSING, 0 ANCHOR BROKEN**. Runbook structure **213 PASS / 5 WARN / 25
+FAIL** across 27 documents, unchanged. Script portability **0 WARN / 0 FAIL**,
+unchanged. Checks ran on Linux with Bash 5.x. The 22-file comparison that decides
+finding 1 ran on the Mac, in the owner's shell, against the attached image.
 
 ## Revision 165 — a session says who it was, and a bundle stops being called a finding
 

@@ -8,7 +8,7 @@ Statuses are defined in [`docs/legend.md`](../../legend.md).
 
 | # | Bundle | Kind | Subject | Findings | Status |
 |---:|---|---|---|---:|---|
-| 0001 | `docs/runbook-findings/restore-apps/0001-restore-repos-evidence/` | runbook | Phase 11B evidence review — what `restore-repos` actually left behind | 10 | `unresolved` |
+| 0001 | `docs/runbook-findings/restore-apps/0001-restore-repos-evidence/` | runbook | Phase 11B evidence review — what `restore-repos` actually left behind | 10 | `in progress` |
 
 Ownership was reconstructed during the Revision 162 conversion from the
 `**Found:**` line each note carries, which names the session that recorded it.
