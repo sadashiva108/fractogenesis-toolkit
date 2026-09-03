@@ -499,22 +499,48 @@ Then run:
 ./bin/restore-repos.sh
 ```
 
-The script prints a summary — total repos, present on disk, needs clone, staged ignored bundles available, carry-forward rows total — and points at the newly written report:
+The script prints a summary and names both files it wrote:
 
 ```text
-$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/runs/post-image-restore-YYYYMMDD-HHMMSS/restore-status.md
+Restore repositories report complete.
+  Total repos in inventory: 27
+  Present on disk:          0
+  Needs clone:              27
+  Planned / excluded / unreviewed: 6 / 14 / 7
+  Cloned this run:          0
+  Conflicts (untouched):    0
+  Carry-forward rows total: 315
+  Mode:                     report
+  Stages:                   clone ignored-files repo-secrets project-metadata
+
+  7 repository/repositories are in the audit and in neither plan fragment.
+  They were not cloned. Select them, or exclude them with a reason:
+    /path/to/reimage-workspace/repo-plan
+
+Report → .../post-image-restore-YYYYMMDD-HHMMSS/restore-status.md
+What happened → .../post-image-restore-YYYYMMDD-HHMMSS/hydrated.md
 ```
 
-Open it — the pointer file already carries the `runs/` segment, so it joins straight onto `repo-audit-reports/`:
+**Planned / excluded / unreviewed** is the line to read. It measures the plan
+against the audit, and `unreviewed` counts repositories neither fragment
+mentions — none of which will be cloned until you say so in Step 2. The trailing
+block appears only while that count is above zero.
+
+**Mode** says whether this run acted. `report` is this one: it classified and
+wrote evidence and touched nothing.
+
+Two files, and they answer different questions. `restore-status.md` is the state
+— the per-repo table and the exit-criteria rows. `hydrated.md` is what the run
+did, or on a read-only run what it *would* do: `needs-clone`, `would-apply`,
+`pending`, one row per repository per stage. That second list is what Step 3
+acts on.
+
+The pointer file already carries the `runs/` segment, so it joins straight onto
+`repo-audit-reports/`:
 
 ```bash
 LATEST_RUN="$(cat "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/official/post-image-restore.txt")"
 open "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/$LATEST_RUN/restore-status.md"
-```
-
-Open `hydrated.md` beside it. On a read-only run every row is what *would* happen — `needs-clone`, `would-apply`, `pending` — which is the same list Step 3 will act on:
-
-```bash
 open "$REIMAGE_ARTIFACT_ROOT/repo-audit-reports/$LATEST_RUN/hydrated.md"
 ```
 

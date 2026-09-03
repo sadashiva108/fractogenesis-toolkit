@@ -1,5 +1,7 @@
 # Apply Manifest
 
+**Revision 152** — supersedes Revision 151 and earlier. Step 1 quotes the summary the script prints now, and names both files the run writes.
+
 **Revision 151** — supersedes Revision 150 and earlier. Two keys a real `reimage.env` sets were not named anywhere in the example; both are now.
 
 **Revision 150** — supersedes Revision 149 and earlier. Three clone-plan fields that were stored and never read now do what they say, a clone stops keeping the fork and throwing the org away, and the field whose name did not say which machine it meant is renamed.
@@ -423,6 +425,51 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `scan-archive-contents.sh` | `.internal/home/scan-archive-contents.sh` |
 | `scan-postman-collections.py` | `.internal/home/scan-postman-collections.py` |
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
+
+---
+
+## Revision 152 — Step 1 describes the run it actually produces
+
+`restore-repos.md` Step 1 quoted a summary the script stopped printing three
+revisions ago, and named one output file where it now writes two.
+
+The old text listed *total repos, present on disk, needs clone, staged ignored
+bundles available, carry-forward rows total*. Two problems. *Staged ignored
+bundles available* is in the report, not the terminal summary, so a reader
+watching for it never saw it. And every count the clone plan introduced was
+absent — **planned / excluded / unreviewed**, cloned, conflicts, mode, stages —
+including the one the next step opens on.
+
+`unreviewed` is the number that decides what Step 2 does. A reader who does not
+see it in the summary has no reason to go looking for it, and the failure that
+follows is the quiet one: a run that reports cleanly, clones nothing, and looks
+like a phase with nothing to do.
+
+The step now shows the terminal output verbatim, transcribed from a real run
+against the pinned 27-repository audit, with the trailing block that appears
+while `unreviewed` is above zero. Three lines of prose say which to read: the
+plan-versus-audit line, `Mode` (whether the run acted at all), and the fact that
+`restore-status.md` and `hydrated.md` answer different questions — the state
+versus what the run did, or on a read-only run what it would do.
+
+`restore-status.md` has not moved and is not superseded. It is still the state
+report carrying the exit-criteria table; it is simply no longer the only thing
+the run writes, and a step that names one file of two reads as though the other
+does not exist.
+
+### Validation
+
+The transcribed summary was produced by running the script against the live
+artifact root and copied from its output rather than composed. `--dry-run` was
+used, so nothing was written to the volume; the only difference from Step 1's
+own invocation is the `Mode` line, which reads `report` there and
+`report --dry-run` in the run that produced the transcript.
+
+`verify-runbook-structure.sh` 213 PASS / 5 WARN / 25 FAIL across 27 documents
+and `verify-doc-paths.sh --all` 759 OK / 0 MISSING / 0 ANCHOR BROKEN, both
+unchanged; code fences balanced at 98. No script changed.
+
+**Ran on Linux with Bash 5.x.**
 
 ---
 
