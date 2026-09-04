@@ -40,6 +40,31 @@
 # invocation, where it records what was true at run time rather than asserting
 # something that can go stale.
 #
+# A RUN'S TIMESTAMP SAYS WHEN THE RECORDER RAN, NEVER WHEN THE PHASE DID. The two
+# are usually minutes apart and occasionally weeks. `bookends/` holds four runs
+# stamped 2026-08-31 and 2026-09-01 for two phases that ran on 08-18 and 08-19:
+# the recorders did not exist in that form at the time, and the bookends were
+# added afterwards. They are honest -- each records when it was written -- and
+# they are not phase timestamps.
+#
+# For those two phases `restarts/` is the honest clock, because those lineages
+# were written as the phase ran. Read timestamps from the lineage that was
+# recorded live, not from the one that was backfilled.
+#
+# The first-wins points are what CATCHES this, and the reason they exist. An
+# `entry` recorded after the phase finished describes a machine the phase has
+# already changed, exactly as a late `before` does, so both refuse to advance
+# their pointer and say so in the manifest `Note` column. Nothing on the machine
+# knows when a phase ran, so the rule is the only guard there can be: it does not
+# detect lateness, it declines to let a late run become official.
+#
+# A LATER RUN AT A FIRST-WINS POINT IS NOT AN ERROR. It is the ordinary case
+# where a capture was improved while the machine still sat at that point, and it
+# is why the refusal is a flag rather than a rejection: the run is recorded, the
+# manifest says the pointer did not move, and a person decides. Deciding it is
+# what `artifact_run_set_official` is for. See
+# `docs/cross-cutting-findings/0005-boundary-runs-recorded-long-after-their-phase/`.
+#
 # WHY A POINTER PER LINEAGE, NOT ONE `latest-run.txt`. A category holds several
 # independent lineages -- pre-image and post-image, pre-restart and post-restart,
 # one runbook's entry and its exit -- and a single "latest" pointer can only name
@@ -68,9 +93,10 @@
 #
 # CLASSIFICATION: foundation file, sourced only. It sits at the `.internal/`
 # root beside the two config loaders rather than under a domain directory,
-# because its callers span `restore/`, `home/`, and the artifact-root reporters,
-# and no one domain owns it. Like those loaders it must not set shell options or
-# call `exit`; it returns status instead. See
+# because its callers span `bin/` -- the capture, record, report and restore
+# entrypoints alike -- plus `git/`, `home/` and `sign-offs.sh`, and no one domain
+# owns it. Like those loaders it must not set shell options or call `exit`; it
+# returns status instead. See
 # `.github/guides/script-types-and-locations.md`.
 #
 # --- BEGIN USAGE ---
@@ -107,8 +133,14 @@
 #
 # Points and their rules:
 #
-#   before, pre-restart                            first completed run wins
-#   after, entry, exit, post-restart, final, diff  latest completed run wins
+#   before, entry, initial, pre-restart      first completed run wins
+#   after, exit, post-restart, final, result latest completed run wins
+#   diff, delta                              latest wins, and no rule applies:
+#                                            both captures they join were already
+#                                            settled by the time either ran, so a
+#                                            later one cannot contradict an
+#                                            earlier. Their failure mode is a
+#                                            missing pair, not a wrong pointer
 #   (absent or unrecognised)                 latest wins, recorded as `unknown`
 #
 # A run whose point is first-wins and which is not the first records normally and
@@ -129,13 +161,26 @@
 # Points for which the FIRST completed run is official. Space-delimited rather
 # than an array so a caller that has already used the name is unaffected, and
 # because Bash 3.2 has no associative arrays.
-ARTIFACT_RUNS_FIRST_WINS_POINTS="before pre-restart"
+#
+# THE TEST IS WHETHER THE POINT NAMES A MOMENT THE PHASE HAS NOT YET PASSED.
+# `before`, `entry`, `initial` and `pre-restart` all describe the machine as it
+# stood before something happened to it. That moment occurs once. A second run
+# at the same point is either the same unchanged state re-measured -- because the
+# capture itself improved -- or it is a machine the phase has already moved,
+# recorded under a name that says it has not. The first is legitimate and is what
+# a pin is for; the second is well-formed and wrong, and first-wins is what
+# refuses it.
+#
+# `exit`, `after` and `post-restart` are LATEST-wins for the opposite reason.
+# They ask "where did this end up", which is a question about now, and re-running
+# one is how a stale answer is replaced.
+ARTIFACT_RUNS_FIRST_WINS_POINTS="before entry initial pre-restart"
 # `diff` and `delta` are not synonyms here. A diff compares the machine against
 # a capture taken before the erase -- divergence from a recorded baseline. A
 # delta joins one phase's own before- and after-state recordings -- what that
 # phase changed. Different questions, different lineages, and an official
 # pointer that flipped between them answered neither.
-ARTIFACT_RUNS_KNOWN_POINTS="before after entry exit pre-restart post-restart final diff delta result"
+ARTIFACT_RUNS_KNOWN_POINTS="before after entry exit initial pre-restart post-restart final diff delta result"
 
 ARTIFACT_RUNS_MANIFEST_HEADING="# Artifact Runs"
 
@@ -576,7 +621,7 @@ artifact_run_reopen_lineage() {
 }
 
 artifact_runs_rebuild() {
-  local category_root="$1" manifest contexts context runs official pinned retired marker rebuilt=0
+  local category_root="$1" manifest contexts context runs official newest pinned retired marker rebuilt=0
 
   if [ -z "${category_root:-}" ] || [ ! -d "${category_root:-}" ]; then
     _artifact_runs_err "artifact_runs_rebuild <category-root>"
@@ -636,6 +681,26 @@ artifact_runs_rebuild() {
         "$(_artifact_runs_point_of "$context")" "$official" "—" \
         "recovered from PINNED-OFFICIAL.txt during rebuild"
       _artifact_runs_write_pointer "$category_root" "$context" "$official"
+    fi
+  done
+
+  # A lineage whose official run is NOT its newest is the case a person has to
+  # decide: at a first-wins point a later run is usually a capture that improved
+  # while the machine still sat there, and occasionally it is a run that should
+  # never have been taken. Neither is knowable from here. A rebuild is silent
+  # about it otherwise -- the pointer simply moves -- and a rule applied
+  # retroactively moves pointers for runs that were recorded before the rule
+  # existed and so carry no flag in their own manifest row.
+  for context in $contexts; do
+    runs="$(_artifact_runs_rows_for "$manifest" "$context" run)"
+    [ -n "$runs" ] || continue
+    official="$(cat "$(_artifact_runs_official_path "$category_root" "$context")" 2>/dev/null)"
+    official="${official#runs/}"
+    [ -n "$official" ] || continue
+    newest="$(printf '%s\n' "$runs" | tail -1)"
+    if [ "$official" != "$newest" ]; then
+      _artifact_runs_note "'$context': official is $official; $newest is newer and not official"
+      _artifact_runs_note "  decide it deliberately, or leave it: artifact_run_set_official '$category_root' '$context' '<run-id>' '<reason>'"
     fi
   done
 

@@ -87,6 +87,11 @@
 #                         `entry` and `exit` select the bookend modes instead
 #                         of an evidence capture -- see Bookend modes below.
 #                         Letters, digits, dot, underscore, and hyphen only.
+#   --note TEXT           Free text recorded in the manifest's `Note` column for
+#                         this run. Use it when a run is written well after the
+#                         phase it records -- a bookend added retrospectively is
+#                         well-formed and its timestamp is the recorder's, not
+#                         the phase's, and nothing else can say so.
 #   --open                Reveal the generated record in Finder on completion.
 #   -h, --help            Show this message and exit.
 #
@@ -236,6 +241,9 @@ STAMP="$(date +%Y%m%d-%H%M%S)"
 OUTPUT_DIR=""
 OUTPUT_DIR_EXPLICIT=""
 OPEN_RESULT=false
+# Free text for the manifest Note column. Empty unless --note is given, and the
+# library writes an em dash for an empty note, so the default is not special.
+RUN_NOTE=""
 MANAGED_INVENTORY_DIR=""
 CONTEXT_LABEL=""
 
@@ -260,6 +268,11 @@ while [[ $# -gt 0 ]]; do
     --managed-inventory)
       require_option_value "$1" "${2:-}"
       MANAGED_INVENTORY_DIR="$2"
+      shift 2
+      ;;
+    --note)
+      require_option_value "$1" "${2:-}"
+      RUN_NOTE="$2"
       shift 2
       ;;
     --context)
@@ -538,7 +551,7 @@ if [[ "${CONTEXT_LABEL:-}" == "entry" || "${CONTEXT_LABEL:-}" == "exit" ]]; then
   # staging path because these four did not follow it.
   signoff_finalize "Phase 8" "$ARTIFACT_RUN_FINAL_DIR/bookend.md"
 
-  if ! artifact_run_finalize "$BOOKEND_ROOT" "$b_pass pass / $b_warn warn / $b_fail fail"; then
+  if ! artifact_run_finalize "$BOOKEND_ROOT" "$b_pass pass / $b_warn warn / $b_fail fail" "$RUN_NOTE"; then
     echo "ERROR: the bookend was written but could not be indexed." >&2
     exit 2
   fi
@@ -1209,7 +1222,7 @@ RUN_PASS="$(grep -c '	PASS	' "$ROWS_FILE" 2>/dev/null || true)"
 RUN_WARN="$(grep -c '	WARN	' "$ROWS_FILE" 2>/dev/null || true)"
 
 if ! artifact_run_finalize "$RUN_CATEGORY_ROOT" \
-     "${RUN_PASS:-0} pass / ${RUN_WARN:-0} warn"; then
+     "${RUN_PASS:-0} pass / ${RUN_WARN:-0} warn" "$RUN_NOTE"; then
   echo "ERROR: the record was written but artifact-runs reported a problem indexing it — see above." >&2
   exit 2
 fi

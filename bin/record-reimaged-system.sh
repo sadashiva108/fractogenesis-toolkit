@@ -54,6 +54,11 @@
 #                         of a first-boot capture -- see Bookend modes below.
 #                         Letters, digits, dot, underscore, and hyphen only.
 #   --no-network          Skip network reachability probes.
+#   --note TEXT           Free text recorded in the manifest's `Note` column for
+#                         this run. Use it when a run is written well after the
+#                         phase it records -- a bookend added retrospectively is
+#                         well-formed and its timestamp is the recorder's, not
+#                         the phase's, and nothing else can say so.
 #   --open                Reveal the generated bundle in Finder on completion.
 #   -h, --help            Show this message and exit.
 #
@@ -172,6 +177,9 @@ usage() {
 # ---------------------------------------------------------------------------
 OUTPUT_ROOT=""
 OPEN_RESULT=false
+# Free text for the manifest Note column. Empty unless --note is given, and the
+# library writes an em dash for an empty note, so the default is not special.
+RUN_NOTE=""
 RUN_NETWORK=true
 ARTIFACT_ROOT_EXPLICIT=false
 CONTEXT_LABEL=""
@@ -222,6 +230,11 @@ while [[ $# -gt 0 ]]; do
     --output-root)
       require_option_value "$1" "${2:-}"
       OUTPUT_ROOT="$2"
+      shift 2
+      ;;
+    --note)
+      require_option_value "$1" "${2:-}"
+      RUN_NOTE="$2"
       shift 2
       ;;
     --context)
@@ -608,7 +621,7 @@ if [[ "${CONTEXT_LABEL:-}" == "diff" ]]; then
   rm -f "$PRE_TMP" "$POST_TMP" "$ROWS_TMP"
 
   if ! artifact_run_finalize "$CMP_ROOT" \
-       "$N_REG regressed / $N_IMP improved / $N_CHG changed"; then
+       "$N_REG regressed / $N_IMP improved / $N_CHG changed" "$RUN_NOTE"; then
     echo "ERROR: the comparison was written but could not be indexed." >&2
     exit 2
   fi
@@ -680,7 +693,7 @@ if [[ "${CONTEXT_LABEL:-}" == "entry" || "${CONTEXT_LABEL:-}" == "exit" ]]; then
   # staging path because these four did not follow it.
   signoff_finalize "Phase 9" "$ARTIFACT_RUN_FINAL_DIR/bookend.md"
 
-  if ! artifact_run_finalize "$BOOKEND_ROOT" "$b_pass pass / $b_warn warn / $b_fail fail"; then
+  if ! artifact_run_finalize "$BOOKEND_ROOT" "$b_pass pass / $b_warn warn / $b_fail fail" "$RUN_NOTE"; then
     echo "ERROR: the bookend was written but could not be indexed." >&2
     exit 2
   fi
@@ -1251,7 +1264,7 @@ RUN_WARN="$(grep -c '`WARN`' "$RECORD" 2>/dev/null || true)"
 RUN_TODO="$(grep -c '`TODO`' "$RECORD" 2>/dev/null || true)"
 
 if ! artifact_run_finalize "$RUN_CATEGORY_ROOT" \
-     "${RUN_PASS:-0} pass / ${RUN_WARN:-0} warn / ${RUN_TODO:-0} todo"; then
+     "${RUN_PASS:-0} pass / ${RUN_WARN:-0} warn / ${RUN_TODO:-0} todo" "$RUN_NOTE"; then
   echo "ERROR: the bundle was written but artifact-runs reported a problem indexing it — see above." >&2
   exit 2
 fi

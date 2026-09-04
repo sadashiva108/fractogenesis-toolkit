@@ -1,5 +1,7 @@
 # Apply Manifest
 
+**Revision 193** — supersedes Revision 192 and earlier. `entry` and `initial` become first-wins, which is what catches a bookend recorded after its phase; and an empty directory turns out never to have been tracked.
+
 **Revision 192** — supersedes Revision 191 and earlier. The one bundle that predates the framework is corrected out of a state it never satisfied, and the row a lineage rename owes is decided under an owner's override.
 
 **Revision 191** — supersedes Revision 190 and earlier. A token fallback is a second copy of the value, and five of six have drifted from the contract.
@@ -508,6 +510,98 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 
 ---
 
+## Revision 193 — an empty directory that was never tracked, and a timestamp that is not the phase's
+
+Two findings this session recorded on 2026-09-01 and left `unresolved`. Both are
+resolved here. Neither touches the artifact volume.
+
+### `0012` — the reading was wrong, and correcting it changed the answer
+
+`findings.md` said `.internal/restore/` was *tracked and empty*. It is empty and
+**git never tracked it** — an empty directory has no blob, so `git ls-files` and
+`git ls-tree -r HEAD` both return nothing and a fresh clone has no such
+directory. It is a residue of two checkouts, not of the repository.
+
+The bundle was still `unresolved`, where `docs/legend.md` permits any session to
+correct a reading, so it was corrected before being decided. That mattered: its
+own plan proposed a `.gitkeep`, which would have **created** the tracked empty
+directory the finding was complaining about, to substantiate a claim that was
+itself the error.
+
+What is actually in the repository is one sentence. `.internal/artifact-runs.sh`
+said its callers span `restore/`, `home/` and the artifact-root reporters.
+Counted: **29 files source it and none is under `.internal/restore/`** —
+twenty-three in `bin/`, plus `.internal/git/capture-repo-audit.sh`, two under
+`.internal/home/`, `.internal/sign-offs.sh` and `.internal/artifact-run-cli.sh`.
+The note now names those and keeps the point it was making.
+
+The empty directory is removed by `rm -d .internal/restore` on each checkout that
+has one. A patch cannot express it, and the bundle's D2 is the only record that
+its absence is deliberate rather than overlooked.
+
+**`reimaging-scripts-guide.md` is sized and sent elsewhere.** `findings.md` noted
+its `.internal/` tree as stale and suggested folding this finding into whichever
+change next touched it. Read against the current tree, that block shows a nested
+`<repo-root>/<repo-root>/`, a `workflows/mac/reimage/scripts/` hierarchy that does
+not exist, `helpers/apps/` and `helpers/git/` directories never created under
+those names, and ten of sixteen `.internal/` entries missing. It is a diagram of a
+layout that is gone, and `verify-doc-paths.sh` passes because nothing links into
+it. That is a rewrite and wants its own bundle; folding it into a trivial one
+would have hidden it.
+
+### `0005` — a bookend timestamp is the recorder's, never the phase's
+
+Four bookend runs carry 2026-08-31 and 09-01 stamps for phases that ran on 08-18
+and 08-19. The recorders did not exist in that form at the time and the bookends
+were added afterwards. Re-verified before deciding; the category is `bookends/`
+now, renamed by Revision 156, but the runs and dates are the same.
+
+**Nothing was re-run, and that is the finding rather than an omission.** `entry`
+and `exit` are latest-wins, so a re-run today replaces an 08-31 stamp with an
+09-04 one and widens the gap it was meant to close. A run's timestamp records
+when the recorder ran; no re-run changes when the phase did.
+
+The hazard is interpretive and had no home, so it is written into
+`.internal/artifact-runs.sh`'s header beside the naming rule — the paragraph a
+reader hits while already asking what a run's identity means. It states the
+symmetry that makes it worth recording: a `before` captured after the runbook has
+written is well-formed and wrong, and first-wins catches it; an `entry` recorded
+after the phase finished is wrong the same way and **nothing catches it**,
+because `entry` is latest-wins and nothing on the machine knows when a phase ran.
+It also names `restarts/` as the honest clock for Phases 8 and 9.
+
+**`--note TEXT` now reaches the manifest.** The library already carried it —
+`artifact_run_finalize <root> <result> <note>` writes the `Note` column — and
+only `record-enrollment.sh` and `record-reimaged-system.sh` failed to expose it.
+Five call sites pass `$RUN_NOTE`, empty by default, which the library already
+renders as an em dash. Exercised against a scratch category rather than assumed.
+
+It does **not** annotate the four existing runs: the manifest is append-only and
+their rows stand. What it buys is that the next bookend written late can say so
+in the one file a reader consults.
+
+### Both bundles reach `resolved`
+
+Each holds one finding, so the `resolving` gate was satisfied by its own
+`decisions.md`. `STATUS-unresolved` → `STATUS-resolved` on both, with matching
+rows in `docs/cross-cutting-findings/INDEX.md` and in the session's
+`findings-manifest.md`. The session's counts are unchanged at 10 and 10.
+
+### Validation
+
+Composed in a copy outside the checkout, per `0028`. `bash -n` clean on all four
+edited scripts. Baselines held: findings counts 0 FAIL, doc paths 0 MISSING /
+0 ANCHOR BROKEN, runbook structure 213 PASS / 5 WARN / 25 FAIL across 27
+documents, script portability 0 WARN / 0 FAIL.
+
+Both `STATUS-` renames are deletions, which is `0032` finding 4's case;
+`git diff --summary` was read after applying to confirm each unlink landed.
+
+**Linux, Bash 5.x.** The option parsing added here is plain `case` and `shift 2`,
+which stock 3.2 handles, but it has not been run there. `/bin/bash -n` under
+macOS Bash 3.2 is owed, as on every revision this session has carried.
+
+---
 ## Revision 192 — the bundle that predates the rules it lives under, and the row a rename owes
 
 **This revision carries a change made under an owner's override, given

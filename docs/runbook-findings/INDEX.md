@@ -51,9 +51,10 @@ rows in the same position in the table below.
 | `reimage-prep-checks` | 1 | 1 | 1 |
 | `restore-access` | 1 | 1 | 0 |
 | `restore-docker` | 1 | 1 | 0 |
+| `restore-git` | 1 | 1 | 0 |
 | `restore-runtime` | 1 | 1 | 0 |
 | `stage-loose-secrets` | 1 | 1 | 1 |
-| **Total** | **15** | **24** | **7** |
+| **Total** | **16** | **25** | **7** |
 
 ### Every bundle
 
@@ -72,5 +73,6 @@ rows in the same position in the table below.
 | 0019 | `reimage-prep-checks` | [0019-reimage-checklist-repo-audit-manifest-header](reimage-prep-checks/0019-reimage-checklist-repo-audit-manifest-header/) | Phase 6B records FAIL against a correct repository-audit manifest | 1 | `resolved` | [`pre-image-capture-conformance-20260903-194532`](../sessions/pre-image-capture-conformance-20260903-194532/) | closed by Revision 129 |
 | 0021 | `restore-access` | [0021-restore-access-exit-predates-its-own-state-walk](restore-access/0021-restore-access-exit-predates-its-own-state-walk/) | The Phase 10B exit was recorded a week before the evidence it stands on | 1 | `unresolved` | [`run-index-design-20260901-000000`](../sessions/run-index-design-20260901-000000/) | — |
 | 0024 | `restore-docker` | [0024-restore-docker-stack-differs-from-pre-image](restore-docker/0024-restore-docker-stack-differs-from-pre-image/) | The running Docker stack is not the one `restore-docker.md` restores | 1 | `unresolved` | — | — |
+| 0034 | `restore-git` | [0034-step-0a-names-two-rows-the-recorder-no-longer-emits](restore-git/0034-step-0a-names-two-rows-the-recorder-no-longer-emits/) | Step 0a names two rows the recorder no longer emits | 1 | `unresolved` | — | Removed by `bb7e2d5` because they gated on values Step 0c writes. The runbook still says its rows "cannot drift" |
 | 0014 | `restore-runtime` | [0014-orphaned-comparison-lineage-runtime-version-comparison](restore-runtime/0014-orphaned-comparison-lineage-runtime-version-comparison/) | `restore-runtime-version-comparison` is a lineage with no producer | 1 | `unresolved` | [`run-index-design-20260901-000000`](../sessions/run-index-design-20260901-000000/) | — |
 | 0007 | `stage-loose-secrets` | [0007-content-scans-keeps-a-bespoke-index](stage-loose-secrets/0007-content-scans-keeps-a-bespoke-index/) | `content-scans/` looks like a run category and is not one | 1 | `resolved` | [`pre-image-capture-conformance-20260903-194532`](../sessions/pre-image-capture-conformance-20260903-194532/) | closed by Revision 141 |
