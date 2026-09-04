@@ -252,6 +252,74 @@ that needs per-run owner permission would stop a rename on paperwork. Both renam
 so far show the row is worth having *after* the fact, which a gate would have
 prevented from ever being written.
 
+## D8 — Detection is deferred, and it is downstream of D7 rather than parallel to it
+
+Finding 1 says a rename leaves every prior citation naming something gone and
+nothing detects it. D7 answers recoverability and says in its own words that the
+row *"detects nothing"*, leaving finding 1 open. This decides it.
+
+**Decided: no detector is built by this bundle, and the reason is that one cannot
+work until `rename` rows exist.** Both candidate designs were prototyped read-only
+against the volume on 2026-09-04 rather than argued about.
+
+| Design | Result over 6,907 text artifacts |
+|---|---|
+| flag any `<words>-YYYYMMDD-HHMMSS` that resolves to no run | 329 id-shaped strings, **167 unresolved** — and essentially all false: `bundle-watch-20260608-013002`, `all-cert-keychain-discovery-*`, `cert-key-file-candidates-*` are dated **filenames**, not citations |
+| flag only `<known-context>-STAMP` that resolves to no run | one citation matched, **zero unresolved** — it found nothing, including the citation known to be broken |
+
+**Why the second design finds nothing is the finding restated as a measurement.**
+The broken citation is `post-image-restore-runtime-diff-20260820-032625`. Its
+context appears in **zero** live manifests, because the rename removed it; the
+surviving context `restore-runtime-inventory-diff` appears in one. A detector
+keyed on currently-known contexts is structurally blind to exactly the citations a
+rename breaks, because the rename deletes the key it would need to look them up.
+
+**So D7's row is the missing input, not a consolation prize.** Filter by known
+contexts **plus the former contexts recorded in `rename` rows**, and design B finds
+the citation. Detection is therefore downstream of D7: it becomes tractable when
+the rows exist and cannot work before, which is why it is deferred rather than
+rejected.
+
+**A correction to D7's rejected alternatives, recorded here rather than by editing
+another session's decision.** D7 rejects a validator partly on the ground that the
+artifact root *"is not in the repository, is read-only to sessions by default, and
+is absent wherever a validator would run."* The tree contradicts two thirds of
+that. Thirty-eight scripts under `bin/` read `$REIMAGE_ARTIFACT_ROOT`; seventeen
+of them report PASS/FAIL against it; `bin/reimage-checklist.sh` **is** a validator
+over the artifact root, and exits 2 when the root is unset rather than pretending
+otherwise. Read-only argues the other way: a detector only reads.
+
+What survives is a real distinction, and it is where such a check belongs. This
+repository has two validator families: **repo lints** — `verify-doc-paths.sh`,
+`verify-runbook-structure.sh`, `verify-script-portability.sh`,
+`verify-findings-counts.sh` — which run anywhere including a fresh clone with no
+volume attached and whose baselines every manifest entry quotes; and
+**artifact-root checks**, which need the volume and are run by the operator at a
+phase. A citation detector is the second kind. It must never join the first, or
+every revision's baseline becomes conditional on a mounted drive.
+
+**Rejected — build it now, with design A.** It reports 167 non-problems against
+two real ones. A check with that ratio is not read twice.
+
+**Rejected — build it now, with design B.** Measured at zero true positives. It
+would ship as evidence that nothing is broken while the thing it was built for sits
+in two files.
+
+**Rejected — declare detection out of scope for the workflow.** It is buildable,
+the precedent for its family exists, and `0009` recorded the hazard as structural
+for exactly this reason. Closing the question would lose that.
+
+### What the probe turned up that the bundle did not know
+
+The citation appears in **two** bookends, not one:
+`bookends/runs/restore-runtime-exit-20260820-032645/bookend.md` line 19 and
+`bookends/runs/restore-access-entry-20260824-063529/bookend.md` line 16. D5 and
+D7's retroactive table each name only the first. The surviving run exists, so both
+are repairable under D2 with the stamp retained, and both remain queued rather than
+taken.
+
+---
+
 ---
 
 ## What this authorises

@@ -34,6 +34,30 @@
 # is stable, is what an operator remembers, and is what the runbook file is
 # actually called.
 #
+# A LINEAGE RENAME IS A MIGRATION, NOT AN EDIT. Repoint the readers, and record
+# in the manifest what the lineage used to be called -- `artifact_run_record_rename`.
+# A dated artifact is never regenerated, so it holds run ids as literal text: a
+# rename updates the runs, the manifest and the pointers, and leaves every prior
+# citation naming something that is gone, with nothing to catch it. The row does
+# not repair those citations and cannot. It makes the former name recoverable, so
+# a citation that no longer resolves can be traced rather than merely disbelieved.
+#
+# THE ROW IS FILED UNDER THE SURVIVING CONTEXT, and is inert to pointer
+# computation by construction rather than by luck. `artifact_runs_rebuild` takes
+# its context list from `sort -u` over the Context column, so a row filed under a
+# live context adds nothing to that loop; and selection inside it goes through
+# `_artifact_runs_rows_for` with a kind filter, so `run`, `pin` and `retire`
+# lookups cannot see a `rename` row. Filing under the FORMER name would instead
+# put a dead context into that loop, surviving only because an emptiness check
+# happens to skip it.
+#
+# Scope: lineage renames. A run id never contains its category's directory name,
+# so a CATEGORY rename breaks paths rather than run ids and cannot be expressed in
+# a Context column that holds lineage keys. It has no record here. The repair rule
+# for a citation a rename broke -- values frozen, references repairable with the
+# timestamp retained -- is decided in
+# `docs/cross-cutting-findings/0030-renames-break-citations-and-which-may-be-repaired/`.
+#
 # The same holds INSIDE the documents a run contains, not just in its directory
 # name: the bookend recorders, the state recorder and the comparison all title
 # their output by runbook and carry the phase only as context sourced from the
@@ -128,6 +152,8 @@
 #
 #   artifact_run_retire_lineage "$CATEGORY_ROOT" "<context>" "<reason>"
 #   artifact_run_reopen_lineage "$CATEGORY_ROOT" "<context>" "<reason>"
+#   artifact_run_record_rename "$CATEGORY_ROOT" "<surviving-context>" \\
+#                              "<former-context>" "<reason>"
 #   #   A retired lineage keeps its runs and loses its pointer, and a rebuild
 #   #   leaves it retired. For a context whose producer no longer exists.
 #
@@ -617,6 +643,55 @@ artifact_run_reopen_lineage() {
   _artifact_runs_append_row "$manifest" retire "$context" "$point" "(reopened)" "—" "$reason"
   _artifact_runs_note "reopened '$context'; the default rule applies again"
   artifact_runs_rebuild "$category_root" >/dev/null
+  return 0
+}
+
+# Records a former name for a lineage. Not a lifecycle change: the runs, the
+# pointer and the point rule are all untouched, and a rebuild neither reads this
+# row nor is disturbed by it. See A LINEAGE RENAME IS A MIGRATION in the header
+# for why it is filed under the surviving context rather than the former one.
+artifact_run_record_rename() {
+  local category_root="$1" context="$2" former="$3" reason="$4"
+  local manifest point seen
+
+  if [ -z "${category_root:-}" ] || [ -z "${context:-}" ] || [ -z "${former:-}" ]; then
+    _artifact_runs_err "artifact_run_record_rename <category-root> <surviving-context> <former-context> <reason>"
+    return 2
+  fi
+  if [ -z "${reason:-}" ]; then
+    _artifact_runs_err "a reason is required, the same as for retiring or pinning"
+    return 2
+  fi
+  if ! _artifact_runs_valid_context "$context"; then
+    _artifact_runs_err "surviving context '$context' is not usable as a directory name"
+    return 2
+  fi
+  if ! _artifact_runs_valid_context "$former"; then
+    _artifact_runs_err "former context '$former' is not usable as a directory name"
+    return 2
+  fi
+  if [ "$context" = "$former" ]; then
+    _artifact_runs_err "surviving and former context are the same; nothing was renamed"
+    return 2
+  fi
+
+  manifest="$(_artifact_runs_manifest_path "$category_root")"
+  if [ ! -f "$manifest" ]; then
+    _artifact_runs_err "no manifest in $category_root; nothing to record against"
+    return 1
+  fi
+
+  # Append-only means a second identical row is noise rather than damage, but it
+  # is still noise, and this is the one kind whose rows a reader counts by hand.
+  seen="$(_artifact_runs_rows_for "$manifest" "$context" rename | grep -c "^${former}$" 2>/dev/null || true)"
+  if [ "${seen:-0}" -gt 0 ]; then
+    _artifact_runs_note "'$context' already records '$former' as a former name"
+    return 0
+  fi
+
+  point="$(_artifact_runs_point_of "$context")"
+  _artifact_runs_append_row "$manifest" rename "$context" "$point" "$former" "—" "$reason"
+  _artifact_runs_note "recorded '$former' as a former name of '$context'; no pointer changed"
   return 0
 }
 

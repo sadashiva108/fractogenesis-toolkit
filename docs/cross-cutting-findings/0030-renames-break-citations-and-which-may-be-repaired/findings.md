@@ -29,7 +29,7 @@ superseded rather than rewritten, so this bundle carries the merged reading and
 |---:|---|---|
 | 1 | A lineage rename leaves every prior citation naming something gone, and nothing detects it | `in progress` |
 | 2 | The repair rule was never written down, so every broken citation looked unrepairable | `in progress` |
-| 3 | A category manifest records no `rename` row, so a former lineage name is unrecoverable from the index | `unresolved` |
+| 3 | A category manifest records no `rename` row, so a former lineage name is unrecoverable from the index | `in progress` |
 | 4 | `0009`'s own text cites a path that Revision 156 moved | `in progress` |
 | 5 | The Revision 138 conversion broke a citation inside the run it was converting | `in progress` |
 

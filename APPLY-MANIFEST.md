@@ -1,5 +1,9 @@
 # Apply Manifest
 
+**Revision 195** — supersedes Revision 194 and earlier. The tables and the status tags get a check, after six failures that every existing validator passed.
+
+**Revision 194** — supersedes Revision 193 and earlier. A rename records the name it replaced, and the detector that would use it is measured and deferred.
+
 **Revision 193** — supersedes Revision 192 and earlier. `entry` and `initial` become first-wins, which is what catches a bookend recorded after its phase; and an empty directory turns out never to have been tracked.
 
 **Revision 192** — supersedes Revision 191 and earlier. The one bundle that predates the framework is corrected out of a state it never satisfied, and the row a lineage rename owes is decided under an owner's override.
@@ -509,6 +513,173 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
 
 ---
+
+## Revision 195 — the tables and the tags get the check that six failures argued for
+
+`0032` recorded that §§4c–4d fix the shape of five kinds of table and nothing
+tests it. Since then the same class of defect landed four more times, from two
+sessions, and every validator passed on all six. This closes it with one lint.
+
+### `bin/verify-findings-structure.sh`
+
+Two invariants, both stated in the instruction set and neither tested:
+
+- **every data row carries its own table's column count.** Taken from the header
+  that opens the table rather than from the file, because
+  `docs/runbook-findings/INDEX.md` holds a rollup above the detail table with
+  different columns. Blank cells are legal and unflagged — that table leaves
+  `Runbook` empty on continuation rows, meaning *same as above*.
+- **every bundle carries exactly one `STATUS-` tag, agreeing with its index row.**
+  Both halves, because the four instances left the old tag *beside* the new one.
+
+**43 OK / 0 FAIL**, and verified against the defects rather than only against a
+clean tree — each class was reproduced and the check made to fail on it:
+
+```text
+row has 8 cells, its table header has 7        <- the Revision 183 malformed row
+expected exactly one STATUS- tag, found 2      <- the deletion residue, four times
+tag says `resolved`, row says `in progress`    <- §4c's stated, unenforced rule
+```
+
+### Why a fifth validator rather than an extension
+
+`bin/verify-findings-counts.sh` already walks all three surfaces, so extending it
+was the obvious move. Its header states its charter — *a fact has one home, and a
+copy is permitted only where a check fails on drift* — and it exists for **derived
+facts displayed twice**. A tag and its row are such a pair and would fit there; a
+table's column count is not a copy of anything, and widening the script would make
+the clearest sentence in its own header untrue.
+
+The cost is a fifth baseline in every validation block, and it is accepted.
+**`0029` decision 3.1 rejected a lint and named this bundle while doing it** — that
+rejection was of a check whose purpose was to *license a duplicate that could be
+removed instead*, and 3.1 removes the duplicates. Nothing here can be removed: the
+tables must exist and their shape is load-bearing. The only alternatives are a
+check or a habit, and the habit failed six times in two days.
+
+### Two bugs in the check, found by running it
+
+The first version reported **36 failures** against a tree every other validator
+passes, which is a broken detector rather than 36 defects. A greedy
+`gsub(/^.*`/)` ran past the closing backtick, so a linked status cell returned
+its URL and a plain one returned nothing, and 34 bundles read as unindexed. And
+the cell counter treated the escaped `\|` inside `[[path\|Label]]` as a separator,
+so the one wikilink in `docs/sessions/INDEX.md` read as an extra cell. Both are in
+the part that reads the tree rather than the part that judges it, and a lint that
+cries wolf on its first run is worse than no lint.
+
+### What the bundle decided and did not do
+
+`verify-doc-paths.sh` is unchanged: it was correct, and the error was reading *the
+lints are clean* as a claim about well-formedness. Finding 4 — `git apply`
+under-applying a deletion because the mount refuses `unlink` — cannot be fixed in
+this repository; the tag check catches the residue and prevention is a procedural
+rule owed where `0028`'s compose-in-a-copy rule lives. And the bundle stays in
+`docs/instruction-set-findings/` on the owner's routing, recording that §4c's
+*where the fix lands* test and `0029`'s *a rule lives where its kind lives* give
+opposite answers here — a gap `0029` may take.
+
+### Validation
+
+Documentation lint **0 MISSING, 0 ANCHOR BROKEN**. Findings counts **0 FAIL**.
+Findings structure **43 OK / 0 FAIL**. Runbook structure **213 PASS / 5 WARN /
+25 FAIL** across 27 documents, unchanged. Script portability **0 WARN / 0 FAIL**
+with the new script; `bash -n` clean. Composed in a copy outside the owner's
+checkout, per `0028`; number taken at apply time. **`/bin/bash -n` against macOS
+stock Bash 3.2 is owed** — the script uses `awk`, `sed`, `grep` and `cut` with no
+Bash 4 construct, and the portability lint agrees, which is not the same claim.
+
+## Revision 194 — the row a rename owes is written, detection is measured and deferred, and `0030` closes
+
+`0030` had four findings decided and one held. `run-index-design-20260901-000000`
+decided finding 3 as **D7** under the owner's override recorded in Revision 192,
+specifying a `rename` row filed under the surviving lineage. This revision writes
+that row's producer, decides the finding D7 left open, and closes the bundle.
+
+### D8 — detection, decided on a measurement rather than an argument
+
+Finding 1 says a rename breaks citations and nothing detects it. D7 answers
+recoverability and says in its own words that the row *detects nothing*. Both
+candidate detectors were prototyped read-only against the volume:
+
+| Design | Over 6,907 text artifacts |
+|---|---|
+| flag any `<words>-YYYYMMDD-HHMMSS` resolving to no run | 329 id-shaped strings, **167 unresolved**, essentially all false — `bundle-watch-*`, `all-cert-keychain-discovery-*` are dated **filenames** |
+| flag only `<known-context>-STAMP` resolving to no run | one match, **zero unresolved**. It found nothing, including the citation known to be broken |
+
+The second result is the finding restated as a measurement.
+`post-image-restore-runtime-diff` appears in **zero** live manifests because the
+rename removed it; the surviving `restore-runtime-inventory-diff` appears in one.
+**A detector keyed on currently-known contexts is structurally blind to exactly the
+citations a rename breaks**, because the rename deletes the key it needs.
+
+So D7's row is the missing input rather than a consolation: filter by known
+contexts **plus the former contexts in `rename` rows**, and the second design finds
+it. Detection is **downstream of D7**, deferred rather than rejected, and its
+family is named — an artifact-root check like `bin/reimage-checklist.sh`, never a
+repo lint, or every revision's baseline becomes conditional on a mounted drive.
+
+**A correction to D7's rejected alternatives**, recorded rather than made by
+editing another session's decision. D7 rejects a validator partly because the
+artifact root *is absent wherever a validator would run*. Thirty-eight scripts
+under `bin/` read `$REIMAGE_ARTIFACT_ROOT`, seventeen report PASS/FAIL against it,
+and `reimage-checklist.sh` **is** such a validator. *Read-only to sessions* argues
+the other way, since a detector only reads.
+
+**The probe also found the citation in two bookends, not one** —
+`restore-runtime-exit-20260820-032645/bookend.md:19` and
+`restore-access-entry-20260824-063529/bookend.md:16`. D5 and D7's retroactive table
+each name only the first. Both remain queued.
+
+### The toolkit write
+
+`artifact_run_record_rename "$CATEGORY_ROOT" "<surviving>" "<former>" "<reason>"`
+in `.internal/artifact-runs.sh`, modelled on `artifact_run_retire_lineage`. The
+header gains **A LINEAGE RENAME IS A MIGRATION, NOT AN EDIT**, which states why
+the row is filed under the surviving context, that lineage renames are its scope
+and category renames have no record here, and names the bundle holding the repair
+rule.
+
+D7's inertness claim was verified rather than trusted: pointer byte-identical
+across a rebuild, no extra `official/` file, `run` lookups blind to the row,
+`rename` lookups recovering the former name, and return codes exercised against
+the file's documented 0/1/2 contract.
+
+### `0035` — parked, not decided
+
+*A lineage rename is a procedure, not an operation.* Three findings: nothing
+performs a rename; recovery runs one way — `reindex` rebuilds the manifest from
+`runs/`, `artifact_runs_rebuild` rebuilds pointers from the manifest — so a
+half-done rename silently completes in the wrong direction; and a run carries no
+lineage identity though `PINNED-OFFICIAL.txt` shows the shape. The volume is
+consistent today: 162 manifest rows, 162 run directories, no dangling pointers.
+
+### Two things this revision records about its own making
+
+**The gate was crossed and un-crossed.** D7 closed by asserting every finding then
+carried a decision. It did not — finding 1 had none, as D7's own text says two
+paragraphs earlier — and this session made the toolkit write on that assertion. The
+write was held in the composing copy until D8 closed the gate honestly and reached
+the repository only afterwards. A gate crossed and reversed leaves no trace
+otherwise.
+
+**The bundle was renumbered before it was written.** It was composed as `0034`;
+`run-index` took that number in Revision 193 for
+`docs/runbook-findings/restore-git/0034-…`. Caught on the refresh before deriving
+the patch, which is the reason section 4c says to take the number immediately
+before writing.
+
+### Validation
+
+Documentation lint **0 MISSING, 0 ANCHOR BROKEN**. Findings counts **0 FAIL**.
+Runbook structure **213 PASS / 5 WARN / 25 FAIL** across 27 documents, unchanged.
+Script portability **0 WARN / 0 FAIL** with the new function, `bash -n` clean.
+Every index and manifest table checked header-against-rows; every bundle carries
+exactly one `STATUS-` tag. Composed in a copy outside the owner's checkout and
+re-derived onto `30ef24b` after a concurrent push touched the same file, per
+`0028`; number taken at apply time. **`/bin/bash -n` against macOS stock Bash 3.2
+is owed for this revision** — the function uses no construct newer than 3.2 by
+inspection and the lint agrees, which is not the same claim.
 
 ## Revision 193 — an empty directory that was never tracked, and a timestamp that is not the phase's
 
