@@ -1,5 +1,7 @@
 # Apply Manifest
 
+**Revision 189** — supersedes Revision 188 and earlier. `0032` gains a fourth finding, contributed while it is `unresolved`: a patch that deletes something under-applies against the connected folder, `git apply` exits 0 anyway, and four instances in two days were caught only by someone looking.
+
 **Revision 188** — supersedes Revision 187 and earlier. `0029` is decided but for finding 8: a rule now lives where its kind lives, the `docs/` directory list gets one home, and bundle ordering stays prose because that is what a second session reached for when it had the choice.
 
 **Revision 187** — supersedes Revision 186 and earlier. The two office-stability lineages are defined where a reader looks for them, and `0013` closes.
@@ -499,6 +501,115 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
 
 ---
+
+## Revision 189 — `0032` gains a fourth finding, contributed by another session
+
+A patch that deletes something under-applies against the connected folder, and
+nothing catches it. Four instances across two sessions, none of which reached the
+history, all of which were caught by a person looking.
+
+### The mechanism is narrower than it first looked
+
+The first statement of this was *"a `git apply` carrying a rename half-lands."*
+The owning session sharpened it, and the sharper version is the one recorded:
+**`git apply` cannot unlink a file in the connected folder, downgrades that
+failure to a warning, applies everything else, and exits 0.** Creating works,
+deleting does not. The new file lands, the old one survives, the command reports
+success.
+
+So this is a mount permission interacting with git's error handling, not
+something about renames or patches generally — and stated that way it predicts
+the rest: **any patch containing a deletion under-applies.** A `STATUS-` tag
+rename is only the common case, because every status transition is a delete plus
+a create.
+
+### Four instances, and it recurred after it was known
+
+| Revision | Bundle | Left behind |
+|---|---|---|
+| 183 | `0009` | `STATUS-unresolved` beside `STATUS-superseded` |
+| 183 | `0013` | `STATUS-unresolved` beside `STATUS-in-progress` |
+| 187 | `0013` | again |
+| 188 | `0029` | `STATUS-unresolved` beside `STATUS-in-progress` |
+
+**None reached the history**, verified with `git ls-tree -r` across every commit
+of 2026-09-03 and 04 — no commit holds two tags for one bundle. The cost so far
+has been paid entirely in attention, which is the same currency `0032`'s findings
+1 and 2 were paid in and the reason this belongs beside them.
+
+Revision 187 is the argument. It recurred four days after 183 was seen and
+cleared, in the same session that had cleared it. A habit did not hold.
+
+### Why nothing caught it, including the verification
+
+All four validators passed with two tags present, each correctly: doc paths
+resolve because both tags exist, and the findings-count check reads finding
+tables and never opens a bundle directory. §4c has stated the rule the whole
+time — *"a bundle whose tag disagrees with its INDEX.md row is a bug in whoever
+moved it last"* — stated, and unenforced. The check is one line of shape: exactly
+one `STATUS-*` per bundle, agreeing with the index row.
+
+The second half is not about tags. **`git apply --check` passes on exactly the
+patch that will under-apply**, because it validates the diff against the tree
+rather than against the filesystem's permissions — and §3, written in Revision
+182, instructs a session to run it and say so.
+
+And the verification run afterwards had the same blind spot: the applied files
+were compared to the composed files by checksum, all five matched, and the
+deletion was not among them. **A checksum comparison only sees files the patch
+names as content.** Catching this means comparing two trees, not two file lists.
+
+### An operational note that outlives this finding
+
+The delete permission granted for a connected folder **does not survive a bridge
+reconnect.** The owning session had one granted, the desktop link dropped and
+returned, and the next `rm` failed with `Operation not permitted` mid-apply. Any
+procedure written against *"deletion is enabled for the rest of the session"* is
+written against something that can lapse without notice.
+
+### Contributed, not taken
+
+`0032` is `unresolved`, which `docs/legend.md` opens to every session — *"any
+session may contribute to it: add a finding, add detail to one, correct one."*
+Exclusivity begins at `in progress`, and starting it is the owner's move. So this
+needed no permission, and the owning session said so plainly when asked, citing
+the reason to welcome it: *"an owner who takes a bundle in progress on day one
+gets exclusivity and loses every other session's eyes on the reading."*
+
+The bundle is otherwise unchanged. `pre-image-capture-conformance-20260903-194532`
+still owns it and is holding it at `unresolved` until this landed, so it can read
+finding 4 before deciding anything.
+
+### One write into another session's file
+
+`0032`'s count moves 3 → 4, which lands in the owning session's
+`findings-manifest.md` and in its `docs/sessions/INDEX.md` row, 16 → 17. That is a
+write into a file another session owns, made because `verify-findings-counts.sh`
+fails otherwise — a derived count cannot stay wrong while the thing it counts
+changes. Recorded here rather than done quietly. Nothing else in either file is
+touched.
+
+### Files
+
+- `docs/instruction-set-findings/0032-.../findings.md` — finding 4, its status
+  row, and a `Contributed to:` header line naming the session and the date
+- `docs/instruction-set-findings/INDEX.md` — `0032` Findings 3 → 4
+- `docs/sessions/pre-image-capture-conformance-20260903-194532/findings-manifest.md` — same
+- `docs/sessions/INDEX.md` — that session's Findings 16 → 17
+
+### Validators
+
+Run in the scratch copy against this change alone. Findings counts **40 OK / 0
+FAIL**; doc paths **774 OK / 0 MISSING / 1108 ANCHOR OK / 0 ANCHOR BROKEN**;
+runbook structure **213 PASS / 5 WARN / 25 FAIL**; portability **83 clean / 0
+WARN / 0 FAIL**. Unchanged; no script changed.
+
+Table shape checked by hand, every row matching its header. **Tag shape checked
+by hand too, for the first time** — one `STATUS-*` per bundle across all three
+trees — which is finding 4's own subject and exists as no script.
+
+Linux VM (Bash 5.1, GNU coreutils) on the owner's Mac, not macOS. `/bin/bash -n`
+against stock Bash 3.2 remains owed for Revisions 116 onward.
 
 ## Revision 188 — `0029` decided, except the one about being told twice
 
