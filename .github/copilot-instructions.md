@@ -224,6 +224,62 @@ the bundle itself rather than a summary of it:
     Finding 0007 -- docs/cross-cutting-findings/0007-<slug>/
     (cross-cutting: no single runbook owns it)
 
+Superseding a bundle whose session is gone: `docs/legend.md` covers a bundle
+overtaken while `in progress` and superseded by its own owner. This is the other
+case, and 4d creates it -- a `closed` session's unfinished readings live on
+without an owner, a `withdrawn` session's are marked `superseded` where another
+bundle replaces them, and a `handoff` may wait indefinitely for a successor. In
+all three the owning session cannot supersede its own bundle.
+
+THE SESSION WITH THE NEW READING DOES IT, AND DOES NOT TAKE OWNERSHIP.
+Superseding is not inheriting. The superseded bundle stays listed in the
+`findings-manifest.md` of the session that recorded it, with only its status
+changed -- that file is authoritative for who held a reading, and a supersession
+changes neither who recorded it nor who held it.
+
+Three things a supersession must NOT do:
+
+- The superseded `findings.md` is NOT edited. Not to add a pointer to its
+  replacement, not to repair a citation inside it, not to soften a conclusion.
+  The two pointers below are where the structure puts them. A reading is retained
+  by being left alone, and one that shows a diff was not retained.
+- The number is NEVER reused and the directory is never renamed. `finding 0009`
+  must keep naming exactly one bundle; two siblings cannot carry one number, so
+  reuse makes retaining the original impossible.
+- The bundle does NOT move between manifests.
+
+The steps:
+
+1.  Take the next free number immediately before writing.
+2.  Create `<NNNN>-<slug>/` with its tag, `findings.md` carrying the merged
+    reading, and `decisions.md`. The status is normally `in progress`: a bundle
+    supersedes because something has been concluded, and `decisions.md` is what
+    records it.
+3.  The new `findings.md` header carries `Relates to`, naming what it replaces:
+
+        **Relates to:** `0009-<slug>` -- **supersedes it.**
+
+4.  Rename the old bundle's tag to `STATUS-superseded`.
+5.  In the old bundle's INDEX.md row, THE STATUS CELL BECOMES THE LINK --
+    `[`superseded`](<new-bundle>/)` -- so one cell answers both what state the
+    bundle is in and what replaced it. Notes records that the reading is retained.
+6.  Add the new bundle's row, naming the superseding session.
+7.  Add it to that session's `findings-manifest.md` and update its counts in
+    `docs/sessions/INDEX.md`. The originating session's counts do not change.
+8.  `decisions.md` re-affirms or explicitly drops every decision the superseded
+    bundle recorded -- decisions do not carry forward by themselves. Where it has
+    no `decisions.md` but states a conclusion in prose, name that as the thing
+    being superseded rather than departing from it silently.
+9.  One APPLY-MANIFEST.md revision covers the whole supersession.
+
+Where the originating session is `closed`, its `final-summary.md` is never
+edited; the index row and the new bundle's `Relates to` are the record. If its
+manifest lists the bundle, only the status cell changes.
+
+`superseded` where another bundle carries the reading forward; `withdrawn` where
+the reading is dropped and nothing replaces it. If a replacement is being opened,
+it is `superseded`.
+
 4d) Session bundles -- docs/sessions/<title>-<stamp>/
 
 A session that needs more than a prompt gets a directory. A prompt, the handoffs

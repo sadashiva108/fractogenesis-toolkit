@@ -1,5 +1,7 @@
 # Apply Manifest
 
+**Revision 184** — supersedes Revision 183 and earlier. The supersede procedure is written into section 4c, and the tables nothing validates get a reading.
+
 **Revision 183** — supersedes Revision 182 and earlier. A reading is superseded rather than narrowed, and a citation a rename broke turns out to be repairable.
 
 **Revision 182** — supersedes Revision 181 and earlier. `0028` is resolved: a session composes in a copy of the repository and hands over a patch, the revision number is taken at apply time by a new helper that can see uncommitted entries, and two vocabulary counts that had been wrong since Revision 180 are removed rather than corrected.
@@ -489,6 +491,77 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
 
 ---
+
+## Revision 184 — the supersede procedure is written down, and the tables get a reading
+
+Revision 183 superseded a findings bundle whose owning session was in `handoff`
+and could not do it itself. Nothing in the instruction set covered that: section
+4d *instructs* the procedure — **THE FINDINGS GO WITH IT** — and section 4c never
+defined it. The steps that revision followed were reasoned out, not read.
+
+`0031` records that gap and closes it. `0032` records a second one and does not.
+
+### `0031` — section 4c gains *Superseding a bundle whose session is gone*
+
+Four findings, all resolved by one subsection placed between the handing-one-off
+convention and section 4d:
+
+1. Section 4d instructs the procedure; section 4c never defined it. `docs/legend.md`
+   defines the *status* and says itself that requirements live in 4c and 4d.
+2. Both existing accounts assume the superseding party owns the bundle — the
+   legend's section is titled *When something overtakes a bundle already in
+   progress*. Section 4d creates the opposite population in the same paragraph
+   that uses the term: *a `closed` session finishes and its unfinished readings
+   live on without an owner*.
+3. The three prohibitions were unwritten. The superseded `findings.md` is not
+   edited; the number is never reused; the bundle does not move between
+   manifests. Each was reasoned out during Revision 183, and two of them were
+   reached for anyway — a `Superseded by` header line was added to `0009` and
+   removed again, and number reuse was proposed and declined.
+4. The form that carries the pointer existed only in the tree. The superseded
+   row's **Status** cell is the link, so one cell answers both what state the
+   bundle is in and what replaced it. Section 4c now documents a form that
+   exists rather than proposing one.
+
+**Superseding is not inheriting**, which is the decision most likely to be got
+wrong by a session tidying up: the bundle stays in the `findings-manifest.md` of
+the session that recorded it, with only its status changed.
+
+### `0032` — the tables have a shape nothing checks
+
+Recorded, not decided. Two index rows were malformed in Revision 183 by this
+session — the `0009` row at 8 cells in a 7-column table, the `0013` row at 9 in an
+8-column one, both from stripping a trailing `| — |` and appending a cell. Both
+were found only because the owner asked for an unrelated change that required
+reading a row column by column.
+
+`./bin/verify-doc-paths.sh --all` reported **0 MISSING / 0 ANCHOR BROKEN** on both,
+correctly: every link in them resolved. Link resolution and table shape are
+different properties, and the one that is checked is not the one that broke. That
+is `0026`'s argument from another angle — there a baseline that drifts makes *I
+did not cause it* indistinguishable from *I did not look*; here a validator that
+passes on what it does not examine makes *the lints are clean* indistinguishable
+from *the lints do not cover this*.
+
+The bundle carries its own open question as finding 3: the subject is a rule from
+sections 4c and 4d, but the fix is a lint, and section 4c's classification test is
+where the fix lands. It sits in `instruction-set-findings/` on the owner's
+routing, and says so.
+
+Also recorded there: the near miss. Earlier in the same session the `phase-11b`
+row in `docs/sessions/INDEX.md` was reported to the owner as malformed and was
+not — that table had gained a `Bundles` column. A pipe count without the header
+produces both error directions.
+
+### Validation
+
+Documentation lint: **0 MISSING, 0 ANCHOR BROKEN**. Runbook structure and script
+portability unchanged; no runbook and no script was touched. Every `STATUS-` tag
+agrees with its index row; every session's counts agree with its manifest; and
+every index and manifest table was checked header-against-rows, which is the check
+`0032` says should not have to be done by hand. Composed in a copy outside the
+owner's checkout and handed over as a patch, per `0028`; number taken at apply
+time with `./bin/check-manifest-revision.sh`. Applied by the owner.
 
 ## Revision 183 — a reading is superseded rather than narrowed, and a citation a rename broke is repairable
 
