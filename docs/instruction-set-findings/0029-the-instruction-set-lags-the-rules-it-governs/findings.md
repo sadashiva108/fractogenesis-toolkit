@@ -12,15 +12,23 @@ symptoms of one question `0027` finding 1 owns — *where is a rule allowed to
 live* — and deciding them first would decide against a surface about to move.
 `0028`'s resolution adds to finding 1's list rather than changing it. Finding 7
 is about this line existing at all.
-**Severity:** findings 1 and 5 are high. A session that reads only the
-instruction set does not learn five of the rules it is expected to follow.
+**Gate cleared 2026-09-04:** both are `resolved`. `0027` answered the question
+finding 1 sits under — a fact has one home — and `0028` added §3 to the surfaces
+this bundle must read, along with finding 8, which was found by breaking `0028`'s
+own rule the day it was written.
+**Severity:** findings 1, 5 and 8 are high. A session that reads only the
+instruction set does not learn several of the rules it is expected to follow,
+and one of those rules governs when it may touch the owner's checkout.
 **Scope:** instruction-set. The fix lands in `.github/copilot-instructions.md`
 §§4b–4d, `.claude/CLAUDE.md`, and `docs/architecture/findings-and-sessions.md`.
 
-**This bundle is a self-report.** Five of its six findings are rules this session
+**This bundle is a self-report.** Most of its findings are rules this session
 wrote into `docs/legend.md` and did not carry into the instruction set, each time
-with a line saying the adoption was owed. Six such lines is not a backlog, it is
-a pattern, and finding 5 is about the pattern rather than any one instance.
+with a line saying the adoption was owed. That many such lines is not a backlog,
+it is a pattern, and finding 5 is about the pattern rather than any one instance.
+Finding 8, added a day later, is the pattern's first *observed* cost rather than
+its record: a rule that lived only in conversation was broken twice in an
+afternoon by the session that had been told it.
 
 ---
 
@@ -40,6 +48,7 @@ work, since every fix is a toolkit write.
 | 5 | Nothing tells a session that `docs/legend.md` is normative | — | `unresolved` |
 | 6 | State names and state requirements live in different files | — | `unresolved` |
 | 7 | The vocabulary cannot say that one bundle must be decided before another | — | `unresolved` |
+| 8 | The rule says where a change is composed, not when it is handed over | — | `unresolved` |
 
 ---
 
@@ -155,6 +164,62 @@ Three shapes, none chosen:
 
 Whichever is chosen, it should be decided with finding 5: both are about what a
 session can learn from the tree without being told.
+
+---
+
+## 8 — the rule says where a change is composed, not when it is handed over
+
+**Recorded 2026-09-04**, one revision after the rule it is about, by the session
+that broke it. Revision 182 wrote the composition rule into §3: compose in a copy
+outside the owner's checkout, validate there, hand the owner a patch. It does not
+say WHEN the patch is applied — and this session applied two of them to the
+owner's checkout unasked, Revisions 181 and 182, each within minutes of composing
+it.
+
+The instruction reads as one motion. *"Hand over a patch"*, followed by *"check
+the patch before applying it and say so"*, describes a session that applies its
+own work and leaves the owner a role that begins at the commit. That is not the
+owner's role. The owner asks to see the content first, asks for it to be written
+when it is ready, and until then the work is a draft.
+
+**That rule exists and is followed — in conversation.** It has been stated to
+this session more than once. It is not in `.github/copilot-instructions.md`, not
+in `docs/legend.md`, and not in any session prompt. It is finding 5 exactly, with
+the difference that this one has now been observed failing rather than predicted
+to.
+
+### What it costs
+
+Not much, and precisely one thing. An unasked-for apply is not destructive: the
+owner reviews the diff before committing and can decline it. What it costs is
+**review order.** A patch already in the tree is reviewed as a fait accompli; it
+sits between the owner and anything else they wanted to do in that folder; and
+declining it becomes an action rather than an omission — which is the property
+`0028` finding 4 was pleased to have removed, restored by the same session in the
+same revision.
+
+`0028`'s own `resolutions.md` names this without recognising it: *"nothing
+enforces the composition rule — the only signal that a session ignored it is a
+dirty working tree in the owner's checkout."* That sentence describes the signal
+for this finding too. The tree was dirty both times, and it was the owner who
+noticed.
+
+### Three shapes, none chosen
+
+- **A hand-over step in §3.** The session reports what it composed and shows the
+  content inline; the patch is applied only when the owner asks for it. Smallest,
+  and it puts the rule beside the composition rule it completes.
+- **A fourth write category.** Rejected on sight, and worth recording as
+  rejected: `0028` decision 6.1 established one day earlier that composition is
+  not a permission question, and applying is not one either. Two rules that vary
+  by nothing do not become clearer by being made into three.
+- **State it per session, in the prompt.** Where it lives today, minus the
+  conversation. It makes the rule a property of a session rather than of the
+  repository, which is the shape finding 5 exists to argue against.
+
+**Decide with 5**, and probably in the same sentence: both are about what a
+session can learn from the tree without being told, and this one is the case
+where not being told had a cost the same day.
 
 ---
 

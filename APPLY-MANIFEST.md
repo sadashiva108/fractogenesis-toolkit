@@ -1,5 +1,7 @@
 # Apply Manifest
 
+**Revision 186** — supersedes Revision 185 and earlier. `0029` gains an eighth finding: the composition rule says where a change is composed and never says when it is handed over, and the session that wrote it applied two patches unasked.
+
 **Revision 185** — supersedes Revision 184 and earlier. The two unreachable staged bundles are opened, and nothing in them needs restoring.
 
 **Revision 184** — supersedes Revision 183 and earlier. The supersede procedure is written into section 4c, and the tables nothing validates get a reading.
@@ -493,6 +495,86 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
 
 ---
+
+## Revision 186 — `0029` gains an eighth finding, from breaking its own rule
+
+Revision 182 wrote the composition rule into §3: compose in a copy outside the
+owner's checkout, validate there, hand over a patch. It did not say WHEN the
+patch is applied, and the session that wrote it applied two of them to the
+owner's checkout unasked — Revisions 181 and 182, each within minutes of being
+composed. The owner had to say so twice.
+
+That gap is now `0029` finding 8. It is not a new rule; the rule exists and is
+followed, in conversation. It is not in `.github/copilot-instructions.md`, not in
+`docs/legend.md`, and not in any session prompt — which is `0029` finding 5
+exactly, with the difference that this instance has been observed failing rather
+than predicted to.
+
+### What it actually costs
+
+Not much, and precisely one thing. An unasked-for apply is not destructive: the
+owner reviews the diff before committing and can decline it. What it costs is
+**review order.** A patch already in the tree is reviewed as a fait accompli, it
+sits between the owner and anything else they wanted to do in that folder, and
+declining it becomes an action rather than an omission — the property `0028`
+finding 4 was pleased to have removed, restored by the same session in the same
+revision.
+
+`0028`'s `resolutions.md` names this without recognising it: *"nothing enforces
+the composition rule — the only signal that a session ignored it is a dirty
+working tree in the owner's checkout."* That sentence describes the signal for
+this finding too. The tree was dirty both times, and it was the owner who
+noticed.
+
+Three shapes are recorded, none chosen. One of them — a fourth write category —
+is rejected on sight and recorded as rejected, because `0028` decision 6.1
+established one day earlier that composition is not a permission question.
+
+### Header corrections to the same bundle
+
+The `Decide after:` gate is cleared: `0027` and `0028` are both `resolved`, and
+the line now says what each contributed rather than only that it was waiting.
+Severity extends to finding 8. And the self-report paragraph said *"five of its
+six findings"* when there were already seven — rewritten without a count, on the
+same reasoning Revision 182 used for the status and state counts: a number
+restated beside the list it counts is a copy nobody maintains.
+
+### Composed outside the tree, and this time handed over
+
+Fourth change under `0028`'s decision and the first one the owner asked for
+before it landed. The patch was re-derived twice against a moving tree — Revision
+183 and again at 184–185 — rather than forced through, which is the behaviour
+decision 1.1 predicted and had not yet been tested against another session's
+commits.
+
+### Files
+
+- `docs/instruction-set-findings/0029-.../findings.md` — finding 8, the status
+  row, the cleared gate, the severity line, the self-report paragraph
+- `docs/instruction-set-findings/INDEX.md` — `0029` Findings 7 → 8
+- `docs/sessions/restore-apps-outstanding-20260903-000000/findings-manifest.md` —
+  same
+- `docs/sessions/INDEX.md` — the session's Findings 30 → 31, and a Notes cell
+  that had stopped at Revision 172 and never mentioned `0029`
+
+### Validators
+
+Run in the scratch copy against this change alone. Findings counts **40 OK / 0
+FAIL** — 37 at Revision 182, the three bundles opened since are the difference.
+Doc paths **774 OK / 0 MISSING / 0 ANCHOR BROKEN**; runbook structure **213 PASS
+/ 5 WARN / 25 FAIL**; portability **83 clean / 0 WARN / 0 FAIL**. No script
+changed.
+
+Table shape was also checked by hand, header pipe count against every data row
+across the three findings indexes, the sessions index and every
+`findings-manifest.md` — every row matches. That check is `0032` finding 2's
+subject and does not exist as a script; `verify-doc-paths.sh` passes on a
+malformed row because links and shape are different properties, and two index
+rows edited by hand in this revision are exactly the operation that produced the
+two malformed rows `0032` records.
+
+Linux VM (Bash 5.1, GNU coreutils) on the owner's Mac, not macOS. `/bin/bash -n`
+against stock Bash 3.2 remains owed for Revisions 116 onward.
 
 ## Revision 185 — the two unreachable bundles are opened, and nothing in them is restored
 
