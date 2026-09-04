@@ -1,5 +1,7 @@
 # Apply Manifest
 
+**Revision 181** — supersedes Revision 180 and earlier. `0028` is decided: four decisions across six findings, adopting the scratch-and-patch method that three revisions had already been running, and taking the revision number at apply time.
+
 **Revision 180** — supersedes Revision 179 and earlier. `0027` is resolved: ten decisions become edits across the instruction set, the legend and the indexes, and a fourth validator makes a displayed count fail when it drifts.
 
 **Revision 179** — supersedes Revision 178 and earlier. `0027` is decided: ten decisions across seven findings, a sixth findings status, and the nine per-runbook indexes become one.
@@ -483,6 +485,98 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
 
 ---
+
+## Revision 181 — `0028` decided
+
+Six findings, four decisions, and a bundle whose fix had been running for three
+revisions before anyone put it to the owner. `decisions.md` carries the
+reasoning; this entry names what a reader of the tree would not otherwise see.
+
+### The decision was made against evidence, not argument
+
+Revisions 178, 179 and 180 were each composed in a scratch copy of the
+repository, validated there, and handed over as a patch — before finding 1 was
+decided. So the table in `decisions.md` is a measurement:
+
+| | |
+|---|---|
+| Patches applied cleanly to a tree that had moved under them | 3 of 3 |
+| Validator runs attributable to one session's change | 3 of 3 — previously 0 |
+| Patches abandoned because the revision number had been taken | 2 |
+| Work lost | none |
+
+**Decision 1.1** adopts it: a session composes in a copy outside the connected
+folder, runs the validators there against its own change alone, and hands the
+owner a patch. Findings 2, 3 and 4 are consequences of the shared tree rather
+than defects with fixes of their own, so **decision 2.1** records that they go
+with it and nothing separate is owed.
+
+### The method makes one finding worse, and that is written down
+
+Two patches were abandoned in a single afternoon because the revision number had
+been taken. A number chosen at compose time is a guess, and a scratch copy widens
+the window between the guess and the apply. **Decision 5.1** closes it rather
+than narrowing it: an entry is composed with its number left open and numbered
+when the patch is applied, when the next free number is a fact.
+
+Revision 180 already did this as practice. **This entry is the first numbered
+under it as a rule.**
+
+The other half of finding 5 — a session amending a revision the owner had already
+committed — is answered by 1.1: a session amends its own copy, and the patch
+either applies to what the owner has or does not.
+
+### What the decision does not solve
+
+A scratch copy in session-local storage dies with the session. It survives
+context compaction, which is the larger risk; it does not survive termination.
+The owner has already seen the exposure: at one point today ten decisions existed
+only in scratch. The mitigation is to hand over at natural stopping points and to
+say plainly when work exists only there. Recorded as a cost, not argued away.
+
+### Composition is not permission
+
+**Decision 6.1.** The three write categories keep answering *when* a write is
+allowed; *where* it is composed becomes its own rule, applying to all three
+alike. They stay separate because they do not line up: permission varies by
+category and by status, composition varies not at all.
+
+The observation that decides it is that **record writes are ungated and were
+exactly the ones that collided** — the manifest and the indexes, which gating
+would make deciding impossible. A rule keyed to permission would have exempted
+precisely the writes that caused the problem.
+
+### Status only; the rules have not moved yet
+
+This revision writes `docs/` alone. `0028` is `in progress`; the edits that carry
+1.1, 5.1 and 6.1 into `.github/copilot-instructions.md` and `docs/legend.md` wait
+for `resolving`, and the helper that fills a revision number in at apply time is
+not yet built.
+
+### Composed outside the tree
+
+Fourth change under `0028`'s own decision. Scratch copy, validators run there
+against this change alone, handed over as a patch, numbered at apply.
+
+### Files
+
+- `docs/cross-cutting-findings/0028-.../decisions.md` — new
+- `docs/cross-cutting-findings/0028-.../STATUS-unresolved` → `STATUS-in-progress`
+- `docs/cross-cutting-findings/0028-.../findings.md` — six rows marked decided
+- `docs/cross-cutting-findings/INDEX.md` — `0028` row `in progress`
+- `docs/sessions/restore-apps-outstanding-20260903-000000/findings-manifest.md` — `0028` row `in progress`, summary aligned with the bundle title
+
+### Validators
+
+Run in the scratch copy against this change alone. Doc paths **774 OK / 0
+MISSING / 0 ANCHOR BROKEN**; runbook structure **213 PASS / 5 WARN / 25 FAIL**
+across 27 documents; portability **81 clean / 0 WARN / 0 FAIL**; findings counts
+**37 OK / 0 FAIL**. Every figure matches the standing baseline — this revision
+writes prose and status tags only.
+
+The environment was a Linux VM (Bash 5.1, GNU coreutils) on the owner's Mac, not
+macOS. `/bin/bash -n` against stock Bash 3.2 remains owed for Revisions 116
+onward; this revision touches no script.
 
 ## Revision 180 — `0027` resolved
 
