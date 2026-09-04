@@ -1,5 +1,7 @@
 # Apply Manifest
 
+**Revision 190** — supersedes Revision 189 and earlier. The runbook findings index gains a rollup that puts the two runbooks carrying the weight at the top, and `0033` records that seventeen scripts each hardcode the same palette and that 48 evidence artifacts on the volume carry raw ANSI escapes.
+
 **Revision 189** — supersedes Revision 188 and earlier. `0032` gains a fourth finding, contributed while it is `unresolved`: a patch that deletes something under-applies against the connected folder, `git apply` exits 0 anyway, and four instances in two days were caught only by someone looking.
 
 **Revision 188** — supersedes Revision 187 and earlier. `0029` is decided but for finding 8: a rule now lives where its kind lives, the `docs/` directory list gets one home, and bundle ordering stays prose because that is what a second session reached for when it had the choice.
@@ -501,6 +503,134 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
 
 ---
+
+## Revision 190 — a rollup on the runbook index, and `0033`
+
+Two changes the owner asked for, unrelated except that both came out of looking
+at how this repository presents itself.
+
+### `docs/runbook-findings/INDEX.md` gets a rollup
+
+Two tables in one file. **By runbook** carries one row per runbook — bundles,
+findings, resolved — sorted by findings, most first. **Every bundle** is the
+existing table, regrouped into the same order, with the `Runbook` cell filled on
+the first row of each group and blank on the rest.
+
+The rollup earns its place in its first two rows: **`restore-apps` is one bundle
+carrying ten findings, none resolved, and `restore-repos` is seven bundles
+carrying seven.** The old numeric sort put `0001` first and then scattered the
+seven `restore-repos` bundles through the middle, so neither fact was visible on
+the page that exists to show them.
+
+Three shapes were considered and rejected, and the reasons are worth keeping
+because they will come back:
+
+- **Per-runbook `INDEX.md` files**, one per directory, the way the tree looked
+  before Revision 179. Rejected because R179 removed them **three revisions
+  earlier that same day** and its stated gain was eliminating eight copies of the
+  status key — the largest single instance of `0029` finding 2. Restoring nine
+  indexes to gain navigation would have re-created it.
+- **A `<details>` block per runbook**, giving something close to filtering.
+  Rejected on measurement: there is **no HTML anywhere in this repository's
+  Markdown**, not one tag, and the table is 24 rows of which nine runbooks
+  contribute one each. It would set a precedent to solve a scrolling problem that
+  does not exist yet.
+- **Group rows carrying subtotals inside one table.** Rejected as `0027` finding
+  3's defect — a cell meaning something different under the same header, which is
+  an accurate count of the wrong thing and which no consistency check catches.
+
+**The condition to revisit is recorded rather than the decision being treated as
+permanent:** when one runbook passes roughly ten bundles or the tree passes
+forty, scrolling stops working and per-runbook indexes earn their keep.
+`restore-repos` at seven is the closest.
+
+**The rollup's twenty-seven figures are derived and nothing checks them yet.**
+They were reconciled by hand for this revision — which is the cost `0032` exists
+to remove — and `verify-findings-counts.sh` is owed the rule that each rollup row
+must equal the detail rows beneath it. That is named here rather than left for
+someone to notice.
+
+### `0033` — styling is copied into every script, and it lands in the evidence
+
+Recorded from the owner comparing this repository against `indigo`, a sibling in
+the same workspace that solved the same problem for its own outputs. Six
+findings, `unresolved`.
+
+**Finding 5 is why it is a bundle and not a note.** Measured against the artifact
+volume, read-only: of **12,838** text artifacts, **48 contain raw ANSI escape
+sequences** — 15 in `loose-secrets-reports/`, 9 in `size-audit-reports/`, and 24
+copies of those in `_pre-conversion-backup-20260902/`. The first line of each is
+
+    ^[[1m^[[0;36m▸ Loose plaintext secret check^[[0m
+
+That is pre-image evidence of a machine which has since been reimaged, written by
+a producer that did not know it was writing evidence rather than talking to a
+terminal. Nothing is lost — `less -R` reads it — but those artifacts are no
+longer plain text, so a grep across a coloured line can miss and a diff between
+two runs shows escape changes as content changes.
+
+The other five: **seventeen scripts each define the palette** with no shared
+source, `RED='\033[0;31m'` appearing seventeen times; the entrypoint template
+**prescribes the copy** — *"reuse the same palette and helpers as
+backup-home.sh"*; the copies have **already drifted** three ways, one script
+carrying no `CYN` and two carrying only `RED`; **fourteen of seventeen** emit
+colour regardless of destination; and no check looks at any of it.
+
+`0032`'s argument reaches a third angle here. Its finding 2 is a check examining
+the wrong property, its finding 4 is a check exiting 0 on a partial apply, and
+this is a property with no check at all.
+
+### What `indigo` proves, and what it does not
+
+Recorded in the bundle because it is the clearest available statement of the fix,
+not because this bundle decides anything for that repository — its header says
+the reading applies there and the decisions may differ.
+
+Its documents carry content plus style-free semantic markers and a **named style
+supplies the look at render time**, styles being data files rather than code. Its
+UI has a token contract in `tokens.css` with colour and density as two
+independent axes. Both work.
+
+**And its own contract leaks**, which is the part worth having written down:
+`ui/src/styles.css` uses `var(--…)` 154 times and still hardcodes `#4f46e5` three
+times — the literal value of `--indigo`, copied out of the token file, which
+stays indigo under every other skin. The rule is stated in the file it is broken
+in. That is one observation about both repositories, and it argues that whatever
+is decided for `0033` ships with its check rather than acquiring one later as a
+finding.
+
+### Deliberately not claimed
+
+The Markdown's own visual conventions — the callout legend, the status backticks,
+the `✓` and `—` in index cells — may be the same finding one level up. They were
+not read and are not claimed. Nor does `0033` cover whether the forty-eight files
+should be rewritten: that is an evidence write against dated records, needing the
+owner's word for that run, and it is a decision rather than a reading.
+
+### Files
+
+- `docs/runbook-findings/INDEX.md` — the rollup, and the detail table regrouped
+- `docs/cross-cutting-findings/0033-.../` — new: `STATUS-unresolved`, `findings.md`
+- `docs/cross-cutting-findings/INDEX.md` — the `0033` row
+- `docs/sessions/restore-apps-outstanding-20260903-000000/findings-manifest.md` — same
+- `docs/sessions/INDEX.md` — that session 4 → 5 bundles, 31 → 37 findings
+
+### Validators
+
+Run in the scratch copy against this change alone. Findings counts **41 OK / 0
+FAIL** — 40 before, `0033` is the difference. Doc paths **774 OK / 0 MISSING /
+1108 ANCHOR OK / 0 ANCHOR BROKEN**; runbook structure **213 PASS / 5 WARN / 25
+FAIL**; portability **83 clean / 0 WARN / 0 FAIL**. No script changed.
+
+Checked by hand, because no script does: table shape across all index and
+manifest tables, exactly one `STATUS-*` per bundle, and the rollup's nine rows
+against the detail rows beneath them.
+
+**The artifact volume was read only.** The scan that produced finding 5's numbers
+opened files and wrote nothing.
+
+Linux VM (Bash 5.1, GNU coreutils) on the owner's Mac, not macOS. `/bin/bash -n`
+against stock Bash 3.2 remains owed for Revisions 116 onward.
 
 ## Revision 189 — `0032` gains a fourth finding, contributed by another session
 

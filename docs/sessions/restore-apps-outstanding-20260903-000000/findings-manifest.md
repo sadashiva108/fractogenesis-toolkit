@@ -12,6 +12,7 @@ Statuses are defined in [`docs/legend.md`](../../legend.md).
 | 0027 | `docs/cross-cutting-findings/0027-findings-architecture-conformance/` | cross-cutting | The findings-and-sessions architecture disagrees with itself and with the tree | 7 | `resolved` |
 | 0028 | `docs/cross-cutting-findings/0028-sessions-write-into-the-tree-the-owner-commits-from/` | cross-cutting | Sessions compose their changes in the tree the owner commits from | 6 | `resolved` |
 | 0029 | `docs/instruction-set-findings/0029-the-instruction-set-lags-the-rules-it-governs/` | instruction-set | The instruction set lags the rules it governs | 8 | `in progress` |
+| 0033 | `docs/cross-cutting-findings/0033-styling-is-copied-into-every-script-and-lands-in-evidence/` | cross-cutting | Styling is copied into every script, and it lands in the evidence | 6 | `unresolved` |
 
 `0027` and `0028` were **recorded** by `session_019yzcjm2QneJ5ymVEQDi1bu` under
 `phase-11b-hydrate-and-bookends-20260903-141500`, which was told not to address
