@@ -2,7 +2,7 @@
 
 # Capture Office Stability
 
-**Last updated:** 2026-09-02
+**Last updated:** 2026-09-03
 
 Capture the evidence behind Outlook / OneNote instability when Office update churn or unexpected app closures are part of the reason this Mac is being reimaged. A continuous watcher logs the apps, their bundles, crash reports, and Microsoft update/management activity over days or weeks; a baseline collector then summarizes everything newer than a timestamp marker into a self-contained bundle. Run it pre-image (Phase 4D) to record the before picture, and again post-image (Phase 13E) to show whether the rebuilt Mac stayed stable.
 
@@ -101,6 +101,8 @@ There is one capture flow, run at two capture depths. The depth is the only thin
 | Marker | `bundle-watch-start.marker` — a timestamp anchor. Crash/bundle/log checks report only items *newer than* the marker. |
 | Baseline bundle | One timestamped `pre-reimage-office-baseline-*` (or `post-reimage-*`) directory plus its `.zip`, written by the collector. |
 | Workload snapshot | A point-in-time capture of visible apps, processes, and Office bundle status (`capture-workload-snapshot.sh`). |
+| Evidence | The collector's run — `<phase>-office-stability-evidence`. Holds the numbered section files, the run summary, and the baseline ZIP. Written by `capture-office-stability.sh` at Step 3. |
+| Assessment | The assessor's run — `<phase>-office-stability-assessment`. Holds its verdict and the per-check evidence behind that verdict. Written by `assess-office-stability.sh` at Step 4. |
 | Phase | The `--phase` value (`pre-reimage` / `post-reimage`) that prefixes the bundle name. |
 | Incident | An unexpected Outlook/OneNote close during the test window. |
 

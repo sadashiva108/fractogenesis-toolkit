@@ -1,5 +1,7 @@
 # Apply Manifest
 
+**Revision 187** — supersedes Revision 186 and earlier. The two office-stability lineages are defined where a reader looks for them, and `0013` closes.
+
 **Revision 186** — supersedes Revision 185 and earlier. `0029` gains an eighth finding: the composition rule says where a change is composed and never says when it is handed over, and the session that wrote it applied two patches unasked.
 
 **Revision 185** — supersedes Revision 184 and earlier. The two unreachable staged bundles are opened, and nothing in them needs restoring.
@@ -495,6 +497,63 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
 
 ---
+
+## Revision 187 — the two office-stability lineages are named in the glossary, and `0013` closes
+
+`0013` said `office-stability/checklists/` holds evidence bundles that are really
+runs. It does not hold anything: Revision 138 moved the bundles into
+`office-stability/runs/` under two lineages, removed `checklists/`, and extracted
+the assessment sign-off; Revision 137 had already renamed the producer to
+`bin/assess-office-stability.sh` and converted its manual `record_check WARN` rows
+to `signoff_row`. Both verified on the volume rather than taken from the ledger,
+which is how a contradiction was settled: the bundle's own header said the
+directory move was still owed and cited exception E5, and E5 has read **CLOSED
+R138** since it was written.
+
+So the finding closes against work that shipped before this session, plus one edit.
+
+### The edit
+
+`capture-office-stability.md` → `Terminology` gains two rows:
+
+    | Evidence   | the collector's run -- <phase>-office-stability-evidence.
+    |              Numbered section files, the run summary, the baseline ZIP.
+    |              capture-office-stability.sh, Step 3.
+    | Assessment | the assessor's run -- <phase>-office-stability-assessment.
+    |              Its verdict and the per-check evidence behind it.
+    |              assess-office-stability.sh, Step 4.
+
+The distinction existed in one Bundle Layout sentence and nowhere else. That table
+defines Watcher, Marker, Baseline bundle, Workload snapshot, Phase and Incident —
+six terms, and not the two the lineage names turn on. The question *which of these
+is which* had to be answered from the volume, which is the definition of a
+glossary that is missing an entry.
+
+The names themselves stand and are correct: **`assessment` names the run that holds
+the verdict.** The single lineage `0013` proposed was rejected — two producers
+writing different artifacts at two steps under one `official/` pointer is what
+per-lineage pointers exist to prevent — and swapping the two names was rejected
+with its reasoning, which is that a run is named for what it is rather than for its
+shape or its clock.
+
+### Not folded in
+
+The `Phase` row still gives the `--phase` values as `pre-reimage` / `post-reimage`.
+That is accurate: `capture-office-stability.sh` maps its internal label to the
+`pre-image` run context deliberately, commented at its line 495, and
+`reimage-checklist.sh:1609` depends on the old prefix. Reported earlier in this
+session as a missed rename, and it is not one.
+
+### Validation
+
+Documentation lint: **0 MISSING, 0 ANCHOR BROKEN**. Runbook structure **213 PASS /
+5 WARN / 25 FAIL** across 27 documents, unchanged — the edit adds rows to an
+existing table, so no section and no Table of Contents entry moved. No script
+changed; no portability run owed and no new macOS Bash 3.2 debt. Every index and
+manifest table checked header-against-rows; every `STATUS-` tag agrees with its
+index row. Composed in a copy outside the owner's checkout and handed over as a
+patch, per `0028`; number taken at apply time with
+`./bin/check-manifest-revision.sh`.
 
 ## Revision 186 — `0029` gains an eighth finding, from breaking its own rule
 
