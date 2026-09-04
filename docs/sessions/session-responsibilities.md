@@ -193,15 +193,19 @@ every category outside the three named above.
 
 ## Shared rules
 
-- **Never commit. The owner commits.** Leave work uncommitted in the working
-  tree.
-- `APPLY-MANIFEST.md` is at **Revision 130** — this session took 129 and 130. **Neither session reserves a number
-  in advance.** Re-read the header immediately before writing an entry and take
-  the next free one; if the intended number is taken, take the one after it. Two
-  sessions collided on Revision 123 once already, and the resolution — renumber
-  the later-committed entry forward — is the precedent.
-- `docs/` is gitignored. A design-only session may correctly end with no
-  revision at all.
+- **Never commit. The owner commits.**
+- **Compose in a copy of the repository outside the owner's checkout and hand
+  over a patch.** Decided in `0028`; the rule is in
+  `.github/copilot-instructions.md` section 3 and `docs/legend.md`.
+- **Take the `APPLY-MANIFEST.md` revision number at apply time**, with
+  `./bin/check-manifest-revision.sh` run against the tree being applied to. The
+  rule this replaces — *re-read the header immediately before writing and take
+  the next free one* — was followed exactly by two sessions who both took 167,
+  because an uncommitted entry is not in the header the other session reads.
+- All of `docs/` is tracked. Writing there is a repository change and takes a
+  revision; no session ends without one.
+- Where the two rules above are recorded is the authority. The numbers and dates
+  in this file are a snapshot of 2026-09-01 and are not maintained.
 - Both sessions run on Linux with Bash 5.x. `/bin/bash -n` against real macOS
   Bash 3.2 is owed on Revisions 116–128 and on everything either session writes.
   Name the environment a check ran in.

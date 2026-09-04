@@ -1,5 +1,7 @@
 # Apply Manifest
 
+**Revision 182** — supersedes Revision 181 and earlier. `0028` is resolved: a session composes in a copy of the repository and hands over a patch, the revision number is taken at apply time by a new helper that can see uncommitted entries, and two vocabulary counts that had been wrong since Revision 180 are removed rather than corrected.
+
 **Revision 181** — supersedes Revision 180 and earlier. `0028` is decided: four decisions across six findings, adopting the scratch-and-patch method that three revisions had already been running, and taking the revision number at apply time.
 
 **Revision 180** — supersedes Revision 179 and earlier. `0027` is resolved: ten decisions become edits across the instruction set, the legend and the indexes, and a fourth validator makes a displayed count fail when it drifts.
@@ -485,6 +487,124 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
 
 ---
+
+## Revision 182 — `0028` resolved
+
+Sessions stop composing in the tree the owner commits from. `decisions.md` holds
+the reasoning and `resolutions.md` records what was done; this entry names what a
+reader of the tree would not otherwise see.
+
+### The rule that moved
+
+§3's version-control block said *"leave your work uncommitted in the working
+tree."* It now says the opposite: **copy the checkout to session-local storage,
+edit and validate there, and hand over a `git diff`.** Four points the practice
+turned out to need are stated rather than left to be rediscovered — validate in
+the copy, because only there do the numbers describe your own change; run `git
+apply --check` before applying and say so; staging inside your own copy is not a
+write to the owner's repository, while staging in the owner's checkout still is;
+and a copy in session-local storage dies with the session.
+
+`docs/legend.md` gains *Where a write is composed* as a section of its own, next
+to the write categories rather than inside them. The two answer different
+questions — permission varies by category and by status, composition varies not
+at all — and the reason they must stay apart is that **record writes are ungated
+and were exactly the ones that collided.** A rule keyed to permission would have
+exempted precisely the writes that caused the problem.
+
+### A helper that can see what the old rule could not
+
+`bin/check-manifest-revision.sh` — new. It prints the next free revision number
+by scanning **both** places a number can be taken: the `**Revision N**` header
+block and the `## Revision N` entry headings.
+
+The second is the whole point. The rule it replaces read the header block alone,
+so an entry written but not yet committed was invisible to it — which is why two
+sessions following that rule exactly both took 167, and why it happened again two
+revisions later. Against a fixture whose header says 5 while an entry heading
+says 7, the helper returns 8 and says an entry exists the header does not
+summarise.
+
+**This entry's own number was taken with it, at apply time.** Revision 181
+adopted the rule; this is the first entry the mechanism numbered.
+
+### An idea loses half of itself
+
+`docs/ideas/knowing-when-it-is-safe-to-write.md` was raised as two questions.
+The first — which revision number is free — is now decided and built, so it
+leaves the idea and is replaced by a pointer. What remains is the second, which
+files are safe to touch, and this revision makes it **harder**: `git status` in
+the owner's checkout was the only mechanism that ever worked for it, and now that
+sessions compose in their own copies that tree is usually clean, so it shows a
+concurrent session nothing. The idea records the loss rather than quietly
+absorbing it. The filename is unchanged — eight documents cite it, and `0009` is
+about exactly that.
+
+`docs/sessions/session-responsibilities.md` carried the superseded numbering
+rule, a hard-coded *"at Revision 130"*, and the claim that `docs/` is gitignored.
+All three corrected, plus a line saying its numbers are a 2026-09-01 snapshot and
+are not maintained — which is true of the whole file and was not written down.
+
+### Two counts that were wrong, and why they are now absent
+
+§4c said **THE FIVE STATUSES**; the legend has six. §4d said **THE FIVE STATES**;
+the legend has four. Revision 180 changed both vocabularies and neither number,
+two sections away.
+
+Both sentences now say *the statuses* and *the states* with no number at all.
+That is §4b's own one-home rule applied to the sentence that points at the home:
+a count restated beside a pointer to the list it counts is the unchecked copy the
+rule forbids. The legend is the home; a reader who wants the number reads the
+list.
+
+A third, in `docs/legend.md`: the `└── any session may write ──┘` separator
+appeared twice, once correctly under the diagram and once stranded below the
+`superseded`/`withdrawn` paragraph. Removed.
+
+### The script was nearly misnamed
+
+Its first name was `next-manifest-revision.sh`, which breaks §3's verb-first
+rule. Renamed to `check-manifest-revision.sh`, beside `check-reimage-env.sh`.
+§3's prefix list turned out to be incomplete in the same breath — `check-` and
+`verify-` are both in use in `bin/` and neither was listed. Both added.
+
+### What is not done, and is named rather than left
+
+The instruction set has still not adopted the write-category vocabulary; the
+legend still says sections 4b–4d *"predate this vocabulary"* and that adoption is
+owed. It belongs to `0029`. And **nothing enforces the composition rule** — the
+only signal that a session ignored it is a dirty working tree in the owner's
+checkout, which is the same manual look this bundle relied on.
+
+### Files
+
+- `.github/copilot-instructions.md` — §3 version-control block rewritten; the
+  apply-time numbering rule; the prefix list; two counts removed from §4c and §4d
+- `bin/check-manifest-revision.sh` — new, 755
+- `docs/legend.md` — *Where a write is composed*; a stray separator removed
+- `docs/ideas/knowing-when-it-is-safe-to-write.md` — the decided half removed
+- `docs/sessions/session-responsibilities.md` — shared rules corrected
+- `docs/cross-cutting-findings/0028-.../resolutions.md` — new
+- `docs/cross-cutting-findings/0028-.../STATUS-in-progress` → `STATUS-resolved`
+- `docs/cross-cutting-findings/0028-.../findings.md`, `decisions.md` — status
+- `docs/cross-cutting-findings/INDEX.md`, the session's `findings-manifest.md` —
+  `0028` row `resolved`
+
+### Validators
+
+Run in the scratch copy against this change alone. Doc paths **774 OK / 0
+MISSING / 1108 ANCHOR OK / 0 ANCHOR BROKEN**; runbook structure **213 PASS / 5
+WARN / 25 FAIL**; portability **83 clean / 0 WARN / 0 FAIL** — 82 before, the new
+script is the difference; findings counts **37 OK / 0 FAIL**. Everything but the
+portability file count is unchanged from baseline.
+
+`bash -n` passes on `bin/check-manifest-revision.sh`, and the script was
+exercised directly: `--free` exits 1 on a taken number and 0 on a free one, a bad
+option and a non-numeric argument both exit 2.
+
+The environment was a Linux VM (Bash 5.1, GNU coreutils) on the owner's Mac, not
+macOS. `/bin/bash -n` against stock Bash 3.2 remains owed for Revisions 116
+onward and now covers a second script written today.
 
 ## Revision 181 — `0028` decided
 

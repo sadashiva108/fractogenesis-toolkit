@@ -32,12 +32,12 @@ and that is not what was found.
 
 | # | Finding | Status |
 |---|---|---|
-| 1 | Two sessions' uncommitted work interleaves in shared files, so neither can be committed alone | `in progress` — **decided**, see `decisions.md` 1.1 |
-| 2 | A revision's claimed validator baselines are measured on a tree containing another session's work | `in progress` — **decided** |
-| 3 | A session's work has no diff boundary, so the owner cannot review it as a unit | `in progress` — **decided** |
-| 4 | Backing out one session's change is surgical, because `git checkout` would take the other's too | `in progress` — **decided** |
-| 5 | A session can amend a revision the owner has already committed | `in progress` — **decided** |
-| 6 | The write discipline does not distinguish the write kinds `docs/legend.md` now names | `in progress` — **decided**, see `decisions.md` 6.1 |
+| 1 | Two sessions' uncommitted work interleaves in shared files, so neither can be committed alone | `resolved` — 1.1, see `resolutions.md` |
+| 2 | A revision's claimed validator baselines are measured on a tree containing another session's work | `resolved` |
+| 3 | A session's work has no diff boundary, so the owner cannot review it as a unit | `resolved` |
+| 4 | Backing out one session's change is surgical, because `git checkout` would take the other's too | `resolved` |
+| 5 | A session can amend a revision the owner has already committed | `resolved` |
+| 6 | The write discipline does not distinguish the write kinds `docs/legend.md` now names | `resolved` — 6.1, see `resolutions.md` |
 
 Findings 1 and 2 are the high ones. The revision-number collision that prompted
 the day's investigation is **not** a finding here — it is recorded in

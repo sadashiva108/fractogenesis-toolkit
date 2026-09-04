@@ -39,8 +39,6 @@ points onward, `withdrawn` says the trail ends here and gives the reason. A
 `withdrawn` findings bundle writes no `resolutions.md` — there are none. Its
 `findings.md` stands as the reading it was.
 
-    └── any session may write ──┘└────── the owner only ──────────┘
-
 ## Who may write to a findings bundle
 
 **While a bundle is `unresolved`, any session may contribute to it** — add a
@@ -202,6 +200,52 @@ longer exists in that state.
 `.github/copilot-instructions.md` sections 4b through 4d predate this vocabulary
 and say the same things at greater length. Adopting these three words there is
 itself a toolkit write, and is owed.
+
+---
+
+## Where a write is composed
+
+The categories above answer WHEN a write is allowed. Where it is composed is a
+separate question, and the answer is the same for all three:
+
+**Every write — record, toolkit or evidence — is composed in a copy of the
+repository outside the owner's checkout, validated there, and handed over as a
+patch.** The owner applies it, reviews the diff, and commits.
+
+The two rules are kept apart because they do not line up. Permission varies by
+category and by a findings bundle's status; composition varies not at all. And
+the category needing the discipline most was the ungated one: record writes are
+never gated — gating them would make deciding impossible — and record writes are
+exactly what collided. A rule keyed to permission would have exempted precisely
+the writes that caused the problem.
+
+| | Varies by | Answers |
+|---|---|---|
+| **category** | what is being written, and the bundle's status | may I write this now |
+| **composition** | nothing | where do I write it |
+
+What it buys, measured over the revisions that ran this way before it was
+decided: a patch is a diff boundary the owner can review as a unit; validator
+numbers describe one session's change rather than whatever else is in the tree;
+and declining a change becomes not applying a patch rather than surgery against
+a file two sessions have touched.
+
+What it costs, stated rather than argued away: **a copy in session-local storage
+dies with the session.** It survives context compaction, which is the larger
+risk; it does not survive termination. Hand over at natural stopping points, and
+say when work exists only in the copy.
+
+The revision number is the one thing NOT taken while composing. An entry is
+written with its number left open and numbered when the patch is applied — see
+`bin/check-manifest-revision.sh`, and `0028` decision 5.1 for why choosing early
+cannot work.
+
+Evidence writes were already solved this way by another route: a session has no
+write permission to the artifact volume, and the owner grants it one run at a
+time. One writer, decided by the owner, at the moment of the write.
+
+Decided in
+[`0028`](cross-cutting-findings/0028-sessions-write-into-the-tree-the-owner-commits-from/).
 
 ---
 

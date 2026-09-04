@@ -33,7 +33,7 @@ Purpose
 - .share/: reserved for genuinely cross-repo shared scripts (empty until needed).
 
 3) Key conventions and patterns
-- Naming: runbooks and their executable share the same name (backup-apps.md ↔ bin/backup-apps.sh). Runbook and script filenames are verb-first: prepare-, backup-, capture-, record-, report-, restore-, run-, stage-, enroll-, validate-. Three are easily confused: capture- is a paired pre-image/post-image state inventory with a Phase 13 sibling, record- is one-time evidence of an operation, report- leaves a durable *-reports/ directory the workflow reads back. See .github/guides/script-types-and-locations.md.
+- Naming: runbooks and their executable share the same name (backup-apps.md ↔ bin/backup-apps.sh). Runbook and script filenames are verb-first: prepare-, backup-, capture-, check-, record-, report-, restore-, run-, stage-, enroll-, validate-, verify-. Three are easily confused: capture- is a paired pre-image/post-image state inventory with a Phase 13 sibling, record- is one-time evidence of an operation, report- leaves a durable *-reports/ directory the workflow reads back. See .github/guides/script-types-and-locations.md.
 - Execution semantics:
   - Always run scripts from the repository root unless a script documents explicit absolute-path invocation.
   - Runbook command examples assume this repo-root working directory — stated once in reimaging-guide.md → Core Assumptions and each runbook's Prerequisites. Do not prefix command blocks with `cd "$FRACTOGENESIS_HOME"`; command blocks start at the command.
@@ -48,10 +48,14 @@ Purpose
 - Portability: remain compatible with macOS stock Bash 3.2 unless a script explicitly opts into newer Bash; avoid associative arrays, mapfile, GNU-only options; prefer NUL-delimited traversal for file lists.
 - Safety: Do not introduce hardcoded personal or company paths, secrets, or live placeholder paths. Preserve existing behavior unless a change request explicitly asks to alter workflow-level artifact naming or retention.
 - Version control (applies to every AI session):
-  - The repository owner reviews and commits every change. Leave your work uncommitted in the working tree.
-  - Do not run `git commit`, `git push`, `git add`, or any history-rewriting command. Write the files, report what changed and what you validated, and stop there.
+  - The repository owner reviews and commits every change. Never commit, never push, never rewrite history in the owner's checkout.
+  - COMPOSE YOUR CHANGES IN A COPY OF THE REPOSITORY OUTSIDE THE OWNER'S CHECKOUT, and hand over a patch. Copy the checkout to session-local storage, edit there, run the validators there, then `git diff` the change and apply that diff to the owner's tree. The rule and its evidence are in `docs/cross-cutting-findings/0028-sessions-write-into-the-tree-the-owner-commits-from/`; the short version is that two sessions editing one working tree produce a diff neither of them can be committed out of, and validator numbers that belong to whoever else was writing. Staging (`git add`) inside YOUR OWN COPY, to get a baseline to diff against, is not a write to the owner's repository and is expected. Never stage or commit in the owner's checkout.
+  - Validate in the copy, not in the owner's tree. The three linting scripts and the findings-count check all self-locate from `BASH_SOURCE` and none invokes git, so they run in a copy unchanged — and only there do their numbers describe YOUR change rather than the tree's current occupants.
+  - Check the patch before applying it (`git apply --check`) and say so. A patch that no longer applies means the owner's tree moved under you: re-derive against a fresh copy rather than forcing the stale diff through.
+  - A copy in session-local storage DIES WITH THE SESSION. Hand over at natural stopping points rather than holding a long-lived copy, and say plainly when work exists only there and has not been handed over.
   - Because the owner always commits, the working-tree diff is the review surface. Keep it clean: edit files in place rather than leaving `.bak` copies, timestamped duplicates, `.incoming` staging files, or parallel "new" versions beside the originals.
   - Do not change file modes as a side effect of an edit. When a write drops the executable bit on a `bin/` script, restore it (`chmod 755`) so the diff carries content changes only.
+  - TAKE THE APPLY-MANIFEST.md REVISION NUMBER AT APPLY TIME, not while composing. Write the entry with its number left open and fill it in at the moment the patch is applied, using `./bin/check-manifest-revision.sh` run against the tree being applied to. Choosing a number while composing is a guess, and it collided twice in one afternoon: both sessions re-read the header block and both took 167, correctly, because an entry that is written but not yet committed is not in the header block the other session reads. The helper scans the entry headings as well as the header block, so it sees what the header misses, and at apply time only one session is writing.
   - When the owner asks you to write the commit message, keep it **short**: a subject line under about 70 characters, then a body of one or two short paragraphs saying what changed and why. `APPLY-MANIFEST.md` is where the reasoning lives; the message names the revision and points at it rather than restating it. If the first draft runs long, cut it before offering it — the owner should not have to ask twice.
   - Write the message so it pastes safely. Wrap it for `git commit -m '...'` in **single** quotes and use no single quotes inside it; prefer backticks to double quotes when quoting a name. If the message genuinely needs double quotes, say so as you give it and remind the owner that `git commit` on its own opens an editor and `git commit -F -` reads a paste, both of which avoid shell quoting entirely. A message that breaks the shell gets pasted twice and can land with the terminal's own prompt and error text inside it.
 
@@ -178,7 +182,7 @@ may have taken the one you saw:
     ls -d docs/runbook-findings/*/[0-9]*/ docs/cross-cutting-findings/[0-9]*/ 2>/dev/null
 
 Status lives in the scope's INDEX.md for the bundle, and in findings.md for each
-finding inside it. THE FIVE STATUSES AND WHAT EACH MEANS ARE DEFINED IN
+finding inside it. THE STATUSES AND WHAT EACH MEANS ARE DEFINED IN
 `docs/legend.md`, which is also where the session states live -- one place for
 both vocabularies, so a reader sees the two lifecycles side by side. Do not
 restate them here or in an index.
@@ -275,9 +279,11 @@ hours or days later, and the session that wrote it will not be there to explain
 it. A findings bundle with no owner is not a session waiting to exist -- it shows
 `—` in its index Session column, which is a property of the findings bundle.
 
-State is recorded in `docs/sessions/INDEX.md` and in the tag. THE FIVE STATES
-AND WHAT EACH MEANS ARE DEFINED IN `docs/legend.md`, beside the findings
-statuses. What each state REQUIRES is here:
+State is recorded in `docs/sessions/INDEX.md` and in the tag. THE STATES AND
+WHAT EACH MEANS ARE DEFINED IN `docs/legend.md`, beside the findings statuses.
+Neither vocabulary's SIZE is stated here: a count restated away from the list it
+counts is exactly the unchecked copy 4b forbids, and both were wrong — five and
+five — from the revision that made one six and the other four. What each state REQUIRES is here:
 
 - `owned` -- `metadata.md`, and the assistant and date in the INDEX.md row.
   `metadata.md` is authoritative for WHO and WHAT: one row per owner, with the

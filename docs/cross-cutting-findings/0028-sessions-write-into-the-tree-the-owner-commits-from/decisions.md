@@ -1,6 +1,7 @@
 # Decisions — sessions write into the tree the owner commits from
 
 **Findings bundle:** `0028` · **Status when opened:** `in progress`, 2026-09-04.
+**Status now:** `resolved` — what was done is in `resolutions.md`.
 **Owner:** `restore-apps-outstanding-20260903-000000`.
 
 Decisions are recorded per finding as they are made. A finding with no entry here

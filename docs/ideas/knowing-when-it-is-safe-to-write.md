@@ -1,24 +1,22 @@
-# Knowing when it is safe to write, and which revision is free
+# Knowing when it is safe to write
 
-**Raised:** 2026-09-03, restore-apps session, immediately after both failures
+**Raised:** 2026-09-03, restore-apps session, immediately after two failures
 happened in the same sitting.
 
 This is an idea rather than a finding: nothing is broken. Two sessions working
-concurrently have no mechanism for either question, and the rules that stand in
-for one are conventions a session has to remember rather than something it can
-check.
+concurrently have no mechanism for the question, and the rule that stands in for
+one is a convention a session has to remember rather than something it can check.
 
-## The two failures, both observed
+**Half of this idea has since been decided and built.** It was raised as two
+questions — which revision number is free, and which files are safe to touch.
+The first was answered by
+[`0028`](../cross-cutting-findings/0028-sessions-write-into-the-tree-the-owner-commits-from/):
+the number is taken at apply time by `bin/check-manifest-revision.sh`, which
+scans the entry headings as well as the header block and so sees the uncommitted
+entry that defeated the old rule. That half is no longer an idea and is not
+restated here. What remains open is the second question, below.
 
-**Two Revision 167s existed at once.** The restore-apps session wrote Revision
-167, uncommitted. The concurrent session re-read the header, correctly saw 166 as
-the highest committed, and took 167 as well. The manifest held two entries with
-the same number until one was renumbered forward, which is the resolution the
-Revision 123 collision already set as precedent. The existing rule — *re-read the
-header immediately before writing and take the next free number* — was followed
-exactly, by both, and produced the collision. **It cannot work while entries are
-uncommitted, because an uncommitted entry is not in the header the other session
-reads.**
+## The failure this idea is still about
 
 **A session bundle was created twice.** The restore-apps session was asked to
 create one for the concurrent session, and did — while the concurrent session was
@@ -31,27 +29,18 @@ one had to be deleted. The same minute also produced two rows for that bundle in
 - `docs/sessions/session-responsibilities.md` — one file, one owner, written by
   hand. It describes two sessions from 2026-09-01 and has not tracked a session
   since; it is the right idea, kept manually, and manual is why it is stale.
-- The re-read-the-header rule, which the collision above defeated.
+- Each `owned` session bundle's `findings-manifest.md`, which says what a session
+  owns but not what it is holding open right now.
 - `git status`, which shows another session's uncommitted work — the only
-  mechanism here that actually worked, and only because someone looked.
+  mechanism here that ever worked, and only because someone looked. Since `0028`
+  a session composes in its own copy, so the owner's tree is usually clean and
+  `git status` no longer shows a concurrent session at all. The observability it
+  gave up has not been replaced.
 
 ## Shapes worth considering
 
 Sketched, not chosen; whichever is picked wants its rejected alternatives written
 down, at which point it becomes an architecture record.
-
-**For the revision number**
-
-- A helper that prints the next free number by scanning the manifest for `##
-  Revision N` headings rather than the header block — an uncommitted entry is
-  visible to it, which is exactly what the header is not.
-- Let the number be assigned at commit rather than at write: an entry is written
-  as `## Revision NEXT` and numbered by the owner or a hook when it lands. No
-  collision is possible because no number is chosen while two sessions can choose.
-- Accept collisions and make renumbering cheap and routine, since the precedent
-  already exists and nothing was lost either time.
-
-**For knowing what is safe to write**
 
 - Each `owned` session bundle declares the files it is holding, and a session
   reads the other bundles before its first edit. Closest to
@@ -65,12 +54,13 @@ down, at which point it becomes an architecture record.
 
 ## What is not proposed
 
-Reserving revision numbers in advance. The repository already rejected that once,
-and for a good reason: a reserved number that is never used leaves a hole in a
-sequence whose whole value is that it has none.
+Reserving files in advance, for the same reason revision numbers are not
+reserved: a claim that is never released blocks work nobody is doing.
 
 ## Note
 
-This interacts with `0027`, which is reading the same architecture for
-conformance. If that bundle's decisions change how sessions declare what they
-own, this idea should be re-read against them before anything is built.
+`0027` and `0028` have both been resolved since this was raised, and both bear on
+it. `0027` settled how sessions declare what they own; `0028` moved composition
+out of the shared tree, which removed the collisions this idea's first half was
+about and removed `git status` as the informal signal at the same time. Re-read
+this against both before anything is built.
