@@ -1,5 +1,7 @@
 # Apply Manifest
 
+**Revision 183** — supersedes Revision 182 and earlier. A reading is superseded rather than narrowed, and a citation a rename broke turns out to be repairable.
+
 **Revision 182** — supersedes Revision 181 and earlier. `0028` is resolved: a session composes in a copy of the repository and hands over a patch, the revision number is taken at apply time by a new helper that can see uncommitted entries, and two vocabulary counts that had been wrong since Revision 180 are removed rather than corrected.
 
 **Revision 181** — supersedes Revision 180 and earlier. `0028` is decided: four decisions across six findings, adopting the scratch-and-patch method that three revisions had already been running, and taking the revision number at apply time.
@@ -487,6 +489,113 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
 
 ---
+
+## Revision 183 — a reading is superseded rather than narrowed, and a citation a rename broke is repairable
+
+`0009-dated-artifacts-cite-run-ids-a-rename-breaks` read the problem correctly and
+drew a conclusion broader than its own reasoning: *no repair of the 2026-08-20
+checklist: it is a dated record and correcting it would be worse than leaving it.*
+The owner's intent was narrower — the prohibition is on changing dates and values,
+not on repairing a filename.
+
+A reading is not rewritten to match what was later concluded, so `0009` is
+**`superseded`** and retained unedited, and
+`0030-renames-break-citations-and-which-may-be-repaired` carries the merged
+reading. `0009` stays listed in `run-index-design-20260901-000000`'s manifest:
+superseding a reading does not change who recorded or held it.
+
+It is recorded in the two places `docs/legend.md` names and no others: the `0009`
+row's **Status** cell is the link — `[`superseded`](0030-…/)` — so one cell answers
+both what state the bundle is in and what replaced it; and `0030`'s header carries
+`Relates to: 0009 — supersedes it`. `0009/findings.md` is not edited and shows no
+diff. A `Superseded by` line was added to its header during composition and removed
+again: the structure specifies a row and a pointer, not an amendment to a frozen
+reading, and `0030`'s D4 declines to repair that same file on that same ground.
+
+### The rule the prohibition was missing
+
+> A dated record's **values** are never edited — dates, measurements, verdicts,
+> counts. A **reference** inside one — a filename, a path, a run id — may be
+> repaired when the thing it names still exists, provided any timestamp in the
+> name is retained exactly.
+
+The stamp is what binds a citation to the same evidence; the name around it is a
+pointer, not a measurement. `0030` decision 2 records it, and records the edge
+case the wording does not reach: a reference that was *wrong when written* is
+still a reference.
+
+### What the volume showed
+
+`0009`'s own instance is repairable under that rule and was not repaired here.
+`bookends/runs/restore-runtime-exit-20260820-032645/bookend.md` line 19 cites
+`post-image-restore-runtime-diff-20260820-032625`; the run exists as
+`restore-runtime-inventory-diff-20260820-032625`. It is stale twice — a lineage
+rename, and the later dropping of the `post-image-` prefix. Held as decision 5:
+an evidence write in a category this session was not granted.
+
+`0009`'s own text cites `reimaged-system/boundaries/.../checklist.md`, which
+Revision 156 moved to `bookends/.../bookend.md`. The finding about renames
+breaking citations contains one. Decision 4 leaves it: `0030` permits the repair,
+and a superseded reading is frozen, which is the narrower rule.
+
+### One evidence write, already made
+
+`office-stability/runs/pre-image-office-stability-assessment-20260817-175050/README.md`
+named two files that did not resolve — one renamed by Revision 138, one the
+August producer never wrote. Both repaired 2026-09-03 on the owner's direction
+for that run, in place, no unlink. Every path in that README now resolves, and
+`_pre-conversion-backup-20260902/` retains both original lines, so nothing the
+producer wrote was lost. A scan of every `README.md` in every converted run found
+this file and no other.
+
+### `0013` is decided
+
+`office-stability/checklists/` does not hold checklists — and has not existed
+since Revision 138. Verified on the volume rather than taken from the ledger,
+which is what settled a contradiction between the finding's header and exception
+E5. The two lineages stand and the names are correct: `assessment` holds the
+verdict. What was missing was a definition, and `capture-office-stability.md`'s
+`Terminology` table defines six terms and not those two — decision 3, a toolkit
+write owed at `resolving`.
+
+Its dependency on item 4 is discharged. `run-index-design-20260901-000000` keeps
+item 4; this bundle no longer waits on it.
+
+### Corrections this session owes its own earlier claims
+
+Recorded because they were asserted to the owner before they were checked:
+
+- `docs/sessions/INDEX.md`'s `phase-11b` row was reported malformed. It is not —
+  the table gained a `Bundles` column and the row is correct. A "fix" was composed
+  in the copy, caught in verification, and discarded.
+- Two rows then **were** malformed, by this session: the `0009` row in
+  `docs/cross-cutting-findings/INDEX.md` (8 cells in a 7-column table) and the
+  `0013` row in `docs/runbook-findings/INDEX.md` (9 in an 8-column one), both from
+  stripping a trailing `| — |` and appending a cell. Found only when the `0009` row
+  was read column by column for an unrelated reason; both fixed. `verify-doc-paths.sh`
+  passed on both, because every link in them resolved — **no lint in this repository
+  checks table shape.** Every index and manifest here was checked header-against-rows
+  by hand as a result.
+- The `pre-reimage-` ZIP filename inside a `pre-image-` run id was reported as a
+  missed rename. It is deliberate: `capture-office-stability.sh` maps an internal
+  `pre-reimage` label to the `pre-image` run context, commented at line 495, with
+  a reader depending on the old prefix at `reimage-checklist.sh:1609`.
+- Repairing only the renamed reference and not the never-written one was
+  recommended, on the reasoning that the second was the sole surviving trace of a
+  producer defect. The pre-conversion backup holds it; the recommendation did not
+  survive its own evidence.
+
+### Validation
+
+Documentation lint: **0 MISSING, 0 ANCHOR BROKEN** — the `OK` total is not quoted,
+per `0026`. Runbook structure **213 PASS / 5 WARN / 25 FAIL** across 27 documents,
+unchanged. Script portability **0 WARN / 0 FAIL**, unchanged. Every `STATUS-` tag
+agrees with its index row across all 30 indexed bundles, and every session's
+bundle and finding counts agree with its `findings-manifest.md`. No script and no
+runbook changed; every write here is a record write under `docs/`. Composed in a
+copy outside the checkout and handed over as a patch, per `0028`; refreshed to
+`87ff205` before the patch was derived; number taken at apply time with
+`bin/check-manifest-revision.sh`.
 
 ## Revision 182 — `0028` resolved
 
