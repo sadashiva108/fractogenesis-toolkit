@@ -1,5 +1,7 @@
 # Apply Manifest
 
+**Revision 185** — supersedes Revision 184 and earlier. The two unreachable staged bundles are opened, and nothing in them needs restoring.
+
 **Revision 184** — supersedes Revision 183 and earlier. The supersede procedure is written into section 4c, and the tables nothing validates get a reading.
 
 **Revision 183** — supersedes Revision 182 and earlier. A reading is superseded rather than narrowed, and a citation a rename broke turns out to be repairable.
@@ -491,6 +493,78 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
 
 ---
+
+## Revision 185 — the two unreachable bundles are opened, and nothing in them is restored
+
+`0025` asked one question and proposed no code change: look at what is in
+`staged-ignored-files/live/IdeaProjects/` and `live/documentation/`, and decide
+whether the contents belong to a repository or to the parent directory. Both were
+opened on the volume, read-only, on the owner's grant. The bundle closes with the
+answer recorded, which is what it asked for.
+
+### What is in them
+
+`live/documentation/` is 4 files — the scan root's own `.idea/`. Parent-level
+configuration for a machine that no longer exists.
+
+`live/IdeaProjects/` is 24 files in three classes: the root's own `.idea/` (5);
+project config for `apicoe`, `tools`, `data-cache-related` and
+`transformation-tool` (17), four directories under the root that were **not git
+repositories**; and two `module-selector-plugin` zips.
+
+**Nothing in either is restored.** The 17 nested files are the only real question
+— `restore-intellij.md` does restore selective project-level `.idea/` metadata per
+cloned repository, so the material has a consumer — and the owner decided those
+projects are not being recreated. Its own Confirm Your Intent makes the case:
+restoring metadata for a project you no longer need drags stale run
+configurations forward for no benefit.
+
+The zips are not the same case and are recorded separately.
+`module-selector-plugin-1.3.1.zip` is a built plugin distribution, 324,640 bytes,
+and `live/module-selector-plugin/` exists as its own reachable bundle — so it is
+build output of a repository Phase 11B clones, reproducible from source.
+`module-selector-plugin.zip` was 0 bytes at source. Both were swept in by the
+include pattern `*.zip` rather than chosen.
+
+### The producer is not fixed, and the labelling is correct
+
+`make_label_map()` gives a scan root its own label so that files matching the
+operator's include patterns outside any repository are staged with their
+provenance intact rather than dropped. The defect is only that
+`bin/restore-repos.sh` has no lookup for such a label — and it should not, because
+what lands there is by definition not a repository's.
+
+Rejected: teaching the restore path to read scan-root bundles, which would give it
+a case resolving to *restore this into no clone*; and excluding scan roots from
+labelling, which would silently drop files the operator's own patterns selected.
+Both are moot in any case — this is a pre-image producer and the machine it read
+is gone, so a change is forward-only and cannot improve this evidence.
+
+### A correction to the reading, made before it was decided against
+
+`findings.md` named `.internal/git/stage-ignored-files.sh` as where a fix would
+belong. That script resolves every destination from `basename` of a
+`git rev-parse --show-toplevel` and cannot emit a non-repository label. The
+producer is `.internal/git/stage-selected-patterns.py`, confirmed from
+`live/copied.tsv` — the file that script writes — which carries 24 rows labelled
+`IdeaProjects` and 4 labelled `documentation`. The counts were two out as well:
+`live/` holds 24 directories, of which 22 are repository bundles.
+
+The correction is a dated line in the header, made while the bundle was still
+`unresolved` and before any decision was taken against it, per the rule that any
+session may correct a reading at that status. The reading below it is unchanged.
+
+**Anyone counting `live/` subdirectories to answer *how many repositories kept
+ignored files* wants 22.**
+
+### Validation
+
+Documentation lint: **0 MISSING, 0 ANCHOR BROKEN**. Runbook structure and script
+portability unchanged; no runbook and no script was touched. Every index and
+manifest table checked header-against-rows, and every `STATUS-` tag agrees with
+its index row. Nothing was written to the artifact volume for this bundle.
+Composed in a copy outside the owner's checkout and handed over as a patch, per
+`0028`; number taken at apply time with `./bin/check-manifest-revision.sh`.
 
 ## Revision 184 — the supersede procedure is written down, and the tables get a reading
 
