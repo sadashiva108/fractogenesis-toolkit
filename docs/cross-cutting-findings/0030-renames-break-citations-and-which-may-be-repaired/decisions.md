@@ -132,11 +132,139 @@ finding decided, so holding finding 3 open holds the whole bundle short of any
 toolkit write. That is the correct outcome: the alternative is designing a
 manifest row for conversions this session is not doing.
 
+**Finding 3 is now decided, in D7 below.** Written 2026-09-04 by
+`run-index-design-20260901-000000` under an owner's override; the reasoning above
+is unchanged and stands as the reason it waited.
+
+---
+
+## D7 — Category manifests get a `rename` row, filed under the surviving lineage
+
+**Decided by `run-index-design-20260901-000000`, 2026-09-04, under an owner's
+override.** `docs/legend.md` holds that from `in progress` onward only the owner
+writes to a bundle; the owner set that aside for this one decision, because D6
+named a session that does not own this bundle as the right one to make it and the
+framework has no vocabulary for a finding owned separately from its bundle. The
+override is recorded in the `APPLY-MANIFEST.md` entry that carries this change,
+per `docs/legend.md` — *a revision carrying an overridden change says so, and says
+what was overridden*. Nothing in D1–D6 is altered beyond the pointer above, and
+`findings.md` is untouched.
+
+**Yes. A lineage rename appends one row to the category's `MANIFEST.md`,** with
+`rename` in the Kind column, **the surviving context in the Context column, and
+the former context key in `Run or target`**:
+
+```text
+| 2026-09-04 12:00:00 | rename | `pre-image-office-stability-assessment` | unknown | `pre-image-office-stability-checklist` | — | former lineage name; renamed Revision 137, reindexed Revision 138 |
+```
+
+Written by a new `artifact_run_record_rename "$CATEGORY_ROOT" "<surviving-context>"
+"<former-context>" "<reason>"`, shaped like the existing
+`artifact_run_retire_lineage`. `_artifact_runs_append_row` already takes the kind
+as an argument, so the row itself needs no new machinery.
+
+**`artifact_runs_rebuild` needs no change, and that was checked rather than
+assumed.** Its context list is `sort -u` over the Context column of every row, so
+filing under the surviving name adds nothing new to the loop — that context
+already has `run` rows. Selection inside the loop goes through
+`_artifact_runs_rows_for` with a kind filter, so `run`, `pin` and `retire`
+lookups cannot see a `rename` row. It is inert to the pointer computation by
+construction. That inertness belongs in the `artifact-runs.sh` header, where the
+next reader will look for it, rather than being rediscovered.
+
+**Scope: lineage renames only.** A run id never contains its category's directory
+name, so a category rename — `boundaries` → `bookends`, Revision 156 — breaks
+*paths*, not run ids, and cannot be expressed in a Context column that holds
+lineage keys. Paths inside the repository are already covered by
+`verify-doc-paths.sh`; paths inside dated artifacts are findings 4 and 5 of this
+bundle. **A category rename therefore has no record in the index and this decision
+does not give it one.** Stated rather than quietly folded in, because finding 3
+cites both events and only one of them is answered here.
+
+**Retroactively, for both lineage renames that have already happened**, because
+the mechanism otherwise begins with a hole in exactly the categories that
+motivated it:
+
+| Category | Surviving context | Former context | Recoverable from |
+|---|---|---|---|
+| `office-stability/` | `pre-image-office-stability-assessment` | `pre-image-office-stability-checklist` | `_pre-conversion-backup-20260902/` |
+| `office-stability/` | `pre-image-office-stability-evidence` | `pre-image-office-stability` | Revision 137's rename record |
+| `reimaged-system/comparisons/` | `restore-runtime-inventory-diff` | `post-image-restore-runtime-diff` | the citation in `bookends/runs/restore-runtime-exit-20260820-032645/bookend.md` line 19 |
+
+The third is the one that proves the point: `post-image-` appears **zero** times
+in that manifest, so the only surviving evidence of the former name is the broken
+citation itself. A reader today cannot tell that citation from one that was always
+wrong, which is finding 3 stated as a measurement.
+
+Each retroactive row is an **evidence write** and needs the owner's word for that
+category. They are not authorised by this decision.
+
+### What it costs, and what it does not buy
+
+Every future lineage rename becomes two acts, the second needing per-run owner
+permission. Two categories owe retroactive rows.
+
+**It makes a former name recoverable within a category; it does not make it
+findable across the root.** A reader holding a stale run id still has to guess
+which category to grep. And **it detects nothing** — no validator will tell anyone
+a citation broke. The row only lets a suspicion be resolved. Detection is finding
+1's subject and is not decided here.
+
+### Rejected alternatives
+
+**Rejected — do nothing; the backup is the record.** `_pre-conversion-backup-20260902/`
+does hold the office-stability former name, and that is why finding 3 could be
+written at all. But a backup directory is dated, disposable, and outside the index
+a reader consults; the manifest is append-only and permanent. The comparisons
+rename settles it — no backup exists for it, and the former name survives nowhere
+in the index.
+
+**Rejected — former name in Context, surviving name in `Run or target`.** It reads
+more naturally and is worse in both directions. It puts a dead context into
+`artifact_runs_rebuild`'s loop, where it survives only because
+`[ -n "$runs" ] || continue` happens to skip it — correct by accident. And it makes
+*"what was this lineage called before?"* unanswerable through
+`_artifact_runs_rows_for "$manifest" "<live-context>" rename`, which is the query
+a reader with the current name would write. The chosen shape answers both
+directions; this one answers one.
+
+**Rejected — a `renames.md` domain index beside `MANIFEST.md`.** The precedent
+runs the other way. `repo-audit-index.md`, `size-audit-index.md`,
+`loose-secrets-index.md` and `content-scan-index.md` all exist because their
+*columns* do not fit the shared seven-column schema. A rename row fits it exactly,
+and the manifest already carries two non-`run` kinds. A second file would be a
+second thing to keep in sync for no gain.
+
+**Rejected — rewrite the stale rows in place to the surviving name.** The
+manifest's own header says nothing in it is ever edited in place, and the edit
+would destroy the fact being recorded. It also cannot work where the rows were
+replaced by a reindex, which is what actually happened to `office-stability/`.
+
+**Rejected — a validator that checks artifact run ids against the manifests.**
+Argued for, because a row nobody reads helps nobody. Rejected as the answer to
+*this* finding: the artifact root is not in the repository, is read-only to
+sessions by default, and is absent wherever a validator would run. Finding 3 asks
+for recoverability, not detection, and answering a different question would leave
+this one open.
+
+**Rejected — gate the rename on the row being written first.** A gate on an act
+that needs per-run owner permission would stop a rename on paperwork. Both renames
+so far show the row is worth having *after* the fact, which a gate would have
+prevented from ever being written.
+
 ---
 
 ## What this authorises
 
-**Nothing outside `docs/`.** Finding 3 has no decision, so the bundle cannot
-reach `resolving` and no toolkit write is permitted. The one evidence write D3
-records was made before this bundle existed, on the owner's direct instruction
-for that run, and is recorded here rather than authorised by here.
+**Nothing outside `docs/`.** The one evidence write D3 records was made before
+this bundle existed, on the owner's direct instruction for that run, and is
+recorded here rather than authorised by here.
+
+Every finding now carries a decision, so the gate `resolving` waits on is
+satisfied. **Moving the bundle there is its owner's act, not this decision's** —
+`pre-image-capture-conformance-20260903-194532` holds `0030`, and the override
+that permitted D7 did not extend to the `STATUS-` tag or the index row. The
+toolkit write D7 implies — `artifact_run_record_rename` in
+`.internal/artifact-runs.sh` — and the three retroactive evidence writes are
+authorised only once that owner moves the bundle and, for the evidence writes, the
+owner grants each category in turn.

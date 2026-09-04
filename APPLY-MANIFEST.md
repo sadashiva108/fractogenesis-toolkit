@@ -1,5 +1,7 @@
 # Apply Manifest
 
+**Revision 192** — supersedes Revision 191 and earlier. The one bundle that predates the framework is corrected out of a state it never satisfied, and the row a lineage rename owes is decided under an owner's override.
+
 **Revision 191** — supersedes Revision 190 and earlier. A token fallback is a second copy of the value, and five of six have drifted from the contract.
 
 **Revision 190** — supersedes Revision 189 and earlier. The runbook findings index gains a rollup that puts the two runbooks carrying the weight at the top, and `0033` records that seventeen scripts each hardcode the same palette and that 48 evidence artifacts on the volume carry raw ANSI escapes.
@@ -506,6 +508,103 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 
 ---
 
+## Revision 192 — the bundle that predates the rules it lives under, and the row a rename owes
+
+**This revision carries a change made under an owner's override, given
+2026-09-04.** The rule set aside is `docs/legend.md`, *Who may write to a findings
+bundle*: **from `in progress` onward, only the owner writes to the bundle.**
+`0030-renames-break-citations-and-which-may-be-repaired` is `in progress` and
+owned by `pre-image-capture-conformance-20260903-194532`; its D7 below was written
+by `run-index-design-20260901-000000`, which does not own it.
+
+The reason is a gap in the framework rather than a convenience. `0030` decision 6
+named the session that would perform the next conversion as the right one to
+decide finding 3, and the structure has **no way to express a finding owned
+separately from its bundle** — every rule speaks of a session owning a *bundle*,
+and `findings-manifest.md` lists bundles. That gap exists because the
+findings-and-sessions framework was written after `run-index-design-20260901-000000`
+stopped; it is the one bundle in the tree that predates it. The alternatives were
+reassigning a bundle whose other four findings are already decided, or splitting
+one finding into a new bundle for ceremony. The owner set the rule aside instead.
+
+Revisions 166 and 168 changed section 4c on the owner's word and did not say so.
+This says so.
+
+### The session's own bundle is corrected first
+
+`run-index-design-20260901-000000` was tagged `STATE-handoff`. Revision 179
+redefined that state as *ended by transferring its unresolved findings to a
+successor*, and abolished `unclaimed`. The session transferred nothing: no
+successor exists, ten findings remain, four unresolved, and the four that left did
+so because the owner reassigned them under Revision 178 — somebody else moving
+them, not a handover made. `docs/legend.md` also holds that a session may not end
+leaving a finding owned by a session that has stopped, which the tag breached
+outright.
+
+| | Before | After |
+|---|---|---|
+| tag | `STATE-handoff` | `STATE-owned` |
+| `docs/sessions/INDEX.md` | `handoff` · last Claude, to 2026-09-02 | `owned` · Claude, since 2026-09-04 |
+| `metadata.md` | one owner row | a second row, the first untouched |
+
+**The two owner rows carry the same session identifier**, and that is the plainest
+evidence for the correction: this is the 2026-09-01 session resuming, not a
+successor arriving. It is two rows because they are two periods of ownership two
+days apart, and because a closed row is never edited.
+
+`findings-manifest.md` gains what it had no record of — that `0007`, `0013`,
+`0019` and `0025` were reassigned to
+`pre-image-capture-conformance-20260903-194532` under Revision 178 — in the form
+the file already used for `0020`. Counts are unchanged at 10 and 10.
+
+The tag was wrong because the vocabulary moved twice under a stationary bundle,
+which is `0029`'s subject. Nothing was done incorrectly.
+
+### `0030` finding 3 — a rename row, filed under the surviving lineage
+
+A lineage rename leaves the former context key recoverable nowhere. Two have
+happened and neither recorded one: `office-stability/` carries two rows, both
+*recovered by reindex*, and `post-image-` appears **zero** times in
+`reimaged-system/comparisons/MANIFEST.md`, so the only surviving trace of
+`post-image-restore-runtime-diff` is the broken citation that reports it.
+
+D7 decides one appended row, `rename` in the Kind column, **the surviving context
+in Context and the former key in `Run or target`** — the orientation chosen so
+that a reader can go both ways and so that `artifact_runs_rebuild` sees nothing
+new. That was verified against the code rather than assumed: the rebuild's context
+list is `sort -u` over the Context column, and filing under a name that already
+has `run` rows adds nothing to it; every selection inside the loop filters by
+kind, so a `rename` row is invisible to pointer computation by construction.
+
+Scope is **lineage renames only**. A run id never carries its category's directory
+name, so `boundaries` → `bookends` broke paths rather than run ids and has no
+Context to file under. D7 says so rather than folding it in, and leaves it
+unanswered.
+
+Three retroactive rows are named and are **not** authorised here — each is an
+evidence write needing the owner's word for that category.
+
+**No toolkit write is made.** D7 implies one — `artifact_run_record_rename` in
+`.internal/artifact-runs.sh` — and it waits, because moving `0030` to `resolving`
+is its owner's act and the override did not extend to the bundle's status, its
+`STATUS-` tag, or its index row. `findings.md` is untouched, and D1–D6 are
+unaltered beyond one pointer in D6 saying finding 3 is now decided below.
+
+### Validation
+
+Composed in a copy outside the checkout, per `0028`. Baselines all held: findings
+counts 0 FAIL, doc paths 0 MISSING / 0 ANCHOR BROKEN, runbook structure 213 PASS /
+5 WARN / 25 FAIL across 27 documents, script portability 0 WARN / 0 FAIL.
+
+The `STATE-` rename is a deletion plus an addition, which is `0032` finding 4's
+case: `git apply` reports the unlink as a warning and exits 0, leaving both tags
+on disk with every validator passing. `git diff --summary` was read after applying
+to confirm the deletion landed.
+
+**Linux, Bash 5.x.** `/bin/bash -n` under macOS stock Bash 3.2 is owed here as on
+every revision this session has carried.
+
+---
 ## Revision 191 — `indigo`'s token fallbacks are a second copy, and five have drifted
 
 A contribution to `0033`, made while it is `unresolved` and open to any session.
