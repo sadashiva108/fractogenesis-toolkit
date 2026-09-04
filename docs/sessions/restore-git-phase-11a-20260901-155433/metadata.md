@@ -6,15 +6,24 @@ Authoritative for who and what has owned this bundle.
 
 | From | Until | Assistant | Session id | Model | Environment |
 |---|---|---|---|---|---|
-| see `final-summary.md` | — | Claude | **not recoverable** | not recorded | Linux, Bash 5.x (inferred) |
+| see `final-summary.md` | 2026-09-01 | Claude | `session_01DQF5y9VQfaoRD9gnw4UcrN` | not recorded | Linux, Bash 5.x (inferred) |
 
-This bundle was converted from loose files in Revision 162. The session that did
-the work predates both the bundle shape and the practice of recording an
-identifier, and it left none in anything it wrote. The identifier is not
-recoverable and is recorded as unknown rather than guessed.
+Transcript: `https://claude.ai/code/session_01DQF5y9VQfaoRD9gnw4UcrN`
 
-The environment is inferred from the repository's standing observation that an AI
-session is almost certainly not running on macOS. Treat anything this session
-validated as validated on Linux.
+The identifier was recorded as **not recoverable** during the Revision 162
+conversion, on the reasoning that the session left none in anything it wrote.
+Decision 7.1 of `0027` required any such claim to name the searches behind it,
+and running them found it:
+
+    git log --format='%h %s' --grep='Claude-Session'
+
+Four commits on 2026-09-01 carry `session_01DQF5y9VQfaoRD9gnw4UcrN`; three touch
+`restore-git.md` and one names Phase 11A explicitly, and all four fall in the
+window ending at this session's transcript. The `Claude-Session` trailer is
+written by the harness rather than by the session, which is why a search for what
+the session "wrote" came back empty and the conclusion was wrong.
+
+Model and environment were not recorded by the session itself. Anything it
+validated should be assumed validated on Linux until it says otherwise.
 
 `final-summary.md` beside this file carries what it contributed.

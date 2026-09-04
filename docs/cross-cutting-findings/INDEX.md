@@ -26,7 +26,8 @@ tag that disagrees with it is a bug in whoever moved the bundle last.
 | `in progress` | The owner is reviewing and deciding. Produces `decisions.md`. **Only the owner writes from here on.** |
 | `resolving` | Every finding decided; the decided work is being carried out. Produces `resolutions.md`. |
 | `resolved` | Every finding has a resolution recorded. |
-| `superseded` | A later bundle replaces this reading — including a bundle overtaken while `in progress`. The row names which; the replacement carries `Relates to`. |
+| `superseded` | A later findings bundle replaces this reading — including one overtaken while `in progress`. The row names which. |
+| `withdrawn` | The reading is dropped and nothing replaces it. The row says why. |
 
 A bundle advances with its first finding and reaches `resolved` only with its
 last. The owner may override any rule; a revision carrying an overridden change
@@ -48,5 +49,5 @@ says so. Full definitions, the transitions and the write rules:
 | 0015 | [0015-portability-lint-cannot-see-heredoc-context](0015-portability-lint-cannot-see-heredoc-context/) | The portability lint cannot see a defect that needs heredoc context | 1 | `unresolved` | — | — |
 | 0018 | [0018-recorder-usage-strings-understate-supported-runbooks](0018-recorder-usage-strings-understate-supported-runbooks/) | Two recorders still tell you your own phase is unsupported | 1 | `resolved` | [`run-index-design-20260901-000000`](../../sessions/run-index-design-20260901-000000/) | closed by Revision 136 |
 | 0026 | [0026-verify-doc-paths-counts-gitignored-docs](0026-verify-doc-paths-counts-gitignored-docs/) | `verify-doc-paths.sh --all` counts `docs/`, so its OK baseline cannot hold | 1 | `resolved` | [`run-index-design-20260901-000000`](../../sessions/run-index-design-20260901-000000/) | closed by Revision 130 |
-| 0027 | [0027-findings-architecture-conformance](0027-findings-architecture-conformance/) | The findings-and-sessions architecture disagrees with itself and with the tree | 7 | `in progress` | [`restore-apps-outstanding-20260903-000000`](../sessions/restore-apps-outstanding-20260903-000000/) | 1 is high — §4b and §4c contradict each other on whether a bundle takes a manifest revision |
+| 0027 | [0027-findings-architecture-conformance](0027-findings-architecture-conformance/) | The findings-and-sessions architecture disagrees with itself and with the tree | 7 | `resolved` | [`restore-apps-outstanding-20260903-000000`](../sessions/restore-apps-outstanding-20260903-000000/) | 1 is high — §4b and §4c contradict each other on whether a bundle takes a manifest revision |
 | 0028 | [0028-sessions-write-into-the-tree-the-owner-commits-from](0028-sessions-write-into-the-tree-the-owner-commits-from/) | Sessions compose their changes in the tree the owner commits from | 6 | `unresolved` | [`restore-apps-outstanding-20260903-000000`](../sessions/restore-apps-outstanding-20260903-000000/) | 1 and 2 are high — two sessions' work cannot be committed separately, and a revision's baselines are measured on the other session's tree |

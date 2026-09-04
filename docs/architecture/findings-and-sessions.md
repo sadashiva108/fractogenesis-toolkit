@@ -122,16 +122,20 @@ moment the relationship stops being one-to-one it has to be broken or renamed.
 
 ## 6. The lifecycles
 
-    unresolved ──▶ in progress ──▶ resolving ──▶ resolved
-                                     └─▶ superseded (from any status)
-
-    unclaimed ──▶ owned ──▶ closed
-                    ├─▶ handoff ──▶ owned (next session)
-                    └─▶ withdrawn
-
-Definitions live in `docs/legend.md`; what each state *requires* lives in
+**The diagrams are in `docs/legend.md` and are not redrawn here.** They were,
+until Revision 179, and the two copies disagreed on one arrow — which is what
+`0027` finding 6 recorded and what a second copy of any fact eventually does.
+Definitions live in the legend; what each state *requires* lives in
 `.github/copilot-instructions.md` sections 4c and 4d. This record covers only why
 the shape is what it is.
+
+Two things about the shape are worth stating here because they are design rather
+than definition. **A session creates its own bundle**, so there is no state for a
+bundle waiting to be claimed — an earlier draft had one, and it described an
+object the workflow does not have. And **the three terminal session states differ
+by what happens to the findings**: a closed session's unfinished readings live on
+unowned, a handoff carries them to a successor, a withdrawn session takes them
+with it.
 
 **`in progress` and `resolving` are separate on purpose.** The first is deciding
 and produces `decisions.md`; the second is doing and produces `resolutions.md`,

@@ -1,6 +1,15 @@
 # Session prompt — run-index design and evidence conformance
 
-Working in **fractogenesis-toolkit**. Continuing from Revisions 116–128. Read
+Working in **fractogenesis-toolkit**. Continuing from Revisions 116–128.
+
+## Reading order
+
+1. **`.github/copilot-instructions.md`** — the instruction set, before anything
+   else and every time. Sections 4b–4d define `docs/`, the findings bundles and
+   the sessions; `docs/legend.md` carries the statuses and states they use.
+2. The handoffs and design record named below.
+
+Read
 `docs/sessions/run-index-design-20260901-000000/handoff-20260901-222913.md` and
 `docs/sessions/restore-git-phase-11a-20260901-155433/transcript-20260901-155433.txt` first — two concurrent sessions, one
 per file. Then `docs/architecture/time-machine-run-index.md`, which is the

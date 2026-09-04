@@ -1,5 +1,7 @@
 # Apply Manifest
 
+**Revision 180** — supersedes Revision 179 and earlier. `0027` is resolved: ten decisions become edits across the instruction set, the legend and the indexes, and a fourth validator makes a displayed count fail when it drifts.
+
 **Revision 179** — supersedes Revision 178 and earlier. `0027` is decided: ten decisions across seven findings, a sixth findings status, and the nine per-runbook indexes become one.
 
 **Revision 178** — supersedes Revision 177 and earlier. Four pre-image runbook findings get a session of their own, and that session's only output is a reading.
@@ -481,6 +483,80 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
 
 ---
+
+## Revision 180 — `0027` resolved
+
+Ten decisions, seven findings, one bundle closed. `decisions.md` holds the
+reasoning and `resolutions.md` records what was done; this entry is neither, and
+names only what a reader of the tree would not otherwise see.
+
+### The rules moved, and one sentence went
+
+§4c's *"Recording one touches no tracked file and takes no manifest revision"* is
+deleted. It was true only while `docs/` was gitignored, survived the two
+revisions that changed that, and had been contradicting §4b eighteen lines away
+ever since. §4b gains the rule the whole bundle turned on: **a fact has one home,
+and a copy of it is permitted only where it is generated or where a check fails
+when it drifts.**
+
+§4d drops `unclaimed` and states the three terminal session states by what
+happens to the findings — `closed` leaves them resolved or disowned to
+`unresolved`, `handoff` carries them to a successor, `withdrawn` marks them
+`withdrawn` or `superseded`. `docs/legend.md` gains `withdrawn` as a sixth
+findings status and now holds the only copy of each diagram; the architecture
+record points at them rather than redrawing them, which is what let the two
+disagree.
+
+### A fourth validator
+
+`bin/verify-findings-counts.sh` — 37 checks, all passing. It compares a bundle's
+displayed `Findings` against the finding table inside its `findings.md`, and a
+session's `Bundles` and `Findings` against its `findings-manifest.md`.
+
+It exists because of what finding 3 actually was. It was filed as a miscount; it
+was a **wrong unit under a right-sounding header** — `docs/sessions/INDEX.md`
+carried a `Findings` column holding a count of bundles. A consistency check would
+have passed it forever, because `4` was an accurate count of the wrong thing. So
+every figure is compared against a named source rather than against itself, and
+the session row now carries `Bundles` and `Findings` as two columns.
+
+The check found two things while being written. Its first draft read the bundle
+number as the count, because it assumed a column position that differs between
+trees; it now reads the position from the header. And it failed on `0027` and
+`0028`, whose finding tables are headed `## Findings` where `0001` and `0029` use
+`## Finding status` — so it identifies the table by its shape instead, rather
+than imposing a convention nobody has decided. That inconsistency is unresolved
+and belongs with `0029`.
+
+### The third identifier was recoverable
+
+`restore-git-phase-11a`'s `metadata.md` said `not recoverable`. Finding 7 flagged
+it as never checked, decision 7.1 required any such claim to name its searches,
+and running them found `session_01DQF5y9VQfaoRD9gnw4UcrN` on four commits of
+2026-09-01 — three touching `restore-git.md`, one naming Phase 11A.
+
+**All three assertions of unrecoverability in this repository have now been
+disproved by the same search.** The trailer is written by the harness, so a
+session looking for what it "wrote" finds nothing and concludes wrongly. That is
+the argument for 7.1 rather than an illustration of it.
+
+### Composed outside the tree
+
+Third change under `0028`'s tested alternative, and the first to touch anything
+beyond `docs/`. Scratch copy, validators run there against this change alone,
+handed over as a patch. The revision number was taken at apply time, after two
+earlier patches were abandoned for having guessed one that a concurrent session
+took.
+
+### Validation
+
+Documentation lint **774 OK / 0 MISSING / 0 ANCHOR BROKEN**; runbook structure
+**213 PASS / 5 WARN / 25 FAIL** across 27 documents, unchanged; script
+portability **81 clean / 0 WARN / 0 FAIL**, including the new script; findings
+counts **37 OK / 0 FAIL**. `bash -n` passes on `bin/verify-findings-counts.sh`.
+
+Linux, Bash 5.x. `/bin/bash -n` against real macOS Bash 3.2 remains owed for
+Revisions 116 through 180, and now covers a script written today.
 
 ## Revision 179 — `0027` is decided, and the vocabulary grows a sixth status
 

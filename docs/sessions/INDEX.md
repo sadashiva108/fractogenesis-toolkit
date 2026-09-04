@@ -31,26 +31,30 @@ searches that came back empty is finding `0027`.
 
 ## State key
 
-| | |
-|---|---|
-| `unclaimed` | No AI session owns it. The prompt is written and waiting. |
-| `owned` | An AI session owns it — `Claude` or `Copilot`, with when ownership began. `metadata.md` carries the identifier and the environment it ran in. |
-| `handoff` | The work is passing between sessions. Covers the bundle being handed over **and** a continuation prepared by a running session, until it is owned. Each handover leaves its own `handoff-<stamp>.md`. |
-| `closed` | Complete. `final-summary.md` lists every commit hash and revision the session contributed. |
-| `withdrawn` | The owner pivoted, or chose to leave findings unresolved. `final-summary.md` is required here too, and records what the work reached and why it stopped. |
+A session creates its own bundle, so it is `owned` from the moment it exists.
+The other three are terminal and differ by **what happens to its findings**.
 
-Full definitions, the transitions and what each state requires:
+| | | Its findings end |
+|---|---|---|
+| `owned` | An AI session holds it — `Claude` or `Copilot`, with when ownership began. | — |
+| `closed` | Completed. | `resolved`, or disowned and set back to `unresolved` — still live, simply unowned |
+| `handoff` | Ended by transferring its unresolved findings to a successor. | carried to the successor at whatever status they hold |
+| `withdrawn` | The work is no longer viable — drift, staleness, a sudden pivot. | `withdrawn`, or `superseded` where another bundle replaces them |
+
+`final-summary.md` records which disposal happened, by name, for every finding
+the session owned. A session may not end leaving a finding owned by a session
+that has stopped. Full definitions and what each state requires:
 [`docs/legend.md`](../legend.md).
 
 ## Session Bundles
 
-| Bundle | State | Owner and when | Findings | Notes |
-|---|---|---|---|---|
-| [`pre-image-capture-conformance-20260903-194532`](pre-image-capture-conformance-20260903-194532/) | `owned` | Claude · `session_01PcgHu9kz9Hm5RatLQuFR8H`, since 2026-09-03 | [4](pre-image-capture-conformance-20260903-194532/findings-manifest.md) | Four pre-image runbook findings reassigned from `run-index-design-20260901-000000` on 2026-09-03. A reading session: the report is the output, and nothing outside this bundle is written |
-| [`restore-apps-outstanding-20260903-000000`](restore-apps-outstanding-20260903-000000/) | `owned` | Claude · `session_016EbjB7M527qEFqZFzpv2C9`, since 2026-09-03 | [4](restore-apps-outstanding-20260903-000000/findings-manifest.md) | Eight parked items from Revisions 143–155, then `restore-apps.md`. Produced finding `0001`; assigned `0027` and `0028` on 2026-09-03. Revisions 160–166, 168–169, 172 |
-| [`phase-11b-hydrate-and-bookends-20260903-141500`](phase-11b-hydrate-and-bookends-20260903-141500/) | `closed` | Claude · `session_019yzcjm2QneJ5ymVEQDi1bu`, to 2026-09-03 | [2](phase-11b-hydrate-and-bookends-20260903-141500/findings-manifest.md) | Revisions 131, 142–159, 167, 170, 171, 175, 176. **The whole session** — absorbed its two earlier briefs. Five unresolved findings were unowned at closing; see `final-summary.md` |
-| [`run-index-design-20260901-000000`](run-index-design-20260901-000000/) | `handoff` | last Claude · `01KcZvrKMgfenhrT9DvxW9Jk`, to 2026-09-02 | [10](run-index-design-20260901-000000/findings-manifest.md) | Items 1–3 done, **resume at item 4**. Two handoffs; the later one is where to start. Four pre-image findings reassigned to `pre-image-capture-conformance-20260903-194532` on 2026-09-03 |
-| [`restore-git-phase-11a-20260901-155433`](restore-git-phase-11a-20260901-155433/) | `closed` | Claude, to 2026-09-01 · id not recorded | — | Phase 11A, driven interactively. No prompt survives; the transcript is the record |
+| Bundle | State | Owner and when | Bundles | Findings | Notes |
+|---|---|---|---:|---:|---|
+| [`pre-image-capture-conformance-20260903-194532`](pre-image-capture-conformance-20260903-194532/) | `owned` | Claude · `session_01PcgHu9kz9Hm5RatLQuFR8H`, since 2026-09-03 | [4](pre-image-capture-conformance-20260903-194532/findings-manifest.md) | 4 | Four pre-image runbook findings reassigned from `run-index-design-20260901-000000` on 2026-09-03. A reading session: the report is the output, and nothing outside this bundle is written |
+| [`restore-apps-outstanding-20260903-000000`](restore-apps-outstanding-20260903-000000/) | `owned` | Claude · `session_016EbjB7M527qEFqZFzpv2C9`, since 2026-09-03 | [4](restore-apps-outstanding-20260903-000000/findings-manifest.md) | 30 | Eight parked items from Revisions 143–155, then `restore-apps.md`. Produced finding `0001`; assigned `0027` and `0028` on 2026-09-03. Revisions 160–166, 168–169, 172 |
+| [`phase-11b-hydrate-and-bookends-20260903-141500`](phase-11b-hydrate-and-bookends-20260903-141500/) | `closed` | Claude · `session_019yzcjm2QneJ5ymVEQDi1bu`, to 2026-09-03 | [7](phase-11b-hydrate-and-bookends-20260903-141500/findings-manifest.md) | 7 | Revisions 131, 142–159, 167, 170, 171, 175, 176. **The whole session** — absorbed its two earlier briefs. Five unresolved findings were unowned at closing; see `final-summary.md` |
+| [`run-index-design-20260901-000000`](run-index-design-20260901-000000/) | `handoff` | last Claude · `01KcZvrKMgfenhrT9DvxW9Jk`, to 2026-09-02 | [10](run-index-design-20260901-000000/findings-manifest.md) | 10 | Items 1–3 done, **resume at item 4**. Two handoffs; the later one is where to start. Four pre-image findings reassigned to `pre-image-capture-conformance-20260903-194532` on 2026-09-03 |
+| [`restore-git-phase-11a-20260901-155433`](restore-git-phase-11a-20260901-155433/) | `closed` | Claude, to 2026-09-01 · id not recorded | — | — | Phase 11A, driven interactively. No prompt survives; the transcript is the record |
 
 **`-000000` in a stamp means the start time was not recoverable.** Five bundles
 were converted from loose files in Revision 162 and only the Phase 11A transcript

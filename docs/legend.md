@@ -23,11 +23,21 @@ how far that reading has been taken, never how anyone feels about it.
 | `in progress` | The findings are being reviewed and decisions being made for resolutions. | `decisions.md` |
 | `resolving` | Begins **only** once **every** finding in the bundle has a decision recorded in `decisions.md`. The decided work is being carried out. | `resolutions.md` |
 | `resolved` | Every finding in the bundle has a resolution recorded in `resolutions.md`. | — |
-| `superseded` | A later bundle replaces this reading. The row names which, and the replacement carries `Relates to`. | — |
+| `superseded` | A later findings bundle replaces this reading. The row names which, and the replacement carries `Relates to`. | — |
+| `withdrawn` | The reading is dropped and nothing replaces it. The row says why. | — |
 
     unresolved ──▶ in progress ──▶ resolving ──▶ resolved
                                      │
-                                     └─▶ superseded (from any status)
+                                     ├─▶ superseded   a later bundle replaces it
+                                     └─▶ withdrawn    nothing replaces it
+
+    └── any session may write ──┘└────── the owner only ──────────┘
+
+`superseded` and `withdrawn` are both terminal and neither is a failure. The
+difference is whether a reader following the trail lands somewhere: `superseded`
+points onward, `withdrawn` says the trail ends here and gives the reason. A
+`withdrawn` findings bundle writes no `resolutions.md` — there are none. Its
+`findings.md` stands as the reading it was.
 
     └── any session may write ──┘└────── the owner only ──────────┘
 
@@ -130,32 +140,43 @@ they are the reason this is written down.
 
 ## Session states
 
-A session bundle is a unit of work with an owner. The state says who has it and
-what stage the handover is at.
+A session is a unit of work with an owner. **A session creates its own bundle**,
+so it is `owned` from the moment it exists; nothing waits to be claimed. The
+other three states are terminal and say how it ended.
 
 | State | Meaning | Produces |
 |---|---|---|
-| `unclaimed` | No AI session owns it. The prompt is written and waiting — either the owner wrote it, or a running session prepared it for work with no scheduled start. | `prompt.md` |
-| `owned` | An AI session owns it: `Claude` or `Copilot`, the two approved, with when ownership was established. | `findings-manifest.md`, once it owns a finding |
-| `handoff` | The work is passing between sessions. Covers the bundle being handed over **and** a continuation prepared by a running session, until it is owned. | `handoff-<stamp>.md`, one per handover |
-| `closed` | The owner has determined the work is complete. | `final-summary.md` |
-| `withdrawn` | Work may have been done, but the owner has decided to pivot or to leave findings unresolved rather than finish. | `final-summary.md` |
+| `owned` | An AI session holds it: `Claude` or `Copilot`, the two approved, with when ownership began. | `metadata.md`; `findings-manifest.md` once it owns a finding |
+| `handoff` | Ended by transferring its unresolved findings to a successor. | `handoff-<stamp>.md`, one per handover |
+| `closed` | Completed. | `final-summary.md` |
+| `withdrawn` | The work is no longer viable — drift, staleness, a sudden pivot. | `final-summary.md` |
 
-    unclaimed ──▶ owned ──▶ closed
-                    │  ▲
-                    │  └── owned (the next session)
-                    └─▶ handoff ──▶ unclaimed / owned
-                    └─▶ withdrawn
+    owned ──┬─▶ closed        findings resolved, or disowned to `unresolved`
+            ├─▶ handoff       findings carried to the successor
+            └─▶ withdrawn     findings marked `withdrawn` or `superseded`
 
-`closed` and `withdrawn` are both terminal and both write `final-summary.md`.
-The difference is what it has to say. A closed session lists every commit hash
-and `APPLY-MANIFEST.md` revision it contributed. A withdrawn one lists that too,
-and then the part that matters more: what the work reached, which findings are
-still open and at what status, what was assumed, and why it stopped. A withdrawn
-session that recorded nothing is indistinguishable from one that did nothing,
-and the findings it leaves behind are the ones somebody picks up cold.
+**The three terminal states differ by what happens to the findings**, and that is
+the whole distinction:
 
----
+| Ending | Its findings end |
+|---|---|
+| `closed` | `resolved`, or **disowned and set back to `unresolved`** — still live, simply unowned and waiting for somebody to pick them up |
+| `handoff` | carried to the successor at whatever status they hold |
+| `withdrawn` | **`withdrawn` or `superseded`**. The work is dead, so the readings die with it |
+
+A closed session finishes and its unfinished readings live on without an owner. A
+withdrawn session takes its readings with it, because what made them worth acting
+on has gone.
+
+`final-summary.md` records which disposal happened, by name, for every finding
+the session owned. **A session may not end leaving a finding owned by a session
+that has stopped.**
+
+`unclaimed` was a state until Revision 179 and is gone: it described a bundle
+waiting for a session, and no such bundle exists. A prompt written for a
+successor lives in the writing session's `handoff-<stamp>.md`; a findings bundle
+with no owner shows `—` in its index Session column, which is a property of the
+findings bundle rather than a state of a session that does not exist yet.
 
 ## Write categories
 

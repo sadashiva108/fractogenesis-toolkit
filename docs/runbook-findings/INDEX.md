@@ -27,7 +27,8 @@ a bundle without needing its tree.
 | `in progress` | The owner is reviewing and deciding. Produces `decisions.md`. **Only the owner writes from here on.** |
 | `resolving` | Every finding decided; the decided work is being carried out. Produces `resolutions.md`. |
 | `resolved` | Every finding has a resolution recorded. |
-| `superseded` | A later bundle replaces this reading — including a bundle overtaken while `in progress`. The row names which; the replacement carries `Relates to`. |
+| `superseded` | A later findings bundle replaces this reading — including one overtaken while `in progress`. The row names which. |
+| `withdrawn` | The reading is dropped and nothing replaces it. The row says why. |
 
 A bundle advances with its first finding and reaches `resolved` only with its
 last. The owner may override any rule; a revision carrying an overridden change

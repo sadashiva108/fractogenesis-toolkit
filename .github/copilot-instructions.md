@@ -19,6 +19,7 @@ Purpose
   - Loose-secret sweep (Phase 3B, stage-loose-secrets.md): ./bin/report-loose-secrets.sh reports credential-shaped files sitting in plaintext outside secrets-encrypted/; ./bin/stage-loose-secrets.sh moves them inside it. Run the check, then the stager (dry-run by default, --apply to move), then the check again — all before Phase 3C builds the DMG, since 3C encrypts secrets-encrypted/ and nothing else. The check never modifies what it scans and saves each run to $REIMAGE_ARTIFACT_ROOT/loose-secrets-reports/ (--no-report to suppress).
   - Runbook structure lint: ./bin/verify-runbook-structure.sh checks the structural house rules the authoring prompt defines — Sequential Steps is an H2, every step is `### Step N — Title` numbered consecutively, every step ends with a back-link and divider, every step is in the Table of Contents, no `[!note]` callouts, the Pitfall budget, the callout legend, balanced code fences, and no orphaned quote lines. These drift silently: a runbook written before a rule existed keeps passing every other check in the repo. Run it after editing any runbook.
   - Portability lint: ./bin/verify-script-portability.sh flags Bash 4+ syntax and GNU-only userland flags that the macOS target rejects. Run it after editing any bin/ or .internal/ script, and after moving an inline runbook block into a script — that move changes the target shell from the operator's interactive zsh to the Bash 3.2 that `#!/usr/bin/env bash` resolves to in Phases 8 and 9, before Phase 10A installs Homebrew.
+  - Findings-count check: ./bin/verify-findings-counts.sh verifies the counts displayed about findings bundles and sessions against the files that own them -- a bundle's `Findings` against the finding table in its findings.md, a session's `Bundles` and `Findings` against its findings-manifest.md. Run it after adding a finding, adding a bundle, or assigning one. It exists because section 4b permits a derived fact to be displayed only where something catches it drifting, and because the defect it was written for was subtler than a wrong number: `docs/sessions/INDEX.md` carried a column headed `Findings` holding a count of bundles, which is an accurate count of the wrong thing and which no consistency check would have caught.
   - An AI session is almost certainly NOT running on macOS. Every shell available to one is Linux with GNU coreutils and Bash 5.x, where `mapfile`, `declare -A`, `sed -i`, and `stat -c` all work silently. Name the environment a check ran in rather than reporting it as verified — "tested on Linux" and "tested on the target Mac" are different claims. On the Mac, `/bin/bash -n` catches parse errors against the real 3.2; the portability lint catches the runtime-level constructs `-n` cannot see. The two are complements, not substitutes.
   - Secret shapes are defined once: SECRET_SHAPES_FLOOR in .internal/artifact-config.sh, extended (never reduced) by the optional secret-shapes.conf.sh fragment. Both scripts above read it via build_secret_shape_predicate. Do not add a private pattern list to a script — that drift is what let credential-shaped files reach home-files-backup/ in the clear.
 
@@ -73,8 +74,10 @@ does not become a line in a chat log nobody reads again.
                     built that way. Options, the alternatives rejected and the
                     reason, the decision, the scope, the plan. A record without
                     its rejected alternatives is an assertion, not a decision.
-- docs/cross-cutting-findings/ -- findings bundles whose fix lands in shared
-                    machinery rather than in one runbook. See 4c.
+- docs/cross-cutting-findings/ -- findings bundles whose impact is broad and
+                    agnostic to any one runbook. See 4c.
+- docs/instruction-set-findings/ -- findings bundles about the rules a session
+                    works under. See 4c.
 - docs/ideas/    -- things that do not exist yet. A new script or a new
                     sub-command on one, a new runbook, a new reference, a new
                     artifact pattern or layout. What to build, not how.
@@ -106,6 +109,11 @@ Rules for an AI session:
   unreviewable one. Park it as a findings bundle (4c) and say so in the summary.
 - READ the findings indexes and docs/sessions/ before starting work in an area --
   the answer to "why is this half-done" is often already written down.
+- A FACT HAS ONE HOME. A count, a membership, a description of what something
+  currently holds: write it once, and link to it everywhere else. A copy is
+  permitted only where it is generated, or where a check fails when it drifts --
+  an unchecked hand-typed copy is the defect, not the display. A description says
+  what a thing is FOR, never what it currently contains.
 - These files ARE tracked and reach a fresh clone, so writing one IS a
   repository change and takes an APPLY-MANIFEST.md revision like any other.
   Revision 162 exempted them, on the reasoning that a note about the workflow is
@@ -125,8 +133,9 @@ Rules for an AI session:
 4c) Findings bundles -- docs/runbook-findings/ and docs/cross-cutting-findings/
 
 A findings bundle is a READING of something that already exists: what was found,
-where it is felt, and what it costs to leave. It is not a change. Recording one
-touches no tracked file and takes no manifest revision.
+where it is felt, and what it costs to leave. Recording one is a repository
+change like any other and takes an APPLY-MANIFEST.md revision -- 4b's rule, which
+governs everything under docs/ without exception.
 
 Which of the two:
 
@@ -151,7 +160,11 @@ worked, and they are only legible together:
     |                   never rewritten to match what was later decided.
     |-- decisions.md    written during `in progress`: what was decided for each
     |                   finding, and the alternatives rejected. A decision
-    |                   without its rejected alternatives is an assertion.
+    |                   without its rejected alternatives is an assertion. A
+    |                   bundle MIGRATED from an already-closed record carries
+    |                   `resolutions.md` and no `decisions.md`, because the
+    |                   deciding happened before this lifecycle existed; its
+    |                   `resolutions.md` says so.
     `-- resolutions.md  written during `resolving`: what was actually done, with
                         the commit hash and the APPLY-MANIFEST.md revision that
                         carries each one.
@@ -233,7 +246,8 @@ say so. The name is fixed at creation. Renaming it breaks every prompt, handoff
 and index row already written against it -- the failure in
 `docs/cross-cutting-findings/0009-dated-artifacts-cite-run-ids-a-rename-breaks/findings.md`.
 
-Every `prompt.md` names `.github/copilot-instructions.md` as required reading,
+A `prompt.md` for a session that can STILL BE STARTED -- `owned` or `handoff` --
+names `.github/copilot-instructions.md` as required reading,
 before anything else it asks the session to read. That holds for every session
 regardless of state, scope or assistant; a prompt that omits it is incomplete.
 
@@ -245,21 +259,26 @@ and points here rather than restating the list, so the two cannot disagree. Each
 bundle's own INDEX.md row names the session folder working it, which is the other
 half of the pointer.
 
-Where a prompt comes from:
+Where a prompt comes from. A session bundle is created BY THE SESSION IT BELONGS
+TO and is `owned` from that moment; nothing sits waiting to be claimed. The
+prompt reaches it from one of two places:
 
-- **Hand-written by the owner.** The bundle starts `unclaimed`.
-- **Written inside a running session for use by a new one.** The bundle starts
-  `unclaimed` when it is preparation for work with no scheduled start, and
-  `handoff` when it is a continuation of what the writing session is doing now.
-  In both cases the prompt is complete before it is needed: the owner may pick it
-  up hours or days later, and the session that wrote it will not be there to
-  explain it.
+- **Hand-written by the owner**, and pasted into the new session.
+- **Written inside a running session for a successor**, and pasted the same way.
+  When that successor takes over the writing session's unresolved findings, the
+  writing session ends `handoff` and the prompt lives in its
+  `handoff-<stamp>.md`; when it is new material, nothing about the writing
+  session changes -- it produced a document and carried on.
+
+Either way the prompt is complete before it is needed: the owner may pick it up
+hours or days later, and the session that wrote it will not be there to explain
+it. A findings bundle with no owner is not a session waiting to exist -- it shows
+`—` in its index Session column, which is a property of the findings bundle.
 
 State is recorded in `docs/sessions/INDEX.md` and in the tag. THE FIVE STATES
 AND WHAT EACH MEANS ARE DEFINED IN `docs/legend.md`, beside the findings
 statuses. What each state REQUIRES is here:
 
-- `unclaimed` -- `prompt.md` and the tag. Nothing else.
 - `owned` -- `metadata.md`, and the assistant and date in the INDEX.md row.
   `metadata.md` is authoritative for WHO and WHAT: one row per owner, with the
   assistant (`Claude` or `Copilot`; those are the two approved), its session
@@ -271,7 +290,10 @@ statuses. What each state REQUIRES is here:
   3.2, an AI session almost never runs there, and a claim validated on Linux is a
   different claim -- `metadata.md` is where that is on the record rather than
   remembered. An unidentifiable session is still `owned`: write what is known and
-  say what is not.
+  say what is not. ANY `not recoverable` NAMES THE SEARCHES that came back empty,
+  so the next reader knows whether to try again -- three identifiers recorded as
+  unrecoverable have since been found in the `Claude-Session` commit trailer,
+  which is written by the harness and so is not something a session "wrote".
 - `handoff` -- `handoff-<stamp>.md`, plus the date and time the owner decided to
   hand off and, once known, the incoming assistant. The document carries:
   progress so far, exactly where the work stopped, every assumption the outgoing
@@ -279,16 +301,27 @@ statuses. What each state REQUIRES is here:
   folders to connect, volumes to mount, prior revisions to read. There may be
   several; each records one handover and is never edited afterwards. The outgoing
   bundle and the continuation bundle each name the other.
-- `closed` -- `final-summary.md`, naming the date and time the work completed and
-  listing EVERY commit hash and APPLY-MANIFEST.md revision the session
-  contributed, across all of its owners. A closed session's contribution should
-  be readable from that one file without reconstructing it from git.
-- `withdrawn` -- `final-summary.md` as well, and this is the state where it
-  matters most. Write down what the work reached before it stopped: what was
-  contributed, which findings are still open and at what status, what was
-  assumed, and why the owner pivoted. A withdrawn session that recorded nothing
-  is indistinguishable from one that did nothing, and the findings it leaves
-  behind are the ones somebody picks up cold.
+- `closed` -- COMPLETED. `final-summary.md` names the date and time, lists EVERY
+  commit hash and APPLY-MANIFEST.md revision the session contributed across all
+  of its owners, and says what became of every finding it owned: `resolved`, or
+  DISOWNED AND SET BACK TO `unresolved` -- still live, simply unowned. A closed
+  session's contribution should be readable from that one file without
+  reconstructing it from git.
+- `withdrawn` -- THE WORK IS NO LONGER VIABLE: drift, staleness, a sudden pivot.
+  `final-summary.md` as well, and this is the state where it matters most. Write
+  down what the work reached before it stopped, what was contributed, what was
+  assumed, and why the owner pivoted. THE FINDINGS GO WITH IT -- every findings
+  bundle the session owned is marked `superseded` where another bundle replaces
+  it and `withdrawn` where nothing does. A withdrawn session that recorded
+  nothing is indistinguishable from one that did nothing.
+
+THE THREE TERMINAL STATES DIFFER BY WHAT HAPPENS TO THE FINDINGS, and that is
+the whole distinction. A `closed` session finishes and its unfinished readings
+live on without an owner, waiting to be picked up. A `handoff` carries them to a
+successor. A `withdrawn` session takes them with it, because what made them worth
+acting on has gone.
+
+A SESSION MAY NOT END LEAVING A FINDING OWNED BY A SESSION THAT HAS STOPPED.
 
 Everything under `docs/sessions/` is a bundle. Two files are not, and are not
 meant to be: `INDEX.md`, and `session-responsibilities.md`, which describes the
