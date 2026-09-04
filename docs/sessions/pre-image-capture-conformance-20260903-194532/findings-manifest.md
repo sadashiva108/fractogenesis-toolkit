@@ -15,7 +15,7 @@ Statuses are defined in [`docs/legend.md`](../../legend.md).
 | 0030 | `docs/cross-cutting-findings/0030-renames-break-citations-and-which-may-be-repaired/` | cross-cutting | Renames break citations, and only a record's values are frozen | 5 | `resolved` | Closed 2026-09-04. Finding 3 decided by `run-index-design-20260901-000000` under an owner override; finding 1 deferred on a measurement |
 | 0031 | `docs/instruction-set-findings/0031-superseding-a-bundle-whose-session-is-gone/` | instruction-set | Superseding a bundle whose session is gone is instructed but never defined | 4 | `resolved` | Owns it. Recorded and resolved in one sitting; §4c gains the procedure Revision 183 had to invent |
 | 0032 | `docs/instruction-set-findings/0032-index-and-manifest-tables-have-a-shape-nothing-checks/` | instruction-set | The index and manifest tables have a shape nothing checks | 4 | `resolved` | Closed 2026-09-04. Two findings contributed by `restore-apps-outstanding-20260903-000000` while unresolved |
-| 0035 | `docs/cross-cutting-findings/0035-a-lineage-rename-is-a-procedure-not-an-operation/` | cross-cutting | A lineage rename is a procedure, not an operation | 3 | `unresolved` | Owns it. Recorded while closing `0030`; a reading only |
+| 0035 | `docs/cross-cutting-findings/0035-a-lineage-rename-is-a-procedure-not-an-operation/` | cross-cutting | A lineage rename is a procedure, not an operation | 3 | `resolved` | Closed 2026-09-04. Recorded and resolved in one sitting; the missing step was retiring the former lineage |
 
 All four of the originals were **recorded** by session `01KcZvrKMgfenhrT9DvxW9Jk` and **owned** by
 [`run-index-design-20260901-000000`](../run-index-design-20260901-000000/) until

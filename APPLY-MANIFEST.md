@@ -1,5 +1,7 @@
 # Apply Manifest
 
+**Revision 196** — supersedes Revision 195 and earlier. A lineage rename becomes one operation, and the step that was never performed is the one that lost a former name.
+
 **Revision 195** — supersedes Revision 194 and earlier. The tables and the status tags get a check, after six failures that every existing validator passed.
 
 **Revision 194** — supersedes Revision 193 and earlier. A rename records the name it replaced, and the detector that would use it is measured and deferred.
@@ -513,6 +515,77 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
 
 ---
+
+## Revision 196 — a lineage rename becomes one operation, and the step nobody performed is named
+
+`0035` said a rename is three manual acts with no operation, and assumed the
+operation would need designing. It did not. **Every step already existed**; what
+was missing was that they happen together, in order, and that one of them happens
+at all.
+
+    artifact_run_rename_lineage "$CATEGORY_ROOT" "<former>" "<surviving>" "<reason>"
+
+    1. artifact_run_record_rename   the former name, FIRST
+    2. mv runs/<former>-STAMP -> runs/<surviving>-STAMP
+    3. append a `run` row per moved run, keeping its completion time
+    4. artifact_run_retire_lineage on the FORMER context
+    5. artifact_runs_rebuild
+
+### Step 4 is why a former name was lost, and it was measured
+
+Without it the old context keeps its `run` rows, so **every later rebuild loops
+over it, reports `computed official run is not on disk`, and leaves its stale
+pointer file in place** — the rebuild continues past the error without removing
+it. Reproduced in a scratch category before the function was written, and gone
+after. `artifact_run_retire_lineage` has existed since Revision 136 and does
+exactly the right thing here; nothing had ever called it as part of a rename.
+
+### Finding 2 is corrected, and the correction matters
+
+The reading said a half-done rename is *silently completed in the wrong
+direction*. Half wrong. `artifact_runs_rebuild` **is loud** — it verifies the
+computed run exists and refuses. `bin/reindex-artifact-runs.sh` is the silent one:
+it takes each context from the directory name (`context="${id%-$stamp}"`) and
+appends rows, so running it after moving directories rebuilds a manifest that
+describes the new world and nothing else. The hazard is one command, not a general
+property, and that is the command to keep away from a rename.
+
+### Finding 3 rejected, with the reason recorded
+
+A per-run identity marker — the `PINNED-OFFICIAL.txt` pattern, which rebuild
+already reads back — was rejected. The operation removes the need, and a marker
+written from now on cannot cover the case it exists for: a pre-existing run
+renamed by hand. If the operation turns out to be bypassed in practice that is the
+answer, and it should be reopened on that evidence rather than adopted against the
+possibility. The format and its reader already exist.
+
+### A limitation stated rather than left to be found
+
+The `run` rows appended in step 3 carry `—` in **Result**. The library has no
+accessor for a prior row's result. The original rows stay in the manifest with
+their results intact — it is append-only — and the `rename` row is what tells a
+reader where to look. That is the mechanism working, and the reason this was
+acceptable to leave.
+
+### Nothing was renamed
+
+Running this against a category is an evidence write needing the owner per
+category. Three remain queued: `0030` D7's retroactive rows for `office-stability/`
+and `reimaged-system/comparisons/`, whose renames already happened by hand and
+which want `artifact_run_record_rename` rather than this operation. `0014`'s
+orphaned lineage is a retirement rather than a rename and belongs to its own
+session.
+
+### Validation
+
+Documentation lint **0 MISSING, 0 ANCHOR BROKEN**. Findings counts **0 FAIL**.
+Findings structure **43 OK / 0 FAIL**. Runbook structure **213 PASS / 5 WARN /
+25 FAIL** across 27 documents, unchanged. Script portability **0 WARN / 0 FAIL**,
+`bash -n` clean. Exercised end to end in a scratch category including every
+argument guard; **the artifact volume was not touched**. Composed in a copy
+outside the owner's checkout, per `0028`; number taken at apply time.
+**`/bin/bash -n` against macOS stock Bash 3.2 is owed** — no Bash 4 construct is
+used and the portability lint agrees, which is not the same claim.
 
 ## Revision 195 — the tables and the tags get the check that six failures argued for
 

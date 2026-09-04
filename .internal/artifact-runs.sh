@@ -42,6 +42,14 @@
 # not repair those citations and cannot. It makes the former name recoverable, so
 # a citation that no longer resolves can be traced rather than merely disbelieved.
 #
+# RETIRE THE FORMER LINEAGE AS PART OF THE RENAME. Without it the old context
+# keeps its `run` rows, so every later `artifact_runs_rebuild` loops over it,
+# reports `computed official run is not on disk`, and LEAVES ITS STALE POINTER
+# FILE IN PLACE -- the rebuild continues past the error without removing it.
+# `artifact_run_rename_lineage` does this; a rename performed by hand is the
+# thing that forgets it, and forgetting it is why one category's former name
+# survives only in a dated backup directory.
+#
 # THE ROW IS FILED UNDER THE SURVIVING CONTEXT, and is inert to pointer
 # computation by construction rather than by luck. `artifact_runs_rebuild` takes
 # its context list from `sort -u` over the Context column, so a row filed under a
@@ -154,6 +162,13 @@
 #   artifact_run_reopen_lineage "$CATEGORY_ROOT" "<context>" "<reason>"
 #   artifact_run_record_rename "$CATEGORY_ROOT" "<surviving-context>" \\
 #                              "<former-context>" "<reason>"
+#
+#   artifact_run_rename_lineage "$CATEGORY_ROOT" "<former-context>" \\
+#                               "<surviving-context>" "<reason>"
+#   #   Performs the whole rename: records the former name, moves the run
+#   #   directories, re-indexes them under the new context, retires the old
+#   #   lineage and rebuilds. Step order matters and is enforced here rather
+#   #   than remembered -- see A LINEAGE RENAME IS A MIGRATION below.
 #   #   A retired lineage keeps its runs and loses its pointer, and a rebuild
 #   #   leaves it retired. For a context whose producer no longer exists.
 #
@@ -692,6 +707,90 @@ artifact_run_record_rename() {
   point="$(_artifact_runs_point_of "$context")"
   _artifact_runs_append_row "$manifest" rename "$context" "$point" "$former" "—" "$reason"
   _artifact_runs_note "recorded '$former' as a former name of '$context'; no pointer changed"
+  return 0
+}
+
+# The whole rename, in the one order that leaves the category consistent. Each
+# step exists on its own; what this adds is that they happen together and in
+# sequence. Recording the former name FIRST means a failure part-way leaves the
+# record present and the rest recoverable, rather than a half-renamed category
+# with nothing saying what was intended.
+artifact_run_rename_lineage() {
+  local category_root="$1" former="$2" context="$3" reason="$4"
+  local manifest dir id stamp new_id moved=0 completed
+
+  if [ -z "${category_root:-}" ] || [ -z "${former:-}" ] || [ -z "${context:-}" ]; then
+    _artifact_runs_err "artifact_run_rename_lineage <category-root> <former-context> <surviving-context> <reason>"
+    return 2
+  fi
+  if [ -z "${reason:-}" ]; then
+    _artifact_runs_err "a reason is required, the same as for retiring or pinning"
+    return 2
+  fi
+  if [ "$former" = "$context" ]; then
+    _artifact_runs_err "former and surviving context are the same; nothing to rename"
+    return 2
+  fi
+  if ! _artifact_runs_valid_context "$context" || ! _artifact_runs_valid_context "$former"; then
+    _artifact_runs_err "both contexts must be usable as directory names"
+    return 2
+  fi
+
+  manifest="$(_artifact_runs_manifest_path "$category_root")"
+  if [ ! -f "$manifest" ]; then
+    _artifact_runs_err "no manifest in $category_root; nothing to rename"
+    return 1
+  fi
+  if [ -z "$(_artifact_runs_rows_for "$manifest" "$former" run)" ]; then
+    _artifact_runs_err "'$former' has no runs in this manifest; nothing to rename"
+    return 1
+  fi
+
+  # 1. The record first, so a failure below leaves the former name recoverable.
+  artifact_run_record_rename "$category_root" "$context" "$former" "$reason" || return 1
+
+  # 2 and 3. Move each run and re-index it under the surviving context, keeping
+  # the stamp so the run keeps its identity in time. A pre-existing target is a
+  # refusal rather than an overwrite: two runs cannot share an id.
+  for dir in "$category_root"/runs/"$former"-*; do
+    [ -d "$dir" ] || continue
+    id="$(basename "$dir")"
+    stamp="${id##*-}"
+    case "$id" in
+      *-[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]-"$stamp") ;;
+      *) continue ;;
+    esac
+    stamp="$(printf '%s' "$id" | sed -n 's/^.*-\([0-9]\{8\}-[0-9]\{6\}\)$/\1/p')"
+    [ -n "$stamp" ] || continue
+    new_id="${context}-${stamp}"
+    if [ -e "$category_root/runs/$new_id" ]; then
+      _artifact_runs_err "refusing: $new_id already exists; $moved run(s) already moved"
+      return 1
+    fi
+    mv "$dir" "$category_root/runs/$new_id" || {
+      _artifact_runs_err "could not move $id; $moved run(s) already moved"
+      return 1
+    }
+    completed="$(printf '%s' "$stamp" | sed 's/^\(....\)\(..\)\(..\)-\(..\)\(..\)\(..\)$/\1-\2-\3 \4:\5:\6/')"
+    printf '| %s | run | `%s` | %s | `%s` | %s | %s |\n' \
+      "$completed" "$context" "$(_artifact_runs_point_of "$context")" "$new_id" "—" \
+      "renamed from $id" >> "$manifest"
+    moved=$((moved + 1))
+  done
+
+  if [ "$moved" -eq 0 ]; then
+    _artifact_runs_err "'$former' had manifest rows but no run directories; nothing moved"
+    return 1
+  fi
+
+  # 4. Retire the former lineage. Skipping this is the defect the header names:
+  # its rows stay, every rebuild errors on them, and its pointer file survives.
+  artifact_run_retire_lineage "$category_root" "$former" "renamed to '$context': $reason" || return 1
+
+  # 5. Recompute pointers for the surviving lineage.
+  artifact_runs_rebuild "$category_root" >/dev/null
+
+  _artifact_runs_note "renamed '$former' to '$context': $moved run(s) moved, former name recorded, old lineage retired"
   return 0
 }
 
