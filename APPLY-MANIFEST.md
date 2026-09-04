@@ -1,5 +1,7 @@
 # Apply Manifest
 
+**Revision 191** — supersedes Revision 190 and earlier. A token fallback is a second copy of the value, and five of six have drifted from the contract.
+
 **Revision 190** — supersedes Revision 189 and earlier. The runbook findings index gains a rollup that puts the two runbooks carrying the weight at the top, and `0033` records that seventeen scripts each hardcode the same palette and that 48 evidence artifacts on the volume carry raw ANSI escapes.
 
 **Revision 189** — supersedes Revision 188 and earlier. `0032` gains a fourth finding, contributed while it is `unresolved`: a patch that deletes something under-applies against the connected folder, `git apply` exits 0 anyway, and four instances in two days were caught only by someone looking.
@@ -503,6 +505,72 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
 
 ---
+
+## Revision 191 — `indigo`'s token fallbacks are a second copy, and five have drifted
+
+A contribution to `0033`, made while it is `unresolved` and open to any session.
+It is owned by `restore-apps-outstanding-20260903-000000`; ownership gates nothing
+at that status, and this adds a finding rather than altering the reading around it.
+
+### Finding 7
+
+`0033` records that `indigo/ui/src/styles.css` states the rule it breaks —
+*"Components reference these `var(--…)` names ONLY — never a raw hex"* — and
+counts `#fff` eleven times and `#4f46e5` three. Measured again after the owner
+connected the repository, that count turns out to hide two different defects:
+
+| Class | Count | What it is |
+|---|---:|---|
+| bare hex, no token involved | 18, on 16 lines | `color: #fff`, `#a3272e`, `#c026a2`, `#b91c1c` and others |
+| `var(--token, #hex)` fallback | 15, across 6 tokens | a token reference **and** a copy of its value, in one expression |
+
+**Five of the six fallbacks no longer match `tokens.css`.** `--green` is `#35a26a`
+against `#0f9d58`, which is a visibly different green rather than a rounding.
+`--panel`, `--green-bg` and `--neutral-bg` differ likewise. `--border` carries a
+fallback for a token the contract never defines, so every use of it renders from
+the copy — permanently, and while reading as though it defers to the token. Only
+`--indigo` agrees.
+
+The two counts are not in conflict: the earlier one treats a fallback as `var(--…)`
+usage, which is a fair reading, since the expression does reference the token.
+Separating the classes is what exposes the drift.
+
+**What it changes about the fix.** A fallback does not look like a violation — it
+looks like defensive practice, which is why it survives review and why the values
+diverge quietly afterwards. A lint that forbids bare hex, the obvious reading of
+*never a raw hex*, would pass all fifteen of these and miss all five drifted
+values. The check has to compare a fallback against the contract it names.
+
+That turns *ship the decision with its check* from a principle into a measurement:
+the repository that states the rule, and proves the mechanism works, is already out
+of step with itself in five places, and nothing there noticed.
+
+### Counts followed the finding
+
+`0033` goes from six findings to seven, so its row in
+`docs/cross-cutting-findings/INDEX.md`, its row in the owning session's
+`findings-manifest.md`, and that session's `Findings` cell in
+`docs/sessions/INDEX.md` all move with it. The reading itself, and every section
+of it written by the recording session, is unchanged.
+
+`./bin/verify-findings-counts.sh` caught the third of those before it was made:
+
+    FAIL  restore-apps-outstanding-20260903-000000  Findings column
+          shown 37, source says 38 (sum of its bundles)
+
+Worth recording on the day the check shipped. It verifies a session's `Findings`
+against the sum of its bundles, which narrows what `0032` still owes: the gap is
+the `| Runbook | Bundles | Findings | Resolved |` rollup in
+`docs/runbook-findings/INDEX.md`, whose rows have no source relationship expressed.
+
+### Validation
+
+Documentation lint: **0 MISSING, 0 ANCHOR BROKEN**. Findings counts **0 FAIL**.
+Runbook structure **213 PASS / 5 WARN / 25 FAIL** across 27 documents, unchanged.
+Script portability **0 WARN / 0 FAIL**. No script and no runbook changed; every
+write is a record write under `docs/`. `indigo` was read read-only and nothing in
+it was modified. Composed in a copy outside the owner's checkout, per `0028`;
+number taken at apply time with `./bin/check-manifest-revision.sh`.
 
 ## Revision 190 — a rollup on the runbook index, and `0033`
 

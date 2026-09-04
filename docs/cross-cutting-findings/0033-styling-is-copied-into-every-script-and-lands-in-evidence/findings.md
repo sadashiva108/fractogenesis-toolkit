@@ -13,6 +13,9 @@ no longer exists in that state.
 and the two report producers — shared machinery, felt in every script's output.
 **Also applies to `indigo`:** see *The principle already exists in the estate*.
 The reading holds there; the decisions may not, and are not assumed here.
+**Contributed to 2026-09-03** by `pre-image-capture-conformance-20260903-194532`
+(`session_01PcgHu9kz9Hm5RatLQuFR8H`), while the bundle was `unresolved` and open to
+any session: finding 7, measured against `indigo` after the owner connected it.
 
 ---
 
@@ -26,6 +29,7 @@ The reading holds there; the decisions may not, and are not assumed here.
 | 4 | Fourteen of seventeen emit colour regardless of where the output goes | `unresolved` |
 | 5 | Forty-eight saved evidence artifacts carry raw ANSI escapes | `unresolved` |
 | 6 | Nothing checks any of it | `unresolved` |
+| 7 | `indigo`'s token fallbacks are a second copy, and five of six have already drifted | `unresolved` |
 
 ---
 
@@ -156,6 +160,53 @@ So the principle is proven in practice and its enforcement is not, in both
 repositories. That is one observation, not two, and it argues that whatever is
 decided here should come with the check from the start rather than as a later
 finding.
+
+---
+
+## 7 — the fallbacks are a second copy, and they have drifted
+
+Measured in `ui/src/styles.css` after the owner connected `indigo`, and it
+sharpens finding 3 rather than repeating it: the drift is not only in this
+repository's seventeen palettes, it is inside the token contract held up as the
+fix.
+
+Raw hex in that file splits into two classes, which a single count hides:
+
+| Class | Occurrences | What it is |
+|---|---:|---|
+| bare hex, no token involved | 18, on 16 lines | `color: #fff`, `#a3272e`, `#c026a2`, `#fff7ed`, `#b91c1c` and others |
+| `var(--token, #hex)` fallback | 15, across 6 distinct tokens | a token reference **and** a copy of its value, in the same expression |
+
+The section above counts `#fff` eleven times and `#4f46e5` three times, which
+treats a fallback as `var(--…)` usage. That is a fair reading — the expression
+does reference the token. Separating the two classes is what exposes the problem,
+because **five of the six fallback values no longer match the contract**:
+
+| Token | Fallback in `styles.css` | `tokens.css` | |
+|---|---|---|---|
+| `--border` | `#e2e6ea` | **not defined at all** | drifted |
+| `--panel` | `#fff` | `#ffffff` | drifted |
+| `--green-bg` | `#e6f6ec` | `#e6f4ea` | drifted |
+| `--green` | `#35a26a` | `#0f9d58` | drifted |
+| `--neutral-bg` | `#eee` | `#eef0f3` | drifted |
+| `--indigo` | `#4f46e5` | `#4f46e5` | agrees |
+
+`--green` is the one to look at: `#35a26a` against `#0f9d58` is a visibly
+different green, not a rounding. And `--border` has a fallback for a token the
+contract never defines, so every one of its uses renders from the copy —
+permanently, and while reading as though it defers to the token.
+
+**Why this changes what the check has to do.** A fallback does not look like a
+violation. It looks like defensive practice, which is why it survives review and
+why the values diverge quietly afterwards. A lint that forbids bare hex — the
+obvious reading of *never a raw hex* — would pass all fifteen of these and miss
+all five drifted values. The check has to compare a fallback against the contract
+it names, not merely ban literals.
+
+That is the argument for shipping the decision with its check, made from the
+evidence rather than from principle: the repository that states the rule, and
+proves the mechanism works, is already out of step with itself in five places,
+and nothing there noticed either.
 
 ---
 
