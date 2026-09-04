@@ -35,14 +35,31 @@ and made no successor — and the distinction is why its state was corrected to
 ## One finding inside another session's bundle
 
 `0030` finding 3 — *a category manifest records no `rename` row, so a former
-lineage name is unrecoverable from the index* — is assigned to this session.
+lineage name is unrecoverable from the index* — was assigned to this session.
 The bundle,
 `docs/cross-cutting-findings/0030-renames-break-citations-and-which-may-be-repaired/`,
-is owned by `pre-image-capture-conformance-20260903-194532` and is `in progress`.
-Its decision 6 holds finding 3 open deliberately: the `rename` row belongs to
-whoever performs the next conversion, and that is this session's item 4. Because
-`resolving` gates on the whole bundle, `0030` cannot advance until finding 3 is
-decided — a bundle owned elsewhere is blocked here.
+is owned by `pre-image-capture-conformance-20260903-194532` and is `resolved` as
+of Revision 196. Its decision 6 had held finding 3 open deliberately: the
+`rename` row belongs to whoever performs the next conversion, and that is this
+session's item 4. Because `resolving` gates on the whole bundle, `0030` could not
+advance until finding 3 was decided, so a bundle owned elsewhere was blocked
+here.
+
+**It was decided as D7, by this session, under an owner's override given
+2026-09-04**, and the override is named in the `APPLY-MANIFEST.md` entry that
+carried it. Two things about D7 belong in this session's own record rather than
+only in the other session's:
+
+- **Its closing claim was wrong.** D7 asserted that every finding in `0030` then
+  carried a decision — the condition the `resolving` gate turns on — and finding
+  1 did not, as D7's own text says two paragraphs earlier. The owning session
+  caught it, added D8, and held its toolkit write in its composing copy until the
+  gate closed honestly. `0030`'s `resolutions.md` records this.
+- **Its toolkit write was made by the owning session, not by this one.**
+  `artifact_run_record_rename()` and the rename procedure are in
+  `.internal/artifact-runs.sh`. What remains owed here is the three retroactive
+  `rename` rows themselves, which are evidence writes and are listed in
+  `outstanding-20260904.md`.
 
 **It is deliberately not a row in the table above.** That table is one row per
 bundle and is authoritative for what this session *owns*; a row would put one

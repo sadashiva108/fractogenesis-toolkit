@@ -1,5 +1,7 @@
 # Apply Manifest
 
+**Revision 197** — supersedes Revision 196 and earlier. Seven evidence writes settle what four `entry` lineages mean and what two categories used to be called, and the session's list of what it owes turns up four `resolved` bundles whose findings never moved.
+
 **Revision 196** — supersedes Revision 195 and earlier. A lineage rename becomes one operation, and the step that was never performed is the one that lost a former name.
 
 **Revision 195** — supersedes Revision 194 and earlier. The tables and the status tags get a check, after six failures that every existing validator passed.
@@ -513,6 +515,97 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `scan-archive-contents.sh` | `.internal/home/scan-archive-contents.sh` |
 | `scan-postman-collections.py` | `.internal/home/scan-postman-collections.py` |
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
+
+---
+
+## Revision 197 — seven evidence writes, and a list of what is owed that finds four bundles closed over open findings
+
+Two record writes and no toolkit write, both under
+`docs/sessions/run-index-design-20260901-000000/`, plus **seven evidence writes**
+made under a grant the owner gave on 2026-09-04 for exactly those seven and
+nothing else. Nothing in this revision's diff carries the evidence writes — they
+are on the volume, not in the repository — so the tables below are the record of
+them.
+
+**`outstanding-20260904.md` is new.** It is the standing list of what this session
+owes: what the two pushes closed, the seven evidence writes now made, `0014` and
+`0021` still unresolved, the local `rm -d .internal/restore`, and the Bash 3.2
+syntax check owed for Revisions 116 through 197. Every claim in it was re-verified
+against `HEAD` `3604743` and the volume; an earlier draft had three claims that
+Revisions 195 and 196 had already made false, and a fourth that the evidence
+writes themselves disproved.
+
+### Seven evidence writes, under a grant covering exactly those seven
+
+The owner granted the write for the four `bookends/` pins that D2 of `0005` and
+the owner's own readings called for, and the three retroactive `rename` rows D7
+owed.
+
+| Lineage | Pinned to | First-wins would compute | Why the later run |
+|---|---|---|---|
+| `restore-repos-entry` | `20260902-160157` | `20260825-033849` | the first run's recorder misreported |
+| `restore-git-entry` | `20260901-083539` | `20260824-174717` | the earlier runs failed a check whose FAIL was the expected state |
+| `restore-access-entry` | `20260824-063529` | `20260820-011553` | prerequisite setup steps had been skipped |
+| `restore-apps-entry` | `20260825-065638` | `20260825-042828` | a DMG was mounted that should not have been |
+
+The three `rename` rows: `pre-image-office-stability-checklist` →
+`-assessment` and `pre-image-office-stability` → `-evidence` in
+`office-stability/`, and `post-image-restore-runtime-diff` →
+`restore-runtime-inventory-diff` in `reimaged-system/comparisons/`. Both
+`office-stability` rows carry `unknown` in Point, which is what D7's worked
+example shows. No pointer moved in either category.
+
+### The pins were load-bearing, and the claim that they were was half wrong
+
+Before the pins, all four pointers already read the wanted run — by coincidence,
+not by pin: the old latest-wins result, unrebuilt since Revision 193 made `entry`
+first-wins. **Rebuilding a stripped copy of the category puts all four on the
+left-hand column**; with the pins in place a full `artifact_runs_rebuild` moves
+nothing. Both directions were run rather than reasoned about.
+
+**The draft of `outstanding-20260904.md` said the flip would be silent, and it
+would not be.** Revision 193's own reporting fires on each of the four —
+*`'restore-git-entry': official is restore-git-entry-20260824-174717;
+restore-git-entry-20260901-083539 is newer and not official`* — and names the
+call that settles it. The hazard was a loud report with nobody reading it, not a
+missing one. That is a different problem with a different fix, and the file was
+corrected before it was applied.
+
+**The blast radius was exactly four.** Every other multi-run lineage in
+`bookends/` sits at a latest-wins point — nine, all `exit` — so Revision 193's
+rule change had no other subject there.
+
+### Four `resolved` bundles carry findings that read `in progress`
+
+`0030` (5 rows of 5), `0035` (3 of 3), `0031` (4 of 4) and `0032` (4 of 4) are
+all `STATUS-resolved` with per-finding tables nothing ever moved. `docs/legend.md`
+is unambiguous: *"the bundle cannot be `resolved` while any row is not."*
+
+`bin/verify-findings-structure.sh` passes all four **and is right to**. Its header
+names its two invariants — column count per table, and a bundle's tag against its
+`INDEX.md` row — and per-finding coherence is a third one that nobody wrote. The
+validator built for this exact class of defect does not cover it; that is the
+finding, not a fault in the validator. All four bundles are closed, so this is not
+a contribution to any of them, and this revision does not open the bundle it
+wants: the choice between a new bundle and a supersession of `0032` is the
+owner's.
+
+### The `0030` note in `findings-manifest.md` is brought up to date
+
+It said `0030` "is `in progress`" and "cannot advance until finding 3 is decided".
+Both were true when written and neither is now. The rewrite keeps the structural
+point — a finding-level assignment across bundles has no shape in the instruction
+set, and the counts stay `10`/`10` — and adds the two things about D7 that belong
+in this session's own record rather than only in the other session's: **D7's
+closing claim was wrong**, and the toolkit write it called for was made by the
+owning session, not by this one.
+
+### Flagged, not edited
+
+`docs/sessions/session-responsibilities.md` was written 2026-09-01 and names the
+pairing of that day; the concurrent session is now
+`pre-image-capture-conformance-20260903-194532`. Half of that file is not this
+session's to rewrite, so it is listed and left alone.
 
 ---
 
