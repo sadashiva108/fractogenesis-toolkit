@@ -32,4 +32,4 @@ says so. Full definitions, the transitions and the write rules:
 
 | # | Bundle | Subject | Findings | Status | Session | Notes |
 |---:|---|---|---:|---|---|---|
-| 0025 | [0025-staged-ignored-files-live-parent-root-bundles](0025-staged-ignored-files-live-parent-root-bundles/) | `staged-ignored-files/live/` holds two bundles no lookup can reach | 1 | `unresolved` | [`run-index-design-20260901-000000`](../../../sessions/run-index-design-20260901-000000/) | — |
+| 0025 | [0025-staged-ignored-files-live-parent-root-bundles](0025-staged-ignored-files-live-parent-root-bundles/) | `staged-ignored-files/live/` holds two bundles no lookup can reach | 1 | `unresolved` | [`pre-image-capture-conformance-20260903-194532`](../../../sessions/pre-image-capture-conformance-20260903-194532/) | — |

@@ -32,4 +32,4 @@ says so. Full definitions, the transitions and the write rules:
 
 | # | Bundle | Subject | Findings | Status | Session | Notes |
 |---:|---|---|---:|---|---|---|
-| 0013 | [0013-office-stability-checklists-are-evidence-bundles](0013-office-stability-checklists-are-evidence-bundles/) | `office-stability/checklists/` does not hold checklists | 1 | `unresolved` | [`run-index-design-20260901-000000`](../../../sessions/run-index-design-20260901-000000/) | — |
+| 0013 | [0013-office-stability-checklists-are-evidence-bundles](0013-office-stability-checklists-are-evidence-bundles/) | `office-stability/checklists/` does not hold checklists | 1 | `unresolved` | [`pre-image-capture-conformance-20260903-194532`](../../../sessions/pre-image-capture-conformance-20260903-194532/) | — |

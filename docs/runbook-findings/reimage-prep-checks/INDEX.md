@@ -32,4 +32,4 @@ says so. Full definitions, the transitions and the write rules:
 
 | # | Bundle | Subject | Findings | Status | Session | Notes |
 |---:|---|---|---:|---|---|---|
-| 0019 | [0019-reimage-checklist-repo-audit-manifest-header](0019-reimage-checklist-repo-audit-manifest-header/) | Phase 6B records FAIL against a correct repository-audit manifest | 1 | `resolved` | [`run-index-design-20260901-000000`](../../../sessions/run-index-design-20260901-000000/) | closed by Revision 129 |
+| 0019 | [0019-reimage-checklist-repo-audit-manifest-header](0019-reimage-checklist-repo-audit-manifest-header/) | Phase 6B records FAIL against a correct repository-audit manifest | 1 | `resolved` | [`pre-image-capture-conformance-20260903-194532`](../../../sessions/pre-image-capture-conformance-20260903-194532/) | closed by Revision 129 |

@@ -1,5 +1,7 @@
 # Apply Manifest
 
+**Revision 178** — supersedes Revision 177 and earlier. Four pre-image runbook findings get a session of their own, and that session's only output is a reading.
+
 **Revision 177** — supersedes Revision 176 and earlier. A session closes, its five open findings go back to unowned, and the trailer turns out not to enumerate a session's commits.
 
 **Revision 176** — supersedes Revision 175 and earlier. A commit message the owner asks for is short, and is written so the shell cannot break it.
@@ -477,6 +479,68 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
 
 ---
+
+## Revision 178 — four pre-image findings get a session, which decides none of them
+
+`pre-image-capture-conformance-20260903-194532` is created and `owned`, holding
+findings `0007`, `0013`, `0019` and `0025`. All four were recorded by session
+`01KcZvrKMgfenhrT9DvxW9Jk` and owned by `run-index-design-20260901-000000`; the
+owner reassigns them here. That session keeps its other ten and keeps item 4.
+
+The bundle carries the four files `owned` owes and nothing else: the tag,
+`prompt.md`, `metadata.md`, and `findings-manifest.md`. No handoff, no summary,
+no `decisions.md` anywhere — the session was told to read and report, and a
+decision recorded before the owner takes one is the failure `in progress` exists
+to prevent.
+
+### What moved, and what deliberately did not
+
+The four bundles' INDEX rows change in the Session column only. Their statuses,
+Notes and `STATUS-` tags are untouched: `0013` and `0025` stay `unresolved`,
+`0007` and `0019` stay `resolved`. Reassigning a finding is not progress on it.
+
+`run-index-design-20260901-000000` loses those four rows from its
+`findings-manifest.md` and its `docs/sessions/INDEX.md` count goes 14 to 10.
+Its state stays `handoff` and item 4 stays with it. That matters for `0013`,
+whose own disposition folds the fix into item 4's conversion of
+`office-stability/` and warns against an interim rename: this bundle now owns the
+finding and does not own the work that resolves it. Both rows say so.
+
+### The reading is not in this revision
+
+The session's report — what the four findings say, where they touch item 4, and
+where the tree has moved past them — was delivered in conversation and is on no
+tracked file. Four things it turned up are worth naming here so they are not
+re-derived, and none of them is decided:
+
+- `artifact-migration-2026-09-02.md` records **E5 as CLOSED** by Revision 138,
+  with `office-stability/checklists/` converted and removed. `0013`'s header still
+  says the directory move is owed and cites E5 as the reason. One of the two is
+  wrong, and settling it needs a read of the volume this session did not have.
+- `0013`'s body names `bin/office-stability-checklist.sh` and its
+  `record_check WARN "Manual: …"` rows. That script is
+  `bin/assess-office-stability.sh` since Revision 137, and the rows are
+  `signoff_row` calls since the same pass. `sign-off-consolidation.md` §4 and §6
+  and `evidence-conformance.md` still describe the old shape.
+- `0025` says the fix belongs in `.internal/git/stage-ignored-files.sh`, which
+  keys every destination on `basename` of a git top-level and cannot emit a
+  non-repository label. `.internal/git/stage-selected-patterns.py` can, and does:
+  `backup_roots` is scopes plus git roots, and `make_label_map` labels each by
+  `root.name`.
+- `0009`'s own citation names `reimaged-system/boundaries/runs/…/checklist.md`.
+  Revision 156 renamed that directory to `bookends/` and the record to
+  `bookend.md`, so the finding about renames breaking citations now contains one.
+
+### Validation
+
+Documentation lint: **0 MISSING, 0 ANCHOR BROKEN** — the `OK` total is not quoted,
+per `0026`. Runbook structure **213 PASS / 5 WARN / 25 FAIL** across 27 documents,
+unchanged. Script portability **0 WARN / 0 FAIL**, unchanged. No script changed
+and no runbook changed; every write here is a record write under `docs/`.
+Composed in a scratch copy outside the connected folders, refreshed from the live
+tree at `8f1ce13` immediately before the patch was derived; header re-read at
+apply time, 177 was highest. All three validators ran on Linux with Bash 5.1 —
+`/bin/bash -n` against macOS Bash 3.2 remains owed for Revisions 116 onward.
 
 ## Revision 177 — a session closes, and its open findings do not go with it
 
