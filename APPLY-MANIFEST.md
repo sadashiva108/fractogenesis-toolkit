@@ -1,5 +1,7 @@
 # Apply Manifest
 
+**Revision 188** — supersedes Revision 187 and earlier. `0029` is decided but for finding 8: a rule now lives where its kind lives, the `docs/` directory list gets one home, and bundle ordering stays prose because that is what a second session reached for when it had the choice.
+
 **Revision 187** — supersedes Revision 186 and earlier. The two office-stability lineages are defined where a reader looks for them, and `0013` closes.
 
 **Revision 186** — supersedes Revision 185 and earlier. `0029` gains an eighth finding: the composition rule says where a change is composed and never says when it is handed over, and the session that wrote it applied two patches unasked.
@@ -497,6 +499,133 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
 
 ---
+
+## Revision 188 — `0029` decided, except the one about being told twice
+
+Four decisions across seven of eight findings. `decisions.md` holds the
+reasoning; this entry names what a reader of the tree would not otherwise see.
+
+### One decision answers four findings
+
+Findings 1, 2, 5 and 6 read as four defects — rules stranded in `docs/legend.md`,
+rules written twice in different prose, nothing naming the legend as normative,
+and a vocabulary split across two files. They are one defect: **nothing said
+which file a new rule belongs in**, so every rule landed wherever its author was
+editing.
+
+**Decision 5.1** draws the line. `docs/legend.md` holds VOCABULARY — what a word
+means. `.github/copilot-instructions.md` §§4b–4d hold PROCEDURE — what a session
+must do. Each points at the other, and the legend is named in §4 as required
+reading. `0027` decided that a fact has one home; this extends the reasoning to
+rules, and the extension is not automatic — a fact's home is wherever it is
+generated, while a rule's home has to be chosen, because a rule is not generated
+anywhere.
+
+The strongest argument for the line is that the tree drew it first. §4c's
+supersession section, written by a different session in Revision 184, opens by
+pointing at the legend for the case the legend owns and then states only
+procedure. Nobody instructed that. It is the shape the material takes when
+someone writes it carefully.
+
+Five sections leave the legend for §§4b–4d; it goes from nine sections to five.
+One of them, *Where a write is composed*, was already duplicated into §3 by
+Revision 182 — finding 2, authored two days ago by this session.
+
+**Finding 6 closes as no change needed.** State names in the legend and state
+requirements in §4d is exactly what 5.1 prescribes. The finding was right that a
+reader of either file alone is under-served; the answer is the pointer and the
+required reading, not a merge. It is recorded as decided rather than dropped
+because deciding it is what showed the line was already half-drawn.
+
+### The hole an unrelated revision found
+
+**Decision 5.1 as first drafted said flatly that the legend holds vocabulary, and
+that is too wide.** Revision 187 added *evidence run* and *assessment run* to
+`capture-office-stability.md`'s Terminology section — an hour after the decision
+was made and before it was written down. Read without a scope, 5.1 would have
+called that the wrong file and pulled every defined term in the repository into
+the legend.
+
+So 5.1 now carries what it does not reach. The test is what a term is ABOUT:
+`superseded` describes how this repository tracks work and would mean the same in
+any project that adopted the structure; *assessment run* describes what a Mac's
+Office installation did and means nothing outside that phase. The legend is for
+the first kind; a runbook's Terminology section keeps the second.
+
+That paragraph briefly stated how many runbooks carry a Terminology section. The
+number was removed before it was written — a count in prose that nothing
+maintains is the defect decision 3.1 is about, and putting one into the file that
+decides against them would be a poor advertisement.
+
+### The map has one home
+
+**Decision 3.1.** Three files enumerate the `docs/` directories. §4b says six
+where there are seven; `docs/architecture/findings-and-sessions.md` §2 names two
+findings trees where there are three; `docs/INDEX.md` says *"All seven
+directories"* and is right — because it sits directly under a seven-row table.
+
+The wrong count is a symptom and the list is the copy. §4b has been wrong after
+four of the last six revisions that touched `docs/`. `docs/INDEX.md` owns the
+enumeration, the other two point at it, and `docs/INDEX.md` gets its own
+two-versus-three drift fixed as the price of becoming the single home.
+
+The rejected alternative worth recording is the lint: keep all three lists and
+check them against `ls docs/`. **Adding a check to license a copy, while `0032`
+concurrently documents a check that passed on a defect it did not examine, would
+be the wrong lesson learned twice.**
+
+### Ordering is prose, and the evidence overruled the finding
+
+**Decision 7.1.** Finding 7 sketched three shapes and preferred a `Decide after:`
+header field. It is decided against, on evidence gathered after it was written.
+
+`Decide after:` appears in exactly one place in this repository — `0029`'s own
+header, where it was invented to record that the vocabulary lacked it. `0031` hit
+the same need days later and wrote prose inside `Relates to` instead. Two
+sessions, free to choose; the one that was not inventing the notation did not use
+it.
+
+What ordering lacked was never expressiveness — `Relates to` carries a sentence
+and obliges nobody. It lacked VISIBILITY: an owner picking work off an index sees
+a status, not a header. So §4c will require the bundle's INDEX.md Notes cell to
+say it, which is where that kind of qualifier already lives.
+
+Stated cost: nothing enforces the order. That was equally true of the header
+field, so this declines to invent a guarantee rather than losing one.
+
+### Finding 8 is left open deliberately
+
+The composition rule says where a change is composed and never says when it is
+handed over. It is undecided, so **`resolving` cannot begin** and the bundle
+stays `in progress`. One of its three shapes — a fourth write category — is
+already rejected on sight under `0028` decision 6.1.
+
+Every rule 5.1, 5.2, 3.1 and 7.1 imply is a toolkit write and none of it has been
+made. This revision writes `docs/` only.
+
+### Files
+
+- `docs/instruction-set-findings/0029-.../decisions.md` — new, four decisions
+- `docs/instruction-set-findings/0029-.../STATUS-unresolved` → `STATUS-in-progress`
+- `docs/instruction-set-findings/0029-.../findings.md` — eight status rows
+- `docs/instruction-set-findings/INDEX.md`, the session's `findings-manifest.md` —
+  `0029` row `in progress`
+
+### Validators
+
+Run in the scratch copy against this change alone. Doc paths **774 OK / 0
+MISSING / 1108 ANCHOR OK / 0 ANCHOR BROKEN**; runbook structure **213 PASS / 5
+WARN / 25 FAIL**; portability **83 clean / 0 WARN / 0 FAIL**; findings counts
+**40 OK / 0 FAIL**. All unchanged from baseline; no script changed.
+
+Table shape checked by hand — header pipe count against every data row across
+the three findings indexes, the sessions index and every `findings-manifest.md`,
+every row matching. That check is `0032` finding 2's subject and exists as no
+script; `verify-doc-paths.sh` passes on a malformed row because links and shape
+are different properties.
+
+Linux VM (Bash 5.1, GNU coreutils) on the owner's Mac, not macOS. `/bin/bash -n`
+against stock Bash 3.2 remains owed for Revisions 116 onward.
 
 ## Revision 187 — the two office-stability lineages are named in the glossary, and `0013` closes
 
