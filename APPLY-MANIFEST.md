@@ -1,5 +1,7 @@
 # Apply Manifest
 
+**Revision 179** — supersedes Revision 178 and earlier. `0027` is decided: ten decisions across seven findings, a sixth findings status, and the nine per-runbook indexes become one.
+
 **Revision 178** — supersedes Revision 177 and earlier. Four pre-image runbook findings get a session of their own, and that session's only output is a reading.
 
 **Revision 177** — supersedes Revision 176 and earlier. A session closes, its five open findings go back to unowned, and the trailer turns out not to enumerate a session's commits.
@@ -479,6 +481,92 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
 
 ---
+
+## Revision 179 — `0027` is decided, and the vocabulary grows a sixth status
+
+Three changes in one sitting, recorded together because they were made together
+and the second and third came out of deciding the first.
+
+Nothing is fixed here. `0027` is `in progress` with all seven findings decided,
+which satisfies the gate to `resolving`; the edits themselves are the next
+revision. **The owner directed this commit** — the standing arrangement is to
+hold until a findings bundle reaches `resolved`, and ten decisions are worth
+landing before they are acted on.
+
+### 1. `0027`, decided
+
+| Decision | |
+|---|---|
+| **1.1** | Recording a findings bundle **takes** an `APPLY-MANIFEST.md` revision. §4c's contradicting sentence is deleted, not reworded — it was true only while `docs/` was gitignored and survived the two revisions that changed that |
+| **2.1** | §4d's required-reading rule binds prompts for sessions that can **still be started**. A `closed` session's prompt is a record of what was given |
+| **3.1** | A fact has one home; everywhere else links to it |
+| **3.2** | …revised: a **derived fact may be displayed if something catches it drifting**. The count was never the defect — an unchecked hand-typed copy was |
+| **3.3** | A session's row carries `Bundles` **and** `Findings` as separate columns. `restore-apps-outstanding` reads 4 bundles and 30 findings; `run-index-design` reads 10 and 10 |
+| **5.1** | A findings bundle migrated from an already-closed record owes no `decisions.md`. One sentence, not ten stub files |
+| **6.1** | Four session states. `unclaimed` is dropped — a session creates its own bundle, so nothing waits to be owned |
+| **6.2** | …revised: the three terminal states differ by **what happens to the findings** |
+| **7.1** | Any `not recoverable` names the searches that came back empty |
+
+Three of the ten revise an earlier one. 3.1 was too broad and would have removed
+a count the owner wanted visible; 6.1 was too narrow and failed on its first real
+case within the hour. Both were corrected in place with the reason, which is what
+`decisions.md` is for — the reasoning survives, where a chat log would not have.
+
+**Finding 3 was worse than it was filed as.** Recorded as *"miscounts a manifest
+it links to"* — a wrong number. It is a wrong **unit** under a right-sounding
+header: `docs/sessions/INDEX.md` has a `Findings` column holding a count of
+bundles. A wrong number gets noticed; a wrong unit gets believed, and the check
+3.2 requires would never have caught it, because `4` was an accurate count of the
+wrong thing.
+
+### 2. A sixth findings status: `withdrawn`
+
+`superseded` names a replacement. A dropped reading often has none — the code was
+rewritten, the question was answered elsewhere, the machine is gone. `withdrawn`
+says the trail ends here and gives the reason.
+
+It gives the state its job on both sides. A **withdrawn session** must mark every
+finding it owned `withdrawn` or `superseded`; a **closed session** leaves its
+unfinished findings `resolved` or disowned back to `unresolved`, still live and
+simply unowned. Whether the findings survive the session is the whole difference
+between the two, and before this status there was nowhere to put a reading that
+was simply dead.
+
+### 3. Nine per-runbook indexes become one
+
+Owner-directed. `docs/runbook-findings/INDEX.md` replaces the index in each
+runbook directory: one table with a `Runbook` column, sorted by finding number,
+**15 bundles · 24 findings across 9 runbooks**. The directories stay; only the
+index files go.
+
+It removes eight copies of the status key, which is the largest instance of
+`0029` finding 2 — one rule written many times with nothing keeping it in step —
+without touching that finding. Three copies remain, one per tree.
+
+It also makes something visible that nine separate pages hid: **seven of the
+fifteen runbook bundles belong to `restore-repos`**, which is the phase about to
+be walked.
+
+`APPLY-MANIFEST.md` cites two of the removed paths and is not retro-edited, so
+those citations name files that have moved — the standing treatment, and the new
+index is the single place they resolve to.
+
+### 4. `0029` gains finding 7
+
+The vocabulary can say two findings bundles relate; it cannot say one must be
+decided before another. `0029` must wait for `0027` and `0028`, and a
+`Decide after:` line now heads it — used provisionally, and the finding says so,
+because whether it becomes vocabulary is part of its own decision.
+
+### Validation
+
+Composed in a scratch copy outside the connected folder and applied as a patch.
+Validators run there, against this change alone: **0 MISSING / 0 ANCHOR BROKEN**;
+structure **213 PASS / 5 WARN / 25 FAIL** across 27 documents; portability
+**81 clean / 0 WARN / 0 FAIL**. Every link in the new index resolves.
+
+No script changed. Linux, Bash 5.x; `/bin/bash -n` against macOS Bash 3.2 remains
+owed for Revisions 116 through 179.
 
 ## Revision 178 — four pre-image findings get a session, which decides none of them
 

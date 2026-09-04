@@ -7,6 +7,11 @@ writing Revisions 166 through 173, and deferred in prose at the time.
 **Relates to:** `0027` — that bundle read the instruction set for conformance and
 found seven defects. This one collects what this session left owed. They overlap
 at one point only, named in finding 2.
+**Decide after:** `0027`, then `0028`. Findings 1, 2, 5 and 6 below are four
+symptoms of one question `0027` finding 1 owns — *where is a rule allowed to
+live* — and deciding them first would decide against a surface about to move.
+`0028`'s resolution adds to finding 1's list rather than changing it. Finding 7
+is about this line existing at all.
 **Severity:** findings 1 and 5 are high. A session that reads only the
 instruction set does not learn five of the rules it is expected to follow.
 **Scope:** instruction-set. The fix lands in `.github/copilot-instructions.md`
@@ -34,6 +39,7 @@ work, since every fix is a toolkit write.
 | 4 | The architecture record describes two findings trees; there are three | — | `unresolved` |
 | 5 | Nothing tells a session that `docs/legend.md` is normative | — | `unresolved` |
 | 6 | State names and state requirements live in different files | — | `unresolved` |
+| 7 | The vocabulary cannot say that one bundle must be decided before another | — | `unresolved` |
 
 ---
 
@@ -114,6 +120,41 @@ So a session reading §4d finds out what `handoff` requires without finding out
 what `handoff` means, and a session reading `legend.md` finds the reverse. Both
 are correct; neither is sufficient. Smallest of the six, and the one most likely
 to be swept up by whatever answers finding 5.
+
+## 7 — the vocabulary cannot express decision order
+
+`Relates to` was added in Revision 173 and says that two bundles bear on each
+other. It has no direction and no ordering, and the first three findings bundles
+to use it needed both: `0029` must be decided after `0027`, because four of its
+findings are downstream of `0027` finding 1, and after `0028`, whose resolution
+adds to `0029` finding 1's list.
+
+Nothing in the status vocabulary carries that. A bundle at `unresolved` looks
+equally ready whether it is genuinely open or waiting on another bundle's
+decision, and an owner picking work off an index cannot tell the two apart.
+Supersession, added in the same revision, covers the case where a bundle is
+overtaken *after* decisions are taken against it — the reverse situation, and no
+help here.
+
+**The `Decide after:` line at the head of this bundle is used provisionally.** It
+is not in `docs/legend.md`, nothing else recognises it, and whether it becomes
+vocabulary is part of this finding's own decision. Using an undefined pointer to
+record that a pointer is undefined is uncomfortable, and the alternative — saying
+nothing until the vocabulary exists — would have left the ordering in
+conversation, which is what finding 5 is about.
+
+Three shapes, none chosen:
+
+- **A `Decide after:` header line**, as used here. Explicit, and a session picking
+  the bundle up sees immediately that it should not start.
+- **Nothing in the bundle; the owner sequences the work.** Honest, and it puts the
+  knowledge back where finding 5 says it should not be.
+- **Carry it in the `Relates to` clause** — *"decide that first, four of these are
+  downstream of its finding 1"*. No new vocabulary, weaker guarantee, and it
+  overloads a pointer that deliberately obliges nobody.
+
+Whichever is chosen, it should be decided with finding 5: both are about what a
+session can learn from the tree without being told.
 
 ---
 

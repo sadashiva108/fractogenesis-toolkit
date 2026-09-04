@@ -31,13 +31,13 @@ arriving at this bundle should not mistake the list for a verdict on the design.
 
 | # | Finding | Status |
 |---|---|---|
-| 1 | §4b and §4c contradict each other on whether a findings bundle takes a manifest revision | `unresolved` |
-| 2 | Four of five `prompt.md` files violate §4d's "always" rule | `unresolved` |
-| 3 | `docs/sessions/INDEX.md` miscounts a manifest it links to | `unresolved` — count corrected in Revision 167; the rule that let them drift is not |
-| 4 | `docs/INDEX.md` says `ideas/` is empty; it is not | `unresolved` |
-| 5 | Every `resolved` bundle is missing `decisions.md` | `unresolved` |
-| 6 | The two session-state diagrams disagree | `unresolved` |
-| 7 | Two session identifiers recorded as unrecoverable are recoverable | `unresolved` — the two instances are corrected in Revision 167; the general property is not |
+| 1 | §4b and §4c contradict each other on whether a findings bundle takes a manifest revision | `in progress` — **decided**, see `decisions.md` 1.1 |
+| 2 | Four of five `prompt.md` files violate §4d's "always" rule | `in progress` — **decided**, see `decisions.md` 2.1 |
+| 3 | `docs/sessions/INDEX.md` miscounts a manifest it links to | `in progress` — **decided**, see `decisions.md` 3.1 |
+| 4 | `docs/INDEX.md` says `ideas/` is empty; it is not | `in progress` — **decided**, see `decisions.md` 3.1 |
+| 5 | Every `resolved` bundle is missing `decisions.md` | `in progress` — **decided**, see `decisions.md` 5.1 |
+| 6 | The two session-state diagrams disagree | `in progress` — **decided**, see `decisions.md` 6.1 |
+| 7 | Two session identifiers recorded as unrecoverable are recoverable | `in progress` — **decided**, see `decisions.md` 7.1 |
 
 ### 1 — §4b and §4c contradict each other, eighteen lines apart
 

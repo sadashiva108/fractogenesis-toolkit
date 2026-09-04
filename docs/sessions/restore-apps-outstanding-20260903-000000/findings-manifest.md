@@ -9,9 +9,9 @@ Statuses are defined in [`docs/legend.md`](../../legend.md).
 | # | Bundle | Kind | Subject | Findings | Status |
 |---:|---|---|---|---:|---|
 | 0001 | `docs/runbook-findings/restore-apps/0001-restore-repos-evidence/` | runbook | Phase 11B evidence review — what `restore-repos` actually left behind | 10 | `in progress` |
-| 0027 | `docs/cross-cutting-findings/0027-findings-architecture-conformance/` | cross-cutting | The findings-and-sessions architecture disagrees with itself and with the tree | 7 | `unresolved` |
+| 0027 | `docs/cross-cutting-findings/0027-findings-architecture-conformance/` | cross-cutting | The findings-and-sessions architecture disagrees with itself and with the tree | 7 | `in progress` |
 | 0028 | `docs/cross-cutting-findings/0028-sessions-write-into-the-tree-the-owner-commits-from/` | cross-cutting | Sessions write into the tree the owner commits from | 6 | `unresolved` |
-| 0029 | `docs/instruction-set-findings/0029-the-instruction-set-lags-the-rules-it-governs/` | instruction-set | The instruction set lags the rules it governs | 6 | `unresolved` |
+| 0029 | `docs/instruction-set-findings/0029-the-instruction-set-lags-the-rules-it-governs/` | instruction-set | The instruction set lags the rules it governs | 7 | `unresolved` |
 
 `0027` and `0028` were **recorded** by `session_019yzcjm2QneJ5ymVEQDi1bu` under
 `phase-11b-hydrate-and-bookends-20260903-141500`, which was told not to address
