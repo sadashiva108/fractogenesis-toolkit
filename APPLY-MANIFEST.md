@@ -1,4 +1,13 @@
 # Apply Manifest
+**Revision 199** — Brought back the original findings bundles:
+  0026-verify-doc-paths-counts-gitignored-docs
+  0027-findings-architecture-conformance
+  0028-sessions-write-into-the-tree-the-owner-commits-from
+  0029-the-instruction-set-lags-the-rules-it-governs
+  0031-superseding-a-bundle-whose-session-is-gone
+  0032-index-and-manifest-tables-have-a-shape-nothing-checks
+  
+  Under their oringal directories for reference purposes.
 
 **Revision 198** — supersedes Revision 197 and earlier. The status model is rebuilt so a finding carries the status and the bundle derives it, `.github/copilot-instructions.md` splits into a session-management set and a toolkit set, a fourth findings tree takes six bundles that were filed apart while being one subject, and those six are reopened and parked for the re-evaluation.
 

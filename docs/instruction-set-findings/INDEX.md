@@ -31,9 +31,6 @@ Statuses and states are defined in [`docs/legend.md`](../legend.md).
 
 | # | Bundle | Subject | Findings | Status | Session | Notes |
 |---:|---|---|---:|---|---|---|
-
-**0 bundles · 0 findings.** The tree's three original bundles — `0029`, `0031`
-and `0032` — moved to `docs/session-management-findings/` on 2026-09-06, because
-all three were about sessions and bundles rather than the workflow. The tree is
-kept for what it was named for: findings about the toolkit's own instruction set,
-which had nowhere else to go and still does not.
+| 0029 | [0029-the-instruction-set-lags-the-rules-it-governs](0029-the-instruction-set-lags-the-rules-it-governs/) | The instruction set lags the rules it governs | 8 | `in progress` | [`restore-apps-outstanding-20260903-000000`](../sessions/restore-apps-outstanding-20260903-000000/) | Every rule written into `docs/legend.md` since Revision 169 is absent from or duplicated in §§4b–4d |
+| 0031 | [0031-superseding-a-bundle-whose-session-is-gone](0031-superseding-a-bundle-whose-session-is-gone/) | Superseding a bundle whose session is gone is instructed but never defined | 4 | `resolved` | [`pre-image-capture-conformance-20260903-194532`](../sessions/pre-image-capture-conformance-20260903-194532/) | closed by this revision; §4c gains the procedure |
+| 0032 | [0032-index-and-manifest-tables-have-a-shape-nothing-checks](0032-index-and-manifest-tables-have-a-shape-nothing-checks/) | The index and manifest tables have a shape nothing checks | 4 | `unresolved` | [`pre-image-capture-conformance-20260903-194532`](../sessions/pre-image-capture-conformance-20260903-194532/) | tree placement is its own finding 3; finding 4 contributed by `restore-apps-outstanding-20260903-000000` |
