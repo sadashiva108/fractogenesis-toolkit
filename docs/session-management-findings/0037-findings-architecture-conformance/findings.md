@@ -34,13 +34,13 @@ arriving at this bundle should not mistake the list for a verdict on the design.
 
 | # | Finding | Status |
 |---:|---|---|
-| F1 | §4b and §4c contradict each other on whether a findings bundle takes a manifest revision | `reopened` |
-| F2 | Four of five `prompt.md` files violate §4d's "always" rule | `reopened` |
-| F3 | `docs/sessions/INDEX.md` miscounts a manifest it links to | `reopened` |
-| F4 | `docs/INDEX.md` says `ideas/` is empty; it is not | `reopened` |
-| F5 | Every `reopened` bundle is missing `decisions.md` | `reopened` |
-| F6 | The two session-state diagrams disagree | `reopened` |
-| F7 | Two session identifiers recorded as unrecoverable are recoverable | `reopened` |
+| F1 | §4b and §4c contradict each other on whether a findings bundle takes a manifest revision | `framing` |
+| F2 | Four of five `prompt.md` files violate §4d's "always" rule | `framing` |
+| F3 | `docs/sessions/INDEX.md` miscounts a manifest it links to | `framing` |
+| F4 | `docs/INDEX.md` says `ideas/` is empty; it is not | `framing` |
+| F5 | Every `reopened` bundle is missing `decisions.md` | `framing` |
+| F6 | The two session-state diagrams disagree | `framing` |
+| F7 | Two session identifiers recorded as unrecoverable are recoverable | `framing` |
 
 ### F1 — §4b and §4c contradict each other, eighteen lines apart
 

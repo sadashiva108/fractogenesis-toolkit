@@ -50,4 +50,7 @@ touches evidence, so no evidence write is possible from here even by mistake.
 
 ## Contributions
 
-None yet. This session owns no findings bundle and is `available`.
+**None.** This section lists work this session contributed to bundles it does not
+own; section 11 is explicit that ownership is not a contribution. Everything this
+session has written so far is to bundles in its own
+`findings-manifest.md`, or to `docs/sessions/` and `APPLY-MANIFEST.md`.

@@ -36,14 +36,14 @@ work, since every fix is a toolkit write.
 
 | # | Finding | Status |
 |---:|---|---|
-| F1 | Five rules exist only in `docs/legend.md` and not in the instruction set | `decided` |
-| F2 | Two rules exist in both, in different words | `decided` |
-| F3 | §4b's directory list is now wrong | `decided` |
-| F4 | The architecture record describes two findings trees; there are three | `decided` |
-| F5 | Nothing tells a session that `docs/legend.md` is normative | `decided` |
-| F6 | State names and state requirements live in different files | `decided` |
-| F7 | The vocabulary cannot say that one bundle must be decided before another | `decided` |
-| F8 | The rule says where a change is composed, not when it is handed over | `un-started` |
+| F1 | Five rules exist only in `docs/legend.md` and not in the instruction set | `framing` |
+| F2 | Two rules exist in both, in different words | `framing` |
+| F3 | §4b's directory list is now wrong | `framing` |
+| F4 | The architecture record describes two findings trees; there are three | `framing` |
+| F5 | Nothing tells a session that `docs/legend.md` is normative | `framing` |
+| F6 | State names and state requirements live in different files | `framing` |
+| F7 | The vocabulary cannot say that one bundle must be decided before another | `framing` |
+| F8 | The rule says where a change is composed, not when it is handed over | `framing` |
 
 ---
 

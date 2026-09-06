@@ -11,10 +11,10 @@
 
 | # | Finding | Status |
 |---:|---|---|
-| F1 | §4d instructs a session to mark bundles `superseded`; §4c never defines what that means or requires | `reopened` |
-| F2 | Both existing accounts assume the superseding party owns the bundle. §4d itself creates the case where nobody does | `reopened` |
-| F3 | Nothing states what a supersession must **not** touch, and all three prohibitions are load-bearing | `reopened` |
-| F4 | The form that carries the pointer now exists in the tree and is written down nowhere | `reopened` |
+| F1 | §4d instructs a session to mark bundles `superseded`; §4c never defines what that means or requires | `framing` |
+| F2 | Both existing accounts assume the superseding party owns the bundle. §4d itself creates the case where nobody does | `framing` |
+| F3 | Nothing states what a supersession must **not** touch, and all three prohibitions are load-bearing | `framing` |
+| F4 | The form that carries the pointer now exists in the tree and is written down nowhere | `framing` |
 
 ---
 

@@ -36,12 +36,12 @@ and that is not what was found.
 
 | # | Finding | Status |
 |---:|---|---|
-| F1 | Two sessions' uncommitted work interleaves in shared files, so neither can be committed alone | `reopened` |
-| F2 | A revision's claimed validator baselines are measured on a tree containing another session's work | `reopened` |
-| F3 | A session's work has no diff boundary, so the owner cannot review it as a unit | `reopened` |
-| F4 | Backing out one session's change is surgical, because `git checkout` would take the other's too | `reopened` |
-| F5 | A session can amend a revision the owner has already committed | `reopened` |
-| F6 | The write discipline does not distinguish the write kinds `docs/legend.md` now names | `reopened` |
+| F1 | Two sessions' uncommitted work interleaves in shared files, so neither can be committed alone | `framing` |
+| F2 | A revision's claimed validator baselines are measured on a tree containing another session's work | `framing` |
+| F3 | A session's work has no diff boundary, so the owner cannot review it as a unit | `framing` |
+| F4 | Backing out one session's change is surgical, because `git checkout` would take the other's too | `framing` |
+| F5 | A session can amend a revision the owner has already committed | `framing` |
+| F6 | The write discipline does not distinguish the write kinds `docs/legend.md` now names | `framing` |
 
 Findings 1 and 2 are the high ones. The revision-number collision that prompted
 the day's investigation is **not** a finding here — it is recorded in

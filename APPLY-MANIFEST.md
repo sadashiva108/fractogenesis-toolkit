@@ -1,4 +1,8 @@
 # Apply Manifest
+**Revision 208** — supersedes Revision 207 and earlier. `0036` through `0041` are assigned to `session-management-re-evaluation-20260906-110105` and read on assignment: six bundles `analyzing`, thirty findings `framing`, the session `active`. `0041` finding 4 is sharpened — the mount refuses `unlink` for modification as well as deletion, so the warning it produces is not diagnostic.
+
+**Revision 207** — supersedes Revision 206 and earlier. The session bundle's `prompt.md` is refreshed to the conformant prompt as it now stands, and the rule that a prompt tracks rather than freezes is stated in the prompt itself, along with three rules that existed only in conversation or inside a finding: ask for delete permission before applying, expect the trailing-whitespace warning, and put no placeholders in a record.
+
 **Revision 206** — supersedes Revision 205 and earlier. A session bundle for the re-evaluation of `docs/session-management-findings/`, created `available` and owning nothing; its `prompt.md` carries the conformant prompt, the session prompt and the amendments issued in flight, and its `metadata.md` names both environments it runs in and the macOS Bash 3.2 debt it extends rather than pays.
 
 **Revision 205** — supersedes Revision 204 and earlier. `restore-apps-outstanding-20260903-000000` closes; `0001` is released to `unclaimed` undecided rather than carried into a stopped session, and `closed` is redefined to admit every terminal status rather than `resolved` alone.
@@ -542,6 +546,152 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
 
 ---
+
+## Revision 208 — Six bundles assigned, and read
+
+`restore-apps-outstanding-20260903-000000` closed on 2026-09-06 leaving `0036`
+through `0041` `unclaimed`. The owner assigns them to
+`session-management-re-evaluation-20260906-110105`.
+
+### The two transitions, in one sitting
+
+Assignment set each bundle to `un-started` with every finding in it `un-started`,
+and the session from `available` to `active`. **The first reading is the
+transition**, and it was performed the same sitting, so each bundle is
+`STATUS-analyzing` with all of its findings `framing`. The intermediate state was
+real and brief; it is named here rather than left to be inferred from a tag that
+no longer exists.
+
+`0042-no-check-reads-the-rendered-page` sits in the same tree and **was not
+assigned.** It stays `unclaimed`, closed to every session, and its finding 3 is a
+dependency decision that is the owner's to take.
+
+### Thirty findings, including seven that were `decided`
+
+`0039` carried seven `decided` rows and one `un-started`. All eight are now
+`framing`, **on the owner's instruction to re-evaluate from the ground up.**
+That is a deliberate reset and not a correction: `decisions.md` retains every one
+of those decisions with its rejected alternatives, and nothing in it was touched.
+It is recorded here because a status moving backwards is otherwise indistinguishable
+from a mistake.
+
+`0037` D2 is **rejected** by the owner in the same sitting — noted here because
+it governs the retrofit doctrine now in the conformant prompt, and its Outcome
+cell is owed a change when `0037` is worked.
+
+### `0041` finding 4 — the refusal is not specific to deletion
+
+The finding reads *"any patch containing a deletion under-applies"*, and calls it
+a mount permission meeting git error handling rather than anything about renames.
+Both halves hold. What it under-states is the reach.
+
+Three applies in Revisions 206 and 207 deleted and renamed nothing, and every one
+reported `unable to unlink ... Operation not permitted`, exited 0, and landed
+correctly — verified by `cmp` on each touched path. `git apply` modifies a file
+by writing a replacement and unlinking the original, so the refusal fires on
+plain modification too; the difference is that a modification has a fallback and
+a deletion does not.
+
+**The consequence is the detection rule.** *Watch for the warning* does not work,
+because the warning appears on patches that applied perfectly — and `git status`
+emits it for `.git/index.lock` with no patch at all. Only comparing the two trees
+separates a dropped deletion from a clean apply.
+
+This revision is the first to request delete permission for the connected folder
+**before** applying, rather than after an unlink failed. Six `STATUS-` tags and
+one `STATE-` tag change here, and every one is a delete plus a create.
+
+### Files
+
+Six `STATUS-unclaimed` tags become `STATUS-analyzing`; `STATE-available` becomes
+`STATE-active`; thirty finding rows move to `framing`;
+`docs/session-management-findings/INDEX.md` gains the session in six Session
+cells and a corrected footer; `docs/sessions/INDEX.md` carries the session's
+counts; `findings-manifest.md` is created; `metadata.md`'s Contributions section
+records that ownership is not a contribution.
+
+### Validators
+
+| Checker | Result |
+|---|---|
+| `verify-findings-headers.sh` | 0 FAIL |
+| `verify-findings-structure.sh` | 0 FAIL — tags and index rows agree |
+| `verify-findings-counts.sh` | 52 OK, 0 FAIL — 50 before; the session's two new counts |
+| `verify-doc-paths.sh --all` | 0 MISSING, 0 ANCHOR BROKEN |
+| `verify-script-portability.sh` | 0 WARN, 0 FAIL |
+| `verify-runbook-structure.sh` | 213 PASS / 5 WARN / 25 FAIL — standing baseline |
+
+Composed in a copy outside the owner's checkout; Linux VM, Bash 5.1.16, GNU
+coreutils. **Not macOS.**
+
+## Revision 207 — A prompt tracks rather than freezes
+
+`0037` D2 is **rejected**. It held that a `closed` or `withdrawn` session's
+`prompt.md` is a record of what was given and is not retro-edited. The owner's
+reading is the opposite: retrofit, so that no session is left following rules the
+tree has moved past, and partial retrofitting is worse than none because it
+teaches the next reader that conformance is optional. **The exception is data
+captured at a point in time that cannot be recreated** — a dated artifact, a
+measurement, a commit hash, a session identifier, what a `metadata.md` recorded
+about a run that has ended. That is evidence and is never rewritten.
+
+A prompt is not evidence. It is what a session is expected to follow.
+
+### What changed here
+
+`docs/sessions/session-management-re-evaluation-20260906-110105/prompt.md` is
+rebuilt from the three source files as they now stand, and its preamble says so
+rather than naming the revision it was created against. Nothing else in the
+bundle is touched.
+
+### Four rules that were living outside the record
+
+Written into the conformant prompt in the same sitting. **All four still owe the
+instruction set**, which is a toolkit write and is gated; they are named here so
+they are not rediscovered a fifth time.
+
+- **Ask for delete permission before applying, not after it fails.** The
+  connected folder refuses `unlink` until the owner grants deletion for it.
+  Nothing in either instruction set, `docs/legend.md`, or the conformant prompt
+  said to ask — every one of them described the symptom. **Every status
+  transition is a delete plus a create**, so it bites every `STATUS-` and
+  `STATE-` change. The grant does not survive a bridge reconnect. That last fact
+  was recorded inside `0041` finding 4, which already assumed you knew to ask.
+- **`git apply` exits 0 whether or not it did what you asked**, and not only on
+  deletions — it modifies a file by writing a replacement and unlinking the
+  original, so the refusal fires on plain modification too. Corrected in
+  Revision 206 and now in the prompt.
+- **The trailing-whitespace warning is required, not a defect.** The header
+  schema needs two trailing spaces, so `git apply` warns on every conformant
+  header. Stripping them breaks the rendering the schema protects.
+- **No placeholders in a record.** A `metadata.md` is read years later by someone
+  with no way to expand `<workspace>`, and an unresolved placeholder is
+  indistinguishable from a fact nobody recorded.
+
+### And one the checkers cannot reach
+
+**Completeness is not conformance.** Every checker answers whether a document is
+well formed; none answers whether it is complete, and opening the page does not
+either, because rendering cannot show content that is not there. This revision's
+own `prompt.md` had silently lost its first eleven lines to
+`{ sed -n '1,11p' file; ...; } > file` — the shell truncates before `sed` opens
+it — and passed all six checkers and a render inspection. The content is now
+verified line-by-line against its three sources: 0 missing of 267, 185 and 119.
+
+### Validators
+
+| Checker | Result |
+|---|---|
+| `verify-findings-headers.sh` | 893 OK, 0 FAIL |
+| `verify-findings-structure.sh` | 51 OK, 0 FAIL |
+| `verify-findings-counts.sh` | 50 OK, 0 FAIL |
+| `verify-doc-paths.sh --all` | 778 OK, 0 MISSING, 1108 anchors, 0 broken |
+| `verify-script-portability.sh` | 85 clean, 0 WARN, 0 FAIL |
+| `verify-runbook-structure.sh` | 213 PASS / 5 WARN / 25 FAIL — standing baseline |
+
+Composed in a copy outside the owner's checkout; Linux VM, Bash 5.1.16, GNU
+coreutils. **Not macOS.** The patch deletes and renames nothing, so no delete
+permission was needed; the apply was verified by `cmp` on every touched path.
 
 ## Revision 206 — A session bundle for the session-management re-evaluation
 

@@ -2,15 +2,15 @@
 
 This session was started on 2026-09-06 from `conformant-prompt.md` and
 `session-management-prompt.md` as they stood **before** that day's revisions, and
-was handed `prompt-amendments-20260906.md` in flight. The three files are
-reproduced below from `/Users/dkittrell/reimage-workspace/session-prompts/` as
-they stand at Revision 205, which is what a cloned session would be given. Where
-the amendments contradict the two prompts, the amendments win; both prompt files
-have since been brought current.
+was handed `prompt-amendments-20260906.md` in flight. Where the amendments
+contradict the two prompts, the amendments win.
 
-Two examples in Part 1 were four-space indented in the source and are fenced here
-as `text`, per the amendments' section 2 and the schema in section 11. Their
-content is unchanged.
+**This copy tracks rather than freezes.** The three files below are reproduced
+from `/Users/dkittrell/reimage-workspace/session-prompts/` as they stand at
+Revision 207, which is what a session cloned today would be given — not as they
+stood when this session began. It is refreshed whenever either prompt changes,
+per *Standing constraints*: retrofit rather than leave half a change behind. The
+exception there covers evidence, and a prompt is not evidence.
 
 ---
 
@@ -18,8 +18,8 @@ content is unchanged.
 
 # Conformant session prompt
 
-**Last updated:** 2026-09-06 11:00 EST  
-**Current as of:** `APPLY-MANIFEST.md` Revision 205
+**Last updated:** 2026-09-06 14:45 EST  
+**Current as of:** `APPLY-MANIFEST.md` Revision 206
 
 If the repository is past that revision, this file may have fallen behind — say so
 rather than following it where it disagrees with `docs/legend.md` or the
@@ -68,6 +68,18 @@ where exposed, the model it was configured for, **the environment it actually ra
 in**, and the date. That environment line matters: this repository targets macOS
 stock Bash 3.2 and you are almost certainly on Linux with Bash 5 and GNU
 coreutils. Name where a check ran; never report a Linux result as verified.
+
+**Every value in it is resolved. No placeholders.** Not `<repo>`, not
+`<workspace>`, not `<EVIDENCE_ROOT>` — the absolute path, the real identifier,
+the actual commit. A `metadata.md` is read years later by someone with no other
+source and no way to expand a placeholder, and an unresolved one there is
+indistinguishable from a fact nobody recorded. The same holds for every document
+in a bundle. A placeholder belongs in a schema or a template, never in a record.
+
+**`prompt.md` tracks.** When the conformant prompt or your session prompt
+changes, refresh the copy in your bundle and say which revision it now holds. A
+prompt is what a session is expected to follow, not a souvenir of what it was
+handed.
 
 You are `available` until you own a findings bundle. Owning one makes you
 `active`. The owner assigns bundles; recording one does not make you its owner.
@@ -133,11 +145,35 @@ whatever else is in flight.
 **Wait to be asked before applying a patch.** Composing is not delivering. Show
 what you made; the owner says when it lands.
 
-**`git apply` lies about deletions.** It cannot unlink on a connected folder,
-downgrades that to a warning, and **exits 0** — so a patch containing a deletion
-lands incomplete and every check still passes. Verify by comparing the two trees,
-not the exit status, and not a checksum of the files the patch names, because a
-checksum only sees files the patch carries as content.
+**`git apply` exits 0 whether or not it did what you asked.** It cannot unlink on
+a connected folder and downgrades that failure to a warning. **This is not only
+about deletions** — `git apply` modifies an existing file by writing a
+replacement and unlinking the original, so the refusal fires on plain
+modification too, and whether the content lands then depends on a fallback. A
+patch carrying a deletion lands incomplete; a patch carrying only modifications
+may land perfectly. **The exit status distinguishes none of it, and neither does
+any checker.**
+
+Verify by **comparing the two trees** — `diff -r` of your copy against the
+checkout — or `cmp` on every path the patch touched. Not the exit status. Not a
+checksum of the files the patch names, because that only sees files the patch
+carries as content and a deleted file carries none.
+
+**Ask for delete permission before you apply, not after it fails.** The connected
+folder refuses `unlink` until the owner grants deletion for that folder. If your
+patch deletes or renames anything, request it **before** applying — and note that
+**every status transition is a delete plus a create**, so this bites every
+`STATUS-` and `STATE-` tag change you will ever make. The grant is per folder,
+for the session, and **does not survive a bridge reconnect**: if the link drops
+and comes back, request it again rather than discovering it mid-apply. If it is
+declined or goes unanswered, move the file into a `_to_delete/` subfolder under
+the same connected folder and tell the owner — never leave two tags on one
+bundle. This remedy is not yet in either instruction set; it is owed there.
+
+**Expect a trailing-whitespace warning and do not act on it.** The header schema
+requires two trailing spaces on every line of a header block but the last, so
+`git apply` warns on every conformant header you hand it. Stripping them to
+silence the warning breaks the rendering the schema exists to protect.
 
 **Take the `APPLY-MANIFEST.md` revision number at apply time**, with
 `./bin/check-manifest-revision.sh` against the tree being applied to. Never while
@@ -195,6 +231,20 @@ check reads the rendered page**; every one of them reads the source, which is th
 section above. That second one is `0042`, recorded in Revision 204 with the four
 options for fixing it and none of them costed — it is open, and it is why the
 instruction to open the page yourself is an instruction rather than a check.
+
+**Every check here answers whether a document is well formed. None answers
+whether it is complete.** They are different questions and the second one has no
+checker at all: a file that lost half its content still has a valid header, a
+well-shaped table and a clean render, and passes all six. Opening the page does
+not catch it either — **rendering cannot show you content that is not there.**
+
+So when you generate or rebuild a document, verify its content is present, by
+its source: every line of the input accounted for, every section that should
+exist existing. This is not hypothetical. Rebuilding a `prompt.md` with
+`{ sed -n '1,11p' file; …; } > file` truncated the file before `sed` opened it,
+silently dropped its first eleven lines, and passed every check and a render
+inspection. **Never redirect into a file you are reading from** — write to a
+temporary file and move it into place.
 
 `verify-doc-paths.sh` **without `--all` scans the `.github` surface only** — 98
 paths and no anchors at all. Always pass `--all`, which reaches `docs/` as well:
@@ -279,6 +329,14 @@ owner rather than by a check.
 - The owner commits. You never do.
 - A fact has one home. A copy is permitted only where it is generated, or where a
   check fails when it drifts.
+- **Retrofit; never leave half a change behind.** When a rule changes, bring the
+  existing records onto it rather than applying it only to what comes next. A
+  tree where some documents follow the rule and some do not teaches the next
+  session the wrong thing, and partial conformance is harder to read than none.
+  **The one exception is data captured at a point in time that cannot be
+  recreated** — a dated artifact, a measurement, a commit hash, a session
+  identifier, what a `metadata.md` recorded about a run that has ended. That is
+  evidence, and evidence is never rewritten to match a later rule.
 - Say what you did not check, as plainly as what you did.
 - If a rule here contradicts `docs/legend.md` or the instruction sets, they win
   and the contradiction is itself a finding.

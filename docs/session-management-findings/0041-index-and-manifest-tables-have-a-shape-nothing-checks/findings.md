@@ -16,10 +16,10 @@ and `pre-image-capture-conformance-20260903-194532` still owns it.
 
 | # | Finding | Status |
 |---:|---|---|
-| F1 | The indexes and manifests have a required column shape that no check enforces | `reopened` |
-| F2 | `verify-doc-paths.sh` gives false assurance on a malformed row, because links are not shape | `reopened` |
-| F3 | The fix is a lint, so this bundle may be in the wrong tree | `reopened` |
-| F4 | A patch containing a deletion under-applies silently, and every check passes | `reopened` |
+| F1 | The indexes and manifests have a required column shape that no check enforces | `framing` |
+| F2 | `verify-doc-paths.sh` gives false assurance on a malformed row, because links are not shape | `framing` |
+| F3 | The fix is a lint, so this bundle may be in the wrong tree | `framing` |
+| F4 | A patch containing a deletion under-applies silently, and every check passes | `framing` |
 
 ---
 
@@ -115,6 +115,48 @@ INDEX.md row is a bug in whoever moved it last."* Stated, and unenforced. The
 check is one line of shape: **exactly one `STATUS-*` per bundle directory, and it
 agrees with the index row.** It is the same kind of check finding F1 asks for,
 against the same kind of rule, and it would be in the same script.
+
+#### The refusal is not specific to deletion
+
+**Recorded 2026-09-06** by `session-management-re-evaluation-20260906-110105`,
+from three applies in Revisions 206 and 207. **None of them deleted or renamed
+anything.** Every one reported `unable to unlink ... Operation not permitted` —
+on `APPLY-MANIFEST.md`, on `docs/sessions/INDEX.md`, on the session bundle's
+`prompt.md` — every one exited 0, and every one landed correctly, verified by
+`cmp` on each touched path against the composing copy.
+
+`git apply` modifies a file by writing a replacement and unlinking the original,
+so **the mount's refusal fires on plain modification too.** The difference is
+recovery, not exposure: on a modification git has a fallback and the content
+lands; on a deletion there is nothing to fall back to, so the file survives.
+
+**What this changes is the detection rule.** This finding is right that the
+failure is downgraded to a warning — and a reader takes from that *watch for the
+warning*. That does not work: the warning appears on patches that applied
+perfectly, three times in one afternoon, and `git status` in the checkout emits
+it for `.git/index.lock` with no patch involved at all. The warning cannot
+separate a dropped deletion from a clean apply. Neither can the exit code, and
+neither can a checksum of the files the patch names. **Only comparing the two
+trees can** — `diff -r` of the copy against the checkout, or `cmp` per touched
+path.
+
+What this finding has exactly right and should keep: creating works and deleting
+does not; this is a mount permission meeting git's error handling rather than
+anything about renames; and a `STATUS-` tag rename is the common instance rather
+than the mechanism.
+
+**Not tested here.** This session did not deliberately apply a deletion-bearing
+patch to confirm the drop — the four instances above are the evidence for that
+half, and these three are the evidence for the modification half. Whether
+`git apply --3way` or `patch(1)` behave differently is untested.
+
+**And the remedy is still missing from the record.** Request delete permission
+for the connected folder *before* applying a patch that deletes or renames, and
+again after any bridge reconnect, because the grant does not survive one — which
+the operational note below already records while assuming the reader knew to ask.
+Nothing in either instruction set, `docs/legend.md`, or the conformant prompt
+said to ask. It went into the conformant prompt on 2026-09-06 and is owed to
+`.github/session-management-instructions.md` section 6.
 
 #### The apply step has the same blind spot
 
