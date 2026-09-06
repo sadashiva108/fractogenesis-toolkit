@@ -1,5 +1,8 @@
 # The index and manifest tables have a shape nothing checks
 
+**Relates to:** [`0032`](../../instruction-set-findings/0032-index-and-manifest-tables-have-a-shape-nothing-checks/) — **supersedes it.**
+The original stands untouched at `docs/instruction-set-findings/0032-index-and-manifest-tables-have-a-shape-nothing-checks/`, still listed by the session
+that held it. Authority for this reading lives here.
 **Recorded:** 2026-09-03, session `session_01PcgHu9kz9Hm5RatLQuFR8H`, from
 breaking two of them and not noticing.
 **Relates to:** `0031` — the same section, §4c, from the other side: `0031` is a

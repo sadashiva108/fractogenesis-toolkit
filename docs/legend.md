@@ -1,8 +1,14 @@
 # Legend — findings statuses and session states
 
-The two vocabularies used across `docs/`. This file is where they are defined;
-`.github/copilot-instructions.md` sections 4c and 4d say what each one *requires*
-and point here for what each one *means*, so there is one place to change.
+The three vocabularies used across `docs/` — finding statuses, bundle statuses
+and session states. **This file is where they are defined.**
+[`.github/session-management-instructions.md`](../.github/session-management-instructions.md)
+says what each one *requires* and points here for what each one *means*, so there
+is one place to change.
+
+**This file is project-agnostic and is meant to be reusable as-is.** Nothing in
+it should acquire an example that only makes sense in one project: the next
+project inherits the file, and an example it cannot follow reads as noise.
 
 Both are recorded twice and the two must agree: in the bundle's row in its
 `INDEX.md`, which is authoritative, and in a tag file on the bundle directory —
@@ -71,7 +77,7 @@ makes the answer single-valued.
 | # | Status | When |
 |---:|---|---|
 | 1 | `unclaimed` | no session owns it — never assigned since creation, or released back to the queue. Never applies to a finding |
-| 2 | `superseded` | replaced whole by a later bundle. Declared, not derived. Bundles only |
+| 2 | `superseded` | replaced whole by a later bundle, **from any status**. Declared, not derived. Bundles only |
 | 3 | `un-started` | every finding is `un-started` |
 | 4 | `withdrawn` | every finding is `withdrawn` |
 | 5 | `resolved` | every finding is `resolved` or `withdrawn`, and at least one is `resolved` |
@@ -110,28 +116,21 @@ through. That is why row 4 sits above row 5.
 difference is whether a reader following the trail lands somewhere.
 
 **`superseded` and `reopened` are not alternatives.** `superseded` applies to a
-whole bundle, never a single finding: the replacement is **created as a clone**
-of the original, so every finding it does not rewrite is preserved, and authority
-moves to the new bundle. Nothing is reverted or undone — the old bundle stands
-untouched as the reading it was, and its row names its replacement, which carries
-`Relates to`. `reopened` alters a finding in place, one at a time. Replacing a
-reading is superseding; correcting a resolution is reopening.
+whole bundle, never a single finding, and **reaches a bundle at any status** —
+there is no state in which a reading cannot be replaced. Authority moves to the
+new bundle; nothing is reverted or undone. The old bundle stands untouched as the
+reading it was, keeps its number, its tree, its session and its place in that
+session's `findings-manifest.md`, and only its status changes. Its row names the
+replacement, which carries `Relates to`.
 
-### Bundles written before this vocabulary
+Cloning the original is the usual way to build the replacement, and it is not
+required. What is required is that the replacement carries the reading forward
+and names what it replaces; whether it starts as a copy or as work already begun
+is the superseding session's business.
 
-The statuses above replaced an earlier set on 2026-09-06. **Existing bundles were
-deliberately not migrated** — each pivots when it is next worked, and rewriting
-settled readings to match new words would be the churn this vocabulary exists to
-prevent. Until then some tags and index rows carry statuses defined nowhere here:
-
-| Old | Reads as | Where it went |
-|---|---|---|
-| `unresolved` | a bundle nobody has read | `un-started` |
-| `in progress` | a bundle part-worked | `analyzing` at bundle level; its findings are `framing` or `decided` |
-| `resolving` | decisions complete, work under way | `decided`, which is the enduring fact rather than the moment |
-
-`resolved`, `superseded` and `withdrawn` carried over unchanged. A session that
-opens a bundle on an old status sets the new one as its first act.
+`reopened` alters a finding in place, one at a time, and only reaches what is
+`resolved`. **Replacing a reading is superseding; correcting a resolution is
+reopening.**
 
 ### What another session may do
 
@@ -191,8 +190,8 @@ second session with something that bears on it — new evidence, an idea that
 changes a problem statement — with nowhere to put it.
 
 **Mark the bundle `superseded` and open a new one carrying the merged reading.**
-The replacement is created as a **clone**, so every finding it does not rewrite
-is preserved and the original stands untouched.
+The original stands untouched. The procedure is in
+`.github/session-management-instructions.md` section 9.
 The superseded row names its replacement; the replacement carries a `Relates to`
 line naming what it replaces. Nothing is edited inside a bundle whose decisions
 have been taken against it as it was read, which is the property `decided`
@@ -212,8 +211,8 @@ changes one after that is the exception rather than the working case.
 A bundle may name another it bears on, without either replacing the other, as a
 line in `findings.md`'s header beside `Found`, `Severity` and `Scope`:
 
-    **Relates to:** `0028` — its finding 2 is the same baseline problem this
-    bundle's finding 6 reaches from the other side.
+    **Relates to:** `<NNNN>` — a one-line statement of how the two bear on
+    each other, and from which direction.
 
 It is a pointer and nothing more: it creates no ownership, moves no status, and
 obliges nobody. It exists because two readings of one mechanism from different
@@ -234,9 +233,8 @@ a bundle, a reading and a decisions document produces paperwork, not judgement.
 **A revision carrying an overridden change says so, and says what was
 overridden.** That is the whole discipline: the override is not a loophole
 because it is never silent, and a reader can always tell a change that followed
-from a finding from one the owner simply directed. Revisions 166 and 168 changed
-section 4c on the owner's word with no finding behind them, and did not say so;
-they are the reason this is written down.
+from a finding from one the owner simply directed. An override that goes
+unrecorded is indistinguishable from a rule nobody agreed to.
 
 ## Session states
 
@@ -295,22 +293,28 @@ kinds are named rather than left to judgement.
 | Category | What | When |
 |---|---|---|
 | **record write** | anything under `docs/` — readings, decisions, resolutions, indexes, session bundles, this file | any status. It is how deciding gets recorded, so it is never gated |
-| **toolkit write** | any other tracked file: `bin/`, `.internal/`, the runbooks, `references/`, `templates/`, `.github/`, `.claude/`, the root scripts and env examples | **only for a finding that is `decided`**, and only by the owning session |
-| **evidence write** | anything under `$REIMAGE_ARTIFACT_ROOT` or `$REIMAGE_WORKSPACE_ROOT` | never, unless the owner has said so for that specific run. A decision to change a script is not a decision to touch the volume |
+| **toolkit write** | any other tracked file — everything the project *is*, and the rules for working on it | **only for a finding that is `decided`**, and only by the owning session |
+| **evidence write** | anything outside the repository that the project treats as a record: `<EVIDENCE_ROOT>` | never, unless the owner has said so for that specific run |
 
-`APPLY-MANIFEST.md` sits outside `docs/` but accompanies **both** record and
-toolkit writes — every change of either kind takes a revision — so it is not a
-toolkit write and is not gated.
+A project names its own `<EVIDENCE_ROOT>` in
+[`.github/toolkit-instructions.md`](../.github/toolkit-instructions.md) — the
+volume, directory or store where its dated records live. A project with no such
+store has two categories and not three; nothing else changes.
 
-The three fail differently, which is why the distinction is worth a name. A
+The manifest that records revisions sits outside `docs/` but accompanies **both**
+record and toolkit writes — every change of either kind takes a revision — so it
+is not a toolkit write and is not gated.
+
+**The three fail differently, which is why the distinction is worth a name.** A
 record write that turns out wrong is edited. A toolkit write that turns out wrong
 has to be found, reverted and re-reviewed. An evidence write that turns out wrong
-may be unrecoverable: the artifact root holds dated records of a machine that no
-longer exists in that state.
+**may be unrecoverable**, because evidence records a state of the world that no
+longer exists — which is why it is the one category the owner grants a run at a
+time, and why a decision to change a script is never a decision to touch it.
 
-`.github/copilot-instructions.md` sections 4b through 4d predate this vocabulary
-and say the same things at greater length. Adopting these three words there is
-itself a toolkit write, and is owed.
+These three words are used throughout
+[`.github/session-management-instructions.md`](../.github/session-management-instructions.md),
+which states the permission rules; this file defines what each category *is*.
 
 ---
 
@@ -348,15 +352,16 @@ say when work exists only in the copy.
 
 The revision number is the one thing NOT taken while composing. An entry is
 written with its number left open and numbered when the patch is applied — see
-`bin/check-manifest-revision.sh`, and `0028` decision 5.1 for why choosing early
-cannot work.
+the project's next-revision helper, and the session management set for why
+choosing early cannot work.
 
 Evidence writes were already solved this way by another route: a session has no
 write permission to the artifact volume, and the owner grants it one run at a
 time. One writer, decided by the owner, at the moment of the write.
 
-Decided in
-[`0028`](session-management-findings/0028-sessions-write-into-the-tree-the-owner-commits-from/).
+The mechanics — what to run, what to check, and in what order — are in
+[`.github/session-management-instructions.md`](../.github/session-management-instructions.md)
+section 6.
 
 ---
 

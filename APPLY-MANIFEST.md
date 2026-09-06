@@ -1,4 +1,6 @@
 # Apply Manifest
+**Revision 200** — supersedes Revision 199 and earlier. The session management instruction set and the legend become project-agnostic and measurably so, the supersession procedure lost in Revision 198 is restored, and every bundle, manifest and index is brought onto the statuses the legend defines — including five open bundles a closed session was still holding.
+
 **Revision 199** — Brought back the original findings bundles:
   0026-verify-doc-paths-counts-gitignored-docs
   0027-findings-architecture-conformance
@@ -528,6 +530,135 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
 
 ---
+
+## Revision 200 — the reusable half is made reusable, and the tree is brought onto the new vocabulary
+
+The owner's review of Revision 198, worked from a written list. Two kinds of
+change: the instruction set and the legend become genuinely project-agnostic, and
+every bundle, manifest and index is brought onto the statuses the legend now
+defines.
+
+### The session management set is reusable as-is, and now measurably so
+
+`.github/session-management-instructions.md` and `docs/legend.md` are meant to be
+copied into another project unchanged. They were not: both carried examples that
+only parse here, which the next project would inherit and have to decode.
+
+| Was | Now |
+|---|---|
+| *"says nothing about reimaging a Mac"* | *"says nothing about what this project does"* |
+| three rows naming this project's findings trees | one rule — this file governs `session-management-findings/` alone, and **nothing not strictly about session management goes in that tree** |
+| *"a defect in `bin/reindex-artifact-runs.sh` is cross-cutting"* | **one question: would this finding still exist in a project that did something else entirely?** The example script is unnamed |
+| *"the failure `0009` describes"* | why the status lives in a file inside the directory rather than in its name |
+| *"two sessions once … both took 167"* | two sessions can follow the rule exactly and still collide, because an entry written but not committed is not in the header the other reads |
+| write categories naming `$REIMAGE_ARTIFACT_ROOT` | `<EVIDENCE_ROOT>`, named by each project — **and a project with no such store has two categories, not three** |
+
+`docs/legend.md` also loses its transitional table, its `Relates to` worked
+example, and the sentence naming the two revisions that changed a section on the
+owner's word. That last became the general point it was always making: **an
+override that goes unrecorded is indistinguishable from a rule nobody agreed
+to.**
+
+Both files now measure **zero** project-specific references. That is checkable
+and was checked, rather than asserted.
+
+`.github/copilot-instructions.md` stays project-specific by decision — it is this
+repository's entry point and naming the workflow there is useful. A
+project-agnostic template with six placeholders was produced separately and
+handed to the owner as a download; it is not committed, because a template
+tracked beside the file it templates is a second copy of a file we already
+struggle to keep singular.
+
+### Sections lost in Revision 198, restored
+
+Revision 198 rewrote `.github/copilot-instructions.md` as a pointer and lifted
+sections 1–4 into the toolkit set. **§§4b–4d went nowhere.** Most of their
+content had been paraphrased into the new session management set; two things had
+not:
+
+- **The nine-step supersession procedure**, `0031`'s resolution from Revision
+  184. Restored as section 9, widened to any status, with its three prohibitions.
+- **One file per item, named for the thing rather than the date**, with the
+  findings-bundle exception and why.
+
+### Every bundle is on the new vocabulary
+
+`unresolved` and `in progress` are not statuses any more. The sweep, all of it
+verified by the checkers rather than by eye:
+
+| Bundle | Was | Now |
+|---|---|---|
+| `0001` | `in progress` | `analyzing`, its finding `framing` |
+| `0030` | `resolved` over five `in progress` rows | `analyzing`, five rows `framing` |
+| `0035` | `resolved` over three `unresolved` rows | `un-started`, three rows `un-started` |
+| `0014`, `0021`, `0034` | `unresolved` | `un-started` |
+
+`0030` and `0035` were two of the four bundles Revision 197 recorded as
+`resolved` over rows that had never moved. They are not resolved; the rows were
+right and the tag was wrong.
+
+Eighteen further finding rows and two remaining tags were swept.
+
+### A closed session was still holding five open bundles
+
+`phase-11b-hydrate-and-bookends-20260903-141500` is `closed`, and owned `0008`,
+`0011`, `0015`, `0016` and `0017`, none of them resolved. **A session may not end
+leaving a bundle owned by a session that has stopped.** All five are now
+`unclaimed` and off its manifest, which leaves it holding the two it actually
+resolved.
+
+`0034` was owned by `run-index-design-20260901-000000` and had never been listed
+in its manifest at all. Added, `un-started`.
+
+### Indexes and manifests
+
+Every manifest's Bundle cell is now a link. Every `superseded` Status cell is a
+link to its replacement, and section 9 step 5 now says so as a rule — **always a
+link, never the bare word** — so one cell answers both what state a bundle is in
+and what replaced it.
+
+`docs/sessions/INDEX.md` gains `available`, which the state key had never
+carried, and its whole key is rewritten: state is **derived from the bundles a
+session owns**, and the three terminal states differ by what became of them.
+
+The status keys in the tree indexes are rewritten to the seven bundle statuses,
+and the runbook rollup is rebuilt from its detail rows rather than edited.
+
+### `session-responsibilities.md` is reframed rather than rewritten
+
+It described the boundary between two sessions on 2026-09-01 and had been read
+since as though it were current. It now opens by saying it is **a dated record,
+not a rule**, with a table of what has superseded each of its claims — statuses,
+states, the shared-tree assumption, `docs/` being gitignored, and the
+re-read-the-header numbering rule. The record below that is left as written.
+
+What survives is the shape of the problem: two sessions on one tree need a
+boundary, and stating it explicitly is what made that pair workable.
+
+### Files
+
+- `.github/copilot-instructions.md` — rewritten, project-specific, four trees named
+- `.github/session-management-instructions.md` — five generalisations, section 9 restored, one-file-per-item restored
+- `docs/legend.md` — generalised throughout; transitional section removed
+- `docs/sessions/session-responsibilities.md` — reframed as a dated record
+- `docs/sessions/INDEX.md` — `available`, the rewritten state key, recomputed counts
+- the four tree indexes — status keys, status cells, the rebuilt rollup
+- every `findings-manifest.md` — linked Bundle cells, aligned statuses, `0034` added, five bundles disowned
+- twenty-odd bundles — tags and finding rows
+
+### Validators
+
+Run in the scratch copy against this change alone. Doc paths **775 OK / 0 MISSING
+/ 0 ANCHOR BROKEN**; findings counts **49 OK / 0 FAIL**; findings structure **50
+OK / 0 FAIL**; runbook structure **213 PASS / 5 WARN / 25 FAIL**; portability
+**84 clean / 0 WARN / 0 FAIL**. No script changed.
+
+The patch renames six bundle directories and many tags, so it carries a great
+many deletions — the case `git apply` under-applies while exiting 0. Verified by
+comparing the two trees entry by entry.
+
+Linux VM (Bash 5.1, GNU coreutils) on the owner's Mac, not macOS. `/bin/bash -n`
+against stock Bash 3.2 remains owed for Revisions 116 onward.
 
 ## Revision 198 — the status model is rebuilt, and the instruction set splits in two
 

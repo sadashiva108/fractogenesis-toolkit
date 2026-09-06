@@ -48,7 +48,7 @@ work, since every fix is a toolkit write.
 | 5 | Nothing tells a session that `docs/legend.md` is normative | **yes** — 5.1, 5.2 | `in progress` — **decided** |
 | 6 | State names and state requirements live in different files | **yes** — 5.1 | `in progress` — **decided**, no change needed |
 | 7 | The vocabulary cannot say that one bundle must be decided before another | **yes** — 7.1 | `in progress` — **decided** |
-| 8 | The rule says where a change is composed, not when it is handed over | — | `unresolved` |
+| 8 | The rule says where a change is composed, not when it is handed over | — | `un-started` |
 
 ---
 

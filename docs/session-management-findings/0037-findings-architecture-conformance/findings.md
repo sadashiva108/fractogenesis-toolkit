@@ -1,5 +1,8 @@
 # The findings-and-sessions architecture disagrees with itself and with the tree
 
+**Relates to:** [`0027`](../../cross-cutting-findings/0027-findings-architecture-conformance/) — **supersedes it.**
+The original stands untouched at `docs/cross-cutting-findings/0027-findings-architecture-conformance/`, still listed by the session
+that held it. Authority for this reading lives here.
 **Found:** 2026-09-03, session `session_019yzcjm2QneJ5ymVEQDi1bu`, on the owner's
 request to review the new architecture. Read: `docs/architecture/findings-and-sessions.md`,
 `.github/copilot-instructions.md` §§4b–4d, `docs/legend.md`, and every bundle and

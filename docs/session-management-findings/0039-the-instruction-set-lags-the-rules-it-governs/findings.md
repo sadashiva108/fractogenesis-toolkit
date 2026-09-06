@@ -1,5 +1,8 @@
 # The instruction set lags the rules it governs
 
+**Relates to:** [`0029`](../../instruction-set-findings/0029-the-instruction-set-lags-the-rules-it-governs/) — **supersedes it.**
+The original stands untouched at `docs/instruction-set-findings/0029-the-instruction-set-lags-the-rules-it-governs/`, still listed by the session
+that held it. Authority for this reading lives here.
 **Recorded:** 2026-09-03, restore-apps session
 (`session_016EbjB7M527qEFqZFzpv2C9`), from its own outstanding items rather than
 from a fresh reading. Every finding below was noticed by this session while

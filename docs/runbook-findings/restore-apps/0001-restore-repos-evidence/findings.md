@@ -53,16 +53,16 @@ with nothing outstanding. `decisions.md` carries the detail.
 
 | # | Finding | Decided | Status |
 |---:|---|---|---|
-| 1 | The official run reports `repo-secrets` as blocked, although it succeeded | yes | `in progress` |
-| 2 | Step 5 and the `project-metadata` stage were never applied | — | `unresolved` |
-| 3 | The exit bookend reads clean on a phase with two WARN exit criteria | — | `unresolved` |
-| 4 | Four sign-offs on the volume were written by scratch runs | — | `unresolved` |
-| 5 | Every bookend sign-off written since 2026-09-01 cites a staging path | — | `unresolved` |
-| 6 | The status report blanks the carry-forward count for two repositories | — | `unresolved` |
-| 7 | The two unreviewed repositories are Time Machine or nothing | — | `unresolved` |
-| 8 | `reference-vault` cloned with a warning nobody has acted on | — | `unresolved` |
-| 9 | All six clones came back on HTTPS | — | `unresolved` |
-| 10 | All three exit sign-off rows are outstanding | — | `unresolved` |
+| 1 | The official run reports `repo-secrets` as blocked, although it succeeded | yes | `framing` |
+| 2 | Step 5 and the `project-metadata` stage were never applied | — | `un-started` |
+| 3 | The exit bookend reads clean on a phase with two WARN exit criteria | — | `un-started` |
+| 4 | Four sign-offs on the volume were written by scratch runs | — | `un-started` |
+| 5 | Every bookend sign-off written since 2026-09-01 cites a staging path | — | `un-started` |
+| 6 | The status report blanks the carry-forward count for two repositories | — | `un-started` |
+| 7 | The two unreviewed repositories are Time Machine or nothing | — | `un-started` |
+| 8 | `reference-vault` cloned with a warning nobody has acted on | — | `un-started` |
+| 9 | All six clones came back on HTTPS | — | `un-started` |
+| 10 | All three exit sign-off rows are outstanding | — | `un-started` |
 
 ---
 

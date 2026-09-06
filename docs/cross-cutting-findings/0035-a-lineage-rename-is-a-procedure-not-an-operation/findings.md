@@ -16,9 +16,9 @@ pointers. Every future rename is an opportunity to break that by hand.
 
 | # | Finding | Status |
 |---:|---|---|
-| 1 | A rename is three manual acts with no defined order and no operation that performs them | `unresolved` |
-| 2 | Recovery runs one way, so a half-done rename is silently completed in the wrong direction | `unresolved` |
-| 3 | A run directory does not carry its own lineage identity, though the pin precedent shows how | `unresolved` |
+| 1 | A rename is three manual acts with no defined order and no operation that performs them | `un-started` |
+| 2 | Recovery runs one way, so a half-done rename is silently completed in the wrong direction | `un-started` |
+| 3 | A run directory does not carry its own lineage identity, though the pin precedent shows how | `un-started` |
 
 ---
 

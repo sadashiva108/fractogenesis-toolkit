@@ -8,13 +8,8 @@ Statuses are defined in [`docs/legend.md`](../../legend.md).
 
 | # | Bundle | Kind | Subject | Findings | Status |
 |---:|---|---|---|---:|---|
-| 0006 | `docs/cross-cutting-findings/0006-caller-environment-precedence-covers-only-listed-keys/` | cross-cutting | Caller-environment precedence holds only for the keys `artifact-config.sh` lists | 1 | `resolved` |
-| 0008 | `docs/runbook-findings/restore-repos/0008-carrier-services-storage-foreign-remote/` | runbook | `carrier-services-storage` carries a remote pointing at `dotfiles` | 1 | `unresolved` |
-| 0011 | `docs/runbook-findings/restore-repos/0011-emit-extra-remotes-readds-the-clone-url/` | runbook | `emit_extra_remotes` re-adds the URL the clone already used | 1 | `unresolved` |
-| 0015 | `docs/cross-cutting-findings/0015-portability-lint-cannot-see-heredoc-context/` | cross-cutting | The portability lint cannot see a defect that needs heredoc context | 1 | `unresolved` |
-| 0016 | `docs/runbook-findings/restore-repos/0016-post-image-restore-per-run-manifest/` | runbook | `MANIFEST.txt` duplicates the category run index | 1 | `unresolved` |
-| 0017 | `docs/runbook-findings/restore-repos/0017-post-image-restore-runs-truncated/` | runbook | Every post-image-restore run on disk stops before its report | 1 | `unresolved` |
-| 0020 | `docs/runbook-findings/restore-repos/0020-repo-audit-tsv-column-shift/` | runbook | `repos.tsv` remote column is shifted by embedded tabs | 1 | `resolved` |
+| 0006 | [`0006-caller-environment-precedence-covers-only-listed-keys`](../../cross-cutting-findings/0006-caller-environment-precedence-covers-only-listed-keys/) | cross-cutting | Caller-environment precedence holds only for the keys `artifact-config.sh` lists | 1 | `resolved` |
+| 0020 | [`0020-repo-audit-tsv-column-shift`](../../runbook-findings/restore-repos/0020-repo-audit-tsv-column-shift/) | runbook | `repos.tsv` remote column is shifted by embedded tabs | 1 | `resolved` |
 
 ## Where these came from
 
@@ -59,3 +54,9 @@ has, by its own state, stopped, and leaving an open finding under one is the def
 Revision 175 removed from the two `restore-repos` bundles. They are unassigned, not
 abandoned. They remain in the table above because this session found and held them,
 and the table is the record of that.
+
+
+**2026-09-06 — five bundles disowned.** This session is `closed`; `0008`, `0011`,
+`0015`, `0016` and `0017` were never resolved and a closed session may not leave a
+finding owned by a session that has stopped. They are `unclaimed` and wait for the
+owner to assign them. `0006` and `0020` are `resolved` and stay listed here.

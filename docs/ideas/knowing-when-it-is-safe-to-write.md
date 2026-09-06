@@ -10,7 +10,7 @@ one is a convention a session has to remember rather than something it can check
 **Half of this idea has since been decided and built.** It was raised as two
 questions — which revision number is free, and which files are safe to touch.
 The first was answered by
-[`0028`](../session-management-findings/0028-sessions-write-into-the-tree-the-owner-commits-from/):
+[`0028`](../session-management-findings/0038-sessions-write-into-the-tree-the-owner-commits-from/):
 the number is taken at apply time by `bin/check-manifest-revision.sh`, which
 scans the entry headings as well as the header block and so sees the uncommitted
 entry that defeated the old rule. That half is no longer an idea and is not

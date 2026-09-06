@@ -1,5 +1,8 @@
 # Sessions write into the tree the owner commits from
 
+**Relates to:** [`0028`](../../cross-cutting-findings/0028-sessions-write-into-the-tree-the-owner-commits-from/) — **supersedes it.**
+The original stands untouched at `docs/cross-cutting-findings/0028-sessions-write-into-the-tree-the-owner-commits-from/`, still listed by the session
+that held it. Authority for this reading lives here.
 **Found:** 2026-09-03, session `session_019yzcjm2QneJ5ymVEQDi1bu`, on the owner's
 observation that a session should hold its changes until told to release them.
 Read: the day's own working tree, `git status` and `git log` across the two

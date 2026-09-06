@@ -1,9 +1,15 @@
 # Session management — how a session works in this repository
 
 **This file governs sessions, findings bundles and the records under `docs/`.**
-It says nothing about reimaging a Mac. For the workflow — the runbooks, the
-scripts, the artifact volume, the conventions those follow — read
+It says nothing about what this project does. For the project's own subject — its
+work, its scripts, its conventions — read
 [`.github/toolkit-instructions.md`](toolkit-instructions.md).
+
+**It is deliberately project-agnostic and is meant to be reusable as-is.** The
+only project-specific things in it are the link above, the paths under `docs/`,
+and the helper named in section 7. Nothing else should acquire a project detail:
+an example that only makes sense here is a defect, because the next project
+inherits it and it reads as noise.
 
 **Read this before doing anything else.** The vocabulary it uses —
 every status and state — is defined once, in
@@ -29,20 +35,28 @@ row names the session working it.
 
 ## 2. The three findings trees
 
-| Tree | Subject | Fix lands in |
-|---|---|---|
-| `docs/runbook-findings/<runbook>/` | one runbook, its scripts and its artifacts | that runbook and what it owns |
-| `docs/cross-cutting-findings/` | the toolkit's shared machinery | `bin/`, `.internal/`, the shared config |
-| `docs/instruction-set-findings/` | the rules a session follows when working the toolkit | `.github/toolkit-instructions.md` |
-| `docs/session-management-findings/` | how sessions and findings bundles themselves work | `.github/session-management-instructions.md`, `docs/legend.md` |
+**`docs/session-management-findings/` is the only tree this file governs.** It
+holds findings about **how sessions and findings bundles themselves work** — the
+statuses, the states, the rules binding them, and the checks that hold them. Its
+fixes land in this file or in `docs/legend.md`.
 
-**The test is where the ramifications are functionally felt**, not which file a
-fix happens to touch. A defect in `bin/reindex-artifact-runs.sh` is
-cross-cutting; a defect in the rule that says when a session may edit it is
-session management.
+Every other tree belongs to the project and is described in
+[`.github/toolkit-instructions.md`](toolkit-instructions.md), which is where a
+project lists its own. **Nothing that is not strictly about session management
+goes in this tree.**
 
-Numbering is ONE sequence across all three, so `finding 0007` names a bundle
-without needing its tree. Four digits, zero-padded, never reused, never
+**The test is one question: would this finding still exist in a project that did
+something else entirely?**
+
+If yes, it belongs here — who may read a finding, when a bundle may be written
+to, what a status means, what a check must catch. Those travel to any project
+that adopts this structure. If no, it belongs to the project: a defect in one of
+its scripts is its own, and so are the rules for writing them. **A defect in the
+rule that says when a session may edit that script is session management**,
+because that rule is the same wherever this structure is used.
+
+Numbering is ONE sequence across **every** findings tree in the project, so
+`finding <NNNN>` names a bundle without needing its tree. Four digits, zero-padded, never reused, never
 renumbered — a renumber breaks every prompt already written against the old one.
 Take the next free number immediately before writing; another session may have
 taken the one you saw:
@@ -69,8 +83,9 @@ they are only legible together:
                          APPLY-MANIFEST.md revision carrying each one.
 
 The tag is a marker file, **not** a suffix on the directory name. The directory
-name is what prompts and indexes cite, and renaming it on every transition is the
-failure `0009` describes.
+name is what prompts, indexes and other bundles cite by path; renaming it on
+every status transition breaks every one of those citations at once, which is why
+the status lives in a file inside the directory rather than in its name.
 
 **`findings.md` carries a per-finding status table.** The bundle's status is read
 off it by the ladder in `docs/legend.md` — first row that matches wins. A tag or
@@ -165,10 +180,12 @@ sitting are one entry, the same way a revision editing nine documents is one.
 
     ./bin/check-manifest-revision.sh
 
-run against the tree being applied to. Choosing while composing is a guess: two
-sessions once re-read the header, correctly, and both took 167, because an entry
-written but not yet committed is not in the header the other reads. The helper
-scans the entry headings as well.
+run against the tree being applied to. **Choosing while composing is a guess**,
+and two sessions can follow *re-read the header and take the next free number*
+exactly and still collide — because an entry that is written but not yet
+committed is not in the header the other session reads. The helper scans the
+entry headings as well as the header, so it sees what the header misses, and at
+apply time only one session is writing.
 
 Entries are never retro-edited. A revert is a new entry naming what was reverted
 and the commit it reverted, never an edit to the entry being undone.
@@ -183,7 +200,74 @@ and the commit it reverted, never an edit to the entry being undone.
 fixing the first is normal; fixing both in one change is how a small edit becomes
 an unreviewable one. Park it as a bundle and say so.
 
+**One file per item, named for the thing rather than the date.** A dated filename
+sorts by when someone noticed, which is never the question being asked. Findings
+bundles are the exception and say why: a finding accumulates documents as it is
+worked, and they are only legible together.
+
 **A fact has one home.** A count, a membership, a description of what something
 currently holds: write it once and link to it. A copy is permitted only where it
 is generated, or where a check fails when it drifts — an unchecked hand-typed
 copy is the defect, not the display.
+
+## 9. Superseding a bundle
+
+**A bundle is replaced whole by a later one. It reaches a bundle at ANY status**
+— there is no state in which a reading cannot be replaced. An earlier rule tied
+it to a bundle being overtaken mid-work, which left the commonest case unhandled:
+a settled bundle whose owning session has ended, with nobody able to perform the
+supersession at all.
+
+Never a single finding: correcting one resolution is `reopened`.
+
+**The session with the new reading does it, and does not take ownership.**
+Superseding is not inheriting.
+
+### Three things it must NOT do
+
+- **The superseded `findings.md` is not edited.** Not to add a pointer to its
+  replacement, not to repair a citation inside it, not to soften a conclusion.
+  The two pointers below are where the structure puts them. A reading is retained
+  by being left alone, and one that shows a diff was not retained.
+- **The number is never reused and the directory never renamed.** A number must
+  keep naming exactly one bundle; two siblings cannot carry one, so reuse makes
+  retaining the original impossible.
+- **The bundle does not move between manifests.** It stays listed by the session
+  that held it, with only its status changed. That file is authoritative for who
+  held a reading, and a supersession changes neither who recorded it nor who held
+  it.
+
+### The steps
+
+1.  Take the next free number immediately before writing — another session may
+    have taken the one you saw.
+2.  Create `<NNNN>-<slug>/` with its tag, `findings.md` carrying the reading
+    forward, and `decisions.md`. **Cloning the original is the usual way and is
+    not required**; a replacement may start from work already begun. What matters
+    is that it carries the reading and names what it replaces.
+3.  The new `findings.md` header carries `Relates to`, naming what it replaces:
+
+        **Relates to:** `<NNNN>-<slug>` -- **supersedes it.**
+
+4.  Rename the old bundle's tag to `STATUS-superseded`.
+5.  In the old bundle's INDEX.md row, THE STATUS CELL BECOMES THE LINK —
+    `[`superseded`](<new-bundle>/)` — **always a link, never the bare word** — so one cell answers both what state the
+    bundle is in and what replaced it. Notes records that the reading is retained.
+6.  Add the new bundle's row, naming the superseding session, or `—` where the
+    replacement is not yet owned.
+7.  Add it to that session's `findings-manifest.md` and update its counts in
+    `docs/sessions/INDEX.md`. **The originating session's bundle count does not
+    change** — the superseded bundle is still listed there.
+8.  `decisions.md` re-affirms or explicitly drops every decision the superseded
+    bundle recorded — decisions do not carry forward by themselves. Where it has
+    no `decisions.md` but states a conclusion in prose, name that as the thing
+    being superseded rather than departing from it silently.
+9.  One `APPLY-MANIFEST.md` revision covers the whole supersession.
+
+Where the originating session is `closed`, its `final-summary.md` is never
+edited; the index row and the new bundle's `Relates to` are the record. If its
+manifest lists the bundle, only the status cell changes.
+
+`superseded` where another bundle carries the reading forward; `withdrawn` where
+the reading is dropped and nothing replaces it. If a replacement is being opened,
+it is `superseded`.

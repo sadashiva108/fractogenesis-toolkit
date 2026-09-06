@@ -1,5 +1,8 @@
 # `verify-doc-paths.sh --all` counts `docs/`, so its OK baseline cannot hold
 
+**Relates to:** [`0026`](../../cross-cutting-findings/0026-verify-doc-paths-counts-gitignored-docs/) — **supersedes it.**
+The original stands untouched at `docs/cross-cutting-findings/0026-verify-doc-paths-counts-gitignored-docs/`, still listed by the session
+that held it. Authority for this reading lives here.
 **Found:** 2026-09-01, session `01KcZvrKMgfenhrT9DvxW9Jk`, while validating
 Revision 129.
 **Severity:** low, but it silently invalidates a number two session briefs quote.

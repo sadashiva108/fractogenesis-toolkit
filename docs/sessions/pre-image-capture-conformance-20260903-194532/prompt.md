@@ -57,7 +57,7 @@ findings describe.
 9. **`docs/cross-cutting-findings/0009-dated-artifacts-cite-run-ids-a-rename-breaks/findings.md`**
    — every conversion in this area is a rename, and a rename breaks citations
    already written against the old name.
-10. **`docs/session-management-findings/0028-sessions-write-into-the-tree-the-owner-commits-from/findings.md`**
+10. **`docs/session-management-findings/0038-sessions-write-into-the-tree-the-owner-commits-from/findings.md`**
     — why this session composes nothing in the working tree. Owned by the
     `restore-apps-outstanding-20260903-000000` session; read it, do not touch it.
 

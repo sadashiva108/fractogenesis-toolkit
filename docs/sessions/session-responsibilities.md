@@ -1,11 +1,26 @@
 # Session responsibilities
 
-Two sessions run concurrently against this tree. This file is the boundary
-between them. Written 2026-09-01 by session `01KcZvrKMgfenhrT9DvxW9Jk`.
+**This file is a dated record, not a rule.** It describes the boundary between
+two sessions running concurrently on 2026-09-01, written that day by session
+`01KcZvrKMgfenhrT9DvxW9Jk`. It is kept because the reasoning in it is still
+useful and because several later findings cite it.
 
-Where two sessions overlap, the rule is the same one that worked on 2026-09-01:
-**one file, one owner.** Read freely, edit only what you own, and flag rather
-than edit anything on the other side.
+**Nothing here is authoritative.** Where it disagrees with
+[`docs/legend.md`](../legend.md) or
+[`.github/session-management-instructions.md`](../../.github/session-management-instructions.md),
+those win — and much of it has been superseded:
+
+| It says | Now |
+|---|---|
+| a bundle is `unresolved`, `in progress` or `resolving` | statuses are carried by each **finding** — `un-started`, `framing`, `decided`, `resolved`, `reopened`, `withdrawn` — and the bundle's status is **derived** from them |
+| a session is `owned` | `available` until it owns a bundle, then `active` |
+| **one file, one owner** | still the working principle for concurrent sessions, but the mechanism is different: each session composes in **its own copy** of the repository and hands the owner a patch, so two sessions no longer share a working tree at all |
+| `docs/` is gitignored | all of `docs/` has been tracked since Revision 162 |
+| re-read the manifest header and take the next free number | the number is taken **at apply time**, by the project's next-revision helper |
+
+What survives unchanged is the shape of the problem: two sessions working the
+same tree need a boundary, and stating it explicitly is what made the 2026-09-01
+pair workable. The record below is left as it was written.
 
 ---
 
@@ -76,7 +91,7 @@ fast pass to circle back on. Not contended, but flag rather than edit.
   713, then 745, then 860, in one day, with no regression among them. `docs/` is
   now pruned and the total is back to 713. `MISSING` and `ANCHOR BROKEN` were
   never affected and stay the rows worth quoting.
-  `docs/session-management-findings/0026-verify-doc-paths-counts-gitignored-docs/findings.md` is closed. Uncommitted.
+  `docs/session-management-findings/0036-verify-doc-paths-counts-gitignored-docs/findings.md` is closed. Uncommitted.
 - **Revision 129 — the Phase 6B repository-audit row.** `bin/reimage-checklist.sh`
   was testing a manifest heading Revision 120 retired, so a Phase 6B gate
   recorded `FAIL` against a manifest that was exactly canonical. Fixed by

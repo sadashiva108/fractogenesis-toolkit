@@ -1,5 +1,8 @@
 # Superseding a bundle whose session is gone is instructed but never defined
 
+**Relates to:** [`0031`](../../instruction-set-findings/0031-superseding-a-bundle-whose-session-is-gone/) — **supersedes it.**
+The original stands untouched at `docs/instruction-set-findings/0031-superseding-a-bundle-whose-session-is-gone/`, still listed by the session
+that held it. Authority for this reading lives here.
 **Recorded:** 2026-09-03, session `session_01PcgHu9kz9Hm5RatLQuFR8H`, from
 performing the procedure in Revision 183 with nothing in the instruction set to
 follow.

@@ -30,12 +30,18 @@ Statuses and states are defined in [`docs/legend.md`](../legend.md).
 
 | # | Bundle | Subject | Findings | Status | Session | Notes |
 |---:|---|---|---:|---|---|---|
-| 0026 | [0026-verify-doc-paths-counts-gitignored-docs](0026-verify-doc-paths-counts-gitignored-docs/) | `verify-doc-paths.sh --all` counts `docs/`, so its OK baseline cannot hold | 1 | `unclaimed` | — | Reopened 2026-09-06. Its exclusion rests on a reason false since Revision 162; every link under `docs/` is unverified. Option (iii) still undecided |
-| 0027 | [0027-findings-architecture-conformance](0027-findings-architecture-conformance/) | The findings-and-sessions architecture disagrees with itself and with the tree | 7 | `unclaimed` | — | Reopened 2026-09-06 for the ground-up re-evaluation |
-| 0028 | [0028-sessions-write-into-the-tree-the-owner-commits-from](0028-sessions-write-into-the-tree-the-owner-commits-from/) | Sessions compose their changes in the tree the owner commits from | 6 | `unclaimed` | — | Reopened 2026-09-06 for the ground-up re-evaluation |
-| 0029 | [0029-the-instruction-set-lags-the-rules-it-governs](0029-the-instruction-set-lags-the-rules-it-governs/) | The instruction set lags the rules it governs | 8 | `unclaimed` | — | 7 findings `decided`, finding 8 never decided. Parked for the ground-up re-evaluation |
-| 0031 | [0031-superseding-a-bundle-whose-session-is-gone](0031-superseding-a-bundle-whose-session-is-gone/) | Superseding a bundle whose session is gone is instructed but never defined | 4 | `unclaimed` | — | Reopened 2026-09-06. Its rows read `in progress` on a `resolved` bundle — the Revision 197 defect |
-| 0032 | [0032-index-and-manifest-tables-have-a-shape-nothing-checks](0032-index-and-manifest-tables-have-a-shape-nothing-checks/) | The index and manifest tables have a shape nothing checks | 4 | `unclaimed` | — | Reopened 2026-09-06. Its rows read `unresolved` on a `resolved` bundle — the Revision 197 defect |
+| 0036 | [0036-verify-doc-paths-counts-gitignored-docs](0036-verify-doc-paths-counts-gitignored-docs/) | `verify-doc-paths.sh --all` counts `docs/`, so its OK baseline cannot hold | 1 | `unclaimed` | — | Supersedes `0026`. Its exclusion rests on a reason false since Revision 162; every link under `docs/` is unverified. Original retained unedited in its own tree, still held by the session that had it |
+| 0037 | [0037-findings-architecture-conformance](0037-findings-architecture-conformance/) | The findings-and-sessions architecture disagrees with itself and with the tree | 7 | `unclaimed` | — | Supersedes `0027`. Reopened for the ground-up re-evaluation. Original retained unedited in its own tree, still held by the session that had it |
+| 0038 | [0038-sessions-write-into-the-tree-the-owner-commits-from](0038-sessions-write-into-the-tree-the-owner-commits-from/) | Sessions compose their changes in the tree the owner commits from | 6 | `unclaimed` | — | Supersedes `0028`. Reopened for the ground-up re-evaluation. Original retained unedited in its own tree, still held by the session that had it |
+| 0039 | [0039-the-instruction-set-lags-the-rules-it-governs](0039-the-instruction-set-lags-the-rules-it-governs/) | The instruction set lags the rules it governs | 8 | `unclaimed` | — | Supersedes `0029`. 7 findings `decided`, finding 8 never decided. Original retained unedited in its own tree, still held by the session that had it |
+| 0040 | [0040-superseding-a-bundle-whose-session-is-gone](0040-superseding-a-bundle-whose-session-is-gone/) | Superseding a bundle whose session is gone is instructed but never defined | 4 | `unclaimed` | — | Supersedes `0031`. Its rows read `in progress` on a `resolved` bundle — the Revision 197 defect. Original retained unedited in its own tree, still held by the session that had it |
+| 0041 | [0041-index-and-manifest-tables-have-a-shape-nothing-checks](0041-index-and-manifest-tables-have-a-shape-nothing-checks/) | The index and manifest tables have a shape nothing checks | 4 | `unclaimed` | — | Supersedes `0032`. Its rows read `unresolved` on a `resolved` bundle — the Revision 197 defect. Original retained unedited in its own tree, still held by the session that had it |
 
 **6 bundles · 30 findings.** Every one is `unclaimed`: parked and closed to every
 session until the owner assigns them to the session that will re-evaluate them.
+
+Each supersedes a bundle that stays where it was. **The originals keep their
+numbers, their trees, their sessions and their manifests**; only their status
+changed, to `superseded`, and their Status cell links here. Nothing in them was
+edited — that is the point of superseding rather than moving, and it is why
+`0026` through `0032` are still readable as the work they were.
