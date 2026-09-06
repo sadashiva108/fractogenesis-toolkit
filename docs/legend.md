@@ -282,7 +282,7 @@ from the findings bundles it owns.
 | `available` | Created or cloned, owning no findings bundle yet. | `metadata.md` |
 | `active` | Owns at least one bundle that is not `resolved` or `withdrawn`. | `findings-manifest.md` |
 | `handoff` | It has passed its qualifying bundles to a successor. No longer working. | `handoff-<stamp>.md`, one per handover |
-| `closed` | Every bundle it owns is `resolved`. | `final-summary.md` |
+| `closed` | Every bundle it owns is terminal — `resolved`, `superseded` or `withdrawn` — and any that is not has been released to `unclaimed`. | `final-summary.md` |
 | `withdrawn` | Every bundle it owns is `withdrawn`. | `final-summary.md` |
 
 ```text

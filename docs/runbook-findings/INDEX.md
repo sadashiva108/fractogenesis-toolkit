@@ -65,7 +65,7 @@ rows in the same position in the table below.
 
 | # | Runbook | Bundle | Subject | Findings | Status | Session | Notes |
 |---:|---|---|---|---:|---|---|---|
-| 0001 | `restore-apps` | [0001-restore-repos-evidence](restore-apps/0001-restore-repos-evidence/) | Phase 11B evidence review — what `restore-repos` actually left behind | 10 | `analyzing` | [`restore-apps-outstanding-20260903-000000`](../sessions/restore-apps-outstanding-20260903-000000/) | Recorded 2026-09-03. 10 findings: 1–3 block a truthful Phase 12 entry, 4–5 are shared-machinery defects, 6–7 answer the two unreviewed repositories |
+| 0001 | `restore-apps` | [0001-restore-repos-evidence](restore-apps/0001-restore-repos-evidence/) | Phase 11B evidence review — what `restore-repos` actually left behind | 10 | `unclaimed` | — | Released 2026-09-06 by `restore-apps-outstanding-20260903-000000` on closing, undecided. F1 has six decisions recorded against it and nothing outstanding; the other nine were never read. Parked and closed to every session until the owner assigns it |
 | 0008 | `restore-repos` | [0008-carrier-services-storage-foreign-remote](restore-repos/0008-carrier-services-storage-foreign-remote/) | `carrier-services-storage` carries a remote pointing at `dotfiles` | 1 | `unclaimed` | — | — |
 | 0011 |  | [0011-emit-extra-remotes-readds-the-clone-url](restore-repos/0011-emit-extra-remotes-readds-the-clone-url/) | `emit_extra_remotes` re-adds the URL the clone already used | 1 | `unclaimed` | — | — |
 | 0016 |  | [0016-post-image-restore-per-run-manifest](restore-repos/0016-post-image-restore-per-run-manifest/) | `MANIFEST.txt` duplicates the category run index | 1 | `unclaimed` | — | — |

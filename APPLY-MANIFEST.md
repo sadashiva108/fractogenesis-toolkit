@@ -1,4 +1,6 @@
 # Apply Manifest
+**Revision 205** — supersedes Revision 204 and earlier. `restore-apps-outstanding-20260903-000000` closes; `0001` is released to `unclaimed` undecided rather than carried into a stopped session, and `closed` is redefined to admit every terminal status rather than `resolved` alone.
+
 **Revision 204** — supersedes Revision 203 and earlier. `0042` parks the gap that let the last three revisions through: every checker reads the source, none reads the rendered page, and the fix is a dependency decision the owner has not been asked for.
 
 **Revision 203** — supersedes Revision 202 and earlier. A field and its value own a line: `Session:` comes out of the sentence it was buried in, `Read:` becomes the list it always was, and `Status:` leaves the two files that kept a third copy of it. `0001`'s Decisions table turns out to have held three of its six decisions.
@@ -538,6 +540,70 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
 
 ---
+
+## Revision 205 — `restore-apps-outstanding` closes, and `0001` goes back to the queue
+
+The session that ran from 2026-09-03 to 2026-09-06 ends. One bundle it held is
+undecided, so it is released rather than carried into a session that has stopped.
+
+### `0001` is `unclaimed`
+
+`0001-restore-repos-evidence` — ten findings, `analyzing` since 2026-09-03 — is
+released to `unclaimed`, removed from the session's `findings-manifest.md`, and
+its Session column set to `—`. **F1 is answered**: `decisions.md` records D1
+through D6 against it with nothing outstanding. **The other nine were never
+read.**
+
+A session may not end leaving a bundle owned by a session that has stopped.
+Releasing it is how that rule is satisfied, and it is the same disposal
+`phase-11b-hydrate-and-bookends` used for its five in Revision 200.
+
+**One question is left open on it deliberately.** F1's row reads `framing` while
+its own prose says nothing about it is still open — which under the current
+vocabulary is `decided`. Moving a finding there is the owner's act; the owner was
+asked, did not answer, and this session did not move it on its own. Whoever takes
+the bundle settles that first, because the derived status depends on it.
+
+### The session is `closed`
+
+`STATE-active` becomes `STATE-closed`, `metadata.md` gains its `Until` date, and
+`final-summary.md` disposes every bundle the session owned by name: `0001`
+released, `0027` and `0028` resolved then superseded, `0029` decided but for
+finding 8 and superseded. It also recorded `0033` and `0042` without owning
+either.
+
+The summary carries what is owed and by whom — `0042` F3, the rollup's 27
+unchecked derived figures which are this session's own unpaid debt, `0039`
+finding 8, `/bin/bash -n` on real Bash 3.2, and the `0041`/`0039` disagreement
+about how a bundle is classified.
+
+### `closed` admits every terminal status, not `resolved` alone
+
+`docs/legend.md` defined `closed` as *"every bundle it owns is `resolved`"*.
+This session owns three that are **`superseded`**, which is terminal and not
+`resolved`, so by that definition it could not close — and neither could any
+session whose work was superseded rather than finished.
+
+The definition now reads: **every bundle it owns is terminal — `resolved`,
+`superseded` or `withdrawn` — and any that is not has been released to
+`unclaimed`.** `docs/sessions/INDEX.md`'s state key said the narrower thing too,
+and now matches.
+
+### Validators
+
+| Checker | Result |
+|---|---|
+| `verify-findings-headers.sh` | 889 OK, 0 FAIL |
+| `verify-findings-structure.sh` | 51 OK, 0 FAIL |
+| `verify-findings-counts.sh` | 50 OK, 0 FAIL — the manifest count moved 31 → 21 with the bundle |
+| `verify-doc-paths.sh --all` | 778 OK, 1108 anchors, 0 broken |
+| `verify-script-portability.sh` | clean |
+| `verify-runbook-structure.sh` | 25 — the standing baseline, unchanged |
+
+The two tag changes are **renames, not deletions** — `STATUS-analyzing` to
+`STATUS-unclaimed`, `STATE-active` to `STATE-closed`. `0041` finding 4 records
+that a patch containing a deletion under-applies against a connected folder and
+exits 0 anyway; a rename does not depend on an unlink succeeding.
 
 ## Revision 204 — the gap that let three revisions through is parked as a bundle
 
