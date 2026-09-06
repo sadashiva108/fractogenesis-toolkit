@@ -1,25 +1,26 @@
 # The instruction set lags the rules it governs
 
-**Recorded:** 2026-09-03, restore-apps session (`session_016EbjB7M527qEFqZFzpv2C9`), from its own outstanding items rather than from a fresh reading. Every finding below was noticed by this session while writing Revisions 166 through 173, and deferred in prose at the time.  
-**Severity:** findings 1, 5 and 8 are high. A session that reads only the instruction set does not learn several of the rules it is expected to follow, and one of those rules governs when it may touch the owner's checkout.  
+**Recorded:** 2026-09-03, restore-apps session, from its own outstanding items rather than from a fresh reading. Every finding below was noticed by this session while writing Revisions 166 through 173, and deferred in prose at the time.  
+**Session:** `session_016EbjB7M527qEFqZFzpv2C9`  
+**Severity:** findings F1, F5 and F8 are high. A session that reads only the instruction set does not learn several of the rules it is expected to follow, and one of those rules governs when it may touch the owner's checkout.  
 **Scope:** instruction-set. The fix lands in `.github/copilot-instructions.md` §§4b–4d, `.claude/CLAUDE.md`, and `docs/architecture/findings-and-sessions.md`.  
-**Relates to:** [`0029`](../../instruction-set-findings/0029-the-instruction-set-lags-the-rules-it-governs/) — **supersedes it.** The original stands untouched at `docs/instruction-set-findings/0029-the-instruction-set-lags-the-rules-it-governs/`, still listed by the session that held it. Authority for this reading lives here.  
-**Relates to:** `0027` — that bundle read the instruction set for conformance and found seven defects. This one collects what this session left owed. They overlap at one point only, named in finding 2.
+**Relates to:** [`0029`](../../instruction-set-findings/0029-the-instruction-set-lags-the-rules-it-governs/) — **supersedes it.** The original is retained at `docs/instruction-set-findings/0029-the-instruction-set-lags-the-rules-it-governs/`, still listed by the session that held it, its reading unchanged and its files brought onto the schema in Revision 203. Authority for this reading lives here.  
+**Relates to:** `0027` — that bundle read the instruction set for conformance and found seven defects. This one collects what this session left owed. They overlap at one point only, named in finding F2.
 
 **Decide after:** `0027`, then `0028`. Findings 1, 2, 5 and 6 below are four
-symptoms of one question `0027` finding 1 owns — *where is a rule allowed to
+symptoms of one question `0027` finding F1 owns — *where is a rule allowed to
 live* — and deciding them first would decide against a surface about to move.
-`0028`'s resolution adds to finding 1's list rather than changing it. Finding 7
+`0028`'s resolution adds to finding F1's list rather than changing it. Finding 7
 is about this line existing at all.
 **Gate cleared 2026-09-04:** both are `resolved`. `0027` answered the question
-finding 1 sits under — a fact has one home — and `0028` added §3 to the surfaces
-this bundle must read, along with finding 8, which was found by breaking `0028`'s
+finding F1 sits under — a fact has one home — and `0028` added §3 to the surfaces
+this bundle must read, along with finding F8, which was found by breaking `0028`'s
 own rule the day it was written.
 
 **This bundle is a self-report.** Most of its findings are rules this session
 wrote into `docs/legend.md` and did not carry into the instruction set, each time
 with a line saying the adoption was owed. That many such lines is not a backlog,
-it is a pattern, and finding 5 is about the pattern rather than any one instance.
+it is a pattern, and finding F5 is about the pattern rather than any one instance.
 Finding 8, added a day later, is the pattern's first *observed* cost rather than
 its record: a rule that lived only in conversation was broken twice in an
 afternoon by the session that had been told it.
@@ -74,7 +75,7 @@ normative.
 written twice in different prose by the same session in Revisions 166, 168 and
 172. Nothing keeps them in step.
 
-**This is where this bundle touches `0027`.** That bundle's finding 6 records
+**This is where this bundle touches `0027`.** That bundle's finding F6 records
 that the two session-state diagrams disagree; this is the same failure on the
 status side. They are separate instances and should be decided together — if the
 answer is a rule about where a rule may live, it covers both.
@@ -122,15 +123,15 @@ Revision 162 moved the status and state definitions out of §§4c–4d into
 So a session reading §4d finds out what `handoff` requires without finding out
 what `handoff` means, and a session reading `legend.md` finds the reverse. Both
 are correct; neither is sufficient. Smallest of the six, and the one most likely
-to be swept up by whatever answers finding 5.
+to be swept up by whatever answers finding F5.
 
 ## F7 — the vocabulary cannot express decision order
 
 `Relates to` was added in Revision 173 and says that two bundles bear on each
 other. It has no direction and no ordering, and the first three findings bundles
 to use it needed both: `0029` must be decided after `0027`, because four of its
-findings are downstream of `0027` finding 1, and after `0028`, whose resolution
-adds to `0029` finding 1's list.
+findings are downstream of `0027` finding F1, and after `0028`, whose resolution
+adds to `0029` finding F1's list.
 
 Nothing in the status vocabulary carries that. A bundle at `unresolved` looks
 equally ready whether it is genuinely open or waiting on another bundle's
@@ -144,19 +145,19 @@ is not in `docs/legend.md`, nothing else recognises it, and whether it becomes
 vocabulary is part of this finding's own decision. Using an undefined pointer to
 record that a pointer is undefined is uncomfortable, and the alternative — saying
 nothing until the vocabulary exists — would have left the ordering in
-conversation, which is what finding 5 is about.
+conversation, which is what finding F5 is about.
 
 Three shapes, none chosen:
 
 - **A `Decide after:` header line**, as used here. Explicit, and a session picking
   the bundle up sees immediately that it should not start.
 - **Nothing in the bundle; the owner sequences the work.** Honest, and it puts the
-  knowledge back where finding 5 says it should not be.
+  knowledge back where finding F5 says it should not be.
 - **Carry it in the `Relates to` clause** — *"decide that first, four of these are
-  downstream of its finding 1"*. No new vocabulary, weaker guarantee, and it
+  downstream of its finding F1"*. No new vocabulary, weaker guarantee, and it
   overloads a pointer that deliberately obliges nobody.
 
-Whichever is chosen, it should be decided with finding 5: both are about what a
+Whichever is chosen, it should be decided with finding F5: both are about what a
 session can learn from the tree without being told.
 
 ---
@@ -178,7 +179,7 @@ when it is ready, and until then the work is a draft.
 
 **That rule exists and is followed — in conversation.** It has been stated to
 this session more than once. It is not in `.github/copilot-instructions.md`, not
-in `docs/legend.md`, and not in any session prompt. It is finding 5 exactly, with
+in `docs/legend.md`, and not in any session prompt. It is finding F5 exactly, with
 the difference that this one has now been observed failing rather than predicted
 to.
 
@@ -189,7 +190,7 @@ owner reviews the diff before committing and can decline it. What it costs is
 **review order.** A patch already in the tree is reviewed as a fait accompli; it
 sits between the owner and anything else they wanted to do in that folder; and
 declining it becomes an action rather than an omission — which is the property
-`0028` finding 4 was pleased to have removed, restored by the same session in the
+`0028` finding F4 was pleased to have removed, restored by the same session in the
 same revision.
 
 `0028`'s own `resolutions.md` names this without recognising it: *"nothing
@@ -209,7 +210,7 @@ noticed.
   by nothing do not become clearer by being made into three.
 - **State it per session, in the prompt.** Where it lives today, minus the
   conversation. It makes the rule a property of a session rather than of the
-  repository, which is the shape finding 5 exists to argue against.
+  repository, which is the shape finding F5 exists to argue against.
 
 **Decide with 5**, and probably in the same sentence: both are about what a
 session can learn from the tree without being told, and this one is the case
@@ -221,4 +222,4 @@ where not being told had a cost the same day.
 
 `0027`'s seven findings, which are a separate reading of the same surface by a
 different session and are owned separately by this one. Where the two meet is
-named in finding 2 and nowhere else.
+named in finding F2 and nowhere else.

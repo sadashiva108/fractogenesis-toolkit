@@ -1,8 +1,7 @@
 # Resolutions — sessions write into the tree the owner commits from
 
 **Bundle:** `0028`  
-**Status:** `resolved`, 2026-09-04.  
-**Owner:** `restore-apps-outstanding-20260903-000000`.  
+**Session:** `restore-apps-outstanding-20260903-000000`  
 **Decisions:** `decisions.md`, four across six findings.
 
 The reasoning is in `decisions.md` and is not repeated. This file records what
@@ -32,7 +31,7 @@ write to the owner's repository, while staging in the owner's checkout still is;
 and a copy in session-local storage dies with the session, so hand over at
 stopping points and say when work exists only there.
 
-A further point covers finding 5: **the revision number is taken at apply time**,
+A further point covers finding F5: **the revision number is taken at apply time**,
 with `./bin/check-manifest-revision.sh` run against the tree being applied to.
 
 **`bin/check-manifest-revision.sh`** — new. Prints the next free
@@ -130,7 +129,7 @@ and against a fixture whose header block says 5 while an entry heading says 7 it
 returns 8 and reports that an entry exists the header does not summarise — the
 collision case, in the one place the old rule could not look.
 
-The environment was a Linux VM (Bash 5.1, GNU coreutils) on the owner's Mac, not
+The environment was a Linux VM (Bash D3, GNU coreutils) on the owner's Mac, not
 macOS. `/bin/bash -n` against stock Bash 3.2 remains owed for Revisions 116
 onward and now covers a script written today.
 

@@ -1,7 +1,7 @@
 # Resolutions — Emitted rsync commands target the pre-image path, not the clone
 
 **Bundle:** `0023-restore-repos-rsync-targets-pre-image-path`  
-**Status:** `resolved`  
+**Session:** —  
 **Recorded:** 2026-09-03, during the `docs/*-findings/` migration.
 
 This finding was closed before findings bundles existed, as a parked note whose

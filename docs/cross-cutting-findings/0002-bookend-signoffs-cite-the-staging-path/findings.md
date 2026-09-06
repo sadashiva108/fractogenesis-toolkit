@@ -1,6 +1,7 @@
 # Bookend sign-offs cite the `.incomplete` staging path
 
 **Recorded:** 2026-09-03, while renaming `boundaries/` to `bookends/` — 20 of the sign-offs on the volume named the category, and every one of them named it through a path that never existed after the run finished.  
+**Session:** —  
 **Severity:** cosmetic per file, but it is the same defect Revision 150 fixed in `bin/restore-repos.sh`, in four more scripts.
 
 ## Findings
@@ -14,7 +15,7 @@ run-index session.
 
 ## What the sign-offs say
 
-```markdown
+```text
 | Plan | `…/reimaged-system/bookends/runs/.restore-repos-exit-20260903-005335.incomplete` |
 ```
 

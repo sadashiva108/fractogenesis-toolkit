@@ -1,8 +1,8 @@
 # Resolutions — renames break citations, and only a record's values are frozen
 
 **Bundle:** `0030-renames-break-citations-and-which-may-be-repaired`  
-**Status:** `resolved`  
-**Recorded:** 2026-09-04, session `session_01PcgHu9kz9Hm5RatLQuFR8H`.
+**Session:** `session_01PcgHu9kz9Hm5RatLQuFR8H`  
+**Recorded:** 2026-09-04.
 
 Five findings, five decisions, one toolkit write. `findings.md` is unchanged apart
 from its per-finding status table, which is the one part of it that moves.

@@ -1,6 +1,7 @@
 # The index and manifest tables have a shape nothing checks
 
-**Recorded:** 2026-09-03, session `session_01PcgHu9kz9Hm5RatLQuFR8H`, from breaking two of them and not noticing.  
+**Recorded:** 2026-09-03, from breaking two of them and not noticing.  
+**Session:** `session_01PcgHu9kz9Hm5RatLQuFR8H`  
 **Severity:** low per instance, and it defeats the check a session actually runs. Every validator in the repository passed on both broken rows.  
 **Scope:** instruction set. §§4c–4d define these tables; nothing validates them. Whether the *fix* belongs here is finding 3.  
 **Relates to:** `0031` — the same section, §4c, from the other side: `0031` is a rule that is missing, this is a rule that exists and is unenforced.

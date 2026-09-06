@@ -1,6 +1,7 @@
 # An empty Docker section captures cleanly and nothing downstream notices
 
 **Recorded:** 2026-09-02, while planning a `restore-docker` teardown test.  
+**Session:** —  
 **Severity:** low to hit, moderate to leave — a comparison silently compares nothing against nothing.
 
 ## Findings

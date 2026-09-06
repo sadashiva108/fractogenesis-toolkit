@@ -1,8 +1,8 @@
 # Resolutions — four bookend runs are dated the day the recorder was extended
 
 **Bundle:** `0005-boundary-runs-recorded-long-after-their-phase`  
-**Status:** `resolved`  
-**Resolved:** 2026-09-04, session `session_01KcZvrKMgfenhrT9DvxW9Jk`.
+**Session:** `session_01KcZvrKMgfenhrT9DvxW9Jk`  
+**Resolved:** 2026-09-04.
 
 | Finding | Resolved by | What was done | Revision | Commit |
 |---|---|---|---|---|

@@ -15,15 +15,21 @@
 #
 # The rules, from .github/session-management-instructions.md section 11:
 #
-#   findings.md      required: Recorded, Severity -- the two every reading has
-#                    optional: Felt at, Scope, and Relates to (repeatable, last)
-#                    order: Recorded, Severity, Felt at, Scope, Relates to
+#   findings.md      required: Recorded, Session, Severity
+#                    optional: Felt at, Scope, Read, Relates to (repeatable, last)
+#                    order: Recorded, Session, Severity, Felt at, Scope, Read,
+#                    Relates to
+#                    Session is never packed into another field's value, and
+#                    holds `--` where none was ever recorded.
 #                    NO other field in the header block. That is the rule that
 #                    matters: the schema fixes the vocabulary, not the content.
 #                    Requiring Scope would mean inventing it for the 26 readings
 #                    that never had one, which is not a checker's business.
-#   decisions.md     required: Bundle, and nothing named `Findings bundle`
-#   resolutions.md   required: Bundle, Recorded
+#   decisions.md     required: Bundle, Session; nothing named `Findings bundle`
+#   resolutions.md   required: Bundle, Session
+#   no Status field   in decisions.md or resolutions.md -- a third copy of the
+#                    bundle status after the tag and the index row, and 17 of
+#                    them had gone stale by Revision 202
 #   finding table    `| # | Finding | Status |` -- required, no `Decided`
 #                    column; that became a status of its own
 #   rendering        each field on ONE line, and every line but the last in the
@@ -34,7 +40,10 @@
 #   cross-reference  every F-number cited by decisions.md or resolutions.md
 #                    exists in findings.md, and every D-number cited by
 #                    resolutions.md exists in decisions.md
-#   code blocks      fenced with ``` and never indented four spaces. Renderers
+#   code blocks      fenced with ``` and tagged `text`, never `markdown` -- some
+#                    renderers read that tag as "render this as markdown" and
+#                    interpret the example instead of showing it. Never indented
+#                    four spaces either. Renderers
 #                    disagree about the indented form: one rendered section 11's
 #                    own schema example as live markdown, processed the backticks
 #                    inside it, and swallowed `<where the fix lands>` as an HTML
@@ -109,7 +118,7 @@ for doc in docs/*-findings/[0-9][0-9][0-9][0-9]-*/findings.md \
 
   fields="$(header_fields "$doc")"
 
-  for req in Recorded Severity; do
+  for req in Recorded Session Severity; do
     if printf '%s\n' "$fields" | grep -qx "$req"; then pass "$bundle  $req"
     else bad "$bundle" "required header field '$req' is missing"; fi
   done
@@ -118,7 +127,7 @@ for doc in docs/*-findings/[0-9][0-9][0-9][0-9]-*/findings.md \
   while IFS= read -r fld; do
     [ -n "$fld" ] || continue
     case "$fld" in
-      Recorded|Severity|"Felt at"|Scope|"Relates to") ;;
+      Recorded|Session|Severity|"Felt at"|Scope|Read|"Relates to") ;;
       *) bad "$bundle" "header field '$fld' is not in the schema -- move it below the header" ;;
     esac
   done <<EOF
@@ -127,10 +136,11 @@ EOF
 
   # order: Recorded, Severity, [Felt at], Scope, then Relates to
   order="$(printf '%s\n' "$fields" | awk '
-    $0=="Recorded"{print 1} $0=="Severity"{print 2} $0=="Felt at"{print 3}
-    $0=="Scope"{print 4} $0=="Relates to"{print 5}')"
+    $0=="Recorded"{print 1} $0=="Session"{print 2} $0=="Severity"{print 3}
+    $0=="Felt at"{print 4} $0=="Scope"{print 5} $0=="Read"{print 6}
+    $0=="Relates to"{print 7}')"
   if [ -n "$order" ] && ! printf '%s\n' "$order" | sort -nc 2>/dev/null; then
-    bad "$bundle" "header fields are out of order -- Recorded, Severity, [Felt at], Scope, [Relates to]"
+    bad "$bundle" "header fields are out of order -- Recorded, Session, Severity, [Felt at], [Scope], [Read], [Relates to]"
   else
     pass "$bundle  field order"
   fi
@@ -237,6 +247,21 @@ for doc in docs/*-findings/[0-9][0-9][0-9][0-9]-*/decisions.md \
   else
     pass "$bundle  bundle field name"
   fi
+  if grep -qE '^\*\*Status( when opened| now)?:\*\*' "$doc"; then
+    bad "$bundle" "carries a Status field -- the STATUS- tag and the index row own the status"
+  else
+    pass "$bundle  no status copy"
+  fi
+  if grep -q '^\*\*Session:' "$doc"; then
+    pass "$bundle  session field"
+  else
+    bad "$bundle" "no Session field -- it is required, and holds an em dash where none was recorded"
+  fi
+  if grep -q '^\*\*Read against:' "$doc"; then
+    bad "$bundle" "uses 'Read against:' -- the field is named 'Read:'"
+  else
+    pass "$bundle  read field name"
+  fi
 done
 
 # --- code blocks are fenced, never indented ------------------------------------
@@ -257,6 +282,11 @@ for doc in docs/legend.md .github/session-management-instructions.md \
     bad "$doc" "indented code block at line(s) $(printf '%s' "$hits" | tr '\n' ' ')-- fence it with \`\`\`"
   else
     pass "$doc  code blocks fenced"
+  fi
+  if grep -q '^```markdown$' "$doc"; then
+    bad "$doc" "a fence is tagged \`markdown\` -- some renderers interpret it instead of showing it; tag it \`text\`"
+  else
+    pass "$doc  fences are inert"
   fi
 done
 

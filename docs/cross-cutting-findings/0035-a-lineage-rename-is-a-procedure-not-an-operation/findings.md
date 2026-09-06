@@ -1,6 +1,7 @@
 # A lineage rename is a procedure, not an operation
 
-**Recorded:** 2026-09-04, `pre-image-capture-conformance-20260903-194532` (`session_01PcgHu9kz9Hm5RatLQuFR8H`), from the owner asking what keeps a run directory and its manifest row in step during a rename.  
+**Recorded:** 2026-09-04, from the owner asking what keeps a run directory and its manifest row in step during a rename.  
+**Session:** `pre-image-capture-conformance-20260903-194532` (`session_01PcgHu9kz9Hm5RatLQuFR8H`)  
 **Severity:** low today and self-inflicting. The volume is currently consistent — 162 manifest rows, 162 run directories, exact correspondence, no dangling pointers. Every future rename is an opportunity to break that by hand.  
 **Scope:** cross-cutting. `.internal/artifact-runs.sh`, `bin/reindex-artifact-runs.sh`, and every category that is ever renamed.  
 **Relates to:** `0030` — that bundle decided what a rename must *record* (D7) and that detection waits on those records (D8). This is the third question: what performs the rename, and what happens when it half-happens.

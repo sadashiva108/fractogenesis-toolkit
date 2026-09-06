@@ -1,8 +1,8 @@
 # Resolutions — `.internal/restore/` is empty, and is not tracked
 
 **Bundle:** `0012-internal-restore-directory-empty`  
-**Status:** `resolved`  
-**Resolved:** 2026-09-04, session `session_01KcZvrKMgfenhrT9DvxW9Jk`.
+**Session:** `session_01KcZvrKMgfenhrT9DvxW9Jk`  
+**Resolved:** 2026-09-04.
 
 | Finding | Resolved by | What was done | Revision | Commit |
 |---|---|---|---|---|

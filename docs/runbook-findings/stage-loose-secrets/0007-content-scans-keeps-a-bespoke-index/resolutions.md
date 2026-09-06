@@ -1,7 +1,7 @@
 # Resolutions — `content-scans/` looks like a run category and is not one
 
 **Bundle:** `0007-content-scans-keeps-a-bespoke-index`  
-**Status:** `resolved`  
+**Session:** —  
 **Recorded:** 2026-09-03, during the `docs/*-findings/` migration.
 
 This finding was closed before findings bundles existed, as a parked note whose

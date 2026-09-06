@@ -1,8 +1,8 @@
 # Decisions — superseding a bundle whose session is gone
 
 **Bundle:** `0031-superseding-a-bundle-whose-session-is-gone`  
-**Status:** `in progress`  
-**Decided:** 2026-09-03, session `session_01PcgHu9kz9Hm5RatLQuFR8H`, owner present and routing confirmed by the owner.
+**Session:** `session_01PcgHu9kz9Hm5RatLQuFR8H`  
+**Decided:** 2026-09-03, owner present and routing confirmed by the owner.
 
 ## Decisions
 

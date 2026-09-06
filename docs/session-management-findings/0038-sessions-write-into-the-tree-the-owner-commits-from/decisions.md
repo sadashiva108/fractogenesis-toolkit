@@ -1,26 +1,24 @@
 # Decisions — sessions write into the tree the owner commits from
 
 **Bundle:** `0028`  
-**Status when opened:** `in progress`, 2026-09-04.  
-**Status now:** `resolved` — what was done is in `resolutions.md`.  
-**Owner:** `restore-apps-outstanding-20260903-000000`.
+**Session:** `restore-apps-outstanding-20260903-000000`
 
 Decisions are recorded per finding as they are made. A finding with no entry here
 has not been decided, and `resolving` cannot begin until all six have one.
 
 **This bundle is unusual: its proposed fix was already running when it was
 decided.** Revisions 178, 179 and 180 were composed in a scratch copy and handed
-over as patches, before finding 1 was put to the owner. The evidence below is
+over as patches, before finding F1 was put to the owner. The evidence below is
 from those three, not from reasoning about them.
 
-| # | Finding | Decided |
+| # | Finding | Decisions |
 |---:|---|---|
-| 1 | Two sessions' uncommitted work interleaves in shared files | **yes** — 1.1 |
-| 2 | A revision's validator baselines are measured on another session's tree | **yes** — 2.1 |
-| 3 | A session's work has no diff boundary | **yes** — 2.1 |
-| 4 | Backing out one session's change is surgical | **yes** — 2.1 |
-| 5 | A session can amend a revision the owner has already committed | **yes** — 5.1 |
-| 6 | The write discipline does not distinguish where a write is composed | **yes** — 6.1 |
+| F1 | Two sessions' uncommitted work interleaves in shared files | D1 |
+| F2 | A revision's validator baselines are measured on another session's tree | D2 |
+| F3 | A session's work has no diff boundary | D2 |
+| F4 | Backing out one session's change is surgical | D2 |
+| F5 | A session can amend a revision the owner has already committed | D3 |
+| F6 | The write discipline does not distinguish where a write is composed | D4 |
 
 ---
 
@@ -70,10 +68,10 @@ is specific to each.
 taken.** A number chosen at compose time is a guess, and a scratch copy widens
 the window between the guess and the apply. Neither loss was expensive — three
 small edits re-derived against a fresh baseline both times, which is safer than
-replaying a stale diff — but the method as adopted here does not solve finding 5
+replaying a stale diff — but the method as adopted here does not solve finding F5
 and slightly aggravates it.
 
-The answer is to take the number at apply time, which is finding 5's decision and
+The answer is to take the number at apply time, which is finding F5's decision and
 is not made here.
 
 ### What it does not solve
@@ -148,10 +146,10 @@ line has to be written at the same moment as the entry. Both are small. This
 session wrote *"Revision 179"* into its own entry and each such guess happened to
 hold only because nobody took it first.
 
-### The other half of finding 5
+### The other half of finding F5
 
 The finding also records a session amending a revision the owner had already
-committed, having read the manifest before their commit landed. Decision 1.1
+committed, having read the manifest before their commit landed. Decision D1
 answers that: a session composing in a copy amends its own copy, and the patch
 either applies to what the owner has or does not. It can no longer reach into the
 file the owner is committing from.
@@ -176,7 +174,7 @@ that run. Composition does not vary at all — it is the same for every write, b
 every session, at every status.
 
 Folding composition into the categories would write one sentence three times, in
-three places that then have to be kept in step. That is `0029` finding 2 exactly,
+three places that then have to be kept in step. That is `0029` finding F2 exactly,
 and adding a fourth instance of it while `0029` waits would be perverse.
 
 ### The observation the finding rests on, and why it decides this

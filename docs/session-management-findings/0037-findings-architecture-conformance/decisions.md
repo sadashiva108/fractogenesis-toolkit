@@ -1,8 +1,7 @@
 # Decisions — the findings-and-sessions architecture disagrees with itself
 
 **Bundle:** `0027`  
-**Status when opened:** `in progress`, 2026-09-03.  
-**Owner:** `restore-apps-outstanding-20260903-000000`.
+**Session:** `restore-apps-outstanding-20260903-000000`
 
 Decisions are recorded per finding as they are made. A finding with no entry here
 has not been decided, and `resolving` cannot begin until all seven have one.
@@ -12,15 +11,15 @@ in the deciding session's own work, which is recorded in that session's
 `findings-manifest.md` and repeated here so a later reader weighing these
 decisions knows the deciding session is not neutral about them.
 
-| # | Finding | Decided |
+| # | Finding | Decisions |
 |---:|---|---|
-| 1 | §4b and §4c contradict each other on whether a findings bundle takes a revision | **yes** |
-| 2 | Four of five `prompt.md` files violate §4d's "always" rule | **yes** |
-| 3 | `docs/sessions/INDEX.md` restates a count the manifest owns | **yes** |
-| 4 | `docs/INDEX.md` describes a directory it no longer matches | **yes** |
-| 5 | Every `resolved` findings bundle is missing `decisions.md` | **yes** |
-| 6 | The two session-state diagrams disagree | **yes** |
-| 7 | Two session identifiers recorded as unrecoverable are recoverable | **yes** |
+| F1 | §4b and §4c contradict each other on whether a findings bundle takes a revision | D1 |
+| F2 | Four of five `prompt.md` files violate §4d's "always" rule | D2 |
+| F3 | `docs/sessions/INDEX.md` restates a count the manifest owns | D3, D4, D5 |
+| F4 | `docs/INDEX.md` describes a directory it no longer matches | D3, D4, D5 |
+| F5 | Every `resolved` findings bundle is missing `decisions.md` | D6 |
+| F6 | The two session-state diagrams disagree | D7, D8 |
+| F7 | Two session identifiers recorded as unrecoverable are recoverable | D9 |
 
 ---
 
@@ -80,7 +79,7 @@ sentences and often should be.
 ### What this decision implies elsewhere
 
 It answers the question `0029` is waiting on — **where is a rule allowed to
-live** — for the case of the manifest. `0029` findings 1, 2, 5 and 6 are
+live** — for the case of the manifest. `0029` findings F1, F2, F5 and F6 are
 downstream of the general form of that question and are not decided here.
 
 ### What is not done
@@ -113,7 +112,7 @@ last contribution this findings bundle could take.
 
 What is left is two, and the decision separates them cleanly:
 
-| Session | State | Under 2.1 |
+| Session | State | Under D2 |
 |---|---|---|
 | `run-index-design-20260901-000000` | `handoff` | **fix it.** Its prompt will be handed to a session as written, and its only mention of the instruction set is an incidental citation in a ground-rules bullet at line 33 of 373 |
 | `restore-git-phase-11a-20260901-155433` | `closed` | leave it. It is a placeholder written in Revision 162 for a session that left no brief, and it says so in its first line |
@@ -131,7 +130,7 @@ property the tree already carries in the session's state.
 
 ### Considered and not adopted
 
-A clause exempting placeholder prompts. Under 2.1 it is unnecessary — the only
+A clause exempting placeholder prompts. Under D2 it is unnecessary — the only
 placeholder is `closed` and therefore already out of scope. Should a live session
 ever need one, this decision is the place to revisit.
 
@@ -145,7 +144,7 @@ The edit to `run-index-design`'s prompt. `resolving` waits on all seven findings
 
 ## D3 — a fact is written down once, and everywhere else links to it
 Owner, 2026-09-03. Adopted as a rule rather than applied as two fixes, because
-findings 3 and 4 are one defect wearing two coats and neither instance is the
+findings F3 and F4 are one defect wearing two coats and neither instance is the
 last one.
 
 What it means in practice:
@@ -156,12 +155,12 @@ What it means in practice:
 
 ## D4 — a derived fact may be displayed, if something catches it drifting
 
-Owner, 2026-09-04, revising 3.1 on first application.
+Owner, 2026-09-04, revising D3 on first application.
 
-3.1 as first written said a count is not restated, and would have removed the
+D3 as first written said a count is not restated, and would have removed the
 number of findings bundles from each session's row in `docs/sessions/INDEX.md`.
 The owner wants that count visible, and the rule was wrong rather than the
-request: **what failed in finding 3 was not that a count was shown, it was that a
+request: **what failed in finding F3 was not that a count was shown, it was that a
 count was typed in a second place and nothing brought it back when the source
 changed.** Authorship and checkability are the property that matters; display is
 not.
@@ -174,7 +173,7 @@ somebody is busy.
 
 The general form: **a fact has one home. A copy of it elsewhere is permitted only
 when it is generated, or when a check fails on drift.** An unchecked hand-typed
-copy is what finding 3 is about, and what §4b's directory count still is.
+copy is what finding F3 is about, and what §4b's directory count still is.
 
 ## D5 — a session's row shows bundles owned *and* findings carried
 Owner, 2026-09-04.
@@ -213,7 +212,7 @@ rather than verify internal consistency. A number that agrees with itself proves
 nothing about what it is counting. Both are derived from the
 `Findings` column each bundle's index row already holds, which is itself derived
 from the per-finding table inside `findings.md` — so the chain has one source and
-three displays, all covered by the check 3.2 requires.
+three displays, all covered by the check D4 requires.
 
 The check therefore verifies three things, not one: a bundle's stated finding
 count against its own `findings.md` table, a session's stated bundle count
@@ -224,7 +223,7 @@ of those bundles.
 The same defect is live in a third place this bundle does not name: §4b states
 the number of directories under `docs/`, and that number has been wrong after
 four of the last six revisions that touched `docs/`. It is recorded separately as
-`0029` finding 3, and this decision answers it too — which is worth saying here,
+`0029` finding F3, and this decision answers it too — which is worth saying here,
 because a rule adopted in one findings bundle and applied in another is exactly
 the kind of connection that gets lost.
 
@@ -237,7 +236,7 @@ nothing brought them back when the fact changed.
 It applies to facts *about the tree* — counts, contents, membership. It does not
 mean a document may never restate a rule for the reader's convenience: the status
 keys added to the indexes in Revision 173 are deliberate duplication, and finding
-2 of `0029` is about a case where that duplication has already drifted. Where the
+F2 of `0029` is about a case where that duplication has already drifted. Where the
 line falls between a useful restatement and a drifting copy is not settled here.
 
 ### What is not done
@@ -352,9 +351,9 @@ and the two drawings.
 
 ## D8 — the three terminal states differ by what happens to the findings
 
-Owner, 2026-09-04, revising 6.1 on its first real case.
+Owner, 2026-09-04, revising D7 on its first real case.
 
-6.1 defined `closed` as *ended having finished the work*, and within the hour a
+D7 defined `closed` as *ended having finished the work*, and within the hour a
 session ended `closed` with five unresolved findings handed back to unowned.
 That reading was too narrow: `closed` **is** completion — of the session, not of
 every finding it recorded.
@@ -439,7 +438,7 @@ earn itself.
 `restore-git-phase-11a-20260901-155433/metadata.md` carries the same *"not
 recoverable"* wording and was never checked. `0027`'s own text flags it as
 possibly a different case: that session predates the trailer convention. Under
-7.1 it is checked during `resolving`, and whatever the answer, the file records
+D9 it is checked during `resolving`, and whatever the answer, the file records
 what was searched.
 
 ### The general property

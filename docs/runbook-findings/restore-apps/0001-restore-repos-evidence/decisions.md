@@ -1,7 +1,7 @@
 # Decisions — Phase 11B evidence review
 
 **Bundle:** `0001`  
-**Status when opened:** `analyzing`, 2026-09-03.
+**Session:** —
 
 Decisions are recorded per finding as they are made. A finding with no entry
 here has not been decided.
@@ -15,6 +15,9 @@ here has not been decided.
 | D1 | the work succeeded and nothing is owed | F1 | — | `accepted` |
 | D2 | verify, do not remember (option E) | F1 | — | `accepted` |
 | D3 | `unknown` when the source is unreachable (option D) | F1 | — | `accepted` |
+| D4 | the outcome vocabulary | F1 | — | `accepted` |
+| D5 | an unreachable source is recorded, not refused | F1 | — | `accepted` |
+| D6 | how strict the comparison is depends on the gap | F1 | — | `accepted` |
 
 ## Finding 1 — the official run reports `repo-secrets` as blocked
 
@@ -52,7 +55,7 @@ out the two that had looked strongest.
 |---|---|
 | **A — procedural.** Pin the hydrate run official, or make it the last run | `pin` would make a run official whose status report is stale on every other count, and Step 9 still instructs the next operator to do the thing that caused this |
 | **B — carry outcomes forward in `hydrated.md`**, as `.internal/sign-offs.sh` does for human answers | Destroys the one property that makes the file worth having: that it says what *a single run* did. A stage that genuinely re-blocked would read clean |
-| **C — a cumulative phase-state file** beside `repo-restore-index.md` | Not wrong, and more machinery than the problem needs once E is available. May still have something to offer finding 3; not needed for this one |
+| **C — a cumulative phase-state file** beside `repo-restore-index.md` | Not wrong, and more machinery than the problem needs once E is available. May still have something to offer finding F3; not needed for this one |
 
 ## D2 — verify, do not remember (option E)
 
@@ -81,7 +84,7 @@ A run that cannot reach the image reports *not evaluated*, not *evaluated and
 unavailable*. It stops the record asserting something false in the one situation
 where it cannot know.
 
-### Decision 1.4 — the outcome vocabulary
+## D4 — the outcome vocabulary
 
 `applied` becomes **`hydrated`**, and `would-apply` becomes **`would-hydrate`**
 for symmetry. The flag is `--hydrate`, the helper is
@@ -107,14 +110,14 @@ its only case — the image not attached — is exactly `unknown`.
 the workflow applies to every rename. Revision numbers in the manifest are what
 lets a reader date the vocabulary.
 
-### Decision 1.5 — an unreachable source is recorded, not refused
+## D5 — an unreachable source is recorded, not refused
 
 `--hydrate` runs the stage and records `unknown` rather than refusing. Owner,
 2026-09-03. Refusing would make an unattached image an error for a phase that has
 several other stages to get on with, and the run would then have nothing to say
 about the stage at all — which is the failure this finding is about.
 
-### Decision 1.6 — how strict the comparison is depends on the gap
+## D6 — how strict the comparison is depends on the gap
 
 Owner, 2026-09-03: **`sha256` when the stages ran close together in time,
 presence when they did not.** A clone and a hydrate minutes apart should be
@@ -143,7 +146,7 @@ portability lint will catch it — which is the sort of thing
 `docs/cross-cutting-findings/0015-portability-lint-cannot-see-heredoc-context/`
 exists to warn about.
 
-**Finding 1 is now fully decided.** Six decisions, 1.1 through 1.6. It is not
+**Finding 1 is now fully decided.** Six decisions, D1 through 1.6. It is not
 `resolving` and no toolkit file will be touched for it until every other finding
 in this bundle is decided too.
 

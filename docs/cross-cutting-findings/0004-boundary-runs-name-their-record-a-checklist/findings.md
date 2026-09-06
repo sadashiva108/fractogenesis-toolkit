@@ -1,6 +1,7 @@
 # Boundary runs call their record a `checklist`, and it is not one
 
 **Recorded:** 2026-09-02, by the owner, on reading `reimaged-system/boundaries/runs/restore-repos-entry-20260902-083713/checklist.md`.  
+**Session:** —  
 **Severity:** naming only — nothing misbehaves. It matters because this is the one word the workflow uses for two other things.
 
 ## Findings

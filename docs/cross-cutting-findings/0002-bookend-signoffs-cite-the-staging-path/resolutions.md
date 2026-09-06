@@ -1,7 +1,7 @@
 # Resolutions — Bookend sign-offs cite the `.incomplete` staging path
 
 **Bundle:** `0002-bookend-signoffs-cite-the-staging-path`  
-**Status:** `resolved`  
+**Session:** —  
 **Recorded:** 2026-09-03, during the `docs/*-findings/` migration.
 
 This finding was closed before findings bundles existed, as a parked note whose

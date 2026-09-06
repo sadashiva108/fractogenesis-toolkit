@@ -1,8 +1,8 @@
 # Resolutions — `staged-ignored-files/live/` holds two bundles no lookup can reach
 
 **Bundle:** `0025-staged-ignored-files-live-parent-root-bundles`  
-**Status:** `resolved`  
-**Recorded:** 2026-09-03, session `session_01PcgHu9kz9Hm5RatLQuFR8H`.
+**Session:** `session_01PcgHu9kz9Hm5RatLQuFR8H`  
+**Recorded:** 2026-09-03.
 
 `findings.md` asked for one thing — *record the answer here rather than
 re-deriving it* — and proposed no code change. The answer is recorded in

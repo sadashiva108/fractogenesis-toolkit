@@ -1,6 +1,7 @@
 # `emit_extra_remotes` re-adds the URL the clone already used
 
 **Recorded:** 2026-09-01, Restore Repositories Refactor session, while verifying the regenerated `clone-commands.sh`.  
+**Session:** —  
 **Severity:** cosmetic. Produces a redundant but harmless command.
 
 ## Findings

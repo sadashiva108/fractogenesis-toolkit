@@ -1,7 +1,8 @@
 # Phase 11B evidence review — what `restore-repos` actually left behind
 
-**Recorded:** 2026-09-03, `restore-apps-outstanding-20260903-000000` (`session_016EbjB7M527qEFqZFzpv2C9`)  
-**Severity:** findings 1–3 block a truthful Phase 12 entry; 4 and 5 are shared-machinery defects; 6 and 7 answer the two unreviewed repositories  
+**Recorded:** 2026-09-03  
+**Session:** `restore-apps-outstanding-20260903-000000` (`session_016EbjB7M527qEFqZFzpv2C9`)  
+**Severity:** findings F1–3 block a truthful Phase 12 entry; 4 and 5 are shared-machinery defects; 6 and 7 answer the two unreviewed repositories  
 **Scope:** the `restore-repos.md` evidence and captures on the live artifact root, read before starting `restore-apps.md` (Phase 12)
 
 Findings only — no repository file and no artifact was modified by this review.
@@ -49,7 +50,7 @@ in `resolutions.md` — not when the work feels done.
 one bundle bear on each other, and a row reaches `decided` only when nothing
 about that finding is still open.
 
-**F1 is there**: `decisions.md` records D1, D2 and D3 against it with nothing
+**F1 is there**: `decisions.md` records D1 through D6 against it with nothing
 outstanding. Which decisions answer which finding is recorded in one place — the
 `Findings` column of that table — and not restated here.
 
@@ -274,7 +275,7 @@ from the 2026-08-25 run:
 - Carry-forward reconciled for what was restored
 - Repositories with no remote are resolved
 
-Findings 6 and 7 answer the third; finding 2 bears on the second.
+Findings 6 and 7 answer the third; finding F2 bears on the second.
 
 ---
 
@@ -301,7 +302,7 @@ phase rather than to weaken the gate.
    `applied` rather than `blocked` in the run the pointer names.
 3. Rerun Steps 9, 10 and 11 so the official run, the delta and the exit bookend
    describe what actually happened.
-4. Answer the three exit sign-off rows, using findings 6 and 7.
+4. Answer the three exit sign-off rows, using findings F6 and F7.
 5. Decide `engagements` and `ingestion-related` against the Time Machine chain.
 
 Findings 4 and 5 are defects in shared machinery rather than in this evidence.

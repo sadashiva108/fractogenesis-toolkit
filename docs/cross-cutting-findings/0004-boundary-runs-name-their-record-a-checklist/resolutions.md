@@ -1,7 +1,7 @@
 # Resolutions — Boundary runs call their record a `checklist`, and it is not one
 
 **Bundle:** `0004-boundary-runs-name-their-record-a-checklist`  
-**Status:** `resolved`  
+**Session:** —  
 **Recorded:** 2026-09-03, during the `docs/*-findings/` migration.
 
 This finding was closed before findings bundles existed, as a parked note whose

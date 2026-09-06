@@ -1,6 +1,7 @@
 # Phase 6B records FAIL against a correct repository-audit manifest
 
-**Recorded:** 2026-09-01, session `01KcZvrKMgfenhrT9DvxW9Jk`, while checking what reads `repo-audit-reports/`.  
+**Recorded:** 2026-09-01, while checking what reads `repo-audit-reports/`.  
+**Session:** `01KcZvrKMgfenhrT9DvxW9Jk`  
 **Severity:** a Phase 6B gate reports the opposite of the truth.
 
 ## Findings

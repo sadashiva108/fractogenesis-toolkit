@@ -1,9 +1,9 @@
 # Decisions — `office-stability/checklists/` does not hold checklists
 
 **Bundle:** `0013-office-stability-checklists-are-evidence-bundles`  
-**Status:** `in progress`  
-**Decided:** 2026-09-03, session `session_01PcgHu9kz9Hm5RatLQuFR8H`, owner present.  
-**Read against:** the volume at `/Volumes/Data/reimage-CVG-0002160-500-20260816-open`, read-only, and the repository at `8f1ce13`.
+**Session:** `session_01PcgHu9kz9Hm5RatLQuFR8H`  
+**Decided:** 2026-09-03, owner present.  
+**Read:** the volume at `/Volumes/Data/reimage-CVG-0002160-500-20260816-open`, read-only, and the repository at `8f1ce13`.
 
 `findings.md` is unchanged. It records what was found on 2026-09-01 and is not
 rewritten to match what is decided here.

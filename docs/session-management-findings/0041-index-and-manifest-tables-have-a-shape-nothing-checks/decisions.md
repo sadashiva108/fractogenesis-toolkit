@@ -1,15 +1,15 @@
 # Decisions — the index and manifest tables have a shape nothing checks
 
 **Bundle:** `0032-index-and-manifest-tables-have-a-shape-nothing-checks`  
-**Status:** `in progress`  
-**Decided:** 2026-09-04, session `session_01PcgHu9kz9Hm5RatLQuFR8H`, owner present. Held at the owner's word until `0029`'s decisions landed, because `0029` D3 names this bundle.
+**Session:** `session_01PcgHu9kz9Hm5RatLQuFR8H`  
+**Decided:** 2026-09-04, owner present. Held at the owner's word until `0029`'s decisions landed, because `0029` D3 names this bundle.
 
 ## Decisions
 
 | # | Decision | Findings | Decided | Outcome |
 |---|---|---|---|---|
 | D1 | One new validator, `bin/verify-findings-structure.sh` | — | 2026-09-04 | `accepted` |
-| D2 | `verify-doc-paths.sh` is not changed, and the reason is finding 2's point | — | 2026-09-04 | `accepted` |
+| D2 | `verify-doc-paths.sh` is not changed, and the reason is finding F2's point | — | 2026-09-04 | `accepted` |
 | D3 | The bundle stays in `docs/session-management-findings/`, and the two tests disagree | — | 2026-09-03 | `accepted` |
 | D4 | Finding 4 cannot be fixed in this repository, and D1 catches its residue | — | 2026-09-04 | `accepted` |
 
@@ -36,12 +36,12 @@ have to agree about what a table is.
 **The cost is real and is accepted.** A fifth repo lint is a fifth line in every
 manifest entry's validation block, and `0029` named that cost when it rejected a
 lint of its own. **This is not that case.** `0029` rejected a check whose purpose
-was to *license a duplicate that could be deleted instead* — its decision 3.1
+was to *license a duplicate that could be deleted instead* — its decision D3
 removes the copies and needs no check. Here there is nothing to remove: the tables
 must exist, their shape is load-bearing, and the only alternatives are a check or
 a habit. A habit has now failed six times.
 
-## D2 — `verify-doc-paths.sh` is not changed, and the reason is finding 2's point
+## D2 — `verify-doc-paths.sh` is not changed, and the reason is finding F2's point
 
 Finding 2 says that lint gave false assurance on both malformed rows. It did, and
 it was correct to: every link in them resolved. Existence and shape are different

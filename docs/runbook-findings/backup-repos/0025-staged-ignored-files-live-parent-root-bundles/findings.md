@@ -1,6 +1,7 @@
 # `staged-ignored-files/live/` holds two bundles no lookup can reach
 
-**Recorded:** 2026-09-01, session `01KcZvrKMgfenhrT9DvxW9Jk`, while deciding whether the category should join the run index.  
+**Recorded:** 2026-09-01, while deciding whether the category should join the run index.  
+**Session:** `01KcZvrKMgfenhrT9DvxW9Jk`  
 **Severity:** low. Harmless today; misleading to anyone counting bundles.
 
 ## Findings

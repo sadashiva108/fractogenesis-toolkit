@@ -1,6 +1,7 @@
 # `repos.tsv` remote column is shifted by embedded tabs
 
-**Recorded:** 2026-09-01, session `01KcZvrKMgfenhrT9DvxW9Jk`, while planning item 1.  
+**Recorded:** 2026-09-01, while planning item 1.  
+**Session:** `01KcZvrKMgfenhrT9DvxW9Jk`  
 **Severity:** blocks Phase 11B's entire automated path.
 
 ## Findings

@@ -1,8 +1,8 @@
 # Resolutions — the index and manifest tables have a shape nothing checks
 
 **Bundle:** `0032-index-and-manifest-tables-have-a-shape-nothing-checks`  
-**Status:** `resolved`  
-**Recorded:** 2026-09-04, session `session_01PcgHu9kz9Hm5RatLQuFR8H`.
+**Session:** `session_01PcgHu9kz9Hm5RatLQuFR8H`  
+**Recorded:** 2026-09-04.
 
 One toolkit write: `bin/verify-findings-structure.sh`, a fifth repo lint.
 
@@ -67,12 +67,12 @@ a script whose own header would have become untrue.
 
 `0029` D3 rejected a lint of its own and named this bundle while doing
 it. That rejection was of a check whose purpose was to *license a duplicate that
-could be removed instead* — and 3.1 removes the duplicates. Nothing here can be
+could be removed instead* — and D3 removes the duplicates. Nothing here can be
 removed: the tables must exist and their shape is load-bearing.
 
 ## Owed, and named so it is not rediscovered
 
-**Prevention for finding 4.** *Verify a deletion actually happened with
+**Prevention for finding F4.** *Verify a deletion actually happened with
 `git diff --summary` after applying any patch that contains one.* That is a rule
 about how a session applies work, which belongs where `0028`'s compose-in-a-copy
 rule lives — `docs/legend.md` and §§4c–4d, both held by another session.

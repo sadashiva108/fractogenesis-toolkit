@@ -1,8 +1,9 @@
 # `verify-doc-paths.sh --all` counts `docs/`, so its OK baseline cannot hold
 
-**Recorded:** 2026-09-01, session `01KcZvrKMgfenhrT9DvxW9Jk`, while validating Revision 129.  
+**Recorded:** 2026-09-01, while validating Revision 129.  
+**Session:** `01KcZvrKMgfenhrT9DvxW9Jk`  
 **Severity:** low, but it silently invalidates a number two session briefs quote.  
-**Relates to:** [`0026`](../../cross-cutting-findings/0026-verify-doc-paths-counts-gitignored-docs/) — **supersedes it.** The original stands untouched at `docs/cross-cutting-findings/0026-verify-doc-paths-counts-gitignored-docs/`, still listed by the session that held it. Authority for this reading lives here.
+**Relates to:** [`0026`](../../cross-cutting-findings/0026-verify-doc-paths-counts-gitignored-docs/) — **supersedes it.** The original is retained at `docs/cross-cutting-findings/0026-verify-doc-paths-counts-gitignored-docs/`, still listed by the session that held it, its reading unchanged and its files brought onto the schema in Revision 203. Authority for this reading lives here.
 
 **Status: CLOSED** by Revision 130, 2026-09-01, same session — option (i), with
 (iii) adopted alongside it in `docs/sessions/session-responsibilities.md`. With

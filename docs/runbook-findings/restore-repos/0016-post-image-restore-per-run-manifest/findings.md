@@ -1,6 +1,7 @@
 # `MANIFEST.txt` duplicates the category run index
 
 **Recorded:** 2026-09-01, Restore Repositories Refactor session, while reconciling the Bundle Layout in `restore-repos.md`.  
+**Session:** —  
 **Severity:** none. A retention/manifest policy question, deliberately not decided by an AI session.
 
 ## Findings

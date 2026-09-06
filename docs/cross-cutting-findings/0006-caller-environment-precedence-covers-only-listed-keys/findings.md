@@ -1,6 +1,7 @@
 # Caller-environment precedence holds only for the keys `artifact-config.sh` lists
 
 **Recorded:** 2026-09-02, Restore Repositories Refactor session, while smoke-testing the blank-`GIT_PERSONAL_GITHUB_OWNER` path in `bin/restore-repos.sh`.  
+**Session:** —  
 **Severity:** low, but it made a documented rule untrue for most keys.
 
 ## Findings

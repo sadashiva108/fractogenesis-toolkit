@@ -1,6 +1,7 @@
 # Two recorders still tell you your own phase is unsupported
 
-**Recorded:** 2026-09-01, session `01KcZvrKMgfenhrT9DvxW9Jk`, item 2.  
+**Recorded:** 2026-09-01, item 2.  
+**Session:** `01KcZvrKMgfenhrT9DvxW9Jk`  
 **Severity:** low to fix, high to hit — it turns a working command into an error message at the moment an operator is following a runbook.
 
 ## Findings

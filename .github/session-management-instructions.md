@@ -73,7 +73,7 @@ file does not enumerate them.
 A numbered directory, because a finding accumulates documents as it is worked and
 they are only legible together:
 
-```markdown
+```text
 <NNNN>-<slug>/
 |-- STATUS-<status>  the tag. One file, no contents. `ls` answers the status
 |                    without opening anything. It must agree with the INDEX.md
@@ -123,7 +123,7 @@ session checks first, to know whether opening it is worth anything. The table in
 
 ## 5. Sessions
 
-```markdown
+```text
 docs/sessions/<title>-<stamp>/
 |-- STATE-<state>          the tag, as in 3. Required, always.
 |-- prompt.md              what starts the session. Required, always.
@@ -350,10 +350,11 @@ Every `findings.md` opens with the same block, in this order. It is a schema, no
 a suggestion: a reader and a checker should both be able to find a field without
 reading prose.
 
-```markdown
+```text
 # <the finding bundle's title, as a sentence>
 
-**Recorded:** <YYYY-MM-DD>, `<session-bundle-name>` (`<session identifier>`)
+**Recorded:** <YYYY-MM-DD>, <the occasion, if there was one>
+**Session:** `<session-bundle-name>` (`<session identifier>`)
 **Severity:** <what it costs to leave, and which finding is the high one>
 **Felt at:** <where the defect shows — files, steps, artifacts>       optional
 **Scope:** <where the fix lands>                                     optional
@@ -395,8 +396,29 @@ A long value stays on its one line. Wrapping it is what breaks the block.
 `bin/verify-findings-headers.sh` checks both halves — the wrap and the two
 spaces.
 
-**Required: `Recorded:` and `Severity:`** — the two fields every reading in the
-repository already had. **Optional: `Felt at:`, `Scope:`, `Relates to:`.** The
+**Fence every example as `text`, never as `markdown`.** A block tagged
+` ```markdown ` is read by some renderers as *render this as markdown*: the
+example is interpreted rather than shown, the hard breaks are joined back into
+paragraphs, and the specification displays as the defect it exists to prevent.
+That happened to this section twice — once as a four-space indented block, once
+as a `markdown`-tagged fence. `text` is inert everywhere.
+
+### `Session:` is its own field
+
+**The session is never packed into another field's value.** It was written as
+*"2026-09-01, session `01KcZ…`, item 2"* — a date, a session and a circumstance
+in one sentence, with the one machine-readable part in the middle. Now
+`Recorded:` carries the date and the occasion, and `Session:` carries the
+session, on its own line, bolded like every other field.
+
+It holds the session-bundle name, the identifier, or both:
+`` `restore-apps-outstanding-20260903-000000` (`session_016Ebj…`) ``.
+**Where no session was ever recorded it holds `—`.** Twenty-three headers do.
+That is a gap in the record, and writing it as a dash says so; inventing a
+session to fill the field would not.
+
+**Required: `Recorded:`, `Session:` and `Severity:`** — the fields every reading
+in the repository has once the session is separated out. **Optional: `Felt at:`, `Scope:`, `Relates to:`.** The
 rule that matters is the last one in the block above: **no other field appears in
 the header.** The schema fixes the vocabulary, not the content — requiring
 `Scope:` would mean inventing one for the readings that never had it.
@@ -408,6 +430,20 @@ began. Always this word; `Found:` meant the same thing and is not used.
 difference. `Felt at:` is where the defect shows — the file, the step, the
 artifact. `Scope:` is where the fix lands. A defect in shared machinery felt in
 one runbook is the case that needs both.
+
+**`Read:`** is optional: what the reading was taken against, as a bulleted list
+under the field. It was prose inside `Recorded:` — *"Read: A, B, C, and every
+bundle in `docs/`"* — a list flattened into a sentence, which is a list nobody
+can scan or add to. `decisions.md` called the same thing `Read against:`; one
+name, and it is `Read:`.
+
+```text
+**Read:**
+
+- `docs/architecture/findings-and-sessions.md`
+- §§4b–4d, in `.github/copilot-instructions.md`
+- every bundle and index in `docs/`
+```
 
 **`Relates to:`** is optional and repeatable, one line each. `superseded` uses
 the same field to name what it replaced.
@@ -439,7 +475,7 @@ with every index that counted it.
 Finding numbers are **`F1`, `F2`** rather than bare digits, so a citation from
 `decisions.md` — *"Findings: F1, F3"* — means one thing.
 
-```markdown
+```text
 ## Findings
 
 | # | Finding | Status |
@@ -452,10 +488,18 @@ Then one free-form section per finding, heading matching the row:
 
 ### `decisions.md`
 
-Two header fields — **`Bundle:`** and **`Recorded:`** — then the table.
+Header: **`Bundle:`**, **`Session:`**, and the date the work was done —
+`Recorded:`, `Decided:` or `Resolved:` as the file warrants. Then the table.
 `Findings bundle:` meant the same as `Bundle:` in some files and is retired.
 
-```markdown
+**There is no `Status:` field here.** It was a third copy of the bundle's status,
+after the `STATUS-` tag and the index row, and by Revision 202 seventeen of them
+had gone stale — `0005`'s said `in progress` on a bundle that was `resolved`, in
+a vocabulary that no longer existed. `Status when opened:` and `Status now:` were
+the same copy wearing a date. The tag and the index row own the status; a
+document that restates it is a document that will contradict it.
+
+```text
 ## Decisions
 
 | # | Decision | Findings | Decided | Outcome |
@@ -483,7 +527,7 @@ fields.
 
 Same two header fields, then:
 
-```markdown
+```text
 ## Resolutions
 
 | Finding | Resolved by | What was done | Revision | Commit |
@@ -510,7 +554,7 @@ record and becomes decoration.
 
 ### `findings-manifest.md` and `metadata.md`
 
-```markdown
+```text
 | # | Bundle | Kind | Subject | Findings | Status | Notes |
 ```
 

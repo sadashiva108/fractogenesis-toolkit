@@ -1,6 +1,7 @@
 # `restore-repos.md` opens its boundary but never closes it
 
-**Recorded:** 2026-09-01, session `01KcZvrKMgfenhrT9DvxW9Jk`, while confirming the evidence completeness map.  
+**Recorded:** 2026-09-01, while confirming the evidence completeness map.  
+**Session:** `01KcZvrKMgfenhrT9DvxW9Jk`  
 **Severity:** the phase has no recorded finish line, and its promised delta is never taken.
 
 ## Findings

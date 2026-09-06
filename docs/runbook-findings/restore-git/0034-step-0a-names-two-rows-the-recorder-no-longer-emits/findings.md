@@ -1,6 +1,7 @@
 # `restore-git.md` Step 0a names two rows the recorder no longer emits
 
-**Recorded:** 2026-09-04, session `session_01KcZvrKMgfenhrT9DvxW9Jk`, while deciding `0005` — the pointer for `restore-git-entry` was moving to a run whose FAIL turned out to be the expected state rather than a defect.  
+**Recorded:** 2026-09-04, while deciding `0005` — the pointer for `restore-git-entry` was moving to a run whose FAIL turned out to be the expected state rather than a defect.  
+**Session:** `session_01KcZvrKMgfenhrT9DvxW9Jk`  
 **Severity:** the runbook tells the reader to read a row twice that will never appear, and the hazard it describes is now unchecked at Step 0a.  
 **Scope:** runbook. Felt in `restore-git.md` Step 0a and in `check_restore_git()` in `bin/record-restore-prereqs.sh`.
 

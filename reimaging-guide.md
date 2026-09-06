@@ -83,7 +83,7 @@ This guide assumes:
 - A local `reimage.env` file created from `reimage.env.example`, then updated with the machine-specific resolved paths used by the scripts.
 - **An interactive `zsh`** — the macOS default — as the shell you paste command blocks into. Two of its behaviours bite pasted text, and both look like the command failed when it did not:
 
-```markdown
+```text
 **`#` does not start a comment** unless `interactivecomments` is set — and this applies to a whole-line comment as much as a trailing one. A trailing `# note` arrives as arguments, and a `;` inside that note starts a new command: `grep -c PATTERN file   # expect 1 or more; 0 means failed` runs `grep` with five extra filenames, then tries to execute `0`. The `grep` already succeeded; everything after it is the comment running.
 
 A **whole-line** `#` comment is worse, because it can consume the lines below it. An apostrophe in the prose opens a quote that stays open until the next one, so

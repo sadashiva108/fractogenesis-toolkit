@@ -1,29 +1,28 @@
 # Decisions — the instruction set lags the rules it governs
 
 **Bundle:** `0029`  
-**Status when opened:** `in progress`, 2026-09-04.  
-**Owner:** `restore-apps-outstanding-20260903-000000`.
+**Session:** `restore-apps-outstanding-20260903-000000`
 
 Decisions are recorded per finding as they are made. A finding with no entry here
 has not been decided, and `resolving` cannot begin until all eight have one.
 **Finding 8 does not yet, so this bundle stays `in progress`.**
 
-**One decision carries four findings.** 5.1 answers findings 1, 2 and 6 as well
+**One decision carries four findings.** D1 answers findings F1, F2 and F6 as well
 as 5, because all four are instances of a single question — *where is a rule
 allowed to live* — which nothing in the repository had answered. That is `0027`
-finding 1's question, and `0027` answered it for facts (*a fact has one home*)
+finding F1's question, and `0027` answered it for facts (*a fact has one home*)
 without answering it for rules.
 
-| # | Finding | Decided |
+| # | Finding | Decisions |
 |---:|---|---|
-| 1 | Three rules exist only in `docs/legend.md` | **yes** — 5.1 |
-| 2 | Rules exist in both files, in different words | **yes** — 5.1 |
-| 3 | §4b's directory list is wrong | **yes** — 3.1 |
-| 4 | The architecture record names two findings trees | **yes** — 3.1 |
-| 5 | Nothing says `docs/legend.md` is normative | **yes** — 5.1, 5.2 |
-| 6 | State names and state requirements are in different files | **yes** — 5.1 |
-| 7 | The vocabulary cannot express decision order | **yes** — 7.1 |
-| 8 | The rule says where a change is composed, not when it is handed over | **no** |
+| F1 | Three rules exist only in `docs/legend.md` | D1 |
+| F2 | Rules exist in both files, in different words | D1 |
+| F3 | §4b's directory list is wrong | D3 |
+| F4 | The architecture record names two findings trees | D3 |
+| F5 | Nothing says `docs/legend.md` is normative | D1, D2 |
+| F6 | State names and state requirements are in different files | D1 |
+| F7 | The vocabulary cannot express decision order | D4 |
+| F8 | The rule says where a change is composed, not when it is handed over | — |
 
 ---
 
@@ -54,7 +53,7 @@ override.
 **It governs the findings-and-sessions vocabulary only.** A runbook's own
 Terminology section — `capture-office-stability.md` defining *evidence run* and
 *assessment run*, and every runbook that carries one — is workflow vocabulary and
-stays in the runbook that uses it. Read without this scope, 5.1 would pull every
+stays in the runbook that uses it. Read without this scope, D1 would pull every
 defined term in the repository into `docs/legend.md`, which nobody decided and
 which would put a phase's terminology two files away from the phase.
 
@@ -97,7 +96,7 @@ best evidence available that the line is real rather than imposed.
 | `## When something overtakes a bundle already in progress` | procedure — and it joins §4c's other supersession case, which is its other half |
 | `## The owner's override` | procedure |
 | `## Where a write is composed` | procedure, and already duplicated into §3 by Revision 182 |
-| the gating half of `## Write categories` | see 5.2 |
+| the gating half of `## Write categories` | see D2 |
 
 The legend keeps the statuses, the states, both diagrams, `Relates to`, *How the
 two meet*, and three one-line definitions of the write categories. It goes from
@@ -114,7 +113,7 @@ nine sections to five, and every rule in it today is procedure.
   section it sits in. `resolving`'s gate and the bundle-advance rule are
   procedure and stay in §4c; the legend keeps the status names they refer to.
 - **6.** **Closes as correct by design, not as a defect.** State names in the
-  legend and state requirements in §4d is exactly what 5.1 prescribes. The
+  legend and state requirements in §4d is exactly what D1 prescribes. The
   finding was right that a reader of either file alone is under-served; the
   answer is the pointer and the required reading, not a merge. This is the one
   finding in the bundle that is withdrawn rather than fixed, and it is recorded
@@ -124,25 +123,25 @@ nine sections to five, and every rule in it today is procedure.
 ### The rejected alternatives
 
 **Fold the legend into the instruction set.** One file, no pointer, nothing to go
-stale — the strongest version of *a fact has one home*, and it kills findings 1,
-2, 5 and 6 outright. Rejected because the two files serve different readers: a
+stale — the strongest version of *a fact has one home*, and it kills findings F1,
+F2, F5 and F6 outright. Rejected because the two files serve different readers: a
 session reading rules before working, and a person scanning what `superseded`
 means while deciding. `.github/copilot-instructions.md` is already 29KB and the
 legend is 263 lines; merging makes the scan-while-working case worse to save a
 pointer.
 
 **Name the legend in §4 and change nothing else.** The smallest fix, and it
-closes finding 5 honestly — a session told to read it does read it. Rejected
-because it leaves findings 1, 2 and 6 open with no rule for the next one:
+closes finding F5 honestly — a session told to read it does read it. Rejected
+because it leaves findings F1, F2 and F6 open with no rule for the next one:
 discoverability is not the same as a home, and the next rule written still lands
 wherever its author happened to be.
 
 ### The cost
 
 A rule now has to be classified before it is written, and the boundary has one
-genuinely ambiguous case, which is why 5.2 exists. Expect more. The mitigation is
+genuinely ambiguous case, which is why D2 exists. Expect more. The mitigation is
 that misclassification is cheap to correct — moving a section is a record write —
-where writing a rule in both files is what produced findings 1 and 2.
+where writing a rule in both files is what produced findings F1 and F2.
 
 ---
 
@@ -152,7 +151,7 @@ where writing a rule in both files is what produced findings 1 and 2.
 
 Owner, 2026-09-04.
 
-This is the same shape the statuses already have and which finding 6 mistook for
+This is the same shape the statuses already have and which finding F6 mistook for
 a defect: the name in the legend, the requirements in the instruction set. Making
 write categories the one exception would have meant the boundary had a carve-out
 on the day it was drawn.
@@ -164,7 +163,7 @@ the statuses, which nobody makes.
 
 **Rejected: the legend keeps the section entire and §4b points at it.** Smallest
 diff, and it makes the new rule ambiguous the first time it is applied — which is
-finding 1's failure mode, on day one.
+finding F1's failure mode, on day one.
 
 ---
 
@@ -183,7 +182,7 @@ seven-row table.
 The wrong count is a symptom. **The list is the copy**, and §4b has been wrong
 after four of the last six revisions that touched `docs/`, because a number in a
 sentence has to be maintained by whoever adds a directory and nothing checks it.
-This is 5.1 one level up: §4b is procedure, `docs/INDEX.md` is the map. §4b keeps
+This is D1 one level up: §4b is procedure, `docs/INDEX.md` is the map. §4b keeps
 its rules — write here rather than widening, one file per item, a fact has one
 home — and names no directories.
 
@@ -227,11 +226,11 @@ elsewhere, *"1 is high — …"*, *"Finding 3 held open — …"*.
 **Rejected: make `Decide after:` real vocabulary**, defined in the legend and
 required by §4c. Strongest signal and unambiguous. Rejected because it is a new
 field to maintain for a case that has arisen twice, one session did not reach for
-it, and under 5.1 it would have to be split across both files — the term in the
+it, and under D1 it would have to be split across both files — the term in the
 legend, the obligation in §4c — which is a lot of structure for one sentence.
 
 **Rejected: nothing formal; the owner sequences the work.** Honest about where
-the knowledge is. Rejected as directly against 5.1, decided an hour earlier: a
+the knowledge is. Rejected as directly against D1, decided an hour earlier: a
 rule that lives only in conversation is the failure this architecture exists to
 remove.
 

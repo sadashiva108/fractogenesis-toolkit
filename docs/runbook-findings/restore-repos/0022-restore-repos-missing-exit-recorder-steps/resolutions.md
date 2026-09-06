@@ -1,7 +1,7 @@
 # Resolutions — `restore-repos.md` opens its boundary but never closes it
 
 **Bundle:** `0022-restore-repos-missing-exit-recorder-steps`  
-**Status:** `resolved`  
+**Session:** —  
 **Recorded:** 2026-09-03, during the `docs/*-findings/` migration.
 
 This finding was closed before findings bundles existed, as a parked note whose

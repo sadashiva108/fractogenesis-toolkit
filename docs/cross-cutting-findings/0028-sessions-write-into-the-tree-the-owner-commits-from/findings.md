@@ -1,8 +1,19 @@
 # Sessions write into the tree the owner commits from
 
-**Recorded:** 2026-09-03, session `session_019yzcjm2QneJ5ymVEQDi1bu`, on the owner's observation that a session should hold its changes until told to release them. Read: the day's own working tree, `git status` and `git log` across the two concurrent sessions, `docs/ideas/knowing-when-it-is-safe-to-write.md`, `0026-verify-doc-paths-counts-gitignored-docs`, `docs/legend.md`, `.github/copilot-instructions.md` §§4b–4d, and all 27 existing findings bundles checked for overlap.  
+**Recorded:** 2026-09-03, on the owner's observation that a session should hold its changes until told to release them.  
+**Session:** `session_019yzcjm2QneJ5ymVEQDi1bu`  
 **Severity:** two findings are high. Both are silent — nothing fails, and the damage is to what the record can be trusted to mean.  
-**Scope:** cross-cutting. Tracked files only; the artifact volume is out of scope and finding 6 says why.
+**Scope:** cross-cutting. Tracked files only; the artifact volume is out of scope and finding F6 says why.
+
+**Read:**
+
+- the day's own working tree
+- `git status` and `git log` across the two concurrent sessions
+- `docs/ideas/knowing-when-it-is-safe-to-write.md`
+- `0026-verify-doc-paths-counts-gitignored-docs`
+- `docs/legend.md`
+- §§4b–4d, in `.github/copilot-instructions.md`
+- all 27 existing findings bundles, checked for overlap
 
 ## What is not the problem
 
@@ -23,13 +34,13 @@ and that is not what was found.
 ## Findings
 
 | # | Finding | Status |
-|---|---|---|
-| F1 | Two sessions' uncommitted work interleaves in shared files, so neither can be committed alone | `resolved` — 1.1, see `resolutions.md` |
+|---:|---|---|
+| F1 | Two sessions' uncommitted work interleaves in shared files, so neither can be committed alone | `resolved` |
 | F2 | A revision's claimed validator baselines are measured on a tree containing another session's work | `resolved` |
 | F3 | A session's work has no diff boundary, so the owner cannot review it as a unit | `resolved` |
 | F4 | Backing out one session's change is surgical, because `git checkout` would take the other's too | `resolved` |
 | F5 | A session can amend a revision the owner has already committed | `resolved` |
-| F6 | The write discipline does not distinguish the write kinds `docs/legend.md` now names | `resolved` — 6.1, see `resolutions.md` |
+| F6 | The write discipline does not distinguish the write kinds `docs/legend.md` now names | `resolved` |
 
 Findings 1 and 2 are the high ones. The revision-number collision that prompted
 the day's investigation is **not** a finding here — it is recorded in
@@ -138,7 +149,7 @@ Revision 169 gave `docs/legend.md` three categories: a **record write** under
 owner's word for the specific run.
 
 The categories say *when* a write is allowed. They say nothing about *where it is
-composed*, and findings 1 through 5 are all about composition. Record writes are
+composed*, and findings F1 through 5 are all about composition. Record writes are
 ungated and are precisely the ones that collided today — the manifest and the
 indexes are all under `docs/` or accompany it.
 
@@ -169,7 +180,7 @@ included the copy is a real working tree, so `git diff` there produces a patch;
 `git apply --check` accepted that patch against the live repository with the live
 working tree left untouched, verified by `git status` immediately after.
 
-That answers findings 2 and 3 directly — validation runs against one session's
+That answers findings F2 and F3 directly — validation runs against one session's
 changes alone, and the patch is the reviewable unit. It answers 1, 4 and 5 by
 removing the shared tree they all depend on. It does not answer the revision
 number, which is `docs/ideas/knowing-when-it-is-safe-to-write.md`'s second shape:
@@ -178,7 +189,7 @@ take the number at apply time, when only one session is writing.
 What it does not solve is worth recording with it. A copy in session-local scratch
 dies with the session, so unapplied work is lost if a session ends unexpectedly —
 it survives context compaction, which is the larger risk, but not termination.
-And it is the same Linux VM with Bash 5.1 and GNU coreutils: **`/bin/bash -n`
+And it is the same Linux VM with Bash D3 and GNU coreutils: **`/bin/bash -n`
 against real macOS Bash 3.2 remains owed for Revisions 116–170** and no scratch
 arrangement reaches it.
 

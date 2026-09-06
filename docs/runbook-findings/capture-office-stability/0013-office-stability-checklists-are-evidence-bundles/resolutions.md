@@ -1,8 +1,8 @@
 # Resolutions — `office-stability/checklists/` does not hold checklists
 
 **Bundle:** `0013-office-stability-checklists-are-evidence-bundles`  
-**Status:** `resolved`  
-**Recorded:** 2026-09-03, session `session_01PcgHu9kz9Hm5RatLQuFR8H`.
+**Session:** `session_01PcgHu9kz9Hm5RatLQuFR8H`  
+**Recorded:** 2026-09-03.
 
 The finding is closed by work that had already shipped, plus one edit made here.
 

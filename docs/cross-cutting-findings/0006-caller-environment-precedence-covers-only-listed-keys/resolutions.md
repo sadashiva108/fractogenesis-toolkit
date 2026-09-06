@@ -1,7 +1,7 @@
 # Resolutions — Caller-environment precedence holds only for the keys `artifact-config.sh` lists
 
 **Bundle:** `0006-caller-environment-precedence-covers-only-listed-keys`  
-**Status:** `resolved`  
+**Session:** —  
 **Recorded:** 2026-09-03, during the `docs/*-findings/` migration.
 
 This finding was closed before findings bundles existed, as a parked note whose

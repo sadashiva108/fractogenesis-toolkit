@@ -1,7 +1,7 @@
 # Resolutions — Two recorders still tell you your own phase is unsupported
 
 **Bundle:** `0018-recorder-usage-strings-understate-supported-runbooks`  
-**Status:** `resolved`  
+**Session:** —  
 **Recorded:** 2026-09-03, during the `docs/*-findings/` migration.
 
 This finding was closed before findings bundles existed, as a parked note whose

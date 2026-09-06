@@ -1,6 +1,7 @@
 # `verify-doc-paths.sh --all` counts `docs/`, so its OK baseline cannot hold
 
-**Recorded:** 2026-09-01, session `01KcZvrKMgfenhrT9DvxW9Jk`, while validating Revision 129.  
+**Recorded:** 2026-09-01, while validating Revision 129.  
+**Session:** `01KcZvrKMgfenhrT9DvxW9Jk`  
 **Severity:** low, but it silently invalidates a number two session briefs quote.
 
 ## Findings

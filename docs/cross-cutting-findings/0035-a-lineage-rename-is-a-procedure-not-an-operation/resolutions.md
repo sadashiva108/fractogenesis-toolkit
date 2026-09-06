@@ -1,8 +1,8 @@
 # Resolutions — a lineage rename is a procedure, not an operation
 
 **Bundle:** `0035-a-lineage-rename-is-a-procedure-not-an-operation`  
-**Status:** `resolved`  
-**Recorded:** 2026-09-04, session `session_01PcgHu9kz9Hm5RatLQuFR8H`.
+**Session:** `session_01PcgHu9kz9Hm5RatLQuFR8H`  
+**Recorded:** 2026-09-04.
 
 One toolkit write: `artifact_run_rename_lineage` in `.internal/artifact-runs.sh`.
 

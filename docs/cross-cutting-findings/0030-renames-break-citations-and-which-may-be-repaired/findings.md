@@ -1,6 +1,7 @@
 # Renames break citations, and only a record's values are frozen
 
-**Recorded:** 2026-09-03, session `session_01PcgHu9kz9Hm5RatLQuFR8H`, while reading four pre-image runbook findings against the artifact volume.  
+**Recorded:** 2026-09-03, while reading four pre-image runbook findings against the artifact volume.  
+**Session:** `session_01PcgHu9kz9Hm5RatLQuFR8H`  
 **Severity:** the reading itself is low. Finding 2 is what matters: without it, every citation a rename breaks is treated as unrepairable, and the tree accumulates broken pointers to evidence that is still there.  
 **Scope:** cross-cutting. Felt in `.internal/artifact-runs.sh`, in every category manifest, and in dated artifacts across the volume.  
 **Relates to:** `0009` — **supersedes it.** `0009` carried the reading below as its findings 1 and 3; it is marked `superseded` and left unedited, so the 2026-09-01 reading survives as it was written.

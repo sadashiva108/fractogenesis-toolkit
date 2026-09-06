@@ -71,7 +71,7 @@ hold against another. Splitting severs that, and `Relates to` obliges nobody.
 A bundle appears in **both** manifests. A `Finding Ownership` table in
 `findings.md` becomes the source of truth for who owns which findings:
 
-```markdown
+```text
 ## Finding Ownership
 
 | Session | Date | Findings |

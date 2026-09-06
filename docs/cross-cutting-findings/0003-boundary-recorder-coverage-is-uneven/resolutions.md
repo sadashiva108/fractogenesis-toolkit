@@ -1,7 +1,7 @@
 # Resolutions — The boundary-recorder family is applied unevenly across the phases it covers
 
 **Bundle:** `0003-boundary-recorder-coverage-is-uneven`  
-**Status:** `resolved`  
+**Session:** —  
 **Recorded:** 2026-09-03, during the `docs/*-findings/` migration.
 
 This finding was closed before findings bundles existed, as a parked note whose

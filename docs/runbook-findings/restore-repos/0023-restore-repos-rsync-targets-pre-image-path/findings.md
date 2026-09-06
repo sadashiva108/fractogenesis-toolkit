@@ -1,6 +1,7 @@
 # Emitted rsync commands target the pre-image path, not the clone
 
-**Recorded:** 2026-09-01, session `01KcZvrKMgfenhrT9DvxW9Jk`, while planning item 1.  
+**Recorded:** 2026-09-01, while planning item 1.  
+**Session:** `01KcZvrKMgfenhrT9DvxW9Jk`  
 **Severity:** unsafe to run. Writes decrypted secrets outside every repository.
 
 ## Findings

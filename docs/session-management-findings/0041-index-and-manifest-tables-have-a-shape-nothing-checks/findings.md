@@ -1,12 +1,13 @@
 # The index and manifest tables have a shape nothing checks
 
-**Recorded:** 2026-09-03, session `session_01PcgHu9kz9Hm5RatLQuFR8H`, from breaking two of them and not noticing.  
+**Recorded:** 2026-09-03, from breaking two of them and not noticing.  
+**Session:** `session_01PcgHu9kz9Hm5RatLQuFR8H`  
 **Severity:** low per instance, and it defeats the check a session actually runs. Every validator in the repository passed on both broken rows.  
-**Scope:** instruction set. §§4c–4d define these tables; nothing validates them. Whether the *fix* belongs here is finding 3.  
-**Relates to:** [`0032`](../../instruction-set-findings/0032-index-and-manifest-tables-have-a-shape-nothing-checks/) — **supersedes it.** The original stands untouched at `docs/instruction-set-findings/0032-index-and-manifest-tables-have-a-shape-nothing-checks/`, still listed by the session that held it. Authority for this reading lives here.  
+**Scope:** instruction set. §§4c–4d define these tables; nothing validates them. Whether the *fix* belongs here is finding F3.  
+**Relates to:** [`0032`](../../instruction-set-findings/0032-index-and-manifest-tables-have-a-shape-nothing-checks/) — **supersedes it.** The original is retained at `docs/instruction-set-findings/0032-index-and-manifest-tables-have-a-shape-nothing-checks/`, still listed by the session that held it, its reading unchanged and its files brought onto the schema in Revision 203. Authority for this reading lives here.  
 **Relates to:** `0031` — the same section, §4c, from the other side: `0031` is a rule that is missing, this is a rule that exists and is unenforced.
 
-**Contributed to:** finding 4 was added 2026-09-04 by
+**Contributed to:** finding F4 was added 2026-09-04 by
 `restore-apps-outstanding-20260903-000000` while this bundle is `unresolved`,
 which `docs/legend.md` opens to any session. The bundle is unchanged otherwise
 and `pre-image-capture-conformance-20260903-194532` still owns it.
@@ -93,7 +94,7 @@ common one, because every status transition is a delete plus a create.
 **None of the four reached the history.** Checked with `git ls-tree -r` across
 every commit of 2026-09-03 and 04: no commit contains two tags for one bundle. So
 the cost to date has been paid entirely in attention — a person noticing, four
-times — which is the same currency findings 1 and 2 were paid in and the reason
+times — which is the same currency findings F1 and F2 were paid in and the reason
 this belongs with them rather than in a bundle of its own.
 
 That it recurred at Revision 187, after 183 had already been seen and cleared, is
@@ -112,7 +113,7 @@ All four validators passed with two tags present, each correctly:
 And §4c states the rule the whole time: *"a bundle whose tag disagrees with its
 INDEX.md row is a bug in whoever moved it last."* Stated, and unenforced. The
 check is one line of shape: **exactly one `STATUS-*` per bundle directory, and it
-agrees with the index row.** It is the same kind of check finding 1 asks for,
+agrees with the index row.** It is the same kind of check finding F1 asks for,
 against the same kind of rule, and it would be in the same script.
 
 #### The apply step has the same blind spot
@@ -158,5 +159,5 @@ lint: a new `bin/verify-index-tables.sh`, or a section added to
 
 The owner routed it here. It is noted because the routing is genuinely arguable
 and a later reader should see that it was a choice rather than an oversight —
-and because if the answer is *cross-cutting*, `0027` finding 1's question
+and because if the answer is *cross-cutting*, `0027` finding F1's question
 (*where is a rule allowed to live*) reaches this bundle too.

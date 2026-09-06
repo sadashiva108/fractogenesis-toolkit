@@ -1,9 +1,10 @@
 # Superseding a bundle whose session is gone is instructed but never defined
 
-**Recorded:** 2026-09-03, session `session_01PcgHu9kz9Hm5RatLQuFR8H`, from performing the procedure in Revision 183 with nothing in the instruction set to follow.  
+**Recorded:** 2026-09-03, from performing the procedure in Revision 183 with nothing in the instruction set to follow.  
+**Session:** `session_01PcgHu9kz9Hm5RatLQuFR8H`  
 **Severity:** low until it is needed, and then total — a session with no procedure invents one, and every invented variant is a different tree shape for the same event.  
 **Scope:** instruction set. The fix is one subsection in `.github/copilot-instructions.md` §4c.  
-**Relates to:** [`0031`](../../instruction-set-findings/0031-superseding-a-bundle-whose-session-is-gone/) — **supersedes it.** The original stands untouched at `docs/instruction-set-findings/0031-superseding-a-bundle-whose-session-is-gone/`, still listed by the session that held it. Authority for this reading lives here.  
+**Relates to:** [`0031`](../../instruction-set-findings/0031-superseding-a-bundle-whose-session-is-gone/) — **supersedes it.** The original is retained at `docs/instruction-set-findings/0031-superseding-a-bundle-whose-session-is-gone/`, still listed by the session that held it, its reading unchanged and its files brought onto the schema in Revision 203. Authority for this reading lives here.  
 **Relates to:** `0029` — that bundle collects what the restore-apps session left owed in §§4b–4d, eight of its findings landing there. This one is a single missing subsection in §4c, found from the other direction: by needing it. The two do not overlap in content, and this bundle should reach `resolving` first so `0029` reads §4c as it will then stand.
 
 ## Findings

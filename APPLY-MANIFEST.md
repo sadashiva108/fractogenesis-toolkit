@@ -1,4 +1,6 @@
 # Apply Manifest
+**Revision 203** — supersedes Revision 202 and earlier. A field and its value own a line: `Session:` comes out of the sentence it was buried in, `Read:` becomes the list it always was, and `Status:` leaves the two files that kept a third copy of it. `0001`'s Decisions table turns out to have held three of its six decisions.
+
 **Revision 202** — supersedes Revision 201 and earlier. The schema is checked on the rendering rather than the source: the header block renders one field per line, twenty-six bundles gain the Findings table nothing noticed was missing, and a `Findings` column that had been derived by guessing is corrected in fourteen cells.
 
 **Revision 201** — supersedes Revision 200 and earlier. The six files every session reads get a stated schema and a checker that enforces it, `transferred` joins the status model, and three checkers are found wrong — one of them after the tree had already been edited to satisfy it.
@@ -534,6 +536,125 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
 
 ---
+
+## Revision 203 — a field and its value own a line, and the session stops hiding inside a sentence
+
+The owner read the rendered pages and found the schema still packing several
+facts into one field. Three decisions settled it, and this revision carries them
+through every bundle document.
+
+### `Session:` is its own field
+
+It was written as *"2026-09-01, session `01KcZ…`, item 2"* — a date, a session
+and a circumstance in one sentence, with the one machine-readable part buried in
+the middle. `Recorded:` now carries the date and the occasion; **`Session:`
+carries the session, bolded, on its own line**, holding the bundle name, the
+identifier, or both.
+
+**Fifty-nine headers had a session to hoist out. Twenty-three had none, and hold
+`—`.** That is a gap in the record and the dash says so. Inventing a session to
+fill the field would have made the record worse while making it look complete.
+
+### `Read:` is a list, and looks like one
+
+Four readings recorded what they were taken against as prose inside `Recorded:` —
+*"Read: A, B, C, and every bundle in `docs/`"* — a list flattened into a
+sentence, which nobody can scan and nobody can add a line to. It is now a field
+with a bulleted list under it. `decisions.md` called the same thing
+`Read against:` in three files; **one concept, one name, and it is `Read:`.**
+
+### `Status:` is gone from `decisions.md` and `resolutions.md`
+
+Forty-three status fields removed across the two file types — `Status:`,
+`Status when opened:`, `Status now:`.
+
+Each was a third copy of the bundle's status, after the `STATUS-` tag and the
+index row. By Revision 202 seventeen had gone stale: `0005`'s said `in progress`
+on a bundle that was `resolved`, in a vocabulary that had not existed for two
+revisions. **The tag and the index row own the status. A document that restates
+it is a document that will eventually contradict it** — which is the same reason
+`Status:` was retired from `findings.md` in Revision 201, applied to the two
+files that kept it.
+
+`Owner:` went with them where it had become empty: it held the session-bundle
+name, which is what `Session:` now holds, and ten files were left with a field
+containing a full stop.
+
+### The tables the owner found, and what they revealed
+
+`| # | Finding | Decided |` in six `decisions.md` — bare finding numbers and
+decision references in a numbering retired two revisions ago: `**yes** — 5.1`.
+Now `| # | Finding | Decisions |`, F-numbers against D-numbers, and inverting it
+reproduces the old column exactly.
+
+**Forty-five decimal citations in prose** — *"Rejected as directly against 5.1"*,
+*"revising 3.1 on first application"* — mapped to D-numbers per file, from each
+file's own `Findings` column. Bare finding numbers in prose became F-numbers with
+them.
+
+Following that thread turned up the worse one. **`0001`'s Decisions table held
+three decisions; the file contains six.** D1 to D3 were written as
+`**Decision 1.1 —**` in bold, D4 to D6 as `### Decision 1.4 —` headings, and the
+Revision 201 transformer matched the first form only. Its `findings.md` said
+*"six decisions, 1.1 through 1.6"*, which Revision 202 read as a stale claim and
+corrected downward — **the prose was right and the table was wrong, and the
+correction went the wrong way.** D4, D5 and D6 are restored, and the count reads
+six again.
+
+### The superseded originals come onto the schema
+
+`0027`, `0028` and `0029` were held back from three revisions of reformatting on
+the rule that a superseded reading is frozen evidence. The owner opened `0029`
+and found exactly what that policy preserves: bare numbers, retired decision
+references, a table nothing had touched.
+
+**The rule was wrong in its reach.** `0041` states the defect it rests on in its
+own findings table, citing revisions and bundles — the evidence does not depend
+on the original staying broken. The originals are now on the schema like
+everything else, their readings unchanged, and the index notes that claimed they
+were *"retained unedited"* say what is true instead.
+
+### The fence tag, found the same way
+
+Revision 202 fenced the schema example because an indented block rendered as
+live markdown. It was tagged ` ```markdown `, and the owner opened it in a
+renderer that reads that tag as **render this as markdown** — so the example was
+interpreted again, the hard breaks joined back into paragraphs, and the
+specification displayed as the exact defect it specifies against.
+
+**Twelve fences across five files are retagged `text`, which is inert
+everywhere.** The checker rejects the `markdown` tag now. Two revisions in a row
+have failed on the same thing: the schema example must be *shown*, and every
+mechanism for showing it has to be tested by looking at the rendered page.
+
+### Validators
+
+`bin/verify-findings-headers.sh` now requires `Recorded`, `Session` and
+`Severity`; allows `Felt at`, `Scope`, `Read`, `Relates to` and nothing else;
+enforces the order; and rejects a `Status` field or a `Read against:` in
+`decisions.md` and `resolutions.md`. **877 checks, 0 failures.**
+
+| Checker | Result |
+|---|---|
+| `verify-findings-headers.sh` | 877 OK, 0 FAIL |
+| `verify-findings-structure.sh` | 50 OK, 0 FAIL |
+| `verify-findings-counts.sh` | 49 OK, 0 FAIL |
+| `verify-doc-paths.sh --all` | 778 OK, 1108 anchors, 0 broken |
+| `verify-script-portability.sh` | clean |
+| `verify-runbook-structure.sh` | 25 — the standing baseline, unchanged |
+| rendered audit, not in `bin/` | 135 files, 0 real failures |
+
+### What this revision deliberately did not touch
+
+**Retired status words survive in about seventy places in reasoning prose** —
+*"`resolving` cannot begin until all seven have one"*, *"while the bundle was
+`unresolved`"*. Those sentences were true when written and say something about
+how the work went. Rewriting them is an edit to the reading, not a reformat, and
+the two are not the same rule. It is recorded here so the next reader knows it
+was seen and left, rather than missed.
+
+**Still owed: `/bin/bash -n` under real macOS Bash 3.2**, for Revisions 116
+onward. This session's shell is Linux Bash 5.1 with GNU coreutils.
 
 ## Revision 202 — the schema is checked on the rendering, not on the source
 

@@ -245,7 +245,7 @@ changes one after that is the exception rather than the working case.
 A bundle may name another it bears on, without either replacing the other, as a
 line in `findings.md`'s header beside `Recorded`, `Severity` and `Scope`:
 
-```markdown
+```text
 **Relates to:** `<NNNN>` — a one-line statement of how the two bear on
 each other, and from which direction.
 ```

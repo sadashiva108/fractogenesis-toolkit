@@ -1,6 +1,7 @@
 # Styling is copied into every script, and it lands in the evidence
 
-**Recorded:** 2026-09-04, `restore-apps-outstanding-20260903-000000` (`session_016EbjB7M527qEFqZFzpv2C9`), from the owner comparing this repository against `indigo`, which solved the same problem for its own outputs.  
+**Recorded:** 2026-09-04, from the owner comparing this repository against `indigo`, which solved the same problem for its own outputs.  
+**Session:** `restore-apps-outstanding-20260903-000000` (`session_016EbjB7M527qEFqZFzpv2C9`)  
 **Severity:** finding 5 is high and is the reason this was written down. The rest is untidiness; finding 5 is escape codes inside dated evidence of a machine that no longer exists in that state.  
 **Scope:** cross-cutting. The fix lands in `.internal/`, the authoring template, and the two report producers — shared machinery, felt in every script's output.  
 **Relates to:** `0029` finding 2 — one rule written many times with nothing keeping it in step. This is that defect in values rather than in prose, and the copies have already drifted, which `0029`'s have not.
@@ -12,7 +13,7 @@ The reading holds there; the decisions may not, and are not assumed here.
 any session: finding 7, measured against `indigo` after the owner connected it.
 That finding corrects the section below rather than only adding to it — the
 fallback class was counted there as token usage.
-**Status:** `unclaimed`, 2026-09-04, at the owner's direction.
+**Parked 2026-09-04 at the owner's direction.**
 `restore-apps-outstanding-20260903-000000` recorded it and released it without
 deciding anything; two sessions have read it and neither is deciding it. Parked
 means parked: no session may read it, contribute to it, or correct it, and it

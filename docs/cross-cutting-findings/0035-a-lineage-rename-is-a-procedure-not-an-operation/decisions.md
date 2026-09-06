@@ -1,9 +1,9 @@
 # Decisions — a lineage rename is a procedure, not an operation
 
 **Bundle:** `0035-a-lineage-rename-is-a-procedure-not-an-operation`  
-**Status:** `in progress`  
-**Decided:** 2026-09-04, session `session_01PcgHu9kz9Hm5RatLQuFR8H`, owner present.  
-**Read against:** the library itself, and a scratch category exercised through a full rename. Nothing on the artifact volume was touched.
+**Session:** `session_01PcgHu9kz9Hm5RatLQuFR8H`  
+**Decided:** 2026-09-04, owner present.  
+**Read:** the library itself, and a scratch category exercised through a full rename. Nothing on the artifact volume was touched.
 
 ## Decisions
 

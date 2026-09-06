@@ -1,6 +1,7 @@
 # `carrier-services-storage` carries a remote pointing at `dotfiles`
 
 **Recorded:** 2026-09-01, Restore Repositories Refactor session, while re-deriving the pre-image `repos.tsv`.  
+**Session:** —  
 **Severity:** operator decision, not a defect in the toolkit.
 
 ## Findings

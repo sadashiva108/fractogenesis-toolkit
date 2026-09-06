@@ -1,7 +1,7 @@
 # Resolutions — `verify-doc-paths.sh --all` counts `docs/`, so its OK baseline cannot hold
 
 **Bundle:** `0026-verify-doc-paths-counts-gitignored-docs`  
-**Status:** `resolved`  
+**Session:** —  
 **Recorded:** 2026-09-03, during the `docs/*-findings/` migration.
 
 This finding was closed before findings bundles existed, as a parked note whose

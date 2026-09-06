@@ -1,7 +1,7 @@
 # Resolutions — Phase 6B records FAIL against a correct repository-audit manifest
 
 **Bundle:** `0019-reimage-checklist-repo-audit-manifest-header`  
-**Status:** `resolved`  
+**Session:** —  
 **Recorded:** 2026-09-03, during the `docs/*-findings/` migration.
 
 This finding was closed before findings bundles existed, as a parked note whose

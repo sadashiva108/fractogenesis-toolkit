@@ -1,8 +1,8 @@
 # Decisions — `.internal/restore/` is empty, and is not tracked
 
 **Bundle:** `0012-internal-restore-directory-empty`  
-**Status:** `in progress`  
-**Decided:** 2026-09-04, session `session_01KcZvrKMgfenhrT9DvxW9Jk`, which owns it.
+**Session:** `session_01KcZvrKMgfenhrT9DvxW9Jk`  
+**Decided:** 2026-09-04.
 
 The reading was corrected before deciding, while the bundle was `unresolved` and
 `docs/legend.md` still permitted it. The original said the directory was tracked;

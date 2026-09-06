@@ -1,6 +1,7 @@
 # `restore-runtime-version-comparison` is a lineage with no producer
 
-**Recorded:** 2026-09-01, session `01KcZvrKMgfenhrT9DvxW9Jk`, item 2.  
+**Recorded:** 2026-09-01, item 2.  
+**Session:** `01KcZvrKMgfenhrT9DvxW9Jk`  
 **Severity:** low. It will trip the item 4 coverage audit if it is not recorded here first.
 
 ## Findings

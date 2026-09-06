@@ -1,9 +1,17 @@
 # The findings-and-sessions architecture disagrees with itself and with the tree
 
-**Recorded:** 2026-09-03, session `session_019yzcjm2QneJ5ymVEQDi1bu`, on the owner's request to review the new architecture. Read: `docs/architecture/findings-and-sessions.md`, `.github/copilot-instructions.md` §§4b–4d, `docs/legend.md`, and every bundle and index in `docs/`.  
+**Recorded:** 2026-09-03, on the owner's request to review the new architecture.  
+**Session:** `session_019yzcjm2QneJ5ymVEQDi1bu`  
 **Severity:** one finding is high and governs a rule every future session hits on its first parked note. The rest are small and mechanical.  
 **Scope:** cross-cutting. The fix lands in `.github/copilot-instructions.md`, `docs/INDEX.md`, `docs/sessions/INDEX.md`, `docs/legend.md` and four `prompt.md` files — no single runbook owns any of it.  
-**Relates to:** [`0027`](../../cross-cutting-findings/0027-findings-architecture-conformance/) — **supersedes it.** The original stands untouched at `docs/cross-cutting-findings/0027-findings-architecture-conformance/`, still listed by the session that held it. Authority for this reading lives here.
+**Relates to:** [`0027`](../../cross-cutting-findings/0027-findings-architecture-conformance/) — **supersedes it.** The original is retained at `docs/cross-cutting-findings/0027-findings-architecture-conformance/`, still listed by the session that held it, its reading unchanged and its files brought onto the schema in Revision 203. Authority for this reading lives here.
+
+**Read:**
+
+- `docs/architecture/findings-and-sessions.md`
+- §§4b–4d, in `.github/copilot-instructions.md`
+- `docs/legend.md`
+- every bundle and index in `docs/`
 
 ## What is conformant
 
@@ -16,7 +24,7 @@ arriving at this bundle should not mistake the list for a verdict on the design.
 - All 26 `STATUS-<status>` tags agree with their scope's `INDEX.md` row.
 - All 5 `STATE-<state>` tags agree with `docs/sessions/INDEX.md`.
 - The two-way pointer between a bundle's INDEX row and a session's
-  `findings-manifest.md` holds in both directions, except for finding 3 below.
+  `findings-manifest.md` holds in both directions, except for finding F3 below.
   The four unclaimed bundles correctly show `—` and appear in no manifest.
 - `docs/gaps/` is fully retired. No directory, no live citation, and no note
   existing in both the old and new location.
