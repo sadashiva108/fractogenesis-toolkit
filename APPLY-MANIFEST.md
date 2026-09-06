@@ -1,4 +1,6 @@
 # Apply Manifest
+**Revision 204** — supersedes Revision 203 and earlier. `0042` parks the gap that let the last three revisions through: every checker reads the source, none reads the rendered page, and the fix is a dependency decision the owner has not been asked for.
+
 **Revision 203** — supersedes Revision 202 and earlier. A field and its value own a line: `Session:` comes out of the sentence it was buried in, `Read:` becomes the list it always was, and `Status:` leaves the two files that kept a third copy of it. `0001`'s Decisions table turns out to have held three of its six decisions.
 
 **Revision 202** — supersedes Revision 201 and earlier. The schema is checked on the rendering rather than the source: the header block renders one field per line, twenty-six bundles gain the Findings table nothing noticed was missing, and a `Findings` column that had been derived by guessing is corrected in fourteen cells.
@@ -536,6 +538,69 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
 
 ---
+
+## Revision 204 — the gap that let three revisions through is parked as a bundle
+
+One finding parked, and two claims in an index corrected. No rule changes.
+
+### `0042` — no check reads the rendered page
+
+Four findings, `unclaimed`, recorded by
+`restore-apps-outstanding-20260903-000000`, which does not own it.
+
+**All six validators read the markdown as text.** None renders it and inspects
+the result — and markdown is not a display of its source. It joins consecutive
+lines into a paragraph, eats asterisks as emphasis, reads a bracketed word as an
+HTML tag, and treats an indented block as code or not depending on the renderer.
+A file can be correct as text and wrong as a page, and every check this
+repository has is on the wrong side of that line.
+
+**Revisions 201, 202 and 203 each shipped a defect of exactly that kind, and all
+six checkers passed all three times.** Each was found by the owner opening the
+page. No session found any of them, and none could have: the sessions ran the
+checks, the checks passed, and the checks were the only evidence they had.
+
+The second and third are the sharp instance. The document was a specification,
+and **it rendered as the defect it specifies against** — twice, by two different
+mechanisms, with a checker added after the first that did not catch the second.
+
+The bundle is recorded rather than fixed because **the fix is a dependency
+decision and belongs to the owner.** A rendering check needs a CommonMark parser.
+This repository has no build system, no CI and no declared runtime dependency
+beyond a POSIX userland, and its floor is macOS stock Bash 3.2. F3 sets out four
+options — a Python checker with a parser dependency, a checker that skips when no
+parser is present, an instruction to a person instead of a check, or narrowing
+the surface by forbidding the renderer-dependent constructs — and costs none of
+them. The fourth is what Revisions 202 and 203 actually did, and F2 records that
+it caught each defect one revision after it shipped.
+
+F4 records that the audit which *did* find these — 135 files rendered and their
+output tested — ran in a session workspace against a copy, is not in `bin/`, and
+leaves no way for the next session to repeat it. Its own first run reported 131
+failures of which 128 were bugs in the audit. **A rendering check is not free of
+the problem it checks for.**
+
+### Two claims in `docs/session-management-findings/INDEX.md`
+
+*"This tree replaced `docs/session-management-findings/`"* — it replaced the
+wider half of `docs/instruction-set-findings/`. The sentence named itself.
+
+*"Nothing in them was edited"*, of the six superseded originals, has been false
+since Revision 203 brought them onto the header schema. It now says what is true
+and keeps the distinction that matters: nothing any of them **says** was changed,
+and a reformat is not an edit to the reading.
+
+### Validators
+
+| Checker | Result |
+|---|---|
+| `verify-findings-headers.sh` | 887 OK, 0 FAIL |
+| `verify-findings-structure.sh` | 51 OK, 0 FAIL |
+| `verify-findings-counts.sh` | 50 OK, 0 FAIL |
+| `verify-doc-paths.sh --all` | 778 OK, 1108 anchors, 0 broken |
+| `verify-script-portability.sh` | clean |
+| `verify-runbook-structure.sh` | 25 — the standing baseline, unchanged |
+| rendered audit, not in `bin/` | 135 files, 0 real failures — which is `0042` F4 |
 
 ## Revision 203 — a field and its value own a line, and the session stops hiding inside a sentence
 

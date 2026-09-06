@@ -15,7 +15,7 @@ The line against the other two trees:
 | `docs/instruction-set-findings/` | the rules a session follows when working the toolkit | `.github/toolkit-instructions.md` |
 | **`docs/session-management-findings/`** | **how sessions and findings bundles themselves work** | **`.github/session-management-instructions.md`, `docs/legend.md`** |
 
-This tree replaced `docs/session-management-findings/` on 2026-09-06 and absorbed
+This tree replaced `docs/instruction-set-findings/`'s wider half on 2026-09-06 and absorbed
 three bundles from `docs/cross-cutting-findings/`. The earlier tree drew its line
 at *the instruction set*, which was too narrow: the statuses, the states and the
 checks that enforce them are the same subject and were scattered across two
@@ -36,12 +36,18 @@ Statuses and states are defined in [`docs/legend.md`](../legend.md).
 | 0039 | [0039-the-instruction-set-lags-the-rules-it-governs](0039-the-instruction-set-lags-the-rules-it-governs/) | The instruction set lags the rules it governs | 8 | `unclaimed` | — | Supersedes `0029`. 7 findings `decided`, finding 8 never decided. Original retained in its own tree, reading unchanged, brought onto the schema in Revision 203; still held by the session that had it |
 | 0040 | [0040-superseding-a-bundle-whose-session-is-gone](0040-superseding-a-bundle-whose-session-is-gone/) | Superseding a bundle whose session is gone is instructed but never defined | 4 | `unclaimed` | — | Supersedes `0031`. Its rows read `in progress` on a `resolved` bundle — the Revision 197 defect. Original retained in its own tree, reading unchanged, brought onto the schema in Revision 203; still held by the session that had it |
 | 0041 | [0041-index-and-manifest-tables-have-a-shape-nothing-checks](0041-index-and-manifest-tables-have-a-shape-nothing-checks/) | The index and manifest tables have a shape nothing checks | 4 | `unclaimed` | — | Supersedes `0032`. Its rows read `unresolved` on a `resolved` bundle — the Revision 197 defect. Original retained in its own tree, reading unchanged, brought onto the schema in Revision 203; still held by the session that had it |
+| 0042 | [0042-no-check-reads-the-rendered-page](0042-no-check-reads-the-rendered-page/) | No check reads the rendered page, and three revisions shipped defects that only the rendering showed | 4 | `unclaimed` | — | Recorded by `restore-apps-outstanding-20260903-000000`, which does not own it. Supersedes nothing. F3 is a dependency question and is the owner's to decide |
 
-**6 bundles · 30 findings.** Every one is `unclaimed`: parked and closed to every
+**7 bundles · 34 findings.** Every one is `unclaimed`: parked and closed to every
 session until the owner assigns them to the session that will re-evaluate them.
 
-Each supersedes a bundle that stays where it was. **The originals keep their
-numbers, their trees, their sessions and their manifests**; only their status
-changed, to `superseded`, and their Status cell links here. Nothing in them was
-edited — that is the point of superseding rather than moving, and it is why
-`0026` through `0032` are still readable as the work they were.
+`0042` is the exception to the paragraph below: it supersedes nothing and was
+recorded here rather than moved.
+
+Each of the first six supersedes a bundle that stays where it was. **The
+originals keep their numbers, their trees, their sessions and their manifests**;
+only their status changed, to `superseded`, and their Status cell links here.
+**Nothing any of them says was changed** — that is the point of superseding
+rather than moving, and it is why `0026` through `0032` are still readable as the
+work they were. Their files were brought onto the header schema in Revision 203,
+which is a reformat and not an edit to the reading.
