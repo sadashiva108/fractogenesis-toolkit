@@ -38,7 +38,7 @@ arriving at this bundle should not mistake the list for a verdict on the design.
 | F2 | Four of five `prompt.md` files violate §4d's "always" rule | `framing` |
 | F3 | `docs/sessions/INDEX.md` miscounts a manifest it links to | `framing` |
 | F4 | `docs/INDEX.md` says `ideas/` is empty; it is not | `framing` |
-| F5 | Every `reopened` bundle is missing `decisions.md` | `framing` |
+| F5 | Every `resolved` bundle is missing `decisions.md` | `framing` |
 | F6 | The two session-state diagrams disagree | `framing` |
 | F7 | Two session identifiers recorded as unrecoverable are recoverable | `framing` |
 
@@ -125,6 +125,42 @@ Revision 166 produced the first `decisions.md` written under the live lifecycle,
 in `docs/runbook-findings/restore-apps/0001-restore-repos-evidence/`, which
 confirms the mechanism works when a bundle is opened normally. It does not touch
 the ten backfilled ones, and the missing carve-out is what this finding is about.
+
+#### What became of D6, recorded 2026-09-06
+
+**The row said the wrong word until 2026-09-06.** It read *"Every `reopened`
+bundle is missing `decisions.md`"*, against a section heading two lines below
+that said `resolved` — and against `0027`, which says `resolved`. A status-word
+sweep during Revisions 198–203 reached into the Finding column and changed what
+the reading claims. Restoring `resolved` returns the row to the original wording
+and to its own heading; it is a repair of sweep damage, not an edit to the
+reading, and it is recorded here because the two are indistinguishable in a diff.
+
+
+**The carve-out landed and was then deleted.** `resolutions.md` records F5 as
+closed by *"the migrated-bundle carve-out in §4c"*, and it was there: pre-split
+`.github/copilot-instructions.md`, section 4c, in the `decisions.md` line of the
+bundle-layout block —
+
+```text
+A bundle MIGRATED from an already-closed record carries `resolutions.md` and no
+`decisions.md`, because the deciding happened before this lifecycle existed; its
+`resolutions.md` says so.
+```
+
+Commit `1c48deb`, which split that file into
+`.github/session-management-instructions.md` and
+`.github/toolkit-instructions.md`, did not carry it across. It is in neither
+file, nor in `docs/legend.md`, nor in `docs/INDEX.md`.
+
+**This corrects a claim made earlier in this session.** A `git log -S"migrated"`
+search returned nothing and was read as *the carve-out was never written*. The
+search was case-sensitive and the file spelled it `MIGRATED`. The resolution was
+not false; **the split lost it**, which is a different defect with a different
+fix — restore the sentence rather than take the decision again.
+
+It is one of fifteen rules the split dropped with no decision recording the
+removal. The full list belongs to `0039`, whose subject is exactly this.
 
 ### F6 — the two state diagrams disagree
 

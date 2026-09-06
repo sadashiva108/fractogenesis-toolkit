@@ -20,6 +20,7 @@ and `pre-image-capture-conformance-20260903-194532` still owns it.
 | F2 | `verify-doc-paths.sh` gives false assurance on a malformed row, because links are not shape | `framing` |
 | F3 | The fix is a lint, so this bundle may be in the wrong tree | `framing` |
 | F4 | A patch containing a deletion under-applies silently, and every check passes | `framing` |
+| F5 | Nothing compares a resolution's claim against the tree | `framing` |
 
 ---
 
@@ -48,6 +49,31 @@ in `docs/sessions/INDEX.md` was reported to the owner as malformed and was not �
 that table had gained a `Bundles` column, and the row was correct. A pipe count
 without the header is not a check, and a session doing it by eye will produce both
 error directions.
+
+#### Two more shapes the check does not reach, recorded 2026-09-06
+
+**The `Bundle:` field is wrong in all ten `decisions.md` and `resolutions.md` in
+this tree.** Every one carries the number of the bundle it was cloned from rather
+than the one it sits in: `0037`'s says `0027`, `0038`'s says `0028`, `0039`'s
+says `0029`, `0040`'s and `0041`'s carry the full `0031-` and `0032-` directory
+names, and `0036`'s says `0026-`. `bin/verify-findings-headers.sh` makes 902
+assertions about these files. It checks that `Bundle:` is **present**; it never
+checks its **value**. That is this finding exactly — a required shape, stated in
+section 11, with no check behind it — and the value is derivable from the
+directory the file is in, so the check is a comparison rather than a judgement.
+
+**A tag may say `resolved` over finding rows that never moved.** Revision 197
+found four such bundles — `0030`, `0031`, `0032`, `0035` — and two other sessions
+independently reached the same conclusion about the fix: a **third invariant** in
+`bin/verify-findings-structure.sh`, which today compares the tag against the
+index row and never opens `findings.md`. It has one dependency worth naming,
+raised by `run-index-design-20260901-000000`: a bundle with no per-finding table
+is legal when it holds one finding, and that fact is owned by
+`verify-findings-counts.sh`. Crossing that boundary is what D1 declined to do,
+so the two scripts have to agree about it before either can carry the rule.
+
+Neither of these was caught by anything. Both were found by a person reading a
+column.
 
 ### F2 — the check that runs gives the wrong assurance
 
@@ -182,6 +208,45 @@ against "deletion is enabled for the rest of the session" is written against
 something that can lapse without notice.
 
 ---
+
+### F5 — nothing compares a resolution's claim against the tree
+
+**Recorded 2026-09-06** by `session-management-re-evaluation-20260906-110105`,
+from verifying all 25 resolution claims in this tree against the repository.
+
+`resolutions.md` is the one document in the bundle shape that makes a **factual
+claim about the tree**: *this was done, here, in this revision*. It is the only
+one with an external referent, and it is the only one nothing checks.
+`verify-findings-headers.sh` confirms that every `F<n>` and `D<n>` a resolution
+cites exists on the other side — a claim about the bundle's internal
+consistency. Whether the thing a resolution says was done was done is not
+examined by any of the six checkers.
+
+Twenty-two of the twenty-five hold. **Three do not, and they fail in three
+different ways**, which is the argument that this is a class rather than three
+mistakes:
+
+| | Claim | What is actually true |
+|---|---|---|
+| `0037` F5 | the migrated-bundle carve-out landed in §4c | it landed, and commit `1c48deb` dropped it |
+| `0037` F2 | required reading scoped to prompts that can still start a session | the scoping landed; the rule it scoped was then deleted |
+| `0041` F3 | *"stays in `docs/session-management-findings/`"* | the supersession moved it cross-tree |
+
+None is a false statement at the time it was written. Each became false
+afterwards, silently, and **a bundle carrying `resolved` is exactly the object
+nobody re-reads.**
+
+This is finding 2 one level up. There, a validator passed on a property it does
+not examine. Here, `resolved` asserts a property nothing examines at all — and
+`resolved` is frozen, so the assertion hardens.
+
+**What a check could reach, and what it cannot.** *Revision* and *Commit* are
+mechanical: a revision must exist in `APPLY-MANIFEST.md`, a commit must resolve
+in the log. *What was done* is prose and no checker will judge it. The honest
+middle is to require that a resolution name a **verifiable referent** — a file
+and a construct in it, so that `grep` can answer — rather than a section number
+in a file that may be renamed out from under it. All three failures above cite
+`§4c`, a section that no longer exists.
 
 ### F3 — this may be in the wrong tree
 

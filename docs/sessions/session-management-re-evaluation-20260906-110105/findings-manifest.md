@@ -18,9 +18,9 @@ sitting, moved each to `analyzing` with every finding in it `framing`.
 | 0038 | [`0038-sessions-write-into-the-tree-the-owner-commits-from`](../../session-management-findings/0038-sessions-write-into-the-tree-the-owner-commits-from/) | `session-management` | Sessions compose their changes in the tree the owner commits from | 6 | `analyzing` | All six resolutions verified present and holding. What it removed — `git status` as the only signal of a concurrent session — is recorded and unreplaced |
 | 0039 | [`0039-the-instruction-set-lags-the-rules-it-governs`](../../session-management-findings/0039-the-instruction-set-lags-the-rules-it-governs/) | `session-management` | The instruction set lags the rules it governs | 8 | `analyzing` | The keystone. D1's destination no longer exists, so it cannot be applied as written. Seven rows were `decided`; reset to `framing` on the owner's instruction to re-evaluate from the ground up — `decisions.md` retains every decision |
 | 0040 | [`0040-superseding-a-bundle-whose-session-is-gone`](../../session-management-findings/0040-superseding-a-bundle-whose-session-is-gone/) | `session-management` | Superseding a bundle whose session is gone is instructed but never defined | 4 | `analyzing` | All four resolutions verified present in §9 and expanded since. Only the address is stale: every row cites §4c, which no longer exists |
-| 0041 | [`0041-index-and-manifest-tables-have-a-shape-nothing-checks`](../../session-management-findings/0041-index-and-manifest-tables-have-a-shape-nothing-checks/) | `session-management` | The index and manifest tables have a shape nothing checks | 4 | `analyzing` | F4 sharpened by this session on 2026-09-06. F3's classification question is open and reaches four other bundles |
+| 0041 | [`0041-index-and-manifest-tables-have-a-shape-nothing-checks`](../../session-management-findings/0041-index-and-manifest-tables-have-a-shape-nothing-checks/) | `session-management` | The index and manifest tables have a shape nothing checks | 5 | `analyzing` | F4 sharpened by this session on 2026-09-06. F3's classification question is open and reaches four other bundles |
 
-**6 bundles · 30 findings.**
+**6 bundles · 31 findings.**
 
 `0042-no-check-reads-the-rendered-page` sits in the same tree and is **not owned
 by this session.** It is `unclaimed` and stays that way until the owner assigns

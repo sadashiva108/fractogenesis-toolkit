@@ -1,4 +1,6 @@
 # Apply Manifest
+**Revision 209** — supersedes Revision 208 and earlier. Group A, the first pass over the re-evaluation: `verify-doc-paths.sh` is shown by test never to read `docs/` in either mode, `0036` gains the measurement and the four options it never had, `0037` finding 5 is corrected twice over, and `0041` gains a fifth finding — nothing compares a resolution's claim against the tree.
+
 **Revision 208** — supersedes Revision 207 and earlier. `0036` through `0041` are assigned to `session-management-re-evaluation-20260906-110105` and read on assignment: six bundles `analyzing`, thirty findings `framing`, the session `active`. `0041` finding 4 is sharpened — the mount refuses `unlink` for modification as well as deletion, so the warning it produces is not diagnostic.
 
 **Revision 207** — supersedes Revision 206 and earlier. The session bundle's `prompt.md` is refreshed to the conformant prompt as it now stands, and the rule that a prompt tracks rather than freezes is stated in the prompt itself, along with three rules that existed only in conversation or inside a finding: ask for delete permission before applying, expect the trailing-whitespace warning, and put no placeholders in a record.
@@ -546,6 +548,97 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
 
 ---
+
+## Revision 209 — Group A: what "done" and "clean" are actually worth
+
+Six record writes across three bundles, all `analyzing`, all owned by
+`session-management-re-evaluation-20260906-110105`. No toolkit file is touched:
+every fix these findings point at is still gated.
+
+### `verify-doc-paths.sh` has never read `docs/`, in either mode
+
+Tested by breaking a link inside a findings bundle and running the checker both
+ways. **Neither reported it.** `bin/verify-doc-paths.sh:185` prunes `./docs/*`
+unconditionally; `--all` widens the *document set*, not the exclusion, from a
+hard-coded 98 files to every tracked Markdown file except `docs/`,
+`.github/ai-templates/` and `APPLY-MANIFEST.md`. The 778 paths and 1108 anchors
+quoted in every recent manifest entry contain nothing from `docs/`.
+
+The opposite was written down. A session-prompt amendment of 2026-09-06 stated
+*"with `--all` it reaches `docs/`"* — correcting a true statement into a false
+one — and two sessions repeated it, this one included. The prompt was corrected
+the same day.
+
+**Removing the prune and running it finds 10 MISSING and 2 ANCHOR BROKEN**,
+against 0 and 0 today. Seven of the ten are paths a reading *proposes* and are
+not defects. Three are genuinely stale, all in one file. Both anchors are
+self-references inside architecture records. The numbers and the itemisation are
+in `0036`.
+
+### `0036` gains a measurement and a `decisions.md`
+
+The bundle has had neither since 2026-09-01. It was closed by Revision 130
+without a `decisions.md` — option (i) applied, options (ii) and (iii) left in
+prose — so the closing decision was never recorded where a reader could find it.
+
+`findings.md` gains the test, the mechanism and the itemised results, and the
+statement the bundle has needed from the start: **it is two defects sharing one
+exclusion.** The OK total moving is one. `docs/` links going unverified is the
+other, created by the fix for the first, on a stated reason false since Revision
+162. `decisions.md` sets out four options with what each costs, including a
+fourth the measurement produced — let a reading declare a path *proposed*, which
+would make MISSING under `docs/` read 3 rather than 10. **None is chosen.**
+
+### `0037` finding 5, corrected twice
+
+**The carve-out landed and the split deleted it.** Earlier in this session a
+`git log -S"migrated"` search returned nothing and was read as *never written*.
+The search was case-sensitive; the file spelled it `MIGRATED`, in pre-split
+section 4c. The resolution was not false — commit `1c48deb` lost it. That is a
+different defect with a different fix: restore the sentence rather than retake
+the decision.
+
+**And the row said the wrong word.** It read *"Every `reopened` bundle is missing
+`decisions.md`"* against its own heading, and against `0027`, which say
+`resolved`. A status-word sweep in Revisions 198–203 reached into the Finding
+column and changed what the reading claims. `resolved` is restored; the repair is
+recorded because sweep damage and an edit to a reading are indistinguishable in a
+diff.
+
+### `0041` gains finding 5 — and two more shapes under finding 1
+
+**Finding 5: nothing compares a resolution's claim against the tree.**
+`resolutions.md` is the only document in the bundle shape with an external
+referent — *this was done, here, in this revision* — and the only one nothing
+checks. All 25 claims in this tree were verified against the repository: 22 hold,
+and the three that do not fail in three different ways, none of them false when
+written. `resolved` is frozen, so the assertion hardens. All three cite `§4c`, a
+section that no longer exists.
+
+**Under finding 1**, two instances of the same unenforced shape. The `Bundle:`
+field is wrong in **all ten** `decisions.md` and `resolutions.md` in this tree —
+every clone kept its original's number — and `verify-findings-headers.sh` makes
+902 assertions, checks the field is present, and never checks its value, which
+is derivable from the directory. And a tag may say `resolved` over finding rows
+that never moved: Revision 197 found four, and two other sessions independently
+proposed the same fix, a third invariant in `verify-findings-structure.sh`, whose
+one dependency — a missing table is legal at one finding, a fact
+`verify-findings-counts.sh` owns — is named so it is not rediscovered.
+
+### Validators
+
+| Checker | Result |
+|---|---|
+| `verify-findings-headers.sh` | 902 OK, 0 FAIL — 895 before; `0036`'s new `decisions.md` |
+| `verify-findings-structure.sh` | 52 OK, 0 FAIL |
+| `verify-findings-counts.sh` | 52 OK, 0 FAIL — **it failed first**, on `0041` moving from 4 findings to 5, and passed once all four displays were corrected. The check working as designed |
+| `verify-doc-paths.sh --all` | 778 OK, 0 MISSING, 1108 anchors, 0 broken — and see above for what that does not cover |
+| `verify-script-portability.sh` | 85 clean, 0 WARN, 0 FAIL |
+| `verify-runbook-structure.sh` | 213 PASS / 5 WARN / 25 FAIL — standing baseline |
+
+Composed in a copy outside the owner's checkout; Linux VM, Bash 5.1.16, GNU
+coreutils. **Not macOS.** The prune was removed only in the copy, to measure, and
+restored; `bin/verify-doc-paths.sh` is unchanged in this revision.
 
 ## Revision 208 — Six bundles assigned, and read
 
