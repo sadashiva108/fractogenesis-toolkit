@@ -10,7 +10,7 @@ The line against the other two trees:
 |---|---|
 | **`docs/runbook-findings/`** | **one runbook, its scripts and its artifacts** |
 | `docs/cross-cutting-findings/` | the workflow's shared machinery — recorders, the run index, the lints, the artifact layout |
-| `docs/instruction-set-findings/` | how a session is told to work at all |
+| `docs/session-management-findings/` | how a session is told to work at all |
 
 The test is where the ramifications are functionally felt, not which file a fix
 happens to touch: a defect in a shared script whose impact lands in one runbook

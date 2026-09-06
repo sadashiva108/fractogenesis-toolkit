@@ -13,9 +13,17 @@ no longer exists in that state.
 and the two report producers — shared machinery, felt in every script's output.
 **Also applies to `indigo`:** see *The principle already exists in the estate*.
 The reading holds there; the decisions may not, and are not assumed here.
-**Contributed to 2026-09-03** by `pre-image-capture-conformance-20260903-194532`
+**Contributed to 2026-09-04** by `pre-image-capture-conformance-20260903-194532`
 (`session_01PcgHu9kz9Hm5RatLQuFR8H`), while the bundle was `unresolved` and open to
 any session: finding 7, measured against `indigo` after the owner connected it.
+That finding corrects the section below rather than only adding to it — the
+fallback class was counted there as token usage.
+**Status:** `unclaimed`, 2026-09-04, at the owner's direction.
+`restore-apps-outstanding-20260903-000000` recorded it and released it without
+deciding anything; two sessions have read it and neither is deciding it. Parked
+means parked: no session may read it, contribute to it, or correct it, and it
+appears in no `findings-manifest.md`. Every finding row reads `unclaimed` with
+it. It waits for the owner to assign it, which will take it to `unresolved`.
 
 ---
 
@@ -23,13 +31,13 @@ any session: finding 7, measured against `indigo` after the owner connected it.
 
 | # | Finding | Status |
 |---|---|---|
-| 1 | Seventeen scripts each define the palette; there is no shared source | `unresolved` |
-| 2 | The authoring template prescribes the copy as policy | `unresolved` |
-| 3 | The copies have already drifted, in three different directions | `unresolved` |
-| 4 | Fourteen of seventeen emit colour regardless of where the output goes | `unresolved` |
-| 5 | Forty-eight saved evidence artifacts carry raw ANSI escapes | `unresolved` |
-| 6 | Nothing checks any of it | `unresolved` |
-| 7 | `indigo`'s token fallbacks are a second copy, and five of six have already drifted | `unresolved` |
+| 1 | Seventeen scripts each define the palette; there is no shared source | `unclaimed` |
+| 2 | The authoring template prescribes the copy as policy | `unclaimed` |
+| 3 | The copies have already drifted, in three different directions | `unclaimed` |
+| 4 | Fourteen of seventeen emit colour regardless of where the output goes | `unclaimed` |
+| 5 | Forty-eight saved evidence artifacts carry raw ANSI escapes | `unclaimed` |
+| 6 | Nothing checks any of it | `unclaimed` |
+| 7 | `indigo`'s token fallbacks are a second copy, and five of six have already drifted | `unclaimed` |
 
 ---
 

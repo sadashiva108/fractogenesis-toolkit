@@ -15,17 +15,27 @@ concerns, not in a note.
 | `sessions/` | Session prompts, the plans they execute, and the handoffs they leave. | [[docs/sessions/INDEX\|sessions/INDEX.md]] |
 | `ideas/` | Things that do not exist yet: a new script or sub-command, a new runbook or reference, a new artifact pattern or layout. Not fixes, refactors, renames or prose corrections — those are findings. | — |
 | `runbook-findings/` | Findings whose ramifications are functionally felt in one runbook, including the scripts and artifacts it owns. One directory per runbook stem, all indexed in one place. Bundles hold `findings.md`, then `decisions.md`, then `resolutions.md`. | [[docs/runbook-findings/INDEX\|runbook-findings/INDEX.md]] |
-| `instruction-set-findings/` | Findings about the rules a session works under — the instruction set, the prompts and templates, and `legend.md` while it carries rules the instruction set has not adopted. Same numbered shape; one sequence shared with the other two. | [[docs/instruction-set-findings/INDEX\|instruction-set-findings/INDEX.md]] |
+| `instruction-set-findings/` | Findings about the toolkit's own instruction set — the rules a session follows when working the reimaging workflow. The fix lands in `.github/toolkit-instructions.md`. Empty since 2026-09-06; kept for the subject, which has nowhere else to go. | [[docs/instruction-set-findings/INDEX\|instruction-set-findings/INDEX.md]] |
+| `session-management-findings/` | Findings about how sessions and findings bundles themselves work — the statuses, the states, the rules binding them, and the checks that hold them. The fix lands in `.github/session-management-instructions.md` or `docs/legend.md`. | [[docs/session-management-findings/INDEX\|session-management-findings/INDEX.md]] |
 | `cross-cutting-findings/` | Findings whose impact is broad and agnostic to any one runbook, and may affect more than one — not merely findings that touch a shared script. Same numbered shape; one sequence shared with `runbook-findings/`. | [[docs/cross-cutting-findings/INDEX\|cross-cutting-findings/INDEX.md]] |
 
 All seven directories and everything in them are tracked. `docs/gaps/` was retired
 in Revision 162: its 25 notes became findings bundles under the two directories
 above.
 
-The two findings directories arrived in Revision 160. Their shape, their status
-vocabulary and the shared numbering rule are defined once, in
-`.github/copilot-instructions.md` section 4c — the indexes under them carry rows
-and point there rather than restating it.
+**Four findings directories**, sharing one numbering sequence and one bundle
+shape. `docs/session-management-findings/` was added on 2026-09-06 and drew in
+six bundles — three from `docs/cross-cutting-findings/` and all three then under
+`docs/instruction-set-findings/`.
+
+The two instruction-set trees divide on **which instruction file a fix lands
+in**: `toolkit-instructions.md` for the workflow's rules,
+`session-management-instructions.md` for the rules about sessions and bundles.
+That question has one answer, where the old boundary — *is this about the
+instruction set* — was true of both and so split one subject across two trees.
+
+Their status vocabulary lives in `docs/legend.md`; the indexes carry rows and
+point there rather than restating it.
 
 The two `architecture/` files that covered the same subject are now one.
 `time-machine-run-index.md` is current and approved;

@@ -1,5 +1,7 @@
 # Apply Manifest
 
+**Revision 198** — supersedes Revision 197 and earlier. The status model is rebuilt so a finding carries the status and the bundle derives it, `.github/copilot-instructions.md` splits into a session-management set and a toolkit set, a fourth findings tree takes six bundles that were filed apart while being one subject, and those six are reopened and parked for the re-evaluation.
+
 **Revision 197** — supersedes Revision 196 and earlier. Seven evidence writes settle what four `entry` lineages mean and what two categories used to be called, and the session's list of what it owes turns up four `resolved` bundles whose findings never moved.
 
 **Revision 196** — supersedes Revision 195 and earlier. A lineage rename becomes one operation, and the step that was never performed is the one that lost a former name.
@@ -517,6 +519,170 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
 
 ---
+
+## Revision 198 — the status model is rebuilt, and the instruction set splits in two
+
+The owner's re-evaluation of the findings architecture. Statuses and states are
+redesigned from the ground up, the instruction set becomes two files with a
+pointer, a fourth findings tree is created, and six bundles are reopened and
+parked for the session that will do the re-evaluation.
+
+Nothing here decides any finding. It is the ground being levelled.
+
+### Status is carried by the finding; the bundle derives
+
+That inversion is the change everything else follows from. Previously a bundle
+had a status and its findings had one too, kept in step by hand — which is how
+Revision 197 found four `resolved` bundles whose rows still read `in progress`.
+
+**A finding** is `un-started`, `framing`, `decided`, `resolved`, `reopened` or
+`withdrawn`. **A bundle's status is read off its findings** by an ordered ladder
+in `docs/legend.md` — first row that matches wins, because the cases overlap and
+matching by eye is what produced the defect above.
+
+`in progress` and `resolving` are gone.
+
+- **`framing`** replaces `in progress` and is the long one. Not a staging post: it
+  is where the work happens, and it runs both ways. Rethinking a decision often
+  means the problem statement was phrased wrong, so wording and decisions are
+  revised as one activity. Any session may record here — the thing that has
+  repeatedly proved its worth.
+- **`decided`** replaces `resolving` and says the enduring fact rather than the
+  moment. Whether the owner is actively resolving at any instant is not something
+  a status should try to carry. Other sessions may read; only the owner records.
+- **`un-started` and `reopened` behave identically**, both invisible to every
+  session but the owner, and the owner's first reading moves either to `framing`.
+  The difference is only where they came from.
+
+### Two statuses that make settled work reviewable
+
+**`resolved` is frozen and `reopened` is the only door.** Not a correction, not a
+clarification — change the status first, and the revision becomes reviewable as
+what it is. That settles a tension rather than creating one: §4c said
+`findings.md` is *"written once, never rewritten to match what was later
+decided"*, and the rule is not that resolved work is permanent but that revising
+it is a **declared act**.
+
+**`reopened` dominates the inert.** A finding is inert when it is `resolved` or
+`withdrawn` — finished either way. A bundle of reopened findings, or reopened
+findings among resolved and withdrawn ones, is `reopened`; the only work in it is
+the reopening and the index should say so. `reopened` beside anything live is
+`analyzing`.
+
+**`unclaimed` is about ownership, not progress** — the same amount of work done
+as `un-started`, which is none, and its opposite on permission: closed to every
+session rather than open to all. It is parked in a queue until the owner assigns
+it, appears in no `findings-manifest.md`, and never applies to a finding.
+
+**`withdrawn` reaches every status but `resolved`**, because resolved work has
+already stopped. What the finding contributed while `framing` or `decided` is
+reverted by `git revert` against the commit hash, plus a **new** manifest entry
+naming what was reverted. Nothing is retro-edited; the record is additive.
+
+### Sessions
+
+`owned` is gone. A session is `available` until it owns a bundle and `active`
+once it does; `handoff`, `closed` and `withdrawn` are unchanged in meaning. The
+three live session bundles were migrated `STATE-owned` → `STATE-active`.
+
+`docs/legend.md` gains how a session begins — **created** with the conformant
+instruction set and prompt, **cloned** with an existing session's exact ones, or
+**handoff** with those plus its bundles — and exactly what transfers at a
+handoff, including that a `superseded` bundle does not transfer but its
+replacement is created against the successor.
+
+### The instruction set splits
+
+`.github/copilot-instructions.md` becomes 33 lines that point at two files and
+carry the one rule belonging to neither — the owner commits.
+
+| File | Governs |
+|---|---|
+| `.github/session-management-instructions.md` | sessions, bundles, permission, composing and handing over, `APPLY-MANIFEST.md` |
+| `.github/toolkit-instructions.md` | the reimaging workflow, lifted verbatim minus the version-control block |
+
+They were one file, and a session working the workflow had to read the findings
+architecture's rules to find its own.
+
+### A fourth findings tree
+
+`docs/session-management-findings/` — six bundles: `0026`, `0027` and `0028` from
+`docs/cross-cutting-findings/`, and `0029`, `0031` and `0032`, which were all of
+`docs/instruction-set-findings/`.
+
+**`docs/instruction-set-findings/` is retained and narrowed**, not retired. It
+keeps the toolkit's own instruction set, which has nowhere else to go. The two
+trees divide on **which instruction file a fix lands in** — a question with one
+answer, where the old boundary *is this about the instruction set* was true of
+both and so split one subject across two trees. That is why all five of `0027`
+through `0032` had been filed apart while being the same subject.
+
+Sub-directories under the new tree are recorded as an open question rather than
+defaulted, so the next session knows the flat shape was not a decision.
+
+### The six bundles are reopened and parked
+
+Every `resolved` finding in them is `reopened`; every bundle is `unclaimed`. They
+are off every `findings-manifest.md` and show `—` in their Session column, and
+they wait for the owner to assign them.
+
+Three of them needed judgement rather than a rule:
+
+- **`0026` had no finding table at all** — it predates them and carried its status
+  in prose. It gains one, single row, `reopened`.
+- **`0031` and `0032` are the Revision 197 defect**: `resolved` bundles whose rows
+  read `in progress` and `unresolved`. The work *is* resolved, so the rows reopen
+  with the bundle rather than being left reading as unstarted.
+- **`0029`'s eight rows read `unclaimed`**, which is a level error this session
+  introduced earlier in the day — `unclaimed` never applies to a finding. They are
+  now 7 `decided` and 1 `un-started`, with the bundle `unclaimed` at ownership
+  level.
+
+`verify-findings-counts.sh` caught this session writing **8 findings for `0027`
+when it has 7**, on an index it had never seen before. That is the check doing
+exactly what it was built for, and it is recorded here rather than quietly fixed.
+
+### Bundles written before this vocabulary were not migrated
+
+At the owner's direction. Eleven still carry an old status and pivot when next
+worked; `docs/legend.md` carries a transitional table mapping `unresolved` →
+`un-started`, `in progress` → `analyzing`, `resolving` → `decided`. A session
+opening one sets the new status as its first act.
+
+### The conformant prompt
+
+Written to `$REIMAGE_WORKSPACE_ROOT/session-prompts/conformant-prompt.md`, which
+is outside this repository and so is not in this diff. It front-loads the four
+rules a fresh session breaks if nobody says them — never commit, compose outside
+the checkout, wait to be asked before applying, and `git apply` exits 0 on a
+patch it under-applied — and names what the checkers do **not** cover, so a new
+session cannot quote `776 OK` as though `docs/` were verified.
+
+### `0033` and this session
+
+`0033` is `unclaimed`. `restore-apps-outstanding-20260903-000000` keeps `0001`
+alone, stays `active`, and writes `handoff-20260906-003935.md` listing what it
+released and what is already known to be wrong.
+
+### Not done
+
+`docs/sessions/session-responsibilities.md` describes the old vocabulary
+throughout and is untouched. The rollup added in Revision 190 still has 27
+unchecked derived figures; `verify-findings-counts.sh` is owed that rule.
+
+### Validators
+
+Run in the scratch copy against this change alone. Doc paths **776 OK / 0 MISSING
+/ 0 ANCHOR BROKEN**; findings counts **43 OK / 0 FAIL**; findings structure **44
+OK / 0 FAIL**; runbook structure **213 PASS / 5 WARN / 25 FAIL**; portability
+**84 clean / 0 WARN / 0 FAIL**. No script changed.
+
+The patch carries eight deletions — four `STATUS-` renames and three `STATE-`
+renames — which is the case `git apply` under-applies while exiting 0, so it was
+verified by comparing the two trees entry by entry, not by exit status.
+
+Linux VM (Bash 5.1, GNU coreutils) on the owner's Mac, not macOS. `/bin/bash -n`
+against stock Bash 3.2 remains owed for Revisions 116 onward.
 
 ## Revision 197 — seven evidence writes, and a list of what is owed that finds four bundles closed over open findings
 

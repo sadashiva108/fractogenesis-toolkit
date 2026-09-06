@@ -31,13 +31,13 @@ arriving at this bundle should not mistake the list for a verdict on the design.
 
 | # | Finding | Status |
 |---|---|---|
-| 1 | §4b and §4c contradict each other on whether a findings bundle takes a manifest revision | `resolved` — decided 1.1, resolved in `resolutions.md` |
-| 2 | Four of five `prompt.md` files violate §4d's "always" rule | `resolved` — decided 2.1, resolved in `resolutions.md` |
-| 3 | `docs/sessions/INDEX.md` miscounts a manifest it links to | `resolved` — decided 3.1, resolved in `resolutions.md` |
-| 4 | `docs/INDEX.md` says `ideas/` is empty; it is not | `resolved` — decided 3.1, resolved in `resolutions.md` |
-| 5 | Every `resolved` bundle is missing `decisions.md` | `resolved` — decided 5.1, resolved in `resolutions.md` |
-| 6 | The two session-state diagrams disagree | `resolved` — decided 6.1, resolved in `resolutions.md` |
-| 7 | Two session identifiers recorded as unrecoverable are recoverable | `resolved` — decided 7.1, resolved in `resolutions.md` |
+| 1 | §4b and §4c contradict each other on whether a findings bundle takes a manifest revision | `reopened` — decided 1.1, resolved in `resolutions.md` |
+| 2 | Four of five `prompt.md` files violate §4d's "always" rule | `reopened` — decided 2.1, resolved in `resolutions.md` |
+| 3 | `docs/sessions/INDEX.md` miscounts a manifest it links to | `reopened` — decided 3.1, resolved in `resolutions.md` |
+| 4 | `docs/INDEX.md` says `ideas/` is empty; it is not | `reopened` — decided 3.1, resolved in `resolutions.md` |
+| 5 | Every `reopened` bundle is missing `decisions.md` | `reopened` — decided 5.1, resolved in `resolutions.md` |
+| 6 | The two session-state diagrams disagree | `reopened` — decided 6.1, resolved in `resolutions.md` |
+| 7 | Two session identifiers recorded as unrecoverable are recoverable | `reopened` — decided 7.1, resolved in `resolutions.md` |
 
 ### 1 — §4b and §4c contradict each other, eighteen lines apart
 

@@ -1,0 +1,63 @@
+# Toolkit instructions for fractogenesis-toolkit
+
+**This file governs the reimaging workflow** — the runbooks, the scripts, the
+artifact volume, and the conventions they follow. It says nothing about sessions
+or findings bundles. For those — how work is recorded, who may write what and
+when, how a change is composed and handed over — read
+[`.github/session-management-instructions.md`](session-management-instructions.md),
+which is required reading with [`docs/legend.md`](../docs/legend.md).
+
+
+1) Build / test / lint commands
+- This repository is documentation + shell/python runbooks; there is no build system, CI config, or automated test suite committed.
+- Run a single entrypoint script (from the repo root):
+  - ./bin/backup-apps.sh
+  - bash -n ./bin/backup-apps.sh  # syntax-only check
+  - bash -x ./bin/backup-apps.sh  # debug with tracing
+- Python helper: python3 ./bin/prepare-artifact-root.py --help (or run directly)
+- Linting guidance (recommended):
+  - Use `bash -n` for quick syntax checks on shell scripts.
+  - Run `shellcheck` when available (recommended but avoid making it a declared runtime dependency):
+    - shellcheck -x bin/*.sh .internal/**/*.sh
+  - For Python, use your usual project linter (e.g., ruff/flake8) if desired; none are enforced here.
+  - Documentation lint: ./bin/verify-doc-paths.sh checks that the repository paths named in the governance docs still exist. Run it after moving or renaming any file that the docs point at, and after editing the docs themselves — a stale path silently misdirects the next session.
+  - Loose-secret sweep (Phase 3B, stage-loose-secrets.md): ./bin/report-loose-secrets.sh reports credential-shaped files sitting in plaintext outside secrets-encrypted/; ./bin/stage-loose-secrets.sh moves them inside it. Run the check, then the stager (dry-run by default, --apply to move), then the check again — all before Phase 3C builds the DMG, since 3C encrypts secrets-encrypted/ and nothing else. The check never modifies what it scans and saves each run to $REIMAGE_ARTIFACT_ROOT/loose-secrets-reports/ (--no-report to suppress).
+  - Runbook structure lint: ./bin/verify-runbook-structure.sh checks the structural house rules the authoring prompt defines — Sequential Steps is an H2, every step is `### Step N — Title` numbered consecutively, every step ends with a back-link and divider, every step is in the Table of Contents, no `[!note]` callouts, the Pitfall budget, the callout legend, balanced code fences, and no orphaned quote lines. These drift silently: a runbook written before a rule existed keeps passing every other check in the repo. Run it after editing any runbook.
+  - Portability lint: ./bin/verify-script-portability.sh flags Bash 4+ syntax and GNU-only userland flags that the macOS target rejects. Run it after editing any bin/ or .internal/ script, and after moving an inline runbook block into a script — that move changes the target shell from the operator's interactive zsh to the Bash 3.2 that `#!/usr/bin/env bash` resolves to in Phases 8 and 9, before Phase 10A installs Homebrew.
+  - Findings-count check: ./bin/verify-findings-counts.sh verifies the counts displayed about findings bundles and sessions against the files that own them -- a bundle's `Findings` against the finding table in its findings.md, a session's `Bundles` and `Findings` against its findings-manifest.md. Run it after adding a finding, adding a bundle, or assigning one. It exists because section 4b permits a derived fact to be displayed only where something catches it drifting, and because the defect it was written for was subtler than a wrong number: `docs/sessions/INDEX.md` carried a column headed `Findings` holding a count of bundles, which is an accurate count of the wrong thing and which no consistency check would have caught.
+  - An AI session is almost certainly NOT running on macOS. Every shell available to one is Linux with GNU coreutils and Bash 5.x, where `mapfile`, `declare -A`, `sed -i`, and `stat -c` all work silently. Name the environment a check ran in rather than reporting it as verified — "tested on Linux" and "tested on the target Mac" are different claims. On the Mac, `/bin/bash -n` catches parse errors against the real 3.2; the portability lint catches the runtime-level constructs `-n` cannot see. The two are complements, not substitutes.
+  - Secret shapes are defined once: SECRET_SHAPES_FLOOR in .internal/artifact-config.sh, extended (never reduced) by the optional secret-shapes.conf.sh fragment. Both scripts above read it via build_secret_shape_predicate. Do not add a private pattern list to a script — that drift is what let credential-shaped files reach home-files-backup/ in the clear.
+
+2) High-level architecture (big picture)
+- Runbook-driven workflow: Markdown runbooks (top-level .md files) sequence the reimage phases and document the rationale and manual steps.
+- bin/: user-facing entrypoints. Each bin/<name>.sh (or .py) implements the runnable step described by its matching runbook <name>.md.
+- .internal/: sourced-only helpers, templates, and config fragments. These are intended to be sourced by entrypoints or other internal helpers and should not be run directly.
+- templates/: committed templates and sign-off cheatsheets used by runbooks and scripts.
+- reimage.env.example + reimage.env: example/template tracked; reimage.env is local, machine-specific, and must NOT be committed.
+- prepare-artifact-root.py self-locates the repo root and centralizes env/artifact-root logic; scripts rely on self-location rather than a REIMAGE_ROOT variable.
+- .share/: reserved for genuinely cross-repo shared scripts (empty until needed).
+
+3) Key conventions and patterns
+- Naming: runbooks and their executable share the same name (backup-apps.md ↔ bin/backup-apps.sh). Runbook and script filenames are verb-first: prepare-, backup-, capture-, check-, record-, report-, restore-, run-, stage-, enroll-, validate-, verify-. Three are easily confused: capture- is a paired pre-image/post-image state inventory with a Phase 13 sibling, record- is one-time evidence of an operation, report- leaves a durable *-reports/ directory the workflow reads back. See .github/guides/script-types-and-locations.md.
+- Execution semantics:
+  - Always run scripts from the repository root unless a script documents explicit absolute-path invocation.
+  - Runbook command examples assume this repo-root working directory — stated once in reimaging-guide.md → Core Assumptions and each runbook's Prerequisites. Do not prefix command blocks with `cd "$FRACTOGENESIS_HOME"`; command blocks start at the command.
+  - Phase bookends are recorded, not just described. `record-restore-prereqs.sh --phase <p>` runs at a phase's Step 0 and answers "may this start"; `record-restore-exit.sh --phase <p>` runs at its final step and answers "did it finish". One check per bookend: a phase never runs the next phase's entry check, and never re-checks its own entry at the end. Both write dated, indexed runs into one category — `reimaged-system/bookends/` — so a single `MANIFEST.md` answers whether a phase both started and finished, and a question asked three days later has an answer.
+  - Prerequisites declares; Step 0 verifies. `### Prerequisites` states preconditions in prose and contains no commands. A phase whose preconditions can fail *silently* opens Sequential Steps with `### Step 0 — Record Prerequisites`, which runs the recorder and writes an artifact. Number it 0 because it gates rather than advances, is rerunnable at any point, and adding one renumbers nothing. Omit it where a phase has no precondition worth checking.
+  - Entrypoints should self-locate via BASH_SOURCE and then load .internal/load-reimage-config.sh.
+  - reimage.env must contain resolved absolute values only. Do not commit reimage.env. Keep only reimage.env.example committed.
+- Loader vs helper rules (important for edits and AI-driven changes):
+  - Sourced loaders (.internal/load-*.sh) must not use `exit` and must avoid setting strict shell options that change the caller environment. Use `return` for failures.
+  - Entry points (bin/*.sh) should use `set -euo pipefail` (unless intentionally a validator) and print concise summaries and meaningful exit codes.
+  - Helpers in .internal/ should prefer explicit CLI args (--root, --dest) and be safe to run standalone when arguments are supplied.
+- Portability: remain compatible with macOS stock Bash 3.2 unless a script explicitly opts into newer Bash; avoid associative arrays, mapfile, GNU-only options; prefer NUL-delimited traversal for file lists.
+- Safety: Do not introduce hardcoded personal or company paths, secrets, or live placeholder paths. Preserve existing behavior unless a change request explicitly asks to alter workflow-level artifact naming or retention.
+4) Files and docs to read first (AI sessions)
+- README.md
+- reimaging-guide.md and matching runbook <phase>.md for the area being changed
+- bin/<target>.sh and its matching <target>.md
+- .internal/load-reimage-config.sh
+- .internal/artifact-config.sh and the fragments under .internal/templates/artifact-config/
+- .github/ai-templates/script-templates/*.tmpl (bash-entrypoint.sh.tmpl, bash-helper.sh.tmpl)
+- reimage.env.example
+- .github/ai-prompts/script-prompts/bash-script-authoring-and-review.md (authoring/review rules)

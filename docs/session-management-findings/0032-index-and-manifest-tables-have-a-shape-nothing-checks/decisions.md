@@ -49,7 +49,7 @@ paths and anchors across all of `docs/`; findings-table shape applies to five
 files. A validator that checks two unrelated properties reports one number for
 both, which is how a session learns to read a total instead of a result.
 
-## D3 — The bundle stays in `docs/instruction-set-findings/`, and the two tests disagree
+## D3 — The bundle stays in `docs/session-management-findings/`, and the two tests disagree
 
 Finding 3 asks whether a bundle whose fix is a lint belongs in the instruction-set
 tree. It stays, on the owner's routing of 2026-09-03, and the disagreement is

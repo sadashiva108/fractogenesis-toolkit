@@ -17,7 +17,6 @@ Statuses are defined in [`docs/legend.md`](../../legend.md).
 | 0021 | `docs/runbook-findings/restore-access/0021-restore-access-exit-predates-its-own-state-walk/` | runbook | The Phase 10B exit was recorded a week before the evidence it stands on | 1 | `unresolved` |
 | 0022 | `docs/runbook-findings/restore-repos/0022-restore-repos-missing-exit-recorder-steps/` | runbook | `restore-repos.md` opens its boundary but never closes it | 1 | `resolved` |
 | 0023 | `docs/runbook-findings/restore-repos/0023-restore-repos-rsync-targets-pre-image-path/` | runbook | Emitted rsync commands target the pre-image path, not the clone | 1 | `resolved` |
-| 0026 | `docs/cross-cutting-findings/0026-verify-doc-paths-counts-gitignored-docs/` | cross-cutting | `verify-doc-paths.sh --all` counts `docs/`, so its OK baseline cannot hold | 1 | `resolved` |
 
 A finding this session *found* but handed to another session is listed in that
 session's manifest, not here: `0020` was recorded by this session while planning
@@ -74,3 +73,10 @@ call.
 
 Ownership was reconstructed during the Revision 162 conversion from the
 `**Found:**` line each note carries, which names the session that recorded it.
+
+
+**2026-09-06 — three bundles left this session.** `0026`, `0031` and `0032` moved to
+`docs/session-management-findings/` and were set `unclaimed` for the ground-up
+re-evaluation of the findings architecture. They are not owned by this session or
+any other until the owner assigns them. Nothing about the work they record is
+withdrawn; the readings stand and their findings are `reopened`.

@@ -17,10 +17,10 @@ Whether the *fix* belongs here is finding 3.
 
 | # | Finding | Status |
 |---:|---|---|
-| 1 | The indexes and manifests have a required column shape that no check enforces | `unresolved` |
-| 2 | `verify-doc-paths.sh` gives false assurance on a malformed row, because links are not shape | `unresolved` |
-| 3 | The fix is a lint, so this bundle may be in the wrong tree | `unresolved` |
-| 4 | A patch containing a deletion under-applies silently, and every check passes | `unresolved` |
+| 1 | The indexes and manifests have a required column shape that no check enforces | `reopened` |
+| 2 | `verify-doc-paths.sh` gives false assurance on a malformed row, because links are not shape | `reopened` |
+| 3 | The fix is a lint, so this bundle may be in the wrong tree | `reopened` |
+| 4 | A patch containing a deletion under-applies silently, and every check passes | `reopened` |
 
 ---
 

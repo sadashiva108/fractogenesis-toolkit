@@ -7,6 +7,20 @@ Revision 129.
 (iii) adopted alongside it in `docs/sessions/session-responsibilities.md`. With
 `docs/` pruned the total returns to 713, the figure recorded before any note was
 parked. Kept for the reasoning.
+**Reopened 2026-09-06.** Moved to `docs/session-management-findings/` and put
+back in play: the exclusion this bundle installed rests on a reason that stopped
+being true at Revision 162 — `docs/` is tracked and does reach a fresh clone — so
+every link in every findings index and session manifest is unverified. Option
+(iii) is still undecided.
+
+## Finding status
+
+This bundle predates the per-finding table and carried its status in prose. One
+finding, recorded here so the bundle derives like every other.
+
+| # | Finding | Status |
+|---|---|---|
+| 1 | `verify-doc-paths.sh --all` scans `docs/`, so its OK baseline cannot hold | `reopened` |
 
 ## What is wrong
 

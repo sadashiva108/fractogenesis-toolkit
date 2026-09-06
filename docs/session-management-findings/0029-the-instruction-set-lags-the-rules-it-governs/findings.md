@@ -41,14 +41,14 @@ work, since every fix is a toolkit write.
 
 | # | Finding | Decided | Status |
 |---:|---|---|---|
-| 1 | Five rules exist only in `docs/legend.md` and not in the instruction set | **yes** — 5.1 | `in progress` — **decided** |
-| 2 | Two rules exist in both, in different words | **yes** — 5.1 | `in progress` — **decided** |
-| 3 | §4b's directory list is now wrong | **yes** — 3.1 | `in progress` — **decided** |
-| 4 | The architecture record describes two findings trees; there are three | **yes** — 3.1 | `in progress` — **decided** |
-| 5 | Nothing tells a session that `docs/legend.md` is normative | **yes** — 5.1, 5.2 | `in progress` — **decided** |
-| 6 | State names and state requirements live in different files | **yes** — 5.1 | `in progress` — **decided**, no change needed |
-| 7 | The vocabulary cannot say that one bundle must be decided before another | **yes** — 7.1 | `in progress` — **decided** |
-| 8 | The rule says where a change is composed, not when it is handed over | — | `unresolved` |
+| 1 | Five rules exist only in `docs/legend.md` and not in the instruction set | **yes** — 5.1 | `decided` |
+| 2 | Two rules exist in both, in different words | **yes** — 5.1 | `decided` |
+| 3 | §4b's directory list is now wrong | **yes** — 3.1 | `decided` |
+| 4 | The architecture record describes two findings trees; there are three | **yes** — 3.1 | `decided` |
+| 5 | Nothing tells a session that `docs/legend.md` is normative | **yes** — 5.1, 5.2 | `decided` |
+| 6 | State names and state requirements live in different files | **yes** — 5.1 | `decided` |
+| 7 | The vocabulary cannot say that one bundle must be decided before another | **yes** — 7.1 | `decided` |
+| 8 | The rule says where a change is composed, not when it is handed over | — | `un-started` |
 
 ---
 
@@ -89,7 +89,7 @@ answer is a rule about where a rule may live, it covers both.
 
 §4b enumerates the directories under `docs/` and gives a count. It said five,
 then six, then seven across Revisions 160 to 163, and reads six today.
-`docs/instruction-set-findings/` makes seven, and this bundle is in it.
+`docs/session-management-findings/` makes seven, and this bundle is in it.
 
 The count in prose is the defect, not the arithmetic: it has been wrong after
 four of the last six revisions that touched `docs/`, because a number in a

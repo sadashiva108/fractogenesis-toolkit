@@ -76,7 +76,7 @@ fast pass to circle back on. Not contended, but flag rather than edit.
   713, then 745, then 860, in one day, with no regression among them. `docs/` is
   now pruned and the total is back to 713. `MISSING` and `ANCHOR BROKEN` were
   never affected and stay the rows worth quoting.
-  `docs/cross-cutting-findings/0026-verify-doc-paths-counts-gitignored-docs/findings.md` is closed. Uncommitted.
+  `docs/session-management-findings/0026-verify-doc-paths-counts-gitignored-docs/findings.md` is closed. Uncommitted.
 - **Revision 129 — the Phase 6B repository-audit row.** `bin/reimage-checklist.sh`
   was testing a manifest heading Revision 120 retired, so a Phase 6B gate
   recorded `FAIL` against a manifest that was exactly canonical. Fixed by

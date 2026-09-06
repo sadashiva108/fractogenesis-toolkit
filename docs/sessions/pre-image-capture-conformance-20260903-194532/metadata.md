@@ -43,7 +43,7 @@ whole session:
 The copy was taken from the live tree at `46dab58` with `git status` clean, and
 is refreshed whenever a push lands and immediately before any patch is derived
 from it — refreshed to `8f1ce13` on 2026-09-03, after Revision 177 landed. The reasoning is
-[`docs/cross-cutting-findings/0028-sessions-write-into-the-tree-the-owner-commits-from/findings.md`](../../cross-cutting-findings/0028-sessions-write-into-the-tree-the-owner-commits-from/findings.md).
+[`docs/session-management-findings/0028-sessions-write-into-the-tree-the-owner-commits-from/findings.md`](../../cross-cutting-findings/0028-sessions-write-into-the-tree-the-owner-commits-from/findings.md).
 The copy is session-local scratch and dies with the session: unapplied work is
 lost if the session ends unexpectedly.
 

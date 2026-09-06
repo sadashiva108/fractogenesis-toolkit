@@ -1,46 +1,39 @@
-# Instruction-set findings
+# Instruction set findings
 
-Findings whose subject is **the rules a session works under**, rather than the
-workflow those rules produce: `.github/copilot-instructions.md`,
-`.claude/CLAUDE.md`, `.github/ai-prompts/`, `.github/ai-templates/`,
-`.github/guides/`, and `docs/legend.md` while it carries rules the instruction
-set has not yet adopted.
+Findings about **the toolkit's instruction set** — the rules a session follows
+when it works on the reimaging workflow, and the prompts and templates that carry
+them. The fix lands in
+[`.github/toolkit-instructions.md`](../../.github/toolkit-instructions.md) or in
+the authoring prompts and templates beside it.
 
-The line against the other two trees:
+**Not the rules about sessions and findings bundles.** Those are the same kind of
+thing one level up, and they have their own tree: a finding whose fix lands in
+`.github/session-management-instructions.md` belongs in
+[`docs/session-management-findings/`](../session-management-findings/INDEX.md).
+The two instruction sets were one file until Revision 191, which is why findings
+about them were one tree until 2026-09-06.
 
-| Tree | Subject |
-|---|---|
-| `docs/runbook-findings/<runbook>/` | one runbook, its scripts and its artifacts |
-| `docs/cross-cutting-findings/` | the workflow's shared machinery — recorders, the run index, the lints, the artifact layout |
-| **`docs/instruction-set-findings/`** | **how a session is told to work at all** |
+The line against the other three:
 
-A defect in `bin/reindex-artifact-runs.sh` is cross-cutting; a defect in the rule
-that says when a session may edit it is here. The test is the same one the other
-two use: where the ramifications are functionally felt.
+| Tree | Subject | Fix lands in |
+|---|---|---|
+| `docs/runbook-findings/` | one runbook, its scripts and its artifacts | that runbook and what it owns |
+| `docs/cross-cutting-findings/` | the toolkit's shared machinery — recorders, the run index, the lints, the artifact layout | `bin/`, `.internal/`, the shared config |
+| **`docs/instruction-set-findings/`** | **the rules a session follows when working the toolkit** | **`.github/toolkit-instructions.md`** |
+| `docs/session-management-findings/` | how sessions and findings bundles themselves work | `.github/session-management-instructions.md`, `docs/legend.md` |
 
-Numbering is one sequence shared with both other trees, so a finding number names
-a bundle without needing its tree.
+Numbering is one sequence shared across all four, so a finding number names a
+bundle without needing its tree.
 
-## Status key
-
-| | |
-|---|---|
-| `unresolved` | Recorded. No decisions yet. **Any session may add, correct or remove findings here.** |
-| `in progress` | The owner is reviewing and deciding. Produces `decisions.md`. **Only the owner writes from here on.** |
-| `resolving` | Every finding decided; the decided work is being carried out. Produces `resolutions.md`. |
-| `resolved` | Every finding has a resolution recorded. |
-| `superseded` | A later findings bundle replaces this reading — including one overtaken while `in progress`. The row names which. |
-| `withdrawn` | The reading is dropped and nothing replaces it. The row says why. |
-
-A bundle advances with its first finding and reaches `resolved` only with its
-last. The owner may override any rule; a revision carrying an overridden change
-says so. Full definitions, the transitions and the write rules:
-[`docs/legend.md`](../legend.md).
+Statuses and states are defined in [`docs/legend.md`](../legend.md).
 
 ## Findings Bundles
 
 | # | Bundle | Subject | Findings | Status | Session | Notes |
 |---:|---|---|---:|---|---|---|
-| 0029 | [0029-the-instruction-set-lags-the-rules-it-governs](0029-the-instruction-set-lags-the-rules-it-governs/) | The instruction set lags the rules it governs | 8 | `in progress` | [`restore-apps-outstanding-20260903-000000`](../sessions/restore-apps-outstanding-20260903-000000/) | Every rule written into `docs/legend.md` since Revision 169 is absent from or duplicated in §§4b–4d |
-| 0031 | [0031-superseding-a-bundle-whose-session-is-gone](0031-superseding-a-bundle-whose-session-is-gone/) | Superseding a bundle whose session is gone is instructed but never defined | 4 | `resolved` | [`pre-image-capture-conformance-20260903-194532`](../sessions/pre-image-capture-conformance-20260903-194532/) | closed by this revision; §4c gains the procedure |
-| 0032 | [0032-index-and-manifest-tables-have-a-shape-nothing-checks](0032-index-and-manifest-tables-have-a-shape-nothing-checks/) | The index and manifest tables have a shape nothing checks | 4 | `resolved` | [`pre-image-capture-conformance-20260903-194532`](../sessions/pre-image-capture-conformance-20260903-194532/) | closed 2026-09-04; `bin/verify-findings-structure.sh` |
+
+**0 bundles · 0 findings.** The tree's three original bundles — `0029`, `0031`
+and `0032` — moved to `docs/session-management-findings/` on 2026-09-06, because
+all three were about sessions and bundles rather than the workflow. The tree is
+kept for what it was named for: findings about the toolkit's own instruction set,
+which had nowhere else to go and still does not.
