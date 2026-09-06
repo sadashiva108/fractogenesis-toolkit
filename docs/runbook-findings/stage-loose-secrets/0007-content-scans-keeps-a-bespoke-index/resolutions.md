@@ -1,6 +1,7 @@
 # Resolutions — `content-scans/` looks like a run category and is not one
 
-**Bundle:** `0007-content-scans-keeps-a-bespoke-index` · **Status:** `resolved`
+**Bundle:** `0007-content-scans-keeps-a-bespoke-index`  
+**Status:** `resolved`  
 **Recorded:** 2026-09-03, during the `docs/*-findings/` migration.
 
 This finding was closed before findings bundles existed, as a parked note whose
@@ -10,7 +11,7 @@ resolution; this file states it in the shape every bundle now uses.
 
 | Finding | Resolved by | What was done | Revision | Commit |
 |---|---|---|---|---|
-| F1 — `content-scans/` looks like a run category and is not one | — | — | 141 | c7043f2 |
+| F1 | — | — | 141 | c7043f2 |
 
 Commit hashes for revisions before 141 are not derivable from the log: those
 commit messages describe the change rather than naming its revision number. The

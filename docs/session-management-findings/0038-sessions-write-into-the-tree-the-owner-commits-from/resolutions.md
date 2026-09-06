@@ -1,7 +1,8 @@
 # Resolutions — sessions write into the tree the owner commits from
 
-**Bundle:** `0028` · **Status:** `resolved`, 2026-09-04.
-**Owner:** `restore-apps-outstanding-20260903-000000`.
+**Bundle:** `0028`  
+**Status:** `resolved`, 2026-09-04.  
+**Owner:** `restore-apps-outstanding-20260903-000000`.  
 **Decisions:** `decisions.md`, four across six findings.
 
 The reasoning is in `decisions.md` and is not repeated. This file records what
@@ -9,12 +10,12 @@ was actually done.
 
 | Finding | Resolved by | What was done | Revision | Commit |
 |---|---|---|---|---|
-| F1 — Two sessions' uncommitted work interleaves in shared files | The composition rule in §3 and `docs/legend.md` | — | — | — |
-| F2 — A revision's validator baselines are measured on another session's tree | The same rule — validators run in the copy | — | — | — |
-| F3 — A session's work has no diff boundary | The same rule — the patch is the unit | — | — | — |
-| F4 — Backing out one session's change is surgical | The same rule — declining a patch replaces reversal | — | — | — |
-| F5 — A session can amend a revision the owner has already committed | Numbering at apply time, and `bin/check-manifest-revision.sh` | — | — | — |
-| F6 — The write discipline does not distinguish where a write is composed | A separate section in `docs/legend.md`, orthogonal to the categories | — | — | — |
+| F1 | D1 | The composition rule in §3 and `docs/legend.md` | — | — |
+| F2 | D2 | The same rule — validators run in the copy | — | — |
+| F3 | D2 | The same rule — the patch is the unit | — | — |
+| F4 | D2 | The same rule — declining a patch replaces reversal | — | — |
+| F5 | D3 | Numbering at apply time, and `bin/check-manifest-revision.sh` | — | — |
+| F6 | D4 | A separate section in `docs/legend.md`, orthogonal to the categories | — | — |
 
 ---
 

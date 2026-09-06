@@ -1,7 +1,13 @@
 # `.internal/restore/` is empty, and is not tracked
 
-**Recorded:** 2026-09-01, session `01KcZvrKMgfenhrT9DvxW9Jk`.
+**Recorded:** 2026-09-01, session `01KcZvrKMgfenhrT9DvxW9Jk`.  
 **Severity:** trivial. Recorded so it is not rediscovered.
+
+## Findings
+
+| # | Finding | Status |
+|---:|---|---|
+| F1 | `.internal/restore/` is empty, and is not tracked | `resolved` |
 
 **Corrected for accuracy 2026-09-04**, by the session that recorded it, while the
 bundle was still `unresolved`. The original title and first sentence said the

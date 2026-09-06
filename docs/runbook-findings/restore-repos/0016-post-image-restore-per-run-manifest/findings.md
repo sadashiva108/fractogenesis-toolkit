@@ -1,9 +1,13 @@
 # `MANIFEST.txt` duplicates the category run index
 
-**Recorded:** 2026-09-01, Restore Repositories Refactor session, while reconciling
-the Bundle Layout in `restore-repos.md`.
-**Severity:** none. A retention/manifest policy question, deliberately not
-decided by an AI session.
+**Recorded:** 2026-09-01, Restore Repositories Refactor session, while reconciling the Bundle Layout in `restore-repos.md`.  
+**Severity:** none. A retention/manifest policy question, deliberately not decided by an AI session.
+
+## Findings
+
+| # | Finding | Status |
+|---:|---|---|
+| F1 | `MANIFEST.txt` duplicates the category run index | `un-started` |
 
 **Owner:** the repository owner.
 

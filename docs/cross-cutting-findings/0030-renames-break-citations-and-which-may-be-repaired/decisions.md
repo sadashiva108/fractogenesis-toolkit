@@ -1,7 +1,8 @@
 # Decisions — renames break citations, and only a record's values are frozen
 
-**Bundle:** `0030-renames-break-citations-and-which-may-be-repaired` · **Status:** `in progress`
-**Decided:** 2026-09-03, session `session_01PcgHu9kz9Hm5RatLQuFR8H`, owner present.
+**Bundle:** `0030-renames-break-citations-and-which-may-be-repaired`  
+**Status:** `in progress`  
+**Decided:** 2026-09-03, session `session_01PcgHu9kz9Hm5RatLQuFR8H`, owner present.  
 **Supersedes:** `0009-dated-artifacts-cite-run-ids-a-rename-breaks`.
 
 ## Decisions

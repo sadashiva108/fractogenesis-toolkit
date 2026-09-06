@@ -1,9 +1,9 @@
 # Decisions — four bookend runs are dated the day the recorder was extended
 
-**Bundle:** `0005-boundary-runs-recorded-long-after-their-phase` · **Status:** `in progress`
-**Decided:** 2026-09-04, session `session_01KcZvrKMgfenhrT9DvxW9Jk`, which owns it.
-**Point rules ruled on by the owner, 2026-09-04**, correcting this session's first
-answer. See D2.
+**Bundle:** `0005-boundary-runs-recorded-long-after-their-phase`  
+**Status:** `in progress`  
+**Decided:** 2026-09-04, session `session_01KcZvrKMgfenhrT9DvxW9Jk`, which owns it.  
+**Point rules ruled on by the owner, 2026-09-04**, correcting this session's first answer. See D2.
 
 Re-verified against the volume before deciding. Both pairs still carry their
 2026-08-31 and 2026-09-01 stamps against phases that ran 08-18/19. The category is

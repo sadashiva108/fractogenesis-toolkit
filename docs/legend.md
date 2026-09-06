@@ -35,12 +35,14 @@ says how far a reading has been taken, never how anyone feels about it.
 | `reopened` | A `resolved` finding put back in play because its resolution is inconsistent or wrong. Nothing is reverted. | the owning session only | — |
 | `withdrawn` | Shut down. No further work, ever. | any session | nobody |
 
-    un-started ──▶ framing ──▶ decided ──▶ resolved ──▶ reopened ──┐
-                      ▲                                            │
-                      └────────────────────────────────────────────┘
-                                  first read by the owner
+```text
+un-started ──▶ framing ──▶ decided ──▶ resolved ──▶ reopened ──┐
+                  ▲                                            │
+                  └────────────────────────────────────────────┘
+                              first read by the owner
 
-    withdrawn ◀── from any status except `resolved`
+withdrawn ◀── from any status except `resolved`
+```
 
 ### Awaiting a first read
 
@@ -179,7 +181,6 @@ other session checks the bundle first, then the finding.
 An `un-started` bundle offers nothing to anyone but its owner, by definition: all
 its findings are `un-started`, and the owner's first reading is what opens them.
 
-
 ## Who may write to a findings bundle
 
 Permission is carried by the **finding**, not the bundle; the bundle status is
@@ -216,7 +217,6 @@ Two consequences worth stating:
 - **Assignment is what starts things.** An `unclaimed` bundle sits outside every
   session until assigned; assigning it makes the receiving session `active`.
 
-
 ## When something overtakes a finding that is already decided
 
 `decided` closes a finding to every session but its owner, which leaves a
@@ -243,10 +243,12 @@ changes one after that is the exception rather than the working case.
 ## `Relates to`
 
 A bundle may name another it bears on, without either replacing the other, as a
-line in `findings.md`'s header beside `Found`, `Severity` and `Scope`:
+line in `findings.md`'s header beside `Recorded`, `Severity` and `Scope`:
 
-    **Relates to:** `<NNNN>` — a one-line statement of how the two bear on
-    each other, and from which direction.
+```markdown
+**Relates to:** `<NNNN>` — a one-line statement of how the two bear on
+each other, and from which direction.
+```
 
 It is a pointer and nothing more: it creates no ownership, moves no status, and
 obliges nobody. It exists because two readings of one mechanism from different
@@ -283,9 +285,11 @@ from the findings bundles it owns.
 | `closed` | Every bundle it owns is `resolved`. | `final-summary.md` |
 | `withdrawn` | Every bundle it owns is `withdrawn`. | `final-summary.md` |
 
-    available ──▶ active ──┬─▶ closed       every bundle resolved
-                           ├─▶ handoff      bundles carried to a successor
-                           └─▶ withdrawn    every bundle withdrawn
+```text
+available ──▶ active ──┬─▶ closed       every bundle resolved
+                       ├─▶ handoff      bundles carried to a successor
+                       └─▶ withdrawn    every bundle withdrawn
+```
 
 ### How a session begins
 
@@ -317,7 +321,6 @@ the index lists. So a session holding a superseded bundle at handoff is not
 thereby finished: its successor picks up the replacement.
 
 The outgoing session stays `handoff` and is understood to be no longer working.
-
 
 ## Write categories
 

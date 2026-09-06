@@ -1,7 +1,13 @@
 # Emitted rsync commands target the pre-image path, not the clone
 
-**Recorded:** 2026-09-01, session `01KcZvrKMgfenhrT9DvxW9Jk`, while planning item 1.
+**Recorded:** 2026-09-01, session `01KcZvrKMgfenhrT9DvxW9Jk`, while planning item 1.  
 **Severity:** unsafe to run. Writes decrypted secrets outside every repository.
+
+## Findings
+
+| # | Finding | Status |
+|---:|---|---|
+| F1 | Emitted rsync commands target the pre-image path, not the clone | `resolved` |
 
 **Owner:** the Restore Repositories Refactor session.
 **Status: CLOSED** by Revision 131, 2026-09-02, same session. All three edits

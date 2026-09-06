@@ -1,8 +1,13 @@
 # `office-stability/checklists/` does not hold checklists
 
-**Recorded:** 2026-09-01, session `01KcZvrKMgfenhrT9DvxW9Jk`, item 2.
-**Severity:** low on its own. It matters because the name is the only thing
-making this category look like a special case.
+**Recorded:** 2026-09-01, session `01KcZvrKMgfenhrT9DvxW9Jk`, item 2.  
+**Severity:** low on its own. It matters because the name is the only thing making this category look like a special case.
+
+## Findings
+
+| # | Finding | Status |
+|---:|---|---|
+| F1 | `office-stability/checklists/` does not hold checklists | `resolved` |
 
 **Confirmed by the owner 2026-09-02:** these artifacts are not checklists and
 need a different name.

@@ -1,16 +1,9 @@
 # Styling is copied into every script, and it lands in the evidence
 
-**Recorded:** 2026-09-04, `restore-apps-outstanding-20260903-000000`
-(`session_016EbjB7M527qEFqZFzpv2C9`), from the owner comparing this repository
-against `indigo`, which solved the same problem for its own outputs.
-**Severity:** finding 5 is high and is the reason this was written down. The rest
-is untidiness; finding 5 is escape codes inside dated evidence of a machine that
-no longer exists in that state.
-**Scope:** cross-cutting. The fix lands in `.internal/`, the authoring template,
-and the two report producers — shared machinery, felt in every script's output.
-**Relates to:** `0029` finding 2 — one rule written many times with nothing
-keeping it in step. This is that defect in values rather than in prose, and the
-copies have already drifted, which `0029`'s have not.
+**Recorded:** 2026-09-04, `restore-apps-outstanding-20260903-000000` (`session_016EbjB7M527qEFqZFzpv2C9`), from the owner comparing this repository against `indigo`, which solved the same problem for its own outputs.  
+**Severity:** finding 5 is high and is the reason this was written down. The rest is untidiness; finding 5 is escape codes inside dated evidence of a machine that no longer exists in that state.  
+**Scope:** cross-cutting. The fix lands in `.internal/`, the authoring template, and the two report producers — shared machinery, felt in every script's output.  
+**Relates to:** `0029` finding 2 — one rule written many times with nothing keeping it in step. This is that defect in values rather than in prose, and the copies have already drifted, which `0029`'s have not.
 
 **Also applies to `indigo`:** see *The principle already exists in the estate*.
 The reading holds there; the decisions may not, and are not assumed here.
@@ -31,14 +24,14 @@ it. It waits for the owner to assign it, which will take it to `unresolved`.
 ## Finding status
 
 | # | Finding | Status |
-|---|---|---|
-| F1 | Seventeen scripts each define the palette; there is no shared source | `unclaimed` |
-| F2 | The authoring template prescribes the copy as policy | `unclaimed` |
-| F3 | The copies have already drifted, in three different directions | `unclaimed` |
-| F4 | Fourteen of seventeen emit colour regardless of where the output goes | `unclaimed` |
-| F5 | Forty-eight saved evidence artifacts carry raw ANSI escapes | `unclaimed` |
-| F6 | Nothing checks any of it | `unclaimed` |
-| F7 | `indigo`'s token fallbacks are a second copy, and five of six have already drifted | `unclaimed` |
+|---:|---|---|
+| F1 | Seventeen scripts each define the palette; there is no shared source | `un-started` |
+| F2 | The authoring template prescribes the copy as policy | `un-started` |
+| F3 | The copies have already drifted, in three different directions | `un-started` |
+| F4 | Fourteen of seventeen emit colour regardless of where the output goes | `un-started` |
+| F5 | Forty-eight saved evidence artifacts carry raw ANSI escapes | `un-started` |
+| F6 | Nothing checks any of it | `un-started` |
+| F7 | `indigo`'s token fallbacks are a second copy, and five of six have already drifted | `un-started` |
 
 ---
 
@@ -113,7 +106,9 @@ Measured against the artifact volume, read-only:
 Two producers, `bin/report-loose-secrets.sh` and `bin/report-size-audit.sh`, both
 unguarded. The first line of every one of those reports is:
 
-    ^[[1m^[[0;36m▸ Loose plaintext secret check^[[0m
+```text
+^[[1m^[[0;36m▸ Loose plaintext secret check^[[0m
+```
 
 **These are pre-image evidence.** They record what was on a machine on a date,
 and that machine has since been reimaged. An evidence write that turns out wrong

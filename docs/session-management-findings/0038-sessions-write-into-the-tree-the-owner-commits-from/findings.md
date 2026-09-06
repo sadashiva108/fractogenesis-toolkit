@@ -1,19 +1,9 @@
 # Sessions write into the tree the owner commits from
 
-**Recorded:** 2026-09-03, session `session_019yzcjm2QneJ5ymVEQDi1bu`, on the owner's
-observation that a session should hold its changes until told to release them.
-Read: the day's own working tree, `git status` and `git log` across the two
-concurrent sessions, `docs/ideas/knowing-when-it-is-safe-to-write.md`,
-`0026-verify-doc-paths-counts-gitignored-docs`, `docs/legend.md`,
-`.github/copilot-instructions.md` §§4b–4d, and all 27 existing findings bundles
-checked for overlap.
-**Severity:** two findings are high. Both are silent — nothing fails, and the
-damage is to what the record can be trusted to mean.
-**Scope:** cross-cutting. Tracked files only; the artifact volume is out of scope
-and finding 6 says why.
-**Relates to:** [`0028`](../../cross-cutting-findings/0028-sessions-write-into-the-tree-the-owner-commits-from/) — **supersedes it.**
-The original stands untouched at `docs/cross-cutting-findings/0028-sessions-write-into-the-tree-the-owner-commits-from/`, still listed by the session
-that held it. Authority for this reading lives here.
+**Recorded:** 2026-09-03, session `session_019yzcjm2QneJ5ymVEQDi1bu`, on the owner's observation that a session should hold its changes until told to release them. Read: the day's own working tree, `git status` and `git log` across the two concurrent sessions, `docs/ideas/knowing-when-it-is-safe-to-write.md`, `0026-verify-doc-paths-counts-gitignored-docs`, `docs/legend.md`, `.github/copilot-instructions.md` §§4b–4d, and all 27 existing findings bundles checked for overlap.  
+**Severity:** two findings are high. Both are silent — nothing fails, and the damage is to what the record can be trusted to mean.  
+**Scope:** cross-cutting. Tracked files only; the artifact volume is out of scope and finding 6 says why.  
+**Relates to:** [`0028`](../../cross-cutting-findings/0028-sessions-write-into-the-tree-the-owner-commits-from/) — **supersedes it.** The original stands untouched at `docs/cross-cutting-findings/0028-sessions-write-into-the-tree-the-owner-commits-from/`, still listed by the session that held it. Authority for this reading lives here.
 
 ## What is not the problem
 
@@ -34,13 +24,13 @@ and that is not what was found.
 ## Findings
 
 | # | Finding | Status |
-|---|---|---|
-| F1 | Two sessions' uncommitted work interleaves in shared files, so neither can be committed alone | `reopened` — 1.1, see `resolutions.md` |
+|---:|---|---|
+| F1 | Two sessions' uncommitted work interleaves in shared files, so neither can be committed alone | `reopened` |
 | F2 | A revision's claimed validator baselines are measured on a tree containing another session's work | `reopened` |
 | F3 | A session's work has no diff boundary, so the owner cannot review it as a unit | `reopened` |
 | F4 | Backing out one session's change is surgical, because `git checkout` would take the other's too | `reopened` |
 | F5 | A session can amend a revision the owner has already committed | `reopened` |
-| F6 | The write discipline does not distinguish the write kinds `docs/legend.md` now names | `reopened` — 6.1, see `resolutions.md` |
+| F6 | The write discipline does not distinguish the write kinds `docs/legend.md` now names | `reopened` |
 
 Findings 1 and 2 are the high ones. The revision-number collision that prompted
 the day's investigation is **not** a finding here — it is recorded in

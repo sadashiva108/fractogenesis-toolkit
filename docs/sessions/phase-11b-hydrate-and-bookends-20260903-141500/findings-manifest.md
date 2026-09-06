@@ -8,8 +8,8 @@ Statuses are defined in [`docs/legend.md`](../../legend.md).
 
 | # | Bundle | Kind | Subject | Findings | Status | Notes |
 |---:|---|---|---|---:|---|---|
-| 0006 | [`0006-caller-environment-precedence-covers-only-listed-keys`](../../cross-cutting-findings/0006-caller-environment-precedence-covers-only-listed-keys/) | cross-cutting | Caller-environment precedence holds only for the keys `artifact-config.sh` lists | 1 | `resolved` | — |
-| 0020 | [`0020-repo-audit-tsv-column-shift`](../../runbook-findings/restore-repos/0020-repo-audit-tsv-column-shift/) | runbook | `repos.tsv` remote column is shifted by embedded tabs | 1 | `resolved` | — |
+| 0006 | [`0006-caller-environment-precedence-covers-only-listed-keys`](../../cross-cutting-findings/0006-caller-environment-precedence-covers-only-listed-keys/) | `cross-cutting` | Caller-environment precedence holds only for the keys `artifact-config.sh` lists | 1 | `resolved` | — |
+| 0020 | [`0020-repo-audit-tsv-column-shift`](../../runbook-findings/restore-repos/0020-repo-audit-tsv-column-shift/) | `runbook` | `repos.tsv` remote column is shifted by embedded tabs | 1 | `resolved` | — |
 
 ## Where these came from
 

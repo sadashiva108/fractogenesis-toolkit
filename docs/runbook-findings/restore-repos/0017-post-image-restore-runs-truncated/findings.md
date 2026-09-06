@@ -1,8 +1,13 @@
 # Every post-image-restore run on disk stops before its report
 
-**Recorded:** 2026-09-01, Restore Repositories Refactor session, while confirming
-Change 7 against what `bin/restore-repos.sh` actually writes.
+**Recorded:** 2026-09-01, Restore Repositories Refactor session, while confirming Change 7 against what `bin/restore-repos.sh` actually writes.  
 **Severity:** all three existing Phase 11B bundles are unusable as evidence.
+
+## Findings
+
+| # | Finding | Status |
+|---:|---|---|
+| F1 | Every post-image-restore run on disk stops before its report | `un-started` |
 
 **Owner:** unassigned — needs a run on the Mac to reproduce.
 

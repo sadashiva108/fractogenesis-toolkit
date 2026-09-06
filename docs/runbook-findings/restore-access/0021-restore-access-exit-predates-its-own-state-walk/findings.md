@@ -1,8 +1,13 @@
 # The Phase 10B exit was recorded a week before the evidence it stands on
 
-**Recorded:** 2026-09-01, session `01KcZvrKMgfenhrT9DvxW9Jk`, item 2.
-**Severity:** the phase is finished; its recorded finish is stale and understates
-what was checked.
+**Recorded:** 2026-09-01, session `01KcZvrKMgfenhrT9DvxW9Jk`, item 2.  
+**Severity:** the phase is finished; its recorded finish is stale and understates what was checked.
+
+## Findings
+
+| # | Finding | Status |
+|---:|---|---|
+| F1 | The Phase 10B exit was recorded a week before the evidence it stands on | `un-started` |
 
 ## What is wrong
 

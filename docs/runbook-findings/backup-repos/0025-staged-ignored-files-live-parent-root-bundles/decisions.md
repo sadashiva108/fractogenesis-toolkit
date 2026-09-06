@@ -1,10 +1,9 @@
 # Decisions — `staged-ignored-files/live/` holds two bundles no lookup can reach
 
-**Bundle:** `0025-staged-ignored-files-live-parent-root-bundles` · **Status:** `in progress`
-**Decided:** 2026-09-03, session `session_01PcgHu9kz9Hm5RatLQuFR8H`, owner
-present.
-**Read against:** `/Volumes/Data/reimage-CVG-0002160-500-20260816-open`,
-read-only, on the owner's grant.
+**Bundle:** `0025-staged-ignored-files-live-parent-root-bundles`  
+**Status:** `in progress`  
+**Decided:** 2026-09-03, session `session_01PcgHu9kz9Hm5RatLQuFR8H`, owner present.  
+**Read against:** `/Volumes/Data/reimage-CVG-0002160-500-20260816-open`, read-only, on the owner's grant.
 
 `findings.md` carries a dated correction to the producer it named, made while the
 bundle was still `unresolved` and before any decision was taken against it. The

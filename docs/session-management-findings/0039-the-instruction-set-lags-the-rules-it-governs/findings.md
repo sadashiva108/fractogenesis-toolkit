@@ -1,20 +1,10 @@
 # The instruction set lags the rules it governs
 
-**Recorded:** 2026-09-03, restore-apps session
-(`session_016EbjB7M527qEFqZFzpv2C9`), from its own outstanding items rather than
-from a fresh reading. Every finding below was noticed by this session while
-writing Revisions 166 through 173, and deferred in prose at the time.
-**Severity:** findings 1, 5 and 8 are high. A session that reads only the
-instruction set does not learn several of the rules it is expected to follow,
-and one of those rules governs when it may touch the owner's checkout.
-**Scope:** instruction-set. The fix lands in `.github/copilot-instructions.md`
-§§4b–4d, `.claude/CLAUDE.md`, and `docs/architecture/findings-and-sessions.md`.
-**Relates to:** [`0029`](../../instruction-set-findings/0029-the-instruction-set-lags-the-rules-it-governs/) — **supersedes it.**
-The original stands untouched at `docs/instruction-set-findings/0029-the-instruction-set-lags-the-rules-it-governs/`, still listed by the session
-that held it. Authority for this reading lives here.
-**Relates to:** `0027` — that bundle read the instruction set for conformance and
-found seven defects. This one collects what this session left owed. They overlap
-at one point only, named in finding 2.
+**Recorded:** 2026-09-03, restore-apps session (`session_016EbjB7M527qEFqZFzpv2C9`), from its own outstanding items rather than from a fresh reading. Every finding below was noticed by this session while writing Revisions 166 through 173, and deferred in prose at the time.  
+**Severity:** findings 1, 5 and 8 are high. A session that reads only the instruction set does not learn several of the rules it is expected to follow, and one of those rules governs when it may touch the owner's checkout.  
+**Scope:** instruction-set. The fix lands in `.github/copilot-instructions.md` §§4b–4d, `.claude/CLAUDE.md`, and `docs/architecture/findings-and-sessions.md`.  
+**Relates to:** [`0029`](../../instruction-set-findings/0029-the-instruction-set-lags-the-rules-it-governs/) — **supersedes it.** The original stands untouched at `docs/instruction-set-findings/0029-the-instruction-set-lags-the-rules-it-governs/`, still listed by the session that held it. Authority for this reading lives here.  
+**Relates to:** `0027` — that bundle read the instruction set for conformance and found seven defects. This one collects what this session left owed. They overlap at one point only, named in finding 2.
 
 **Decide after:** `0027`, then `0028`. Findings 1, 2, 5 and 6 below are four
 symptoms of one question `0027` finding 1 owns — *where is a rule allowed to

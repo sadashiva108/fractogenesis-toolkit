@@ -1,6 +1,7 @@
 # Resolutions — Boundary runs call their record a `checklist`, and it is not one
 
-**Bundle:** `0004-boundary-runs-name-their-record-a-checklist` · **Status:** `resolved`
+**Bundle:** `0004-boundary-runs-name-their-record-a-checklist`  
+**Status:** `resolved`  
 **Recorded:** 2026-09-03, during the `docs/*-findings/` migration.
 
 This finding was closed before findings bundles existed, as a parked note whose
@@ -10,7 +11,7 @@ resolution; this file states it in the shape every bundle now uses.
 
 | Finding | Resolved by | What was done | Revision | Commit |
 |---|---|---|---|---|
-| F1 — Boundary runs call their record a `checklist`, and it is not one | `APPLY-MANIFEST.md` Revisions 156 through 159 | — | — | de7aa8e, a1c2f33, a2342d1 |
+| F1 | — | `APPLY-MANIFEST.md` Revisions 156 through 159 | — | de7aa8e, a1c2f33, a2342d1 |
 
 Commit hashes for revisions before 141 are not derivable from the log: those
 commit messages describe the change rather than naming its revision number. The

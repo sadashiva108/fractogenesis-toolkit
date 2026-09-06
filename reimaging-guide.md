@@ -83,21 +83,28 @@ This guide assumes:
 - A local `reimage.env` file created from `reimage.env.example`, then updated with the machine-specific resolved paths used by the scripts.
 - **An interactive `zsh`** — the macOS default — as the shell you paste command blocks into. Two of its behaviours bite pasted text, and both look like the command failed when it did not:
 
-    **`#` does not start a comment** unless `interactivecomments` is set — and this applies to a whole-line comment as much as a trailing one. A trailing `# note` arrives as arguments, and a `;` inside that note starts a new command: `grep -c PATTERN file   # expect 1 or more; 0 means failed` runs `grep` with five extra filenames, then tries to execute `0`. The `grep` already succeeded; everything after it is the comment running.
+```markdown
+**`#` does not start a comment** unless `interactivecomments` is set — and this applies to a whole-line comment as much as a trailing one. A trailing `# note` arrives as arguments, and a `;` inside that note starts a new command: `grep -c PATTERN file   # expect 1 or more; 0 means failed` runs `grep` with five extra filenames, then tries to execute `0`. The `grep` already succeeded; everything after it is the comment running.
 
-    A **whole-line** `#` comment is worse, because it can consume the lines below it. An apostrophe in the prose opens a quote that stays open until the next one, so
+A **whole-line** `#` comment is worse, because it can consume the lines below it. An apostrophe in the prose opens a quote that stays open until the next one, so
 
-    ```text
-    # print the first lines of the tool's own error
-    ```
+```text
 
-    swallows everything up to the next `'` anywhere in the block. The symptom is a `quote>` prompt — or `function quote>` inside a function body — and `zsh: unmatched '`. `Ctrl-C` gets you out. Runbook command blocks therefore carry **no `#` comments at all**; the explanation goes in the prose above the block. To paste your own safely:
+# print the first lines of the tool's own error
 
-    ```bash
-    setopt interactivecomments
-    ```
+```
 
-    **`<placeholder>` is a redirection, not a blank to fill in.** `<` and `>` are redirection operators in every POSIX shell, so `run --url https://<your-host>/` is parsed as *read stdin from `your-host`*, and fails with `no such file or directory: your-host`. Runbook blocks put placeholders inside quotes or in a variable assignment on the line above, so a bare one is a defect worth reporting. When you meet one, quote it: `"<your-host>"`.
+swallows everything up to the next `'` anywhere in the block. The symptom is a `quote>` prompt — or `function quote>` inside a function body — and `zsh: unmatched '`. `Ctrl-C` gets you out. Runbook command blocks therefore carry **no `#` comments at all**; the explanation goes in the prose above the block. To paste your own safely:
+
+```bash
+
+setopt interactivecomments
+
+```
+
+**`<placeholder>` is a redirection, not a blank to fill in.** `<` and `>` are redirection operators in every POSIX shell, so `run --url https://<your-host>/` is parsed as *read stdin from `your-host`*, and fails with `no such file or directory: your-host`. Runbook blocks put placeholders inside quotes or in a variable assignment on the line above, so a bare one is a defect worth reporting. When you meet one, quote it: `"<your-host>"`.
+```
+
 - Company-managed components may include:
     - Intune / Company Portal enrollment
     - Microsoft 365 apps and helpers

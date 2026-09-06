@@ -1,8 +1,13 @@
 # An empty Docker section captures cleanly and nothing downstream notices
 
-**Recorded:** 2026-09-02, while planning a `restore-docker` teardown test.
-**Severity:** low to hit, moderate to leave — a comparison silently compares
-nothing against nothing.
+**Recorded:** 2026-09-02, while planning a `restore-docker` teardown test.  
+**Severity:** low to hit, moderate to leave — a comparison silently compares nothing against nothing.
+
+## Findings
+
+| # | Finding | Status |
+|---:|---|---|
+| F1 | An empty Docker section captures cleanly and nothing downstream notices | `un-started` |
 
 **Owner:** unassigned. Touches `capture-system-inventory.sh`,
 `bin/reimage-checklist.sh` (Phase 6B) and `bin/compare-restored-state.sh`.

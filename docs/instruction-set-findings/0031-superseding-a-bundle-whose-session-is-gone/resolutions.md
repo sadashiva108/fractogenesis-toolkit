@@ -1,6 +1,7 @@
 # Resolutions — superseding a bundle whose session is gone
 
-**Bundle:** `0031-superseding-a-bundle-whose-session-is-gone` · **Status:** `resolved`
+**Bundle:** `0031-superseding-a-bundle-whose-session-is-gone`  
+**Status:** `resolved`  
 **Recorded:** 2026-09-03, session `session_01PcgHu9kz9Hm5RatLQuFR8H`.
 
 One toolkit write, in `.github/copilot-instructions.md` section 4c: a new
@@ -10,10 +11,10 @@ instructs the procedure.
 
 | Finding | Resolved by | What was done | Revision | Commit |
 |---|---|---|---|---|
-| F1 — the term is instructed in 4d and defined nowhere | 4c subsection, opening paragraph | Names the case 4d creates and points at `docs/legend.md` for the owner-present case rather than restating it | — | — |
-| F2 — both accounts assume the superseding party owns the bundle | 4c subsection, second paragraph | *The session with the new reading does it, and does not take ownership.* States that the bundle stays in the recording session's manifest and why | — | — |
-| F3 — the prohibitions are unwritten | 4c subsection, the three-item list | Stated in the procedure rather than cross-referenced, per decision 3 | — | — |
-| F4 — the index form exists in the tree and nowhere in writing | 4c subsection, step 5 | The Status cell carries the link. Documents the form Revision 183 put in `docs/cross-cutting-findings/INDEX.md`, rather than proposing a new one | — | — |
+| F1 | — | 4c subsection, opening paragraph — Names the case 4d creates and points at `docs/legend.md` for the owner-present case rather than restating it | — | — |
+| F2 | — | 4c subsection, second paragraph — *The session with the new reading does it, and does not take ownership.* States that the bundle stays in the recording session's manifest and why | — | — |
+| F3 | — | 4c subsection, the three-item list — Stated in the procedure rather than cross-referenced, per decision 3 | — | — |
+| F4 | — | 4c subsection, step 5 — The Status cell carries the link. Documents the form Revision 183 put in `docs/cross-cutting-findings/INDEX.md`, rather than proposing a new one | — | — |
 
 ## What the subsection does not do
 

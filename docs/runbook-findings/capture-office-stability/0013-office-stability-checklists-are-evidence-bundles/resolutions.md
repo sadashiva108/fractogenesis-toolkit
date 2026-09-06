@@ -1,16 +1,17 @@
 # Resolutions — `office-stability/checklists/` does not hold checklists
 
-**Bundle:** `0013-office-stability-checklists-are-evidence-bundles` · **Status:** `resolved`
+**Bundle:** `0013-office-stability-checklists-are-evidence-bundles`  
+**Status:** `resolved`  
 **Recorded:** 2026-09-03, session `session_01PcgHu9kz9Hm5RatLQuFR8H`.
 
 The finding is closed by work that had already shipped, plus one edit made here.
 
-| What | Resolved by | Where |
-|---|---|---|
-| `checklists/` holds evidence bundles that are really runs | **Revision 138** | Bundles moved to `office-stability/runs/` under two lineages; `checklists/` removed; the assessment sign-off extracted to `office-stability/sign-offs/`. Verified on the volume 2026-09-03 |
-| The producer emits manual items as `record_check WARN` rows inside the automated table | **Revision 137** | `office-stability-checklist.sh` became `bin/assess-office-stability.sh`; the rows became `signoff_begin` / `signoff_row` at lines 713–727 |
-| `latest-pre-image-office-stability-checklist.txt`, a legacy pointer | **Revision 138** | Replaced by `official/`. The old pointer survives only in `_pre-conversion-backup-20260902/` |
-| The two lineage names were nowhere defined | **this revision** | `capture-office-stability.md` → `### Terminology` gains an `Evidence` row and an `Assessment` row |
+| Finding | Resolved by | What was done | Revision | Commit |
+|---|---|---|---|---|
+| F1 | — | `checklists/` holds evidence bundles that are really runs — Bundles moved to `office-stability/runs/` under two lineages; `checklists/` removed; the assessment sign-off extracted to `office-stability/sign-offs/`. Verified on the volume 2026-09-03 | 138 | — |
+| F1 | — | The producer emits manual items as `record_check WARN` rows inside the automated table — `office-stability-checklist.sh` became `bin/assess-office-stability.sh`; the rows became `signoff_begin` / `signoff_row` at lines 713–727 | 137 | — |
+| F1 | — | `latest-pre-image-office-stability-checklist.txt`, a legacy pointer — Replaced by `official/`. The old pointer survives only in `_pre-conversion-backup-20260902/` | 138 | — |
+| F1 | — | The two lineage names were nowhere defined — `capture-office-stability.md` → `### Terminology` gains an `Evidence` row and an `Assessment` row | this revision | — |
 
 ## The one edit made here
 

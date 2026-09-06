@@ -1,6 +1,7 @@
 # Decisions — the findings-and-sessions architecture disagrees with itself
 
-**Bundle:** `0027` · **Status when opened:** `in progress`, 2026-09-03.
+**Bundle:** `0027`  
+**Status when opened:** `in progress`, 2026-09-03.  
 **Owner:** `restore-apps-outstanding-20260903-000000`.
 
 Decisions are recorded per finding as they are made. A finding with no entry here
@@ -29,9 +30,9 @@ decisions knows the deciding session is not neutral about them.
 |---|---|---|---|---|
 | D1 | §4b stands. §4c's contradicting sentence is deleted | F1 | 2026-09-03 | `accepted` |
 | D2 | §4d's "always" binds a `prompt.md` for a session that is `unclaimed`, `owned` or `handoff`. A `closed` or `withdrawn` session's prompt is a record of what was given and is not retro-edited | F2 | 2026-09-03 | `accepted` |
-| D3 | a fact is written down once, and everywhere else links to it | F3 | 2026-09-03 | `accepted` |
-| D4 | a derived fact may be displayed, if something catches it drifting | F3 | 2026-09-04 | `accepted` |
-| D5 | a session's row shows bundles owned *and* findings carried | F3 | 2026-09-04 | `accepted` |
+| D3 | a fact is written down once, and everywhere else links to it | F3, F4 | 2026-09-03 | `accepted` |
+| D4 | a derived fact may be displayed, if something catches it drifting | F3, F4 | 2026-09-04 | `accepted` |
+| D5 | a session's row shows bundles owned *and* findings carried | F3, F4 | 2026-09-04 | `accepted` |
 | D6 | a findings bundle migrated into this shape from an already-closed record carries `resolutions.md` and no `decisions.md`, and its `resolutions.md` says so | F5 | 2026-09-03 | `accepted` |
 | D7 | four session states: `owned`, `handoff`, `closed`, `withdrawn`. `unclaimed` is dropped | F6 | 2026-09-04 | `accepted` |
 | D8 | the three terminal states differ by what happens to the findings | F6 | 2026-09-04 | `accepted` |

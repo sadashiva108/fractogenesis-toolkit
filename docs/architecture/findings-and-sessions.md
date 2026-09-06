@@ -35,21 +35,25 @@ exists, where it is felt, what it costs to leave. It lives under
 in one runbook, or `docs/cross-cutting-findings/` when they are broad and
 agnostic to any one runbook.
 
-    <NNNN>-<slug>/
-    ├── STATUS-<status>
-    ├── findings.md      the reading
-    ├── decisions.md     what was decided, and what was rejected
-    └── resolutions.md   what was done, with commit and revision
+```text
+<NNNN>-<slug>/
+├── STATUS-<status>
+├── findings.md      the reading
+├── decisions.md     what was decided, and what was rejected
+└── resolutions.md   what was done, with commit and revision
+```
 
 **A session bundle** is a *unit of work with an owner*, under `docs/sessions/`.
 
-    <title>-<stamp>/
-    ├── STATE-<state>
-    ├── prompt.md              always required
-    ├── metadata.md            who and what has owned it
-    ├── findings-manifest.md   the bundles this session owns
-    ├── handoff-<stamp>.md     one per handover
-    └── final-summary.md       at closed or withdrawn
+```text
+<title>-<stamp>/
+├── STATE-<state>
+├── prompt.md              always required
+├── metadata.md            who and what has owned it
+├── findings-manifest.md   the bundles this session owns
+├── handoff-<stamp>.md     one per handover
+└── final-summary.md       at closed or withdrawn
+```
 
 The two lifecycles run in parallel and meet at exactly one place, section 5.
 

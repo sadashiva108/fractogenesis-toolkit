@@ -1,7 +1,8 @@
 # Decisions — sessions write into the tree the owner commits from
 
-**Bundle:** `0028` · **Status when opened:** `in progress`, 2026-09-04.
-**Status now:** `resolved` — what was done is in `resolutions.md`.
+**Bundle:** `0028`  
+**Status when opened:** `in progress`, 2026-09-04.  
+**Status now:** `resolved` — what was done is in `resolutions.md`.  
 **Owner:** `restore-apps-outstanding-20260903-000000`.
 
 Decisions are recorded per finding as they are made. A finding with no entry here
@@ -28,7 +29,7 @@ from those three, not from reasoning about them.
 | # | Decision | Findings | Decided | Outcome |
 |---|---|---|---|---|
 | D1 | a session composes its changes in a copy of the repository outside the connected folder, runs the validators there against its own change alone, and hands the owner a patch | F1 | 2026-09-04 | `accepted` |
-| D2 | no separate decision | F2 | — | `accepted` |
+| D2 | no separate decision | F2, F3, F4 | — | `accepted` |
 | D3 | an entry is composed with its number left open and numbered when the patch is applied | F5 | 2026-09-04 | `accepted` |
 | D4 | the three write categories continue to answer *when* a write is allowed. *Where* it is composed becomes its own rule, applying to all three | F6 | 2026-09-04 | `accepted` |
 

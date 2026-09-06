@@ -1,8 +1,13 @@
 # Four boundary runs are dated the day the recorder was extended, not the day the phase ran
 
-**Recorded:** 2026-09-01, session `01KcZvrKMgfenhrT9DvxW9Jk`, item 2.
-**Severity:** none to the workflow; real to anyone reading timestamps as phase
-timestamps.
+**Recorded:** 2026-09-01, session `01KcZvrKMgfenhrT9DvxW9Jk`, item 2.  
+**Severity:** none to the workflow; real to anyone reading timestamps as phase timestamps.
+
+## Findings
+
+| # | Finding | Status |
+|---:|---|---|
+| F1 | Four boundary runs are dated the day the recorder was extended, not the day the phase ran | `resolved` |
 
 ## What the dates say
 

@@ -1,4 +1,6 @@
 # Apply Manifest
+**Revision 202** — supersedes Revision 201 and earlier. The schema is checked on the rendering rather than the source: the header block renders one field per line, twenty-six bundles gain the Findings table nothing noticed was missing, and a `Findings` column that had been derived by guessing is corrected in fourteen cells.
+
 **Revision 201** — supersedes Revision 200 and earlier. The six files every session reads get a stated schema and a checker that enforces it, `transferred` joins the status model, and three checkers are found wrong — one of them after the tree had already been edited to satisfy it.
 
 **Revision 200** — supersedes Revision 199 and earlier. The session management instruction set and the legend become project-agnostic and measurably so, the supersession procedure lost in Revision 198 is restored, and every bundle, manifest and index is brought onto the statuses the legend defines — including five open bundles a closed session was still holding.
@@ -532,6 +534,126 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
 
 ---
+
+## Revision 202 — the schema is checked on the rendering, not on the source
+
+Revision 201 wrote a schema and checked it by reading the files. The owner opened
+one in a renderer and the header was a single run-on paragraph — five labelled
+facts collapsed into prose. Every check had passed.
+
+**A markdown file is not what it says; it is what it becomes.** This revision
+fixes what the rendering showed and moves the checking to where the defect was.
+
+### One field, one line
+
+Markdown joins consecutive lines into one paragraph. The header block was written
+as consecutive lines, so all five fields rendered as a single sentence with the
+names buried in it. **Forty-one `findings.md`, sixteen `decisions.md` and
+twenty-five `resolutions.md`** now put each field on its own source line, ending
+in the two spaces that make a hard break.
+
+Forty-one more files carried two fields on one line, joined by a middot —
+`**Bundle:** … · **Status:** …`. Split, on the rule that a field and its value
+own a line.
+
+### The schema itself rendered as the thing it specifies
+
+Section 11's example was an indented code block. Renderers disagree about that
+form, and the owner's processed it as live markdown: the backticks inside became
+inline code, `## Contributions` became a real heading with a real table under it,
+and `<where the fix lands>` was swallowed as an unknown HTML tag.
+
+**Twenty-five indented blocks across twelve files are now fenced.**
+`APPLY-MANIFEST.md` is exempt — its entries are never retro-edited.
+
+### Twenty-six bundles had no Findings table
+
+`bin/verify-findings-counts.sh` returns 1 when it finds no table. So a missing
+table read as *"one finding"* and agreed with every index that counted it. Every
+bundle now carries the table, single-finding ones included, built from the index
+Subject and the `STATUS-` tag.
+
+### The `Findings` column was derived, and derivation guessed
+
+`decisions.md` records which findings each decision answers. Revision 201 filled
+that column by taking the **last number out of a section heading**, so
+*"Findings 1, 2, 5 and 6"* became `F5`. **Fourteen cells across six bundles were
+wrong.** Corrected against the old `Decided` column where one existed, against
+the headings elsewhere.
+
+That column is the only record of the relation now, which is why it matters:
+`resolutions.md` reads `Resolved by` from it, and inverting it reproduces the
+`Decided` column that Revision 201 dropped.
+
+### Other losses from that retrofit, found and repaired
+
+| Where | What was lost |
+|---|---|
+| 61 rows, 24 files | the finding sentence duplicated into `resolutions.md`; the number alone now points at the table that owns the sentence |
+| `0031`, `0040` | the **location** of each fix — *"4c subsection, opening paragraph"* — overwritten when the column shifted |
+| `0013` | a `What \| Resolved by \| Where` table that no pattern matched, so no pass had touched it |
+| `0001` | an orphaned *"during the session."*, and prose explaining a `Decided` column that no longer existed |
+| `0033` | seven findings carrying `unclaimed`, which is a bundle status and never a finding's |
+| `0001` decisions | three sentences of prose trapped inside a field value, and a retired `in progress` |
+
+### One defect that predates all of this
+
+`.github/toolkit-instructions.md` had `shellcheck -x bin/*.sh .internal/**/*.sh`
+unquoted, so the asterisks were eaten as emphasis and it rendered as
+`bin/.sh .internal/**/.sh` — a command that would not run, in the file that tells
+a session how to run commands.
+
+### The checking moved
+
+`bin/verify-findings-headers.sh` goes from 205 checks to **590**. New rules, each
+negative-tested by breaking a file and confirming the failure:
+
+| Rule | Why it exists |
+|---|---|
+| a field never wraps; every line but the last ends in two spaces | the run-on |
+| the Findings table exists | 26 bundles without one |
+| code blocks are fenced, never indented four spaces | the schema rendering as live markdown |
+| Status is one of the six finding statuses, and nothing more | `unclaimed` on a finding; a status cell restating which decision settled it |
+| every `F<n>` and `D<n>` cited on one side exists on the other | a citation resolving to nothing is decoration |
+
+Superseded bundles are exempt from the status rule. `0027`, `0028` and `0029`
+hold the retired words deliberately: they are the evidence for the findings that
+superseded them.
+
+### And a check the repository does not have
+
+The above still reads the source. **All 135 markdown files were also rendered
+through a CommonMark parser and the output tested** — one field per rendered
+line, the required table present with the right columns, every row's cell count
+matching its header, no placeholder swallowed as a tag, no literal markdown
+surviving into the prose.
+
+Three failures came back. **Two were bugs in the audit**: `<th` matched
+`<thead>`, which invented 128 cell-count mismatches, and the code-span mask did
+not handle a span wrapping a line, which made two legitimate placeholders look
+swallowed. One was real, and is the `shellcheck` line above.
+
+That audit is not committed. It ran in a session workspace against a copy, and
+what it is worth recording is the lesson rather than the script: **a validator
+that reads the source cannot see a rendering defect, and every validator in
+`bin/` reads the source.** Whether a rendering check belongs in `bin/` — it needs
+a markdown parser, which is a dependency this repository does not have — is a
+finding, not a decision to take inside a revision that was fixing something else.
+
+### Validators
+
+| Checker | Result |
+|---|---|
+| `verify-findings-headers.sh` | 590 OK, 0 FAIL |
+| `verify-findings-structure.sh` | 50 OK, 0 FAIL |
+| `verify-findings-counts.sh` | 49 OK, 0 FAIL |
+| `verify-doc-paths.sh --all` | 777 OK, 1108 anchors, 0 broken |
+| `verify-script-portability.sh` | clean |
+| `verify-runbook-structure.sh` | 25 — the standing baseline, unchanged |
+| rendered audit, not in `bin/` | 135 files, 0 real failures |
+
+**Still owed: `/bin/bash -n` under real macOS Bash 3.2**, for Revisions 116
+onward. This session's shell is Linux Bash 5.1 with GNU coreutils.
 
 ## Revision 201 — the conformed files get a schema, a bundle can be transferred, and three checkers were wrong
 

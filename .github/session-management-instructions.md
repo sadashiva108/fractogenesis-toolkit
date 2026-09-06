@@ -61,7 +61,9 @@ renumbered — a renumber breaks every prompt already written against the old on
 Take the next free number immediately before writing; another session may have
 taken the one you saw:
 
-    ls -d docs/*-findings/[0-9]*/ docs/*-findings/*/[0-9]*/ 2>/dev/null
+```text
+ls -d docs/*-findings/[0-9]*/ docs/*-findings/*/[0-9]*/ 2>/dev/null
+```
 
 `docs/INDEX.md` is the map of `docs/` and owns the list of its directories. This
 file does not enumerate them.
@@ -71,16 +73,18 @@ file does not enumerate them.
 A numbered directory, because a finding accumulates documents as it is worked and
 they are only legible together:
 
-    <NNNN>-<slug>/
-    |-- STATUS-<status>  the tag. One file, no contents. `ls` answers the status
-    |                    without opening anything. It must agree with the INDEX.md
-    |                    row, which is authoritative. Spaces become hyphens.
-    |-- findings.md      the reading, and the per-finding status table
-    |-- decisions.md     what was decided for each finding, and the alternatives
-    |                    rejected. A decision without its rejected alternatives is
-    |                    an assertion.
-    `-- resolutions.md   what was actually done, with the commit hash and the
-                         APPLY-MANIFEST.md revision carrying each one.
+```markdown
+<NNNN>-<slug>/
+|-- STATUS-<status>  the tag. One file, no contents. `ls` answers the status
+|                    without opening anything. It must agree with the INDEX.md
+|                    row, which is authoritative. Spaces become hyphens.
+|-- findings.md      the reading, and the per-finding status table
+|-- decisions.md     what was decided for each finding, and the alternatives
+|                    rejected. A decision without its rejected alternatives is
+|                    an assertion.
+`-- resolutions.md   what was actually done, with the commit hash and the
+                     APPLY-MANIFEST.md revision carrying each one.
+```
 
 The tag is a marker file, **not** a suffix on the directory name. The directory
 name is what prompts, indexes and other bundles cite by path; renaming it on
@@ -119,14 +123,16 @@ session checks first, to know whether opening it is worth anything. The table in
 
 ## 5. Sessions
 
-    docs/sessions/<title>-<stamp>/
-    |-- STATE-<state>          the tag, as in 3. Required, always.
-    |-- prompt.md              what starts the session. Required, always.
-    |-- metadata.md            who and what has owned it. Required from the start.
-    |-- findings-manifest.md   the bundles this session owns. Required once it
-    |                          owns one. AUTHORITATIVE for ownership.
-    |-- handoff-<stamp>.md     one per handover; never edited afterwards.
-    `-- final-summary.md       written at `closed` or `withdrawn`.
+```markdown
+docs/sessions/<title>-<stamp>/
+|-- STATE-<state>          the tag, as in 3. Required, always.
+|-- prompt.md              what starts the session. Required, always.
+|-- metadata.md            who and what has owned it. Required from the start.
+|-- findings-manifest.md   the bundles this session owns. Required once it
+|                          owns one. AUTHORITATIVE for ownership.
+|-- handoff-<stamp>.md     one per handover; never edited afterwards.
+`-- final-summary.md       written at `closed` or `withdrawn`.
+```
 
 `<title>` is a short readable scope; `<stamp>` is `YYYYMMDD-HHMMSS` local, the
 artifact-root format. The name carries no finding number — a session routinely
@@ -187,7 +193,9 @@ sitting are one entry, the same way a revision editing nine documents is one.
 
 **Take the number at apply time, not while composing**, with
 
-    ./bin/check-manifest-revision.sh
+```text
+./bin/check-manifest-revision.sh
+```
 
 run against the tree being applied to. **Choosing while composing is a guess**,
 and two sessions can follow *re-read the header and take the next free number*
@@ -342,24 +350,50 @@ Every `findings.md` opens with the same block, in this order. It is a schema, no
 a suggestion: a reader and a checker should both be able to find a field without
 reading prose.
 
-    # <the finding bundle's title, as a sentence>
+```markdown
+# <the finding bundle's title, as a sentence>
 
-    **Recorded:** <YYYY-MM-DD>, `<session-bundle-name>` (`<session identifier>`)
-    **Severity:** <what it costs to leave, and which finding is the high one>
-    **Felt at:** <where the defect shows — files, steps, artifacts>       optional
-    **Scope:** <where the fix lands>                                     optional
-    **Relates to:** `<NNNN>` — <how the two bear on each other>  optional, repeatable
+**Recorded:** <YYYY-MM-DD>, `<session-bundle-name>` (`<session identifier>`)
+**Severity:** <what it costs to leave, and which finding is the high one>
+**Felt at:** <where the defect shows — files, steps, artifacts>       optional
+**Scope:** <where the fix lands>                                     optional
+**Relates to:** `<NNNN>` — <how the two bear on each other>  optional, repeatable
 
-    ## Contributions
+## Contributions
 
-    | Session | Date | Contribution |
-    |---|---|---|
-    | `<session-bundle-name>` | <YYYY-MM-DD> | <what it added or corrected> |
+| Session | Date | Contribution |
+|---|---|---|
+| `<session-bundle-name>` | <YYYY-MM-DD> | <what it added or corrected> |
 
-    ## Finding status
+## Findings
 
-    | # | Finding | Status |
-    |---:|---|---|
+| # | Finding | Status |
+|---:|---|---|
+```
+
+### One field, one line, and a hard break
+
+**Each field occupies exactly one source line, and every line but the last in the
+block ends with two spaces.** Markdown joins consecutive lines into a single
+paragraph, so a header written without the hard breaks renders as one run-on
+sentence with the field names buried in it — five labelled facts collapsing into
+prose nobody can scan. Forty-one files did this, and it went unnoticed because
+every check read the source rather than the rendering.
+
+The two spaces are invisible in the file, so here they are marked with `·`:
+
+```text
+**Recorded:** 2026-09-04, `restore-apps-outstanding-20260903-000000`··
+**Severity:** finding 5 is high — 48 evidence artifacts carry raw escape codes··
+**Scope:** `.internal/`, the authoring template, the two report producers
+                                                                        ↑↑
+                                          every line but the last, and only those
+```
+
+A long value stays on its one line. Wrapping it is what breaks the block.
+
+`bin/verify-findings-headers.sh` checks both halves — the wrap and the two
+spaces.
 
 **Required: `Recorded:` and `Severity:`** — the two fields every reading in the
 repository already had. **Optional: `Felt at:`, `Scope:`, `Relates to:`.** The
@@ -397,14 +431,21 @@ across forty-one readings is what it looked like before there was one.
 
 ### The Findings table
 
-Required. Finding numbers are **`F1`, `F2`** rather than bare digits, so a
-citation from `decisions.md` — *"Findings: F1, F3"* — means one thing.
+**Required — including when the bundle holds a single finding.** Twenty-six
+bundles had none, and nothing caught it: `bin/verify-findings-counts.sh` returns
+1 when it finds no table, so a missing table read as *"one finding"* and agreed
+with every index that counted it.
 
-    ## Findings
+Finding numbers are **`F1`, `F2`** rather than bare digits, so a citation from
+`decisions.md` — *"Findings: F1, F3"* — means one thing.
 
-    | # | Finding | Status |
-    |---:|---|---|
-    | F1 | <the finding, as a sentence> | `framing` |
+```markdown
+## Findings
+
+| # | Finding | Status |
+|---:|---|---|
+| F1 | <the finding, as a sentence> | `framing` |
+```
 
 Then one free-form section per finding, heading matching the row:
 `## F1 — <the finding>`.
@@ -414,12 +455,14 @@ Then one free-form section per finding, heading matching the row:
 Two header fields — **`Bundle:`** and **`Recorded:`** — then the table.
 `Findings bundle:` meant the same as `Bundle:` in some files and is retired.
 
-    ## Decisions
+```markdown
+## Decisions
 
-    | # | Decision | Findings | Decided | Outcome |
-    |---|---|---|---|---|
-    | D1 | <the decision, as a statement> | F1, F2 | <date> | `accepted` |
-    | D2 | <…> | F3 | <date> | `refined → D4` |
+| # | Decision | Findings | Decided | Outcome |
+|---|---|---|---|---|
+| D1 | <the decision, as a statement> | F1, F2 | <date> | `accepted` |
+| D2 | <…> | F3 | <date> | `refined → D4` |
+```
 
 **`Outcome`** is `accepted`, `rejected`, `refined → DX` or `superseded → DX`.
 **Any session may add a row or change an `Outcome` while the finding is
@@ -440,11 +483,13 @@ fields.
 
 Same two header fields, then:
 
-    ## Resolutions
+```markdown
+## Resolutions
 
-    | Finding | Resolved by | What was done | Revision | Commit |
-    |---|---|---|---|---|
-    | F1 | D1 | <what was actually done> | 198 | `4626eb4` |
+| Finding | Resolved by | What was done | Revision | Commit |
+|---|---|---|---|---|
+| F1 | D1 | <what was actually done> | 198 | `4626eb4` |
+```
 
 **`Resolved by` is the decision**, not the revision. **`Revision` and `Commit`
 are separate fields** because one can exist without the other: revisions before
@@ -454,13 +499,24 @@ change rather than naming its number.
 A finding closed before this shape existed carries `—` in `Resolved by`; a
 withdrawn finding carries `—` throughout and owes no resolution.
 
+**`Finding` holds the number alone**, not the number and the sentence. The
+sentence has one home, which is the Findings table.
+
+**The three files must agree.** Every `F<n>` cited by `decisions.md` or
+`resolutions.md` exists in `findings.md`, and every `D<n>` a resolution resolves
+by exists in `decisions.md`. `bin/verify-findings-headers.sh` checks this in both
+directions — a citation that resolves to nothing is how a table stops being a
+record and becomes decoration.
+
 ### `findings-manifest.md` and `metadata.md`
 
-    | # | Bundle | Kind | Subject | Findings | Status | Notes |
+```markdown
+| # | Bundle | Kind | Subject | Findings | Status | Notes |
+```
 
 `Bundle` is a link. `Kind` is one of `runbook`, `cross-cutting`,
-`instruction-set`, `session-management`. `Notes` is what this session owes the
-bundle.
+`instruction-set`, `session-management`, written in the cell as code. `Notes` is
+what this session owes the bundle.
 
 `metadata.md` carries `## Owners`, `## Environment`, `## Resources` and
 `## Contributions`, and its Owners table is

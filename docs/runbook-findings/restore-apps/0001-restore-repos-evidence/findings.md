@@ -1,24 +1,20 @@
 # Phase 11B evidence review — what `restore-repos` actually left behind
 
-**Recorded:** 2026-09-03, `restore-apps-outstanding-20260903-000000`
-(`session_016EbjB7M527qEFqZFzpv2C9`)
-**Severity:** findings 1–3 block a truthful Phase 12 entry; 4 and 5 are
-shared-machinery defects; 6 and 7 answer the two unreviewed repositories
-**Scope:** the `restore-repos.md` evidence and captures on the live artifact
-root, read before starting `restore-apps.md` (Phase 12)
+**Recorded:** 2026-09-03, `restore-apps-outstanding-20260903-000000` (`session_016EbjB7M527qEFqZFzpv2C9`)  
+**Severity:** findings 1–3 block a truthful Phase 12 entry; 4 and 5 are shared-machinery defects; 6 and 7 answer the two unreviewed repositories  
+**Scope:** the `restore-repos.md` evidence and captures on the live artifact root, read before starting `restore-apps.md` (Phase 12)
 
 Findings only — no repository file and no artifact was modified by this review.
 Every command ran in an AI session's Linux VM (GNU coreutils, Bash 5.x) against
 the mounted repository and artifact volume, reads only: `ls`, `find`, `cat`,
 `grep`, `diff`, `stat`. No `bin/` script was executed, on either platform. The
 artifact root was `/Volumes/Data/reimage-CVG-0002160-500-20260816-open` and the
-repository was at `9fea5eb`, then `de7aa8e` (Revision 156).
+repository was at `9fea5eb`, then `de7aa8e` (Revision 156) during the session.
 
 **`Bundle status:` and `Finding:` were header fields here and are gone.** Both
 were copies: the status is the tag and the index row, and the number is the
 directory name. A copy in a third place is what the schema in section 11 exists
 to stop.
-during the session.
 
 ---
 
@@ -49,11 +45,13 @@ The bundle advances when its first row advances and reaches `resolved` only when
 its last one does, and a row moves to `resolved` when its resolution is recorded
 in `resolutions.md` — not when the work feels done.
 
-**`resolving` cannot begin until every row reads `yes` under Decided.** Findings
-in one bundle bear on each other, and nothing outside `docs/` is written until
-the last of them is settled. A row reads `yes` only when nothing about that
-finding is still open. Finding 1 reads `yes`: six decisions, 1.1 through 1.6,
-with nothing outstanding. `decisions.md` carries the detail.
+**Nothing outside `docs/` is written until every row is `decided`.** Findings in
+one bundle bear on each other, and a row reaches `decided` only when nothing
+about that finding is still open.
+
+**F1 is there**: `decisions.md` records D1, D2 and D3 against it with nothing
+outstanding. Which decisions answer which finding is recorded in one place — the
+`Findings` column of that table — and not restated here.
 
 | # | Finding | Status |
 |---:|---|---|

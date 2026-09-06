@@ -1,16 +1,17 @@
 # Resolutions — the index and manifest tables have a shape nothing checks
 
-**Bundle:** `0032-index-and-manifest-tables-have-a-shape-nothing-checks` · **Status:** `resolved`
+**Bundle:** `0032-index-and-manifest-tables-have-a-shape-nothing-checks`  
+**Status:** `resolved`  
 **Recorded:** 2026-09-04, session `session_01PcgHu9kz9Hm5RatLQuFR8H`.
 
 One toolkit write: `bin/verify-findings-structure.sh`, a fifth repo lint.
 
 | Finding | Resolved by | What was done | Revision | Commit |
 |---|---|---|---|---|
-| F1 — a required column shape that no check enforces | D1 | The check takes each table's column count from its own header and compares every data row beneath it | — | — |
-| F2 — `verify-doc-paths.sh` gives false assurance | D2 | **Nothing.** That lint was correct; the error was reading *the lints are clean* as a claim about shape. D1's check makes the reading true | — | — |
-| F3 — the fix is a lint, so the tree may be wrong | D3 | **Stays here**, on the owner's routing. The disagreement between §4c's test and `0029`'s principle is recorded, not resolved | — | — |
-| F4 — a patch containing a deletion under-applies silently | D4 | The tag half of D1's check catches the residue every one of the four instances left. Prevention is procedural and is owed elsewhere | — | — |
+| F1 | D1 | The check takes each table's column count from its own header and compares every data row beneath it | — | — |
+| F2 | D2 | **Nothing.** That lint was correct; the error was reading *the lints are clean* as a claim about shape. D1's check makes the reading true | — | — |
+| F3 | D3 | **Stays here**, on the owner's routing. The disagreement between §4c's test and `0029`'s principle is recorded, not resolved | — | — |
+| F4 | D4 | The tag half of D1's check catches the residue every one of the four instances left. Prevention is procedural and is owed elsewhere | — | — |
 
 ## What the check does
 

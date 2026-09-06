@@ -1,8 +1,13 @@
 # Caller-environment precedence holds only for the keys `artifact-config.sh` lists
 
-**Recorded:** 2026-09-02, Restore Repositories Refactor session, while smoke-testing
-the blank-`GIT_PERSONAL_GITHUB_OWNER` path in `bin/restore-repos.sh`.
+**Recorded:** 2026-09-02, Restore Repositories Refactor session, while smoke-testing the blank-`GIT_PERSONAL_GITHUB_OWNER` path in `bin/restore-repos.sh`.  
 **Severity:** low, but it made a documented rule untrue for most keys.
+
+## Findings
+
+| # | Finding | Status |
+|---:|---|---|
+| F1 | Caller-environment precedence holds only for the keys `artifact-config.sh` lists | `resolved` |
 
 **Status: CLOSED** by Revision 136, 2026-09-02 — option three, scoped. Caller
 values for every key `reimage.env` sets are captured before sourcing and

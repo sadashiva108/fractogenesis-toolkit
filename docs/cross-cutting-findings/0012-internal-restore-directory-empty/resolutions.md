@@ -1,11 +1,12 @@
 # Resolutions — `.internal/restore/` is empty, and is not tracked
 
-**Bundle:** `0012-internal-restore-directory-empty` · **Status:** `resolved`
+**Bundle:** `0012-internal-restore-directory-empty`  
+**Status:** `resolved`  
 **Resolved:** 2026-09-04, session `session_01KcZvrKMgfenhrT9DvxW9Jk`.
 
 | Finding | Resolved by | What was done | Revision | Commit |
 |---|---|---|---|---|
-| F1 — `.internal/restore/` is empty, and is not tracked | D1 | D1's sentence rewrite in `.internal/artifact-runs.sh` | 193 | pending; the owner commits |
+| F1 | D1 | D1's sentence rewrite in `.internal/artifact-runs.sh` | 193 | pending; the owner commits |
 
 ## What was done
 

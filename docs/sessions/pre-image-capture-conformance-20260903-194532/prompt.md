@@ -1,16 +1,18 @@
 # Session prompt — four pre-image runbook findings: read them, decide nothing
 
-    Finding 0025 — docs/runbook-findings/backup-repos/0025-staged-ignored-files-live-parent-root-bundles/
-    (runbook: backup-repos.md)
+```text
+Finding 0025 — docs/runbook-findings/backup-repos/0025-staged-ignored-files-live-parent-root-bundles/
+(runbook: backup-repos.md)
 
-    Finding 0013 — docs/runbook-findings/capture-office-stability/0013-office-stability-checklists-are-evidence-bundles/
-    (runbook: capture-office-stability.md)
+Finding 0013 — docs/runbook-findings/capture-office-stability/0013-office-stability-checklists-are-evidence-bundles/
+(runbook: capture-office-stability.md)
 
-    Finding 0007 — docs/runbook-findings/stage-loose-secrets/0007-content-scans-keeps-a-bespoke-index/
-    (runbook: stage-loose-secrets.md)
+Finding 0007 — docs/runbook-findings/stage-loose-secrets/0007-content-scans-keeps-a-bespoke-index/
+(runbook: stage-loose-secrets.md)
 
-    Finding 0019 — docs/runbook-findings/reimage-prep-checks/0019-reimage-checklist-repo-audit-manifest-header/
-    (runbook: reimage-prep-checks.md)
+Finding 0019 — docs/runbook-findings/reimage-prep-checks/0019-reimage-checklist-repo-audit-manifest-header/
+(runbook: reimage-prep-checks.md)
+```
 
 ## This session's only task
 

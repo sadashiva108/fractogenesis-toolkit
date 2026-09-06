@@ -1,6 +1,7 @@
 # Resolutions — The boundary-recorder family is applied unevenly across the phases it covers
 
-**Bundle:** `0003-boundary-recorder-coverage-is-uneven` · **Status:** `resolved`
+**Bundle:** `0003-boundary-recorder-coverage-is-uneven`  
+**Status:** `resolved`  
 **Recorded:** 2026-09-03, during the `docs/*-findings/` migration.
 
 This finding was closed before findings bundles existed, as a parked note whose
@@ -10,7 +11,7 @@ resolution; this file states it in the shape every bundle now uses.
 
 | Finding | Resolved by | What was done | Revision | Commit |
 |---|---|---|---|---|
-| F1 — The boundary-recorder family is applied unevenly across the phases it covers | `APPLY-MANIFEST.md` Revisions 136 and 137 | — | — | not identifiable from `git log` — the revision is the record |
+| F1 | — | `APPLY-MANIFEST.md` Revisions 136 and 137 | — | not identifiable from `git log` — the revision is the record |
 
 Commit hashes for revisions before 141 are not derivable from the log: those
 commit messages describe the change rather than naming its revision number. The

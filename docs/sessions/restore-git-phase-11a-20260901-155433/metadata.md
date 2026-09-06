@@ -15,7 +15,9 @@ conversion, on the reasoning that the session left none in anything it wrote.
 Decision 7.1 of `0027` required any such claim to name the searches behind it,
 and running them found it:
 
-    git log --format='%h %s' --grep='Claude-Session'
+```text
+git log --format='%h %s' --grep='Claude-Session'
+```
 
 Four commits on 2026-09-01 carry `session_01DQF5y9VQfaoRD9gnw4UcrN`; three touch
 `restore-git.md` and one names Phase 11A explicitly, and all four fall in the

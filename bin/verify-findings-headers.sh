@@ -24,8 +24,23 @@
 #                    that never had one, which is not a checker's business.
 #   decisions.md     required: Bundle, and nothing named `Findings bundle`
 #   resolutions.md   required: Bundle, Recorded
-#   finding table    `| # | Finding | Status |` -- no `Decided` column; that
-#                    became a status of its own
+#   finding table    `| # | Finding | Status |` -- required, no `Decided`
+#                    column; that became a status of its own
+#   rendering        each field on ONE line, and every line but the last in the
+#                    block ends with two spaces. Markdown joins consecutive
+#                    lines into one paragraph, so a header without the hard
+#                    breaks renders as a single run-on sentence -- which is what
+#                    it did until someone read the rendered page.
+#   cross-reference  every F-number cited by decisions.md or resolutions.md
+#                    exists in findings.md, and every D-number cited by
+#                    resolutions.md exists in decisions.md
+#   code blocks      fenced with ``` and never indented four spaces. Renderers
+#                    disagree about the indented form: one rendered section 11's
+#                    own schema example as live markdown, processed the backticks
+#                    inside it, and swallowed `<where the fix lands>` as an HTML
+#                    tag. A spec that renders as the thing it specifies is not a
+#                    spec. APPLY-MANIFEST.md is exempt -- its entries are never
+#                    retro-edited.
 #
 # This file is intended for bin/. It is an aggregate validator: it records every
 # finding and reports all results rather than aborting on the first miss, so it
@@ -126,6 +141,89 @@ EOF
   else
     pass "$bundle  finding table shape"
   fi
+
+  # the Findings table exists. A bundle with one finding used to omit it, and
+  # `verify-findings-counts.sh` returns 1 when it finds no table -- so a missing
+  # table read as "one finding" and agreed with every index. 26 bundles had none.
+  if grep -qE '^\|[ ]*F[0-9]+[ ]*\|' "$doc"; then
+    pass "$bundle  findings table present"
+  else
+    bad "$bundle" "no Findings table -- every bundle has one, even with a single finding"
+  fi
+
+  # the header renders as separate lines
+  hardbreak="$(awk '
+    /^# / { seen = 1; next }
+    !seen { next }
+    NF == 0 { if (started) exit; next }
+    /^\*\*[A-Z]/ { started = 1; n = n + 1; last = NR; if ($0 !~ /  $/) { miss = miss " " n } ; next }
+    started { print "WRAP"; exit }
+    END { if (miss != "") print "MISS" miss; print "LAST" n }
+  ' "$doc")"
+  if printf '%s\n' "$hardbreak" | grep -q '^WRAP'; then
+    bad "$bundle" "a header field wraps onto a second line -- one field, one line"
+  elif printf '%s\n' "$hardbreak" | grep -q '^MISS'; then
+    nmiss="$(printf '%s\n' "$hardbreak" | grep '^MISS' | sed 's/^MISS //')"
+    nlast="$(printf '%s\n' "$hardbreak" | grep '^LAST' | sed 's/^LAST//')"
+    stray="$(printf '%s\n' "$nmiss" | tr ' ' '\n' | grep -vx "$nlast" | tr '\n' ' ')"
+    if [ -n "$(printf '%s' "$stray" | tr -d ' ')" ]; then
+      bad "$bundle" "header field(s) $stray do not end in two spaces -- markdown joins them into one paragraph"
+    else
+      pass "$bundle  header renders"
+    fi
+  else
+    pass "$bundle  header renders"
+  fi
+
+  # every Status cell holds one of the six finding statuses and nothing else.
+  # `unclaimed` and `superseded` are bundle statuses and never appear here; a
+  # cell carrying the status plus a note about which decision settled it is
+  # restating what decisions.md owns. A `superseded` bundle is exempt: its rows
+  # are frozen evidence of what the tree looked like, and three bundles are
+  # retained precisely for that.
+  dir="$(dirname "$doc")"
+  if [ ! -f "$dir/STATUS-superseded" ]; then
+    strays="$(awk -F'|' '
+      /^\|[ ]*#[ ]*\|[ ]*Finding[ ]*\|/ { intbl = 1; next }
+      intbl && /^\|[-: |]+\|$/ { next }
+      intbl && /^\|[ ]*F?[0-9]+[ ]*\|/ {
+        s = $4; gsub(/^[ \t]+|[ \t]+$/, "", s)
+        if (s !~ /^`(un-started|framing|decided|resolved|reopened|withdrawn)`$/) print s
+        next
+      }
+      intbl { intbl = 0 }
+    ' "$doc" | head -3)"
+    if [ -n "$strays" ]; then
+      bad "$bundle" "finding Status is not one of the six: $(printf '%s' "$strays" | tr '\n' ';')"
+    else
+      pass "$bundle  finding statuses"
+    fi
+  fi
+
+  # cross-reference: what the sibling documents cite must exist here
+  have_f="$(grep -oE '^\|[ ]*F[0-9]+' "$doc" | tr -d '| ' | sort -u)"
+  for sib in "$dir/decisions.md" "$dir/resolutions.md"; do
+    [ -f "$sib" ] || continue
+    cited="$(awk -F'|' '/^\|/ { print $2 "\n" $4 }' "$sib" | grep -oE 'F[0-9]+' | sort -u)"
+    for fn in $cited; do
+      if printf '%s\n' "$have_f" | grep -qx "$fn"; then
+        pass "$bundle  $(basename "$sib") cites $fn"
+      else
+        bad "$bundle" "$(basename "$sib") cites $fn, which findings.md does not have"
+      fi
+    done
+  done
+  if [ -f "$dir/decisions.md" ] && [ -f "$dir/resolutions.md" ]; then
+    have_d="$(grep -oE '^\|[ ]*D[0-9]+' "$dir/decisions.md" | tr -d '| ' | sort -u)"
+    cited_d="$(awk -F'|' '/^\|/ { print $3 }' "$dir/resolutions.md" | grep -oE 'D[0-9]+' | sort -u)"
+    for dn in $cited_d; do
+      if printf '%s\n' "$have_d" | grep -qx "$dn"; then
+        pass "$bundle  resolutions.md cites $dn"
+      else
+        bad "$bundle" "resolutions.md resolves by $dn, which decisions.md does not have"
+      fi
+    done
+  fi
 done
 
 for doc in docs/*-findings/[0-9][0-9][0-9][0-9]-*/decisions.md \
@@ -138,6 +236,27 @@ for doc in docs/*-findings/[0-9][0-9][0-9][0-9]-*/decisions.md \
     bad "$bundle" "uses 'Findings bundle:' -- the field is named 'Bundle:'"
   else
     pass "$bundle  bundle field name"
+  fi
+done
+
+# --- code blocks are fenced, never indented ------------------------------------
+for doc in docs/legend.md .github/session-management-instructions.md \
+           .github/toolkit-instructions.md .github/copilot-instructions.md \
+           docs/*-findings/[0-9][0-9][0-9][0-9]-*/*.md \
+           docs/*-findings/*/[0-9][0-9][0-9][0-9]-*/*.md \
+           docs/architecture/*.md docs/sessions/*/*.md; do
+  [ -f "$doc" ] || continue
+  hits="$(awk '
+    /^```/            { fence = !fence; next }
+    fence             { next }
+    /^[ \t]*$/        { blank = 1; next }
+    blank && /^    [^ ]/ && $0 !~ /^[ \t]*[-*+] / { print NR; blank = 0; next }
+    { blank = 0 }
+  ' "$doc" | head -3)"
+  if [ -n "$hits" ]; then
+    bad "$doc" "indented code block at line(s) $(printf '%s' "$hits" | tr '\n' ' ')-- fence it with \`\`\`"
+  else
+    pass "$doc  code blocks fenced"
   fi
 done
 

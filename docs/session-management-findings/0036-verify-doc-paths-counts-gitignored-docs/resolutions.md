@@ -1,6 +1,7 @@
 # Resolutions — `verify-doc-paths.sh --all` counts `docs/`, so its OK baseline cannot hold
 
-**Bundle:** `0026-verify-doc-paths-counts-gitignored-docs` · **Status:** `resolved`
+**Bundle:** `0026-verify-doc-paths-counts-gitignored-docs`  
+**Status:** `resolved`  
 **Recorded:** 2026-09-03, during the `docs/*-findings/` migration.
 
 This finding was closed before findings bundles existed, as a parked note whose
@@ -10,7 +11,7 @@ resolution; this file states it in the shape every bundle now uses.
 
 | Finding | Resolved by | What was done | Revision | Commit |
 |---|---|---|---|---|
-| F1 — `verify-doc-paths.sh --all` counts `docs/`, so its OK baseline cannot hold | — | — | 130 | not identifiable from `git log` — the revision is the record |
+| F1 | — | — | 130 | not identifiable from `git log` — the revision is the record |
 
 Commit hashes for revisions before 141 are not derivable from the log: those
 commit messages describe the change rather than naming its revision number. The

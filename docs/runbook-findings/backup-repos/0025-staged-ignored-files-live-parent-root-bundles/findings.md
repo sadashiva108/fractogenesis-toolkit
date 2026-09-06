@@ -1,8 +1,13 @@
 # `staged-ignored-files/live/` holds two bundles no lookup can reach
 
-**Recorded:** 2026-09-01, session `01KcZvrKMgfenhrT9DvxW9Jk`, while deciding whether
-the category should join the run index.
+**Recorded:** 2026-09-01, session `01KcZvrKMgfenhrT9DvxW9Jk`, while deciding whether the category should join the run index.  
 **Severity:** low. Harmless today; misleading to anyone counting bundles.
+
+## Findings
+
+| # | Finding | Status |
+|---:|---|---|
+| F1 | `staged-ignored-files/live/` holds two bundles no lookup can reach | `resolved` |
 
 **Correction, 2026-09-03**, while this bundle was still `unresolved`: the producer
 named under *What to do* is wrong. `.internal/git/stage-ignored-files.sh` resolves

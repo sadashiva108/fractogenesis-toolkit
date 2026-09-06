@@ -1146,7 +1146,10 @@ Three ways to resolve it, in order of how well they hold up:
     git config --show-origin user.email
     ```
 
-    The origin must read `.git/config` for the pin to be in effect; a repository-local value beats both the global file and the `includeIf` override.
+```text
+The origin must read `.git/config` for the pin to be in effect; a repository-local value beats both the global file and the `includeIf` override.
+```
+
 - **Split the repository.** Two accounts that must each own their own commits are two repositories with a shared upstream. Configuration cannot make one commit carry two authors, and arrangements that appear to are rewriting history on one side.
 
 Set both `user.name` and `user.email` together when you pin. Setting only the email leaves the name from the layer above in force, which produces commits carrying one account's name and the other's address — correct enough to pass every check and wrong in the one place people read.

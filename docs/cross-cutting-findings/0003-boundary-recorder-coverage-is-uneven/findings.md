@@ -1,8 +1,13 @@
 # The boundary-recorder family is applied unevenly across the phases it covers
 
-**Recorded:** 2026-09-01, session `01KcZvrKMgfenhrT9DvxW9Jk`, item 2.
-**Severity:** not a defect in any one phase. The question was whether the family
-is a convention or a set of one-offs.
+**Recorded:** 2026-09-01, session `01KcZvrKMgfenhrT9DvxW9Jk`, item 2.  
+**Severity:** not a defect in any one phase. The question was whether the family is a convention or a set of one-offs.
+
+## Findings
+
+| # | Finding | Status |
+|---:|---|---|
+| F1 | The boundary-recorder family is applied unevenly across the phases it covers | `resolved` |
 
 **Reframed:** 2026-09-02, after the owner confirmed Phase 12 is unfinished and
 not running its exit was deliberate.

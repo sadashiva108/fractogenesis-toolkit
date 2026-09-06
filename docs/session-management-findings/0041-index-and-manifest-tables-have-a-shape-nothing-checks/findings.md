@@ -1,16 +1,10 @@
 # The index and manifest tables have a shape nothing checks
 
-**Recorded:** 2026-09-03, session `session_01PcgHu9kz9Hm5RatLQuFR8H`, from
-breaking two of them and not noticing.
-**Severity:** low per instance, and it defeats the check a session actually runs.
-Every validator in the repository passed on both broken rows.
-**Scope:** instruction set. §§4c–4d define these tables; nothing validates them.
-Whether the *fix* belongs here is finding 3.
-**Relates to:** [`0032`](../../instruction-set-findings/0032-index-and-manifest-tables-have-a-shape-nothing-checks/) — **supersedes it.**
-The original stands untouched at `docs/instruction-set-findings/0032-index-and-manifest-tables-have-a-shape-nothing-checks/`, still listed by the session
-that held it. Authority for this reading lives here.
-**Relates to:** `0031` — the same section, §4c, from the other side: `0031` is a
-rule that is missing, this is a rule that exists and is unenforced.
+**Recorded:** 2026-09-03, session `session_01PcgHu9kz9Hm5RatLQuFR8H`, from breaking two of them and not noticing.  
+**Severity:** low per instance, and it defeats the check a session actually runs. Every validator in the repository passed on both broken rows.  
+**Scope:** instruction set. §§4c–4d define these tables; nothing validates them. Whether the *fix* belongs here is finding 3.  
+**Relates to:** [`0032`](../../instruction-set-findings/0032-index-and-manifest-tables-have-a-shape-nothing-checks/) — **supersedes it.** The original stands untouched at `docs/instruction-set-findings/0032-index-and-manifest-tables-have-a-shape-nothing-checks/`, still listed by the session that held it. Authority for this reading lives here.  
+**Relates to:** `0031` — the same section, §4c, from the other side: `0031` is a rule that is missing, this is a rule that exists and is unenforced.
 
 **Contributed to:** finding 4 was added 2026-09-04 by
 `restore-apps-outstanding-20260903-000000` while this bundle is `unresolved`,

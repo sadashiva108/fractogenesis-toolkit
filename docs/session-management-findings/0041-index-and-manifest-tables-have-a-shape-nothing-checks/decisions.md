@@ -1,9 +1,8 @@
 # Decisions — the index and manifest tables have a shape nothing checks
 
-**Bundle:** `0032-index-and-manifest-tables-have-a-shape-nothing-checks` · **Status:** `in progress`
-**Decided:** 2026-09-04, session `session_01PcgHu9kz9Hm5RatLQuFR8H`, owner
-present. Held at the owner's word until `0029`'s decisions landed, because
-`0029` D3 names this bundle.
+**Bundle:** `0032-index-and-manifest-tables-have-a-shape-nothing-checks`  
+**Status:** `in progress`  
+**Decided:** 2026-09-04, session `session_01PcgHu9kz9Hm5RatLQuFR8H`, owner present. Held at the owner's word until `0029`'s decisions landed, because `0029` D3 names this bundle.
 
 ## Decisions
 

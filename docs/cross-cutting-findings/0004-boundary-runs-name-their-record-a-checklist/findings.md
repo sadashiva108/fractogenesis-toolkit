@@ -1,9 +1,13 @@
 # Boundary runs call their record a `checklist`, and it is not one
 
-**Recorded:** 2026-09-02, by the owner, on reading
-`reimaged-system/boundaries/runs/restore-repos-entry-20260902-083713/checklist.md`.
-**Severity:** naming only — nothing misbehaves. It matters because this is the
-one word the workflow uses for two other things.
+**Recorded:** 2026-09-02, by the owner, on reading `reimaged-system/boundaries/runs/restore-repos-entry-20260902-083713/checklist.md`.  
+**Severity:** naming only — nothing misbehaves. It matters because this is the one word the workflow uses for two other things.
+
+## Findings
+
+| # | Finding | Status |
+|---:|---|---|
+| F1 | Boundary runs call their record a `checklist`, and it is not one | `resolved` |
 
 **Owner:** the repository owner. Producers belong to the run-index session's file
 set; the runbooks that cite the name are the owner's next pass.

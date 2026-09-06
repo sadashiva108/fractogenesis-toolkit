@@ -18,7 +18,7 @@ which is required reading with [`docs/legend.md`](../docs/legend.md).
 - Linting guidance (recommended):
   - Use `bash -n` for quick syntax checks on shell scripts.
   - Run `shellcheck` when available (recommended but avoid making it a declared runtime dependency):
-    - shellcheck -x bin/*.sh .internal/**/*.sh
+    - `shellcheck -x bin/*.sh .internal/**/*.sh`
   - For Python, use your usual project linter (e.g., ruff/flake8) if desired; none are enforced here.
   - Documentation lint: ./bin/verify-doc-paths.sh checks that the repository paths named in the governance docs still exist. Run it after moving or renaming any file that the docs point at, and after editing the docs themselves — a stale path silently misdirects the next session.
   - Loose-secret sweep (Phase 3B, stage-loose-secrets.md): ./bin/report-loose-secrets.sh reports credential-shaped files sitting in plaintext outside secrets-encrypted/; ./bin/stage-loose-secrets.sh moves them inside it. Run the check, then the stager (dry-run by default, --apply to move), then the check again — all before Phase 3C builds the DMG, since 3C encrypts secrets-encrypted/ and nothing else. The check never modifies what it scans and saves each run to $REIMAGE_ARTIFACT_ROOT/loose-secrets-reports/ (--no-report to suppress).

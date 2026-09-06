@@ -1,9 +1,9 @@
 # Decisions — a lineage rename is a procedure, not an operation
 
-**Bundle:** `0035-a-lineage-rename-is-a-procedure-not-an-operation` · **Status:** `in progress`
-**Decided:** 2026-09-04, session `session_01PcgHu9kz9Hm5RatLQuFR8H`, owner present.
-**Read against:** the library itself, and a scratch category exercised through a
-full rename. Nothing on the artifact volume was touched.
+**Bundle:** `0035-a-lineage-rename-is-a-procedure-not-an-operation`  
+**Status:** `in progress`  
+**Decided:** 2026-09-04, session `session_01PcgHu9kz9Hm5RatLQuFR8H`, owner present.  
+**Read against:** the library itself, and a scratch category exercised through a full rename. Nothing on the artifact volume was touched.
 
 ## Decisions
 
@@ -19,11 +19,13 @@ The finding said no operation performs a rename. It also assumed the operation
 would need designing. It does not: **every step already exists, and the order was
 established by test rather than by argument.**
 
-    1. artifact_run_record_rename   record the former name FIRST
-    2. mv runs/<former>-STAMP -> runs/<surviving>-STAMP
-    3. append a `run` row per moved run, keeping its original completion time
-    4. artifact_run_retire_lineage on the FORMER context
-    5. artifact_runs_rebuild
+```text
+1. artifact_run_record_rename   record the former name FIRST
+2. mv runs/<former>-STAMP -> runs/<surviving>-STAMP
+3. append a `run` row per moved run, keeping its original completion time
+4. artifact_run_retire_lineage on the FORMER context
+5. artifact_runs_rebuild
+```
 
 Run in a scratch category on a two-run first-wins lineage, this leaves exactly one
 pointer, aimed at the right run, with the former name recoverable and no error.

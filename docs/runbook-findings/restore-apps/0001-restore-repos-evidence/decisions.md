@@ -1,8 +1,10 @@
 # Decisions — Phase 11B evidence review
 
-**Bundle:** `0001` · **Status when opened:** `in progress`, 2026-09-03.
-Decisions are recorded per finding as they are made. A finding with no entry here
-has not been decided.
+**Bundle:** `0001`  
+**Status when opened:** `analyzing`, 2026-09-03.
+
+Decisions are recorded per finding as they are made. A finding with no entry
+here has not been decided.
 
 ---
 

@@ -1,8 +1,13 @@
 # `verify-doc-paths.sh --all` counts `docs/`, so its OK baseline cannot hold
 
-**Recorded:** 2026-09-01, session `01KcZvrKMgfenhrT9DvxW9Jk`, while validating
-Revision 129.
+**Recorded:** 2026-09-01, session `01KcZvrKMgfenhrT9DvxW9Jk`, while validating Revision 129.  
 **Severity:** low, but it silently invalidates a number two session briefs quote.
+
+## Findings
+
+| # | Finding | Status |
+|---:|---|---|
+| F1 | `verify-doc-paths.sh --all` counts `docs/`, so its OK baseline cannot hold | `resolved` |
 
 **Status: CLOSED** by Revision 130, 2026-09-01, same session — option (i), with
 (iii) adopted alongside it in `docs/sessions/session-responsibilities.md`. With

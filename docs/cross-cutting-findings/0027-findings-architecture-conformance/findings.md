@@ -1,14 +1,8 @@
 # The findings-and-sessions architecture disagrees with itself and with the tree
 
-**Recorded:** 2026-09-03, session `session_019yzcjm2QneJ5ymVEQDi1bu`, on the owner's
-request to review the new architecture. Read: `docs/architecture/findings-and-sessions.md`,
-`.github/copilot-instructions.md` §§4b–4d, `docs/legend.md`, and every bundle and
-index in `docs/`.
-**Severity:** one finding is high and governs a rule every future session hits on
-its first parked note. The rest are small and mechanical.
-**Scope:** cross-cutting. The fix lands in `.github/copilot-instructions.md`,
-`docs/INDEX.md`, `docs/sessions/INDEX.md`, `docs/legend.md` and four `prompt.md`
-files — no single runbook owns any of it.
+**Recorded:** 2026-09-03, session `session_019yzcjm2QneJ5ymVEQDi1bu`, on the owner's request to review the new architecture. Read: `docs/architecture/findings-and-sessions.md`, `.github/copilot-instructions.md` §§4b–4d, `docs/legend.md`, and every bundle and index in `docs/`.  
+**Severity:** one finding is high and governs a rule every future session hits on its first parked note. The rest are small and mechanical.  
+**Scope:** cross-cutting. The fix lands in `.github/copilot-instructions.md`, `docs/INDEX.md`, `docs/sessions/INDEX.md`, `docs/legend.md` and four `prompt.md` files — no single runbook owns any of it.
 
 ## What is conformant
 

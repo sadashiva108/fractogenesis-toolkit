@@ -1,7 +1,8 @@
 # Resolutions — the findings-and-sessions architecture disagrees with itself
 
-**Bundle:** `0027` · **Status:** `resolved`, 2026-09-04.
-**Owner:** `restore-apps-outstanding-20260903-000000`.
+**Bundle:** `0027`  
+**Status:** `resolved`, 2026-09-04.  
+**Owner:** `restore-apps-outstanding-20260903-000000`.  
 **Decisions:** `decisions.md`, ten across seven findings.
 
 Every finding below is closed by a change in this repository. The reasoning is in
@@ -9,13 +10,13 @@ Every finding below is closed by a change in this repository. The reasoning is i
 
 | Finding | Resolved by | What was done | Revision | Commit |
 |---|---|---|---|---|
-| F1 — §4b and §4c contradict on whether recording takes a revision | §4c's sentence deleted; the section now states 4b's rule | — | — | — |
-| F2 — Four of five prompts omit the required reading | The rule scoped to prompts that can still start a session; `run-index-design`'s prompt gains a reading order | — | — | — |
-| F3 — An index restates a count the manifest owns | The one-home rule in §4b, the two columns, and `bin/verify-findings-counts.sh` | — | — | — |
-| F4 — `docs/INDEX.md` describes a directory it no longer matches | *"Currently empty"* removed; the one-home rule covers the class | — | — | — |
-| F5 — Every `resolved` bundle is missing `decisions.md` | The migrated-bundle carve-out in §4c | — | — | — |
-| F6 — The two session-state diagrams disagree | One diagram, in `docs/legend.md`; four states; `unclaimed` retired | — | — | — |
-| F7 — Two identifiers recorded as unrecoverable are recoverable | The searches rule in §4d — **and a third identifier found** | — | — | — |
+| F1 | D1 | §4c's sentence deleted; the section now states 4b's rule | — | — |
+| F2 | D2 | The rule scoped to prompts that can still start a session; `run-index-design`'s prompt gains a reading order | — | — |
+| F3 | D3, D4, D5 | The one-home rule in §4b, the two columns, and `bin/verify-findings-counts.sh` | — | — |
+| F4 | D3, D4, D5 | *"Currently empty"* removed; the one-home rule covers the class | — | — |
+| F5 | D6 | The migrated-bundle carve-out in §4c | — | — |
+| F6 | D7, D8 | One diagram, in `docs/legend.md`; four states; `unclaimed` retired | — | — |
+| F7 | D9 | The searches rule in §4d — **and a third identifier found** | — | — |
 
 ---
 

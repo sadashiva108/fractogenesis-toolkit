@@ -1,6 +1,7 @@
 # Decisions — the instruction set lags the rules it governs
 
-**Bundle:** `0029` · **Status when opened:** `in progress`, 2026-09-04.
+**Bundle:** `0029`  
+**Status when opened:** `in progress`, 2026-09-04.  
 **Owner:** `restore-apps-outstanding-20260903-000000`.
 
 Decisions are recorded per finding as they are made. A finding with no entry here
@@ -30,9 +31,9 @@ without answering it for rules.
 
 | # | Decision | Findings | Decided | Outcome |
 |---|---|---|---|---|
-| D1 | `docs/legend.md` holds VOCABULARY. `.github/copilot-instructions.md` sections 4b–4d hold PROCEDURE. Each points at the other for the kind it does not hold, and the legend is named in §4 as required reading | F5 | 2026-09-04 | `accepted` |
+| D1 | `docs/legend.md` holds VOCABULARY. `.github/copilot-instructions.md` sections 4b–4d hold PROCEDURE. Each points at the other for the kind it does not hold, and the legend is named in §4 as required reading | F1, F2, F5, F6 | 2026-09-04 | `accepted` |
 | D2 | the write categories split. The legend keeps three one-line definitions of what a record, toolkit and evidence write IS. §4b takes the gating | F5 | 2026-09-04 | `accepted` |
-| D3 | `docs/INDEX.md` owns the enumeration of the `docs/` directories. §4b and `docs/architecture/findings-and-sessions.md` §2 stop listing them and point at it | F3 | 2026-09-04 | `accepted` |
+| D3 | `docs/INDEX.md` owns the enumeration of the `docs/` directories. §4b and `docs/architecture/findings-and-sessions.md` §2 stop listing them and point at it | F3, F4 | 2026-09-04 | `accepted` |
 | D4 | a bundle waiting on another's decision says so in prose inside its `Relates to` line, and §4c requires the bundle's INDEX.md Notes cell to say it too. `Decide after:` does not become vocabulary | F7 | 2026-09-04 | `accepted` |
 
 ## Findings 1, 2, 5 and 6 — a rule lives where its kind lives

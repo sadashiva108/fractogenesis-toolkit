@@ -1,6 +1,7 @@
 # Decisions — `.internal/restore/` is empty, and is not tracked
 
-**Bundle:** `0012-internal-restore-directory-empty` · **Status:** `in progress`
+**Bundle:** `0012-internal-restore-directory-empty`  
+**Status:** `in progress`  
 **Decided:** 2026-09-04, session `session_01KcZvrKMgfenhrT9DvxW9Jk`, which owns it.
 
 The reading was corrected before deciding, while the bundle was `unresolved` and

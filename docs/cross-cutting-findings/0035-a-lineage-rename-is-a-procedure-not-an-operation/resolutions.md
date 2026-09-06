@@ -1,19 +1,22 @@
 # Resolutions — a lineage rename is a procedure, not an operation
 
-**Bundle:** `0035-a-lineage-rename-is-a-procedure-not-an-operation` · **Status:** `resolved`
+**Bundle:** `0035-a-lineage-rename-is-a-procedure-not-an-operation`  
+**Status:** `resolved`  
 **Recorded:** 2026-09-04, session `session_01PcgHu9kz9Hm5RatLQuFR8H`.
 
 One toolkit write: `artifact_run_rename_lineage` in `.internal/artifact-runs.sh`.
 
 | Finding | Resolved by | What was done | Revision | Commit |
 |---|---|---|---|---|
-| F1 — a rename is three manual acts with no operation | D1 | `artifact_run_rename_lineage` performs all five steps in the one order that leaves the category consistent | — | — |
-| F2 — recovery is one-way, so a half-done rename completes wrongly | D2 | **Corrected.** `artifact_runs_rebuild` is loud; `bin/reindex-artifact-runs.sh` is the silent one. The header now records the stale-pointer behaviour | — | — |
-| F3 — a run carries no lineage identity | D3 | **Not built.** D1 removes the need, and a marker cannot cover the case it exists for — a pre-existing run renamed by hand | — | — |
+| F1 | D1 | `artifact_run_rename_lineage` performs all five steps in the one order that leaves the category consistent | — | — |
+| F2 | D2 | **Corrected.** `artifact_runs_rebuild` is loud; `bin/reindex-artifact-runs.sh` is the silent one. The header now records the stale-pointer behaviour | — | — |
+| F3 | D3 | **Not built.** D1 removes the need, and a marker cannot cover the case it exists for — a pre-existing run renamed by hand | — | — |
 
 ## The operation
 
-    artifact_run_rename_lineage "$CATEGORY_ROOT" "<former>" "<surviving>" "<reason>"
+```text
+artifact_run_rename_lineage "$CATEGORY_ROOT" "<former>" "<surviving>" "<reason>"
+```
 
 Five steps, in this order:
 

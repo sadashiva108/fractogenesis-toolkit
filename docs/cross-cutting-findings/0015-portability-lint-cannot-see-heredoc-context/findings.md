@@ -1,9 +1,13 @@
 # The portability lint cannot see a defect that needs heredoc context
 
-**Recorded:** 2026-09-02, Restore Repositories clone-plan session, while reproducing
-`post-image-restore-runs-truncated`.
-**Severity:** low. One known-dangerous construct is invisible to the check that
-exists to catch exactly this class of thing.
+**Recorded:** 2026-09-02, Restore Repositories clone-plan session, while reproducing `post-image-restore-runs-truncated`.  
+**Severity:** low. One known-dangerous construct is invisible to the check that exists to catch exactly this class of thing.
+
+## Findings
+
+| # | Finding | Status |
+|---:|---|---|
+| F1 | The portability lint cannot see a defect that needs heredoc context | `un-started` |
 
 **Owner:** unassigned — `bin/verify-script-portability.sh` is in neither current
 session's file set.

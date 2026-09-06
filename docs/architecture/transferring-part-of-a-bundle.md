@@ -71,11 +71,13 @@ hold against another. Splitting severs that, and `Relates to` obliges nobody.
 A bundle appears in **both** manifests. A `Finding Ownership` table in
 `findings.md` becomes the source of truth for who owns which findings:
 
-    ## Finding Ownership
+```markdown
+## Finding Ownership
 
-    | Session | Date | Findings |
-    |---|---|---|
-    | `<session>` | <date> | F1, F2, F5  — or `all` |
+| Session | Date | Findings |
+|---|---|---|
+| `<session>` | <date> | F1, F2, F5  — or `all` |
+```
 
 It would sit in the header block of `findings.md`, between `Contributions` and
 `Findings`, and it is the only table the schema in section 11 leaves unbuilt —

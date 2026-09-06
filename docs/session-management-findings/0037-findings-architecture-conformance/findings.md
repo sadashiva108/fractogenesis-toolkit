@@ -1,17 +1,9 @@
 # The findings-and-sessions architecture disagrees with itself and with the tree
 
-**Recorded:** 2026-09-03, session `session_019yzcjm2QneJ5ymVEQDi1bu`, on the owner's
-request to review the new architecture. Read: `docs/architecture/findings-and-sessions.md`,
-`.github/copilot-instructions.md` §§4b–4d, `docs/legend.md`, and every bundle and
-index in `docs/`.
-**Severity:** one finding is high and governs a rule every future session hits on
-its first parked note. The rest are small and mechanical.
-**Scope:** cross-cutting. The fix lands in `.github/copilot-instructions.md`,
-`docs/INDEX.md`, `docs/sessions/INDEX.md`, `docs/legend.md` and four `prompt.md`
-files — no single runbook owns any of it.
-**Relates to:** [`0027`](../../cross-cutting-findings/0027-findings-architecture-conformance/) — **supersedes it.**
-The original stands untouched at `docs/cross-cutting-findings/0027-findings-architecture-conformance/`, still listed by the session
-that held it. Authority for this reading lives here.
+**Recorded:** 2026-09-03, session `session_019yzcjm2QneJ5ymVEQDi1bu`, on the owner's request to review the new architecture. Read: `docs/architecture/findings-and-sessions.md`, `.github/copilot-instructions.md` §§4b–4d, `docs/legend.md`, and every bundle and index in `docs/`.  
+**Severity:** one finding is high and governs a rule every future session hits on its first parked note. The rest are small and mechanical.  
+**Scope:** cross-cutting. The fix lands in `.github/copilot-instructions.md`, `docs/INDEX.md`, `docs/sessions/INDEX.md`, `docs/legend.md` and four `prompt.md` files — no single runbook owns any of it.  
+**Relates to:** [`0027`](../../cross-cutting-findings/0027-findings-architecture-conformance/) — **supersedes it.** The original stands untouched at `docs/cross-cutting-findings/0027-findings-architecture-conformance/`, still listed by the session that held it. Authority for this reading lives here.
 
 ## What is conformant
 
@@ -33,14 +25,14 @@ arriving at this bundle should not mistake the list for a verdict on the design.
 ## Findings
 
 | # | Finding | Status |
-|---|---|---|
-| F1 | §4b and §4c contradict each other on whether a findings bundle takes a manifest revision | `reopened` — decided 1.1, resolved in `resolutions.md` |
-| F2 | Four of five `prompt.md` files violate §4d's "always" rule | `reopened` — decided 2.1, resolved in `resolutions.md` |
-| F3 | `docs/sessions/INDEX.md` miscounts a manifest it links to | `reopened` — decided 3.1, resolved in `resolutions.md` |
-| F4 | `docs/INDEX.md` says `ideas/` is empty; it is not | `reopened` — decided 3.1, resolved in `resolutions.md` |
-| F5 | Every `reopened` bundle is missing `decisions.md` | `reopened` — decided 5.1, resolved in `resolutions.md` |
-| F6 | The two session-state diagrams disagree | `reopened` — decided 6.1, resolved in `resolutions.md` |
-| F7 | Two session identifiers recorded as unrecoverable are recoverable | `reopened` — decided 7.1, resolved in `resolutions.md` |
+|---:|---|---|
+| F1 | §4b and §4c contradict each other on whether a findings bundle takes a manifest revision | `reopened` |
+| F2 | Four of five `prompt.md` files violate §4d's "always" rule | `reopened` |
+| F3 | `docs/sessions/INDEX.md` miscounts a manifest it links to | `reopened` |
+| F4 | `docs/INDEX.md` says `ideas/` is empty; it is not | `reopened` |
+| F5 | Every `reopened` bundle is missing `decisions.md` | `reopened` |
+| F6 | The two session-state diagrams disagree | `reopened` |
+| F7 | Two session identifiers recorded as unrecoverable are recoverable | `reopened` |
 
 ### F1 — §4b and §4c contradict each other, eighteen lines apart
 
