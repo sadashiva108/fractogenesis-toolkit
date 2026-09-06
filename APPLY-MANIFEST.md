@@ -1,4 +1,6 @@
 # Apply Manifest
+**Revision 206** — supersedes Revision 205 and earlier. A session bundle for the re-evaluation of `docs/session-management-findings/`, created `available` and owning nothing; its `prompt.md` carries the conformant prompt, the session prompt and the amendments issued in flight, and its `metadata.md` names both environments it runs in and the macOS Bash 3.2 debt it extends rather than pays.
+
 **Revision 205** — supersedes Revision 204 and earlier. `restore-apps-outstanding-20260903-000000` closes; `0001` is released to `unclaimed` undecided rather than carried into a stopped session, and `closed` is redefined to admit every terminal status rather than `resolved` alone.
 
 **Revision 204** — supersedes Revision 203 and earlier. `0042` parks the gap that let the last three revisions through: every checker reads the source, none reads the rendered page, and the fix is a dependency decision the owner has not been asked for.
@@ -540,6 +542,72 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
 
 ---
+
+## Revision 206 — A session bundle for the session-management re-evaluation
+
+`restore-apps-outstanding-20260903-000000` closed on 2026-09-06 leaving six
+bundles `unclaimed` in `docs/session-management-findings/` and a brief to
+re-evaluate them from the ground up. This creates the bundle for the session
+that will do that.
+
+### What it holds
+
+`STATE-available` — the session owns no findings bundle. The six are `unclaimed`
+and closed to every session until the owner assigns them, so nothing here claims
+work it has not been given, and `findings-manifest.md` does not yet exist.
+
+`prompt.md` carries all three documents a session of this kind is started from:
+the conformant prompt, the session prompt, and `prompt-amendments-20260906.md`,
+which was issued after the session had begun. Its preamble records that ordering
+and that the amendments win where they disagree.
+
+`metadata.md` records the assistant, the session identifier and transcript, the
+configured model, and — separately, because they are different claims — the two
+environments this session actually runs in: a Linux VM on the owner's machine
+where every check was run, and an isolated cloud container that holds no copy of
+the repository. **Neither is macOS.** The Bash 3.2 debt for Revisions 116 onward
+is named there as extended rather than paid.
+
+### What it does not do
+
+No findings bundle status moves. No finding is read. Nothing outside
+`docs/sessions/` is touched, and the artifact volume is not connected to this
+session at all — its subject is `docs/` and `.github/`, so an evidence write is
+not possible from here even by mistake.
+
+### Validators
+
+| Checker | Result |
+|---|---|
+| `verify-findings-headers.sh` | 893 OK, 0 FAIL — 889 before; the four are this bundle's two new files |
+| `verify-findings-structure.sh` | 51 OK, 0 FAIL |
+| `verify-findings-counts.sh` | 50 OK, 0 FAIL — the row carries `—` for both counts, owning nothing |
+| `verify-doc-paths.sh --all` | 778 OK, 0 MISSING, 1108 anchors, 0 broken |
+| `verify-script-portability.sh` | 85 clean, 0 WARN, 0 FAIL |
+| `verify-runbook-structure.sh` | 213 PASS / 5 WARN / 25 FAIL — the standing baseline, unchanged |
+
+Composed in a copy outside the owner's checkout and run there, so the numbers
+describe this change alone. **The environment was a Linux VM with Bash 5.1.16 and
+GNU coreutils on the owner's Mac, not macOS.**
+
+### The apply, and a correction it forces on `0041` finding 4
+
+The patch contains **no deletions** — four additions and one inserted table row.
+`git apply` still reported `unable to unlink 'APPLY-MANIFEST.md'` and
+`unable to unlink 'docs/sessions/INDEX.md'`, warned, and **exited 0**.
+
+`0041` finding 4 states the hazard as *"any patch containing a deletion
+under-applies."* **That understates it.** `git apply` modifies a file by writing
+a replacement and unlinking the original, so the mount's refusal fires on a plain
+modification too. Whether the content lands then depends on git's fallback, and
+the exit status says nothing either way. On this apply it did land: every one of
+the five touched paths was byte-compared against the copy with `cmp` and every
+one is identical, which is the verification the finding asks for — the trees, not
+the exit code.
+
+`git apply` also warned about **trailing whitespace on three lines**. All three
+are the two-space hard breaks the header schema in section 11 requires. A
+conformant header block will always produce that warning, and it is not a defect.
 
 ## Revision 205 — `restore-apps-outstanding` closes, and `0001` goes back to the queue
 
