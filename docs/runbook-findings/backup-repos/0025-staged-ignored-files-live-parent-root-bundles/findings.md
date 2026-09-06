@@ -1,7 +1,9 @@
 # `staged-ignored-files/live/` holds two bundles no lookup can reach
 
-**Found:** 2026-09-01, session `01KcZvrKMgfenhrT9DvxW9Jk`, while deciding whether
+**Recorded:** 2026-09-01, session `01KcZvrKMgfenhrT9DvxW9Jk`, while deciding whether
 the category should join the run index.
+**Severity:** low. Harmless today; misleading to anyone counting bundles.
+
 **Correction, 2026-09-03**, while this bundle was still `unresolved`: the producer
 named under *What to do* is wrong. `.internal/git/stage-ignored-files.sh` resolves
 every destination from `basename` of a `git rev-parse --show-toplevel` and cannot
@@ -13,7 +15,6 @@ plus the discovered git roots and whose `make_label_map()` labels each by
 `documentation`, in the file that script writes. The counts below are also two
 out — `live/` holds 24 directories, of which 22 are repository bundles.
 The reading is otherwise unchanged.
-**Severity:** low. Harmless today; misleading to anyone counting bundles.
 
 ## What is wrong
 

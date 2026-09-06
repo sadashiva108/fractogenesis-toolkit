@@ -1,6 +1,6 @@
 # Decisions — the instruction set lags the rules it governs
 
-**Findings bundle:** `0029` · **Status when opened:** `in progress`, 2026-09-04.
+**Bundle:** `0029` · **Status when opened:** `in progress`, 2026-09-04.
 **Owner:** `restore-apps-outstanding-20260903-000000`.
 
 Decisions are recorded per finding as they are made. A finding with no entry here
@@ -26,11 +26,20 @@ without answering it for rules.
 
 ---
 
+## Decisions
+
+| # | Decision | Findings | Decided | Outcome |
+|---|---|---|---|---|
+| D1 | `docs/legend.md` holds VOCABULARY. `.github/copilot-instructions.md` sections 4b–4d hold PROCEDURE. Each points at the other for the kind it does not hold, and the legend is named in §4 as required reading | F5 | 2026-09-04 | `accepted` |
+| D2 | the write categories split. The legend keeps three one-line definitions of what a record, toolkit and evidence write IS. §4b takes the gating | F5 | 2026-09-04 | `accepted` |
+| D3 | `docs/INDEX.md` owns the enumeration of the `docs/` directories. §4b and `docs/architecture/findings-and-sessions.md` §2 stop listing them and point at it | F3 | 2026-09-04 | `accepted` |
+| D4 | a bundle waiting on another's decision says so in prose inside its `Relates to` line, and §4c requires the bundle's INDEX.md Notes cell to say it too. `Decide after:` does not become vocabulary | F7 | 2026-09-04 | `accepted` |
+
 ## Findings 1, 2, 5 and 6 — a rule lives where its kind lives
 
-**Decision 5.1 — `docs/legend.md` holds VOCABULARY. `.github/copilot-instructions.md`
-sections 4b–4d hold PROCEDURE. Each points at the other for the kind it does not
-hold, and the legend is named in §4 as required reading.** Owner, 2026-09-04.
+## D1 — `docs/legend.md` holds VOCABULARY. `.github/copilot-instructions.md` sections 4b–4d hold PROCEDURE. Each points at the other for the kind it does not hold, and the legend is named in §4 as required reading
+
+Owner, 2026-09-04.
 
 Vocabulary is what a word means: the six findings statuses, the four session
 states, both lifecycle diagrams, `Relates to`, and what each of the three write
@@ -138,9 +147,9 @@ where writing a rule in both files is what produced findings 1 and 2.
 
 ## Finding 5, the ambiguous case
 
-**Decision 5.2 — the write categories split. The legend keeps three one-line
-definitions of what a record, toolkit and evidence write IS. §4b takes the
-gating.** Owner, 2026-09-04.
+## D2 — the write categories split. The legend keeps three one-line definitions of what a record, toolkit and evidence write IS. §4b takes the gating
+
+Owner, 2026-09-04.
 
 This is the same shape the statuses already have and which finding 6 mistook for
 a defect: the name in the legend, the requirements in the instruction set. Making
@@ -160,9 +169,9 @@ finding 1's failure mode, on day one.
 
 ## Findings 3 and 4 — the map has one home
 
-**Decision 3.1 — `docs/INDEX.md` owns the enumeration of the `docs/`
-directories. §4b and `docs/architecture/findings-and-sessions.md` §2 stop
-listing them and point at it.** Owner, 2026-09-04.
+## D3 — `docs/INDEX.md` owns the enumeration of the `docs/` directories. §4b and `docs/architecture/findings-and-sessions.md` §2 stop listing them and point at it
+
+Owner, 2026-09-04.
 
 Three files enumerate the directories. Two are wrong: §4b says six where there
 are seven, and the architecture record names two findings trees where there are
@@ -196,9 +205,9 @@ a defect it did not examine, would be the wrong lesson learned twice.
 
 ## Finding 7 — ordering is prose, and the index says so
 
-**Decision 7.1 — a bundle waiting on another's decision says so in prose inside
-its `Relates to` line, and §4c requires the bundle's INDEX.md Notes cell to say
-it too. `Decide after:` does not become vocabulary.** Owner, 2026-09-04.
+## D4 — a bundle waiting on another's decision says so in prose inside its `Relates to` line, and §4c requires the bundle's INDEX.md Notes cell to say it too. `Decide after:` does not become vocabulary
+
+Owner, 2026-09-04.
 
 The finding sketched three shapes and preferred the header field. The evidence
 since says otherwise. **`Decide after:` appears in exactly one place in the
@@ -239,6 +248,6 @@ it will have evidence this one does not.
 
 Recorded 2026-09-04, one revision after the rule it is about, and left open
 deliberately. Its three shapes are in `findings.md`; one of them, a fourth write
-category, is already rejected on sight under `0028` decision 6.1.
+category, is already rejected on sight under `0028` D4.
 
 `resolving` cannot begin until it has a decision.

@@ -5,6 +5,14 @@
 **Read against:** the library itself, and a scratch category exercised through a
 full rename. Nothing on the artifact volume was touched.
 
+## Decisions
+
+| # | Decision | Findings | Decided | Outcome |
+|---|---|---|---|---|
+| D1 | `artifact_run_rename_lineage` is built, because the sequence turns out to be composable | — | 2026-09-04 | `accepted` |
+| D2 | Finding 2 is corrected: rebuild is loud, `reindex` is the silent one | — | 2026-09-04 | `accepted` |
+| D3 | No per-run identity marker | — | 2026-09-04 | `accepted` |
+
 ## D1 — `artifact_run_rename_lineage` is built, because the sequence turns out to be composable
 
 The finding said no operation performs a rename. It also assumed the operation

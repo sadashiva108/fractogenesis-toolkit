@@ -4,9 +4,15 @@
 (`session_016EbjB7M527qEFqZFzpv2C9`), from its own outstanding items rather than
 from a fresh reading. Every finding below was noticed by this session while
 writing Revisions 166 through 173, and deferred in prose at the time.
+**Severity:** findings 1, 5 and 8 are high. A session that reads only the
+instruction set does not learn several of the rules it is expected to follow,
+and one of those rules governs when it may touch the owner's checkout.
+**Scope:** instruction-set. The fix lands in `.github/copilot-instructions.md`
+§§4b–4d, `.claude/CLAUDE.md`, and `docs/architecture/findings-and-sessions.md`.
 **Relates to:** `0027` — that bundle read the instruction set for conformance and
 found seven defects. This one collects what this session left owed. They overlap
 at one point only, named in finding 2.
+
 **Decide after:** `0027`, then `0028`. Findings 1, 2, 5 and 6 below are four
 symptoms of one question `0027` finding 1 owns — *where is a rule allowed to
 live* — and deciding them first would decide against a surface about to move.
@@ -16,11 +22,6 @@ is about this line existing at all.
 finding 1 sits under — a fact has one home — and `0028` added §3 to the surfaces
 this bundle must read, along with finding 8, which was found by breaking `0028`'s
 own rule the day it was written.
-**Severity:** findings 1, 5 and 8 are high. A session that reads only the
-instruction set does not learn several of the rules it is expected to follow,
-and one of those rules governs when it may touch the owner's checkout.
-**Scope:** instruction-set. The fix lands in `.github/copilot-instructions.md`
-§§4b–4d, `.claude/CLAUDE.md`, and `docs/architecture/findings-and-sessions.md`.
 
 **This bundle is a self-report.** Most of its findings are rules this session
 wrote into `docs/legend.md` and did not carry into the instruction set, each time
@@ -39,20 +40,20 @@ The bundle advances with its first row and reaches `resolved` only with its last
 outside `docs/` is written until then — which for this bundle is the whole of the
 work, since every fix is a toolkit write.
 
-| # | Finding | Decided | Status |
-|---:|---|---|---|
-| 1 | Five rules exist only in `docs/legend.md` and not in the instruction set | **yes** — 5.1 | `in progress` — **decided** |
-| 2 | Two rules exist in both, in different words | **yes** — 5.1 | `in progress` — **decided** |
-| 3 | §4b's directory list is now wrong | **yes** — 3.1 | `in progress` — **decided** |
-| 4 | The architecture record describes two findings trees; there are three | **yes** — 3.1 | `in progress` — **decided** |
-| 5 | Nothing tells a session that `docs/legend.md` is normative | **yes** — 5.1, 5.2 | `in progress` — **decided** |
-| 6 | State names and state requirements live in different files | **yes** — 5.1 | `in progress` — **decided**, no change needed |
-| 7 | The vocabulary cannot say that one bundle must be decided before another | **yes** — 7.1 | `in progress` — **decided** |
-| 8 | The rule says where a change is composed, not when it is handed over | — | `un-started` |
+| # | Finding | Status |
+|---:|---|---|
+| F1 | Five rules exist only in `docs/legend.md` and not in the instruction set | `in progress` — **decided** |
+| F2 | Two rules exist in both, in different words | `in progress` — **decided** |
+| F3 | §4b's directory list is now wrong | `in progress` — **decided** |
+| F4 | The architecture record describes two findings trees; there are three | `in progress` — **decided** |
+| F5 | Nothing tells a session that `docs/legend.md` is normative | `in progress` — **decided** |
+| F6 | State names and state requirements live in different files | `in progress` — **decided**, no change needed |
+| F7 | The vocabulary cannot say that one bundle must be decided before another | `in progress` — **decided** |
+| F8 | The rule says where a change is composed, not when it is handed over | `un-started` |
 
 ---
 
-## 1 — five rules exist only in `docs/legend.md`
+## F1 — five rules exist only in `docs/legend.md`
 
 Written there between Revisions 169 and 173, each because the instruction set was
 gated at the time, and none carried across since:
@@ -74,7 +75,7 @@ write to a bundle it does not own, which is a question every concurrent session
 hits, and it is discoverable only by opening a file neither instruction names as
 normative.
 
-## 2 — two rules exist in both, in different words
+## F2 — two rules exist in both, in different words
 
 `resolving`'s gate and the bundle-advance rule are in §4c *and* in `legend.md`,
 written twice in different prose by the same session in Revisions 166, 168 and
@@ -85,7 +86,7 @@ that the two session-state diagrams disagree; this is the same failure on the
 status side. They are separate instances and should be decided together — if the
 answer is a rule about where a rule may live, it covers both.
 
-## 3 — §4b's directory list is now wrong
+## F3 — §4b's directory list is now wrong
 
 §4b enumerates the directories under `docs/` and gives a count. It said five,
 then six, then seven across Revisions 160 to 163, and reads six today.
@@ -95,7 +96,7 @@ The count in prose is the defect, not the arithmetic: it has been wrong after
 four of the last six revisions that touched `docs/`, because a number in a
 sentence has to be maintained by whoever adds a directory and nothing checks it.
 
-## 4 — the architecture record describes two findings trees
+## F4 — the architecture record describes two findings trees
 
 `docs/architecture/findings-and-sessions.md` §2 names
 `docs/runbook-findings/<runbook>/` and `docs/cross-cutting-findings/` and gives
@@ -106,7 +107,7 @@ Its §12.3 also asks where a finding whose subject is not the project should go 
 an open question that this tree partly answers and partly does not, since an
 instruction-set finding is still about this project.
 
-## 5 — nothing says `docs/legend.md` is normative
+## F5 — nothing says `docs/legend.md` is normative
 
 The instruction set points at `legend.md` for the status and state vocabularies,
 and `legend.md` describes itself as where they are defined. Neither says it is a
@@ -119,7 +120,7 @@ session where the rules live* — and today the honest answer is that a session
 learns it by being told in conversation, which is the failure mode this entire
 architecture exists to remove.
 
-## 6 — state names and state requirements are in different files
+## F6 — state names and state requirements are in different files
 
 Revision 162 moved the status and state definitions out of §§4c–4d into
 `legend.md` and left the per-state requirements — what `owned` records, what
@@ -130,7 +131,7 @@ what `handoff` means, and a session reading `legend.md` finds the reverse. Both
 are correct; neither is sufficient. Smallest of the six, and the one most likely
 to be swept up by whatever answers finding 5.
 
-## 7 — the vocabulary cannot express decision order
+## F7 — the vocabulary cannot express decision order
 
 `Relates to` was added in Revision 173 and says that two bundles bear on each
 other. It has no direction and no ordering, and the first three findings bundles
@@ -167,7 +168,7 @@ session can learn from the tree without being told.
 
 ---
 
-## 8 — the rule says where a change is composed, not when it is handed over
+## F8 — the rule says where a change is composed, not when it is handed over
 
 **Recorded 2026-09-04**, one revision after the rule it is about, by the session
 that broke it. Revision 182 wrote the composition rule into §3: compose in a copy
@@ -210,7 +211,7 @@ noticed.
   content inline; the patch is applied only when the owner asks for it. Smallest,
   and it puts the rule beside the composition rule it completes.
 - **A fourth write category.** Rejected on sight, and worth recording as
-  rejected: `0028` decision 6.1 established one day earlier that composition is
+  rejected: `0028` D4 established one day earlier that composition is
   not a permission question, and applying is not one either. Two rules that vary
   by nothing do not become clearer by being made into three.
 - **State it per session, in the prompt.** Where it lives today, minus the

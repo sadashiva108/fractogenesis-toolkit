@@ -1,21 +1,21 @@
 # Resolutions — the findings-and-sessions architecture disagrees with itself
 
-**Findings bundle:** `0027` · **Status:** `resolved`, 2026-09-04.
+**Bundle:** `0027` · **Status:** `resolved`, 2026-09-04.
 **Owner:** `restore-apps-outstanding-20260903-000000`.
 **Decisions:** `decisions.md`, ten across seven findings.
 
 Every finding below is closed by a change in this repository. The reasoning is in
 `decisions.md` and is not repeated; this file records what was actually done.
 
-| # | Finding | Resolved by |
-|---:|---|---|
-| 1 | §4b and §4c contradict on whether recording takes a revision | §4c's sentence deleted; the section now states 4b's rule |
-| 2 | Four of five prompts omit the required reading | The rule scoped to prompts that can still start a session; `run-index-design`'s prompt gains a reading order |
-| 3 | An index restates a count the manifest owns | The one-home rule in §4b, the two columns, and `bin/verify-findings-counts.sh` |
-| 4 | `docs/INDEX.md` describes a directory it no longer matches | *"Currently empty"* removed; the one-home rule covers the class |
-| 5 | Every `resolved` bundle is missing `decisions.md` | The migrated-bundle carve-out in §4c |
-| 6 | The two session-state diagrams disagree | One diagram, in `docs/legend.md`; four states; `unclaimed` retired |
-| 7 | Two identifiers recorded as unrecoverable are recoverable | The searches rule in §4d — **and a third identifier found** |
+| Finding | Resolved by | What was done | Revision | Commit |
+|---|---|---|---|---|
+| F1 — §4b and §4c contradict on whether recording takes a revision | §4c's sentence deleted; the section now states 4b's rule | — | — | — |
+| F2 — Four of five prompts omit the required reading | The rule scoped to prompts that can still start a session; `run-index-design`'s prompt gains a reading order | — | — | — |
+| F3 — An index restates a count the manifest owns | The one-home rule in §4b, the two columns, and `bin/verify-findings-counts.sh` | — | — | — |
+| F4 — `docs/INDEX.md` describes a directory it no longer matches | *"Currently empty"* removed; the one-home rule covers the class | — | — | — |
+| F5 — Every `resolved` bundle is missing `decisions.md` | The migrated-bundle carve-out in §4c | — | — | — |
+| F6 — The two session-state diagrams disagree | One diagram, in `docs/legend.md`; four states; `unclaimed` retired | — | — | — |
+| F7 — Two identifiers recorded as unrecoverable are recoverable | The searches rule in §4d — **and a third identifier found** | — | — | — |
 
 ---
 
@@ -50,7 +50,7 @@ with the instruction set first. It is `handoff`, so it will be read.
 
 **The third identifier was recoverable.** `restore-git-phase-11a`'s
 `metadata.md` said `not recoverable`; finding 7 flagged it as unchecked and
-decision 7.1 required the searches to be named. Running them found
+D9 required the searches to be named. Running them found
 `session_01DQF5y9VQfaoRD9gnw4UcrN` on four commits of 2026-09-01, three of which
 touch `restore-git.md` and one of which names Phase 11A. All three assertions of
 unrecoverability in this repository have now been disproved by the same search,

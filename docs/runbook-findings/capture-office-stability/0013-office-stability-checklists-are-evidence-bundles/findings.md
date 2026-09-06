@@ -1,6 +1,9 @@
 # `office-stability/checklists/` does not hold checklists
 
-**Found:** 2026-09-01, session `01KcZvrKMgfenhrT9DvxW9Jk`, item 2.
+**Recorded:** 2026-09-01, session `01KcZvrKMgfenhrT9DvxW9Jk`, item 2.
+**Severity:** low on its own. It matters because the name is the only thing
+making this category look like a special case.
+
 **Confirmed by the owner 2026-09-02:** these artifacts are not checklists and
 need a different name.
 **Script side CLOSED** by Revision 137: `office-stability-checklist.sh` →
@@ -9,8 +12,6 @@ need a different name.
 **The directory move is still owed** — the existing bundle sits under
 `office-stability/checklists/`; see exception E5 in
 `docs/ledgers/artifact-migration-2026-09-02.md`.
-**Severity:** low on its own. It matters because the name is the only thing
-making this category look like a special case.
 
 ## What is actually in there
 

@@ -1,8 +1,9 @@
 # `carrier-services-storage` carries a remote pointing at `dotfiles`
 
-**Found:** 2026-09-01, Restore Repositories Refactor session, while re-deriving
+**Recorded:** 2026-09-01, Restore Repositories Refactor session, while re-deriving
 the pre-image `repos.tsv`.
 **Severity:** operator decision, not a defect in the toolkit.
+
 **Owner:** the repository owner, at `restore-repos.md` Step 2.
 
 ## What the audit recorded

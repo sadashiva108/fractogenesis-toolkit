@@ -1,6 +1,6 @@
 # The findings-and-sessions architecture disagrees with itself and with the tree
 
-**Found:** 2026-09-03, session `session_019yzcjm2QneJ5ymVEQDi1bu`, on the owner's
+**Recorded:** 2026-09-03, session `session_019yzcjm2QneJ5ymVEQDi1bu`, on the owner's
 request to review the new architecture. Read: `docs/architecture/findings-and-sessions.md`,
 `.github/copilot-instructions.md` §§4b–4d, `docs/legend.md`, and every bundle and
 index in `docs/`.
@@ -31,15 +31,15 @@ arriving at this bundle should not mistake the list for a verdict on the design.
 
 | # | Finding | Status |
 |---|---|---|
-| 1 | §4b and §4c contradict each other on whether a findings bundle takes a manifest revision | `resolved` — decided 1.1, resolved in `resolutions.md` |
-| 2 | Four of five `prompt.md` files violate §4d's "always" rule | `resolved` — decided 2.1, resolved in `resolutions.md` |
-| 3 | `docs/sessions/INDEX.md` miscounts a manifest it links to | `resolved` — decided 3.1, resolved in `resolutions.md` |
-| 4 | `docs/INDEX.md` says `ideas/` is empty; it is not | `resolved` — decided 3.1, resolved in `resolutions.md` |
-| 5 | Every `resolved` bundle is missing `decisions.md` | `resolved` — decided 5.1, resolved in `resolutions.md` |
-| 6 | The two session-state diagrams disagree | `resolved` — decided 6.1, resolved in `resolutions.md` |
-| 7 | Two session identifiers recorded as unrecoverable are recoverable | `resolved` — decided 7.1, resolved in `resolutions.md` |
+| F1 | §4b and §4c contradict each other on whether a findings bundle takes a manifest revision | `resolved` — decided 1.1, resolved in `resolutions.md` |
+| F2 | Four of five `prompt.md` files violate §4d's "always" rule | `resolved` — decided 2.1, resolved in `resolutions.md` |
+| F3 | `docs/sessions/INDEX.md` miscounts a manifest it links to | `resolved` — decided 3.1, resolved in `resolutions.md` |
+| F4 | `docs/INDEX.md` says `ideas/` is empty; it is not | `resolved` — decided 3.1, resolved in `resolutions.md` |
+| F5 | Every `resolved` bundle is missing `decisions.md` | `resolved` — decided 5.1, resolved in `resolutions.md` |
+| F6 | The two session-state diagrams disagree | `resolved` — decided 6.1, resolved in `resolutions.md` |
+| F7 | Two session identifiers recorded as unrecoverable are recoverable | `resolved` — decided 7.1, resolved in `resolutions.md` |
 
-### 1 — §4b and §4c contradict each other, eighteen lines apart
+### F1 — §4b and §4c contradict each other, eighteen lines apart
 
 `.github/copilot-instructions.md:107` (§4b):
 
@@ -71,7 +71,7 @@ manifest entry against its diff and finds tracked files nothing accounts for.
 This bundle is itself the first instance: written under §4b, with a revision, and
 that choice is defensible only because the architecture record breaks the tie.
 
-### 2 — four of five prompts omit the reading §4d makes mandatory
+### F2 — four of five prompts omit the reading §4d makes mandatory
 
 `.github/copilot-instructions.md:224`:
 
@@ -91,7 +91,7 @@ Only the newest complies. The rule's "regardless of state" gives no exemption fo
 bundles that predate it, and `run-index-design` is still `handoff` — its prompt can
 still be handed to a session as written.
 
-### 3 — an index and the manifest it links to disagree
+### F3 — an index and the manifest it links to disagree
 
 `docs/sessions/INDEX.md:25` shows `[5]` for `restore-repos-refactor-20260902-000000`.
 Its `findings-manifest.md:11-16` lists six: `0006 0008 0011 0016 0017 0020`.
@@ -99,13 +99,13 @@ Its `findings-manifest.md:11-16` lists six: `0006 0008 0011 0016 0017 0020`.
 §4d:231 says INDEX "carries the count and points here rather than restating the
 list … so the two cannot disagree."
 
-### 4 — `docs/INDEX.md` describes a directory it no longer matches
+### F4 — `docs/INDEX.md` describes a directory it no longer matches
 
 `docs/INDEX.md:16` says `ideas/` is **"Currently empty."** It holds
 `docs/ideas/external-findings.md`, added by Revision 164 — the same revision that
 left the description behind.
 
-### 5 — every `resolved` bundle is missing `decisions.md`
+### F5 — every `resolved` bundle is missing `decisions.md`
 
 Ten of ten. `docs/legend.md:23` and §4c:150 both require `decisions.md` from
 `in progress`, and `resolving` "begins **only** once the decisions … are made and
@@ -123,7 +123,7 @@ in `docs/runbook-findings/restore-apps/0001-restore-repos-evidence/`, which
 confirms the mechanism works when a bundle is opened normally. It does not touch
 the ten backfilled ones, and the missing carve-out is what this finding is about.
 
-### 6 — the two state diagrams disagree
+### F6 — the two state diagrams disagree
 
 `docs/legend.md:57` draws `handoff ──▶ unclaimed / owned`.
 `docs/architecture/findings-and-sessions.md:128` draws `handoff ──▶ owned` only.
@@ -133,7 +133,7 @@ alternative *starting* states rather than a transition — which reads as agreei
 with the architecture record. Latent, but they are the two documents that both
 claim to define the same lifecycle.
 
-### 7 — two identifiers recorded as unrecoverable are recoverable
+### F7 — two identifiers recorded as unrecoverable are recoverable
 
 `docs/sessions/phase-11b-hydrate-and-bookends-20260903-141500/metadata-restore-repos-refactor.md:10` and
 `docs/sessions/phase-11b-hydrate-and-bookends-20260903-141500/metadata-restore-repos-clone-plan.md:10` both record

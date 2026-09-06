@@ -4,6 +4,19 @@
 **Decided:** 2026-09-03, session `session_01PcgHu9kz9Hm5RatLQuFR8H`, owner present.
 **Supersedes:** `0009-dated-artifacts-cite-run-ids-a-rename-breaks`.
 
+## Decisions
+
+| # | Decision | Findings | Decided | Outcome |
+|---|---|---|---|---|
+| D1 | Supersede `0009`; do not edit it and do not withdraw it | — | 2026-09-03 | `accepted` |
+| D2 | A record's values are frozen; its references are not | — | 2026-09-03 | `accepted` |
+| D3 | Finding 5's two lines are repaired, and the repair is recorded | — | 2026-09-03 | `accepted` |
+| D4 | `0009`'s own stale path is not repaired | — | 2026-09-03 | `accepted` |
+| D5 | The `bookend.md` citation is not repaired by this bundle | — | 2026-09-03 | `accepted` |
+| D6 | Finding 3 is held open deliberately | — | 2026-09-03 | `accepted` |
+| D7 | Category manifests get a `rename` row, filed under the surviving lineage | — | 2026-09-04 | `accepted` |
+| D8 | Detection is deferred, and it is downstream of D7 rather than parallel to it | — | 2026-09-03 | `accepted` |
+
 ## Decisions carried from `0009`
 
 `0009` has no `decisions.md`. Nothing was formally decided against it, so nothing

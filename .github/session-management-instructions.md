@@ -101,9 +101,18 @@ session checks first, to know whether opening it is worth anything. The table in
   invisible to everyone else, and the owner's first reading moves either to
   `framing`. Writing a bundle up is not a reading — a session may record a bundle
   it never owns.
-- **`framing` is open to every session** to read and record. A reading is not
-  diminished by a second reader.
-- **`decided` is read-only to everyone but the owner.**
+- **`framing` is open to every session** to read and record — the reading *and*
+  the decisions. Any session may sharpen a finding's wording, add detail, correct
+  it, take it out if it does not hold, and equally may **write a decision, reject
+  one, or refine one**: a row in the Decisions table and its section, or an
+  existing row's `Outcome` set to `rejected` or `refined → DX` with the reason.
+  **Deciding is not the owner's privilege; closing the deciding is.** A reading is
+  not diminished by a second reader, and a second reader who disagrees with a
+  decision improves it more. A decision written by a session that does not own
+  the finding goes in the bundle's Contributions table like any other.
+- **`decided` is read-only to everyone but the owner**, and moving a finding
+  there is the owner's act. It marks that the deciding is closed, and that is the
+  only thing it marks.
 - **`resolved` is frozen.** `reopened` is the only door, and going through it is
   a declared act.
 - **`unclaimed` is closed to everyone.** It is parked until the owner assigns it.
@@ -190,6 +199,24 @@ apply time only one session is writing.
 Entries are never retro-edited. A revert is a new entry naming what was reverted
 and the commit it reverted, never an edit to the entry being undone.
 
+### The commit message, when the owner asks for one
+
+**Keep it short**: a subject line under about 70 characters, then a body of one or
+two short paragraphs saying what changed and why. The manifest entry is where the
+reasoning lives; the message names the revision and points at it rather than
+restating it. If the first draft runs long, cut it before offering it — the owner
+should not have to ask twice.
+
+**The block you hand over is the message and nothing else.** No `git commit`, no
+`-m`, no quoting wrapper, no shell around it. The owner commits with a plain
+`git commit` and pastes into the editor, so a command in the block is something
+they have to delete before using it.
+
+Anything the owner might need to *run* — a command, a flag, a reminder about
+staging — goes in the conversation beside the block, not inside it.
+
+End with the `Co-Authored-By` and `Claude-Session` trailers.
+
 ## 8. Reading before working
 
 - `docs/legend.md` — every status and state. Required.
@@ -271,3 +298,186 @@ manifest lists the bundle, only the status cell changes.
 `superseded` where another bundle carries the reading forward; `withdrawn` where
 the reading is dropped and nothing replaces it. If a replacement is being opened,
 it is `superseded`.
+
+## 10. Transferring a bundle
+
+**One bundle moves from one session to another.** A `handoff` moves everything a
+session holds and is a property of the session; a transfer moves one bundle and
+is a property of the bundle.
+
+**The target session must already exist** — created, cloned, or long running.
+A handoff creates its destination; a transfer names one.
+
+A bundle may be transferred while it is `un-started`, `reopened` or `analyzing`.
+The terminal statuses have nothing to move, and `unclaimed` has no owner to move
+it from — assign it instead.
+
+### The steps
+
+1.  Set the bundle's tag to `STATUS-transferred` and its index Status cell to
+    `` `transferred` ``, naming the target session in the Session column.
+2.  Remove its row from the outgoing session's `findings-manifest.md` and add it
+    to the target's.
+3.  Update both sessions' counts in `docs/sessions/INDEX.md` — decrement the
+    outgoing, increment the target. The bundle's own finding count does not
+    change; it moved, it did not split.
+4.  Record it in `metadata.md` on **both** sessions: a transfer is a change of
+    ownership and that file is authoritative for who held what, and when.
+5.  One `APPLY-MANIFEST.md` revision covers the transfer.
+
+**The transfer ends when the target session reads the bundle.** At that point
+`transferred` stops applying, the findings awaiting a first read become
+`framing`, and the bundle derives its status normally — which is `analyzing`.
+Nothing else about the reading changes: no finding is reverted, no decision is
+re-opened, and `decisions.md` and `resolutions.md` stand as they were.
+
+**Transferring part of a bundle is not supported.** The need is real and has
+arisen more than once; the options and what each costs are in
+`docs/architecture/transferring-part-of-a-bundle.md`. Until one is chosen, a
+bundle moves whole or not at all.
+
+## 11. The `findings.md` header
+
+Every `findings.md` opens with the same block, in this order. It is a schema, not
+a suggestion: a reader and a checker should both be able to find a field without
+reading prose.
+
+    # <the finding bundle's title, as a sentence>
+
+    **Recorded:** <YYYY-MM-DD>, `<session-bundle-name>` (`<session identifier>`)
+    **Severity:** <what it costs to leave, and which finding is the high one>
+    **Felt at:** <where the defect shows — files, steps, artifacts>       optional
+    **Scope:** <where the fix lands>                                     optional
+    **Relates to:** `<NNNN>` — <how the two bear on each other>  optional, repeatable
+
+    ## Contributions
+
+    | Session | Date | Contribution |
+    |---|---|---|
+    | `<session-bundle-name>` | <YYYY-MM-DD> | <what it added or corrected> |
+
+    ## Finding status
+
+    | # | Finding | Status |
+    |---:|---|---|
+
+**Required: `Recorded:` and `Severity:`** — the two fields every reading in the
+repository already had. **Optional: `Felt at:`, `Scope:`, `Relates to:`.** The
+rule that matters is the last one in the block above: **no other field appears in
+the header.** The schema fixes the vocabulary, not the content — requiring
+`Scope:` would mean inventing one for the readings that never had it.
+
+**`Recorded:`** is the date the reading was written down, not the date the defect
+began. Always this word; `Found:` meant the same thing and is not used.
+
+**`Felt at:` and `Scope:` are different questions** and the tree test turns on the
+difference. `Felt at:` is where the defect shows — the file, the step, the
+artifact. `Scope:` is where the fix lands. A defect in shared machinery felt in
+one runbook is the case that needs both.
+
+**`Relates to:`** is optional and repeatable, one line each. `superseded` uses
+the same field to name what it replaced.
+
+**`Contributions`** lists every session other than the owner that added a
+finding, corrected one, or contributed to a decision — the thing a
+`framing` finding invites. **Omit the table when there are none**; an empty table
+is noise. Ownership is not a contribution and does not appear here: it is in the
+index row and in `findings-manifest.md`.
+
+Anything else — a gate, a status note, an owner's direction — goes in prose below
+the header, not as an invented field. **Two field names are retired and must not
+come back:** `Owner:`, whose values were *"unassigned"* and file paths rather
+than a session, and `Status:`, which meant a lifecycle status in some bundles and
+*"closed by revision N"* in others. Both duplicated facts the index row and the
+tag already own, and both misled.
+
+`bin/verify-findings-headers.sh` enforces this. Fields that appear in one bundle
+and nowhere else are how a schema stops being one — seventeen distinct names
+across forty-one readings is what it looked like before there was one.
+
+### The Findings table
+
+Required. Finding numbers are **`F1`, `F2`** rather than bare digits, so a
+citation from `decisions.md` — *"Findings: F1, F3"* — means one thing.
+
+    ## Findings
+
+    | # | Finding | Status |
+    |---:|---|---|
+    | F1 | <the finding, as a sentence> | `framing` |
+
+Then one free-form section per finding, heading matching the row:
+`## F1 — <the finding>`.
+
+### `decisions.md`
+
+Two header fields — **`Bundle:`** and **`Recorded:`** — then the table.
+`Findings bundle:` meant the same as `Bundle:` in some files and is retired.
+
+    ## Decisions
+
+    | # | Decision | Findings | Decided | Outcome |
+    |---|---|---|---|---|
+    | D1 | <the decision, as a statement> | F1, F2 | <date> | `accepted` |
+    | D2 | <…> | F3 | <date> | `refined → D4` |
+
+**`Outcome`** is `accepted`, `rejected`, `refined → DX` or `superseded → DX`.
+**Any session may add a row or change an `Outcome` while the finding is
+`framing`**; from `decided` onward only the owner does.
+**A rejected or refined decision keeps its row and its section.** That is the
+record of what was considered, and deleting it leaves an assertion — a decision
+without its rejected alternatives is exactly what this document exists to
+prevent.
+
+**`Findings`** names the findings the decision answers, or `—` where the source
+never said. It is not inferred.
+
+Then one section per decision: `## D1 — <the decision>`, free form beneath.
+`Decided:` and `Rejected:` stay inside those sections as markers, not header
+fields.
+
+### `resolutions.md`
+
+Same two header fields, then:
+
+    ## Resolutions
+
+    | Finding | Resolved by | What was done | Revision | Commit |
+    |---|---|---|---|---|
+    | F1 | D1 | <what was actually done> | 198 | `4626eb4` |
+
+**`Resolved by` is the decision**, not the revision. **`Revision` and `Commit`
+are separate fields** because one can exist without the other: revisions before
+141 have no commit derivable from the log, since those messages describe the
+change rather than naming its number.
+
+A finding closed before this shape existed carries `—` in `Resolved by`; a
+withdrawn finding carries `—` throughout and owes no resolution.
+
+### `findings-manifest.md` and `metadata.md`
+
+    | # | Bundle | Kind | Subject | Findings | Status | Notes |
+
+`Bundle` is a link. `Kind` is one of `runbook`, `cross-cutting`,
+`instruction-set`, `session-management`. `Notes` is what this session owes the
+bundle.
+
+`metadata.md` carries `## Owners`, `## Environment`, `## Resources` and
+`## Contributions`, and its Owners table is
+`| From | Until | Assistant | Session id | Model | Environment |`.
+
+### The narrative files
+
+`prompt.md`, `handoff-<stamp>.md` and `final-summary.md` have **no schema** —
+they are narrative, and a rigid one produces empty headings. A required minimum
+only: a prompt names its reading order and its task; a handoff names what
+transfers, what is known broken, and what is owed; a final summary names every
+bundle the session owned and that bundle's disposal, by name.
+
+### Reformatting is not a change
+
+Bringing a file onto these shapes — renaming a field, reordering the header,
+moving an off-schema field into prose, adding a table built from what is already
+there — **is not an edit to the reading** and does not need `reopened`, even on a
+`resolved` or `superseded` bundle. What is frozen is the content. A revision that
+reformats says so, and says that nothing beneath the schema was touched.

@@ -1,9 +1,10 @@
 # `restore-repos.md` opens its boundary but never closes it
 
-**Found:** 2026-09-01, session `01KcZvrKMgfenhrT9DvxW9Jk`, while confirming the
+**Recorded:** 2026-09-01, session `01KcZvrKMgfenhrT9DvxW9Jk`, while confirming the
 evidence completeness map.
 **Severity:** the phase has no recorded finish line, and its promised delta is
 never taken.
+
 **Owner:** the Restore Repositories Refactor session.
 **Status: CLOSED** by Revision 131, 2026-09-02, same session — but not as 9a/9b/9c.
 `verify-runbook-structure.sh` parses `### Step N` with `$3 + 0`, so a lettered

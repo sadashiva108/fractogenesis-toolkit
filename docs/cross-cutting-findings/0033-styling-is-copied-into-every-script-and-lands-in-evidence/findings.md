@@ -3,14 +3,15 @@
 **Recorded:** 2026-09-04, `restore-apps-outstanding-20260903-000000`
 (`session_016EbjB7M527qEFqZFzpv2C9`), from the owner comparing this repository
 against `indigo`, which solved the same problem for its own outputs.
-**Relates to:** `0029` finding 2 — one rule written many times with nothing
-keeping it in step. This is that defect in values rather than in prose, and the
-copies have already drifted, which `0029`'s have not.
 **Severity:** finding 5 is high and is the reason this was written down. The rest
 is untidiness; finding 5 is escape codes inside dated evidence of a machine that
 no longer exists in that state.
 **Scope:** cross-cutting. The fix lands in `.internal/`, the authoring template,
 and the two report producers — shared machinery, felt in every script's output.
+**Relates to:** `0029` finding 2 — one rule written many times with nothing
+keeping it in step. This is that defect in values rather than in prose, and the
+copies have already drifted, which `0029`'s have not.
+
 **Also applies to `indigo`:** see *The principle already exists in the estate*.
 The reading holds there; the decisions may not, and are not assumed here.
 **Contributed to 2026-09-04** by `pre-image-capture-conformance-20260903-194532`
@@ -31,17 +32,17 @@ it. It waits for the owner to assign it, which will take it to `unresolved`.
 
 | # | Finding | Status |
 |---|---|---|
-| 1 | Seventeen scripts each define the palette; there is no shared source | `unclaimed` |
-| 2 | The authoring template prescribes the copy as policy | `unclaimed` |
-| 3 | The copies have already drifted, in three different directions | `unclaimed` |
-| 4 | Fourteen of seventeen emit colour regardless of where the output goes | `unclaimed` |
-| 5 | Forty-eight saved evidence artifacts carry raw ANSI escapes | `unclaimed` |
-| 6 | Nothing checks any of it | `unclaimed` |
-| 7 | `indigo`'s token fallbacks are a second copy, and five of six have already drifted | `unclaimed` |
+| F1 | Seventeen scripts each define the palette; there is no shared source | `unclaimed` |
+| F2 | The authoring template prescribes the copy as policy | `unclaimed` |
+| F3 | The copies have already drifted, in three different directions | `unclaimed` |
+| F4 | Fourteen of seventeen emit colour regardless of where the output goes | `unclaimed` |
+| F5 | Forty-eight saved evidence artifacts carry raw ANSI escapes | `unclaimed` |
+| F6 | Nothing checks any of it | `unclaimed` |
+| F7 | `indigo`'s token fallbacks are a second copy, and five of six have already drifted | `unclaimed` |
 
 ---
 
-## 1 — seventeen palettes, no source
+## F1 — seventeen palettes, no source
 
 `RED='\033[0;31m'` appears **17 times** across `bin/` and `.internal/`. So do
 `GRN`, `YEL`, `CYN`, `BLD`, `DIM` and `RST`, fifteen times each. Every one is a
@@ -55,7 +56,7 @@ The comparison that makes this legible: `indigo/ui/src/theme/tokens.css` states
 the alternative as a contract — *"Components reference these `var(--…)` names
 ONLY — never a raw hex."* This repository has the raw hex and no names.
 
-## 2 — the template prescribes the copy
+## F2 — the template prescribes the copy
 
 `.github/ai-templates/script-templates/bash-entrypoint.sh.tmpl` carries the
 palette inline as a commented block, and instructs:
@@ -68,7 +69,7 @@ The instruction's goal is right — runs should read consistently — and the
 mechanism guarantees the opposite over time, because consistency maintained by
 hand is consistency until someone edits one file.
 
-## 3 — they have already drifted
+## F3 — they have already drifted
 
 Three divergences, none of them decided anywhere:
 
@@ -82,7 +83,7 @@ The two `RED`-only scripts each pair it with an empty `RED=''` for a no-colour
 path, so they are not simply incomplete — they made a different choice about what
 colour is for, in a file nobody would think to compare against fifteen others.
 
-## 4 — colour is emitted regardless of destination
+## F4 — colour is emitted regardless of destination
 
 Of the seventeen, **three** check whether output is going to a terminal:
 `.internal/home/scan-archive-contents.sh`, `bin/assess-office-stability.sh`,
@@ -97,7 +98,7 @@ The template names this and treats it as acceptable:
 That is a defensible position for a log a human reads once. Finding 5 is what it
 turned into.
 
-## 5 — forty-eight evidence artifacts carry escape codes
+## F5 — forty-eight evidence artifacts carry escape codes
 
 Measured against the artifact volume, read-only:
 
@@ -125,7 +126,7 @@ is that the artifacts are no longer plain text. A grep for a filename in a
 coloured line can miss it, a diff between two runs shows escape changes as
 content changes, and anything that ingests these later has to know.
 
-## 6 — nothing checks any of it
+## F6 — nothing checks any of it
 
 No validator compares one script's palette against another's, none flags a
 producer that writes colour into a file, and none looks for escape codes in the
@@ -171,7 +172,7 @@ finding.
 
 ---
 
-## 7 — the fallbacks are a second copy, and they have drifted
+## F7 — the fallbacks are a second copy, and they have drifted
 
 Measured in `ui/src/styles.css` after the owner connected `indigo`, and it
 sharpens finding 3 rather than repeating it: the drift is not only in this

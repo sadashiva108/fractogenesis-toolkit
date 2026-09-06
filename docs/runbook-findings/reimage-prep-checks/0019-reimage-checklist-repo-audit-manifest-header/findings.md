@@ -1,8 +1,9 @@
 # Phase 6B records FAIL against a correct repository-audit manifest
 
-**Found:** 2026-09-01, session `01KcZvrKMgfenhrT9DvxW9Jk`, while checking what
+**Recorded:** 2026-09-01, session `01KcZvrKMgfenhrT9DvxW9Jk`, while checking what
 reads `repo-audit-reports/`.
 **Severity:** a Phase 6B gate reports the opposite of the truth.
+
 **Origin:** a Revision 120 loose end, not a new regression.
 **Status: CLOSED** by Revision 129, 2026-09-01, same session. Kept for the
 reasoning; the fix and its validation are in `APPLY-MANIFEST.md`.

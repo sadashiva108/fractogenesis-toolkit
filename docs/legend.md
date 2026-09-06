@@ -42,20 +42,43 @@ says how far a reading has been taken, never how anyone feels about it.
 
     withdrawn ◀── from any status except `resolved`
 
-**`un-started` and `reopened` behave identically and that is deliberate.** Both
-are invisible to every session but the owner, and the owner's first reading moves
-either to `framing`. The difference is only where they came from: one has never
-been read, the other has been read, decided, resolved, and called into question.
+### Awaiting a first read
+
+**Three statuses mean the same thing — nobody has looked at this yet — and behave
+identically.** They differ only in provenance:
+
+| | Where it came from |
+|---|---|
+| `un-started` | a finding, never read by anyone |
+| `reopened` | a finding, read and decided and resolved, then called into question |
+| `transferred` | a bundle, handed to a session that has not opened it |
+
+All three are **invisible to every session but the owner**, and **the owner's
+first reading moves them on**. A finding awaiting a first read becomes `framing`.
+A bundle that was `transferred` stops being an ownership row and derives from its
+findings — which, once the ones awaiting a read are `framing`, is `analyzing`.
+
+They are one idea with three origins, and treating them as three rules is what
+makes them look arbitrary. **Reading is the transition**; nothing else moves
+them, and no session but the owner can perform it.
 
 **`framing` is the long one.** It is not a staging post on the way to a decision;
 it is where the work happens, and it runs both ways. Rethinking a decision often
 means the problem statement was phrased wrong, so a finding in `framing` may have
 its wording refined and its decisions revised as one activity rather than two.
-Any session may record here, which is the thing that has repeatedly proved
-valuable: a second reader improves a reading.
 
-**`decided` narrows it to one hand.** Every decision is made, so a change now
-lands against reasoning already taken. Other sessions may still read it — that
+**Any session may record here, and that includes the decisions.** Not only
+sharpening the reading — a second session may **write a decision, reject one, or
+refine one** while the finding is `framing`. Deciding is not the owner's
+privilege; *closing* the deciding is. That is what `decided` marks, and it is the
+only thing it marks.
+
+This is the thing that has repeatedly proved valuable: a second reader improves a
+reading, and a second reader who disagrees with a decision improves it more.
+
+**`decided` narrows it to one hand**, and it is the owner's move to make. Every
+decision is made, so a change now lands against reasoning already taken — which
+is exactly what was open a moment earlier, while the finding was `framing`. Other sessions may still read it — that
 costs nothing and helps — but recording and resolving belong to the owner alone.
 `decided` is the enduring fact that decisions are complete; whether the owner is
 actively resolving at any given moment is not something a status should try to
@@ -76,7 +99,8 @@ makes the answer single-valued.
 
 | # | Status | When |
 |---:|---|---|
-| 1 | `unclaimed` | no session owns it — never assigned since creation, or released back to the queue. Never applies to a finding |
+| 1 | `unclaimed` | no session owns it — never assigned since creation, or released back to the queue |
+| 1b | `transferred` | handed to a named session that has not yet read it. Ownership has moved; the reading has not been picked up |
 | 2 | `superseded` | replaced whole by a later bundle, **from any status**. Declared, not derived. Bundles only |
 | 3 | `un-started` | every finding is `un-started` |
 | 4 | `withdrawn` | every finding is `withdrawn` |
@@ -84,9 +108,11 @@ makes the answer single-valued.
 | 6 | `reopened` | at least one finding is `reopened`, and every other finding is **inert** — `resolved` or `withdrawn` |
 | 7 | `analyzing` | any other combination |
 
-Rows 1 and 2 are the exceptions: `unclaimed` is about ownership rather than
-progress, and `superseded` is declared by the session that replaces the bundle.
-Rows 3 to 7 are read off the findings.
+Rows 1, 1b and 2 are the exceptions. `unclaimed` and `transferred` are about
+**ownership** rather than progress — one has no owner, the other has a new one
+who has not looked yet — and `superseded` is declared by the session that
+replaces the bundle. Rows 3 to 7 are read off the findings. Neither `unclaimed`
+nor `transferred` ever applies to a single finding.
 
 **A finding is inert when it is `resolved` or `withdrawn`** — finished, either
 way, with nothing outstanding. The other four are live.
@@ -131,6 +157,14 @@ is the superseding session's business.
 `reopened` alters a finding in place, one at a time, and only reaches what is
 `resolved`. **Replacing a reading is superseding; correcting a resolution is
 reopening.**
+
+**`transferred` is neither: it moves a bundle between sessions and changes
+nothing about the reading.** Unlike a session `handoff`, which moves everything a
+session holds and is a property of the session, a transfer moves **one bundle**
+and is a property of that bundle. The target session must already exist —
+created, cloned, or long running — because a transfer names a destination where a
+handoff creates one. A bundle may be transferred from `un-started`, `reopened` or
+`analyzing`; the terminal statuses have nothing to move.
 
 ### What another session may do
 

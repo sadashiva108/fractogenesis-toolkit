@@ -121,7 +121,11 @@ for dir in docs/*-findings/[0-9][0-9][0-9][0-9]-*/ docs/*-findings/*/[0-9][0-9][
     fail "$num  $(printf '%s' "$tags" | tr '\n' ' ')" "expected exactly one STATUS- tag, found ${count:-0}"
     continue
   fi
-  tag="$(printf '%s' "$tags" | sed 's/^STATUS-//; s/-/ /g')"
+  # The tag name after `STATUS-` IS the status, verbatim. It is not
+  # de-hyphenated: `un-started` is one hyphenated status name, and rewriting it
+  # to `un started` made this checker demand a status the legend does not
+  # define -- which is how six index rows came to hold one.
+  tag="$(printf '%s' "$tags" | sed 's/^STATUS-//')"
   index="$(dirname "${dir%/}")"
   while [ ! -f "$index/INDEX.md" ] && [ "$index" != "." ] && [ "$index" != "/" ]; do
     index="$(dirname "$index")"

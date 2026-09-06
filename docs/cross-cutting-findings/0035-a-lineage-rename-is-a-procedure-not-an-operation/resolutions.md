@@ -5,11 +5,11 @@
 
 One toolkit write: `artifact_run_rename_lineage` in `.internal/artifact-runs.sh`.
 
-| Finding | Decision | What was done |
-|---|---|---|
-| 1 — a rename is three manual acts with no operation | D1 | `artifact_run_rename_lineage` performs all five steps in the one order that leaves the category consistent |
-| 2 — recovery is one-way, so a half-done rename completes wrongly | D2 | **Corrected.** `artifact_runs_rebuild` is loud; `bin/reindex-artifact-runs.sh` is the silent one. The header now records the stale-pointer behaviour |
-| 3 — a run carries no lineage identity | D3 | **Not built.** D1 removes the need, and a marker cannot cover the case it exists for — a pre-existing run renamed by hand |
+| Finding | Resolved by | What was done | Revision | Commit |
+|---|---|---|---|---|
+| F1 — a rename is three manual acts with no operation | D1 | `artifact_run_rename_lineage` performs all five steps in the one order that leaves the category consistent | — | — |
+| F2 — recovery is one-way, so a half-done rename completes wrongly | D2 | **Corrected.** `artifact_runs_rebuild` is loud; `bin/reindex-artifact-runs.sh` is the silent one. The header now records the stale-pointer behaviour | — | — |
+| F3 — a run carries no lineage identity | D3 | **Not built.** D1 removes the need, and a marker cannot cover the case it exists for — a pre-existing run renamed by hand | — | — |
 
 ## The operation
 

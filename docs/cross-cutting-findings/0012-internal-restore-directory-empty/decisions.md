@@ -9,6 +9,14 @@ it is not. Deciding against the uncorrected text would have produced the wrong
 answer — a `.gitkeep`, creating the tracked empty directory the finding was
 written to complain about.
 
+## Decisions
+
+| # | Decision | Findings | Decided | Outcome |
+|---|---|---|---|---|
+| D1 | Fix the sentence, not the directory | — | 2026-09-04 | `accepted` |
+| D2 | The empty directory is removed locally, and that is not a repository change | — | 2026-09-04 | `accepted` |
+| D3 | `reimaging-scripts-guide.md`'s tree is a separate finding, and is bigger than this one | — | 2026-09-04 | `accepted` |
+
 ## D1 — Fix the sentence, not the directory
 
 `.internal/artifact-runs.sh` line 71 says its callers span `restore/`, `home/`

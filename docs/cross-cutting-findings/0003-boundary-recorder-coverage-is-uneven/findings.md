@@ -1,6 +1,9 @@
 # The boundary-recorder family is applied unevenly across the phases it covers
 
-**Found:** 2026-09-01, session `01KcZvrKMgfenhrT9DvxW9Jk`, item 2.
+**Recorded:** 2026-09-01, session `01KcZvrKMgfenhrT9DvxW9Jk`, item 2.
+**Severity:** not a defect in any one phase. The question was whether the family
+is a convention or a set of one-offs.
+
 **Reframed:** 2026-09-02, after the owner confirmed Phase 12 is unfinished and
 not running its exit was deliberate.
 **Status: CLOSED** by Revisions 136 and 137, 2026-09-02. Decision 1 answered
@@ -11,8 +14,6 @@ added `restore-home` at both ends, so the chain now runs
 **10A → 10B → 11A → 11B → 12 → 15**. `restore-intellij` and `restore-docker`
 deliberately have none: they are expanded sections of `restore-apps.md`, not
 phases. Kept for the reasoning.
-**Severity:** not a defect in any one phase. The question was whether the family
-is a convention or a set of one-offs.
 **Decision 1 answered 2026-09-02: it is a convention, and the chain closes at
 both ends.** Decision 2 remains open and is deliberately blocked on
 `restore-apps.md` being finished.

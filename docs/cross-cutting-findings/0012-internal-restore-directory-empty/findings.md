@@ -1,6 +1,6 @@
 # `.internal/restore/` is empty, and is not tracked
 
-**Found:** 2026-09-01, session `01KcZvrKMgfenhrT9DvxW9Jk`.
+**Recorded:** 2026-09-01, session `01KcZvrKMgfenhrT9DvxW9Jk`.
 **Severity:** trivial. Recorded so it is not rediscovered.
 
 **Corrected for accuracy 2026-09-04**, by the session that recorded it, while the

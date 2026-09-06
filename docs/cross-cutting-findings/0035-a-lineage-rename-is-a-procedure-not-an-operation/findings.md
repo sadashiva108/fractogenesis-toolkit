@@ -3,26 +3,26 @@
 **Recorded:** 2026-09-04, `pre-image-capture-conformance-20260903-194532`
 (`session_01PcgHu9kz9Hm5RatLQuFR8H`), from the owner asking what keeps a run
 directory and its manifest row in step during a rename.
-**Relates to:** `0030` — that bundle decided what a rename must *record* (D7) and
-that detection waits on those records (D8). This is the third question: what
-performs the rename, and what happens when it half-happens.
 **Severity:** low today and self-inflicting. The volume is currently consistent —
 162 manifest rows, 162 run directories, exact correspondence, no dangling
 pointers. Every future rename is an opportunity to break that by hand.
 **Scope:** cross-cutting. `.internal/artifact-runs.sh`,
 `bin/reindex-artifact-runs.sh`, and every category that is ever renamed.
+**Relates to:** `0030` — that bundle decided what a rename must *record* (D7) and
+that detection waits on those records (D8). This is the third question: what
+performs the rename, and what happens when it half-happens.
 
 ## Findings
 
 | # | Finding | Status |
 |---:|---|---|
-| 1 | A rename is three manual acts with no defined order and no operation that performs them | `un-started` |
-| 2 | Recovery runs one way, so a half-done rename is silently completed in the wrong direction | `un-started` |
-| 3 | A run directory does not carry its own lineage identity, though the pin precedent shows how | `un-started` |
+| F1 | A rename is three manual acts with no defined order and no operation that performs them | `un-started` |
+| F2 | Recovery runs one way, so a half-done rename is silently completed in the wrong direction | `un-started` |
+| F3 | A run directory does not carry its own lineage identity, though the pin precedent shows how | `un-started` |
 
 ---
 
-### 1 — three acts, no operation
+### F1 — three acts, no operation
 
 Renaming a lineage means: move the run directories under `runs/`, get the
 manifest to describe the new name, and refresh `official/`. Nothing in
@@ -37,7 +37,7 @@ decided what the row is. Nothing has decided what the *procedure* is, and a
 four-step procedure with no defined order is a procedure that will be done in
 different orders.
 
-### 2 — recovery is one-way, so a half-done rename completes itself wrongly
+### F2 — recovery is one-way, so a half-done rename completes itself wrongly
 
 The two repair commands regenerate in opposite directions, and neither treats the
 other as authoritative:
@@ -64,7 +64,7 @@ name wins**. Two consequences, and both are silent:
 There is no order that is safe by construction — only an order that happens to be
 recoverable, and nothing states which it is.
 
-### 3 — the run does not carry its own identity, and the pin shows the shape
+### F3 — the run does not carry its own identity, and the pin shows the shape
 
 `.internal/artifact-runs.sh` already solved this once, for pins, and its header
 says why:

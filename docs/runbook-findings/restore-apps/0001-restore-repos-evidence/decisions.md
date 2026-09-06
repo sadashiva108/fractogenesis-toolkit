@@ -6,6 +6,14 @@ has not been decided.
 
 ---
 
+## Decisions
+
+| # | Decision | Findings | Decided | Outcome |
+|---|---|---|---|---|
+| D1 | the work succeeded and nothing is owed | F1 | — | `accepted` |
+| D2 | verify, do not remember (option E) | F1 | — | `accepted` |
+| D3 | `unknown` when the source is unreachable (option D) | F1 | — | `accepted` |
+
 ## Finding 1 — the official run reports `repo-secrets` as blocked
 
 ### The evidence that settles it
@@ -27,10 +35,11 @@ rather than assuming a shape — the first attempt at this check looked for `.en
 files and would have reported `ingestion` missing, because its secrets are
 `ci/credentials.yml` and two `application-ncube-client.yml`.
 
-**Decision 1.1 — the work succeeded and nothing is owed.** Finding 1 is a
-reporting defect, not lost work. Step 6 did what it claims; the run that says
-otherwise is `post-image-restore-20260903-004412`, and it is wrong about the
-past rather than about the machine.
+## D1 — the work succeeded and nothing is owed
+
+Finding 1 is a reporting defect, not lost work. Step 6 did what it claims; the
+run that says otherwise is `post-image-restore-20260903-004412`, and it is wrong
+about the past rather than about the machine.
 
 ### How the fix was chosen
 
@@ -43,9 +52,10 @@ out the two that had looked strongest.
 | **B — carry outcomes forward in `hydrated.md`**, as `.internal/sign-offs.sh` does for human answers | Destroys the one property that makes the file worth having: that it says what *a single run* did. A stage that genuinely re-blocked would read clean |
 | **C — a cumulative phase-state file** beside `repo-restore-index.md` | Not wrong, and more machinery than the problem needs once E is available. May still have something to offer finding 3; not needed for this one |
 
-**Decision 1.2 — verify, do not remember (option E).** A stage's outcome is
-re-derivable from its source and its destination, and this holds for every stage
-the phase runs:
+## D2 — verify, do not remember (option E)
+
+A stage's outcome is re-derivable from its source and its destination, and this
+holds for every stage the phase runs:
 
 | Stage | Source | Re-derivable |
 |---|---|---|
@@ -63,8 +73,9 @@ misses — a file that exists but differs.
 The rerun at Step 9 then stops destroying the record, because there is no
 remembered record to destroy. The answer is re-derived, correctly, every time.
 
-**Decision 1.3 — `unknown` when the source is unreachable (option D).** A run
-that cannot reach the image reports *not evaluated*, not *evaluated and
+## D3 — `unknown` when the source is unreachable (option D)
+
+A run that cannot reach the image reports *not evaluated*, not *evaluated and
 unavailable*. It stops the record asserting something false in the one situation
 where it cannot know.
 
@@ -81,8 +92,8 @@ The full set after this finding is resolved:
 |---|---|
 | `hydrated` | the source's files are in the destination |
 | `would-hydrate` | `--dry-run`; this is what would be done |
-| `missing` | the source has files the destination does not — **new**, and only expressible under decision 1.2 |
-| `unknown` | the source is unreachable, so nothing can be said — **new**, decision 1.3 |
+| `missing` | the source has files the destination does not — **new**, and only expressible under D2 |
+| `unknown` | the source is unreachable, so nothing can be said — **new**, D3 |
 | `pending` | the repository is not cloned, so there is nowhere to merge |
 | `skipped` | there is no source for this key, which is normal |
 

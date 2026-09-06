@@ -1,9 +1,6 @@
 # Sessions write into the tree the owner commits from
 
-**Relates to:** [`0028`](../../cross-cutting-findings/0028-sessions-write-into-the-tree-the-owner-commits-from/) — **supersedes it.**
-The original stands untouched at `docs/cross-cutting-findings/0028-sessions-write-into-the-tree-the-owner-commits-from/`, still listed by the session
-that held it. Authority for this reading lives here.
-**Found:** 2026-09-03, session `session_019yzcjm2QneJ5ymVEQDi1bu`, on the owner's
+**Recorded:** 2026-09-03, session `session_019yzcjm2QneJ5ymVEQDi1bu`, on the owner's
 observation that a session should hold its changes until told to release them.
 Read: the day's own working tree, `git status` and `git log` across the two
 concurrent sessions, `docs/ideas/knowing-when-it-is-safe-to-write.md`,
@@ -14,6 +11,9 @@ checked for overlap.
 damage is to what the record can be trusted to mean.
 **Scope:** cross-cutting. Tracked files only; the artifact volume is out of scope
 and finding 6 says why.
+**Relates to:** [`0028`](../../cross-cutting-findings/0028-sessions-write-into-the-tree-the-owner-commits-from/) — **supersedes it.**
+The original stands untouched at `docs/cross-cutting-findings/0028-sessions-write-into-the-tree-the-owner-commits-from/`, still listed by the session
+that held it. Authority for this reading lives here.
 
 ## What is not the problem
 
@@ -35,12 +35,12 @@ and that is not what was found.
 
 | # | Finding | Status |
 |---|---|---|
-| 1 | Two sessions' uncommitted work interleaves in shared files, so neither can be committed alone | `reopened` — 1.1, see `resolutions.md` |
-| 2 | A revision's claimed validator baselines are measured on a tree containing another session's work | `reopened` |
-| 3 | A session's work has no diff boundary, so the owner cannot review it as a unit | `reopened` |
-| 4 | Backing out one session's change is surgical, because `git checkout` would take the other's too | `reopened` |
-| 5 | A session can amend a revision the owner has already committed | `reopened` |
-| 6 | The write discipline does not distinguish the write kinds `docs/legend.md` now names | `reopened` — 6.1, see `resolutions.md` |
+| F1 | Two sessions' uncommitted work interleaves in shared files, so neither can be committed alone | `reopened` — 1.1, see `resolutions.md` |
+| F2 | A revision's claimed validator baselines are measured on a tree containing another session's work | `reopened` |
+| F3 | A session's work has no diff boundary, so the owner cannot review it as a unit | `reopened` |
+| F4 | Backing out one session's change is surgical, because `git checkout` would take the other's too | `reopened` |
+| F5 | A session can amend a revision the owner has already committed | `reopened` |
+| F6 | The write discipline does not distinguish the write kinds `docs/legend.md` now names | `reopened` — 6.1, see `resolutions.md` |
 
 Findings 1 and 2 are the high ones. The revision-number collision that prompted
 the day's investigation is **not** a finding here — it is recorded in
@@ -49,7 +49,7 @@ shapes for fixing it. This bundle is the reading of what the shared working tree
 costs; that idea is one proposal against it. They should be read together and
 resolved together.
 
-### 1 — two sessions' work interleaves in files neither owns alone
+### F1 — two sessions' work interleaves in files neither owns alone
 
 Observed 2026-09-03. Both sessions edited `APPLY-MANIFEST.md` and
 `docs/sessions/INDEX.md` in the same sitting, without conflict and without either
@@ -75,7 +75,7 @@ these two files can be kept off. Every session writes a manifest entry, and ever
 session bundle has a row in the index, so on those two the shapes degrade to
 *wait your turn*, which is a schedule rather than a mechanism.
 
-### 2 — a revision's validation is measured on somebody else's tree
+### F2 — a revision's validation is measured on somebody else's tree
 
 Every `APPLY-MANIFEST.md` entry ends with a validation block: doc-path counts,
 runbook structure counts, portability counts. The convention is that those numbers
@@ -105,7 +105,7 @@ option **(iii)** — stop quoting an `OK` baseline in session briefs, track only
 finding without addressing it. Whoever decides this bundle should decide that
 option with it.
 
-### 3 — no diff boundary, so no unit to review
+### F3 — no diff boundary, so no unit to review
 
 The owner's review surface for a session's work is `git status` and `git diff` on
 a mixed tree. There is no artifact that says *these are the changes this session
@@ -117,7 +117,7 @@ This is what makes the owner's stated preference — draft first, write on the
 word — unenforceable today. A session that writes as it goes has already spent
 the reviewable moment by the time it reports.
 
-### 4 — backing out is surgical
+### F4 — backing out is surgical
 
 Revision 156 of this session substituted `bookend` for `checklist` in fourteen
 places that should not have changed, one of which — `restore-repos.md:695`,
@@ -130,7 +130,7 @@ correct substitutions in the same files, and by then the concurrent session was
 also writing. A session's mistake is only cheaply revertible while its changes are
 separable from everyone else's.
 
-### 5 — a session can amend what the owner has already committed
+### F5 — a session can amend what the owner has already committed
 
 Also 2026-09-03: this session amended Revision 150 while the owner was committing,
 having read the manifest before their commit landed. It was backed out and written
@@ -141,7 +141,7 @@ writing into the tree the owner commits from is writing into a moving target, an
 the window between reading a file and writing it is exactly the window in which
 the owner's commit happens.
 
-### 6 — the write kinds are named but the discipline is not
+### F6 — the write kinds are named but the discipline is not
 
 Revision 169 gave `docs/legend.md` three categories: a **record write** under
 `docs/`, ungated; a **toolkit write** to any other tracked file, gated on

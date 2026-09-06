@@ -1,7 +1,8 @@
 # `repos.tsv` remote column is shifted by embedded tabs
 
-**Found:** 2026-09-01, session `01KcZvrKMgfenhrT9DvxW9Jk`, while planning item 1.
+**Recorded:** 2026-09-01, session `01KcZvrKMgfenhrT9DvxW9Jk`, while planning item 1.
 **Severity:** blocks Phase 11B's entire automated path.
+
 **Owner:** the Restore Repositories Refactor session.
 **Status: CLOSED** by Revision 131, 2026-09-02, same session. Both defects on
 that line are fixed forward — the embedded tabs *and* the cycling `paste -sd '; '`

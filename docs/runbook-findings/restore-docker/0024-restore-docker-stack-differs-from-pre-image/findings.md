@@ -1,9 +1,10 @@
 # The running Docker stack is not the one `restore-docker.md` restores
 
-**Found:** 2026-09-02, comparing a fresh post-image Docker capture against the
+**Recorded:** 2026-09-02, comparing a fresh post-image Docker capture against the
 pre-image inventory.
 **Severity:** planning input for Phase 12. `restore-docker.md` Steps 6–10
 describe a stack that is not on this machine.
+
 **Owner:** the repository owner, at `restore-docker.md`.
 
 ## The two stacks

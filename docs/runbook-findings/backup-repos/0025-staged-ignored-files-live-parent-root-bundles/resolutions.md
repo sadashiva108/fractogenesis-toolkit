@@ -7,9 +7,9 @@
 re-deriving it* — and proposed no code change. The answer is recorded in
 `decisions.md` and nothing was changed anywhere.
 
-| Finding | Resolved by | What was done |
-|---|---|---|
-| `staged-ignored-files/live/` holds two bundles no lookup can reach | `decisions.md` D1–D4 | Both directories opened on the volume and classified; decided that nothing in either is restored, that the labelling is correct by design, and that no producer change is owed |
+| Finding | Resolved by | What was done | Revision | Commit |
+|---|---|---|---|---|
+| F1 — `staged-ignored-files/live/` holds two bundles no lookup can reach | `decisions.md` D1–D4 | Both directories opened on the volume and classified; decided that nothing in either is restored, that the labelling is correct by design, and that no producer change is owed | — | — |
 
 ## The count, for whoever asks it next
 

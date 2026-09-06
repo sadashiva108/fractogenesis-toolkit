@@ -1,11 +1,12 @@
 # Two recorders still tell you your own phase is unsupported
 
-**Found:** 2026-09-01, session `01KcZvrKMgfenhrT9DvxW9Jk`, item 2.
+**Recorded:** 2026-09-01, session `01KcZvrKMgfenhrT9DvxW9Jk`, item 2.
+**Severity:** low to fix, high to hit — it turns a working command into an error
+message at the moment an operator is following a runbook.
+
 **Status: CLOSED** by Revision 136, 2026-09-02. Both scripts now derive every
 message from one `SUPPORTED_RUNBOOKS` string, the shape `record-restore-state.sh`
 already used. Kept for the reasoning.
-**Severity:** low to fix, high to hit — it turns a working command into an error
-message at the moment an operator is following a runbook.
 
 ## What is wrong
 

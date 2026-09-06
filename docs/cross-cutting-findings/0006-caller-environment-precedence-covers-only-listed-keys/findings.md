@@ -1,7 +1,9 @@
 # Caller-environment precedence holds only for the keys `artifact-config.sh` lists
 
-**Found:** 2026-09-02, Restore Repositories Refactor session, while smoke-testing
+**Recorded:** 2026-09-02, Restore Repositories Refactor session, while smoke-testing
 the blank-`GIT_PERSONAL_GITHUB_OWNER` path in `bin/restore-repos.sh`.
+**Severity:** low, but it made a documented rule untrue for most keys.
+
 **Status: CLOSED** by Revision 136, 2026-09-02 — option three, scoped. Caller
 values for every key `reimage.env` sets are captured before sourcing and
 re-applied after, by **set-ness** rather than non-emptiness, so
@@ -9,7 +11,6 @@ re-applied after, by **set-ness** rather than non-emptiness, so
 `artifact-config.sh` resolves by name keep their `:-` semantics so a blank export
 cannot erase a default, and the header documents that exception instead of
 claiming an unqualified rule. Verified across five cases against a fixture.
-**Severity:** low, but it made a documented rule untrue for most keys.
 **Owner:** unassigned — `.internal/artifact-config.sh` belongs to neither current
 session's file set.
 

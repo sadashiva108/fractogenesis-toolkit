@@ -1,6 +1,6 @@
 # Decisions — sessions write into the tree the owner commits from
 
-**Findings bundle:** `0028` · **Status when opened:** `in progress`, 2026-09-04.
+**Bundle:** `0028` · **Status when opened:** `in progress`, 2026-09-04.
 **Status now:** `resolved` — what was done is in `resolutions.md`.
 **Owner:** `restore-apps-outstanding-20260903-000000`.
 
@@ -23,11 +23,20 @@ from those three, not from reasoning about them.
 
 ---
 
+## Decisions
+
+| # | Decision | Findings | Decided | Outcome |
+|---|---|---|---|---|
+| D1 | a session composes its changes in a copy of the repository outside the connected folder, runs the validators there against its own change alone, and hands the owner a patch | F1 | 2026-09-04 | `accepted` |
+| D2 | no separate decision | F2 | — | `accepted` |
+| D3 | an entry is composed with its number left open and numbered when the patch is applied | F5 | 2026-09-04 | `accepted` |
+| D4 | the three write categories continue to answer *when* a write is allowed. *Where* it is composed becomes its own rule, applying to all three | F6 | 2026-09-04 | `accepted` |
+
 ## Finding 1 — compose outside the tree, hand over a patch
 
-**Decision 1.1 — a session composes its changes in a copy of the repository
-outside the connected folder, runs the validators there against its own change
-alone, and hands the owner a patch.** Owner, 2026-09-04.
+## D1 — a session composes its changes in a copy of the repository outside the connected folder, runs the validators there against its own change alone, and hands the owner a patch
+
+Owner, 2026-09-04.
 
 ### The evidence, from three revisions run this way
 
@@ -79,11 +88,12 @@ is a real cost of the decision, recorded rather than argued away.
 
 ---
 
-## Findings 2, 3 and 4 — carried by decision 1.1
+## Findings 2, 3 and 4 — carried by D1
 
-**Decision 2.1 — no separate decision.** These three are consequences of the
-shared working tree rather than defects with fixes of their own, and decision 1.1
-removes the tree they depend on.
+## D2 — no separate decision
+
+These three are consequences of the shared working tree rather than defects with
+fixes of their own, and D1 removes the tree they depend on.
 
 - **2, validation attribution.** The validators run in the copy, which contains
   one session's change. Three revisions have now reported numbers that belong to
@@ -103,8 +113,9 @@ removes the tree they depend on.
 
 ## Finding 5 — the revision number is taken at apply time
 
-**Decision 5.1 — an entry is composed with its number left open and numbered when
-the patch is applied.** Owner, 2026-09-04.
+## D3 — an entry is composed with its number left open and numbered when the patch is applied
+
+Owner, 2026-09-04.
 
 The collision has a precise cause: **an uncommitted entry is not in the header
 the other session reads.** Both sessions followed *re-read the header and take
@@ -148,8 +159,7 @@ file the owner is committing from.
 
 ## Finding 6 — composition is a separate rule from permission
 
-**Decision 6.1 — the three write categories continue to answer *when* a write is
-allowed. *Where* it is composed becomes its own rule, applying to all three.**
+## D4 — the three write categories continue to answer *when* a write is allowed. *Where* it is composed becomes its own rule, applying to all three
 Owner, 2026-09-04.
 
 Every write — record, toolkit or evidence — is composed in a copy of the

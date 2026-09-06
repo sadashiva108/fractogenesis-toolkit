@@ -1,6 +1,6 @@
 # `restore-git.md` Step 0a names two rows the recorder no longer emits
 
-**Found:** 2026-09-04, session `session_01KcZvrKMgfenhrT9DvxW9Jk`, while deciding
+**Recorded:** 2026-09-04, session `session_01KcZvrKMgfenhrT9DvxW9Jk`, while deciding
 `0005` — the pointer for `restore-git-entry` was moving to a run whose FAIL
 turned out to be the expected state rather than a defect.
 **Severity:** the runbook tells the reader to read a row twice that will never

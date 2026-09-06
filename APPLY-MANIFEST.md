@@ -1,4 +1,6 @@
 # Apply Manifest
+**Revision 201** — supersedes Revision 200 and earlier. The six files every session reads get a stated schema and a checker that enforces it, `transferred` joins the status model, and three checkers are found wrong — one of them after the tree had already been edited to satisfy it.
+
 **Revision 200** — supersedes Revision 199 and earlier. The session management instruction set and the legend become project-agnostic and measurably so, the supersession procedure lost in Revision 198 is restored, and every bundle, manifest and index is brought onto the statuses the legend defines — including five open bundles a closed session was still holding.
 
 **Revision 199** — Brought back the original findings bundles:
@@ -530,6 +532,138 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
 
 ---
+
+## Revision 201 — the conformed files get a schema, a bundle can be transferred, and three checkers were wrong
+
+Six files that every session reads had six shapes between them. This revision
+gives `findings.md`, `decisions.md`, `resolutions.md`, `findings-manifest.md`,
+`metadata.md` and the indexes a stated schema, retrofits ninety-odd existing
+files onto it without touching a sentence of their prose, and adds the status
+that was missing from the model.
+
+### The `findings.md` header is a schema, and a checker enforces it
+
+Forty-one readings carried **seventeen distinct header field names**. `Found:`
+and `Recorded:` meant the same thing. `Owner:` held *"unassigned"* in one bundle
+and a file path in another. `Status:` meant a lifecycle status in some and
+*"closed by revision N"* in others — both duplicating what the index row and the
+`STATUS-` tag already own.
+
+The schema is five fields: **`Recorded:` and `Severity:` required**, **`Felt at:`,
+`Scope:` and `Relates to:` optional**, and **nothing else in the header**.
+`Scope:` is optional deliberately — requiring it would mean inventing one for
+every reading that never had it, and a schema that forces invention is worse than
+none. `Owner:` and `Status:` are retired and must not come back.
+
+`bin/verify-findings-headers.sh` is new and enforces it: **205 checks, 0
+failures.**
+
+### Findings are `F1`, decisions are `D1`, and a citation now means one thing
+
+Finding rows are numbered `F1`, `F2`; decision sections are `## D1 — …` with a
+Decisions table above them; resolution rows name the finding as `F1 — <text>` and
+the decision that resolved it. `0001`'s `decisions.md` cited *"decision 1.2"* in
+prose — those citations were rewritten to `D2`, `D3` and now resolve.
+
+`decisions.md` gains an **`Outcome`** column: `accepted`, `rejected`,
+`refined → DX`, `superseded → DX`. **A rejected decision keeps its row and its
+section.** Deleting it leaves an assertion, and a decision without its rejected
+alternatives is exactly what these files exist to prevent.
+
+`resolutions.md` gains **`What was done`, `Revision` and `Commit`** beside
+`Resolved by`, which is now the decision rather than a mix of decision, revision
+and commit in one cell.
+
+### `transferred`
+
+**One bundle moves from one session to another.** A `handoff` moves everything a
+session holds and is a property of the session; a transfer moves one bundle and
+is a property of the bundle. The target session must already exist — a handoff
+creates its destination, a transfer names one.
+
+`transferred` joins `un-started` and `reopened` as the third status meaning
+*nobody has looked at this yet*. All three are invisible to every session but the
+owner, and **the owner's first reading is the transition** out of all three. They
+are one idea with three origins, and the legend now says so in one place instead
+of three.
+
+It enters the derivation ladder at row 1b, beside `unclaimed`: both are about
+**ownership** rather than progress — one has no owner, the other has a new one
+who has not looked yet. Neither ever applies to a single finding.
+
+**Transferring part of a bundle is not supported.** The need is real and has
+arisen twice. `docs/architecture/transferring-part-of-a-bundle.md` records three
+options and what each costs, and chooses none, because the choice turns on a
+question nobody has answered: *is a bundle a unit of ownership, or a unit of
+reading?*
+
+### Deciding is not the owner's privilege; closing the deciding is
+
+The clarification that `framing` is open to every session was stated for the
+reading and not for the decisions. It covers both: **any session may write a
+decision, reject one, or refine one while the finding is `framing`.** A second
+reader improves a reading; a second reader who disagrees with a decision improves
+it more. `decided` marks that the deciding is closed, it is the owner's move to
+make, and that is the only thing it marks.
+
+### Three checkers were wrong, and one of them had been obeyed
+
+Found while validating this revision rather than by reading it:
+
+| Checker | The defect | Consequence |
+|---|---|---|
+| `verify-findings-structure.sh` | `sed 's/^STATUS-//; s/-/ /g'` de-hyphenated the tag, so `STATUS-un-started` read as `un started` | It demanded a status the legend does not define — **and Revision 200 changed ten index rows to satisfy it.** Those rows now read `un-started` and the checker reads the tag verbatim |
+| `verify-findings-counts.sh` | matched finding rows as `\| <digits> \|` only | Blind to every row the new `F1` numbering produces |
+| the manifest retrofit | appended a `Notes` column by adding ` — \| — \|` to the row | The stray `—` landed **inside the Status cell** on 17 rows across three manifests. Cell counts stayed correct, so the shape checker passed a table whose content was wrong |
+
+The first is the more instructive. **A checker that is wrong does not stay wrong
+on its own** — it gets obeyed, and the tree is edited to fit it. Ten rows were
+edited to match a status name a `sed` expression invented.
+
+### The retrofit changed no content, and that was measured
+
+Ninety-four files, retrofitted by transformer. Every table cell present before
+the change was checked for survival afterwards, by string comparison rather than
+by eye. **Twelve cells came back as missing; ten were the revision number,
+relocated to the column that now holds it. Two were real losses** — `0005`'s
+*"D2's point-rule correction, D3's rebuild flagging, D4's standing rule, D5's
+`--note`"* and `0012`'s *"D1's sentence rewrite in `.internal/artifact-runs.sh`"*
+— dropped when a three-column table became five. Both are restored.
+
+The six superseded originals are reformatted onto the schema and not otherwise
+edited. Under the owner's rule that a reformat is not an edit while the
+underlying data is unchanged, their index note — *"reading retained here
+unedited"* — still holds.
+
+### Also
+
+- `docs/legend.md` carries `transferred`, the *Awaiting a first read* table, and
+  the `framing` clarification.
+- `.github/session-management-instructions.md` gains §10 (transferring a bundle)
+  and §11 (the header schema and the three file schemas), and its
+  commit-message rules are corrected: **the block handed over is the message and
+  nothing else** — no `git commit`, no `-m`, no shell around it, because the
+  owner pastes it into an editor and a command in the block is something they
+  have to delete first.
+- The prompts at `$REIMAGE_WORKSPACE_ROOT/session-prompts/` and the
+  project-agnostic `copilot-instructions-template.md` are updated outside this
+  repository and are not part of this revision.
+
+### Validators
+
+| Checker | Result |
+|---|---|
+| `verify-findings-headers.sh` | 205 OK, 0 FAIL — new |
+| `verify-findings-structure.sh` | 50 OK, 0 FAIL |
+| `verify-findings-counts.sh` | 49 OK, 0 FAIL |
+| `verify-doc-paths.sh --all` | 776 OK, 1108 anchors, 0 broken |
+| `verify-script-portability.sh` | clean |
+| `verify-runbook-structure.sh` | 25 — the standing baseline, unchanged |
+
+**Still owed: `/bin/bash -n` under real macOS Bash 3.2.** This session's shell is
+Linux Bash 5.1 with GNU coreutils. The portability lint catches the constructs
+`-n` cannot see; the two are complements and only one has been run, for Revisions
+116 onward.
 
 ## Revision 200 — the reusable half is made reusable, and the tree is brought onto the new vocabulary
 

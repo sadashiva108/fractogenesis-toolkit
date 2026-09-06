@@ -28,7 +28,7 @@ Bash 5.1 with GNU coreutils, where `mapfile`, `declare -A`, `sed -i` and
 session wrote (160–165) and for Revisions 116–159 before it.** Nothing this
 session validated was validated on the target platform.
 
-## Resources it worked against
+## Resources
 
 | What | Path |
 |---|---|
@@ -39,7 +39,7 @@ session validated was validated on the target platform.
 All three were read-only for the whole session except the repository working
 tree. Nothing on the artifact volume was modified.
 
-## Contributions so far
+## Contributions
 
 Revisions 160 through 165, uncommitted at the time of writing except Revisions
 160–163, which shipped as `e13f59d`. Finding bundle `0001`.

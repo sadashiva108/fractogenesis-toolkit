@@ -47,7 +47,7 @@ from it — refreshed to `8f1ce13` on 2026-09-03, after Revision 177 landed. The
 The copy is session-local scratch and dies with the session: unapplied work is
 lost if the session ends unexpectedly.
 
-## Resources it worked against
+## Resources
 
 | What | Path |
 |---|---|
@@ -59,7 +59,7 @@ The artifact root is **read-only to this session** and was not connected, read o
 written. The workspace root likewise. Nothing outside `docs/` is written by this
 session at all.
 
-## Contributions so far
+## Contributions
 
 None. This session is a reading session: its output is a report in the
 conversation and this bundle.

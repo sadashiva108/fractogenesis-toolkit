@@ -1,13 +1,14 @@
 # `content-scans/` looks like a run category and is not one
 
-**Found:** 2026-09-02, session `01KcZvrKMgfenhrT9DvxW9Jk`, during the runbook layout pass.
+**Recorded:** 2026-09-02, session `01KcZvrKMgfenhrT9DvxW9Jk`, during the runbook layout pass.
+**Severity:** low to hit, moderate to leave — it is the last place in the tree where
+`latest-run.txt` is the right answer, which makes the rule "never follow a
+`latest-*.txt`" untrue by exactly one exception.
+
 **Status: CLOSED** by Revision 141, 2026-09-02. The runs moved up into
 `loose-secrets-reports/runs/`, the category's `official/` now answers for them,
 and `latest-run.txt` and `content-scans/` are gone. Kept for the reasoning, and
 for what the conversion turned up.
-**Severity:** low to hit, moderate to leave — it is the last place in the tree where
-`latest-run.txt` is the right answer, which makes the rule "never follow a
-`latest-*.txt`" untrue by exactly one exception.
 
 ## What is wrong
 

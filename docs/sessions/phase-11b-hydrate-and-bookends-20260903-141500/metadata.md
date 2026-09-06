@@ -74,7 +74,7 @@ Nothing this session validated was validated on the target platform. The
 portability lint catches the runtime constructs `-n` cannot see; the two are
 complements, and only one of them has been run.
 
-## Resources it worked against
+## Resources
 
 | What | Path |
 |---|---|

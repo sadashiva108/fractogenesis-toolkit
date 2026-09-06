@@ -1,6 +1,6 @@
 # Renaming a lineage silently breaks every citation already written
 
-**Found:** 2026-09-01, session `01KcZvrKMgfenhrT9DvxW9Jk`, item 2.
+**Recorded:** 2026-09-01, session `01KcZvrKMgfenhrT9DvxW9Jk`, item 2.
 **Severity:** low today, structural for items 3 and 4 — both propose renaming
 lineages.
 

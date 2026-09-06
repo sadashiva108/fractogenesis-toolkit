@@ -3,7 +3,16 @@
 **Bundle:** `0032-index-and-manifest-tables-have-a-shape-nothing-checks` · **Status:** `in progress`
 **Decided:** 2026-09-04, session `session_01PcgHu9kz9Hm5RatLQuFR8H`, owner
 present. Held at the owner's word until `0029`'s decisions landed, because
-`0029` decision 3.1 names this bundle.
+`0029` D3 names this bundle.
+
+## Decisions
+
+| # | Decision | Findings | Decided | Outcome |
+|---|---|---|---|---|
+| D1 | One new validator, `bin/verify-findings-structure.sh` | — | 2026-09-04 | `accepted` |
+| D2 | `verify-doc-paths.sh` is not changed, and the reason is finding 2's point | — | 2026-09-04 | `accepted` |
+| D3 | The bundle stays in `docs/session-management-findings/`, and the two tests disagree | — | 2026-09-03 | `accepted` |
+| D4 | Finding 4 cannot be fixed in this repository, and D1 catches its residue | — | 2026-09-04 | `accepted` |
 
 ## D1 — One new validator, `bin/verify-findings-structure.sh`
 

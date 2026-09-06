@@ -1,8 +1,9 @@
 # `restore-runtime-version-comparison` is a lineage with no producer
 
-**Found:** 2026-09-01, session `01KcZvrKMgfenhrT9DvxW9Jk`, item 2.
+**Recorded:** 2026-09-01, session `01KcZvrKMgfenhrT9DvxW9Jk`, item 2.
 **Severity:** low. It will trip the item 4 coverage audit if it is not recorded
 here first.
+
 **Mechanism added by Revision 136:** the retirement it needed did not exist.
 `artifact_run_clear_official` clears a *pin*, and officialness is computed — so
 deleting the pointer by hand lasted until the next `artifact_runs_rebuild` put it

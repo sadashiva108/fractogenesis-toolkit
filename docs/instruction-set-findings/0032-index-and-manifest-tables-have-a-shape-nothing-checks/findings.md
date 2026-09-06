@@ -2,29 +2,30 @@
 
 **Recorded:** 2026-09-03, session `session_01PcgHu9kz9Hm5RatLQuFR8H`, from
 breaking two of them and not noticing.
-**Relates to:** `0031` — the same section, §4c, from the other side: `0031` is a
-rule that is missing, this is a rule that exists and is unenforced.
-**Contributed to:** finding 4 was added 2026-09-04 by
-`restore-apps-outstanding-20260903-000000` while this bundle is `unresolved`,
-which `docs/legend.md` opens to any session. The bundle is unchanged otherwise
-and `pre-image-capture-conformance-20260903-194532` still owns it.
 **Severity:** low per instance, and it defeats the check a session actually runs.
 Every validator in the repository passed on both broken rows.
 **Scope:** instruction set. §§4c–4d define these tables; nothing validates them.
 Whether the *fix* belongs here is finding 3.
+**Relates to:** `0031` — the same section, §4c, from the other side: `0031` is a
+rule that is missing, this is a rule that exists and is unenforced.
+
+**Contributed to:** finding 4 was added 2026-09-04 by
+`restore-apps-outstanding-20260903-000000` while this bundle is `unresolved`,
+which `docs/legend.md` opens to any session. The bundle is unchanged otherwise
+and `pre-image-capture-conformance-20260903-194532` still owns it.
 
 ## Findings
 
 | # | Finding | Status |
 |---:|---|---|
-| 1 | The indexes and manifests have a required column shape that no check enforces | `un-started` |
-| 2 | `verify-doc-paths.sh` gives false assurance on a malformed row, because links are not shape | `un-started` |
-| 3 | The fix is a lint, so this bundle may be in the wrong tree | `un-started` |
-| 4 | A patch containing a deletion under-applies silently, and every check passes | `un-started` |
+| F1 | The indexes and manifests have a required column shape that no check enforces | `un-started` |
+| F2 | `verify-doc-paths.sh` gives false assurance on a malformed row, because links are not shape | `un-started` |
+| F3 | The fix is a lint, so this bundle may be in the wrong tree | `un-started` |
+| F4 | A patch containing a deletion under-applies silently, and every check passes | `un-started` |
 
 ---
 
-### 1 — a required shape, unenforced
+### F1 — a required shape, unenforced
 
 `.github/copilot-instructions.md` §4c and §4d, and the indexes themselves, fix
 the columns of five kinds of table: the three findings indexes, the sessions
@@ -50,7 +51,7 @@ that table had gained a `Bundles` column, and the row was correct. A pipe count
 without the header is not a check, and a session doing it by eye will produce both
 error directions.
 
-### 2 — the check that runs gives the wrong assurance
+### F2 — the check that runs gives the wrong assurance
 
 `./bin/verify-doc-paths.sh --all` reported **0 MISSING / 0 ANCHOR BROKEN** on both
 malformed rows, correctly: every link in them resolved. Link resolution and table
@@ -68,7 +69,7 @@ A shape check is cheap and total: read the header row, count `|` in every data
 row, report the ones that disagree. It is the check that was run by hand to find
 these two, and it takes about fifteen lines of Bash 3.2.
 
-### 4 — a patch containing a deletion under-applies silently, and every check passes
+### F4 — a patch containing a deletion under-applies silently, and every check passes
 
 **Contributed 2026-09-04** by `restore-apps-outstanding-20260903-000000`, from
 the fourth instance. The first three were this bundle's own session's.
@@ -142,7 +143,7 @@ something that can lapse without notice.
 
 ---
 
-### 3 — this may be in the wrong tree
+### F3 — this may be in the wrong tree
 
 Recorded rather than resolved, because the two tests disagree.
 

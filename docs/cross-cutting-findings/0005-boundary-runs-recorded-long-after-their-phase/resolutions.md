@@ -3,9 +3,9 @@
 **Bundle:** `0005-boundary-runs-recorded-long-after-their-phase` · **Status:** `resolved`
 **Resolved:** 2026-09-04, session `session_01KcZvrKMgfenhrT9DvxW9Jk`.
 
-| Finding | Resolved by | Commit |
-|---|---|---|
-| Four bookend runs are dated the day the recorder was extended, not the day the phase ran | `APPLY-MANIFEST.md` Revision 193 — D2's point-rule correction, D3's rebuild flagging, D4's standing rule, D5's `--note` | pending; the owner commits |
+| Finding | Resolved by | What was done | Revision | Commit |
+|---|---|---|---|---|
+| F1 — Four bookend runs are dated the day the recorder was extended, not the day the phase ran | D2, D3, D4, D5 | D2's point-rule correction, D3's rebuild flagging, D4's standing rule, D5's `--note` | 193 | pending; the owner commits |
 
 ## What was done
 

@@ -4,6 +4,17 @@
 **Decided:** 2026-09-03, session `session_01PcgHu9kz9Hm5RatLQuFR8H`, owner
 present and routing confirmed by the owner.
 
+## Decisions
+
+| # | Decision | Findings | Decided | Outcome |
+|---|---|---|---|---|
+| D1 | The procedure goes in §4c, as a new subsection | — | 2026-09-03 | `accepted` |
+| D2 | The superseding session performs it and does not take ownership | — | 2026-09-03 | `accepted` |
+| D3 | The three prohibitions are stated in the procedure, not cross-referenced | — | 2026-09-03 | `accepted` |
+| D4 | The pointer goes in the Status cell, as a link | — | 2026-09-03 | `accepted` |
+| D5 | The subsection covers the ownerless case and defers the other | — | 2026-09-03 | `accepted` |
+| D6 | `0032` is not decided here | — | 2026-09-03 | `accepted` |
+
 ## D1 — The procedure goes in §4c, as a new subsection
 
 `docs/legend.md` defines what `superseded` *means* and says explicitly that what

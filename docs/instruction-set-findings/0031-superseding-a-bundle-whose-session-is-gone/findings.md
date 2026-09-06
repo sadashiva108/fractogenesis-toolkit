@@ -3,29 +3,29 @@
 **Recorded:** 2026-09-03, session `session_01PcgHu9kz9Hm5RatLQuFR8H`, from
 performing the procedure in Revision 183 with nothing in the instruction set to
 follow.
-**Relates to:** `0029` — that bundle collects what the restore-apps session left
-owed in §§4b–4d, eight of its findings landing there. This one is a single
-missing subsection in §4c, found from the other direction: by needing it. The two
-do not overlap in content, and this bundle should reach `resolving` first so
-`0029` reads §4c as it will then stand.
 **Severity:** low until it is needed, and then total — a session with no
 procedure invents one, and every invented variant is a different tree shape for
 the same event.
 **Scope:** instruction set. The fix is one subsection in
 `.github/copilot-instructions.md` §4c.
+**Relates to:** `0029` — that bundle collects what the restore-apps session left
+owed in §§4b–4d, eight of its findings landing there. This one is a single
+missing subsection in §4c, found from the other direction: by needing it. The two
+do not overlap in content, and this bundle should reach `resolving` first so
+`0029` reads §4c as it will then stand.
 
 ## Findings
 
 | # | Finding | Status |
 |---:|---|---|
-| 1 | §4d instructs a session to mark bundles `superseded`; §4c never defines what that means or requires | `framing` |
-| 2 | Both existing accounts assume the superseding party owns the bundle. §4d itself creates the case where nobody does | `framing` |
-| 3 | Nothing states what a supersession must **not** touch, and all three prohibitions are load-bearing | `framing` |
-| 4 | The form that carries the pointer now exists in the tree and is written down nowhere | `framing` |
+| F1 | §4d instructs a session to mark bundles `superseded`; §4c never defines what that means or requires | `framing` |
+| F2 | Both existing accounts assume the superseding party owns the bundle. §4d itself creates the case where nobody does | `framing` |
+| F3 | Nothing states what a supersession must **not** touch, and all three prohibitions are load-bearing | `framing` |
+| F4 | The form that carries the pointer now exists in the tree and is written down nowhere | `framing` |
 
 ---
 
-### 1 — the term is used as an instruction and defined nowhere
+### F1 — the term is used as an instruction and defined nowhere
 
 `.github/copilot-instructions.md` §4d, on a `withdrawn` session:
 
@@ -43,7 +43,7 @@ reading. The row names which, and the replacement carries `Relates to`"*) and
 carries a section on the case that motivated it. Definitions are not procedure,
 and the legend says so itself: what each state *requires* lives in §§4c–4d.
 
-### 2 — both accounts assume the superseding party is the owner
+### F2 — both accounts assume the superseding party is the owner
 
 The legend's section is titled *When something overtakes a bundle already in
 progress*, and its subject throughout is the bundle's own owner deciding to
@@ -65,7 +65,7 @@ superseding transfer ownership?** It must not — a superseded reading was recor
 and held by whoever recorded and held it — but nothing says so, and the opposite
 is the more natural guess for a session tidying up.
 
-### 3 — the prohibitions are unwritten, and each is load-bearing
+### F3 — the prohibitions are unwritten, and each is load-bearing
 
 Three things a supersession must not do. None appears in §4c, the legend, or the
 architecture record, and each was reasoned out from first principles during
@@ -87,7 +87,7 @@ Revision 183 rather than followed:
   who held a reading, and `findings-manifest.md` is authoritative for exactly
   that.
 
-### 4 — the index form exists in the tree and in no document
+### F4 — the index form exists in the tree and in no document
 
 Revision 183 put the pointer in the superseded row's **Status** cell as a link —
 `` [`superseded`](0030-…/) `` — so one cell answers both what state the bundle is

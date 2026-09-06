@@ -6,13 +6,13 @@
 Five findings, five decisions, one toolkit write. `findings.md` is unchanged apart
 from its per-finding status table, which is the one part of it that moves.
 
-| Finding | Decision | What was done |
-|---|---|---|
-| 1 — a rename breaks citations and nothing detects it | D8 | **Deferred, with a measurement.** Both detector designs were prototyped read-only against the volume; neither works today, and the second is structurally blind for the reason the finding names. Detection is downstream of D7 and becomes tractable once `rename` rows exist |
-| 2 — the repair rule was never written down | D2 | Written down. A record's **values** are frozen; a **reference** inside one may be repaired where the target still exists and the timestamp is retained exactly. `.internal/artifact-runs.sh` now names the bundle that holds it |
-| 3 — no `rename` row, so a former name is unrecoverable | D7 | **`artifact_run_record_rename` added** to `.internal/artifact-runs.sh`, with the header rule that explains it |
-| 4 — `0009`'s own text cites a path Revision 156 moved | D4 | **Deliberately not repaired.** A superseded reading is frozen; `0030` finding 4 records the current path instead |
-| 5 — Revision 138 broke a citation inside its own run | D3 | Two lines repaired 2026-09-03 on the owner's word for that run. The pre-conversion backup retains both originals |
+| Finding | Resolved by | What was done | Revision | Commit |
+|---|---|---|---|---|
+| F1 — a rename breaks citations and nothing detects it | D8 | **Deferred, with a measurement.** Both detector designs were prototyped read-only against the volume; neither works today, and the second is structurally blind for the reason the finding names. Detection is downstream of D7 and becomes tractable once `rename` rows exist | — | — |
+| F2 — the repair rule was never written down | D2 | Written down. A record's **values** are frozen; a **reference** inside one may be repaired where the target still exists and the timestamp is retained exactly. `.internal/artifact-runs.sh` now names the bundle that holds it | — | — |
+| F3 — no `rename` row, so a former name is unrecoverable | D7 | **`artifact_run_record_rename` added** to `.internal/artifact-runs.sh`, with the header rule that explains it | — | — |
+| F4 — `0009`'s own text cites a path Revision 156 moved | D4 | **Deliberately not repaired.** A superseded reading is frozen; `0030` finding 4 records the current path instead | — | — |
+| F5 — Revision 138 broke a citation inside its own run | D3 | Two lines repaired 2026-09-03 on the owner's word for that run. The pre-conversion backup retains both originals | — | — |
 
 ## The toolkit write
 

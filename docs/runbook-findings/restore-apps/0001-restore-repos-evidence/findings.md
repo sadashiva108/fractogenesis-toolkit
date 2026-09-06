@@ -1,19 +1,23 @@
 # Phase 11B evidence review — what `restore-repos` actually left behind
 
-**Recorded:** 2026-09-03 11:36:54 EDT, restore-apps session.
+**Recorded:** 2026-09-03, `restore-apps-outstanding-20260903-000000`
+(`session_016EbjB7M527qEFqZFzpv2C9`)
+**Severity:** findings 1–3 block a truthful Phase 12 entry; 4 and 5 are
+shared-machinery defects; 6 and 7 answer the two unreviewed repositories
 **Scope:** the `restore-repos.md` evidence and captures on the live artifact
-root, read before starting `restore-apps.md` (Phase 12).
-**Finding:** `0001` — scope `restore-apps`.
-**Bundle status:** `unresolved`. The row in the parent `INDEX.md` is
-authoritative; this line is a copy for anyone reading the document alone.
-Findings only — no repository file and no artifact was modified by this review.
-**Environment:** every command ran in an AI session's Linux VM (GNU coreutils,
-Bash 5.x) against the mounted repository and artifact volume. Reads only: `ls`,
-`find`, `cat`, `grep`, `diff`, `stat`. No `bin/` script was executed, on either
-platform.
+root, read before starting `restore-apps.md` (Phase 12)
 
-**Artifact root:** `/Volumes/Data/reimage-CVG-0002160-500-20260816-open`
-**Repository HEAD at review time:** `9fea5eb`, then `de7aa8e` (Revision 156)
+Findings only — no repository file and no artifact was modified by this review.
+Every command ran in an AI session's Linux VM (GNU coreutils, Bash 5.x) against
+the mounted repository and artifact volume, reads only: `ls`, `find`, `cat`,
+`grep`, `diff`, `stat`. No `bin/` script was executed, on either platform. The
+artifact root was `/Volumes/Data/reimage-CVG-0002160-500-20260816-open` and the
+repository was at `9fea5eb`, then `de7aa8e` (Revision 156).
+
+**`Bundle status:` and `Finding:` were header fields here and are gone.** Both
+were copies: the status is the tag and the index row, and the number is the
+directory name. A copy in a third place is what the schema in section 11 exists
+to stop.
 during the session.
 
 ---
@@ -51,24 +55,24 @@ the last of them is settled. A row reads `yes` only when nothing about that
 finding is still open. Finding 1 reads `yes`: six decisions, 1.1 through 1.6,
 with nothing outstanding. `decisions.md` carries the detail.
 
-| # | Finding | Decided | Status |
-|---:|---|---|---|
-| 1 | The official run reports `repo-secrets` as blocked, although it succeeded | yes | `framing` |
-| 2 | Step 5 and the `project-metadata` stage were never applied | — | `un-started` |
-| 3 | The exit bookend reads clean on a phase with two WARN exit criteria | — | `un-started` |
-| 4 | Four sign-offs on the volume were written by scratch runs | — | `un-started` |
-| 5 | Every bookend sign-off written since 2026-09-01 cites a staging path | — | `un-started` |
-| 6 | The status report blanks the carry-forward count for two repositories | — | `un-started` |
-| 7 | The two unreviewed repositories are Time Machine or nothing | — | `un-started` |
-| 8 | `reference-vault` cloned with a warning nobody has acted on | — | `un-started` |
-| 9 | All six clones came back on HTTPS | — | `un-started` |
-| 10 | All three exit sign-off rows are outstanding | — | `un-started` |
+| # | Finding | Status |
+|---:|---|---|
+| F1 | The official run reports `repo-secrets` as blocked, although it succeeded | `framing` |
+| F2 | Step 5 and the `project-metadata` stage were never applied | `un-started` |
+| F3 | The exit bookend reads clean on a phase with two WARN exit criteria | `un-started` |
+| F4 | Four sign-offs on the volume were written by scratch runs | `un-started` |
+| F5 | Every bookend sign-off written since 2026-09-01 cites a staging path | `un-started` |
+| F6 | The status report blanks the carry-forward count for two repositories | `un-started` |
+| F7 | The two unreviewed repositories are Time Machine or nothing | `un-started` |
+| F8 | `reference-vault` cloned with a warning nobody has acted on | `un-started` |
+| F9 | All six clones came back on HTTPS | `un-started` |
+| F10 | All three exit sign-off rows are outstanding | `un-started` |
 
 ---
 
 ## Findings
 
-### 1 — The official run reports `repo-secrets` as blocked, although it succeeded
+### F1 — The official run reports `repo-secrets` as blocked, although it succeeded
 
 Runs `post-image-restore-20260903-002650` and `-002904` record
 `applied — merged repo-secrets/<repo>` for all six repositories. The official
@@ -90,7 +94,7 @@ Nothing carries a completed stage forward.
 **Felt at:** `restore-repos.md` Step 6 and Step 9;
 `repo-audit-reports/runs/post-image-restore-20260903-004412/hydrated.md`.
 
-### 2 — Step 5 and the `project-metadata` stage were never applied
+### F2 — Step 5 and the `project-metadata` stage were never applied
 
 In the official run all six repositories read `would-apply` for
 `ignored-files`. Four read `would-apply` for `project-metadata`; `indigo` and
@@ -105,7 +109,7 @@ Decide which phase owns it before running either.
 
 **Felt at:** `restore-repos.md` Step 5, Step 9; `restore-apps.md` Step 8.
 
-### 3 — The exit bookend reads clean on a phase with two WARN exit criteria
+### F3 — The exit bookend reads clean on a phase with two WARN exit criteria
 
 `reimaged-system/bookends/runs/restore-repos-exit-20260903-005335/bookend.md`
 records **3 pass · 0 warn · 0 fail**:
@@ -129,7 +133,7 @@ left undone.
 **Felt at:** `bin/record-restore-exit.sh`; `restore-repos.md` Step 11;
 `restore-apps.md` Step 0.
 
-### 4 — Four sign-offs on the volume were written by scratch runs
+### F4 — Four sign-offs on the volume were written by scratch runs
 
 `reimaged-system/sign-offs/` holds four `post-image-restore` sign-offs with no
 corresponding run in `repo-audit-reports/runs/`:
@@ -167,7 +171,7 @@ pointer and the next run silently restarts the chain from a `/tmp` test.
 **Felt at:** `bin/restore-repos.sh:487–489`; `.internal/sign-offs.sh`
 (`signoff_latest`).
 
-### 5 — Every bookend sign-off written since 2026-09-01 cites a staging path
+### F5 — Every bookend sign-off written since 2026-09-01 cites a staging path
 
 `reimaged-system/sign-offs/restore-repos-exit-20260903-005335.md`:
 
@@ -192,7 +196,7 @@ resolve.
 **Felt at:** `bin/record-restore-exit.sh`; `.internal/sign-offs.sh`
 (`signoff_begin` / `signoff_finalize`).
 
-### 6 — The status report blanks the carry-forward count for the two repositories that need a decision
+### F6 — The status report blanks the carry-forward count for the two repositories that need a decision
 
 In `restore-status.md` → *Per-Repo Status*, `engagements` and
 `ingestion-related` show an empty *Carry-forward rows* cell and `unknown` under
@@ -212,7 +216,7 @@ attention. Their *Clone host* cell also prints a filesystem path,
 **Felt at:** `bin/restore-repos.sh` (per-repo table); `restore-repos.md` Step 1,
 Step 2.
 
-### 7 — The two unreviewed repositories are Time Machine or nothing
+### F7 — The two unreviewed repositories are Time Machine or nothing
 
 Both are recorded `<none>` for `remote_urls` in the pre-image `repos.tsv`, so
 nothing can clone them. What exists on the artifact volume:
@@ -237,7 +241,7 @@ rather than left unreviewed.
 **Felt at:** `restore-repos.md` Step 2; the exit sign-off row *"Repositories
 with no remote are resolved"*.
 
-### 8 — `reference-vault` cloned with a warning nobody has acted on
+### F8 — `reference-vault` cloned with a warning nobody has acted on
 
 `post-image-restore-20260902-214918` recorded:
 
@@ -252,7 +256,7 @@ one that holds the work, or that commit was never pushed.
 
 **Felt at:** `restore-repos.md` Step 3, Step 7.
 
-### 9 — All six clones came back on HTTPS
+### F9 — All six clones came back on HTTPS
 
 Every `cloned from` URL in the hydrate run is `https://github.gaig.com/...`.
 That is the runbook working as documented — the transport recorded by the
@@ -263,7 +267,7 @@ still `TODO`. Worth a deliberate answer rather than a default.
 
 **Felt at:** `restore-repos.md` Step 3, Troubleshooting.
 
-### 10 — All three exit sign-off rows are outstanding
+### F10 — All three exit sign-off rows are outstanding
 
 `restore-repos-exit-20260903-005335.md` carries `TODO` on all three, carried
 from the 2026-08-25 run:

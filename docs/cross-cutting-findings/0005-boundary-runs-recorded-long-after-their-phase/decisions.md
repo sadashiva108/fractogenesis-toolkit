@@ -9,6 +9,17 @@ Re-verified against the volume before deciding. Both pairs still carry their
 2026-08-31 and 2026-09-01 stamps against phases that ran 08-18/19. The category is
 `bookends/` now, renamed by Revision 156; the runs and the dates are the same.
 
+## Decisions
+
+| # | Decision | Findings | Decided | Outcome |
+|---|---|---|---|---|
+| D1 | Nothing is re-run, and nothing on the volume is repaired | — | 2026-09-04 | `accepted` |
+| D2 | `entry` and `initial` are first-wins | — | 2026-09-04 | `accepted` |
+| D3 | A later run at a first-wins point is flagged for a person, never rejected | — | 2026-09-04 | `accepted` |
+| D4 | The hazard is written where the machinery is read | — | 2026-09-04 | `accepted` |
+| D5 | `--note` is added to both recorders | — | 2026-09-04 | `accepted` |
+| D6 | Five pointers move, one is pinned back, four are the owner's to decide | — | 2026-09-04 | `accepted` |
+
 ## D1 — Nothing is re-run, and nothing on the volume is repaired
 
 A bookend recorded late is better than none, each run is honest about its own

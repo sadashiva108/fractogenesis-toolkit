@@ -10,6 +10,16 @@ rewritten to match what is decided here.
 
 ---
 
+## Decisions
+
+| # | Decision | Findings | Decided | Outcome |
+|---|---|---|---|---|
+| D1 | The finding is resolved by work already shipped, not by new work | — | 2026-09-03 | `accepted` |
+| D2 | The two lineages stand, and the names are correct | — | 2026-09-03 | `accepted` |
+| D3 | Define the two words where a reader looks for them | — | 2026-09-03 | `accepted` |
+| D4 | The item 4 dependency is discharged | — | 2026-09-03 | `accepted` |
+| D5 | What is not taken into this bundle | — | 2026-09-03 | `accepted` |
+
 ## D1 — The finding is resolved by work already shipped, not by new work
 
 Verified on the volume rather than inferred from the ledger:

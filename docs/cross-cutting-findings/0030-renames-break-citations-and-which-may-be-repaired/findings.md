@@ -1,15 +1,15 @@
 # Renames break citations, and only a record's values are frozen
 
-**Found:** 2026-09-03, session `session_01PcgHu9kz9Hm5RatLQuFR8H`, while reading
+**Recorded:** 2026-09-03, session `session_01PcgHu9kz9Hm5RatLQuFR8H`, while reading
 four pre-image runbook findings against the artifact volume.
-**Relates to:** `0009` — **supersedes it.** `0009` carried the reading below as
-its findings 1 and 3; it is marked `superseded` and left unedited, so the
-2026-09-01 reading survives as it was written.
 **Severity:** the reading itself is low. Finding 2 is what matters: without it,
 every citation a rename breaks is treated as unrepairable, and the tree
 accumulates broken pointers to evidence that is still there.
 **Scope:** cross-cutting. Felt in `.internal/artifact-runs.sh`, in every category
 manifest, and in dated artifacts across the volume.
+**Relates to:** `0009` — **supersedes it.** `0009` carried the reading below as
+its findings 1 and 3; it is marked `superseded` and left unedited, so the
+2026-09-01 reading survives as it was written.
 
 ## Why this bundle exists rather than an edit to `0009`
 
@@ -27,15 +27,15 @@ superseded rather than rewritten, so this bundle carries the merged reading and
 
 | # | Finding | Status |
 |---:|---|---|
-| 1 | A lineage rename leaves every prior citation naming something gone, and nothing detects it | `framing` |
-| 2 | The repair rule was never written down, so every broken citation looked unrepairable | `framing` |
-| 3 | A category manifest records no `rename` row, so a former lineage name is unrecoverable from the index | `framing` |
-| 4 | `0009`'s own text cites a path that Revision 156 moved | `framing` |
-| 5 | The Revision 138 conversion broke a citation inside the run it was converting | `framing` |
+| F1 | A lineage rename leaves every prior citation naming something gone, and nothing detects it | `framing` |
+| F2 | The repair rule was never written down, so every broken citation looked unrepairable | `framing` |
+| F3 | A category manifest records no `rename` row, so a former lineage name is unrecoverable from the index | `framing` |
+| F4 | `0009`'s own text cites a path that Revision 156 moved | `framing` |
+| F5 | The Revision 138 conversion broke a citation inside the run it was converting | `framing` |
 
 ---
 
-### 1 — a rename breaks citations, and nothing detects it
+### F1 — a rename breaks citations, and nothing detects it
 
 Carried from `0009` unchanged in substance. A dated artifact is never
 regenerated, so it holds run ids and filenames as literal text. A rename updates
@@ -48,7 +48,7 @@ lineage for its runbook, never for its phase ordinal, *because a dated artifact
 is never regenerated*. Renames are the same hazard from another direction and
 are not covered.
 
-### 2 — the repair rule was never written down
+### F2 — the repair rule was never written down
 
 `0009` recorded a prohibition without its boundary, and the boundary is where the
 whole question lives. Stated by the owner 2026-09-03:
@@ -71,7 +71,7 @@ created. Repairing that changes what the producer *claimed* rather than what it
 *measured*. It is still a reference and not a value, so the rule admits it, but
 the rule does not say so and should.
 
-### 3 — no `rename` row, so the old name is unrecoverable from the index
+### F3 — no `rename` row, so the old name is unrecoverable from the index
 
 `0009` proposed a `rename` row in the category `MANIFEST.md` — the manifest is
 append-only and already carries `pin` rows — and left it as a decision for
@@ -88,7 +88,7 @@ So the mechanism that would make a broken citation traceable rather than merely
 disbelieved does not exist yet, and the two events that would have exercised it
 have passed.
 
-### 4 — `0009` cites a path that has moved
+### F4 — `0009` cites a path that has moved
 
 `0009`'s instance names
 `reimaged-system/boundaries/runs/restore-runtime-exit-20260820-032645/checklist.md`.
@@ -114,7 +114,7 @@ the lineage was renamed *and* the `post-image-` prefix was later dropped, becaus
 construction. The correct repair is
 `restore-runtime-inventory-diff-20260820-032625`.
 
-### 5 — Revision 138 broke a citation inside the run it was converting
+### F5 — Revision 138 broke a citation inside the run it was converting
 
 `office-stability/runs/pre-image-office-stability-assessment-20260817-175050/README.md`
 listed two files that did not resolve:
