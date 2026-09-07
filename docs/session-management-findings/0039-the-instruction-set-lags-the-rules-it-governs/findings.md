@@ -50,6 +50,7 @@ work, since every fix is a toolkit write.
 | F6 | State names and state requirements live in different files | `framing` |
 | F7 | The vocabulary cannot say that one bundle must be decided before another | `framing` |
 | F8 | The rule says where a change is composed, not when it is handed over | `framing` |
+| F9 | Six rules live only in a workspace file, outside the repository entirely | `framing` |
 
 ---
 
@@ -223,6 +224,52 @@ session can learn from the tree without being told, and this one is the case
 where not being told had a cost the same day.
 
 ---
+
+## F9 — six rules live outside the repository entirely
+
+**Recorded 2026-09-07** by `session-management-re-evaluation-20260906-110105`,
+from checking the instruction set against Revisions 208 to 213.
+
+F1 read *five rules exist only in `docs/legend.md`*. This is the same shape with
+a worse destination: **six rules exist only in `session-prompts/conformant-prompt.md`,
+which lives in the owner's workspace and is not in this repository at all.** Not
+merely missing from the instruction set — absent from a fresh clone.
+
+| Rule | Owed to |
+|---|---|
+| `git apply` exits 0 on **modification** as well as deletion, so the exit status and the warning are both non-diagnostic | §6 — which still says *"any patch containing a deletion"* |
+| A tag change is invisible to a patch: `STATUS-` and `STATE-` files are empty, `diff` emits no hunks for them, so a patch carries every prose change and none of the renames | §6 |
+| The two trailing spaces the header schema requires make `git apply` warn on every conformant header; stripping them breaks the rendering the schema protects | §11 |
+| A record carries no placeholders — absolute paths, real identifiers, actual commits | §5 and §11 |
+| Completeness is not conformance: every checker answers whether a document is well formed, none answers whether it is complete, and rendering cannot show content that is not there | §6 and §8 |
+| No check covers the prose total at the foot of a `findings-manifest.md` | §8 |
+
+**The gate is working, and that is the point.** Every one is a toolkit write,
+allowed only for a `decided` finding; the findings that would carry them —
+`0041` F4, this bundle's F1, `0041` F2, `0043` F2 — are all `framing`. Nobody
+broke a rule. **The rules accumulated in the one place a session could still
+write them.**
+
+That is F5 with the prompt in the role conversation used to play. F5 says a
+session learns a rule *by being told*, and the failure is that the tree cannot
+tell it. A cloned session is told, because it is handed the prompt. The
+repository is not, and neither is any reader of it.
+
+**Two properties make this worse than F1.** A rule in `docs/legend.md` is at
+least tracked, reviewed in a diff, and reachable by every checker. A rule in a
+workspace file is none of those: it takes no revision, appears in no manifest
+entry, and `verify-doc-paths.sh` cannot see it because the file is outside the
+repository the script self-locates in.
+
+And the accumulation is **recent and fast** — all six landed between Revisions
+206 and 213, which is one day.
+
+**What this finding is not.** It is not an argument to ungate toolkit writes.
+The gate exists because a rule written before its finding is decided is a rule
+nobody agreed to. It is an argument that **the overflow needs a destination
+inside the repository** — a tracked, revisioned place a session may write a rule
+it has learned but may not yet install, so that the rule is reviewable and
+countable rather than resident in a file the repository has never heard of.
 
 ## What this bundle does not cover
 

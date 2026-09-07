@@ -40,6 +40,7 @@ should record here rather than open a near-duplicate beside it.**
 | F6 | A header field that is optional **and repeatable** cannot be represented by either draft, and this bundle carries three of them | `framing` |
 | F7 | The derived bundle status has an else branch that asserts nothing, so a derivation bug always lands there | `framing` |
 | F8 | Each vocabulary has exactly one activity-named status, and it is the one a name cannot carry | `framing` |
+| F9 | An edge kind is defined by a description and a behaviour, and the two can disagree | `framing` |
 
 ## F1 — the status is in the filename
 
@@ -293,6 +294,57 @@ timestamps the owner asked for on 2026-09-07 — because it yields `framing sinc
 also tells the allocation architecture where `readiness` cannot come from:
 nearly every askable node is `framing`, so the signal is in the duration and the
 edges, not the status.
+
+## F9 — an edge kind's description and its behaviour can disagree
+
+**Recorded 2026-09-07**, from using the edge model in
+`docs/architecture/allocation-and-inquiry.md` §3.2 rather than reading it. Found
+on the first pair either session tried to type.
+
+Each of the ten kinds is defined by **two things at once**: a semantic
+description of what the relationship *is*, and a behaviour the allocator and the
+interviewer take from it. The table gives both in one row, which reads as one
+definition. **On `0036` and `0044` they give different answers.**
+
+| | Says | Because |
+|---|---|---|
+| The description | **`generalises`** — *A is the rule of which B is an instance* | `0044`'s own header: *"this is what its unverified region actually contains; `0036` is the check that cannot see these, this is the defect it cannot see"* |
+| The behaviour | **`constrains`** — *A's answer removes options from B without settling it* | `0044`'s repair proceeds under any of `0036`'s four options; what changes is whether repairing four citations finishes the job or a guard is owed |
+
+`generalises` drives **decision lifting** — ask A once, derive B, present as
+confirm-derived. Deciding `0036`'s options derives nothing about `0044`; the
+citations get repaired either way. So the description fits and the behaviour does
+not, and there is no way to record that both are true.
+
+**A second instance from the same pair**, and it is why this is a definition
+problem rather than a judgement call. This session predicted `evidences` before
+the run, reasoning *`0044` is evidence for `0036`* — true of the content, and
+`0044`'s header says so. But `evidences` is defined as **A's *resolution*
+produces the evidence B needs**, and the evidence already existed: Revision 209's
+scan of the pruned region produced 10 MISSING and 2 ANCHOR BROKEN. `0044` need
+not be resolved for `0036` to be decidable, so the edge holds in neither
+direction.
+
+**The kind name is a common English word and the definition is narrower than it.**
+That prediction was made with the specification open. The next reader will make
+it too.
+
+### Three ways out, none obviously right
+
+- **Let a pair carry two edges of different kinds**, and define how the effects
+  compose. The specification does not say whether that is legal, and composition
+  rules invented for one instance are a rule nobody needed.
+- **Split the kinds** into a semantic pointer and a behavioural one. Doubles the
+  vocabulary to fix a case that has arisen once.
+- **State that where they disagree the behaviour wins**, and accept that the
+  taxonomy under-describes. Cheapest, honest about what the model is for — the
+  allocator and the interviewer consume behaviour, not description.
+
+**This session would take the third and record the case**, which is what this
+finding is. The fix, whichever is chosen, lands in
+`docs/architecture/allocation-and-inquiry.md` §3.2 rather than here — this bundle
+records that the defect exists and how it was found, because it was found by the
+state format's first real use.
 
 ## What it costs to leave
 

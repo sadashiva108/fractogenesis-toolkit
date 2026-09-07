@@ -1,4 +1,6 @@
 # Apply Manifest
+**Revision 215** — supersedes Revision 214 and earlier. Six rules learned between Revisions 206 and 213 live only in a workspace file outside the repository, recorded as `0039` F9. The edge contract agreed across two sessions is recorded as `0043` D1 and D2, and the first pair either session tried to type found a defect in the edge taxonomy, recorded as `0043` F9.
+
 **Revision 214** — supersedes Revision 213 and earlier. The allocator is run against the real nine `unclaimed` bundles and the run finds a defect in the record that proposed it: the objective scored zero for any edge reaching a finding a session already owns, so the one placement everybody expected was reached by coincidence. `0039` D4 is superseded by D5 — ordering becomes a typed edge — and `0043` F4 gains the live instance that settles it.
 
 **Revision 213** — supersedes Revision 212 and earlier. `0043` F8 records why each status vocabulary has exactly one activity-named member: the vocabulary names completed acts, and one member in each is the absence of a completion, which no past participle can name. The information the name cannot carry is duration, and a per-finding timestamp is what carries it.
@@ -558,6 +560,103 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
 
 ---
+
+## Revision 215 — Three things that existed only in conversation
+
+Three record writes, to two bundles that are `analyzing` with every finding
+`framing`. No toolkit file is touched; everything here is gated and stays gated.
+
+### `0039` F9 — six rules live outside the repository entirely
+
+F1 read *five rules exist only in `docs/legend.md`*. This is the same shape with
+a worse destination. **Six rules exist only in
+`session-prompts/conformant-prompt.md`, which is in the owner's workspace and is
+not in this repository** — absent from a fresh clone, not merely missing from the
+instruction set.
+
+They are: `git apply` exits 0 on modification as well as deletion; a tag change
+is invisible to a patch because empty files produce no hunks; the schema's two
+trailing spaces make `git apply` warn on every conformant header; a record
+carries no placeholders; completeness is not conformance; and no check covers the
+prose total at the foot of a `findings-manifest.md`.
+
+**The gate is working, and that is the point.** All six are toolkit writes,
+allowed only for a `decided` finding, and the findings that would carry them are
+`framing`. Nobody broke a rule — **the rules accumulated in the one place a
+session could still write them.** That is F5 with the prompt in the role
+conversation used to play: a cloned session is told, because it is handed the
+prompt; the repository is not.
+
+Two properties make it worse than F1. A rule in `docs/legend.md` is tracked,
+reviewed in a diff, and reachable by every checker; a rule in a workspace file
+takes no revision, appears in no manifest entry, and `verify-doc-paths.sh` cannot
+see it because the file is outside the repository the script self-locates in.
+And all six landed between Revisions 206 and 213 — one day.
+
+The finding argues for a **destination inside the repository** for a rule a
+session has learned but may not yet install. It does not argue for ungating.
+
+### `0043` D1 and D2 — the edge contract, and when a procedure may change
+
+**D1 accepts the contract whole**, and settles what §3.3 left open: **an edge
+lives in the bundle whose session asserted it.** The `from` bundle fails on the
+four undirected kinds; both endpoints is two copies of one fact; a single
+`edges.json` is a file every session must write, which is `0038` F1 exactly.
+Storing by assertion falls out of `asserted_by`, which §3.3 already requires.
+**Stored edges are assertions**; `derived` edges are recomputed and never
+written. **`Relates to` becomes the projection** of `kind == "relates-to"`, which
+is what answers F6 fully.
+
+**D2 declines to change §9 step 3 until the projection ships**, on the other
+session's reasoning, kept as stated: *changing a procedure for a format that
+isn't built is how the instruction set gets ahead of the tree instead of behind
+it.* `0039` is nine findings about the instruction set lagging; this is the first
+recorded case of declining to let it lead, with the trigger written down rather
+than left as a judgement made twice.
+
+### `0043` F9 — an edge kind's description and its behaviour can disagree
+
+Found by using the model rather than reading it, on the **first pair either
+session tried to type**. `0036` and `0044`: the description says `generalises` —
+*A is the rule of which B is an instance*, which is `0044`'s own header almost
+verbatim — and the behaviour says `constrains`, because `0044`'s repair proceeds
+under any of `0036`'s four options and what changes is only whether the repair
+finishes the job. `generalises` drives decision lifting, which derives nothing
+here. Both are true and there is no way to record that.
+
+A second instance from the same pair: this session predicted `evidences` before
+the run, reasoning *`0044` is evidence for `0036`* — true of the content, and
+wrong for the kind, which means **A's *resolution* produces the evidence**. The
+evidence already existed, from Revision 209's scan. **The kind names are common
+English words and the definitions are narrower**; that prediction was made with
+the specification open.
+
+Three ways out are recorded with their costs. This session would state that the
+behaviour wins and keep the case; the fix lands in
+`docs/architecture/allocation-and-inquiry.md` §3.2 and is the other session's.
+
+### Also observed, and not taken in passing
+
+`0039`'s findings table sits under `## Finding status` rather than `## Findings`,
+and its `decisions.md` reads `**Bundle:** 0029` with a sentence saying the bundle
+*"stays `in progress`"*. Both pass every check. The heading inconsistency is
+already recorded as unresolved in `0037`'s `resolutions.md`; the `Bundle:`
+mismatch is `0041` F1's ten-file instance. Conformance work for those bundles,
+not this revision's.
+
+### Validators
+
+| Checker | Result |
+|---|---|
+| `verify-findings-headers.sh` | 936 OK, 0 FAIL — 928 before; `0043`'s new `decisions.md` |
+| `verify-findings-structure.sh` | 54 OK, 0 FAIL |
+| `verify-findings-counts.sh` | 54 OK, 0 FAIL — `0039` and `0043` each move 8 findings to 9 across four displays |
+| `verify-doc-paths.sh --all` | 0 MISSING, 0 ANCHOR BROKEN |
+| `verify-script-portability.sh` | 0 WARN, 0 FAIL |
+| `verify-runbook-structure.sh` | 213 PASS / 5 WARN / 25 FAIL — standing baseline |
+
+Composed in a copy outside the owner's checkout; Linux VM, Bash 5.1.16, GNU
+coreutils. **Not macOS.**
 
 ## Revision 214 — the run, and what it found in the thing that proposed it
 
