@@ -1,4 +1,6 @@
 # Apply Manifest
+**Revision 211** — supersedes Revision 210 and earlier. One architecture from the owner's two briefs: `docs/architecture/allocation-and-inquiry.md` models findings as a graph, partitions it to propose allocations and traverses it to decide what to ask next. `0043` gains a sixth finding and a review of the two draft config files; `0044` records the first demonstrated instance of `0036`. Three instruction-set edits land under an **owner override**: the stamp zone is named `America/New_York`, the `_to_delete/` remedy the conformant prompt says is owed reaches section 6, and `Read:` joins the optional fields it was described in but excluded from.
+
 **Revision 210** — supersedes Revision 209 and earlier. `0043` records what five of the defects met in this re-evaluation have in common: the framework stores its own state in the format it displays it in. It is left open at `analyzing` with every finding `framing`, so the session designing the parallel architecture can record to it rather than open a near-duplicate.
 
 **Revision 209** — supersedes Revision 208 and earlier. Group A, the first pass over the re-evaluation: `verify-doc-paths.sh` is shown by test never to read `docs/` in either mode, `0036` gains the measurement and the four options it never had, `0037` finding 5 is corrected twice over, and `0041` gains a fifth finding — nothing compares a resolution's claim against the tree.
@@ -550,6 +552,119 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
 
 ---
+
+## Revision 211 — one architecture from two briefs, and an override
+
+The owner wrote two briefs separately — one on allocating `unclaimed` bundles to
+sessions, one on constraining what a session presents. They are one problem:
+both are orderings over a graph of findings. Allocation partitions that graph;
+inquiry traverses it.
+
+### `docs/architecture/allocation-and-inquiry.md`
+
+Findings are the nodes, addressable as `<bundle>/F<n>` — which the `F` numbering
+adopted in Revision 201 is what makes possible. **Ten edge kinds**, of which four
+are hard constraints (`blocks`, `evidences`, `co-decides`, `contradicts`) and the
+rest express preference. Five are derivable from the tree; five are asserted, and
+an asserted edge must resolve at both ends, name its session and date, and expire
+when either endpoint goes inert.
+
+The allocator proposes and never assigns — `docs/legend.md` is unambiguous that
+the owner assigns — and emits a **hold set** beside the patch, each held bundle
+naming its blocking edge and which of its findings were ready anyway. Eight
+`unclaimed` bundles and three `active` sessions is 6,561 arrangements, so the
+record says plainly that **no clever algorithm is warranted below about forty
+bundles** and that the whole difficulty is in the objective function.
+
+The interviewer runs six stages — feasibility, precedent, lifting, rank, mode,
+propagate. Two of them do most of the work: **precedents** short-circuit any
+decision already entailed by a rule the repository has written down, cited so it
+can be challenged; **lifting** asks one question where several findings share a
+rule. `0015`, `0036`, `0041` and `0042` are four bundles asking *what is the
+checker layer responsible for seeing*, which is one decision reaching fourteen
+findings.
+
+**The interview transcript is `decisions.md`.** A closed-choice question is a
+decision with its rejected alternatives attached, which is what the schema
+already requires, so the record falls out of the conversation rather than being
+written after it. That is the largest saving in the design and it needed no new
+structure.
+
+Evidence collection is by-product only and never asks the owner anything. Five
+metrics are already recorded by the existing schema and nobody was reading them;
+two more are engine-emitted. The counter that matters is **held-back ready
+findings** — findings ready but stranded in a held bundle — which is what will
+decide, from a number rather than an argument, whether per-finding ownership is
+worth taking.
+
+Section 12 records the decision this rests on: **ownership stays per-bundle**,
+taken on limited owner time, with the three reasons and an explicit statement
+that nothing forecloses option B of `transferring-part-of-a-bundle.md`.
+
+### `0043` gains F6 and a review
+
+**F6** — a header field that is optional *and repeatable* cannot be represented
+by either draft. `Relates to:` is modelled as a single string; **`0043` itself
+carries three.** Every repeatable field must be an array in the data even where
+it renders as one line, or the first record needing two is a migration.
+
+The review gathers what a second reader found in the drafts, as evidence for
+findings already recorded rather than as new ones. The sharpest: the session
+draft's `currentOwner` names a different session from the one its own `owners[]`
+row carries — **a derived copy that is already wrong in a sixty-line draft**,
+which is F2 demonstrating itself before the schema exists. Also a subject
+carrying a stray tab and finding count, two bundle statuses contradicting their
+own notes, two encodings for `superseded`, markdown backticks and em-dashes
+inside data values, a parallel array bound to its partner only by position, and
+`unresolved` — a status the vocabulary no longer has — already back in a draft.
+`schemas.html` has drifted from section 11 in two places and should not be the
+generator's source.
+
+### `0044`, and what it proves
+
+`0044-citations-under-docs-resolve-nowhere-and-nothing-reads-them`, two findings,
+`unclaimed` and owned by nobody. Four session citations in
+`docs/cross-cutting-findings/INDEX.md` use `../../sessions/` and resolve to
+nothing; three rows use `../sessions/` and are correct. **The majority form is
+the broken one.** Two indexes cite `.github/copilot-instructions.md` sections 4c
+and 4d, which moved when Revision 191 split the set.
+
+`verify-doc-paths.sh --all` reports 0 MISSING and 0 ANCHOR BROKEN over this tree.
+**This is the first recorded instance of something actually broken inside the
+region that check cannot see**, so `0036` stops being a hypothetical cost.
+
+### Three instruction-set edits, under an owner override
+
+Stated as `docs/legend.md` requires: these are toolkit writes with no `decided`
+finding behind them, made at the owner's direction.
+
+- **The stamp zone is named.** `YYYYMMDD-HHMMSS` *local* becomes
+  **America/New_York**, and the same zone governs `Recorded:`. A session almost
+  never runs in that zone: `0043` is dated 2026-09-07 from a UTC clock while
+  local time was 2026-09-06, so a bundle created later sorts earlier. **Existing
+  stamps and dates are evidence and are not restamped.**
+- **The `_to_delete/` remedy reaches section 6.** The conformant prompt has
+  carried it with the note *"this remedy is not yet in either instruction set;
+  it is owed there."* It is now there, with delete permission being per folder,
+  per session, and lost on a bridge reconnect.
+- **`Read:` joins the optional fields.** Section 11 described it in full and
+  omitted it from the closed list that the whole schema rests on — a schema
+  contradicting itself.
+
+### Validators
+
+| Checker | Result |
+|---|---|
+| `verify-findings-headers.sh` | 0 FAIL |
+| `verify-findings-structure.sh` | 0 FAIL |
+| `verify-findings-counts.sh` | 0 FAIL |
+| `verify-doc-paths.sh --all` | 0 MISSING, 0 ANCHOR BROKEN |
+| `verify-script-portability.sh` | 0 WARN, 0 FAIL |
+| `verify-runbook-structure.sh` | 213 PASS / 5 WARN / 25 FAIL — standing baseline |
+
+Composed in a copy outside the owner's checkout; Linux VM, Bash 5.1.16, GNU
+coreutils. **Not macOS.** No script in this revision was executed on the target
+platform, and none was changed.
 
 ## Revision 210 — `0043`, and one cause behind five defects
 

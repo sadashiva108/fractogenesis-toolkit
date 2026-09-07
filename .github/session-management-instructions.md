@@ -134,8 +134,13 @@ docs/sessions/<title>-<stamp>/
 `-- final-summary.md       written at `closed` or `withdrawn`.
 ```
 
-`<title>` is a short readable scope; `<stamp>` is `YYYYMMDD-HHMMSS` local, the
-artifact-root format. The name carries no finding number — a session routinely
+`<title>` is a short readable scope; `<stamp>` is `YYYYMMDD-HHMMSS` in
+**America/New_York**, the artifact-root format. **The zone is named rather than
+left as *local* because a session almost never runs in it**: an assistant working
+in UTC that reads *local* as its own produces a stamp hours ahead of a bundle
+created before it, and the sequence a stamp exists to carry stops holding. The
+same zone governs every `Recorded:` date. A stamp or date already written is
+evidence and is never restamped to match this rule. The name carries no finding number — a session routinely
 owns several — and is fixed at creation.
 
 **`metadata.md` is authoritative for who and what.** One row per owner: the
@@ -177,6 +182,13 @@ Where a write is composed is a separate rule and applies to all three:
   and not a checksum of the files the patch names.
 - **The owner asks before a patch is applied.** Composing is not delivering.
   Report what you composed, show it, and wait.
+- **Ask for delete permission before applying, not after it fails.** The
+  connected folder refuses `unlink` until the owner grants deletion for it, and
+  **every status transition is a delete plus a create**, so this reaches every
+  `STATUS-` and `STATE-` change. The grant is per folder, for the session, and
+  **does not survive a bridge reconnect**. Where it is declined or goes
+  unanswered, move the file into a `_to_delete/` subfolder under the same
+  connected folder and tell the owner — never leave two tags on one bundle.
 - **A copy in session-local storage dies with the session.** Hand over at natural
   stopping points, and say plainly when work exists only there.
 
@@ -418,7 +430,9 @@ That is a gap in the record, and writing it as a dash says so; inventing a
 session to fill the field would not.
 
 **Required: `Recorded:`, `Session:` and `Severity:`** — the fields every reading
-in the repository has once the session is separated out. **Optional: `Felt at:`, `Scope:`, `Relates to:`.** The
+in the repository has once the session is separated out. **Optional: `Felt at:`, `Scope:`, `Read:`, `Relates to:`.** `Read:` is the one
+field whose value is a bulleted list beneath it rather than text on the field's
+own line; the two-space rule governs the fields around it, not its bullets. The
 rule that matters is the last one in the block above: **no other field appears in
 the header.** The schema fixes the vocabulary, not the content — requiring
 `Scope:` would mean inventing one for the readings that never had it.

@@ -22,6 +22,12 @@
 is being designed in parallel and these files bear on it. **Another session
 should record here rather than open a near-duplicate beside it.**
 
+## Contributions
+
+| Session | Date | Contribution |
+|---|---|---|
+| `allocation-and-inquiry-design-20260906-233205` | 2026-09-06 | Read the two draft config files and `schemas.html`; added F6, and the draft review below |
+
 ## Findings
 
 | # | Finding | Status |
@@ -31,6 +37,7 @@ should record here rather than open a near-duplicate beside it.**
 | F3 | The framework's own data is parsed back out of rendered markdown, and that parser has been wrong twice | `framing` |
 | F4 | Structured fields and free-form prose share a file with nothing marking the boundary | `framing` |
 | F5 | Authority is assigned to documents, so every consumer must parse prose to read a fact | `framing` |
+| F6 | A header field that is optional **and repeatable** cannot be represented by either draft, and this bundle carries three of them | `framing` |
 
 ## F1 — the status is in the filename
 
@@ -153,3 +160,95 @@ than assumed:
 
 **The full schema belongs in `docs/architecture/`, not here.** A findings bundle
 is a reading; the design is a design.
+
+## F6 — a repeatable field the data cannot hold
+
+`Relates to:` is defined in `.github/session-management-instructions.md` section
+11 as **optional and repeatable, one line each**. Both drafts model it as a
+single scalar: `findings-metadata-0032.json` carries `"relatesTo": "0031 — …"`,
+one string.
+
+**This bundle carries three `Relates to` lines** — `0041`, `0037` and `0036` —
+so the draft schema cannot represent the very file it was drafted alongside.
+`0035` carries the same shape from the other direction.
+
+The general form of the defect: a projection can always flatten a list into
+prose, and prose cannot be widened back into a list without inventing the
+boundaries. **Every repeatable field must be an array in the data even where it
+renders as one line today**, or the first record needing two is a migration.
+
+`Read:` has the same shape — the instruction set already records that it *was*
+prose inside `Recorded:`, "a list flattened into a sentence, which is a list
+nobody can scan or add to", and was made a bulleted list for exactly this
+reason. Neither draft carries it at all.
+
+## What a second session found in the two drafts
+
+Recorded 2026-09-06 by `allocation-and-inquiry-design-20260906-233205`, against
+`sesssion-metadata.json` and `findings-metadata-0032.json` as they stood. **None
+of these is a new finding**; each is evidence for one already here, and they are
+gathered so the schema work has them in one place.
+
+**F2, and it has already happened in the draft.** `sesssion-metadata.json`
+describes `pre-image-capture-conformance-20260903-194532`, whose owner is
+`session_01PcgHu9kz9Hm5RatLQuFR8H` — and its `currentOwner` string reads
+`session_01FhFbEgG4wmrtJqUCcryNVQ`, which is a different session entirely.
+`currentOwner` is derivable from `owners[]` by taking the row whose `until` is
+open, and in a sixty-line draft the derived copy is **already wrong**. The
+finding predicted this; the draft demonstrates it before the schema exists.
+
+The same file carries `"subject": "A lineage rename is a procedure, not an
+operation\t3"` — a stray tab and the finding count welded onto a subject copied
+out of an index row.
+
+**F5, on the ladder.** `ownedFindingsBundles` stores a `status` per bundle, but
+`docs/legend.md` derives all but three of them from the finding rows. The draft
+stores `0035` as `un-started` beside a note reading *"Closed 2026-09-04.
+Recorded and resolved in one sitting"*, and `0030` as `analyzing` beside
+*"Closed 2026-09-04"*. Both contradict themselves inside one object. **The three
+declared statuses — `unclaimed`, `transferred`, `superseded` — are the only ones
+that may be stored**, and they need a field of their own that is normally null,
+exactly as this bundle's sketch already says.
+
+**Two encodings for one fact.** The session draft writes `"status": "superseded
+by 0040"`; the findings draft writes `"status": "superseded"` with
+`"supersededBy": "0041"` beside it. The second is right. A status field that
+sometimes carries a pointer is the string-parsing problem this bundle exists to
+end, moved into the data.
+
+**Presentation leaking into data.** `"model": "configured \`claude-opus-5\`"`
+carries markdown backticks; `"until": "—"` uses an em-dash where the answer is
+`null`; `releasedTo`, `releasedOn`, `ownedBy`, `revisions` and `completed` use
+`""` for the same thing. And `finalContributions` holds one object whose every
+value is empty — a phantom row that a generator renders as an empty table row.
+**The renderer adds the dash. The data says null.**
+
+**F4, in the findings draft.** `findingsSectionHeaders` is a parallel array to
+`findings`, ordered, with nothing binding the two together — the same
+correspondence-by-position that `verify-findings-counts.sh` exists to police one
+level up. A heading belongs to its finding, as a field on it.
+
+**Retired vocabulary already back.** `contributedTo[0].status` reads
+`"unresolved"`, which `docs/legend.md` does not define; the vocabulary it belongs
+to was replaced. A closed vocabulary in the schema, validated, is the cheapest
+fix available and it is the one thing JSON gives for free that markdown never
+did.
+
+**One name, and it is misspelled.** `sesssion-metadata.json`, three `s`.
+Worth saying only because the file is the proposal for the thing that ends
+hand-typed facts.
+
+**`schemas.html` has drifted from the instruction set.** It shows `findings.md`
+as *"two required fields, three optional"* and omits `Session:`, which section 11
+now requires; and it shows `**Bundle:** … · **Status:**` on `decisions.md` and
+`resolutions.md`, where section 11 says plainly **there is no `Status:` field
+here**. It is a mockup of the schema as it was proposed, not as it was adopted.
+Whatever the JSON projects to must be generated from the instruction set's
+shape, not from that page.
+
+**What the parallel architecture needs from this schema**, stated once so it can
+be argued rather than assumed: a finding must be addressable as `<bundle>/F<n>`,
+and the relationships between findings must be typed, directed, signed and dated
+records rather than a prose line. `docs/architecture/allocation-and-inquiry.md`
+section 10 states it in full. It is one array; asking now is cheaper than
+migrating later.
