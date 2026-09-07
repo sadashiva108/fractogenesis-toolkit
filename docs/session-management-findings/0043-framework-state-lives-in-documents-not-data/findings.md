@@ -385,7 +385,9 @@ than assumed:
   verification this session has used on every patch today.
 
 **The full schema belongs in `docs/architecture/`, not here.** A findings bundle
-is a reading; the design is a design.
+is a reading; the design is a design. It was written on 2026-09-07 as
+[`docs/architecture/state-as-data.md`](../../architecture/state-as-data.md),
+which answers all nine findings and records what it does not decide.
 
 ## F6 — a repeatable field the data cannot hold
 

@@ -149,6 +149,13 @@ where the tool exposes one, the model it was configured for, **the environment i
 actually ran in**, and the dates it held the bundle. None is edited once the
 ownership it records has ended.
 
+**Every value in it is resolved.** Not a placeholder, not an angle-bracketed
+name, not a variable — the absolute path, the real identifier, the actual commit.
+This file is read years later by someone with no other source and no way to
+expand a placeholder, and an unresolved one is indistinguishable from a fact
+nobody recorded. The same holds for every document in a bundle. **A placeholder
+belongs in a schema or a template, never in a record.**
+
 The environment field is not decoration. This repository targets macOS stock Bash
 3.2; an AI session almost never runs there, and a claim validated on Linux is a
 different claim. **Any `not recoverable` names the searches that came back
@@ -175,11 +182,25 @@ Where a write is composed is a separate rule and applies to all three:
 - **Validate in the copy.** Every checker self-locates and none invokes git, so
   they run in a copy unchanged — and only there do the numbers describe your
   change.
-- **`git apply --check` before applying, and say so.** Note that it passes on a
-  patch that will under-apply: `git apply` cannot unlink on a connected folder,
-  downgrades that to a warning and **exits 0**, so any patch containing a
-  deletion lands incomplete. Verify by comparing the two trees, not the exit code
-  and not a checksum of the files the patch names.
+- **`git apply --check` before applying, and say so.** It passes on a patch that
+  will under-apply.
+- **The exit status says nothing, and neither does the warning.** Where the
+  working copy sits on a mount that refuses `unlink`, `git apply` downgrades the
+  failure to a warning and **exits 0**. This is not only about deletions: a file
+  is modified by writing a replacement and unlinking the original, so the refusal
+  fires on plain modification too. The difference is recovery — a modification
+  has a fallback and lands; a deletion has none and the file survives. **So the
+  warning appears on patches that applied perfectly**, and cannot separate the
+  two cases. Verify by comparing the two trees, or by comparing every path the
+  patch touched; not the exit code, and not a checksum of the files the patch
+  names, which sees only what the patch carries as content.
+- **A tag change is invisible to the patch itself.** `STATUS-` and `STATE-` files
+  are empty, and `diff` emits no hunks for an empty file — it reports it as
+  present on one side only, which is not patch content. A patch derived from your
+  copy therefore carries every prose change and **none of the tag renames**, and
+  applies successfully having done half the work. Make the renames explicitly
+  beside the patch, and verify by comparing the trees rather than the patch's
+  file list.
 - **The owner asks before a patch is applied.** Composing is not delivering.
   Report what you composed, show it, and wait.
 - **Ask for delete permission before applying, not after it fails.** The
@@ -256,6 +277,21 @@ worked, and they are only legible together.
 currently holds: write it once and link to it. A copy is permitted only where it
 is generated, or where a check fails when it drifts — an unchecked hand-typed
 copy is the defect, not the display.
+
+**Completeness is not conformance.** A check answers whether a document is well
+formed. **None answers whether it is complete**, and opening the rendered page
+does not either, because a rendering cannot show content that is not there. A
+file that has lost half of itself keeps a valid header, a well-shaped table and a
+clean render, and passes everything. So when you generate or rebuild a document,
+verify its content against its source — every line of the input accounted for,
+every section that should exist existing. **Never redirect into a file you are
+reading from**; write to a temporary file and move it into place.
+
+**Know what each check does not examine, and do not quote it as though it does.**
+Two that recur: a check that resolves links says nothing about the shape of the
+table they sit in, and a check that verifies the counts a table displays need not
+cover a total written as a sentence beneath it. *The checks are clean* is a claim
+about the properties they examine and about nothing else.
 
 ## 9. Superseding a bundle
 
@@ -407,6 +443,11 @@ A long value stays on its one line. Wrapping it is what breaks the block.
 
 `bin/verify-findings-headers.sh` checks both halves — the wrap and the two
 spaces.
+
+**Expect a trailing-whitespace warning from your tools, and do not act on it.**
+The two spaces are trailing whitespace, so `git apply` warns on every conformant
+header block it carries, and an editor set to strip it on save will break the
+rendering this rule exists to protect. The warning is the schema being obeyed.
 
 **Fence every example as `text`, never as `markdown`.** A block tagged
 ` ```markdown ` is read by some renderers as *render this as markdown*: the

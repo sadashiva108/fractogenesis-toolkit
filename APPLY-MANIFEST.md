@@ -1,4 +1,8 @@
 # Apply Manifest
+**Revision 217** — supersedes Revision 216 and earlier. **Under an owner override.** Six operational rules that had accumulated in a workspace file outside the repository are installed in the session management set: what an apply's exit status and warning do and do not mean, that a tag change is invisible to a patch, that the schema's trailing spaces are required, that a record carries no placeholders, and that completeness is not conformance.
+
+**Revision 216** — supersedes Revision 215 and earlier. `docs/architecture/state-as-data.md` designs the state format `0043` reads against: two `metadata.json` schemas, the three status fields the single tag file forced into one, the generation map for every table in the tree, `--check` as the verification, and a migration whose first job is to fail on the bundles already recorded as wrong.
+
 **Revision 215** — supersedes Revision 214 and earlier. Six rules learned between Revisions 206 and 213 live only in a workspace file outside the repository, recorded as `0039` F9. The edge contract agreed across two sessions is recorded as `0043` D1 and D2, and the first pair either session tried to type found a defect in the edge taxonomy, recorded as `0043` F9.
 
 **Revision 214** — supersedes Revision 213 and earlier. The allocator is run against the real nine `unclaimed` bundles and the run finds a defect in the record that proposed it: the objective scored zero for any edge reaching a finding a session already owns, so the one placement everybody expected was reached by coincidence. `0039` D4 is superseded by D5 — ordering becomes a typed edge — and `0043` F4 gains the live instance that settles it.
@@ -560,6 +564,193 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
 
 ---
+
+## Revision 217 — Six rules come in from outside the repository, under an override
+
+### This is an owner override, and here is what it overrides
+
+`docs/legend.md` gates a **toolkit write** on a `decided` finding. These six are
+toolkit writes and no finding behind them is `decided` — `0041` F4, `0039` F1,
+`0041` F2 and `0043` F2 are all `framing`. **The owner directed the change on
+2026-09-07**, and the legend's own account of when the override exists is this
+case exactly: *"a change the owner has already decided, with no finding behind it
+and nothing to discuss, which the lifecycle would delay without adding
+anything."*
+
+Nothing here is a judgement. All six are observed facts about how the tooling
+behaves, three of them with recorded incidents. The lifecycle would have routed
+them through a bundle, a reading and a decisions document to reach a conclusion
+nobody disputes.
+
+### Why they were outside the repository
+
+`0039` F9, recorded at Revision 215: they had accumulated in
+`conformant-prompt.md`, which lives in the owner's workspace and is **not in this
+repository** — absent from a fresh clone, taking no revision, appearing in no
+manifest entry, and invisible to every checker, which self-locate in a repository
+the file is not in. The gate was working; the rules collected in the one place a
+session could still write them. All six landed between Revisions 206 and 213,
+which is one day.
+
+### What was installed, and where
+
+**Section 6 — two rules about applying.** The existing bullet said *"any patch
+containing a deletion lands incomplete"*. That understates it and is replaced:
+where the working copy sits on a mount that refuses `unlink`, the failure is
+downgraded to a warning and the command **exits 0**, and because a file is
+modified by writing a replacement and unlinking the original, **the refusal fires
+on plain modification too**. The difference is recovery, not exposure. The
+consequence is the operative part: **the warning appears on patches that applied
+perfectly**, so neither it nor the exit status separates the two cases, and only
+comparing the trees does.
+
+Beside it, the half nobody had written down: **a tag change is invisible to the
+patch itself.** `STATUS-` and `STATE-` files are empty, `diff` emits no hunks for
+an empty file, so a patch carries every prose change and **none of the tag
+renames** and applies successfully having done half the work. Six tag changes
+crossed that way at Revision 208 and one at Revision 210; both times the patch
+looked complete.
+
+**Section 5 — a record carries no placeholders.** A `metadata.md` is read years
+later by someone with no way to expand one, and an unresolved placeholder is
+indistinguishable from a fact nobody recorded.
+
+**Section 8 — completeness is not conformance.** A check answers whether a
+document is well formed; none answers whether it is complete, and the rendered
+page does not either, because **a rendering cannot show content that is not
+there**. With it, the rule that follows: never redirect into a file you are
+reading from. And a general form of the caveat that keeps recurring — **know what
+each check does not examine**, since a check that resolves links says nothing
+about table shape, and a check that verifies displayed counts need not cover a
+total written as a sentence beneath them.
+
+**Section 11 — the trailing-whitespace warning is the schema being obeyed.** The
+two spaces the header block requires *are* trailing whitespace, so an apply warns
+on every conformant header and an editor set to strip it on save breaks the
+rendering the rule protects.
+
+### What this does not do
+
+**It does not close `0039` F9.** The finding's content is that a rule learned but
+not yet installable has **no destination inside the repository**. Installing six
+empties the buffer once; it does not give the next six anywhere to go. That is
+the following revision's subject.
+
+**It does not ungate anything.** The gate stands unchanged, and the override is
+recorded here precisely so a reader can tell a change that followed from a
+finding from one the owner directed.
+
+### Agnosticism
+
+The session management set is project-agnostic by design. Five of the six
+additions name no path, script or project noun. The sixth cites
+`bin/verify-findings-headers.sh`, in a paragraph that already did.
+
+### Validators
+
+| Checker | Result |
+|---|---|
+| `verify-findings-headers.sh` | 938 OK, 0 FAIL |
+| `verify-findings-structure.sh` | 54 OK, 0 FAIL |
+| `verify-findings-counts.sh` | 54 OK, 0 FAIL |
+| `verify-doc-paths.sh --all` | 0 MISSING, 0 ANCHOR BROKEN |
+| `verify-script-portability.sh` | 0 WARN, 0 FAIL |
+| `verify-runbook-structure.sh` | 213 PASS / 5 WARN / 25 FAIL — standing baseline |
+
+Rendered and inspected, not only checked at source. Composed in a copy outside
+the owner's checkout; Linux VM, Bash 5.1.16, GNU coreutils. **Not macOS.**
+
+## Revision 216 — The state format, designed
+
+One record write: `docs/architecture/state-as-data.md`, 417 lines, plus two
+pointers from `0043` to it. **Nothing is decided and nothing is built.** An
+architecture record sets out a shape and what it costs; the decisions belong in
+the bundle and none has been taken.
+
+### What it answers
+
+`0043`'s nine findings, which have one cause — the framework stores its own state
+in the format it displays it in. Two `metadata.json` files, one per bundle kind,
+same name in both because the directory says which it is.
+
+**Four rules govern both schemas**, each from a finding and each from an observed
+instance rather than a principle. Every repeatable field is an array, because a
+projection flattens a list into prose and prose cannot be widened back. No
+presentation in the data — `null`, never `"—"` — because the renderer adds the
+dash. No fact another file owns, because a draft that copied subjects and counts
+from the bundles a session owns had already drifted before the schema existed.
+Nothing derivable is stored, because a stored derivation is a second copy.
+
+**The three status fields** are `0043` F1's answer: `progress` derived and never
+stored, `ownership` for `unclaimed` and `transferred`, `lineage` for
+`superseded`. The ladder shrinks from eight rows to five and stops being an
+override list — rows 1, 1b and 2 leave because they were never derivations. The
+record is explicit that **this does not merge the two vocabularies** and gives
+the three ladder judgements that show why it must not.
+
+**A `updatedAt` on each finding** is F8's remedy: `framing` names a direction,
+not a position, so no noun distinguishes an hour from three weeks. A timestamp
+does, and it tells the allocator where `readiness` cannot come from.
+
+### The generation map, and what verifies it
+
+Every table in the tree is listed with its row source and the origin of each
+column. Generalising `runbook` to `kind`/`subKind` makes the runbook rollup one
+grouping rule rather than a special case. **The owning session is computed by
+scanning session files, never stored on the bundle** — which preserves
+`findings-manifest.md`'s authority for ownership and makes the two sides unable
+to disagree.
+
+**The design's own risk is the generator**, and the record says so plainly: drift
+becomes impossible, and a bug rewrites forty files silently. That is not
+hypothetical here — `0043` F3 records two parser bugs and a first run reporting
+36 failures on a clean tree, and `0042` F4 an audit whose first run reported 131
+failures of which 128 were its own. **`--check` regenerates into a scratch tree
+and diffs against what is committed**, which is the verification this session has
+used on every patch. It replaces `verify-findings-counts.sh` and closes the gap
+that script never covered — the prose total at the foot of a manifest, found
+wrong at Revision 212.
+
+**`analyzing` needs a fixture set**, per F7: it is the only row that states no
+positive condition, so checking it means proving a negative. Fixtures must land
+on named rows, with at least one landing on `analyzing` for a stated reason
+rather than by falling through.
+
+### `metadata.md` survives
+
+Its content is entirely structured bar two paragraphs, which is why it reads as
+redundant — and it is **cited by thirteen documents**, so removing it is a rename
+in `0030`'s sense. Keep the path, move the authority. The two paragraphs become
+`environmentNotes` on the owner row they qualify, travelling with the row rather
+than sitting under a table that may have grown.
+
+### The migration, and why it should fail
+
+Five steps, one revision, roughly 40 findings bundles and 6 session bundles. The
+extraction parser is **the third generation of the one `0043` F3 is about, and
+the last one ever written**, which is what makes it worth writing.
+
+Step 2 is the interesting one: regenerate the markdown from the extracted JSON
+and diff against the committed tree. A clean diff means nothing was lost. **It
+will not be clean**, and the record says why in advance — 23 headers hold
+`Session: —`, four bundles carry finding rows that never moved, ten
+`decisions.md` and `resolutions.md` name the wrong bundle. Every one is already a
+recorded finding. **A migration that reported no problems would be the thing to
+distrust.**
+
+### Validators
+
+| Checker | Result |
+|---|---|
+| `verify-findings-headers.sh` | 936 OK, 0 FAIL |
+| `verify-findings-structure.sh` | 54 OK, 0 FAIL |
+| `verify-findings-counts.sh` | 54 OK, 0 FAIL |
+| `verify-doc-paths.sh --all` | 0 MISSING, 0 ANCHOR BROKEN — and it does not read `docs/`, which is `0036` |
+| `verify-script-portability.sh` | 0 WARN, 0 FAIL |
+| `verify-runbook-structure.sh` | 213 PASS / 5 WARN / 25 FAIL — standing baseline |
+
+Rendered and inspected, not only checked at source. Composed in a copy outside
+the owner's checkout; Linux VM, Bash 5.1.16, GNU coreutils. **Not macOS.**
 
 ## Revision 215 — Three things that existed only in conversation
 

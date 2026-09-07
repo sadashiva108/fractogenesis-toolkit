@@ -94,5 +94,7 @@ session's to take.
 
 **Where the state format goes at all.** D1 settles the edge contract and nothing
 else. The two `metadata.json` schemas, the generation map, the marker
-convention, `--check`, and the migration belong in an architecture record and are
-not decided in this bundle.
+convention, `--check`, and the migration are designed in
+[`docs/architecture/state-as-data.md`](../../architecture/state-as-data.md) and
+are **not decided** by it either — an architecture record sets out the shape and
+what it costs; the decisions belong here, and none of them has been taken.
