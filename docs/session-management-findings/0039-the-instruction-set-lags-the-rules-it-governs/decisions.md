@@ -33,7 +33,9 @@ without answering it for rules.
 | D1 | `docs/legend.md` holds VOCABULARY. `.github/copilot-instructions.md` sections 4b–4d hold PROCEDURE. Each points at the other for the kind it does not hold, and the legend is named in §4 as required reading | F1, F2, F5, F6 | 2026-09-04 | `accepted` |
 | D2 | the write categories split. The legend keeps three one-line definitions of what a record, toolkit and evidence write IS. §4b takes the gating | F5 | 2026-09-04 | `accepted` |
 | D3 | `docs/INDEX.md` owns the enumeration of the `docs/` directories. §4b and `docs/architecture/findings-and-sessions.md` §2 stop listing them and point at it | F3, F4 | 2026-09-04 | `accepted` |
-| D4 | a bundle waiting on another's decision says so in prose inside its `Relates to` line, and §4c requires the bundle's INDEX.md Notes cell to say it too. `Decide after:` does not become vocabulary | F7 | 2026-09-04 | `accepted` |
+| D4 | a bundle waiting on another's decision says so in prose inside its `Relates to` line, and §4c requires the bundle's INDEX.md Notes cell to say it too. `Decide after:` does not become vocabulary | F7 | 2026-09-04 | `superseded → D5` |
+
+| D5 | ordering between findings is a typed, directed edge — `blocks` or `evidences` — asserted in the bundle whose session states it, validated at both ends, and expiring when either endpoint goes inert | F7 | 2026-09-06 | `accepted` |
 
 ## Findings 1, 2, 5 and 6 — a rule lives where its kind lives
 
@@ -241,6 +243,59 @@ start anyway. That was true of `Decide after:` as well — it obliged nobody
 either — so this decision does not lose a guarantee, it declines to invent one.
 If ordering is ever violated in a way that costs something, that is a finding, and
 it will have evidence this one does not.
+
+## D5 — ordering between findings is a typed, directed edge
+
+`allocation-and-inquiry-design-20260906-233205`, 2026-09-06, recorded against a
+`framing` finding as section 4 permits. **This supersedes D4**, whose row and
+section stand unchanged above as the record of what was considered.
+
+D4 rejected `Decide after:` as vocabulary and put ordering in prose inside
+`Relates to`, with §4c to require the INDEX.md Notes cell to repeat it. It stated
+its own cost plainly: **nothing enforces the order.**
+
+`docs/architecture/allocation-and-inquiry.md` makes ordering a typed edge —
+`blocks` where a decision must come first, `evidences` where a decision must have
+been *carried out* first — carrying `kind`, `from`, `to`, `why`, `basis`,
+`asserted_by` and `asserted_on`, checked at both ends the way
+`verify-findings-headers.sh` already checks that every cited `F<n>` exists.
+
+### Why D4 gives rather than D5
+
+**D4's stated cost is exactly what an edge fixes.** It did not lose a guarantee,
+it declined to invent one, and said a violation that cost something would be a
+finding with evidence D4 did not have. That evidence now exists.
+
+**D4 was priced against one sentence, not against ten kinds with four hard
+constraints.** Its rejection of real vocabulary read *"a lot of structure for one
+sentence"* — correct against what was proposed. The edge model is not one field
+for one case; it is the input to an allocator and an interviewer, and ordering is
+one of ten things it carries. The cost D4 weighed is not the cost now on offer.
+
+**Half of D4 was never applied and the other half is contradicted by its own
+bundle.** `git log -S"Decide after"` is empty across the whole history of all
+three instruction files, and the Notes-cell obligation appears in none of them —
+§4c ceased to exist when Revision 191 split the set, and the requirement went
+with it. Meanwhile this bundle's own header still carries `**Decide after:**` and
+a hand-written `**Gate cleared 2026-09-04:**`, recorded as a live instance of
+`0043` F4. Nothing unwinds, because nothing was ever wound.
+
+### What this does not decide
+
+Where the edge is stored, and in what format. That belongs to `0043`, and the
+answer taken there — an edge lives in the bundle whose session asserted it, so
+`asserted_by` is structural rather than a field to be trusted — is not this
+decision's to make.
+
+**Rejected: reopen `0029` D4 instead.** `0029` is `superseded` and frozen;
+`reopened` corrects a resolution, and this is a reading replaced by a better
+mechanism. The row stays, which is the record.
+
+**Rejected: record this against the architecture document alone.** The
+architecture record says why a shape is what it is; it is not where a decision
+against a finding lives. F7 is the finding, this bundle is where it lives, and a
+decision recorded elsewhere leaves F7 answered by a document that does not know
+it exists.
 
 ---
 

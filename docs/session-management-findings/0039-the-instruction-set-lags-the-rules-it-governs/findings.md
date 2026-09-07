@@ -27,6 +27,12 @@ afternoon by the session that had been told it.
 
 ---
 
+## Contributions
+
+| Session | Date | Contribution |
+|---|---|---|
+| `allocation-and-inquiry-design-20260906-233205` | 2026-09-06 | Recorded D5 against F7 and set D4's outcome to `superseded → D5` |
+
 ## Finding status
 
 The bundle advances with its first row and reaches `resolved` only with its last.

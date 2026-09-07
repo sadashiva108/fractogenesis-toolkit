@@ -168,10 +168,24 @@ approves or edits, and approving it is one decision instead of eight.
 
 ```text
 score = w_keep · Σ intra-session edge weight
+      + w_pull · Σ edge weight from a queued bundle to a finding already owned
+                 by the session it would be assigned to
+      + w_tree · Σ bundles whose tree matches the session's subject
       − w_split · Σ cross-session shares-surface weight
       − w_load  · (max session load − min session load)
       − w_hold  · Σ ready findings inside held bundles
 ```
+
+**The `pull` term was missing from the first version of this record and was found
+by running it.** Revision 211 counted only edges between two *queued* bundles, so
+an edge from the queue into work a session already holds — the strongest
+allocation signal there is — had no effect at all. In the first run over the real
+nine, `0044` was placed with the session owning `0036` **by load-balancing
+coincidence**, while the `constrains` edge that actually justifies the placement
+scored zero. A right answer for no reason is the failure this design is least
+able to notice about itself, and it was caught only because the other session had
+put a prediction on the record beforehand. Section 9's ablation is what makes
+that repeatable rather than lucky.
 
 Load is **weighted by decision cost, not by finding count**. A bundle of seven
 findings that a single precedent settles is lighter than one finding needing an

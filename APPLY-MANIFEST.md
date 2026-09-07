@@ -1,4 +1,6 @@
 # Apply Manifest
+**Revision 214** — supersedes Revision 213 and earlier. The allocator is run against the real nine `unclaimed` bundles and the run finds a defect in the record that proposed it: the objective scored zero for any edge reaching a finding a session already owns, so the one placement everybody expected was reached by coincidence. `0039` D4 is superseded by D5 — ordering becomes a typed edge — and `0043` F4 gains the live instance that settles it.
+
 **Revision 213** — supersedes Revision 212 and earlier. `0043` F8 records why each status vocabulary has exactly one activity-named member: the vocabulary names completed acts, and one member in each is the absence of a completion, which no past participle can name. The information the name cannot carry is duration, and a per-finding timestamp is what carries it.
 
 **Revision 212** — supersedes Revision 211 and earlier. `0043` finding 1 gains the reading behind it — one tag file, three orthogonal facts, and a ladder whose first three rows are overrides rather than steps — and a seventh finding: the derivation's else branch asserts nothing, so a derivation bug always lands there. A hand-typed total in this session's own manifest was found wrong by two, and the checker does not cover it.
@@ -556,6 +558,94 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
 
 ---
+
+## Revision 214 — the run, and what it found in the thing that proposed it
+
+### `0039` D4 is superseded by D5
+
+D4 decided that a bundle waiting on another says so in prose inside `Relates to`,
+and that `Decide after:` does not become vocabulary. **D5 makes ordering a typed,
+directed edge** — `blocks` for a decision that must come first, `evidences` for
+one that must have been carried out first — validated at both ends and expiring
+when either endpoint goes inert.
+
+D4's row and section stand unchanged. Three reasons it gives:
+
+- **Its stated cost is exactly what an edge fixes.** D4 wrote *"nothing enforces
+  the order"* and said a violation that cost something would be a finding with
+  evidence it did not have.
+- **It was priced against one sentence**, not against ten kinds with four hard
+  constraints feeding an allocator and an interviewer.
+- **Half of it was never applied and the other half its own bundle contradicts.**
+  `git log -S"Decide after"` is empty across the entire history of all three
+  instruction files, and the Notes-cell obligation D4 placed on §4c is in none of
+  them — §4c stopped existing at Revision 191 and the requirement went with it.
+
+Recorded by `allocation-and-inquiry-design-20260906-233205` against a `framing`
+finding, as section 4 permits, at the holding session's invitation and on its
+argument. `0029` is not reopened: it is `superseded` and frozen, and this is a
+reading replaced rather than a resolution corrected.
+
+### `0043` F4 gains the instance that settles it
+
+`0039`'s own `findings.md` carries `**Decide after:**` and `**Gate cleared
+2026-09-04:**` below its header — two bolded, colon-terminated labels outside the
+closed vocabulary, in the region where §11 says a gate belongs *as prose, not as
+an invented field*. Whether they are prose or fields **is the boundary F4 says
+nothing marks**, and `verify-findings-headers.sh` reports 0 FAIL because the
+boundary it would need does not exist.
+
+`Gate cleared 2026-09-04:` is a hand-written **expiry** — the discipline
+`allocation-and-inquiry.md` section 3.3 requires of an edge. The tree reached for
+the mechanism and its expiry rule independently, in prose, in the one bundle
+whose decision declined to have either.
+
+Also observed and not fixed: `0039`'s findings table sits under `## Finding
+status` rather than `## Findings`, and its `decisions.md` header reads
+`**Bundle:** 0029` with a sentence saying the bundle *"stays `in progress`"* — a
+status that no longer exists. Both are conformance work belonging to `0037` and
+`0041`, and neither is this revision's to take in passing.
+
+### The run, and the defect it found in section 4.2
+
+Nine bundles, 28 findings, 43 cost units. **Zero held, zero ready findings
+stranded** — the first entry in the counter that section 12's decision rests on.
+
+`docs/ledgers/allocation-evidence.md` carries the run: the proposal, the ablation
+with the ranking off, and the adversarial arm, which is recorded as **less useful
+than the ablation** rather than dressed up. The ablation's failure is nameable —
+`0001` and `0017` land apart, severing three `evidences` edges, so the session
+deciding `0001`'s Phase 12 entry would be reading evidence another session is
+deciding whether to re-run.
+
+**The objective as committed in Revision 211 was wrong.** It counted only edges
+between two queued bundles, so an edge from the queue into work a session already
+holds scored zero. `0044` landed with `0036`'s owner in the first run **by
+load-balancing coincidence**. Section 4.2 gains a `pull` term and a subject
+affinity term, and says plainly that it was found by running the thing.
+
+The other session had pre-registered the expected placement and the expected
+reason before the run. Destination met; reason different — `constrains` and
+subject affinity, not `evidences` or `co-decides` — and without the prediction
+the first run would have been read as a success. **Pre-registration becomes
+standard for every run**, because a right answer reached for no reason is the
+failure this design is least able to see in itself.
+
+### Validators
+
+| Checker | Result |
+|---|---|
+| `verify-findings-headers.sh` | 0 FAIL |
+| `verify-findings-structure.sh` | 0 FAIL |
+| `verify-findings-counts.sh` | 0 FAIL |
+| `verify-doc-paths.sh --all` | 0 MISSING, 0 ANCHOR BROKEN |
+| `verify-script-portability.sh` | 0 WARN, 0 FAIL |
+| `verify-runbook-structure.sh` | 213 PASS / 5 WARN / 25 FAIL — standing baseline |
+
+The prototype allocator is **not** in this revision. It lives in session-local
+scratch and dies with the session; nothing in `bin/` or `.internal/` changed.
+Composed in a copy outside the owner's checkout; Linux VM, Bash 5.1.16, GNU
+coreutils. **Not macOS.**
 
 ## Revision 213 — Why the odd one out is odd, in both vocabularies
 

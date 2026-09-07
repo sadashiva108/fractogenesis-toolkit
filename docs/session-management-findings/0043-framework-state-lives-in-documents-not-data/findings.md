@@ -26,7 +26,7 @@ should record here rather than open a near-duplicate beside it.**
 
 | Session | Date | Contribution |
 |---|---|---|
-| `allocation-and-inquiry-design-20260906-233205` | 2026-09-06 | Read the two draft config files and `schemas.html`; added F6, and the draft review below |
+| `allocation-and-inquiry-design-20260906-233205` | 2026-09-06 | Read the two draft config files and `schemas.html`; added F6, the draft review below, and a live instance of F4 in `0039`'s own header |
 
 ## Findings
 
@@ -149,6 +149,39 @@ into a Finding column and changed **what a reading claims** — `0037` F5's row
 read `reopened` against its own heading and against `0027`, and the damage was
 indistinguishable from an intended edit. The consequence tomorrow is that
 nothing can safely regenerate a region of a document it did not write.
+
+### A live instance, found 2026-09-06
+
+Recorded by `allocation-and-inquiry-design-20260906-233205` while checking a
+claim about `0039` D4.
+
+`0039`'s own `findings.md` carries two bolded, colon-terminated labels below its
+header block:
+
+```text
+**Decide after:** `0027`, then `0028`. Findings 1, 2, 5 and 6 below are four
+symptoms of one question `0027` finding F1 owns …
+**Gate cleared 2026-09-04:** both are `resolved`. `0027` answered the question …
+```
+
+Neither is in the closed vocabulary. Section 11 names *a gate* as its example of
+the thing that must go in prose rather than become an invented field, and these
+are below the header block, so whether they are prose or fields is **exactly the
+boundary this finding says nothing marks**. `verify-findings-headers.sh` reports
+0 FAIL over the file, because the boundary it would need in order to judge does
+not exist.
+
+Two things make this the sharpest instance available:
+
+- **The bundle carrying the notation is the one whose D4 declined to make it
+  vocabulary.** A decision and its own bundle's header disagree, and nothing
+  could notice.
+- **`Gate cleared 2026-09-04:` is an expiry, hand-written.** A session tracked
+  an ordering constraint and then recorded, by hand, that it had lapsed —
+  which is the discipline
+  `docs/architecture/allocation-and-inquiry.md` section 3.3 requires of an edge.
+  The tree reached for the mechanism and the expiry rule independently, in prose,
+  in the one bundle that decided not to have either.
 
 ## F5 — authority sits on documents, not on data
 

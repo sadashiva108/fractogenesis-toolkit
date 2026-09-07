@@ -11,7 +11,7 @@ concerns, not in a note.
 |---|---|---|
 | `architecture/` | Design that outlives the session that wrote it. Read before building the thing it describes. | — |
 | `ledgers/` | Dated statements of what exists, what is stale and what is owed. Re-derived and replaced wholesale, not fixed. | — |
-| | `evidence-conformance.md` — the four-table survey · `capture-script-refactor-2026-09-02.md` — R135 · `script-conformance-2026-09-02.md` — R136/137 · `artifact-migration-2026-09-02.md` — **what cannot be regenerated** · `artifact-conversion-2026-09-02.md` — **what was done about it**, R138 | |
+| | `evidence-conformance.md` — the four-table survey · `capture-script-refactor-2026-09-02.md` — R135 · `script-conformance-2026-09-02.md` — R136/137 · `artifact-migration-2026-09-02.md` — **what cannot be regenerated** · `artifact-conversion-2026-09-02.md` — **what was done about it**, R138 · `allocation-evidence.md` — allocator runs, re-derived per run, R214 | |
 | `sessions/` | Session prompts, the plans they execute, and the handoffs they leave. | [[docs/sessions/INDEX\|sessions/INDEX.md]] |
 | `ideas/` | Things that do not exist yet: a new script or sub-command, a new runbook or reference, a new artifact pattern or layout. Not fixes, refactors, renames or prose corrections — those are findings. | — |
 | `runbook-findings/` | Findings whose ramifications are functionally felt in one runbook, including the scripts and artifacts it owns. One directory per runbook stem, all indexed in one place. Bundles hold `findings.md`, then `decisions.md`, then `resolutions.md`. | [[docs/runbook-findings/INDEX\|runbook-findings/INDEX.md]] |
