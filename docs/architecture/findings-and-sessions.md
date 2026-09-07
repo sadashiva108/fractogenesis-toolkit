@@ -1,10 +1,15 @@
 # Findings and sessions — the bundle structure
 
-**Written:** 2026-09-03, restore-apps session, covering the design that shipped
-over Revisions 160 through 164.
-**Scope:** the two object types under `docs/`, their lifecycles, the conventions
-that hold them together, and why each was chosen over the alternatives. Written
-to be readable by someone who has never seen this repository, because the
+**Written:** 2026-09-03, restore-apps session, covering the design that shipped  
+over Revisions 160 through 164.  
+**Brought current:** 2026-09-07, `session-management-re-evaluation-20260906-110105`.  
+Eleven passages carried a vocabulary retired in Revision 198 or pointed at  
+`.github/copilot-instructions.md` sections that stopped existing when it was  
+split. **The reasoning is unchanged**; only the words and the pointers moved,  
+except where a claim had become false and is marked as corrected.  
+**Scope:** the two object types under `docs/`, their lifecycles, the conventions  
+that hold them together, and why each was chosen over the alternatives. Written  
+to be readable by someone who has never seen this repository, because the  
 structure is meant to be reused.
 
 ---
@@ -30,10 +35,9 @@ was considered, and never what somebody looked at and decided not to change.
 ## 2. The two objects
 
 **A findings bundle** is a *reading*: what was found in something that already
-exists, where it is felt, what it costs to leave. It lives under
-`docs/runbook-findings/<runbook>/` when its ramifications are functionally felt
-in one runbook, or `docs/cross-cutting-findings/` when they are broad and
-agnostic to any one runbook.
+exists, where it is felt, what it costs to leave. **`docs/INDEX.md` owns the
+list of trees it may live in**; this record does not enumerate them, because a
+list restated away from the table it counts is the copy `0039` D3 removed.
 
 ```text
 <NNNN>-<slug>/
@@ -76,8 +80,8 @@ corrected only for accuracy; that constraint needs its own file to hold.
 
 ## 4. Identity: numbers on findings, timestamps on sessions
 
-Findings carry a **four-digit number, one sequence across both trees**, so
-`finding 0007` names a bundle without needing its scope. Never reused, never
+Findings carry a **four-digit number, one sequence across every findings tree**,
+so `finding 0007` names a bundle without needing its scope. Never reused, never
 renumbered.
 
 Sessions carry a **title and a timestamp**, no number.
@@ -103,7 +107,11 @@ each. Both are bundles, and the number names the bundle.
 Indexes and manifests therefore carry a **Subject** — what the reading was of —
 and a **Findings** count, rather than a column headed *Finding* that quietly
 implies one. The count comes from the per-finding status table inside
-`findings.md`, and a bundle with no such table holds one finding by definition.
+`findings.md`. **A bundle with no such table used to mean one finding by
+definition; it no longer does.** That convention let twenty-six bundles pass with
+no table at all, because a checker returning 1 on an absent table agreed with
+every index that counted it. The table is required, including for a single
+finding — instruction set section 11.
 
 The distinction is not pedantry: `resolved` means every finding in the bundle has
 a resolution, so a reader who thinks a bundle is a finding will close one that is
@@ -130,8 +138,8 @@ moment the relationship stops being one-to-one it has to be broken or renamed.
 until Revision 179, and the two copies disagreed on one arrow — which is what
 `0027` finding 6 recorded and what a second copy of any fact eventually does.
 Definitions live in the legend; what each state *requires* lives in
-`.github/copilot-instructions.md` sections 4c and 4d. This record covers only why
-the shape is what it is.
+`.github/session-management-instructions.md`. This record covers only why the
+shape is what it is.
 
 Two things about the shape are worth stating here because they are design rather
 than definition. **A session creates its own bundle**, so there is no state for a
@@ -141,13 +149,20 @@ by what happens to the findings**: a closed session's unfinished readings live o
 unowned, a handoff carries them to a successor, a withdrawn session takes them
 with it.
 
-**`in progress` and `resolving` are separate on purpose.** The first is deciding
-and produces `decisions.md`; the second is doing and produces `resolutions.md`,
-and it may not begin until the decisions are finalized. Collapsing them is how
-work starts before the decision behind it is settled, and how a resolution ends
-up with nothing recording why it was the right one. It is the single most
-load-bearing distinction in the design and the easiest to erode under time
-pressure.
+**Deciding and doing are separate on purpose.** The first produces
+`decisions.md`; the second produces `resolutions.md` and may not begin until the
+decisions are complete. Collapsing them is how work starts before the decision
+behind it is settled, and how a resolution ends up with nothing recording why it
+was the right one. It is the most load-bearing distinction in the design and the
+easiest to erode under time pressure.
+
+**The vocabulary that carried it changed in Revision 198 and the distinction did
+not.** `in progress` and `resolving` were two statuses; `framing` is now the long
+working status where wording and decisions are revised together, and `decided`
+is the enduring fact that every decision is made. What was two words is one word
+and its successor. **Whether `decided` is enough — whether a state is needed in
+which the decisions are locked while the work is in flight — is open, and
+recorded as `0039` finding 10.**
 
 **`withdrawn` is terminal and still writes a summary.** Work may well have been
 done before the owner pivoted. A withdrawn session that recorded nothing is
@@ -163,7 +178,7 @@ index Notes column rather than into a softened status.
 Each bundle carries `STATUS-<status>` or `STATE-<state>` — a marker file,
 renamed as the bundle moves.
 
-**Rejected: a suffix on the directory name** (`0001-restore-repos-evidence.unresolved/`).
+**Rejected: a suffix on the directory name** (`0001-restore-repos-evidence.analyzing/`).
 It would rename the directory on every transition, and the directory name is what
 everything else cites. The rule in section 4 forbids it.
 
@@ -240,8 +255,8 @@ designed to be read cold.
 here are Claude or Copilot, the instruction set lives in one tool-neutral file,
 and `.claude/CLAUDE.md` is a pointer rather than a second copy for exactly that
 reason. So everything below is an *accelerator*: it makes the conventions cheaper
-to follow correctly, and every one of them must degrade to *a session reads
-sections 4b through 4d and does it by hand*. An accelerator that becomes load
+to follow correctly, and every one of them must degrade to *a session reads the
+instruction set and does it by hand*. An accelerator that becomes load
 bearing has turned a portable structure into a Claude-only one.
 
 Ordered by what they would actually buy.
@@ -249,8 +264,8 @@ Ordered by what they would actually buy.
 ### 11.1 Enforcement at write time
 
 Every invariant in this record is currently discipline. The tag must agree with
-the index row. `resolutions.md` must not exist while a bundle is `unresolved`.
-`findings.md` must not be edited once the bundle leaves `unresolved`. A new
+the index row. `resolutions.md` must not exist while a finding is still being
+framed. `findings.md` must not be edited once its findings leave `framing`. A new
 number must actually be free. Section 7 admits a tag and a row can disagree and
 names no way to catch it — the honest answer today is *whoever moved it last*.
 
@@ -278,7 +293,8 @@ so the *idea* is portable even where the mechanism is not.
 
 ### 11.3 The decide/do split already exists as a tool behaviour
 
-`in progress` → `decisions.md` → `resolving` is plan, approve, then execute. A
+`framing` → `decisions.md` → `decided` → `resolutions.md` is plan, approve, then
+execute. A
 session that plans, has the plan approved, and only then acts produces those two
 documents as a by-product of how it was already working, rather than as
 paperwork bolted on afterwards.
@@ -319,11 +335,14 @@ rules.
 
 The premise of this whole structure is that work spans sittings and owners. The
 characteristic failure is therefore not a wrong status but a still one: a bundle
-`in progress` for three weeks, an `owned` session with no commits since the day
-it was claimed, a `handoff` nobody collected.
+`analyzing` for three weeks, an `active` session with no commits since the day it
+was claimed, a `handoff` nobody collected.
 
-A scheduled sweep that lists those costs nothing and is the only mechanism here
-that would notice. Nothing in the current design does.
+A scheduled sweep that lists those costs nothing, and nothing in the current
+design notices. **`0043` finding 8 records the cheaper half**: a status names a
+direction and not a duration, so `framing` for an hour and `framing` for three
+weeks are the same value. A per-finding timestamp makes the duration derivable
+without a sweep inferring it.
 
 ### What is deliberately not proposed
 
@@ -400,7 +419,7 @@ trades away.
 
 The per-state document requirements, the exact naming rules, and the numbering
 mechanics — those are instructions and live in
-`.github/copilot-instructions.md` sections 4b through 4d, with the vocabulary in
+`.github/session-management-instructions.md`, with the vocabulary in
 `docs/legend.md`. This record covers why the shape is what it is; if the two ever
 disagree, the instructions are what a session follows and this record is what
 needs correcting.

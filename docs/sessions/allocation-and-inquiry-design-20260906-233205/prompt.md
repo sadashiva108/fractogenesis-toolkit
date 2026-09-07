@@ -2,11 +2,19 @@
 
 ## The conformant half
 
-This session was opened with the workspace's conformant session prompt,
-**last updated 2026-09-06 17:55 EST and current as of Revision 206**. The tree it
-was pasted against is at **Revision 210**, so it is four revisions behind, and
-Revision 210 records a bundle — `0043` — whose subject bears directly on this
-session's task.
+This session was opened with the workspace's conformant session prompt as it
+stood at **Revision 206**. **Refreshed 2026-09-07 against Revision 217**, which
+is the tree this session is now working on.
+
+**What changed under it since it was pasted, in order:** `0043` was recorded and
+is deliberately open (R210); this session's own architecture landed (R211); the
+allocator was run and corrected the record that proposed it (R214); the edge
+contract became `0043` D1 and D2 (R215); `docs/architecture/state-as-data.md`
+designed the format the graph reads (R216); and **six rules that had accumulated
+in the conformant prompt itself were installed in the instruction set under an
+owner override** (R217), which is `0039` F9. That last one matters to this file:
+the conformant prompt is no longer the only home for those rules, and where it
+still states them it is a copy.
 
 **The verbatim copy is owed here and is not yet in place.** The conformant prompt
 lives in `/Users/dkittrell/reimage-workspace`, which is not a connected folder
@@ -57,6 +65,19 @@ existing framework is accounted for rather than approximated.
    inline first.
 5. Demonstrate it against the real queue, then against a deliberately bad
    allocation and with the ranking disabled, so the difference is visible.
+   **The allocator half is done** — Revision 214, recorded in
+   `docs/ledgers/allocation-evidence.md`, including the defect the run found in
+   section 4.2 of the record that proposed it. **The interviewer half is not
+   run**, and it is the half carrying the cognitive-load claim.
+
+### Decisions this session has taken
+
+| | |
+|---|---|
+| bundles stay atomic | owner, 2026-09-06. `allocation-and-inquiry.md` §12 |
+| ordering is a typed edge | `0039` D5, 2026-09-06, superseding D4 |
+| the objective needs a `pull` term | found by running it, R214, `allocation-and-inquiry.md` §4.2 |
+| pre-registration before every run | `docs/ledgers/allocation-evidence.md` |
 
 ### Standing constraints on the design
 

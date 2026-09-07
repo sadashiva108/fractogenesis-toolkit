@@ -41,3 +41,10 @@ list before it is handed over.
 
 | Bundle | Date | Contribution |
 |---|---|---|
+| `0043` | 2026-09-06 | Added F6; reviewed the two draft config files; recorded a live instance of F4 in `0039`'s own header |
+| `0039` | 2026-09-06 | Recorded D5 against F7 and set D4's outcome to `superseded → D5` |
+| `0044` | 2026-09-06 | Recorded the bundle. Not owned — it is `unclaimed` |
+
+This session owns no findings bundle and is `available` by the letter of
+`docs/legend.md`. Its output is an architecture record, three contributions and
+one decision. `0045` records that the state vocabulary cannot say that.

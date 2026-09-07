@@ -48,9 +48,11 @@ work, since every fix is a toolkit write.
 | F4 | The architecture record describes two findings trees; there are three | `framing` |
 | F5 | Nothing tells a session that `docs/legend.md` is normative | `framing` |
 | F6 | State names and state requirements live in different files | `framing` |
-| F7 | The vocabulary cannot say that one bundle must be decided before another | `framing` |
+| F7 | The vocabulary cannot say that one bundle must be decided before another | `decided` |
 | F8 | The rule says where a change is composed, not when it is handed over | `framing` |
 | F9 | Six rules live only in a workspace file, outside the repository entirely | `framing` |
+| F10 | Nothing distinguishes a standing decision from one reopened for re-examination, and no state locks decisions while the work is in flight | `framing` |
+| F11 | The header schema binds `findings.md` only, and six of eight architecture records render their header as one run-on paragraph | `framing` |
 
 ---
 
@@ -270,6 +272,86 @@ nobody agreed to. It is an argument that **the overflow needs a destination
 inside the repository** — a tracked, revisioned place a session may write a rule
 it has learned but may not yet install, so that the rule is reviewable and
 countable rather than resident in a file the repository has never heard of.
+
+## F10 — a decision cannot say it is under re-examination, and nothing locks one
+
+**Recorded 2026-09-07**, from the owner asking why `0040` carries four `framing`
+findings above six `accepted` decisions.
+
+**The observation.** Six bundles in this tree carry accepted decisions. In
+`0037`, `0038`, `0040` and `0041` those decisions are dated 2026-09-03 and
+2026-09-04 and are **being re-evaluated**, because assignment reset every finding
+to `framing` on the owner's instruction. In `0043` they are dated 2026-09-07 and
+are **live and standing**. The two sets are **indistinguishable in the data.**
+
+`Outcome` offers `accepted`, `rejected`, `refined → DX` and `superseded → DX`.
+None of them says *under re-examination*. And the finding status reads `framing`,
+which a reader takes as *not yet decided* where the truth is *decided once, being
+decided again*. The only way to tell the two apart today is to compare a
+decision's date against a session brief, which is a fact that lives in a prompt.
+
+**The second half, and the owner's proposal.** There is no state in which the
+decisions are **locked** while the work is in flight. `decided` narrows recording
+to the owner but does not freeze anything — `0040` is the proof, its decisions
+accepted and then reset. `resolved` is frozen and is the wrong end: by then the
+work is done. The gap between them is exactly where a toolkit write happens, and
+**changing a decision while its resolution is being carried out makes work in
+flight retroactively unauthorised.**
+
+The owner's proposal is a status filling that gap, functioning as a gate: once it
+is entered, the decisions are pinned.
+
+### Two cautions, recorded so they are argued rather than met later
+
+**Do not call it `resolving`.** That word named a status retired in Revision 198,
+and the job proposed here is different — the old `resolving` meant *the doing is
+under way*, this means *the decisions are locked*. Reusing a retired word for a
+new meaning is what happened to `unclaimed`: retired as a session state by `0037`
+D7, returned as a bundle status meaning something else, and the 2026-09-06
+handoff recorded it as a loose end still open. **One word naming two things, one
+of them retired, is a defect this tree has already paid for once.**
+
+**And an activity name would repeat F8.** `resolving` is a present participle. F8
+records that each vocabulary already has exactly one activity-named member and
+that it is structural rather than chosen — a second one would be chosen, and
+would name an activity where the fact being recorded is a **composition**: the
+decisions are complete and closed. A composition-shaped name is what this needs.
+
+**Both halves are one question**: whether the vocabulary should distinguish
+*decided* from *decided and locked*, and if so what the locked state is called
+and who may leave it. Not decided here.
+
+## F11 — the header schema binds one file type, and the records break it
+
+**Recorded 2026-09-07**, while bringing
+`docs/architecture/findings-and-sessions.md` current.
+
+Section 11's rule — one field per source line, two trailing spaces on every line
+but the last — exists because without it a header block renders as a single
+run-on sentence with the field names buried in it. `bin/verify-findings-headers.sh`
+enforces it, and enforces it on `findings.md`, `decisions.md` and
+`resolutions.md`.
+
+**The architecture records use the same header shape and are bound by neither.**
+Measured by rendering all eight:
+
+| | |
+|---|---|
+| Correct | `allocation-and-inquiry.md`, `state-as-data.md` — the two written after the rule existed |
+| **Renders as one run-on paragraph** | `findings-and-sessions.md`, `transferring-part-of-a-bundle.md`, `restore-docker-teardown-and-test.md`, `restore-repos-clone-plan.md`, `sign-off-consolidation.md`, `time-machine-run-index.md` |
+
+**Six of eight.** The two correct ones are correct because their authors had just
+read the rule, not because anything held them to it.
+
+`findings-and-sessions.md` is the sharper instance: it is cited as the authority
+by `allocation-and-inquiry.md` four times, and **its own header has never
+rendered as it was written.** Nobody noticed for four days, because every checker
+reads the source and the rule that would catch it stops at a file-name boundary
+nothing states as deliberate.
+
+The two session-management records were corrected in the revision that recorded
+this. **The four toolkit records were not** — one file, one owner — and are
+flagged rather than edited.
 
 ## What this bundle does not cover
 

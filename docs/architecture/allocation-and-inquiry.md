@@ -72,8 +72,18 @@ cannot be, because an asserted fact that nothing checks is the defect
 | `write_category` | **derived from `Scope:`** | `record` · `toolkit` · `evidence` |
 | `blast_radius` | computed | count of documents, scripts and findings a decision here reaches |
 | `readiness` | computed, then asserted where it cannot be | `ready` · `needs-check` · `needs-owner-fact` · `blocked` |
+| `staleness` | derived from each finding's `updatedAt` | how long it has been where it is |
 | `category` | asserted, closed vocabulary | section 6 |
 | `severity` | the `Severity:` field | free text, ranked by the owner |
+
+**`staleness` arrived free.** `docs/architecture/state-as-data.md` section 4.3
+puts an `updatedAt` on every finding, for `0043` F8's reason — `framing` names a
+direction, not a position, so `framing` for an hour and `framing` for three weeks
+are the same value. That timestamp is also the input the interviewer needs to
+rank a finding nobody has touched above one being actively worked, and it makes
+`findings-and-sessions.md` section 11.6 — *noticing silence* — a derivation
+rather than a scheduled sweep. Nothing here asked for it; it was designed for a
+different reason and answers this one.
 
 **`write_category` is the useful one and it already exists.** `docs/legend.md`
 grades the three write kinds by how they fail — a record write is edited, a
@@ -163,6 +173,13 @@ approves or edits, and approving it is one decision instead of eight.
    bundle boundary go to one session or are held together.
 3. No session exceeds its declared capacity.
 4. Terminal bundles are excluded. `transferred` is not re-allocated.
+
+**The queue is `ownership == "unclaimed"`, not a status.** `state-as-data.md`
+section 4.4 splits the single `STATUS-` slot into `progress`, `ownership` and
+`lineage`, and the allocator reads the second of those. That is a simplification
+and not a translation: under the old single field, *unclaimed* had to be an
+override row sitting above the derivation because it was never a derivation at
+all. The allocator now asks the field that was always the one it meant.
 
 ### 4.2 The objective
 
@@ -419,9 +436,10 @@ complete — and it is stated here rather than discovered later.
 
 ## 10. What this requires of the state format
 
-**This architecture does not specify how the framework stores its state.** That
-is `0043`'s subject and the schema belongs with it. What it needs is one thing,
-and asking for it now is cheaper than migrating to it later:
+**Settled at Revision 216.** `docs/architecture/state-as-data.md` is the state
+format, and `0043` D1 carries the contract this section asked for. What follows
+is what was asked and why, kept because the reasoning is what a later reader
+needs; the request is no longer outstanding.
 
 **Findings must be addressable and edges must be first-class.** A finding needs
 a stable identifier — `<bundle>/F<n>` — and edges need to be typed, directed,
@@ -429,6 +447,17 @@ signed and dated records rather than a prose line. The current `Relates to` is a
 single field holding a sentence; it cannot express ten kinds, cannot be
 validated at both ends, and in at least one bundle it already appears three
 times, which the drafts reviewed in `0043` cannot represent at all.
+
+**What landed, beyond what was asked.** An edge is stored in the bundle whose
+session asserted it, so `asserted_by` is structural rather than a field to be
+trusted — that argument came from `0038` F1 and is better than the one this
+record made. Stored edges are assertions only; derived edges are recomputed at
+load. `Relates to` stops being a header field and becomes the projection of
+`kind == "relates-to"`, which is what *one kind among ten* means if it means
+anything. And `0043` D2 answers the case that would have broken it: §9 step 3
+changes from *write this line* to *assert this edge* **in the revision that ships
+the projection, and not before**, so the first supersession after the switch does
+not hand-write a line the generator then overwrites.
 
 Everything else this design needs, the framework already has.
 
@@ -481,7 +510,9 @@ and a checker rule. Section 8's held-back counter is what says when.
 **13.1 Who asserts an edge, and under what permission?** Recording to a
 `framing` finding is open to any session, and an edge is a record write, so the
 permissive answer follows from the existing rules. But an edge changes what
-other sessions are *shown*, which no other record write does. Unresolved.
+other sessions are *shown*, which no other record write does. Unresolved, and
+carried into `docs/architecture/state-as-data.md` section 11.3 rather than
+answered twice.
 
 **13.2 Does the interviewer belong to a session or to the framework?** As
 described it is a way of working that any session follows. As implemented it is

@@ -1,4 +1,8 @@
 # Apply Manifest
+**Revision 219** — supersedes Revision 218 and earlier. `0036` takes option (iv) and three findings move to `decided`. `docs/architecture/findings-and-sessions.md` is brought onto the current vocabulary — eleven passages, reasoning unchanged. Two findings recorded: no state locks decisions while work is in flight, and the header schema binds one file type while six of eight architecture records render as one paragraph.
+
+**Revision 218** — supersedes Revision 217 and earlier. This session's own records catch up with four revisions of its work: `metadata.md` gains the contributions it owed, `prompt.md` tracks Revision 217 rather than 206, and `allocation-and-inquiry.md` absorbs what `state-as-data.md` settled — the queue is an ownership field rather than a status, and `staleness` arrives free from a timestamp designed for another reason. `0045` records that a session whose output is not a bundle has no state that fits, which is this session's own.
+
 **Revision 217** — supersedes Revision 216 and earlier. **Under an owner override.** Six operational rules that had accumulated in a workspace file outside the repository are installed in the session management set: what an apply's exit status and warning do and do not mean, that a tag change is invisible to a patch, that the schema's trailing spaces are required, that a record carries no placeholders, and that completeness is not conformance.
 
 **Revision 216** — supersedes Revision 215 and earlier. `docs/architecture/state-as-data.md` designs the state format `0043` reads against: two `metadata.json` schemas, the three status fields the single tag file forced into one, the generation map for every table in the tree, `--check` as the verification, and a migration whose first job is to fail on the bundles already recorded as wrong.
@@ -564,6 +568,199 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
 
 ---
+
+## Revision 219 — Four open items closed, and two found closing them
+
+### `0036` D1 — option (iv), accepted
+
+`docs/` is scanned, and a reading may declare a path **proposed**, so a citation
+to something that does not exist yet is not counted as broken.
+
+What decided it is the measurement, not the argument: scanning finds **10 MISSING
+and 2 ANCHOR BROKEN** where the pruned tree reports 0 and 0 — and **only the two
+anchors are real defects.** Seven are paths a reading proposes; three are
+sentences documenting a rename, which name an old path in order to say it is old.
+Option (iv) is the only one of four that separates those populations rather than
+trading one against the other, and under it **MISSING under `docs/` reads 2, not
+12.** The three rejected options keep their sections.
+
+**The shape is deliberately left open** — explicit marker or directory rule — and
+the owner's artifact volume already carries `.proposed` suffixes, which is prior
+art for the vocabulary if not the placement. Two things are recorded as owed with
+it: the script's comment gives **two** reasons for the prune, of which the first
+is true and survives and the second has been false since Revision 162; and the
+two real anchors should be repaired in the same revision, since surfacing them is
+what the change is for.
+
+**The toolkit write is not made here.** It moves a baseline every manifest entry
+quotes and belongs in its own reviewable change.
+
+### Three findings move to `decided`
+
+`0043` F5 and F6, answered by D1 of 2026-09-07; `0039` F7, answered by D5. All
+three had live standing decisions and read `framing`. Moving a finding there is
+the owner's act and the owner took it.
+
+### `findings-and-sessions.md` brought current
+
+Eleven passages carried a vocabulary retired in Revision 198 or pointed at
+`.github/copilot-instructions.md` sections that stopped existing when that file
+was split. **The reasoning is unchanged**; the words and the pointers moved. Two
+claims had become false and are corrected rather than reworded: *one sequence
+across both trees* where there are four, and *a bundle with no per-finding table
+holds one finding by definition*, which section 11 identifies as the convention
+that let twenty-six bundles pass with no table at all.
+
+The passage on deciding and doing being separate is kept and **re-based**: it was
+written about `in progress` and `resolving`, and the distinction survived the
+vocabulary that carried it. The record now says so, and points at F10 for what is
+still open about it.
+
+The record is cited four times by `allocation-and-inquiry.md` as its authority,
+which is why it was worth doing before the reader is built against it.
+
+### `0039` F10 — a decision cannot say it is under re-examination
+
+Six bundles carry accepted decisions. In four of them the decisions are dated
+2026-09-03 or 09-04 and are **being re-evaluated**; in `0043` they are dated
+09-07 and are **live**. **The two are indistinguishable in the data** — `Outcome`
+has no value for *under re-examination*, and the finding reads `framing`, which a
+reader takes as *not yet decided*.
+
+The second half is the owner's: **no state locks decisions while the work is in
+flight.** `decided` narrows recording to the owner but freezes nothing — `0040`
+is the proof — and `resolved` is the wrong end, because by then the work is done.
+The gap between them is where a toolkit write happens, and changing a decision
+mid-resolution makes work in flight retroactively unauthorised.
+
+Two cautions are recorded against the proposal rather than left to be met later.
+**Do not call it `resolving`**: that word named a status retired in Revision 198
+with a different job, and reusing a retired word for a new meaning is what
+happened to `unclaimed` and was recorded as a loose end on 2026-09-06. And an
+activity-shaped name would repeat F8 — the fact being recorded is a composition,
+that the decisions are complete and closed.
+
+### `0039` F11 — the header schema binds one file type
+
+Found while doing the above. Section 11's one-field-one-line rule is enforced on
+`findings.md`, `decisions.md` and `resolutions.md`. **The architecture records use
+the same header shape and are bound by neither the rule nor the checker.**
+
+Rendered, all eight: **six of the eight render their header as one run-on
+paragraph.** The two correct ones are the two written after the rule existed.
+`findings-and-sessions.md` is the sharp instance — cited four times as the
+authority for a design being built now, and **its own header had never rendered
+as written**, unnoticed for four days because every checker reads the source and
+the rule stops at a file-name boundary nothing states as deliberate.
+
+The two session-management records are corrected here. **The four toolkit records
+are flagged and not touched** — one file, one owner.
+
+### Composed against a tree that moved
+
+Revision 218 was written into the working tree while this was being composed in a
+copy, so the copy went stale and the patch derived from it would have **deleted
+218's entry and its `0045` bundle** while reporting success. Caught by taking the
+revision number at apply time and finding 219 rather than 218. Re-derived against
+the current tree: the files only this revision touches were carried across, the
+three shared files were merged rather than overwritten, and the counts are `0039`
+at 11 and the tree at 11 bundles and 51 findings, both of 218's figures plus this
+revision's two.
+
+This is the hazard the composition rule names — *a patch derived from a stale
+copy applies cleanly and silently undoes someone else's work* — met for the first
+time in this session.
+
+### Validators
+
+| Checker | Result |
+|---|---|
+| `verify-findings-headers.sh` | 948 OK, 0 FAIL |
+| `verify-findings-structure.sh` | 55 OK, 0 FAIL |
+| `verify-findings-counts.sh` | 55 OK, 0 FAIL — **it failed first**, on `0039` moving 9 findings to 11, and passed once all three displays were corrected |
+| `verify-doc-paths.sh --all` | 0 MISSING, 0 ANCHOR BROKEN — and it does not read `docs/`, which D1 has now decided |
+| `verify-script-portability.sh` | 0 WARN, 0 FAIL |
+| `verify-runbook-structure.sh` | 213 PASS / 5 WARN / 25 FAIL — standing baseline |
+
+Every touched document was rendered and inspected, which is how F11 was found.
+Composed in a copy outside the owner's checkout; Linux VM, Bash 5.1.16, GNU
+coreutils. **Not macOS.**
+
+## Revision 218 — the records catch up, and a state that does not fit
+
+### What this session owed and had not written
+
+Four revisions of work and its own bundle held three files, one of them an empty
+table. **`metadata.md` carries the contributions**: F6, the draft review and the
+F4 instance to `0043`; D5 to `0039`; `0044` and `0045` recorded and not owned.
+
+**`prompt.md` tracks again.** It said *current as of Revision 206* against a tree
+at 217, which is the failure the tracking rule exists to prevent, committed by
+the session that had the rule in front of it. It now names what changed under it
+in order, and carries the four decisions this session has taken.
+
+**The status itself was correct throughout.** `STATE-available` is right: this
+session owns no findings bundle, and `docs/legend.md` derives the state from
+ownership alone. Nothing was left in a wrong state; what was missing was the
+record of work the state model does not describe.
+
+### `0045` — and it is this session's own state
+
+`available` means *created or cloned, owning no findings bundle yet*. It is also
+what this session reads as after writing two architecture records, running the
+allocator, recording two bundles and taking a decision in a third. **The same
+value for a session that has done nothing and one that has produced most of a
+subsystem**, sitting in `docs/sessions/INDEX.md` with `—` in both count columns
+beside rows reading 7 and 37.
+
+The vocabulary is not wrong — it answers *what does this session own*. It cannot
+answer *is anyone doing anything here*, which is what the state gets read for,
+and `findings-and-sessions.md` section 11.6 already names the failure that leads
+to: **the characteristic failure is not a wrong status but a still one.** Here it
+is available by construction rather than by neglect.
+
+Two findings, `unclaimed`, not owned by the session that recorded them.
+`state-as-data.md` section 4.4 solved the same shape for bundles by splitting one
+overloaded slot into three; whether the session vocabulary needs that, a new
+state, or only a derived contributions count is the decision `0045` owes and does
+not take.
+
+### `allocation-and-inquiry.md` absorbs Revision 216
+
+**The queue is `ownership == "unclaimed"`, not a status.** Section 4.1 said
+*terminal bundles are excluded* against a single `STATUS-` field. With the slot
+split into `progress`, `ownership` and `lineage`, the allocator reads the field
+it always meant — and the old ladder's need to put `unclaimed` in an override row
+above the derivation disappears, because it was never a derivation.
+
+**`staleness` arrived free.** The `updatedAt` on each finding was designed for
+`0043` F8 — `framing` names a direction, not a position — and it is also exactly
+the input the interviewer needs to rank an untouched finding above one being
+worked. It makes *noticing silence*, open since
+`findings-and-sessions.md` section 11.6, a derivation rather than a scheduled
+sweep. Nothing asked for it.
+
+**Section 10 stops asking.** It requested addressable findings and first-class
+edges; `0043` D1 granted both, and `D2` answered the case this session flagged
+and did not act on — §9 step 3 changes from *write this line* to *assert this
+edge* in the revision that ships the projection and not before. The reasoning
+stays; the request is closed. Section 13.1 is carried into `state-as-data.md`
+section 11.3 rather than answered in two places.
+
+### Validators
+
+| Checker | Result |
+|---|---|
+| `verify-findings-headers.sh` | 0 FAIL |
+| `verify-findings-structure.sh` | 0 FAIL |
+| `verify-findings-counts.sh` | 0 FAIL |
+| `verify-doc-paths.sh --all` | 0 MISSING, 0 ANCHOR BROKEN |
+| `verify-script-portability.sh` | 0 WARN, 0 FAIL |
+| `verify-runbook-structure.sh` | 213 PASS / 5 WARN / 25 FAIL — standing baseline |
+
+Composed in a copy outside the owner's checkout; Linux VM, Bash 5.1.16, GNU
+coreutils. **Not macOS.** No script changed and none was run on the target
+platform.
 
 ## Revision 217 — Six rules come in from outside the repository, under an override
 

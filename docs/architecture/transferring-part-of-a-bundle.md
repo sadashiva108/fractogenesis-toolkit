@@ -1,9 +1,9 @@
 # Transferring part of a findings bundle
 
-**Recorded:** 2026-09-06, `restore-apps-outstanding-20260903-000000`.
-**Status:** options recorded, none chosen. **Not implemented.**
-Bundle-level transfer *is* implemented — see
-[`.github/session-management-instructions.md`](../../.github/session-management-instructions.md)
+**Recorded:** 2026-09-06, `restore-apps-outstanding-20260903-000000`.  
+**Status:** options recorded, none chosen. **Not implemented.**  
+Bundle-level transfer *is* implemented — see  
+[`.github/session-management-instructions.md`](../../.github/session-management-instructions.md)  
 section 10. This record is about the finer case only.
 
 ---
