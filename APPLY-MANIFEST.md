@@ -1,4 +1,6 @@
 # Apply Manifest
+**Revision 210** — supersedes Revision 209 and earlier. `0043` records what five of the defects met in this re-evaluation have in common: the framework stores its own state in the format it displays it in. It is left open at `analyzing` with every finding `framing`, so the session designing the parallel architecture can record to it rather than open a near-duplicate.
+
 **Revision 209** — supersedes Revision 208 and earlier. Group A, the first pass over the re-evaluation: `verify-doc-paths.sh` is shown by test never to read `docs/` in either mode, `0036` gains the measurement and the four options it never had, `0037` finding 5 is corrected twice over, and `0041` gains a fifth finding — nothing compares a resolution's claim against the tree.
 
 **Revision 208** — supersedes Revision 207 and earlier. `0036` through `0041` are assigned to `session-management-re-evaluation-20260906-110105` and read on assignment: six bundles `analyzing`, thirty findings `framing`, the session `active`. `0041` finding 4 is sharpened — the mount refuses `unlink` for modification as well as deletion, so the warning it produces is not diagnostic.
@@ -548,6 +550,78 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
 
 ---
+
+## Revision 210 — `0043`, and one cause behind five defects
+
+A new findings bundle, `0043-framework-state-lives-in-documents-not-data`, five
+findings, recorded and owned by
+`session-management-re-evaluation-20260906-110105`. It supersedes nothing and
+replaces nothing; it names the cause that several open findings are symptoms of.
+
+### Why a new bundle rather than a finding in an existing one
+
+`0041` finding 1 is *a required shape nothing enforces*; finding 4 is *a tag
+rename is a delete plus a create*. `0037` D4 answered *may a derived fact be
+displayed* with **display it and add a check**. `0036` is a displayed total that
+moves for reasons unrelated to the change it is quoted against. Those are four
+readings of one thing, and none of them is the place to record it: putting it
+inside any one would make that bundle's subject something other than what its
+session read.
+
+### What it reads
+
+- **F1** — a bundle's status is carried in a **filename**, so every transition is
+  an unlink plus a create. Four recorded instances of a bundle left carrying two
+  tags; a delete-permission request needed before this session could move seven.
+  The artifact volume's own `bundle-watch-start.marker` is the contrast that
+  shows the shape: **a zero-byte file is a good record of an event and a bad
+  record of a state.**
+- **F2** — **88 count and status cells are typed by hand** across the sessions
+  index, the four findings indexes, the six manifests and the runbook rollup.
+  Every one is derived from something else. `verify-findings-counts.sh` exists
+  for no other reason than to notice when one stops agreeing.
+- **F3** — the framework's data is parsed back out of **rendered markdown**, in
+  22, 23 and 43 lines of `awk`/`sed`/`grep` across the three checkers. Two
+  recorded parser bugs, both in the half that reads the tree rather than the half
+  that judges it, and a first run reporting 36 failures against a clean tree.
+- **F4** — structured fields and free-form prose share a file with **nothing
+  marking the boundary**, which is how a status sweep reached into a Finding
+  column and altered what a reading claims.
+- **F5** — authority is assigned to **documents**, so every consumer parses prose
+  to reach a fact. `metadata.md` is the clearest case and cuts both ways: its
+  content is entirely structured bar two paragraphs, and it is **cited by
+  thirteen documents**, so the path cannot move even where the authority can.
+
+### It is deliberately open
+
+`STATUS-analyzing`, all five findings `framing`, which `docs/legend.md` opens to
+any session. A second architecture is being designed in a parallel session and
+these files bear on it directly. **That session should record here.** The bundle
+says so in its own text, and its index Notes cell says so too.
+
+### What it does not do
+
+No decision is taken and no `decisions.md` is written. `findings.md` sketches
+four things the owner's config proposal must settle — JSON rather than YAML on
+the dependency floor, no fact copied between a session and the bundles it owns,
+the ladder's three *declared* statuses preserved rather than bypassed, and a
+`--check` mode because the generator becomes the new single point of failure —
+and states that **the schema itself belongs in `docs/architecture/`, not in a
+findings bundle.** A reading is a reading.
+
+### Validators
+
+| Checker | Result |
+|---|---|
+| `verify-findings-headers.sh` | 912 OK, 0 FAIL — 902 before |
+| `verify-findings-structure.sh` | 53 OK, 0 FAIL |
+| `verify-findings-counts.sh` | 53 OK, 0 FAIL |
+| `verify-doc-paths.sh --all` | 0 MISSING, 0 ANCHOR BROKEN |
+| `verify-script-portability.sh` | 0 WARN, 0 FAIL |
+| `verify-runbook-structure.sh` | 213 PASS / 5 WARN / 25 FAIL — standing baseline |
+
+Composed in a copy outside the owner's checkout; Linux VM, Bash 5.1.16, GNU
+coreutils. **Not macOS.**
 
 ## Revision 209 — Group A: what "done" and "clean" are actually worth
 
