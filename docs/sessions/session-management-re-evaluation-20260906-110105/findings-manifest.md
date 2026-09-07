@@ -20,9 +20,9 @@ sitting, moved each to `analyzing` with every finding in it `framing`.
 | 0040 | [`0040-superseding-a-bundle-whose-session-is-gone`](../../session-management-findings/0040-superseding-a-bundle-whose-session-is-gone/) | `session-management` | Superseding a bundle whose session is gone is instructed but never defined | 4 | `analyzing` | All four resolutions verified present in §9 and expanded since. Only the address is stale: every row cites §4c, which no longer exists |
 | 0041 | [`0041-index-and-manifest-tables-have-a-shape-nothing-checks`](../../session-management-findings/0041-index-and-manifest-tables-have-a-shape-nothing-checks/) | `session-management` | The index and manifest tables have a shape nothing checks | 5 | `analyzing` | F4 sharpened by this session on 2026-09-06. F3's classification question is open and reaches four other bundles |
 
-| 0043 | [`0043-framework-state-lives-in-documents-not-data`](../../session-management-findings/0043-framework-state-lives-in-documents-not-data/) | `session-management` | The framework's own state lives in documents rather than in data | 6 | `analyzing` | Recorded and owned by this session on 2026-09-07, the only one of the seven not released by `restore-apps-outstanding`. Held open at `analyzing`/`framing` so the parallel architecture session can record to it |
+| 0043 | [`0043-framework-state-lives-in-documents-not-data`](../../session-management-findings/0043-framework-state-lives-in-documents-not-data/) | `session-management` | The framework's own state lives in documents rather than in data | 8 | `analyzing` | Recorded and owned by this session on 2026-09-07, the only one of the seven not released by `restore-apps-outstanding`. Held open at `analyzing`/`framing` so the parallel architecture session can record to it |
 
-**7 bundles · 36 findings.**
+**7 bundles · 39 findings.**
 
 `0042-no-check-reads-the-rendered-page` sits in the same tree and is **not owned
 by this session.** It is `unclaimed` and stays that way until the owner assigns

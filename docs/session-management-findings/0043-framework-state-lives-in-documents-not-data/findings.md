@@ -38,6 +38,8 @@ should record here rather than open a near-duplicate beside it.**
 | F4 | Structured fields and free-form prose share a file with nothing marking the boundary | `framing` |
 | F5 | Authority is assigned to documents, so every consumer must parse prose to read a fact | `framing` |
 | F6 | A header field that is optional **and repeatable** cannot be represented by either draft, and this bundle carries three of them | `framing` |
+| F7 | The derived bundle status has an else branch that asserts nothing, so a derivation bug always lands there | `framing` |
+| F8 | Each vocabulary has exactly one activity-named status, and it is the one a name cannot carry | `framing` |
 
 ## F1 — the status is in the filename
 
@@ -55,6 +57,48 @@ seven tag transitions could be applied at all.
 and correct. It is written once and never renamed; its datum is that it exists
 and when. **A zero-byte file is a good record of an event and a bad record of a
 state**, and the framework uses the same construct for both.
+
+### One slot, three orthogonal facts — recorded 2026-09-07
+
+A bundle carries **one** `STATUS-` file, so it has exactly one place to put a
+value. Three unrelated facts compete for it, and `docs/legend.md` says so itself
+at line 113: *"`unclaimed` and `transferred` are about **ownership** rather than
+progress … `superseded` is declared by the session that replaces the bundle."*
+
+| The value | Actually answers | Already recorded in |
+|---|---|---|
+| `unclaimed` · `transferred` | who owns this | `findings-manifest.md`, authoritative for ownership, and the index Session column |
+| `superseded` | is this reading still authoritative | `supersededBy` and the `Relates to` pointer |
+| the other five | how far the reading has been taken | the findings themselves |
+
+**That is why the ladder's rows 1, 1b and 2 sit above the derivation and
+short-circuit it.** They are not steps in a classification; they are overrides
+that suppress one. *"First row that matches wins"* is doing the work of hiding
+that three unrelated questions share a slot.
+
+**The cost is that a property cannot be attached to an ambiguous value.** The
+permission table lists `superseded` beside `un-started` under *nothing is
+readable* — mixing *nobody has looked yet* with *this reading was replaced*
+because they share a field, not because they share a property. And `0032` today
+is tagged `superseded` with four rows reading `un-started`: both facts are true,
+and the tag can only say one.
+
+**What this is not.** It is not an argument that the two status vocabularies
+should merge. They should not, and three things in the ladder show why the
+bundle set carries judgements no aggregation gives you: `resolved` requires **at
+least one** resolved, which has no finding-level analogue; row 4 sits above row 5
+so that a bundle of nothing but withdrawals is `withdrawn` rather than
+`resolved`, *"because nothing was carried through"*; and `reopened` **dominates
+the inert** only when reopening is the whole of the live work. The two sets also
+carry different properties on different questions — *A finding* is keyed on who
+may read and record, *What another session may do* is keyed on whether opening
+the bundle is worth anything at all, and the allocation architecture adds a
+third property set again. **The derivation is a bridge between two vocabularies,
+not an identity.**
+
+Split into `progress`, `ownership` and `lineage`, the ladder shrinks from eight
+rows to five and stops being an override list. Every word keeps its meaning;
+they stop sharing a slot.
 
 ## F2 — 88 hand-typed cells
 
@@ -119,6 +163,103 @@ it is **cited by thirteen documents**, including the instruction set,
 `docs/legend.md`, the architecture record and two session prompts, so removing
 the file is a rename in `0030`'s sense. What can move is the authority, not the
 path.
+
+## F7 — the derivation's else branch asserts nothing
+
+`analyzing` is defined as *"any other combination"*. Every other row of the
+ladder states a specific condition — *every finding is `un-started`*, *at least
+one is `resolved`*, *`reopened` with the rest inert*. `analyzing` states none.
+
+It earns its place: a set can be heterogeneous where a member cannot, so it is
+the one word the derivation genuinely has to invent. **But it is the only row a
+derivation bug can land in silently.** Get any of the five conditions slightly
+wrong and the bundle falls through to `analyzing`, which looks entirely
+plausible on an index row and is what a bundle mid-work is expected to read.
+
+**It cannot be verified the way the others can.** Checking `resolved` means
+checking the rows really are all inert with at least one resolved — a positive
+claim with a witness. Checking `analyzing` means checking that **none** of the
+other four matched, which is a negative and has no witness. The only test is to
+enumerate the cases that must *not* produce it.
+
+That is a requirement on whatever verifies the derivation, and it is not the
+same requirement as the rest: a fixture set of bundles that must each land on a
+named row, plus at least one that must land on `analyzing` **for a stated
+reason** rather than by falling through.
+
+`analyzing` is also the only name in the set describing an *activity* rather
+than a *composition*. **That is F8's subject and is not a defect** — it is
+structural, and F8 records why.
+
+## F8 — one activity-named status per vocabulary, and the thing a name cannot carry
+
+**Recorded 2026-09-07**, from the owner's account of designing the vocabulary:
+every status was meant to be a composition, and *"nothing seemed to fit that
+window where the expanse between `un-started` and `decided` was another
+composition gate that sucked the direction onward — it's pure direction in
+activity."*
+
+### The pattern, in both vocabularies
+
+Five of the six finding statuses are past participles — `un-started`, `decided`,
+`resolved`, `reopened`, `withdrawn`. **`framing` is the only present
+participle.** One level up, `un-started`, `resolved`, `reopened` and `withdrawn`
+describe what the findings *are*; **`analyzing` is the only one describing what
+someone is doing.** Two vocabularies, one activity-named member each.
+
+### Why grammar could not do otherwise
+
+Every other status is defined by **an act that completed**: no act has occurred;
+the deciding finished; the resolving finished; the withdrawing finished; the
+reopening finished. That is what a past participle *is* — the grammatical form
+of a completed act.
+
+**The interval between `un-started` and `decided` is the only one whose defining
+feature is that no act has completed.** A past participle cannot name it without
+naming a completion that has not happened. The window resisted naming because
+the vocabulary is act-completion-shaped and this member is the absence of a
+completion.
+
+Every other status is a **position**. That one is a **direction**, and a
+direction has no composition to describe, because composition is a property of
+where a thing is.
+
+The same cause produces F7's else branch one level up. `analyzing` is *any other
+combination*, which is not "the leftovers" but specifically **no uniform
+completion has been reached** — the absence, aggregated.
+
+### What follows
+
+**Neither is badly named, and neither should be renamed.** They are the only
+members that cannot be named the way the others are, and each vocabulary
+produced exactly one. This is a structural fact about the design rather than a
+slip, and it is recorded here so that a later reader who counts five past
+participles and one gerund does not tidy it. **The earlier argument — not worth
+renaming so soon after the rebuild — was the weaker one and expires; this one
+does not.**
+
+**The missing information was never going to be in the name.** What is absent is
+**duration**: `framing` for an hour and `framing` for three weeks are the same
+value because they are the same direction. No noun distinguishes them.
+
+That is the failure `docs/architecture/findings-and-sessions.md` §11.6 names and
+does not address — *"the characteristic failure is therefore not a wrong status
+but a still one: a bundle `in progress` for three weeks, an `owned` session with
+no commits since the day it was claimed, a `handoff` nobody collected."*
+Written against a vocabulary since replaced, describing a hole the replacement
+still has.
+
+**The instance is in this tree today.** All 38 findings this session owns read
+`framing`, because assignment and a first reading moved every one of them there
+in a single sitting. The status naming the activity is true of everything, which
+is the maximum-entropy case for a field: it discriminates nothing.
+
+**An `updatedAt` per finding closes it without touching the vocabulary** — the
+timestamps the owner asked for on 2026-09-07 — because it yields `framing since
+<date>`, and therefore staleness, without a scheduled sweep inferring it. It
+also tells the allocation architecture where `readiness` cannot come from:
+nearly every askable node is `framing`, so the signal is in the duration and the
+edges, not the status.
 
 ## What it costs to leave
 

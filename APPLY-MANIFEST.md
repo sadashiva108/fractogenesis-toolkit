@@ -1,4 +1,8 @@
 # Apply Manifest
+**Revision 213** — supersedes Revision 212 and earlier. `0043` F8 records why each status vocabulary has exactly one activity-named member: the vocabulary names completed acts, and one member in each is the absence of a completion, which no past participle can name. The information the name cannot carry is duration, and a per-finding timestamp is what carries it.
+
+**Revision 212** — supersedes Revision 211 and earlier. `0043` finding 1 gains the reading behind it — one tag file, three orthogonal facts, and a ladder whose first three rows are overrides rather than steps — and a seventh finding: the derivation's else branch asserts nothing, so a derivation bug always lands there. A hand-typed total in this session's own manifest was found wrong by two, and the checker does not cover it.
+
 **Revision 211** — supersedes Revision 210 and earlier. One architecture from the owner's two briefs: `docs/architecture/allocation-and-inquiry.md` models findings as a graph, partitions it to propose allocations and traverses it to decide what to ask next. `0043` gains a sixth finding and a review of the two draft config files; `0044` records the first demonstrated instance of `0036`. Three instruction-set edits land under an **owner override**: the stamp zone is named `America/New_York`, the `_to_delete/` remedy the conformant prompt says is owed reaches section 6, and `Read:` joins the optional fields it was described in but excluded from.
 
 **Revision 210** — supersedes Revision 209 and earlier. `0043` records what five of the defects met in this re-evaluation have in common: the framework stores its own state in the format it displays it in. It is left open at `analyzing` with every finding `framing`, so the session designing the parallel architecture can record to it rather than open a near-duplicate.
@@ -552,6 +556,161 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
 
 ---
+
+## Revision 213 — Why the odd one out is odd, in both vocabularies
+
+One record write to `0043`, which is `analyzing` with every finding `framing`.
+F7 sheds a paragraph that was never its subject; F8 takes it and gives it the
+reasoning it lacked.
+
+### The observation
+
+Five of the six finding statuses are past participles. **`framing` is the only
+present participle.** One level up, `analyzing` is the only one of five naming
+an activity rather than a composition. **Two vocabularies, one activity-named
+member each** — a pattern, not two coincidences.
+
+### Why grammar could not do otherwise
+
+Every other status is defined by **an act that completed** — no act has
+occurred, the deciding finished, the resolving finished, the withdrawing
+finished, the reopening finished. A past participle is the grammatical form of a
+completed act.
+
+**The interval between `un-started` and `decided` is the only one whose defining
+feature is that no act has completed.** A past participle cannot name it without
+naming a completion that has not happened. In the owner's words, designing it:
+*"nothing seemed to fit that window … it's pure direction in activity."* Every
+other status is a **position**; that one is a **direction**, and a direction has
+no composition to describe.
+
+The same cause produces F7's else branch: `analyzing` is not "the leftovers" but
+specifically **no uniform completion has been reached** — the absence,
+aggregated.
+
+### Why this matters enough to record
+
+**Neither is badly named and neither should be renamed.** Revision 212 argued
+that on cost — not worth renaming three days after the rebuild — which is true
+and **expires**. This reason does not. It is recorded so a later reader who
+counts five past participles and one gerund does not tidy it, and finds instead
+why the vocabulary is shaped as it is.
+
+That is this whole re-evaluation's failure mode in miniature: a choice made for
+a good reason, the reason unwritten, the choice later looking arbitrary.
+
+### What the name cannot carry
+
+**Duration.** `framing` for an hour and `framing` for three weeks are the same
+value because they are the same direction, and no noun separates them. That is
+the failure `docs/architecture/findings-and-sessions.md` §11.6 names and does
+not address — *"not a wrong status but a still one"* — written against a
+vocabulary since replaced, describing a hole the replacement still has.
+
+**The instance is in this tree today.** All 38 findings this session owned before
+this revision read `framing`, because assignment and a first reading moved every
+one of them there in one sitting. A field true of everything discriminates
+nothing.
+
+An `updatedAt` per finding closes it without touching the vocabulary, and tells
+the allocation architecture where `readiness` cannot come from: nearly every
+askable node is `framing`, so the signal is in the duration and the edges.
+
+### Validators
+
+| Checker | Result |
+|---|---|
+| `verify-findings-headers.sh` | 0 FAIL |
+| `verify-findings-structure.sh` | 0 FAIL |
+| `verify-findings-counts.sh` | 0 FAIL — `0043` moves 7 findings to 8 across four displays |
+| `verify-doc-paths.sh --all` | 0 MISSING, 0 ANCHOR BROKEN |
+| `verify-script-portability.sh` | 0 WARN, 0 FAIL |
+| `verify-runbook-structure.sh` | 213 PASS / 5 WARN / 25 FAIL — standing baseline |
+
+Composed in a copy outside the owner's checkout; Linux VM, Bash 5.1.16, GNU
+coreutils. **Not macOS.**
+
+## Revision 212 — One slot, three facts, and the row that asserts nothing
+
+Two record writes to `0043`, which is `analyzing` with every finding `framing`,
+plus a count correction. No toolkit file is touched.
+
+### Finding 1 gains the reading behind it
+
+`0043` F1 said the status is carried in a filename. **What that filename does is
+the finding.** A bundle has one `STATUS-` file, so it has one slot, and three
+unrelated facts compete for it — `unclaimed` and `transferred` answer *who owns
+this*, `superseded` answers *is this reading still authoritative*, and the other
+five answer *how far the reading has been taken*. `docs/legend.md` line 113
+already says the first two are about ownership rather than progress and that the
+third is declared rather than derived.
+
+**That is why the ladder's rows 1, 1b and 2 sit above the derivation and
+short-circuit it.** They are not steps in a classification; they are overrides
+that suppress one, and *"first row that matches wins"* is what hides it.
+
+The cost is that **a property cannot be attached to an ambiguous value**. The
+permission table lists `superseded` beside `un-started` under *nothing is
+readable*, mixing *nobody has looked yet* with *this reading was replaced*
+because they share a field rather than a property. `0032` is the live instance:
+tagged `superseded` with four rows reading `un-started`, both true, and the tag
+able to say only one.
+
+**It is explicitly not an argument to merge the two vocabularies**, and the
+entry records why: `resolved` requires *at least one* resolved, which has no
+finding-level analogue; row 4 sits above row 5 so a bundle of nothing but
+withdrawals is `withdrawn` rather than `resolved`; `reopened` dominates the
+inert only when reopening is the whole of the live work. The two sets carry
+different properties on different questions, and the allocation architecture
+adds a third set again. **The derivation is a bridge between two vocabularies,
+not an identity.** Split into `progress`, `ownership` and `lineage`, the ladder
+shrinks from eight rows to five and stops being an override list; every word
+keeps its meaning.
+
+### F7 — `analyzing` is the else branch
+
+`analyzing` earns its place: a set can be heterogeneous where a member cannot,
+so it is the one word the derivation genuinely has to invent. **It is also the
+only row a derivation bug can land in silently.** Every other row states a
+positive condition with a witness; `analyzing` states *any other combination*,
+so a bundle that should have matched one of the five falls through to a value
+that looks entirely plausible on an index row.
+
+It therefore cannot be verified the way the rest can — checking it means proving
+a negative. Whatever verifies the derivation needs a fixture set: bundles that
+must each land on a named row, and at least one that must land on `analyzing`
+**for a stated reason** rather than by falling through.
+
+Recorded with it, because the value is about to carry properties: `analyzing` is
+the only name in the set describing an **activity** rather than a composition,
+and a bundle sits there whether or not anyone is working it — the silence
+`docs/architecture/findings-and-sessions.md` §11.6 says nothing would notice.
+Not worth renaming three days after the vocabulary was rebuilt.
+
+### A hand-typed total was wrong, and nothing caught it
+
+`findings-manifest.md` for this session read **7 bundles · 36 findings** where
+the seven bundles held **37**. It is corrected to 38 with F7 added.
+
+**`verify-findings-counts.sh` reported 54 OK before and after.** It checks the
+per-bundle `Findings` cells and the session's index counts; the **prose total at
+the foot of a manifest is not covered**. That is `0043` F2 producing a fresh
+instance inside the manifest of the session that recorded F2 — and it is a
+second gap in that checker, beside the 27 unchecked rollup figures already owed.
+
+### Validators
+
+| Checker | Result |
+|---|---|
+| `verify-findings-headers.sh` | 928 OK, 0 FAIL |
+| `verify-findings-structure.sh` | 54 OK, 0 FAIL |
+| `verify-findings-counts.sh` | 54 OK, 0 FAIL — unchanged before and after the count correction, which is the finding |
+| `verify-doc-paths.sh --all` | 0 MISSING, 0 ANCHOR BROKEN |
+| `verify-script-portability.sh` | 0 WARN, 0 FAIL |
+| `verify-runbook-structure.sh` | 213 PASS / 5 WARN / 25 FAIL — standing baseline |
+
+Composed in a copy outside the owner's checkout; Linux VM, Bash 5.1.16, GNU
+coreutils. **Not macOS.**
 
 ## Revision 211 — one architecture from two briefs, and an override
 
