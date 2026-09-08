@@ -1,4 +1,6 @@
 # Apply Manifest
+**Revision 220** — supersedes Revision 219 and earlier. The interviewer runs, its pre-registered first question is met for the registered reason, and stage 1 drops 82 of 131 findings — establishing that allocation strictly precedes inquiry. `0039` F8 gains D6, its first decision. `0046` records that supersession leaves every citation behind, found because this session relayed one. `0047` is the drift inventory behind the retrofit, and its own F5 is that the sweep producing it reports 65 false positives before it is told about superseding clones.
+
 **Revision 219** — supersedes Revision 218 and earlier. `0036` takes option (iv) and three findings move to `decided`. `docs/architecture/findings-and-sessions.md` is brought onto the current vocabulary — eleven passages, reasoning unchanged. Two findings recorded: no state locks decisions while work is in flight, and the header schema binds one file type while six of eight architecture records render as one paragraph.
 
 **Revision 218** — supersedes Revision 217 and earlier. This session's own records catch up with four revisions of its work: `metadata.md` gains the contributions it owed, `prompt.md` tracks Revision 217 rather than 206, and `allocation-and-inquiry.md` absorbs what `state-as-data.md` settled — the queue is an ownership field rather than a status, and `staleness` arrives free from a timestamp designed for another reason. `0045` records that a session whose output is not a bundle has no state that fits, which is this session's own.
@@ -568,6 +570,103 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
 
 ---
+
+## Revision 220 — the interviewer runs, and two bundles come out of it
+
+### `0039` D6 — finding 8 has a decision
+
+A hand-over step joins the composition rule in section 6: **the session reports
+what it composed and shows it; the patch is applied only when the owner asks.**
+F8 had been open since 2026-09-04, recorded by the session that broke it, and it
+gates eight otherwise-decided findings.
+
+Chosen over stating it in a session prompt, which would make the rule a property
+of a session rather than of the repository — the shape F5 exists to argue
+against, and F5 is already `accepted` under D1. The fourth-write-category shape
+is **recorded as rejected without being put to the owner**, because `0038` D4 had
+settled a day before F8 was written that composition is not a permission
+question.
+
+**The decision does not install the rule.** A section 6 edit is a toolkit write
+gated on a `decided` finding; F8 is `framing`, and while any session may record a
+decision there, closing the deciding belongs to
+`session-management-re-evaluation-20260906-110105`. That the rule about not
+applying unasked cannot itself be applied unasked is the rule working.
+
+### The run
+
+Pre-registered before execution, as `docs/ledgers/allocation-evidence.md` now
+requires: expected first question `0039` F8, because it is the only finding
+carrying a gate. **Met, and for that reason** — 32.30 against 22.30 for the next
+three.
+
+**Stage 1 dropped 82 of 131 findings, and of the 30 in the ten `unclaimed`
+bundles exactly one was askable.** Only `framing` is askable, and assignment plus
+the owner's first read is what produces `framing`, so **allocation strictly
+precedes inquiry.** That is not a design choice; it falls out of the permission
+model, and it means nothing may be built on a session being asked about a queue
+it does not yet own.
+
+### `0046` — supersession leaves every citation behind
+
+Found by this session making the mistake. The question put to the owner relayed
+`0028` F4 and `0028` D4 straight out of F8's text; `0028` was superseded on
+2026-09-06 and is closed to every session. The owner caught it.
+
+**Twelve live documents cite `0028`**, including `0039`, `0041`, `0043` and this
+tree's INDEX. The citations are **correct as written** — F8 predates the
+supersession by two days — so under the evidence rule they must not be repaired,
+and section 9 is deliberate that a superseded `findings.md` is never edited.
+Supersession is therefore recorded in exactly two places, the tag and the index
+row, and **a citation anywhere else carries neither.** The remedy is a marker or
+a check, not an edit; which is the decision `0046` owes.
+
+Distinct from `0030`: there a rename makes the path stop resolving. Here the path
+resolves, the content is intact, and only the authority moved.
+
+### `0047` — the inventory behind the retrofit, and a warning about it
+
+A sweep of all 45 bundles and 131 findings for the four comparisons nothing
+currently makes. Five findings, `unclaimed`, not owned:
+
+- **F1** — `0001` is `unclaimed` and its F1 is `framing`. Releasing a bundle
+  changes its tag and leaves its findings where they were, so a bundle closed to
+  every session holds one open to all of them. Nothing anywhere says what a
+  release does to a finding, which is why nothing happened to it.
+- **F2** — the same finding carries six `accepted` decisions and nothing
+  outstanding, which is the legend's definition of `decided`. Its index row says
+  so in prose. The status never moved.
+- **F3** — `0030`, `0035` and `0036` carry resolutions for findings that are not
+  resolved. `0035` is the plainest: a bundle nobody has opened, by its own tag,
+  holding three resolutions.
+- **F4** — eleven `resolved` bundles have no `decisions.md`, all of them Revision
+  162 note conversions. The answer is probably that they owe nothing, and
+  **writing decisions into them now would invent deliberation that never
+  happened.** One decision covers all eleven.
+- **F5** — **the sweep reported 77 hits and 65 are correct by construction.**
+  `0037` through `0041` are superseding clones whose findings were reset to
+  `framing` while carrying the originals' decisions and resolutions forward. This
+  is the third instrument here to report mass failure against a healthy tree on
+  its first run, after `0041`'s lint at 36 and `0042` F4's audit at 131-of-which-128.
+  The clone exemption belongs in the check before the check is trusted.
+
+**The retrofit does not begin here.** `state-as-data.md` makes `progress` derived,
+which turns two of these classes from checkable into impossible; retrofitting
+markdown first means doing it twice.
+
+### Validators
+
+| Checker | Result |
+|---|---|
+| `verify-findings-headers.sh` | 0 FAIL |
+| `verify-findings-structure.sh` | 0 FAIL |
+| `verify-findings-counts.sh` | 0 FAIL |
+| `verify-doc-paths.sh --all` | 0 MISSING, 0 ANCHOR BROKEN |
+| `verify-script-portability.sh` | 0 WARN, 0 FAIL |
+| `verify-runbook-structure.sh` | 213 PASS / 5 WARN / 25 FAIL — standing baseline |
+
+**None of the six performs any comparison in `0047`.** Composed in a copy outside
+the owner's checkout; Linux VM, Bash 5.1.16, GNU coreutils. **Not macOS.**
 
 ## Revision 219 — Four open items closed, and two found closing them
 

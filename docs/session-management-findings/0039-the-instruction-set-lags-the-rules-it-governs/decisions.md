@@ -37,6 +37,8 @@ without answering it for rules.
 
 | D5 | ordering between findings is a typed, directed edge — `blocks` or `evidences` — asserted in the bundle whose session states it, validated at both ends, and expiring when either endpoint goes inert | F7 | 2026-09-06 | `accepted` |
 
+| D6 | a hand-over step joins the composition rule in section 6: the session reports what it composed and shows it, and the patch is applied only when the owner asks | F8 | 2026-09-07 | `accepted` |
+
 ## Findings 1, 2, 5 and 6 — a rule lives where its kind lives
 
 ## D1 — `docs/legend.md` holds VOCABULARY. `.github/copilot-instructions.md` sections 4b–4d hold PROCEDURE. Each points at the other for the kind it does not hold, and the legend is named in §4 as required reading
@@ -296,6 +298,64 @@ architecture record says why a shape is what it is; it is not where a decision
 against a finding lives. F7 is the finding, this bundle is where it lives, and a
 decision recorded elsewhere leaves F7 answered by a document that does not know
 it exists.
+
+## D6 — the hand-over step joins the composition rule in section 6
+
+Owner, 2026-09-07, put by `allocation-and-inquiry-design-20260906-233205` and
+answered in one move. **Finding 8 has a decision for the first time.**
+
+Section 6 says where a change is composed and says nothing about when it is
+handed over, so *"hand the owner a patch"* followed by *"check the patch before
+applying it"* reads as one motion ending in the session applying its own work.
+The step now states it: **the session reports what it composed and shows the
+content; the patch is applied only when the owner asks for it.**
+
+### Why here rather than in a prompt
+
+F5 is already `accepted` under D1 — a rule lives where its kind lives, and the
+instruction set holds procedure. Putting this in a session prompt would make it a
+property of a session rather than of the repository, which is the shape F5 exists
+to argue against, and two `accepted` decisions in one bundle would then point
+opposite ways. It also sits beside the composition rule it completes, which is
+the whole of why it is small.
+
+### The cost, stated
+
+An unasked-for apply was never destructive — the owner reviews the diff and can
+decline it. What it cost was **review order**: a patch already in the tree is
+reviewed as a fait accompli, it sits between the owner and anything else they
+wanted in that folder, and declining it becomes an action rather than an
+omission. That last property is the one `0028` finding F4 was pleased to have
+removed and the same session restored in the same revision.
+
+**Read that citation as `0038` F4.** `0028` was superseded on 2026-09-06 and
+authority moved; F8's text was written on 2026-09-04, when the citation was
+correct, and it is evidence and is not rewritten. `0046` records that nothing
+marks the difference.
+
+### Rejected: a fourth write category
+
+Recorded as rejected rather than dropped. `0028` D4 — read as `0038` D4 —
+established one day before F8 was written that composition is not a permission
+question, and applying is not one either. Two rules that vary by nothing do not
+become clearer as three. **This was rejected on sight in the finding itself**,
+and the interviewer offered it as neither a live option nor a silent omission.
+
+### Rejected: state it per session, in the prompt
+
+Where the rule lived until now, minus the conversation. Costs nothing to write
+and needs no instruction-set change. Rejected against D1 and F5, above.
+
+### What this decision does not do
+
+**It does not install the rule.** A change to `.github/session-management-instructions.md`
+is a toolkit write, gated on a `decided` finding, and F8 is `framing` — any
+session may record a decision there, but **closing the deciding is the owning
+session's act**. `session-management-re-evaluation-20260906-110105` moves F8 to
+`decided`, and the section 6 edit follows in that revision.
+
+That the rule about not applying unasked cannot itself be applied unasked is not
+an irony to work around. It is the rule working.
 
 ---
 

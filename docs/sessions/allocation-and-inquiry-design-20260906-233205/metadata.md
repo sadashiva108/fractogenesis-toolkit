@@ -44,6 +44,9 @@ list before it is handed over.
 | `0043` | 2026-09-06 | Added F6; reviewed the two draft config files; recorded a live instance of F4 in `0039`'s own header |
 | `0039` | 2026-09-06 | Recorded D5 against F7 and set D4's outcome to `superseded → D5` |
 | `0044` | 2026-09-06 | Recorded the bundle. Not owned — it is `unclaimed` |
+| `0039` | 2026-09-07 | Recorded D6 against F8, the first decision that finding has had |
+| `0046` | 2026-09-07 | Recorded the bundle. Not owned |
+| `0047` | 2026-09-07 | Recorded the bundle from a conformance sweep. Not owned |
 
 This session owns no findings bundle and is `available` by the letter of
 `docs/legend.md`. Its output is an architecture record, three contributions and
