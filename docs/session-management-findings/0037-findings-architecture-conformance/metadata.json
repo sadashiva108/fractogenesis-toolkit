@@ -14,14 +14,15 @@
   },
   "severity": "one finding is high and governs a rule every future session hits on its first parked note. The rest are small and mechanical.",
   "feltAt": [],
-  "scope": "cross-cutting. The fix lands in `.github/copilot-instructions.md`, `docs/INDEX.md`, `docs/sessions/INDEX.md`, `docs/legend.md` and four `prompt.md` files — no single runbook owns any of it.",
+  "scope": "cross-cutting. The fix lands in `.github/copilot-instructions.md`, `docs/INDEX.md`, `docs/sessions/INDEX.md`, `docs/legend.md` and four `prompt.md` files \u2014 no single runbook owns any of it.",
   "read": [
     "`docs/architecture/findings-and-sessions.md`",
-    "§§4b–4d, in `.github/copilot-instructions.md`",
+    "\u00a7\u00a74b\u20134d, in `.github/copilot-instructions.md`",
     "`docs/legend.md`",
     "every bundle and index in `docs/`"
   ],
-  "progress": null,
+  "status": "unclaimed",
+  "progress": "analyzing",
   "ownership": "unclaimed",
   "lineage": {
     "supersedes": "0027",
@@ -30,24 +31,24 @@
   "findings": [
     {
       "id": "F1",
-      "statement": "§4b and §4c contradict each other on whether a findings bundle takes a manifest revision",
+      "statement": "\u00a74b and \u00a74c contradict each other on whether a findings bundle takes a manifest revision",
       "status": "framing",
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F1 — §4b and §4c contradict each other, eighteen lines apart",
+      "sectionHeading": "F1 \u2014 \u00a74b and \u00a74c contradict each other, eighteen lines apart",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
     },
     {
       "id": "F2",
-      "statement": "Four of five `prompt.md` files violate §4d's \"always\" rule",
+      "statement": "Four of five `prompt.md` files violate \u00a74d's \"always\" rule",
       "status": "framing",
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F2 — four of five prompts omit the reading §4d makes mandatory",
+      "sectionHeading": "F2 \u2014 four of five prompts omit the reading \u00a74d makes mandatory",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -59,7 +60,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F3 — an index and the manifest it links to disagree",
+      "sectionHeading": "F3 \u2014 an index and the manifest it links to disagree",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -71,7 +72,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F4 — `docs/INDEX.md` describes a directory it no longer matches",
+      "sectionHeading": "F4 \u2014 `docs/INDEX.md` describes a directory it no longer matches",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -83,7 +84,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F5 — every `resolved` bundle is missing `decisions.md`",
+      "sectionHeading": "F5 \u2014 every `resolved` bundle is missing `decisions.md`",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -95,7 +96,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F6 — the two state diagrams disagree",
+      "sectionHeading": "F6 \u2014 the two state diagrams disagree",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -107,7 +108,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F7 — two identifiers recorded as unrecoverable are recoverable",
+      "sectionHeading": "F7 \u2014 two identifiers recorded as unrecoverable are recoverable",
       "reopened": null,
       "withdrawn": null,
       "resolution": null

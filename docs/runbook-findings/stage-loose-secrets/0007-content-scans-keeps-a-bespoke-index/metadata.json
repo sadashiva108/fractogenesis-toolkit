@@ -12,11 +12,12 @@
     "sessionBundle": null,
     "sessionId": "01KcZvrKMgfenhrT9DvxW9Jk"
   },
-  "severity": "low to hit, moderate to leave — it is the last place in the tree where `latest-run.txt` is the right answer, which makes the rule \"never follow a `latest-*.txt`\" untrue by exactly one exception.",
+  "severity": "low to hit, moderate to leave \u2014 it is the last place in the tree where `latest-run.txt` is the right answer, which makes the rule \"never follow a `latest-*.txt`\" untrue by exactly one exception.",
   "feltAt": [],
   "scope": null,
   "read": [],
-  "progress": null,
+  "status": "resolved",
+  "progress": "resolved",
   "ownership": null,
   "lineage": null,
   "findings": [

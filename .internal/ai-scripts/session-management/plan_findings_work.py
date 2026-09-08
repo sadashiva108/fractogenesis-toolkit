@@ -265,6 +265,96 @@ def rank(g, fr):
     return sorted(fr, key=lambda x: -x["score"])
 
 
+# ------------------------------------------- derived state, written and checked
+#
+# `state-as-data.md` 4.4 said progress was derived and NEVER STORED. The owner
+# reversed that on 2026-09-08: a reader should not have to run a ladder to learn
+# a bundle's status. That reintroduces the risk `0043` F2 is about -- a derived
+# value written down is a second copy that can drift -- so the legend's condition
+# applies: a copy is permitted "where a check fails when it drifts". Both fields
+# are stamped by `stamp` and compared by `check`. Neither is authored by hand.
+
+def bundle_status(b):
+    """The one value a reader wants: what state is this bundle in.
+
+    Ownership and lineage outrank progress because they are not progress at all
+    -- an unclaimed bundle is closed to everyone whatever its findings say, and a
+    superseded reading is no longer authoritative whatever it concluded.
+    """
+    if (b.get("lineage") or {}).get("supersededBy"):
+        return "superseded"
+    if b.get("ownership"):
+        return b["ownership"]
+    return ladder([x.get("status") for x in (b.get("findings") or [])])
+
+
+def bundle_progress(b):
+    """The pure derivation over the finding rows, with nothing layered on it."""
+    return ladder([x.get("status") for x in (b.get("findings") or [])])
+
+
+def bundle_is_terminal(b):
+    return (bundle_status(b) in ("resolved", "withdrawn", "superseded"))
+
+
+def session_state(g, s):
+    """available, active, closed, handoff or withdrawn -- docs/legend.md.
+
+    `declaredState` stays: it is what the OWNER declared, and a handoff or a
+    withdrawal cannot be derived from what a session holds. `state` is the
+    effective value, which is the declaration where there is one and the
+    derivation where there is not.
+    """
+    if s.get("declaredState"):
+        return s["declaredState"]
+    owned = [g.bundles[str(ob.get("number"))[:4]]
+             for ob in (s.get("ownedBundles") or [])
+             if str(ob.get("number"))[:4] in g.bundles]
+    if (s.get("ended") or {}).get("on"):
+        return "closed"
+    if not owned:
+        return "available"
+    return "closed" if all(bundle_is_terminal(b) for b in owned) else "active"
+
+
+def stamp_derived(g, write=True):
+    """Write status/progress onto every bundle and state onto every session."""
+    changed = []
+    for n, b in sorted(g.bundles.items()):
+        want = {"status": bundle_status(b), "progress": bundle_progress(b)}
+        if any(b.get(k) != v for k, v in want.items()):
+            changed.append(("bundle", n, dict(want)))
+            if write:
+                _rewrite(os.path.join(g.root, b["_dir"], "metadata.json"), want)
+    for name, s in sorted(g.sessions.items()):
+        want = {"state": session_state(g, s)}
+        if s.get("state") != want["state"]:
+            changed.append(("session", name, dict(want)))
+            if write:
+                _rewrite(os.path.join(g.root, s["_dir"], "metadata.json"), want)
+    return changed
+
+
+def _rewrite(path, fields):
+    """Set fields in place, preserving key order and adding new keys after
+    the field they belong beside."""
+    with io.open(path, encoding="utf-8") as fh:
+        d = json.load(fh)
+    for k, v in fields.items():
+        d[k] = v
+    # keep `status` next to `progress`/`ownership` rather than appended at the end
+    order = []
+    for k in d:
+        if k == "progress" and "status" in d and "status" not in order:
+            order.append("status")
+        if k != "status":
+            order.append(k)
+    out = dict((k, d[k]) for k in order if k in d)
+    with io.open(path + ".tmp", "w", encoding="utf-8") as fh:
+        fh.write(json.dumps(out, indent=2) + "\n")
+    os.replace(path + ".tmp", path)
+
+
 # ------------------------------------------------------- conformance detectors
 FINDING_STATUSES = ("un-started", "framing", "decided", "resolved",
                     "reopened", "withdrawn")
@@ -296,6 +386,13 @@ def conformance(g):
     for s in g.sessions.values():
         for ob in (s.get("ownedBundles") or []):
             owned.add(str(ob.get("number"))[:4])
+    for name, sess in sorted(g.sessions.items()):
+        if sess.get("state") is None:
+            out.append(("UNSTAMPED", name, "state is null -- run `stamp`"))
+        elif sess["state"] != session_state(g, sess):
+            out.append(("STORED-DISAGREES", name,
+                        "state says %r, the record derives %r"
+                        % (sess["state"], session_state(g, sess))))
     for n, b in sorted(g.bundles.items()):
         fs = b["_findings"]
         sts = [x.get("status") for x in fs]
@@ -346,8 +443,18 @@ def conformance(g):
                     out.append(("RESOLUTION-AHEAD-OF-FINDING", n,
                                 "%s is %s and carries a resolution"
                                 % (x["id"], x["status"])))
-        if sts and ladder(sts) != (b.get("progress") or ladder(sts)):
-            out.append(("LADDER", n, "stored progress disagrees with the rows"))
+        if b.get("progress") is None:
+            out.append(("UNSTAMPED", n, "progress is null -- run `stamp`"))
+        elif b["progress"] != bundle_progress(b):
+            out.append(("STORED-DISAGREES", n,
+                        "progress says %r, the finding rows derive %r"
+                        % (b["progress"], bundle_progress(b))))
+        if b.get("status") is None:
+            out.append(("UNSTAMPED", n, "status is null -- run `stamp`"))
+        elif b["status"] != bundle_status(b):
+            out.append(("STORED-DISAGREES", n,
+                        "status says %r, the record derives %r"
+                        % (b["status"], bundle_status(b))))
         # a citation to a bundle whose authority has moved (0046)
         for e in (b.get("edges") or []):
             t = g.bundles.get(str(e.get("to", "")).split("/")[0])
@@ -611,6 +718,18 @@ def cmd_capacity(g, a):
           " count what\n  came back, not what should have." % len(rows))
 
 
+def cmd_stamp(g, a):
+    changed = stamp_derived(g, write=not a.dry_run)
+    verb = "would write" if a.dry_run else "wrote"
+    print("STAMP  %s %d record(s)\n" % (verb, len(changed)))
+    for kind, name, want in changed[:40]:
+        print("  %-8s %-52s %s" % (kind, name, want))
+    if len(changed) > 40:
+        print("  ... and %d more" % (len(changed) - 40))
+    if not changed:
+        print("  Every derived field already agrees with what it derives from.")
+
+
 def cmd_check(g, a):
     rows = conformance(g)
     by = defaultdict(list)
@@ -633,12 +752,15 @@ def cmd_check(g, a):
 def main():
     p = argparse.ArgumentParser(prog="plan-findings-work")
     p.add_argument("command",
-                   choices=["graph", "allocate", "ask", "capacity", "check"])
+                   choices=["graph", "allocate", "ask", "capacity", "check",
+                            "stamp"])
     p.add_argument("--new-sessions", type=int, default=0,
                    help="how many new session bundles to allow; -1 sizes it")
     p.add_argument("--capacity", default=None,
                    help="cost units a session may hold: a number, or `auto` to "
                         "derive it. Omitted, a chosen default is used -- see 0048")
+    p.add_argument("--dry-run", action="store_true",
+                   help="stamp: report what would change and write nothing")
     p.add_argument("--only-kind", help="allocate only these kinds, comma separated")
     p.add_argument("--exclude-kind", help="never allocate these kinds")
     p.add_argument("--only", help="allocate only these bundle numbers")
@@ -646,7 +768,8 @@ def main():
     a = p.parse_args()
     g = Graph(root())
     {"graph": cmd_graph, "allocate": cmd_allocate, "ask": cmd_ask,
-     "capacity": cmd_capacity, "check": cmd_check}[a.command](g, a)
+     "capacity": cmd_capacity, "check": cmd_check,
+     "stamp": cmd_stamp}[a.command](g, a)
 
 
 if __name__ == "__main__":

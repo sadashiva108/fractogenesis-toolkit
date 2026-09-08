@@ -5,18 +5,19 @@
   "bundleName": "0001-restore-repos-evidence",
   "kind": "runbook",
   "subKind": null,
-  "subject": "Phase 11B evidence review — what `restore-repos` actually left behind",
+  "subject": "Phase 11B evidence review \u2014 what `restore-repos` actually left behind",
   "recordedOn": "2026-09-03",
   "recordedOccasion": null,
   "recordedBy": {
     "sessionBundle": "restore-apps-outstanding-20260903-000000",
     "sessionId": "session_016EbjB7M527qEFqZFzpv2C9"
   },
-  "severity": "findings F1–3 block a truthful Phase 12 entry; 4 and 5 are shared-machinery defects; 6 and 7 answer the two unreviewed repositories",
+  "severity": "findings F1\u20133 block a truthful Phase 12 entry; 4 and 5 are shared-machinery defects; 6 and 7 answer the two unreviewed repositories",
   "feltAt": [],
   "scope": "the `restore-repos.md` evidence and captures on the live artifact root, read before starting `restore-apps.md` (Phase 12)",
   "read": [],
-  "progress": null,
+  "status": "unclaimed",
+  "progress": "analyzing",
   "ownership": "unclaimed",
   "lineage": null,
   "findings": [
@@ -27,7 +28,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F1 — The official run reports `repo-secrets` as blocked, although it succeeded",
+      "sectionHeading": "F1 \u2014 The official run reports `repo-secrets` as blocked, although it succeeded",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -39,7 +40,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F2 — Step 5 and the `project-metadata` stage were never applied",
+      "sectionHeading": "F2 \u2014 Step 5 and the `project-metadata` stage were never applied",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -51,7 +52,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F3 — The exit bookend reads clean on a phase with two WARN exit criteria",
+      "sectionHeading": "F3 \u2014 The exit bookend reads clean on a phase with two WARN exit criteria",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -63,7 +64,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F4 — Four sign-offs on the volume were written by scratch runs",
+      "sectionHeading": "F4 \u2014 Four sign-offs on the volume were written by scratch runs",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -75,7 +76,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F5 — Every bookend sign-off written since 2026-09-01 cites a staging path",
+      "sectionHeading": "F5 \u2014 Every bookend sign-off written since 2026-09-01 cites a staging path",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -87,7 +88,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F6 — The status report blanks the carry-forward count for the two repositories that need a decision",
+      "sectionHeading": "F6 \u2014 The status report blanks the carry-forward count for the two repositories that need a decision",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -99,7 +100,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F7 — The two unreviewed repositories are Time Machine or nothing",
+      "sectionHeading": "F7 \u2014 The two unreviewed repositories are Time Machine or nothing",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -111,7 +112,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F8 — `reference-vault` cloned with a warning nobody has acted on",
+      "sectionHeading": "F8 \u2014 `reference-vault` cloned with a warning nobody has acted on",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -123,7 +124,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F9 — All six clones came back on HTTPS",
+      "sectionHeading": "F9 \u2014 All six clones came back on HTTPS",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -135,7 +136,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F10 — All three exit sign-off rows are outstanding",
+      "sectionHeading": "F10 \u2014 All three exit sign-off rows are outstanding",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -152,7 +153,7 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D1 — the work succeeded and nothing is owed"
+      "sectionHeading": "D1 \u2014 the work succeeded and nothing is owed"
     },
     {
       "id": "D2",
@@ -164,7 +165,7 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D2 — verify, do not remember (option E)"
+      "sectionHeading": "D2 \u2014 verify, do not remember (option E)"
     },
     {
       "id": "D3",
@@ -176,7 +177,7 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D3 — `unknown` when the source is unreachable (option D)"
+      "sectionHeading": "D3 \u2014 `unknown` when the source is unreachable (option D)"
     },
     {
       "id": "D4",
@@ -188,7 +189,7 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D4 — the outcome vocabulary"
+      "sectionHeading": "D4 \u2014 the outcome vocabulary"
     },
     {
       "id": "D5",
@@ -200,7 +201,7 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D5 — an unreachable source is recorded, not refused"
+      "sectionHeading": "D5 \u2014 an unreachable source is recorded, not refused"
     },
     {
       "id": "D6",
@@ -212,7 +213,7 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D6 — how strict the comparison is depends on the gap"
+      "sectionHeading": "D6 \u2014 how strict the comparison is depends on the gap"
     }
   ],
   "contributions": [

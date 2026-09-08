@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-08T20:49:12+00:00",
+  "number": "0049",
+  "bundleName": "0049-the-patch-is-named-as-the-deliverable-and-never-produced",
+  "kind": "session-management",
+  "subKind": null,
+  "subject": "The patch is named as the deliverable, never defined, and would drop half the work if produced",
+  "recordedOn": "2026-09-08",
+  "recordedOccasion": "after the owner asked why six revisions were written straight into the checkout.",
+  "recordedBy": {
+    "sessionBundle": "allocation-and-inquiry-design-20260906-233205",
+    "sessionId": "session_015FpYVBF7dDoDrHfKDkq8fn"
+  },
+  "severity": "F1 is high -- the rule was missed across six revisions by a session that had read it. F3 is high and independent: following the rule literally produces a patch that silently omits every new file.",
+  "feltAt": [
+    ".github/session-management-instructions.md section 6",
+    "Revisions 211, 214, 218, 220, 229, 230, 231"
+  ],
+  "scope": "session management. The fix is a defined artifact, a named actor, and a guard.",
+  "read": [
+    ".github/session-management-instructions.md section 6, in full",
+    "docs/ideas/knowing-when-it-is-safe-to-write.md",
+    "git status and git diff --name-only over Revision 231's change set",
+    "Revisions 211 through 231 in APPLY-MANIFEST.md"
+  ],
+  "status": "unclaimed",
+  "progress": "un-started",
+  "ownership": "unclaimed",
+  "lineage": null,
+  "findings": [
+    {
+      "id": "F1",
+      "statement": "A session composed correctly and then copied into the checkout six times, and never once produced a patch",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F1 -- what actually happened",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F2",
+      "statement": "Section 6 names the patch as the deliverable and never says how to produce one, where it goes, or who applies it",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F2 -- the deliverable has no definition",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F3",
+      "statement": "git diff in a session copy omits every untracked file, so the prescribed patch would have carried 9 of 14 paths",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F3 -- the prescribed patch would have dropped five of fourteen paths",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F4",
+      "statement": "Nothing detects a write into the owner's checkout, and the signal that used to exist was removed by 0038",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F4 -- nothing would have noticed",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    }
+  ],
+  "decisions": [],
+  "contributions": [],
+  "edges": [
+    {
+      "kind": "blocks",
+      "from": "0049/F2",
+      "to": "0049/F1",
+      "why": "the rule cannot be followed until the artifact it names is defined",
+      "reason": null,
+      "basis": "asserted",
+      "asserted_by": "allocation-and-inquiry-design-20260906-233205",
+      "asserted_on": "2026-09-08"
+    },
+    {
+      "kind": "co-decides",
+      "from": "0049/F2",
+      "to": "0049/F3",
+      "why": "how a patch is produced and what it must carry are one answer",
+      "reason": null,
+      "basis": "asserted",
+      "asserted_by": "allocation-and-inquiry-design-20260906-233205",
+      "asserted_on": "2026-09-08"
+    }
+  ],
+  "indexNotes": "A session's account of its own failure. Offered to be checked, not believed"
+}

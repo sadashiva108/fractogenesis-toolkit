@@ -12,7 +12,7 @@
     "sessionBundle": "session-management-re-evaluation-20260906-110105",
     "sessionId": "session_01FhFbEgG4wmrtJqUCcryNVQ"
   },
-  "severity": "F1 and F3 are high — both have recorded incidents, and F3's are bugs in the checks the framework is trusted by. The rest are structural and cost attention rather than correctness.",
+  "severity": "F1 and F3 are high \u2014 both have recorded incidents, and F3's are bugs in the checks the framework is trusted by. The rest are structural and cost attention rather than correctness.",
   "feltAt": [
     "every `STATUS-` and `STATE-` tag, all five `INDEX.md` files, every `findings-manifest.md` and `metadata.md`, and `bin/verify-findings-counts.sh`, `-structure.sh`, `-headers.sh`"
   ],
@@ -24,7 +24,8 @@
     "`bin/verify-findings-counts.sh`, `bin/verify-findings-structure.sh`, `bin/verify-findings-headers.sh`",
     "the owner's two draft config files, 2026-09-07"
   ],
-  "progress": null,
+  "status": "analyzing",
+  "progress": "analyzing",
   "ownership": null,
   "lineage": null,
   "findings": [
@@ -35,7 +36,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F1 — the status is in the filename",
+      "sectionHeading": "F1 \u2014 the status is in the filename",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -47,7 +48,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F2 — 88 hand-typed cells",
+      "sectionHeading": "F2 \u2014 88 hand-typed cells",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -59,7 +60,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F3 — the data is parsed back out of the rendering",
+      "sectionHeading": "F3 \u2014 the data is parsed back out of the rendering",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -71,7 +72,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F4 — no boundary between what is authored and what is derived",
+      "sectionHeading": "F4 \u2014 no boundary between what is authored and what is derived",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -83,7 +84,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F5 — authority sits on documents, not on data",
+      "sectionHeading": "F5 \u2014 authority sits on documents, not on data",
       "reopened": null,
       "withdrawn": null,
       "resolution": {
@@ -102,7 +103,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F6 — a repeatable field the data cannot hold",
+      "sectionHeading": "F6 \u2014 a repeatable field the data cannot hold",
       "reopened": null,
       "withdrawn": null,
       "resolution": {
@@ -121,7 +122,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F7 — the derivation's else branch asserts nothing",
+      "sectionHeading": "F7 \u2014 the derivation's else branch asserts nothing",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -133,7 +134,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F8 — one activity-named status per vocabulary, and the thing a name cannot carry",
+      "sectionHeading": "F8 \u2014 one activity-named status per vocabulary, and the thing a name cannot carry",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -145,7 +146,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F9 — an edge kind's description and its behaviour can disagree",
+      "sectionHeading": "F9 \u2014 an edge kind's description and its behaviour can disagree",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -163,11 +164,11 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D1 — the edge contract"
+      "sectionHeading": "D1 \u2014 the edge contract"
     },
     {
       "id": "D2",
-      "decision": "§9 step 3 changes from *write this line* to *assert this edge* in the revision that ships the projection, and not before",
+      "decision": "\u00a79 step 3 changes from *write this line* to *assert this edge* in the revision that ships the projection, and not before",
       "findings": [
         "F5"
       ],
@@ -175,7 +176,7 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D2 — the procedure changes when the format exists, not before"
+      "sectionHeading": "D2 \u2014 the procedure changes when the format exists, not before"
     }
   ],
   "contributions": [

@@ -16,7 +16,8 @@
   "feltAt": [],
   "scope": "cross-cutting. Felt in `.internal/artifact-runs.sh`, in every category manifest, and in dated artifacts across the volume.",
   "read": [],
-  "progress": null,
+  "status": "analyzing",
+  "progress": "analyzing",
   "ownership": null,
   "lineage": {
     "supersedes": "0009",
@@ -30,7 +31,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F1 — a rename breaks citations, and nothing detects it",
+      "sectionHeading": "F1 \u2014 a rename breaks citations, and nothing detects it",
       "reopened": null,
       "withdrawn": null,
       "resolution": {
@@ -49,7 +50,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F2 — the repair rule was never written down",
+      "sectionHeading": "F2 \u2014 the repair rule was never written down",
       "reopened": null,
       "withdrawn": null,
       "resolution": {
@@ -68,7 +69,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F3 — no `rename` row, so the old name is unrecoverable from the index",
+      "sectionHeading": "F3 \u2014 no `rename` row, so the old name is unrecoverable from the index",
       "reopened": null,
       "withdrawn": null,
       "resolution": {
@@ -87,7 +88,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F4 — `0009` cites a path that has moved",
+      "sectionHeading": "F4 \u2014 `0009` cites a path that has moved",
       "reopened": null,
       "withdrawn": null,
       "resolution": {
@@ -106,7 +107,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F5 — Revision 138 broke a citation inside the run it was converting",
+      "sectionHeading": "F5 \u2014 Revision 138 broke a citation inside the run it was converting",
       "reopened": null,
       "withdrawn": null,
       "resolution": {
@@ -128,7 +129,7 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D1 — Supersede `0009`; do not edit it and do not withdraw it"
+      "sectionHeading": "D1 \u2014 Supersede `0009`; do not edit it and do not withdraw it"
     },
     {
       "id": "D2",
@@ -138,7 +139,7 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D2 — A record's values are frozen; its references are not"
+      "sectionHeading": "D2 \u2014 A record's values are frozen; its references are not"
     },
     {
       "id": "D3",
@@ -148,7 +149,7 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D3 — Finding 5's two lines are repaired, and the repair is recorded"
+      "sectionHeading": "D3 \u2014 Finding 5's two lines are repaired, and the repair is recorded"
     },
     {
       "id": "D4",
@@ -158,7 +159,7 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D4 — `0009`'s own stale path is not repaired"
+      "sectionHeading": "D4 \u2014 `0009`'s own stale path is not repaired"
     },
     {
       "id": "D5",
@@ -168,7 +169,7 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D5 — The `bookend.md` citation is not repaired by this bundle"
+      "sectionHeading": "D5 \u2014 The `bookend.md` citation is not repaired by this bundle"
     },
     {
       "id": "D6",
@@ -178,7 +179,7 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D6 — Finding 3 is held open deliberately"
+      "sectionHeading": "D6 \u2014 Finding 3 is held open deliberately"
     },
     {
       "id": "D7",
@@ -188,7 +189,7 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D7 — Category manifests get a `rename` row, filed under the surviving lineage"
+      "sectionHeading": "D7 \u2014 Category manifests get a `rename` row, filed under the surviving lineage"
     },
     {
       "id": "D8",
@@ -198,7 +199,7 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D8 — Detection is deferred, and it is downstream of D7 rather than parallel to it"
+      "sectionHeading": "D8 \u2014 Detection is deferred, and it is downstream of D7 rather than parallel to it"
     }
   ],
   "contributions": [],

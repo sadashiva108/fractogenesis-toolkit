@@ -16,7 +16,8 @@
   "feltAt": [],
   "scope": null,
   "read": [],
-  "progress": null,
+  "status": "un-started",
+  "progress": "un-started",
   "ownership": null,
   "lineage": null,
   "findings": [

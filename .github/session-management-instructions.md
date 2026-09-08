@@ -19,6 +19,38 @@ a copy nobody maintains.
 
 ---
 
+## 0. The working cycle — read this before anything else
+
+**This is the loop everything else serves. It is what makes several sessions at
+once work where earlier attempts did not.**
+
+1. **Compose in a scratch tree outside the owner's checkout.** Copy the checkout
+   to session-local storage and edit there. **Never edit the checkout directly**
+   — not once, not for a one-line fix.
+2. **Run every verification and test in the scratch tree.** Only there do the
+   numbers describe your change rather than whoever else is writing.
+3. **Produce the patch.** `git add -N .` then `git diff` to the project's
+   `PATCH_DIR`. It is the reviewable artifact and the record of what you did.
+4. **Report a review, not a diff.** A grouped summary the owner can read in a
+   minute: what changed, by area, with risk flagged. A raw diff can run to
+   thousands of lines and reviewing it is not the owner's job.
+   `./bin/review-changes.sh` produces it.
+5. **Wait.** The owner reviews and may ask for the full diff, one file, or a
+   rationale. Composing is not delivering.
+6. **On *"write it and provide a commit message"* — apply the patch.** That
+   sentence is the owner's instruction to write your work into the checkout and
+   hand back a commit message. It is the one time a session writes there, and
+   the report says **applied at your direction** with what was compared to verify
+   it landed whole.
+7. **The owner runs `git add`, `git commit`, `git push`.** A session never
+   stages, never commits, never pushes, and never rewrites history.
+
+**Steps 1 and 2 are absolute. Step 6 is the only exception to step 1 and it
+requires the owner's words.** `0049` records seven revisions that skipped 3, 4
+and 5 and went straight to 6 on a shorter phrase.
+
+---
+
 ## 1. The two objects
 
 A **findings bundle** is a *reading* of something that already exists: what was
@@ -252,8 +284,30 @@ Where a write is composed is a separate rule and applies to all three:
   applies successfully having done half the work. Make the renames explicitly
   beside the patch, and verify by comparing the trees rather than the patch's
   file list.
-- **The owner asks before a patch is applied.** Composing is not delivering.
-  Report what you composed, show it, and wait.
+- **The cycle is section 0 and this bullet does not restate it.** The one thing
+  worth repeating here: **composing is not delivering, and neither is copying.**
+  A session produces a patch and a review, and writes into the checkout only on
+  *write it and provide a commit message*.
+- **A patch is a file, and this is how it is made.** From the session copy:
+
+```text
+git add -N .
+git diff > "$PATCH_DIR/<revision>-<slug>.patch"
+```
+
+  **`git add -N` is not optional and its absence is silent.** `git diff` carries
+  no untracked file, so a patch made without it drops every file the session
+  created — new bundles, new scripts, whole directories — and `git apply` exits 0
+  having applied what was left. Measured on Revision 231: **9 of 14 paths, and
+  the five it dropped were the test suite, the prompts, a findings bundle and a
+  guard.** This is the trap two bullets up, which the section described for tag
+  renames and left as a special case; it is the general one.
+
+  **Read the patch's file list against your own change set before handing it
+  over.** That comparison is what catches a dropped file, and nothing else does.
+- **Say which you did.** A report ends with *handed over* and the patch path, or
+  *applied at your direction* and what was compared. Those are different claims
+  and a reader six weeks out cannot tell them apart otherwise.
 - **Ask for delete permission before applying, not after it fails.** The
   connected folder refuses `unlink` until the owner grants deletion for it, and
   **every status transition is a delete plus a create**, so this reaches every

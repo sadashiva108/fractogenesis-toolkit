@@ -1,4 +1,6 @@
 # Apply Manifest
+**Revision 232** — supersedes Revision 231 and earlier. A bundle now carries `status` and `progress`, and a session carries `state`: derived as before, and written down, with a check that fails when a stored value drifts. The working cycle becomes section 0, stated before anything else in the file, and it says what actually happens: compose in scratch, verify there, produce a patch, **report a review rather than a diff**, wait, and apply on *write it and provide a commit message*. `0049` records seven revisions that skipped the middle three. `bin/review-changes.sh` is the review. `bin/verify-doc-currency.sh` reports which documents may have gone stale because a source they describe changed, from asserted edges only. A PreToolUse guard refuses a write into the checkout.
+
 **Revision 231** — supersedes Revision 230 and earlier. The capacity stops pretending to be measured and `0048` records why. The session management framework gets a test suite — 38 contracts and regressions over fixtures — and its first act was to catch a repair from Revision 230 that had gone to the projection instead of the record. The conformant prompt moves into the repository, a clone's inheritance is written down once, and a session-management guard joins the runbook one. **Under an owner override.**
 
 **Revision 230** — supersedes Revision 229 and earlier. The two checker failures are fixed at their actual sources — nineteen mechanical citations in the tree, one stale count, and section 11, which had gone on permitting the `—` that Revision 219's ruling retired. The allocator gains selection, a dry run that says create or clone, and a capacity derived from evidence — which reports that the evidence points the other way and says so. `docs/architecture/the-record-and-the-graph.md` measures the eight gaps between the state format and what reads it.
@@ -592,6 +594,128 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
 
 ---
+
+## Revision 232 — the cycle, written down first, and two things that watch it
+
+### Section 0, and a correction to what this session proposed yesterday
+
+The handed-over Revision 232 patch said **the owner applies, always**. That was
+wrong, and it was wrong in the direction of over-correcting a real failure. The
+owner's cycle is:
+
+1. compose in a scratch tree outside the checkout — **never edit it directly**;
+2. run every verification and test there;
+3. produce the patch, `git add -N .` then `git diff`;
+4. **report a review, not a diff** — a raw diff runs to thousands of lines and
+   reading it is not the owner's job;
+5. wait, and answer what the owner asks;
+6. on **"write it and provide a commit message"**, apply the patch and hand back
+   the message;
+7. the owner runs `git add`, `git commit`, `git push`.
+
+**Steps 1 and 2 are absolute; step 6 is the only exception to step 1 and it needs
+the owner's words.** This is now section 0 of the instruction set, before the two
+objects, because it is the thing that makes concurrent sessions work and it was
+previously assembled from four bullets in the middle of section 6.
+
+`0049` records what went wrong: seven revisions ran 1, 2 and 6 and skipped 3, 4
+and 5 on a shorter phrase — and the session never produced a patch at all. Its F3
+is independent and worse: **`git diff` without `git add -N` drops every untracked
+file**, so the prescribed patch would have carried 9 of Revision 231's 14 paths
+and `git apply` would have exited 0.
+
+### `bin/review-changes.sh`
+
+Step 4, which had no artifact. Groups a session's change set by area — rules,
+agent config, architecture, ledgers, ideas, findings, sessions, code, manifest —
+counts it, and **flags what carries risk**: a rule change, anything under
+`.claude/` or `.github/ai-prompts/` that alters what a session may do, and any
+file that only loses lines. Then it names the one command to open a single file
+and the patch for everything else.
+
+On this revision it reports nine files and three flags in twelve lines.
+
+### `bin/verify-doc-currency.sh`
+
+The first answer to documents going stale. `doc-currency.json` holds **asserted**
+source-to-dependent edges: change `state-as-data.md` and it names the readers,
+the tests and the two architecture records written against it.
+
+**Nothing is inferred.** Not from filename, not from similarity, not from
+proximity — an inferred edge is how a checker tells one project's game engine
+that another project's intake docs need updating, and how a real drift hides in a
+page of noise. A watch nobody wrote does not exist, and `--coverage` names every
+file no watch covers so the gap is visible rather than assumed.
+
+Seven watches over 17 sources and 21 dependents, four marked `critical` and
+failing the exit code, three `manual` because they are not safe to confirm
+without being read. `--confirm <id>` re-stamps after a person has reviewed.
+
+It found its own first defect: `write-location-guard.sh` was listed as a source
+and was **MISSING**, because the Revision 232 patch that created it was handed
+over and correctly not applied.
+
+### `.claude/hooks/write-location-guard.sh`
+
+PreToolUse. Refuses an `Edit`/`Write` into the owner's checkout and warns on a
+shell command that writes there — **which the Revision 231 guard could not do**,
+because it matched `Edit|Write|MultiEdit` and every violation was a `cp` inside a
+`Bash` call. It restores the signal `0038` removed.
+`SESSION_APPLY_APPROVED=1` is the escape for step 6, per invocation.
+
+### `docs/ideas/worker-sessions-under-a-managing-session.md`
+
+The owner's observation that he is the bottleneck the allocator does not model:
+it reduces load per exchange and not the number of exchanges. Workers taking the
+mechanical work under a managing session, reporting upward rather than outward.
+Recorded with what makes it hard — a manager's decision is still a decision and
+owes a record; autonomy over a toolkit write is the line; **and what a manager
+filters out is invisible**, so the failure will be a right question that never
+reached the owner. The cheap first version needs nothing new: fan the existing
+checks out as sub-agents and see what gets filtered.
+
+### The derived state is written down, and checked
+
+`state-as-data.md` 4.4 said `progress` was **derived, never stored**. The owner
+reversed that on 2026-09-08: a reader should not have to run a ladder to learn a
+bundle's status, and `progress` was null on all 49 bundles — a field that existed
+and answered nothing.
+
+**A bundle now carries `status` and `progress`; a session carries `state`.** That
+reintroduces what `0043` F2 is about, so the legend's condition applies rather
+than being waived — a copy is permitted *where a check fails when it drifts*.
+`plan-findings-work.sh stamp` writes them and **nothing else may**; `check`
+reports `UNSTAMPED` for a null and `STORED-DISAGREES` for a value that does not
+match what it derives from. Eight tests cover both, and 56 records were stamped.
+
+**`status` and `progress` are different questions and differ on 27 of 49
+bundles.** `status` layers ownership and lineage over the derivation, because
+neither is progress: an `unclaimed` bundle is closed to every session whatever
+its findings say, and a `superseded` reading is not authoritative whatever it
+concluded. `progress` is the derivation alone. `0001` reads `status: unclaimed`
+and `progress: analyzing` at once — which is precisely the drift `0047` F1
+records, now visible in one place instead of inferred.
+
+**`declaredState` keeps its name and its prefix**, and the question of why it has
+one has an answer: it is what the **owner declared**, and a `handoff` or a
+`withdrawn` cannot be derived from what a session holds. `state` is the effective
+value — the declaration where there is one, the derivation where there is not. It
+was absent from all seven sessions.
+
+### Validators
+
+| Checker | Result |
+|---|---|
+| `test-session-management.sh` | **46 tests, 0 failures** — 8 new, on the stored state |
+| `verify-script-portability.sh` | 0 WARN, 0 FAIL — both new entrypoints Bash 3.2 clean |
+| `verify-session-findings.sh` | counts 0 FAIL, structure 0 FAIL, headers 11 FAIL |
+| `verify-doc-currency.sh` | 7 watches, 0 drifted, 7 never confirmed |
+| `verify-doc-paths.sh --all` | 0 MISSING, 0 ANCHOR BROKEN |
+
+Under an owner override for the section 0 and section 6 edits: `0049` F1–F4 are
+`un-started` and the owner directed the change on 2026-09-08. **The findings stay
+open** — they carry the reading, and a reading is not closed by the change it
+prompted.
 
 ## Revision 231 — a capacity that admits what it is, and tests that caught the last revision
 

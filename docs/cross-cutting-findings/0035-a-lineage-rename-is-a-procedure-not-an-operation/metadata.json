@@ -12,11 +12,12 @@
     "sessionBundle": "pre-image-capture-conformance-20260903-194532",
     "sessionId": "session_01PcgHu9kz9Hm5RatLQuFR8H"
   },
-  "severity": "low today and self-inflicting. The volume is currently consistent — 162 manifest rows, 162 run directories, exact correspondence, no dangling pointers. Every future rename is an opportunity to break that by hand.",
+  "severity": "low today and self-inflicting. The volume is currently consistent \u2014 162 manifest rows, 162 run directories, exact correspondence, no dangling pointers. Every future rename is an opportunity to break that by hand.",
   "feltAt": [],
   "scope": "cross-cutting. `.internal/artifact-runs.sh`, `bin/reindex-artifact-runs.sh`, and every category that is ever renamed.",
   "read": [],
-  "progress": null,
+  "status": "un-started",
+  "progress": "un-started",
   "ownership": null,
   "lineage": null,
   "findings": [
@@ -27,7 +28,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F1 — three acts, no operation",
+      "sectionHeading": "F1 \u2014 three acts, no operation",
       "reopened": null,
       "withdrawn": null,
       "resolution": {
@@ -46,7 +47,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F2 — recovery is one-way, so a half-done rename completes itself wrongly",
+      "sectionHeading": "F2 \u2014 recovery is one-way, so a half-done rename completes itself wrongly",
       "reopened": null,
       "withdrawn": null,
       "resolution": {
@@ -65,14 +66,14 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F3 — the run does not carry its own identity, and the pin shows the shape",
+      "sectionHeading": "F3 \u2014 the run does not carry its own identity, and the pin shows the shape",
       "reopened": null,
       "withdrawn": null,
       "resolution": {
         "resolvedBy": [
           "D3"
         ],
-        "whatWasDone": "**Not built.** D1 removes the need, and a marker cannot cover the case it exists for — a pre-existing run renamed by hand",
+        "whatWasDone": "**Not built.** D1 removes the need, and a marker cannot cover the case it exists for \u2014 a pre-existing run renamed by hand",
         "revision": null,
         "commit": null
       }
@@ -87,7 +88,7 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D1 — `artifact_run_rename_lineage` is built, because the sequence turns out to be composable"
+      "sectionHeading": "D1 \u2014 `artifact_run_rename_lineage` is built, because the sequence turns out to be composable"
     },
     {
       "id": "D2",
@@ -97,7 +98,7 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D2 — Finding 2 is corrected: rebuild is loud, `reindex` is the silent one"
+      "sectionHeading": "D2 \u2014 Finding 2 is corrected: rebuild is loud, `reindex` is the silent one"
     },
     {
       "id": "D3",
@@ -107,7 +108,7 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D3 — No per-run identity marker"
+      "sectionHeading": "D3 \u2014 No per-run identity marker"
     }
   ],
   "contributions": [],

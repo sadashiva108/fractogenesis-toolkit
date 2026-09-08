@@ -22,7 +22,8 @@ sys.path.insert(0, HERE)
 import fixtures as F                                          # noqa: E402
 from plan_findings_work import (                              # noqa: E402
     Graph, ladder, conformance, allocate, select, frontier, rank, is_clone,
-    FINDING_STATUSES, OUTCOMES, KINDS, INERT, quality)
+    FINDING_STATUSES, OUTCOMES, KINDS, INERT, quality,
+    bundle_status, bundle_progress, session_state, stamp_derived)
 
 
 def codes(g):
@@ -343,6 +344,74 @@ class TestInterviewer(unittest.TestCase):
         top = rank(g, frontier(g))
         blocked = [r for r in top if r["id"] == "0601/F1"][0]
         self.assertEqual(blocked["score"], 0)
+        t.close()
+
+
+class TestDerivedStateIsStoredAndChecked(unittest.TestCase):
+    """Revision 232: status and progress are written down, so they can drift.
+
+    The legend permits a stored copy of a derived value only where a check fails
+    when it drifts. These are that check.
+    """
+
+    def test_status_layers_ownership_over_progress(self):
+        b = F.bundle("0100", ("framing",), ownership="unclaimed")
+        self.assertEqual(bundle_status(b), "unclaimed")
+        self.assertEqual(bundle_progress(b), "analyzing")
+
+    def test_lineage_outranks_ownership(self):
+        b = F.bundle("0100", ("resolved",), ownership="unclaimed",
+                     lineage={"supersededBy": "0101", "on": "2026-09-01"})
+        self.assertEqual(bundle_status(b), "superseded")
+
+    def test_status_is_progress_when_neither_applies(self):
+        b = F.bundle("0100", ("resolved",), ownership=None)
+        self.assertEqual(bundle_status(b), bundle_progress(b))
+
+    def test_a_null_status_is_reported_as_unstamped(self):
+        g = graph_of(F.bundle("0100", ("framing",), ownership=None))
+        self.assertIn("UNSTAMPED", codes(g))
+        g._fixture.close()
+
+    def test_a_stored_value_that_drifts_is_caught(self):
+        b = F.bundle("0100", ("resolved",), ownership=None)
+        b["status"] = "analyzing"          # a hand edit, or a stale stamp
+        b["progress"] = "resolved"
+        g = graph_of(b)
+        self.assertIn("STORED-DISAGREES", codes(g))
+        g._fixture.close()
+
+    def test_stamping_makes_the_check_pass(self):
+        t = F.Tree()
+        t.add_bundle(F.bundle("0100", ("framing", "resolved"), ownership=None))
+        t.add_session(F.session("s-20260908-000000", owned=("0100",)))
+        g = Graph(t.root)
+        self.assertIn("UNSTAMPED", codes(g))
+        stamp_derived(g, write=True)
+        self.assertNotIn("UNSTAMPED", codes(Graph(t.root)))
+        self.assertNotIn("STORED-DISAGREES", codes(Graph(t.root)))
+        t.close()
+
+    def test_session_state_derives_when_nothing_is_declared(self):
+        t = F.Tree()
+        t.add_bundle(F.bundle("0100", ("framing",), ownership=None))
+        t.add_bundle(F.bundle("0101", ("resolved",), ownership=None))
+        t.add_session(F.session("empty-20260908-000000"))
+        t.add_session(F.session("busy-20260908-000001", owned=("0100",)))
+        t.add_session(F.session("done-20260908-000002", owned=("0101",)))
+        g = Graph(t.root)
+        self.assertEqual(session_state(g, g.sessions["empty-20260908-000000"]), "available")
+        self.assertEqual(session_state(g, g.sessions["busy-20260908-000001"]), "active")
+        self.assertEqual(session_state(g, g.sessions["done-20260908-000002"]), "closed")
+        t.close()
+
+    def test_a_declaration_wins_over_the_derivation(self):
+        """handoff and withdrawn cannot be derived from what a session holds."""
+        t = F.Tree()
+        t.add_bundle(F.bundle("0100", ("framing",), ownership=None))
+        t.add_session(F.session("s-20260908-000000", owned=("0100",), declared="handoff"))
+        g = Graph(t.root)
+        self.assertEqual(session_state(g, g.sessions["s-20260908-000000"]), "handoff")
         t.close()
 
 

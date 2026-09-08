@@ -7,7 +7,7 @@
   "subKind": null,
   "subject": "Bookend sign-offs cite the `.incomplete` staging path",
   "recordedOn": "2026-09-03",
-  "recordedOccasion": "while renaming `boundaries/` to `bookends/` — 20 of the sign-offs on the volume named the category, and every one of them named it through a path that never existed after the run finished.",
+  "recordedOccasion": "while renaming `boundaries/` to `bookends/` \u2014 20 of the sign-offs on the volume named the category, and every one of them named it through a path that never existed after the run finished.",
   "recordedBy": {
     "sessionBundle": null,
     "sessionId": null
@@ -16,7 +16,8 @@
   "feltAt": [],
   "scope": null,
   "read": [],
-  "progress": null,
+  "status": "resolved",
+  "progress": "resolved",
   "ownership": null,
   "lineage": null,
   "findings": [

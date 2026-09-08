@@ -12,13 +12,14 @@
     "sessionBundle": "restore-apps-outstanding-20260903-000000",
     "sessionId": "session_016EbjB7M527qEFqZFzpv2C9"
   },
-  "severity": "F1 is high. The repository's whole assurance surface is six checkers, and a class of defect passes all six by construction — not by oversight, but because none of them looks at the artefact a reader sees.",
+  "severity": "F1 is high. The repository's whole assurance surface is six checkers, and a class of defect passes all six by construction \u2014 not by oversight, but because none of them looks at the artefact a reader sees.",
   "feltAt": [
     "`bin/verify-doc-paths.sh`, `bin/verify-runbook-structure.sh`, `bin/verify-script-portability.sh`, `bin/verify-findings-counts.sh`, `bin/verify-findings-structure.sh`, `bin/verify-findings-headers.sh`"
   ],
-  "scope": "cross-cutting in effect, session management in subject — the rule is about what a session must verify before handing work over, not about anything this project does",
+  "scope": "cross-cutting in effect, session management in subject \u2014 the rule is about what a session must verify before handing work over, not about anything this project does",
   "read": [],
-  "progress": null,
+  "status": "unclaimed",
+  "progress": "un-started",
   "ownership": "unclaimed",
   "lineage": null,
   "findings": [
@@ -29,7 +30,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F1 — Every checker reads the source; none reads what the source renders as",
+      "sectionHeading": "F1 \u2014 Every checker reads the source; none reads what the source renders as",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -41,7 +42,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F2 — Three consecutive revisions shipped a rendering defect that all six checkers passed",
+      "sectionHeading": "F2 \u2014 Three consecutive revisions shipped a rendering defect that all six checkers passed",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -53,7 +54,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F3 — A rendering check needs a markdown parser, which is a dependency the repository does not have",
+      "sectionHeading": "F3 \u2014 A rendering check needs a markdown parser, which is a dependency the repository does not have",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -65,7 +66,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F4 — The audit that did find these ran outside the repository and was never committed",
+      "sectionHeading": "F4 \u2014 The audit that did find these ran outside the repository and was never committed",
       "reopened": null,
       "withdrawn": null,
       "resolution": null

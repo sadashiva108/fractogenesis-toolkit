@@ -16,7 +16,8 @@
   "feltAt": [],
   "scope": null,
   "read": [],
-  "progress": null,
+  "status": "resolved",
+  "progress": "resolved",
   "ownership": null,
   "lineage": {
     "supersedes": "0026",
@@ -54,7 +55,7 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D1 — how `docs/` is checked, if at all"
+      "sectionHeading": "D1 \u2014 how `docs/` is checked, if at all"
     }
   ],
   "contributions": [],

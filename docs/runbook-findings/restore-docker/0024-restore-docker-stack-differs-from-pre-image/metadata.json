@@ -12,11 +12,12 @@
     "sessionBundle": null,
     "sessionId": null
   },
-  "severity": "planning input for Phase 12. `restore-docker.md` Steps 6–10 describe a stack that is not on this machine.",
+  "severity": "planning input for Phase 12. `restore-docker.md` Steps 6\u201310 describe a stack that is not on this machine.",
   "feltAt": [],
   "scope": null,
   "read": [],
-  "progress": null,
+  "status": "unclaimed",
+  "progress": "un-started",
   "ownership": "unclaimed",
   "lineage": null,
   "findings": [

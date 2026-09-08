@@ -12,11 +12,12 @@
     "sessionBundle": null,
     "sessionId": null
   },
-  "severity": "low to hit, moderate to leave — a comparison silently compares nothing against nothing.",
+  "severity": "low to hit, moderate to leave \u2014 a comparison silently compares nothing against nothing.",
   "feltAt": [],
   "scope": null,
   "read": [],
-  "progress": null,
+  "status": "unclaimed",
+  "progress": "un-started",
   "ownership": "unclaimed",
   "lineage": null,
   "findings": [

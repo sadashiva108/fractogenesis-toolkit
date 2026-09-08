@@ -12,11 +12,12 @@
     "sessionBundle": null,
     "sessionId": null
   },
-  "severity": "naming only — nothing misbehaves. It matters because this is the one word the workflow uses for two other things.",
+  "severity": "naming only \u2014 nothing misbehaves. It matters because this is the one word the workflow uses for two other things.",
   "feltAt": [],
   "scope": null,
   "read": [],
-  "progress": null,
+  "status": "resolved",
+  "progress": "resolved",
   "ownership": null,
   "lineage": null,
   "findings": [

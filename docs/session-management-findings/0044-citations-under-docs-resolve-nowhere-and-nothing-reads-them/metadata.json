@@ -12,7 +12,7 @@
     "sessionBundle": "allocation-and-inquiry-design-20260906-233205",
     "sessionId": "session_015FpYVBF7dDoDrHfKDkq8fn"
   },
-  "severity": "low each, and F1 is the first demonstrated instance of `0036` — a broken link inside `docs/` that every validator passes.",
+  "severity": "low each, and F1 is the first demonstrated instance of `0036` \u2014 a broken link inside `docs/` that every validator passes.",
   "feltAt": [
     "`docs/cross-cutting-findings/INDEX.md` rows 0003, 0005, 0006 and 0030; line 15 of the same file; `docs/sessions/INDEX.md` line 8"
   ],
@@ -22,7 +22,8 @@
     "`bin/verify-doc-paths.sh`, and its `--all` run over 778 paths and 1108 anchors",
     "`.github/session-management-instructions.md` sections 2 and 3"
   ],
-  "progress": null,
+  "status": "unclaimed",
+  "progress": "un-started",
   "ownership": "unclaimed",
   "lineage": null,
   "findings": [
@@ -33,7 +34,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F1 — four citations resolve one directory too high",
+      "sectionHeading": "F1 \u2014 four citations resolve one directory too high",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -45,7 +46,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F2 — two indexes cite a file section that moved",
+      "sectionHeading": "F2 \u2014 two indexes cite a file section that moved",
       "reopened": null,
       "withdrawn": null,
       "resolution": null

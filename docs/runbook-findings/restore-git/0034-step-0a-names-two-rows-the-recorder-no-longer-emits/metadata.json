@@ -7,7 +7,7 @@
   "subKind": null,
   "subject": "`restore-git.md` Step 0a names two rows the recorder no longer emits",
   "recordedOn": "2026-09-04",
-  "recordedOccasion": "while deciding `0005` — the pointer for `restore-git-entry` was moving to a run whose FAIL turned out to be the expected state rather than a defect.",
+  "recordedOccasion": "while deciding `0005` \u2014 the pointer for `restore-git-entry` was moving to a run whose FAIL turned out to be the expected state rather than a defect.",
   "recordedBy": {
     "sessionBundle": null,
     "sessionId": "session_01KcZvrKMgfenhrT9DvxW9Jk"
@@ -16,7 +16,8 @@
   "feltAt": [],
   "scope": "runbook. Felt in `restore-git.md` Step 0a and in `check_restore_git()` in `bin/record-restore-prereqs.sh`.",
   "read": [],
-  "progress": null,
+  "status": "un-started",
+  "progress": "un-started",
   "ownership": null,
   "lineage": null,
   "findings": [

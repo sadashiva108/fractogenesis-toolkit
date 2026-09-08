@@ -14,9 +14,10 @@
   },
   "severity": "findings F1, F5 and F8 are high. A session that reads only the instruction set does not learn several of the rules it is expected to follow, and one of those rules governs when it may touch the owner's checkout.",
   "feltAt": [],
-  "scope": "instruction-set. The fix lands in `.github/session-management-instructions.md`, `.claude/CLAUDE.md`, and `docs/architecture/findings-and-sessions.md`. Recorded against `.github/copilot-instructions.md` §§4b–4d, which commit `1c48deb` deleted; D13 re-ruled the address.",
+  "scope": "instruction-set. The fix lands in `.github/session-management-instructions.md`, `.claude/CLAUDE.md`, and `docs/architecture/findings-and-sessions.md`. Recorded against `.github/copilot-instructions.md` \u00a7\u00a74b\u20134d, which commit `1c48deb` deleted; D13 re-ruled the address.",
   "read": [],
-  "progress": null,
+  "status": "analyzing",
+  "progress": "analyzing",
   "ownership": null,
   "lineage": {
     "supersedes": "0029",
@@ -30,7 +31,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F1 — five rules exist only in `docs/legend.md`",
+      "sectionHeading": "F1 \u2014 five rules exist only in `docs/legend.md`",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -42,19 +43,19 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F2 — two rules exist in both, in different words",
+      "sectionHeading": "F2 \u2014 two rules exist in both, in different words",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
     },
     {
       "id": "F3",
-      "statement": "§4b's directory list is now wrong",
+      "statement": "\u00a74b's directory list is now wrong",
       "status": "framing",
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F3 — §4b's directory list is now wrong",
+      "sectionHeading": "F3 \u2014 \u00a74b's directory list is now wrong",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -66,7 +67,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F4 — the architecture record describes two findings trees",
+      "sectionHeading": "F4 \u2014 the architecture record describes two findings trees",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -78,7 +79,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F5 — nothing says `docs/legend.md` is normative",
+      "sectionHeading": "F5 \u2014 nothing says `docs/legend.md` is normative",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -90,7 +91,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F6 — state names and state requirements are in different files",
+      "sectionHeading": "F6 \u2014 state names and state requirements are in different files",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -102,7 +103,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F7 — the vocabulary cannot express decision order",
+      "sectionHeading": "F7 \u2014 the vocabulary cannot express decision order",
       "reopened": null,
       "withdrawn": null,
       "resolution": {
@@ -121,7 +122,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F8 — the rule says where a change is composed, not when it is handed over",
+      "sectionHeading": "F8 \u2014 the rule says where a change is composed, not when it is handed over",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -133,7 +134,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F9 — six rules live outside the repository entirely",
+      "sectionHeading": "F9 \u2014 six rules live outside the repository entirely",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -145,7 +146,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F10 — a decision cannot say it is under re-examination, and nothing locks one",
+      "sectionHeading": "F10 \u2014 a decision cannot say it is under re-examination, and nothing locks one",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -157,7 +158,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F11 — the header schema binds one file type, and the records break it",
+      "sectionHeading": "F11 \u2014 the header schema binds one file type, and the records break it",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -169,7 +170,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F12 — a status transition names no trigger, and a sweep is indistinguishable from a reading",
+      "sectionHeading": "F12 \u2014 a status transition names no trigger, and a sweep is indistinguishable from a reading",
       "reopened": null,
       "withdrawn": null,
       "resolution": {
@@ -181,7 +182,7 @@
           "D11",
           "D12"
         ],
-        "whatWasDone": "Every transition in docs/legend.md names its triggering event; the reason, outcome and provenance vocabularies are defined; §9 gains the provenance gate and §9a the reopen and withdraw procedures",
+        "whatWasDone": "Every transition in docs/legend.md names its triggering event; the reason, outcome and provenance vocabularies are defined; \u00a79 gains the provenance gate and \u00a79a the reopen and withdraw procedures",
         "revision": "221, 223",
         "commit": "b09a69d, 5ad7304"
       }
@@ -193,7 +194,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F13 — the vocabulary file is named for a glance and read as a specification",
+      "sectionHeading": "F13 \u2014 the vocabulary file is named for a glance and read as a specification",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -205,7 +206,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F14 — nothing here is written for someone arriving cold",
+      "sectionHeading": "F14 \u2014 nothing here is written for someone arriving cold",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -217,7 +218,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F15 — a check that validates citations cannot detect their absence",
+      "sectionHeading": "F15 \u2014 a check that validates citations cannot detect their absence",
       "reopened": null,
       "withdrawn": null,
       "resolution": {
@@ -236,7 +237,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F16 — every check asks whether a document is well formed; none asks whether it is complete",
+      "sectionHeading": "F16 \u2014 every check asks whether a document is well formed; none asks whether it is complete",
       "reopened": null,
       "withdrawn": null,
       "resolution": {
@@ -256,7 +257,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F17 — resolving has no procedure",
+      "sectionHeading": "F17 \u2014 resolving has no procedure",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -268,7 +269,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F18 — `accepted` cannot say whether the work was done",
+      "sectionHeading": "F18 \u2014 `accepted` cannot say whether the work was done",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -280,14 +281,14 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F19 — nothing scopes the record to this repository",
+      "sectionHeading": "F19 \u2014 nothing scopes the record to this repository",
       "reopened": null,
       "withdrawn": null,
       "resolution": {
         "resolvedBy": [
           "D19"
         ],
-        "whatWasDone": "The record is scoped to this repository and foreign named as a fourth write kind, in §6 and the legend",
+        "whatWasDone": "The record is scoped to this repository and foreign named as a fourth write kind, in \u00a76 and the legend",
         "revision": "227",
         "commit": "*(taken at apply time)*"
       }
@@ -299,7 +300,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F20 — releasing to `unclaimed` has no procedure",
+      "sectionHeading": "F20 \u2014 releasing to `unclaimed` has no procedure",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -308,7 +309,7 @@
   "decisions": [
     {
       "id": "D1",
-      "decision": "`docs/legend.md` holds VOCABULARY. `.github/copilot-instructions.md` sections 4b–4d hold PROCEDURE. Each points at the other for the kind it does not hold, and the legend is named in §4 as required reading",
+      "decision": "`docs/legend.md` holds VOCABULARY. `.github/copilot-instructions.md` sections 4b\u20134d hold PROCEDURE. Each points at the other for the kind it does not hold, and the legend is named in \u00a74 as required reading",
       "findings": [
         "F1",
         "F2",
@@ -316,14 +317,14 @@
         "F6"
       ],
       "decided": "2026-09-04",
-      "outcome": "replaced → D13",
+      "outcome": "replaced \u2192 D13",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D1 — `docs/legend.md` holds VOCABULARY. `.github/copilot-instructions.md` sections 4b–4d hold PROCEDURE. Each points at the other for the kind it does not hold, and the legend is named in §4 as required reading"
+      "sectionHeading": "D1 \u2014 `docs/legend.md` holds VOCABULARY. `.github/copilot-instructions.md` sections 4b\u20134d hold PROCEDURE. Each points at the other for the kind it does not hold, and the legend is named in \u00a74 as required reading"
     },
     {
       "id": "D2",
-      "decision": "the write categories split. The legend keeps three one-line definitions of what a record, toolkit and evidence write IS. §4b takes the gating",
+      "decision": "the write categories split. The legend keeps three one-line definitions of what a record, toolkit and evidence write IS. \u00a74b takes the gating",
       "findings": [
         "F5"
       ],
@@ -331,11 +332,11 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D2 — the write categories split. The legend keeps three one-line definitions of what a record, toolkit and evidence write IS. §4b takes the gating"
+      "sectionHeading": "D2 \u2014 the write categories split. The legend keeps three one-line definitions of what a record, toolkit and evidence write IS. \u00a74b takes the gating"
     },
     {
       "id": "D3",
-      "decision": "`docs/INDEX.md` owns the enumeration of the `docs/` directories. §4b and `docs/architecture/findings-and-sessions.md` §2 stop listing them and point at it",
+      "decision": "`docs/INDEX.md` owns the enumeration of the `docs/` directories. \u00a74b and `docs/architecture/findings-and-sessions.md` \u00a72 stop listing them and point at it",
       "findings": [
         "F3",
         "F4"
@@ -344,23 +345,23 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D3 — `docs/INDEX.md` owns the enumeration of the `docs/` directories. §4b and `docs/architecture/findings-and-sessions.md` §2 stop listing them and point at it"
+      "sectionHeading": "D3 \u2014 `docs/INDEX.md` owns the enumeration of the `docs/` directories. \u00a74b and `docs/architecture/findings-and-sessions.md` \u00a72 stop listing them and point at it"
     },
     {
       "id": "D4",
-      "decision": "a bundle waiting on another's decision says so in prose inside its `Relates to` line, and §4c requires the bundle's INDEX.md Notes cell to say it too. `Decide after:` does not become vocabulary",
+      "decision": "a bundle waiting on another's decision says so in prose inside its `Relates to` line, and \u00a74c requires the bundle's INDEX.md Notes cell to say it too. `Decide after:` does not become vocabulary",
       "findings": [
         "F7"
       ],
       "decided": "2026-09-04",
-      "outcome": "replaced → D5",
+      "outcome": "replaced \u2192 D5",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D4 — a bundle waiting on another's decision says so in prose inside its `Relates to` line, and §4c requires the bundle's INDEX.md Notes cell to say it too. `Decide after:` does not become vocabulary"
+      "sectionHeading": "D4 \u2014 a bundle waiting on another's decision says so in prose inside its `Relates to` line, and \u00a74c requires the bundle's INDEX.md Notes cell to say it too. `Decide after:` does not become vocabulary"
     },
     {
       "id": "D5",
-      "decision": "ordering between findings is a typed, directed edge — `blocks` or `evidences` — asserted in the bundle whose session states it, validated at both ends, and expiring when either endpoint goes inert",
+      "decision": "ordering between findings is a typed, directed edge \u2014 `blocks` or `evidences` \u2014 asserted in the bundle whose session states it, validated at both ends, and expiring when either endpoint goes inert",
       "findings": [
         "F7"
       ],
@@ -368,7 +369,7 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D5 — ordering between findings is a typed, directed edge"
+      "sectionHeading": "D5 \u2014 ordering between findings is a typed, directed edge"
     },
     {
       "id": "D6",
@@ -380,7 +381,7 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D6 — the hand-over step joins the composition rule in section 6"
+      "sectionHeading": "D6 \u2014 the hand-over step joins the composition rule in section 6"
     },
     {
       "id": "D7",
@@ -392,7 +393,7 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D7 — a status moves on a material change to the record, never on a reading"
+      "sectionHeading": "D7 \u2014 a status moves on a material change to the record, never on a reading"
     },
     {
       "id": "D8",
@@ -405,11 +406,11 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D8 — reframing invalidates the decisions under a finding"
+      "sectionHeading": "D8 \u2014 reframing invalidates the decisions under a finding"
     },
     {
       "id": "D9",
-      "decision": "A decision's `Outcome` is one of seven — `proposed`, `accepted`, `rejected`, `deferred`, `retracted`, `replaced → DX`, `voided` — and **no word appears in both an Outcome and a status vocabulary**, which a schema check asserts. `refined → DX` and `superseded → DX` collapse into `replaced → DX`",
+      "decision": "A decision's `Outcome` is one of seven \u2014 `proposed`, `accepted`, `rejected`, `deferred`, `retracted`, `replaced \u2192 DX`, `voided` \u2014 and **no word appears in both an Outcome and a status vocabulary**, which a schema check asserts. `refined \u2192 DX` and `superseded \u2192 DX` collapse into `replaced \u2192 DX`",
       "findings": [
         "F10",
         "F12"
@@ -418,7 +419,7 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D9 — the Outcome vocabulary, and no word in two vocabularies"
+      "sectionHeading": "D9 \u2014 the Outcome vocabulary, and no word in two vocabularies"
     },
     {
       "id": "D10",
@@ -430,11 +431,11 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D10 — reopening takes a reason, and the reason decides the exit"
+      "sectionHeading": "D10 \u2014 reopening takes a reason, and the reason decides the exit"
     },
     {
       "id": "D11",
-      "decision": "**Withdrawing requires a reason**, an optional note and `withdrawn_at`, per finding — a bundle-level withdrawal needs one for every finding in it. A `resolved` finding is reopened first; `withdrawn` reaches every status except `resolved`",
+      "decision": "**Withdrawing requires a reason**, an optional note and `withdrawn_at`, per finding \u2014 a bundle-level withdrawal needs one for every finding in it. A `resolved` finding is reopened first; `withdrawn` reaches every status except `resolved`",
       "findings": [
         "F12"
       ],
@@ -442,7 +443,7 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D11 — withdrawing takes a reason too"
+      "sectionHeading": "D11 \u2014 withdrawing takes a reason too"
     },
     {
       "id": "D12",
@@ -454,11 +455,11 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D12 — supersession carries provenance, at finding granularity"
+      "sectionHeading": "D12 \u2014 supersession carries provenance, at finding granularity"
     },
     {
       "id": "D13",
-      "decision": "`docs/legend.md` holds VOCABULARY. **`.github/session-management-instructions.md` holds PROCEDURE** — D1 said §§4b–4d of `copilot-instructions.md`, which commit `1c48deb` deleted. Each points at the other for the kind it does not hold. D2's unfinished half is carried out: the legend keeps three one-line definitions of the write categories and the gating moves to §6",
+      "decision": "`docs/legend.md` holds VOCABULARY. **`.github/session-management-instructions.md` holds PROCEDURE** \u2014 D1 said \u00a7\u00a74b\u20134d of `copilot-instructions.md`, which commit `1c48deb` deleted. Each points at the other for the kind it does not hold. D2's unfinished half is carried out: the legend keeps three one-line definitions of the write categories and the gating moves to \u00a76",
       "findings": [
         "F1",
         "F2",
@@ -470,11 +471,11 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D13 — the split survives, the address does not"
+      "sectionHeading": "D13 \u2014 the split survives, the address does not"
     },
     {
       "id": "D14",
-      "decision": "The four pre-D12 supersession successors get the clean slate D12 requires. `0037`, `0038`, `0040` keep only `findings.md` and `metadata.json`; `0036` loses the cloned `resolutions.md` and keeps its own `decisions.md`. `0041`'s pair is MOVED to `0032` rather than deleted — sole copies, and both headers name `0032`",
+      "decision": "The four pre-D12 supersession successors get the clean slate D12 requires. `0037`, `0038`, `0040` keep only `findings.md` and `metadata.json`; `0036` loses the cloned `resolutions.md` and keeps its own `decisions.md`. `0041`'s pair is MOVED to `0032` rather than deleted \u2014 sole copies, and both headers name `0032`",
       "findings": [
         "F12",
         "F15"
@@ -483,11 +484,11 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D14 — the clean slate, applied to the bundles that predate the rule"
+      "sectionHeading": "D14 \u2014 the clean slate, applied to the bundles that predate the rule"
     },
     {
       "id": "D15",
-      "decision": "A decision row must cite at least one `F<n>`. The checker validates citations that exist and cannot see their absence, so the rule states the positive condition — the same shape as D12's coverage clause",
+      "decision": "A decision row must cite at least one `F<n>`. The checker validates citations that exist and cannot see their absence, so the rule states the positive condition \u2014 the same shape as D12's coverage clause",
       "findings": [
         "F15"
       ],
@@ -495,11 +496,11 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D15 — a decision must cite at least one finding"
+      "sectionHeading": "D15 \u2014 a decision must cite at least one finding"
     },
     {
       "id": "D16",
-      "decision": "A `completeness` check joins the verify group: it asserts that no atomic value carries markdown ornament, that a list in a document is a list of the same length in the data, and that every header field the markdown has reaches a non-empty key. Deliberately NOT a second parser — a second reader shares the first's blind spots",
+      "decision": "A `completeness` check joins the verify group: it asserts that no atomic value carries markdown ornament, that a list in a document is a list of the same length in the data, and that every header field the markdown has reaches a non-empty key. Deliberately NOT a second parser \u2014 a second reader shares the first's blind spots",
       "findings": [
         "F16"
       ],
@@ -507,7 +508,7 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D16 — a check for completeness, and why it is not a second parser"
+      "sectionHeading": "D16 \u2014 a check for completeness, and why it is not a second parser"
     },
     {
       "id": "D17",
@@ -519,11 +520,11 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D17 — the extractor is single-use, and refuses to prove it"
+      "sectionHeading": "D17 \u2014 the extractor is single-use, and refuses to prove it"
     },
     {
       "id": "D18",
-      "decision": "Resolving gets a numbered procedure, §9b: carry out the decision, write the `resolutions.md` row naming the decision and the revision, then move the finding to `resolved` — in that order, because the row is the evidence the status asserts. A `decided` finding whose decisions are all carried out and which has no row is a defect a check can name",
+      "decision": "Resolving gets a numbered procedure, \u00a79b: carry out the decision, write the `resolutions.md` row naming the decision and the revision, then move the finding to `resolved` \u2014 in that order, because the row is the evidence the status asserts. A `decided` finding whose decisions are all carried out and which has no row is a defect a check can name",
       "findings": [
         "F17"
       ],
@@ -531,11 +532,11 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D18 — resolving gets a procedure"
+      "sectionHeading": "D18 \u2014 resolving gets a procedure"
     },
     {
       "id": "D19",
-      "decision": "**The record covers this repository; the rules governing it live in this repository.** Work a session does in another project is not recorded here — no manifest entry, no finding, no `metadata.md` resource row — and a rule the framework depends on is not left in a file outside it. A fourth write kind, `foreign`, names the case so it is excluded deliberately rather than by omission",
+      "decision": "**The record covers this repository; the rules governing it live in this repository.** Work a session does in another project is not recorded here \u2014 no manifest entry, no finding, no `metadata.md` resource row \u2014 and a rule the framework depends on is not left in a file outside it. A fourth write kind, `foreign`, names the case so it is excluded deliberately rather than by omission",
       "findings": [
         "F19",
         "F9"
@@ -544,11 +545,11 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D19 — the record covers this repository, and the rules live in it"
+      "sectionHeading": "D19 \u2014 the record covers this repository, and the rules live in it"
     },
     {
       "id": "D20",
-      "decision": "Releasing to `unclaimed` gets §10a, four steps: remove the row from the session's `findings-manifest.md`, set the bundle's index Session cell to `—` and its Status cell to `unclaimed`, decrement the session's counts, and record the disposal in the session. Ownership derives, so there is no status to set",
+      "decision": "Releasing to `unclaimed` gets \u00a710a, four steps: remove the row from the session's `findings-manifest.md`, set the bundle's index Session cell to `\u2014` and its Status cell to `unclaimed`, decrement the session's counts, and record the disposal in the session. Ownership derives, so there is no status to set",
       "findings": [
         "F20"
       ],
@@ -556,14 +557,14 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D20 — releasing to `unclaimed` gets a procedure"
+      "sectionHeading": "D20 \u2014 releasing to `unclaimed` gets a procedure"
     }
   ],
   "contributions": [
     {
       "session": "allocation-and-inquiry-design-20260906-233205",
       "date": "2026-09-06",
-      "contribution": "Recorded D5 against F7 and set D4's outcome to `superseded → D5`"
+      "contribution": "Recorded D5 against F7 and set D4's outcome to `superseded \u2192 D5`"
     }
   ],
   "edges": [

@@ -12,17 +12,18 @@
     "sessionBundle": "allocation-and-inquiry-design-20260906-233205",
     "sessionId": "session_015FpYVBF7dDoDrHfKDkq8fn"
   },
-  "severity": "F1 is high — an `unclaimed` bundle is meant to be closed to every session and one is not. F5 is high for a different reason: it is a defect in the instrument, and acting on the instrument's raw output would touch sixty-five records that are correct.",
+  "severity": "F1 is high \u2014 an `unclaimed` bundle is meant to be closed to every session and one is not. F5 is high for a different reason: it is a defect in the instrument, and acting on the instrument's raw output would touch sixty-five records that are correct.",
   "feltAt": [
     "`0001` F1; `0030`, `0035`, `0036`; eleven bundles resolved before Revision 162's conversion"
   ],
   "scope": "session management. The remedy is a check and a retrofit, and the retrofit waits on `docs/architecture/state-as-data.md`",
   "read": [
-    "every `findings.md`, `decisions.md`, `resolutions.md` and `STATUS-` tag in the four trees — 45 bundles, 131 findings",
+    "every `findings.md`, `decisions.md`, `resolutions.md` and `STATUS-` tag in the four trees \u2014 45 bundles, 131 findings",
     "`docs/legend.md`, the ladder and the two permission tables",
     "`docs/architecture/state-as-data.md` sections 4.3 and 4.4"
   ],
-  "progress": null,
+  "status": "unclaimed",
+  "progress": "un-started",
   "ownership": "unclaimed",
   "lineage": null,
   "findings": [
@@ -33,7 +34,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F1 — an `unclaimed` bundle holding a live finding",
+      "sectionHeading": "F1 \u2014 an `unclaimed` bundle holding a live finding",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -45,7 +46,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F2 — six decisions that moved nothing",
+      "sectionHeading": "F2 \u2014 six decisions that moved nothing",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -57,7 +58,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F3 — resolutions for findings that are not resolved",
+      "sectionHeading": "F3 \u2014 resolutions for findings that are not resolved",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -69,7 +70,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F4 — eleven resolved bundles with no `decisions.md`",
+      "sectionHeading": "F4 \u2014 eleven resolved bundles with no `decisions.md`",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -81,7 +82,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F5 — the sweep is wrong before it is right",
+      "sectionHeading": "F5 \u2014 the sweep is wrong before it is right",
       "reopened": null,
       "withdrawn": null,
       "resolution": null

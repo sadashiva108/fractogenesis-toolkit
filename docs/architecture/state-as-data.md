@@ -275,9 +275,37 @@ for one slot. The legend already says two of the three are not progress at all.
 
 | Field | Answers | Values |
 |---|---|---|
-| `progress` | how far the reading has been taken | **derived**, never stored — `un-started`, `withdrawn`, `resolved`, `reopened`, `analyzing` |
+| `status` | what state this bundle is in — the one value a reader wants | **derived and STORED** — the three fields below, in that precedence |
+| `progress` | how far the reading has been taken, ownership aside | **derived and STORED** — `un-started`, `withdrawn`, `resolved`, `reopened`, `analyzing` |
 | `ownership` | who owns this | `null` when owned per the manifest, else `unclaimed` or `transferred` |
 | `lineage` | is this reading still authoritative | `null`, or `{ "supersededBy": "0041", "on": "2026-09-06" }` on the predecessor; `{ "supersedes": "0032", "on": "…" }` on the successor, whose provenance edges carry the per-finding accounting |
+
+**Derived, and written down anyway.** This table read *derived, never stored*
+until Revision 232. The owner reversed it on 2026-09-08: a reader should not have
+to run a ladder to learn a bundle's status, and `progress` being null on all 49
+bundles meant the field existed and answered nothing.
+
+That reintroduces what `0043` F2 is about — a derived value written down is a
+second copy that can drift — so **the legend's condition applies rather than
+being waived**: a copy is permitted *where a check fails when it drifts*.
+`plan-findings-work.sh stamp` writes both fields and **nothing else may**;
+`check` reports `UNSTAMPED` for a null and `STORED-DISAGREES` for a value that
+does not match what it derives from, and both are tested. A hand-edited status is
+a defect the next `check` names.
+
+**`status` and `progress` are not the same question and differ on 27 of 49
+bundles.** `status` layers ownership and lineage over the derivation, because
+neither is progress: an `unclaimed` bundle is closed to every session whatever
+its findings say, and a `superseded` reading is no longer authoritative whatever
+it concluded. `progress` is the derivation alone — which is how `0001` reads
+`status: unclaimed` and `progress: analyzing` at once, and that pair is exactly
+the drift `0047` F1 records.
+
+**A session carries `state` on the same terms.** `declaredState` keeps its name
+and its prefix: it is what the **owner declared**, and a `handoff` or a
+`withdrawn` cannot be derived from what a session holds. `state` is the effective
+value — the declaration where there is one, the derivation where there is not.
+It was absent from all seven sessions and is now stamped and checked.
 
 **The ladder shrinks from eight rows to five** and stops being an override list.
 Rows 1, 1b and 2 leave because they were never derivations — they are the two

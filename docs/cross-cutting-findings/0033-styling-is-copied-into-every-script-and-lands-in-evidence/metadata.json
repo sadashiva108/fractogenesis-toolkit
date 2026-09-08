@@ -14,9 +14,10 @@
   },
   "severity": "finding 5 is high and is the reason this was written down. The rest is untidiness; finding 5 is escape codes inside dated evidence of a machine that no longer exists in that state.",
   "feltAt": [],
-  "scope": "cross-cutting. The fix lands in `.internal/`, the authoring template, and the two report producers — shared machinery, felt in every script's output.",
+  "scope": "cross-cutting. The fix lands in `.internal/`, the authoring template, and the two report producers \u2014 shared machinery, felt in every script's output.",
   "read": [],
-  "progress": null,
+  "status": "unclaimed",
+  "progress": "un-started",
   "ownership": "unclaimed",
   "lineage": null,
   "findings": [
@@ -27,7 +28,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F1 — seventeen palettes, no source",
+      "sectionHeading": "F1 \u2014 seventeen palettes, no source",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -39,7 +40,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F2 — the template prescribes the copy",
+      "sectionHeading": "F2 \u2014 the template prescribes the copy",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -51,7 +52,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F3 — they have already drifted",
+      "sectionHeading": "F3 \u2014 they have already drifted",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -63,7 +64,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F4 — colour is emitted regardless of destination",
+      "sectionHeading": "F4 \u2014 colour is emitted regardless of destination",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -75,7 +76,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F5 — forty-eight evidence artifacts carry escape codes",
+      "sectionHeading": "F5 \u2014 forty-eight evidence artifacts carry escape codes",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -87,7 +88,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F6 — nothing checks any of it",
+      "sectionHeading": "F6 \u2014 nothing checks any of it",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -99,7 +100,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F7 — the fallbacks are a second copy, and they have drifted",
+      "sectionHeading": "F7 \u2014 the fallbacks are a second copy, and they have drifted",
       "reopened": null,
       "withdrawn": null,
       "resolution": null

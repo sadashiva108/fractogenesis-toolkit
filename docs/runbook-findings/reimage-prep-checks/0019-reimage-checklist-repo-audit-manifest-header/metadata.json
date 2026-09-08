@@ -16,7 +16,8 @@
   "feltAt": [],
   "scope": null,
   "read": [],
-  "progress": null,
+  "status": "resolved",
+  "progress": "resolved",
   "ownership": null,
   "lineage": null,
   "findings": [
@@ -34,7 +35,7 @@
         "resolvedBy": [],
         "whatWasDone": null,
         "revision": "129",
-        "commit": "not identifiable from git log — the revision is the record"
+        "commit": "not identifiable from git log \u2014 the revision is the record"
       }
     }
   ],

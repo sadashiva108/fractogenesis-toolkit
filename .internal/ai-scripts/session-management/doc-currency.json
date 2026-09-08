@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "note": "Which documents go stale when which sources change. Every edge is ASSERTED, never inferred from similarity -- that is what keeps a checker from telling one project's game engine that another project's intake docs need updating. An entry nobody wrote does not exist, and that is the correct failure.",
+  "howToConfirm": "After reviewing a dependent and finding it current, re-stamp with: ./bin/verify-doc-currency.sh --confirm <id>",
+  "watches": [
+    {
+      "id": "session-rules",
+      "tier": "critical",
+      "why": "The rules a session follows. Stale here means a session works to a rule that no longer holds.",
+      "sources": [
+        ".github/session-management-instructions.md",
+        "docs/legend.md"
+      ],
+      "dependents": [
+        ".github/ai-prompts/session-management/conformant-prompt.md",
+        ".github/ai-prompts/session-management/session-management-prompt.md",
+        ".github/ai-prompts/session-management/what-a-session-is-given.md",
+        ".claude/CLAUDE.md",
+        "docs/architecture/findings-and-sessions.md",
+        "docs/sessions/session-responsibilities.md"
+      ],
+      "review": "manual",
+      "confirmedAt": null,
+      "sourceDigest": null
+    },
+    {
+      "id": "project-rules",
+      "tier": "critical",
+      "why": "The project's own conventions. CLAUDE.md points at copilot-instructions.md and must not drift from it.",
+      "sources": [
+        ".github/copilot-instructions.md",
+        ".github/toolkit-instructions.md"
+      ],
+      "dependents": [
+        ".claude/CLAUDE.md",
+        "README.md"
+      ],
+      "review": "manual",
+      "confirmedAt": null,
+      "sourceDigest": null
+    },
+    {
+      "id": "state-schema",
+      "tier": "critical",
+      "why": "The shape of metadata.json. Every reader and every test is written against it.",
+      "sources": [
+        "docs/architecture/state-as-data.md"
+      ],
+      "dependents": [
+        ".internal/ai-scripts/session-management/plan_findings_work.py",
+        ".internal/ai-scripts/session-management/extract-metadata.py",
+        ".internal/ai-scripts/session-management/tests/fixtures.py",
+        "docs/architecture/the-record-and-the-graph.md",
+        "docs/legend.md"
+      ],
+      "review": "manual",
+      "confirmedAt": null,
+      "sourceDigest": null
+    },
+    {
+      "id": "allocation-tooling",
+      "tier": "normal",
+      "why": "The allocator and interviewer. Their architecture record describes what the code does.",
+      "sources": [
+        ".internal/ai-scripts/session-management/plan_findings_work.py",
+        "bin/plan-findings-work.sh"
+      ],
+      "dependents": [
+        "docs/architecture/allocation-and-inquiry.md",
+        "docs/ledgers/allocation-evidence.md"
+      ],
+      "review": "auto",
+      "confirmedAt": null,
+      "sourceDigest": null
+    },
+    {
+      "id": "checkers",
+      "tier": "normal",
+      "why": "What the checks cover. Several findings are about the gap between that and what they claim.",
+      "sources": [
+        "bin/verify-session-findings.sh",
+        ".internal/ai-scripts/session-management/verify-findings-counts.sh",
+        ".internal/ai-scripts/session-management/verify-findings-headers.sh",
+        ".internal/ai-scripts/session-management/verify-findings-structure.sh"
+      ],
+      "dependents": [
+        ".github/ai-prompts/session-management/conformant-prompt.md",
+        ".internal/ai-scripts/session-management/tests/test_session_management.py"
+      ],
+      "review": "auto",
+      "confirmedAt": null,
+      "sourceDigest": null
+    },
+    {
+      "id": "agent-config",
+      "tier": "critical",
+      "why": "Hooks and settings change what a session may do. A stale description of them is worse than none.",
+      "sources": [
+        ".claude/settings.json",
+        ".claude/hooks/runbook-guard.sh",
+        ".claude/hooks/session-guard.sh",
+        ".claude/hooks/write-location-guard.sh"
+      ],
+      "dependents": [
+        ".claude/CLAUDE.md",
+        ".github/ai-prompts/session-management/what-a-session-is-given.md"
+      ],
+      "review": "manual",
+      "confirmedAt": null,
+      "sourceDigest": null
+    },
+    {
+      "id": "environment",
+      "tier": "normal",
+      "why": "Paths and variables. The conformant prompt used to hard-code folders that differ per project.",
+      "sources": [
+        ".envrc",
+        "reimage.env.example"
+      ],
+      "dependents": [
+        ".github/ai-prompts/session-management/conformant-prompt.md",
+        "README.md"
+      ],
+      "review": "manual",
+      "confirmedAt": null,
+      "sourceDigest": null
+    }
+  ]
+}

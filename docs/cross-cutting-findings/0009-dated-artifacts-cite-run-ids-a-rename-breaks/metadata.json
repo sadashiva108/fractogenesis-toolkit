@@ -12,11 +12,12 @@
     "sessionBundle": null,
     "sessionId": "01KcZvrKMgfenhrT9DvxW9Jk"
   },
-  "severity": "low today, structural for items 3 and 4 — both propose renaming lineages.",
+  "severity": "low today, structural for items 3 and 4 \u2014 both propose renaming lineages.",
   "feltAt": [],
   "scope": null,
   "read": [],
-  "progress": null,
+  "status": "superseded",
+  "progress": "un-started",
   "ownership": null,
   "lineage": {
     "supersededBy": "0030",

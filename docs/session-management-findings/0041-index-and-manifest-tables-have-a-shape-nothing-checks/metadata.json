@@ -14,9 +14,10 @@
   },
   "severity": "low per instance, and it defeats the check a session actually runs. Every validator in the repository passed on both broken rows.",
   "feltAt": [],
-  "scope": "instruction set. §§4c–4d define these tables; nothing validates them. Whether the *fix* belongs here is finding F3.",
+  "scope": "instruction set. \u00a7\u00a74c\u20134d define these tables; nothing validates them. Whether the *fix* belongs here is finding F3.",
   "read": [],
-  "progress": null,
+  "status": "unclaimed",
+  "progress": "analyzing",
   "ownership": "unclaimed",
   "lineage": {
     "supersedes": "0032",
@@ -30,7 +31,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F1 — a required shape, unenforced",
+      "sectionHeading": "F1 \u2014 a required shape, unenforced",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -42,7 +43,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F2 — the check that runs gives the wrong assurance",
+      "sectionHeading": "F2 \u2014 the check that runs gives the wrong assurance",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -54,7 +55,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F3 — this may be in the wrong tree",
+      "sectionHeading": "F3 \u2014 this may be in the wrong tree",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -66,7 +67,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F4 — a patch containing a deletion under-applies silently, and every check passes",
+      "sectionHeading": "F4 \u2014 a patch containing a deletion under-applies silently, and every check passes",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -78,7 +79,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F5 — nothing compares a resolution's claim against the tree",
+      "sectionHeading": "F5 \u2014 nothing compares a resolution's claim against the tree",
       "reopened": null,
       "withdrawn": null,
       "resolution": null

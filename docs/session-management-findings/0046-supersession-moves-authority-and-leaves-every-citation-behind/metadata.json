@@ -22,7 +22,8 @@
     "`.github/session-management-instructions.md` section 9",
     "every document citing `0028`, and `0028` itself"
   ],
-  "progress": null,
+  "status": "unclaimed",
+  "progress": "un-started",
   "ownership": "unclaimed",
   "lineage": null,
   "findings": [
@@ -33,7 +34,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F1 — twelve documents cite a bundle nothing may read",
+      "sectionHeading": "F1 \u2014 twelve documents cite a bundle nothing may read",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -45,7 +46,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F2 — the path resolves, so nothing looks broken",
+      "sectionHeading": "F2 \u2014 the path resolves, so nothing looks broken",
       "reopened": null,
       "withdrawn": null,
       "resolution": null

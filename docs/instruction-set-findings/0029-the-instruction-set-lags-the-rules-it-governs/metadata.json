@@ -14,9 +14,10 @@
   },
   "severity": "findings F1, F5 and F8 are high. A session that reads only the instruction set does not learn several of the rules it is expected to follow, and one of those rules governs when it may touch the owner's checkout.",
   "feltAt": [],
-  "scope": "instruction-set. The fix lands in `.github/copilot-instructions.md` §§4b–4d, `.claude/CLAUDE.md`, and `docs/architecture/findings-and-sessions.md`.",
+  "scope": "instruction-set. The fix lands in `.github/copilot-instructions.md` \u00a7\u00a74b\u20134d, `.claude/CLAUDE.md`, and `docs/architecture/findings-and-sessions.md`.",
   "read": [],
-  "progress": null,
+  "status": "superseded",
+  "progress": "analyzing",
   "ownership": null,
   "lineage": {
     "supersededBy": "0039",
@@ -30,7 +31,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F1 — five rules exist only in `docs/legend.md`",
+      "sectionHeading": "F1 \u2014 five rules exist only in `docs/legend.md`",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -42,19 +43,19 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F2 — two rules exist in both, in different words",
+      "sectionHeading": "F2 \u2014 two rules exist in both, in different words",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
     },
     {
       "id": "F3",
-      "statement": "§4b's directory list is now wrong",
+      "statement": "\u00a74b's directory list is now wrong",
       "status": "decided",
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F3 — §4b's directory list is now wrong",
+      "sectionHeading": "F3 \u2014 \u00a74b's directory list is now wrong",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -66,7 +67,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F4 — the architecture record describes two findings trees",
+      "sectionHeading": "F4 \u2014 the architecture record describes two findings trees",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -78,7 +79,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F5 — nothing says `docs/legend.md` is normative",
+      "sectionHeading": "F5 \u2014 nothing says `docs/legend.md` is normative",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -90,7 +91,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F6 — state names and state requirements are in different files",
+      "sectionHeading": "F6 \u2014 state names and state requirements are in different files",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -102,7 +103,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F7 — the vocabulary cannot express decision order",
+      "sectionHeading": "F7 \u2014 the vocabulary cannot express decision order",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -114,7 +115,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F8 — the rule says where a change is composed, not when it is handed over",
+      "sectionHeading": "F8 \u2014 the rule says where a change is composed, not when it is handed over",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -123,7 +124,7 @@
   "decisions": [
     {
       "id": "D1",
-      "decision": "`docs/legend.md` holds VOCABULARY. `.github/copilot-instructions.md` sections 4b–4d hold PROCEDURE. Each points at the other for the kind it does not hold, and the legend is named in §4 as required reading",
+      "decision": "`docs/legend.md` holds VOCABULARY. `.github/copilot-instructions.md` sections 4b\u20134d hold PROCEDURE. Each points at the other for the kind it does not hold, and the legend is named in \u00a74 as required reading",
       "findings": [
         "F1",
         "F2",
@@ -134,11 +135,11 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D1 — `docs/legend.md` holds VOCABULARY. `.github/copilot-instructions.md` sections 4b–4d hold PROCEDURE. Each points at the other for the kind it does not hold, and the legend is named in §4 as required reading"
+      "sectionHeading": "D1 \u2014 `docs/legend.md` holds VOCABULARY. `.github/copilot-instructions.md` sections 4b\u20134d hold PROCEDURE. Each points at the other for the kind it does not hold, and the legend is named in \u00a74 as required reading"
     },
     {
       "id": "D2",
-      "decision": "the write categories split. The legend keeps three one-line definitions of what a record, toolkit and evidence write IS. §4b takes the gating",
+      "decision": "the write categories split. The legend keeps three one-line definitions of what a record, toolkit and evidence write IS. \u00a74b takes the gating",
       "findings": [
         "F5"
       ],
@@ -146,11 +147,11 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D2 — the write categories split. The legend keeps three one-line definitions of what a record, toolkit and evidence write IS. §4b takes the gating"
+      "sectionHeading": "D2 \u2014 the write categories split. The legend keeps three one-line definitions of what a record, toolkit and evidence write IS. \u00a74b takes the gating"
     },
     {
       "id": "D3",
-      "decision": "`docs/INDEX.md` owns the enumeration of the `docs/` directories. §4b and `docs/architecture/findings-and-sessions.md` §2 stop listing them and point at it",
+      "decision": "`docs/INDEX.md` owns the enumeration of the `docs/` directories. \u00a74b and `docs/architecture/findings-and-sessions.md` \u00a72 stop listing them and point at it",
       "findings": [
         "F3",
         "F4"
@@ -159,11 +160,11 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D3 — `docs/INDEX.md` owns the enumeration of the `docs/` directories. §4b and `docs/architecture/findings-and-sessions.md` §2 stop listing them and point at it"
+      "sectionHeading": "D3 \u2014 `docs/INDEX.md` owns the enumeration of the `docs/` directories. \u00a74b and `docs/architecture/findings-and-sessions.md` \u00a72 stop listing them and point at it"
     },
     {
       "id": "D4",
-      "decision": "a bundle waiting on another's decision says so in prose inside its `Relates to` line, and §4c requires the bundle's INDEX.md Notes cell to say it too. `Decide after:` does not become vocabulary",
+      "decision": "a bundle waiting on another's decision says so in prose inside its `Relates to` line, and \u00a74c requires the bundle's INDEX.md Notes cell to say it too. `Decide after:` does not become vocabulary",
       "findings": [
         "F7"
       ],
@@ -171,7 +172,7 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D4 — a bundle waiting on another's decision says so in prose inside its `Relates to` line, and §4c requires the bundle's INDEX.md Notes cell to say it too. `Decide after:` does not become vocabulary"
+      "sectionHeading": "D4 \u2014 a bundle waiting on another's decision says so in prose inside its `Relates to` line, and \u00a74c requires the bundle's INDEX.md Notes cell to say it too. `Decide after:` does not become vocabulary"
     }
   ],
   "contributions": [],
