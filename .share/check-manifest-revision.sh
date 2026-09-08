@@ -30,16 +30,16 @@
 #   cd <repo-root>
 #
 #   # The number to write on the entry being applied now
-#   ./bin/check-manifest-revision.sh
+#   ./bin/verify-session-findings.sh manifest-revision
 #
 #   # The highest number already taken
-#   ./bin/check-manifest-revision.sh --current
+#   ./bin/verify-session-findings.sh manifest-revision --current
 #
 #   # Is a composed entry's number still free?
-#   ./bin/check-manifest-revision.sh --free 181
+#   ./bin/verify-session-findings.sh manifest-revision --free 181
 #
 #   # Show where each number was found
-#   ./bin/check-manifest-revision.sh --verbose
+#   ./bin/verify-session-findings.sh manifest-revision --verbose
 #
 # Options:
 #   --current       Print the highest revision number already taken.
@@ -58,6 +58,11 @@
 
 set -uo pipefail
 
+# ONE level up: this sits in .share/, which is a repo-root sibling of bin/, so
+# the repo root is the parent. A cross-repo script must not assume a depth it
+# does not control -- moving a script between depths without changing this line
+# is a failure this repository has already hit; the same comment stands in
+# bin/record-restore-prereqs.sh.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 

@@ -35,9 +35,33 @@
 #                 runbooks and references as well as the governance set. This is
 #                 where the wikilink anchors live, so it is the mode that
 #                 exercises the anchor check. Not yet the default -- see below.
-#                 docs/ is excluded; pass --doc for a note under it.
+#                 docs/ IS included as of 0036 D1 option (iv). A path a
+                reading declares as not-yet-existing is reported PROPOSED
+                rather than MISSING -- see Proposed paths below.
 #   --verbose     List OK references too, not just MISSING and WARN.
 #   -h, --help    Show this message and exit.
+#
+# Proposed paths:
+#   A document under docs/ often names a path that does not exist YET -- a script
+#   a finding proposes, a file a decision would create. Declare it and the check
+#   reports PROPOSED instead of MISSING:
+#
+#       <!-- proposed: bin/verify-session-findings.sh -->
+#
+#   A record that cites a path as it STOOD -- a resolutions.md, a handoff, a
+#   ledger -- declares that instead, and the path is reported HISTORICAL:
+#
+#       <!-- historical: bin/verify-findings-counts.sh -->
+#       <!-- historical-record -->
+#
+#   The second form covers the whole document, for a record whose every path
+#   is a citation of its own moment. Repairing such a path would falsify the
+#   record, so HISTORICAL never fails the run. This is 0046's marker.
+#
+#   One path per marker, repeatable, anywhere in the document. It applies to that
+#   document only. PROPOSED is reported, counted separately, and does NOT fail
+#   the run; once the path exists it is reported OK and the marker is redundant
+#   but harmless.
 #
 # Wikilink anchors:
 #   A [[doc#Heading|label]] or [[#Heading|label]] link is checked as well: the
@@ -171,18 +195,29 @@ if $ALL_DOCS && (( ${#DOCS[@]} == 0 )); then
     # links as they were at the time of a revision, so a reference that no
     # longer resolves is the record working correctly.
     #
-    # docs/ is excluded for the same reason and one more. Its contents are
-    # gitignored working notes -- gaps, features, session handoffs -- so they
-    # quote paths as they were when someone noticed something, and they never
-    # reach a fresh clone. Counting them also made the OK total move every time
-    # any session parked a note, which is what stopped that total being usable
-    # as a baseline: three figures were recorded on one day, 713, 745 and 860,
-    # and none of the differences was a regression. MISSING and ANCHOR BROKEN
-    # are the rows that mean something, and they are unaffected either way.
-    # A note can still be checked deliberately with --doc.
+    # docs/ IS scanned, as of 0036 D1 option (iv).
+    #
+    # It was pruned here from Revision 130, on two reasons. The first held: a
+    # note quotes paths as they were when someone noticed something, so a stale
+    # path in one is the record working, not a regression. The second EXPIRED
+    # AT REVISION 162, when all of docs/ became tracked -- the comment kept
+    # calling its contents "gitignored working notes" that "never reach a fresh
+    # clone" for six weeks after that stopped being true, which is 0036 F1.
+    #
+    # Pruning to protect the OK total was the wrong instrument for the right
+    # problem. The total moved every time a session parked a note -- 713, 745
+    # and 860 on one day, no regression among them -- so the fix was to stop
+    # quoting the total as a baseline, not to stop reading a third of the
+    # repository. MISSING and ANCHOR BROKEN are the rows that mean something,
+    # and they were the rows being suppressed.
+    #
+    # What replaces the prune is PROPOSED, below: a reading may declare a path
+    # it names as not-yet-existing, and that path is reported as PROPOSED
+    # rather than MISSING. A note about something that has not been built yet
+    # says so, instead of being unreadable to the check that would catch it
+    # once it is built.
     find . -name .git -prune -o -name __pycache__ -prune \
          -o -path './.github/ai-templates/*' -prune \
-         -o -path './docs/*' -prune \
          -o -type f -name '*.md' -print 2>/dev/null \
       | sed 's|^\./||' \
       | grep -v '^APPLY-MANIFEST\.md$' \
@@ -361,6 +396,8 @@ echo -e "  ${DIM}Repository: $REPO_ROOT${RST}"
 echo -e "  ${DIM}Documents : ${#DOCS[@]}${RST}"
 
 missing_count=0
+proposed_count=0
+historical_count=0
 warn_count=0
 skip_count=0
 ok_count=0
@@ -377,6 +414,18 @@ for doc in "${DOCS[@]}"; do
   fi
 
   doc_findings=""
+  # 0036 D1 option (iv): paths this document declares as not-yet-existing.
+  # NUL-safe is unnecessary here -- a path with a newline could not appear in
+  # an HTML comment on one line -- but the space-delimited membership test
+  # below is the Bash 3.2 idiom used throughout this repository.
+  proposed_paths=" $(sed -n 's/.*<!-- *proposed: *\([^ ]*\) *-->.*/\1/p' "$doc" 2>/dev/null | tr '\n' ' ')"
+  # And paths it names as they stood at the time -- a record of what was done,
+  # correct as written, which repairing would falsify. 0046 asked for exactly
+  # this marker. Whole-document form: <!-- historical-record --> declares that
+  # every path in the document is a citation of its own moment.
+  historical_paths=" $(sed -n 's/.*<!-- *historical: *\([^ ]*\) *-->.*/\1/p' "$doc" 2>/dev/null | tr '\n' ' ')"
+  historical_doc=false
+  grep -q '<!-- *historical-record *-->' "$doc" 2>/dev/null && historical_doc=true
 
   while IFS= read -r reference; do
     [[ -n "$reference" ]] || continue
@@ -391,6 +440,12 @@ for doc in "${DOCS[@]}"; do
       if glob_matches "$reference"; then
         ok_count=$((ok_count + 1))
         $VERBOSE && doc_findings="${doc_findings}$(printf "\n  ${GRN}OK       %s${RST}" "$reference")"
+      elif [[ "$proposed_paths" == *" $reference "* ]]; then
+        proposed_count=$((proposed_count + 1))
+        doc_findings="${doc_findings}$(printf "\n  ${YEL}PROPOSED %s  (declared not-yet-existing)${RST}" "$reference")"
+      elif $historical_doc || [[ "$historical_paths" == *" $reference "* ]]; then
+        historical_count=$((historical_count + 1))
+        $VERBOSE && doc_findings="${doc_findings}$(printf "\n  ${DIM}HISTORY  %s  (cited as it stood)${RST}" "$reference")"
       else
         missing_count=$((missing_count + 1))
         doc_findings="${doc_findings}$(printf "\n  ${RED}MISSING  %s  (glob matches nothing)${RST}" "$reference")"
@@ -408,6 +463,15 @@ for doc in "${DOCS[@]}"; do
       # so a genuinely absent bin/foo.sh is still MISSING.
       ok_count=$((ok_count + 1))
       $VERBOSE && doc_findings="${doc_findings}$(printf "\n  ${GRN}OK       %s  (wikilink target, resolves as %s.md)${RST}" "$reference" "$reference")"
+    elif [[ "$proposed_paths" == *" $reference "* ]]; then
+      # Declared by this document as not yet existing. Reported, never fatal.
+      proposed_count=$((proposed_count + 1))
+      doc_findings="${doc_findings}$(printf "\n  ${YEL}PROPOSED %s  (declared not-yet-existing)${RST}" "$reference")"
+    elif $historical_doc || [[ "$historical_paths" == *" $reference "* ]]; then
+      # A record citing a path as it stood. Repairing it would falsify the
+      # record, so this is not a defect and never fails the run.
+      historical_count=$((historical_count + 1))
+      $VERBOSE && doc_findings="${doc_findings}$(printf "\n  ${DIM}HISTORY  %s  (cited as it stood)${RST}" "$reference")"
     elif [[ "$reference" == */* ]]; then
       missing_count=$((missing_count + 1))
       doc_findings="${doc_findings}$(printf "\n  ${RED}MISSING  %s${RST}" "$reference")"
@@ -466,6 +530,8 @@ echo ""
 printf "  %-14s %s\n" "OK:"             "$ok_count"
 printf "  %-14s %s\n" "WARN:"           "$warn_count"
 printf "  %-14s %s\n" "SKIP:"           "$skip_count"
+printf "  %-14s %s\n" "PROPOSED:"       "$proposed_count"
+printf "  %-14s %s\n" "HISTORICAL:"     "$historical_count"
 printf "  %-14s %s\n" "MISSING:"        "$missing_count"
 printf "  %-14s %s\n" "ANCHOR OK:"      "$anchor_ok_count"
 printf "  %-14s %s\n" "ANCHOR BROKEN:"  "$anchor_missing_count"

@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-08T14:00:57+00:00",
+  "number": "0005",
+  "bundleName": "0005-boundary-runs-recorded-long-after-their-phase",
+  "kind": "cross-cutting",
+  "subKind": null,
+  "subject": "Four boundary runs are dated the day the recorder was extended, not the day the phase ran",
+  "recordedOn": "** 2026-09-01",
+  "recordedOccasion": "item 2.",
+  "recordedBy": {
+    "sessionBundle": null,
+    "sessionId": "** 01KcZvrKMgfenhrT9DvxW9Jk"
+  },
+  "severity": "** none to the workflow; real to anyone reading timestamps as phase timestamps.",
+  "feltAt": [],
+  "scope": null,
+  "read": [],
+  "progress": null,
+  "ownership": null,
+  "lineage": null,
+  "declaredTag": "resolved",
+  "findings": [
+    {
+      "id": "F1",
+      "statement": "Four boundary runs are dated the day the recorder was extended, not the day the phase ran",
+      "status": "resolved",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": null,
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": {
+        "resolvedBy": [
+          "D2",
+          "D3",
+          "D4",
+          "D5"
+        ],
+        "whatWasDone": "D2's point-rule correction, D3's rebuild flagging, D4's standing rule, D5's `--note`",
+        "revision": "193",
+        "commit": "pending; the owner commits"
+      }
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "decision": "Nothing is re-run, and nothing on the volume is repaired",
+      "findings": [],
+      "decided": "2026-09-04",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D1 — Nothing is re-run, and nothing on the volume is repaired"
+    },
+    {
+      "id": "D2",
+      "decision": "`entry` and `initial` are first-wins",
+      "findings": [],
+      "decided": "2026-09-04",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D2 — `entry` and `initial` are first-wins"
+    },
+    {
+      "id": "D3",
+      "decision": "A later run at a first-wins point is flagged for a person, never rejected",
+      "findings": [],
+      "decided": "2026-09-04",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D3 — A later run at a first-wins point is flagged for a person, never rejected"
+    },
+    {
+      "id": "D4",
+      "decision": "The hazard is written where the machinery is read",
+      "findings": [],
+      "decided": "2026-09-04",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D4 — The hazard is written where the machinery is read"
+    },
+    {
+      "id": "D5",
+      "decision": "`--note` is added to both recorders",
+      "findings": [],
+      "decided": "2026-09-04",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D5 — `--note` is added to both recorders"
+    },
+    {
+      "id": "D6",
+      "decision": "Five pointers move, one is pinned back, four are the owner's to decide",
+      "findings": [],
+      "decided": "2026-09-04",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D6 — Five pointers move, one is pinned back, four are the owner's to decide"
+    }
+  ],
+  "contributions": [],
+  "edges": [],
+  "indexNotes": null
+}

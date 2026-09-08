@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-08T14:00:57+00:00",
+  "number": "0012",
+  "bundleName": "0012-internal-restore-directory-empty",
+  "kind": "cross-cutting",
+  "subKind": null,
+  "subject": "`.internal/restore/` is empty, and is not tracked",
+  "recordedOn": "** 2026-09-01.",
+  "recordedOccasion": null,
+  "recordedBy": {
+    "sessionBundle": null,
+    "sessionId": "** 01KcZvrKMgfenhrT9DvxW9Jk"
+  },
+  "severity": "** trivial. Recorded so it is not rediscovered.",
+  "feltAt": [],
+  "scope": null,
+  "read": [],
+  "progress": null,
+  "ownership": null,
+  "lineage": null,
+  "declaredTag": "resolved",
+  "findings": [
+    {
+      "id": "F1",
+      "statement": "`.internal/restore/` is empty, and is not tracked",
+      "status": "resolved",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": null,
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": {
+        "resolvedBy": [
+          "D1"
+        ],
+        "whatWasDone": "D1's sentence rewrite in `.internal/artifact-runs.sh`",
+        "revision": "193",
+        "commit": "pending; the owner commits"
+      }
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "decision": "Fix the sentence, not the directory",
+      "findings": [],
+      "decided": "2026-09-04",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D1 — Fix the sentence, not the directory"
+    },
+    {
+      "id": "D2",
+      "decision": "The empty directory is removed locally, and that is not a repository change",
+      "findings": [],
+      "decided": "2026-09-04",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D2 — The empty directory is removed locally, and that is not a repository change"
+    },
+    {
+      "id": "D3",
+      "decision": "`reimaging-scripts-guide.md`'s tree is a separate finding, and is bigger than this one",
+      "findings": [],
+      "decided": "2026-09-04",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D3 — `reimaging-scripts-guide.md`'s tree is a separate finding, and is bigger than this one"
+    }
+  ],
+  "contributions": [],
+  "edges": [],
+  "indexNotes": null
+}

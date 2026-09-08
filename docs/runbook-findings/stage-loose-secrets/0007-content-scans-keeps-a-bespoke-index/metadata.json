@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-08T14:00:57+00:00",
+  "number": "0007",
+  "bundleName": "0007-content-scans-keeps-a-bespoke-index",
+  "kind": "runbook",
+  "subKind": null,
+  "subject": "`content-scans/` looks like a run category and is not one",
+  "recordedOn": "** 2026-09-02",
+  "recordedOccasion": "during the runbook layout pass.",
+  "recordedBy": {
+    "sessionBundle": null,
+    "sessionId": "** 01KcZvrKMgfenhrT9DvxW9Jk"
+  },
+  "severity": "** low to hit, moderate to leave — it is the last place in the tree where `latest-run.txt` is the right answer, which makes the rule \"never follow a `latest-*.txt`\" untrue by exactly one exception.",
+  "feltAt": [],
+  "scope": null,
+  "read": [],
+  "progress": null,
+  "ownership": null,
+  "lineage": null,
+  "declaredTag": "resolved",
+  "findings": [
+    {
+      "id": "F1",
+      "statement": "`content-scans/` looks like a run category and is not one",
+      "status": "resolved",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": null,
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": {
+        "resolvedBy": [
+          "—"
+        ],
+        "whatWasDone": "—",
+        "revision": "141",
+        "commit": "c7043f2"
+      }
+    }
+  ],
+  "decisions": [],
+  "contributions": [],
+  "edges": [],
+  "indexNotes": null
+}

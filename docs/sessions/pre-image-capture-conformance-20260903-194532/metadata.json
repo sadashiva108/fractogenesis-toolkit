@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-08T14:00:57+00:00",
+  "bundleName": "pre-image-capture-conformance-20260903-194532",
+  "createdOn": "2026-09-03",
+  "owners": [
+    {
+      "from": "2026-09-03",
+      "until": null,
+      "assistant": "Claude",
+      "sessionId": "session_01PcgHu9kz9Hm5RatLQuFR8H",
+      "model": "configured claude-opus-5",
+      "environment": "Linux VM on the owner's Mac, Ubuntu 22.04, Bash 5.1.16, GNU coreutils, aarch64",
+      "environmentNotes": null
+    }
+  ],
+  "transcript": "https://claude.ai/code/session_01PcgHu9kz9Hm5RatLQuFR8H",
+  "scratchPath": null,
+  "resources": [
+    {
+      "what": "Repository",
+      "path": "/Users/dkittrell/workspace/shiva/fractogenesis-toolkit"
+    },
+    {
+      "what": "Artifact root",
+      "path": "/Volumes/Data/reimage-CVG-0002160-500-20260816-open"
+    },
+    {
+      "what": "Workspace root",
+      "path": "/Users/dkittrell/reimage-workspace"
+    }
+  ],
+  "ownedBundles": [
+    {
+      "number": "0007",
+      "notes": "Nothing. Assigned so this bundle answers for the whole set; read for the reasoning it preserves and for what the conversion turned up"
+    },
+    {
+      "number": "0013",
+      "notes": "Closed 2026-09-03. Revisions 137 and 138 did the work; this session defined the two lineage names in the runbook glossary"
+    },
+    {
+      "number": "0019",
+      "notes": "Nothing. Closed by Revision 129. Confirm whether item 4's `reimage-prep-checks/` candidacy overlaps it"
+    },
+    {
+      "number": "0025",
+      "notes": "Closed 2026-09-03. Both directories opened on the volume; nothing is restored and no producer change is owed"
+    },
+    {
+      "number": "0030",
+      "notes": "Closed 2026-09-04. Finding 3 decided by `run-index-design-20260901-000000` under an owner override; finding 1 deferred on a measurement"
+    },
+    {
+      "number": "0035",
+      "notes": "Closed 2026-09-04. Recorded and resolved in one sitting; the missing step was retiring the former lineage"
+    },
+    {
+      "number": "0031",
+      "notes": "superseded by `0040`; retained here, reading unchanged"
+    },
+    {
+      "number": "0032",
+      "notes": "superseded by `0041`; retained here, reading unchanged"
+    }
+  ],
+  "contributions": [],
+  "declaredState": null,
+  "declaredTag": "active",
+  "indexNotes": null,
+  "ended": {
+    "on": null,
+    "reason": null,
+    "revisions": [],
+    "commits": [],
+    "disposals": []
+  }
+}

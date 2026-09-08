@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-08T14:00:57+00:00",
+  "bundleName": "run-index-design-20260901-000000",
+  "createdOn": "2026-09-03",
+  "owners": [
+    {
+      "from": "2026-09-01",
+      "until": "2026-09-02",
+      "assistant": "Claude",
+      "sessionId": "01KcZvrKMgfenhrT9DvxW9Jk",
+      "model": "not recorded",
+      "environment": "Linux, Bash 5.x",
+      "environmentNotes": null
+    },
+    {
+      "from": "2026-09-04",
+      "until": null,
+      "assistant": "Claude",
+      "sessionId": "session_01KcZvrKMgfenhrT9DvxW9Jk",
+      "model": "claude-opus-5",
+      "environment": "Linux, Bash 5.x, cloud container; the repository and the artifact volume reached through the desktop bridge",
+      "environmentNotes": null
+    }
+  ],
+  "transcript": null,
+  "scratchPath": null,
+  "resources": [],
+  "ownedBundles": [
+    {
+      "number": "0003",
+      "notes": "—"
+    },
+    {
+      "number": "0005",
+      "notes": "—"
+    },
+    {
+      "number": "0009",
+      "notes": "—"
+    },
+    {
+      "number": "0012",
+      "notes": "—"
+    },
+    {
+      "number": "0014",
+      "notes": "—"
+    },
+    {
+      "number": "0018",
+      "notes": "—"
+    },
+    {
+      "number": "0021",
+      "notes": "—"
+    },
+    {
+      "number": "0022",
+      "notes": "—"
+    },
+    {
+      "number": "0023",
+      "notes": "—"
+    },
+    {
+      "number": "0026",
+      "notes": "—"
+    },
+    {
+      "number": "0034",
+      "notes": "—"
+    }
+  ],
+  "contributions": [],
+  "declaredState": null,
+  "declaredTag": "active",
+  "indexNotes": null,
+  "ended": {
+    "on": null,
+    "reason": null,
+    "revisions": [],
+    "commits": [],
+    "disposals": []
+  }
+}

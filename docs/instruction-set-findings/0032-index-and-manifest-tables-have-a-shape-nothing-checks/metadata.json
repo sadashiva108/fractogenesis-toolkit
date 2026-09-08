@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-08T14:00:57+00:00",
+  "number": "0032",
+  "bundleName": "0032-index-and-manifest-tables-have-a-shape-nothing-checks",
+  "kind": "instruction-set",
+  "subKind": null,
+  "subject": "The index and manifest tables have a shape nothing checks",
+  "recordedOn": "** 2026-09-03",
+  "recordedOccasion": "from breaking two of them and not noticing.",
+  "recordedBy": {
+    "sessionBundle": null,
+    "sessionId": "** session_01PcgHu9kz9Hm5RatLQuFR8H"
+  },
+  "severity": "** low per instance, and it defeats the check a session actually runs. Every validator in the repository passed on both broken rows.",
+  "feltAt": [],
+  "scope": "** instruction set. §§4c–4d define these tables; nothing validates them. Whether the *fix* belongs here is finding 3.",
+  "read": [],
+  "progress": null,
+  "ownership": null,
+  "lineage": {
+    "supersededBy": "0041",
+    "on": null
+  },
+  "declaredTag": "superseded",
+  "findings": [
+    {
+      "id": "F1",
+      "statement": "The indexes and manifests have a required column shape that no check enforces",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F1 — a required shape, unenforced",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F2",
+      "statement": "`verify-doc-paths.sh` gives false assurance on a malformed row, because links are not shape",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F2 — the check that runs gives the wrong assurance",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F3",
+      "statement": "The fix is a lint, so this bundle may be in the wrong tree",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F3 — this may be in the wrong tree",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F4",
+      "statement": "A patch containing a deletion under-applies silently, and every check passes",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F4 — a patch containing a deletion under-applies silently, and every check passes",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    }
+  ],
+  "decisions": [],
+  "contributions": [],
+  "edges": [],
+  "indexNotes": null
+}

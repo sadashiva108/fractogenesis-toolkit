@@ -213,7 +213,7 @@ every category outside the three named above.
   over a patch.** Decided in `0028`; the rule is in
   `.github/copilot-instructions.md` section 3 and `docs/legend.md`.
 - **Take the `APPLY-MANIFEST.md` revision number at apply time**, with
-  `./bin/check-manifest-revision.sh` run against the tree being applied to. The
+  `./bin/verify-session-findings.sh manifest-revision` run against the tree being applied to. The
   rule this replaces — *re-read the header immediately before writing and take
   the next free one* — was followed exactly by two sessions who both took 167,
   because an uncommitted entry is not in the header the other session reads.

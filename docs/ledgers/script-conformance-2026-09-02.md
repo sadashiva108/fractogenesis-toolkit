@@ -350,3 +350,5 @@ what the decision came to.
 **Not built.** You asked for boundaries, and this is a different mechanism. Say
 the word and it is a `targets_restore_home()` function plus one entry in
 `SUPPORTED_RUNBOOKS`.
+
+<!-- proposed: bin/office-stability-checklist.sh -->

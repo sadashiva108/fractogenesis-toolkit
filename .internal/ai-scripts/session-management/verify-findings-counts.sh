@@ -30,8 +30,10 @@
 #
 # --- BEGIN USAGE ---
 # Usage:
-#   cd <repo-root>
-#   ./bin/verify-findings-counts.sh
+#   ./bin/verify.sh findings-counts
+#
+#   Runs from any directory: it self-locates. `bin/verify.sh` is the callsite;
+#   this script is its implementation and is not invoked directly.
 #
 # Exit codes:
 #   0  every displayed count agrees with its source
@@ -40,8 +42,12 @@
 # --- END USAGE ---
 # =============================================================================
 
+# THREE levels up: this sits in .internal/ai-scripts/session-management/, so
+# the repo root is three parents away. It was in bin/ and climbed one. Moving a
+# script between depths without changing this line is a failure this repository
+# has already hit -- the same comment stands in bin/record-restore-prereqs.sh.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 cd "$REPO_ROOT" || exit 2
 
 tmp_rows="${TMPDIR:-/tmp}/verify-findings-counts.$$"

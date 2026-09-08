@@ -1,0 +1,300 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-08T14:00:57+00:00",
+  "number": "0027",
+  "bundleName": "0027-findings-architecture-conformance",
+  "kind": "cross-cutting",
+  "subKind": null,
+  "subject": "The findings-and-sessions architecture disagrees with itself and with the tree",
+  "recordedOn": "** 2026-09-03",
+  "recordedOccasion": "on the owner's request to review the new architecture.",
+  "recordedBy": {
+    "sessionBundle": null,
+    "sessionId": "** session_019yzcjm2QneJ5ymVEQDi1bu"
+  },
+  "severity": "** one finding is high and governs a rule every future session hits on its first parked note. The rest are small and mechanical.",
+  "feltAt": [],
+  "scope": "** cross-cutting. The fix lands in `.github/copilot-instructions.md`, `docs/INDEX.md`, `docs/sessions/INDEX.md`, `docs/legend.md` and four `prompt.md` files — no single runbook owns any of it.",
+  "read": [
+    "**"
+  ],
+  "progress": null,
+  "ownership": null,
+  "lineage": {
+    "supersededBy": "0037",
+    "on": null
+  },
+  "declaredTag": "superseded",
+  "findings": [
+    {
+      "id": "F1",
+      "statement": "§4b and §4c contradict each other on whether a findings bundle takes a manifest revision",
+      "status": "resolved",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F1 — §4b and §4c contradict each other, eighteen lines apart",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": {
+        "resolvedBy": [
+          "D1"
+        ],
+        "whatWasDone": "§4c's sentence deleted; the section now states 4b's rule",
+        "revision": null,
+        "commit": null
+      }
+    },
+    {
+      "id": "F2",
+      "statement": "Four of five `prompt.md` files violate §4d's \"always\" rule",
+      "status": "resolved",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F2 — four of five prompts omit the reading §4d makes mandatory",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": {
+        "resolvedBy": [
+          "D2"
+        ],
+        "whatWasDone": "The rule scoped to prompts that can still start a session; `run-index-design`'s prompt gains a reading order",
+        "revision": null,
+        "commit": null
+      }
+    },
+    {
+      "id": "F3",
+      "statement": "`docs/sessions/INDEX.md` miscounts a manifest it links to",
+      "status": "resolved",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F3 — an index and the manifest it links to disagree",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": {
+        "resolvedBy": [
+          "D3",
+          "D4",
+          "D5"
+        ],
+        "whatWasDone": "The one-home rule in §4b, the two columns, and `bin/verify-findings-counts.sh`",
+        "revision": null,
+        "commit": null
+      }
+    },
+    {
+      "id": "F4",
+      "statement": "`docs/INDEX.md` says `ideas/` is empty; it is not",
+      "status": "resolved",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F4 — `docs/INDEX.md` describes a directory it no longer matches",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": {
+        "resolvedBy": [
+          "D3",
+          "D4",
+          "D5"
+        ],
+        "whatWasDone": "*\"Currently empty\"* removed; the one-home rule covers the class",
+        "revision": null,
+        "commit": null
+      }
+    },
+    {
+      "id": "F5",
+      "statement": "Every `resolved` bundle is missing `decisions.md`",
+      "status": "resolved",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F5 — every `resolved` bundle is missing `decisions.md`",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": {
+        "resolvedBy": [
+          "D6"
+        ],
+        "whatWasDone": "The migrated-bundle carve-out in §4c",
+        "revision": null,
+        "commit": null
+      }
+    },
+    {
+      "id": "F6",
+      "statement": "The two session-state diagrams disagree",
+      "status": "resolved",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F6 — the two state diagrams disagree",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": {
+        "resolvedBy": [
+          "D7",
+          "D8"
+        ],
+        "whatWasDone": "One diagram, in `docs/legend.md`; four states; `unclaimed` retired",
+        "revision": null,
+        "commit": null
+      }
+    },
+    {
+      "id": "F7",
+      "statement": "Two session identifiers recorded as unrecoverable are recoverable",
+      "status": "resolved",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F7 — two identifiers recorded as unrecoverable are recoverable",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": {
+        "resolvedBy": [
+          "D9"
+        ],
+        "whatWasDone": "The searches rule in §4d — **and a third identifier found**",
+        "revision": null,
+        "commit": null
+      }
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "decision": "§4b stands. §4c's contradicting sentence is deleted",
+      "findings": [
+        "F1"
+      ],
+      "decided": "2026-09-03",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D1 — §4b stands. §4c's contradicting sentence is deleted"
+    },
+    {
+      "id": "D2",
+      "decision": "§4d's \"always\" binds a `prompt.md` for a session that is `unclaimed`, `owned` or `handoff`. A `closed` or `withdrawn` session's prompt is a record of what was given and is not retro-edited",
+      "findings": [
+        "F2"
+      ],
+      "decided": "2026-09-03",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D2 — §4d's \"always\" binds a `prompt.md` for a session that is `unclaimed`, `owned` or `handoff`. A `closed` or `withdrawn` session's prompt is a record of what was given and is not retro-edited"
+    },
+    {
+      "id": "D3",
+      "decision": "a fact is written down once, and everywhere else links to it",
+      "findings": [
+        "F3",
+        "F4"
+      ],
+      "decided": "2026-09-03",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D3 — a fact is written down once, and everywhere else links to it"
+    },
+    {
+      "id": "D4",
+      "decision": "a derived fact may be displayed, if something catches it drifting",
+      "findings": [
+        "F3",
+        "F4"
+      ],
+      "decided": "2026-09-04",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D4 — a derived fact may be displayed, if something catches it drifting"
+    },
+    {
+      "id": "D5",
+      "decision": "a session's row shows bundles owned *and* findings carried",
+      "findings": [
+        "F3",
+        "F4"
+      ],
+      "decided": "2026-09-04",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D5 — a session's row shows bundles owned *and* findings carried"
+    },
+    {
+      "id": "D6",
+      "decision": "a findings bundle migrated into this shape from an already-closed record carries `resolutions.md` and no `decisions.md`, and its `resolutions.md` says so",
+      "findings": [
+        "F5"
+      ],
+      "decided": "2026-09-03",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D6 — a findings bundle migrated into this shape from an already-closed record carries `resolutions.md` and no `decisions.md`, and its `resolutions.md` says so"
+    },
+    {
+      "id": "D7",
+      "decision": "four session states: `owned`, `handoff`, `closed`, `withdrawn`. `unclaimed` is dropped",
+      "findings": [
+        "F6"
+      ],
+      "decided": "2026-09-04",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D7 — four session states: `owned`, `handoff`, `closed`, `withdrawn`. `unclaimed` is dropped"
+    },
+    {
+      "id": "D8",
+      "decision": "the three terminal states differ by what happens to the findings",
+      "findings": [
+        "F6"
+      ],
+      "decided": "2026-09-04",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D8 — the three terminal states differ by what happens to the findings"
+    },
+    {
+      "id": "D9",
+      "decision": "any `not recoverable` in a `metadata.md` lists the searches that came back empty",
+      "findings": [
+        "F7"
+      ],
+      "decided": "2026-09-04",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D9 — any `not recoverable` in a `metadata.md` lists the searches that came back empty"
+    }
+  ],
+  "contributions": [
+    {
+      "session": "restore-apps-outstanding-20260903-000000",
+      "date": "item 1 of the reading order (`prompt.md:25`)",
+      "contribution": "yes"
+    },
+    {
+      "session": "run-index-design-20260901-000000",
+      "date": "no reading order; buried in a ground-rules bullet (`prompt.md:33`)",
+      "contribution": "no"
+    },
+    {
+      "session": "restore-git-phase-11a-20260901-155433",
+      "date": "cited only as *why the file exists*; `prompt.md:13` sends the reader to `restore-git.md` first",
+      "contribution": "no"
+    }
+  ],
+  "edges": [],
+  "indexNotes": null
+}

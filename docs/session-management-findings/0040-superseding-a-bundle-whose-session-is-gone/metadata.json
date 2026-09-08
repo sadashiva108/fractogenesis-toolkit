@@ -1,0 +1,210 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-08T14:00:57+00:00",
+  "number": "0040",
+  "bundleName": "0040-superseding-a-bundle-whose-session-is-gone",
+  "kind": "session-management",
+  "subKind": null,
+  "subject": "Superseding a bundle whose session is gone is instructed but never defined",
+  "recordedOn": "** 2026-09-03",
+  "recordedOccasion": "from performing the procedure in Revision 183 with nothing in the instruction set to follow.",
+  "recordedBy": {
+    "sessionBundle": null,
+    "sessionId": "** session_01PcgHu9kz9Hm5RatLQuFR8H"
+  },
+  "severity": "** low until it is needed, and then total — a session with no procedure invents one, and every invented variant is a different tree shape for the same event.",
+  "feltAt": [],
+  "scope": "** instruction set. The fix is one subsection in `.github/copilot-instructions.md` §4c.",
+  "read": [],
+  "progress": null,
+  "ownership": null,
+  "lineage": {
+    "supersedes": "0031",
+    "on": null
+  },
+  "declaredTag": "analyzing",
+  "findings": [
+    {
+      "id": "F1",
+      "statement": "§4d instructs a session to mark bundles `superseded`; §4c never defines what that means or requires",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F1 — the term is used as an instruction and defined nowhere",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": {
+        "resolvedBy": [
+          "—"
+        ],
+        "whatWasDone": "4c subsection, opening paragraph — Names the case 4d creates and points at `docs/legend.md` for the owner-present case rather than restating it",
+        "revision": null,
+        "commit": null
+      }
+    },
+    {
+      "id": "F2",
+      "statement": "Both existing accounts assume the superseding party owns the bundle. §4d itself creates the case where nobody does",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F2 — both accounts assume the superseding party is the owner",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": {
+        "resolvedBy": [
+          "—"
+        ],
+        "whatWasDone": "4c subsection, second paragraph — *The session with the new reading does it, and does not take ownership.* States that the bundle stays in the recording session's manifest and why",
+        "revision": null,
+        "commit": null
+      }
+    },
+    {
+      "id": "F3",
+      "statement": "Nothing states what a supersession must **not** touch, and all three prohibitions are load-bearing",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F3 — the prohibitions are unwritten, and each is load-bearing",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": {
+        "resolvedBy": [
+          "—"
+        ],
+        "whatWasDone": "4c subsection, the three-item list — Stated in the procedure rather than cross-referenced, per decision 3",
+        "revision": null,
+        "commit": null
+      }
+    },
+    {
+      "id": "F4",
+      "statement": "The form that carries the pointer now exists in the tree and is written down nowhere",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F4 — the index form exists in the tree and in no document",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": {
+        "resolvedBy": [
+          "—"
+        ],
+        "whatWasDone": "4c subsection, step 5 — The Status cell carries the link. Documents the form Revision 183 put in `docs/cross-cutting-findings/INDEX.md`, rather than proposing a new one",
+        "revision": null,
+        "commit": null
+      }
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "decision": "The procedure goes in §4c, as a new subsection",
+      "findings": [],
+      "decided": "2026-09-03",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D1 — The procedure goes in §4c, as a new subsection"
+    },
+    {
+      "id": "D2",
+      "decision": "The superseding session performs it and does not take ownership",
+      "findings": [],
+      "decided": "2026-09-03",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D2 — The superseding session performs it and does not take ownership"
+    },
+    {
+      "id": "D3",
+      "decision": "The three prohibitions are stated in the procedure, not cross-referenced",
+      "findings": [],
+      "decided": "2026-09-03",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D3 — The three prohibitions are stated in the procedure, not cross-referenced"
+    },
+    {
+      "id": "D4",
+      "decision": "The pointer goes in the Status cell, as a link",
+      "findings": [],
+      "decided": "2026-09-03",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D4 — The pointer goes in the Status cell, as a link"
+    },
+    {
+      "id": "D5",
+      "decision": "The subsection covers the ownerless case and defers the other",
+      "findings": [],
+      "decided": "2026-09-03",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D5 — The subsection covers the ownerless case and defers the other"
+    },
+    {
+      "id": "D6",
+      "decision": "`0032` is not decided here",
+      "findings": [],
+      "decided": "2026-09-03",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D6 — `0032` is not decided here"
+    }
+  ],
+  "contributions": [],
+  "edges": [
+    {
+      "kind": "carried",
+      "from": "0040/F1",
+      "to": "0031/F1",
+      "why": null,
+      "reason": null,
+      "basis": "derived",
+      "asserted_by": "** session_01PcgHu9kz9Hm5RatLQuFR8H",
+      "asserted_on": "2026-09-08"
+    },
+    {
+      "kind": "carried",
+      "from": "0040/F2",
+      "to": "0031/F2",
+      "why": null,
+      "reason": null,
+      "basis": "derived",
+      "asserted_by": "** session_01PcgHu9kz9Hm5RatLQuFR8H",
+      "asserted_on": "2026-09-08"
+    },
+    {
+      "kind": "carried",
+      "from": "0040/F3",
+      "to": "0031/F3",
+      "why": null,
+      "reason": null,
+      "basis": "derived",
+      "asserted_by": "** session_01PcgHu9kz9Hm5RatLQuFR8H",
+      "asserted_on": "2026-09-08"
+    },
+    {
+      "kind": "carried",
+      "from": "0040/F4",
+      "to": "0031/F4",
+      "why": null,
+      "reason": null,
+      "basis": "derived",
+      "asserted_by": "** session_01PcgHu9kz9Hm5RatLQuFR8H",
+      "asserted_on": "2026-09-08"
+    }
+  ],
+  "indexNotes": null
+}

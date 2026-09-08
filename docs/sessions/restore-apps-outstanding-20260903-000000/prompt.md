@@ -319,3 +319,5 @@ the same place for the same reason.
   target Mac" are different claims.
 - Every commit message: a short subject and at most a few lines of body. End with
   the `Co-Authored-By` and `Claude-Session` trailers.
+
+<!-- historical-record -->

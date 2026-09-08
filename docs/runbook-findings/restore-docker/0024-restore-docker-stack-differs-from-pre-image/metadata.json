@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-08T14:00:57+00:00",
+  "number": "0024",
+  "bundleName": "0024-restore-docker-stack-differs-from-pre-image",
+  "kind": "runbook",
+  "subKind": null,
+  "subject": "The running Docker stack is not the one `restore-docker.md` restores",
+  "recordedOn": "** 2026-09-02",
+  "recordedOccasion": "comparing a fresh post-image Docker capture against the pre-image inventory.",
+  "recordedBy": {
+    "sessionBundle": null,
+    "sessionId": "** —"
+  },
+  "severity": "** planning input for Phase 12. `restore-docker.md` Steps 6–10 describe a stack that is not on this machine.",
+  "feltAt": [],
+  "scope": null,
+  "read": [],
+  "progress": null,
+  "ownership": null,
+  "lineage": null,
+  "declaredTag": "un-started",
+  "findings": [
+    {
+      "id": "F1",
+      "statement": "The running Docker stack is not the one `restore-docker.md` restores",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": null,
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    }
+  ],
+  "decisions": [],
+  "contributions": [],
+  "edges": [],
+  "indexNotes": null
+}

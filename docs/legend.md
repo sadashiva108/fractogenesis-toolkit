@@ -32,17 +32,136 @@ says how far a reading has been taken, never how anyone feels about it.
 | `framing` | Live and open. The reading, the wording of the problem statement, and the decisions are all still being worked. | any session | any session |
 | `decided` | Every decision is made. The owning session resolves it from here. | any session | the owning session only |
 | `resolved` | Done. Frozen — `reopened` is the only way it may be altered. | any session | nobody |
-| `reopened` | A `resolved` finding put back in play because its resolution is inconsistent or wrong. Nothing is reverted. | the owning session only | — |
+| `reopened` | A `resolved` finding put back in play. The only door out of `resolved`, and it takes a **reason**. Nothing is reverted, and it persists until the record materially changes. | the owning session only | — |
 | `withdrawn` | Shut down. No further work, ever. | any session | nobody |
 
 ```text
+             first          decisions      resolution      reason
+             reading        accepted       executed        recorded
+                │              │              │              │
+                ▼              ▼              ▼              ▼
 un-started ──▶ framing ──▶ decided ──▶ resolved ──▶ reopened ──┐
-                  ▲                                            │
-                  └────────────────────────────────────────────┘
-                              first read by the owner
+                  ▲            ▲                               │
+                  │            └── decision accepted ──────────┤
+                  └── written to, or a contribution ───────────┘
 
 withdrawn ◀── from any status except `resolved`
 ```
+
+**Every arrow names the event that causes it, and every event is a change to the
+record.** A status does not move because someone read the finding. Assignment
+does not move it, a vocabulary sweep does not, a rename does not, and a retrofit
+does not — each of those touches a status cell without anyone forming a judgement
+about the finding underneath it, and each is a mass operation, so a wrong one
+damages every finding it passes over. Revision 208 moved twenty-one rows that
+way; the reading is `0039` F12.
+
+**`reopened → decided` directly is correct, not a skipped step.** It is the
+common case: the framing was sound and the *resolution* was wrong. Routing it
+through `framing` would assert the problem statement is being reworked.
+
+### Reasons
+
+**Four transitions take a reason from a closed set**, and the reason is a field
+rather than prose so a later reader can group by it and a checker can validate it.
+An optional free-form `note` elaborates; the reason is what is reasoned about.
+
+**Reopening a finding** — `resolved ──▶ reopened`. The reason names the layer at
+fault, and **the layer determines the exit**, which removes a judgement call at
+the moment someone is already annoyed about a bug.
+
+| Reason | What it says | Exits to |
+|---|---|---|
+| `resolution-defective` | the work was done and is wrong | `decided` |
+| `resolution-incomplete` | the work was done and does not cover the finding | `decided` |
+| `resolution-had-side-effects` | it worked, and broke something else | `decided` |
+| `resolution-not-applied` | the record says resolved; the tree disagrees | `decided` |
+| `resolution-regressed` | it was applied, and a later change removed it | `decided` |
+| `resolution-unverifiable` | the claim cannot be checked | `decided` |
+| `decision-wrong` | the decision it carried out was wrong | `framing` |
+| `decision-inapplicable` | the decision's target no longer exists | `framing` |
+| `framing-wrong` | the problem statement was wrong | `framing` |
+
+A fault in the *work* leaves the decision standing, so the finding returns to
+`decided` and the work is redone. A fault in the *decision* or the *framing*
+returns it to `framing`.
+
+There is no `unable-to-resolve`. Reopening is reachable only from `resolved`, so a
+finding nobody can resolve never arrives at this door: it stays `decided`, or it is
+`withdrawn`.
+
+**Rolling a finding back** — `decided ──▶ framing`. Reframing a finding
+invalidates the decisions under it, and **not every reason voids something**.
+
+| Reason | Means | Effect on decisions |
+|---|---|---|
+| `framing-changed` | the problem statement materially changed | **every** accepted decision → `voided` |
+| `decision-wrong` | a decision is wrong on the merits; the framing is intact | **that** decision → `voided` |
+| `decision-inapplicable` | a decision's target no longer exists | **that** decision → `voided` |
+| `decided-prematurely` | it was marked `decided` before every decision was made | none — `decided` was the error |
+| `new-information` | something was learned that may change the answer | none yet; decisions flagged to re-evaluate |
+
+The rollback is the **default** on any edit to the finding, and a session may
+decline it **in writing**: a dated line in `decisions.md` recording that the edit
+was non-material and why. A mechanical trigger alone over-fires on typos, and a
+rule that fires on trivia gets routed around.
+
+**Withdrawing** — a reason, an optional note and `withdrawn_at`, **per finding**.
+A bundle-level withdrawal needs one for every finding in it, which keeps bundle
+`withdrawn` derived rather than declared. A `resolved` finding is reopened first.
+
+**Superseding** — a reason per disposition, alongside the provenance edge. See
+*Provenance* below.
+
+### Decision outcomes
+
+A decision's `Outcome` is one of seven. **Statuses are adjectives about a
+condition** — *where is this?* **Outcomes are past-participle verbs about an act**
+— *what was done to this?* **No word appears in both vocabularies**, and a schema
+check asserts the two sets are disjoint.
+
+| Outcome | Means | Pointer |
+|---|---|---|
+| `proposed` | on the table; nobody has ruled | — |
+| `accepted` | adopted — this is what will be done | — |
+| `rejected` | turned down on the merits; nothing replaces it | — |
+| `deferred` | cannot be ruled yet; what it waits on is named | required |
+| `retracted` | the proposer withdrew it before a ruling | — |
+| `replaced → DX` | a later decision answers the same question instead | required |
+| `voided` | was `accepted`, then invalidated because its foundation moved | reason required |
+
+`proposed` is stored rather than left empty, so an unset outcome is a load error
+and not a reading. `replaced → DX` covers what `refined → DX` and
+`superseded → DX` used to divide between them; the distinction was a judgement
+nobody could check, and both told a reader the same thing.
+
+### Provenance
+
+**When a bundle is superseded, every finding of the predecessor is accounted
+for.** Provenance is a property of the relationship rather than of either bundle,
+so it is a typed edge at finding granularity, **stored in the new bundle only** —
+the predecessor is never edited.
+
+| Edge | Means | Reason |
+|---|---|---|
+| `carried` | comes over unchanged | none — nothing changed |
+| `successor` | retained, and substantially changed | `restated`, `narrowed`, `widened` |
+| `split` | one predecessor finding becomes several | names each target |
+| `merged` | several predecessor findings become one | names each source |
+| `dropped` | it no longer applies | `already-resolved`, `no-longer-applies`, `absorbed → F<n>`, `out-of-scope`, `owned-elsewhere → <bundle>/F<n>` |
+
+**`new` is derived, never stored:** a finding in the new bundle with no incoming
+provenance edge is new by definition.
+
+Two rules gate the `superseded` tag, so the accounting is a precondition rather
+than a follow-up:
+
+- **Coverage** — every predecessor finding is named by **at least one** disposition
+  edge. Zero is the real failure: a finding silently lost.
+- **Exclusivity** — a predecessor finding disposed `dropped` carries **that edge and
+  no other**.
+
+*Exactly one* was the first draft of both and rejects a legitimate split or merge.
 
 ### Awaiting a first read
 
@@ -175,7 +294,8 @@ other session checks the bundle first, then the finding.
 
 | Bundle status | Then, inside it |
 |---|---|
-| `un-started`, `unclaimed`, `withdrawn`, `superseded` | nothing is readable |
+| `un-started`, `unclaimed`, `withdrawn` | nothing is readable |
+| `superseded` | **readable by any session, writable by none** — including the session that owns it. The reading is retained precisely so it can be read; §9 spends three prohibitions keeping it that way |
 | `analyzing`, `reopened`, `resolved` | `framing` — read and record · `decided` — read only · `resolved` — read only · `un-started`, `reopened`, `withdrawn` — not readable |
 
 An `un-started` bundle offers nothing to anyone but its owner, by definition: all

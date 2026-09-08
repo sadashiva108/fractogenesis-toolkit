@@ -1,0 +1,253 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-08T14:00:57+00:00",
+  "number": "0001",
+  "bundleName": "0001-restore-repos-evidence",
+  "kind": "runbook",
+  "subKind": null,
+  "subject": "Phase 11B evidence review — what `restore-repos` actually left behind",
+  "recordedOn": "** 2026-09-03",
+  "recordedOccasion": null,
+  "recordedBy": {
+    "sessionBundle": null,
+    "sessionId": "** restore-apps-outstanding-20260903-000000 (session_016EbjB7M527qEFqZFzpv2C9)"
+  },
+  "severity": "** findings F1–3 block a truthful Phase 12 entry; 4 and 5 are shared-machinery defects; 6 and 7 answer the two unreviewed repositories",
+  "feltAt": [],
+  "scope": "** the `restore-repos.md` evidence and captures on the live artifact root, read before starting `restore-apps.md` (Phase 12)",
+  "read": [],
+  "progress": null,
+  "ownership": "unclaimed",
+  "lineage": null,
+  "declaredTag": "unclaimed",
+  "findings": [
+    {
+      "id": "F1",
+      "statement": "The official run reports `repo-secrets` as blocked, although it succeeded",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F1 — The official run reports `repo-secrets` as blocked, although it succeeded",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F2",
+      "statement": "Step 5 and the `project-metadata` stage were never applied",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F2 — Step 5 and the `project-metadata` stage were never applied",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F3",
+      "statement": "The exit bookend reads clean on a phase with two WARN exit criteria",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F3 — The exit bookend reads clean on a phase with two WARN exit criteria",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F4",
+      "statement": "Four sign-offs on the volume were written by scratch runs",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F4 — Four sign-offs on the volume were written by scratch runs",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F5",
+      "statement": "Every bookend sign-off written since 2026-09-01 cites a staging path",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F5 — Every bookend sign-off written since 2026-09-01 cites a staging path",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F6",
+      "statement": "The status report blanks the carry-forward count for two repositories",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F6 — The status report blanks the carry-forward count for the two repositories that need a decision",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F7",
+      "statement": "The two unreviewed repositories are Time Machine or nothing",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F7 — The two unreviewed repositories are Time Machine or nothing",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F8",
+      "statement": "`reference-vault` cloned with a warning nobody has acted on",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F8 — `reference-vault` cloned with a warning nobody has acted on",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F9",
+      "statement": "All six clones came back on HTTPS",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F9 — All six clones came back on HTTPS",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F10",
+      "statement": "All three exit sign-off rows are outstanding",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F10 — All three exit sign-off rows are outstanding",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "decision": "the work succeeded and nothing is owed",
+      "findings": [
+        "F1"
+      ],
+      "decided": null,
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D1 — the work succeeded and nothing is owed"
+    },
+    {
+      "id": "D2",
+      "decision": "verify, do not remember (option E)",
+      "findings": [
+        "F1"
+      ],
+      "decided": null,
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D2 — verify, do not remember (option E)"
+    },
+    {
+      "id": "D3",
+      "decision": "`unknown` when the source is unreachable (option D)",
+      "findings": [
+        "F1"
+      ],
+      "decided": null,
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D3 — `unknown` when the source is unreachable (option D)"
+    },
+    {
+      "id": "D4",
+      "decision": "the outcome vocabulary",
+      "findings": [
+        "F1"
+      ],
+      "decided": null,
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D4 — the outcome vocabulary"
+    },
+    {
+      "id": "D5",
+      "decision": "an unreachable source is recorded, not refused",
+      "findings": [
+        "F1"
+      ],
+      "decided": null,
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D5 — an unreachable source is recorded, not refused"
+    },
+    {
+      "id": "D6",
+      "decision": "how strict the comparison is depends on the gap",
+      "findings": [
+        "F1"
+      ],
+      "decided": null,
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D6 — how strict the comparison is depends on the gap"
+    }
+  ],
+  "contributions": [
+    {
+      "session": "post-image-restore-20260902-212601",
+      "date": "report",
+      "contribution": "6"
+    },
+    {
+      "session": "post-image-restore-20260902-214918",
+      "date": "hydrate",
+      "contribution": "6"
+    },
+    {
+      "session": "post-image-restore-20260903-002650",
+      "date": "hydrate",
+      "contribution": "6"
+    },
+    {
+      "session": "post-image-restore-20260903-002904",
+      "date": "hydrate",
+      "contribution": "6"
+    },
+    {
+      "session": "post-image-restore-20260903-004131",
+      "date": "report",
+      "contribution": "6"
+    },
+    {
+      "session": "post-image-restore-20260903-004412",
+      "date": "report",
+      "contribution": "6"
+    }
+  ],
+  "edges": [],
+  "indexNotes": null
+}

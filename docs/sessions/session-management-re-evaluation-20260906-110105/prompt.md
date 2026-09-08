@@ -176,7 +176,7 @@ requires two trailing spaces on every line of a header block but the last, so
 silence the warning breaks the rendering the schema exists to protect.
 
 **Take the `APPLY-MANIFEST.md` revision number at apply time**, with
-`./bin/check-manifest-revision.sh` against the tree being applied to. Never while
+`./bin/verify-session-findings.sh manifest-revision` against the tree being applied to. Never while
 composing.
 
 **One file, one owner.** More than one session may be writing. Read freely; edit
@@ -652,3 +652,5 @@ understates a reading that did happen — also unanswered.
 | `verify-doc-paths.sh --all` | 778 paths, 1108 anchors, 0 broken |
 | `verify-runbook-structure.sh` | 213 PASS / 5 WARN / 25 FAIL — unchanged baseline |
 | Next free bundle number | **0043** |
+
+<!-- historical: bin/verify-findings-headers.sh -->

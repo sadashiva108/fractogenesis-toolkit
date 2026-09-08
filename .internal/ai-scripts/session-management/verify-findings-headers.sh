@@ -57,9 +57,11 @@
 #
 # --- BEGIN USAGE ---
 # Usage:
-#   cd <repo-root>
-#   ./bin/verify-findings-headers.sh            # every bundle
-#   ./bin/verify-findings-headers.sh --verbose  # list conforming files too
+#   ./bin/verify.sh findings-headers            # every bundle
+#   ./bin/verify.sh findings-headers --verbose  # list conforming files too
+#
+#   Runs from any directory: it self-locates. `bin/verify.sh` is the callsite;
+#   this script is its implementation and is not invoked directly.
 #
 # Exit codes:
 #   0  every header conforms
@@ -70,8 +72,12 @@
 
 set -uo pipefail
 
+# THREE levels up: this sits in .internal/ai-scripts/session-management/, so
+# the repo root is three parents away. It was in bin/ and climbed one. Moving a
+# script between depths without changing this line is a failure this repository
+# has already hit -- the same comment stands in bin/record-restore-prereqs.sh.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 cd "$REPO_ROOT" || exit 2
 
 VERBOSE=false

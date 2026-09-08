@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-08T14:00:57+00:00",
+  "number": "0021",
+  "bundleName": "0021-restore-access-exit-predates-its-own-state-walk",
+  "kind": "runbook",
+  "subKind": null,
+  "subject": "The Phase 10B exit was recorded a week before the evidence it stands on",
+  "recordedOn": "** 2026-09-01",
+  "recordedOccasion": "item 2.",
+  "recordedBy": {
+    "sessionBundle": null,
+    "sessionId": "** 01KcZvrKMgfenhrT9DvxW9Jk"
+  },
+  "severity": "** the phase is finished; its recorded finish is stale and understates what was checked.",
+  "feltAt": [],
+  "scope": null,
+  "read": [],
+  "progress": null,
+  "ownership": null,
+  "lineage": null,
+  "declaredTag": "un-started",
+  "findings": [
+    {
+      "id": "F1",
+      "statement": "The Phase 10B exit was recorded a week before the evidence it stands on",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": null,
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    }
+  ],
+  "decisions": [],
+  "contributions": [],
+  "edges": [],
+  "indexNotes": null
+}

@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-08T14:00:57+00:00",
+  "number": "0004",
+  "bundleName": "0004-boundary-runs-name-their-record-a-checklist",
+  "kind": "cross-cutting",
+  "subKind": null,
+  "subject": "Boundary runs call their record a `checklist`, and it is not one",
+  "recordedOn": "** 2026-09-02",
+  "recordedOccasion": "by the owner, on reading `reimaged-system/boundaries/runs/restore-repos-entry-20260902-083713/checklist.md`.",
+  "recordedBy": {
+    "sessionBundle": null,
+    "sessionId": "** —"
+  },
+  "severity": "** naming only — nothing misbehaves. It matters because this is the one word the workflow uses for two other things.",
+  "feltAt": [],
+  "scope": null,
+  "read": [],
+  "progress": null,
+  "ownership": null,
+  "lineage": null,
+  "declaredTag": "resolved",
+  "findings": [
+    {
+      "id": "F1",
+      "statement": "Boundary runs call their record a `checklist`, and it is not one",
+      "status": "resolved",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": null,
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": {
+        "resolvedBy": [
+          "—"
+        ],
+        "whatWasDone": "`APPLY-MANIFEST.md` Revisions 156 through 159",
+        "revision": null,
+        "commit": "de7aa8e, a1c2f33, a2342d1"
+      }
+    }
+  ],
+  "decisions": [],
+  "contributions": [],
+  "edges": [],
+  "indexNotes": null
+}

@@ -1,0 +1,219 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-08T14:00:57+00:00",
+  "number": "0030",
+  "bundleName": "0030-renames-break-citations-and-which-may-be-repaired",
+  "kind": "cross-cutting",
+  "subKind": null,
+  "subject": "Renames break citations, and only a record's values are frozen",
+  "recordedOn": "** 2026-09-03",
+  "recordedOccasion": "while reading four pre-image runbook findings against the artifact volume.",
+  "recordedBy": {
+    "sessionBundle": null,
+    "sessionId": "** session_01PcgHu9kz9Hm5RatLQuFR8H"
+  },
+  "severity": "** the reading itself is low. Finding 2 is what matters: without it, every citation a rename breaks is treated as unrepairable, and the tree accumulates broken pointers to evidence that is still there.",
+  "feltAt": [],
+  "scope": "** cross-cutting. Felt in `.internal/artifact-runs.sh`, in every category manifest, and in dated artifacts across the volume.",
+  "read": [],
+  "progress": null,
+  "ownership": null,
+  "lineage": {
+    "supersedes": "0009",
+    "on": null
+  },
+  "declaredTag": "analyzing",
+  "findings": [
+    {
+      "id": "F1",
+      "statement": "A lineage rename leaves every prior citation naming something gone, and nothing detects it",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F1 — a rename breaks citations, and nothing detects it",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": {
+        "resolvedBy": [
+          "D8"
+        ],
+        "whatWasDone": "**Deferred, with a measurement.** Both detector designs were prototyped read-only against the volume; neither works today, and the second is structurally blind for the reason the finding names. Detection is downstream of D7 and becomes tractable once `rename` rows exist",
+        "revision": null,
+        "commit": null
+      }
+    },
+    {
+      "id": "F2",
+      "statement": "The repair rule was never written down, so every broken citation looked unrepairable",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F2 — the repair rule was never written down",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": {
+        "resolvedBy": [
+          "D2"
+        ],
+        "whatWasDone": "Written down. A record's **values** are frozen; a **reference** inside one may be repaired where the target still exists and the timestamp is retained exactly. `.internal/artifact-runs.sh` now names the bundle that holds it",
+        "revision": null,
+        "commit": null
+      }
+    },
+    {
+      "id": "F3",
+      "statement": "A category manifest records no `rename` row, so a former lineage name is unrecoverable from the index",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F3 — no `rename` row, so the old name is unrecoverable from the index",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": {
+        "resolvedBy": [
+          "D7"
+        ],
+        "whatWasDone": "**`artifact_run_record_rename` added** to `.internal/artifact-runs.sh`, with the header rule that explains it",
+        "revision": null,
+        "commit": null
+      }
+    },
+    {
+      "id": "F4",
+      "statement": "`0009`'s own text cites a path that Revision 156 moved",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F4 — `0009` cites a path that has moved",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": {
+        "resolvedBy": [
+          "D4"
+        ],
+        "whatWasDone": "**Deliberately not repaired.** A superseded reading is frozen; `0030` finding 4 records the current path instead",
+        "revision": null,
+        "commit": null
+      }
+    },
+    {
+      "id": "F5",
+      "statement": "The Revision 138 conversion broke a citation inside the run it was converting",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F5 — Revision 138 broke a citation inside the run it was converting",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": {
+        "resolvedBy": [
+          "D3"
+        ],
+        "whatWasDone": "Two lines repaired 2026-09-03 on the owner's word for that run. The pre-conversion backup retains both originals",
+        "revision": null,
+        "commit": null
+      }
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "decision": "Supersede `0009`; do not edit it and do not withdraw it",
+      "findings": [],
+      "decided": "2026-09-03",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D1 — Supersede `0009`; do not edit it and do not withdraw it"
+    },
+    {
+      "id": "D2",
+      "decision": "A record's values are frozen; its references are not",
+      "findings": [],
+      "decided": "2026-09-03",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D2 — A record's values are frozen; its references are not"
+    },
+    {
+      "id": "D3",
+      "decision": "Finding 5's two lines are repaired, and the repair is recorded",
+      "findings": [],
+      "decided": "2026-09-03",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D3 — Finding 5's two lines are repaired, and the repair is recorded"
+    },
+    {
+      "id": "D4",
+      "decision": "`0009`'s own stale path is not repaired",
+      "findings": [],
+      "decided": "2026-09-03",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D4 — `0009`'s own stale path is not repaired"
+    },
+    {
+      "id": "D5",
+      "decision": "The `bookend.md` citation is not repaired by this bundle",
+      "findings": [],
+      "decided": "2026-09-03",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D5 — The `bookend.md` citation is not repaired by this bundle"
+    },
+    {
+      "id": "D6",
+      "decision": "Finding 3 is held open deliberately",
+      "findings": [],
+      "decided": "2026-09-03",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D6 — Finding 3 is held open deliberately"
+    },
+    {
+      "id": "D7",
+      "decision": "Category manifests get a `rename` row, filed under the surviving lineage",
+      "findings": [],
+      "decided": "2026-09-04",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D7 — Category manifests get a `rename` row, filed under the surviving lineage"
+    },
+    {
+      "id": "D8",
+      "decision": "Detection is deferred, and it is downstream of D7 rather than parallel to it",
+      "findings": [],
+      "decided": "2026-09-03",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D8 — Detection is deferred, and it is downstream of D7 rather than parallel to it"
+    }
+  ],
+  "contributions": [],
+  "edges": [
+    {
+      "kind": "successor",
+      "from": "0030/F1",
+      "to": "0009/F1",
+      "why": "the statement changed in the superseding reading",
+      "reason": "restated",
+      "basis": "derived",
+      "asserted_by": "** session_01PcgHu9kz9Hm5RatLQuFR8H",
+      "asserted_on": "2026-09-08"
+    }
+  ],
+  "indexNotes": null
+}

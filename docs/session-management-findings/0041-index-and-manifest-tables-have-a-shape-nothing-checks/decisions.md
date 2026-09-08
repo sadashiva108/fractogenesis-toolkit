@@ -111,3 +111,6 @@ written down and simply was not followed.
 One toolkit write: `bin/verify-findings-structure.sh`. Every finding now carries a
 decision, so `resolving` may begin. Nothing on the artifact volume, nothing in
 `0029`, and no change to any existing validator.
+
+<!-- historical: bin/verify-findings-counts.sh -->
+<!-- historical: bin/verify-findings-structure.sh -->

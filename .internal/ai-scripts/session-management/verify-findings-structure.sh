@@ -35,9 +35,11 @@
 #
 # --- BEGIN USAGE ---
 # Usage:
-#   cd <repo-root>
-#   ./bin/verify-findings-structure.sh
-#   ./bin/verify-findings-structure.sh --verbose   # also list every table found
+#   ./bin/verify.sh findings-structure
+#   ./bin/verify.sh findings-structure --verbose   # also list every table found
+#
+#   Runs from any directory: it self-locates. `bin/verify.sh` is the callsite;
+#   this script is its implementation and is not invoked directly.
 #
 # Exit codes:
 #   0  every table is well formed and every tag agrees with its row
@@ -45,6 +47,18 @@
 #   2  the repository layout could not be read
 # --- END USAGE ---
 # =============================================================================
+
+# THREE levels up: this sits in .internal/ai-scripts/session-management/, so
+# the repo root is three parents away. It was in bin/ and had no self-location
+# at all -- it tested `-d docs` against whatever the current directory happened
+# to be, so running it from anywhere but the root reported "run from the
+# repository root", which reads as operator error rather than as the script
+# being unable to find itself. Moving a script between depths without changing
+# this line is a failure this repository has already hit; the same comment
+# stands in bin/record-restore-prereqs.sh.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+cd "$REPO_ROOT" || exit 2
 
 VERBOSE=false
 while [ $# -gt 0 ]; do
@@ -57,7 +71,7 @@ while [ $# -gt 0 ]; do
 done
 
 if [ ! -d docs ] || [ ! -d .github ]; then
-  echo "ERROR: run from the repository root." >&2
+  echo "ERROR: $REPO_ROOT does not look like the repository root." >&2
   exit 2
 fi
 

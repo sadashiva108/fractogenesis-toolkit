@@ -35,15 +35,15 @@ one. Both live under the domain they serve.
 | Config fragment or generated-file template | `.internal/templates/<set>/` | `.internal/templates/artifact-config/` |
 | Sign-off / document template | `templates/` | `templates/it-reimage-confirmation-template.md` |
 | Authoring template for new scripts | `.github/ai-templates/script-templates/` | `bash-entrypoint.sh.tmpl` |
-| Genuinely cross-repo script | `.share/` | *(empty — nothing has earned it yet)* |
+| Genuinely cross-repo script | `.share/` | `check-manifest-revision.sh` |
 
 ## Notes on the less obvious rows
 
 **Entrypoints and validators share `bin/`.** A validator is user-invoked, so it
 belongs beside the other entrypoints; what distinguishes it is behavior — it
 records PASS/WARN/FAIL/SKIP rather than aborting, so it may omit `set -e`. The current validators are `check-reimage-env.sh`,
-`reimage-checklist.sh`, `verify-artifact-config.sh`, `verify-doc-paths.sh`, and
-`verify-script-portability.sh`.
+`reimage-checklist.sh`, `verify-artifact-config.sh`, `verify-doc-paths.sh`,
+`verify-runbook-structure.sh`, and `verify-script-portability.sh`.
 
 **Loaders sit at the `.internal/` root, not in a `loaders/` subdirectory.**
 There are two — `load-reimage-config.sh` and `artifact-config.sh` — and a
@@ -56,6 +56,16 @@ domains are `ai-scripts/`, `apps/`, `certs/`, `git/`, `home/`, and
 appears; a lone helper can wait for a sibling before earning a directory of its
 own. This holds for both helper classes — pure and standalone-capable helpers
 sit side by side.
+
+`ai-scripts/` is the one domain with a sub-domain: `ai-scripts/session-management/`
+holds the three findings checkers. They sit there rather than in `bin/` because they are the session-management framework and
+nothing else — with comments stripped, the only paths their operative code names
+are `docs/*-findings/`, `docs/sessions/` and `APPLY-MANIFEST.md`, and none of
+them mentions `REIMAGE_ARTIFACT_ROOT`, `reimage.env` or a runbook — and because
+`bin/verify-session-findings.sh` is now their callsite, which is what stops them
+being user-facing. A validator under `.internal/` is otherwise wrong; this is
+the graduation rule in reverse, and it holds only while a dispatcher fronts
+them.
 
 A domain is named for the material a helper works on, not always for the runbook
 that calls it. `home/` holds both content scanners — `scan-archive-contents.sh`
@@ -135,7 +145,8 @@ A second script belongs to the runbook that tells the reader to run it.
 
 **Cross-cutting utilities have no owning runbook at all** — the third population
 in *Reading `bin/`* below — and are the deliberate exception to the pairing — `report-size-audit.sh` (called by six runbooks),
-`verify-doc-paths.sh`, and `verify-script-portability.sh` are the current ones.
+`verify-session-findings.sh`, `verify-doc-paths.sh`, `verify-runbook-structure.sh`,
+and `verify-script-portability.sh` are the current ones.
 The test is how many runbooks *call* it, not how much ground
 it covers: `report-loose-secrets.sh` examines material produced by six earlier
 phases but is invoked from exactly one runbook, so it is owned, not
@@ -145,6 +156,7 @@ The last two are called by no runbook at all, which is a second shape of
 cross-cutting: they enforce conventions the repository depends on rather than
 performing a workflow step, so they run after an edit rather than at a phase.
 `verify-doc-paths.sh` catches a documented path that stopped resolving;
+`verify-session-findings.sh` is the one callsite for the framework's own checks;
 `verify-script-portability.sh` catches a construct that works on the shell the
 author had and not on the Bash 3.2 the workflow reaches in Phases 8 and 9.
 
@@ -168,7 +180,7 @@ The flat listing hides that, so here is how to read it.
 |---|---|---|---|
 | Owned entrypoint | exactly 1 | A command belonging to one phase. Name-paired with its runbook where the runbook has a primary entrypoint. | `capture-managed-inventory.sh`, `restore-access.sh`, `restore-staged-loose.sh` |
 | Shared | 2 or more | One implementation several phases parameterise, usually by `--phase` or `--context`. Owned by no runbook in the naming sense; its name says what it does, not which phase runs it. | `report-size-audit.sh` (8), `prepare-artifact-root.py` (5), `record-restore-prereqs.sh` (2) |
-| Cross-cutting utility | 0 | Enforces a repository convention rather than performing a workflow step. Run after an edit, not at a phase. | `verify-doc-paths.sh`, `verify-script-portability.sh` |
+| Cross-cutting utility | 0 | Enforces a repository convention rather than performing a workflow step. Run after an edit, not at a phase. | `verify-session-findings.sh`, `verify-doc-paths.sh`, `verify-script-portability.sh` |
 
 Shared is the **majority** — 22 of 39. That is worth stating plainly, because the
 name-pairing convention reads like the norm and is not: only eight scripts are

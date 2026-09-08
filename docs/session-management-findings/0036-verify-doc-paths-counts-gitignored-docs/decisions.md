@@ -125,3 +125,5 @@ settled*.
 now permitted, and is deliberately not made in the same revision as the
 decision** — it moves a baseline every manifest entry quotes, and that belongs in
 its own reviewable change.
+
+<!-- proposed: bin/verify-index-tables.sh -->

@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-08T14:00:57+00:00",
+  "number": "0020",
+  "bundleName": "0020-repo-audit-tsv-column-shift",
+  "kind": "runbook",
+  "subKind": null,
+  "subject": "`repos.tsv` remote column is shifted by embedded tabs",
+  "recordedOn": "** 2026-09-01",
+  "recordedOccasion": "while planning item 1.",
+  "recordedBy": {
+    "sessionBundle": null,
+    "sessionId": "** 01KcZvrKMgfenhrT9DvxW9Jk"
+  },
+  "severity": "** blocks Phase 11B's entire automated path.",
+  "feltAt": [],
+  "scope": null,
+  "read": [],
+  "progress": null,
+  "ownership": null,
+  "lineage": null,
+  "declaredTag": "resolved",
+  "findings": [
+    {
+      "id": "F1",
+      "statement": "`repos.tsv` remote column is shifted by embedded tabs",
+      "status": "resolved",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": null,
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": {
+        "resolvedBy": [
+          "—"
+        ],
+        "whatWasDone": "—",
+        "revision": "131",
+        "commit": "not identifiable from git log — the revision is the record"
+      }
+    }
+  ],
+  "decisions": [],
+  "contributions": [],
+  "edges": [],
+  "indexNotes": null
+}

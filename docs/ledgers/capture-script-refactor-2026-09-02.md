@@ -222,3 +222,5 @@ to widen the task on an assumption.
   out in §9 of the design record.
 - **`restore-*` and `record-restore-*` scripts** were already converted and were
   not touched.
+
+<!-- proposed: bin/office-stability-checklist.sh -->

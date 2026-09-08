@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-08T14:00:57+00:00",
+  "bundleName": "restore-git-phase-11a-20260901-155433",
+  "createdOn": "2026-09-03",
+  "owners": [],
+  "transcript": "https://claude.ai/code/session_01DQF5y9VQfaoRD9gnw4UcrN",
+  "scratchPath": null,
+  "resources": [],
+  "ownedBundles": [],
+  "contributions": [],
+  "declaredState": null,
+  "declaredTag": "closed",
+  "indexNotes": null,
+  "ended": {
+    "on": null,
+    "reason": null,
+    "revisions": [],
+    "commits": [],
+    "disposals": []
+  }
+}

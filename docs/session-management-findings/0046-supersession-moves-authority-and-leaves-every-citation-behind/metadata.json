@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-08T14:00:57+00:00",
+  "number": "0046",
+  "bundleName": "0046-supersession-moves-authority-and-leaves-every-citation-behind",
+  "kind": "session-management",
+  "subKind": null,
+  "subject": "Supersession moves authority and leaves every citation behind",
+  "recordedOn": "** 2026-09-07",
+  "recordedOccasion": "after a session relayed a citation to a superseded bundle into a live question.",
+  "recordedBy": {
+    "sessionBundle": null,
+    "sessionId": "** allocation-and-inquiry-design-20260906-233205 (session_015FpYVBF7dDoDrHfKDkq8fn)"
+  },
+  "severity": "** F1 is the instance and F2 is the mechanism. Neither corrupts a record; both send a reader to a bundle `docs/legend.md` says offers nothing readable.",
+  "feltAt": [
+    "** twelve documents citing `0028`, among them `0039` `findings.md` and `decisions.md`, `0041`, `0043` and `docs/session-management-findings/INDEX.md`"
+  ],
+  "scope": "** session management. The fix is a marker or a check, not an edit to any reading.",
+  "read": [
+    "**"
+  ],
+  "progress": null,
+  "ownership": "unclaimed",
+  "lineage": null,
+  "declaredTag": "unclaimed",
+  "findings": [
+    {
+      "id": "F1",
+      "statement": "Twelve live documents cite `0028`, which is superseded and closed to every session",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F1 — twelve documents cite a bundle nothing may read",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F2",
+      "statement": "Nothing distinguishes a citation to a superseded bundle from a citation to a live one",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F2 — the path resolves, so nothing looks broken",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    }
+  ],
+  "decisions": [],
+  "contributions": [],
+  "edges": [],
+  "indexNotes": null
+}

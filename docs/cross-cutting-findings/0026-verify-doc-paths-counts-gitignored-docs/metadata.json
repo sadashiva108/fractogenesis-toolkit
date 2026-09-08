@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-08T14:00:57+00:00",
+  "number": "0026",
+  "bundleName": "0026-verify-doc-paths-counts-gitignored-docs",
+  "kind": "cross-cutting",
+  "subKind": null,
+  "subject": "`verify-doc-paths.sh --all` counts `docs/`, so its OK baseline cannot hold",
+  "recordedOn": "** 2026-09-01",
+  "recordedOccasion": "while validating Revision 129.",
+  "recordedBy": {
+    "sessionBundle": null,
+    "sessionId": "** 01KcZvrKMgfenhrT9DvxW9Jk"
+  },
+  "severity": "** low, but it silently invalidates a number two session briefs quote.",
+  "feltAt": [],
+  "scope": null,
+  "read": [],
+  "progress": null,
+  "ownership": null,
+  "lineage": {
+    "supersededBy": "0036",
+    "on": null
+  },
+  "declaredTag": "superseded",
+  "findings": [
+    {
+      "id": "F1",
+      "statement": "`verify-doc-paths.sh --all` counts `docs/`, so its OK baseline cannot hold",
+      "status": "resolved",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": null,
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": {
+        "resolvedBy": [
+          "—"
+        ],
+        "whatWasDone": "—",
+        "revision": "130",
+        "commit": "not identifiable from git log — the revision is the record"
+      }
+    }
+  ],
+  "decisions": [],
+  "contributions": [],
+  "edges": [],
+  "indexNotes": null
+}

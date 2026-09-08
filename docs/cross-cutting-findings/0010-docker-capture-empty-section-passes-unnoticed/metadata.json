@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-08T14:00:57+00:00",
+  "number": "0010",
+  "bundleName": "0010-docker-capture-empty-section-passes-unnoticed",
+  "kind": "cross-cutting",
+  "subKind": null,
+  "subject": "An empty Docker section captures cleanly and nothing downstream notices",
+  "recordedOn": "** 2026-09-02",
+  "recordedOccasion": "while planning a `restore-docker` teardown test.",
+  "recordedBy": {
+    "sessionBundle": null,
+    "sessionId": "** —"
+  },
+  "severity": "** low to hit, moderate to leave — a comparison silently compares nothing against nothing.",
+  "feltAt": [],
+  "scope": null,
+  "read": [],
+  "progress": null,
+  "ownership": null,
+  "lineage": null,
+  "declaredTag": "un-started",
+  "findings": [
+    {
+      "id": "F1",
+      "statement": "An empty Docker section captures cleanly and nothing downstream notices",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": null,
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    }
+  ],
+  "decisions": [],
+  "contributions": [],
+  "edges": [],
+  "indexNotes": null
+}

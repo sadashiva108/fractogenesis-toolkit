@@ -53,6 +53,7 @@ work, since every fix is a toolkit write.
 | F9 | Six rules live only in a workspace file, outside the repository entirely | `framing` |
 | F10 | Nothing distinguishes a standing decision from one reopened for re-examination, and no state locks decisions while the work is in flight | `framing` |
 | F11 | The header schema binds `findings.md` only, and six of eight architecture records render their header as one run-on paragraph | `framing` |
+| F12 | No status transition names the event that triggers it, so a bulk edit moved twenty-one findings and every checker passed | `decided` |
 
 ---
 
@@ -353,8 +354,113 @@ The two session-management records were corrected in the revision that recorded
 this. **The four toolkit records were not** — one file, one owner — and are
 flagged rather than edited.
 
+## F12 — a status transition names no trigger, and a sweep is indistinguishable from a reading
+
+Recorded 2026-09-08, from this session doing it.
+
+`docs/legend.md` line 39 draws the finding lifecycle as arrows between statuses.
+Every arrow says what the *next* status is. **Not one says what event causes the
+move.** The one arrow that carries a label carries the wrong kind of one:
+
+```text
+un-started ──▶ framing ──▶ decided ──▶ resolved ──▶ reopened ──┐
+                  ▲                                            │
+                  └────────────────────────────────────────────┘
+                              first read by the owner
+```
+
+*"First read by the owner"* makes **reading** the trigger. Reading is the one
+thing that changes nothing, and a vocabulary whose transitions fire on reading
+cannot tell a sweep from a glance.
+
+### What it cost, measured
+
+Revision 208 assigned six bundles and read them. Immediately before it, at
+`80d3482`:
+
+| Bundle | Before | After Revision 208 |
+|---|---|---|
+| `0037` | 7 `reopened` | 7 `framing` |
+| `0038` | 6 `reopened` | 6 `framing` |
+| `0039` | 7 `decided`, 1 `un-started` | 8 `framing` |
+| `0040` | 4 `reopened` | 4 `framing` |
+| `0041` | 4 `reopened` | 4 `framing` |
+
+**Twenty-one `reopened` rows became `framing` in one commit, and its message
+accounted for eight of them** — `0039`'s, which the owner had asked for. The
+other twenty-one are not mentioned, because the session did not notice it was
+making a claim. Under the labelled arrow it had not: it had read them.
+
+The transition is *legal*. That is the finding. `reopened ──▶ framing` is the
+diagram's own loop, so no rule was broken, and all six validators passed on the
+result — `verify-findings-structure.sh` compares a tag against a row and both
+had moved together, which is exactly what a sweep produces.
+
+### What was destroyed, and what was not
+
+`reopened` says *this was decided, resolved, and its resolution was called into
+question.* `framing` says *live and open.* Flattening the first into the second
+loses the entire history and reads as though the reading had never been
+completed. Nothing recovers it from the row; it was recovered here from
+`git show 80d3482`.
+
+Two smaller facts fall out of the same reading:
+
+**The twenty-one carry no reason for having been `reopened` either.** They were
+swept there at Revision 200 (`4626eb4`, *"eighteen further rows and two tags
+swept"*) when the tree was brought onto the current vocabulary. A sweep is not a
+reading of any individual finding, so no reason was recorded for any of them, and
+none is invented here — the reasons are owed, not lost.
+
+**A reading is not the only thing mistaken for a change.** Assignment, a
+vocabulary sweep, a rename and a retrofit are all edits that touch a status cell
+without anyone forming a judgement about the finding underneath it. Each is a
+mass operation, which is why each is dangerous: a wrong judgement damages one
+finding, a wrong sweep damages every finding it passes over.
+
+### The correction, recorded 2026-09-08
+
+The first repair proposed for this was to restore the twenty-one rows to
+`reopened`, and **it was wrong for the same reason Revision 200 was wrong.**
+
+`reopened` requires the finding to have been `resolved`. `0038/F1` never was —
+`0028/F1` was, and `0028` is a different bundle. `0043` D1 is what makes that
+sayable: a finding is addressed `<bundle>/F<n>`, so `0028/F1` and `0038/F1` are
+two addresses and only one of them was ever resolved.
+
+**These six bundles are supersession successors, not reopened readings.** Each
+carries `Relates to … supersedes it`, each predecessor is tagged `superseded`,
+and `superseded` reaches a bundle from any status — which is exactly why it fits
+here and `reopened` does not. What the successors' findings needed was never a
+status at all: it was **provenance**, and there was no way to record it until
+`0039` D12.
+
+So the rows stay `framing`, which is what they are, and the relationship they
+were trying to express is now six sets of provenance edges — 31 of them,
+extracted by comparing statements rather than asserted by hand, with coverage
+and exclusivity passing on every pair.
+
+**Twice now a sweep has put a status on these findings that the findings did not
+support**, and the second time was by a session that had just written the rule
+against it. That is the strongest evidence for D7 in the bundle: a status a human
+or a session *reasons* their way to is exactly as wrong as one swept in, unless
+the event that justifies it is recorded.
+
+### Why no check catches it
+
+Every existing checker compares two *displays* of the same fact — a tag against a
+row, a count against a table. A sweep moves both, so agreement is preserved and
+the check passes. **Nothing compares a status against the event that should have
+produced it**, because no event is recorded. That is `0043` F2 and F3 arriving
+from a third direction: the framework can only check its displays against each
+other, never against what happened.
+
+---
+
 ## What this bundle does not cover
 
 `0027`'s seven findings, which are a separate reading of the same surface by a
 different session and are owned separately by this one. Where the two meet is
 named in finding F2 and nowhere else.
+
+<!-- historical: bin/verify-findings-headers.sh -->

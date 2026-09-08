@@ -90,3 +90,5 @@ Two things to carry into that work:
   `-checklist` one. `capture-office-stability.sh` already exists and writes the
   same category, so the two may want merging rather than renaming. Decide that in
   item 4, not here.
+
+<!-- proposed: bin/office-stability-checklist.sh -->

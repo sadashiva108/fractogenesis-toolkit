@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-08T14:00:57+00:00",
+  "number": "0002",
+  "bundleName": "0002-bookend-signoffs-cite-the-staging-path",
+  "kind": "cross-cutting",
+  "subKind": null,
+  "subject": "Bookend sign-offs cite the `.incomplete` staging path",
+  "recordedOn": "** 2026-09-03",
+  "recordedOccasion": "while renaming `boundaries/` to `bookends/` — 20 of the sign-offs on the volume named the category, and every one of them named it through a path that never existed after the run finished.",
+  "recordedBy": {
+    "sessionBundle": null,
+    "sessionId": "** —"
+  },
+  "severity": "** cosmetic per file, but it is the same defect Revision 150 fixed in `bin/restore-repos.sh`, in four more scripts.",
+  "feltAt": [],
+  "scope": null,
+  "read": [],
+  "progress": null,
+  "ownership": null,
+  "lineage": null,
+  "declaredTag": "resolved",
+  "findings": [
+    {
+      "id": "F1",
+      "statement": "Bookend sign-offs cite the `.incomplete` staging path",
+      "status": "resolved",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": null,
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": {
+        "resolvedBy": [
+          "—"
+        ],
+        "whatWasDone": "—",
+        "revision": "159",
+        "commit": "a2342d1"
+      }
+    }
+  ],
+  "decisions": [],
+  "contributions": [],
+  "edges": [],
+  "indexNotes": null
+}

@@ -225,3 +225,5 @@ are not claimed.
 Nor does it cover whether the artifact volume's forty-eight files should be
 rewritten. That is an evidence write against dated records, it needs the owner's
 word for that run, and it is a decision rather than a reading.
+
+<!-- proposed: .internal/palette.sh -->

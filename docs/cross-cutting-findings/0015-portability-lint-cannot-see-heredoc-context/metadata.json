@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-08T14:00:57+00:00",
+  "number": "0015",
+  "bundleName": "0015-portability-lint-cannot-see-heredoc-context",
+  "kind": "cross-cutting",
+  "subKind": null,
+  "subject": "The portability lint cannot see a defect that needs heredoc context",
+  "recordedOn": "** 2026-09-02",
+  "recordedOccasion": "Restore Repositories clone-plan session, while reproducing `post-image-restore-runs-truncated`.",
+  "recordedBy": {
+    "sessionBundle": null,
+    "sessionId": "** —"
+  },
+  "severity": "** low. One known-dangerous construct is invisible to the check that exists to catch exactly this class of thing.",
+  "feltAt": [],
+  "scope": null,
+  "read": [],
+  "progress": null,
+  "ownership": "unclaimed",
+  "lineage": null,
+  "declaredTag": "unclaimed",
+  "findings": [
+    {
+      "id": "F1",
+      "statement": "The portability lint cannot see a defect that needs heredoc context",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": null,
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    }
+  ],
+  "decisions": [],
+  "contributions": [],
+  "edges": [],
+  "indexNotes": null
+}

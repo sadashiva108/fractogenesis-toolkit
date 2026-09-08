@@ -11,7 +11,7 @@ one is a convention a session has to remember rather than something it can check
 questions — which revision number is free, and which files are safe to touch.
 The first was answered by
 [`0028`](../session-management-findings/0038-sessions-write-into-the-tree-the-owner-commits-from/):
-the number is taken at apply time by `bin/check-manifest-revision.sh`, which
+the number is taken at apply time by `./bin/verify-session-findings.sh manifest-revision`, which
 scans the entry headings as well as the header block and so sees the uncommitted
 entry that defeated the old rule. That half is no longer an idea and is not
 restated here. What remains open is the second question, below.

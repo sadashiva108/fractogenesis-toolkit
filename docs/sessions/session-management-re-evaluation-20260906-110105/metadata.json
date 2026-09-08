@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-08T14:00:57+00:00",
+  "bundleName": "session-management-re-evaluation-20260906-110105",
+  "createdOn": "2026-09-06",
+  "owners": [
+    {
+      "from": "2026-09-06",
+      "until": null,
+      "assistant": "Claude",
+      "sessionId": "session_01FhFbEgG4wmrtJqUCcryNVQ",
+      "model": "configured claude-opus-5",
+      "environment": "Linux VM, Bash 5.1.16, GNU coreutils, aarch64",
+      "environmentNotes": null
+    }
+  ],
+  "transcript": "https://claude.ai/code/session_01FhFbEgG4wmrtJqUCcryNVQ",
+  "scratchPath": null,
+  "resources": [
+    {
+      "what": "Repository",
+      "path": "/Users/dkittrell/workspace/shiva/fractogenesis-toolkit — connected read/write; **never written to by this session**"
+    },
+    {
+      "what": "Scratch copy",
+      "path": "~/scratch/fractogenesis-toolkit in the Linux VM, refreshed from the checkout at 3828d19"
+    },
+    {
+      "what": "Workspace",
+      "path": "/Users/dkittrell/reimage-workspace — connected 2026-09-06; source of the three prompt files in prompt.md"
+    },
+    {
+      "what": "Artifact root",
+      "path": "not connected, and not needed: this session's subject is docs/ and .github/ only"
+    }
+  ],
+  "ownedBundles": [
+    {
+      "number": "0036",
+      "notes": "The Revision 130 prune landed; its premise expired at Revision 162. Option (iii) — stop quoting the OK baseline — is still undecided"
+    },
+    {
+      "number": "0037",
+      "notes": "D1 accepted, **D2 rejected** by the owner on 2026-09-06 — retrofit rather than leave half a change behind. D6's carve-out and F2's rule were both lost in the instruction-set split and must be restored"
+    },
+    {
+      "number": "0038",
+      "notes": "All six resolutions verified present and holding. What it removed — `git status` as the only signal of a concurrent session — is recorded and unreplaced"
+    },
+    {
+      "number": "0039",
+      "notes": "The keystone. D1's destination no longer exists, so it cannot be applied as written. Seven rows were `decided`; reset to `framing` on the owner's instruction to re-evaluate from the ground up — `decisions.md` retains every decision"
+    },
+    {
+      "number": "0040",
+      "notes": "All four resolutions verified present in §9 and expanded since. Only the address is stale: every row cites §4c, which no longer exists"
+    },
+    {
+      "number": "0041",
+      "notes": "F4 sharpened by this session on 2026-09-06. F3's classification question is open and reaches four other bundles"
+    },
+    {
+      "number": "0043",
+      "notes": "Recorded and owned by this session on 2026-09-07, the only one of the seven not released by `restore-apps-outstanding`. Held open at `analyzing`/`framing` so the parallel architecture session can record to it"
+    }
+  ],
+  "contributions": [],
+  "declaredState": "handoff",
+  "declaredTag": "handoff",
+  "indexNotes": null,
+  "ended": {
+    "on": null,
+    "reason": null,
+    "revisions": [],
+    "commits": [],
+    "disposals": []
+  }
+}

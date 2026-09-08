@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-08T14:00:57+00:00",
+  "number": "0047",
+  "bundleName": "0047-the-tree-carries-drift-no-check-looks-for",
+  "kind": "session-management",
+  "subKind": null,
+  "subject": "The tree carries status drift that no check looks for",
+  "recordedOn": "** 2026-09-07",
+  "recordedOccasion": "from a conformance sweep run at the owner's direction before any retrofit.",
+  "recordedBy": {
+    "sessionBundle": null,
+    "sessionId": "** allocation-and-inquiry-design-20260906-233205 (session_015FpYVBF7dDoDrHfKDkq8fn)"
+  },
+  "severity": "** F1 is high — an `unclaimed` bundle is meant to be closed to every session and one is not. F5 is high for a different reason: it is a defect in the instrument, and acting on the instrument's raw output would touch sixty-five records that are correct.",
+  "feltAt": [
+    "** `0001` F1; `0030`, `0035`, `0036`; eleven bundles resolved before Revision 162's conversion"
+  ],
+  "scope": "** session management. The remedy is a check and a retrofit, and the retrofit waits on `docs/architecture/state-as-data.md`",
+  "read": [
+    "**"
+  ],
+  "progress": null,
+  "ownership": "unclaimed",
+  "lineage": null,
+  "declaredTag": "unclaimed",
+  "findings": [
+    {
+      "id": "F1",
+      "statement": "Releasing a bundle to `unclaimed` leaves its findings where they were, so a bundle closed to every session holds a readable finding",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F1 — an `unclaimed` bundle holding a live finding",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F2",
+      "statement": "Six `accepted` decisions never moved their finding out of `framing`",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F2 — six decisions that moved nothing",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F3",
+      "statement": "Three bundles carry resolutions for findings that are not resolved",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F3 — resolutions for findings that are not resolved",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F4",
+      "statement": "Eleven `resolved` bundles have no `decisions.md`, and whether they owe one has never been decided",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F4 — eleven resolved bundles with no `decisions.md`",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F5",
+      "statement": "A conformance sweep that does not know about superseding clones reports sixty-five false positives",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F5 — the sweep is wrong before it is right",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    }
+  ],
+  "decisions": [],
+  "contributions": [],
+  "edges": [],
+  "indexNotes": null
+}

@@ -160,3 +160,5 @@ The owner routed it here. It is noted because the routing is genuinely arguable
 and a later reader should see that it was a choice rather than an oversight —
 and because if the answer is *cross-cutting*, `0027` finding 1's question
 (*where is a rule allowed to live*) reaches this bundle too.
+
+<!-- proposed: bin/verify-index-tables.sh -->

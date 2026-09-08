@@ -94,3 +94,7 @@ it did not.
 Worth noting against F3: that audit's own first run reported 131 failures, of
 which **128 were bugs in the audit** — a regex matching `<thead>` when it meant
 `<th>`. A rendering check is not free of the problem it is checking for.
+
+<!-- historical: bin/verify-findings-counts.sh -->
+<!-- historical: bin/verify-findings-headers.sh -->
+<!-- historical: bin/verify-findings-structure.sh -->

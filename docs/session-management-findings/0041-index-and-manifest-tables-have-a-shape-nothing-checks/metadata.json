@@ -1,0 +1,202 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-08T14:00:57+00:00",
+  "number": "0041",
+  "bundleName": "0041-index-and-manifest-tables-have-a-shape-nothing-checks",
+  "kind": "session-management",
+  "subKind": null,
+  "subject": "The index and manifest tables have a shape nothing checks",
+  "recordedOn": "** 2026-09-03",
+  "recordedOccasion": "from breaking two of them and not noticing.",
+  "recordedBy": {
+    "sessionBundle": null,
+    "sessionId": "** session_01PcgHu9kz9Hm5RatLQuFR8H"
+  },
+  "severity": "** low per instance, and it defeats the check a session actually runs. Every validator in the repository passed on both broken rows.",
+  "feltAt": [],
+  "scope": "** instruction set. §§4c–4d define these tables; nothing validates them. Whether the *fix* belongs here is finding F3.",
+  "read": [],
+  "progress": null,
+  "ownership": null,
+  "lineage": {
+    "supersedes": "0032",
+    "on": null
+  },
+  "declaredTag": "analyzing",
+  "findings": [
+    {
+      "id": "F1",
+      "statement": "The indexes and manifests have a required column shape that no check enforces",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F1 — a required shape, unenforced",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": {
+        "resolvedBy": [
+          "D1"
+        ],
+        "whatWasDone": "The check takes each table's column count from its own header and compares every data row beneath it",
+        "revision": null,
+        "commit": null
+      }
+    },
+    {
+      "id": "F2",
+      "statement": "`verify-doc-paths.sh` gives false assurance on a malformed row, because links are not shape",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F2 — the check that runs gives the wrong assurance",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": {
+        "resolvedBy": [
+          "D2"
+        ],
+        "whatWasDone": "**Nothing.** That lint was correct; the error was reading *the lints are clean* as a claim about shape. D1's check makes the reading true",
+        "revision": null,
+        "commit": null
+      }
+    },
+    {
+      "id": "F3",
+      "statement": "The fix is a lint, so this bundle may be in the wrong tree",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F3 — this may be in the wrong tree",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": {
+        "resolvedBy": [
+          "D3"
+        ],
+        "whatWasDone": "**Stays here**, on the owner's routing. The disagreement between §4c's test and `0029`'s principle is recorded, not resolved",
+        "revision": null,
+        "commit": null
+      }
+    },
+    {
+      "id": "F4",
+      "statement": "A patch containing a deletion under-applies silently, and every check passes",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F4 — a patch containing a deletion under-applies silently, and every check passes",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": {
+        "resolvedBy": [
+          "D4"
+        ],
+        "whatWasDone": "The tag half of D1's check catches the residue every one of the four instances left. Prevention is procedural and is owed elsewhere",
+        "revision": null,
+        "commit": null
+      }
+    },
+    {
+      "id": "F5",
+      "statement": "Nothing compares a resolution's claim against the tree",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F5 — nothing compares a resolution's claim against the tree",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "decision": "One new validator, `bin/verify-findings-structure.sh`",
+      "findings": [],
+      "decided": "2026-09-04",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D1 — One new validator, `bin/verify-findings-structure.sh`"
+    },
+    {
+      "id": "D2",
+      "decision": "`verify-doc-paths.sh` is not changed, and the reason is finding F2's point",
+      "findings": [],
+      "decided": "2026-09-04",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D2 — `verify-doc-paths.sh` is not changed, and the reason is finding F2's point"
+    },
+    {
+      "id": "D3",
+      "decision": "The bundle stays in `docs/session-management-findings/`, and the two tests disagree",
+      "findings": [],
+      "decided": "2026-09-03",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D3 — The bundle stays in `docs/session-management-findings/`, and the two tests disagree"
+    },
+    {
+      "id": "D4",
+      "decision": "Finding 4 cannot be fixed in this repository, and D1 catches its residue",
+      "findings": [],
+      "decided": "2026-09-04",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D4 — Finding 4 cannot be fixed in this repository, and D1 catches its residue"
+    }
+  ],
+  "contributions": [],
+  "edges": [
+    {
+      "kind": "carried",
+      "from": "0041/F1",
+      "to": "0032/F1",
+      "why": null,
+      "reason": null,
+      "basis": "derived",
+      "asserted_by": "** session_01PcgHu9kz9Hm5RatLQuFR8H",
+      "asserted_on": "2026-09-08"
+    },
+    {
+      "kind": "carried",
+      "from": "0041/F2",
+      "to": "0032/F2",
+      "why": null,
+      "reason": null,
+      "basis": "derived",
+      "asserted_by": "** session_01PcgHu9kz9Hm5RatLQuFR8H",
+      "asserted_on": "2026-09-08"
+    },
+    {
+      "kind": "carried",
+      "from": "0041/F3",
+      "to": "0032/F3",
+      "why": null,
+      "reason": null,
+      "basis": "derived",
+      "asserted_by": "** session_01PcgHu9kz9Hm5RatLQuFR8H",
+      "asserted_on": "2026-09-08"
+    },
+    {
+      "kind": "carried",
+      "from": "0041/F4",
+      "to": "0032/F4",
+      "why": null,
+      "reason": null,
+      "basis": "derived",
+      "asserted_by": "** session_01PcgHu9kz9Hm5RatLQuFR8H",
+      "asserted_on": "2026-09-08"
+    }
+  ],
+  "indexNotes": null
+}

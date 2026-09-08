@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-08T14:00:57+00:00",
+  "number": "0011",
+  "bundleName": "0011-emit-extra-remotes-readds-the-clone-url",
+  "kind": "runbook",
+  "subKind": null,
+  "subject": "`emit_extra_remotes` re-adds the URL the clone already used",
+  "recordedOn": "** 2026-09-01",
+  "recordedOccasion": "Restore Repositories Refactor session, while verifying the regenerated `clone-commands.sh`.",
+  "recordedBy": {
+    "sessionBundle": null,
+    "sessionId": "** —"
+  },
+  "severity": "** cosmetic. Produces a redundant but harmless command.",
+  "feltAt": [],
+  "scope": null,
+  "read": [],
+  "progress": null,
+  "ownership": "unclaimed",
+  "lineage": null,
+  "declaredTag": "unclaimed",
+  "findings": [
+    {
+      "id": "F1",
+      "statement": "`emit_extra_remotes` re-adds the URL the clone already used",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": null,
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    }
+  ],
+  "decisions": [],
+  "contributions": [],
+  "edges": [],
+  "indexNotes": null
+}

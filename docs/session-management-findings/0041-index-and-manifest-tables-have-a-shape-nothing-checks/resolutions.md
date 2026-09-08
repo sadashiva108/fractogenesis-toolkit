@@ -93,3 +93,5 @@ script, `bash -n` clean. Composed in a copy outside the owner's checkout, per
 `0028`. **`/bin/bash -n` against macOS stock Bash 3.2 is owed** — the script uses
 `awk`, `sed`, `grep`, `cut` and no Bash 4 construct, and the portability lint
 agrees, which is not the same claim.
+
+<!-- historical-record -->

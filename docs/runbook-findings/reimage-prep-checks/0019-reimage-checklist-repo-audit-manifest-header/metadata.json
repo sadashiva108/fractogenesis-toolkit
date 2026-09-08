@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-08T14:00:57+00:00",
+  "number": "0019",
+  "bundleName": "0019-reimage-checklist-repo-audit-manifest-header",
+  "kind": "runbook",
+  "subKind": null,
+  "subject": "Phase 6B records FAIL against a correct repository-audit manifest",
+  "recordedOn": "** 2026-09-01",
+  "recordedOccasion": "while checking what reads `repo-audit-reports/`.",
+  "recordedBy": {
+    "sessionBundle": null,
+    "sessionId": "** 01KcZvrKMgfenhrT9DvxW9Jk"
+  },
+  "severity": "** a Phase 6B gate reports the opposite of the truth.",
+  "feltAt": [],
+  "scope": null,
+  "read": [],
+  "progress": null,
+  "ownership": null,
+  "lineage": null,
+  "declaredTag": "resolved",
+  "findings": [
+    {
+      "id": "F1",
+      "statement": "Phase 6B records FAIL against a correct repository-audit manifest",
+      "status": "resolved",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": null,
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": {
+        "resolvedBy": [
+          "—"
+        ],
+        "whatWasDone": "—",
+        "revision": "129",
+        "commit": "not identifiable from git log — the revision is the record"
+      }
+    }
+  ],
+  "decisions": [],
+  "contributions": [],
+  "edges": [],
+  "indexNotes": null
+}

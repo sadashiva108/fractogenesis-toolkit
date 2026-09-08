@@ -1,0 +1,173 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-08T14:00:57+00:00",
+  "number": "0043",
+  "bundleName": "0043-framework-state-lives-in-documents-not-data",
+  "kind": "session-management",
+  "subKind": null,
+  "subject": "The framework's own state lives in documents rather than in data",
+  "recordedOn": "** 2026-09-07",
+  "recordedOccasion": "from the owner's proposal that a JSON config become the single source of truth for statuses, states and counts.",
+  "recordedBy": {
+    "sessionBundle": null,
+    "sessionId": "** session-management-re-evaluation-20260906-110105 (session_01FhFbEgG4wmrtJqUCcryNVQ)"
+  },
+  "severity": "** F1 and F3 are high — both have recorded incidents, and F3's are bugs in the checks the framework is trusted by. The rest are structural and cost attention rather than correctness.",
+  "feltAt": [
+    "** every `STATUS-` and `STATE-` tag, all five `INDEX.md` files, every `findings-manifest.md` and `metadata.md`, and `bin/verify-findings-counts.sh`, `-structure.sh`, `-headers.sh`"
+  ],
+  "scope": "** session management. The fix lands in the bundle and session file shapes, and in the checkers that read them",
+  "read": [
+    "**"
+  ],
+  "progress": null,
+  "ownership": null,
+  "lineage": null,
+  "declaredTag": "analyzing",
+  "findings": [
+    {
+      "id": "F1",
+      "statement": "A bundle's status is carried in a filename, so every transition is a delete plus a create",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F1 — the status is in the filename",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F2",
+      "statement": "88 count and status cells are typed by hand, and a checker exists only to catch them drifting",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F2 — 88 hand-typed cells",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F3",
+      "statement": "The framework's own data is parsed back out of rendered markdown, and that parser has been wrong twice",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F3 — the data is parsed back out of the rendering",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F4",
+      "statement": "Structured fields and free-form prose share a file with nothing marking the boundary",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F4 — no boundary between what is authored and what is derived",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F5",
+      "statement": "Authority is assigned to documents, so every consumer must parse prose to read a fact",
+      "status": "decided",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F5 — authority sits on documents, not on data",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F6",
+      "statement": "A header field that is optional **and repeatable** cannot be represented by either draft, and this bundle carries three of them",
+      "status": "decided",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F6 — a repeatable field the data cannot hold",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F7",
+      "statement": "The derived bundle status has an else branch that asserts nothing, so a derivation bug always lands there",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F7 — the derivation's else branch asserts nothing",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F8",
+      "statement": "Each vocabulary has exactly one activity-named status, and it is the one a name cannot carry",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F8 — one activity-named status per vocabulary, and the thing a name cannot carry",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F9",
+      "statement": "An edge kind is defined by a description and a behaviour, and the two can disagree",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F9 — an edge kind's description and its behaviour can disagree",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "decision": "Findings are addressed as `<bundle>/F<n>`, relationships are typed edges, an edge is stored in the bundle whose session asserted it, stored edges are assertions, and `Relates to` becomes a projection",
+      "findings": [
+        "F5",
+        "F6"
+      ],
+      "decided": "2026-09-07",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D1 — the edge contract"
+    },
+    {
+      "id": "D2",
+      "decision": "§9 step 3 changes from *write this line* to *assert this edge* in the revision that ships the projection, and not before",
+      "findings": [
+        "F5"
+      ],
+      "decided": "2026-09-07",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D2 — the procedure changes when the format exists, not before"
+    }
+  ],
+  "contributions": [
+    {
+      "session": "allocation-and-inquiry-design-20260906-233205",
+      "date": "2026-09-06",
+      "contribution": "Read the two draft config files and `schemas.html`; added F6, the draft review below, and a live instance of F4 in `0039`'s own header"
+    }
+  ],
+  "edges": [],
+  "indexNotes": null
+}

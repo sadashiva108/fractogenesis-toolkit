@@ -80,3 +80,5 @@ FAIL**. `bash -n` passes on `bin/verify-findings-counts.sh`.
 
 Linux, Bash 5.x. `/bin/bash -n` against real macOS Bash D4 remains owed, and now
 covers a script written today.
+
+<!-- historical-record -->

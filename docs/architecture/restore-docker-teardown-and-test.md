@@ -16,7 +16,7 @@ to depend on three things nobody had checked.
 - [[#Three findings that change the test|Three findings that change the test]]
 - [[#Before teardown — snapshot|Before teardown — snapshot]]
 - [[#Graduated teardown|Graduated teardown]]
-- [[#What to add to restore-docker.md|What to add to restore-docker.md]]
+- [[#What to add to `restore-docker.md`|What to add to restore-docker.md]]
 - [[#Open decision — which stack is the target|Open decision — which stack is the target]]
 
 ---

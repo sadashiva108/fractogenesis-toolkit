@@ -157,3 +157,10 @@ The false-positive class the exclusion was really protecting against is neither
 of those. It is the seven proposed paths: **a reading legitimately names a path
 that does not exist yet.** No document said so, and it is what the options in
 `decisions.md` now turn on.
+
+<!-- historical: .github/copilot-prompts/ -->
+<!-- historical: .github/copilot-templates/ -->
+<!-- historical: .internal/restore/record-restore-prereqs.sh -->
+<!-- proposed: .internal/palette.sh -->
+<!-- proposed: bin/office-stability-checklist.sh -->
+<!-- proposed: bin/verify-index-tables.sh -->

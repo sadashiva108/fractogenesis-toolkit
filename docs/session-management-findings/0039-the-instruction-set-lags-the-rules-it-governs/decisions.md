@@ -1,11 +1,11 @@
 # Decisions — the instruction set lags the rules it governs
 
-**Bundle:** `0029`  
-**Session:** `restore-apps-outstanding-20260903-000000`
+**Bundle:** `0039-the-instruction-set-lags-the-rules-it-governs`  
+**Session:** `restore-apps-outstanding-20260903-000000`, continued by `session-management-re-evaluation-20260906-110105`
 
 Decisions are recorded per finding as they are made. A finding with no entry here
-has not been decided, and `resolving` cannot begin until all eight have one.
-**Finding 8 does not yet, so this bundle stays `in progress`.**
+has not been decided, and no finding is resolved until it has one.
+**Ten of the twelve do not yet, so this bundle stays `analyzing`.**
 
 **One decision carries four findings.** D1 answers findings F1, F2 and F6 as well
 as 5, because all four are instances of a single question — *where is a rule
@@ -33,11 +33,15 @@ without answering it for rules.
 | D1 | `docs/legend.md` holds VOCABULARY. `.github/copilot-instructions.md` sections 4b–4d hold PROCEDURE. Each points at the other for the kind it does not hold, and the legend is named in §4 as required reading | F1, F2, F5, F6 | 2026-09-04 | `accepted` |
 | D2 | the write categories split. The legend keeps three one-line definitions of what a record, toolkit and evidence write IS. §4b takes the gating | F5 | 2026-09-04 | `accepted` |
 | D3 | `docs/INDEX.md` owns the enumeration of the `docs/` directories. §4b and `docs/architecture/findings-and-sessions.md` §2 stop listing them and point at it | F3, F4 | 2026-09-04 | `accepted` |
-| D4 | a bundle waiting on another's decision says so in prose inside its `Relates to` line, and §4c requires the bundle's INDEX.md Notes cell to say it too. `Decide after:` does not become vocabulary | F7 | 2026-09-04 | `superseded → D5` |
-
+| D4 | a bundle waiting on another's decision says so in prose inside its `Relates to` line, and §4c requires the bundle's INDEX.md Notes cell to say it too. `Decide after:` does not become vocabulary | F7 | 2026-09-04 | `replaced → D5` |
 | D5 | ordering between findings is a typed, directed edge — `blocks` or `evidences` — asserted in the bundle whose session states it, validated at both ends, and expiring when either endpoint goes inert | F7 | 2026-09-06 | `accepted` |
-
 | D6 | a hand-over step joins the composition rule in section 6: the session reports what it composed and shows it, and the patch is applied only when the owner asks | F8 | 2026-09-07 | `accepted` |
+| D7 | A status moves on a **material change to the record**, never on a reading. `reopened` persists until one occurs: a write to the finding or a contribution moves it to `framing`, an accepted decision to `decided`, an executed resolution to `resolved`, and it may be `withdrawn` from there like any live status | F12 | 2026-09-08 | `accepted` |
+| D8 | **Reframing a finding invalidates the decisions under it.** One rule, two visible effects: at `decided` the status rolls back to `framing`; at `framing` there is no status to move, so the effect is confined to the decisions. The rollback is the DEFAULT and a session may decline it in writing, recording in `decisions.md` that the edit was non-material and why. `resolved` and `withdrawn` are frozen and unreachable by it | F12, F10 | 2026-09-08 | `accepted` |
+| D9 | A decision's `Outcome` is one of seven — `proposed`, `accepted`, `rejected`, `deferred`, `retracted`, `replaced → DX`, `voided` — and **no word appears in both an Outcome and a status vocabulary**, which a schema check asserts. `refined → DX` and `superseded → DX` collapse into `replaced → DX` | F10, F12 | 2026-09-08 | `accepted` |
+| D10 | **Reopening requires a reason** from a nine-value enumeration, an optional note, `reopened_at`, and the commit SHA at reopen time. The reason determines the exit status rather than leaving it to judgement. `reopened.md` is GENERATED from those fields, never hand-written | F12 | 2026-09-08 | `accepted` |
+| D11 | **Withdrawing requires a reason**, an optional note and `withdrawn_at`, per finding — a bundle-level withdrawal needs one for every finding in it. A `resolved` finding is reopened first; `withdrawn` reaches every status except `resolved` | F12 | 2026-09-08 | `accepted` |
+| D12 | **Supersession carries provenance as typed edges at finding granularity, stored in the new bundle only.** `carried`, `successor`, `split`, `merged` and `dropped`; `new` is derived from the absence of an incoming edge. Coverage and exclusivity gate the `superseded` tag. The new bundle gets no `decisions.md`. A superseded bundle is readable by any session and writable by none | F12 | 2026-09-08 | `accepted` |
 
 ## Findings 1, 2, 5 and 6 — a rule lives where its kind lives
 
@@ -359,10 +363,320 @@ an irony to work around. It is the rule working.
 
 ---
 
-## Finding 8 — not decided
+## Finding 8 — decided 2026-09-07
 
 Recorded 2026-09-04, one revision after the rule it is about, and left open
-deliberately. Its three shapes are in `findings.md`; one of them, a fourth write
-category, is already rejected on sight under `0028` D4.
+deliberately for three days. D6 closes it. Its three shapes are in `findings.md`;
+one of them, a fourth write category, was rejected on sight under `0028` D4.
 
-`resolving` cannot begin until it has a decision.
+D6 is decided and **not installed**: installing it is a toolkit write, and
+closing F8 belongs to the session that owns this bundle.
+
+---
+
+## Finding 12 — the lifecycle names no triggers
+
+Six decisions, taken 2026-09-08 between this session and the owner. They are one
+subject seen six ways, and D7 is the one the other five depend on.
+
+---
+
+## D7 — a status moves on a material change to the record, never on a reading
+
+The finding is that `docs/legend.md`'s one labelled arrow reads *"first read by
+the owner"*, making reading the trigger. **Reading is the one act that changes
+nothing.** A vocabulary whose transitions fire on it cannot tell a sweep from a
+glance, and Revision 208 is what that costs: twenty-one rows moved by a session
+that believed it had only looked.
+
+**The replacement is a single principle: a status moves when the record changes.**
+Assignment does not move a status. A sweep does not. A rename does not. A
+retrofit does not. Reading does not.
+
+`reopened` is where this bites hardest, because it is the status most likely to
+be flattened by someone tidying: it looks unfinished. Its exits are now events,
+not readings:
+
+| Event | Exit |
+|---|---|
+| the finding is written to, or takes a contribution | `framing` |
+| a decision on it is accepted | `decided` |
+| its resolution is executed | `resolved` |
+| it is shut down | `withdrawn` |
+
+**`reopened → decided` directly, skipping `framing`, is correct and not a skipped
+step.** It is the common case: the framing was sound and the *resolution* was
+wrong. Forcing it through `framing` would assert the problem statement is being
+reworked, which would be false.
+
+### What this does not do
+
+It does not make the transition checkable on its own. A status is still a cell,
+and a cell can still be typed over. What makes it checkable is D10's record of
+the event — and, past that, `0043`'s move of state out of documents. This
+decision is the rule; the enforcement arrives with the data.
+
+---
+
+## D8 — reframing invalidates the decisions under a finding
+
+One rule, not two, because two statements of one rule drift — which is `0037` F1
+exactly, and this bundle's own F2.
+
+**At `decided`** the status rolls back to `framing` and every accepted decision
+under the finding is `voided`. **At `framing`** there is no status to move, so the
+effect is confined to the decisions, which are flagged rather than voided: they
+were never accepted, so nothing was relied on.
+
+The ground for it is plain: **if the foundation a ruling was made on changes, the
+ruling may no longer apply**, and a decision that silently outlives its premise is
+worse than no decision, because it carries authority it has lost.
+
+### The default, and declining it
+
+A mechanical trigger — *any edit to the finding* — over-fires. A typo fix, a
+tightened sentence, a corrected citation would each void every decision beneath
+it. **A rule that fires on trivia gets routed around, and a routed-around rule
+still reads as live**, which is this bundle's whole subject.
+
+So the rollback is the **default**, and a session may **decline it in writing**:
+a dated line in `decisions.md` recording that the edit was non-material and why.
+
+That shape is not invented here. `bin/verify-script-portability.sh` runs it
+already — a rule fires mechanically, a deliberate exception is declared at the
+site with a reason, and the declaration is itself checked, since the script warns
+on a pragma that no longer covers anything. Judgement alone cannot be audited;
+a recorded judgement can.
+
+### The boundary
+
+`resolved` and `withdrawn` are frozen — `docs/legend.md` line 34 and
+`docs/architecture/findings-and-sessions.md` §8. This rule therefore fires at
+`framing`, `decided` and `reopened` only. Reframing a `resolved` finding is not
+permitted at all: it goes through `reopened` first, and D10 governs that door.
+
+### The reasons, and which of them void
+
+Not every reason voids something. That distinction is the rule's whole precision.
+
+| Reason | Means | Effect on decisions |
+|---|---|---|
+| `framing-changed` | the problem statement materially changed | **every** accepted decision → `voided` |
+| `decision-wrong` | a decision is wrong on the merits; the framing is intact | **that** decision → `voided` |
+| `decision-inapplicable` | a decision's target no longer exists | **that** decision → `voided` |
+| `decided-prematurely` | it was marked `decided` before every decision was made | none — `decided` was the error |
+| `new-information` | something was learned that may change the answer | none yet; decisions flagged to re-evaluate |
+
+`decided-prematurely` will be used. `decided` claims *every decision is made*, and
+that is a claim someone makes in a hurry.
+
+### Rejected: a `reframing` status
+
+Proposed by the owner and rejected on the owner's own findings. Three reasons.
+
+**`framing` already covers it.** `docs/legend.md` line 32 defines it as *"Live and
+open. The reading, the wording of the problem statement, **and the decisions** are
+all still being worked."* A `reframing` status would carve out a subset of
+something the definition already contains.
+
+**It is a second activity-named status**, which is `0043` F8 — each vocabulary has
+exactly one, and it is the one a name cannot carry. A second doubles that.
+
+**It would mean the finding, or the decision, or both.** One name, three
+orthogonal facts, which is `0043` F1 reappearing before the ink is dry — and the
+next request would be `re-deciding`. **Names do not scale; a reason field does.**
+The index renders `framing (decision-wrong)`, so the distinction is visible
+without opening the file, which was the real thing wanted from a separate status.
+
+---
+
+## D9 — the Outcome vocabulary, and no word in two vocabularies
+
+`superseded → DX` was a decision Outcome and `superseded` is a bundle status.
+A reader who learns one meaning reads the other wrong. The rule that prevents the
+next collision is structural rather than a matter of taste:
+
+> **Statuses are adjectives about a condition** — *where is this?*
+> **Outcomes are past-participle verbs about an act** — *what was done to this?*
+> **No word appears in both**, and a schema check asserts the enums are disjoint.
+
+| Outcome | Means | Pointer |
+|---|---|---|
+| `proposed` | on the table; nobody has ruled | — |
+| `accepted` | adopted — this is what will be done | — |
+| `rejected` | turned down on the merits; nothing replaces it | — |
+| `deferred` | cannot be ruled yet; what it waits on is named | required |
+| `retracted` | the proposer withdrew it before a ruling | — |
+| `replaced → DX` | a later decision answers the same question instead | required |
+| `voided` | was `accepted`, then invalidated because its foundation moved | reason required |
+
+Checked disjoint against all three status vocabularies — finding, bundle and
+session — at the time of writing.
+
+**`refined → DX` and `superseded → DX` collapse into `replaced → DX`.** The
+distinction between them was *same answer better stated* versus *different
+answer*, which is a judgement nobody can check, and both tell a reader to go and
+read DX. Where the nuance matters it belongs in the decision's prose, not in a
+value an index renders.
+
+**`proposed` is stored, not left empty.** `docs/architecture/state-as-data.md`
+§4.1 requires closed vocabularies to validate, and a draft config in this
+repository already carried `"status": "unresolved"` — a value the vocabulary had
+retired three days earlier. An explicit `proposed` makes an unset outcome a load
+error rather than a reading.
+
+**`deferred` earns its place from an instance**, not from symmetry: this bundle's
+own `findings.md` invented `Decide after:` and `Gate cleared:` labels because
+there was no word for a decision that cannot be ruled yet.
+
+**D4 of this bundle is retrofitted** from `superseded → D5` to `replaced → D5` in
+the revision that ships this, rather than left as a half-change.
+
+---
+
+## D10 — reopening takes a reason, and the reason decides the exit
+
+`reopened` is the only door out of `resolved`, and until now it took no account
+of why it was opened. Nine reasons, in three families named for the layer at
+fault:
+
+| Reason | What it says | Exits to |
+|---|---|---|
+| `resolution-defective` | the work was done and is wrong | `decided` |
+| `resolution-incomplete` | the work was done and does not cover the finding | `decided` |
+| `resolution-had-side-effects` | it worked, and broke something else | `decided` |
+| `resolution-not-applied` | the record says resolved; the tree disagrees | `decided` |
+| `resolution-regressed` | it was applied, and a later change removed it | `decided` |
+| `resolution-unverifiable` | the claim cannot be checked | `decided` |
+| `decision-wrong` | the decision it carried out was wrong | `framing` |
+| `decision-inapplicable` | the decision's target no longer exists | `framing` |
+| `framing-wrong` | the problem statement was wrong | `framing` |
+
+**The reason determines the exit**, which removes a judgement call at the moment
+someone is already annoyed about a bug. A fault in the work leaves the decision
+standing, so the finding returns to `decided` and the work is redone. A fault in
+the decision or the framing returns it to `framing`.
+
+**Two of these are here because this tree has them.** `0037` F5's carve-out *was*
+written — its `findings.md` shows it pre-split, spelled `MIGRATED` — and commit
+`1c48deb` dropped it in the instruction-set split. `resolution-regressed` and
+`resolution-not-applied` are the commonest way a resolution fails here and had no
+name.
+
+**`unable to resolve` was proposed and rejected.** Reopening is reachable only
+from `resolved`, so a finding nobody can resolve never arrives at this door. It
+stays `decided` or it is `withdrawn`. Admitting the value would invite reopening a
+finding that was never resolved, and nothing would catch it.
+
+### What is recorded, and what is generated
+
+Stored: `reopened_at`, `reason`, optional `note`, the finding, decision and
+resolution ids, and **the commit SHA at reopen time**.
+
+`reopened.md` is **generated** from those fields, rendering the state as of that
+SHA. It is not a snapshot. A snapshot is a second copy of a fact and would drift,
+against the rule that a fact is written down once and everywhere else links to it;
+the SHA is a reference that cannot. The readable file survives; what goes is
+anyone's obligation to maintain it. It is a projection like every other document
+in `docs/architecture/state-as-data.md` §6.
+
+### The twenty-one carry no reason, and none is invented
+
+They were swept to `reopened` at Revision 200 with the rest of the tree, before
+this rule existed. **The reasons are owed, not lost.** Filling them retroactively
+would be inventing a reading nobody performed, which is the failure the retrofit
+rule exists to prevent: what must be preserved is data captured at the time.
+
+---
+
+## D11 — withdrawing takes a reason too
+
+Reason, optional note, and `withdrawn_at`, **per finding**. A bundle-level
+withdrawal requires one for every finding in it, which keeps bundle `withdrawn`
+derived — ladder row 4 — rather than declared, and makes withdrawing a bundle cost
+exactly as much thought as the findings in it.
+
+**A `resolved` finding is reopened first.** `docs/legend.md` line 44 already says
+`withdrawn` reaches every status except `resolved`; stating it in the procedure is
+what stops someone trying it and reading the refusal as a bug.
+
+---
+
+## D12 — supersession carries provenance, at finding granularity
+
+§9 requires the superseded bundle to be left alone and the new one to carry the
+reading forward, and says nothing about **which** finding became which. A reader
+asking *what happened to F3* has to compare two documents by eye.
+
+**Provenance goes on the new bundle only.** Not a preference — §9's *"three things
+it must NOT do"* forbids the alternative: *"the superseded `findings.md` is not
+edited … a reading is retained by being left alone, and one that shows a diff was
+not retained."* Writing provenance into the predecessor would be the diff that
+proves it was not retained. `new` has no home there in any case.
+
+**It is a property of the relationship, not of either bundle**, so it is an edge —
+the machinery `0043` D1 already built: typed edges, findings addressed
+`<bundle>/F<n>`, and an edge stored in the bundle whose session asserted it, which
+is the new one, since its session performs the supersession.
+
+| Edge | Means | Reason enumeration |
+|---|---|---|
+| `carried` | the finding comes over unchanged | none — nothing changed |
+| `successor` | retained, and substantially changed | `restated`, `narrowed`, `widened` |
+| `split` | one predecessor finding becomes several | names each target |
+| `merged` | several predecessor findings become one | names each source |
+| `dropped` | it no longer applies | `already-resolved`, `no-longer-applies`, `absorbed → F<n>`, `out-of-scope`, `owned-elsewhere → <bundle>/F<n>` |
+
+**`new` is derived, never stored.** A finding in the new bundle with no incoming
+provenance edge is new by definition. That satisfies
+`docs/architecture/state-as-data.md` §4.1 — nothing derivable is stored — and
+removes the one value that could be set wrong.
+
+### The gate: coverage and exclusivity
+
+The rule as first drafted was *every finding of the predecessor carries exactly
+one disposition edge*, and it broke on the first case anyone would hit. A **split**
+gives one predecessor finding several edges; a **merge** gives one successor
+several sources. *Exactly one* rejects both, and both are legitimate.
+
+Two clauses instead of one, and both are checkable:
+
+- **Coverage** — every predecessor finding is named by **at least one** disposition
+  edge. Zero is the real failure: a finding silently lost, which is what §9 had no
+  guard against at all.
+- **Exclusivity** — a predecessor finding disposed `dropped` carries **that edge and
+  no other**. Dropped-and-also-carried is the contradiction worth catching.
+
+**Both gate the `superseded` tag.** The tag cannot be applied until the accounting
+is complete, which makes the spec a precondition rather than a follow-up. Today
+§9 step 4 renames the tag with nothing verifying that the new bundle accounts for
+anything.
+
+### The new bundle gets no `decisions.md`
+
+§9 **step 8** currently requires the new `decisions.md` to *"re-affirm or explicitly
+drop every decision the superseded bundle recorded."* That requirement is
+withdrawn.
+
+Supersession usually happens because a reading has drifted too far to work with,
+or was resolved and needs a fresh start. **The predecessor's decisions were taken
+against the predecessor's framing**, so re-litigating them in the new bundle asks
+it to answer the old bundle's questions. The history is preserved where it was
+made and nothing is lost, because the predecessor is retained whole — which is
+the property §9 spends three prohibitions defending.
+
+The accounting step 8 was protecting has not disappeared; it has moved to the
+finding layer, where coverage makes a silent loss impossible. That is the better
+layer: findings are what carry forward, decisions are not.
+
+### A superseded bundle is readable by any session and writable by none
+
+`docs/legend.md` line 178 currently puts `superseded` among the statuses where
+*"nothing is readable."* That is the opposite of the truth and of the practice:
+this session has read superseded bundles repeatedly, and §9 exists to keep them
+readable — *"the old bundle stands untouched as the reading it was."* A retained
+reading nobody may read is a contradiction.
+
+**Readable by any session. Writable by none, including the session that owns it.**
+Terminal, and valuable precisely because it is frozen: the record of why something
+changed, and when.

@@ -136,3 +136,5 @@ onward and now covers a script written today.
 The commit hash and the manifest revision for this resolution are in
 `APPLY-MANIFEST.md`; this bundle's row in
 [`../INDEX.md`](../INDEX.md) names them.
+
+<!-- historical-record -->

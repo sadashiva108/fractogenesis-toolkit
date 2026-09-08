@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-08T14:00:57+00:00",
+  "number": "0025",
+  "bundleName": "0025-staged-ignored-files-live-parent-root-bundles",
+  "kind": "runbook",
+  "subKind": null,
+  "subject": "`staged-ignored-files/live/` holds two bundles no lookup can reach",
+  "recordedOn": "** 2026-09-01",
+  "recordedOccasion": "while deciding whether the category should join the run index.",
+  "recordedBy": {
+    "sessionBundle": null,
+    "sessionId": "** 01KcZvrKMgfenhrT9DvxW9Jk"
+  },
+  "severity": "** low. Harmless today; misleading to anyone counting bundles.",
+  "feltAt": [],
+  "scope": null,
+  "read": [],
+  "progress": null,
+  "ownership": null,
+  "lineage": null,
+  "declaredTag": "resolved",
+  "findings": [
+    {
+      "id": "F1",
+      "statement": "`staged-ignored-files/live/` holds two bundles no lookup can reach",
+      "status": "resolved",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": null,
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": {
+        "resolvedBy": [
+          "D1–D4"
+        ],
+        "whatWasDone": "Both directories opened on the volume and classified; decided that nothing in either is restored, that the labelling is correct by design, and that no producer change is owed",
+        "revision": null,
+        "commit": null
+      }
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "decision": "The question the finding asks is answered, and the answer is *no restore path is needed*",
+      "findings": [],
+      "decided": "2026-09-03",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D1 — The question the finding asks is answered, and the answer is *no restore path is needed*"
+    },
+    {
+      "id": "D2",
+      "decision": "The finding's \"no restore path\" is true of `restore-repos.sh` and not of the workflow",
+      "findings": [],
+      "decided": "2026-09-03",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D2 — The finding's \"no restore path\" is true of `restore-repos.sh` and not of the workflow"
+    },
+    {
+      "id": "D3",
+      "decision": "The two zips are not restored either, and are not the same case",
+      "findings": [],
+      "decided": "2026-09-03",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D3 — The two zips are not restored either, and are not the same case"
+    },
+    {
+      "id": "D4",
+      "decision": "No code change, and the producer is not fixed",
+      "findings": [],
+      "decided": "2026-09-03",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D4 — No code change, and the producer is not fixed"
+    },
+    {
+      "id": "D5",
+      "decision": "What this bundle does not take",
+      "findings": [],
+      "decided": "2026-09-03",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D5 — What this bundle does not take"
+    }
+  ],
+  "contributions": [],
+  "edges": [],
+  "indexNotes": null
+}

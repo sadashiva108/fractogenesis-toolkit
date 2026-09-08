@@ -1,0 +1,260 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-08T14:00:57+00:00",
+  "number": "0038",
+  "bundleName": "0038-sessions-write-into-the-tree-the-owner-commits-from",
+  "kind": "session-management",
+  "subKind": null,
+  "subject": "Sessions write into the tree the owner commits from",
+  "recordedOn": "** 2026-09-03",
+  "recordedOccasion": "on the owner's observation that a session should hold its changes until told to release them.",
+  "recordedBy": {
+    "sessionBundle": null,
+    "sessionId": "** session_019yzcjm2QneJ5ymVEQDi1bu"
+  },
+  "severity": "** two findings are high. Both are silent — nothing fails, and the damage is to what the record can be trusted to mean.",
+  "feltAt": [],
+  "scope": "** cross-cutting. Tracked files only; the artifact volume is out of scope and finding F6 says why.",
+  "read": [
+    "**"
+  ],
+  "progress": null,
+  "ownership": null,
+  "lineage": {
+    "supersedes": "0028",
+    "on": null
+  },
+  "declaredTag": "analyzing",
+  "findings": [
+    {
+      "id": "F1",
+      "statement": "Two sessions' uncommitted work interleaves in shared files, so neither can be committed alone",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F1 — two sessions' work interleaves in files neither owns alone",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": {
+        "resolvedBy": [
+          "D1"
+        ],
+        "whatWasDone": "The composition rule in §3 and `docs/legend.md`",
+        "revision": null,
+        "commit": null
+      }
+    },
+    {
+      "id": "F2",
+      "statement": "A revision's claimed validator baselines are measured on a tree containing another session's work",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F2 — a revision's validation is measured on somebody else's tree",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": {
+        "resolvedBy": [
+          "D2"
+        ],
+        "whatWasDone": "The same rule — validators run in the copy",
+        "revision": null,
+        "commit": null
+      }
+    },
+    {
+      "id": "F3",
+      "statement": "A session's work has no diff boundary, so the owner cannot review it as a unit",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F3 — no diff boundary, so no unit to review",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": {
+        "resolvedBy": [
+          "D2"
+        ],
+        "whatWasDone": "The same rule — the patch is the unit",
+        "revision": null,
+        "commit": null
+      }
+    },
+    {
+      "id": "F4",
+      "statement": "Backing out one session's change is surgical, because `git checkout` would take the other's too",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F4 — backing out is surgical",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": {
+        "resolvedBy": [
+          "D2"
+        ],
+        "whatWasDone": "The same rule — declining a patch replaces reversal",
+        "revision": null,
+        "commit": null
+      }
+    },
+    {
+      "id": "F5",
+      "statement": "A session can amend a revision the owner has already committed",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F5 — a session can amend what the owner has already committed",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": {
+        "resolvedBy": [
+          "D3"
+        ],
+        "whatWasDone": "Numbering at apply time, and `bin/check-manifest-revision.sh`",
+        "revision": null,
+        "commit": null
+      }
+    },
+    {
+      "id": "F6",
+      "statement": "The write discipline does not distinguish the write kinds `docs/legend.md` now names",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F6 — the write kinds are named but the discipline is not",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": {
+        "resolvedBy": [
+          "D4"
+        ],
+        "whatWasDone": "A separate section in `docs/legend.md`, orthogonal to the categories",
+        "revision": null,
+        "commit": null
+      }
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "decision": "a session composes its changes in a copy of the repository outside the connected folder, runs the validators there against its own change alone, and hands the owner a patch",
+      "findings": [
+        "F1"
+      ],
+      "decided": "2026-09-04",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D1 — a session composes its changes in a copy of the repository outside the connected folder, runs the validators there against its own change alone, and hands the owner a patch"
+    },
+    {
+      "id": "D2",
+      "decision": "no separate decision",
+      "findings": [
+        "F2",
+        "F3",
+        "F4"
+      ],
+      "decided": null,
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D2 — no separate decision"
+    },
+    {
+      "id": "D3",
+      "decision": "an entry is composed with its number left open and numbered when the patch is applied",
+      "findings": [
+        "F5"
+      ],
+      "decided": "2026-09-04",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D3 — an entry is composed with its number left open and numbered when the patch is applied"
+    },
+    {
+      "id": "D4",
+      "decision": "the three write categories continue to answer *when* a write is allowed. *Where* it is composed becomes its own rule, applying to all three",
+      "findings": [
+        "F6"
+      ],
+      "decided": "2026-09-04",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D4 — the three write categories continue to answer *when* a write is allowed. *Where* it is composed becomes its own rule, applying to all three"
+    }
+  ],
+  "contributions": [],
+  "edges": [
+    {
+      "kind": "carried",
+      "from": "0038/F1",
+      "to": "0028/F1",
+      "why": null,
+      "reason": null,
+      "basis": "derived",
+      "asserted_by": "** session_019yzcjm2QneJ5ymVEQDi1bu",
+      "asserted_on": "2026-09-08"
+    },
+    {
+      "kind": "carried",
+      "from": "0038/F2",
+      "to": "0028/F2",
+      "why": null,
+      "reason": null,
+      "basis": "derived",
+      "asserted_by": "** session_019yzcjm2QneJ5ymVEQDi1bu",
+      "asserted_on": "2026-09-08"
+    },
+    {
+      "kind": "carried",
+      "from": "0038/F3",
+      "to": "0028/F3",
+      "why": null,
+      "reason": null,
+      "basis": "derived",
+      "asserted_by": "** session_019yzcjm2QneJ5ymVEQDi1bu",
+      "asserted_on": "2026-09-08"
+    },
+    {
+      "kind": "carried",
+      "from": "0038/F4",
+      "to": "0028/F4",
+      "why": null,
+      "reason": null,
+      "basis": "derived",
+      "asserted_by": "** session_019yzcjm2QneJ5ymVEQDi1bu",
+      "asserted_on": "2026-09-08"
+    },
+    {
+      "kind": "carried",
+      "from": "0038/F5",
+      "to": "0028/F5",
+      "why": null,
+      "reason": null,
+      "basis": "derived",
+      "asserted_by": "** session_019yzcjm2QneJ5ymVEQDi1bu",
+      "asserted_on": "2026-09-08"
+    },
+    {
+      "kind": "carried",
+      "from": "0038/F6",
+      "to": "0028/F6",
+      "why": null,
+      "reason": null,
+      "basis": "derived",
+      "asserted_by": "** session_019yzcjm2QneJ5ymVEQDi1bu",
+      "asserted_on": "2026-09-08"
+    }
+  ],
+  "indexNotes": null
+}

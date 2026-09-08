@@ -480,3 +480,7 @@ and the relationships between findings must be typed, directed, signed and dated
 records rather than a prose line. `docs/architecture/allocation-and-inquiry.md`
 section 10 states it in full. It is one array; asking now is cheaper than
 migrating later.
+
+<!-- historical: bin/verify-findings-counts.sh -->
+<!-- historical: bin/verify-findings-headers.sh -->
+<!-- historical: bin/verify-findings-structure.sh -->

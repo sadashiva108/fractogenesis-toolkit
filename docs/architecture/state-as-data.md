@@ -77,7 +77,18 @@ widened back into a list without inventing the boundaries. `Relates to` was
 modelled as a scalar in both drafts by a bundle that carries three of them.
 
 **No presentation in the data.** `null`, never `"—"`. `null`, never `""`. No
-markdown backticks inside a value. No object whose fields are all empty, because
+markdown backticks inside an **atomic** value.
+
+The atomic/prose line was missing from the first draft and the extraction run of
+2026-09-08 is what found it, which is §9 step 3 working as designed. **Atomic
+values** — a status, a model, a kind, a reason, a date, an id — carry no ornament
+at all: `claude-opus-5`, never ``configured `claude-opus-5` ``, which is a
+rendering instruction stored as data. **Prose values** — a finding's statement, a
+decision's text, an edge's `why`, a note — are markdown by nature: their inline
+code spans name real files and are part of the sentence, and stripping them would
+damage the reading to satisfy a rule aimed at something else. The test is whether
+a renderer would ever *add* the ornament: it adds backticks around a status, and
+it does not rewrite a sentence. No object whose fields are all empty, because
 a generator renders it as an empty table row. **The renderer adds the dash and
 the backticks**; the data holds the fact or holds nothing.
 
@@ -173,14 +184,20 @@ for `handoff`, which is a **declaration**: a session says it handed on, where
     { "id": "F1",
       "statement": "A bundle's status is carried in a filename",
       "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
       "updatedAt": "2026-09-06T23:41:00-04:00",
       "sectionHeading": "F1 — the status is in the filename",
+      "reopened": null,
+      "withdrawn": null,
       "resolution": null }
   ],
 
   "decisions": [
     { "id": "D1", "decision": "…", "findings": ["F5", "F6"],
       "decided": "2026-09-07", "outcome": "accepted",
+      "answersAsOf": "2026-09-06T23:41:00-04:00",
+      "voidedReason": null,
       "sectionHeading": "D1 — the edge contract" }
   ],
 
@@ -190,6 +207,13 @@ for `handoff`, which is a **declaration**: a session says it handed on, where
   ],
 
   "edges": [
+    { "kind": "carried", "from": "0041/F1", "to": "0032/F1",
+      "why": null, "reason": null,
+      "basis": "asserted", "asserted_by": "…", "asserted_on": "…" },
+    { "kind": "dropped", "from": "0041", "to": "0032/F5",
+      "why": "the section it was about no longer exists",
+      "reason": "no-longer-applies",
+      "basis": "asserted", "asserted_by": "…", "asserted_on": "…" },
     { "kind": "constrains", "from": "0036/F1", "to": "0044/F1",
       "why": "what the checker is responsible for decides whether repairing four citations finishes the job",
       "basis": "asserted",
@@ -200,6 +224,37 @@ for `handoff`, which is a **declaration**: a session says it handed on, where
   "indexNotes": "Deliberately open — a parallel architecture is in design"
 }
 ```
+
+**The four reason fields are `0039` D7 through D12.** `statusReason` carries the
+enumerated reason for the transition that produced the current status, and
+`statusNote` the optional prose. They are `null` where no transition took a
+reason -- a first reading does not.
+
+**`reopened` and `withdrawn` are objects or `null`**, and they hold what
+`docs/legend.md` -> Reasons requires:
+
+```text
+"reopened": { "at": "2026-09-08T09:31:00-04:00",
+              "reason": "resolution-regressed",
+              "note": "the carve-out landed and 1c48deb dropped it",
+              "sha": "1c48deb…",
+              "decisionId": "D6", "resolutionId": "F5" }
+
+"withdrawn": { "at": "…", "reason": "…", "note": null }
+```
+
+`reopened.md` is generated from that object. **Nothing is copied into it** -- the
+SHA is the reference, and a copy would drift.
+
+**`answersAsOf` is what makes `0039` D8 enforceable.** It records the finding's
+`updatedAt` at the moment the decision was accepted. A decision whose
+`answersAsOf` is older than its finding's `updatedAt` was answered against a
+statement that has since changed, and `--check` flags it. Without it the
+reframing rule depends entirely on someone remembering the rule exists; with it,
+the case where nobody remembers is exactly the case that gets caught.
+
+**`voidedReason`** is set only where `outcome` is `voided`, and is one of the
+five `decided ──▶ framing` reasons.
 
 **A resolution nests inside its finding**, because the resolutions table is one
 row per finding. An orphan row becomes structurally impossible rather than
@@ -222,7 +277,7 @@ for one slot. The legend already says two of the three are not progress at all.
 |---|---|---|
 | `progress` | how far the reading has been taken | **derived**, never stored — `un-started`, `withdrawn`, `resolved`, `reopened`, `analyzing` |
 | `ownership` | who owns this | `null` when owned per the manifest, else `unclaimed` or `transferred` |
-| `lineage` | is this reading still authoritative | `null`, or `{ "supersededBy": "0041", "on": "2026-09-06" }` |
+| `lineage` | is this reading still authoritative | `null`, or `{ "supersededBy": "0041", "on": "2026-09-06" }` on the predecessor; `{ "supersedes": "0032", "on": "…" }` on the successor, whose provenance edges carry the per-finding accounting |
 
 **The ladder shrinks from eight rows to five** and stops being an override list.
 Rows 1, 1b and 2 leave because they were never derivations — they are the two
@@ -328,7 +383,7 @@ every patch today.** Regenerate into a scratch tree, diff against what is
 committed, exit non-zero on any difference. If the only differences are the ones
 the change intended, the generator is sound.
 
-It replaces `verify-findings-counts.sh` entirely and is stronger: that script
+It replaces the `findings-counts` check entirely and is stronger: that script
 detects drift after the fact, where `--check` makes drift impossible unless the
 generator is wrong, and catches that too. It also closes the gap found at
 Revision 212 — the **prose total at the foot of a manifest**, which the script

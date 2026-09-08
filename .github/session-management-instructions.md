@@ -227,7 +227,7 @@ sitting are one entry, the same way a revision editing nine documents is one.
 **Take the number at apply time, not while composing**, with
 
 ```text
-./bin/check-manifest-revision.sh
+./bin/verify-session-findings.sh manifest-revision
 ```
 
 run against the tree being applied to. **Choosing while composing is a guess**,
@@ -303,6 +303,10 @@ supersession at all.
 
 Never a single finding: correcting one resolution is `reopened`.
 
+**A superseded bundle is readable by any session and writable by none**,
+including the session that owns it. It is retained precisely so it can be read --
+this is where a reader finds out why something changed, and when.
+
 **The session with the new reading does it, and does not take ownership.**
 Superseding is not inheriting.
 
@@ -324,15 +328,19 @@ Superseding is not inheriting.
 
 1.  Take the next free number immediately before writing — another session may
     have taken the one you saw.
-2.  Create `<NNNN>-<slug>/` with its tag, `findings.md` carrying the reading
-    forward, and `decisions.md`. **Cloning the original is the usual way and is
-    not required**; a replacement may start from work already begun. What matters
-    is that it carries the reading and names what it replaces.
+2.  Create `<NNNN>-<slug>/` with its tag and `findings.md` carrying the reading
+    forward. **Cloning the original is the usual way and is not required**; a
+    replacement may start from work already begun. What matters is that it
+    carries the reading and names what it replaces.
+
 3.  The new `findings.md` header carries `Relates to`, naming what it replaces:
 
         **Relates to:** `<NNNN>-<slug>` -- **supersedes it.**
 
-4.  Rename the old bundle's tag to `STATUS-superseded`.
+4.  Rename the old bundle's tag to `STATUS-superseded`. **Not before coverage
+    and exclusivity pass**: a tag applied over an incomplete accounting is the
+    state nothing can recover from, because the predecessor may not then be
+    edited to fix it.
 5.  In the old bundle's INDEX.md row, THE STATUS CELL BECOMES THE LINK —
     `[`superseded`](<new-bundle>/)` — **always a link, never the bare word** — so one cell answers both what state the
     bundle is in and what replaced it. Notes records that the reading is retained.
@@ -341,11 +349,38 @@ Superseding is not inheriting.
 7.  Add it to that session's `findings-manifest.md` and update its counts in
     `docs/sessions/INDEX.md`. **The originating session's bundle count does not
     change** — the superseded bundle is still listed there.
-8.  `decisions.md` re-affirms or explicitly drops every decision the superseded
-    bundle recorded — decisions do not carry forward by themselves. Where it has
-    no `decisions.md` but states a conclusion in prose, name that as the thing
-    being superseded rather than departing from it silently.
+8.  **The new bundle gets no `decisions.md`.** The predecessor's decisions were
+    taken against the predecessor's framing, and it is retained whole, so the
+    history is preserved where it was made. An earlier rule required the new
+    file to re-affirm or drop each of them; that asked a fresh bundle to answer
+    the old bundle's questions. The accounting it protected has moved to the
+    finding layer, below, where coverage makes a silent loss impossible.
 9.  One `APPLY-MANIFEST.md` revision covers the whole supersession.
+
+### Provenance, and the gate on the tag
+
+**Every finding of the predecessor is accounted for**, as provenance edges stored
+in the NEW bundle. The predecessor is never edited, so provenance cannot live
+there; and it is a property of the relationship rather than of either bundle, so
+it is an edge at finding granularity rather than a field on either side.
+
+The five edge kinds and their reasons are defined in `docs/legend.md` ->
+Provenance: `carried`, `successor`, `split`, `merged`, `dropped`. **`new` is
+derived from the absence of an incoming edge and is never stored.**
+
+Two rules gate the tag in step 4, which makes the accounting a precondition
+rather than a follow-up:
+
+**Coverage.** Every predecessor finding is named by at least one disposition
+edge. Zero is the real failure -- a finding silently lost, which the procedure
+had no guard against at all.
+
+**Exclusivity.** A predecessor finding disposed `dropped` carries that edge and
+no other. Dropped-and-also-carried is the contradiction worth catching.
+
+*Exactly one edge per finding* was the first draft of both, and it rejects a
+legitimate split or merge: a split gives one predecessor finding several edges,
+a merge gives one successor several sources, and both are ordinary.
 
 Where the originating session is `closed`, its `final-summary.md` is never
 edited; the index row and the new bundle's `Relates to` are the record. If its
@@ -354,6 +389,49 @@ manifest lists the bundle, only the status cell changes.
 `superseded` where another bundle carries the reading forward; `withdrawn` where
 the reading is dropped and nothing replaces it. If a replacement is being opened,
 it is `superseded`.
+
+## 9a. Reopening a finding, and withdrawing one
+
+**`reopened` is the only door out of `resolved`**, and it takes a reason. The
+vocabulary is in `docs/legend.md` -> Reasons; this section is the procedure.
+
+### Reopening
+
+Record four things, and the fourth is what makes the other three checkable:
+
+- `reason` -- one of the nine. Free-form prose is not a reason.
+- `note` -- optional, and where the elaboration goes.
+- `reopened_at` -- when.
+- the **commit SHA** at reopen time, alongside the finding, decision and
+  resolution ids.
+
+**The reason determines the exit status**, so it is not decoration. A fault in the
+*work* -- the six `resolution-*` reasons -- leaves the decision standing, and the
+finding returns to `decided` for the work to be redone. A fault in the *decision*
+or the *framing* returns it to `framing`. Deciding the exit from the reason
+removes a judgement call at the moment someone is already annoyed about a bug.
+
+**`reopened.md` is GENERATED from those fields**, rendering the state as of that
+SHA. Do not hand-write it and do not copy the finding, decision or resolution
+into it. A snapshot is a second copy of a fact and will drift; the SHA is a
+reference that cannot. It is a projection like every other generated document --
+`docs/architecture/state-as-data.md` section 6.
+
+**A `reopened` finding persists until the record materially changes.** Reading it
+is not a change. Assignment is not, a sweep is not, a rename is not, a retrofit
+is not. Its exits are the events in the legend's diagram, and nothing else moves
+it.
+
+### Withdrawing
+
+A `reason`, an optional `note` and `withdrawn_at`, **per finding**. Withdrawing a
+whole bundle requires one for every finding in it -- which keeps bundle
+`withdrawn` derived rather than declared, and makes withdrawing a bundle cost
+exactly as much thought as the findings in it.
+
+**A `resolved` finding is reopened first.** `withdrawn` reaches every status
+except `resolved`, which is frozen. Stating it here is what stops someone trying
+it and reading the refusal as a bug.
 
 ## 10. Transferring a bundle
 
@@ -441,7 +519,7 @@ The two spaces are invisible in the file, so here they are marked with `·`:
 
 A long value stays on its one line. Wrapping it is what breaks the block.
 
-`bin/verify-findings-headers.sh` checks both halves — the wrap and the two
+`./bin/verify-session-findings.sh headers` checks both halves — the wrap and the two
 spaces.
 
 **Expect a trailing-whitespace warning from your tools, and do not act on it.**
@@ -516,14 +594,14 @@ than a session, and `Status:`, which meant a lifecycle status in some bundles an
 *"closed by revision N"* in others. Both duplicated facts the index row and the
 tag already own, and both misled.
 
-`bin/verify-findings-headers.sh` enforces this. Fields that appear in one bundle
+`./bin/verify-session-findings.sh headers` enforces this. Fields that appear in one bundle
 and nowhere else are how a schema stops being one — seventeen distinct names
 across forty-one readings is what it looked like before there was one.
 
 ### The Findings table
 
 **Required — including when the bundle holds a single finding.** Twenty-six
-bundles had none, and nothing caught it: `bin/verify-findings-counts.sh` returns
+bundles had none, and nothing caught it: `./bin/verify-session-findings.sh counts` returns
 1 when it finds no table, so a missing table read as *"one finding"* and agreed
 with every index that counted it.
 
@@ -563,7 +641,10 @@ document that restates it is a document that will contradict it.
 | D2 | <…> | F3 | <date> | `refined → D4` |
 ```
 
-**`Outcome`** is `accepted`, `rejected`, `refined → DX` or `superseded → DX`.
+**`Outcome`** is one of the seven in `docs/legend.md` -> Decision outcomes:
+`proposed`, `accepted`, `rejected`, `deferred`, `retracted`, `replaced → DX` or
+`voided`. **No Outcome value is ever also a status value** -- `superseded → DX`
+was, and a reader who learned one meaning read the other wrong.
 **Any session may add a row or change an `Outcome` while the finding is
 `framing`**; from `decided` onward only the owner does.
 **A rejected or refined decision keeps its row and its section.** That is the
@@ -603,7 +684,7 @@ sentence has one home, which is the Findings table.
 
 **The three files must agree.** Every `F<n>` cited by `decisions.md` or
 `resolutions.md` exists in `findings.md`, and every `D<n>` a resolution resolves
-by exists in `decisions.md`. `bin/verify-findings-headers.sh` checks this in both
+by exists in `decisions.md`. `./bin/verify-session-findings.sh headers` checks this in both
 directions — a citation that resolves to nothing is how a table stops being a
 record and becomes decoration.
 

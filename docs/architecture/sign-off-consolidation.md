@@ -274,3 +274,5 @@ it earns one too, naming the backup.
   `docs/runbook-findings/capture-office-stability/0013-office-stability-checklists-are-evidence-bundles/findings.md`. What *does*
   belong to this plan is §4's conversion of the producer, since its manual items
   are `record_check WARN` rows inside the automated table.
+
+<!-- proposed: bin/office-stability-checklist.sh -->

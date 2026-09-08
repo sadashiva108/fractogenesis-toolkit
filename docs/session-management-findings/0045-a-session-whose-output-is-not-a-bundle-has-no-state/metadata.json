@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-08T14:00:57+00:00",
+  "number": "0045",
+  "bundleName": "0045-a-session-whose-output-is-not-a-bundle-has-no-state",
+  "kind": "session-management",
+  "subKind": null,
+  "subject": "A session whose output is not a findings bundle has no state that fits",
+  "recordedOn": "** 2026-09-07",
+  "recordedOccasion": "from this session's own state after four revisions of work.",
+  "recordedBy": {
+    "sessionBundle": null,
+    "sessionId": "** allocation-and-inquiry-design-20260906-233205 (session_015FpYVBF7dDoDrHfKDkq8fn)"
+  },
+  "severity": "** low, and it misleads the one reader it is written for. `docs/sessions/INDEX.md` is what an owner scans to see who is doing what, and it currently shows a session that produced two architecture records and a decision as indistinguishable from one created a minute ago.",
+  "feltAt": [
+    "** `docs/legend.md` *Session states*; `docs/sessions/INDEX.md` Bundles and Findings columns"
+  ],
+  "scope": "** session management. The fix lands in `docs/legend.md` and the sessions index.",
+  "read": [
+    "**"
+  ],
+  "progress": null,
+  "ownership": "unclaimed",
+  "lineage": null,
+  "declaredTag": "unclaimed",
+  "findings": [
+    {
+      "id": "F1",
+      "statement": "Session state derives only from owned bundles, so a session that contributes and designs but owns nothing stays `available`",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F1 — `available` means two different things",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F2",
+      "statement": "The sessions index shows such a session as empty, next to sessions holding thirty findings",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F2 — the index shows the work as absent",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    }
+  ],
+  "decisions": [],
+  "contributions": [],
+  "edges": [],
+  "indexNotes": null
+}

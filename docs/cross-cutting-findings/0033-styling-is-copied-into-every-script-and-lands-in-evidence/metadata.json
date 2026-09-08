@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-08T14:00:57+00:00",
+  "number": "0033",
+  "bundleName": "0033-styling-is-copied-into-every-script-and-lands-in-evidence",
+  "kind": "cross-cutting",
+  "subKind": null,
+  "subject": "Styling is copied into every script, and it lands in the evidence",
+  "recordedOn": "** 2026-09-04",
+  "recordedOccasion": "from the owner comparing this repository against `indigo`, which solved the same problem for its own outputs.",
+  "recordedBy": {
+    "sessionBundle": null,
+    "sessionId": "** restore-apps-outstanding-20260903-000000 (session_016EbjB7M527qEFqZFzpv2C9)"
+  },
+  "severity": "** finding 5 is high and is the reason this was written down. The rest is untidiness; finding 5 is escape codes inside dated evidence of a machine that no longer exists in that state.",
+  "feltAt": [],
+  "scope": "** cross-cutting. The fix lands in `.internal/`, the authoring template, and the two report producers — shared machinery, felt in every script's output.",
+  "read": [],
+  "progress": null,
+  "ownership": "unclaimed",
+  "lineage": null,
+  "declaredTag": "unclaimed",
+  "findings": [
+    {
+      "id": "F1",
+      "statement": "Seventeen scripts each define the palette; there is no shared source",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F1 — seventeen palettes, no source",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F2",
+      "statement": "The authoring template prescribes the copy as policy",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F2 — the template prescribes the copy",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F3",
+      "statement": "The copies have already drifted, in three different directions",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F3 — they have already drifted",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F4",
+      "statement": "Fourteen of seventeen emit colour regardless of where the output goes",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F4 — colour is emitted regardless of destination",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F5",
+      "statement": "Forty-eight saved evidence artifacts carry raw ANSI escapes",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F5 — forty-eight evidence artifacts carry escape codes",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F6",
+      "statement": "Nothing checks any of it",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F6 — nothing checks any of it",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F7",
+      "statement": "`indigo`'s token fallbacks are a second copy, and five of six have already drifted",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F7 — the fallbacks are a second copy, and they have drifted",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    }
+  ],
+  "decisions": [],
+  "contributions": [],
+  "edges": [],
+  "indexNotes": null
+}

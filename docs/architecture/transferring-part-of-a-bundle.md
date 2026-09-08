@@ -30,7 +30,7 @@ whole shape follows from that.
 in this bundle that I own*, or two manifests count the same findings twice. Same
 header, different quantity — which is the defect
 `docs/session-management-findings/0037-findings-architecture-conformance/`
-finding 3 records, and the reason `bin/verify-findings-counts.sh` exists. It is
+finding 3 records, and the reason the `findings-counts` check exists. It is
 not a hypothetical: it is the exact shape of the bug that produced that checker.
 
 **2. "The owning session" stops being a single answer.** Every permission rule
@@ -84,7 +84,7 @@ It would sit in the header block of `findings.md`, between `Contributions` and
 deliberately, because it exists only if this option is taken.
 
 The `Findings` column in `findings-manifest.md` and `docs/sessions/INDEX.md`
-becomes **`Findings owned`**, and `verify-findings-counts.sh` checks it against
+becomes **`Findings owned`**, and the `findings-counts` check checks it against
 that table. Where a bundle has more than one owner its index Session cell reads
 `multiple*`, with a footnote pointing at the bundle's own table.
 

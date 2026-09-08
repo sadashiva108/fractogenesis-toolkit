@@ -33,7 +33,7 @@ work rather than widen it:
 - [[#6. Scope|6. Scope]]
 - [[#7. Implementation notes|7. Implementation notes]]
 - [[#8. Verification|8. Verification]]
-- [[#9. Open decisions|9. Open decisions]]
+- [[#9. Decisions — both settled|9. Decisions — both settled]]
 
 ---
 

@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-08T14:00:57+00:00",
+  "number": "0018",
+  "bundleName": "0018-recorder-usage-strings-understate-supported-runbooks",
+  "kind": "cross-cutting",
+  "subKind": null,
+  "subject": "Two recorders still tell you your own phase is unsupported",
+  "recordedOn": "** 2026-09-01",
+  "recordedOccasion": "item 2.",
+  "recordedBy": {
+    "sessionBundle": null,
+    "sessionId": "** 01KcZvrKMgfenhrT9DvxW9Jk"
+  },
+  "severity": "** low to fix, high to hit — it turns a working command into an error message at the moment an operator is following a runbook.",
+  "feltAt": [],
+  "scope": null,
+  "read": [],
+  "progress": null,
+  "ownership": null,
+  "lineage": null,
+  "declaredTag": "resolved",
+  "findings": [
+    {
+      "id": "F1",
+      "statement": "Two recorders still tell you your own phase is unsupported",
+      "status": "resolved",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": null,
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": {
+        "resolvedBy": [
+          "—"
+        ],
+        "whatWasDone": "—",
+        "revision": "136",
+        "commit": "not identifiable from git log — the revision is the record"
+      }
+    }
+  ],
+  "decisions": [],
+  "contributions": [],
+  "edges": [],
+  "indexNotes": null
+}
