@@ -54,6 +54,8 @@ work, since every fix is a toolkit write.
 | F10 | Nothing distinguishes a standing decision from one reopened for re-examination, and no state locks decisions while the work is in flight | `framing` |
 | F11 | The header schema binds `findings.md` only, and six of eight architecture records render their header as one run-on paragraph | `framing` |
 | F12 | No status transition names the event that triggers it, so a bulk edit moved twenty-one findings and every checker passed | `decided` |
+| F13 | The vocabulary file is named for a glance and read as a specification, and moving it is a rename with sixty-three citations | `framing` |
+| F14 | Nothing in the repository is written for someone arriving cold; the entry point is a 724-line instruction set | `framing` |
 
 ---
 
@@ -456,6 +458,62 @@ from a third direction: the framework can only check its displays against each
 other, never against what happened.
 
 ---
+
+## F13 — the vocabulary file is named for a glance and read as a specification
+
+Recorded 2026-09-08, from the owner asking where vocabulary lives.
+
+`docs/legend.md` is 540 lines holding six enumerations: finding statuses, bundle
+statuses, session states, transition reasons, decision outcomes and provenance
+kinds. **A legend is a key you glance at. This is a specification you look things
+up in**, and the name tells a reader to skim what they should be searching.
+
+The shape it wants is `docs/reference/`, which does not exist. That is also the
+shape a quick-start would point into, which is F14.
+
+**What makes it a finding rather than a `git mv`: sixty-three files cite it.**
+`0030` is the bundle about renames breaking citations, and its whole subject is
+that a rename is cheap to perform and expensive in the way this repository keeps
+recording. So this is a `0030`-class change and needs that procedure, not a
+move.
+
+**It is also not free of the thing it would fix.** Three of the legend's sections
+— *Write categories*, *Where a write is composed*, *How the two meet* — are
+procedure sitting in the vocabulary file, and `0039` D2 said in 2026-09-04 that
+the gating leaves and only the definitions stay. That half of D2 was never
+carried out. **Renaming the file before splitting it would carry the defect into
+the new name**, so this finding is ordered after D13, not before it.
+
+Undecided deliberately. The reading is that the rename is right and the sequence
+matters; whether it is worth sixty-three citations is the owner's call.
+
+## F14 — nothing here is written for someone arriving cold
+
+Recorded 2026-09-08, from the same question.
+
+Every document in this repository is written for a session that is **already
+working**: the instruction set tells it what it may write, the legend tells it
+what the words mean, the architecture records tell it why. **Nothing tells a
+person who has just opened the repository what any of it is for.**
+
+The de facto entry point is `.github/session-management-instructions.md` at 724
+lines, which is a reference manual serving as a front door.
+
+That gap has a cost this bundle can measure. **Six rules lived only in a
+workspace file outside the repository** — F9 — and three more were added to that
+file on 2026-09-08 while this finding was being written. They went there because
+there was no obvious place for *how this works* as distinct from *what the rules
+are*, and a workspace file is what a person reaches for when the repository
+offers no shelf.
+
+**This is new surface and no ruling covers it.** D1 split vocabulary from
+procedure; both are written for a session mid-task. A README and a quick-start
+answer a third question — *what is this and where do I start* — that neither
+half was ever asked.
+
+Recorded unanswered on purpose. It was discussed only in a session transcript,
+which is F9's defect one level worse: a transcript is not a file anyone can open,
+and this finding exists so the question survives the session that raised it.
 
 ## What this bundle does not cover
 

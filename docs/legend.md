@@ -448,93 +448,17 @@ The outgoing session stays `handoff` and is understood to be no longer working.
 
 ## Write categories
 
-Which files a session may touch depends on the bundle's status, so the three
-kinds are named rather than left to judgement.
+Three kinds, told apart by what is being written. **These are the definitions.
+When each is allowed, and where each is composed, are procedure** —
+`.github/session-management-instructions.md` §6. `0039` D2 and D13.
 
-| Category | What | When |
-|---|---|---|
-| **record write** | anything under `docs/` — readings, decisions, resolutions, indexes, session bundles, this file | any status. It is how deciding gets recorded, so it is never gated |
-| **toolkit write** | any other tracked file — everything the project *is*, and the rules for working on it | **only for a finding that is `decided`**, and only by the owning session |
-| **evidence write** | anything outside the repository that the project treats as a record: `<EVIDENCE_ROOT>` | never, unless the owner has said so for that specific run |
-
-A project names its own `<EVIDENCE_ROOT>` in
-[`.github/toolkit-instructions.md`](../.github/toolkit-instructions.md) — the
-volume, directory or store where its dated records live. A project with no such
-store has two categories and not three; nothing else changes.
-
-The manifest that records revisions sits outside `docs/` but accompanies **both**
-record and toolkit writes — every change of either kind takes a revision — so it
-is not a toolkit write and is not gated.
+| Category | What it is |
+|---|---|
+| **record** | a write under `docs/` — a finding, a decision, a session file |
+| **toolkit** | a write to any other tracked file |
+| **evidence** | a write to the artifact volume |
 
 **The three fail differently, which is why the distinction is worth a name.** A
-record write that turns out wrong is edited. A toolkit write that turns out wrong
-has to be found, reverted and re-reviewed. An evidence write that turns out wrong
-**may be unrecoverable**, because evidence records a state of the world that no
-longer exists — which is why it is the one category the owner grants a run at a
-time, and why a decision to change a script is never a decision to touch it.
-
-These three words are used throughout
-[`.github/session-management-instructions.md`](../.github/session-management-instructions.md),
-which states the permission rules; this file defines what each category *is*.
-
----
-
-## Where a write is composed
-
-The categories above answer WHEN a write is allowed. Where it is composed is a
-separate question, and the answer is the same for all three:
-
-**Every write — record, toolkit or evidence — is composed in a copy of the
-repository outside the owner's checkout, validated there, and handed over as a
-patch.** The owner applies it, reviews the diff, and commits.
-
-The two rules are kept apart because they do not line up. Permission varies by
-category and by a findings bundle's status; composition varies not at all. And
-the category needing the discipline most was the ungated one: record writes are
-never gated — gating them would make deciding impossible — and record writes are
-exactly what collided. A rule keyed to permission would have exempted precisely
-the writes that caused the problem.
-
-| | Varies by | Answers |
-|---|---|---|
-| **category** | what is being written, and the bundle's status | may I write this now |
-| **composition** | nothing | where do I write it |
-
-What it buys, measured over the revisions that ran this way before it was
-decided: a patch is a diff boundary the owner can review as a unit; validator
-numbers describe one session's change rather than whatever else is in the tree;
-and declining a change becomes not applying a patch rather than surgery against
-a file two sessions have touched.
-
-What it costs, stated rather than argued away: **a copy in session-local storage
-dies with the session.** It survives context compaction, which is the larger
-risk; it does not survive termination. Hand over at natural stopping points, and
-say when work exists only in the copy.
-
-The revision number is the one thing NOT taken while composing. An entry is
-written with its number left open and numbered when the patch is applied — see
-the project's next-revision helper, and the session management set for why
-choosing early cannot work.
-
-Evidence writes were already solved this way by another route: a session has no
-write permission to the artifact volume, and the owner grants it one run at a
-time. One writer, decided by the owner, at the moment of the write.
-
-The mechanics — what to run, what to check, and in what order — are in
-[`.github/session-management-instructions.md`](../.github/session-management-instructions.md)
-section 6.
-
----
-
-## How the two meet
-
-A session owns findings; a finding is worked by a session. The pointer runs both
-ways and neither side is derived from the other:
-
-- the session bundle's `findings-manifest.md` lists every finding it owns —
-  authoritative for ownership;
-- each findings bundle's INDEX.md row names the session working it.
-
-A finding can outlive several sessions, and a session can own several findings.
-Neither directory name carries the other's identifier, so neither has to be
-renamed when the relationship changes.
+bad record write is corrected by writing again. A bad toolkit write is reverted.
+**A bad evidence write may be unrecoverable**, because evidence records a state
+of the world that no longer exists to be recaptured.

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T14:22:19+00:00",
+  "updatedAt": "2026-09-08T14:59:29+00:00",
   "number": "0039",
   "bundleName": "0039-the-instruction-set-lags-the-rules-it-governs",
   "kind": "session-management",
@@ -166,6 +166,30 @@
       "reopened": null,
       "withdrawn": null,
       "resolution": null
+    },
+    {
+      "id": "F13",
+      "statement": "The vocabulary file is named for a glance and read as a specification, and moving it is a rename with sixty-three citations",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F13 — the vocabulary file is named for a glance and read as a specification",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F14",
+      "statement": "Nothing in the repository is written for someone arriving cold; the entry point is a 724-line instruction set",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F14 — nothing here is written for someone arriving cold",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
     }
   ],
   "decisions": [
@@ -179,7 +203,7 @@
         "F6"
       ],
       "decided": "2026-09-04",
-      "outcome": "accepted",
+      "outcome": "replaced → D13",
       "answersAsOf": null,
       "voidedReason": null,
       "sectionHeading": "D1 — `docs/legend.md` holds VOCABULARY. `.github/copilot-instructions.md` sections 4b–4d hold PROCEDURE. Each points at the other for the kind it does not hold, and the legend is named in §4 as required reading"
@@ -318,6 +342,22 @@
       "answersAsOf": null,
       "voidedReason": null,
       "sectionHeading": "D12 — supersession carries provenance, at finding granularity"
+    },
+    {
+      "id": "D13",
+      "decision": "`docs/legend.md` holds VOCABULARY. **`.github/session-management-instructions.md` holds PROCEDURE** — D1 said §§4b–4d of `copilot-instructions.md`, which commit `1c48deb` deleted. Each points at the other for the kind it does not hold. D2's unfinished half is carried out: the legend keeps three one-line definitions of the write categories and the gating moves to §6",
+      "findings": [
+        "F1",
+        "F2",
+        "F5",
+        "F6",
+        "F13"
+      ],
+      "decided": "2026-09-08",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D13 — the split survives, the address does not"
     }
   ],
   "contributions": [

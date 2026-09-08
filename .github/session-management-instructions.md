@@ -33,6 +33,19 @@ renamed when the relationship changes. The pointer runs both ways: a session's
 `findings-manifest.md` is authoritative for what it owns, and each bundle's index
 row names the session working it.
 
+### How the two meet
+
+A session owns findings; a finding is worked by a session. The pointer runs both
+ways and neither side is derived from the other:
+
+- the session bundle's `findings-manifest.md` lists every finding it owns —
+  authoritative for ownership;
+- each findings bundle's INDEX.md row names the session working it.
+
+A finding can outlive several sessions, and a session can own several findings.
+Neither directory name carries the other's identifier, so neither has to be
+renamed when the relationship changes.
+
 ## 2. The three findings trees
 
 **`docs/session-management-findings/` is the only tree this file governs.** It
@@ -169,8 +182,24 @@ exactly what transfers at a handoff. This file does not restate it.
 ## 6. Writing
 
 Three kinds of write, defined in `docs/legend.md`: **record** (`docs/`),
-**toolkit** (anything else tracked), **evidence** (the artifact volume). What
-they mean and when each is allowed is there.
+**toolkit** (anything else tracked), **evidence** (the artifact volume). **What
+they mean is there; when each is allowed is here** — `0039` D2 ruled that split
+on 2026-09-04 and D13 carried it out. The legend used to hold both, and §6 used
+to point at the legend for the gating, so the two files agreed with each other
+and both disagreed with the decision.
+
+**A record write is never gated.** Gating it would make deciding impossible: a
+decision is a record write, so a rule requiring a decision before a record write
+could never be satisfied from a standing start.
+
+**A toolkit write is gated on a `decided` finding.** The finding names what
+changes and why, and the write carries it out. Without one there is no record of
+what the change was for, which is the state every archaeology in this repository
+has run into.
+
+**An evidence write is granted by the owner, per run.** Anything run against the
+artifact volume is read-only unless the owner has said otherwise for that run.
+A bad evidence write may be unrecoverable.
 
 Where a write is composed is a separate rule and applies to all three:
 

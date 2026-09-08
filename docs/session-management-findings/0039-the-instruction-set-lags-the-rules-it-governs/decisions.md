@@ -30,7 +30,7 @@ without answering it for rules.
 
 | # | Decision | Findings | Decided | Outcome |
 |---|---|---|---|---|
-| D1 | `docs/legend.md` holds VOCABULARY. `.github/copilot-instructions.md` sections 4b–4d hold PROCEDURE. Each points at the other for the kind it does not hold, and the legend is named in §4 as required reading | F1, F2, F5, F6 | 2026-09-04 | `accepted` |
+| D1 | `docs/legend.md` holds VOCABULARY. `.github/copilot-instructions.md` sections 4b–4d hold PROCEDURE. Each points at the other for the kind it does not hold, and the legend is named in §4 as required reading | F1, F2, F5, F6 | 2026-09-04 | `replaced → D13` |
 | D2 | the write categories split. The legend keeps three one-line definitions of what a record, toolkit and evidence write IS. §4b takes the gating | F5 | 2026-09-04 | `accepted` |
 | D3 | `docs/INDEX.md` owns the enumeration of the `docs/` directories. §4b and `docs/architecture/findings-and-sessions.md` §2 stop listing them and point at it | F3, F4 | 2026-09-04 | `accepted` |
 | D4 | a bundle waiting on another's decision says so in prose inside its `Relates to` line, and §4c requires the bundle's INDEX.md Notes cell to say it too. `Decide after:` does not become vocabulary | F7 | 2026-09-04 | `replaced → D5` |
@@ -42,6 +42,7 @@ without answering it for rules.
 | D10 | **Reopening requires a reason** from a nine-value enumeration, an optional note, `reopened_at`, and the commit SHA at reopen time. The reason determines the exit status rather than leaving it to judgement. `reopened.md` is GENERATED from those fields, never hand-written | F12 | 2026-09-08 | `accepted` |
 | D11 | **Withdrawing requires a reason**, an optional note and `withdrawn_at`, per finding — a bundle-level withdrawal needs one for every finding in it. A `resolved` finding is reopened first; `withdrawn` reaches every status except `resolved` | F12 | 2026-09-08 | `accepted` |
 | D12 | **Supersession carries provenance as typed edges at finding granularity, stored in the new bundle only.** `carried`, `successor`, `split`, `merged` and `dropped`; `new` is derived from the absence of an incoming edge. Coverage and exclusivity gate the `superseded` tag. The new bundle gets no `decisions.md`. A superseded bundle is readable by any session and writable by none | F12 | 2026-09-08 | `accepted` |
+| D13 | `docs/legend.md` holds VOCABULARY. **`.github/session-management-instructions.md` holds PROCEDURE** — D1 said §§4b–4d of `copilot-instructions.md`, which commit `1c48deb` deleted. Each points at the other for the kind it does not hold. D2's unfinished half is carried out: the legend keeps three one-line definitions of the write categories and the gating moves to §6 | F1, F2, F5, F6, F13 | 2026-09-08 | `accepted` |
 
 ## Findings 1, 2, 5 and 6 — a rule lives where its kind lives
 
@@ -680,3 +681,50 @@ reading nobody may read is a contradiction.
 **Readable by any session. Writable by none, including the session that owns it.**
 Terminal, and valuable precisely because it is frozen: the record of why something
 changed, and when.
+
+---
+
+## D13 — the split survives, the address does not
+
+D1 was accepted on 2026-09-04 and **has never been applicable.** It named
+`.github/copilot-instructions.md` sections 4b–4d as the home for procedure, and
+commit `1c48deb` split that file into `session-management-instructions.md` and
+`toolkit-instructions.md` before anyone acted on it. What remains at
+`copilot-instructions.md` is 51 lines with no §4b, §4c or §4d at all.
+
+**The principle was never in question. Only the address was**, which is why this
+replaces D1 rather than rejecting it: `replaced → D13` says read D13 instead, and
+D1's reasoning is untouched and still worth reading.
+
+**Procedure lives in `.github/session-management-instructions.md`.** It is where
+the procedure already went, it is the file the split created for exactly this,
+and it is the half meant to be copied into another project unchanged.
+
+### D2's unfinished half, carried out here
+
+D2 ruled on 2026-09-04 that *"the legend keeps three one-line definitions of what
+a record, toolkit and evidence write IS. §4b takes the gating."* The definitions
+stayed. **The gating never left**, and §6 of the instruction set currently reads
+*"What they mean and when each is allowed is there"* — pointing at the legend for
+the gating that D2 assigned to procedure. The two files agree with each other and
+both disagree with the decision.
+
+Three sections move or go:
+
+| Section | Where it belongs | Why |
+|---|---|---|
+| *Write categories* | definitions stay; **gating to §6** | D2, four days late |
+| *Where a write is composed* | **§6, which already has it** | Pure procedure, and duplicated verbatim — the legend even says "the categories above answer WHEN; where it is composed is a separate question", which is the file arguing against its own contents |
+| *How the two meet* | **§1, The two objects** | Structure, not vocabulary. It describes a pointer between two directories |
+
+### What this does not decide
+
+**Whether the legend is renamed**, which is F13 and is the owner's call: sixty-three
+files cite it and `0030` is the bundle about what that costs. The order matters
+and is the reason F13 is recorded after this rather than folded into it —
+**renaming the file before splitting it would carry the procedure into the new
+name**, and a reference document containing procedure is the same defect with a
+better title.
+
+**Whether a README and a quick-start exist**, which is F14 and is new surface no
+ruling covers.

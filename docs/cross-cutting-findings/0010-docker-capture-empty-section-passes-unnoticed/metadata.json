@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T14:22:19+00:00",
+  "updatedAt": "2026-09-08T14:59:29+00:00",
   "number": "0010",
   "bundleName": "0010-docker-capture-empty-section-passes-unnoticed",
   "kind": "cross-cutting",
