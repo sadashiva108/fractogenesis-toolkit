@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-08T18:02:17+00:00",
+  "number": "0048",
+  "bundleName": "0048-the-session-capacity-limit-has-no-datum",
+  "kind": "session-management",
+  "subKind": null,
+  "subject": "The session capacity limit has no datum, and its only proxy points the wrong way",
+  "recordedOn": "2026-09-08",
+  "recordedOccasion": "from the allocator being asked for a data-driven session limit and finding none.",
+  "recordedBy": {
+    "sessionBundle": "allocation-and-inquiry-design-20260906-233205",
+    "sessionId": "session_015FpYVBF7dDoDrHfKDkq8fn"
+  },
+  "severity": "F1 is the blocker -- the limit the owner cares about cannot be computed from anything recorded. F2 is worse than a gap: the one available proxy would set a limit that licenses longer sessions.",
+  "feltAt": [
+    "bin/plan-findings-work.sh capacity",
+    "docs/architecture/allocation-and-inquiry.md section 4.2",
+    "every session's metadata.json"
+  ],
+  "scope": "session management. The fix is a field a session writes about itself, then a measurement.",
+  "read": [
+    "docs/architecture/the-record-and-the-graph.md section 2.3",
+    "docs/architecture/allocation-and-inquiry.md sections 4.2 and 8",
+    "every docs/sessions/*/metadata.json",
+    "the capacity report over all seven sessions, 2026-09-08"
+  ],
+  "progress": null,
+  "ownership": "unclaimed",
+  "lineage": null,
+  "findings": [
+    {
+      "id": "F1",
+      "statement": "A session's length is recorded nowhere, so the limit the owner means cannot be derived",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F1 -- the limit is about length, and length is not a field",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F2",
+      "statement": "The only available proxy says rework falls as load rises, which would license longer sessions",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F2 -- the proxy inverts",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F3",
+      "statement": "What would have to be captured to measure degradation has never been written down",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F3 -- what would have to be captured",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    }
+  ],
+  "decisions": [],
+  "contributions": [],
+  "edges": [
+    {
+      "kind": "blocks",
+      "from": "0048/F1",
+      "to": "0048/F3",
+      "why": "what to capture cannot be settled before it is agreed that nothing is captured",
+      "reason": null,
+      "basis": "asserted",
+      "asserted_by": "allocation-and-inquiry-design-20260906-233205",
+      "asserted_on": "2026-09-08"
+    }
+  ],
+  "indexNotes": "A placeholder capacity is in use and is marked as one in every report that prints it"
+}

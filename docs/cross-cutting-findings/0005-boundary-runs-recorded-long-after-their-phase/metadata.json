@@ -47,62 +47,74 @@
     {
       "id": "D1",
       "decision": "Nothing is re-run, and nothing on the volume is repaired",
-      "findings": [],
+      "findings": [
+        "F1"
+      ],
       "decided": "2026-09-04",
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D1 — Nothing is re-run, and nothing on the volume is repaired"
+      "sectionHeading": "D1 \u2014 Nothing is re-run, and nothing on the volume is repaired"
     },
     {
       "id": "D2",
       "decision": "`entry` and `initial` are first-wins",
-      "findings": [],
+      "findings": [
+        "F1"
+      ],
       "decided": "2026-09-04",
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D2 — `entry` and `initial` are first-wins"
+      "sectionHeading": "D2 \u2014 `entry` and `initial` are first-wins"
     },
     {
       "id": "D3",
       "decision": "A later run at a first-wins point is flagged for a person, never rejected",
-      "findings": [],
+      "findings": [
+        "F1"
+      ],
       "decided": "2026-09-04",
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D3 — A later run at a first-wins point is flagged for a person, never rejected"
+      "sectionHeading": "D3 \u2014 A later run at a first-wins point is flagged for a person, never rejected"
     },
     {
       "id": "D4",
       "decision": "The hazard is written where the machinery is read",
-      "findings": [],
+      "findings": [
+        "F1"
+      ],
       "decided": "2026-09-04",
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D4 — The hazard is written where the machinery is read"
+      "sectionHeading": "D4 \u2014 The hazard is written where the machinery is read"
     },
     {
       "id": "D5",
       "decision": "`--note` is added to both recorders",
-      "findings": [],
+      "findings": [
+        "F1"
+      ],
       "decided": "2026-09-04",
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D5 — `--note` is added to both recorders"
+      "sectionHeading": "D5 \u2014 `--note` is added to both recorders"
     },
     {
       "id": "D6",
       "decision": "Five pointers move, one is pinned back, four are the owner's to decide",
-      "findings": [],
+      "findings": [
+        "F1"
+      ],
       "decided": "2026-09-04",
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D6 — Five pointers move, one is pinned back, four are the owner's to decide"
+      "sectionHeading": "D6 \u2014 Five pointers move, one is pinned back, four are the owner's to decide"
     }
   ],
   "contributions": [],

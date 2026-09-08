@@ -53,7 +53,8 @@ class Graph(object):
         self.root = r
         self.bundles, self.sessions, self.edges = {}, {}, []
         for f in glob.glob(os.path.join(r, "docs/*-findings/**/metadata.json"), recursive=True):
-            d = json.load(io.open(f, encoding="utf-8"))
+            with io.open(f, encoding="utf-8") as fh:
+                d = json.load(fh)
             d["_dir"] = os.path.relpath(os.path.dirname(f), r)
             d["_findings"] = d.get("findings") or []
             d["_progress"] = ladder([x.get("status") for x in d["_findings"]])
@@ -63,7 +64,8 @@ class Graph(object):
                 e["_home"] = d["number"]
                 self.edges.append(e)
         for f in glob.glob(os.path.join(r, "docs/sessions/*/metadata.json")):
-            d = json.load(io.open(f, encoding="utf-8"))
+            with io.open(f, encoding="utf-8") as fh:
+                d = json.load(fh)
             d["_dir"] = os.path.relpath(os.path.dirname(f), r)
             self.sessions[d["bundleName"]] = d
         # blast radius: how many OTHER bundles name this one anywhere in their data
@@ -117,7 +119,10 @@ def holds(g, queue):
     return h
 
 
-DEFAULT_CAPACITY = 22.0     # cost units before a session is too long to add to
+# A CHOSEN number, not a measured one. `0048` records why: a session's length is
+# recorded nowhere, and the only proxy available (rework against load) inverts.
+# Every report that prints a capacity says which kind it is.
+DEFAULT_CAPACITY = 20.0
 NEW_SESSION_SETUP = 3.0     # a new session is not free: bundle, prompt, cold read
 
 
@@ -260,6 +265,99 @@ def rank(g, fr):
     return sorted(fr, key=lambda x: -x["score"])
 
 
+# ------------------------------------------------------- conformance detectors
+FINDING_STATUSES = ("un-started", "framing", "decided", "resolved",
+                    "reopened", "withdrawn")
+BUNDLE_PROGRESS = ("un-started", "analyzing", "resolved", "reopened", "withdrawn")
+OWNERSHIP = (None, "unclaimed", "transferred")
+OUTCOMES = ("accepted", "rejected")          # plus `refined -> DX`, `superseded -> DX`
+KINDS = ("runbook", "cross-cutting", "instruction-set", "session-management")
+
+
+def is_clone(b):
+    """A bundle re-reading one it supersedes.
+
+    0047 F5: its findings are reset to `framing` while it carries the original's
+    decisions and resolutions forward, so `decision ahead of its finding` and
+    `resolution ahead of its finding` are what a correct clone looks like. Without
+    this exemption the sweep reported 65 false positives out of 77 on its first
+    run -- the fourth instrument here to fail loudly against a healthy tree.
+    """
+    for e in (b.get("edges") or []):
+        if e.get("kind") in ("carried", "successor"):
+            return True
+    return bool((b.get("lineage") or {}).get("supersedes"))
+
+
+def conformance(g):
+    """Every comparison the six checkers do not make. Returns (code, bundle, detail)."""
+    out = []
+    owned = set()
+    for s in g.sessions.values():
+        for ob in (s.get("ownedBundles") or []):
+            owned.add(str(ob.get("number"))[:4])
+    for n, b in sorted(g.bundles.items()):
+        fs = b["_findings"]
+        sts = [x.get("status") for x in fs]
+        clone = is_clone(b)
+        for x in fs:
+            if x.get("status") not in FINDING_STATUSES:
+                out.append(("VOCAB", n, "%s has status %r" % (x["id"], x.get("status"))))
+        if b.get("ownership") not in OWNERSHIP:
+            out.append(("VOCAB", n, "ownership %r" % b.get("ownership")))
+        if b.get("kind") not in KINDS:
+            out.append(("VOCAB", n, "kind %r" % b.get("kind")))
+        # a bundle closed to every session must hold nothing open to one
+        if b.get("ownership") in ("unclaimed", "transferred"):
+            live = [x["id"] for x in fs if x.get("status") != "un-started"]
+            if live:
+                out.append(("CLOSED-BUNDLE-LIVE-FINDING", n,
+                            "%s is %s but %s are past un-started"
+                            % (n, b["ownership"], ",".join(live))))
+        # ownership null and in no manifest: owned by nobody, or nobody said
+        if b.get("ownership") is None and n not in owned \
+           and b["_progress"] not in ("resolved", "withdrawn") \
+           and not (b.get("lineage") or {}).get("supersededBy"):
+            out.append(("ORPHAN", n, "ownership is null and no manifest lists it"))
+        ids = set(x["id"] for x in fs)
+        cited = set()
+        for d in (b.get("decisions") or []):
+            o = d.get("outcome") or ""
+            if o not in OUTCOMES and not o.startswith(("refined", "superseded")):
+                out.append(("VOCAB", n, "%s outcome %r" % (d.get("id"), o)))
+            fl = d.get("findings") or []
+            if not fl:
+                out.append(("UNCITED-DECISION", n, "%s cites no finding" % d.get("id")))
+            for fid in fl:
+                cited.add(fid)
+                if fid not in ids:
+                    out.append(("DANGLING-CITATION", n,
+                                "%s cites %s, which does not exist" % (d.get("id"), fid)))
+        if not clone:
+            for x in fs:
+                if x.get("status") in ("framing", "un-started") and x["id"] in cited:
+                    if all(((d.get("outcome") or "") == "accepted")
+                           for d in (b.get("decisions") or [])
+                           if x["id"] in (d.get("findings") or [])):
+                        out.append(("DECISION-AHEAD-OF-FINDING", n,
+                                    "%s is %s with every decision accepted"
+                                    % (x["id"], x["status"])))
+                if x.get("resolution") and x.get("status") not in INERT:
+                    out.append(("RESOLUTION-AHEAD-OF-FINDING", n,
+                                "%s is %s and carries a resolution"
+                                % (x["id"], x["status"])))
+        if sts and ladder(sts) != (b.get("progress") or ladder(sts)):
+            out.append(("LADDER", n, "stored progress disagrees with the rows"))
+        # a citation to a bundle whose authority has moved (0046)
+        for e in (b.get("edges") or []):
+            t = g.bundles.get(str(e.get("to", "")).split("/")[0])
+            if t and (t.get("lineage") or {}).get("supersededBy") \
+               and e.get("kind") not in ("carried", "successor", "supersedes"):
+                out.append(("EDGE-TO-SUPERSEDED", n,
+                            "%s edge to %s, which is superseded" % (e.get("kind"), e.get("to"))))
+    return out
+
+
 # ---------------------------------------------- 5a. capacity, derived from rework
 def quality(g):
     """Per session: how much it held, and how much of what it decided came back.
@@ -340,17 +438,22 @@ def cmd_allocate(g, a):
                only=split_arg(a.only), skip=split_arg(a.exclude))
     excluded = len(select(g)) - len(q)
     cap = a.capacity
-    if cap is None:
-        cap, rows = derive_capacity(g)
+    if cap == "auto":
+        cap, _ = derive_capacity(g)
         if cap is None:
             cap = DEFAULT_CAPACITY
-            print("CAPACITY  no session yet has 2+ decisions and a clean record; "
-                  "falling back to the default %.0f\n" % cap)
+            print("CAPACITY  %.1f cost units, CHOSEN -- nothing to derive from.\n" % cap)
         else:
-            print("CAPACITY  %.1f cost units, derived: the largest load any session "
-                  "carried while keeping its rework rate at or under 25%%.\n"
-                  "          Seven sessions is an argument, not a sample -- "
-                  "run `capacity` to see the rows.\n" % cap)
+            print("CAPACITY  %.1f cost units, DERIVED from rework against load.\n"
+                  "          Read `capacity` before trusting it: the proxy inverts,"
+                  " and `0048` records why.\n" % cap)
+    elif cap is None:
+        cap = DEFAULT_CAPACITY
+        print("CAPACITY  %.1f cost units, CHOSEN not measured -- `0048`. Pass"
+              " --capacity N or --capacity auto.\n" % cap)
+    else:
+        cap = float(cap)
+        print("CAPACITY  %.1f cost units, given on the command line.\n" % cap)
     if excluded:
         print("FILTERED  %d of %d unclaimed bundles excluded by the selection\n"
               % (excluded, len(select(g))))
@@ -508,13 +611,34 @@ def cmd_capacity(g, a):
           " count what\n  came back, not what should have." % len(rows))
 
 
+def cmd_check(g, a):
+    rows = conformance(g)
+    by = defaultdict(list)
+    for code, n, detail in rows:
+        by[code].append((n, detail))
+    print("CONFORMANCE  %d finding(s) across %d bundles\n" % (len(rows), len(g.bundles)))
+    for code in sorted(by):
+        print("  %s  (%d)" % (code, len(by[code])))
+        for n, d in by[code][:10]:
+            print("      %s  %s" % (n, d))
+        if len(by[code]) > 10:
+            print("      ... and %d more" % (len(by[code]) - 10))
+        print()
+    if not rows:
+        print("  Nothing. Every comparison the six checkers do not make, holds.")
+    print("  Superseding clones are exempt from the two ordering comparisons"
+          " -- 0047 F5.")
+
+
 def main():
     p = argparse.ArgumentParser(prog="plan-findings-work")
-    p.add_argument("command", choices=["graph", "allocate", "ask", "capacity"])
+    p.add_argument("command",
+                   choices=["graph", "allocate", "ask", "capacity", "check"])
     p.add_argument("--new-sessions", type=int, default=0,
                    help="how many new session bundles to allow; -1 sizes it")
-    p.add_argument("--capacity", type=float, default=None,
-                   help="cost units a session may hold; omitted, it is derived")
+    p.add_argument("--capacity", default=None,
+                   help="cost units a session may hold: a number, or `auto` to "
+                        "derive it. Omitted, a chosen default is used -- see 0048")
     p.add_argument("--only-kind", help="allocate only these kinds, comma separated")
     p.add_argument("--exclude-kind", help="never allocate these kinds")
     p.add_argument("--only", help="allocate only these bundle numbers")
@@ -522,7 +646,7 @@ def main():
     a = p.parse_args()
     g = Graph(root())
     {"graph": cmd_graph, "allocate": cmd_allocate, "ask": cmd_ask,
-     "capacity": cmd_capacity}[a.command](g, a)
+     "capacity": cmd_capacity, "check": cmd_check}[a.command](g, a)
 
 
 if __name__ == "__main__":

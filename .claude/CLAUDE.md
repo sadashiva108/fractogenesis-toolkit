@@ -14,11 +14,15 @@ authoritative place and apply to Claude exactly as they do to Copilot.
 - **Script authoring:** `.github/ai-prompts/script-prompts/bash-script-authoring-and-review.md`
   with `.github/ai-templates/script-templates/`.
 - **Script placement:** `.github/guides/script-types-and-locations.md`.
-- **Parked work:** the findings indexes under `docs/runbook-findings/` and
-  `docs/cross-cutting-findings/`, and `docs/sessions/` — read them before
+- **Session management:** `.github/session-management-instructions.md` and
+  `docs/legend.md` — how sessions, findings bundles, statuses and states work.
+  **Required reading before any write under `docs/`.** The conformant session
+  prompt is `.github/ai-prompts/session-management/conformant-prompt.md`.
+- **Parked work:** the findings indexes under `docs/runbook-findings/`,
+  `docs/cross-cutting-findings/`, `docs/instruction-set-findings/` and
+  `docs/session-management-findings/`, and `docs/sessions/` — read them before
   starting in an unfamiliar area, and park a second defect as a findings bundle
-  instead of widening the task. All of `docs/` is tracked; the rules are in
-  `.github/copilot-instructions.md` sections 4b through 4d.
+  instead of widening the task. All of `docs/` is tracked.
 
 Do not restate their contents here. When guidance changes, edit the source above
 so there is one place to maintain.

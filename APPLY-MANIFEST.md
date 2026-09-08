@@ -1,4 +1,6 @@
 # Apply Manifest
+**Revision 231** — supersedes Revision 230 and earlier. The capacity stops pretending to be measured and `0048` records why. The session management framework gets a test suite — 38 contracts and regressions over fixtures — and its first act was to catch a repair from Revision 230 that had gone to the projection instead of the record. The conformant prompt moves into the repository, a clone's inheritance is written down once, and a session-management guard joins the runbook one. **Under an owner override.**
+
 **Revision 230** — supersedes Revision 229 and earlier. The two checker failures are fixed at their actual sources — nineteen mechanical citations in the tree, one stale count, and section 11, which had gone on permitting the `—` that Revision 219's ruling retired. The allocator gains selection, a dry run that says create or clone, and a capacity derived from evidence — which reports that the evidence points the other way and says so. `docs/architecture/the-record-and-the-graph.md` measures the eight gaps between the state format and what reads it.
 
 **Revision 229** — supersedes Revision 228 and earlier. The allocator and the interviewer exist as one entrypoint, `bin/plan-findings-work.sh`, reading `metadata.json` directly. Running them found what the record proposing them had missed: the objective had no term for a session being too long, which is the owner's actual complaint, and the exact-search ceiling is reached at eighteen bundles rather than forty because proposing new sessions multiplies the destinations. **Under an owner override.**
@@ -590,6 +592,104 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
 
 ---
+
+## Revision 231 — a capacity that admits what it is, and tests that caught the last revision
+
+### The capacity is chosen, and says so
+
+`--capacity` now takes a number, or `auto` to derive one, and **omitted it uses a
+chosen default of 20 and prints the word CHOSEN**. Revision 230 derived 35.2 and
+buried the caveat in a report nobody had to read.
+
+`0048` carries the reading. **F1**: a session's length is recorded nowhere, and
+length is what *too long* means — the record holds size instead, and the tooling
+had been treating them as one quantity because size is the one that exists.
+**F2**: the only proxy inverts, so a limit derived from it licenses longer
+sessions. **F3**: what would have to be captured, written down before the
+measuring rather than after — length in three senses, **the turn a decision was
+taken at** (the one that would show a curve rather than one point per session),
+and an outcome not scored by the lineage that produced the work.
+
+`0048` also carries **the first asserted decision edge in the tree**: `0048/F1
+blocks 0048/F3`.
+
+### A test suite, and what it caught
+
+`./bin/test-session-management.sh` — **38 tests, fixtures only, never the real
+tree**, so a test can be wrong on purpose. Two kinds, and the difference is the
+point:
+
+**Contracts** assert what the documents say. The ladder, all five derived rows in
+order, including that `withdrawn` outranks `resolved` and that `reopened`
+dominates the inert *only* when reopening is the whole of the live work. That
+`progress` is derived and never stored. The closed vocabularies. That a bundle
+closed to every session holds nothing open to one. **If a contract changes, a
+test fails and the change is deliberate rather than silent** — which is the
+answer to the doubt that prompted this.
+
+**Regressions** each name a defect the tree actually suffered. Revision 197's
+bundle reading `resolved` while a row was live. `0047` F5's clone exemption, in
+both directions — a clone is exempt, a bundle that is not a clone is not.
+`0047` F2's six accepted decisions that never moved a finding. `0046`'s edge into
+a superseded bundle, and its lineage counterpart which is expected. Revision
+229's session liveness, its greedy packing, and its two proposals with one name.
+
+**The suite's first act was to catch Revision 230.** The conformance detector
+reported 40 uncited decisions where Revision 230 claimed 11 — because that repair
+wrote nineteen citations into `decisions.md` and **not into `metadata.json`,
+which is the authoritative record.** The markdown and the data had diverged and
+every checker passed. The nineteen are now in the record, and the remaining 21
+are `0030`, `0031`, `0032` and `0035`, which need a reading and not a repair.
+
+### `check`, which is the sweep made permanent
+
+`./bin/plan-findings-work.sh check` runs every comparison the six checkers do not
+make: closed bundles holding live findings, orphans, dangling and uncited
+citations, decisions and resolutions ahead of their findings, ladder
+disagreement, vocabulary, and edges into superseded bundles. **The superseding
+clone exemption is built in and tested**, so it cannot repeat the 65-of-77 first
+run that `0047` F5 records.
+
+### The conformant prompt comes into the repository
+
+`.github/ai-prompts/session-management/` now holds `conformant-prompt.md` and
+`session-management-prompt.md`. They were in the owner's workspace, which is
+`0039` F9 exactly: outside a fresh clone, taking no revision, invisible to every
+checker. **Any copy still in `reimage-workspace/session-prompts/` is stale.**
+
+`what-a-session-is-given.md` beside them is the complete list — what is pasted,
+what is read from the repository, what a clone inherits beyond a created session
+(the source's customisations, **not its bundles**), and what a handoff adds. It
+says when to clone rather than create: clone where the work pulls on what the
+source holds, create where nothing ties them, because a clone's inherited context
+is then dead weight read every turn. **If a session has to be told something not
+on that list, that is a finding against the list.**
+
+`.claude/CLAUDE.md` gains the session-management set and loses its pointer to
+`.github/copilot-instructions.md` sections 4b–4d, which stopped existing when
+Revision 191 split the file.
+
+### `.claude/hooks/session-guard.sh`
+
+A companion to `runbook-guard.sh`, same shape: PostToolUse, exits 0 always,
+Bash 3.2 clean. When a write touches a session-management record it names the
+rule — that the bundle is `unclaimed` and closed, that it is superseded and
+retained, that a `findings.md` is written once, that `progress` is derived, that
+an instruction-set edit is a gated toolkit write, that a prompt tracks.
+
+### Validators
+
+| Checker | Result |
+|---|---|
+| `test-session-management.sh` | **38 tests, 0 failures** |
+| `verify-session-findings.sh` | counts 0 FAIL, structure 0 FAIL, headers 11 FAIL |
+| `verify-script-portability.sh` | 0 WARN, 0 FAIL |
+| `verify-doc-paths.sh --all` | 0 MISSING, 0 ANCHOR BROKEN |
+| `verify-runbook-structure.sh` | 213 PASS / 5 WARN / 25 FAIL — standing baseline |
+
+The eleven headers failures are `0030` and `0035`, unchanged and owed a reading.
+Composed in a copy outside the owner's checkout; Linux VM, Bash 5.1.16, GNU
+coreutils. **Not macOS.**
 
 ## Revision 230 — the checkers pass, the allocator chooses, and eight gaps are measured
 

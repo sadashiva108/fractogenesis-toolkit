@@ -32,7 +32,7 @@
       "withdrawn": null,
       "resolution": {
         "resolvedBy": [],
-        "whatWasDone": "The two lineage names were nowhere defined — capture-office-stability.md → ### Terminology gains an Evidence row and an Assessment row",
+        "whatWasDone": "The two lineage names were nowhere defined \u2014 capture-office-stability.md \u2192 ### Terminology gains an Evidence row and an Assessment row",
         "revision": "this revision",
         "commit": null
       }
@@ -42,52 +42,62 @@
     {
       "id": "D1",
       "decision": "The finding is resolved by work already shipped, not by new work",
-      "findings": [],
+      "findings": [
+        "F1"
+      ],
       "decided": "2026-09-03",
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D1 — The finding is resolved by work already shipped, not by new work"
+      "sectionHeading": "D1 \u2014 The finding is resolved by work already shipped, not by new work"
     },
     {
       "id": "D2",
       "decision": "The two lineages stand, and the names are correct",
-      "findings": [],
+      "findings": [
+        "F1"
+      ],
       "decided": "2026-09-03",
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D2 — The two lineages stand, and the names are correct"
+      "sectionHeading": "D2 \u2014 The two lineages stand, and the names are correct"
     },
     {
       "id": "D3",
       "decision": "Define the two words where a reader looks for them",
-      "findings": [],
+      "findings": [
+        "F1"
+      ],
       "decided": "2026-09-03",
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D3 — Define the two words where a reader looks for them"
+      "sectionHeading": "D3 \u2014 Define the two words where a reader looks for them"
     },
     {
       "id": "D4",
       "decision": "The item 4 dependency is discharged",
-      "findings": [],
+      "findings": [
+        "F1"
+      ],
       "decided": "2026-09-03",
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D4 — The item 4 dependency is discharged"
+      "sectionHeading": "D4 \u2014 The item 4 dependency is discharged"
     },
     {
       "id": "D5",
       "decision": "What is not taken into this bundle",
-      "findings": [],
+      "findings": [
+        "F1"
+      ],
       "decided": "2026-09-03",
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D5 — What is not taken into this bundle"
+      "sectionHeading": "D5 \u2014 What is not taken into this bundle"
     }
   ],
   "contributions": [],

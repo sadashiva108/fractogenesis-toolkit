@@ -32,7 +32,7 @@
       "withdrawn": null,
       "resolution": {
         "resolvedBy": [
-          "D1–D4"
+          "D1\u2013D4"
         ],
         "whatWasDone": "Both directories opened on the volume and classified; decided that nothing in either is restored, that the labelling is correct by design, and that no producer change is owed",
         "revision": null,
@@ -44,52 +44,62 @@
     {
       "id": "D1",
       "decision": "The question the finding asks is answered, and the answer is *no restore path is needed*",
-      "findings": [],
+      "findings": [
+        "F1"
+      ],
       "decided": "2026-09-03",
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D1 — The question the finding asks is answered, and the answer is *no restore path is needed*"
+      "sectionHeading": "D1 \u2014 The question the finding asks is answered, and the answer is *no restore path is needed*"
     },
     {
       "id": "D2",
       "decision": "The finding's \"no restore path\" is true of `restore-repos.sh` and not of the workflow",
-      "findings": [],
+      "findings": [
+        "F1"
+      ],
       "decided": "2026-09-03",
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D2 — The finding's \"no restore path\" is true of `restore-repos.sh` and not of the workflow"
+      "sectionHeading": "D2 \u2014 The finding's \"no restore path\" is true of `restore-repos.sh` and not of the workflow"
     },
     {
       "id": "D3",
       "decision": "The two zips are not restored either, and are not the same case",
-      "findings": [],
+      "findings": [
+        "F1"
+      ],
       "decided": "2026-09-03",
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D3 — The two zips are not restored either, and are not the same case"
+      "sectionHeading": "D3 \u2014 The two zips are not restored either, and are not the same case"
     },
     {
       "id": "D4",
       "decision": "No code change, and the producer is not fixed",
-      "findings": [],
+      "findings": [
+        "F1"
+      ],
       "decided": "2026-09-03",
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D4 — No code change, and the producer is not fixed"
+      "sectionHeading": "D4 \u2014 No code change, and the producer is not fixed"
     },
     {
       "id": "D5",
       "decision": "What this bundle does not take",
-      "findings": [],
+      "findings": [
+        "F1"
+      ],
       "decided": "2026-09-03",
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D5 — What this bundle does not take"
+      "sectionHeading": "D5 \u2014 What this bundle does not take"
     }
   ],
   "contributions": [],

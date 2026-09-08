@@ -44,32 +44,38 @@
     {
       "id": "D1",
       "decision": "Fix the sentence, not the directory",
-      "findings": [],
+      "findings": [
+        "F1"
+      ],
       "decided": "2026-09-04",
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D1 — Fix the sentence, not the directory"
+      "sectionHeading": "D1 \u2014 Fix the sentence, not the directory"
     },
     {
       "id": "D2",
       "decision": "The empty directory is removed locally, and that is not a repository change",
-      "findings": [],
+      "findings": [
+        "F1"
+      ],
       "decided": "2026-09-04",
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D2 — The empty directory is removed locally, and that is not a repository change"
+      "sectionHeading": "D2 \u2014 The empty directory is removed locally, and that is not a repository change"
     },
     {
       "id": "D3",
       "decision": "`reimaging-scripts-guide.md`'s tree is a separate finding, and is bigger than this one",
-      "findings": [],
+      "findings": [
+        "F1"
+      ],
       "decided": "2026-09-04",
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D3 — `reimaging-scripts-guide.md`'s tree is a separate finding, and is bigger than this one"
+      "sectionHeading": "D3 \u2014 `reimaging-scripts-guide.md`'s tree is a separate finding, and is bigger than this one"
     }
   ],
   "contributions": [],
