@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T15:52:47+00:00",
+  "updatedAt": "2026-09-08T16:21:41+00:00",
   "number": "0039",
   "bundleName": "0039-the-instruction-set-lags-the-rules-it-governs",
   "kind": "session-management",
@@ -98,19 +98,26 @@
     {
       "id": "F7",
       "statement": "The vocabulary cannot say that one bundle must be decided before another",
-      "status": "decided",
+      "status": "resolved",
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
       "sectionHeading": "F7 — the vocabulary cannot express decision order",
       "reopened": null,
       "withdrawn": null,
-      "resolution": null
+      "resolution": {
+        "resolvedBy": [
+          "D5"
+        ],
+        "whatWasDone": "Ordering became a typed, directed edge, stored in the asserting bundle and carried in metadata.json",
+        "revision": "222",
+        "commit": "42d08a4"
+      }
     },
     {
       "id": "F8",
       "statement": "The rule says where a change is composed, not when it is handed over",
-      "status": "framing",
+      "status": "decided",
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
@@ -158,14 +165,26 @@
     {
       "id": "F12",
       "statement": "No status transition names the event that triggers it, so a bulk edit moved twenty-one findings and every checker passed",
-      "status": "decided",
+      "status": "resolved",
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
       "sectionHeading": "F12 — a status transition names no trigger, and a sweep is indistinguishable from a reading",
       "reopened": null,
       "withdrawn": null,
-      "resolution": null
+      "resolution": {
+        "resolvedBy": [
+          "D7",
+          "D8",
+          "D9",
+          "D10",
+          "D11",
+          "D12"
+        ],
+        "whatWasDone": "Every transition in docs/legend.md names its triggering event; the reason, outcome and provenance vocabularies are defined; §9 gains the provenance gate and §9a the reopen and withdraw procedures",
+        "revision": "221, 223",
+        "commit": "b09a69d, 5ad7304"
+      }
     },
     {
       "id": "F13",
@@ -194,26 +213,84 @@
     {
       "id": "F15",
       "statement": "A check that validates citations cannot detect their absence: ten decisions cited no finding and every checker passed",
-      "status": "decided",
+      "status": "resolved",
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
       "sectionHeading": "F15 — a check that validates citations cannot detect their absence",
       "reopened": null,
       "withdrawn": null,
-      "resolution": null
+      "resolution": {
+        "resolvedBy": [
+          "D15"
+        ],
+        "whatWasDone": "A decision must cite at least one F<n>, checked in verify-findings-headers.sh",
+        "revision": "224",
+        "commit": "44c5289"
+      }
     },
     {
       "id": "F16",
       "statement": "Every check asks whether a document is well formed; none asks whether it is complete, and 162 contaminated fields passed all of them",
-      "status": "decided",
+      "status": "resolved",
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
       "sectionHeading": "F16 — every check asks whether a document is well formed; none asks whether it is complete",
       "reopened": null,
       "withdrawn": null,
+      "resolution": {
+        "resolvedBy": [
+          "D16",
+          "D17"
+        ],
+        "whatWasDone": "A completeness check joined the verify group, and the extractor refuses to run once the markdown is a projection",
+        "revision": "225",
+        "commit": "44c5289"
+      }
+    },
+    {
+      "id": "F17",
+      "statement": "Resolving has no procedure: the framework's commonest transition is the only one with no numbered steps, and seven resolutions went unrecorded because of it",
+      "status": "decided",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F17 — resolving has no procedure",
+      "reopened": null,
+      "withdrawn": null,
       "resolution": null
+    },
+    {
+      "id": "F18",
+      "statement": "`accepted` cannot say whether a decision's work was carried out, so a decision that changed nothing reads identically to one that changed the tree",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F18 — `accepted` cannot say whether the work was done",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F19",
+      "statement": "Nothing scopes the record to this repository, so work a session does in another connected project has no stated home and no rule keeping it out",
+      "status": "resolved",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F19 — nothing scopes the record to this repository",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": {
+        "resolvedBy": [
+          "D19"
+        ],
+        "whatWasDone": "The record is scoped to this repository and foreign named as a fourth write kind, in §6 and the legend",
+        "revision": "227",
+        "commit": "*(this revision)*"
+      }
     }
   ],
   "decisions": [
@@ -431,6 +508,31 @@
       "answersAsOf": null,
       "voidedReason": null,
       "sectionHeading": "D17 — the extractor is single-use, and refuses to prove it"
+    },
+    {
+      "id": "D18",
+      "decision": "Resolving gets a numbered procedure, §9b: carry out the decision, write the `resolutions.md` row naming the decision and the revision, then move the finding to `resolved` — in that order, because the row is the evidence the status asserts. A `decided` finding whose decisions are all carried out and which has no row is a defect a check can name",
+      "findings": [
+        "F17"
+      ],
+      "decided": "2026-09-08",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D18 — resolving gets a procedure"
+    },
+    {
+      "id": "D19",
+      "decision": "**The record covers this repository; the rules governing it live in this repository.** Work a session does in another project is not recorded here — no manifest entry, no finding, no `metadata.md` resource row — and a rule the framework depends on is not left in a file outside it. A fourth write kind, `foreign`, names the case so it is excluded deliberately rather than by omission",
+      "findings": [
+        "F19",
+        "F9"
+      ],
+      "decided": "2026-09-08",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D19 — the record covers this repository, and the rules live in it"
     }
   ],
   "contributions": [

@@ -457,6 +457,7 @@ When each is allowed, and where each is composed, are procedure** —
 | **record** | a write under `docs/` — a finding, a decision, a session file |
 | **toolkit** | a write to any other tracked file |
 | **evidence** | a write to the artifact volume |
+| **`foreign`** | a write to any other connected folder — another project entirely. Ordinary, and **not recorded here**: `0039` D19 |
 
 **The three fail differently, which is why the distinction is worth a name.** A
 bad record write is corrected by writing again. A bad toolkit write is reverted.

@@ -41,7 +41,7 @@ platform.
 | What | Where |
 |---|---|
 | Repository | `/Users/dkittrell/workspace/shiva/fractogenesis-toolkit` — connected read/write; **never written to by this session** |
-| Scratch copy | `~/scratch/fractogenesis-toolkit` in the Linux VM, refreshed from the checkout at `3828d19` |
+| Scratch copy | `~/scratch/fractogenesis-toolkit` in the Linux VM, refreshed from the checkout at `44c5289` |
 | Workspace | `/Users/dkittrell/reimage-workspace` — connected 2026-09-06; source of the three prompt files in `prompt.md` |
 | Artifact root | not connected, and not needed: this session's subject is `docs/` and `.github/` only |
 

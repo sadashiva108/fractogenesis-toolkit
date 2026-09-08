@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T15:52:47+00:00",
+  "updatedAt": "2026-09-08T16:21:41+00:00",
   "bundleName": "session-management-re-evaluation-20260906-110105",
   "createdOn": "2026-09-06",
   "owners": [
@@ -25,7 +25,7 @@
     {
       "what": "Scratch copy",
       "path": "~/scratch/fractogenesis-toolkit",
-      "notes": "in the Linux VM, refreshed from the checkout at `3828d19`"
+      "notes": "in the Linux VM, refreshed from the checkout at `44c5289`"
     },
     {
       "what": "Workspace",
@@ -41,31 +41,31 @@
   "ownedBundles": [
     {
       "number": "0036",
-      "notes": "The Revision 130 prune landed; its premise expired at Revision 162. Option (iii) — stop quoting the OK baseline — is still undecided"
+      "notes": "**Resolved at Revision 225.** Option (iv): docs/ is scanned, and proposed and historical are declarable — which is also 0046's remedy. 1714 OK / 0 MISSING / 0 broken anchors"
     },
     {
       "number": "0037",
-      "notes": "D1 accepted, **D2 rejected** by the owner on 2026-09-06 — retrofit rather than leave half a change behind. D6's carve-out and F2's rule were both lost in the instruction-set split and must be restored"
+      "notes": "Clean slate at Revision 224: its decisions.md and resolutions.md were byte-identical clones of 0027's and are removed. Seven findings framing, seven provenance edges. D2's Outcome → rejected is still owed"
     },
     {
       "number": "0038",
-      "notes": "All six resolutions verified present and holding. What it removed — git status as the only signal of a concurrent session — is recorded and unreplaced"
+      "notes": "Clean slate at Revision 224: byte-identical clones of 0028's removed. Six findings framing, six provenance edges, nothing decided in this bundle"
     },
     {
       "number": "0039",
-      "notes": "The keystone. D1's destination no longer exists, so it cannot be applied as written. Seven rows were decided; reset to framing on the owner's instruction to re-evaluate from the ground up — decisions.md retains every decision"
+      "notes": "The keystone, and the most worked. **Four findings resolved** (F7, F12, F15, F16), F8 decided and owed. D13 replaced D1, whose destination 1c48deb had deleted. F13 and F14 recorded unanswered for the owner"
     },
     {
       "number": "0040",
-      "notes": "All four resolutions verified present in §9 and expanded since. Only the address is stale: every row cites §4c, which no longer exists"
+      "notes": "Clean slate at Revision 224: byte-identical clones of 0031's removed. Four findings framing, four provenance edges"
     },
     {
       "number": "0041",
-      "notes": "F4 sharpened by this session on 2026-09-06. F3's classification question is open and reaches four other bundles"
+      "notes": "Clean slate at Revision 224: its decisions.md and resolutions.md were the **only** copies of 0032's work and were moved there, not deleted. Five findings framing, four provenance edges"
     },
     {
       "number": "0043",
-      "notes": "Recorded and owned by this session on 2026-09-07, the only one of the seven not released by restore-apps-outstanding. Held open at analyzing/framing so the parallel architecture session can record to it"
+      "notes": "**Two findings resolved** (F5, F6): authority moved to data, 54 metadata.json files, all tag files gone. Held open so allocation-and-inquiry-design can record to the remaining seven"
     }
   ],
   "contributions": [],

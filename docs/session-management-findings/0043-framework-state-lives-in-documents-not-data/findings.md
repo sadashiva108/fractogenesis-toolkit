@@ -36,8 +36,8 @@ should record here rather than open a near-duplicate beside it.**
 | F2 | 88 count and status cells are typed by hand, and a checker exists only to catch them drifting | `framing` |
 | F3 | The framework's own data is parsed back out of rendered markdown, and that parser has been wrong twice | `framing` |
 | F4 | Structured fields and free-form prose share a file with nothing marking the boundary | `framing` |
-| F5 | Authority is assigned to documents, so every consumer must parse prose to read a fact | `decided` |
-| F6 | A header field that is optional **and repeatable** cannot be represented by either draft, and this bundle carries three of them | `decided` |
+| F5 | Authority is assigned to documents, so every consumer must parse prose to read a fact | `resolved` |
+| F6 | A header field that is optional **and repeatable** cannot be represented by either draft, and this bundle carries three of them | `resolved` |
 | F7 | The derived bundle status has an else branch that asserts nothing, so a derivation bug always lands there | `framing` |
 | F8 | Each vocabulary has exactly one activity-named status, and it is the one a name cannot carry | `framing` |
 | F9 | An edge kind is defined by a description and a behaviour, and the two can disagree | `framing` |

@@ -22,7 +22,7 @@ finding, recorded here so the bundle derives like every other.
 
 | # | Finding | Status |
 |---|---|---|
-| F1 | `verify-doc-paths.sh --all` scans `docs/`, so its OK baseline cannot hold | `decided` |
+| F1 | `verify-doc-paths.sh --all` scans `docs/`, so its OK baseline cannot hold | `resolved` |
 
 ## What is wrong
 

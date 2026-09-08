@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T15:52:47+00:00",
+  "updatedAt": "2026-09-08T16:21:41+00:00",
   "number": "0021",
   "bundleName": "0021-restore-access-exit-predates-its-own-state-walk",
   "kind": "runbook",

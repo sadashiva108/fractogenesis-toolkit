@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T15:52:47+00:00",
+  "updatedAt": "2026-09-08T16:21:41+00:00",
   "number": "0036",
   "bundleName": "0036-verify-doc-paths-counts-gitignored-docs",
   "kind": "session-management",
@@ -26,14 +26,21 @@
     {
       "id": "F1",
       "statement": "`verify-doc-paths.sh --all` scans `docs/`, so its OK baseline cannot hold",
-      "status": "decided",
+      "status": "resolved",
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
       "sectionHeading": null,
       "reopened": null,
       "withdrawn": null,
-      "resolution": null
+      "resolution": {
+        "resolvedBy": [
+          "D1"
+        ],
+        "whatWasDone": "bin/verify-doc-paths.sh scans docs/; the prune is gone and two declarable verdicts replace it",
+        "revision": "225",
+        "commit": "44c5289"
+      }
     }
   ],
   "decisions": [

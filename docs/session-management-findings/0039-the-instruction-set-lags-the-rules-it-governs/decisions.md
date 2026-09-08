@@ -47,6 +47,8 @@ without answering it for rules.
 | D15 | A decision row must cite at least one `F<n>`. The checker validates citations that exist and cannot see their absence, so the rule states the positive condition — the same shape as D12's coverage clause | F15 | 2026-09-08 | `accepted` |
 | D16 | A `completeness` check joins the verify group: it asserts that no atomic value carries markdown ornament, that a list in a document is a list of the same length in the data, and that every header field the markdown has reaches a non-empty key. Deliberately NOT a second parser — a second reader shares the first's blind spots | F16 | 2026-09-08 | `accepted` |
 | D17 | The extractor is **single-use** and refuses to run once any generated-region marker exists in a file a generator writes. Parsing generated markdown back into the data that generated it can only lose, and it would look like a successful run | F16 | 2026-09-08 | `accepted` |
+| D18 | Resolving gets a numbered procedure, §9b: carry out the decision, write the `resolutions.md` row naming the decision and the revision, then move the finding to `resolved` — in that order, because the row is the evidence the status asserts. A `decided` finding whose decisions are all carried out and which has no row is a defect a check can name | F17 | 2026-09-08 | `accepted` |
+| D19 | **The record covers this repository; the rules governing it live in this repository.** Work a session does in another project is not recorded here — no manifest entry, no finding, no `metadata.md` resource row — and a rule the framework depends on is not left in a file outside it. A fourth write kind, `foreign`, names the case so it is excluded deliberately rather than by omission | F19, F9 | 2026-09-08 | `accepted` |
 
 ## Findings 1, 2, 5 and 6 — a rule lives where its kind lives
 
@@ -889,3 +891,100 @@ version searched everything and refused because `state-as-data.md` documents the
 marker inside a fenced example — a guard declining to run on the strength of the
 document describing it. Fifth instance of the pattern in F16, and it happened
 inside the decision recording the pattern.
+
+---
+
+## D18 — resolving gets a procedure
+
+Every other lifecycle event has numbered steps. This one had a file schema and no
+instructions, and seven resolutions went unwritten across five revisions because
+nothing prompted them.
+
+**§9b, three steps, in this order:**
+
+1. **Carry out the decision.** A toolkit write, gated on the finding being
+   `decided` — §6 unchanged.
+2. **Write the `resolutions.md` row**: the finding, the decision that resolves it,
+   what was actually done, the revision, the commit. The revision is taken at
+   apply time like any other.
+3. **Move the finding to `resolved`.**
+
+**The order is the point.** The row is the evidence the status asserts, so writing
+it second and moving the status third means a `resolved` finding always has a row
+behind it. Reversing them produces a status nobody can check — which is the state
+`0037` F5 recorded from the other direction, where every `resolved` bundle was
+missing its `decisions.md`.
+
+### What makes it checkable
+
+**A `decided` finding whose decisions are all carried out and which has no
+`resolutions.md` row is nameable.** Not fully derivable — whether a toolkit write
+happened is a fact about the tree, not about the data — but the *absence of a row
+under a decided finding* is exactly the shape D12's coverage clause and D15's
+citation rule already have: **the failure worth catching is zero.**
+
+Deliberately not implemented in this revision. Three checks were written today and
+**every one failed against a healthy tree on its first run**; a fourth, written in
+the same sitting as its own rule, would be the fifth instance of the pattern F16
+records. The rule lands first and the check follows in a revision that can measure
+it.
+
+### Rejected: making `resolutions.md` required
+
+It would fail every `framing` bundle in the tree, which is most of them. A bundle
+with nothing resolved correctly has no resolutions file — the same reasoning that
+makes `decisions.md` absent from a bundle that has decided nothing, which is D12.
+
+---
+
+## D19 — the record covers this repository, and the rules live in it
+
+Two sentences, because the boundary fails in both directions and one rule closes
+both.
+
+**The record covers this repository.** A session may have several folders
+connected and may legitimately work in more than one. Only this repository's work
+is recorded here: no manifest entry, no finding, no `resolutions.md` row, no
+`metadata.md` resource row for a folder that is not this repository's subject or
+its evidence. F19.
+
+**The rules governing it live in this repository.** A rule the framework depends
+on is not left in a workspace file outside it. F9 records six that were, and three
+more arrived there on the day this was written.
+
+### `foreign` — a fourth write kind, so the case is excluded on purpose
+
+§6 defines record, toolkit and evidence. All three are inside this repository or
+its evidence volume, so a write to a fourth place had **no category** — which
+reads as *not covered* and behaves as *not thought about*.
+
+| Kind | Where | Gate |
+|---|---|---|
+| record | `docs/` | ungated |
+| toolkit | any other tracked file | a `decided` finding |
+| evidence | the artifact volume | the owner, per run |
+| **`foreign`** | **any other connected folder** | **the owner asks for it, and it is not recorded here** |
+
+Naming it is the point. An unnamed case is a gap; a named one is a decision. A
+`foreign` write is ordinary and often useful — it is simply not this
+repository's business, and it takes no revision.
+
+### Connection is availability; scope is subject
+
+The tempting rule — *write only about folders in your Resources table* — is wrong
+in both directions. **The artifact volume is not a connected folder and is
+squarely in scope.** A folder can be connected for one lookup and be nobody's
+business. What settles it is the session bundle's `prompt.md`, which states the
+subject; the Resources table says only what was reachable.
+
+### What this does not do
+
+**It does not forbid the work.** A session asked to write in another project does
+it. The rule governs the *record*, not the errand.
+
+**It is not checkable.** No validator can know whether a paragraph is about this
+repository. `verify-doc-paths.sh` would flag a path outside the tree as MISSING,
+which is a partial signal at best and now declarable as `historical` or
+`proposed` anyway. This is a rule a session follows, which is the weakest kind —
+and the reason it is written down rather than assumed, since the instance that
+prompted it was clean by luck.

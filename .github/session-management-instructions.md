@@ -181,9 +181,28 @@ exactly what transfers at a handoff. This file does not restate it.
 
 ## 6. Writing
 
-Three kinds of write, defined in `docs/legend.md`: **record** (`docs/`),
-**toolkit** (anything else tracked), **evidence** (the artifact volume). **What
-they mean is there; when each is allowed is here** — `0039` D2 ruled that split
+**The record covers this repository, and the rules governing it live in this
+repository.** A session may have several folders connected and may legitimately
+work in more than one; only this repository's work is recorded here -- no manifest
+entry, no finding, no resource row for a folder that is not this repository's
+subject or its evidence. And a rule the framework depends on is not left in a file
+outside it. `0039` D19, which closes F19 and F9 with one sentence in each
+direction.
+
+**Connection is availability; scope is subject.** The artifact volume is not a
+connected folder and is squarely in scope; a folder can be connected for one
+lookup and be nobody's business. The session bundle's `prompt.md` states the
+subject, and that is what to measure against.
+
+Four kinds of write. Three are defined in `docs/legend.md`: **record** (`docs/`),
+**toolkit** (anything else tracked), **evidence** (the artifact volume). The
+fourth is **`foreign`** -- a write to any other connected folder. It is ordinary,
+it happens when the owner asks for it, it takes no revision, and **it is not
+recorded here.** It is named so the case is excluded deliberately rather than by
+omission: an unnamed case reads as *not covered* and behaves as *not thought
+about*.
+
+**What they mean is in the legend; when each is allowed is here** — `0039` D2 ruled that split
 on 2026-09-04 and D13 carried it out. The legend used to hold both, and §6 used
 to point at the legend for the gating, so the two files agreed with each other
 and both disagreed with the decision.
@@ -466,6 +485,37 @@ exactly as much thought as the findings in it.
 **A `resolved` finding is reopened first.** `withdrawn` reaches every status
 except `resolved`, which is frozen. Stating it here is what stops someone trying
 it and reading the refusal as a bug.
+
+## 9b. Resolving a finding
+
+**Three steps, in this order.** The row is the evidence the status asserts, so it
+is written before the status moves.
+
+1.  **Carry out the decision.** A toolkit write, gated on the finding being
+    `decided` -- section 6 unchanged.
+2.  **Write the `resolutions.md` row**: the finding, the decision that resolves
+    it, what was actually done, the revision, the commit. The revision is taken
+    at apply time like any other. The file's shape is in section 11.
+3.  **Move the finding to `resolved`.**
+
+Reversing steps 2 and 3 produces a `resolved` finding with nothing behind it,
+which nobody can check. `0037` F5 recorded that state from the other direction:
+every `resolved` bundle missing its `decisions.md`.
+
+**A `decided` finding whose decisions have been carried out and which has no row
+is a defect.** Not derivable in full -- whether a toolkit write happened is a fact
+about the tree rather than about the data -- but a missing row under a decided
+finding has the same shape as section 9's coverage clause and D15's citation rule:
+the failure worth catching is zero.
+
+**`resolutions.md` is not required.** A bundle that has resolved nothing correctly
+has no such file, for the same reason a bundle that has decided nothing has no
+`decisions.md`. Requiring it would fail every `framing` bundle in the tree.
+
+This procedure exists because it did not. Every other lifecycle event -- superseding,
+reopening, withdrawing, transferring -- had numbered steps; the commonest one had a
+file schema and no instructions, and seven resolutions went unwritten across five
+revisions because nothing prompted them. `0039` F17 and D18.
 
 ## 10. Transferring a bundle
 

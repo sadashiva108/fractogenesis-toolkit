@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T15:52:47+00:00",
+  "updatedAt": "2026-09-08T16:21:41+00:00",
   "number": "0015",
   "bundleName": "0015-portability-lint-cannot-see-heredoc-context",
   "kind": "cross-cutting",

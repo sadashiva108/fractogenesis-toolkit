@@ -52,16 +52,19 @@ for.
 | F4 | The architecture record describes two findings trees; there are three | `framing` |
 | F5 | Nothing tells a session that `docs/legend.md` is normative | `framing` |
 | F6 | State names and state requirements live in different files | `framing` |
-| F7 | The vocabulary cannot say that one bundle must be decided before another | `decided` |
-| F8 | The rule says where a change is composed, not when it is handed over | `framing` |
+| F7 | The vocabulary cannot say that one bundle must be decided before another | `resolved` |
+| F8 | The rule says where a change is composed, not when it is handed over | `decided` |
 | F9 | Six rules live only in a workspace file, outside the repository entirely | `framing` |
 | F10 | Nothing distinguishes a standing decision from one reopened for re-examination, and no state locks decisions while the work is in flight | `framing` |
 | F11 | The header schema binds `findings.md` only, and six of eight architecture records render their header as one run-on paragraph | `framing` |
-| F12 | No status transition names the event that triggers it, so a bulk edit moved twenty-one findings and every checker passed | `decided` |
+| F12 | No status transition names the event that triggers it, so a bulk edit moved twenty-one findings and every checker passed | `resolved` |
 | F13 | The vocabulary file is named for a glance and read as a specification, and moving it is a rename with sixty-three citations | `framing` |
 | F14 | Nothing in the repository is written for someone arriving cold; the entry point is a 724-line instruction set | `framing` |
-| F15 | A check that validates citations cannot detect their absence: ten decisions cited no finding and every checker passed | `decided` |
-| F16 | Every check asks whether a document is well formed; none asks whether it is complete, and 162 contaminated fields passed all of them | `decided` |
+| F15 | A check that validates citations cannot detect their absence: ten decisions cited no finding and every checker passed | `resolved` |
+| F16 | Every check asks whether a document is well formed; none asks whether it is complete, and 162 contaminated fields passed all of them | `resolved` |
+| F17 | Resolving has no procedure: the framework's commonest transition is the only one with no numbered steps, and seven resolutions went unrecorded because of it | `decided` |
+| F18 | `accepted` cannot say whether a decision's work was carried out, so a decision that changed nothing reads identically to one that changed the tree | `framing` |
+| F19 | Nothing scopes the record to this repository, so work a session does in another connected project has no stated home and no rule keeping it out | `resolved` |
 
 ---
 
@@ -610,6 +613,133 @@ check itself at 18 false positives and the one-way guard refusing to run because
 the design document describing its marker mentions it. **The half that reads is
 wrong; the half that judges is fine.** That is now a five-instance pattern and
 should be treated as a law of this repository rather than a run of bad luck.
+
+## F17 — resolving has no procedure
+
+Recorded 2026-09-08, from the owner asking why seven resolutions were never
+written down.
+
+`.github/session-management-instructions.md` carries a numbered procedure for
+every lifecycle event except one:
+
+| Event | Procedure |
+|---|---|
+| superseding a bundle | §9, nine numbered steps and three prohibitions |
+| reopening a finding | §9a |
+| withdrawing a finding or bundle | §9a |
+| transferring a bundle | §10 |
+| **carrying out a decision and resolving a finding** | **none** |
+
+What exists for `resolutions.md` is its **shape**, in §11 beside the header
+schema: five columns, what `Resolved by` means, how a pre-schema finding records
+an absent revision. **Nothing says when a session writes one.**
+
+That is the commonest transition in the framework and the only lifecycle event
+that produces a tracked file, and it is the one with no steps.
+
+### The instance
+
+This session accepted eighteen decisions and carried out the toolkit writes for
+seven of them across Revisions 221 through 225 — `verify-doc-paths.sh` scanning
+`docs/`, the transition rules in the legend, the citation check, the completeness
+check, the one-way guard, the tag removal, the edge contract in the schema.
+
+**Not one `resolutions.md` was written, and not one finding moved to `resolved`**
+until the owner asked what had been resolved. The answer at that moment was
+*nothing*, over a tree that had absorbed five revisions of the work.
+
+**`docs/legend.md` describes `resolved` as a state and D7 names its trigger.**
+Neither is a procedure. A session reading the instruction set learns what
+`resolved` means and never learns that closing a finding requires writing a row.
+
+### Why it is worse than a missing section
+
+The three checkers cannot see it. `verify-findings-headers.sh` validates
+`resolutions.md` **if the file exists**; a bundle with none is not failing
+anything. So the framework's position was: no instruction to write the file, and
+no check for its absence. **A finding could stay `decided` forever with its work
+long since shipped**, and every validator would pass — which is `0037` F5's shape
+(*every `resolved` bundle missing `decisions.md`*) with the two files swapped.
+
+## F18 — `accepted` cannot say whether the work was done
+
+Recorded 2026-09-08, from the owner asking what *uninstalled* meant.
+
+It is not vocabulary. It is a word this session invented mid-conversation because
+the framework has none, and inventing one under pressure is the tell.
+
+**`accepted` means the decision is adopted.** It says nothing about whether the
+change it authorizes exists in the tree. This bundle carries both states under one
+value:
+
+| Decision | State | Renders as |
+|---|---|---|
+| D5 — ordering as a typed edge | accepted, and 31 edges exist in the data | `accepted` |
+| D6 — the hand-over step in §6 | accepted 2026-09-07, **nothing written** | `accepted` |
+
+A reader cannot tell them apart without reading the tree, which is the work the
+record exists to save.
+
+**The finding status carries it and cannot carry it alone.** `decided → resolved`
+answers *the whole finding*, not each decision under it. A finding with four
+decisions where three shipped is `decided`, exactly as if none had — which is what
+`0039` looked like all day.
+
+**This is not `voided`, and not `deferred`.** `voided` is a decision invalidated
+because its foundation moved; `deferred` is one that cannot be ruled yet. D6 is
+ruled, sound, and simply not carried out. The vocabulary has no seat for it.
+
+Left `framing` deliberately. The obvious fix — an eighth Outcome — would put a
+*progress* fact into a vocabulary D9 defined as **acts performed on a decision**,
+and D9's whole rule is that no word appears in two vocabularies. Whether this
+wants a separate field, a derivation from `resolutions.md`, or nothing at all is
+the owner's call, and F17's procedure may make it moot: if closing a finding
+requires a row per decision, *carried out* becomes derivable.
+
+## F19 — nothing scopes the record to this repository
+
+Recorded 2026-09-08, from the owner noticing that a session had done work in a
+second project and observing that nothing would have kept it out of these records.
+
+A session can have several folders connected at once. This one had three by the
+end: the toolkit checkout, `reimage-workspace`, and a notes vault belonging to a
+different project entirely. **Work was done in all three**, and only one of them
+is what this repository records.
+
+**Nothing states that boundary.** §6 defines three write categories — record,
+toolkit, evidence — and all three are about writes *inside* this repository or to
+its evidence volume. A write to a fourth place has no category, which reads as
+*not covered* and behaves as *not thought about*. The manifest, the session
+bundle's `metadata.md` Resources table and a `findings-manifest.md` note are all
+places a side errand could land, with no rule against it and no check able to see
+it.
+
+**It did not happen here**, and that is the finding rather than a reprieve: the
+records are clean because the session happened to keep them clean, not because
+anything required it. A rule that holds by luck has not been tested.
+
+### It is F9 from the other direction
+
+F9 records **six rules living only in a workspace file, outside the repository**
+— three more were added there the same day. That is the framework's material
+leaking *out*.
+
+This is unrelated material leaking *in*. One boundary, two failures, and stating
+it once answers both:
+
+> **The record covers this repository. The rules governing it live in this
+> repository.**
+
+Nothing else is recorded here, and nothing the framework depends on is recorded
+anywhere else.
+
+### Why a connected folder is the wrong unit
+
+The obvious rule — *only write about folders in your Resources table* — fails
+immediately: the artifact volume is not a connected folder and is squarely in
+scope, while a folder can be connected for one lookup and be nobody's business.
+**Connection is availability; scope is subject.** The session bundle's `prompt.md`
+says what the subject is, and that is the thing to measure against.
 
 ## What this bundle does not cover
 

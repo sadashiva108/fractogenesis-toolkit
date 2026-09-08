@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T15:52:47+00:00",
+  "updatedAt": "2026-09-08T16:21:41+00:00",
   "number": "0043",
   "bundleName": "0043-framework-state-lives-in-documents-not-data",
   "kind": "session-management",
@@ -79,26 +79,40 @@
     {
       "id": "F5",
       "statement": "Authority is assigned to documents, so every consumer must parse prose to read a fact",
-      "status": "decided",
+      "status": "resolved",
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
       "sectionHeading": "F5 — authority sits on documents, not on data",
       "reopened": null,
       "withdrawn": null,
-      "resolution": null
+      "resolution": {
+        "resolvedBy": [
+          "D1"
+        ],
+        "whatWasDone": "Authority moved from documents to data: 54 metadata.json files, and the STATUS-/STATE- tag files deleted",
+        "revision": "222",
+        "commit": "42d08a4"
+      }
     },
     {
       "id": "F6",
       "statement": "A header field that is optional **and repeatable** cannot be represented by either draft, and this bundle carries three of them",
-      "status": "decided",
+      "status": "resolved",
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
       "sectionHeading": "F6 — a repeatable field the data cannot hold",
       "reopened": null,
       "withdrawn": null,
-      "resolution": null
+      "resolution": {
+        "resolvedBy": [
+          "D1"
+        ],
+        "whatWasDone": "Every repeatable field is an array, and Relates to became a projection over typed edges",
+        "revision": "222",
+        "commit": "42d08a4"
+      }
     },
     {
       "id": "F7",
