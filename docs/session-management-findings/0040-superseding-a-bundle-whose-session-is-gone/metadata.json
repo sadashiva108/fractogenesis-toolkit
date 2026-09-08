@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T16:21:41+00:00",
+  "updatedAt": "2026-09-08T16:32:42+00:00",
   "number": "0040",
   "bundleName": "0040-superseding-a-bundle-whose-session-is-gone",
   "kind": "session-management",
@@ -17,7 +17,7 @@
   "scope": "instruction set. The fix is one subsection in `.github/copilot-instructions.md` §4c.",
   "read": [],
   "progress": null,
-  "ownership": null,
+  "ownership": "unclaimed",
   "lineage": {
     "supersedes": "0031",
     "on": null

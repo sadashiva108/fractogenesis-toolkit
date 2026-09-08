@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T16:21:41+00:00",
+  "updatedAt": "2026-09-08T16:32:42+00:00",
   "number": "0023",
   "bundleName": "0023-restore-repos-rsync-targets-pre-image-path",
   "kind": "runbook",

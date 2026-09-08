@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T16:21:41+00:00",
+  "updatedAt": "2026-09-08T16:32:42+00:00",
   "number": "0038",
   "bundleName": "0038-sessions-write-into-the-tree-the-owner-commits-from",
   "kind": "session-management",
@@ -25,7 +25,7 @@
     "all 27 existing findings bundles, checked for overlap"
   ],
   "progress": null,
-  "ownership": null,
+  "ownership": "unclaimed",
   "lineage": {
     "supersedes": "0028",
     "on": null

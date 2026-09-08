@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T16:21:41+00:00",
+  "updatedAt": "2026-09-08T16:32:42+00:00",
   "number": "0039",
   "bundleName": "0039-the-instruction-set-lags-the-rules-it-governs",
   "kind": "session-management",
@@ -289,8 +289,20 @@
         ],
         "whatWasDone": "The record is scoped to this repository and foreign named as a fourth write kind, in §6 and the legend",
         "revision": "227",
-        "commit": "*(this revision)*"
+        "commit": "*(taken at apply time)*"
       }
+    },
+    {
+      "id": "F20",
+      "statement": "Releasing a bundle to `unclaimed` has no procedure, though its sibling `transferred` has five numbered steps and the operation strands a bundle when done wrong",
+      "status": "decided",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F20 — releasing to `unclaimed` has no procedure",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
     }
   ],
   "decisions": [
@@ -533,6 +545,18 @@
       "answersAsOf": null,
       "voidedReason": null,
       "sectionHeading": "D19 — the record covers this repository, and the rules live in it"
+    },
+    {
+      "id": "D20",
+      "decision": "Releasing to `unclaimed` gets §10a, four steps: remove the row from the session's `findings-manifest.md`, set the bundle's index Session cell to `—` and its Status cell to `unclaimed`, decrement the session's counts, and record the disposal in the session. Ownership derives, so there is no status to set",
+      "findings": [
+        "F20"
+      ],
+      "decided": "2026-09-08",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D20 — releasing to `unclaimed` gets a procedure"
     }
   ],
   "contributions": [

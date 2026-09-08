@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T16:21:41+00:00",
+  "updatedAt": "2026-09-08T16:32:42+00:00",
   "number": "0041",
   "bundleName": "0041-index-and-manifest-tables-have-a-shape-nothing-checks",
   "kind": "session-management",
@@ -17,7 +17,7 @@
   "scope": "instruction set. §§4c–4d define these tables; nothing validates them. Whether the *fix* belongs here is finding F3.",
   "read": [],
   "progress": null,
-  "ownership": null,
+  "ownership": "unclaimed",
   "lineage": {
     "supersedes": "0032",
     "on": null

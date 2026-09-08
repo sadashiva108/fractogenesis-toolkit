@@ -49,6 +49,7 @@ without answering it for rules.
 | D17 | The extractor is **single-use** and refuses to run once any generated-region marker exists in a file a generator writes. Parsing generated markdown back into the data that generated it can only lose, and it would look like a successful run | F16 | 2026-09-08 | `accepted` |
 | D18 | Resolving gets a numbered procedure, §9b: carry out the decision, write the `resolutions.md` row naming the decision and the revision, then move the finding to `resolved` — in that order, because the row is the evidence the status asserts. A `decided` finding whose decisions are all carried out and which has no row is a defect a check can name | F17 | 2026-09-08 | `accepted` |
 | D19 | **The record covers this repository; the rules governing it live in this repository.** Work a session does in another project is not recorded here — no manifest entry, no finding, no `metadata.md` resource row — and a rule the framework depends on is not left in a file outside it. A fourth write kind, `foreign`, names the case so it is excluded deliberately rather than by omission | F19, F9 | 2026-09-08 | `accepted` |
+| D20 | Releasing to `unclaimed` gets §10a, four steps: remove the row from the session's `findings-manifest.md`, set the bundle's index Session cell to `—` and its Status cell to `unclaimed`, decrement the session's counts, and record the disposal in the session. Ownership derives, so there is no status to set | F20 | 2026-09-08 | `accepted` |
 
 ## Findings 1, 2, 5 and 6 — a rule lives where its kind lives
 
@@ -988,3 +989,49 @@ which is a partial signal at best and now declarable as `historical` or
 `proposed` anyway. This is a rule a session follows, which is the weakest kind —
 and the reason it is written down rather than assumed, since the instance that
 prompted it was clean by luck.
+
+---
+
+## D20 — releasing to `unclaimed` gets a procedure
+
+`transferred` has five numbered steps and `unclaimed` had none, though the legend
+defines the two in one sentence as the ownership pair. §10a closes that.
+
+**Four steps.** There is no fifth for setting the status, because since Revision
+222 **ownership is derived** — computed by scanning the session manifests. Removing
+the row *is* the release; `unclaimed` follows from it. A pre-222 procedure would
+have opened with *set the tag*, and that step no longer exists.
+
+1. **Remove the bundle's row** from the releasing session's `findings-manifest.md`.
+2. **The bundle's index row**: Session cell to `—`, Status cell to `` `unclaimed` ``.
+3. **Decrement the session's Bundles and Findings** in `docs/sessions/INDEX.md`.
+4. **Record the disposal** in the session — `final-summary.md` on closing, the
+   handoff document otherwise — naming each bundle and why it was released.
+
+### Why step 4 is not optional
+
+A released bundle leaves no trace in the session that held it: the row is gone
+from the manifest, and the index row names nobody. **Without the disposal record,
+the reading's history stops at the moment it was released** and a later reader
+cannot find out who held it or what state it was left in.
+
+That is the same property §9 protects for supersession by keeping the superseded
+bundle listed by the session that held it. Release cannot do that — the point is
+that the session no longer owns it — so the disposal record is where the history
+goes instead.
+
+### Release versus transfer, which are chosen by whether a taker exists
+
+**Transfer names a target session; release does not.** A bundle handed to a named
+session is `transferred` and stays owned. A bundle put back in the queue is
+`unclaimed` and is closed to everyone until the owner assigns it. The mistake to
+avoid is releasing when a taker is known, which turns a two-party handover into an
+owner decision nobody asked for.
+
+### The failure it prevents
+
+The legend at line 409 requires a `closed` session's bundles to be terminal or
+released. **Revision 200 found `phase-11b` closed while still holding five**, and
+`0008`, `0011`, `0015`, `0016` and `0017` were released after the fact by a session
+that had to notice the problem first. A written procedure is what makes that a
+step rather than an archaeology.

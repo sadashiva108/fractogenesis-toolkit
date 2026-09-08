@@ -65,6 +65,7 @@ for.
 | F17 | Resolving has no procedure: the framework's commonest transition is the only one with no numbered steps, and seven resolutions went unrecorded because of it | `decided` |
 | F18 | `accepted` cannot say whether a decision's work was carried out, so a decision that changed nothing reads identically to one that changed the tree | `framing` |
 | F19 | Nothing scopes the record to this repository, so work a session does in another connected project has no stated home and no rule keeping it out | `resolved` |
+| F20 | Releasing a bundle to `unclaimed` has no procedure, though its sibling `transferred` has five numbered steps and the operation strands a bundle when done wrong | `decided` |
 
 ---
 
@@ -740,6 +741,52 @@ immediately: the artifact volume is not a connected folder and is squarely in
 scope, while a folder can be connected for one lookup and be nobody's business.
 **Connection is availability; scope is subject.** The session bundle's `prompt.md`
 says what the subject is, and that is the thing to measure against.
+
+## F20 — releasing to `unclaimed` has no procedure
+
+Recorded 2026-09-08, from the owner asking whether instructions existed for it.
+
+`unclaimed` and `transferred` are the two ownership statuses. The legend defines
+both in the same sentence — *"`unclaimed` and `transferred` are about **ownership**
+rather than progress"* — and the instruction set treats them nothing alike:
+
+| Status | Procedure |
+|---|---|
+| `transferred` | §10, five numbered steps: the field, both manifests, both sessions' counts, `metadata.md` on both sides, one revision |
+| **`unclaimed`** | **none** |
+
+`unclaimed` appears twice in the whole instruction set, and neither mention is a
+step: *"closed to everyone… parked until the owner assigns it"*, and a note that
+it has no owner to move.
+
+### It is not a small operation
+
+Releasing touches four places — the session's `findings-manifest.md`, the
+bundle's index row in two cells, the session's counts in `docs/sessions/INDEX.md`,
+and the session's own disposal record. **Getting it wrong strands a bundle**: it
+stays listed by a session that has stopped, which is unreachable by definition,
+and the legend forbids exactly that at line 409 — a `closed` session must have
+every bundle terminal or released.
+
+**That failure is on the record.** Revision 200 found `phase-11b` closed while
+still holding five bundles, and `0008`, `0011`, `0015`, `0016` and `0017` had to
+be released after the fact.
+
+### The practice exists and was never written down
+
+Commit `80d3482` did it correctly when `restore-apps-outstanding` closed: the row
+removed from the manifest, the index Session cell set to `—`, the counts
+decremented, and `final-summary.md` recording a disposition per bundle. **A
+session that had not read that commit would be inventing the procedure**, which is
+this bundle's subject exactly.
+
+### One step of it has already disappeared
+
+Revision 222 made ownership **derived** — computed by scanning the session
+manifests rather than stored. So the first step of any pre-222 procedure, *set the
+status*, no longer exists: **remove the manifest row and `unclaimed` follows.**
+The procedure that was never written is now shorter than it would have been, which
+is the design paying for itself.
 
 ## What this bundle does not cover
 

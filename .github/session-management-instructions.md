@@ -554,6 +554,38 @@ arisen more than once; the options and what each costs are in
 `docs/architecture/transferring-part-of-a-bundle.md`. Until one is chosen, a
 bundle moves whole or not at all.
 
+## 10a. Releasing a bundle to `unclaimed`
+
+**A bundle put back in the queue rather than handed to a named session.** Transfer
+names a target and the bundle stays owned; release names none and the bundle is
+closed to everyone until the owner assigns it. Choose by whether a taker exists.
+
+**Four steps. There is no step for setting the status.** Since Revision 222
+ownership is DERIVED -- computed by scanning the session manifests -- so removing
+the row IS the release and `unclaimed` follows from it.
+
+1.  **Remove the bundle's row** from the releasing session's
+    `findings-manifest.md`.
+2.  **The bundle's index row**: Session cell to `—`, Status cell to
+    `` `unclaimed` ``.
+3.  **Decrement the session's `Bundles` and `Findings`** in
+    `docs/sessions/INDEX.md`.
+4.  **Record the disposal in the session** -- `final-summary.md` on closing, the
+    handoff document otherwise -- naming each bundle and why it was released.
+
+**Step 4 is not optional.** A released bundle leaves no trace in the session that
+held it: the manifest row is gone and the index row names nobody. Without the
+disposal record the reading's history stops at the moment of release, and a later
+reader cannot find out who held it or in what state it was left. Section 9 keeps
+a superseded bundle listed by the session that held it for the same reason;
+release cannot do that, so the disposal record is where the history goes instead.
+
+**A session may not end holding a bundle.** `docs/legend.md` requires a `closed`
+session's bundles to be terminal or released. Revision 200 found `phase-11b`
+closed while still holding five, and `0008`, `0011`, `0015`, `0016` and `0017`
+were released after the fact by a session that had to notice the problem first.
+`0039` F20 and D20.
+
 ## 11. The `findings.md` header
 
 Every `findings.md` opens with the same block, in this order. It is a schema, not
