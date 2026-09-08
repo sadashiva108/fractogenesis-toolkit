@@ -16,8 +16,8 @@
   "feltAt": [],
   "scope": "instruction set. \u00a7\u00a74c\u20134d define these tables; nothing validates them. Whether the *fix* belongs here is finding 3.",
   "read": [],
-  "status": "superseded",
-  "progress": "un-started",
+  "standing": "superseded",
+  "progress": "pending",
   "ownership": null,
   "lineage": {
     "supersededBy": "0041",

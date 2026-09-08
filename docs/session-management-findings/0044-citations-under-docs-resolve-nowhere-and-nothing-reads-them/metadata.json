@@ -22,8 +22,8 @@
     "`bin/verify-doc-paths.sh`, and its `--all` run over 778 paths and 1108 anchors",
     "`.github/session-management-instructions.md` sections 2 and 3"
   ],
-  "status": "unclaimed",
-  "progress": "un-started",
+  "standing": "unclaimed",
+  "progress": "pending",
   "ownership": "unclaimed",
   "lineage": null,
   "findings": [

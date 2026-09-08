@@ -24,7 +24,7 @@
     "`bin/verify-findings-counts.sh`, `bin/verify-findings-structure.sh`, `bin/verify-findings-headers.sh`",
     "the owner's two draft config files, 2026-09-07"
   ],
-  "status": "analyzing",
+  "standing": "analyzing",
   "progress": "analyzing",
   "ownership": null,
   "lineage": null,

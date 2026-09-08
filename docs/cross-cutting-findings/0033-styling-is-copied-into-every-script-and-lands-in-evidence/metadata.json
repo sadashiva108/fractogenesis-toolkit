@@ -16,8 +16,8 @@
   "feltAt": [],
   "scope": "cross-cutting. The fix lands in `.internal/`, the authoring template, and the two report producers \u2014 shared machinery, felt in every script's output.",
   "read": [],
-  "status": "unclaimed",
-  "progress": "un-started",
+  "standing": "unclaimed",
+  "progress": "pending",
   "ownership": "unclaimed",
   "lineage": null,
   "findings": [

@@ -35,16 +35,23 @@ def write_category(scope):
 
 
 def ladder(sts):
+    """Finding STATUSES in, bundle STANDING out. A translation, not an identity.
+
+    The two vocabularies share no word as of Revision 233, which is what makes a
+    bare value self-locating: `framing` is a finding, `analyzing` is a bundle.
+    `state-as-data.md` 4.4 always called this "a bridge between two
+    vocabularies"; until now four rows of it were identity and read as one set.
+    """
     if not sts:
-        return "un-started"
+        return "pending"
     if all(s == "un-started" for s in sts):
-        return "un-started"
+        return "pending"
     if all(s == "withdrawn" for s in sts):
-        return "withdrawn"
+        return "retired"
     if all(s in INERT for s in sts) and "resolved" in sts:
-        return "resolved"
+        return "answered"
     if "reopened" in sts and all(s in INERT for s in sts if s != "reopened"):
-        return "reopened"
+        return "revisited"
     return "analyzing"
 
 
@@ -274,8 +281,15 @@ def rank(g, fr):
 # applies: a copy is permitted "where a check fails when it drifts". Both fields
 # are stamped by `stamp` and compared by `check`. Neither is authored by hand.
 
-def bundle_status(b):
-    """The one value a reader wants: what state is this bundle in.
+def bundle_standing(b):
+    """Where this bundle stands. NOT `status` -- that word belongs to a finding.
+
+    Three vocabularies, three words: a finding has a **status**, a bundle has a
+    **standing**, a session has a **state**. They were two words for three sets
+    until Revision 233, and the two that shared one also share four of their
+    values -- `un-started`, `resolved`, `reopened`, `withdrawn` -- so a value
+    could not say which set it came from and a bundle file carried `status` at
+    two nesting levels meaning two different things.
 
     Ownership and lineage outrank progress because they are not progress at all
     -- an unclaimed bundle is closed to everyone whatever its findings say, and a
@@ -294,7 +308,7 @@ def bundle_progress(b):
 
 
 def bundle_is_terminal(b):
-    return (bundle_status(b) in ("resolved", "withdrawn", "superseded"))
+    return (bundle_standing(b) in ("answered", "retired", "superseded"))
 
 
 def session_state(g, s):
@@ -321,7 +335,7 @@ def stamp_derived(g, write=True):
     """Write status/progress onto every bundle and state onto every session."""
     changed = []
     for n, b in sorted(g.bundles.items()):
-        want = {"status": bundle_status(b), "progress": bundle_progress(b)}
+        want = {"standing": bundle_standing(b), "progress": bundle_progress(b)}
         if any(b.get(k) != v for k, v in want.items()):
             changed.append(("bundle", n, dict(want)))
             if write:
@@ -345,9 +359,9 @@ def _rewrite(path, fields):
     # keep `status` next to `progress`/`ownership` rather than appended at the end
     order = []
     for k in d:
-        if k == "progress" and "status" in d and "status" not in order:
-            order.append("status")
-        if k != "status":
+        if k == "progress" and "standing" in d and "standing" not in order:
+            order.append("standing")
+        if k != "standing":
             order.append(k)
     out = dict((k, d[k]) for k in order if k in d)
     with io.open(path + ".tmp", "w", encoding="utf-8") as fh:
@@ -358,7 +372,8 @@ def _rewrite(path, fields):
 # ------------------------------------------------------- conformance detectors
 FINDING_STATUSES = ("un-started", "framing", "decided", "resolved",
                     "reopened", "withdrawn")
-BUNDLE_PROGRESS = ("un-started", "analyzing", "resolved", "reopened", "withdrawn")
+BUNDLE_STANDINGS = ("pending", "analyzing", "answered", "revisited", "retired",
+                    "unclaimed", "transferred", "superseded")
 OWNERSHIP = (None, "unclaimed", "transferred")
 OUTCOMES = ("accepted", "rejected")          # plus `refined -> DX`, `superseded -> DX`
 KINDS = ("runbook", "cross-cutting", "instruction-set", "session-management")
@@ -449,12 +464,12 @@ def conformance(g):
             out.append(("STORED-DISAGREES", n,
                         "progress says %r, the finding rows derive %r"
                         % (b["progress"], bundle_progress(b))))
-        if b.get("status") is None:
-            out.append(("UNSTAMPED", n, "status is null -- run `stamp`"))
-        elif b["status"] != bundle_status(b):
+        if b.get("standing") is None:
+            out.append(("UNSTAMPED", n, "standing is null -- run `stamp`"))
+        elif b["standing"] != bundle_standing(b):
             out.append(("STORED-DISAGREES", n,
-                        "status says %r, the record derives %r"
-                        % (b["status"], bundle_status(b))))
+                        "standing says %r, the record derives %r"
+                        % (b["standing"], bundle_standing(b))))
         # a citation to a bundle whose authority has moved (0046)
         for e in (b.get("edges") or []):
             t = g.bundles.get(str(e.get("to", "")).split("/")[0])

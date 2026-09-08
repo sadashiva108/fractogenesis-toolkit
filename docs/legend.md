@@ -1,6 +1,6 @@
 # Legend — findings statuses and session states
 
-The three vocabularies used across `docs/` — finding statuses, bundle statuses
+The three vocabularies used across `docs/` — finding statuses, bundle standings
 and session states. **This file is where they are defined.**
 [`.github/session-management-instructions.md`](../.github/session-management-instructions.md)
 says what each one *requires* and points here for what each one *means*, so there

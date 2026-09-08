@@ -16,7 +16,7 @@
   "feltAt": [],
   "scope": "cross-cutting. Felt in `.internal/artifact-runs.sh`, in every category manifest, and in dated artifacts across the volume.",
   "read": [],
-  "status": "analyzing",
+  "standing": "analyzing",
   "progress": "analyzing",
   "ownership": null,
   "lineage": {

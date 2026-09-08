@@ -22,8 +22,8 @@
     "`docs/sessions/INDEX.md`, all seven rows",
     "`.github/session-management-instructions.md` section 5"
   ],
-  "status": "unclaimed",
-  "progress": "un-started",
+  "standing": "unclaimed",
+  "progress": "pending",
   "ownership": "unclaimed",
   "lineage": null,
   "findings": [

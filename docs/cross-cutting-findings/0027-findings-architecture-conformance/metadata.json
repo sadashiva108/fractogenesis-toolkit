@@ -21,8 +21,8 @@
     "`docs/legend.md`",
     "every bundle and index in `docs/`"
   ],
-  "status": "superseded",
-  "progress": "resolved",
+  "standing": "superseded",
+  "progress": "answered",
   "ownership": null,
   "lineage": {
     "supersededBy": "0037",

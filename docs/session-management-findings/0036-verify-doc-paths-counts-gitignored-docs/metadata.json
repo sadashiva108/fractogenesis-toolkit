@@ -16,8 +16,8 @@
   "feltAt": [],
   "scope": null,
   "read": [],
-  "status": "resolved",
-  "progress": "resolved",
+  "standing": "answered",
+  "progress": "answered",
   "ownership": null,
   "lineage": {
     "supersedes": "0026",

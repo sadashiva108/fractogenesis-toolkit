@@ -25,8 +25,8 @@
     "every docs/sessions/*/metadata.json",
     "the capacity report over all seven sessions, 2026-09-08"
   ],
-  "status": "unclaimed",
-  "progress": "un-started",
+  "standing": "unclaimed",
+  "progress": "pending",
   "ownership": "unclaimed",
   "lineage": null,
   "findings": [

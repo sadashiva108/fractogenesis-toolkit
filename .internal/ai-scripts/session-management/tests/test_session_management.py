@@ -22,8 +22,8 @@ sys.path.insert(0, HERE)
 import fixtures as F                                          # noqa: E402
 from plan_findings_work import (                              # noqa: E402
     Graph, ladder, conformance, allocate, select, frontier, rank, is_clone,
-    FINDING_STATUSES, OUTCOMES, KINDS, INERT, quality,
-    bundle_status, bundle_progress, session_state, stamp_derived)
+    FINDING_STATUSES, BUNDLE_STANDINGS, OUTCOMES, KINDS, INERT, quality,
+    bundle_standing, bundle_progress, session_state, stamp_derived)
 
 
 def codes(g):
@@ -43,27 +43,35 @@ def graph_of(*bundles, **kw):
 
 # ---------------------------------------------------------------- CONTRACTS
 class TestLadder(unittest.TestCase):
-    """docs/legend.md: read the ladder in order, first row that matches wins."""
+    """docs/legend.md: read the ladder in order, first row that matches wins.
+
+    Finding STATUSES go in, a bundle STANDING comes out. Since Revision 233 the
+    two vocabularies share no word, so every assertion here is also a check that
+    the translation happened rather than a value passing straight through.
+    """
+
+    def test_the_two_vocabularies_share_no_word(self):
+        self.assertEqual(set(FINDING_STATUSES) & set(BUNDLE_STANDINGS), set())
 
     def test_every_finding_un_started(self):
-        self.assertEqual(ladder(["un-started", "un-started"]), "un-started")
+        self.assertEqual(ladder(["un-started", "un-started"]), "pending")
 
     def test_every_finding_withdrawn(self):
-        self.assertEqual(ladder(["withdrawn", "withdrawn"]), "withdrawn")
+        self.assertEqual(ladder(["withdrawn", "withdrawn"]), "retired")
 
-    def test_withdrawn_outranks_resolved(self):
+    def test_retired_outranks_answered(self):
         # Row 4 sits above row 5 so a bundle of nothing but withdrawals is
-        # `withdrawn`, not `resolved`: nothing was carried through.
-        self.assertEqual(ladder(["withdrawn"]), "withdrawn")
+        # `retired`, not `answered`: nothing was carried through.
+        self.assertEqual(ladder(["withdrawn"]), "retired")
 
-    def test_resolved_counts_withdrawn_as_finished(self):
-        self.assertEqual(ladder(["resolved", "withdrawn"]), "resolved")
+    def test_answered_counts_withdrawn_as_finished(self):
+        self.assertEqual(ladder(["resolved", "withdrawn"]), "answered")
 
-    def test_resolved_needs_at_least_one_resolved(self):
-        self.assertNotEqual(ladder(["withdrawn", "withdrawn"]), "resolved")
+    def test_answered_needs_at_least_one_resolved(self):
+        self.assertNotEqual(ladder(["withdrawn", "withdrawn"]), "answered")
 
-    def test_reopened_dominates_the_inert(self):
-        self.assertEqual(ladder(["reopened", "resolved", "withdrawn"]), "reopened")
+    def test_revisited_dominates_the_inert(self):
+        self.assertEqual(ladder(["reopened", "resolved", "withdrawn"]), "revisited")
 
     def test_reopened_beside_anything_live_is_analyzing(self):
         # Row 6 fires only when reopening is the WHOLE of the live work.
@@ -354,29 +362,29 @@ class TestDerivedStateIsStoredAndChecked(unittest.TestCase):
     when it drifts. These are that check.
     """
 
-    def test_status_layers_ownership_over_progress(self):
+    def test_standing_layers_ownership_over_progress(self):
         b = F.bundle("0100", ("framing",), ownership="unclaimed")
-        self.assertEqual(bundle_status(b), "unclaimed")
+        self.assertEqual(bundle_standing(b), "unclaimed")
         self.assertEqual(bundle_progress(b), "analyzing")
 
     def test_lineage_outranks_ownership(self):
         b = F.bundle("0100", ("resolved",), ownership="unclaimed",
                      lineage={"supersededBy": "0101", "on": "2026-09-01"})
-        self.assertEqual(bundle_status(b), "superseded")
+        self.assertEqual(bundle_standing(b), "superseded")
 
-    def test_status_is_progress_when_neither_applies(self):
+    def test_standing_is_progress_when_neither_applies(self):
         b = F.bundle("0100", ("resolved",), ownership=None)
-        self.assertEqual(bundle_status(b), bundle_progress(b))
+        self.assertEqual(bundle_standing(b), bundle_progress(b))
 
-    def test_a_null_status_is_reported_as_unstamped(self):
+    def test_a_null_standing_is_reported_as_unstamped(self):
         g = graph_of(F.bundle("0100", ("framing",), ownership=None))
         self.assertIn("UNSTAMPED", codes(g))
         g._fixture.close()
 
     def test_a_stored_value_that_drifts_is_caught(self):
         b = F.bundle("0100", ("resolved",), ownership=None)
-        b["status"] = "analyzing"          # a hand edit, or a stale stamp
-        b["progress"] = "resolved"
+        b["standing"] = "analyzing"          # a hand edit, or a stale stamp
+        b["progress"] = "answered"
         g = graph_of(b)
         self.assertIn("STORED-DISAGREES", codes(g))
         g._fixture.close()

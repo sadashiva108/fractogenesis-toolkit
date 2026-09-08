@@ -24,8 +24,8 @@
     "\u00a7\u00a74b\u20134d, in `.github/copilot-instructions.md`",
     "all 27 existing findings bundles, checked for overlap"
   ],
-  "status": "superseded",
-  "progress": "resolved",
+  "standing": "superseded",
+  "progress": "answered",
   "ownership": null,
   "lineage": {
     "supersededBy": "0038",

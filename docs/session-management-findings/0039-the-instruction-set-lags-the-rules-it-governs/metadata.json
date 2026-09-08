@@ -16,7 +16,7 @@
   "feltAt": [],
   "scope": "instruction-set. The fix lands in `.github/session-management-instructions.md`, `.claude/CLAUDE.md`, and `docs/architecture/findings-and-sessions.md`. Recorded against `.github/copilot-instructions.md` \u00a7\u00a74b\u20134d, which commit `1c48deb` deleted; D13 re-ruled the address.",
   "read": [],
-  "status": "analyzing",
+  "standing": "analyzing",
   "progress": "analyzing",
   "ownership": null,
   "lineage": {

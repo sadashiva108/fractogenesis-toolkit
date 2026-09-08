@@ -16,8 +16,8 @@
   "feltAt": [],
   "scope": null,
   "read": [],
-  "status": "superseded",
-  "progress": "un-started",
+  "standing": "superseded",
+  "progress": "pending",
   "ownership": null,
   "lineage": {
     "supersededBy": "0030",

@@ -22,8 +22,8 @@
     "`docs/legend.md`, the ladder and the two permission tables",
     "`docs/architecture/state-as-data.md` sections 4.3 and 4.4"
   ],
-  "status": "unclaimed",
-  "progress": "un-started",
+  "standing": "unclaimed",
+  "progress": "pending",
   "ownership": "unclaimed",
   "lineage": null,
   "findings": [

@@ -18,8 +18,8 @@
   ],
   "scope": "cross-cutting in effect, session management in subject \u2014 the rule is about what a session must verify before handing work over, not about anything this project does",
   "read": [],
-  "status": "unclaimed",
-  "progress": "un-started",
+  "standing": "unclaimed",
+  "progress": "pending",
   "ownership": "unclaimed",
   "lineage": null,
   "findings": [

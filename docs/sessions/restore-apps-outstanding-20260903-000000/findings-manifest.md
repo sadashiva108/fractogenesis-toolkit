@@ -6,7 +6,7 @@ restating the list. Each bundle's own index row names this session in return.
 
 Statuses are defined in [`docs/legend.md`](../../legend.md).
 
-| # | Bundle | Kind | Subject | Findings | Status | Notes |
+| # | Bundle | Kind | Subject | Findings | Standing | Notes |
 |---:|---|---|---|---:|---|---|
 | 0027 | [`0027-findings-architecture-conformance`](../../cross-cutting-findings/0027-findings-architecture-conformance/) | `cross-cutting` | The findings-and-sessions architecture disagrees with itself and with the tree | 7 | `superseded` by `0037` | — |
 | 0028 | [`0028-sessions-write-into-the-tree-the-owner-commits-from`](../../cross-cutting-findings/0028-sessions-write-into-the-tree-the-owner-commits-from/) | `cross-cutting` | Sessions write into the tree the owner commits from | 6 | `superseded` by `0038` | — |

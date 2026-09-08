@@ -1,4 +1,6 @@
 # Apply Manifest
+**Revision 233** — supersedes Revision 232 and earlier. Three vocabularies now use three words and share no value: a finding has a **status**, a bundle has a **standing**, a session has a **state**. A bundle standing is `pending · analyzing · answered · revisited · retired · unclaimed · transferred · superseded`, so a bare value says which set it came from. `docs/architecture/typed-bundles-and-work.md` drafts the bundle as a genus taking two shapes — reasoning and doing — which is the decide/do split promoted from a convention inside one directory to a property of the object.
+
 **Revision 232** — supersedes Revision 231 and earlier. A bundle now carries `status` and `progress`, and a session carries `state`: derived as before, and written down, with a check that fails when a stored value drifts. The working cycle becomes section 0, stated before anything else in the file, and it says what actually happens: compose in scratch, verify there, produce a patch, **report a review rather than a diff**, wait, and apply on *write it and provide a commit message*. `0049` records seven revisions that skipped the middle three. `bin/review-changes.sh` is the review. `bin/verify-doc-currency.sh` reports which documents may have gone stale because a source they describe changed, from asserted edges only. A PreToolUse guard refuses a write into the checkout.
 
 **Revision 231** — supersedes Revision 230 and earlier. The capacity stops pretending to be measured and `0048` records why. The session management framework gets a test suite — 38 contracts and regressions over fixtures — and its first act was to catch a repair from Revision 230 that had gone to the projection instead of the record. The conformant prompt moves into the repository, a clone's inheritance is written down once, and a session-management guard joins the runbook one. **Under an owner override.**
@@ -594,6 +596,174 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
 
 ---
+
+## Revision 233 — three words for three sets, and a draft for the thing there is nowhere to put
+
+### The collision, and why it had teeth
+
+`status` named two vocabularies. Worse, a bundle file carried `status` at the top
+level **and** inside every element of `findings[]` — one key, two meanings, one
+nesting level apart — and the two sets shared four values, so `resolved` could
+not say which it belonged to. A reader that grabbed the wrong level got something
+plausible, which is the failure this repository has met four times.
+
+**A finding has a `status`. A bundle has a `standing`. A session has a `state`.**
+And no value appears in more than one set:
+
+| | |
+|---|---|
+| finding `status` | `un-started` `framing` `decided` `resolved` `reopened` `withdrawn` |
+| bundle `standing` | `pending` `analyzing` `answered` `revisited` `retired` `unclaimed` `transferred` `superseded` |
+| session `state` | `available` `active` `closed` `handoff` `withdrawn` |
+
+`state-as-data.md` always called the derivation *"a bridge between two
+vocabularies, not an identity"*, and four rows of it were identity. Now the
+ladder translates: every finding `withdrawn` gives a bundle `retired`; findings
+inert with one `resolved` gives `answered`.
+
+**`answered` is deliberate and slightly ahead of the model.** It is right when a
+bundle's job ends at an answer — which is what section 4 of the new architecture
+proposes, with the doing moving to a work item. Today a bundle still carries
+`resolutions.md`, so `answered` describes a little less than the object holds.
+That is the direction the design is going, chosen over `concluded` because
+renaming twice costs twice.
+
+`pending` rather than `assigned` for the derived slot, because an `unclaimed`
+bundle would read `progress: assigned`, which is false. *Assigned* is an
+ownership fact and `progress` is the derivation with ownership set aside.
+
+**The tests caught the rename**, which is what they are for: five `TestLadder`
+failures on the old words, then 47 green including a new one asserting the two
+vocabularies share nothing.
+
+### `docs/architecture/typed-bundles-and-work.md`
+
+**A draft to be worked, not a design to be built.** Sections 2 and 3 are firm;
+the rest is named so a successor can argue with it.
+
+**Three origins of work, one vehicle.** A finding gets a bundle and a lifecycle;
+an idea gets a markdown file with no status; a **blueprint** — the owner's word,
+and better than *architecture record* because it says the thing is built from —
+gets nothing. Two of the three have to disguise themselves as a defect to be
+worked: `state-as-data.md` is a design, and four revisions of building it were
+carried by `0043`, a bundle about a problem.
+
+**The bundle is a genus.** Everything the checkers, the allocator, the
+interviewer and the ladder implement is generic — a numbered directory with a
+reason, items carrying statuses, decisions with their rejected alternatives, a
+record of what was done, ownership, lineage and typed edges. `kind` already
+exists; it stops meaning *which tree* and starts meaning *what sort of bundle*.
+
+**Two shapes, and they are not new.** A **reasoning** bundle carries a question,
+its options and its decisions with the alternatives rejected; a **doing** bundle
+carries a spec, a scope, steps and evidence. `findings-and-sessions.md` section 6
+calls decide-versus-do *"the single most load-bearing distinction in the design
+and the easiest to erode under time pressure"*, and it has been a convention
+inside one directory held by discipline. This makes it a property of the object.
+
+**A task is an item, not a bundle.** A findings bundle holds findings `F1..Fn`;
+a doing bundle holds tasks `T1..Tn`. That symmetry is what the genus already
+implements, and the first draft broke it by putting `task` at the bundle level.
+So the doing side needs no separate type field: **the kind is the type** —
+`implement`, `refactor`, `retrofit`, `bugfix`, `verify`, one flat extensible list
+with the shape derived from the kind.
+
+**Two reasoning kinds, and the line is backward against forward.** `findings` is
+a reading of **something that exists** — what is true about it, whether that turns
+out to be a defect or a fact established. **Research belongs here**, and the tree
+already works this way: `0036` F1 was settled by testing whether
+`verify-doc-paths` reads `docs/`. `commission` is **an intent to build** — we
+want X, what shape should it take. **A
+blueprint is what a commission produces**, the way an answer is what a findings
+bundle produces; both terminate at `answered` and differ only in the artifact.
+`charter` stays a blueprint subtype, one that authorizes a programme rather than
+specifying an artifact.
+
+**The draft got this wrong once and the correction is worth recording**, because
+it is the admission rule catching its author: the first version made `blueprint`
+a kind one paragraph after stating the rule that excludes it. A `findings` bundle's fields look backward — where this is felt, what it costs to
+leave. A `commission`'s look forward — the goal, the constraints. Neither set can
+be written for the other, which is what the rule asks for.
+
+**`docs/legend.md` may owe a sentence**: it already says a findings bundle is *"a
+reading of something that already exists"*, which is neutral, and this record's
+first draft narrowed it to *and is wrong*. Saying plainly that a finding can
+record a fact established as well as a defect found is a change to a rule and is
+**owed a finding, not a quiet edit**.
+
+**Deciding kinds multiply; the doing shape does not.** Doing is uniform in
+structure and varied in content — a retrofit, a refactor and a verify need
+identical things recorded. Reasoning differs per kind in its reason document, and
+**the genus stays fixed underneath**, which is why the checkers and the ladder do
+not multiply.
+
+**The admission rule, kept:** a new reasoning shape must name a field no existing
+shape has. It disposes of the near misses — an audit is a commission that
+produces findings, an incident is a finding with a date, an RFC is a blueprint
+with fewer options — and it has now disposed of one that got past its author.
+
+**An answer is not a hand-off to doing**, and the draft's first version implied
+it was. Three things can follow an `answered` bundle: **nothing** — the answer was
+the point, as `0025` records; **a doing bundle** that `serves` it; or **another
+reasoning bundle** that this one `evidences`. Research settles what is true, and
+*then* there is something worth building. **That third case needs no new edge
+kind** — `evidences` already means *A's resolution produces the evidence B needs
+to be decided*.
+
+So the graph across kinds is **a directed graph, not a pipeline**: findings can
+evidence a commission, a blueprint can raise findings against what exists, and a
+doing bundle's tasks can turn up something that becomes a finding — the park-it
+rule, now with an edge recording where the parked thing came from. **A pipeline
+records the path taken; a graph records the path and the branches off it**, which
+is section 3 arriving at the level of the whole tree.
+
+**Work joins its reason by a `serves` edge**, from the doing to the reason and
+never the other way, so a reason is never edited when work is created against it.
+Many-to-many, which is why it is an edge and not a field.
+
+**The dispatch rule falls out rather than being invented:** a `task` may be
+dispatched only when every bundle it `serves` is `decided` or later. An agent
+handed anything else would have to decide something to proceed. **The two shapes
+are the boundary between a session and an agent**, and the check is that boundary
+made enforceable.
+
+`operation` and `procedure` are unavailable as kinds or types: `0035` is titled
+*"A lineage rename is a procedure, not an operation"*, so both already carry a
+contested distinction here.
+
+### Section 3, which is the reason for all of it
+
+**Breadth is the property, and it is already protected twice without being
+named.** A conversation with an assistant is depth-first — it plunges, branches,
+plunges again, and the paths not taken evaporate because nobody wrote them down.
+What survives is deep and narrow, and what is lost is what a fresh session most
+needs.
+
+The repository fights this in exactly two places: *a decision without its
+rejected alternatives is an assertion*, and *park the second defect rather than
+widening the task*. **Both are the same rule — when the work narrows, write down
+what it narrowed away from** — and neither is stated as a principle, so neither
+generalises.
+
+**The interviewer makes this urgent.** Its entire purpose is to narrow, and
+narrowing *is* breadth loss. It is safe only because what it eliminates is
+recorded as it goes, and that is a property the design asserts and **nothing
+checks** — open question 6.4, and it would fail today on purpose.
+
+### Validators
+
+| Checker | Result |
+|---|---|
+| `test-session-management.sh` | **47 tests, 0 failures** — 5 caught the rename first |
+| `verify-session-findings.sh` | counts 0 FAIL, structure 0 FAIL, headers 11 FAIL |
+| `verify-script-portability.sh` | 0 WARN, 0 FAIL |
+| `verify-doc-paths.sh --all` | 0 MISSING, 0 ANCHOR BROKEN |
+| `plan-findings-work.sh check` | no `UNSTAMPED`, no `STORED-DISAGREES` |
+
+Renamed in 49 bundle records, 9 table headers, 7 index and manifest files, the
+loader, the structure checker's own derivation, the tests, `docs/legend.md` and
+`state-as-data.md`. Under an owner override; the manifest entries that cite a
+bundle as `resolved` are history and are not retro-edited.
 
 ## Revision 232 — the cycle, written down first, and two things that watch it
 

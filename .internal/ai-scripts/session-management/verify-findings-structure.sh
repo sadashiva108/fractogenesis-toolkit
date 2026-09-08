@@ -8,7 +8,7 @@
 #   1. every data row in a findings/sessions table has its own table's column
 #      count -- a row with the wrong number of cells renders shifted and reads
 #      as data;
-#   2. every findings bundle's DERIVED status (from metadata.json) agrees
+#   2. every findings bundle's DERIVED standing (from metadata.json) agrees
 #      with the bundle's INDEX.md row, which is authoritative.
 #
 # Why this is separate from verify-findings-counts.sh. That script exists for
@@ -145,11 +145,11 @@ if d.get("ownership"):                                   print(d["ownership"]); 
 if (d.get("lineage") or {}).get("supersededBy"):         print("superseded");   raise SystemExit
 st = [f["status"] for f in d.get("findings", [])]
 INERT = ("resolved", "withdrawn")
-if not st or all(s == "un-started" for s in st):                       print("un-started")
-elif all(s == "withdrawn" for s in st):                                print("withdrawn")
-elif all(s in INERT for s in st) and any(s == "resolved" for s in st): print("resolved")
+if not st or all(s == "un-started" for s in st):                       print("pending")
+elif all(s == "withdrawn" for s in st):                                print("retired")
+elif all(s in INERT for s in st) and any(s == "resolved" for s in st): print("answered")
 elif any(s == "reopened" for s in st) and all(s in INERT for s in st if s != "reopened"):
-                                                                       print("reopened")
+                                                                       print("revisited")
 else:                                                                  print("analyzing")
 PYDERIVE
 }
@@ -179,7 +179,7 @@ for dir in docs/*-findings/[0-9][0-9][0-9][0-9]-*/ docs/*-findings/*/[0-9][0-9][
   # backticked token; a greedy strip runs past the closing backtick and returns
   # the URL, or nothing at all on a plain cell.
   row="$(awk -F'|' -v n=" $num " '
-    /^\| *#/ { for (i = 2; i < NF; i++) { c = $i; gsub(/^[ \t]+|[ \t]+$/, "", c); if (c == "Status") si = i } ; next }
+    /^\| *#/ { for (i = 2; i < NF; i++) { c = $i; gsub(/^[ \t]+|[ \t]+$/, "", c); if (c == "Standing") si = i } ; next }
     index($0, "|" n "|") == 1 && si {
       s = $si
       if (match(s, /`[^`]*`/)) s = substr(s, RSTART + 1, RLENGTH - 2)

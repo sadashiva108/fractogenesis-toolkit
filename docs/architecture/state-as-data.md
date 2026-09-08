@@ -275,7 +275,7 @@ for one slot. The legend already says two of the three are not progress at all.
 
 | Field | Answers | Values |
 |---|---|---|
-| `status` | what state this bundle is in — the one value a reader wants | **derived and STORED** — the three fields below, in that precedence |
+| `standing` | where this bundle stands — the one value a reader wants | **derived and STORED** — the three fields below, in that precedence |
 | `progress` | how far the reading has been taken, ownership aside | **derived and STORED** — `un-started`, `withdrawn`, `resolved`, `reopened`, `analyzing` |
 | `ownership` | who owns this | `null` when owned per the manifest, else `unclaimed` or `transferred` |
 | `lineage` | is this reading still authoritative | `null`, or `{ "supersededBy": "0041", "on": "2026-09-06" }` on the predecessor; `{ "supersedes": "0032", "on": "…" }` on the successor, whose provenance edges carry the per-finding accounting |
@@ -293,12 +293,12 @@ being waived**: a copy is permitted *where a check fails when it drifts*.
 does not match what it derives from, and both are tested. A hand-edited status is
 a defect the next `check` names.
 
-**`status` and `progress` are not the same question and differ on 27 of 49
-bundles.** `status` layers ownership and lineage over the derivation, because
+**`standing` and `progress` are not the same question and differ on 27 of 49
+bundles.** `standing` layers ownership and lineage over the derivation, because
 neither is progress: an `unclaimed` bundle is closed to every session whatever
 its findings say, and a `superseded` reading is no longer authoritative whatever
 it concluded. `progress` is the derivation alone — which is how `0001` reads
-`status: unclaimed` and `progress: analyzing` at once, and that pair is exactly
+`standing: unclaimed` and `progress: analyzing` at once, and that pair is exactly
 the drift `0047` F1 records.
 
 **A session carries `state` on the same terms.** `declaredState` keeps its name
