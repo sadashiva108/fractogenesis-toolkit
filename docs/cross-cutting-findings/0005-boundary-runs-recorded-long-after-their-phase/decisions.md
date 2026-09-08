@@ -15,12 +15,12 @@ Re-verified against the volume before deciding. Both pairs still carry their
 
 | # | Decision | Findings | Decided | Outcome |
 |---|---|---|---|---|
-| D1 | Nothing is re-run, and nothing on the volume is repaired | — | 2026-09-04 | `accepted` |
-| D2 | `entry` and `initial` are first-wins | — | 2026-09-04 | `accepted` |
-| D3 | A later run at a first-wins point is flagged for a person, never rejected | — | 2026-09-04 | `accepted` |
-| D4 | The hazard is written where the machinery is read | — | 2026-09-04 | `accepted` |
-| D5 | `--note` is added to both recorders | — | 2026-09-04 | `accepted` |
-| D6 | Five pointers move, one is pinned back, four are the owner's to decide | — | 2026-09-04 | `accepted` |
+| D1 | Nothing is re-run, and nothing on the volume is repaired | F1 | 2026-09-04 | `accepted` |
+| D2 | `entry` and `initial` are first-wins | F1 | 2026-09-04 | `accepted` |
+| D3 | A later run at a first-wins point is flagged for a person, never rejected | F1 | 2026-09-04 | `accepted` |
+| D4 | The hazard is written where the machinery is read | F1 | 2026-09-04 | `accepted` |
+| D5 | `--note` is added to both recorders | F1 | 2026-09-04 | `accepted` |
+| D6 | Five pointers move, one is pinned back, four are the owner's to decide | F1 | 2026-09-04 | `accepted` |
 
 ## D1 — Nothing is re-run, and nothing on the volume is repaired
 

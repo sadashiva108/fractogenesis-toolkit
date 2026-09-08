@@ -111,8 +111,17 @@ becomes one kind among ten.
 | `duplicates` | undirected | the same finding read twice | never separated | the interviewer proposes withdrawing one instead of asking twice |
 | `constrains` | directed | A's answer removes options from B without settling it | prefers co-allocation | drives propagation; B's option set shrinks and may collapse to one |
 | `shares-surface` | undirected | both land in the same file or region | cross-session placement carries a **collision cost** | no effect on ordering |
+| `carried` | directed | a finding continues one in the bundle this supersedes, unchanged | keeps a re-reading with its lineage | context: what was already decided about it |
+| `successor` | directed | as `carried`, but the statement changed — `reason` says how | same | the prior reading is read before the new one |
 | `relates-to` | undirected | the existing prose pointer | weak preference only | context on request; never ordering |
 | `supersedes` | directed | as `docs/legend.md` defines it | terminal, never allocatable | excluded from the queue |
+
+**`carried` and `successor` were not in this record's first version.** They came
+from the state migration, they are **derived rather than asserted** — a
+supersession produces them — and they do something none of the original ten did:
+they track lineage at *finding* granularity, so a re-reading can be joined to
+what its predecessor already settled. `successor` carries a `reason`, which is a
+field `supersedes` should have had.
 
 **The four hard ones are `blocks`, `evidences`, `co-decides` and `contradicts`.**
 They constrain what is legal. The rest express preference, and a preference that
@@ -190,8 +199,23 @@ score = w_keep · Σ intra-session edge weight
       + w_tree · Σ bundles whose tree matches the session's subject
       − w_split · Σ cross-session shares-surface weight
       − w_load  · (max session load − min session load)
+      − w_over  · Σ ((load − capacity)² / capacity) over sessions past capacity
       − w_hold  · Σ ready findings inside held bundles
+      − setup   · per new session bundle the proposal opens
 ```
+
+**The overflow term is what makes a new session preferable to a long one**, and
+it was missing until the allocator was run for real. Without it the objective
+rewards concentration without limit: `pull` and subject affinity both favour the
+session that already holds the most, so the arrangement it liked best put eleven
+bundles on one session and seven on another. **A session that is too long is the
+owner's actual complaint and the first objective had no term for it.**
+
+It is superlinear on purpose. Linear overflow trades one unit of overload against
+one unit of anything else, which is how a session ends up thirty per cent over
+and nothing objects. Squared, the next bundle onto an overloaded session always
+costs more than the last, and the search opens a new one instead. `setup` keeps
+new sessions from being free — a bundle, a prompt and a cold read are real.
 
 **The `pull` term was missing from the first version of this record and was found
 by running it.** Revision 211 counted only edges between two *queued* bundles, so
@@ -213,12 +237,30 @@ directly into the objective, so the allocator prefers arrangements that strand
 fewer ready findings — and, more importantly, **records the number it could not
 avoid**. See section 8.
 
+### 4.2a Sizing the new sessions
+
+`--new-sessions -1` raises the number of new session bundles until no session is
+over capacity, and reports **how many it used**, not how many it was allowed.
+Those are different numbers and reporting the second is how a tool claims credit
+for work it did not do.
+
 ### 4.3 Why there is no clever algorithm here
 
 Eight `unclaimed` bundles and three `active` sessions is 3⁸ ≈ 6,561 assignments.
-**Exhaustive search, scored, in milliseconds.** Graph partitioning, Louvain
-modularity, GAP solvers and LPT bin-packing all apply to this problem and all of
-them are unnecessary below roughly forty bundles.
+**Exhaustive search, scored, in milliseconds.**
+
+**That ceiling was reached sooner than this record expected.** Eighteen bundles
+across two live sessions is still exact at 262,144, but the moment new sessions
+are proposed the base grows and the space does not: ten destinations over
+eighteen bundles is 10¹⁸. The implementation searches exhaustively up to 400,000
+arrangements and otherwise runs **longest-processing-time first, then local
+search** — move one bundle at a time, best improvement, until none.
+
+The local search is not optional. Greedy alone filled whichever session scored
+best for one bundle and left four over capacity while claiming eight new sessions
+and using two. **Bin-packing heuristics turned out to be necessary at eighteen
+bundles, not forty**, and the reason is that proposing new sessions multiplies
+the destinations rather than the items.
 
 This is worth stating plainly because the temptation runs the other way. The
 entire difficulty is in specifying the objective honestly; none of it is in

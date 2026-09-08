@@ -14,11 +14,11 @@ rewritten to match what is decided here.
 
 | # | Decision | Findings | Decided | Outcome |
 |---|---|---|---|---|
-| D1 | The finding is resolved by work already shipped, not by new work | — | 2026-09-03 | `accepted` |
-| D2 | The two lineages stand, and the names are correct | — | 2026-09-03 | `accepted` |
-| D3 | Define the two words where a reader looks for them | — | 2026-09-03 | `accepted` |
-| D4 | The item 4 dependency is discharged | — | 2026-09-03 | `accepted` |
-| D5 | What is not taken into this bundle | — | 2026-09-03 | `accepted` |
+| D1 | The finding is resolved by work already shipped, not by new work | F1 | 2026-09-03 | `accepted` |
+| D2 | The two lineages stand, and the names are correct | F1 | 2026-09-03 | `accepted` |
+| D3 | Define the two words where a reader looks for them | F1 | 2026-09-03 | `accepted` |
+| D4 | The item 4 dependency is discharged | F1 | 2026-09-03 | `accepted` |
+| D5 | What is not taken into this bundle | F1 | 2026-09-03 | `accepted` |
 
 ## D1 — The finding is resolved by work already shipped, not by new work
 

@@ -1,4 +1,8 @@
 # Apply Manifest
+**Revision 230** — supersedes Revision 229 and earlier. The two checker failures are fixed at their actual sources — nineteen mechanical citations in the tree, one stale count, and section 11, which had gone on permitting the `—` that Revision 219's ruling retired. The allocator gains selection, a dry run that says create or clone, and a capacity derived from evidence — which reports that the evidence points the other way and says so. `docs/architecture/the-record-and-the-graph.md` measures the eight gaps between the state format and what reads it.
+
+**Revision 229** — supersedes Revision 228 and earlier. The allocator and the interviewer exist as one entrypoint, `bin/plan-findings-work.sh`, reading `metadata.json` directly. Running them found what the record proposing them had missed: the objective had no term for a session being too long, which is the owner's actual complaint, and the exact-search ceiling is reached at eighteen bundles rather than forty because proposing new sessions multiplies the destinations. **Under an owner override.**
+
 **Revision 228** — supersedes Revision 227 and earlier. **Four bundles are released and the session hands off.** `0037`, `0038`, `0040` and `0041` — twenty-two findings, all `framing`, all clean-slate supersession successors with full provenance and nothing decided — go back to `unclaimed` deliberately, as the allocator's first real workload rather than a successor's reading-order guess. Doing it surfaced `0039` F20: **releasing to `unclaimed` had no procedure**, though its sibling `transferred` has five numbered steps and the legend defines the two in one sentence as the ownership pair. `unclaimed` appeared twice in the whole instruction set and neither mention was a step. The operation is not small — it touches the manifest, two index cells, the session's counts and its disposal record — and **getting it wrong strands a bundle**, which is on the record: Revision 200 found `phase-11b` closed while still holding five. The practice existed in commit `80d3482` and was written down nowhere. D20 installs §10a in four steps, and there is no fifth for setting the status: **Revision 222 made ownership derived, so removing the manifest row IS the release** and `unclaimed` follows from it — a procedure that was never written turning out shorter than it would have been, which is the design paying for itself. Step 4, the disposal record, is not optional: a released bundle leaves no trace in the session that held it, so without it the reading's history stops at the moment of release. `handoff-20260908-100020.md` is brought current from Revision 221 to here, carrying the disposal table, five things a successor most needs to know, and six owed items in pickup order.
 
 **Revision 227** — supersedes Revision 226 and earlier. The record gets a boundary. A session may have several folders connected and may legitimately work in more than one; this one ended with three, one of them a notes vault belonging to a different project. Nothing stated that only this repository's work is recorded here, and nothing could have caught a side errand landing in the manifest, a finding, or a `metadata.md` resource row. **It did not happen, and that is `0039` F19 rather than a reprieve: the records are clean because the session kept them clean, not because anything required it.** D19 states it in both directions, because the boundary fails both ways — **the record covers this repository, and the rules governing it live in this repository.** The second half is F9, six rules left in a workspace file outside the tree with three more added the same day; one sentence each closes both. A fourth write kind, `foreign`, names a write to any other connected folder: ordinary, owner-asked, no revision, **not recorded here**. It is named so the case is excluded deliberately rather than by omission, since an unnamed case reads as *not covered* and behaves as *not thought about*. The tempting rule — write only about folders in your Resources table — is rejected in both directions: the artifact volume is not a connected folder and is squarely in scope, and a folder can be connected for one lookup and be nobody's business. **Connection is availability; scope is subject**, and the session bundle's `prompt.md` is what states the subject. Not checkable, and recorded as such: no validator can know whether a paragraph is about this repository.
@@ -586,6 +590,193 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
 
 ---
+
+## Revision 230 — the checkers pass, the allocator chooses, and eight gaps are measured
+
+### The two failures had two different causes
+
+**Counts, 1 FAIL: the tree was wrong.** `docs/sessions/INDEX.md` said
+`session-management-re-evaluation` holds 7 bundles; its `findings-manifest.md`
+and `metadata.json` both say 3. Revision 228 released four and the index row did
+not move. Corrected to 3. **Counts is now 0 FAIL.**
+
+**Headers, 30 FAIL: section 11 was wrong.** The check requires every decision to
+cite a finding — the owner's explicit ruling, recorded in the checker and
+following `0039` D8, which retired the derivable-citation exemption at Revision
+219. Section 11 still read *"or `—` where the source never said. It is not
+inferred."* **A rule and the check enforcing it had said opposite things for
+eleven revisions**, and thirty decisions carried `—` because the schema said they
+could. Section 11 now matches the ruling and names what it used to say.
+
+**Nineteen of the thirty are repaired; eleven are not, on purpose.** In a
+one-finding bundle the citation is `F1` by construction — that is
+*"a table built from what is already there"*, which section 11 calls a reformat
+rather than an edit to the reading, so it is permitted on `resolved` bundles and
+is declared here as such. `0005`, `0012`, `0013` and `0025` are done.
+
+`0030` (8 decisions, 5 findings) and `0035` (3 and 3) need somebody to read which
+decision answers which finding. **That is inference and this session will not do
+it** — the rule that citations are not inferred survives its own paragraph's
+rewrite. Both belong to `pre-image-capture-conformance-20260903-194532`.
+**Headers is 30 FAIL to 11.**
+
+### The allocator chooses what it is given
+
+**Selection.** `--only-kind` / `--exclude-kind` and `--only` / `--exclude` by
+number, so a queue can be narrowed to one subject — session management without
+the toolkit work, which is what prompted it. The run reports how many bundles the
+filter excluded, because a proposal over a filtered queue that does not say so is
+a proposal that looks complete.
+
+**A dry run that recommends create or clone.** For each proposed session it
+reports **CLONE** where the cluster pulls on an existing session's owned work,
+naming the source and the pull weight, and **CREATE** where no edge ties it to
+one — because a clone inherits a prompt and customisations, which is either the
+point or dead weight. It closes by saying the owner creates them, assigns, and
+commits and pushes, and that nothing was written.
+
+### The capacity is derived, and the derivation argues against itself
+
+`capacity` reports every session's load against its rework — decisions whose
+outcome was not `accepted`, findings reopened, bundles superseded, all already
+recorded and none newly captured.
+
+**Rework falls as load rises.** 22 per cent at 4.6 units; 6 and 9 per cent at
+30.4 and 35.2. The two largest sessions are the two cleanest, the derived
+capacity is **35.2**, and it points the opposite way to the instruction that
+asked for it.
+
+The tool prints that rather than smoothing it, and then prints why: **the record
+cannot see the thing the limit is about.** A session becomes too long in turns,
+in context and in attention; none is recorded anywhere. Until a session logs its
+own length a capacity is a judgement, so `--capacity` takes one and the report
+says it was chosen rather than measured.
+
+### `docs/architecture/the-record-and-the-graph.md`
+
+Eight gaps between `state-as-data.md` and `allocation-and-inquiry.md`, every one
+found by running the consumers rather than reading the schema — **six are fields
+that exist and are empty**, which a schema review cannot see.
+
+`updatedAt` 0 of 147. `severity` free text 47 of 47. The write category **guessed
+by keyword** off the scope sentence, which is inference and is load bearing in
+the cost model. No field for readiness, none for session length. `ownership` null
+both when owned and when unowned, so a bundle cannot answer who owns it — two
+bundles are null and in no manifest. Two decisions carry `replaced → DX`, which
+section 11's outcome vocabulary does not define.
+
+And the first one: **the edges array holds no decision edges.** `0043` D1 settled
+the contract, `state-as-data.md` uses `0036/F1 constrains 0044/F1` as its worked
+example, and that edge is not in the data. It is an adoption gap rather than a
+schema gap, it needs no schema change, and it unlocks more than the other seven
+together.
+
+The record proposes no fields. `state-as-data.md` owns that shape, and a second
+document proposing fields for it would be the defect the migration removed.
+
+### Validators
+
+| Checker | Result |
+|---|---|
+| `verify-session-findings.sh` counts | **0 FAIL** — was 1 |
+| `verify-session-findings.sh` headers | **11 FAIL** — was 30 |
+| `verify-session-findings.sh` structure | 0 FAIL |
+| `verify-script-portability.sh` | 0 WARN, 0 FAIL |
+| `verify-doc-paths.sh --all` | 0 MISSING, 0 ANCHOR BROKEN |
+| `verify-runbook-structure.sh` | 213 PASS / 5 WARN / 25 FAIL — standing baseline |
+
+The eleven remaining are named above and are owed a reading, not a repair.
+Composed in a copy outside the owner's checkout; Linux VM, Bash 5.1.16, GNU
+coreutils. **Not macOS.**
+
+## Revision 229 — the allocator and the interviewer, running
+
+`bin/plan-findings-work.sh` with `graph`, `allocate` and `ask`, over
+`.internal/ai-scripts/session-management/plan_findings_work.py`. It reads the
+tree and writes nothing: every subcommand prints a proposal, and **the owner
+assigns.** One entrypoint and one module, no second path.
+
+### This is an owner override
+
+`docs/legend.md` gates a toolkit write on a `decided` finding. There is none —
+`allocation-and-inquiry.md` is an architecture record, not a bundle, and the
+findings behind it are `framing` or `unclaimed`. **The owner directed the build
+on 2026-09-08**, having read the record and run both halves as demonstrations.
+
+### What running it found in the record that proposed it
+
+**The objective had no term for a session being too long.** `pull` and subject
+affinity both favour the session already holding the most, so with no counterpressure
+the best-scoring arrangement put eleven bundles on one session and seven on
+another. That is the exact complaint the build was asked to solve, and section
+4.2 as written made it worse. It now carries a **superlinear overflow penalty**
+past a capacity, plus a setup cost so a new session is not free. Squared rather
+than linear, because linear overflow trades one unit of overload against one unit
+of anything else, which is how a session ends up thirty per cent over with
+nothing objecting.
+
+**The exact-search ceiling arrives at eighteen bundles, not forty.** Section 4.3
+argued no clever algorithm was warranted below about forty. True while the
+destinations are fixed — but proposing new sessions multiplies the destinations
+without touching the items, and ten destinations over eighteen bundles is 10¹⁸.
+**Longest-processing-time first plus local search is now necessary**, and greedy
+alone was visibly wrong: it claimed eight new sessions, used two, and left four
+sessions over capacity.
+
+### Four defects found by running it, each silent
+
+- **Session liveness read the wrong field.** `ended` is always present as an
+  object, so `if session.ended` is true for every session and the allocator saw
+  none. A session is ended when `ended.on` is set; a session that has handed off
+  or closed takes no new work either.
+- **The objective passed a bundle number where a bundle was wanted**, which threw
+  rather than mis-scoring. The only one of the four that announced itself.
+- **Greedy packing**, above.
+- **Two proposed session bundles were given the same name** — same kind, same
+  stamp, same directory. Names now carry the cluster's lowest bundle number.
+
+### What the run says about the tree
+
+Eighteen `unclaimed` bundles, 61 findings, 99.4 cost units, **zero held**. Three
+new session bundles proposed, sized by the tool rather than asked for.
+
+**`keep` is 0: no edge joins two queued bundles.** The only edges in the data are
+the 29 `carried` and 2 `successor` produced by the migration, and those point
+from a bundle to the one it supersedes. **The cohesion half of the objective is
+running on an empty graph**, and the allocation is being decided by `pull`,
+subject affinity and load alone. The format supports the decision edges; nobody
+has asserted any. That is the single largest thing standing between this tool and
+the quality it was designed for.
+
+The interviewer reports 147 findings, 51 `framing`, **28 askable** — 23 of the
+`framing` ones sit in `unclaimed` bundles, which is `0047` F1 at scale. It then
+found a **three-way tie** at the top and said so rather than presenting an order,
+which is section 5 behaving as specified.
+
+### The taxonomy absorbs what the migration invented
+
+`carried` and `successor` join the edge kinds, marked **derived**. They do
+something none of the original ten did — lineage at *finding* granularity, so a
+re-reading joins to what its predecessor settled — and `successor`'s `reason`
+field is a shape `supersedes` should have had.
+
+### Validators
+
+| Checker | Result |
+|---|---|
+| `verify-script-portability.sh` | 0 WARN, 0 FAIL — the entrypoint is Bash 3.2 clean |
+| `verify-doc-paths.sh --all` | 0 MISSING, 0 ANCHOR BROKEN |
+| `verify-runbook-structure.sh` | 213 PASS / 5 WARN / 25 FAIL — standing baseline |
+| `verify-session-findings.sh` | **counts 1 FAIL, headers 30 FAIL — PRE-EXISTING** |
+
+**Those failures are not this revision's.** They were measured in the owner's
+checkout before anything was applied and are identical after: the tree has been
+failing its own findings checkers since the migration. They are named here so a
+later reader does not attribute them to the tool, and they are owed a finding.
+
+The entrypoint self-locates and runs from any working directory; `python3` is
+already a dependency through `bin/prepare-artifact-root.py`. Composed in a copy
+outside the owner's checkout; Linux VM, Bash 5.1.16, GNU coreutils. **Not macOS.**
 
 ## Revision 220 — the interviewer runs, and two bundles come out of it
 

@@ -13,11 +13,11 @@ reading is otherwise unchanged.
 
 | # | Decision | Findings | Decided | Outcome |
 |---|---|---|---|---|
-| D1 | The question the finding asks is answered, and the answer is *no restore path is needed* | — | 2026-09-03 | `accepted` |
-| D2 | The finding's "no restore path" is true of `restore-repos.sh` and not of the workflow | — | 2026-09-03 | `accepted` |
-| D3 | The two zips are not restored either, and are not the same case | — | 2026-09-03 | `accepted` |
-| D4 | No code change, and the producer is not fixed | — | 2026-09-03 | `accepted` |
-| D5 | What this bundle does not take | — | 2026-09-03 | `accepted` |
+| D1 | The question the finding asks is answered, and the answer is *no restore path is needed* | F1 | 2026-09-03 | `accepted` |
+| D2 | The finding's "no restore path" is true of `restore-repos.sh` and not of the workflow | F1 | 2026-09-03 | `accepted` |
+| D3 | The two zips are not restored either, and are not the same case | F1 | 2026-09-03 | `accepted` |
+| D4 | No code change, and the producer is not fixed | F1 | 2026-09-03 | `accepted` |
+| D5 | What this bundle does not take | F1 | 2026-09-03 | `accepted` |
 
 ## D1 — The question the finding asks is answered, and the answer is *no restore path is needed*
 

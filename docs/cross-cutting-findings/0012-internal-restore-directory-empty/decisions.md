@@ -14,9 +14,9 @@ written to complain about.
 
 | # | Decision | Findings | Decided | Outcome |
 |---|---|---|---|---|
-| D1 | Fix the sentence, not the directory | — | 2026-09-04 | `accepted` |
-| D2 | The empty directory is removed locally, and that is not a repository change | — | 2026-09-04 | `accepted` |
-| D3 | `reimaging-scripts-guide.md`'s tree is a separate finding, and is bigger than this one | — | 2026-09-04 | `accepted` |
+| D1 | Fix the sentence, not the directory | F1 | 2026-09-04 | `accepted` |
+| D2 | The empty directory is removed locally, and that is not a repository change | F1 | 2026-09-04 | `accepted` |
+| D3 | `reimaging-scripts-guide.md`'s tree is a separate finding, and is bigger than this one | F1 | 2026-09-04 | `accepted` |
 
 ## D1 — Fix the sentence, not the directory
 

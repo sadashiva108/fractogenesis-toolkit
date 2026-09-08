@@ -768,8 +768,18 @@ record of what was considered, and deleting it leaves an assertion — a decisio
 without its rejected alternatives is exactly what this document exists to
 prevent.
 
-**`Findings`** names the findings the decision answers, or `—` where the source
-never said. It is not inferred.
+**`Findings`** names the findings the decision answers. **Always — there is no
+`—` here.** Revision 219 retired the exemption that let a one-finding bundle
+leave it blank on the reasoning that the citation was derivable, and
+`verify-findings-headers.sh` D15 enforces the ruling: always a table, always a
+citation. `F1` costs one cell.
+
+This paragraph read *"or `—` where the source never said, it is not inferred"*
+until Revision 230, which is the rule the check was written to replace. Thirty
+decisions in six bundles still carried `—` because the schema said they could.
+**Where a citation genuinely is not derivable it is a reading, not a formatting
+gap**: the decision is read against its findings and cited, by a session that may
+open that bundle.
 
 Then one section per decision: `## D1 — <the decision>`, free form beneath.
 `Decided:` and `Rejected:` stay inside those sections as markers, not header
