@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T14:00:57+00:00",
+  "updatedAt": "2026-09-08T14:22:19+00:00",
   "number": "0029",
   "bundleName": "0029-the-instruction-set-lags-the-rules-it-governs",
   "kind": "instruction-set",
@@ -22,7 +22,6 @@
     "supersededBy": "0039",
     "on": null
   },
-  "declaredTag": "superseded",
   "findings": [
     {
       "id": "F1",

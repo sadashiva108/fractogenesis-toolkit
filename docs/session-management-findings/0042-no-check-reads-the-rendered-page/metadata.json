@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T14:00:57+00:00",
+  "updatedAt": "2026-09-08T14:22:19+00:00",
   "number": "0042",
   "bundleName": "0042-no-check-reads-the-rendered-page",
   "kind": "session-management",
@@ -21,7 +21,6 @@
   "progress": null,
   "ownership": "unclaimed",
   "lineage": null,
-  "declaredTag": "unclaimed",
   "findings": [
     {
       "id": "F1",

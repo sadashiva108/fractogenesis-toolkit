@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T14:00:57+00:00",
+  "updatedAt": "2026-09-08T14:22:19+00:00",
   "number": "0026",
   "bundleName": "0026-verify-doc-paths-counts-gitignored-docs",
   "kind": "cross-cutting",
@@ -22,7 +22,6 @@
     "supersededBy": "0036",
     "on": null
   },
-  "declaredTag": "superseded",
   "findings": [
     {
       "id": "F1",

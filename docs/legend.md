@@ -12,9 +12,13 @@ project inherits the file, and an example it cannot follow reads as noise.
 
 Both are recorded twice and the two must agree: in the bundle's row in its
 `INDEX.md`, which is authoritative, and in a tag file on the bundle directory —
-`STATUS-<status>` for a findings bundle, `STATE-<state>` for a session bundle —
-so `ls` answers the question without opening anything. Spaces become hyphens:
-`STATUS-in-progress`.
+A bundle's status is **derived from its findings**, in `metadata.json`, and
+stored nowhere. It was carried in a marker filename until Revision 222 --
+`STATUS-<status>` for a findings bundle, `STATE-<state>` for a session -- which
+made every transition an unlink plus a create and put three unrelated facts in
+one slot. `0043` F1 is the reading; `0039` D7 is why it mattered. The derivation
+was proved against all 54 tags before they were removed, and it reproduced every
+one.
 
 ---
 

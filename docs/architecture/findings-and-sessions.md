@@ -41,7 +41,7 @@ list restated away from the table it counts is the copy `0039` D3 removed.
 
 ```text
 <NNNN>-<slug>/
-├── STATUS-<status>
+├── metadata.json        derived status, provenance, edges
 ├── findings.md      the reading
 ├── decisions.md     what was decided, and what was rejected
 └── resolutions.md   what was done, with commit and revision
@@ -51,7 +51,7 @@ list restated away from the table it counts is the copy `0039` D3 removed.
 
 ```text
 <title>-<stamp>/
-├── STATE-<state>
+├── metadata.json        derived state, owners, owned bundles
 ├── prompt.md              always required
 ├── metadata.md            who and what has owned it
 ├── findings-manifest.md   the bundles this session owns
@@ -175,7 +175,7 @@ index Notes column rather than into a softened status.
 
 ## 7. The tag file
 
-Each bundle carries `STATUS-<status>` or `STATE-<state>` — a marker file,
+Each bundle carries `metadata.json`, from which its status or state derives — until Revision 222 this was a marker file,
 renamed as the bundle moves.
 
 **Rejected: a suffix on the directory name** (`0001-restore-repos-evidence.analyzing/`).

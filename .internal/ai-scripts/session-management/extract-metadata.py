@@ -158,9 +158,12 @@ def bundle_json(tree, name):
             "docs/cross-cutting-findings":"cross-cutting",
             "docs/instruction-set-findings":"instruction-set"}.get(tree,"runbook")
 
+    # The STATUS- tag was read here during the migration, to prove the
+    # derivation reproduced it. It did, on all 47 bundles, and the tags were
+    # removed at Revision 222. `ownership` and `lineage` survive as FIELDS,
+    # because the legend already said they were never progress; `progress`
+    # itself is derived and never stored.
     tag = None
-    for f in sorted(os.listdir(os.path.join(ROOT,d))):
-        if f.startswith("STATUS-"): tag = f[len("STATUS-"):]
 
     findings=[]
     for c in rows(fmd, r'^F\d+$'):
@@ -214,9 +217,8 @@ def bundle_json(tree, name):
       "scope": h.get("Scope",[None])[0],
       "read": h.get("Read",[]),
       "progress": None,
-      "ownership": tag if tag in ("unclaimed","transferred") else None,
+      "ownership": None,   # computed in main() by scanning session manifests
       "lineage": None,
-      "declaredTag": tag,
       "findings": findings, "decisions": decisions,
       "contributions": contributions, "edges": [],
       "indexNotes": None }
@@ -228,9 +230,11 @@ def session_json(name):
     d = os.path.join("docs/sessions", name)
     mmd = read(os.path.join(d,"metadata.md"))
     fm  = read(os.path.join(d,"findings-manifest.md"))
-    state = None
-    for f in sorted(os.listdir(os.path.join(ROOT,d))):
-        if f.startswith("STATE-"): state = f[len("STATE-"):]
+    # As above: STATE- tags were removed at Revision 222. `handoff` is the one
+    # state a session DECLARES, and it declares it in final-summary.md or in a
+    # handoff-<stamp>.md, not in a filename.
+    state = "handoff" if any(f.startswith("handoff-") for f in os.listdir(os.path.join(ROOT,d))) \
+            and not os.path.exists(os.path.join(ROOT,d,"final-summary.md")) else None
 
     owners=[]
     if mmd:
@@ -249,6 +253,18 @@ def session_json(name):
         for c in rows(mmd, r'^[A-Z].*$'):
             if len(c)==2 and c[0] not in ("What","From"): resources.append({"what":c[0],"path":unwrap(c[1])})
 
+    # A session records its end in final-summary.md, which the first extraction
+    # run did not read -- three sessions came out `active` against a `closed`
+    # tag because of it. That was an extraction bug, not a tree defect, and
+    # section 9 step 3 is the step that tells them apart.
+    ended = {"on":None,"reason":None,"revisions":[],"commits":[],"disposals":[]}
+    fs = read(os.path.join(d,"final-summary.md"))
+    if fs:
+        m = re.search(r'\*\*Closed (\d{4}-\d{2}-\d{2})\*\*', fs) or \
+            re.search(r'closed[^.\n]{0,20}?(\d{4}-\d{2}-\d{2})', fs, re.I)
+        ended["on"] = m.group(1) if m else "unknown"
+        ended["reason"] = "withdrawn" if re.search(r'\*\*State:\*\* *`?withdrawn', fs) else "closed"
+
     owned=[]
     if fm:
         for c in rows(fm, r'^\d{4}$'):
@@ -261,9 +277,61 @@ def session_json(name):
       "scratchPath": None, "resources": resources,
       "ownedBundles": owned, "contributions": [],
       "declaredState": state if state=="handoff" else None,
-      "declaredTag": state,
       "indexNotes": None,
-      "ended": {"on":None,"reason":None,"revisions":[],"commits":[],"disposals":[]} }
+      "ended": ended }
+
+
+# ---------------------------------------------------------------------------
+# Derivation -- state-as-data section 4.4
+#
+# `progress` is COMPUTED and never stored. The ladder shrinks from eight rows to
+# five: rows 1, 1b and 2 leave because they were never derivations at all --
+# `unclaimed` and `transferred` are ownership, `superseded` is lineage, and each
+# now has a field of its own instead of competing for one filename.
+#
+# This does NOT merge the two vocabularies and must not. The bundle set carries
+# judgements no aggregation gives you: `resolved` needs AT LEAST ONE resolved,
+# which has no finding-level analogue; row 4 sits above row 5 so a bundle of
+# nothing but withdrawals is `withdrawn`, not `resolved`; and `reopened`
+# dominates only when reopening is the whole of the live work. It is a bridge
+# between two vocabularies, not an identity.
+# ---------------------------------------------------------------------------
+INERT = ("resolved", "withdrawn")
+
+def derive_progress(findings):
+    """Ladder rows 3-7. Returns (progress, why) -- the why names the witness,
+    because 0043 F7 is that `analyzing` asserts nothing and a derivation bug
+    always lands there looking plausible."""
+    st = [f["status"] for f in findings]
+    if not st:
+        return "un-started", "no findings"
+    if all(s == "un-started" for s in st):
+        return "un-started", "every finding is un-started"
+    if all(s == "withdrawn" for s in st):
+        return "withdrawn", "every finding is withdrawn"
+    if all(s in INERT for s in st) and any(s == "resolved" for s in st):
+        return "resolved", f"every finding inert, {st.count('resolved')} resolved"
+    if any(s == "reopened" for s in st) and all(s in INERT for s in st if s != "reopened"):
+        return "reopened", f"{st.count('reopened')} reopened, every other finding inert"
+    live = sorted(set(s for s in st if s not in INERT))
+    return "analyzing", "live findings: " + ", ".join(f"{s}x{st.count(s)}" for s in live)
+
+def derive_state(session):
+    """Session states. `handoff` is a declaration -- a session says it handed
+    on. The rest follow from what it owns and whether it ended."""
+    if session.get("declaredState"):
+        return session["declaredState"], "declared"
+    ended = session.get("ended") or {}
+    if ended.get("on"):
+        # An end is decisive. A closed session may still LIST bundles: section 9
+        # step 7 keeps a superseded bundle listed by the session that held it,
+        # because that file is authoritative for who held a reading. Listing is
+        # a historical fact, not live ownership.
+        r = (ended.get("reason") or "").lower()
+        return ("withdrawn", "ended, reason withdrawn") if "withdraw" in r else ("closed", f"ended {ended['on']}")
+    if session.get("ownedBundles"):
+        return "active", f"owns {len(session['ownedBundles'])} bundle(s), not ended"
+    return "available", "owns nothing, not ended"
 
 # ---------------------------------------------------------------------------
 def main():
@@ -291,6 +359,41 @@ def main():
         j["edges"] = provenance(omd, md, old, num, sess, NOW[:10])
         j["lineage"] = {"supersedes": old, "on": None}
         oj["lineage"] = {"supersededBy": num, "on": None}
+
+    # Ownership is COMPUTED by scanning the session manifests, never stored on
+    # the bundle -- state-as-data section 6.1. findings-manifest.md is
+    # authoritative for who owns a reading, so deriving from it makes the two
+    # sides unable to disagree. A bundle no live session lists is `unclaimed`.
+    #
+    # A CLOSED session's listing does not confer ownership: section 9 step 7
+    # keeps a superseded bundle listed by the session that held it, and a
+    # closed session releases what it still owned. Both are historical facts.
+    live_owned = set()
+    sbase0 = os.path.join(ROOT, "docs/sessions")
+    for nm in sorted(os.listdir(sbase0)):
+        dd = os.path.join(sbase0, nm)
+        if not os.path.isdir(dd): continue
+        if os.path.exists(os.path.join(dd, "final-summary.md")): continue   # closed
+        fmx = read(os.path.join("docs/sessions", nm, "findings-manifest.md"))
+        if not fmx: continue
+        for c in rows(fmx, r'^\d{4}$'): live_owned.add(c[0])
+    # `unclaimed` means LIVE WORK NOBODY HOLDS, not merely "no owner". The
+    # legend's row 1 is "never assigned since creation, or released back to the
+    # queue" -- and a bundle whose reading is finished is not in any queue. A
+    # `resolved` or `withdrawn` bundle needs no owner and marking it unclaimed
+    # would advertise finished work as available.
+    #
+    # This surfaced by running the derivation against the tree: six bundles
+    # came out `unclaimed` over rows reading `resolved`. Section 9 step 3 says a
+    # difference is an extraction bug or a fact that was wrong -- this was a
+    # third thing, a rule that had never been stated precisely because a human
+    # applying it by hand never needed it to be.
+    for num,(rel,j) in bundles.items():
+        if (j.get("lineage") or {}).get("supersededBy"): continue
+        prog,_ = derive_progress(j["findings"])
+        if prog in ("resolved","withdrawn"): continue
+        if num not in live_owned:
+            j["ownership"] = "unclaimed"
 
     for num,(rel,j) in sorted(bundles.items()):
         p=os.path.join(rel,"metadata.json")

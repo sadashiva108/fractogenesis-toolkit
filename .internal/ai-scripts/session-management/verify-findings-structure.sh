@@ -8,7 +8,7 @@
 #   1. every data row in a findings/sessions table has its own table's column
 #      count -- a row with the wrong number of cells renders shifted and reads
 #      as data;
-#   2. every findings bundle carries exactly one `STATUS-` tag, and it agrees
+#   2. every findings bundle's DERIVED status (from metadata.json) agrees
 #      with the bundle's INDEX.md row, which is authoritative.
 #
 # Why this is separate from verify-findings-counts.sh. That script exists for
@@ -122,24 +122,50 @@ for doc in docs/*-findings/INDEX.md docs/sessions/INDEX.md docs/sessions/*/findi
   fi
 done
 
-# --- 2. one tag per bundle, agreeing with its index row ----------------------
-# The row is authoritative; section 4c says a disagreement is a bug in whoever
-# moved the bundle last. Both halves are checked because the four instances this
-# exists for left the OLD tag in place beside the new one.
+# --- 2. the DERIVED status agrees with its index row -------------------------
+# Until Revision 222 this compared a `STATUS-` FILENAME against the row. The tag
+# files are gone: a status is derived from the findings in metadata.json, and a
+# derivation cannot drift from itself. What remains checkable -- and what this
+# now checks -- is that the DISPLAY agrees with the source.
+#
+# The row is still authoritative for a reader; the derivation is authoritative
+# for the truth. A disagreement now means the index was not regenerated, not
+# that somebody moved a bundle and forgot half of it.
+#
+# 0043 F7: `analyzing` is the else branch and asserts nothing, so a derivation
+# bug always lands there looking plausible. That is why derive_status below
+# states a positive condition for every row it can, and why the ladder is
+# spelled out here rather than defaulted.
+derive_status() {
+  # derive_status <metadata.json>
+  python3 - "$1" <<'PYDERIVE'
+import json, sys
+d = json.load(open(sys.argv[1]))
+if d.get("ownership"):                                   print(d["ownership"]); raise SystemExit
+if (d.get("lineage") or {}).get("supersededBy"):         print("superseded");   raise SystemExit
+st = [f["status"] for f in d.get("findings", [])]
+INERT = ("resolved", "withdrawn")
+if not st or all(s == "un-started" for s in st):                       print("un-started")
+elif all(s == "withdrawn" for s in st):                                print("withdrawn")
+elif all(s in INERT for s in st) and any(s == "resolved" for s in st): print("resolved")
+elif any(s == "reopened" for s in st) and all(s in INERT for s in st if s != "reopened"):
+                                                                       print("reopened")
+else:                                                                  print("analyzing")
+PYDERIVE
+}
+
 for dir in docs/*-findings/[0-9][0-9][0-9][0-9]-*/ docs/*-findings/*/[0-9][0-9][0-9][0-9]-*/; do
   [ -d "$dir" ] || continue
   num="$(basename "$dir" | cut -c1-4)"
-  tags="$(ls "$dir" 2>/dev/null | grep '^STATUS-' || true)"
-  count="$(printf '%s\n' "$tags" | grep -c '^STATUS-' || true)"
-  if [ "${count:-0}" -ne 1 ]; then
-    fail "$num  $(printf '%s' "$tags" | tr '\n' ' ')" "expected exactly one STATUS- tag, found ${count:-0}"
+  if [ ! -f "$dir/metadata.json" ]; then
+    fail "$num  no metadata.json" "a bundle's status is derived from its data; there is none"
     continue
   fi
-  # The tag name after `STATUS-` IS the status, verbatim. It is not
-  # de-hyphenated: `un-started` is one hyphenated status name, and rewriting it
-  # to `un started` made this checker demand a status the legend does not
-  # define -- which is how six index rows came to hold one.
-  tag="$(printf '%s' "$tags" | sed 's/^STATUS-//')"
+  if [ -e "$dir/STATUS-analyzing" ] || ls "$dir"STATUS-* >/dev/null 2>&1; then
+    fail "$num  a STATUS- tag survives" "status moved into metadata.json at Revision 222; a tag is now a second copy"
+    continue
+  fi
+  tag="$(derive_status "$dir/metadata.json")"
   index="$(dirname "${dir%/}")"
   while [ ! -f "$index/INDEX.md" ] && [ "$index" != "." ] && [ "$index" != "/" ]; do
     index="$(dirname "$index")"
@@ -162,7 +188,7 @@ for dir in docs/*-findings/[0-9][0-9][0-9][0-9]-*/ docs/*-findings/*/[0-9][0-9][
     }
   ' "$index/INDEX.md")"
   if [ -z "$row" ]; then
-    fail "$num  no row in $index/INDEX.md" "the tag says '$tag' and nothing indexes the bundle"
+    fail "$num  no row in $index/INDEX.md" "the derived status is '$tag' and nothing indexes the bundle"
   elif [ "$row" != "$tag" ]; then
     fail "$num  $index/INDEX.md" "tag says '$tag', row says '$row'   (the row is authoritative)"
   else

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T14:00:57+00:00",
+  "updatedAt": "2026-09-08T14:22:19+00:00",
   "bundleName": "restore-git-phase-11a-20260901-155433",
   "createdOn": "2026-09-03",
   "owners": [],
@@ -10,11 +10,10 @@
   "ownedBundles": [],
   "contributions": [],
   "declaredState": null,
-  "declaredTag": "closed",
   "indexNotes": null,
   "ended": {
-    "on": null,
-    "reason": null,
+    "on": "unknown",
+    "reason": "closed",
     "revisions": [],
     "commits": [],
     "disposals": []

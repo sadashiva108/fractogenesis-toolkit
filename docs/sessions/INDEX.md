@@ -1,7 +1,7 @@
 # Sessions — index
 
 Every session is a bundle: `docs/sessions/<title>-<stamp>/`, holding a
-`STATE-<state>` tag and `prompt.md` always, `findings-manifest.md` once it owns a
+`metadata.json` and `prompt.md` always, `findings-manifest.md` once it owns a
 finding, one `handoff-<stamp>.md` per handover, and `final-summary.md` when it
 reaches `closed` or `withdrawn`.
 

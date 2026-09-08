@@ -75,7 +75,7 @@ they are only legible together:
 
 ```text
 <NNNN>-<slug>/
-|-- STATUS-<status>  the tag. One file, no contents. `ls` answers the status
+|-- metadata.json    the data. Status DERIVES from the findings in it
 |                    without opening anything. It must agree with the INDEX.md
 |                    row, which is authoritative. Spaces become hyphens.
 |-- findings.md      the reading, and the per-finding status table
@@ -125,7 +125,7 @@ session checks first, to know whether opening it is worth anything. The table in
 
 ```text
 docs/sessions/<title>-<stamp>/
-|-- STATE-<state>          the tag, as in 3. Required, always.
+|-- metadata.json          the data. State DERIVES from it, as in 3.
 |-- prompt.md              what starts the session. Required, always.
 |-- metadata.md            who and what has owned it. Required from the start.
 |-- findings-manifest.md   the bundles this session owns. Required once it
@@ -194,7 +194,10 @@ Where a write is composed is a separate rule and applies to all three:
   two cases. Verify by comparing the two trees, or by comparing every path the
   patch touched; not the exit code, and not a checksum of the files the patch
   names, which sees only what the patch carries as content.
-- **A tag change is invisible to the patch itself.** `STATUS-` and `STATE-` files
+- **A tag change WAS invisible to the patch itself.** Tag files were removed
+  at Revision 222 and a status is now a value inside `metadata.json`, so a
+  status change is an ordinary diff. Retained because it explains four recorded
+  incidents and because the same trap applies to any file a patch renames: `STATUS-` and `STATE-` files
   are empty, and `diff` emits no hunks for an empty file — it reports it as
   present on one side only, which is not patch content. A patch derived from your
   copy therefore carries every prose change and **none of the tag renames**, and
@@ -337,7 +340,9 @@ Superseding is not inheriting.
 
         **Relates to:** `<NNNN>-<slug>` -- **supersedes it.**
 
-4.  Rename the old bundle's tag to `STATUS-superseded`. **Not before coverage
+4.  Nothing to rename: `superseded` derives from the predecessor's `lineage`
+    field in `metadata.json`, which the new bundle's provenance sets. **Do not
+    set it before coverage
     and exclusivity pass**: a tag applied over an incomplete accounting is the
     state nothing can recover from, because the predecessor may not then be
     edited to fix it.
@@ -448,7 +453,7 @@ it from — assign it instead.
 
 ### The steps
 
-1.  Set the bundle's tag to `STATUS-transferred` and its index Status cell to
+1.  Set the bundle's `ownership` to `transferred` in `metadata.json` and its index Status cell to
     `` `transferred` ``, naming the target session in the Session column.
 2.  Remove its row from the outgoing session's `findings-manifest.md` and add it
     to the target's.

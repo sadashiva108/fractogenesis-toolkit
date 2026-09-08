@@ -37,7 +37,7 @@ A finding is `un-started`, `framing`, `decided`, `resolved`, `reopened` or
 | `withdrawn` | Every finding is `withdrawn` |
 
 The status is written in two places and they must agree: the row here, which is
-authoritative, and the `STATUS-<status>` tag in the bundle directory. Full
+authoritative, and derived from the findings in the bundle's `metadata.json`. Full
 definitions, the transitions and the write rules: [`docs/legend.md`](../legend.md).
 
 ## Findings Bundles
@@ -77,7 +77,7 @@ rows in the same position in the table below.
 | 0013 | `capture-office-stability` | [0013-office-stability-checklists-are-evidence-bundles](capture-office-stability/0013-office-stability-checklists-are-evidence-bundles/) | `office-stability/checklists/` does not hold checklists | 1 | `resolved` | [`pre-image-capture-conformance-20260903-194532`](../sessions/pre-image-capture-conformance-20260903-194532/) | closed 2026-09-03 by Revisions 137, 138 and this one |
 | 0019 | `reimage-prep-checks` | [0019-reimage-checklist-repo-audit-manifest-header](reimage-prep-checks/0019-reimage-checklist-repo-audit-manifest-header/) | Phase 6B records FAIL against a correct repository-audit manifest | 1 | `resolved` | [`pre-image-capture-conformance-20260903-194532`](../sessions/pre-image-capture-conformance-20260903-194532/) | closed by Revision 129 |
 | 0021 | `restore-access` | [0021-restore-access-exit-predates-its-own-state-walk](restore-access/0021-restore-access-exit-predates-its-own-state-walk/) | The Phase 10B exit was recorded a week before the evidence it stands on | 1 | `un-started` | [`run-index-design-20260901-000000`](../sessions/run-index-design-20260901-000000/) | — |
-| 0024 | `restore-docker` | [0024-restore-docker-stack-differs-from-pre-image](restore-docker/0024-restore-docker-stack-differs-from-pre-image/) | The running Docker stack is not the one `restore-docker.md` restores | 1 | `un-started` | — | — |
+| 0024 | `restore-docker` | [0024-restore-docker-stack-differs-from-pre-image](restore-docker/0024-restore-docker-stack-differs-from-pre-image/) | The running Docker stack is not the one `restore-docker.md` restores | 1 | `unclaimed` | — | — |
 | 0034 | `restore-git` | [0034-step-0a-names-two-rows-the-recorder-no-longer-emits](restore-git/0034-step-0a-names-two-rows-the-recorder-no-longer-emits/) | Step 0a names two rows the recorder no longer emits | 1 | `un-started` | — | Removed by `bb7e2d5` because they gated on values Step 0c writes. The runbook still says its rows "cannot drift" |
 | 0014 | `restore-runtime` | [0014-orphaned-comparison-lineage-runtime-version-comparison](restore-runtime/0014-orphaned-comparison-lineage-runtime-version-comparison/) | `restore-runtime-version-comparison` is a lineage with no producer | 1 | `un-started` | [`run-index-design-20260901-000000`](../sessions/run-index-design-20260901-000000/) | — |
 | 0007 | `stage-loose-secrets` | [0007-content-scans-keeps-a-bespoke-index](stage-loose-secrets/0007-content-scans-keeps-a-bespoke-index/) | `content-scans/` looks like a run category and is not one | 1 | `resolved` | [`pre-image-capture-conformance-20260903-194532`](../sessions/pre-image-capture-conformance-20260903-194532/) | closed by Revision 141 |

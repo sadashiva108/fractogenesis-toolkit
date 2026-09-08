@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T14:00:57+00:00",
+  "updatedAt": "2026-09-08T14:22:19+00:00",
   "number": "0043",
   "bundleName": "0043-framework-state-lives-in-documents-not-data",
   "kind": "session-management",
@@ -23,7 +23,6 @@
   "progress": null,
   "ownership": null,
   "lineage": null,
-  "declaredTag": "analyzing",
   "findings": [
     {
       "id": "F1",

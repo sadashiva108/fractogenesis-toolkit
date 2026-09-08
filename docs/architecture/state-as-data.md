@@ -293,8 +293,9 @@ record, *What another session may do* on whether opening the bundle is worth
 anything at all. **The derivation is a bridge between two vocabularies, not an
 identity.**
 
-The `STATUS-` and `STATE-` tag files are then **rendered artefacts** like any
-other projection, or they go. Either way a transition stops being an unlink.
+The `STATUS-` and `STATE-` tag files are then redundant. **They went, at
+Revision 222** -- see §11.2, which asked the question and now records the answer.
+A transition stops being an unlink because it stops being a file at all.
 
 ## 5. The line between data and prose
 
@@ -457,10 +458,41 @@ distrust.**
 and fences the region. The cost is a finding's text sitting in JSON, read out of
 context by anyone who opens the file rather than the page.
 
-**11.2 What happens to the tag files?** Rendered artefacts, or gone. Rendering
-keeps `ls` answering the question and keeps the unlink problem for the generator
-rather than the session; removing them makes `ls` uninformative and is a change
-to how the tree is read at a glance. Not decided.
+**11.2 What happens to the tag files? — ANSWERED, Revision 222: gone.**
+
+Rendering them would have kept `ls` answering the question, and kept the unlink
+problem for the generator rather than the session. Removing them makes `ls`
+uninformative, which is a real loss and the reason the question was open.
+
+What settled it: a rendered tag is **a second copy of a derived fact**, which
+§10 rejects by name, and the whole of `0043` is the cost of copies. The `ls`
+convenience did not survive being weighed against re-creating the defect the
+change exists to remove.
+
+**The round trip is what made it safe.** §9 step 2 was run for this field first:
+the derivation was computed for all 47 bundles and 7 sessions and compared
+against every tag in the tree. **54 of 54 agreed** -- after two corrections the
+comparison itself forced, both recorded below. Only then were the tags deleted.
+
+Two things the run found, and neither was an extraction bug:
+
+**Ownership is computed from the session manifests, never stored.** §6.1 already
+said so; the first extraction ignored it and read `unclaimed` off the tag, which
+is the same second copy in a different file. `findings-manifest.md` is
+authoritative for ownership, so deriving from it makes the two sides unable to
+disagree.
+
+**`unclaimed` means live work nobody holds, not merely "no owner".** Six bundles
+came out `unclaimed` over rows reading `resolved`. A finished reading is in no
+queue and needs no owner, so the rule excludes bundles whose progress is
+`resolved` or `withdrawn`. That precision had never been written down, because a
+human applying the ladder by hand never needed it.
+
+And one thing it found in the tree: `0010` and `0024` were indexed `un-started`
+while listed by no session at all. Ladder row 1 sits above row 3, so both are
+`unclaimed`. **The old checker could not have caught it** -- it compared a tag
+against a row, and both held the same wrong value. The replacement compares a
+display against the source.
 
 **11.3 Who may assert an edge?** Carried from `allocation-and-inquiry.md` §13.1
 unresolved: recording to a `framing` finding is open to any session and an edge

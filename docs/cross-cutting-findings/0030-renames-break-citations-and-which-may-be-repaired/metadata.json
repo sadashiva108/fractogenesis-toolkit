@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T14:00:57+00:00",
+  "updatedAt": "2026-09-08T14:22:19+00:00",
   "number": "0030",
   "bundleName": "0030-renames-break-citations-and-which-may-be-repaired",
   "kind": "cross-cutting",
@@ -22,7 +22,6 @@
     "supersedes": "0009",
     "on": null
   },
-  "declaredTag": "analyzing",
   "findings": [
     {
       "id": "F1",

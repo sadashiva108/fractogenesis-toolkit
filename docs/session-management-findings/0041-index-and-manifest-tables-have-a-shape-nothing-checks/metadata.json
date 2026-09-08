@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T14:00:57+00:00",
+  "updatedAt": "2026-09-08T14:22:19+00:00",
   "number": "0041",
   "bundleName": "0041-index-and-manifest-tables-have-a-shape-nothing-checks",
   "kind": "session-management",
@@ -22,7 +22,6 @@
     "supersedes": "0032",
     "on": null
   },
-  "declaredTag": "analyzing",
   "findings": [
     {
       "id": "F1",
