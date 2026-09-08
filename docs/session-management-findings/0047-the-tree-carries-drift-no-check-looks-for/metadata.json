@@ -1,24 +1,26 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T14:59:29+00:00",
+  "updatedAt": "2026-09-08T15:52:47+00:00",
   "number": "0047",
   "bundleName": "0047-the-tree-carries-drift-no-check-looks-for",
   "kind": "session-management",
   "subKind": null,
   "subject": "The tree carries status drift that no check looks for",
-  "recordedOn": "** 2026-09-07",
+  "recordedOn": "2026-09-07",
   "recordedOccasion": "from a conformance sweep run at the owner's direction before any retrofit.",
   "recordedBy": {
-    "sessionBundle": null,
-    "sessionId": "** allocation-and-inquiry-design-20260906-233205 (session_015FpYVBF7dDoDrHfKDkq8fn)"
+    "sessionBundle": "allocation-and-inquiry-design-20260906-233205",
+    "sessionId": "session_015FpYVBF7dDoDrHfKDkq8fn"
   },
-  "severity": "** F1 is high — an `unclaimed` bundle is meant to be closed to every session and one is not. F5 is high for a different reason: it is a defect in the instrument, and acting on the instrument's raw output would touch sixty-five records that are correct.",
+  "severity": "F1 is high — an `unclaimed` bundle is meant to be closed to every session and one is not. F5 is high for a different reason: it is a defect in the instrument, and acting on the instrument's raw output would touch sixty-five records that are correct.",
   "feltAt": [
-    "** `0001` F1; `0030`, `0035`, `0036`; eleven bundles resolved before Revision 162's conversion"
+    "`0001` F1; `0030`, `0035`, `0036`; eleven bundles resolved before Revision 162's conversion"
   ],
-  "scope": "** session management. The remedy is a check and a retrofit, and the retrofit waits on `docs/architecture/state-as-data.md`",
+  "scope": "session management. The remedy is a check and a retrofit, and the retrofit waits on `docs/architecture/state-as-data.md`",
   "read": [
-    "**"
+    "every `findings.md`, `decisions.md`, `resolutions.md` and `STATUS-` tag in the four trees — 45 bundles, 131 findings",
+    "`docs/legend.md`, the ladder and the two permission tables",
+    "`docs/architecture/state-as-data.md` sections 4.3 and 4.4"
   ],
   "progress": null,
   "ownership": "unclaimed",

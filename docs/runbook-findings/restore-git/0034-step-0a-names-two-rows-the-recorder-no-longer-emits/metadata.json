@@ -1,20 +1,20 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T14:59:29+00:00",
+  "updatedAt": "2026-09-08T15:52:47+00:00",
   "number": "0034",
   "bundleName": "0034-step-0a-names-two-rows-the-recorder-no-longer-emits",
   "kind": "runbook",
   "subKind": null,
   "subject": "`restore-git.md` Step 0a names two rows the recorder no longer emits",
-  "recordedOn": "** 2026-09-04",
+  "recordedOn": "2026-09-04",
   "recordedOccasion": "while deciding `0005` — the pointer for `restore-git-entry` was moving to a run whose FAIL turned out to be the expected state rather than a defect.",
   "recordedBy": {
     "sessionBundle": null,
-    "sessionId": "** session_01KcZvrKMgfenhrT9DvxW9Jk"
+    "sessionId": "session_01KcZvrKMgfenhrT9DvxW9Jk"
   },
-  "severity": "** the runbook tells the reader to read a row twice that will never appear, and the hazard it describes is now unchecked at Step 0a.",
+  "severity": "the runbook tells the reader to read a row twice that will never appear, and the hazard it describes is now unchecked at Step 0a.",
   "feltAt": [],
-  "scope": "** runbook. Felt in `restore-git.md` Step 0a and in `check_restore_git()` in `bin/record-restore-prereqs.sh`.",
+  "scope": "runbook. Felt in `restore-git.md` Step 0a and in `check_restore_git()` in `bin/record-restore-prereqs.sh`.",
   "read": [],
   "progress": null,
   "ownership": null,

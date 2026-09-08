@@ -1,18 +1,18 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T14:59:29+00:00",
+  "updatedAt": "2026-09-08T15:52:47+00:00",
   "number": "0025",
   "bundleName": "0025-staged-ignored-files-live-parent-root-bundles",
   "kind": "runbook",
   "subKind": null,
   "subject": "`staged-ignored-files/live/` holds two bundles no lookup can reach",
-  "recordedOn": "** 2026-09-01",
+  "recordedOn": "2026-09-01",
   "recordedOccasion": "while deciding whether the category should join the run index.",
   "recordedBy": {
     "sessionBundle": null,
-    "sessionId": "** 01KcZvrKMgfenhrT9DvxW9Jk"
+    "sessionId": "01KcZvrKMgfenhrT9DvxW9Jk"
   },
-  "severity": "** low. Harmless today; misleading to anyone counting bundles.",
+  "severity": "low. Harmless today; misleading to anyone counting bundles.",
   "feltAt": [],
   "scope": null,
   "read": [],

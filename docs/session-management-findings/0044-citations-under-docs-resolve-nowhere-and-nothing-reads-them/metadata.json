@@ -1,24 +1,26 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T14:59:29+00:00",
+  "updatedAt": "2026-09-08T15:52:47+00:00",
   "number": "0044",
   "bundleName": "0044-citations-under-docs-resolve-nowhere-and-nothing-reads-them",
   "kind": "session-management",
   "subKind": null,
   "subject": "Citations under `docs/` resolve nowhere, and nothing reads them",
-  "recordedOn": "** 2026-09-06",
+  "recordedOn": "2026-09-06",
   "recordedOccasion": "while reading the tree to design the allocation architecture.",
   "recordedBy": {
-    "sessionBundle": null,
-    "sessionId": "** allocation-and-inquiry-design-20260906-233205 (session_015FpYVBF7dDoDrHfKDkq8fn)"
+    "sessionBundle": "allocation-and-inquiry-design-20260906-233205",
+    "sessionId": "session_015FpYVBF7dDoDrHfKDkq8fn"
   },
-  "severity": "** low each, and F1 is the first demonstrated instance of `0036` — a broken link inside `docs/` that every validator passes.",
+  "severity": "low each, and F1 is the first demonstrated instance of `0036` — a broken link inside `docs/` that every validator passes.",
   "feltAt": [
-    "** `docs/cross-cutting-findings/INDEX.md` rows 0003, 0005, 0006 and 0030; line 15 of the same file; `docs/sessions/INDEX.md` line 8"
+    "`docs/cross-cutting-findings/INDEX.md` rows 0003, 0005, 0006 and 0030; line 15 of the same file; `docs/sessions/INDEX.md` line 8"
   ],
-  "scope": "** the two index files. No script changes.",
+  "scope": "the two index files. No script changes.",
   "read": [
-    "**"
+    "`docs/cross-cutting-findings/INDEX.md` and `docs/sessions/INDEX.md`",
+    "`bin/verify-doc-paths.sh`, and its `--all` run over 778 paths and 1108 anchors",
+    "`.github/session-management-instructions.md` sections 2 and 3"
   ],
   "progress": null,
   "ownership": "unclaimed",

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T14:59:29+00:00",
+  "updatedAt": "2026-09-08T15:52:47+00:00",
   "bundleName": "session-management-re-evaluation-20260906-110105",
   "createdOn": "2026-09-06",
   "owners": [
@@ -19,19 +19,23 @@
   "resources": [
     {
       "what": "Repository",
-      "path": "/Users/dkittrell/workspace/shiva/fractogenesis-toolkit — connected read/write; **never written to by this session**"
+      "path": "/Users/dkittrell/workspace/shiva/fractogenesis-toolkit",
+      "notes": "connected read/write; **never written to by this session**"
     },
     {
       "what": "Scratch copy",
-      "path": "~/scratch/fractogenesis-toolkit in the Linux VM, refreshed from the checkout at 3828d19"
+      "path": "~/scratch/fractogenesis-toolkit",
+      "notes": "in the Linux VM, refreshed from the checkout at `3828d19`"
     },
     {
       "what": "Workspace",
-      "path": "/Users/dkittrell/reimage-workspace — connected 2026-09-06; source of the three prompt files in prompt.md"
+      "path": "/Users/dkittrell/reimage-workspace",
+      "notes": "connected 2026-09-06; source of the three prompt files in `prompt.md`"
     },
     {
       "what": "Artifact root",
-      "path": "not connected, and not needed: this session's subject is docs/ and .github/ only"
+      "path": "not connected, and not needed: this session's subject is docs/ and .github/ only",
+      "notes": null
     }
   ],
   "ownedBundles": [
@@ -45,11 +49,11 @@
     },
     {
       "number": "0038",
-      "notes": "All six resolutions verified present and holding. What it removed — `git status` as the only signal of a concurrent session — is recorded and unreplaced"
+      "notes": "All six resolutions verified present and holding. What it removed — git status as the only signal of a concurrent session — is recorded and unreplaced"
     },
     {
       "number": "0039",
-      "notes": "The keystone. D1's destination no longer exists, so it cannot be applied as written. Seven rows were `decided`; reset to `framing` on the owner's instruction to re-evaluate from the ground up — `decisions.md` retains every decision"
+      "notes": "The keystone. D1's destination no longer exists, so it cannot be applied as written. Seven rows were decided; reset to framing on the owner's instruction to re-evaluate from the ground up — decisions.md retains every decision"
     },
     {
       "number": "0040",
@@ -61,7 +65,7 @@
     },
     {
       "number": "0043",
-      "notes": "Recorded and owned by this session on 2026-09-07, the only one of the seven not released by `restore-apps-outstanding`. Held open at `analyzing`/`framing` so the parallel architecture session can record to it"
+      "notes": "Recorded and owned by this session on 2026-09-07, the only one of the seven not released by restore-apps-outstanding. Held open at analyzing/framing so the parallel architecture session can record to it"
     }
   ],
   "contributions": [],

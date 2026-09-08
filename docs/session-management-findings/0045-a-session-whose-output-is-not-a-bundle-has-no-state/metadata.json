@@ -1,24 +1,26 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T14:59:29+00:00",
+  "updatedAt": "2026-09-08T15:52:47+00:00",
   "number": "0045",
   "bundleName": "0045-a-session-whose-output-is-not-a-bundle-has-no-state",
   "kind": "session-management",
   "subKind": null,
   "subject": "A session whose output is not a findings bundle has no state that fits",
-  "recordedOn": "** 2026-09-07",
+  "recordedOn": "2026-09-07",
   "recordedOccasion": "from this session's own state after four revisions of work.",
   "recordedBy": {
-    "sessionBundle": null,
-    "sessionId": "** allocation-and-inquiry-design-20260906-233205 (session_015FpYVBF7dDoDrHfKDkq8fn)"
+    "sessionBundle": "allocation-and-inquiry-design-20260906-233205",
+    "sessionId": "session_015FpYVBF7dDoDrHfKDkq8fn"
   },
-  "severity": "** low, and it misleads the one reader it is written for. `docs/sessions/INDEX.md` is what an owner scans to see who is doing what, and it currently shows a session that produced two architecture records and a decision as indistinguishable from one created a minute ago.",
+  "severity": "low, and it misleads the one reader it is written for. `docs/sessions/INDEX.md` is what an owner scans to see who is doing what, and it currently shows a session that produced two architecture records and a decision as indistinguishable from one created a minute ago.",
   "feltAt": [
-    "** `docs/legend.md` *Session states*; `docs/sessions/INDEX.md` Bundles and Findings columns"
+    "`docs/legend.md` *Session states*; `docs/sessions/INDEX.md` Bundles and Findings columns"
   ],
-  "scope": "** session management. The fix lands in `docs/legend.md` and the sessions index.",
+  "scope": "session management. The fix lands in `docs/legend.md` and the sessions index.",
   "read": [
-    "**"
+    "`docs/legend.md`, *Session states* and *How the two meet*",
+    "`docs/sessions/INDEX.md`, all seven rows",
+    "`.github/session-management-instructions.md` section 5"
   ],
   "progress": null,
   "ownership": "unclaimed",

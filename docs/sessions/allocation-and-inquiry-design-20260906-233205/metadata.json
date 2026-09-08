@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T14:59:29+00:00",
+  "updatedAt": "2026-09-08T15:52:47+00:00",
   "bundleName": "allocation-and-inquiry-design-20260906-233205",
   "createdOn": "2026-09-07",
   "owners": [
@@ -19,23 +19,28 @@
   "resources": [
     {
       "what": "Resource",
-      "path": "Value"
+      "path": "Value",
+      "notes": null
     },
     {
       "what": "Repository checkout",
-      "path": "/Users/dkittrell/workspace/shiva/fractogenesis-toolkit"
+      "path": "/Users/dkittrell/workspace/shiva/fractogenesis-toolkit",
+      "notes": null
     },
     {
       "what": "Scratch copy",
-      "path": "/sessions/rcw-015fpyvbf7ddodrhfkdkq8fn/scratch/fractogenesis-toolkit"
+      "path": "/sessions/rcw-015fpyvbf7ddodrhfkdkq8fn/scratch/fractogenesis-toolkit",
+      "notes": null
     },
     {
       "what": "Commit copied from",
-      "path": "1a4c9b4"
+      "path": "1a4c9b4",
+      "notes": null
     },
     {
       "what": "Artifact root",
-      "path": "/Volumes/Data/reimage-CVG-0002160-500-20260816-open — not mounted, not read"
+      "path": "/Volumes/Data/reimage-CVG-0002160-500-20260816-open",
+      "notes": "not mounted, not read"
     }
   ],
   "ownedBundles": [],

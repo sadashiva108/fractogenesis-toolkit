@@ -1,18 +1,18 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T14:59:29+00:00",
+  "updatedAt": "2026-09-08T15:52:47+00:00",
   "number": "0036",
   "bundleName": "0036-verify-doc-paths-counts-gitignored-docs",
   "kind": "session-management",
   "subKind": null,
   "subject": "`verify-doc-paths.sh --all` counts `docs/`, so its OK baseline cannot hold",
-  "recordedOn": "** 2026-09-01",
+  "recordedOn": "2026-09-01",
   "recordedOccasion": "while validating Revision 129.",
   "recordedBy": {
     "sessionBundle": null,
-    "sessionId": "** 01KcZvrKMgfenhrT9DvxW9Jk"
+    "sessionId": "01KcZvrKMgfenhrT9DvxW9Jk"
   },
-  "severity": "** low, but it silently invalidates a number two session briefs quote.",
+  "severity": "low, but it silently invalidates a number two session briefs quote.",
   "feltAt": [],
   "scope": null,
   "read": [],
@@ -33,14 +33,7 @@
       "sectionHeading": null,
       "reopened": null,
       "withdrawn": null,
-      "resolution": {
-        "resolvedBy": [
-          "—"
-        ],
-        "whatWasDone": "—",
-        "revision": "130",
-        "commit": "not identifiable from git log — the revision is the record"
-      }
+      "resolution": null
     }
   ],
   "decisions": [
@@ -66,7 +59,7 @@
       "why": "the statement changed in the superseding reading",
       "reason": "restated",
       "basis": "derived",
-      "asserted_by": "** 01KcZvrKMgfenhrT9DvxW9Jk",
+      "asserted_by": "01KcZvrKMgfenhrT9DvxW9Jk",
       "asserted_on": "2026-09-08"
     }
   ],

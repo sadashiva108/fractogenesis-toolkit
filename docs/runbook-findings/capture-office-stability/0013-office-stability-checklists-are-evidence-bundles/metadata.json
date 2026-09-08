@@ -1,18 +1,18 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T14:59:29+00:00",
+  "updatedAt": "2026-09-08T15:52:47+00:00",
   "number": "0013",
   "bundleName": "0013-office-stability-checklists-are-evidence-bundles",
   "kind": "runbook",
   "subKind": null,
   "subject": "`office-stability/checklists/` does not hold checklists",
-  "recordedOn": "** 2026-09-01",
+  "recordedOn": "2026-09-01",
   "recordedOccasion": "item 2.",
   "recordedBy": {
     "sessionBundle": null,
-    "sessionId": "** 01KcZvrKMgfenhrT9DvxW9Jk"
+    "sessionId": "01KcZvrKMgfenhrT9DvxW9Jk"
   },
-  "severity": "** low on its own. It matters because the name is the only thing making this category look like a special case.",
+  "severity": "low on its own. It matters because the name is the only thing making this category look like a special case.",
   "feltAt": [],
   "scope": null,
   "read": [],
@@ -31,10 +31,8 @@
       "reopened": null,
       "withdrawn": null,
       "resolution": {
-        "resolvedBy": [
-          "—"
-        ],
-        "whatWasDone": "The two lineage names were nowhere defined — `capture-office-stability.md` → `### Terminology` gains an `Evidence` row and an `Assessment` row",
+        "resolvedBy": [],
+        "whatWasDone": "The two lineage names were nowhere defined — capture-office-stability.md → ### Terminology gains an Evidence row and an Assessment row",
         "revision": "this revision",
         "commit": null
       }

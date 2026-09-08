@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T14:59:29+00:00",
+  "updatedAt": "2026-09-08T15:52:47+00:00",
   "bundleName": "restore-apps-outstanding-20260903-000000",
   "createdOn": "2026-09-03",
   "owners": [
@@ -19,29 +19,32 @@
   "resources": [
     {
       "what": "Repository",
-      "path": "/Users/dkittrell/workspace/shiva/fractogenesis-toolkit"
+      "path": "/Users/dkittrell/workspace/shiva/fractogenesis-toolkit",
+      "notes": null
     },
     {
       "what": "Artifact root",
-      "path": "/Volumes/Data/reimage-CVG-0002160-500-20260816-open"
+      "path": "/Volumes/Data/reimage-CVG-0002160-500-20260816-open",
+      "notes": null
     },
     {
       "what": "Workspace root",
-      "path": "/Users/dkittrell/reimage-workspace — the clone plan and the Docker capture"
+      "path": "/Users/dkittrell/reimage-workspace",
+      "notes": "the clone plan and the Docker capture"
     }
   ],
   "ownedBundles": [
     {
       "number": "0027",
-      "notes": "—"
+      "notes": null
     },
     {
       "number": "0028",
-      "notes": "—"
+      "notes": null
     },
     {
       "number": "0029",
-      "notes": "—"
+      "notes": null
     }
   ],
   "contributions": [],

@@ -1,18 +1,18 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T14:59:29+00:00",
+  "updatedAt": "2026-09-08T15:52:47+00:00",
   "number": "0009",
   "bundleName": "0009-dated-artifacts-cite-run-ids-a-rename-breaks",
   "kind": "cross-cutting",
   "subKind": null,
   "subject": "Renaming a lineage silently breaks every citation already written",
-  "recordedOn": "** 2026-09-01",
+  "recordedOn": "2026-09-01",
   "recordedOccasion": "item 2.",
   "recordedBy": {
     "sessionBundle": null,
-    "sessionId": "** 01KcZvrKMgfenhrT9DvxW9Jk"
+    "sessionId": "01KcZvrKMgfenhrT9DvxW9Jk"
   },
-  "severity": "** low today, structural for items 3 and 4 — both propose renaming lineages.",
+  "severity": "low today, structural for items 3 and 4 — both propose renaming lineages.",
   "feltAt": [],
   "scope": null,
   "read": [],

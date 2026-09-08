@@ -1,20 +1,20 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T14:59:29+00:00",
+  "updatedAt": "2026-09-08T15:52:47+00:00",
   "number": "0001",
   "bundleName": "0001-restore-repos-evidence",
   "kind": "runbook",
   "subKind": null,
   "subject": "Phase 11B evidence review — what `restore-repos` actually left behind",
-  "recordedOn": "** 2026-09-03",
+  "recordedOn": "2026-09-03",
   "recordedOccasion": null,
   "recordedBy": {
-    "sessionBundle": null,
-    "sessionId": "** restore-apps-outstanding-20260903-000000 (session_016EbjB7M527qEFqZFzpv2C9)"
+    "sessionBundle": "restore-apps-outstanding-20260903-000000",
+    "sessionId": "session_016EbjB7M527qEFqZFzpv2C9"
   },
-  "severity": "** findings F1–3 block a truthful Phase 12 entry; 4 and 5 are shared-machinery defects; 6 and 7 answer the two unreviewed repositories",
+  "severity": "findings F1–3 block a truthful Phase 12 entry; 4 and 5 are shared-machinery defects; 6 and 7 answer the two unreviewed repositories",
   "feltAt": [],
-  "scope": "** the `restore-repos.md` evidence and captures on the live artifact root, read before starting `restore-apps.md` (Phase 12)",
+  "scope": "the `restore-repos.md` evidence and captures on the live artifact root, read before starting `restore-apps.md` (Phase 12)",
   "read": [],
   "progress": null,
   "ownership": "unclaimed",

@@ -1,24 +1,28 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T14:59:29+00:00",
+  "updatedAt": "2026-09-08T15:52:47+00:00",
   "number": "0043",
   "bundleName": "0043-framework-state-lives-in-documents-not-data",
   "kind": "session-management",
   "subKind": null,
   "subject": "The framework's own state lives in documents rather than in data",
-  "recordedOn": "** 2026-09-07",
+  "recordedOn": "2026-09-07",
   "recordedOccasion": "from the owner's proposal that a JSON config become the single source of truth for statuses, states and counts.",
   "recordedBy": {
-    "sessionBundle": null,
-    "sessionId": "** session-management-re-evaluation-20260906-110105 (session_01FhFbEgG4wmrtJqUCcryNVQ)"
+    "sessionBundle": "session-management-re-evaluation-20260906-110105",
+    "sessionId": "session_01FhFbEgG4wmrtJqUCcryNVQ"
   },
-  "severity": "** F1 and F3 are high — both have recorded incidents, and F3's are bugs in the checks the framework is trusted by. The rest are structural and cost attention rather than correctness.",
+  "severity": "F1 and F3 are high — both have recorded incidents, and F3's are bugs in the checks the framework is trusted by. The rest are structural and cost attention rather than correctness.",
   "feltAt": [
-    "** every `STATUS-` and `STATE-` tag, all five `INDEX.md` files, every `findings-manifest.md` and `metadata.md`, and `bin/verify-findings-counts.sh`, `-structure.sh`, `-headers.sh`"
+    "every `STATUS-` and `STATE-` tag, all five `INDEX.md` files, every `findings-manifest.md` and `metadata.md`, and `bin/verify-findings-counts.sh`, `-structure.sh`, `-headers.sh`"
   ],
-  "scope": "** session management. The fix lands in the bundle and session file shapes, and in the checkers that read them",
+  "scope": "session management. The fix lands in the bundle and session file shapes, and in the checkers that read them",
   "read": [
-    "**"
+    "`docs/legend.md`, the ladder and the three vocabularies",
+    "`.github/session-management-instructions.md` sections 3, 5 and 11",
+    "all five `INDEX.md` files and all six `findings-manifest.md`",
+    "`bin/verify-findings-counts.sh`, `bin/verify-findings-structure.sh`, `bin/verify-findings-headers.sh`",
+    "the owner's two draft config files, 2026-09-07"
   ],
   "progress": null,
   "ownership": null,

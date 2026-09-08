@@ -1,22 +1,22 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T14:59:29+00:00",
+  "updatedAt": "2026-09-08T15:52:47+00:00",
   "number": "0042",
   "bundleName": "0042-no-check-reads-the-rendered-page",
   "kind": "session-management",
   "subKind": null,
   "subject": "No check reads the rendered page, and three revisions shipped defects that only the rendering showed",
-  "recordedOn": "** 2026-09-06",
+  "recordedOn": "2026-09-06",
   "recordedOccasion": "while conforming the bundle documents to the header schema",
   "recordedBy": {
-    "sessionBundle": null,
-    "sessionId": "** restore-apps-outstanding-20260903-000000 (session_016EbjB7M527qEFqZFzpv2C9)"
+    "sessionBundle": "restore-apps-outstanding-20260903-000000",
+    "sessionId": "session_016EbjB7M527qEFqZFzpv2C9"
   },
-  "severity": "** F1 is high. The repository's whole assurance surface is six checkers, and a class of defect passes all six by construction — not by oversight, but because none of them looks at the artefact a reader sees.",
+  "severity": "F1 is high. The repository's whole assurance surface is six checkers, and a class of defect passes all six by construction — not by oversight, but because none of them looks at the artefact a reader sees.",
   "feltAt": [
-    "** `bin/verify-doc-paths.sh`, `bin/verify-runbook-structure.sh`, `bin/verify-script-portability.sh`, `bin/verify-findings-counts.sh`, `bin/verify-findings-structure.sh`, `bin/verify-findings-headers.sh`"
+    "`bin/verify-doc-paths.sh`, `bin/verify-runbook-structure.sh`, `bin/verify-script-portability.sh`, `bin/verify-findings-counts.sh`, `bin/verify-findings-structure.sh`, `bin/verify-findings-headers.sh`"
   ],
-  "scope": "** cross-cutting in effect, session management in subject — the rule is about what a session must verify before handing work over, not about anything this project does",
+  "scope": "cross-cutting in effect, session management in subject — the rule is about what a session must verify before handing work over, not about anything this project does",
   "read": [],
   "progress": null,
   "ownership": "unclaimed",

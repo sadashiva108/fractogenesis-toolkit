@@ -1,22 +1,28 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T14:59:29+00:00",
+  "updatedAt": "2026-09-08T15:52:47+00:00",
   "number": "0028",
   "bundleName": "0028-sessions-write-into-the-tree-the-owner-commits-from",
   "kind": "cross-cutting",
   "subKind": null,
   "subject": "Sessions write into the tree the owner commits from",
-  "recordedOn": "** 2026-09-03",
+  "recordedOn": "2026-09-03",
   "recordedOccasion": "on the owner's observation that a session should hold its changes until told to release them.",
   "recordedBy": {
     "sessionBundle": null,
-    "sessionId": "** session_019yzcjm2QneJ5ymVEQDi1bu"
+    "sessionId": "session_019yzcjm2QneJ5ymVEQDi1bu"
   },
-  "severity": "** two findings are high. Both are silent — nothing fails, and the damage is to what the record can be trusted to mean.",
+  "severity": "two findings are high. Both are silent — nothing fails, and the damage is to what the record can be trusted to mean.",
   "feltAt": [],
-  "scope": "** cross-cutting. Tracked files only; the artifact volume is out of scope and finding F6 says why.",
+  "scope": "cross-cutting. Tracked files only; the artifact volume is out of scope and finding F6 says why.",
   "read": [
-    "**"
+    "the day's own working tree",
+    "`git status` and `git log` across the two concurrent sessions",
+    "`docs/ideas/knowing-when-it-is-safe-to-write.md`",
+    "`0026-verify-doc-paths-counts-gitignored-docs`",
+    "`docs/legend.md`",
+    "§§4b–4d, in `.github/copilot-instructions.md`",
+    "all 27 existing findings bundles, checked for overlap"
   ],
   "progress": null,
   "ownership": null,
@@ -39,7 +45,7 @@
         "resolvedBy": [
           "D1"
         ],
-        "whatWasDone": "The composition rule in §3 and `docs/legend.md`",
+        "whatWasDone": "The composition rule in §3 and docs/legend.md",
         "revision": null,
         "commit": null
       }
@@ -115,7 +121,7 @@
         "resolvedBy": [
           "D3"
         ],
-        "whatWasDone": "Numbering at apply time, and `bin/check-manifest-revision.sh`",
+        "whatWasDone": "Numbering at apply time, and bin/check-manifest-revision.sh",
         "revision": null,
         "commit": null
       }
@@ -134,7 +140,7 @@
         "resolvedBy": [
           "D4"
         ],
-        "whatWasDone": "A separate section in `docs/legend.md`, orthogonal to the categories",
+        "whatWasDone": "A separate section in docs/legend.md, orthogonal to the categories",
         "revision": null,
         "commit": null
       }

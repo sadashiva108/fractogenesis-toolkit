@@ -19,6 +19,7 @@ metadata.json beside what exists, which makes the whole run reversible with rm.
 
 Usage:
   python3 .internal/ai-scripts/session-management/extract-metadata.py [--dry-run]
+  python3 .internal/ai-scripts/session-management/extract-metadata.py --check
 """
 import json, os, re, sys, subprocess, datetime
 
@@ -57,22 +58,79 @@ def unwrap(v):
 
 def header_fields(md):
     """Bold field lines from the title to the first non-field line. Repeatable
-    fields accumulate -- 0043 F6: a scalar cannot be widened back into a list."""
-    fields={}
-    seen=False
-    for ln in md.split("\n"):
-        if ln.startswith("# "): seen=True; continue
-        if not seen: continue
-        m = re.match(r'^\*\*([A-Z][^:*]*)[:*]', ln)
+    fields accumulate -- 0043 F6: a scalar cannot be widened back into a list.
+
+    THE FIRST VERSION OF THIS FUNCTION WAS WRONG in three ways, and the parallel
+    session found them by reading the output rather than by any check passing or
+    failing. All three are recorded because they are 0043 F3 happening inside the
+    migration away from 0043 F3 -- a markdown parser, wrong, at the moment it was
+    being retired.
+
+      1. `lstrip(": ")` stripped the colon and the space and NOT the closing
+         `**`, so 162 values began with two asterisks. The bold marker is
+         presentation and section 4.1 forbids it in a value.
+      2. A field whose value is a BULLET LIST -- `**Read:**` followed by
+         `- item` lines -- captured the empty remainder of the label line and
+         stopped. Nine bundles lost 39 bullets that way.
+      3. `Session:` was stored whole into `sessionId`, leaving `sessionBundle`
+         null. That is the field split the schema exists to enforce, undone by
+         the thing populating it.
+    """
+    fields = {}
+    lines = md.split("\n")
+    seen = False
+    i = 0
+    while i < len(lines):
+        ln = lines[i]
+        if ln.startswith("# "):
+            seen = True; i += 1; continue
+        if not seen:
+            i += 1; continue
+        m = re.match(r'^\*\*([A-Z][^:*]*):?\*?\*?:?', ln)
         if not m:
-            if ln.strip()=="" : continue
-            if not ln.startswith("**"): break
-            continue
-        name=m.group(1).strip()
-        val=ln[m.end():].lstrip(": ").rstrip()
-        val=re.sub(r'\s{2,}$','',val)
-        fields.setdefault(name,[]).append(val.strip())
+            if ln.strip() == "" or ln.startswith("**"):
+                i += 1; continue
+            break
+        name = m.group(1).strip()
+        val = ln[m.end():]
+        # The closing bold marker, whichever side of the colon it fell on.
+        val = re.sub(r'^\*\*', '', val.lstrip(": ")).lstrip(": ").strip()
+        val = re.sub(r'\s+$', '', val)
+
+        if not val:
+            # A list-valued field: collect the bullets that follow, across at
+            # most one blank line. This is what lost 39 lines.
+            j = i + 1
+            items = []
+            while j < len(lines):
+                nxt = lines[j]
+                if nxt.strip() == "" and not items:
+                    j += 1; continue
+                b = re.match(r'^[-*] +(.*)$', nxt.strip())
+                if b:
+                    items.append(b.group(1).strip()); j += 1; continue
+                break
+            if items:
+                fields.setdefault(name, []).extend(items)
+                i = j; continue
+        if val:
+            fields.setdefault(name, []).append(val)
+        i += 1
     return fields
+
+def split_session(v):
+    """`bundle-name` (`session_id`) -> (bundle, id). Either half may be absent:
+    older headers carry only a raw session id, newer ones carry both."""
+    if not v: return (None, None)
+    v = unwrap(v) or ""
+    v = v.replace("`", "").strip()
+    if not v: return (None, None)
+    m = re.match(r'^(.*?)\s*\(\s*(session_[A-Za-z0-9]+)\s*\)\s*$', v)
+    if m:
+        return (m.group(1).strip() or None, m.group(2))
+    if v.startswith("session_") or re.match(r'^[0-9A-Za-z]{20,}$', v):
+        return (None, v)
+    return (v or None, None)
 
 def title(md):
     for ln in md.split("\n"):
@@ -197,9 +255,18 @@ def bundle_json(tree, name):
         for f in findings:
             c = by.get(f["id"])
             if not c or len(c) < 5: continue
-            f["resolution"] = {"resolvedBy": [x.strip() for x in c[1].split(",") if x.strip()],
-                               "whatWasDone": c[2],
-                               "revision": unwrap(c[3]), "commit": unwrap(c[4])}
+            # NOT named `by`: that is the row index above, and shadowing it
+            # turned a dict into a list one line later.
+            res_by = [u for u in (unwrap(x) for x in c[1].split(",")) if u]
+            what = unwrap(c[2])
+            rev, com = unwrap(c[3]), unwrap(c[4])
+            # Section 4.1: no object whose fields are all empty -- a generator
+            # renders one as an empty table row. A resolutions.md row that is
+            # all dashes records that the finding is NOT resolved, and `null`
+            # is how the data says that.
+            if any((res_by, what, rev, com)):
+                f["resolution"] = {"resolvedBy": res_by, "whatWasDone": what,
+                                   "revision": rev, "commit": com}
 
     contributions=[]
     for c in rows(fmd, r'^`?[a-z0-9-]+-\d{8}-\d{6}`?$'):
@@ -211,7 +278,8 @@ def bundle_json(tree, name):
       "subject": title(fmd),
       "recordedOn": (h.get("Recorded",[""])[0].split(",")[0] or None),
       "recordedOccasion": (",".join(h.get("Recorded",[""])[0].split(",")[1:]).strip() or None),
-      "recordedBy": {"sessionBundle": None, "sessionId": unwrap(h.get("Session",[None])[0])},
+      "recordedBy": dict(zip(("sessionBundle","sessionId"),
+                             split_session(h.get("Session",[None])[0]))),
       "severity": h.get("Severity",[None])[0],
       "feltAt": h.get("Felt at",[]),
       "scope": h.get("Scope",[None])[0],
@@ -251,7 +319,16 @@ def session_json(name):
     resources=[]
     if mmd:
         for c in rows(mmd, r'^[A-Z].*$'):
-            if len(c)==2 and c[0] not in ("What","From"): resources.append({"what":c[0],"path":unwrap(c[1])})
+            if len(c)==2 and c[0] not in ("What","From"):
+                # The cell is `path` -- commentary. `path` is atomic and takes
+                # only the path; the rest is prose and keeps its own field.
+                raw = c[1].strip()
+                m2 = re.match(r'^`([^`]+)`\s*(?:[-\u2014\u2013]\s*)?(.*)$', raw)
+                if m2:
+                    resources.append({"what": c[0], "path": m2.group(1).strip(),
+                                      "notes": (m2.group(2).strip() or None)})
+                else:
+                    resources.append({"what": c[0], "path": unwrap(raw), "notes": None})
 
     # A session records its end in final-summary.md, which the first extraction
     # run did not read -- three sessions came out `active` against a `closed`
@@ -268,7 +345,7 @@ def session_json(name):
     owned=[]
     if fm:
         for c in rows(fm, r'^\d{4}$'):
-            owned.append({"number": c[0], "notes": (c[-1] if len(c)>=7 else None)})
+            owned.append({"number": c[0], "notes": unwrap(c[-1]) if len(c)>=7 else None})
 
     return {
       "schemaVersion": 1, "updatedAt": NOW,
@@ -333,8 +410,183 @@ def derive_state(session):
         return "active", f"owns {len(session['ownedBundles'])} bundle(s), not ended"
     return "available", "owns nothing, not ended"
 
+
+# ---------------------------------------------------------------------------
+# --check: is the DATA complete against the MARKDOWN it came from?
+#
+# Every existing checker answers whether a document is well formed. None answers
+# whether it is COMPLETE. That gap let 162 contaminated fields and 39 lost
+# `Read:` bullets sit in 47 files while verify-session-findings.sh reported 0
+# FAIL -- correctly, because the JSON was well formed. It was found by a person
+# reading the output.
+#
+# "Completeness is not conformance" is already a written rule. This is the first
+# thing that enforces it.
+#
+# Deliberately NOT a second parser. A second reader of the same markdown shares
+# the first one's blind spots -- the bug being caught here was a regex that
+# looked right. These are invariants a parser cannot satisfy by accident:
+# presentation cannot survive into a value, and a count in the document must
+# equal a length in the data.
+# ---------------------------------------------------------------------------
+ATOMIC = {
+    # Values a renderer would add ornament TO. Nothing else is checked for it.
+    "id", "number", "bundleName", "kind", "subKind", "status", "outcome",
+    "statusReason", "reason", "basis", "asserted_by", "asserted_on",
+    "recordedOn", "recordedOccasion", "decided", "revision", "commit",
+    "from", "until", "on", "at", "sha", "assistant", "sessionId",
+    "sessionBundle", "model", "schemaVersion", "updatedAt", "answersAsOf",
+    "createdOn", "declaredState", "transcript", "scratchPath", "path",
+    "ownership", "supersededBy", "supersedes", "voidedReason", "resolvedBy",
+}
+
+def check_completeness():
+    import glob
+    fails = []
+
+    def bad(p, msg):
+        fails.append(f"{p}: {msg}")
+
+    for jp in sorted(glob.glob(os.path.join(ROOT, "docs/**/metadata.json"), recursive=True)):
+        rel = os.path.relpath(jp, ROOT)
+        d = json.load(open(jp))
+        src = os.path.join(os.path.dirname(rel),
+                           "findings.md" if "number" in d else "metadata.md")
+        md = read(src)
+
+        # 1. No presentation in any value, at any depth. One line, and it is the
+        #    line that would have caught all 162.
+        def walk(node, path=""):
+            if isinstance(node, dict):
+                for k, v in node.items(): walk(v, f"{path}.{k}" if path else k)
+            elif isinstance(node, list):
+                for i, v in enumerate(node): walk(v, f"{path}[{i}]")
+            elif isinstance(node, str):
+                leaf = path.split(".")[-1].split("[")[0]
+                # Section 4.1's atomic/prose line. An ATOMIC value carries no
+                # ornament: a renderer would ADD the backticks around a status.
+                # A PROSE value -- a statement, a note, a why -- is markdown by
+                # nature and its inline emphasis is part of the sentence. The
+                # first draft of this check flagged 18 prose fields, which is
+                # the same false-positive-on-first-run pattern as 0042 F4.
+                if leaf in ATOMIC:
+                    if "**" in node:
+                        bad(rel, f"{path} carries a bold marker: {node[:48]!r}")
+                    if node.startswith("`") or node.endswith("`"):
+                        bad(rel, f"{path} carries a backtick: {node[:48]!r}")
+                if node.strip() in ("-", "--", "—", ""):
+                    bad(rel, f"{path} holds a dash or empty string where null belongs")
+        walk(d)
+
+        if md is None:
+            continue
+
+        # 2. Every bold field line in the markdown reaches a non-empty key. The
+        #    map is explicit rather than derived, so a field nobody wired up is
+        #    a failure and not a silent omission.
+        FIELDMAP = {"Recorded": "recordedOn", "Session": "recordedBy",
+                    "Severity": "severity", "Felt at": "feltAt",
+                    "Scope": "scope", "Read": "read"}
+        # ONLY the header block. `**Felt at:**` also appears inside individual
+        # finding sections -- 0001 carries two at lines 93 and 109 -- and
+        # searching the whole document reported a header field missing that the
+        # header never had. The header ends at the first line that is neither a
+        # bold field nor blank.
+        hdr_lines = []
+        started = False
+        for ln in md.split("\n"):
+            if ln.startswith("# "): started = True; continue
+            if not started: continue
+            if ln.startswith("**") or ln.strip() == "" or ln.startswith(("-", "*")):
+                hdr_lines.append(ln); continue
+            break
+        hdr = "\n".join(hdr_lines)
+
+        for label, key in FIELDMAP.items():
+            present = re.search(r'^\*\*' + re.escape(label) + r':', hdr, re.M)
+            got = d.get(key)
+            if present and not got:
+                bad(rel, f"markdown has **{label}:** and {key} is empty")
+
+        # 3. A list in the document is a list of the same length in the data.
+        #    This is what the Read: bug failed, and a count cannot be faked.
+        for label, key in (("Read", "read"), ("Felt at", "feltAt")):
+            m = re.search(r'^\*\*' + re.escape(label) + r':\*\*\s*$', hdr, re.M)
+            if not m:
+                continue
+            tail = hdr[m.end():]
+            n = 0
+            for ln in tail.split("\n"):
+                if ln.strip() == "" and n == 0: continue
+                if re.match(r'^[-*] +\S', ln.strip()): n += 1
+                elif n: break
+                elif ln.strip(): break
+            have = len(d.get(key) or [])
+            if n != have:
+                bad(rel, f"**{label}:** lists {n} bullet(s); {key} holds {have}")
+
+        # 4. Row counts. A table row that did not become an object is the
+        #    failure mode a well-formedness check cannot see.
+        if "number" in d:
+            for pat, key in ((r'^\| *F\d+ *\|', "findings"), (r'^\| *D\d+ *\|', "decisions")):
+                n = len(re.findall(pat, md, re.M))
+                if key == "decisions":
+                    dm = read(os.path.join(os.path.dirname(rel), "decisions.md"))
+                    n = len(re.findall(pat, dm, re.M)) if dm else 0
+                have = len(d.get(key) or [])
+                if n != have:
+                    bad(rel, f"{n} {key} row(s) in markdown, {have} in data")
+
+    for f in fails:
+        print("  FAIL  " + f)
+    print(f"\n  {'FAIL' if fails else 'OK'}: {len(fails)} completeness problem(s)")
+    return 1 if fails else 0
+
 # ---------------------------------------------------------------------------
 def main():
+    if "--check" in sys.argv:
+        raise SystemExit(check_completeness())
+
+    # ------------------------------------------------------------------
+    # THE ONE-WAY GUARD
+    #
+    # state-as-data.md section 9 step 1 makes this a MIGRATION parser -- "the
+    # third generation of the markdown parser 0043 F3 is about, and the last one
+    # ever written". Step 5 flips authority: the markdown becomes a projection
+    # generated FROM the JSON.
+    #
+    # Nothing stopped this script running after that flip, and running it then
+    # parses generated markdown back into the data that generated it. A round
+    # trip through a lossy renderer can only lose: anything the generator does
+    # not emit is silently dropped from the source of truth on the next
+    # extraction. That is worse than any bug the parser has had, because it
+    # would look like a successful run.
+    #
+    # The generated-region markers of section 6.2 are the witness. If any exist,
+    # the markdown is downstream and extraction is refused.
+    # ------------------------------------------------------------------
+    # Scoped to the files a generator WRITES. The first version searched all of
+    # docs/ and fired on state-as-data.md, which documents the marker inside a
+    # fenced example -- a guard refusing to run because the design describing it
+    # mentions it. Fifth instrument in this repository to fail loudly against a
+    # healthy tree on its first run.
+    generated = subprocess.run(
+        ["grep", "-rl", "--include=findings.md", "--include=decisions.md",
+         "--include=resolutions.md", "--include=metadata.md",
+         "--include=INDEX.md", "--include=findings-manifest.md",
+         "<!-- generated:", os.path.join(ROOT, "docs")],
+        capture_output=True, text=True).stdout.strip()
+    if generated and "--force" not in sys.argv:
+        n = len(generated.split("\n"))
+        print(f"REFUSING: {n} document(s) carry generated-region markers, so the", file=sys.stderr)
+        print("markdown is a projection of this data rather than its source.", file=sys.stderr)
+        print("Extracting now would parse generated output back into the source", file=sys.stderr)
+        print("of truth and silently drop whatever the generator does not emit.", file=sys.stderr)
+        print("", file=sys.stderr)
+        print("This script is single-use by design -- state-as-data.md section 9", file=sys.stderr)
+        print("step 1. If you genuinely need it, --force, and say why in the", file=sys.stderr)
+        print("manifest entry.", file=sys.stderr)
+        raise SystemExit(2)
     written=[]
     bundles={}
     for tree in FINDING_TREES:

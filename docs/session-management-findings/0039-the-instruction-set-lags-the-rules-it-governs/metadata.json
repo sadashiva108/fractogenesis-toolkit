@@ -1,20 +1,20 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T14:59:29+00:00",
+  "updatedAt": "2026-09-08T15:52:47+00:00",
   "number": "0039",
   "bundleName": "0039-the-instruction-set-lags-the-rules-it-governs",
   "kind": "session-management",
   "subKind": null,
   "subject": "The instruction set lags the rules it governs",
-  "recordedOn": "** 2026-09-03",
+  "recordedOn": "2026-09-03",
   "recordedOccasion": "restore-apps session, from its own outstanding items rather than from a fresh reading. Every finding below was noticed by this session while writing Revisions 166 through 173, and deferred in prose at the time.",
   "recordedBy": {
     "sessionBundle": null,
-    "sessionId": "** session_016EbjB7M527qEFqZFzpv2C9"
+    "sessionId": "session_016EbjB7M527qEFqZFzpv2C9"
   },
-  "severity": "** findings F1, F5 and F8 are high. A session that reads only the instruction set does not learn several of the rules it is expected to follow, and one of those rules governs when it may touch the owner's checkout.",
+  "severity": "findings F1, F5 and F8 are high. A session that reads only the instruction set does not learn several of the rules it is expected to follow, and one of those rules governs when it may touch the owner's checkout.",
   "feltAt": [],
-  "scope": "** instruction-set. The fix lands in `.github/copilot-instructions.md` §§4b–4d, `.claude/CLAUDE.md`, and `docs/architecture/findings-and-sessions.md`.",
+  "scope": "instruction-set. The fix lands in `.github/session-management-instructions.md`, `.claude/CLAUDE.md`, and `docs/architecture/findings-and-sessions.md`. Recorded against `.github/copilot-instructions.md` §§4b–4d, which commit `1c48deb` deleted; D13 re-ruled the address.",
   "read": [],
   "progress": null,
   "ownership": null,
@@ -190,6 +190,30 @@
       "reopened": null,
       "withdrawn": null,
       "resolution": null
+    },
+    {
+      "id": "F15",
+      "statement": "A check that validates citations cannot detect their absence: ten decisions cited no finding and every checker passed",
+      "status": "decided",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F15 — a check that validates citations cannot detect their absence",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F16",
+      "statement": "Every check asks whether a document is well formed; none asks whether it is complete, and 162 contaminated fields passed all of them",
+      "status": "decided",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F16 — every check asks whether a document is well formed; none asks whether it is complete",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
     }
   ],
   "decisions": [
@@ -358,6 +382,55 @@
       "answersAsOf": null,
       "voidedReason": null,
       "sectionHeading": "D13 — the split survives, the address does not"
+    },
+    {
+      "id": "D14",
+      "decision": "The four pre-D12 supersession successors get the clean slate D12 requires. `0037`, `0038`, `0040` keep only `findings.md` and `metadata.json`; `0036` loses the cloned `resolutions.md` and keeps its own `decisions.md`. `0041`'s pair is MOVED to `0032` rather than deleted — sole copies, and both headers name `0032`",
+      "findings": [
+        "F12",
+        "F15"
+      ],
+      "decided": "2026-09-08",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D14 — the clean slate, applied to the bundles that predate the rule"
+    },
+    {
+      "id": "D15",
+      "decision": "A decision row must cite at least one `F<n>`. The checker validates citations that exist and cannot see their absence, so the rule states the positive condition — the same shape as D12's coverage clause",
+      "findings": [
+        "F15"
+      ],
+      "decided": "2026-09-08",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D15 — a decision must cite at least one finding"
+    },
+    {
+      "id": "D16",
+      "decision": "A `completeness` check joins the verify group: it asserts that no atomic value carries markdown ornament, that a list in a document is a list of the same length in the data, and that every header field the markdown has reaches a non-empty key. Deliberately NOT a second parser — a second reader shares the first's blind spots",
+      "findings": [
+        "F16"
+      ],
+      "decided": "2026-09-08",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D16 — a check for completeness, and why it is not a second parser"
+    },
+    {
+      "id": "D17",
+      "decision": "The extractor is **single-use** and refuses to run once any generated-region marker exists in a file a generator writes. Parsing generated markdown back into the data that generated it can only lose, and it would look like a successful run",
+      "findings": [
+        "F16"
+      ],
+      "decided": "2026-09-08",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D17 — the extractor is single-use, and refuses to prove it"
     }
   ],
   "contributions": [
@@ -375,7 +448,7 @@
       "why": null,
       "reason": null,
       "basis": "derived",
-      "asserted_by": "** session_016EbjB7M527qEFqZFzpv2C9",
+      "asserted_by": "session_016EbjB7M527qEFqZFzpv2C9",
       "asserted_on": "2026-09-08"
     },
     {
@@ -385,7 +458,7 @@
       "why": null,
       "reason": null,
       "basis": "derived",
-      "asserted_by": "** session_016EbjB7M527qEFqZFzpv2C9",
+      "asserted_by": "session_016EbjB7M527qEFqZFzpv2C9",
       "asserted_on": "2026-09-08"
     },
     {
@@ -395,7 +468,7 @@
       "why": null,
       "reason": null,
       "basis": "derived",
-      "asserted_by": "** session_016EbjB7M527qEFqZFzpv2C9",
+      "asserted_by": "session_016EbjB7M527qEFqZFzpv2C9",
       "asserted_on": "2026-09-08"
     },
     {
@@ -405,7 +478,7 @@
       "why": null,
       "reason": null,
       "basis": "derived",
-      "asserted_by": "** session_016EbjB7M527qEFqZFzpv2C9",
+      "asserted_by": "session_016EbjB7M527qEFqZFzpv2C9",
       "asserted_on": "2026-09-08"
     },
     {
@@ -415,7 +488,7 @@
       "why": null,
       "reason": null,
       "basis": "derived",
-      "asserted_by": "** session_016EbjB7M527qEFqZFzpv2C9",
+      "asserted_by": "session_016EbjB7M527qEFqZFzpv2C9",
       "asserted_on": "2026-09-08"
     },
     {
@@ -425,7 +498,7 @@
       "why": null,
       "reason": null,
       "basis": "derived",
-      "asserted_by": "** session_016EbjB7M527qEFqZFzpv2C9",
+      "asserted_by": "session_016EbjB7M527qEFqZFzpv2C9",
       "asserted_on": "2026-09-08"
     },
     {
@@ -435,7 +508,7 @@
       "why": null,
       "reason": null,
       "basis": "derived",
-      "asserted_by": "** session_016EbjB7M527qEFqZFzpv2C9",
+      "asserted_by": "session_016EbjB7M527qEFqZFzpv2C9",
       "asserted_on": "2026-09-08"
     },
     {
@@ -445,7 +518,7 @@
       "why": null,
       "reason": null,
       "basis": "derived",
-      "asserted_by": "** session_016EbjB7M527qEFqZFzpv2C9",
+      "asserted_by": "session_016EbjB7M527qEFqZFzpv2C9",
       "asserted_on": "2026-09-08"
     }
   ],

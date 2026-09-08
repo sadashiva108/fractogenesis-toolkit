@@ -1,18 +1,18 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T14:59:29+00:00",
+  "updatedAt": "2026-09-08T15:52:47+00:00",
   "number": "0005",
   "bundleName": "0005-boundary-runs-recorded-long-after-their-phase",
   "kind": "cross-cutting",
   "subKind": null,
   "subject": "Four boundary runs are dated the day the recorder was extended, not the day the phase ran",
-  "recordedOn": "** 2026-09-01",
+  "recordedOn": "2026-09-01",
   "recordedOccasion": "item 2.",
   "recordedBy": {
     "sessionBundle": null,
-    "sessionId": "** 01KcZvrKMgfenhrT9DvxW9Jk"
+    "sessionId": "01KcZvrKMgfenhrT9DvxW9Jk"
   },
-  "severity": "** none to the workflow; real to anyone reading timestamps as phase timestamps.",
+  "severity": "none to the workflow; real to anyone reading timestamps as phase timestamps.",
   "feltAt": [],
   "scope": null,
   "read": [],
@@ -37,7 +37,7 @@
           "D4",
           "D5"
         ],
-        "whatWasDone": "D2's point-rule correction, D3's rebuild flagging, D4's standing rule, D5's `--note`",
+        "whatWasDone": "D2's point-rule correction, D3's rebuild flagging, D4's standing rule, D5's --note",
         "revision": "193",
         "commit": "pending; the owner commits"
       }

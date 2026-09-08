@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T14:59:29+00:00",
+  "updatedAt": "2026-09-08T15:52:47+00:00",
   "bundleName": "run-index-design-20260901-000000",
   "createdOn": "2026-09-03",
   "owners": [
@@ -29,47 +29,47 @@
   "ownedBundles": [
     {
       "number": "0003",
-      "notes": "—"
+      "notes": null
     },
     {
       "number": "0005",
-      "notes": "—"
+      "notes": null
     },
     {
       "number": "0009",
-      "notes": "—"
+      "notes": null
     },
     {
       "number": "0012",
-      "notes": "—"
+      "notes": null
     },
     {
       "number": "0014",
-      "notes": "—"
+      "notes": null
     },
     {
       "number": "0018",
-      "notes": "—"
+      "notes": null
     },
     {
       "number": "0021",
-      "notes": "—"
+      "notes": null
     },
     {
       "number": "0022",
-      "notes": "—"
+      "notes": null
     },
     {
       "number": "0023",
-      "notes": "—"
+      "notes": null
     },
     {
       "number": "0026",
-      "notes": "—"
+      "notes": null
     },
     {
       "number": "0034",
-      "notes": "—"
+      "notes": null
     }
   ],
   "contributions": [],

@@ -221,6 +221,53 @@ EOF
   for sib in "$dir/decisions.md" "$dir/resolutions.md"; do
     [ -f "$sib" ] || continue
     cited="$(awk -F'|' '/^\|/ { print $2 "\n" $4 }' "$sib" | grep -oE 'F[0-9]+' | sort -u)"
+
+    # 0039 D15: a decision must cite AT LEAST ONE finding.
+    #
+    # The loop below asks whether every citation RESOLVES. On a row that cites
+    # nothing it iterates over an empty set and passes -- "every citation
+    # resolves" is vacuously true of a row with none. Ten decisions sat in that
+    # state for four days with six validators passing over them, and 0039 D8
+    # cannot void a decision that is under no finding, so the gap outlived being
+    # merely cosmetic.
+    #
+    # Stated as a POSITIVE condition, which is the only kind a missing thing can
+    # fail -- the same shape as D12's coverage clause.
+    # A SUPERSEDED bundle is frozen and exempt. D15 governs what is written from
+    # here; repairing a frozen record to satisfy a rule it predates is the
+    # retrofit error, and 0046 reaches the same conclusion about citations a
+    # supersession leaves behind. Ten rows in 0031 and 0032 are in exactly that
+    # state and must stay there.
+    frozen=false
+    if [ -f "$dir/metadata.json" ] && grep -q '"supersededBy"' "$dir/metadata.json" 2>/dev/null; then
+      frozen=true
+    fi
+
+    if [ "$(basename "$sib")" = "decisions.md" ] && [ "$frozen" = false ]; then
+      while IFS= read -r drow; do
+        [ -n "$drow" ] || continue
+        did="$(printf '%s' "$drow" | awk -F'|' '{ gsub(/^[ \t]+|[ \t]+$/, "", $2); print $2 }')"
+        dfind="$(printf '%s' "$drow" | awk -F'|' '{ print $4 }' | grep -oE 'F[0-9]+' | head -1)"
+        # NO single-finding exemption. A first draft of this check had one, on
+        # the reasoning that findings-and-sessions.md 4a made the citation
+        # derivable for a one-finding bundle. That convention was RETIRED at
+        # Revision 219 -- a table is required even for a single finding -- so
+        # the exemption cited a rule that no longer existed, and the author of
+        # the exemption was the author of the retirement.
+        #
+        # The owner's ruling is explicit: always a table, always a citation.
+        # `F1` costs one cell and it is what 0039 D8's voiding rule follows.
+        n_have="$(printf '%s\n' "$have_f" | grep -c . || true)"
+        if [ -z "$dfind" ]; then
+          bad "$bundle" "decisions.md $did cites no finding, and this bundle has $n_have (D15)"
+        else
+          pass "$bundle  decisions.md $did cites a finding"
+        fi
+      done <<EOF
+$(grep -E '^\| *D[0-9]+ *\|' "$sib" 2>/dev/null)
+EOF
+    fi
+
     for fn in $cited; do
       if printf '%s\n' "$have_f" | grep -qx "$fn"; then
         pass "$bundle  $(basename "$sib") cites $fn"

@@ -1,20 +1,20 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T14:59:29+00:00",
+  "updatedAt": "2026-09-08T15:52:47+00:00",
   "number": "0029",
   "bundleName": "0029-the-instruction-set-lags-the-rules-it-governs",
   "kind": "instruction-set",
   "subKind": null,
   "subject": "The instruction set lags the rules it governs",
-  "recordedOn": "** 2026-09-03",
+  "recordedOn": "2026-09-03",
   "recordedOccasion": "restore-apps session, from its own outstanding items rather than from a fresh reading. Every finding below was noticed by this session while writing Revisions 166 through 173, and deferred in prose at the time.",
   "recordedBy": {
     "sessionBundle": null,
-    "sessionId": "** session_016EbjB7M527qEFqZFzpv2C9"
+    "sessionId": "session_016EbjB7M527qEFqZFzpv2C9"
   },
-  "severity": "** findings F1, F5 and F8 are high. A session that reads only the instruction set does not learn several of the rules it is expected to follow, and one of those rules governs when it may touch the owner's checkout.",
+  "severity": "findings F1, F5 and F8 are high. A session that reads only the instruction set does not learn several of the rules it is expected to follow, and one of those rules governs when it may touch the owner's checkout.",
   "feltAt": [],
-  "scope": "** instruction-set. The fix lands in `.github/copilot-instructions.md` §§4b–4d, `.claude/CLAUDE.md`, and `docs/architecture/findings-and-sessions.md`.",
+  "scope": "instruction-set. The fix lands in `.github/copilot-instructions.md` §§4b–4d, `.claude/CLAUDE.md`, and `docs/architecture/findings-and-sessions.md`.",
   "read": [],
   "progress": null,
   "ownership": null,

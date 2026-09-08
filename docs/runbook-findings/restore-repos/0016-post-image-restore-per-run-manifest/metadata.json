@@ -1,18 +1,18 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T14:59:29+00:00",
+  "updatedAt": "2026-09-08T15:52:47+00:00",
   "number": "0016",
   "bundleName": "0016-post-image-restore-per-run-manifest",
   "kind": "runbook",
   "subKind": null,
   "subject": "`MANIFEST.txt` duplicates the category run index",
-  "recordedOn": "** 2026-09-01",
+  "recordedOn": "2026-09-01",
   "recordedOccasion": "Restore Repositories Refactor session, while reconciling the Bundle Layout in `restore-repos.md`.",
   "recordedBy": {
     "sessionBundle": null,
-    "sessionId": "** —"
+    "sessionId": null
   },
-  "severity": "** none. A retention/manifest policy question, deliberately not decided by an AI session.",
+  "severity": "none. A retention/manifest policy question, deliberately not decided by an AI session.",
   "feltAt": [],
   "scope": null,
   "read": [],

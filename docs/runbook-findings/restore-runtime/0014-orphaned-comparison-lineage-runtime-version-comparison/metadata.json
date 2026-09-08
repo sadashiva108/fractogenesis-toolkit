@@ -1,18 +1,18 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T14:59:29+00:00",
+  "updatedAt": "2026-09-08T15:52:47+00:00",
   "number": "0014",
   "bundleName": "0014-orphaned-comparison-lineage-runtime-version-comparison",
   "kind": "runbook",
   "subKind": null,
   "subject": "`restore-runtime-version-comparison` is a lineage with no producer",
-  "recordedOn": "** 2026-09-01",
+  "recordedOn": "2026-09-01",
   "recordedOccasion": "item 2.",
   "recordedBy": {
     "sessionBundle": null,
-    "sessionId": "** 01KcZvrKMgfenhrT9DvxW9Jk"
+    "sessionId": "01KcZvrKMgfenhrT9DvxW9Jk"
   },
-  "severity": "** low. It will trip the item 4 coverage audit if it is not recorded here first.",
+  "severity": "low. It will trip the item 4 coverage audit if it is not recorded here first.",
   "feltAt": [],
   "scope": null,
   "read": [],

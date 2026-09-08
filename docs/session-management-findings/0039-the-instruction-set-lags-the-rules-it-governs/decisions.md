@@ -43,6 +43,10 @@ without answering it for rules.
 | D11 | **Withdrawing requires a reason**, an optional note and `withdrawn_at`, per finding — a bundle-level withdrawal needs one for every finding in it. A `resolved` finding is reopened first; `withdrawn` reaches every status except `resolved` | F12 | 2026-09-08 | `accepted` |
 | D12 | **Supersession carries provenance as typed edges at finding granularity, stored in the new bundle only.** `carried`, `successor`, `split`, `merged` and `dropped`; `new` is derived from the absence of an incoming edge. Coverage and exclusivity gate the `superseded` tag. The new bundle gets no `decisions.md`. A superseded bundle is readable by any session and writable by none | F12 | 2026-09-08 | `accepted` |
 | D13 | `docs/legend.md` holds VOCABULARY. **`.github/session-management-instructions.md` holds PROCEDURE** — D1 said §§4b–4d of `copilot-instructions.md`, which commit `1c48deb` deleted. Each points at the other for the kind it does not hold. D2's unfinished half is carried out: the legend keeps three one-line definitions of the write categories and the gating moves to §6 | F1, F2, F5, F6, F13 | 2026-09-08 | `accepted` |
+| D14 | The four pre-D12 supersession successors get the clean slate D12 requires. `0037`, `0038`, `0040` keep only `findings.md` and `metadata.json`; `0036` loses the cloned `resolutions.md` and keeps its own `decisions.md`. `0041`'s pair is MOVED to `0032` rather than deleted — sole copies, and both headers name `0032` | F12, F15 | 2026-09-08 | `accepted` |
+| D15 | A decision row must cite at least one `F<n>`. The checker validates citations that exist and cannot see their absence, so the rule states the positive condition — the same shape as D12's coverage clause | F15 | 2026-09-08 | `accepted` |
+| D16 | A `completeness` check joins the verify group: it asserts that no atomic value carries markdown ornament, that a list in a document is a list of the same length in the data, and that every header field the markdown has reaches a non-empty key. Deliberately NOT a second parser — a second reader shares the first's blind spots | F16 | 2026-09-08 | `accepted` |
+| D17 | The extractor is **single-use** and refuses to run once any generated-region marker exists in a file a generator writes. Parsing generated markdown back into the data that generated it can only lose, and it would look like a successful run | F16 | 2026-09-08 | `accepted` |
 
 ## Findings 1, 2, 5 and 6 — a rule lives where its kind lives
 
@@ -728,3 +732,160 @@ better title.
 
 **Whether a README and a quick-start exist**, which is F14 and is new surface no
 ruling covers.
+
+---
+
+## D14 — the clean slate, applied to the bundles that predate the rule
+
+D12 requires a superseding bundle to carry no `decisions.md`. Four bundles predate
+it, and **the evidence was a byte comparison rather than an assumption**:
+
+| Bundle | File | Compared against predecessor | Action |
+|---|---|---|---|
+| `0037` | `decisions.md`, `resolutions.md` | **byte-identical** to `0027`'s, headed `Bundle: 0027` | removed |
+| `0038` | `decisions.md`, `resolutions.md` | **byte-identical** to `0028`'s, headed `Bundle: 0028` | removed |
+| `0040` | `decisions.md`, `resolutions.md` | **byte-identical** to `0031`'s, headed `Bundle: 0031-…` | removed |
+| `0036` | `resolutions.md` | **byte-identical** to `0026`'s, headed `Bundle: 0026-…` | removed |
+| `0036` | `decisions.md` | predecessor has **none**; header says `0036` | **retained** — option (iv), Revision 209 |
+| `0039` | `decisions.md` | **differs by 497 lines**; header says `0039` | **retained** — D1–D13 |
+| `0041` | `decisions.md`, `resolutions.md` | predecessor has **neither**; both headed `Bundle: 0032-…` | **moved to `0032`** |
+| `0043` | `decisions.md` | no predecessor at all | **retained** |
+
+**The bundles are retained. Only the borrowed files go.** These four are new
+readings of superseded predecessors and the owner opened them deliberately; what
+went wrong was not the bundles but files cloned into them before any rule said
+not to.
+
+**Why the statuses were never wrong.** All eight removed files named a *different
+bundle in their own headers*. Nothing had been decided in `0037`, `0038`, `0040`
+or `0041` — those decisions were taken in `0027`, `0028`, `0031` and `0032`,
+against those bundles' framing. So `framing` on every finding was **accurate**,
+and it was the presence of a `decisions.md` full of accepted rows that made it
+look wrong. The status column was telling the truth and the decisions file was
+lying.
+
+### `0041` is moved, not deleted, and that distinction is load-bearing
+
+`0032` had only `findings.md`. Its decisions and resolutions were sitting in
+`0041`, dated 2026-09-04 — before `0041` existed — and naming `0032` in their own
+headers. **Deleting them would have destroyed the only record of what `0032`
+decided.** The same operation applied uniformly across all four bundles would
+have lost real work in one of them, which is why the comparison came before the
+action.
+
+**It writes into a `superseded` bundle**, which `docs/legend.md` now says is
+writable by none — a rule installed hours earlier, and this is its first test.
+Read narrowly: **placing a file in the bundle its own header names is not a write
+to the reading.** It alters no finding, no statement and no conclusion; it
+completes a supersession that left two files behind. The rule protects a reading
+from revision, not a directory from ever changing. Recorded here rather than
+resolved silently, because a rule met on its first day deserves the argument in
+writing.
+
+### What the clean slate does NOT remove
+
+The **provenance** — 31 edges across the six successors, in `metadata.json`,
+derived by comparing statements. That is the record of what became of each
+predecessor finding, and it is what makes removing the borrowed decisions safe:
+the relationship is recorded where D12 puts it, so nothing is lost by declining
+to restate the predecessor's rulings.
+
+The edges are not yet rendered into `findings.md`. `state-as-data.md` §6.3 has
+the generator refreshing marked regions of documents that exist, and it is not
+written; until then the edges live in the data only.
+
+---
+
+## D15 — a decision must cite at least one finding
+
+The checker asks whether every citation resolves and cannot ask whether there is
+one. Ten decisions cited nothing and passed. **The rule states the positive
+condition**, which is the only kind a missing thing can fail.
+
+Deliberately the same shape as D12's coverage clause — *at least one*, because
+zero is the failure — so the two read as one idea applied twice rather than two
+rules that happen to rhyme.
+
+### No single-finding exemption, and how one got in anyway
+
+The first implementation exempted a bundle with exactly one finding, on the
+reasoning that the citation was derivable because only one finding existed. **The
+convention it cited had been retired at Revision 219** — a findings table is
+required even for a single finding — and the session that wrote the exemption was
+the session that had retired the convention four revisions earlier.
+
+The owner's ruling, 2026-09-08: **always a table, always a citation.** `F1` costs
+one cell, and it is the link D8's voiding rule follows. An exemption would have
+left twenty rows outside a rule written the same morning.
+
+**What it reports.** Thirty rows across `0005`, `0012`, `0013`, `0025`, `0030` and
+`0035` — all owned by `run-index-design-20260901-000000` and
+`pre-image-capture-conformance-20260903-194532`, none by this session, so they are
+flagged and not edited. Ten further rows in `0031` and `0032` are frozen and
+exempt by design. `bin/verify-session-findings.sh --help` names the bundles and
+deliberately does not name the count.
+
+**Not applied retroactively to the ten.** They are now in `0032` and `0031`,
+whose readings are superseded and frozen. The rule governs what is written from
+here; repairing a frozen record to satisfy a rule it predates is the retrofit
+error, and `0046` records the same conclusion about citations left behind by a
+supersession.
+
+---
+
+## D16 — a check for completeness, and why it is not a second parser
+
+Four checkers reported 0 FAIL over 162 contaminated fields, correctly: the data
+was well formed. **The obvious fix — parse the markdown again and compare — is
+wrong.** A second reader of the same documents shares the first one's blind
+spots, and the bug here was a regex that looked right. Two parsers agreeing
+proves they were written by the same mind.
+
+What the check asserts instead are **invariants a parser cannot satisfy by
+accident**:
+
+- **No atomic value carries markdown ornament.** One line, and it is the line
+  that would have caught all 162 instantly.
+- **A list in the document is a list of the same length in the data.** A count
+  cannot be faked, and this is exactly what the 39 lost `Read:` bullets failed.
+- **Every header field the markdown has reaches a non-empty key**, against an
+  explicit field map, so a field nobody wired up fails rather than vanishing.
+- **Row counts.** A table row that did not become an object is invisible to
+  every well-formedness check there is.
+
+**It lives beside the extractor**, in `extract-metadata.py --check`, with a thin
+shell wrapper so `bin/verify-session-findings.sh` dispatches it like the other
+three. Two copies of the schema's invariants would be the drift this repository
+keeps recording.
+
+### The atomic/prose line, found by running it
+
+The first run reported 89 problems, of which **18 were prose fields** — a `notes`
+cell reading *"D1 accepted, **D2 rejected** by the owner"*, where the emphasis is
+part of the sentence. `state-as-data.md` §4.1 had already been amended that
+morning to draw the atomic/prose line; the check had not read its own schema.
+An explicit `ATOMIC` set fixed it, and the remaining 71 were real.
+
+---
+
+## D17 — the extractor is single-use, and refuses to prove it
+
+`state-as-data.md` §9 step 1 calls this *"the third generation of the markdown
+parser `0043` F3 is about — and the last one ever written."* Step 5 flips
+authority: the markdown becomes a projection generated from the JSON.
+
+**Nothing stopped the extractor running after that flip.** Doing so parses
+generated markdown back into the data that generated it, and a round trip through
+a lossy renderer can only lose — whatever the generator does not emit is dropped
+from the source of truth. **It would look like a successful run**, which makes it
+worse than any bug the parser has had.
+
+The generated-region markers of §6.2 are the witness. If any exist in a file a
+generator writes, extraction is refused; `--force` exists and the manifest entry
+must say why.
+
+**Scoped to the files a generator writes**, not to all of `docs/`. The first
+version searched everything and refused because `state-as-data.md` documents the
+marker inside a fenced example — a guard declining to run on the strength of the
+document describing it. Fifth instance of the pattern in F16, and it happened
+inside the decision recording the pattern.

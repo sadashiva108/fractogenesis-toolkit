@@ -1,20 +1,20 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T14:59:29+00:00",
+  "updatedAt": "2026-09-08T15:52:47+00:00",
   "number": "0031",
   "bundleName": "0031-superseding-a-bundle-whose-session-is-gone",
   "kind": "instruction-set",
   "subKind": null,
   "subject": "Superseding a bundle whose session is gone is instructed but never defined",
-  "recordedOn": "** 2026-09-03",
+  "recordedOn": "2026-09-03",
   "recordedOccasion": "from performing the procedure in Revision 183 with nothing in the instruction set to follow.",
   "recordedBy": {
     "sessionBundle": null,
-    "sessionId": "** session_01PcgHu9kz9Hm5RatLQuFR8H"
+    "sessionId": "session_01PcgHu9kz9Hm5RatLQuFR8H"
   },
-  "severity": "** low until it is needed, and then total — a session with no procedure invents one, and every invented variant is a different tree shape for the same event.",
+  "severity": "low until it is needed, and then total — a session with no procedure invents one, and every invented variant is a different tree shape for the same event.",
   "feltAt": [],
-  "scope": "** instruction set. The fix is one subsection in `.github/copilot-instructions.md` §4c.",
+  "scope": "instruction set. The fix is one subsection in `.github/copilot-instructions.md` §4c.",
   "read": [],
   "progress": null,
   "ownership": null,
@@ -34,10 +34,8 @@
       "reopened": null,
       "withdrawn": null,
       "resolution": {
-        "resolvedBy": [
-          "—"
-        ],
-        "whatWasDone": "4c subsection, opening paragraph — Names the case 4d creates and points at `docs/legend.md` for the owner-present case rather than restating it",
+        "resolvedBy": [],
+        "whatWasDone": "4c subsection, opening paragraph — Names the case 4d creates and points at docs/legend.md for the owner-present case rather than restating it",
         "revision": null,
         "commit": null
       }
@@ -53,9 +51,7 @@
       "reopened": null,
       "withdrawn": null,
       "resolution": {
-        "resolvedBy": [
-          "—"
-        ],
+        "resolvedBy": [],
         "whatWasDone": "4c subsection, second paragraph — *The session with the new reading does it, and does not take ownership.* States that the bundle stays in the recording session's manifest and why",
         "revision": null,
         "commit": null
@@ -72,9 +68,7 @@
       "reopened": null,
       "withdrawn": null,
       "resolution": {
-        "resolvedBy": [
-          "—"
-        ],
+        "resolvedBy": [],
         "whatWasDone": "4c subsection, the three-item list — Stated in the procedure rather than cross-referenced, per decision 3",
         "revision": null,
         "commit": null
@@ -91,10 +85,8 @@
       "reopened": null,
       "withdrawn": null,
       "resolution": {
-        "resolvedBy": [
-          "—"
-        ],
-        "whatWasDone": "4c subsection, step 5 — The Status cell carries the link. Documents the form Revision 183 put in `docs/cross-cutting-findings/INDEX.md`, rather than proposing a new one",
+        "resolvedBy": [],
+        "whatWasDone": "4c subsection, step 5 — The Status cell carries the link. Documents the form Revision 183 put in docs/cross-cutting-findings/INDEX.md, rather than proposing a new one",
         "revision": null,
         "commit": null
       }

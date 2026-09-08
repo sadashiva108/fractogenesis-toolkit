@@ -1,24 +1,26 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T14:59:29+00:00",
+  "updatedAt": "2026-09-08T15:52:47+00:00",
   "number": "0046",
   "bundleName": "0046-supersession-moves-authority-and-leaves-every-citation-behind",
   "kind": "session-management",
   "subKind": null,
   "subject": "Supersession moves authority and leaves every citation behind",
-  "recordedOn": "** 2026-09-07",
+  "recordedOn": "2026-09-07",
   "recordedOccasion": "after a session relayed a citation to a superseded bundle into a live question.",
   "recordedBy": {
-    "sessionBundle": null,
-    "sessionId": "** allocation-and-inquiry-design-20260906-233205 (session_015FpYVBF7dDoDrHfKDkq8fn)"
+    "sessionBundle": "allocation-and-inquiry-design-20260906-233205",
+    "sessionId": "session_015FpYVBF7dDoDrHfKDkq8fn"
   },
-  "severity": "** F1 is the instance and F2 is the mechanism. Neither corrupts a record; both send a reader to a bundle `docs/legend.md` says offers nothing readable.",
+  "severity": "F1 is the instance and F2 is the mechanism. Neither corrupts a record; both send a reader to a bundle `docs/legend.md` says offers nothing readable.",
   "feltAt": [
-    "** twelve documents citing `0028`, among them `0039` `findings.md` and `decisions.md`, `0041`, `0043` and `docs/session-management-findings/INDEX.md`"
+    "twelve documents citing `0028`, among them `0039` `findings.md` and `decisions.md`, `0041`, `0043` and `docs/session-management-findings/INDEX.md`"
   ],
-  "scope": "** session management. The fix is a marker or a check, not an edit to any reading.",
+  "scope": "session management. The fix is a marker or a check, not an edit to any reading.",
   "read": [
-    "**"
+    "`docs/legend.md`, *What another session may do* and the supersession rules",
+    "`.github/session-management-instructions.md` section 9",
+    "every document citing `0028`, and `0028` itself"
   ],
   "progress": null,
   "ownership": "unclaimed",

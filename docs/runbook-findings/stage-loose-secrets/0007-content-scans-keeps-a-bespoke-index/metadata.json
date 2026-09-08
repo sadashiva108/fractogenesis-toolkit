@@ -1,18 +1,18 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T14:59:29+00:00",
+  "updatedAt": "2026-09-08T15:52:47+00:00",
   "number": "0007",
   "bundleName": "0007-content-scans-keeps-a-bespoke-index",
   "kind": "runbook",
   "subKind": null,
   "subject": "`content-scans/` looks like a run category and is not one",
-  "recordedOn": "** 2026-09-02",
+  "recordedOn": "2026-09-02",
   "recordedOccasion": "during the runbook layout pass.",
   "recordedBy": {
     "sessionBundle": null,
-    "sessionId": "** 01KcZvrKMgfenhrT9DvxW9Jk"
+    "sessionId": "01KcZvrKMgfenhrT9DvxW9Jk"
   },
-  "severity": "** low to hit, moderate to leave — it is the last place in the tree where `latest-run.txt` is the right answer, which makes the rule \"never follow a `latest-*.txt`\" untrue by exactly one exception.",
+  "severity": "low to hit, moderate to leave — it is the last place in the tree where `latest-run.txt` is the right answer, which makes the rule \"never follow a `latest-*.txt`\" untrue by exactly one exception.",
   "feltAt": [],
   "scope": null,
   "read": [],
@@ -31,10 +31,8 @@
       "reopened": null,
       "withdrawn": null,
       "resolution": {
-        "resolvedBy": [
-          "—"
-        ],
-        "whatWasDone": "—",
+        "resolvedBy": [],
+        "whatWasDone": null,
         "revision": "141",
         "commit": "c7043f2"
       }

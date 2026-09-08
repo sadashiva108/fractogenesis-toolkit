@@ -1,22 +1,28 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T14:59:29+00:00",
+  "updatedAt": "2026-09-08T15:52:47+00:00",
   "number": "0038",
   "bundleName": "0038-sessions-write-into-the-tree-the-owner-commits-from",
   "kind": "session-management",
   "subKind": null,
   "subject": "Sessions write into the tree the owner commits from",
-  "recordedOn": "** 2026-09-03",
+  "recordedOn": "2026-09-03",
   "recordedOccasion": "on the owner's observation that a session should hold its changes until told to release them.",
   "recordedBy": {
     "sessionBundle": null,
-    "sessionId": "** session_019yzcjm2QneJ5ymVEQDi1bu"
+    "sessionId": "session_019yzcjm2QneJ5ymVEQDi1bu"
   },
-  "severity": "** two findings are high. Both are silent — nothing fails, and the damage is to what the record can be trusted to mean.",
+  "severity": "two findings are high. Both are silent — nothing fails, and the damage is to what the record can be trusted to mean.",
   "feltAt": [],
-  "scope": "** cross-cutting. Tracked files only; the artifact volume is out of scope and finding F6 says why.",
+  "scope": "cross-cutting. Tracked files only; the artifact volume is out of scope and finding F6 says why.",
   "read": [
-    "**"
+    "the day's own working tree",
+    "`git status` and `git log` across the two concurrent sessions",
+    "`docs/ideas/knowing-when-it-is-safe-to-write.md`",
+    "`0026-verify-doc-paths-counts-gitignored-docs`",
+    "`docs/legend.md`",
+    "§§4b–4d, in `.github/copilot-instructions.md`",
+    "all 27 existing findings bundles, checked for overlap"
   ],
   "progress": null,
   "ownership": null,
@@ -35,14 +41,7 @@
       "sectionHeading": "F1 — two sessions' work interleaves in files neither owns alone",
       "reopened": null,
       "withdrawn": null,
-      "resolution": {
-        "resolvedBy": [
-          "D1"
-        ],
-        "whatWasDone": "The composition rule in §3 and `docs/legend.md`",
-        "revision": null,
-        "commit": null
-      }
+      "resolution": null
     },
     {
       "id": "F2",
@@ -54,14 +53,7 @@
       "sectionHeading": "F2 — a revision's validation is measured on somebody else's tree",
       "reopened": null,
       "withdrawn": null,
-      "resolution": {
-        "resolvedBy": [
-          "D2"
-        ],
-        "whatWasDone": "The same rule — validators run in the copy",
-        "revision": null,
-        "commit": null
-      }
+      "resolution": null
     },
     {
       "id": "F3",
@@ -73,14 +65,7 @@
       "sectionHeading": "F3 — no diff boundary, so no unit to review",
       "reopened": null,
       "withdrawn": null,
-      "resolution": {
-        "resolvedBy": [
-          "D2"
-        ],
-        "whatWasDone": "The same rule — the patch is the unit",
-        "revision": null,
-        "commit": null
-      }
+      "resolution": null
     },
     {
       "id": "F4",
@@ -92,14 +77,7 @@
       "sectionHeading": "F4 — backing out is surgical",
       "reopened": null,
       "withdrawn": null,
-      "resolution": {
-        "resolvedBy": [
-          "D2"
-        ],
-        "whatWasDone": "The same rule — declining a patch replaces reversal",
-        "revision": null,
-        "commit": null
-      }
+      "resolution": null
     },
     {
       "id": "F5",
@@ -111,14 +89,7 @@
       "sectionHeading": "F5 — a session can amend what the owner has already committed",
       "reopened": null,
       "withdrawn": null,
-      "resolution": {
-        "resolvedBy": [
-          "D3"
-        ],
-        "whatWasDone": "Numbering at apply time, and `bin/check-manifest-revision.sh`",
-        "revision": null,
-        "commit": null
-      }
+      "resolution": null
     },
     {
       "id": "F6",
@@ -130,68 +101,10 @@
       "sectionHeading": "F6 — the write kinds are named but the discipline is not",
       "reopened": null,
       "withdrawn": null,
-      "resolution": {
-        "resolvedBy": [
-          "D4"
-        ],
-        "whatWasDone": "A separate section in `docs/legend.md`, orthogonal to the categories",
-        "revision": null,
-        "commit": null
-      }
+      "resolution": null
     }
   ],
-  "decisions": [
-    {
-      "id": "D1",
-      "decision": "a session composes its changes in a copy of the repository outside the connected folder, runs the validators there against its own change alone, and hands the owner a patch",
-      "findings": [
-        "F1"
-      ],
-      "decided": "2026-09-04",
-      "outcome": "accepted",
-      "answersAsOf": null,
-      "voidedReason": null,
-      "sectionHeading": "D1 — a session composes its changes in a copy of the repository outside the connected folder, runs the validators there against its own change alone, and hands the owner a patch"
-    },
-    {
-      "id": "D2",
-      "decision": "no separate decision",
-      "findings": [
-        "F2",
-        "F3",
-        "F4"
-      ],
-      "decided": null,
-      "outcome": "accepted",
-      "answersAsOf": null,
-      "voidedReason": null,
-      "sectionHeading": "D2 — no separate decision"
-    },
-    {
-      "id": "D3",
-      "decision": "an entry is composed with its number left open and numbered when the patch is applied",
-      "findings": [
-        "F5"
-      ],
-      "decided": "2026-09-04",
-      "outcome": "accepted",
-      "answersAsOf": null,
-      "voidedReason": null,
-      "sectionHeading": "D3 — an entry is composed with its number left open and numbered when the patch is applied"
-    },
-    {
-      "id": "D4",
-      "decision": "the three write categories continue to answer *when* a write is allowed. *Where* it is composed becomes its own rule, applying to all three",
-      "findings": [
-        "F6"
-      ],
-      "decided": "2026-09-04",
-      "outcome": "accepted",
-      "answersAsOf": null,
-      "voidedReason": null,
-      "sectionHeading": "D4 — the three write categories continue to answer *when* a write is allowed. *Where* it is composed becomes its own rule, applying to all three"
-    }
-  ],
+  "decisions": [],
   "contributions": [],
   "edges": [
     {
@@ -201,7 +114,7 @@
       "why": null,
       "reason": null,
       "basis": "derived",
-      "asserted_by": "** session_019yzcjm2QneJ5ymVEQDi1bu",
+      "asserted_by": "session_019yzcjm2QneJ5ymVEQDi1bu",
       "asserted_on": "2026-09-08"
     },
     {
@@ -211,7 +124,7 @@
       "why": null,
       "reason": null,
       "basis": "derived",
-      "asserted_by": "** session_019yzcjm2QneJ5ymVEQDi1bu",
+      "asserted_by": "session_019yzcjm2QneJ5ymVEQDi1bu",
       "asserted_on": "2026-09-08"
     },
     {
@@ -221,7 +134,7 @@
       "why": null,
       "reason": null,
       "basis": "derived",
-      "asserted_by": "** session_019yzcjm2QneJ5ymVEQDi1bu",
+      "asserted_by": "session_019yzcjm2QneJ5ymVEQDi1bu",
       "asserted_on": "2026-09-08"
     },
     {
@@ -231,7 +144,7 @@
       "why": null,
       "reason": null,
       "basis": "derived",
-      "asserted_by": "** session_019yzcjm2QneJ5ymVEQDi1bu",
+      "asserted_by": "session_019yzcjm2QneJ5ymVEQDi1bu",
       "asserted_on": "2026-09-08"
     },
     {
@@ -241,7 +154,7 @@
       "why": null,
       "reason": null,
       "basis": "derived",
-      "asserted_by": "** session_019yzcjm2QneJ5ymVEQDi1bu",
+      "asserted_by": "session_019yzcjm2QneJ5ymVEQDi1bu",
       "asserted_on": "2026-09-08"
     },
     {
@@ -251,7 +164,7 @@
       "why": null,
       "reason": null,
       "basis": "derived",
-      "asserted_by": "** session_019yzcjm2QneJ5ymVEQDi1bu",
+      "asserted_by": "session_019yzcjm2QneJ5ymVEQDi1bu",
       "asserted_on": "2026-09-08"
     }
   ],

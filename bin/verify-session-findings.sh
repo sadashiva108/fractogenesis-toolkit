@@ -87,6 +87,11 @@
 #   counts             Does every displayed finding count agree with its source?
 #   headers            Does every findings-bundle header conform to the schema?
 #   structure          Is every table well formed and every tag agreeing with its row?
+#   completeness       Does metadata.json carry everything its markdown holds?
+#                      The other three ask whether a document is WELL FORMED.
+#                      This is the only one that asks whether it is COMPLETE --
+#                      162 contaminated fields and 39 lost `Read:` bullets sat
+#                      in 47 files while all three reported 0 FAIL, correctly.
 #
 #   manifest-revision  The next free APPLY-MANIFEST.md revision. Reports a
 #                      number rather than a verdict, so it is not in `all`:
@@ -115,6 +120,20 @@
 #   0  every check invoked returned 0.
 #   1  at least one returned non-zero.
 #   2  usage error, or a check's script is missing.
+#
+#   STANDING BASELINE: `headers` reports FAIL rows and `all` therefore exits 1
+#   on a clean tree. They are decisions that cite no finding -- 0039 D15's rule
+#   firing on rows that predate it -- in `0005`, `0012`, `0013`, `0025`, `0030`
+#   and `0035`. Those bundles belong to `run-index-design-20260901-000000` and
+#   `pre-image-capture-conformance-20260903-194532`, so the fix is one table
+#   cell per row and is not the session-management re-evaluation's to make.
+#
+#   The BUNDLES are named here and the COUNT is not, deliberately: a number
+#   written into a script goes stale the moment one row is fixed, and quoting a
+#   stale total as a baseline is 0036 exactly. Run the check to get the count.
+#
+#   Superseded bundles are exempt by design, not by baseline -- ten further rows
+#   in `0031` and `0032` are frozen and must not be repaired.
 # --- END USAGE ---
 # =============================================================================
 
@@ -148,6 +167,7 @@ check_table() {
 counts .internal/ai-scripts/session-management/verify-findings-counts.sh verify
 headers .internal/ai-scripts/session-management/verify-findings-headers.sh verify
 structure .internal/ai-scripts/session-management/verify-findings-structure.sh verify
+completeness .internal/ai-scripts/session-management/check-completeness.sh verify
 manifest-revision .share/check-manifest-revision.sh report
 TABLE
 }
@@ -287,7 +307,7 @@ fi
 
 case "$worst" in
   0) printf '\nEvery check returned 0.\n' ;;
-  1) printf '\nAt least one check returned 1. Nothing here carries a standing baseline:\non a clean tree every one of them returns 0.\n' ;;
+  1) printf '\nAt least one check returned 1. `headers` carries a standing baseline in six\nbundles owned by other sessions -- see --help before reading it as a regression.\n' ;;
   *) printf '\nA check returned %s, which is a configuration or layout error rather than\na finding. Read its output above.\n' "$worst" ;;
 esac
 

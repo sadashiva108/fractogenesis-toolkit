@@ -3,7 +3,7 @@
 **Recorded:** 2026-09-03, restore-apps session, from its own outstanding items rather than from a fresh reading. Every finding below was noticed by this session while writing Revisions 166 through 173, and deferred in prose at the time.  
 **Session:** `session_016EbjB7M527qEFqZFzpv2C9`  
 **Severity:** findings F1, F5 and F8 are high. A session that reads only the instruction set does not learn several of the rules it is expected to follow, and one of those rules governs when it may touch the owner's checkout.  
-**Scope:** instruction-set. The fix lands in `.github/copilot-instructions.md` §§4b–4d, `.claude/CLAUDE.md`, and `docs/architecture/findings-and-sessions.md`.  
+**Scope:** instruction-set. The fix lands in `.github/session-management-instructions.md`, `.claude/CLAUDE.md`, and `docs/architecture/findings-and-sessions.md`. Recorded against `.github/copilot-instructions.md` §§4b–4d, which commit `1c48deb` deleted; D13 re-ruled the address.  
 **Relates to:** [`0029`](../../instruction-set-findings/0029-the-instruction-set-lags-the-rules-it-governs/) — **supersedes it.** The original is retained at `docs/instruction-set-findings/0029-the-instruction-set-lags-the-rules-it-governs/`, still listed by the session that held it, its reading unchanged and its files brought onto the schema in Revision 203. Authority for this reading lives here.  
 **Relates to:** `0027` — that bundle read the instruction set for conformance and found seven defects. This one collects what this session left owed. They overlap at one point only, named in finding F2.
 
@@ -35,10 +35,14 @@ afternoon by the session that had been told it.
 
 ## Finding status
 
-The bundle advances with its first row and reaches `resolved` only with its last.
-`resolving` cannot begin until every row reads `yes` under Decided, and nothing
-outside `docs/` is written until then — which for this bundle is the whole of the
-work, since every fix is a toolkit write.
+The bundle advances with its first finding and reaches `resolved` only with its
+last. **No finding is resolved until it is `decided`**, and nothing outside
+`docs/` is written until then — which for this bundle is the whole of the work,
+since every fix is a toolkit write.
+
+Recorded when a `resolving` status existed. It was retired in Revision 198 and
+F10 argues against reviving it; `decided` is the gate the sentence was reaching
+for.
 
 | # | Finding | Status |
 |---:|---|---|
@@ -56,6 +60,8 @@ work, since every fix is a toolkit write.
 | F12 | No status transition names the event that triggers it, so a bulk edit moved twenty-one findings and every checker passed | `decided` |
 | F13 | The vocabulary file is named for a glance and read as a specification, and moving it is a rename with sixty-three citations | `framing` |
 | F14 | Nothing in the repository is written for someone arriving cold; the entry point is a 724-line instruction set | `framing` |
+| F15 | A check that validates citations cannot detect their absence: ten decisions cited no finding and every checker passed | `decided` |
+| F16 | Every check asks whether a document is well formed; none asks whether it is complete, and 162 contaminated fields passed all of them | `decided` |
 
 ---
 
@@ -83,9 +89,11 @@ normative.
 
 ## F2 — two rules exist in both, in different words
 
-`resolving`'s gate and the bundle-advance rule are in §4c *and* in `legend.md`,
-written twice in different prose by the same session in Revisions 166, 168 and
-172. Nothing keeps them in step.
+The gate on beginning resolution and the bundle-advance rule were in §4c *and*
+in `legend.md`, written twice in different prose by the same session in Revisions
+166, 168 and 172. Nothing kept them in step. Both named a `resolving` status,
+retired in Revision 198; the duplication is the finding and the word is
+incidental to it.
 
 **This is where this bundle touches `0027`.** That bundle's finding F6 records
 that the two session-state diagrams disagree; this is the same failure on the
@@ -145,9 +153,10 @@ to use it needed both: `0029` must be decided after `0027`, because four of its
 findings are downstream of `0027` finding F1, and after `0028`, whose resolution
 adds to `0029` finding F1's list.
 
-Nothing in the status vocabulary carries that. A bundle at `unresolved` looks
+Nothing in the status vocabulary carries that. A bundle at `analyzing` looks
 equally ready whether it is genuinely open or waiting on another bundle's
 decision, and an owner picking work off an index cannot tell the two apart.
+Recorded against `unresolved`, the name that row carried before Revision 200.
 Supersession, added in the same revision, covers the case where a bundle is
 overtaken *after* decisions are taken against it — the reverse situation, and no
 help here.
@@ -243,7 +252,7 @@ merely missing from the instruction set — absent from a fresh clone.
 | Rule | Owed to |
 |---|---|
 | `git apply` exits 0 on **modification** as well as deletion, so the exit status and the warning are both non-diagnostic | §6 — which still says *"any patch containing a deletion"* |
-| A tag change is invisible to a patch: `STATUS-` and `STATE-` files are empty, `diff` emits no hunks for them, so a patch carries every prose change and none of the renames | §6 |
+| A tag change is invisible to a patch: `STATUS-` and `STATE-` files were empty, `diff` emitted no hunks for them, so a patch carried every prose change and none of the renames. **Moot since Revision 222** — the tags are gone and a status is a value in `metadata.json` — but the trap applies to any file a patch renames | §6 |
 | The two trailing spaces the header schema requires make `git apply` warn on every conformant header; stripping them breaks the rendering the schema protects | §11 |
 | A record carries no placeholders — absolute paths, real identifiers, actual commits | §5 and §11 |
 | Completeness is not conformance: every checker answers whether a document is well formed, none answers whether it is complete, and rendering cannot show content that is not there | §6 and §8 |
@@ -514,6 +523,93 @@ half was ever asked.
 Recorded unanswered on purpose. It was discussed only in a session transcript,
 which is F9's defect one level worse: a transcript is not a file anyone can open,
 and this finding exists so the question survives the session that raised it.
+
+## F15 — a check that validates citations cannot detect their absence
+
+Recorded 2026-09-08, from the owner noticing accepted decisions with an empty
+Findings cell.
+
+`bin/verify-findings-headers.sh` checks that **every `F<n>` a decision cites
+exists in `findings.md`**. Line 223 collects the citations with
+`grep -oE 'F[0-9]+'` and the loop below iterates over what it finds.
+
+**On a decision that cites nothing, `grep` returns nothing, the loop body never
+runs, and the check passes.** The claim *"every citation resolves"* is
+vacuously true of a row with no citations. Ten decisions were in that state —
+six in `0040`, four in `0041` — and six validators passed over them for four
+days.
+
+### Why it matters more since this morning
+
+`0039` D8 voids **"the decisions under a finding"** when the finding is reframed.
+**A decision citing no finding is under nothing**, so the rule written today
+cannot reach any of those ten. A decision unreachable by the voiding rule keeps
+its authority through any amount of reframing, silently.
+
+That is the same shape as `0043` F7 — `analyzing` is the else branch and asserts
+nothing, so a bug lands there looking plausible. Here the blind spot is in a
+*check* rather than a *derivation*, and it was invisible for the same reason:
+**nothing states a positive condition that a missing thing would fail.**
+
+### The fix
+
+One line: a decision row must cite **at least one** `F<n>`. It is the same shape
+as D12's coverage rule — the failure worth catching is zero, not a mismatch — and
+it belongs beside it.
+
+## F16 — every check asks whether a document is well formed; none asks whether it is complete
+
+Recorded 2026-09-08, from the parallel session reading the migration's output.
+
+The extraction that produced 54 `metadata.json` files wrote **162 contaminated
+fields across 47 of them.** Every `recordedOn`, `sessionId` and `severity` began
+with two asterisks:
+
+```text
+"recordedOn": "** 2026-09-07",
+"recordedBy": { "sessionBundle": null,
+                "sessionId": "** allocation-and-inquiry-design-… (session_015F…)" }
+```
+
+Three defects in one regex. `lstrip(": ")` stripped the colon and the space and
+**not the closing `**`**. A field whose value is a bullet list — `Read:` — captured
+the empty remainder of its label line and stopped, losing **39 bullets across
+nine bundles**. And `Session:` went whole into `sessionId`, leaving
+`sessionBundle` null — **the field split the schema exists to enforce, undone by
+the thing populating it.**
+
+### What makes it a finding rather than a bug
+
+**All four checkers reported 0 FAIL, and all four were right.** The JSON was
+well-formed: valid, every count agreeing, every derived status matching its row.
+Nothing was malformed. Things were *missing*, and no check in this repository
+asks that question.
+
+- `verify-findings-counts.sh` compares a count to a count.
+- `verify-findings-structure.sh` compares a status to a row.
+- `verify-findings-headers.sh` compares a citation to a target.
+
+**Every one compares two things that are present.** A field that lost its
+contents still has a field; a list that lost its items is still a list. It was
+found by a person reading the output.
+
+*"Completeness is not conformance"* has been a written rule since Revision 217,
+installed in the instruction set under an owner override. **Nothing implemented
+it**, which is this bundle's whole subject arriving at its own instruments.
+
+### And it is `0043` F3 inside the migration away from `0043` F3
+
+`0043` F3 is *the framework's data is parsed back out of rendered markdown, and
+that parser has been wrong twice.* This is the third time, in the parser written
+to retire the practice, at the moment it was retiring it.
+
+**Fifth instrument in a row to fail against a healthy tree on its first run**,
+after `0041`'s lint, `0042` F4's audit at 128-of-131, the parallel session's
+sweep at 65-of-77, and — while this finding was being written — the completeness
+check itself at 18 false positives and the one-way guard refusing to run because
+the design document describing its marker mentions it. **The half that reads is
+wrong; the half that judges is fine.** That is now a five-instance pattern and
+should be treated as a law of this repository rather than a run of bad luck.
 
 ## What this bundle does not cover
 

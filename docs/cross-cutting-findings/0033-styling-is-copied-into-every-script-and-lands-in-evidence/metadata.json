@@ -1,20 +1,20 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T14:59:29+00:00",
+  "updatedAt": "2026-09-08T15:52:47+00:00",
   "number": "0033",
   "bundleName": "0033-styling-is-copied-into-every-script-and-lands-in-evidence",
   "kind": "cross-cutting",
   "subKind": null,
   "subject": "Styling is copied into every script, and it lands in the evidence",
-  "recordedOn": "** 2026-09-04",
+  "recordedOn": "2026-09-04",
   "recordedOccasion": "from the owner comparing this repository against `indigo`, which solved the same problem for its own outputs.",
   "recordedBy": {
-    "sessionBundle": null,
-    "sessionId": "** restore-apps-outstanding-20260903-000000 (session_016EbjB7M527qEFqZFzpv2C9)"
+    "sessionBundle": "restore-apps-outstanding-20260903-000000",
+    "sessionId": "session_016EbjB7M527qEFqZFzpv2C9"
   },
-  "severity": "** finding 5 is high and is the reason this was written down. The rest is untidiness; finding 5 is escape codes inside dated evidence of a machine that no longer exists in that state.",
+  "severity": "finding 5 is high and is the reason this was written down. The rest is untidiness; finding 5 is escape codes inside dated evidence of a machine that no longer exists in that state.",
   "feltAt": [],
-  "scope": "** cross-cutting. The fix lands in `.internal/`, the authoring template, and the two report producers — shared machinery, felt in every script's output.",
+  "scope": "cross-cutting. The fix lands in `.internal/`, the authoring template, and the two report producers — shared machinery, felt in every script's output.",
   "read": [],
   "progress": null,
   "ownership": "unclaimed",

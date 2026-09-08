@@ -1,18 +1,18 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T14:59:29+00:00",
+  "updatedAt": "2026-09-08T15:52:47+00:00",
   "number": "0008",
   "bundleName": "0008-carrier-services-storage-foreign-remote",
   "kind": "runbook",
   "subKind": null,
   "subject": "`carrier-services-storage` carries a remote pointing at `dotfiles`",
-  "recordedOn": "** 2026-09-01",
+  "recordedOn": "2026-09-01",
   "recordedOccasion": "Restore Repositories Refactor session, while re-deriving the pre-image `repos.tsv`.",
   "recordedBy": {
     "sessionBundle": null,
-    "sessionId": "** —"
+    "sessionId": null
   },
-  "severity": "** operator decision, not a defect in the toolkit.",
+  "severity": "operator decision, not a defect in the toolkit.",
   "feltAt": [],
   "scope": null,
   "read": [],

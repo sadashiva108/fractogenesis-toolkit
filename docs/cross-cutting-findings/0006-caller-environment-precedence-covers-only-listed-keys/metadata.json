@@ -1,18 +1,18 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T14:59:29+00:00",
+  "updatedAt": "2026-09-08T15:52:47+00:00",
   "number": "0006",
   "bundleName": "0006-caller-environment-precedence-covers-only-listed-keys",
   "kind": "cross-cutting",
   "subKind": null,
   "subject": "Caller-environment precedence holds only for the keys `artifact-config.sh` lists",
-  "recordedOn": "** 2026-09-02",
+  "recordedOn": "2026-09-02",
   "recordedOccasion": "Restore Repositories Refactor session, while smoke-testing the blank-`GIT_PERSONAL_GITHUB_OWNER` path in `bin/restore-repos.sh`.",
   "recordedBy": {
     "sessionBundle": null,
-    "sessionId": "** —"
+    "sessionId": null
   },
-  "severity": "** low, but it made a documented rule untrue for most keys.",
+  "severity": "low, but it made a documented rule untrue for most keys.",
   "feltAt": [],
   "scope": null,
   "read": [],
@@ -31,10 +31,8 @@
       "reopened": null,
       "withdrawn": null,
       "resolution": {
-        "resolvedBy": [
-          "—"
-        ],
-        "whatWasDone": "—",
+        "resolvedBy": [],
+        "whatWasDone": null,
         "revision": "136",
         "commit": "not identifiable from git log — the revision is the record"
       }

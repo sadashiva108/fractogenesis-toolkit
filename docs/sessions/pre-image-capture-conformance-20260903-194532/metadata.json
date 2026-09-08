@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T14:59:29+00:00",
+  "updatedAt": "2026-09-08T15:52:47+00:00",
   "bundleName": "pre-image-capture-conformance-20260903-194532",
   "createdOn": "2026-09-03",
   "owners": [
@@ -19,15 +19,18 @@
   "resources": [
     {
       "what": "Repository",
-      "path": "/Users/dkittrell/workspace/shiva/fractogenesis-toolkit"
+      "path": "/Users/dkittrell/workspace/shiva/fractogenesis-toolkit",
+      "notes": null
     },
     {
       "what": "Artifact root",
-      "path": "/Volumes/Data/reimage-CVG-0002160-500-20260816-open"
+      "path": "/Volumes/Data/reimage-CVG-0002160-500-20260816-open",
+      "notes": null
     },
     {
       "what": "Workspace root",
-      "path": "/Users/dkittrell/reimage-workspace"
+      "path": "/Users/dkittrell/reimage-workspace",
+      "notes": null
     }
   ],
   "ownedBundles": [
@@ -41,7 +44,7 @@
     },
     {
       "number": "0019",
-      "notes": "Nothing. Closed by Revision 129. Confirm whether item 4's `reimage-prep-checks/` candidacy overlaps it"
+      "notes": "Nothing. Closed by Revision 129. Confirm whether item 4's reimage-prep-checks/ candidacy overlaps it"
     },
     {
       "number": "0025",
@@ -49,7 +52,7 @@
     },
     {
       "number": "0030",
-      "notes": "Closed 2026-09-04. Finding 3 decided by `run-index-design-20260901-000000` under an owner override; finding 1 deferred on a measurement"
+      "notes": "Closed 2026-09-04. Finding 3 decided by run-index-design-20260901-000000 under an owner override; finding 1 deferred on a measurement"
     },
     {
       "number": "0035",
@@ -57,11 +60,11 @@
     },
     {
       "number": "0031",
-      "notes": "superseded by `0040`; retained here, reading unchanged"
+      "notes": "superseded by 0040; retained here, reading unchanged"
     },
     {
       "number": "0032",
-      "notes": "superseded by `0041`; retained here, reading unchanged"
+      "notes": "superseded by 0041; retained here, reading unchanged"
     }
   ],
   "contributions": [],

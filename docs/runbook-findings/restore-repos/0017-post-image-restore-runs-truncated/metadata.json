@@ -1,18 +1,18 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T14:59:29+00:00",
+  "updatedAt": "2026-09-08T15:52:47+00:00",
   "number": "0017",
   "bundleName": "0017-post-image-restore-runs-truncated",
   "kind": "runbook",
   "subKind": null,
   "subject": "Every post-image-restore run on disk stops before its report",
-  "recordedOn": "** 2026-09-01",
+  "recordedOn": "2026-09-01",
   "recordedOccasion": "Restore Repositories Refactor session, while confirming Change 7 against what `bin/restore-repos.sh` actually writes.",
   "recordedBy": {
     "sessionBundle": null,
-    "sessionId": "** —"
+    "sessionId": null
   },
-  "severity": "** all three existing Phase 11B bundles are unusable as evidence.",
+  "severity": "all three existing Phase 11B bundles are unusable as evidence.",
   "feltAt": [],
   "scope": null,
   "read": [],

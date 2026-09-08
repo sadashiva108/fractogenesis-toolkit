@@ -1,22 +1,25 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T14:59:29+00:00",
+  "updatedAt": "2026-09-08T15:52:47+00:00",
   "number": "0027",
   "bundleName": "0027-findings-architecture-conformance",
   "kind": "cross-cutting",
   "subKind": null,
   "subject": "The findings-and-sessions architecture disagrees with itself and with the tree",
-  "recordedOn": "** 2026-09-03",
+  "recordedOn": "2026-09-03",
   "recordedOccasion": "on the owner's request to review the new architecture.",
   "recordedBy": {
     "sessionBundle": null,
-    "sessionId": "** session_019yzcjm2QneJ5ymVEQDi1bu"
+    "sessionId": "session_019yzcjm2QneJ5ymVEQDi1bu"
   },
-  "severity": "** one finding is high and governs a rule every future session hits on its first parked note. The rest are small and mechanical.",
+  "severity": "one finding is high and governs a rule every future session hits on its first parked note. The rest are small and mechanical.",
   "feltAt": [],
-  "scope": "** cross-cutting. The fix lands in `.github/copilot-instructions.md`, `docs/INDEX.md`, `docs/sessions/INDEX.md`, `docs/legend.md` and four `prompt.md` files — no single runbook owns any of it.",
+  "scope": "cross-cutting. The fix lands in `.github/copilot-instructions.md`, `docs/INDEX.md`, `docs/sessions/INDEX.md`, `docs/legend.md` and four `prompt.md` files — no single runbook owns any of it.",
   "read": [
-    "**"
+    "`docs/architecture/findings-and-sessions.md`",
+    "§§4b–4d, in `.github/copilot-instructions.md`",
+    "`docs/legend.md`",
+    "every bundle and index in `docs/`"
   ],
   "progress": null,
   "ownership": null,
@@ -58,7 +61,7 @@
         "resolvedBy": [
           "D2"
         ],
-        "whatWasDone": "The rule scoped to prompts that can still start a session; `run-index-design`'s prompt gains a reading order",
+        "whatWasDone": "The rule scoped to prompts that can still start a session; run-index-design's prompt gains a reading order",
         "revision": null,
         "commit": null
       }
@@ -79,7 +82,7 @@
           "D4",
           "D5"
         ],
-        "whatWasDone": "The one-home rule in §4b, the two columns, and `bin/verify-findings-counts.sh`",
+        "whatWasDone": "The one-home rule in §4b, the two columns, and bin/verify-findings-counts.sh",
         "revision": null,
         "commit": null
       }
@@ -139,7 +142,7 @@
           "D7",
           "D8"
         ],
-        "whatWasDone": "One diagram, in `docs/legend.md`; four states; `unclaimed` retired",
+        "whatWasDone": "One diagram, in docs/legend.md; four states; unclaimed retired",
         "revision": null,
         "commit": null
       }

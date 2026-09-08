@@ -1,18 +1,18 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T14:59:29+00:00",
+  "updatedAt": "2026-09-08T15:52:47+00:00",
   "number": "0012",
   "bundleName": "0012-internal-restore-directory-empty",
   "kind": "cross-cutting",
   "subKind": null,
   "subject": "`.internal/restore/` is empty, and is not tracked",
-  "recordedOn": "** 2026-09-01.",
+  "recordedOn": "2026-09-01.",
   "recordedOccasion": null,
   "recordedBy": {
     "sessionBundle": null,
-    "sessionId": "** 01KcZvrKMgfenhrT9DvxW9Jk"
+    "sessionId": "01KcZvrKMgfenhrT9DvxW9Jk"
   },
-  "severity": "** trivial. Recorded so it is not rediscovered.",
+  "severity": "trivial. Recorded so it is not rediscovered.",
   "feltAt": [],
   "scope": null,
   "read": [],
@@ -34,7 +34,7 @@
         "resolvedBy": [
           "D1"
         ],
-        "whatWasDone": "D1's sentence rewrite in `.internal/artifact-runs.sh`",
+        "whatWasDone": "D1's sentence rewrite in .internal/artifact-runs.sh",
         "revision": "193",
         "commit": "pending; the owner commits"
       }
