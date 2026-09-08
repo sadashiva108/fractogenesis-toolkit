@@ -1,4 +1,6 @@
 # Apply Manifest
+**Revision 234** — supersedes Revision 233 and earlier. Twelve decision edges are asserted across the eleven unclaimed session-management bundles, and the allocator's cohesion term goes from **0 to 26** — the first allocation this repository has produced with a graph behind it rather than load balancing alone. `--only-new` is added, because asked to divide work between two new sessions the allocator offered work to existing ones too.
+
 **Revision 233** — supersedes Revision 232 and earlier. Three vocabularies now use three words and share no value: a finding has a **status**, a bundle has a **standing**, a session has a **state**. A bundle standing is `pending · analyzing · answered · revisited · retired · unclaimed · transferred · superseded`, so a bare value says which set it came from. `docs/architecture/typed-bundles-and-work.md` drafts the bundle as a genus taking two shapes — reasoning and doing — which is the decide/do split promoted from a convention inside one directory to a property of the object.
 
 **Revision 232** — supersedes Revision 231 and earlier. A bundle now carries `status` and `progress`, and a session carries `state`: derived as before, and written down, with a check that fails when a stored value drifts. The working cycle becomes section 0, stated before anything else in the file, and it says what actually happens: compose in scratch, verify there, produce a patch, **report a review rather than a diff**, wait, and apply on *write it and provide a commit message*. `0049` records seven revisions that skipped the middle three. `bin/review-changes.sh` is the review. `bin/verify-doc-currency.sh` reports which documents may have gone stale because a source they describe changed, from asserted edges only. A PreToolUse guard refuses a write into the checkout.
@@ -596,6 +598,72 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
 
 ---
+
+## Revision 234 — the edges, and the first allocation that had a reason
+
+### The first run could not hold an opinion
+
+Asked to divide the eleven unclaimed session-management bundles between two new
+sessions, the allocator returned `keep 0`: **no edge joined any two bundles in
+the queue**, so the objective was load and subject affinity alone. It spread them
+across four destinations, two of which were existing sessions nobody had offered
+them to.
+
+That is not the allocator being wrong. It is the allocator having nothing to be
+right about — the gap `the-record-and-the-graph.md` measures as gap 1 and the
+largest of the eight.
+
+### Twelve edges, each signed and each arguable
+
+Asserted across `0037`–`0049`: three `co-decides`, two `constrains`, one
+`blocks`, six `relates-to`. Every one carries a stated reason, an asserting
+session and a date, as section 3.3 of `allocation-and-inquiry.md` requires. Two
+examples, because the reasons are the point:
+
+- `0042/F1 co-decides 0041/F1` — *a checker that reads only the source, and a
+  required shape nothing checks, are one question about what the assurance layer
+  must see.*
+- `0037/F1 blocks 0047/F4` — *whether eleven bundles resolved before the shape
+  existed owe a `decisions.md` depends on what the architecture says a bundle
+  must hold.*
+
+**Cohesion went from 0 to 26.** The proposal is `0037 0038 0045 0047 0048` for
+one session and `0040 0041 0042 0044 0046 0049` for the other — architecture
+against assurance, which is what a reader of the bundles would say and what the
+tool could not previously see.
+
+### The pre-registration, and the caveat that matters more
+
+Predicted before the run: the same split, with `0040` and `0047` on the other
+sides. **Nine of eleven matched**; both swaps follow asserted edges rather than
+contradicting them.
+
+**The edges are this session's reading, so the agreement is partly circular.**
+The tool did not discover the split independently — it applied a graph one
+session wrote. What it adds is not confirmation but **reproducibility**: a reader
+who disagrees now argues with a named edge and its stated reason instead of with
+a judgement that left no trace. That is the difference the design claims to buy,
+and this is the first run where it was there to buy.
+
+### `--only-new`
+
+Asked for two new sessions, the allocator offered work to existing sessions as
+well, because nothing said not to. A flag, not a defect in the objective — but it
+took a real request to expose it, which is the fourth time in this design that
+running the thing found what reading it did not.
+
+### Validators
+
+| Checker | Result |
+|---|---|
+| `test-session-management.sh` | 47 tests, 0 failures |
+| `verify-session-findings.sh` | counts 0 FAIL, structure 0 FAIL, headers 11 FAIL |
+| `verify-script-portability.sh` | 0 WARN, 0 FAIL |
+| `verify-doc-paths.sh --all` | 0 MISSING, 0 ANCHOR BROKEN |
+| `plan-findings-work.sh check` | no `UNSTAMPED`, no `STORED-DISAGREES` |
+
+`docs/ledgers/allocation-evidence.md` carries run 3 in full, including the run
+that could not hold an opinion.
 
 ## Revision 233 — three words for three sets, and a draft for the thing there is nowhere to put
 

@@ -127,6 +127,16 @@
       "basis": "derived",
       "asserted_by": "session_01PcgHu9kz9Hm5RatLQuFR8H",
       "asserted_on": "2026-09-08"
+    },
+    {
+      "kind": "co-decides",
+      "from": "0041/F2",
+      "to": "0044/F1",
+      "why": "both ask what verify-doc-paths is responsible for covering; one answer settles the shape of the check and the other its reach",
+      "reason": null,
+      "basis": "asserted",
+      "asserted_by": "allocation-and-inquiry-design-20260906-233205",
+      "asserted_on": "2026-09-08"
     }
   ],
   "indexNotes": null

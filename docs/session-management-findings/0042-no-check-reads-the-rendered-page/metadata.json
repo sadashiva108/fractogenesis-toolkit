@@ -74,6 +74,27 @@
   ],
   "decisions": [],
   "contributions": [],
-  "edges": [],
+  "edges": [
+    {
+      "kind": "co-decides",
+      "from": "0042/F1",
+      "to": "0041/F1",
+      "why": "a checker that reads only the source and a required shape nothing checks are one question about what the assurance layer must see",
+      "reason": null,
+      "basis": "asserted",
+      "asserted_by": "allocation-and-inquiry-design-20260906-233205",
+      "asserted_on": "2026-09-08"
+    },
+    {
+      "kind": "blocks",
+      "from": "0042/F3",
+      "to": "0042/F1",
+      "why": "a rendering check needs a parser the repository does not have; F1's remedy depends on that answer",
+      "reason": null,
+      "basis": "asserted",
+      "asserted_by": "allocation-and-inquiry-design-20260906-233205",
+      "asserted_on": "2026-09-08"
+    }
+  ],
   "indexNotes": null
 }

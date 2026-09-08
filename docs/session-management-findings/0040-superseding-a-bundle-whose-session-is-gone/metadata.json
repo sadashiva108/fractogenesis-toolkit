@@ -115,6 +115,16 @@
       "basis": "derived",
       "asserted_by": "session_01PcgHu9kz9Hm5RatLQuFR8H",
       "asserted_on": "2026-09-08"
+    },
+    {
+      "kind": "relates-to",
+      "from": "0040/F1",
+      "to": "0046/F1",
+      "why": "superseding a bundle whose session is gone, and supersession leaving every citation behind, are two halves of what supersession does not finish",
+      "reason": null,
+      "basis": "asserted",
+      "asserted_by": "allocation-and-inquiry-design-20260906-233205",
+      "asserted_on": "2026-09-08"
     }
   ],
   "indexNotes": null

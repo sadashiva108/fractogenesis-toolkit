@@ -186,11 +186,11 @@ def select(g, only_kind=None, skip_kind=None, only=None, skip=None):
     return q
 
 
-def allocate(g, new_sessions=0, cap=DEFAULT_CAPACITY, queue=None):
+def allocate(g, new_sessions=0, cap=DEFAULT_CAPACITY, queue=None, only_new=False):
     queue = queue if queue is not None else select(g)
     held = holds(g, queue)
     free = sorted(n for n in queue if n not in held)
-    sess = dict(g.live_sessions())
+    sess = {} if only_new else dict(g.live_sessions())
     for i in range(new_sessions):
         sess["<new-%d>" % (i + 1)] = {"_open": 0, "_bundles": 0, "ownedBundles": []}
     names = sorted(sess)
@@ -583,11 +583,12 @@ def cmd_allocate(g, a):
         print("Nothing selected. Widen the filter.")
         return
     if a.new_sessions >= 0:
-        r = allocate(g, new_sessions=a.new_sessions, cap=cap, queue=q)
+        r = allocate(g, new_sessions=a.new_sessions, cap=cap, queue=q,
+                     only_new=a.only_new)
     else:                                   # --new-sessions -1 : size it for me
         n = 0
         while True:
-            r = allocate(g, new_sessions=n, cap=cap, queue=q)
+            r = allocate(g, new_sessions=n, cap=cap, queue=q, only_new=a.only_new)
             if not r:
                 break
             if all(v <= cap for v in r["parts"]["load"].values()) or n >= 8:
@@ -776,6 +777,8 @@ def main():
                         "derive it. Omitted, a chosen default is used -- see 0048")
     p.add_argument("--dry-run", action="store_true",
                    help="stamp: report what would change and write nothing")
+    p.add_argument("--only-new", action="store_true",
+                   help="propose only new sessions; do not add to existing ones")
     p.add_argument("--only-kind", help="allocate only these kinds, comma separated")
     p.add_argument("--exclude-kind", help="never allocate these kinds")
     p.add_argument("--only", help="allocate only these bundle numbers")

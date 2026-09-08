@@ -79,6 +79,16 @@
       "basis": "asserted",
       "asserted_by": "allocation-and-inquiry-design-20260906-233205",
       "asserted_on": "2026-09-08"
+    },
+    {
+      "kind": "relates-to",
+      "from": "0048/F1",
+      "to": "0045/F1",
+      "why": "both are facts about a session that no session record can currently express",
+      "reason": null,
+      "basis": "asserted",
+      "asserted_by": "allocation-and-inquiry-design-20260906-233205",
+      "asserted_on": "2026-09-08"
     }
   ],
   "indexNotes": "A placeholder capacity is in use and is marked as one in every report that prints it"

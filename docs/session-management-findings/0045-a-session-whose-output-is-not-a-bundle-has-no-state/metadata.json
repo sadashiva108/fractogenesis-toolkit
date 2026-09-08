@@ -54,6 +54,17 @@
   ],
   "decisions": [],
   "contributions": [],
-  "edges": [],
+  "edges": [
+    {
+      "kind": "constrains",
+      "from": "0037/F1",
+      "to": "0045/F1",
+      "why": "the architecture record's account of a session is what a session state has to satisfy; settling one narrows the other",
+      "reason": null,
+      "basis": "asserted",
+      "asserted_by": "allocation-and-inquiry-design-20260906-233205",
+      "asserted_on": "2026-09-08"
+    }
+  ],
   "indexNotes": null
 }

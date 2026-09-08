@@ -141,3 +141,60 @@ Recorded as `0046`.
 The lesson for the interviewer specifically: **a precedent must be resolved to a
 live bundle before it is cited**, and today nothing in a citation says whether it
 is live. That is a stage-2 requirement, not a nicety.
+
+---
+
+# Run 3 — the first allocation with a graph behind it
+
+2026-09-08, `allocation-and-inquiry-design-20260906-233205`, against the tree at
+commit `e5b2068`. The owner asked for the outstanding reasoning work divided
+between **two new sessions**, architecture first.
+
+## Pre-registration, stated before the run
+
+**Expected: architecture against assurance.** Session A `0037 0038 0040 0045
+0048`; Session B `0041 0042 0044 0046 0047 0049`. Reason: B is the cluster that
+asks one question — *what is the assurance layer responsible for seeing* — and
+lifting it is worth more than balancing load.
+
+## The first run could not have agreed or disagreed
+
+`keep 0`. **No edge joined any two bundles in the queue**, so the objective was
+load and subject affinity alone, and it spread eleven bundles across four
+destinations. The tool had no way to see the distinction the pre-registration was
+about. Recorded because a run that cannot express an opinion is not a run that
+disagrees.
+
+## Twelve edges asserted, then re-run
+
+Twelve `co-decides`, `blocks`, `constrains` and `relates-to` edges across the
+eleven bundles, each with a stated reason, signed and dated. `keep` went **0 to
+26**.
+
+| | Session A | Session B |
+|---|---|---|
+| **proposed** | `0037 0038 0045 0047 0048` — 23 findings, 37.4 units | `0040 0041 0042 0044 0046 0049` — 21 findings, 33.6 units |
+| **pre-registered** | `0037 0038 0040 0045 0048` | `0041 0042 0044 0046 0047 0049` |
+
+**Nine of eleven matched. Two swapped**, and both swaps follow edges rather than
+contradicting them: `0040` moved to B on `0040/F1 relates-to 0046/F1` —
+superseding a bundle whose session is gone, and supersession leaving citations
+behind, are two halves of one unfinished thing. `0047` moved to A on `0037/F1
+blocks 0047/F4` and `0047/F1 relates-to 0045/F2`.
+
+## The caveat that matters
+
+**The edges are this session's reading, so the agreement is partly circular.**
+The tool did not independently discover the split; it applied a graph one session
+wrote. What it adds is not confirmation — it is that **the split is now
+reproducible and inspectable**: a reader who disagrees can argue with a named
+edge and its stated reason, rather than with a judgement that left no trace.
+
+That is the difference the design claims to buy, and this is the first run where
+it was available to buy.
+
+## Also recorded
+
+`--only-new` was missing and the first run exposed it: asked to divide work
+between two new sessions, the allocator offered work to two existing ones as
+well. A flag, not a defect in the objective.

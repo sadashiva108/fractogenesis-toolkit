@@ -54,6 +54,17 @@
   ],
   "decisions": [],
   "contributions": [],
-  "edges": [],
+  "edges": [
+    {
+      "kind": "relates-to",
+      "from": "0044/F1",
+      "to": "0047/F3",
+      "why": "both are drift a check would catch, found by looking rather than by a checker",
+      "reason": null,
+      "basis": "asserted",
+      "asserted_by": "allocation-and-inquiry-design-20260906-233205",
+      "asserted_on": "2026-09-08"
+    }
+  ],
   "indexNotes": null
 }

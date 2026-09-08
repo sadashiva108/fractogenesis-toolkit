@@ -167,6 +167,16 @@
       "basis": "derived",
       "asserted_by": "session_019yzcjm2QneJ5ymVEQDi1bu",
       "asserted_on": "2026-09-08"
+    },
+    {
+      "kind": "relates-to",
+      "from": "0049/F1",
+      "to": "0038/F1",
+      "why": "0049 is 0038's rule broken by a session that had read it; the reading and the recurrence belong together",
+      "reason": null,
+      "basis": "asserted",
+      "asserted_by": "allocation-and-inquiry-design-20260906-233205",
+      "asserted_on": "2026-09-08"
     }
   ],
   "indexNotes": null

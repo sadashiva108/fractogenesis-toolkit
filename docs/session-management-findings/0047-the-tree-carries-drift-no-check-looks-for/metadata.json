@@ -90,6 +90,17 @@
   ],
   "decisions": [],
   "contributions": [],
-  "edges": [],
+  "edges": [
+    {
+      "kind": "relates-to",
+      "from": "0047/F1",
+      "to": "0045/F2",
+      "why": "a bundle whose release left its findings behind, and a session whose work its state cannot show, are the same gap seen from either end",
+      "reason": null,
+      "basis": "asserted",
+      "asserted_by": "allocation-and-inquiry-design-20260906-233205",
+      "asserted_on": "2026-09-08"
+    }
+  ],
   "indexNotes": null
 }

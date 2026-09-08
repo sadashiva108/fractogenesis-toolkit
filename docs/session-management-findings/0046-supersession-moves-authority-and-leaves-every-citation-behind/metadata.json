@@ -54,6 +54,17 @@
   ],
   "decisions": [],
   "contributions": [],
-  "edges": [],
+  "edges": [
+    {
+      "kind": "constrains",
+      "from": "0046/F2",
+      "to": "0044/F2",
+      "why": "how a citation says its target has moved narrows how a citation to a moved section is repaired",
+      "reason": null,
+      "basis": "asserted",
+      "asserted_by": "allocation-and-inquiry-design-20260906-233205",
+      "asserted_on": "2026-09-08"
+    }
+  ],
   "indexNotes": null
 }
