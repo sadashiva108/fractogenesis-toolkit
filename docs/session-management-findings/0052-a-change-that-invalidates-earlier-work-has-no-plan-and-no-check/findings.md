@@ -23,7 +23,7 @@ recording is not owning.
 
 | # | Finding | Status |
 |---:|---|---|
-| F1 | Nothing re-verifies that a resolution still holds, and one refactor reverted seven without anything noticing | `un-started` |
+| F1 | Nothing re-verifies that a resolution still holds, and one refactor reverted seven without anything noticing | `framing` |
 | F2 | A breaking change to a record format has no migration-plan requirement, so what happens to what predates it is decided per change or not at all | `un-started` |
 
 ## F1 — a resolution is written once and never checked again
@@ -54,6 +54,49 @@ nothing establishes that any of them still holds. **The number this bundle exist
 to produce is how many are false**, and it cannot be produced by reading a
 status. It needs each resolution re-read against the tree — which is the sweep
 this session has proposed and not run.
+
+### Read 2026-09-09 by `drift-and-the-write-boundary-20260909-053548`
+
+**The count is 59, not 36**, at Revision 269 — the tree gained twenty-three
+`resolved` findings in the days between this reading and the next. The number
+this finding exists to produce got larger while nobody was producing it.
+
+**The sweep has now been run on one bundle, and the result changes what to look
+for.** `0038` supersedes `0028`, and `0028` decided and resolved six findings at
+Revision 181. Re-read against Revision 269:
+
+| | What `0028`'s resolution named | At Revision 269 |
+|---|---|---|
+| `0028` F1 | the composition rule in `.github/copilot-instructions.md` §3 | **the file has no such section** — `1c48deb` split it. The rule was re-installed as §0 at Revision 232 |
+| `0028` F2 | validators run in the copy | holds |
+| `0028` F3 | the patch is the unit | holds |
+| `0028` F4 | declining a patch replaces reversal | **stated nowhere**, then or now |
+| `0028` F5 | `bin/check-manifest-revision.sh` | **the path does not exist**; the helper moved to `.share/` |
+| `0028` F6 | a new section in `docs/legend.md`, *Where a write is composed* | **the section does not exist**; `0039` D2 and D13 moved the rule to §6 and widened it |
+
+**Two of six hold as written. Three name a home that is gone. One was never
+stated.** And here is what the finding did not predict: **no remedy was lost.**
+Every rule `0028` installed is alive, and two are in better homes than they had.
+
+**So the failure mode is not the one F1 describes, or not only.** F1 was written
+from `1c48deb`, where fifteen rules were deleted and five resolutions became
+false — a resolution *reverted*. What one bundle's re-verification actually finds
+is a resolution **still true and no longer findable**: five of `0028`'s six cite a
+file, a section or a path, and three of those five decayed in four months of
+correct, deliberate work by sessions that had no way to know what cited them.
+
+**That is a second reading and it is cheaper to check than the first.** Whether a
+rule still holds needs a human re-reading. Whether a resolution's cited path still
+resolves is a path test, and `bin/verify-doc-paths.sh` already performs one — it
+is the `<!-- historical: -->` marker that exempts a `resolutions.md` from it, on
+the correct ground that repairing such a path would falsify the record. **The
+exemption is right and the silence it produces is the gap**: a citation that has
+decayed is not a defect in the record and *is* a signal that a resolution has
+stopped pointing at anything, and nothing distinguishes the two.
+
+**What this does not decide.** Whether the re-verification is a sweep, a check, a
+required step when a rule moves, or a `movedTo` field on a resolution. One bundle
+is one data point, and the shape of the instrument is what F1 still owes.
 
 ## F2 — a breaking change has no migration plan
 

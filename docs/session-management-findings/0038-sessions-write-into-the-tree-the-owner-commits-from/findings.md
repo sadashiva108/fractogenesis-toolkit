@@ -36,13 +36,28 @@ and that is not what was found.
 
 | # | Finding | Status |
 |---:|---|---|
-| F1 | Two sessions' uncommitted work interleaves in shared files, so neither can be committed alone | `framing` |
-| F2 | A revision's claimed validator baselines are measured on a tree containing another session's work | `framing` |
-| F3 | A session's work has no diff boundary, so the owner cannot review it as a unit | `framing` |
-| F4 | Backing out one session's change is surgical, because `git checkout` would take the other's too | `framing` |
-| F5 | A session can amend a revision the owner has already committed | `framing` |
-| F6 | The write discipline does not distinguish the write kinds `docs/legend.md` now names | `framing` |
-| F7 | A rule here is enforceable at write time only where the fact is in `metadata.json`, the actor identifies itself, and a false refusal costs less than the rule — and none of the four guards that pass those tests is built | `framing` |
+| F1 | Two sessions' uncommitted work interleaves in shared files, so neither can be committed alone | `resolved` |
+| F2 | A revision's claimed validator baselines are measured on a tree containing another session's work | `resolved` |
+| F3 | A session's work has no diff boundary, so the owner cannot review it as a unit | `resolved` |
+| F4 | Backing out one session's change is surgical, because `git checkout` would take the other's too | `resolved` |
+| F5 | A session can amend a revision the owner has already committed | `resolved` |
+| F6 | The write discipline does not distinguish the write kinds `docs/legend.md` now names | `resolved` |
+| F7 | A rule here is enforceable at write time only where the fact is in `metadata.json`, the actor identifies itself, and a false refusal costs less than the rule — and none of the four guards that pass those tests is built | `decided` |
+
+**Read as a re-verification on 2026-09-09, at Revision 269**, by
+`drift-and-the-write-boundary-20260909-053548`. `0028`, which this bundle
+supersedes, decided and resolved all six of F1–F6 at Revision 181; the question
+here was whether those answers still held. **Two of six hold as written, three
+name a home that no longer exists, and one — F4's — was never stated anywhere.**
+The table is in `resolutions.md`. **No remedy was lost**: every rule `0028`
+installed is alive, two of them in better homes than they had. What decayed is
+the record's ability to say where.
+
+**F1 recurred twice on the day it was resolved**, which is the reason its
+decision is what it is rather than a claim that the collision is gone. Revisions
+268 and 270 were both composed against a base that moved before the apply, and
+both times the conflicting files were **exactly the three this finding names**
+while every other file applied clean.
 
 Findings 1 and 2 are the high ones. The revision-number collision that prompted
 the day's investigation is **not** a finding here — it is recorded in

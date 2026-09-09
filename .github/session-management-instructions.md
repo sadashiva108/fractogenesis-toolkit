@@ -48,6 +48,15 @@ once work where earlier attempts did not.**
    `./bin/review-changes.sh` produces it.
 5. **Wait.** The owner reviews and may ask for the full diff, one file, or a
    rationale. Composing is not delivering.
+
+   **Declining the patch is how work is backed out, and it is free.** Before the
+   apply there is nothing in the checkout to reverse: the owner says no and the
+   change ends in a scratch copy that dies with the session. After it, backing
+   out is a hand edit per file, because `git checkout -- <path>` takes whatever
+   else is uncommitted with it. **That asymmetry is the reason step 5 exists**,
+   and it is stated here because it was the answer to `0038` F4 for four
+   revisions without ever being written down. Reviewing a patch is cheaper than
+   reverting a commit by the whole difference between the two.
 6. **On *"write it and provide a commit message"* — apply the patch, if and
    only if the checkout is clean.** That sentence is the owner's instruction to
    write your work into the checkout and hand back a commit message. It is the
@@ -66,8 +75,18 @@ once work where earlier attempts did not.**
    **First, assert the checkout is clean**, and refuse if it is not:
 
 ```text
-git status --porcelain          # in the owner's checkout; must be empty
+git --no-optional-locks status --porcelain    # in the owner's checkout; must be empty
 ```
+
+   **`--no-optional-locks` is not optional and the reason is this repository's
+   own.** `git status` refreshes the index as it reads, which takes
+   `.git/index.lock`; on a mounted connected folder the lock cannot be cleaned
+   up, and what is left behind **blocks the owner's next commit** — the failure
+   this file elsewhere tells a session to avoid by using `ls` and `cat` in the
+   checkout. Step 6 is the one place a session must read git state there, so it
+   is the one place the flag is required. It suppresses the index write and
+   nothing else; the answer is the same. **Use it for every git read of the
+   checkout**, this assertion and the index assertion below included. `0038` F1.
 
    **Not empty means another party's uncommitted work is there.** Refuse, name
    what you found, and wait. Do not let `git apply --check` decide it: that
@@ -78,11 +97,54 @@ git status --porcelain          # in the owner's checkout; must be empty
    session runs against it; two sets of uncommitted work in the files every
    session touches cannot be committed apart. `0038` F1 and F4; `0049` F6 and D8.
 
-   **After applying, assert the index is still empty** — `git diff --cached
-   --name-only`. An index write leaves the working tree byte-identical, so the
-   tree comparison cannot see it. `0049` F5 and D6.
+   **After applying, assert the index is still empty** — `git --no-optional-locks
+   diff --cached --name-only`. An index write leaves the working tree
+   byte-identical, so the tree comparison cannot see it. `0049` F5 and D6.
+
+   **`git apply` without `--index` or `--cached` writes the working tree and
+   never the index**, which is why the assertion can pass. Do not add either
+   flag to make the apply "tidy": that stages the work, which is step 7's and
+   not a session's.
 7. **The owner runs `git add`, `git commit`, `git push`.** A session never
    stages, never commits, never pushes, and never rewrites history.
+
+**Between step 5 and step 6 the checkout moves, and the patch is then stale.**
+Review takes as long as it takes and other sessions commit meanwhile; a patch
+composed against one commit and applied to another is the ordinary case, not the
+exception. **The three files that collide are named in `0038` F1 and they are the
+three every session must write** — `APPLY-MANIFEST.md`, `docs/sessions/INDEX.md`
+and the findings tree's `INDEX.md`. `git apply --check` passing says nothing
+about this: it compares content, and two sessions adding different rows to the
+same table do not collide as content.
+
+**So step 6 begins by comparing the base.** If HEAD has moved since the patch was
+composed, rebase before applying, and do it in the scratch copy:
+
+```text
+git --no-optional-locks log --oneline -1      # in the checkout: the base to rebase onto
+cp -a <checkout> <fresh scratch copy>          # a new copy at that commit
+git apply -3 <patch>                           # three-way, in the new copy
+```
+
+**Resolve every conflict to the checkout's content and re-make this session's
+edits on top. Never merge the two.** A conflict here is two records of different
+things sharing a table, so the merge that combines them by line is the one
+outcome that is wrong. **Recompute every count from the data rather than carrying
+it across**, and let `verify-findings-counts.sh` decide; arithmetic on two
+figures neither of which is current is how a total goes wrong in both directions
+at once.
+
+**Then take the revision number again** — §7, against the tree being applied to —
+and **correct every place the composed number appears**: the manifest entry, the
+`Revision` column of any `resolutions.md` row, and any prose naming it. Re-measure
+every number the entry quotes against the new base before rebuilding the patch,
+because the baselines moved with the tree and a figure carried over is a claim
+about a commit nobody is applying to.
+
+**Measured twice, at Revisions 264→268 and again here.** Both times twelve to
+fourteen files applied clean and the conflicts were exactly the three named
+above. The rebase is a routine step, not an incident, and stating it here is what
+stops it being re-derived under time pressure with a write pending.
 
 **Steps 1 and 2 are absolute. Step 6 is the only exception to step 1 and it
 requires the owner's words.** `0049` records seven revisions that skipped 3, 4

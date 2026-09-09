@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T05:45:00-04:00",
+  "updatedAt": "2026-09-09T12:10:00-04:00",
   "number": "0038",
   "bundleName": "0038-sessions-write-into-the-tree-the-owner-commits-from",
   "kind": "session-management",
@@ -24,9 +24,9 @@
     "\u00a7\u00a74b\u20134d, in `.github/copilot-instructions.md`",
     "all 27 existing findings bundles, checked for overlap"
   ],
-  "standing": "transferred",
+  "standing": "analyzing",
   "progress": "analyzing",
-  "ownership": "transferred",
+  "ownership": null,
   "lineage": {
     "supersedes": "0028",
     "on": null
@@ -35,89 +35,204 @@
     {
       "id": "F1",
       "statement": "Two sessions' uncommitted work interleaves in shared files, so neither can be committed alone",
-      "status": "framing",
+      "status": "resolved",
       "statusReason": null,
       "statusNote": null,
-      "updatedAt": null,
+      "updatedAt": "2026-09-09T12:10:00-04:00",
       "sectionHeading": "F1 \u2014 two sessions' work interleaves in files neither owns alone",
       "reopened": null,
       "withdrawn": null,
-      "resolution": null
+      "resolution": {
+        "resolvedBy": "D1",
+        "whatWasDone": "\u00a70 gains the rebase step and `git --no-optional-locks` for every git read of the checkout",
+        "revision": 270,
+        "commit": null
+      }
     },
     {
       "id": "F2",
       "statement": "A revision's claimed validator baselines are measured on a tree containing another session's work",
-      "status": "framing",
+      "status": "resolved",
       "statusReason": null,
       "statusNote": null,
-      "updatedAt": null,
+      "updatedAt": "2026-09-09T12:10:00-04:00",
       "sectionHeading": "F2 \u2014 a revision's validation is measured on somebody else's tree",
       "reopened": null,
       "withdrawn": null,
-      "resolution": null
+      "resolution": {
+        "resolvedBy": "D2",
+        "whatWasDone": "Nothing here. \u00a70 step 2 and `docs/rules/README.md` \u00a76's never-quote-`OK` rule",
+        "revision": 232,
+        "commit": "d0e6d7d"
+      }
     },
     {
       "id": "F3",
       "statement": "A session's work has no diff boundary, so the owner cannot review it as a unit",
-      "status": "framing",
+      "status": "resolved",
       "statusReason": null,
       "statusNote": null,
-      "updatedAt": null,
+      "updatedAt": "2026-09-09T12:10:00-04:00",
       "sectionHeading": "F3 \u2014 no diff boundary, so no unit to review",
       "reopened": null,
       "withdrawn": null,
-      "resolution": null
+      "resolution": {
+        "resolvedBy": "D3",
+        "whatWasDone": "Nothing here. \u00a70 steps 3-4 and `bin/review-changes.sh`",
+        "revision": 232,
+        "commit": "d0e6d7d"
+      }
     },
     {
       "id": "F4",
       "statement": "Backing out one session's change is surgical, because `git checkout` would take the other's too",
-      "status": "framing",
+      "status": "resolved",
       "statusReason": null,
       "statusNote": null,
-      "updatedAt": null,
+      "updatedAt": "2026-09-09T12:10:00-04:00",
       "sectionHeading": "F4 \u2014 backing out is surgical",
       "reopened": null,
       "withdrawn": null,
-      "resolution": null
+      "resolution": {
+        "resolvedBy": "D4",
+        "whatWasDone": "\u00a70 step 5 states the asymmetry it always relied on: declining a patch is free, reverting after an apply is not",
+        "revision": 270,
+        "commit": null
+      }
     },
     {
       "id": "F5",
       "statement": "A session can amend a revision the owner has already committed",
-      "status": "framing",
+      "status": "resolved",
       "statusReason": null,
       "statusNote": null,
-      "updatedAt": null,
+      "updatedAt": "2026-09-09T12:10:00-04:00",
       "sectionHeading": "F5 \u2014 a session can amend what the owner has already committed",
       "reopened": null,
       "withdrawn": null,
-      "resolution": null
+      "resolution": {
+        "resolvedBy": "D5",
+        "whatWasDone": "Nothing here. \u00a77 takes the number at apply time; the helper's path is corrected in `resolutions.md`",
+        "revision": 181,
+        "commit": "87ff205"
+      }
     },
     {
       "id": "F6",
       "statement": "The write discipline does not distinguish the write kinds `docs/legend.md` now names",
-      "status": "framing",
+      "status": "resolved",
       "statusReason": null,
       "statusNote": null,
-      "updatedAt": null,
+      "updatedAt": "2026-09-09T12:10:00-04:00",
       "sectionHeading": "F6 \u2014 the write kinds are named but the discipline is not",
       "reopened": null,
       "withdrawn": null,
-      "resolution": null
+      "resolution": {
+        "resolvedBy": "D6",
+        "whatWasDone": "Nothing here. \u00a76 carries four write kinds with composition stated once; the relocation from `docs/legend.md` is recorded",
+        "revision": 226,
+        "commit": "55e753e"
+      }
     },
     {
       "id": "F7",
       "statement": "A rule here is enforceable at write time only where the fact is in `metadata.json`, the actor identifies itself, and a false refusal costs less than the rule \u2014 and none of the four guards that pass those tests is built",
-      "status": "framing",
+      "status": "decided",
       "statusReason": null,
       "statusNote": null,
-      "updatedAt": "2026-09-09T05:40:00-04:00",
+      "updatedAt": "2026-09-09T12:10:00-04:00",
       "sectionHeading": "F7 \u2014 the write discipline has no instrument, and four are available",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
     }
   ],
-  "decisions": [],
+  "decisions": [
+    {
+      "id": "D1",
+      "decision": "The shared-tree collision is not prevented and is not meant to be: it moves to the patch, where it is visible. \u00a70 gains the rebase step, and `git --no-optional-locks` for every git read of the checkout",
+      "findings": [
+        "F1"
+      ],
+      "decided": "2026-09-09",
+      "outcome": "accepted",
+      "answersAsOf": "2026-09-09T12:10:00-04:00",
+      "voidedReason": null,
+      "sectionHeading": "D1 \u2014 the collision is not prevented, it is made visible"
+    },
+    {
+      "id": "D2",
+      "decision": "F2 is answered by \u00a70 step 2 and by the standing rule never to quote an `OK` total; the enforcement half is F7's and is not folded in here",
+      "findings": [
+        "F2"
+      ],
+      "decided": "2026-09-09",
+      "outcome": "accepted",
+      "answersAsOf": "2026-09-09T12:10:00-04:00",
+      "voidedReason": null,
+      "sectionHeading": "D2 \u2014 the baseline question is answered; the enforcement question is F7's"
+    },
+    {
+      "id": "D3",
+      "decision": "F3 is answered by \u00a70 steps 3\u20134 and `bin/review-changes.sh`, both installed at Revision 232",
+      "findings": [
+        "F3"
+      ],
+      "decided": "2026-09-09",
+      "outcome": "accepted",
+      "answersAsOf": "2026-09-09T12:10:00-04:00",
+      "voidedReason": null,
+      "sectionHeading": "D3 \u2014 the diff boundary exists and has been used"
+    },
+    {
+      "id": "D4",
+      "decision": "F4's remedy holds and has never been stated: declining a patch is free and reverting a commit is not. \u00a70 step 5 now says so",
+      "findings": [
+        "F4"
+      ],
+      "decided": "2026-09-09",
+      "outcome": "accepted",
+      "answersAsOf": "2026-09-09T12:10:00-04:00",
+      "voidedReason": null,
+      "sectionHeading": "D4 \u2014 the cheapest thing in the cycle was never written down"
+    },
+    {
+      "id": "D5",
+      "decision": "F5 is answered by \u00a77; the artifact `0028` named is at a different path and the citation is corrected rather than the tool moved back",
+      "findings": [
+        "F5"
+      ],
+      "decided": "2026-09-09",
+      "outcome": "accepted",
+      "answersAsOf": "2026-09-09T12:10:00-04:00",
+      "voidedReason": null,
+      "sectionHeading": "D5 \u2014 the rule holds and the artifact moved"
+    },
+    {
+      "id": "D6",
+      "decision": "F6 is answered by \u00a76's four write kinds; the legend section `0028` created for it no longer exists, the rule having moved to the instruction set, and the relocation is recorded rather than reversed",
+      "findings": [
+        "F6"
+      ],
+      "decided": "2026-09-09",
+      "outcome": "accepted",
+      "answersAsOf": "2026-09-09T12:10:00-04:00",
+      "voidedReason": null,
+      "sectionHeading": "D6 \u2014 the rule survived; the section it lived in did not"
+    },
+    {
+      "id": "D7",
+      "decision": "Of the four guards F7 names, the manifest-entry guard is built first, warn-only until a clean pass. Nothing is built in this revision and F7 stays `decided`",
+      "findings": [
+        "F7"
+      ],
+      "decided": "2026-09-09",
+      "outcome": "accepted",
+      "answersAsOf": "2026-09-09T12:10:00-04:00",
+      "voidedReason": null,
+      "sectionHeading": "D7 \u2014 the order is decided and nothing is built"
+    }
+  ],
   "contributions": [],
   "edges": [
     {
