@@ -1,4 +1,18 @@
 # Apply Manifest
+**Revision 247** — supersedes Revision 246 and earlier. **Six revision numbers were taken in the log and none was written here.** Revisions 241 through 246 were composed, verified, applied and committed with no entry in this file: `d2f53bf` claims 241 in its subject and never touches `APPLY-MANIFEST.md`, and `d2ea1f7` claims 246 while carrying 242 through 245, and does not touch it either. **The commit message was written instead of the manifest entry** — the work was described at length in the one place that is not the record. `.share/check-manifest-revision.sh` reads this file and not the log, so it reported 241 free, a number that had been a commit subject for two commits; the architecture session went to take a number, found it spent, and stopped rather than composing on top of it. This revision writes the six entries, marked as reconstructed, and records the gap: **no instrument compares the numbers the log claims against the numbers this file allocates.**
+
+**Revision 246** — supersedes Revision 245 and earlier. **Under an owner override.** **The metaphor goes, and the legend stops telling its own history.** `ladder` was used 90 times and defined nowhere until Revision 244 defined it; it is an ordered list of conditions, first match wins, so it is a **derivation table** — a name that joins the family already in use, where values are *derived*, `stamp` writes derived values and `check` compares derived against stored. Renamed in the 14 live files and deliberately **not** in `APPLY-MANIFEST.md`, any `findings.md` or any session record, which say what was true when written. **The rename broke the code and the test suite caught it**: a regex un-snaking the identifier inside comments reached into a docstring and an import list, `bash -n` passed, the anchor checker passed, and the suite failed with a `SyntaxError`. Second, eleven lines of `docs/legend.md` carried revision numbers and accounts of what a rule replaced; six passages move to a **Provenance** table at the foot. Nothing is deleted — `0039` and `0043` belong to other sessions and this one cannot confirm their bundles already carry the reasoning. One citation stays above it deliberately: `0039` F21 owns a live disagreement between two permission cells, and *this is not settled* belongs where the rule is stated even though *what this used to be* does not. Commit `d2ea1f7`.
+
+**Revision 245** — supersedes Revision 244 and earlier. **Under an owner override.** **Twelve rule documents, and not one said what it was authoritative for.** Each now opens with a masthead in one shape — role, what it decides and explicitly what it does not, its rank, and a link to the order. **The precedence order is stated once, in `.github/copilot-instructions.md`**, which was already the router: `metadata.json` and the loader first, then an accepted decision, then the legend for vocabulary and the two instruction sets for procedure, then prompts and guides as copies for convenience, then `docs/architecture/`, then this file — point-in-time evidence, **never authoritative for a current rule.** A document disagreeing with something above it is a defect, not a rule. Rank 4 is not theoretical: Revision 238 found a prompt advertising seven `unclaimed` bundles of which every one was owned, with a session reading it. Commit `d2ea1f7`.
+
+**Revision 244** — supersedes Revision 243 and earlier. **Under an owner override.** **Twelve terms used everywhere and defined nowhere.** Counting uses against defining sentences: `park` 145/0, `ladder` 90/0, *sweep* 44/0, *cost unit* 14/0, *pre-registration* 11/0, *witness* 7/0, *cohesion* 6/0, *hold set* 4/0, *half-change* 3/0. They read as arriving from nowhere because they are a **fourth kind of name** and the file had places for three: tiers 1 to 3 all appear in `metadata.json`, and these name mechanisms and appear in no field at all. Two carry more than a gloss — **`analyzing` has no witness**, because it means *none of the others matched* and a negative has none, which is why it is the one row that cannot be checked directly; and **a sweep is not a checker**, its first run usually wrong. Commit `d2ea1f7`.
+
+**Revision 243** — supersedes Revision 242 and earlier. **Under an owner override.** **Three tiers of vocabulary, so a word says which kind it is.** `status`, `standing` and `state` sat beside `progress`, `ownership`, `kind`, `severity` and the edge types with nothing marking that the first three answer *where does this stand* and the rest do not. Tier 1 is the three top-level values, no value shared between them, so a bare value says which set it came from. Tier 2 is the discriminators, and **`standing` is named as tier 2 assembled** — `progress` with ownership and lineage put back. Tier 3 is edges, not state at all: twelve kinds with their weights, the five hard edges the allocator will not split, and the note that `blocks` alone constrains order while `relates-to` constrains nothing. Every value taken from the loader rather than from memory. Commit `d2ea1f7`.
+
+**Revision 242** — supersedes Revision 241 and earlier. **Under an owner override.** **The two prompts get parts.** Sections sat in the order they were written: rules at positions 6, 9, 10, 11 and 12 of twelve, perishable dated context in the middle of them, the vocabulary between *create your bundle* and *where the conventions live*. The clearest case is one section — *The statuses, in one paragraph* was 38 lines and four kinds of thing: the vocabulary, an ownership rule, four state-change rules and a storage fact. It is now three sections across two parts, which is what it always was. **No prose was rewritten**: both files compared word-multiset against `HEAD` at 3720 and 1550 words, none lost, none gained. Links are plain markdown; Obsidian wiki-links are for toolkit runbooks and references. That has a cost — `verify-doc-paths.sh` validates `[[#Heading]]` and not `[](#slug)`, so 33 links left the checker's field of view and were verified by hand. Commit `d2ea1f7`.
+
+**Revision 241** — supersedes Revision 240 and earlier. **Under an owner override.** **A table of contents for the two files pasted into every session.** 620 lines and 248, pasted in full before a session has read anything else, with no way to find a section by name. Both take the house convention from `runbook-template.md.tmpl`. Commit `d2f53bf`.
+
 **Revision 240** — supersedes Revision 239 and earlier. **Under an owner override.** Section 7 said the commit message block is *the message and nothing else*, spent a paragraph on what must not be inside it, and never said it is a block — so a session can satisfy every word of the rule and still hand the owner a message they have to reassemble before pasting. **Revision 239 is the instance**: the message went over as prose with commentary around it, every requirement met, and the owner asked for it a second time. §7 now states the fence as the other half of the rule it already had — one block, tagged `text`, the fence §11 already requires of every example and for the reason §11 already gives. A `git commit` inside the block is something to delete; a message outside one is something to gather; both cost the owner the same, and only the first had a word. `0039` F23 records the reading and D21 takes the decision, with three alternatives rejected on the record: leaving it to convention (which is what failed), stating it in `conformant-prompt.md` (the copy, not the home — D19 and F9), and writing a check (nothing to check — the message never reaches a tracked file, so the owner is the only instrument, which is `0042`'s shape and is said rather than papered over). **What the override covers**: §7 is a toolkit write and §6 gates those on a `decided` finding. F23 is `framing` — a session that does not own `0039` may record a finding and take a decision there, and may not close the deciding — so the gate is met by the owner's direction and not by the status. **That leaves a live instance of this bundle's own F18 in place deliberately**: an `accepted` decision whose work is carried out, with nothing in the vocabulary able to say so. No `resolutions.md` row is owed yet, because §9b begins at `decided`; when the owner moves F23 there, a row naming D21, this revision and its commit is owed immediately, and forgetting it is F17 in the bundle that recorded F17. `0039` goes from 22 findings to 23.
 
 **Revision 239** — supersedes Revision 238 and earlier. **The legend said a superseded bundle cannot be read.** *What another session may do* — the table a session reads before its first write — listed `superseded` in one row under *nothing is readable* and in the next under *readable by any session*, with no tie-break stated and *first row that matches* as the rule above it, while §9 spends three prohibitions keeping a superseded reading readable. Its third row listed `reopened` and `resolved`, both finding statuses, under a heading reading **Bundle standing**. Both came over from the eight-row ladder Revision 236 replaced, and Revision 236 is the revision that replaced it. The three rows are now disjoint, so no tie-break is needed; two sentences that cited the deleted ladder by row number now name the values instead; and four stale finding words in the surrounding prose are corrected. **Two cells are deliberately left wrong**: a `retired` bundle holds only `withdrawn` findings, which *A finding* makes readable by any session, so *nothing is readable* cannot be right for it — deciding which side is right is a reading and not a repair. `0039` F21 and F22 record why nothing caught any of it: **five consecutive revisions — 233, 235, 236, 237, 238 — each carried a vocabulary change into the derived values and stopped at the prose**, three of them being repairs of the one before, and with the pre-repair legend restored over the repaired file every check in the repository returns byte-identical output. F22 is the instrument half: the `state-schema` currency watch has pointed at `docs/legend.md` since Revision 232, is correct, and **has never been armed** — `sourceDigest` is null on all seven watches and `evaluate()` tests the null before it compares, so no watch can reach `DRIFTED`; armed in a copy, it named the pair immediately. First write of `typed-bundles-architecture-20260908-204724`, which fills its own Owners row, resolves its Resources paths and records both contributions. `0039` goes from 20 findings to 22.
@@ -608,6 +622,48 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `scan-archive-contents.sh` | `.internal/home/scan-archive-contents.sh` |
 | `scan-postman-collections.py` | `.internal/home/scan-postman-collections.py` |
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
+
+---
+
+## Revisions 241-246 — six numbers taken in the log and none written here
+
+**These six entries were written after the fact, in Revision 247.** Revisions 241
+through 246 were composed, verified, applied and committed without a single line
+being added to this file. `d2f53bf` claims Revision 241 in its subject and does
+not touch `APPLY-MANIFEST.md`; `d2ea1f7` claims Revision 246 and carries 242
+through 245 in its body, and does not touch it either.
+
+**The commit message was written instead of the manifest entry.** Each of the six
+had a full message, and every one of them said what the revision did — so the
+work was described, at length, in the one place that is not the record. The file
+that allocates revision numbers went from 240 to nothing while the log went to
+246.
+
+**This is `0049`'s pattern for the third time in this session**, and the third
+different artifact: writing into the checkout instead of producing a patch;
+proposing session bundles instead of creating them; and now writing a commit
+message instead of a manifest entry. In all three the deliverable was named,
+described accurately, and not produced.
+
+**What it cost.** `.share/check-manifest-revision.sh` reads this file and not the
+log, so it reported 241 free — a number that has been a commit subject since
+`d2f53bf`. The architecture session went to take a number, found the next free
+one already spent, and **stopped rather than composing on top of it.** Its own
+work already sat at 242 in draft. Four commits in seven had claimed numbers this
+file did not know about.
+
+**Found by the session that was blocked by it, not by any check.** The gap is
+between two sources of truth that no instrument compares: the log claims
+revisions in subjects, the manifest allocates them, and nothing reads both.
+A checker that compared `git log --grep='^Revision'` against the entries here
+would have failed on `d2f53bf` the moment it landed. **That check is not written
+in this revision** — it is toolkit work, it belongs with the assurance session's
+`0050`, and writing it here would be the same shortcut in a new direction.
+
+**The entries above are reconstructed from the commit messages and the diffs, and
+are marked as reconstructed rather than presented as contemporaneous.** They are
+accurate about what changed; they are not evidence of what was thought at the
+time, because at the time nothing was written here.
 
 ---
 
