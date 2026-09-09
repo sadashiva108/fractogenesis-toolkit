@@ -73,3 +73,4 @@ release.
 | Bundle | Date | Contribution |
 |---|---|---|
 | `0050` | 2026-09-09 | Recorded the bundle from the reading that decided `0049` and `0042`. **Not owned** — three of its four fixes are toolkit writes and the bundle type for those does not exist yet |
+| — | 2026-09-09 | Wrote `docs/ideas/the-collection-and-the-project.md`, a commission for separating the collection management system from the project. Not a bundle contribution — a commission has no bundle to belong to yet, which is the document's own subject |
