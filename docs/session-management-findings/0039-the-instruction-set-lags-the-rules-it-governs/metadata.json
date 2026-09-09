@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T16:32:42+00:00",
+  "updatedAt": "2026-09-09T01:36:00-04:00",
   "number": "0039",
   "bundleName": "0039-the-instruction-set-lags-the-rules-it-governs",
   "kind": "session-management",
@@ -304,6 +304,30 @@
       "reopened": null,
       "withdrawn": null,
       "resolution": null
+    },
+    {
+      "id": "F21",
+      "statement": "Nothing checks that a vocabulary change reached the prose, and five consecutive revisions demonstrate it \u2014 the last leaving the legend saying a superseded bundle cannot be read",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-09T01:36:00-04:00",
+      "sectionHeading": "F21 \u2014 nothing checks that a vocabulary change reached the prose",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F22",
+      "statement": "The currency watch that covers the legend was asserted before the defect existed, has never been armed, and cannot report drift while unarmed",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-09T01:36:00-04:00",
+      "sectionHeading": "F22 \u2014 an assertion is not a subscription",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
     }
   ],
   "decisions": [
@@ -565,6 +589,11 @@
       "session": "allocation-and-inquiry-design-20260906-233205",
       "date": "2026-09-06",
       "contribution": "Recorded D5 against F7 and set D4's outcome to `superseded \u2192 D5`"
+    },
+    {
+      "session": "typed-bundles-architecture-20260908-204724",
+      "date": "2026-09-09",
+      "contribution": "Added F21 and F22, from a cold reading of `docs/legend.md` at Revisions 236 and 237"
     }
   ],
   "edges": [

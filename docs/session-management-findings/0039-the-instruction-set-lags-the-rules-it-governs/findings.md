@@ -32,6 +32,7 @@ afternoon by the session that had been told it.
 | Session | Date | Contribution |
 |---|---|---|
 | `allocation-and-inquiry-design-20260906-233205` | 2026-09-06 | Recorded D5 against F7 and set D4's outcome to `superseded → D5` |
+| `typed-bundles-architecture-20260908-204724` | 2026-09-09 | Added F21 and F22, from a cold reading of `docs/legend.md` at Revisions 236 and 237 |
 
 ## Finding status
 
@@ -66,6 +67,8 @@ for.
 | F18 | `accepted` cannot say whether a decision's work was carried out, so a decision that changed nothing reads identically to one that changed the tree | `framing` |
 | F19 | Nothing scopes the record to this repository, so work a session does in another connected project has no stated home and no rule keeping it out | `resolved` |
 | F20 | Releasing a bundle to `unclaimed` has no procedure, though its sibling `transferred` has five numbered steps and the operation strands a bundle when done wrong | `decided` |
+| F21 | Nothing checks that a vocabulary change reached the prose, and five consecutive revisions demonstrate it — the last leaving the legend saying a superseded bundle cannot be read | `framing` |
+| F22 | The currency watch that covers the legend was asserted before the defect existed, has never been armed, and cannot report drift while unarmed | `framing` |
 
 ---
 
@@ -787,6 +790,164 @@ manifests rather than stored. So the first step of any pre-222 procedure, *set t
 status*, no longer exists: **remove the manifest row and `unclaimed` follows.**
 The procedure that was never written is now shorter than it would have been, which
 is the design paying for itself.
+
+## F21 — nothing checks that a vocabulary change reached the prose
+
+**Start with what the legend said until Revision 239.** *What another session may
+do* is the table every session reads before its first write. Its first row listed
+`superseded` under **nothing is readable**. Its second row listed `superseded`
+under **readable by any session, writable by none**. The table stated no
+tie-break, and the ordering rule stated for the tables above it is *first row that
+matches* — so read literally, **the legend said a superseded bundle cannot be
+opened**, while `.github/session-management-instructions.md` §9 spends three
+prohibitions keeping it readable and says the reading *"is retained precisely so
+it can be read."*
+
+That is not a stale word. It is a live contradiction, in the one table whose whole
+job is to tell a session what it may open, and it stood for three revisions.
+
+**The same table's third row read `analyzing`, `reopened`, `resolved`** under a
+heading that says **Bundle standing**. Two of those three are finding statuses.
+Revision 233 gave the bundle set its own words — `analyzing`, `revisited`,
+`answered` — precisely so a bare value would say which vocabulary it came from,
+and this row is where that property failed.
+
+### Five revisions, one failure
+
+| Revision | Reached | Stopped at |
+|---:|---|---|
+| 233 | `metadata.json`, `plan_findings_work.py`, every INDEX row | `docs/legend.md`'s ladder |
+| 235 | the legend's prose | the ladder table itself |
+| 236 | the ladder, rebuilt as two tables | the permission table directly below it, and two sentences citing by row number the ladder it had just deleted |
+| 237 | every derived cell in `docs/session-management-findings/INDEX.md` | the paragraph beneath that table, still naming the wrong owners and the wrong counts |
+| 238 | the shared subject prompt | all of the above, still standing |
+
+**Three of the five were repairs of the one before.** Revision 236's own entry
+names the failure exactly — *"the ladder, the table people actually read, kept the
+old shape"* — and two revisions then walked past a second table with the same
+defect. The two row-number citations Revision 236 left, at `docs/legend.md:304`
+and `:318` as the file stood at Revision 238, pointed into the eight-row ladder
+that same revision had deleted.
+
+### The mechanism
+
+Every instance is one object: **prose that restates a fact a table derives.** A
+row-number citation restates the ladder's ordering. A permission table restates
+the standing vocabulary. An index footer restates counts and ownership. A manifest
+entry restates what the tree contains.
+
+`docs/legend.md` already forbids this in one sentence — *a fact has one home; a
+copy is permitted only where it is generated, or where a check fails when it
+drifts* — and `docs/architecture/state-as-data.md` §6 carries it out **for tables
+and only for tables**: the generated-region markers stop at the table's last row.
+§5 called the Findings table "the hard case." The hard case was the paragraph
+beneath it, which restates the same facts in a form nothing generates and nothing
+checks.
+
+**Measured in a copy, 2026-09-09, on Linux.** With the pre-repair legend restored
+over the repaired file, every check in the repository returns byte-identical
+output — `counts ok`, `structure ok`, `completeness ok`, `headers` at its standing
+baseline, and doc paths clean. **The repair moves no number.** F16's completeness
+check does not reach it either: it asserts that no atomic value carries ornament,
+that a list in a document is a list of the same length in the data, and that every
+header field reaches a non-empty key. The permission table was not incomplete. It
+was wrong, and nothing in `bin/` has an opinion about what a table means.
+
+### What it costs to leave
+
+Not a stale document — an authoritative one that is wrong, in the file every
+session is told to read first. Five consecutive revisions shipped one, and in
+three of them the revision's own subject was the previous failure. **The only
+thing that has ever caught it is somebody opening the file cold**, which has now
+happened at every one of the five, each time late, and each time by a session
+other than the one that wrote it.
+
+### What this finding owes
+
+Whether prose that restates a derived fact should be generated like the table it
+sits under, prohibited, or accepted deliberately and said so in writing. The
+current position is not a decision; it is five revisions of the same accident.
+
+**A check is plausible and is not obviously the answer.** Six instruments in this
+repository have failed against a healthy tree on their first run, and a
+prose-coherence check would be the seventh. The cheapest candidate that is not a
+new parser: **assert that no word from one vocabulary appears in a table headed by
+another** — a closed-set membership test over three known sets, which would have
+caught the third row on the day it was written and would have caught nothing else.
+
+**Two cells in that table are left as they stand and this finding owns the
+question.** *A finding* makes a `withdrawn` finding readable by any session; the
+bundle table puts `retired` — every finding `withdrawn` — under *nothing is
+readable*, and its third row's cell ends `withdrawn` — not readable. Both came
+over from the eight-row ladder, where one word served a finding and a bundle at
+once. Which side is right is a reading, and Revision 239 declined to decide it in
+a repair.
+
+## F22 — an assertion is not a subscription
+
+`.internal/ai-scripts/session-management/doc-currency.json` carries a
+`state-schema` watch, tier `critical`: source
+`docs/architecture/state-as-data.md`, dependents including **`docs/legend.md`**.
+The edge exists, it is correct, it is aimed at exactly the pair F21's third
+revision broke, and it was written in **Revision 232 — the same revision that took
+the decision the legend then contradicted.** `git log` on that file returns
+exactly one commit, `d0e6d7d`; Revisions 235 through 238 did not touch it.
+
+**It has never fired and it cannot.** All seven watches carry
+`"sourceDigest": null` and `"confirmedAt": null`, and `doc_currency.py:evaluate()`
+tests the null before it compares:
+
+```text
+if w.get("sourceDigest") is None:
+    state = "UNCONFIRMED"
+elif cur != w["sourceDigest"]:
+    state = "DRIFTED"
+```
+
+so a watch with no baseline cannot reach `DRIFTED` however far its sources move.
+`--confirm` is the only thing that writes a digest, it is `manual` on all four
+critical watches, and no revision has run it. **A watch is born unarmed and
+nothing arms it.**
+
+**Measured in a copy, 2026-09-09, on Linux.** `--confirm state-schema` wrote
+digest `b0f3485a7ca2f517`; one line appended to `state-as-data.md` then produced
+`** state-schema DRIFTED`, listing `docs/legend.md` among the dependents to
+review. The instrument works. It has never been switched on, and switching it on
+is one command no procedure asks for.
+
+**Its failure cannot be told from its success at the exit code.** `cmd_check`
+returns 1 when any *critical* watch is not `current`, which since Revision 232 has
+meant *not armed* — so the tool has exited non-zero on every run it has ever had.
+The usage block at `bin/verify-doc-currency.sh:11` states a different contract:
+*"Exits non-zero when a `critical` watch has drifted."* A reader who trusts the
+usage string reads that exit as drift, against a headline reading `0 drifted`.
+
+### The family, which `0047` F5 does not cover
+
+`0047` F5 reads the repository's instrument failures as *the half that reads the
+tree is wrong, not the half that judges it*. **This is a different family and now
+has three members in two days**: an instrument that is correct about the tree and
+structurally unable to say so. This watch is one. The other two are `0050`, owned
+by `assurance-coverage-20260908-204724` — a dead `STATUS-superseded` exemption in
+`verify-findings-headers.sh:201`, and a write-location guard blind to
+`device_bash`. **They are named here and not folded in**; they are that session's
+reading, and this finding claims only the family and this member of it.
+
+The distinction matters because the two families have opposite remedies. A wrong
+reader is fixed by fixing the reader, and its first run tells you it is wrong. A
+correct instrument that cannot fire **passes every test anybody would think to
+run**, and the only evidence of the fault is that it has never said anything.
+
+### What this finding owes
+
+Three candidates, none costed here: that `--confirm` becomes part of applying a
+revision, so a watch cannot stay unarmed across one; that a null digest gets its
+own exit code and its own word rather than sharing one with drift; or that a watch
+is armed at the moment it is written, on the grounds that whoever asserts an edge
+has just read both ends. **The failure worth catching is zero** — a watch that has
+never been confirmed — which is the shape §9's coverage clause and §9b already
+use, and the one shape in this repository that has not yet produced a false
+positive.
 
 ## What this bundle does not cover
 

@@ -1,15 +1,40 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T00:47:24+00:00",
+  "updatedAt": "2026-09-09T01:36:00-04:00",
   "bundleName": "typed-bundles-architecture-20260908-204724",
   "createdOn": "2026-09-09",
-  "owners": [],
-  "transcript": null,
-  "scratchPath": null,
+  "owners": [
+    {
+      "from": "2026-09-09",
+      "until": null,
+      "assistant": "Claude",
+      "sessionId": "session_01QvZrvKpoKwCmyLNjzXzCdQ",
+      "model": "claude-opus-5",
+      "environment": "Linux VM on the owner's Mac, reached through the desktop bridge. Bash 5.1.16(1) aarch64, GNU coreutils 8.32, Python 3.10.12. **Not macOS.**",
+      "environmentNotes": "Every check quoted by this session ran here, not on the target Mac, so the Bash 3.2 debt is extended and not paid. One operating constraint of this environment is not stated in any document: **git takes a lock to read**, and the connected folder refuses `unlink`, so `git status` or `git log` run in the owner's checkout can leave a `.git/index.lock` behind that blocks the owner's next commit. This session did exactly that on 2026-09-09 and the owner's commit cleared it. Standing rule adopted from that point: `ls` and `cat` in the checkout, every git command in the scratch copy. The finding this belongs to is `0038`'s subject and is not yet recorded."
+    }
+  ],
+  "transcript": "https://claude.ai/code/session_01QvZrvKpoKwCmyLNjzXzCdQ",
+  "scratchPath": "/sessions/rcw-01qvzrvkpokwcmylnjzxzcdq/scratch/fractogenesis-toolkit",
   "resources": [
     {
       "what": "Repository checkout",
-      "path": "the owner's checkout; the session works in a scratch copy of it",
+      "path": "/Users/dkittrell/workspace/shiva/fractogenesis-toolkit",
+      "notes": null
+    },
+    {
+      "what": "Scratch copy",
+      "path": "/sessions/rcw-01qvzrvkpokwcmylnjzxzcdq/scratch/fractogenesis-toolkit",
+      "notes": null
+    },
+    {
+      "what": "Commit copied from",
+      "path": "52a4376",
+      "notes": null
+    },
+    {
+      "what": "Patch directory",
+      "path": "/Users/dkittrell/reimage-workspace/patches",
       "notes": null
     }
   ],
@@ -40,7 +65,18 @@
       "assignedOn": "2026-09-09"
     }
   ],
-  "contributions": [],
+  "contributions": [
+    {
+      "bundle": "0039",
+      "date": "2026-09-09",
+      "contribution": "F21 \u2014 nothing checks that a vocabulary change reached the prose; five consecutive revisions, measured"
+    },
+    {
+      "bundle": "0039",
+      "date": "2026-09-09",
+      "contribution": "F22 \u2014 the `state-schema` currency watch is correct, unarmed, and cannot report drift"
+    }
+  ],
   "declaredState": null,
   "indexNotes": null,
   "ended": {

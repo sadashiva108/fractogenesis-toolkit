@@ -229,9 +229,9 @@ recorded change.
 
 ### A bundle
 
-Derived from its findings, with two exceptions. **Read the ladder in order and
-take the first row that matches** — the cases overlap, and the order is what
-makes the answer single-valued.
+Derived from its findings. **Read each table below in order and take the first
+row that matches** — the cases overlap, and the order is what makes the answer
+single-valued.
 
 **The ladder is five rows, not eight.** `state-as-data.md` section 4.4 split the
 one overloaded slot into three fields, and three of the old rows left with it:
@@ -301,8 +301,8 @@ findings sitting among resolved and withdrawn ones, is `revisited`: the only wor
 in it is the reopening, and the index should say so rather than saying `analyzing`
 and making a reader open it to find out. But a reopened finding alongside anything else
 live — a `framing` finding, a `decided` one, an `un-started` one — is a genuinely
-mixed bundle, and that is `analyzing`. Row 6 fires only when reopening is the
-whole of the live work.
+mixed bundle, and that is `analyzing`. **The `revisited` row fires only** when
+reopening is the whole of the live work.
 
 `unclaimed` is the exception because it is about **ownership, not progress**. A
 bundle is `unclaimed` when no session owns it — created without an owner
@@ -315,13 +315,13 @@ to whatever its findings derive, which for a bundle nobody has read is
 `answered` counts a `withdrawn` finding as finished. Withdrawing is a deliberate
 end, not an omission, so it does not hold a bundle open — but a bundle of nothing
 but withdrawals is `retired`, not `answered`, because nothing was carried
-through. That is why row 4 sits above row 5.
+through. That is why `retired` sits above `answered`.
 
-`superseded` and `withdrawn` are terminal and neither is a failure. The
+`superseded` and `retired` are terminal and neither is a failure. The
 difference is whether a reader following the trail lands somewhere.
 
 **`superseded` and `reopened` are not alternatives.** `superseded` applies to a
-whole bundle, never a single finding, and **reaches a bundle at any status** —
+whole bundle, never a single finding, and **reaches a bundle at any standing** —
 there is no state in which a reading cannot be replaced. Authority moves to the
 new bundle; nothing is reverted or undone. The old bundle stands untouched as the
 reading it was, keeps its number, its tree, its session and its place in that
@@ -352,12 +352,29 @@ other session checks the bundle first, then the finding.
 
 | Bundle standing | Then, inside it |
 |---|---|
-| `assigned`, `unclaimed`, `retired`, `superseded` | nothing is readable |
 | `superseded` | **readable by any session, writable by none** — including the session that owns it. The reading is retained precisely so it can be read; §9 spends three prohibitions keeping it that way |
-| `analyzing`, `reopened`, `resolved` | `framing` — read and record · `decided` — read only · `resolved` — read only · `un-started`, `reopened`, `withdrawn` — not readable |
+| `assigned`, `unclaimed`, `retired` | nothing is readable |
+| `analyzing`, `revisited`, `answered` | `framing` — read and record · `decided` — read only · `resolved` — read only · `un-started`, `reopened`, `withdrawn` — not readable |
 
 An `assigned` bundle offers nothing to anyone but its owner, by definition: all
 its findings are `un-started`, and the owner's first reading is what opens them.
+
+**The three rows are disjoint, so no tie-break is needed.** Until Revision 239
+`superseded` appeared in two of them under opposite rules — *nothing is readable*
+and *readable by any session* — which, read by the stated first-match rule, made
+the legend say a superseded bundle cannot be opened while
+`.github/session-management-instructions.md` §9 spends three prohibitions keeping
+it readable. The third row also carried `reopened` and `resolved`, which are
+finding statuses, under a heading that says *Bundle standing*. Both came over
+from the eight-row ladder Revision 236 replaced. `0039` F21.
+
+**Two cells here disagree with *A finding* and are deliberately left alone.** A
+`retired` bundle holds nothing but `withdrawn` findings, and *A finding* makes a
+`withdrawn` finding readable by any session — so *nothing is readable* cannot be
+right for it, and the third row's cell says the same thing again where it ends
+`withdrawn` — not readable. **Which side is right is a reading, not a repair**,
+and a repair revision is the wrong place to decide it. `0039` F21 owns the
+question.
 
 ## Who may write to a findings bundle
 

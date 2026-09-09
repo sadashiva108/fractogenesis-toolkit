@@ -4,20 +4,27 @@
 
 | From | Until | Assistant | Session id | Model | Environment |
 |---|---|---|---|---|---|
-| 2026-09-09 | — | — | — | — | — |
+| 2026-09-09 | — | Claude | `session_01QvZrvKpoKwCmyLNjzXzCdQ` | `claude-opus-5` | Linux VM on the owner's Mac, reached through the desktop bridge. Bash 5.1.16(1) aarch64, GNU coreutils 8.32, Python 3.10.12. **Not macOS.** |
 
-**This row is empty on purpose and the session fills it on its first write.**
+**Filled by the session on its first write, Revision 239.** It was empty on purpose until then.
 Only the session itself knows its identifier, the model it was configured for and
 the environment it actually runs in, and this bundle was created ahead of it by
 `allocation-and-inquiry-design-20260906-233205` on the owner's allocation. Writing
 a value here would be inventing one, which is the placeholder rule. `metadata.md`
 stays authoritative for who has owned this bundle.
 
+## Environment
+
+Every check quoted by this session ran here, not on the target Mac, so the Bash 3.2 debt is extended and not paid. One operating constraint of this environment is not stated in any document: **git takes a lock to read**, and the connected folder refuses `unlink`, so `git status` or `git log` run in the owner's checkout can leave a `.git/index.lock` behind that blocks the owner's next commit. This session did exactly that on 2026-09-09 and the owner's commit cleared it. Standing rule adopted from that point: `ls` and `cat` in the checkout, every git command in the scratch copy. The finding this belongs to is `0038`'s subject and is not yet recorded.
+
 ## Resources
 
 | Resource | Value |
 |---|---|
-| Repository checkout | the owner's checkout; the session works in a scratch copy of it |
+| Repository checkout | `/Users/dkittrell/workspace/shiva/fractogenesis-toolkit` |
+| Scratch copy | `/sessions/rcw-01qvzrvkpokwcmylnjzxzcdq/scratch/fractogenesis-toolkit` |
+| Commit copied from | `52a4376` |
+| Patch directory | `/Users/dkittrell/reimage-workspace/patches` |
 | `APPLY-MANIFEST.md` at creation | Revision 236 |
 
 ## Assignment
@@ -39,6 +46,9 @@ release.
 
 | Bundle | Date | Contribution |
 |---|---|---|
+| [`0039`](../../session-management-findings/0039-the-instruction-set-lags-the-rules-it-governs/) | 2026-09-09 | F21 — nothing checks that a vocabulary change reached the prose; five consecutive revisions, measured |
+| [`0039`](../../session-management-findings/0039-the-instruction-set-lags-the-rules-it-governs/) | 2026-09-09 | F22 — the `state-schema` currency watch is correct, unarmed, and cannot report drift |
 
-Empty at creation. A contribution to a bundle this session does not own is
-recorded here and does not change ownership.
+A contribution to a bundle this session does not own is recorded here and does
+not change ownership. `0039` is owned by
+`session-management-re-evaluation-20260906-110105`.
