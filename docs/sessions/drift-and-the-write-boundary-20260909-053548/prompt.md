@@ -102,6 +102,35 @@ The three are one subject seen from three sides:
    work is done, and it should be written after you have watched three of these
    go past rather than before.
 
+### One instrument you must never run
+
+**`.internal/ai-scripts/session-management/extract-metadata.py` regenerates the
+data from the markdown, and on a healthy tree it unmakes the record.** One run,
+measured by the assurance session on 2026-09-09: **62 files rewritten, 20 fields
+emptied, 429 recorded values destroyed** — every one of the 27 asserted edges, 53
+`standing` values across all five states, and the `state` of all nine session
+bundles. It is `0050` F3 and F6, which is **not your bundle**; the operating rule
+below stands regardless of what they decide.
+
+**It has no safe no-op.** The assurance session triggered it by passing an
+unrecognised `--help`, which it treated as a live run. Do not invoke it to see
+what it does.
+
+**And the procedure routes you into it.** §10a of the instruction set has four
+steps and none of them is *regenerate*, on the correct ground that ownership is
+derived. But the derived value is also **stored** on the bundle, so a release —
+or a transfer — carried out by those four steps alone leaves the stored field
+reading one thing and the row reading another, and `extract-metadata.py` is the
+only instrument that looks like it clears it. **A procedure that produces a
+failure whose only advertised remedy destroys the record is `0047`'s subject seen
+from the other side**, and worth saying in those terms when you write it up.
+
+**What to do instead**, and it is what Revision 261 did for six bundles: set
+`ownership` by hand — `null`, `"unclaimed"` or `"transferred"` — and run
+`./bin/plan-findings-work.sh stamp`, which writes `standing`, `progress` and
+`state` and touches nothing else. `check` then reports `UNSTAMPED` and
+`STORED-DISAGREES` if you missed one.
+
 **Before any instrument goes in, two disciplines that are already findings.**
 `0047` F6: **a guard fails where a checker only reports** — six instruments here
 have reported failure against a healthy tree on their first run, and a checker

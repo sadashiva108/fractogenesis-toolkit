@@ -121,6 +121,26 @@ cannot precede it. What is parked behind you:
    before anyone writes a second genus, because renaming it afterwards is a
    breaking change with no migration plan, which is `0052` F2.
 
+   **One field is missing from every shape and it is a schema decision, not a
+   habit.** Nothing in any `metadata.json` records **which tree a reading was
+   taken against.** `schemaVersion` is `1` on all 63 files and versions the file
+   *shape*, not the tree *state*. The assurance session verified the rest on this
+   tree: `read` populated on 16 of 54 bundles, `answersAsOf` on 7 of 129
+   decisions, **`resolution.commit` on 33 of 73 resolutions.** The pattern is in
+   the schema **twice** and points the same way both times — `answersAsOf` and
+   `resolution.commit` each anchor **what a bundle did**, and neither anchors
+   **what it saw**. **That asymmetry, not a missing habit, is why the anchor was
+   never written**, which is exactly why it has to be settled here rather than
+   bolted on: a genus designed without it inherits the gap.
+
+   Two cautions carried with it. **The first check will read as 54 failures and
+   none of them is a defect** — every bundle is unanchored — **and backfilling to
+   silence it is the one act the whole idea exists to prevent**, because an
+   anchor invented after the fact records nothing. And the assurance session has
+   drawn the boundary against its own commission on knowing what you have read,
+   deliberately, so the two do not become duplicate paths: **do not merge them.**
+   Their commission lands under `docs/ideas/` with their next revision.
+
 4. **The third genus has no name and section 5.1 of the commission says every
    short word is taken.** `order` 327, `build` 198, `works` 185, `doing` 141,
    `charge` 9 and already meaning a session's brief; `undertaking` and `venture`
