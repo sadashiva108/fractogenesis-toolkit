@@ -12,16 +12,42 @@ Then [`docs/rules/README.md`](../../rules/README.md), and *What nothing else
 tells you* in particular — eight facts with no other home, each of which cost a
 session real time to learn.
 
-Opened against the set as it stood at **Revision 260**.
+Opened against the set as it stood at **Revision 261**, and amended at 262.
 
-**Two things about the conformant prompt, before you follow it.** It declares
-itself *current as of Revision 221* and the tree is at 260, so its currency line
-is 39 revisions behind; it is rank 4, a copy, and where it disagrees with
-`docs/legend.md` or an instruction set the home wins and the copy is the defect.
-And its *Create your session bundle first* does not apply to you: **your bundle
-already exists** — this file is in it — because ownership is derived from a
-manifest row and a prompt saying *you own these* is not ownership
-(`docs/rules/README.md` section 5).
+**Three things about the conformant prompt, and it is not pasted to you.**
+
+**1. Nothing about this framework loads automatically.** What arrives with the
+session is the repository's Copilot instructions — build commands, architecture,
+runbook and script prompts — and **they do not mention session management at
+all.** `.claude/CLAUDE.md` names the framework by path, but that is Claude Code's
+auto-load convention in the checkout and is not something to rely on here. **The
+two files named above are your orientation, and there is no other.**
+
+**2. It is a copy, and it is behind.**
+`.github/ai-prompts/session-management/conformant-prompt.md` is **rank 4** and
+declares itself *current as of Revision 221* — read the head of
+`APPLY-MANIFEST.md` for how far behind that now is; it was **41 revisions** when
+this prompt was written. Where it disagrees with `docs/legend.md` or an
+instruction set, **the home wins and the copy is the defect** — report it rather
+than follow it. Its *Create your session bundle first* is one such: **your bundle
+already exists** — this file is in it, because ownership is derived from a manifest row
+and a prompt saying *you own these* is not ownership (`docs/rules/README.md`
+section 5).
+
+**3. Read it as a cross-check, not as an authority.** Read it **once and late**,
+after the instruction set and the front door rather than before, and read it
+looking for two things: **a rule with no home**, and **a rule whose home says
+something different.** Its masthead claims every rule in it lives in the legend
+or an instruction set, and **nothing verifies that claim** — which is why this is
+worth twenty minutes rather than a skim. Its **Part 6, *What is in flight right
+now*, is the one part of the file that is not a copy of anything**, and therefore
+the one part with nothing to correct it: treat it as dated context, never as
+state.
+
+Anything you find with no home is a finding, and **`0039` is where it belongs** —
+F9 is the standing warning about a rule with no shelf, and F21 is the standing
+warning that nothing checks whether a rule reached the prose.
+
 
 ## The session half
 
