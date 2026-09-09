@@ -52,7 +52,7 @@ hours ahead of a bundle created before it. The same zone governs every
 The name is fixed at creation — renaming it breaks every prompt, handoff and
 index row written against it.
 
-It needs, from the moment it exists: `STATE-available`, `prompt.md` holding this
+It needs, from the moment it exists: `metadata.json` carrying `state`, `prompt.md` holding this
 prompt and yours, and `metadata.md`. Add a row to `docs/sessions/INDEX.md`.
 
 `metadata.md` records the assistant, its session identifier and transcript link
@@ -96,12 +96,17 @@ assigns it, listed in no `findings-manifest.md`, carried only by its index row.
 hold `unclaimed` bundles that have nothing to do with your brief. Reading one
 because it is there is how a session takes work nobody gave it.
 
-**What assignment does, in order.** The owner assigns; you do not take. On
-assignment the bundle becomes `STATUS-un-started` with every finding in it
-`un-started`, and your session bundle drops `STATE-available` for `STATE-active`.
-**Your first reading is the transition**: the bundle becomes `STATUS-analyzing`
-and every finding in it becomes `framing`. Nothing else moves them, and no
-session but the owner can perform that first read.
+**What assignment does, in order.** The owner assigns; you do not take.
+**There are no tag files** — `STATUS-` and `STATE-` were removed at Revision 222
+and every one of these values lives in `metadata.json`, derived and stamped by
+`./bin/plan-findings-work.sh stamp`, never written by hand.
+
+On assignment the bundle's `ownership` becomes null — owned is the absence of a
+declared ownership, and the manifest is what says who — its `standing` derives to
+`assigned` with every finding still `un-started` and its `progress` to `untouched`, and your session's `state`
+derives to `active`. **Your first reading is the transition**: every finding
+becomes `framing` and the bundle's standing derives to `analyzing`. Nothing else
+moves them, and no session but the owner can perform that first read.
 
 **While a finding is `framing`, any session may record to it** — sharpen the
 reading, and equally write a decision, reject one or refine one. Deciding is not
@@ -180,8 +185,9 @@ carries as content and a deleted file carries none.
 **Ask for delete permission before you apply, not after it fails.** The connected
 folder refuses `unlink` until the owner grants deletion for that folder. If your
 patch deletes or renames anything, request it **before** applying — and note that
-**every status transition is a delete plus a create**, so this bites every
-`STATUS-` and `STATE-` tag change you will ever make. The grant is per folder,
+**a rename or a deletion is a delete plus a create**. Status changes no longer
+are — the tag files went at Revision 222 and a standing is now a value inside
+`metadata.json`, so a status change is an ordinary diff. The grant is per folder,
 for the session, and **does not survive a bridge reconnect**: if the link drops
 and comes back, request it again rather than discovering it mid-apply. If it is
 declined or goes unanswered, move the file into a `_to_delete/` subfolder under

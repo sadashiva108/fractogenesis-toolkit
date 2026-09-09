@@ -22,13 +22,15 @@ tag that disagrees with it is a bug in whoever moved the bundle last.
 ## Status key
 
 A finding is `un-started`, `framing`, `decided`, `resolved`, `reopened` or
-`withdrawn`. **A bundle's status is derived from its findings** by the ladder in
+`withdrawn`. A **bundle** takes none of those words: its standing is `assigned`,
+`analyzing`, `answered`, `revisited`, `retired`, `unclaimed`, `transferred` or
+`superseded`. **A bundle's standing is derived from its findings** by the ladder in
 [`docs/legend.md`](../legend.md) — first row that matches wins.
 
-| Bundle status | When |
+| Bundle standing | When |
 |---|---|
 | `unclaimed` | No session owns it. Closed to every session until the owner assigns it |
-| `pending` | Every finding is `un-started`. Only the owning session can open one |
+| `assigned` | Every finding is `un-started`. Only the owning session can open one |
 | `transferred` | Handed to a named session that has not read it yet. Ownership has moved; the reading has not been picked up |
 | `analyzing` | Findings are in mixed statuses — the working state |
 | `revisited` | At least one finding is `reopened` and every other is inert (`resolved` or `withdrawn`) |
@@ -59,4 +61,4 @@ definitions, the transitions and the write rules: [`docs/legend.md`](../legend.m
 | 0028 | [0028-sessions-write-into-the-tree-the-owner-commits-from](0028-sessions-write-into-the-tree-the-owner-commits-from/) | Sessions compose their changes in the tree the owner commits from | 6 | [`superseded`](../session-management-findings/0038-sessions-write-into-the-tree-the-owner-commits-from/) | [`restore-apps-outstanding-20260903-000000`](../sessions/restore-apps-outstanding-20260903-000000/) | Superseded 2026-09-06 by `0038` for the ground-up re-evaluation. Reading retained here unchanged, brought onto the schema in Revision 203; still held by this session |
 | 0030 | [0030-renames-break-citations-and-which-may-be-repaired](0030-renames-break-citations-and-which-may-be-repaired/) | Renames break citations, and only a record's values are frozen | 5 | `analyzing` | [`pre-image-capture-conformance-20260903-194532`](../../sessions/pre-image-capture-conformance-20260903-194532/) | Supersedes `0009`. D7 by `run-index-design-20260901-000000` under an owner override; closed by this revision |
 | 0033 | [0033-styling-is-copied-into-every-script-and-lands-in-evidence](0033-styling-is-copied-into-every-script-and-lands-in-evidence/) | Styling is copied into every script, and it lands in the evidence | 7 | `unclaimed` | — | Parked at the owner's direction 2026-09-04. Closed to every session until assigned. Recorded by `restore-apps-outstanding`, finding 7 contributed by `pre-image-capture-conformance` |
-| 0035 | [0035-a-lineage-rename-is-a-procedure-not-an-operation](0035-a-lineage-rename-is-a-procedure-not-an-operation/) | A lineage rename is a procedure, not an operation | 3 | `pending` | [`pre-image-capture-conformance-20260903-194532`](../sessions/pre-image-capture-conformance-20260903-194532/) | closed 2026-09-04; `artifact_run_rename_lineage` |
+| 0035 | [0035-a-lineage-rename-is-a-procedure-not-an-operation](0035-a-lineage-rename-is-a-procedure-not-an-operation/) | A lineage rename is a procedure, not an operation | 3 | `assigned` | [`pre-image-capture-conformance-20260903-194532`](../sessions/pre-image-capture-conformance-20260903-194532/) | closed 2026-09-04; `artifact_run_rename_lineage` |

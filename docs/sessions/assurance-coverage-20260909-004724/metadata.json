@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-09T00:47:24+00:00",
+  "bundleName": "assurance-coverage-20260909-004724",
+  "createdOn": "2026-09-09",
+  "owners": [],
+  "transcript": null,
+  "scratchPath": null,
+  "resources": [
+    {
+      "what": "Repository checkout",
+      "path": "the owner's checkout; the session works in a scratch copy of it",
+      "notes": null
+    }
+  ],
+  "ownedBundles": [
+    {
+      "number": "0040",
+      "path": "docs/session-management-findings/0040-superseding-a-bundle-whose-session-is-gone/",
+      "assignedOn": "2026-09-09"
+    },
+    {
+      "number": "0041",
+      "path": "docs/session-management-findings/0041-index-and-manifest-tables-have-a-shape-nothing-checks/",
+      "assignedOn": "2026-09-09"
+    },
+    {
+      "number": "0042",
+      "path": "docs/session-management-findings/0042-no-check-reads-the-rendered-page/",
+      "assignedOn": "2026-09-09"
+    },
+    {
+      "number": "0044",
+      "path": "docs/session-management-findings/0044-citations-under-docs-resolve-nowhere-and-nothing-reads-them/",
+      "assignedOn": "2026-09-09"
+    },
+    {
+      "number": "0046",
+      "path": "docs/session-management-findings/0046-supersession-moves-authority-and-leaves-every-citation-behind/",
+      "assignedOn": "2026-09-09"
+    },
+    {
+      "number": "0049",
+      "path": "docs/session-management-findings/0049-the-patch-is-named-as-the-deliverable-and-never-produced/",
+      "assignedOn": "2026-09-09"
+    }
+  ],
+  "contributions": [],
+  "declaredState": null,
+  "indexNotes": null,
+  "ended": {
+    "on": null,
+    "reason": null,
+    "revisions": [],
+    "commits": [],
+    "disposals": []
+  },
+  "state": "active"
+}

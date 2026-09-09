@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T16:32:42+00:00",
+  "updatedAt": "2026-09-09T00:47:24+00:00",
   "number": "0044",
   "bundleName": "0044-citations-under-docs-resolve-nowhere-and-nothing-reads-them",
   "kind": "session-management",
@@ -22,9 +22,9 @@
     "`bin/verify-doc-paths.sh`, and its `--all` run over 778 paths and 1108 anchors",
     "`.github/session-management-instructions.md` sections 2 and 3"
   ],
-  "standing": "unclaimed",
-  "progress": "pending",
-  "ownership": "unclaimed",
+  "standing": "assigned",
+  "progress": "untouched",
+  "ownership": null,
   "lineage": null,
   "findings": [
     {

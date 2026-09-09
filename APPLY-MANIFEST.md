@@ -1,4 +1,10 @@
 # Apply Manifest
+**Revision 237** — supersedes Revision 236 and earlier. **The allocation of Revision 234 is carried out.** Two session bundles are created — `typed-bundles-architecture-20260909-004724` and `assurance-coverage-20260909-004724` — and the eleven `unclaimed` session-management bundles are assigned between them. Until now the allocation existed only as a proposal and two pasted prompts: **a prompt saying *you own these* is not ownership**, ownership is derived, and neither session owned anything or could write a Contributions row, because a Contributions row needs a session bundle name and neither session had one. Found by the architecture session, which stopped rather than invent a name. Carrying it out found the second thing: **three documents say `findings-manifest.md` is authoritative for what a session owns, and no code reads it** — every ownership computation reads `ownedBundles` from `metadata.json`.
+
+**Revision 236** — supersedes Revision 235 and earlier. **Revision 235 rewrote the legend's prose and left its table on the old words.** A parallel session reading `docs/legend.md` cold found three defects in it, all real, none of them touched by the revision that claimed to have finished the rename: an eight-row ladder where `state-as-data.md` §4.4 had shrunk it to five, a clause spliced across the Revision 222 edit that leads nowhere, and a sentence saying standing is *"stored nowhere"* eleven revisions after the owner reversed that. The ladder becomes two tables — `progress` derived from the findings, `standing` derived from `progress` — and the file states where the values live and which check fails when they drift.
+
+**Revision 235** — supersedes Revision 234 and earlier. The vocabulary reaches the rules: Revision 233 renamed the data and the code and **stopped at `docs/legend.md`**, whose ladder still defined bundle standings using finding words. Both prompts still described the `STATUS-`/`STATE-` tag files removed at Revision 222. And the derived slot splits in two — `progress` says whether the reading has been worked, `standing` says that with ownership put back in, which is what makes `assigned` true wherever it appears.
+
 **Revision 234** — supersedes Revision 233 and earlier. Twelve decision edges are asserted across the eleven unclaimed session-management bundles, and the allocator's cohesion term goes from **0 to 26** — the first allocation this repository has produced with a graph behind it rather than load balancing alone. `--only-new` is added, because asked to divide work between two new sessions the allocator offered work to existing ones too.
 
 **Revision 233** — supersedes Revision 232 and earlier. Three vocabularies now use three words and share no value: a finding has a **status**, a bundle has a **standing**, a session has a **state**. A bundle standing is `pending · analyzing · answered · revisited · retired · unclaimed · transferred · superseded`, so a bare value says which set it came from. `docs/architecture/typed-bundles-and-work.md` drafts the bundle as a genus taking two shapes — reasoning and doing — which is the decide/do split promoted from a convention inside one directory to a property of the object.
@@ -598,6 +604,254 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
 
 ---
+
+## Revision 237 — the allocation carried out, and what carrying it out found
+
+### A prompt saying *you own these* is not ownership
+
+Revision 234 produced an allocation and this session handed the owner two
+opening prompts, each beginning *"You own: ..."*. Both were pasted. Neither
+session owned anything, because **Revision 222 made ownership derived** — it is
+computed from the session records, not asserted in a chat message. `allocate`
+prints `NEW SESSION BUNDLES TO CREATE` and `The owner creates these, assigns the
+bundles`, and this session went straight past both lines to the prompt.
+
+**That is `0049`'s pattern — the artifact named as the deliverable and never
+produced — committed by the session that recorded `0049`, three revisions after
+recording it.** The first was writing into the checkout instead of producing a
+patch; this is proposing session bundles instead of creating them. Same shape,
+different artifact.
+
+The architecture session found it from the other end, and the way it found it is
+the point: it went to write a Contributions row, **the row needs a session bundle
+name, and it had none.** It stopped rather than invent one — the placeholder rule
+held under pressure, which is the first time that has been tested by something
+the session actually needed.
+
+### What was created
+
+| | Session bundle | Owns | Findings |
+|---|---|---:|---:|
+| architecture | `typed-bundles-architecture-20260909-004724` | `0037` `0038` `0045` `0047` `0048` | 23 |
+| assurance | `assurance-coverage-20260909-004724` | `0040` `0041` `0042` `0044` `0046` `0049` | 21 |
+
+Each holds `prompt.md`, `metadata.md`, `metadata.json` and `findings-manifest.md`.
+Both derive to `active`; eleven bundles move off `unclaimed`; two session index
+rows and eleven findings index rows are updated in both directions.
+
+**The Owners row in each `metadata.md` is deliberately empty**, and the file says
+why: only the session itself knows its identifier, the model it was configured
+for and the environment it actually ran in, and these bundles were created ahead
+of the sessions. Writing a value there would be inventing one.
+
+### Four of the eleven do not read `assigned`
+
+The first draft of both manifests said `assigned` for all eleven. `stamp`
+disagreed on four. **`assigned` means every finding is `un-started`**, and in
+`0037`, `0038`, `0040` and `0041` the findings are `framing` — recorded, not yet
+worked — which derives to `analyzing`. The derivation was right and the hand-written
+table was wrong, in the revision that exists because a hand-written table
+disagreed with its derivation. It is corrected in both manifests and in the
+findings index.
+
+### `findings-manifest.md` is authoritative for ownership, and nothing reads it
+
+Populating the records surfaced a disagreement this revision does **not** fix.
+Three documents say the manifest is the authority:
+
+- `docs/sessions/INDEX.md`: *"`findings-manifest.md` inside a bundle is
+  authoritative for what that session owns"*
+- `.github/session-management-instructions.md` line 65, the same sentence
+- Revision 228's §10a, which rests on it entirely: *"removing the manifest row IS
+  the release"*
+
+**`plan_findings_work.py` never opens the file.** Every ownership computation —
+the loader, `session_state`, the `ORPHAN` detector, the allocator's hold set —
+reads `ownedBundles` from `metadata.json`. A manifest row with no matching
+`ownedBundles` entry owns nothing and reports `ORPHAN`; an `ownedBundles` entry
+with no manifest row owns the bundle silently. **Two homes for one fact, and the
+one the rules name is the one nothing reads.**
+
+It is left open on purpose. It is `0037` — the architecture disagreeing with
+itself and with the tree — and `0037` was assigned to the architecture session
+eleven lines above this one. Fixing it here would decide the question that
+session was created to answer, and this session does not own it.
+
+### Verification
+
+- `check`: 38 conformance findings, **unchanged from before the assignment**;
+  `ORPHAN` reports `0002` and `0004`, neither of them among the eleven.
+- `stamp`: 13 records written, 0 `UNSTAMPED`, 0 `STORED-DISAGREES`.
+- 48 tests pass. `counts`, `structure`, `completeness` ok. `headers` FAIL list
+  compared line by line against the checkout: **identical**, no new entry.
+- `verify-doc-paths.sh --all`: every path and anchor resolves.
+
+---
+
+## Revision 236 — the table the rename did not reach
+
+### Three defects, found by a reader who had not written it
+
+Revision 235's own manifest entry says the rename *"did not reach
+`docs/legend.md`"* and then fixes it. It fixed the prose. **The ladder — the
+table people actually read — kept the old shape**, and a session opened against
+the current instruction set found all three of these before writing anything:
+
+| # | What it said | What was true |
+|---|---|---|
+| 1 | an eight-row standing ladder | `state-as-data.md` §4.4 had split the one slot into three fields; three of those rows had left with it |
+| 2 | *"...and in a tag file on the bundle directory —"* | the tag files went at Revision 222; the em dash leads to a sentence that starts a different thought |
+| 3 | standing is *"derived from its findings, in `metadata.json`, and stored nowhere"* | Revision 232 reversed that: it is derived **and then stored**, by `stamp` and nothing else |
+
+Each is a different failure mode of the same edit. (1) is a rename that stopped
+at the prose. (2) is a splice: Revision 222 deleted the middle of a sentence and
+left both ends. (3) is a statement that was true when written and was contradicted
+ten revisions later by a decision recorded elsewhere.
+
+**A first draft of this entry claimed nothing in the tree could have caught any of
+them, and that was false.** The `state-schema` watch in `doc-currency.json` is
+`critical`, its source is `docs/architecture/state-as-data.md`, and `docs/legend.md`
+is named among its dependents — the edge for defect (3) exists, is correct, and was
+written at **Revision 232, the same revision that took the decision the legend then
+contradicted.** The claim was made by reasoning about what the checker watches
+instead of opening the file it watches from, which is the failure this whole entry
+is about, committed while describing it. The correction is Session A's, reading the
+file cold; it is `0039` F22 and the reading belongs there, not here.
+
+### The ladder is two tables now
+
+One table was doing two jobs, which is why it had eight rows. `progress` is read
+off the findings; `standing` is `progress` with ownership and lineage put back:
+
+- **`progress`, five rows, first match wins** — `untouched`, `retired`,
+  `answered`, `revisited`, `analyzing`.
+- **`standing`, four conditions** — `lineage.supersededBy` set → `superseded`;
+  `ownership` set → that value; `progress` is `untouched` and a session owns it
+  → **`assigned`**; otherwise whatever `progress` says.
+
+This is what the loader has computed since Revision 233. The legend was the last
+place still describing it as one list with overrides at the top, and the
+overrides were exactly the three rows that had become fields.
+
+### Where the values live, said once
+
+The spliced clause is replaced by the paragraph it should have become at
+Revision 232: `standing`, `progress` and `state` are **derived and then stored**
+in `metadata.json`, written by `./bin/plan-findings-work.sh stamp` and by nothing
+else, permitted as a stored copy of a derived fact **because a check fails when
+it drifts** — `UNSTAMPED` for a null, `STORED-DISAGREES` for a value adrift from
+what it derives from. That is the condition this file already imposes on every
+other copy of a derived fact; it was the one place the condition was not stated.
+
+### Verification
+
+- Ladder rows: **5** (was 8). Spliced clause: gone. *"stored nowhere"*: gone.
+- 48 tests pass. `verify-doc-paths.sh`: 0 MISSING, 0 ANCHOR BROKEN.
+- Trees compared byte for byte after apply: identical.
+
+### Owed, and deliberately not done here
+
+The watch that should have caught defect (3) exists and **has never been armed.**
+All seven watches carry `"sourceDigest": null`, and `doc_currency.py:evaluate()`
+tests the null before it compares — so a watch with no baseline reports
+`UNCONFIRMED` and cannot reach `DRIFTED` however far its sources move. `--confirm`
+is the only thing that writes a digest, it is `manual` on every critical watch, and
+no revision has run it. Four revisions on, the output is still
+`7 watches, 0 drifted, 7 never confirmed`.
+
+**Its failure is also indistinguishable from its success at the exit code.**
+`cmd_check` returns 1 when any critical watch is not `current`, which since
+Revision 232 has meant *not armed* — so the tool has exited non-zero on every run
+it has ever had, while `bin/verify-doc-currency.sh` line 11 states a different
+contract: *"Exits non-zero when a `critical` watch has drifted."* A reader
+trusting the usage string reads that exit as drift, against a headline reading
+`0 drifted`.
+
+Arming it is one command and is **not** run this revision. It is a decision with at
+least three shapes — that `--confirm` becomes part of applying a revision; that a
+null digest gets its own exit code and its own word rather than sharing one with
+drift; or that a watch is armed where it is written, on the grounds that whoever
+asserts an edge has just read both ends — and choosing between them is the
+assurance session's, not this one's. `0039` F22 is the reading.
+
+---
+
+## Revision 235 — the half-change finished, and the derived slot split in two
+
+### Revision 233 stopped at the rules
+
+The rename reached `metadata.json`, the loader, the tests, the index tables and
+the architecture records. **It did not reach `docs/legend.md`**, whose ladder —
+the most-read table in the framework — still defined bundle standings as
+`un-started`, `withdrawn`, `resolved`, `reopened`. Nor the instruction set, nor
+either prompt. Not one of the new words appeared in a single rule document.
+
+**So the rules described a vocabulary the data did not use**, which is the
+half-change the standing constraints forbid by name: *partial conformance is
+harder to read than none.* Found by preparing an assignment instruction and
+checking the mechanics rather than reciting them.
+
+### Both prompts described a mechanism removed thirteen revisions ago
+
+The conformant prompt's *What assignment does, in order* still read: *"the bundle
+becomes `STATUS-un-started` … your session bundle drops `STATE-available` for
+`STATE-active`."* The tag files went at Revision 222. **A session opened against
+that prompt would have tried to create files the framework no longer has** — and
+one was reading it when this was found.
+
+It now says what actually happens: `ownership` becomes null, `standing` derives,
+`state` derives, and `./bin/plan-findings-work.sh stamp` writes them because
+nothing else may.
+
+### `progress` and `standing` stop sharing a word
+
+The owner chose `assigned` for the slot meaning *nobody has written to a finding
+yet*, and Revision 233 shipped `pending` instead — because `progress` ignores
+ownership, so an `unclaimed` bundle would have read `progress: assigned`, which
+is false. **That substitution was made mid-implementation and mentioned rather
+than asked**, which is the pattern `0049` is about.
+
+Resolved by making the two fields genuinely different rather than one word doing
+two jobs:
+
+| | Vocabulary | Answers |
+|---|---|---|
+| `progress` | `untouched` `analyzing` `answered` `revisited` `retired` | has the reading been worked — true whoever owns it |
+| `standing` | `assigned` `analyzing` `answered` `revisited` `retired` `unclaimed` `transferred` `superseded` | that, with ownership and lineage put back in |
+
+**`assigned` belongs to `standing` alone** — it is an ownership statement, and a
+bundle nobody owns returns `unclaimed` before the derivation is reached.
+**`untouched` belongs to `progress` alone.** Neither can be false where it
+appears. 21 records restamped; four index cells moved.
+
+### The room this made, recorded before it is filled
+
+Separating `progress` from ownership left it free to describe the reading:
+**`blocked`** where a `blocks` or `evidences` edge into it is unsatisfied,
+`pending` for a change awaiting the owner, `stalled`, `halted`.
+
+**`blocked` needs nothing new.** The allocator's hold set and the interviewer's
+feasibility stage compute it on every run from edges that exist — twelve asserted
+at Revision 234 — and then discard it. It wants the precedence rule `revisited`
+has: it fires only when **every live finding is blocked**, or a five-finding
+bundle with one blocked finding reads as stopped when it is being worked.
+
+Two of the other three become derivable the day `updatedAt` is stamped, which
+turns *noticing silence* into a derivation rather than a sweep.
+
+### Validators
+
+| Checker | Result |
+|---|---|
+| `test-session-management.sh` | **48 tests, 0 failures** — one new, asserting the two vocabularies do not share `assigned` or `untouched` |
+| `verify-session-findings.sh` | counts 0 FAIL, structure 0 FAIL, headers 11 FAIL |
+| `verify-script-portability.sh` | 0 WARN, 0 FAIL |
+| `verify-doc-paths.sh --all` | 0 MISSING, 0 ANCHOR BROKEN |
+| `plan-findings-work.sh check` | no `UNSTAMPED`, no `STORED-DISAGREES` |
+
+Under an owner override for the rule edits. Findings bundles and session records
+that mention the tag files are **readings and are not touched** — they are
+evidence of when they were written.
 
 ## Revision 234 — the edges, and the first allocation that had a reason
 

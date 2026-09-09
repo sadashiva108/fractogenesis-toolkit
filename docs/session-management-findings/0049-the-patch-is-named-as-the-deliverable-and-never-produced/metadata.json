@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T20:49:12+00:00",
+  "updatedAt": "2026-09-09T00:47:24+00:00",
   "number": "0049",
   "bundleName": "0049-the-patch-is-named-as-the-deliverable-and-never-produced",
   "kind": "session-management",
@@ -24,9 +24,9 @@
     "git status and git diff --name-only over Revision 231's change set",
     "Revisions 211 through 231 in APPLY-MANIFEST.md"
   ],
-  "standing": "unclaimed",
-  "progress": "pending",
-  "ownership": "unclaimed",
+  "standing": "assigned",
+  "progress": "untouched",
+  "ownership": null,
   "lineage": null,
   "findings": [
     {

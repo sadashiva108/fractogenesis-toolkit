@@ -55,7 +55,7 @@ and 5 and went straight to 6 on a shorter phrase.
 
 A **findings bundle** is a *reading* of something that already exists: what was
 found, where it is felt, what it costs to leave. It holds findings; each finding
-carries its own status, and the bundle's status is derived from them.
+carries its own status, and the bundle's **standing** is derived from them.
 
 A **session** is a unit of work with an owner. It creates its own bundle, owns
 findings bundles, and its state is derived from what it owns.
@@ -136,13 +136,13 @@ name is what prompts, indexes and other bundles cite by path; renaming it on
 every status transition breaks every one of those citations at once, which is why
 the status lives in a file inside the directory rather than in its name.
 
-**`findings.md` carries a per-finding status table.** The bundle's status is read
-off it by the ladder in `docs/legend.md` — first row that matches wins. A tag or
-an index row that disagrees with the findings is a bug in whoever moved it last.
+**`findings.md` carries a per-finding status table.** The bundle's standing is read
+off it by the ladder in `docs/legend.md` — first row that matches wins. An
+index row that disagrees with the findings is a bug in whoever moved it last.
 
 ## 4. Permission
 
-Carried by the **finding**, not the bundle. The bundle status is what another
+Carried by the **finding**, not the bundle. The bundle standing is what another
 session checks first, to know whether opening it is worth anything. The table in
 `docs/legend.md` is the rule; in short:
 
@@ -165,6 +165,16 @@ session checks first, to know whether opening it is worth anything. The table in
 - **`resolved` is frozen.** `reopened` is the only door, and going through it is
   a declared act.
 - **`unclaimed` is closed to everyone.** It is parked until the owner assigns it.
+
+**A finding has a `status`, a bundle has a `standing`, a session has a `state`**,
+and no value belongs to more than one of the three — Revision 233. A bare value
+says which set it came from: `framing` is a finding, `analyzing` is a bundle,
+`handoff` is a session.
+
+**A bundle carries two derived fields.** `progress` is the reading alone and is
+true whoever owns it; `standing` is that with ownership and lineage put back in,
+so it adds `assigned` — owned, and nobody has written to a finding yet — and the
+three declared values. Both are stamped, never hand-written.
 
 ## 5. Sessions
 

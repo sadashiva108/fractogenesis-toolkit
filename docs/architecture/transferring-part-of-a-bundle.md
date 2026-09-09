@@ -38,7 +38,7 @@ says *only the owning session* — for recording to a `decided` finding, for the
 first read that moves a status, for `resolving`. Each becomes *the session owning
 **that** finding*, in the legend, in section 4, and in section 9's prohibitions.
 
-**3. No owner can derive the bundle's status alone.** The ladder reads every
+**3. No owner can derive the bundle's standing alone.** The ladder reads every
 finding. With ownership split, neither session sees the whole, and a bundle whose
 remaining findings are all inert while transferred ones are live has no row that
 fits.

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T16:32:42+00:00",
+  "updatedAt": "2026-09-09T00:47:24+00:00",
   "number": "0046",
   "bundleName": "0046-supersession-moves-authority-and-leaves-every-citation-behind",
   "kind": "session-management",
@@ -22,9 +22,9 @@
     "`.github/session-management-instructions.md` section 9",
     "every document citing `0028`, and `0028` itself"
   ],
-  "standing": "unclaimed",
-  "progress": "pending",
-  "ownership": "unclaimed",
+  "standing": "assigned",
+  "progress": "untouched",
+  "ownership": null,
   "lineage": null,
   "findings": [
     {

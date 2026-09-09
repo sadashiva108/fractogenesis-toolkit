@@ -17,7 +17,7 @@
   "scope": null,
   "read": [],
   "standing": "superseded",
-  "progress": "pending",
+  "progress": "untouched",
   "ownership": null,
   "lineage": {
     "supersededBy": "0030",

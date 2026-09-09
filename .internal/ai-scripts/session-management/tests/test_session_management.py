@@ -22,7 +22,7 @@ sys.path.insert(0, HERE)
 import fixtures as F                                          # noqa: E402
 from plan_findings_work import (                              # noqa: E402
     Graph, ladder, conformance, allocate, select, frontier, rank, is_clone,
-    FINDING_STATUSES, BUNDLE_STANDINGS, OUTCOMES, KINDS, INERT, quality,
+    FINDING_STATUSES, BUNDLE_STANDINGS, BUNDLE_PROGRESS, OUTCOMES, KINDS, INERT, quality,
     bundle_standing, bundle_progress, session_state, stamp_derived)
 
 
@@ -54,7 +54,7 @@ class TestLadder(unittest.TestCase):
         self.assertEqual(set(FINDING_STATUSES) & set(BUNDLE_STANDINGS), set())
 
     def test_every_finding_un_started(self):
-        self.assertEqual(ladder(["un-started", "un-started"]), "pending")
+        self.assertEqual(ladder(["un-started", "un-started"]), "untouched")
 
     def test_every_finding_withdrawn(self):
         self.assertEqual(ladder(["withdrawn", "withdrawn"]), "retired")
@@ -361,6 +361,16 @@ class TestDerivedStateIsStoredAndChecked(unittest.TestCase):
     The legend permits a stored copy of a derived value only where a check fails
     when it drifts. These are that check.
     """
+
+    def test_assigned_is_standing_only_and_untouched_is_progress_only(self):
+        owned = F.bundle("0100", ("un-started",), ownership=None)
+        self.assertEqual(bundle_progress(owned), "untouched")
+        self.assertEqual(bundle_standing(owned), "assigned")
+        free = F.bundle("0101", ("un-started",), ownership="unclaimed")
+        self.assertEqual(bundle_progress(free), "untouched")
+        self.assertEqual(bundle_standing(free), "unclaimed")
+        self.assertNotIn("assigned", BUNDLE_PROGRESS)
+        self.assertNotIn("untouched", BUNDLE_STANDINGS)
 
     def test_standing_layers_ownership_over_progress(self):
         b = F.bundle("0100", ("framing",), ownership="unclaimed")

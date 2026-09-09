@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T16:32:42+00:00",
+  "updatedAt": "2026-09-09T00:47:24+00:00",
   "number": "0042",
   "bundleName": "0042-no-check-reads-the-rendered-page",
   "kind": "session-management",
@@ -18,9 +18,9 @@
   ],
   "scope": "cross-cutting in effect, session management in subject \u2014 the rule is about what a session must verify before handing work over, not about anything this project does",
   "read": [],
-  "standing": "unclaimed",
-  "progress": "pending",
-  "ownership": "unclaimed",
+  "standing": "assigned",
+  "progress": "untouched",
+  "ownership": null,
   "lineage": null,
   "findings": [
     {

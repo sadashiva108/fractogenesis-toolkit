@@ -10,10 +10,21 @@ is one place to change.
 it should acquire an example that only makes sense in one project: the next
 project inherits the file, and an example it cannot follow reads as noise.
 
-Both are recorded twice and the two must agree: in the bundle's row in its
-`INDEX.md`, which is authoritative, and in a tag file on the bundle directory —
-A bundle's status is **derived from its findings**, in `metadata.json`, and
-stored nowhere. It was carried in a marker filename until Revision 222 --
+**Where these values live.** A bundle's `standing` and `progress`, and a
+session's `state`, are **derived and then stored** in `metadata.json` — written
+by `./bin/plan-findings-work.sh stamp` and by nothing else. They were derived and
+*not* stored until Revision 232; the owner reversed that so a reader need not run
+a ladder to learn where a bundle stands, and `docs/architecture/state-as-data.md`
+section 4.4 carries the reasoning and the condition. **The condition is the one
+this file already imposes on any copy of a derived fact**: a copy is permitted
+where a check fails when it drifts, and `./bin/plan-findings-work.sh check`
+reports `UNSTAMPED` for a null and `STORED-DISAGREES` for a value that has come
+adrift from what it derives from.
+
+The bundle's row in its `INDEX.md` carries the same value for a reader scanning
+the tree, and the two must agree.
+
+A standing was carried in a marker filename until Revision 222 --
 `STATUS-<status>` for a findings bundle, `STATE-<state>` for a session -- which
 made every transition an unlink plus a create and put three unrelated facts in
 one slot. `0043` F1 is the reading; `0039` D7 is why it mattered. The derivation
@@ -25,7 +36,7 @@ one.
 ## Findings statuses
 
 A findings bundle is a reading of something that already exists. **Status is
-carried by each finding; the bundle's status is derived from them.** The status
+carried by each finding; the bundle's standing is derived from them.** The status
 says how far a reading has been taken, never how anyone feels about it.
 
 ### A finding
@@ -222,30 +233,73 @@ Derived from its findings, with two exceptions. **Read the ladder in order and
 take the first row that matches** — the cases overlap, and the order is what
 makes the answer single-valued.
 
-| # | Status | When |
-|---:|---|---|
-| 1 | `unclaimed` | no session owns it — never assigned since creation, or released back to the queue |
-| 1b | `transferred` | handed to a named session that has not yet read it. Ownership has moved; the reading has not been picked up |
-| 2 | `superseded` | replaced whole by a later bundle, **from any status**. Declared, not derived. Bundles only |
-| 3 | `un-started` | every finding is `un-started` |
-| 4 | `withdrawn` | every finding is `withdrawn` |
-| 5 | `resolved` | every finding is `resolved` or `withdrawn`, and at least one is `resolved` |
-| 6 | `reopened` | at least one finding is `reopened`, and every other finding is **inert** — `resolved` or `withdrawn` |
-| 7 | `analyzing` | any other combination |
+**The ladder is five rows, not eight.** `state-as-data.md` section 4.4 split the
+one overloaded slot into three fields, and three of the old rows left with it:
+`unclaimed` and `transferred` are the `ownership` field, `superseded` is
+`lineage`. They were never derivations — they are declared, and they sat in the
+ladder as overrides because there was nowhere else to put them.
 
-Rows 1, 1b and 2 are the exceptions. `unclaimed` and `transferred` are about
-**ownership** rather than progress — one has no owner, the other has a new one
-who has not looked yet — and `superseded` is declared by the session that
-replaces the bundle. Rows 3 to 7 are read off the findings. Neither `unclaimed`
-nor `transferred` ever applies to a single finding.
+**`progress` — derived from the finding rows, in order, first match wins:**
+
+| # | `progress` | When |
+|---:|---|---|
+| 1 | `untouched` | every finding is `un-started` |
+| 2 | `retired` | every finding is `withdrawn` |
+| 3 | `answered` | every finding is `resolved` or `withdrawn`, and at least one is `resolved` |
+| 4 | `revisited` | at least one finding is `reopened`, and every other finding is **inert** — `resolved` or `withdrawn` |
+| 5 | `analyzing` | any other combination |
+
+**`standing` — `progress` with ownership and lineage put back in:**
+
+| If | Then `standing` is |
+|---|---|
+| `lineage.supersededBy` is set | `superseded` |
+| `ownership` is set | that value — `unclaimed` or `transferred` |
+| `progress` is `untouched` and a session owns it | **`assigned`** |
+| otherwise | whatever `progress` says |
+
+`assigned` is the one value `standing` has that `progress` does not, and
+`untouched` the one `progress` has that `standing` does not. Neither can be false
+where it appears: a bundle nobody owns returns `unclaimed` before the derivation
+is reached, so it never reads `assigned`.
+
+**A finding has a status; a bundle has a standing; a session has a state, and no
+value belongs to more than one of the three.** So this table is a translation and
+not a lookup: finding statuses go in the right-hand column and a bundle standing
+comes out of the left. Read a bare `framing` and you know it is a finding; read
+`analyzing` and you know it is a bundle. Revision 233.
+
+**`progress` is where this vocabulary will grow.** Separating it from ownership
+left it free to say things about the *reading* that ownership has no view on — a
+change proposed and awaiting the owner (`pending`), a reading nobody has touched
+for weeks (`stalled`), one deliberately stopped (`halted`). Two of those three
+fall out of a timestamp the schema already has and does not populate, and the
+third needs a marker for a proposal. **None of them belongs in `standing`**,
+which answers who owns this and whether the reading still stands. Recorded here
+so the room is used deliberately rather than filled by the first thing that needs
+a word.
+
+**A bundle carries two derived fields and they answer different questions.**
+`progress` is the reading alone — `untouched`, `analyzing`, `answered`,
+`revisited`, `retired` — and is true whoever owns the bundle. `standing` is that
+with ownership and lineage put back in, which gives it two values `progress` does
+not have: **`assigned`**, where the reading is `untouched` and a session owns it,
+and the three declared values above. A bundle nobody owns reads `unclaimed` and
+never `assigned`. Both are stamped by
+`./bin/plan-findings-work.sh stamp` and neither is written by hand.
+
+`unclaimed` and `transferred` are about **ownership** rather than progress — one
+has no owner, the other has a new one who has not looked yet — and `superseded`
+is declared by the session that replaces the bundle. **Neither `unclaimed` nor
+`transferred` ever applies to a single finding.**
 
 **A finding is inert when it is `resolved` or `withdrawn`** — finished, either
 way, with nothing outstanding. The other four are live.
 
-**`reopened` dominates the inert.** A bundle of reopened findings, or reopened
-findings sitting among resolved and withdrawn ones, is `reopened`: the only work
+**`revisited` dominates the inert.** A bundle of reopened findings, or reopened
+findings sitting among resolved and withdrawn ones, is `revisited`: the only work
 in it is the reopening, and the index should say so rather than saying `analyzing`
-and making a reader open it to find out. But `reopened` alongside anything else
+and making a reader open it to find out. But a reopened finding alongside anything else
 live — a `framing` finding, a `decided` one, an `un-started` one — is a genuinely
 mixed bundle, and that is `analyzing`. Row 6 fires only when reopening is the
 whole of the live work.
@@ -256,11 +310,11 @@ declared, or released back to the queue by one. It is closed to every session,
 appears in no `findings-manifest.md`, and is carried only by its index row. The
 owner assigns it; that makes the receiving session `active` and moves the bundle
 to whatever its findings derive, which for a bundle nobody has read is
-`un-started`.
+`assigned`.
 
-`resolved` counts a `withdrawn` finding as finished. Withdrawing is a deliberate
+`answered` counts a `withdrawn` finding as finished. Withdrawing is a deliberate
 end, not an omission, so it does not hold a bundle open — but a bundle of nothing
-but withdrawals is `withdrawn`, not `resolved`, because nothing was carried
+but withdrawals is `retired`, not `answered`, because nothing was carried
 through. That is why row 4 sits above row 5.
 
 `superseded` and `withdrawn` are terminal and neither is a failure. The
@@ -288,26 +342,26 @@ nothing about the reading.** Unlike a session `handoff`, which moves everything 
 session holds and is a property of the session, a transfer moves **one bundle**
 and is a property of that bundle. The target session must already exist —
 created, cloned, or long running — because a transfer names a destination where a
-handoff creates one. A bundle may be transferred from `un-started`, `reopened` or
-`analyzing`; the terminal statuses have nothing to move.
+handoff creates one. A bundle may be transferred while it stands `assigned`, `revisited` or
+`analyzing`; the terminal standings have nothing to move.
 
 ### What another session may do
 
 The owning session reads finding statuses directly — it is already inside. Every
 other session checks the bundle first, then the finding.
 
-| Bundle status | Then, inside it |
+| Bundle standing | Then, inside it |
 |---|---|
-| `un-started`, `unclaimed`, `withdrawn` | nothing is readable |
+| `assigned`, `unclaimed`, `retired`, `superseded` | nothing is readable |
 | `superseded` | **readable by any session, writable by none** — including the session that owns it. The reading is retained precisely so it can be read; §9 spends three prohibitions keeping it that way |
 | `analyzing`, `reopened`, `resolved` | `framing` — read and record · `decided` — read only · `resolved` — read only · `un-started`, `reopened`, `withdrawn` — not readable |
 
-An `un-started` bundle offers nothing to anyone but its owner, by definition: all
+An `assigned` bundle offers nothing to anyone but its owner, by definition: all
 its findings are `un-started`, and the owner's first reading is what opens them.
 
 ## Who may write to a findings bundle
 
-Permission is carried by the **finding**, not the bundle; the bundle status is
+Permission is carried by the **finding**, not the bundle; the bundle standing is
 what another session checks first to know whether opening it is worth anything.
 The table at the end of *Findings statuses* is the whole rule. In prose:
 

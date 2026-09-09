@@ -43,9 +43,9 @@ def ladder(sts):
     vocabularies"; until now four rows of it were identity and read as one set.
     """
     if not sts:
-        return "pending"
+        return "untouched"
     if all(s == "un-started" for s in sts):
-        return "pending"
+        return "untouched"
     if all(s == "withdrawn" for s in sts):
         return "retired"
     if all(s in INERT for s in sts) and "resolved" in sts:
@@ -284,6 +284,10 @@ def rank(g, fr):
 def bundle_standing(b):
     """Where this bundle stands. NOT `status` -- that word belongs to a finding.
 
+    Standing is progress with ownership and lineage put back in, which is why it
+    has two values progress does not: `assigned` where progress says `untouched`
+    and somebody owns it, and the three declared values.
+
     Three vocabularies, three words: a finding has a **status**, a bundle has a
     **standing**, a session has a **state**. They were two words for three sets
     until Revision 233, and the two that shared one also share four of their
@@ -299,7 +303,14 @@ def bundle_standing(b):
         return "superseded"
     if b.get("ownership"):
         return b["ownership"]
-    return ladder([x.get("status") for x in (b.get("findings") or [])])
+    p = bundle_progress(b)
+    # Owned, and nobody has written to a finding yet. `untouched` is true of the
+    # reading; `assigned` is the same fact with the owner put back in, and it is
+    # the one a reader scanning an index wants. A bundle nobody owns never
+    # reaches here -- it returned `unclaimed` above.
+    if p == "untouched":
+        return "assigned"
+    return p
 
 
 def bundle_progress(b):
@@ -372,7 +383,12 @@ def _rewrite(path, fields):
 # ------------------------------------------------------- conformance detectors
 FINDING_STATUSES = ("un-started", "framing", "decided", "resolved",
                     "reopened", "withdrawn")
-BUNDLE_STANDINGS = ("pending", "analyzing", "answered", "revisited", "retired",
+# Two derived fields, two vocabularies that overlap where they mean the same
+# thing. `untouched` belongs to progress alone -- it is true whoever owns the
+# bundle. `assigned` belongs to standing alone -- it is an ownership statement,
+# and a bundle nobody owns reads `unclaimed` instead.
+BUNDLE_PROGRESS = ("untouched", "analyzing", "answered", "revisited", "retired")
+BUNDLE_STANDINGS = ("assigned", "analyzing", "answered", "revisited", "retired",
                     "unclaimed", "transferred", "superseded")
 OWNERSHIP = (None, "unclaimed", "transferred")
 OUTCOMES = ("accepted", "rejected")          # plus `refined -> DX`, `superseded -> DX`

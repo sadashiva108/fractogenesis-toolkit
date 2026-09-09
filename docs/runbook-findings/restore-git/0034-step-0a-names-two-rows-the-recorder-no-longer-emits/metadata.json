@@ -16,8 +16,8 @@
   "feltAt": [],
   "scope": "runbook. Felt in `restore-git.md` Step 0a and in `check_restore_git()` in `bin/record-restore-prereqs.sh`.",
   "read": [],
-  "standing": "pending",
-  "progress": "pending",
+  "standing": "assigned",
+  "progress": "untouched",
   "ownership": null,
   "lineage": null,
   "findings": [

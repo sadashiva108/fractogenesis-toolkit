@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-09T00:47:24+00:00",
+  "bundleName": "typed-bundles-architecture-20260909-004724",
+  "createdOn": "2026-09-09",
+  "owners": [],
+  "transcript": null,
+  "scratchPath": null,
+  "resources": [
+    {
+      "what": "Repository checkout",
+      "path": "the owner's checkout; the session works in a scratch copy of it",
+      "notes": null
+    }
+  ],
+  "ownedBundles": [
+    {
+      "number": "0037",
+      "path": "docs/session-management-findings/0037-findings-architecture-conformance/",
+      "assignedOn": "2026-09-09"
+    },
+    {
+      "number": "0038",
+      "path": "docs/session-management-findings/0038-sessions-write-into-the-tree-the-owner-commits-from/",
+      "assignedOn": "2026-09-09"
+    },
+    {
+      "number": "0045",
+      "path": "docs/session-management-findings/0045-a-session-whose-output-is-not-a-bundle-has-no-state/",
+      "assignedOn": "2026-09-09"
+    },
+    {
+      "number": "0047",
+      "path": "docs/session-management-findings/0047-the-tree-carries-drift-no-check-looks-for/",
+      "assignedOn": "2026-09-09"
+    },
+    {
+      "number": "0048",
+      "path": "docs/session-management-findings/0048-the-session-capacity-limit-has-no-datum/",
+      "assignedOn": "2026-09-09"
+    }
+  ],
+  "contributions": [],
+  "declaredState": null,
+  "indexNotes": null,
+  "ended": {
+    "on": null,
+    "reason": null,
+    "revisions": [],
+    "commits": [],
+    "disposals": []
+  },
+  "state": "active"
+}

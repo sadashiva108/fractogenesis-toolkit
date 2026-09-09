@@ -304,6 +304,39 @@ counting findings and weighting by write category, because work is not modelled.
 With tasks it can cost the actual work — which is `0048` answered from the side
 that can actually answer it.
 
+### 4.8 Where `progress` grows
+
+Splitting `progress` from `standing` left the first free to describe the
+**reading** while the second describes ownership and lineage. That room is the
+point, and three words are already waiting for it:
+
+| Candidate | Says | What it needs first |
+|---|---|---|
+| **`blocked`** | a `blocks` or `evidences` edge into it is unsatisfied | **nothing — the graph computes this today** |
+| `pending` | a change is proposed and awaits the owner | a marker on the proposal — the interviewer's turn, which nothing records |
+| `stalled` | nobody has touched this for weeks | `updatedAt`, which the schema has and does not populate — `0043` F8 |
+| `halted` | deliberately stopped short of withdrawn | a reason field, and a rule for what resumes it |
+
+**`blocked` is available now and the other three are not.** The allocator's hold
+set and the interviewer's feasibility stage both already compute it from
+`blocks` and `evidences` edges — twelve of which were asserted at Revision 234 —
+and it is currently reported in a run and thrown away rather than written down.
+Writing it into `progress` costs one line and makes a bundle say for itself what
+the allocator would otherwise have to be run to discover.
+
+**It needs the precedence rule `revisited` has.** A five-finding bundle with one
+blocked finding is not blocked; it is being worked. `blocked` fires only when
+**every live finding is blocked** — when being blocked is the whole of the live
+work — or a reader learns nothing from the word.
+
+**Two of the remaining three become derivable** the day `updatedAt` is stamped,
+which makes *noticing silence* — open since `findings-and-sessions.md` section
+11.6 — a derivation rather than a scheduled sweep.
+
+**None of them belongs in `standing`.** Standing answers *who owns this and does
+the reading still stand*; a stalled reading is still owned and still authoritative.
+Keeping them apart is what the split was for.
+
 ## 5. What it costs, stated
 
 - **A second lifecycle to keep honest.** The findings lifecycle took thirty

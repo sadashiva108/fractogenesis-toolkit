@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T16:32:42+00:00",
+  "updatedAt": "2026-09-09T00:47:24+00:00",
   "number": "0038",
   "bundleName": "0038-sessions-write-into-the-tree-the-owner-commits-from",
   "kind": "session-management",
@@ -24,9 +24,9 @@
     "\u00a7\u00a74b\u20134d, in `.github/copilot-instructions.md`",
     "all 27 existing findings bundles, checked for overlap"
   ],
-  "standing": "unclaimed",
+  "standing": "analyzing",
   "progress": "analyzing",
-  "ownership": "unclaimed",
+  "ownership": null,
   "lineage": {
     "supersedes": "0028",
     "on": null

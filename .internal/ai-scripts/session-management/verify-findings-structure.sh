@@ -145,7 +145,7 @@ if d.get("ownership"):                                   print(d["ownership"]); 
 if (d.get("lineage") or {}).get("supersededBy"):         print("superseded");   raise SystemExit
 st = [f["status"] for f in d.get("findings", [])]
 INERT = ("resolved", "withdrawn")
-if not st or all(s == "un-started" for s in st):                       print("pending")
+if not st or all(s == "un-started" for s in st):                       print("assigned" if not d.get("ownership") else "untouched")
 elif all(s == "withdrawn" for s in st):                                print("retired")
 elif all(s in INERT for s in st) and any(s == "resolved" for s in st): print("answered")
 elif any(s == "reopened" for s in st) and all(s in INERT for s in st if s != "reopened"):

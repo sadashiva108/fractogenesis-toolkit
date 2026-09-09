@@ -16,8 +16,8 @@
   "feltAt": [],
   "scope": "cross-cutting. `.internal/artifact-runs.sh`, `bin/reindex-artifact-runs.sh`, and every category that is ever renamed.",
   "read": [],
-  "standing": "pending",
-  "progress": "pending",
+  "standing": "assigned",
+  "progress": "untouched",
   "ownership": null,
   "lineage": null,
   "findings": [

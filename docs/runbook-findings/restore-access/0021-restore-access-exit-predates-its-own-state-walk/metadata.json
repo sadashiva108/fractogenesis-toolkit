@@ -16,8 +16,8 @@
   "feltAt": [],
   "scope": null,
   "read": [],
-  "standing": "pending",
-  "progress": "pending",
+  "standing": "assigned",
+  "progress": "untouched",
   "ownership": null,
   "lineage": null,
   "findings": [
