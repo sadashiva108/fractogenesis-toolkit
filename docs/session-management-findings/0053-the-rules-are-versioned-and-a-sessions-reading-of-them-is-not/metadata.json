@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T07:15:00+00:00",
+  "updatedAt": "2026-09-09T07:50:00+00:00",
   "number": "0053",
   "bundleName": "0053-the-rules-are-versioned-and-a-sessions-reading-of-them-is-not",
   "kind": "session-management",
@@ -25,19 +25,19 @@
     ".internal/ai-scripts/session-management/doc_currency.py and doc-currency.json",
     ".claude/settings.json, and the hook events it does not use"
   ],
-  "standing": "unclaimed",
-  "progress": "untouched",
-  "ownership": "unclaimed",
+  "standing": "analyzing",
+  "progress": "analyzing",
+  "ownership": null,
   "lineage": null,
   "findings": [
     {
       "id": "F1",
       "statement": "A session records what it read and never which version, so nothing can tell it a rule has moved",
-      "status": "un-started",
+      "status": "framing",
       "statusReason": null,
       "statusNote": null,
-      "updatedAt": null,
-      "sectionHeading": "F1 — a read is a point-in-time fact and the record does not treat it as one",
+      "updatedAt": "2026-09-09",
+      "sectionHeading": "F1 \u2014 a read is a point-in-time fact and the record does not treat it as one",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -45,17 +45,80 @@
     {
       "id": "F2",
       "statement": "The instrument that would say so is critical, correct, and has never been armed",
-      "status": "un-started",
+      "status": "framing",
       "statusReason": null,
       "statusNote": null,
-      "updatedAt": null,
-      "sectionHeading": "F2 — the watch is correct, critical, and has never been armed",
+      "updatedAt": "2026-09-09",
+      "sectionHeading": "F2 \u2014 the watch is correct, critical, and has never been armed",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F3",
+      "statement": "No watch covers references/, docs/rules/, or most of docs/architecture/",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-09",
+      "sectionHeading": "F3 \u2014 the categories a reader most needs watched have no watch at all",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
     }
   ],
-  "decisions": [],
+  "decisions": [
+    {
+      "id": "D1",
+      "decision": "Every watch is armed, and a watch that has never been armed is reported as a defect rather than as a state",
+      "findings": [
+        "F2"
+      ],
+      "decided": "2026-09-09",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D1 \u2014 arm them, and make an unarmed watch a defect"
+    },
+    {
+      "id": "D2",
+      "decision": "references/, docs/rules/ and the unwatched architecture records and ledgers get watches, against the instruction sets, prompts and configs they describe",
+      "findings": [
+        "F3"
+      ],
+      "decided": "2026-09-09",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D2 \u2014 watch the categories that describe something else"
+    },
+    {
+      "id": "D3",
+      "decision": "A session records the blob it read each foundational document at, and refresh becomes a comparison rather than a re-read",
+      "findings": [
+        "F1"
+      ],
+      "decided": "2026-09-09",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D3 \u2014 the missing operand is the baseline, not the hash"
+    },
+    {
+      "id": "D4",
+      "decision": "The notification is a hook that injects and never blocks, and it is built last",
+      "findings": [
+        "F1",
+        "F2",
+        "F3"
+      ],
+      "decided": "2026-09-09",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D4 \u2014 a hook that injects, never blocks, and comes last"
+    }
+  ],
   "contributions": [],
   "edges": [
     {
@@ -77,7 +140,17 @@
       "basis": "asserted",
       "asserted_by": "assurance-coverage-20260908-204724",
       "asserted_on": "2026-09-09"
+    },
+    {
+      "kind": "blocks",
+      "from": "0050/F5",
+      "to": "0053/F3",
+      "why": "until the coverage sweep can see references/ and docs/rules/, watches added there cannot be checked for completeness",
+      "reason": null,
+      "basis": "asserted",
+      "asserted_by": "assurance-coverage-20260908-204724",
+      "asserted_on": "2026-09-09"
     }
   ],
-  "indexNotes": "Recorded 2026-09-09 by the session that hit it, and not owned. The design it implies is a commission at docs/ideas/knowing-what-you-have-read.md"
+  "indexNotes": "Assigned 2026-09-09 and read on assignment. Four decisions, and the order they are carried out in is the decision that matters"
 }

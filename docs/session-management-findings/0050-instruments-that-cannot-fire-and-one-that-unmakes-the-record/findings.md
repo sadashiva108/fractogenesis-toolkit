@@ -25,10 +25,11 @@ writes, and the bundle type for those does not exist yet.
 
 | # | Finding | Status |
 |---:|---|---|
-| F1 | The write-location guard does not cover the tool a bridged session actually writes through, and reads the wrong root | `un-started` |
-| F2 | A schema exemption guards on a marker file Revision 222 deleted, so the exemption can never apply | `un-started` |
-| F3 | Running `extract-metadata.py` on a healthy tree destroys every asserted edge and every stamped value | `un-started` |
-| F4 | Four instruments in three days were correct and could not do their job, and no bundle covers that class | `un-started` |
+| F1 | The write-location guard does not cover the tool a bridged session actually writes through, and reads the wrong root | `framing` |
+| F2 | A schema exemption guards on a marker file Revision 222 deleted, so the exemption can never apply | `framing` |
+| F3 | Running `extract-metadata.py` on a healthy tree destroys every asserted edge and every stamped value | `framing` |
+| F4 | Four instruments in three days were correct and could not do their job, and no bundle covers that class | `framing` |
+| F5 | The coverage sweep keeps a second copy of a directory list `docs/INDEX.md` owns, and 43 files are invisible to it | `framing` |
 
 ## F1 — the guard does not run where the writing happens
 
@@ -178,3 +179,60 @@ and it is quieter**: a check that passes because it never ran is indistinguishab
 in every report from a check that ran and found nothing. Six loud failures were
 all caught within a revision. These four were caught between two and sixteen
 revisions late, and three of them only because a session tried to rely on them.
+
+## F5 — the instrument that reports the gap has a gap it cannot report
+
+**Recorded 2026-09-09**, on the owner's question whether references, architecture
+records, ledgers and rules could be watched for staleness against the instruction
+sets and prompts.
+
+`verify-doc-currency.sh --coverage` exists to answer exactly that: *what is not
+watched*. It reports **21 unwatched files** and closes with
+
+> *An unwatched file is not protected. Add it to a watch, or accept it
+> deliberately — the point is that the gap is visible rather than assumed.*
+
+**The gap is not visible.** `doc_currency.py:104` walks five hard-coded roots:
+
+```text
+roots = (".claude", ".github", "docs/architecture", "docs/ledgers", "docs/ideas")
+```
+
+plus four named files. It does not walk `docs/rules/`, `references/`, or the
+repository-root runbooks. Counted 2026-09-09:
+
+| | files |
+|---|---:|
+| watched | 30 |
+| reported unwatched | 21 |
+| **neither watched nor reported** | **43** |
+
+The 43 are `docs/rules/` (1), `references/` (11) and the 31 runbooks at the
+repository root. **They are not unwatched; they are invisible**, and the
+difference matters because the report's own closing sentence promises the
+opposite.
+
+### The sharpest instance is the newest rule document in the repository
+
+`docs/rules/rule-enforcement-avenues.md` was created by **Revision 249**. The
+root list predates it, and nothing updated the list when the directory was made.
+So the document that argues about where a rule can be enforced is outside the
+sweep that would tell anyone it had gone stale.
+
+### Why this is a second copy rather than an oversight
+
+**`docs/INDEX.md` is authoritative for the list of directories under `docs/`** —
+the session management set says so, and `docs/INDEX.md` line 13 lists `rules/`
+with a description. The correct list exists, is maintained, and is one file away.
+
+`doc_currency.py` keeps its own copy in code. `docs/legend.md` permits a copy
+only where it is generated, or where a check fails when it drifts — and **nothing
+fails when this one drifts.** It is the same shape as `verify-doc-paths.sh`'s
+hard-coded document list, and as `0036`'s prune whose stated reason expired at
+Revision 162 and went on being quoted for six weeks.
+
+**This is the fifth member of F4's family and the first that is not merely
+unarmed.** The others are correct instruments that cannot fire. This one fires,
+reports a number, and the number is wrong by 43 in the direction that reads as
+safety.
+

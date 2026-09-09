@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T07:20:00+00:00",
+  "updatedAt": "2026-09-09T07:50:00+00:00",
   "bundleName": "assurance-coverage-20260908-204724",
   "createdOn": "2026-09-09",
   "owners": [
@@ -82,20 +82,17 @@
     {
       "number": "0051",
       "notes": "The target-platform claim has no run behind it. Recorded and owned 2026-09-09 at the owner's direction; F2 resolved by the ledger"
-    }
-  ],
-  "contributions": [
-    {
-      "bundle": "0050",
-      "date": "2026-09-09",
-      "what": "Recorded the bundle from the reading that decided 0049 and 0042. Not owned"
     },
     {
-      "bundle": "0053",
-      "date": "2026-09-09",
-      "what": "Recorded the bundle from its own stale read of the instruction set. Not owned"
+      "number": "0050",
+      "notes": "Instruments that cannot fire. Assigned 2026-09-09; F5 added on the first reading"
+    },
+    {
+      "number": "0053",
+      "notes": "The rules are versioned and a session's reading of them is not. Assigned 2026-09-09"
     }
   ],
+  "contributions": [],
   "declaredState": null,
   "indexNotes": null,
   "ended": {

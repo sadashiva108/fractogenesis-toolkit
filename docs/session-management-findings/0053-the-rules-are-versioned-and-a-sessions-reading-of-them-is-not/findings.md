@@ -16,15 +16,17 @@
 - `.internal/ai-scripts/session-management/doc_currency.py` and `doc-currency.json`
 - `.claude/settings.json`, and the hook events it does not use
 
-Recorded by the session that hit it. **Not owned** — it belongs beside `0050`,
-which the same session recorded and did not own, and the owner assigns.
+Recorded by the session that hit it, and **assigned to it by the owner on
+2026-09-09**, together with `0050`. Read on assignment, so every finding is
+`framing`.
 
 ## Findings
 
 | # | Finding | Status |
 |---:|---|---|
-| F1 | A session records what it read and never which version, so nothing can tell it a rule has moved | `un-started` |
-| F2 | The instrument that would say so is `critical`, correct, and has never been armed | `un-started` |
+| F1 | A session records what it read and never which version, so nothing can tell it a rule has moved | `framing` |
+| F2 | The instrument that would say so is `critical`, correct, and has never been armed | `framing` |
+| F3 | No watch covers `references/`, `docs/rules/`, or most of `docs/architecture/` | `framing` |
 
 ## F1 — a read is a point-in-time fact and the record does not treat it as one
 
@@ -94,3 +96,31 @@ been replaced, on the day the owner asked it to check for exactly that.
 worse than an absent one: the run is clean, the non-zero exit is explained away
 as *never confirmed*, and the gap costs nothing to leave. A gap that is visible
 and free is a gap.
+
+## F3 — the categories a reader most needs watched have no watch at all
+
+The seven watches cover 30 files. Their dependents are the two session prompts,
+`.claude/CLAUDE.md`, `README.md`, three architecture records, one ledger and the
+session-management scripts and tests.
+
+**Nothing watches:**
+
+| Category | Files | Watched |
+|---|---:|---|
+| `references/` — the toolkit's reference documents | 11 | **0** |
+| `docs/rules/` | 1 | **0** |
+| `docs/architecture/` | 11 | 4 |
+| `docs/ledgers/` | 6 | 1 |
+| repository-root runbooks | 31 | 0 |
+
+Every one of those describes something that lives elsewhere and changes without
+them. `references/environment-variable-reference.md` describes `reimage.env.example`,
+which is a **source** in the `environment` watch and has no edge to the reference.
+`references/toolkit-environment-reference.md` and
+`references/master-directory-reference.md` are in the same position.
+
+**This is not the same finding as F2.** F2 is that the watches which exist have
+never been armed. F3 is that the watches which would cover these categories were
+never written. Arming fixes nothing here, and extending fixes nothing while
+unarmed — which is why the order matters and why they are two findings.
+

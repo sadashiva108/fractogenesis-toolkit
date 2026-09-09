@@ -1,18 +1,18 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T02:05:00+00:00",
+  "updatedAt": "2026-09-09T07:50:00+00:00",
   "number": "0050",
   "bundleName": "0050-instruments-that-cannot-fire-and-one-that-unmakes-the-record",
   "kind": "session-management",
   "subKind": null,
   "subject": "Three instruments are correct and cannot fire, and one unmakes the record it reads",
   "recordedOn": "2026-09-09",
-  "recordedOccasion": "while deciding 0049 and 0042 — three of the four were found by trying to use the thing they guard.",
+  "recordedOccasion": "while deciding 0049 and 0042 \u2014 three of the four were found by trying to use the thing they guard.",
   "recordedBy": {
     "sessionBundle": "assurance-coverage-20260908-204724",
     "sessionId": null
   },
-  "severity": "F3 is high and is the only one whose damage is partly irrecoverable — one run destroys fifteen asserted edges and a hundred and seven stamped values; the 107 re-derive and the 15 do not, and twelve of those are Revision 234's decisions. F1 and F2 cost nothing today and cost everything on the day they are relied on.",
+  "severity": "F3 is high and is the only one whose damage is partly irrecoverable \u2014 one run destroys fifteen asserted edges and a hundred and seven stamped values; the 107 re-derive and the 15 do not, and twelve of those are Revision 234's decisions. F1 and F2 cost nothing today and cost everything on the day they are relied on.",
   "feltAt": [
     ".claude/settings.json",
     ".claude/hooks/write-location-guard.sh",
@@ -27,19 +27,19 @@
     "docs/architecture/state-as-data.md sections 6, 8 and 9",
     "every metadata.json in docs/, at HEAD and after one extraction run"
   ],
-  "standing": "unclaimed",
-  "progress": "untouched",
-  "ownership": "unclaimed",
+  "standing": "analyzing",
+  "progress": "analyzing",
+  "ownership": null,
   "lineage": null,
   "findings": [
     {
       "id": "F1",
       "statement": "The write-location guard does not cover the tool a bridged session actually writes through, and reads the wrong root",
-      "status": "un-started",
+      "status": "framing",
       "statusReason": null,
       "statusNote": null,
-      "updatedAt": null,
-      "sectionHeading": "F1 — the guard does not run where the writing happens",
+      "updatedAt": "2026-09-09",
+      "sectionHeading": "F1 \u2014 the guard does not run where the writing happens",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -47,11 +47,11 @@
     {
       "id": "F2",
       "statement": "A schema exemption guards on a marker file Revision 222 deleted, so the exemption can never apply",
-      "status": "un-started",
+      "status": "framing",
       "statusReason": null,
       "statusNote": null,
-      "updatedAt": null,
-      "sectionHeading": "F2 — an exemption for a file that no longer exists",
+      "updatedAt": "2026-09-09",
+      "sectionHeading": "F2 \u2014 an exemption for a file that no longer exists",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -59,11 +59,11 @@
     {
       "id": "F3",
       "statement": "Running extract-metadata.py on a healthy tree destroys every asserted edge and every stamped value",
-      "status": "un-started",
+      "status": "framing",
       "statusReason": null,
       "statusNote": null,
-      "updatedAt": null,
-      "sectionHeading": "F3 — the extractor unmakes the record",
+      "updatedAt": "2026-09-09",
+      "sectionHeading": "F3 \u2014 the extractor unmakes the record",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -71,17 +71,42 @@
     {
       "id": "F4",
       "statement": "Four instruments in three days were correct and could not do their job, and no bundle covers that class",
-      "status": "un-started",
+      "status": "framing",
       "statusReason": null,
       "statusNote": null,
-      "updatedAt": null,
-      "sectionHeading": "F4 — the class, and nothing covers it",
+      "updatedAt": "2026-09-09",
+      "sectionHeading": "F4 \u2014 the class, and nothing covers it",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F5",
+      "statement": "The coverage sweep keeps a second copy of a directory list docs/INDEX.md owns, and 43 files are invisible to it",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-09",
+      "sectionHeading": "F5 \u2014 the instrument that reports the gap has a gap it cannot report",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
     }
   ],
-  "decisions": [],
+  "decisions": [
+    {
+      "id": "D1",
+      "decision": "The coverage sweep derives its roots from docs/INDEX.md instead of keeping a second copy, and reports the repository-root runbooks and references/ explicitly",
+      "findings": [
+        "F5"
+      ],
+      "decided": "2026-09-09",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D1 \u2014 take the list from the file that owns it"
+    }
+  ],
   "contributions": [],
   "edges": [
     {
@@ -125,5 +150,5 @@
       "asserted_on": "2026-09-09"
     }
   ],
-  "indexNotes": "Recorded by the session that owns 0049, from the reading that decided it. Not owned. F3 is high and already costly"
+  "indexNotes": "Assigned 2026-09-09 and read on assignment. F5 added from the reading: the coverage report is blind to 43 files"
 }

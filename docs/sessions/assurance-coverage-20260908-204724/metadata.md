@@ -60,6 +60,9 @@ patch was handed over — `0049` F3.
 | 0046 | [`0046-supersession-moves-authority-and-leaves-every-citation-behind`](../../session-management-findings/0046-supersession-moves-authority-and-leaves-every-citation-behind/) | 2026-09-09 | `analyzing` — both `decided`, nothing repaired on purpose |
 | 0049 | [`0049-the-patch-is-named-as-the-deliverable-and-never-produced`](../../session-management-findings/0049-the-patch-is-named-as-the-deliverable-and-never-produced/) | 2026-09-09 | `analyzing` — F2 and F3 resolved against Revision 232 |
 
+| 0050 | [`0050-instruments-that-cannot-fire-and-one-that-unmakes-the-record`](../../session-management-findings/0050-instruments-that-cannot-fire-and-one-that-unmakes-the-record/) | 2026-09-09 | `analyzing` — recorded here unowned, assigned the same day; F5 added on the first reading |
+| 0053 | [`0053-the-rules-are-versioned-and-a-sessions-reading-of-them-is-not`](../../session-management-findings/0053-the-rules-are-versioned-and-a-sessions-reading-of-them-is-not/) | 2026-09-09 | `analyzing` — recorded here unowned, assigned the same day; F3 added on the first reading |
+
 Ownership is not stated in this file. It is derived by scanning
 `findings-manifest.md` across `docs/sessions/`, which is the rule Revision 222
 installed — **adding the manifest row IS the assignment**, and removing it is the
@@ -70,4 +73,3 @@ release.
 | Bundle | Date | Contribution |
 |---|---|---|
 | `0050` | 2026-09-09 | Recorded the bundle from the reading that decided `0049` and `0042`. **Not owned** — three of its four fixes are toolkit writes and the bundle type for those does not exist yet |
-| `0053` | 2026-09-09 | Recorded the bundle from this session's own stale read of the instruction set — it followed a commit-message rule that had been replaced four revisions earlier. **Not owned** |
