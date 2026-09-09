@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T05:40:00-04:00",
+  "updatedAt": "2026-09-09T05:45:00-04:00",
   "number": "0045",
   "bundleName": "0045-a-session-whose-output-is-not-a-bundle-has-no-state",
   "kind": "session-management",
@@ -22,9 +22,9 @@
     "`docs/sessions/INDEX.md`, all seven rows",
     "`.github/session-management-instructions.md` section 5"
   ],
-  "standing": "analyzing",
+  "standing": "transferred",
   "progress": "analyzing",
-  "ownership": null,
+  "ownership": "transferred",
   "lineage": null,
   "findings": [
     {

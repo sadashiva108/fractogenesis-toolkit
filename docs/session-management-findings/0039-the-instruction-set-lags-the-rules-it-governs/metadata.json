@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T09:05:00-04:00",
+  "updatedAt": "2026-09-09T05:45:00-04:00",
   "number": "0039",
   "bundleName": "0039-the-instruction-set-lags-the-rules-it-governs",
   "kind": "session-management",
@@ -16,9 +16,9 @@
   "feltAt": [],
   "scope": "instruction-set. The fix lands in `.github/session-management-instructions.md`, `.claude/CLAUDE.md`, and `docs/architecture/findings-and-sessions.md`. Recorded against `.github/copilot-instructions.md` \u00a7\u00a74b\u20134d, which commit `1c48deb` deleted; D13 re-ruled the address.",
   "read": [],
-  "standing": "analyzing",
+  "standing": "transferred",
   "progress": "analyzing",
-  "ownership": null,
+  "ownership": "transferred",
   "lineage": {
     "supersedes": "0029",
     "on": null

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T08:20:00-04:00",
+  "updatedAt": "2026-09-09T05:45:00-04:00",
   "number": "0047",
   "bundleName": "0047-the-tree-carries-drift-no-check-looks-for",
   "kind": "session-management",
@@ -22,9 +22,9 @@
     "`docs/legend.md`, the ladder and the two permission tables",
     "`docs/architecture/state-as-data.md` sections 4.3 and 4.4"
   ],
-  "standing": "analyzing",
+  "standing": "transferred",
   "progress": "analyzing",
-  "ownership": null,
+  "ownership": "transferred",
   "lineage": null,
   "findings": [
     {

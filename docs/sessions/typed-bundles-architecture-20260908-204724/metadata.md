@@ -47,12 +47,28 @@ release.
 | Bundle | Direction | From / To | Date | Revision |
 |---|---|---|---|---:|
 | [`0039`](../../session-management-findings/0039-the-instruction-set-lags-the-rules-it-governs/) | in | `session-management-re-evaluation-20260906-110105` | 2026-09-09 | 248 |
+| [`0037`](../../session-management-findings/0037-findings-architecture-conformance/) | out | `entity-model-and-vocabulary-20260909-053548` | 2026-09-09 | 261 |
+| [`0039`](../../session-management-findings/0039-the-instruction-set-lags-the-rules-it-governs/) | out | `entity-model-and-vocabulary-20260909-053548` | 2026-09-09 | 261 |
+| [`0045`](../../session-management-findings/0045-a-session-whose-output-is-not-a-bundle-has-no-state/) | out | `entity-model-and-vocabulary-20260909-053548` | 2026-09-09 | 261 |
+| [`0048`](../../session-management-findings/0048-the-session-capacity-limit-has-no-datum/) | out | `entity-model-and-vocabulary-20260909-053548` | 2026-09-09 | 261 |
+| [`0038`](../../session-management-findings/0038-sessions-write-into-the-tree-the-owner-commits-from/) | out | `drift-and-the-write-boundary-20260909-053548` | 2026-09-09 | 261 |
+| [`0047`](../../session-management-findings/0047-the-tree-carries-drift-no-check-looks-for/) | out | `drift-and-the-write-boundary-20260909-053548` | 2026-09-09 | 261 |
 
 A transfer is a change of ownership and this file is authoritative for who held
 what and when, which is why it is recorded on both sides. `0039` stands
 `transferred` until this session's first write to it **as owner**; F21, F22,
 F23 and D21 were written here as contributions while the bundle was owned
 elsewhere, and a contribution is not an act of ownership.
+
+**Six transfers out at Revision 261, and nothing released to `unclaimed`.** The
+session stands `handoff`, owns nothing, and every bundle it held has a named
+owner from the moment that revision is committed —
+`docs/sessions/INDEX.md`'s condition that a session may not end leaving a bundle
+owned by a session that has stopped. **`0039` leaves having arrived by transfer**,
+so this table records both legs of its journey and is the only place they sit
+together. `0052`, recorded here and never owned, is not in this table: it was
+`unclaimed`, and an assignment is not a transfer. The record is
+[`handoff-20260909-053548.md`](handoff-20260909-053548.md).
 
 ## Contributions
 

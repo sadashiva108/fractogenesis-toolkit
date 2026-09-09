@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T08:20:00-04:00",
+  "updatedAt": "2026-09-09T05:45:00-04:00",
   "number": "0037",
   "bundleName": "0037-findings-architecture-conformance",
   "kind": "session-management",
@@ -21,9 +21,9 @@
     "`docs/legend.md`",
     "every bundle and index in `docs/`"
   ],
-  "standing": "answered",
+  "standing": "transferred",
   "progress": "answered",
-  "ownership": null,
+  "ownership": "transferred",
   "lineage": {
     "supersedes": "0027",
     "on": null

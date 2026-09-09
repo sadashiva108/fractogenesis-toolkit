@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T07:10:00-04:00",
+  "updatedAt": "2026-09-09T05:45:00-04:00",
   "number": "0052",
   "bundleName": "0052-a-change-that-invalidates-earlier-work-has-no-plan-and-no-check",
   "kind": "session-management",
@@ -25,9 +25,9 @@
     ".github/session-management-instructions.md sections 7, 9, 9b",
     "commit 1c48deb and commit 88aed77"
   ],
-  "standing": "unclaimed",
+  "standing": "assigned",
   "progress": "untouched",
-  "ownership": "unclaimed",
+  "ownership": null,
   "lineage": null,
   "findings": [
     {

@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-09T05:45:00-04:00",
+  "bundleName": "entity-model-and-vocabulary-20260909-053548",
+  "createdOn": "2026-09-09",
+  "owners": [],
+  "transcript": null,
+  "scratchPath": null,
+  "resources": [
+    {
+      "what": "Repository checkout",
+      "path": "/Users/dkittrell/workspace/shiva/fractogenesis-toolkit",
+      "notes": null
+    },
+    {
+      "what": "Artifact volume",
+      "path": "the mounted `reimage-\u2026` run directory",
+      "notes": "Read-only unless the owner grants a write per run."
+    },
+    {
+      "what": "Patch directory",
+      "path": "/Users/dkittrell/reimage-workspace/patches",
+      "notes": null
+    },
+    {
+      "what": "Scratch copy",
+      "path": null,
+      "notes": "Filled by the session on its first write."
+    },
+    {
+      "what": "Commit created against",
+      "path": "13b00b3",
+      "notes": "Revision 260."
+    }
+  ],
+  "ownedBundles": [
+    {
+      "number": "0037",
+      "path": "docs/session-management-findings/0037-findings-architecture-conformance/",
+      "assignedOn": "2026-09-09",
+      "notes": "Transferred in from typed-bundles-architecture-20260908-204724 at Revision 261. Not an assignment. Arrived with all seven findings `resolved` and one reading owed: the legend never says a finding may record a fact established rather than a defect."
+    },
+    {
+      "number": "0039",
+      "path": "docs/session-management-findings/0039-the-instruction-set-lags-the-rules-it-governs/",
+      "assignedOn": "2026-09-09",
+      "notes": "Transferred in at Revision 261, its second transfer. It reached typed-bundles-architecture-20260908-204724 from session-management-re-evaluation-20260906-110105 at Revision 248. D23 is decided and deliberately not carried out."
+    },
+    {
+      "number": "0045",
+      "path": "docs/session-management-findings/0045-a-session-whose-output-is-not-a-bundle-has-no-state/",
+      "assignedOn": "2026-09-09",
+      "notes": "Transferred in at Revision 261. This session bundle is F1's second live instance: created before its session, it derives `active` on day zero over four bundles nobody has opened."
+    },
+    {
+      "number": "0048",
+      "path": "docs/session-management-findings/0048-the-session-capacity-limit-has-no-datum/",
+      "assignedOn": "2026-09-09",
+      "notes": "Transferred in at Revision 261. Untouched; every finding is `un-started`."
+    }
+  ],
+  "contributions": [],
+  "declaredState": null,
+  "indexNotes": "**The entity-model session, and the critical path.** `0039` D23 and the relocation proposed in `docs/ideas/the-collection-and-the-project.md` are both parked behind its vocabulary and entity work, on the owner's ordering: vocabulary and entities, then structure, then D23, then build.",
+  "ended": {
+    "on": null,
+    "reason": null,
+    "revisions": [],
+    "commits": [],
+    "disposals": []
+  },
+  "state": "active"
+}

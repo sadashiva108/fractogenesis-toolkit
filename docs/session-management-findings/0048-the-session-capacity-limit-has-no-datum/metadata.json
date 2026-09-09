@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T00:47:24+00:00",
+  "updatedAt": "2026-09-09T05:45:00-04:00",
   "number": "0048",
   "bundleName": "0048-the-session-capacity-limit-has-no-datum",
   "kind": "session-management",
@@ -25,9 +25,9 @@
     "every docs/sessions/*/metadata.json",
     "the capacity report over all seven sessions, 2026-09-08"
   ],
-  "standing": "assigned",
+  "standing": "transferred",
   "progress": "untouched",
-  "ownership": null,
+  "ownership": "transferred",
   "lineage": null,
   "findings": [
     {

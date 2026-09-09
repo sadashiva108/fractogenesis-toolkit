@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T04:12:00-04:00",
+  "updatedAt": "2026-09-09T05:45:00-04:00",
   "bundleName": "typed-bundles-architecture-20260908-204724",
   "createdOn": "2026-09-09",
   "owners": [
@@ -38,39 +38,7 @@
       "notes": null
     }
   ],
-  "ownedBundles": [
-    {
-      "number": "0037",
-      "path": "docs/session-management-findings/0037-findings-architecture-conformance/",
-      "assignedOn": "2026-09-09"
-    },
-    {
-      "number": "0038",
-      "path": "docs/session-management-findings/0038-sessions-write-into-the-tree-the-owner-commits-from/",
-      "assignedOn": "2026-09-09"
-    },
-    {
-      "number": "0039",
-      "path": "docs/session-management-findings/0039-the-instruction-set-lags-the-rules-it-governs/",
-      "assignedOn": "2026-09-09",
-      "notes": "Transferred in from session-management-re-evaluation-20260906-110105 at Revision 248, \u00a710. Not an assignment."
-    },
-    {
-      "number": "0045",
-      "path": "docs/session-management-findings/0045-a-session-whose-output-is-not-a-bundle-has-no-state/",
-      "assignedOn": "2026-09-09"
-    },
-    {
-      "number": "0047",
-      "path": "docs/session-management-findings/0047-the-tree-carries-drift-no-check-looks-for/",
-      "assignedOn": "2026-09-09"
-    },
-    {
-      "number": "0048",
-      "path": "docs/session-management-findings/0048-the-session-capacity-limit-has-no-datum/",
-      "assignedOn": "2026-09-09"
-    }
-  ],
+  "ownedBundles": [],
   "contributions": [
     {
       "bundle": "0039",
@@ -88,8 +56,8 @@
       "contribution": "F23 and D21 \u2014 \u00a77's commit-message rule states what the block excludes and never that there is one"
     }
   ],
-  "declaredState": null,
-  "indexNotes": null,
+  "declaredState": "handoff",
+  "indexNotes": "Handed off at Revision 261 to entity-model-and-vocabulary-20260909-053548 (0037, 0039, 0045, 0048) and drift-and-the-write-boundary-20260909-053548 (0038, 0047). 0052, recorded here and never owned, was assigned to the second. Owns nothing.",
   "ended": {
     "on": null,
     "reason": null,
@@ -97,5 +65,5 @@
     "commits": [],
     "disposals": []
   },
-  "state": "active"
+  "state": "handoff"
 }
