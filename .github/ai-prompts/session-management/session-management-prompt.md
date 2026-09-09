@@ -12,6 +12,20 @@ one says what *this* session is for.
 
 ---
 
+## Table of Contents
+
+- [[#Your subject|Your subject]]
+- [[#What is waiting for you|What is waiting for you]]
+- [[#Read, in this order|Read, in this order]]
+- [[#The owner's brief|The owner's brief]]
+- [[#Report before you change anything|Report before you change anything]]
+- [[#What is already known to be wrong|What is already known to be wrong]]
+- [[#What is settled and should not be re-litigated without cause|What is settled and should not be re-litigated without cause]]
+- [[#What you own, and what you must not touch|What you own, and what you must not touch]]
+- [[#What this session owes when it ends|What this session owes when it ends]]
+
+---
+
 ## Your subject
 
 **How sessions and findings bundles themselves work** — the statuses, the states,

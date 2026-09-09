@@ -14,6 +14,23 @@ is what makes the session yours.
 
 ---
 
+## Table of Contents
+
+- [[#Read these first, in this order, before doing anything|Read these first, in this order]]
+- [[#Connected folders|Connected folders]]
+- [[#Create your session bundle first|Create your session bundle first]]
+- [[#The statuses, in one paragraph|The statuses, in one paragraph]]
+- [[#The conventions, where they live|The conventions, where they live]]
+- [[#The rules you will break if nobody tells you|The rules you will break if nobody tells you]]
+- [[#Before you hand anything over|Before you hand anything over]]
+- [[#What is in flight right now|What is in flight right now]]
+- [[#What to do when you find something|What to do when you find something]]
+- [[#Markdown is what it renders as, not what it says|Markdown is what it renders as, not what it says]]
+- [[#How the owner wants a session to run|How the owner wants a session to run]]
+- [[#Standing constraints|Standing constraints]]
+
+---
+
 ## Read these first, in this order, before doing anything
 
 1. `.github/copilot-instructions.md` — points at the two instruction sets
