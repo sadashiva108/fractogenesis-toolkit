@@ -22,7 +22,8 @@ sys.path.insert(0, HERE)
 import fixtures as F                                          # noqa: E402
 from plan_findings_work import (                              # noqa: E402
     Graph, derivation_table, conformance, allocate, select, frontier, rank, is_clone,
-    FINDING_STATUSES, BUNDLE_STANDINGS, BUNDLE_PROGRESS, OUTCOMES, KINDS, INERT, quality,
+    FINDING_STATUSES, BUNDLE_STANDINGS, BUNDLE_PROGRESS, OUTCOMES,
+    POINTER_OUTCOMES, KINDS, INERT, quality,
     bundle_standing, bundle_progress, session_state, stamp_derived)
 
 
@@ -106,16 +107,33 @@ class TestVocabulary(unittest.TestCase):
         self.assertEqual(sorted(KINDS), sorted(
             ("runbook", "cross-cutting", "instruction-set", "session-management")))
 
-    def test_an_outcome_outside_the_vocabulary_is_caught(self):
-        # Revision 230 found `replaced -> DX` in two decisions. Section 11
-        # defines accepted, rejected, refined -> DX and superseded -> DX.
-        g = graph_of(F.bundle("0100", ("framing",),
-                              decisions=[F.decision("D1", ["F1"], "replaced → D5")]))
-        self.assertIn("VOCAB", codes(g))
-        g._fixture.close()
+    def test_seven_outcomes(self):
+        # docs/legend.md -> Decision outcomes. Six bare words plus the one that
+        # carries a pointer, which is matched by prefix rather than listed.
+        self.assertEqual(sorted(OUTCOMES), sorted(
+            ("proposed", "accepted", "rejected", "deferred", "retracted",
+             "voided")))
+        self.assertEqual(POINTER_OUTCOMES, ("replaced",))
 
-    def test_the_four_legal_outcomes_pass(self):
-        for o in ("accepted", "rejected", "refined → D2", "superseded → D2"):
+    def test_outcomes_and_statuses_share_no_word(self):
+        # docs/legend.md: "No word appears in both vocabularies, and a schema
+        # check asserts the two sets are disjoint." Nothing asserted it until
+        # 0047 F8; the legend has claimed this check since Revision 233.
+        words = set(OUTCOMES) | set(POINTER_OUTCOMES)
+        self.assertEqual(words & set(FINDING_STATUSES), set())
+        self.assertEqual(words & set(BUNDLE_STANDINGS), set())
+        self.assertEqual(words & set(BUNDLE_PROGRESS), set())
+
+    def test_an_outcome_outside_the_vocabulary_is_caught(self):
+        for o in ("in progress", "closed", "superseded → D5"):
+            g = graph_of(F.bundle("0100", ("framing",),
+                                  decisions=[F.decision("D1", ["F1"], o)]))
+            self.assertIn("VOCAB", codes(g), o)
+            g._fixture.close()
+
+    def test_the_seven_legal_outcomes_pass(self):
+        for o in ("proposed", "accepted", "rejected", "deferred", "retracted",
+                  "voided", "replaced → D2"):
             g = graph_of(F.bundle("0100", ("decided",),
                                   decisions=[F.decision("D1", ["F1"], o)]))
             self.assertNotIn("VOCAB", codes(g), o)
@@ -135,10 +153,16 @@ class TestPermissionShape(unittest.TestCase):
         self.assertNotIn("CLOSED-BUNDLE-LIVE-FINDING", codes(g))
         g._fixture.close()
 
-    def test_transferred_is_treated_the_same(self):
-        g = graph_of(F.bundle("0100", ("framing",), ownership="transferred"))
-        self.assertIn("CLOSED-BUNDLE-LIVE-FINDING", codes(g))
-        g._fixture.close()
+    def test_a_transferred_bundle_may_hold_worked_findings(self):
+        # docs/legend.md: "A bundle may be transferred while it stands
+        # `assigned`, `revisited` or `analyzing`", and section 10 says the same.
+        # An `analyzing` bundle has findings past `un-started` by definition, so
+        # a transfer of worked findings is permitted and not a failure.
+        for statuses in (("framing",), ("decided", "resolved"),
+                         ("reopened", "resolved")):
+            g = graph_of(F.bundle("0100", statuses, ownership="transferred"))
+            self.assertNotIn("CLOSED-BUNDLE-LIVE-FINDING", codes(g), statuses)
+            g._fixture.close()
 
 
 class TestCrossFileAgreement(unittest.TestCase):
@@ -170,6 +194,53 @@ class TestCrossFileAgreement(unittest.TestCase):
 
 # --------------------------------------------------------------- REGRESSIONS
 class TestRegressions(unittest.TestCase):
+
+    def test_0047_F7_a_transfer_of_worked_findings_is_not_a_failure(self):
+        """Revision 248 transferred `0039` with 23 findings past `un-started`.
+
+        The check reported it, and reported five more at Revision 261. Section
+        10 permits transferring a bundle that stands `analyzing`, which has
+        worked findings by definition, so the check refused an operation the
+        instruction set allows -- the last executable site of a gloss the
+        documents retired.
+        """
+        g = graph_of(F.bundle("0100", tuple(["framing"] * 23),
+                              ownership="transferred"))
+        self.assertNotIn("CLOSED-BUNDLE-LIVE-FINDING", codes(g))
+        g._fixture.close()
+
+    def test_0047_F7_unclaimed_is_still_reported(self):
+        """Only the `transferred` half went. `0001` is the live instance."""
+        g = graph_of(F.bundle("0100", ("framing",), ownership="unclaimed"))
+        rows = [r for r in conformance(g) if r[0] == "CLOSED-BUNDLE-LIVE-FINDING"]
+        self.assertEqual(len(rows), 1)
+        self.assertIn("0047 F1", rows[0][2])       # the rule it rests on is open
+        g._fixture.close()
+
+    def test_0047_F8_a_legend_outcome_is_not_a_vocabulary_failure(self):
+        """`replaced -> DX` is one of the legend's seven and the check rejected it.
+
+        Three live decisions carried it -- `0039` D1 and D4 and `0050` D1 --
+        and each was reported VOCAB by the instrument that exists to validate
+        them, while the two values Revision 233 retired passed.
+        """
+        for o in ("replaced → D13", "replaced → D5", "replaced → D2"):
+            g = graph_of(F.bundle("0100", ("decided",),
+                                  decisions=[F.decision("D1", ["F1"], o)]))
+            self.assertNotIn("VOCAB", codes(g), o)
+            g._fixture.close()
+
+    def test_0047_F8_the_retired_outcomes_are_refused(self):
+        """`refined -> DX` and `superseded -> DX` collapsed into `replaced -> DX`.
+
+        The second was also a bundle standing, which is the disjointness the
+        legend claims a check asserts.
+        """
+        for o in ("refined → D2", "superseded → D2"):
+            g = graph_of(F.bundle("0100", ("decided",),
+                                  decisions=[F.decision("D1", ["F1"], o)]))
+            self.assertIn("VOCAB", codes(g), o)
+            g._fixture.close()
 
     def test_0047_F5_a_superseding_clone_is_exempt(self):
         """The sweep's first run reported 77 hits of which 65 were correct.

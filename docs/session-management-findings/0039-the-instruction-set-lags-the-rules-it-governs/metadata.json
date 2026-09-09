@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T05:45:00-04:00",
+  "updatedAt": "2026-09-09T10:50:00-04:00",
   "number": "0039",
   "bundleName": "0039-the-instruction-set-lags-the-rules-it-governs",
   "kind": "session-management",
@@ -340,6 +340,30 @@
       "reopened": null,
       "withdrawn": null,
       "resolution": null
+    },
+    {
+      "id": "F24",
+      "statement": "`decisions.md` carries one `Session:` field and the Decisions table has no column for one, so a decision written by a session that does not own the bundle cannot be attributed \u2014 and \u00a74 invites exactly that write",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-09T10:50:00-04:00",
+      "sectionHeading": "F24 \u2014 a decision has no author, and the schema invites one",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F25",
+      "statement": "*What another session may do* has no row for `transferred`, the one standing under which a non-owner is routinely told to contribute",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-09T10:50:00-04:00",
+      "sectionHeading": "F25 \u2014 the permission table has no row for `transferred`",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
     }
   ],
   "decisions": [
@@ -647,6 +671,11 @@
       "session": "typed-bundles-architecture-20260908-204724",
       "date": "2026-09-09",
       "contribution": "Added F23 and took D21, from its own failure to hand the Revision 239 message over as a block"
+    },
+    {
+      "session": "drift-and-the-write-boundary-20260909-053548",
+      "date": "2026-09-09",
+      "what": "Added F24 and F25, both found while writing decisions into `0047` \u2014 a bundle it owns, whose `decisions.md` was begun by another session"
     }
   ],
   "edges": [

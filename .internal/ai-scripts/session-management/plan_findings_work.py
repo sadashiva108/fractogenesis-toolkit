@@ -391,7 +391,14 @@ BUNDLE_PROGRESS = ("untouched", "analyzing", "answered", "revisited", "retired")
 BUNDLE_STANDINGS = ("assigned", "analyzing", "answered", "revisited", "retired",
                     "unclaimed", "transferred", "superseded")
 OWNERSHIP = (None, "unclaimed", "transferred")
-OUTCOMES = ("accepted", "rejected")          # plus `refined -> DX`, `superseded -> DX`
+# The seven of docs/legend.md -> Decision outcomes. Six are bare words; the
+# seventh, `replaced -> DX`, carries a pointer and is matched by prefix. Until
+# 0047 F8 this line read `("accepted", "rejected")` with `refined` and
+# `superseded` accepted by prefix -- two values Revision 233 RETIRED, and four
+# the legend defines rejected. `proposed` is the default the legend stores
+# rather than leaving empty, so the default value failed its own check.
+OUTCOMES = ("proposed", "accepted", "rejected", "deferred", "retracted", "voided")
+POINTER_OUTCOMES = ("replaced",)             # `replaced -> DX`, pointer required
 KINDS = ("runbook", "cross-cutting", "instruction-set", "session-management")
 
 
@@ -435,13 +442,26 @@ def conformance(g):
             out.append(("VOCAB", n, "ownership %r" % b.get("ownership")))
         if b.get("kind") not in KINDS:
             out.append(("VOCAB", n, "kind %r" % b.get("kind")))
-        # a bundle closed to every session must hold nothing open to one
-        if b.get("ownership") in ("unclaimed", "transferred"):
+        # A bundle closed to every session must hold nothing open to one.
+        # `unclaimed` is that bundle. `transferred` is NOT: docs/legend.md and
+        # section 10 both permit transferring a bundle that stands `analyzing`,
+        # and such a bundle has findings past `un-started` by definition -- so
+        # this reported a documented, permitted operation as a conformance
+        # failure, once at Revision 248 and five times at Revision 261. It was
+        # the last executable site of the retired gloss `transferred: handed to
+        # a session that has not opened it`. 0047 F7.
+        #
+        # The half that remains rests on a rule nobody has decided: what happens
+        # to a finding when its bundle is released is 0047 F1, and it is open.
+        # The row is kept because the tree really does hold that state, and the
+        # detail says the rule is undecided rather than asserting it.
+        if b.get("ownership") == "unclaimed":
             live = [x["id"] for x in fs if x.get("status") != "un-started"]
             if live:
                 out.append(("CLOSED-BUNDLE-LIVE-FINDING", n,
-                            "%s is %s but %s are past un-started"
-                            % (n, b["ownership"], ",".join(live))))
+                            "%s is unclaimed but %s are past un-started"
+                            " -- 0047 F1, which is undecided"
+                            % (n, ",".join(live))))
         # ownership null and in no manifest: owned by nobody, or nobody said
         if b.get("ownership") is None and n not in owned \
            and b["_progress"] not in ("resolved", "withdrawn") \
@@ -451,7 +471,7 @@ def conformance(g):
         cited = set()
         for d in (b.get("decisions") or []):
             o = d.get("outcome") or ""
-            if o not in OUTCOMES and not o.startswith(("refined", "superseded")):
+            if o not in OUTCOMES and not o.startswith(POINTER_OUTCOMES):
                 out.append(("VOCAB", n, "%s outcome %r" % (d.get("id"), o)))
             fl = d.get("findings") or []
             if not fl:

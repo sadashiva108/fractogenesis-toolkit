@@ -14,15 +14,19 @@
 - `docs/legend.md`, the ladder and the two permission tables
 - `docs/architecture/state-as-data.md` sections 4.3 and 4.4
 
-**Assigned to `typed-bundles-architecture-20260908-204724` on 2026-09-09**, Revision
-237. F1 through F5 remain `un-started`: this session has written F6 and F7 and
-has not written to any of the first five, and moving them without a judgement
-being formed about each is the mass operation `0039` F12 is about.
+**Transferred to `drift-and-the-write-boundary-20260909-053548` at Revision 261**,
+having been assigned to `typed-bundles-architecture-20260908-204724` at Revision
+237 and recorded `unclaimed` before that. F7 and F8 are `resolved`; F1, F2, F3
+and F5 have not been written to and remain `un-started`, because moving them
+without a judgement being formed about each is the mass operation `0039` F12 is
+about.
 
-Recorded `unclaimed`. Not owned. **The retrofit it points at should not begin
-until the state format lands** — doing it in markdown first means doing it twice,
-and `state-as-data.md` makes two of these classes structurally impossible rather
-than checkable.
+**The retrofit this bundle points at should not begin until the state format
+lands** — doing it in markdown first means doing it twice, and
+`state-as-data.md` makes two of these classes structurally impossible rather
+than checkable. **F7 and F8 are not that retrofit**: they are defects in the
+instrument, and an instrument that misreports cannot be quoted while the
+retrofit is argued.
 
 ## Findings
 
@@ -32,10 +36,12 @@ than checkable.
 | F2 | Six `accepted` decisions never moved their finding out of `framing` | `un-started` |
 | F3 | Three bundles carry resolutions for findings that are not resolved | `un-started` |
 | F4 | Eleven `resolved` bundles have no `decisions.md`, and whether they owe one has never been decided | `resolved` |
-| F5 | A conformance sweep that does not know about superseding clones reports sixty-five false positives | `un-started` |
+| F5 | A conformance sweep that does not know about superseding clones reports sixty-five false positives | `resolved` |
 | F6 | A guard fails where a checker only reports, and the discipline that exists for checkers — a clean pass before it is trusted — has never been stated for guards | `framing` |
-| F7 | `plan_findings_work.py:439` treats `transferred` as `unclaimed` and reports a permitted transfer as a conformance failure, the last executable site of a rule the documents retired | `framing` |
-| F8 | `plan_findings_work.py` validates decision outcomes against a set the legend replaced: it accepts the retired `superseded → DX` and rejects four outcomes the legend defines | `framing` |
+| F7 | `plan_findings_work.py:439` treats `transferred` as `unclaimed` and reports a permitted transfer as a conformance failure, the last executable site of a rule the documents retired | `resolved` |
+| F8 | `plan_findings_work.py` validates decision outcomes against a set the legend replaced: it accepts the two the legend retired and rejects five of the seven it defines, one of which three live decisions already use | `resolved` |
+| F9 | The two ordering comparisons report eight rows against `superseded` bundles, which no session may write to, so the rows cannot be cleared by anyone | `framing` |
+| F10 | The clone exemption is bundle-wide and never expires, so it suppresses the comparisons on a clone whose re-reading has closed — and the `reopened` status, which retains its resolution by design, is reported everywhere else | `framing` |
 
 ## F1 — an `unclaimed` bundle holding a live finding
 
@@ -130,6 +136,31 @@ So the rule belongs in the check before the check is trusted: **a bundle whose
 comparisons** until its re-reading closes. Without it the sweep would direct a
 retrofit at sixty-five records that are already right.
 
+**Carried out at Revision 231, and nothing recorded it here.** `is_clone()` in
+`plan_findings_work.py` exempts a bundle carrying a `carried` or `successor`
+edge, or a `lineage.supersedes`, from `DECISION-AHEAD-OF-FINDING` and
+`RESOLUTION-AHEAD-OF-FINDING`; its docstring cites this finding by number, and
+two regressions in the suite name it. **The finding stood `un-started` for
+thirty-three revisions after its remedy shipped.** Revision 231's manifest entry
+records the test suite and the capacity and does not mention the exemption, so
+there was nothing to find but the code. **This is `0052` F1's subject arriving in
+the bundle `0052` F1 cites**, and it is the reason `docs/rules/README.md` §6
+says to read the tree before writing the finding.
+
+**Measured 2026-09-09 against Revision 267.** The sweep reports **12** ordering
+rows, not 77: one `DECISION-AHEAD-OF-FINDING` and eleven
+`RESOLUTION-AHEAD-OF-FINDING`. The 65 are gone, and `0030` — one of the three
+bundles F3 lists — went with them, because `0030` supersedes `0009` and is
+precisely the correct-by-construction case this finding describes. **F3's table
+is one row shorter than it was and neither F3 nor this finding said so**, and
+`0036`, a second of its three, has since reached `answered`. F3's one surviving
+row is `0035`.
+
+**What the remedy did not do is F9 and F10**, recorded below rather than folded
+in here: the exemption is per bundle and permanent where this finding asked for
+*until its re-reading closes*, and the comparisons still report bundles nobody
+may write to.
+
 ## F6 — the discipline exists for checkers and has never been stated for guards
 
 F5 is the third instrument in this repository to report mass failure against a
@@ -195,6 +226,21 @@ one report an allocator run puts in front of the owner. `0036` is the standing
 lesson about a baseline that cannot be trusted; this is that, in the conformance
 column.
 
+**Measured 2026-09-09 by the owning session, against Revision 267.** `check`
+reported **52** conformance findings, **thirteen** of them this row. Five are the
+`transferred` half — `0037`, `0038`, `0039`, `0045` and `0047`, the transfers
+Revision 261 made — and **one of the five is this bundle**, so the check reported
+its own transfer to the session that owns the finding against it. Removing that
+half takes the row from thirteen to eight and `check` from 52 to 43.
+
+**The other eight are the `unclaimed` half, and seven of them arrived at Revision
+264.** `0001` stood alone until the assurance session closed and released seven
+bundles, every one holding findings past `un-started` — `0041`, `0042`, `0046`,
+`0049`, `0050`, `0051` and `0053`. **So `0047` F1 went from one live instance to
+eight in a single revision, by a documented and correct operation**, and the half
+of this check that survives is now most of the column. That is the argument for
+keeping the row and naming F1 in it rather than deleting either.
+
 ## F8 — the outcome check enforces a vocabulary the legend replaced
 
 `.internal/ai-scripts/session-management/plan_findings_work.py`:
@@ -218,14 +264,115 @@ rejected by the instrument that exists to validate them, and `proposed` is the
 one the legend says is *stored rather than left empty, so an unset outcome is a
 load error and not a reading* — the default value fails its own check.
 
+**Corrected 2026-09-09 by the owning session: it rejects five of the seven, not
+four, and the fifth is in use.** `replaced → DX` is the legend's seventh outcome
+and the check has no prefix for it — the two prefixes it carries are the two the
+legend retired. `check` reports it now, on four live decisions: `0039` D1
+(`replaced → D13`), `0039` D4 (`replaced → D5`), `0050` D1 (`replaced → D2`) and
+`0053` D2 (`replaced → D5`), the fourth having appeared at Revision 264 — **the
+count rises with every session that writes a conformant decision.** The
+correction matters because it moves this finding from a
+latent defect to a firing one, and **`0039` D4 is the decision that retrofitted
+itself** from `superseded → D5` to `replaced → D5` — conforming to the legend
+is what made it fail.
+
 **This is F7's defect in the same file, one function apart**, and the same shape:
 a closed set in code that the documents moved on from. F7 is `transferred` read
 as `unclaimed`; this is the outcome vocabulary read as it stood before Revision
 233. **Two instances make it a property of the file rather than a slip**, which is
 why it is recorded here rather than folded into F7.
 
-**What it costs to leave.** Nothing today, because no decision in the tree uses
-the four rejected values — which is itself the point: the check has never been
-exercised against a conformant decision, so its failure is invisible until
-somebody writes one. The first `deferred` outcome written will look like the
-author's mistake.
+**And the tests held both in place.** `tests/test_session_management.py` carried
+`test_the_four_legal_outcomes_pass`, asserting that `refined → D2` and
+`superseded → D2` produce no `VOCAB` row, and
+`test_an_outcome_outside_the_vocabulary_is_caught`, asserting that
+`replaced → D5` **does** — the legend's outcome pinned as the failure and the
+two retired ones pinned as correct. `test_transferred_is_treated_the_same` did
+the same for F7, in a class whose docstring cites `docs/legend.md`. The file
+separates **contracts**, which assert what the documents say, from
+**regressions**, which assert that a defect cannot return, and all three were
+contracts. **So the check and its suite moved together and stayed wrong
+together**: a contract is written from the same understanding the code was
+written under, and nothing compares either to the legend. That is the third
+instance of the property, and it is the one that made the first two durable.
+
+**What it costs to leave.** Recorded as costing nothing today, on the reading
+that no decision in the tree uses a rejected value. **That was wrong by one
+value.** Four decisions use `replaced → DX` and `check` reports every one of
+them as a vocabulary failure, so the instrument is telling the owner that four
+conformant decisions are malformed. The original point stands for the other four
+— nothing has yet been written `deferred`, `retracted`, `voided` or `proposed`,
+so **the first one will look like the author's mistake** — and the finding now
+has an instance rather than an argument.
+
+## F9 — the sweep reports rows that nobody is permitted to clear
+
+Eight of the eleven `RESOLUTION-AHEAD-OF-FINDING` rows standing at Revision 267
+are in `0031` and `0032`. Both are **`superseded`**, replaced whole by `0040` and
+`0041` at the ground-up re-evaluation.
+
+`docs/legend.md` and §9 are unambiguous about what that means: a superseded
+bundle is **readable by any session and writable by none, including the session
+that owns it**, and §9 spends three prohibitions keeping it that way. Its
+`findings.md` is not edited — not to add a pointer, not to repair a citation, not
+to soften a conclusion.
+
+**So the sweep is reporting a state that the rules forbid anyone from changing.**
+The rows are permanent by construction. They are not false in the way F5's
+sixty-five were false — `0031` F1 really is `framing` and really does carry a
+resolution — but they are unactionable, which costs a reader the same thing: a
+number that cannot go down is not a signal, and eight of eleven is most of the
+column.
+
+`is_clone()` exempts the **successor** and says why. Nothing exempts the
+**predecessor**, and the predecessor is the one nobody may touch. The two halves
+of a supersession are treated as one case by a check that knows about the
+relationship, which is what makes this a defect in the instrument rather than a
+reading of the tree.
+
+**What it costs to leave.** The same as F5, one step further on: the retrofit
+this bundle points at cannot use the column, because eight of its eleven rows
+name work that must not be done. And a reader who does not know the rule will
+try — editing a superseded `findings.md` is a plausible reading of the row, and
+it is the one act §9 exists to prevent.
+
+**What this finding does not claim.** That the rows should be deleted. A
+superseded bundle's drift is worth seeing once; what it is not is a conformance
+failure against a live tree. Whether that is a separate report, a suppressed
+class or a counted-and-excluded line is what F9 owes.
+
+## F10 — the exemption has no expiry, and one status is exempted nowhere
+
+F5 asked for an exemption **until the clone's re-reading closes**. `is_clone()`
+tests for a `carried` or `successor` edge, or a `lineage.supersedes` — three
+facts that are true of a clone for as long as it exists. **The exemption is
+permanent.**
+
+While the clone's findings are still awaiting re-reading the two comparisons are
+the ones being suppressed, and correctly. Afterwards they are suppressed anyway:
+a clone that closes its re-reading, is later reopened, and acquires a genuine
+decision ahead of a genuine finding is the one bundle in the tree where nothing
+will say so. Seven bundles are clones today — `0030`, `0036`, `0037` through
+`0041` — and five of the seven are the re-evaluation, so this is not a corner.
+
+**The mirror of it is `reopened`.** `RESOLUTION-AHEAD-OF-FINDING` fires on any
+finding carrying a resolution whose status is not `resolved` or `withdrawn`, and
+`reopened` is neither. But §9a is explicit that reopening is the door out of
+`resolved` and that `decisions.md` and `resolutions.md` stand as they were, so a
+`reopened` finding **retains its resolution by design**. The check would report
+every one of them. **No finding in the tree is `reopened` today**, which is why
+nothing has noticed — the same shape as F8, whose four rejected outcomes had
+never been written either.
+
+So the exemption is too broad in one direction and absent in the other, and both
+halves have the same cause: the comparison asks *is this bundle a clone* where
+the question is *is this finding awaiting a re-reading*. **The status is on the
+finding and the exemption is on the bundle**, one level up from the fact it
+depends on.
+
+**What it costs to leave.** Nothing measurable today — no clone has closed a
+re-reading and no finding is `reopened` — which is exactly what F8 costs and what
+F8 says about that: a check that has never been exercised against the case it
+governs fails silently, and the first person to hit it reads the failure as their
+own mistake. **The first reopening in this repository will produce a conformance
+failure for doing the thing §9a prescribes.**

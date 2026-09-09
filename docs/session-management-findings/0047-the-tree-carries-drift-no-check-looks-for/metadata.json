@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T05:45:00-04:00",
+  "updatedAt": "2026-09-09T10:45:00-04:00",
   "number": "0047",
   "bundleName": "0047-the-tree-carries-drift-no-check-looks-for",
   "kind": "session-management",
@@ -22,9 +22,9 @@
     "`docs/legend.md`, the ladder and the two permission tables",
     "`docs/architecture/state-as-data.md` sections 4.3 and 4.4"
   ],
-  "standing": "transferred",
+  "standing": "analyzing",
   "progress": "analyzing",
-  "ownership": "transferred",
+  "ownership": null,
   "lineage": null,
   "findings": [
     {
@@ -83,14 +83,19 @@
     {
       "id": "F5",
       "statement": "A conformance sweep that does not know about superseding clones reports sixty-five false positives",
-      "status": "un-started",
+      "status": "resolved",
       "statusReason": null,
       "statusNote": null,
-      "updatedAt": null,
+      "updatedAt": "2026-09-09T10:45:00-04:00",
       "sectionHeading": "F5 \u2014 the sweep is wrong before it is right",
       "reopened": null,
       "withdrawn": null,
-      "resolution": null
+      "resolution": {
+        "resolvedBy": "D4",
+        "whatWasDone": "Nothing, by decision. `is_clone()` exempted superseding clones from both ordering comparisons at Revision 231; the row records the revision that did the work, not the one that noticed",
+        "revision": 231,
+        "commit": "c1da011"
+      }
     },
     {
       "id": "F6",
@@ -107,23 +112,57 @@
     {
       "id": "F7",
       "statement": "`plan_findings_work.py:439` treats `transferred` as `unclaimed` and reports a permitted transfer as a conformance failure, the last executable site of a rule the documents retired",
+      "status": "resolved",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-09T10:30:00-04:00",
+      "sectionHeading": "F7 \u2014 a check refuses an operation the instruction set permits",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": {
+        "resolvedBy": "D2",
+        "whatWasDone": "`plan_findings_work.py` no longer reports a `transferred` bundle under `CLOSED-BUNDLE-LIVE-FINDING`; the `unclaimed` half stays and its detail names `0047` F1 as undecided",
+        "revision": 268,
+        "commit": null
+      }
+    },
+    {
+      "id": "F8",
+      "statement": "`plan_findings_work.py` validates decision outcomes against a set the legend replaced: it accepts the two the legend retired and rejects five of the seven it defines, one of which three live decisions already use",
+      "status": "resolved",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-09T10:30:00-04:00",
+      "sectionHeading": "F8 \u2014 the outcome check enforces a vocabulary the legend replaced",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": {
+        "resolvedBy": "D3",
+        "whatWasDone": "`OUTCOMES` is the legend's six bare values with `replaced` matched by prefix; the two retired prefixes are gone, and a contract test asserts the disjointness the legend has claimed since Revision 233",
+        "revision": 268,
+        "commit": null
+      }
+    },
+    {
+      "id": "F9",
+      "statement": "The two ordering comparisons report eight rows against `superseded` bundles, which no session may write to, so the rows cannot be cleared by anyone",
       "status": "framing",
       "statusReason": null,
       "statusNote": null,
-      "updatedAt": "2026-09-09T05:40:00-04:00",
-      "sectionHeading": "F7 \u2014 a check refuses an operation the instruction set permits",
+      "updatedAt": "2026-09-09T10:45:00-04:00",
+      "sectionHeading": "F9 \u2014 the sweep reports rows that nobody is permitted to clear",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
     },
     {
-      "id": "F8",
-      "statement": "`plan_findings_work.py` validates decision outcomes against a set the legend replaced: it accepts the retired `superseded \u2192 DX` and rejects four outcomes the legend defines",
+      "id": "F10",
+      "statement": "The clone exemption is bundle-wide and never expires, so it suppresses the comparisons on a clone whose re-reading has closed \u2014 and the `reopened` status, which retains its resolution by design, is reported everywhere else",
       "status": "framing",
       "statusReason": null,
       "statusNote": null,
-      "updatedAt": "2026-09-09T08:20:00-04:00",
-      "sectionHeading": "F8 \u2014 the outcome check enforces a vocabulary the legend replaced",
+      "updatedAt": "2026-09-09T10:45:00-04:00",
+      "sectionHeading": "F10 \u2014 the exemption has no expiry, and one status is exempted nowhere",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -141,6 +180,42 @@
       "answersAsOf": "2026-09-09T08:20:00-04:00",
       "voidedReason": null,
       "sectionHeading": "D1 \u2014 the ten owe nothing, and the rule says so again"
+    },
+    {
+      "id": "D2",
+      "decision": "`transferred` leaves the closed-bundle assertion in `plan_findings_work.py` entirely; `unclaimed` keeps it, and its detail names `0047` F1 as the undecided rule the row rests on. The code name is unchanged",
+      "findings": [
+        "F7"
+      ],
+      "decided": "2026-09-09",
+      "outcome": "accepted",
+      "answersAsOf": "2026-09-09T10:30:00-04:00",
+      "voidedReason": null,
+      "sectionHeading": "D2 \u2014 a transfer is a permitted operation, so the check stops calling it a failure"
+    },
+    {
+      "id": "D3",
+      "decision": "`OUTCOMES` becomes the legend's six bare outcomes with `replaced` matched by prefix; the two retired prefixes go; and a contract test asserts the disjointness `docs/legend.md` has claimed a schema check performs since Revision 233",
+      "findings": [
+        "F8"
+      ],
+      "decided": "2026-09-09",
+      "outcome": "accepted",
+      "answersAsOf": "2026-09-09T10:30:00-04:00",
+      "voidedReason": null,
+      "sectionHeading": "D3 \u2014 the outcome vocabulary becomes the legend's, and something asserts it"
+    },
+    {
+      "id": "D4",
+      "decision": "F5 is recorded `resolved` against the work that already answered it \u2014 `is_clone()`, shipped at Revision 231 \u2014 rather than re-done; what the remedy did not cover is opened as F9 and F10 instead of being folded into the resolution",
+      "findings": [
+        "F5"
+      ],
+      "decided": "2026-09-09",
+      "outcome": "accepted",
+      "answersAsOf": "2026-09-09T10:45:00-04:00",
+      "voidedReason": null,
+      "sectionHeading": "D4 \u2014 a finding answered by work nobody recorded is resolved against that work"
     }
   ],
   "contributions": [],

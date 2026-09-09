@@ -9,15 +9,16 @@ Statuses are defined in [`docs/legend.md`](../../legend.md).
 | # | Bundle | Kind | Subject | Findings | Standing | Notes |
 |---:|---|---|---|---:|---|---|
 | 0038 | [`0038-sessions-write-into-the-tree-the-owner-commits-from`](../../session-management-findings/0038-sessions-write-into-the-tree-the-owner-commits-from/) | `session-management` | Sessions write into the tree the owner commits from | 7 | `transferred` | All seven `framing`. F1–F5 are the shared-tree consequences, F6 the write-kind distinction the discipline does not make, F7 the guardability test behind `docs/rules/rule-enforcement-avenues.md`. `0049/F1 relates-to 0038/F1`, which is the assurance session's |
-| 0047 | [`0047-the-tree-carries-drift-no-check-looks-for`](../../session-management-findings/0047-the-tree-carries-drift-no-check-looks-for/) | `session-management` | The tree carries status drift that no check looks for | 8 | `transferred` | The drift inventory. F4 is `resolved` — its blocking edge from `0037/F1` is discharged. **F5, F7 and F8 are defects in the instruments themselves**, and F5 must be fixed before any number this bundle quotes can be read |
+| 0047 | [`0047-the-tree-carries-drift-no-check-looks-for`](../../session-management-findings/0047-the-tree-carries-drift-no-check-looks-for/) | `session-management` | The tree carries status drift that no check looks for | 10 | `analyzing` | The drift inventory. **F7 and F8 are `resolved`** at Revision 268 — both were defects in `plan_findings_work.py`, and the transfer cleared on that write. F4 was resolved at Revision 255. **F5 is answered in the code and unrecorded**: the clone exemption is in `is_clone()` citing this finding, and the finding still reads `un-started`. F1, F2, F3 remain `un-started` |
 | 0052 | [`0052-a-change-that-invalidates-earlier-work-has-no-plan-and-no-check`](../../session-management-findings/0052-a-change-that-invalidates-earlier-work-has-no-plan-and-no-check/) | `session-management` | A change that invalidates earlier work has neither a plan nor a check | 2 | `assigned` | **Assigned at Revision 261 at the owner's direction**, having been recorded `unclaimed` by `typed-bundles-architecture-20260908-204724` at Revision 252. F1 is the reading behind `0037`'s regression: `1c48deb` reverted seven resolved findings and nothing noticed |
 
-**3 bundles · 17 findings**, 16 of them live.
+**3 bundles · 19 findings**, 15 of them live.
 
-**`0038` and `0047` read `transferred` above, which is an ownership statement
-covering the progress underneath it** — both derive `analyzing`. Each becomes its
-own progress the moment this session writes to it as owner. `0052` reads
-`assigned` because it was never anyone's.
+**`0038` reads `transferred` above, which is an ownership statement covering the
+progress underneath it** — it derives `analyzing`, and becomes its own progress
+the moment this session writes to it as owner. **`0047` made that transition at
+Revision 268** and now reads what its findings derive. `0052` reads `assigned`
+because it was never anyone's.
 
 **`0038` and `0047` transferred in at Revision 261** from
 `typed-bundles-architecture-20260908-204724`, which stands `handoff` — **not an

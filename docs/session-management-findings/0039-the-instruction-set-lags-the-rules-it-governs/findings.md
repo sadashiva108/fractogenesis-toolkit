@@ -34,6 +34,7 @@ afternoon by the session that had been told it.
 | `allocation-and-inquiry-design-20260906-233205` | 2026-09-06 | Recorded D5 against F7 and set D4's outcome to `superseded → D5` |
 | `typed-bundles-architecture-20260908-204724` | 2026-09-09 | Added F21 and F22, from a cold reading of `docs/legend.md` at Revisions 236 and 237 |
 | `typed-bundles-architecture-20260908-204724` | 2026-09-09 | Added F23 and took D21, from its own failure to hand the Revision 239 message over as a block |
+| `drift-and-the-write-boundary-20260909-053548` | 2026-09-09 | Added F24 and F25, both found while writing decisions into `0047` — a bundle it owns, whose `decisions.md` was begun by another session |
 
 ## Finding status
 
@@ -71,6 +72,8 @@ for.
 | F21 | Nothing checks that a vocabulary change reached the prose, and five consecutive revisions demonstrate it — the last leaving the legend saying a superseded bundle cannot be read | `framing` |
 | F22 | The currency watch that covers the legend was asserted before the defect existed, has never been armed, and cannot report drift while unarmed | `framing` |
 | F23 | §7 requires the commit message to be nothing but the message and never requires it to be a block, so a session can obey every word of the rule and still hand over one the owner has to reassemble | `framing` |
+| F24 | `decisions.md` carries one `Session:` field and the Decisions table has no column for one, so a decision written by a session that does not own the bundle cannot be attributed — and §4 invites exactly that write | `framing` |
+| F25 | *What another session may do* has no row for `transferred`, the one standing under which a non-owner is routinely told to contribute | `framing` |
 
 ---
 
@@ -1006,3 +1009,76 @@ different session and are owned separately by this one. Where the two meet is
 named in finding F2 and nowhere else.
 
 <!-- historical: bin/verify-findings-headers.sh -->
+
+## F24 — a decision has no author, and the schema invites one
+
+§4 and `docs/legend.md` both say it plainly: while a finding is `framing`, **any
+session may write a decision, reject one, or refine one**, and *"a second reader
+who disagrees with a decision improves it more."* It is one of the framework's
+load-bearing claims about why the ceremony is worth it.
+
+§11 gives `decisions.md` three header fields — `Bundle:`, `Session:` and a date —
+and a five-column table: `#`, `Decision`, `Findings`, `Decided`, `Outcome`.
+**There is no column for who decided**, and `Session:` is one field for a file
+that may hold several sessions' work. The header is explicitly closed: *"no other
+field appears in the header"*, and two field names are named as retired, so
+adding one is not a session's call.
+
+**Observed 2026-09-09.** `0047`'s `decisions.md` was opened by
+`typed-bundles-architecture-20260908-204724`, which took D1. This session, which
+owns the bundle from Revision 261, took D2, D3 and D4 into the same file. The
+`Session:` field can name one or the other. It names the first, because that is
+who wrote the file, and a sentence beneath the table carries the rest — **prose,
+because prose is the only place the schema leaves.**
+
+The mirror of it is already solved one document over: `findings.md` has a
+**Contributions** table for exactly this, listing every session other than the
+owner that added a finding **or contributed to a decision**. So the framework
+records that a contribution to a decision happened and cannot record which
+decision it was.
+
+**What it costs to leave.** The Contributions table's third column is free text,
+so today the fact survives where someone thought to write it and vanishes where
+they did not — `0039`'s own first row says *"Recorded D5 against F7"* and its
+second says only *"Added F21 and F22"*. **A decision's author is what a rejected
+alternative is read against**, and it is the field the schema does not have.
+
+**Not proposed here.** A sixth column, a per-section marker, or a `decidedBy`
+field in `metadata.json` are three shapes and this bundle owns the choice. The
+`metadata.json` decision objects have no author field either, so whatever is
+chosen lands in both.
+
+## F25 — the permission table has no row for `transferred`
+
+*What another session may do* is the table a session reads before its first
+write. It has three rows: `superseded`; `assigned`, `unclaimed`, `retired`; and
+`analyzing`, `revisited`, `answered`. **Revision 239 made the three rows disjoint
+so that no tie-break is needed**, and `docs/rules/README.md` lists eight
+standings. Seven are in the table.
+
+The missing one is `transferred`, and elsewhere the legend does answer it:
+*Awaiting a first read* groups `un-started`, `reopened` and `transferred` and
+says all three are **invisible to every session but the owner**. So the answer
+exists, in a section about finding statuses, for the one value in that group that
+is a bundle standing rather than a finding status — and the table a session is
+told to read before writing does not carry it.
+
+**The practice is the other way.** Revision 248 records this session's
+predecessor writing F21, F22, F23 and D21 into `0039` **while `0039` stood
+`transferred`**, deliberately and as contributions, and Revision 262 directs the
+session that does not own `0039` to record an orphan rule in it — again while it
+stands `transferred`. **This finding is that instruction being carried out**, by
+a session reading a table that does not say it may.
+
+Either the practice is wrong or the invisibility claim is too wide, and **the
+table is the document that has to say which.** The likely shape is that
+`transferred` gates the *owner's* first read and the transitions that depend on
+it, and does not close the bundle to contribution — which is what `analyzing`
+allows, and what a transferred bundle derives the moment its transfer clears. But
+that is a reading, and this bundle owns it.
+
+**What it costs to leave.** Two sessions have now written into a `transferred`
+bundle on an instruction, with the rules as written saying they may not, and
+neither wrote down the discrepancy. **A rule broken twice at the owner's own
+direction is not a rule**, and the third session will either stop and ask or not
+notice — and not noticing is worse.
