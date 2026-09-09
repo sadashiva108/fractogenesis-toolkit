@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T01:45:00+00:00",
+  "updatedAt": "2026-09-09T12:00:00+00:00",
   "number": "0046",
   "bundleName": "0046-supersession-moves-authority-and-leaves-every-citation-behind",
   "kind": "session-management",
@@ -22,9 +22,9 @@
     "`.github/session-management-instructions.md` section 9",
     "every document citing `0028`, and `0028` itself"
   ],
-  "standing": "analyzing",
+  "standing": "unclaimed",
   "progress": "analyzing",
-  "ownership": null,
+  "ownership": "unclaimed",
   "lineage": null,
   "findings": [
     {
@@ -34,7 +34,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": "2026-09-09",
-      "sectionHeading": "F1 \u2014 twelve documents cite a bundle nothing may read",
+      "sectionHeading": "F1 — twelve documents cite a bundle nothing may read",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -46,7 +46,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": "2026-09-09",
-      "sectionHeading": "F2 \u2014 the path resolves, so nothing looks broken",
+      "sectionHeading": "F2 — the path resolves, so nothing looks broken",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -63,7 +63,7 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D1 \u2014 the marker exists and is narrower than the finding"
+      "sectionHeading": "D1 — the marker exists and is narrower than the finding"
     },
     {
       "id": "D2",
@@ -76,7 +76,7 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D2 \u2014 the check that exists reads the declared set"
+      "sectionHeading": "D2 — the check that exists reads the declared set"
     },
     {
       "id": "D3",
@@ -88,7 +88,7 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D3 \u2014 nothing is repaired"
+      "sectionHeading": "D3 — nothing is repaired"
     }
   ],
   "contributions": [],

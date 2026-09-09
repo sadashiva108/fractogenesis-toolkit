@@ -4,7 +4,7 @@
 
 | From | Until | Assistant | Session id | Model | Environment |
 |---|---|---|---|---|---|
-| 2026-09-09 | — | Claude | `session_01Wd7US5C5Msr594vNidboLn` | `claude-opus-5` | Linux VM, Bash 5.1.16(1) aarch64, GNU coreutils. **Not macOS.** |
+| 2026-09-09 | 2026-09-09 | Claude | `session_01Wd7US5C5Msr594vNidboLn` | `claude-opus-5` | Linux VM, Bash 5.1.16(1) aarch64, GNU coreutils. **Not macOS.** |
 
 Transcript link: `https://claude.ai/code/session_01Wd7US5C5Msr594vNidboLn`
 
@@ -67,6 +67,18 @@ Ownership is not stated in this file. It is derived by scanning
 `findings-manifest.md` across `docs/sessions/`, which is the rule Revision 222
 installed — **adding the manifest row IS the assignment**, and removing it is the
 release.
+
+## Closing
+
+**Closed 2026-09-09**, owning `0040` and `0044`, both `answered`. Seven bundles
+were released to `unclaimed` — `0041`, `0042`, `0046`, `0049`, `0050`, `0051`,
+`0053` — and each is named in `final-summary.md` with the state it was left in
+and what it owes, which is §10a step 4.
+
+**A session may not end holding a bundle.** Five of the seven carry decisions
+that are unbuilt, and one — `0050` F3 — carries a defect whose damage is partly
+irrecoverable. Releasing them puts them back in the queue rather than leaving
+them owned by a session that has stopped.
 
 ## Contributions
 

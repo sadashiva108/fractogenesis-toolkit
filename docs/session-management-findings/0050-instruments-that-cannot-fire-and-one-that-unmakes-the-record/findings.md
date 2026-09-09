@@ -30,6 +30,7 @@ writes, and the bundle type for those does not exist yet.
 | F3 | Running `extract-metadata.py` on a healthy tree destroys every asserted edge and every stamped value | `framing` |
 | F4 | Four instruments in three days were correct and could not do their job, and no bundle covers that class | `framing` |
 | F5 | The coverage sweep keeps a second copy of a directory list `docs/INDEX.md` owns, and 43 files are invisible to it | `framing` |
+| F6 | `0050` F3 counted two field families of twenty: one run destroys 429 recorded values, and section 10a routes a session into running it | `framing` |
 
 ## F1 — the guard does not run where the writing happens
 
@@ -236,3 +237,72 @@ unarmed.** The others are correct instruments that cannot fire. This one fires,
 reports a number, and the number is wrong by 43 in the direction that reads as
 safety.
 
+
+## F6 — F3 measured two field families out of twenty, and the procedure that needs the extractor has no step for running it
+
+F3 counted what one run of `extract-metadata.py` destroys as *fifteen asserted
+edges and a hundred and seven stamped values*. That was two field families. The
+same measurement taken at `13b00b3` (Revision 260), by diffing every file the
+run rewrites against `HEAD` and counting each scalar that goes from a value to
+`null` or absent:
+
+| what the run rewrites | |
+|---|---:|
+| `metadata.json` files rewritten | 62 |
+| distinct fields that lose a value | 20 |
+| **recorded values destroyed** | **429** |
+
+The largest groups:
+
+| field | values lost |
+|---|---:|
+| `standing` | 53 |
+| `progress` | 53 |
+| `findings[].updatedAt` | 53 |
+| the seven fields of each asserted `edges[]` entry | 27 × 7 |
+| `state` — every session bundle in the tree | 9 |
+| `ownedBundles[].path` and `.assignedOn` | 12 each |
+| `indexNotes` | 6 |
+| `decisions[].answersAsOf` | 7 |
+| `transcript`, `scratchPath`, `owners[].environmentNotes` | 1, 2, 2 |
+
+**The five values of `standing` all go the same way** — 18 `answered`, 13
+`analyzing`, 10 `unclaimed`, 7 `superseded`, 5 `assigned` — so the loss is not
+confined to bundles in one state, and nothing in the output distinguishes a
+bundle whose standing was destroyed from one that never had it.
+
+**`state` is the sharpest of the twenty.** `docs/legend.md` gives a session
+exactly three live values, and one run of the regenerator leaves all nine
+session bundles in the tree with none. The instrument that exists to make the
+data authoritative is the one thing in the repository that can empty it.
+
+### The reason a session runs it anyway
+
+Section 10a releases a bundle in four steps and none of them is *regenerate*.
+The steps are correct as written and they are not sufficient: `ownership` is
+derived and stored on the bundle, `verify-findings-structure.sh` derives its tag
+from `ownership` first, and so a bundle released by the four steps alone has an
+index row reading `unclaimed` and a tag still reading `analyzing`.
+
+Measured on this closing: **the seven releases produced seven `structure`
+failures**, 65 OK / 0 FAIL to 59 OK / 7 FAIL, each of the form
+`tag says 'analyzing', row says 'unclaimed'`.
+
+**Running the extractor clears all seven.** It is the only instrument in the
+repository that does. So the procedure leaves the tree failing a check, and the
+one action that reconciles it destroys 429 values — a session following section
+10a exactly is routed toward the destructive act by the failure the procedure
+itself produces.
+
+This closing set the two fields by hand instead, matching `0052` and `0001`,
+which carry `standing` and `ownership` as `unclaimed` with `progress` left at
+its derived value. That is a repair of this tree, not of the procedure.
+
+### The false positive to expect first
+
+A check that refuses to run the extractor unless the tree is clean will fire on
+the one occasion the extractor is legitimately needed — a session that has just
+composed changes and wants the derived fields to match them. **A guard here is
+warn-only or it is the wrong instrument**, and the durable fix is not a guard at
+all: the run should preserve every field it does not derive, at which point
+there is nothing to guard against.

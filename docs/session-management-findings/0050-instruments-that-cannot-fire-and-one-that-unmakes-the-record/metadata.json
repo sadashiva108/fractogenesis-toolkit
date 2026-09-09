@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T08:20:00+00:00",
+  "updatedAt": "2026-09-09T12:10:00+00:00",
   "number": "0050",
   "bundleName": "0050-instruments-that-cannot-fire-and-one-that-unmakes-the-record",
   "kind": "session-management",
@@ -27,9 +27,9 @@
     "docs/architecture/state-as-data.md sections 6, 8 and 9",
     "every metadata.json in docs/, at HEAD and after one extraction run"
   ],
-  "standing": "analyzing",
+  "standing": "unclaimed",
   "progress": "analyzing",
-  "ownership": null,
+  "ownership": "unclaimed",
   "lineage": null,
   "findings": [
     {
@@ -98,6 +98,18 @@
         "revision": "255",
         "commit": null
       }
+    },
+    {
+      "id": "F6",
+      "statement": "`0050` F3 counted two field families of twenty: one run destroys 429 recorded values, and section 10a routes a session into running it",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-09",
+      "sectionHeading": "F6 — F3 measured two field families out of twenty, and the procedure that needs the extractor has no step for running it",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
     }
   ],
   "decisions": [

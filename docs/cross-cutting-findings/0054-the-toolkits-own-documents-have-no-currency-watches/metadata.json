@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-09T09:43:23+00:00",
+  "number": "0054",
+  "bundleName": "0054-the-toolkits-own-documents-have-no-currency-watches",
+  "kind": "cross-cutting",
+  "subKind": null,
+  "subject": "The toolkit's own documents have no currency watches",
+  "recordedOn": "2026-09-09",
+  "recordedOccasion": "from a session-management bundle that decided this and should not have.",
+  "recordedBy": {
+    "sessionBundle": "assurance-coverage-20260908-204724",
+    "sessionId": null
+  },
+  "severity": "moderate. Eleven references and five architecture records describe machinery that changes without them, and one — `master-directory-reference.md` — is cited by 31 documents, so a stale one misleads broadly.",
+  "feltAt": [
+    "`references/` (11 files, none watched); `docs/architecture/restore-repos-clone-plan.md`, `restore-docker-teardown-and-test.md`, `sign-off-consolidation.md`, `time-machine-run-index.md`; `docs/ledgers/evidence-conformance.md`"
+  ],
+  "scope": "the toolkit set. The watches live in `.internal/ai-scripts/session-management/doc-currency.json`, but which of the toolkit's documents earn one is `.github/toolkit-instructions.md`'s to decide.",
+  "read": [
+    "all eleven `references/*.md`, opened one at a time",
+    "the five unwatched architecture records and `docs/ledgers/evidence-conformance.md`",
+    "`.internal/ai-scripts/session-management/doc-currency.json` and `doc_currency.py`",
+    "inbound citation counts for each, across every tracked Markdown file"
+  ],
+  "standing": "unclaimed",
+  "progress": "untouched",
+  "ownership": "unclaimed",
+  "lineage": null,
+  "findings": [
+    {
+      "id": "F1",
+      "statement": "Eleven reference documents describe machinery that changes without them, and none is watched",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F1 — the references describe the machinery and nothing watches them",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F2",
+      "statement": "Four architecture records and one ledger describe toolkit machinery and are unwatched",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F2 — the architecture records and one ledger",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F3",
+      "statement": "Whether a document goes stale was tested by what it names, and the relationship runs the other way",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F3 — the test was run in the wrong direction",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    }
+  ],
+  "decisions": [],
+  "contributions": [],
+  "edges": [],
+  "indexNotes": null
+}

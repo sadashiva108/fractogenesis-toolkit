@@ -12,7 +12,8 @@ Any other order produces an instrument that reports nothing and looks correct.
 | # | Decision | Findings | Decided | Outcome |
 |---|---|---|---|---|
 | D1 | Every watch is armed, and a watch that has never been armed is reported as a defect rather than as a state | F2 | 2026-09-09 | `accepted` |
-| D2 | `references/`, `docs/rules/` and the unwatched architecture records and ledgers get watches, against the instruction sets, prompts and configs they describe | F3 | 2026-09-09 | `accepted` |
+| D2 | `references/`, `docs/rules/` and the unwatched architecture records and ledgers get watches, against the instruction sets, prompts and configs they describe | F3 | 2026-09-09 | `replaced → D5` |
+| D5 | D2's scope crossed the tree line. **This bundle decides watches over what it governs**; the toolkit's documents are the toolkit set's to decide, and are parked as a cross-cutting bundle | F3 | 2026-09-09 | `accepted` |
 | D3 | A session records the blob it read each foundational document at, and *refresh* becomes a comparison rather than a re-read | F1 | 2026-09-09 | `accepted` |
 | D4 | The notification is a hook that injects and never blocks, and it is built **last** | F1, F2, F3 | 2026-09-09 | `accepted` |
 
@@ -120,3 +121,40 @@ session documenting that family. Order: `0050` D1, then D2, then D1, then this.
 **What it cannot do.** It injects text. A session that skims the injection fails
 identically to one that never received it. The avenue is `guard` for the
 notification and `person` for the reading, and claiming more would be `0041` F2.
+
+## D5 — the scope crossed the tree line, and carrying it out is what showed it
+
+**D2 was implemented and the implementation is not being kept.** Twenty-four
+documents were read and twelve watches written; five of them —
+`artifact-config`, `backup-machinery`, `restore-machinery`, `post-image-evidence`
+and `sign-offs` — are about where reimage artifacts land, what the backup scripts
+produce, and which templates a sign-off fills. **Not one would exist in a project
+that did something else entirely**, which is `.github/copilot-instructions.md`'s
+test for which set owns a rule.
+
+**This is a session-management bundle deciding the toolkit's content.** The
+reading was sound; the venue was wrong.
+
+**What this bundle keeps:** watches over what session management governs — the
+`agent-config` watch gaining `docs/rules/rule-enforcement-avenues.md`, and
+`session-rules` gaining `transferring-part-of-a-bundle.md` and
+`typed-bundles-and-work.md`.
+
+**What goes to the toolkit set:** every watch over `references/`, and over the
+architecture records and ledgers that describe the reimaging workflow. Parked as
+a cross-cutting bundle, recorded and not owned.
+
+**The owner's correction is what found it.** `references/certificate-types-guide.md`
+was declared out here on the grounds that it *"names no file in this repository"*
+— a test of what a document points **at**. The owner pointed out that
+`stage-certs-keychain.md` cites it twice, at Step 5 and in Supplemental Reference.
+**The relationship runs inbound and the test only measured outbound.** Measured
+after the correction, all eleven references are cited, one of them by 31
+documents — and `backup-strategy-guide.md` also names zero files and had been
+watched, so two files with the same measurement had opposite verdicts and nothing
+caught it.
+
+**Neither half is built.** D1's arming is the owner's act per watch; the
+session-management half is a small toolkit write with no bundle type to hold it;
+and the toolkit half is not this bundle's to write at all.
+

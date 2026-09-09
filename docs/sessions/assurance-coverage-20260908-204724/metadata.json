@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T07:50:00+00:00",
+  "updatedAt": "2026-09-09T12:00:00+00:00",
   "bundleName": "assurance-coverage-20260908-204724",
   "createdOn": "2026-09-09",
   "owners": [
     {
       "from": "2026-09-09",
-      "until": null,
+      "until": "2026-09-09",
       "assistant": "Claude",
       "sessionId": "session_01Wd7US5C5Msr594vNidboLn",
       "model": "claude-opus-5",
@@ -52,55 +52,69 @@
     {
       "number": "0040",
       "path": "docs/session-management-findings/0040-superseding-a-bundle-whose-session-is-gone/",
-      "assignedOn": "2026-09-09"
-    },
-    {
-      "number": "0041",
-      "path": "docs/session-management-findings/0041-index-and-manifest-tables-have-a-shape-nothing-checks/",
-      "assignedOn": "2026-09-09"
-    },
-    {
-      "number": "0042",
-      "path": "docs/session-management-findings/0042-no-check-reads-the-rendered-page/",
-      "assignedOn": "2026-09-09"
+      "assignedOn": "2026-09-09",
+      "notes": "terminal — answered; four findings overtaken by section 9 at Revision 200"
     },
     {
       "number": "0044",
       "path": "docs/session-management-findings/0044-citations-under-docs-resolve-nowhere-and-nothing-reads-them/",
-      "assignedOn": "2026-09-09"
-    },
-    {
-      "number": "0046",
-      "path": "docs/session-management-findings/0046-supersession-moves-authority-and-leaves-every-citation-behind/",
-      "assignedOn": "2026-09-09"
-    },
-    {
-      "number": "0049",
-      "path": "docs/session-management-findings/0049-the-patch-is-named-as-the-deliverable-and-never-produced/",
-      "assignedOn": "2026-09-09"
-    },
-    {
-      "number": "0051",
-      "notes": "The target-platform claim has no run behind it. Recorded and owned 2026-09-09 at the owner's direction; F2 resolved by the ledger"
-    },
-    {
-      "number": "0050",
-      "notes": "Instruments that cannot fire. Assigned 2026-09-09; F5 added on the first reading"
-    },
-    {
-      "number": "0053",
-      "notes": "The rules are versioned and a session's reading of them is not. Assigned 2026-09-09"
+      "assignedOn": "2026-09-09",
+      "notes": "terminal — answered; both findings resolved, eight citations repaired"
     }
   ],
   "contributions": [],
   "declaredState": null,
   "indexNotes": null,
   "ended": {
-    "on": null,
-    "reason": null,
-    "revisions": [],
+    "on": "2026-09-09",
+    "reason": "closed at the owner's direction; the coverage question is answered once in 0041 D1 and the two terminal bundles are finished",
+    "revisions": [
+      "239",
+      "251",
+      "254",
+      "256",
+      "258",
+      "260",
+      "264"
+    ],
     "commits": [],
-    "disposals": []
+    "disposals": [
+      {
+        "number": "0041",
+        "to": "unclaimed",
+        "why": "the coverage answer is recorded as D1 and no check was built for it"
+      },
+      {
+        "number": "0042",
+        "to": "unclaimed",
+        "why": "D5's stderr contract and the two-character verify-doc-paths.sh repair are unbuilt"
+      },
+      {
+        "number": "0046",
+        "to": "unclaimed",
+        "why": "D2's prose-citation check is unbuilt"
+      },
+      {
+        "number": "0049",
+        "to": "unclaimed",
+        "why": "D4's guard extension is unbuilt"
+      },
+      {
+        "number": "0050",
+        "to": "unclaimed",
+        "why": "F1, F2 and F3's repairs are unbuilt, including the extract-metadata.py interlock"
+      },
+      {
+        "number": "0051",
+        "to": "unclaimed",
+        "why": "D1 and D3's edits to sections 5 and 6 are unwritten"
+      },
+      {
+        "number": "0053",
+        "to": "unclaimed",
+        "why": "D1's arming is the owner's act and the session-management half of D2 is unbuilt"
+      }
+    ]
   },
-  "state": "active"
+  "state": "closed"
 }

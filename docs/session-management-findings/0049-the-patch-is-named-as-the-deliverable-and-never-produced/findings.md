@@ -28,6 +28,7 @@ failure**; the reading is offered so it can be checked rather than believed.
 | F4 | Nothing detects a write into the owner's checkout, and the signal that used to exist was removed by `0038` | `decided` |
 | F5 | An index write leaves no trace in the working tree, so the tree comparison this bundle prescribes cannot see it | `decided` |
 | F6 | The phrase that authorizes an apply has two definitions, the broader is in the copy, and neither has a precondition on the checkout | `decided` |
+| F7 | `git add -N` is required to produce the patch and empties every new file the next `checkout -f` touches | `framing` |
 
 ## F1 — what actually happened
 
@@ -217,3 +218,53 @@ discovered at commit time.
 a context mismatch, which is luck rather than a guard — the same shape as F5,
 where a stale lock rather than a rule prevented an index write.
 
+
+## F7 — `git add -N` is required to produce the patch and empties every new file the next `checkout -f` touches
+
+§0 step 4 produces the patch with `git add -N .` followed by `git diff`, because
+`git diff` alone cannot see a file that is not in the index. The `-N` puts the
+path in the index **against the empty blob** — that is what "intent to add"
+means. The path is now tracked-enough that `git checkout -f`, `git checkout
+<commit>` and `git stash` all treat it as a file with a recorded state, and the
+recorded state is empty. **They do not delete it. They truncate it to zero and
+report nothing.**
+
+Reproduced while rebasing this session's own closing patch from Revision 260 to
+Revision 263:
+
+| | |
+|---|---:|
+| new files in the composition | 4 |
+| survived the rebase | 0 |
+| **emptied to zero bytes, still listed by `git status` as present** | **4** |
+
+The four were `0054`'s `findings.md` and `metadata.json`,
+`docs/ideas/anchoring-a-reading.md`, and this session's own `final-summary.md` —
+**5088, 2957, 6158 and 8610 bytes of composed work, all reading as present and
+all empty.**
+
+### What caught it, and what did not
+
+A `json.load` on `0054/metadata.json` raised `Expecting value: line 1 column 1`.
+Nothing else did. `git status --porcelain` listed all four as `A`, unchanged in
+appearance from before the rebase. **The file count was right, which is the
+number a session checks.**
+
+`0041` F4 is a patch that under-applies and every check passes; F5 here is an
+index write no tree comparison can see. **This is the third member and the worst
+of them, because the loss happens to the composition rather than to the patch**
+— the patch generated afterwards would have been internally consistent, would
+have applied cleanly, and would have delivered four empty files.
+
+### The check this implies
+
+**A zero-byte tracked file under `docs/` is never legitimate**, and the sweep
+costs one `find`. The composition step should assert it before generating a
+patch, and the patch verification should assert it again on the rebuilt tree.
+
+**The false positive to expect first:** `.gitkeep`. There are five of them under
+`docs/` and every one is deliberately empty, so a check written as *no empty
+files* fails five times on a clean tree on its first run. Excluding `.gitkeep`
+by name leaves **zero** on this tree, which is the only reason the check is worth
+installing — it can be added refusing rather than warn-only, because its clean
+pass is already measured.

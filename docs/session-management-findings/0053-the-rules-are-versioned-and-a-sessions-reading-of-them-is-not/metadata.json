@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T07:50:00+00:00",
+  "updatedAt": "2026-09-09T12:00:00+00:00",
   "number": "0053",
   "bundleName": "0053-the-rules-are-versioned-and-a-sessions-reading-of-them-is-not",
   "kind": "session-management",
@@ -25,19 +25,19 @@
     ".internal/ai-scripts/session-management/doc_currency.py and doc-currency.json",
     ".claude/settings.json, and the hook events it does not use"
   ],
-  "standing": "analyzing",
+  "standing": "unclaimed",
   "progress": "analyzing",
-  "ownership": null,
+  "ownership": "unclaimed",
   "lineage": null,
   "findings": [
     {
       "id": "F1",
       "statement": "A session records what it read and never which version, so nothing can tell it a rule has moved",
-      "status": "framing",
+      "status": "decided",
       "statusReason": null,
       "statusNote": null,
       "updatedAt": "2026-09-09",
-      "sectionHeading": "F1 \u2014 a read is a point-in-time fact and the record does not treat it as one",
+      "sectionHeading": "F1 — a read is a point-in-time fact and the record does not treat it as one",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -45,11 +45,11 @@
     {
       "id": "F2",
       "statement": "The instrument that would say so is critical, correct, and has never been armed",
-      "status": "framing",
+      "status": "decided",
       "statusReason": null,
       "statusNote": null,
       "updatedAt": "2026-09-09",
-      "sectionHeading": "F2 \u2014 the watch is correct, critical, and has never been armed",
+      "sectionHeading": "F2 — the watch is correct, critical, and has never been armed",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -57,11 +57,11 @@
     {
       "id": "F3",
       "statement": "No watch covers references/, docs/rules/, or most of docs/architecture/",
-      "status": "framing",
+      "status": "decided",
       "statusReason": null,
       "statusNote": null,
       "updatedAt": "2026-09-09",
-      "sectionHeading": "F3 \u2014 the categories a reader most needs watched have no watch at all",
+      "sectionHeading": "F3 — the categories a reader most needs watched have no watch at all",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -78,7 +78,7 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D1 \u2014 arm them, and make an unarmed watch a defect"
+      "sectionHeading": "D1 — arm them, and make an unarmed watch a defect"
     },
     {
       "id": "D2",
@@ -87,10 +87,10 @@
         "F3"
       ],
       "decided": "2026-09-09",
-      "outcome": "accepted",
+      "outcome": "replaced → D5",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D2 \u2014 watch the categories that describe something else"
+      "sectionHeading": "D2 — watch the categories that describe something else"
     },
     {
       "id": "D3",
@@ -102,7 +102,7 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D3 \u2014 the missing operand is the baseline, not the hash"
+      "sectionHeading": "D3 — the missing operand is the baseline, not the hash"
     },
     {
       "id": "D4",
@@ -116,7 +116,19 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D4 \u2014 a hook that injects, never blocks, and comes last"
+      "sectionHeading": "D4 — a hook that injects, never blocks, and comes last"
+    },
+    {
+      "id": "D5",
+      "decision": "D2's scope crossed the tree line. This bundle decides watches over what it governs; the toolkit's documents are the toolkit set's to decide, and are parked as a cross-cutting bundle",
+      "findings": [
+        "F3"
+      ],
+      "decided": "2026-09-09",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D5 — the scope crossed the tree line, and carrying it out is what showed it"
     }
   ],
   "contributions": [],

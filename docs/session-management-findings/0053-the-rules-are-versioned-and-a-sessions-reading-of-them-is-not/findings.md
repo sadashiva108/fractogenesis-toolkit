@@ -24,9 +24,9 @@ Recorded by the session that hit it, and **assigned to it by the owner on
 
 | # | Finding | Status |
 |---:|---|---|
-| F1 | A session records what it read and never which version, so nothing can tell it a rule has moved | `framing` |
-| F2 | The instrument that would say so is `critical`, correct, and has never been armed | `framing` |
-| F3 | No watch covers `references/`, `docs/rules/`, or most of `docs/architecture/` | `framing` |
+| F1 | A session records what it read and never which version, so nothing can tell it a rule has moved | `decided` |
+| F2 | The instrument that would say so is `critical`, correct, and has never been armed | `decided` |
+| F3 | No watch covers `references/`, `docs/rules/`, or most of `docs/architecture/` | `decided` |
 
 ## F1 — a read is a point-in-time fact and the record does not treat it as one
 
