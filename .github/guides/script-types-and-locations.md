@@ -1,5 +1,12 @@
 # Script types and locations
 
+> **Role.** A guide: where a new script belongs, by kind.
+>
+> **Rank 4** of 6 — a guide is a **copy for convenience**. Where it states a rule,
+> the rule's home is `.github/toolkit-instructions.md`. If the two disagree,
+> the instruction set wins and this file is the defect. Order in
+> [`../copilot-instructions.md`](../copilot-instructions.md).
+
 Where a new script belongs, by what kind of script it is.
 
 This guide answers placement only. The behavior each class must follow —

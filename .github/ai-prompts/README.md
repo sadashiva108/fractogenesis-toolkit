@@ -1,5 +1,12 @@
 # AI authoring prompts
 
+> **Role.** Index of the authoring prompts and templates in this directory.
+>
+> **Rank 4** of 6. Everything under `.github/ai-prompts/` is a **copy for
+> convenience**: a prompt exists to be pasted, so it restates rules whose home is
+> an instruction set. **A prompt never wins a disagreement.** Order in
+> [`../copilot-instructions.md`](../copilot-instructions.md).
+
 Prompts and templates for AI-assisted authoring in this repo. Use them to
 create a new runbook or update an existing one, and to author or review the
 bash scripts that back those runbooks. Each prompt points at the template it

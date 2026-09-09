@@ -21,7 +21,7 @@ sys.path.insert(0, HERE)
 
 import fixtures as F                                          # noqa: E402
 from plan_findings_work import (                              # noqa: E402
-    Graph, ladder, conformance, allocate, select, frontier, rank, is_clone,
+    Graph, derivation_table, conformance, allocate, select, frontier, rank, is_clone,
     FINDING_STATUSES, BUNDLE_STANDINGS, BUNDLE_PROGRESS, OUTCOMES, KINDS, INERT, quality,
     bundle_standing, bundle_progress, session_state, stamp_derived)
 
@@ -43,7 +43,7 @@ def graph_of(*bundles, **kw):
 
 # ---------------------------------------------------------------- CONTRACTS
 class TestLadder(unittest.TestCase):
-    """docs/legend.md: read the ladder in order, first row that matches wins.
+    """docs/legend.md: read the derivation_table in order, first row that matches wins.
 
     Finding STATUSES go in, a bundle STANDING comes out. Since Revision 233 the
     two vocabularies share no word, so every assertion here is also a check that
@@ -54,33 +54,33 @@ class TestLadder(unittest.TestCase):
         self.assertEqual(set(FINDING_STATUSES) & set(BUNDLE_STANDINGS), set())
 
     def test_every_finding_un_started(self):
-        self.assertEqual(ladder(["un-started", "un-started"]), "untouched")
+        self.assertEqual(derivation_table(["un-started", "un-started"]), "untouched")
 
     def test_every_finding_withdrawn(self):
-        self.assertEqual(ladder(["withdrawn", "withdrawn"]), "retired")
+        self.assertEqual(derivation_table(["withdrawn", "withdrawn"]), "retired")
 
     def test_retired_outranks_answered(self):
         # Row 4 sits above row 5 so a bundle of nothing but withdrawals is
         # `retired`, not `answered`: nothing was carried through.
-        self.assertEqual(ladder(["withdrawn"]), "retired")
+        self.assertEqual(derivation_table(["withdrawn"]), "retired")
 
     def test_answered_counts_withdrawn_as_finished(self):
-        self.assertEqual(ladder(["resolved", "withdrawn"]), "answered")
+        self.assertEqual(derivation_table(["resolved", "withdrawn"]), "answered")
 
     def test_answered_needs_at_least_one_resolved(self):
-        self.assertNotEqual(ladder(["withdrawn", "withdrawn"]), "answered")
+        self.assertNotEqual(derivation_table(["withdrawn", "withdrawn"]), "answered")
 
     def test_revisited_dominates_the_inert(self):
-        self.assertEqual(ladder(["reopened", "resolved", "withdrawn"]), "revisited")
+        self.assertEqual(derivation_table(["reopened", "resolved", "withdrawn"]), "revisited")
 
     def test_reopened_beside_anything_live_is_analyzing(self):
         # Row 6 fires only when reopening is the WHOLE of the live work.
         for other in ("framing", "decided", "un-started"):
-            self.assertEqual(ladder(["reopened", other]), "analyzing", other)
+            self.assertEqual(derivation_table(["reopened", other]), "analyzing", other)
 
     def test_anything_else_is_analyzing(self):
-        self.assertEqual(ladder(["framing", "resolved"]), "analyzing")
-        self.assertEqual(ladder(["decided"]), "analyzing")
+        self.assertEqual(derivation_table(["framing", "resolved"]), "analyzing")
+        self.assertEqual(derivation_table(["decided"]), "analyzing")
 
     def test_progress_is_never_stored(self):
         # state-as-data.md 4.4: progress is derived, ownership and lineage declared.
@@ -204,7 +204,7 @@ class TestRegressions(unittest.TestCase):
 
     def test_R197_a_bundle_does_not_read_resolved_while_a_row_is_live(self):
         """Revision 197 found four `resolved` bundles whose rows never moved."""
-        self.assertEqual(ladder(["resolved", "resolved", "framing"]), "analyzing")
+        self.assertEqual(derivation_table(["resolved", "resolved", "framing"]), "analyzing")
 
     def test_R229_a_session_with_ended_on_null_is_live(self):
         """`ended` is always present as an object. `if ended:` saw zero of seven."""

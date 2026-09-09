@@ -1,5 +1,27 @@
 # Instructions for fractogenesis-toolkit
 
+> **Role.** The router. Which instruction set governs what, and **the precedence
+> order for the whole rule set**, which is stated here and nowhere else.
+>
+> **Authoritative for** routing and precedence. **Not** authoritative for the
+> rules themselves — it points at the two instruction sets and does not restate
+> them.
+
+> **Precedence, when two documents disagree.** Highest wins. This order is
+> stated once, here, and every rule document's masthead names its own rank.
+>
+> | | Wins over | Why |
+> |---:|---|---|
+> | 1 | `metadata.json` and `.internal/ai-scripts/session-management/plan_findings_work.py` | the data and the code that derives and stamps it. A document describing state is a description; this is the thing described |
+> | 2 | an `accepted` decision in a bundle's `decisions.md` | a decision outranks a document that has not caught up. Revision 223: D1's principle was never in question, only the address it named |
+> | 3 | `docs/legend.md` for vocabulary · the two `*-instructions.md` for procedure | coequal, in their own domains. `0039` D2 ruled that split: what the words mean is in the legend, when each is allowed is in the instruction set |
+> | 4 | `.github/ai-prompts/**` and `.github/guides/**` | prompts and guides are **copies for convenience**. Where one states a rule, the rule's home is above it |
+> | 5 | `docs/architecture/**` | reasoning that outlives a session. Cited, not obeyed |
+> | 6 | `APPLY-MANIFEST.md` | point-in-time evidence, never retro-edited. **Never authoritative for a current rule** — it says what was true when written |
+>
+> **A document that disagrees with something above it is a defect, not a rule.**
+> Record it rather than following it.
+
 **Two instruction sets, and you read both.** They were one file until Revision
 191; splitting them is what makes each answerable on its own, because a session
 working the reimaging workflow and a session working the findings architecture

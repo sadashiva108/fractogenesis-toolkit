@@ -34,7 +34,7 @@ def write_category(scope):
     return "record"
 
 
-def ladder(sts):
+def derivation_table(sts):
     """Finding STATUSES in, bundle STANDING out. A translation, not an identity.
 
     The two vocabularies share no word as of Revision 233, which is what makes a
@@ -64,7 +64,7 @@ class Graph(object):
                 d = json.load(fh)
             d["_dir"] = os.path.relpath(os.path.dirname(f), r)
             d["_findings"] = d.get("findings") or []
-            d["_progress"] = ladder([x.get("status") for x in d["_findings"]])
+            d["_progress"] = derivation_table([x.get("status") for x in d["_findings"]])
             d["_wc"] = write_category(d.get("scope"))
             self.bundles[d["number"]] = d
             for e in d.get("edges") or []:
@@ -275,7 +275,7 @@ def rank(g, fr):
 # ------------------------------------------- derived state, written and checked
 #
 # `state-as-data.md` 4.4 said progress was derived and NEVER STORED. The owner
-# reversed that on 2026-09-08: a reader should not have to run a ladder to learn
+# reversed that on 2026-09-08: a reader should not have to run a derivation table to learn
 # a bundle's status. That reintroduces the risk `0043` F2 is about -- a derived
 # value written down is a second copy that can drift -- so the legend's condition
 # applies: a copy is permitted "where a check fails when it drifts". Both fields
@@ -315,7 +315,7 @@ def bundle_standing(b):
 
 def bundle_progress(b):
     """The pure derivation over the finding rows, with nothing layered on it."""
-    return ladder([x.get("status") for x in (b.get("findings") or [])])
+    return derivation_table([x.get("status") for x in (b.get("findings") or [])])
 
 
 def bundle_is_terminal(b):

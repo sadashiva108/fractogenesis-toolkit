@@ -24,7 +24,7 @@ tag that disagrees with it is a bug in whoever moved the bundle last.
 A finding is `un-started`, `framing`, `decided`, `resolved`, `reopened` or
 `withdrawn`. A **bundle** takes none of those words: its standing is `assigned`,
 `analyzing`, `answered`, `revisited`, `retired`, `unclaimed`, `transferred` or
-`superseded`. **A bundle's standing is derived from its findings** by the ladder in
+`superseded`. **A bundle's standing is derived from its findings** by the derivation table in
 [`docs/legend.md`](../legend.md) — first row that matches wins.
 
 | Bundle standing | When |

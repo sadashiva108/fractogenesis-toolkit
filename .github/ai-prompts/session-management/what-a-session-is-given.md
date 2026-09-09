@@ -1,5 +1,15 @@
 # What a session is given
 
+> **Role.** The complete list of what a session receives, by how it began —
+> created, cloned or by handoff.
+>
+> **Authoritative for** the *inventory*: if a session had to be told something not
+> listed here, that is a finding against this file. **Not** authoritative for the
+> content of anything it lists.
+>
+> **Rank 4** of 6. Order in
+> [`../../copilot-instructions.md`](../../copilot-instructions.md).
+
 **The complete list, so nothing is assembled by hand.** `docs/legend.md` says a
 session begins **created**, **cloned** or by **handoff**; this file says exactly
 what it receives in each case. If a session had to be told something that is not

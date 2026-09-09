@@ -361,7 +361,7 @@ def session_json(name):
 # ---------------------------------------------------------------------------
 # Derivation -- state-as-data section 4.4
 #
-# `progress` is COMPUTED and never stored. The ladder shrinks from eight rows to
+# `progress` is COMPUTED and never stored. The derivation table shrinks from eight rows to
 # five: rows 1, 1b and 2 leave because they were never derivations at all --
 # `unclaimed` and `transferred` are ownership, `superseded` is lineage, and each
 # now has a field of its own instead of competing for one filename.

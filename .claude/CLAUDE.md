@@ -1,5 +1,12 @@
 # CLAUDE.md
 
+> **Role.** A pointer, for Claude. It names where the rules live and **must never
+> restate them** — the instruction sets are under `.github/` because this
+> repository is worked by Copilot as well.
+>
+> **Authoritative for** nothing. **Rank 4** of 6. Order in
+> [`../.github/copilot-instructions.md`](../.github/copilot-instructions.md).
+
 Guidance for Claude Code working in **fractogenesis-toolkit**. This file is a
 pointer, not a second copy — the repository-specific instructions live in one
 authoritative place and apply to Claude exactly as they do to Copilot.

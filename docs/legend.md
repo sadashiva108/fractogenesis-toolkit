@@ -1,5 +1,16 @@
 # Legend — findings statuses and session states
 
+> **Role.** The vocabulary. Every finding status, bundle standing, session state,
+> supporting discriminator, edge kind and term of art used across `docs/`.
+>
+> **Authoritative for** what a word *means*. **Not** authoritative for when a
+> write is allowed, what procedure to follow, or what any value currently is —
+> those are `.github/session-management-instructions.md` and `metadata.json`.
+>
+> **Rank 3** of 6. It loses to `metadata.json` and to an accepted decision, and
+> it is coequal with the instruction sets in its own domain. Order in
+> [`.github/copilot-instructions.md`](../.github/copilot-instructions.md).
+
 The three vocabularies used across `docs/` — finding statuses, bundle standings
 and session states. **This file is where they are defined.**
 [`.github/session-management-instructions.md`](../.github/session-management-instructions.md)
@@ -12,10 +23,8 @@ project inherits the file, and an example it cannot follow reads as noise.
 
 **Where these values live.** A bundle's `standing` and `progress`, and a
 session's `state`, are **derived and then stored** in `metadata.json` — written
-by `./bin/plan-findings-work.sh stamp` and by nothing else. They were derived and
-*not* stored until Revision 232; the owner reversed that so a reader need not run
-a ladder to learn where a bundle stands, and `docs/architecture/state-as-data.md`
-section 4.4 carries the reasoning and the condition. **The condition is the one
+by `./bin/plan-findings-work.sh stamp` and by nothing else. `docs/architecture/state-as-data.md` section 4.4 carries the reasoning.
+**The condition is the one
 this file already imposes on any copy of a derived fact**: a copy is permitted
 where a check fails when it drifts, and `./bin/plan-findings-work.sh check`
 reports `UNSTAMPED` for a null and `STORED-DISAGREES` for a value that has come
@@ -23,13 +32,6 @@ adrift from what it derives from.
 
 The bundle's row in its `INDEX.md` carries the same value for a reader scanning
 the tree, and the two must agree.
-
-A standing was carried in a marker filename until Revision 222 --
-`STATUS-<status>` for a findings bundle, `STATE-<state>` for a session -- which
-made every transition an unlink plus a create and put three unrelated facts in
-one slot. `0043` F1 is the reading; `0039` D7 is why it mattered. The derivation
-was proved against all 54 tags before they were removed, and it reproduced every
-one.
 
 ---
 
@@ -68,8 +70,7 @@ record.** A status does not move because someone read the finding. Assignment
 does not move it, a vocabulary sweep does not, a rename does not, and a retrofit
 does not — each of those touches a status cell without anyone forming a judgement
 about the finding underneath it, and each is a mass operation, so a wrong one
-damages every finding it passes over. Revision 208 moved twenty-one rows that
-way; the reading is `0039` F12.
+damages every finding it passes over.
 
 **`reopened → decided` directly is correct, not a skipped step.** It is the
 common case: the framing was sound and the *resolution* was wrong. Routing it
@@ -233,11 +234,11 @@ Derived from its findings. **Read each table below in order and take the first
 row that matches** — the cases overlap, and the order is what makes the answer
 single-valued.
 
-**The ladder is five rows, not eight.** `state-as-data.md` section 4.4 split the
+**The derivation table is five rows, not eight.** `state-as-data.md` section 4.4 split the
 one overloaded slot into three fields, and three of the old rows left with it:
 `unclaimed` and `transferred` are the `ownership` field, `superseded` is
 `lineage`. They were never derivations — they are declared, and they sat in the
-ladder as overrides because there was nowhere else to put them.
+derivation table as overrides because there was nowhere else to put them.
 
 **`progress` — derived from the finding rows, in order, first match wins:**
 
@@ -267,7 +268,7 @@ is reached, so it never reads `assigned`.
 value belongs to more than one of the three.** So this table is a translation and
 not a lookup: finding statuses go in the right-hand column and a bundle standing
 comes out of the left. Read a bare `framing` and you know it is a finding; read
-`analyzing` and you know it is a bundle. Revision 233.
+`analyzing` and you know it is a bundle.
 
 **`progress` is where this vocabulary will grow.** Separating it from ownership
 left it free to say things about the *reading* that ownership has no view on — a
@@ -359,14 +360,7 @@ other session checks the bundle first, then the finding.
 An `assigned` bundle offers nothing to anyone but its owner, by definition: all
 its findings are `un-started`, and the owner's first reading is what opens them.
 
-**The three rows are disjoint, so no tie-break is needed.** Until Revision 239
-`superseded` appeared in two of them under opposite rules — *nothing is readable*
-and *readable by any session* — which, read by the stated first-match rule, made
-the legend say a superseded bundle cannot be opened while
-`.github/session-management-instructions.md` §9 spends three prohibitions keeping
-it readable. The third row also carried `reopened` and `resolved`, which are
-finding statuses, under a heading that says *Bundle standing*. Both came over
-from the eight-row ladder Revision 236 replaced. `0039` F21.
+**The three rows are disjoint, so no tie-break is needed.**
 
 **Two cells here disagree with *A finding* and are deliberately left alone.** A
 `retired` bundle holds nothing but `withdrawn` findings, and *A finding* makes a
@@ -521,16 +515,40 @@ The outgoing session stays `handoff` and is understood to be no longer working.
 
 Three kinds, told apart by what is being written. **These are the definitions.
 When each is allowed, and where each is composed, are procedure** —
-`.github/session-management-instructions.md` §6. `0039` D2 and D13.
+`.github/session-management-instructions.md` §6.
 
 | Category | What it is |
 |---|---|
 | **record** | a write under `docs/` — a finding, a decision, a session file |
 | **toolkit** | a write to any other tracked file |
 | **evidence** | a write to the artifact volume |
-| **`foreign`** | a write to any other connected folder — another project entirely. Ordinary, and **not recorded here**: `0039` D19 |
+| **`foreign`** | a write to any other connected folder — another project entirely. Ordinary, and **not recorded here** |
 
 **The three fail differently, which is why the distinction is worth a name.** A
 bad record write is corrected by writing again. A bad toolkit write is reverted.
 **A bad evidence write may be unrecoverable**, because evidence records a state
 of the world that no longer exists to be recaptured.
+
+---
+
+## Provenance
+
+**This file states the rules. Why each is what it is, and what it replaced, live
+in the bundle that decided it** — this table is the trail back, and nothing in it
+changes a definition. It is here rather than woven through the definitions
+because a reader looking up what a word means should not have to read the history
+of the word to find out.
+
+| Rule | What it replaced, and where the reasoning lives |
+|---|---|
+| Where these values live | Derived and *not* stored until Revision 232, when the owner reversed it so a reader need not run a derivation table to learn where a bundle stands. `docs/architecture/state-as-data.md` §4.4 |
+| Where these values live | A standing was carried in a marker filename until Revision 222 — `STATUS-<status>` for a bundle, `STATE-<state>` for a session — which made every transition an unlink plus a create and put three unrelated facts in one slot. The derivation was proved against all 54 tags before they were removed and reproduced every one. `0043` F1 is the reading; `0039` D7 is why it mattered |
+| A status moves on a write, not a read | Revision 208 moved twenty-one rows by mass operation without a judgement being formed about any of them. `0039` F12 |
+| Three vocabularies, three words | Revision 233 |
+| What another session may do | Until Revision 239 `superseded` appeared in two rows under opposite rules — *nothing is readable* and *readable by any session* — which by the stated first-match rule made this file say a superseded bundle cannot be opened, while `.github/session-management-instructions.md` §9 spends three prohibitions keeping it readable. The third row also carried `reopened` and `resolved`, finding statuses, under a heading saying *Bundle standing*. Both came from the eight-row derivation table Revision 236 replaced. `0039` F21 |
+| The write categories | `0039` D2 ruled the split between meaning and permission; D13 carried it out. `foreign` is D19 |
+
+**Point-in-time evidence is not repaired.** Where a record cites this file by a
+line number or by wording it has since lost, the record stands as written;
+`APPLY-MANIFEST.md` and every `findings.md` say what was true when they were
+written and are never retro-edited.

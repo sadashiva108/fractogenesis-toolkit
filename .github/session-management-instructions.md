@@ -1,5 +1,16 @@
 # Session management — how a session works in this repository
 
+> **Role.** The procedure. How a session works, what each transition requires,
+> what may be written when, and what a session owes at each point.
+>
+> **Authoritative for** *when* something is allowed and *in what order*. **Not**
+> authoritative for what the words mean — that is
+> [`docs/legend.md`](../docs/legend.md) — nor for the toolkit's own conventions,
+> which are `toolkit-instructions.md`.
+>
+> **Rank 3** of 6, coequal with the legend in its own domain. Order in
+> [`copilot-instructions.md`](copilot-instructions.md).
+
 **This file governs sessions, findings bundles and the records under `docs/`.**
 It says nothing about what this project does. For the project's own subject — its
 work, its scripts, its conventions — read
@@ -137,7 +148,7 @@ every status transition breaks every one of those citations at once, which is wh
 the status lives in a file inside the directory rather than in its name.
 
 **`findings.md` carries a per-finding status table.** The bundle's standing is read
-off it by the ladder in `docs/legend.md` — first row that matches wins. An
+off it by the derivation table in `docs/legend.md` — first row that matches wins. An
 index row that disagrees with the findings is a bug in whoever moved it last.
 
 ## 4. Permission

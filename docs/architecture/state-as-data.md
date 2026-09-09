@@ -174,7 +174,7 @@ for `handoff`, which is a **declaration**: a session says it handed on, where
   "severity": "F1 and F3 are high — both have recorded incidents",
   "feltAt": ["every STATUS- and STATE- tag", "all five INDEX.md files"],
   "scope": "session management",
-  "read": ["docs/legend.md, the ladder and the three vocabularies"],
+  "read": ["docs/legend.md, the derivation table and the three vocabularies"],
 
   "progress": null,
   "ownership": null,
@@ -282,7 +282,7 @@ for one slot. The legend already says two of the three are not progress at all.
 
 **Derived, and written down anyway.** This table read *derived, never stored*
 until Revision 232. The owner reversed it on 2026-09-08: a reader should not have
-to run a ladder to learn a bundle's status, and `progress` being null on all 49
+to run a derivation table to learn a bundle's status, and `progress` being null on all 49
 bundles meant the field existed and answered nothing.
 
 That reintroduces what `0043` F2 is about — a derived value written down is a
@@ -307,7 +307,7 @@ and its prefix: it is what the **owner declared**, and a `handoff` or a
 value — the declaration where there is one, the derivation where there is not.
 It was absent from all seven sessions and is now stamped and checked.
 
-**The ladder shrinks from eight rows to five** and stops being an override list.
+**The derivation table shrinks from eight rows to five** and stops being an override list.
 Rows 1, 1b and 2 leave because they were never derivations — they are the two
 non-progress fields, which had nowhere else to go.
 
@@ -419,7 +419,7 @@ Revision 212 — the **prose total at the foot of a manifest**, which the script
 never covered, and which read *36* where its bundles held *37*.
 
 **The derivation needs a fixture set, and `analyzing` is why.** `0043` F7: every
-row of the ladder states a positive condition with a witness except `analyzing`,
+row of the derivation table states a positive condition with a witness except `analyzing`,
 which is *any other combination*. A derivation bug always lands there and looks
 entirely plausible. Checking it means proving a negative, so the fixtures must be
 bundles that each land on a **named** row, plus at least one that lands on
@@ -514,10 +514,10 @@ disagree.
 came out `unclaimed` over rows reading `resolved`. A finished reading is in no
 queue and needs no owner, so the rule excludes bundles whose progress is
 `resolved` or `withdrawn`. That precision had never been written down, because a
-human applying the ladder by hand never needed it.
+human applying the derivation table by hand never needed it.
 
 And one thing it found in the tree: `0010` and `0024` were indexed `un-started`
-while listed by no session at all. Ladder row 1 sits above row 3, so both are
+while listed by no session at all. Derivation table row 1 sits above row 3, so both are
 `unclaimed`. **The old checker could not have caught it** -- it compared a tag
 against a row, and both held the same wrong value. The replacement compares a
 display against the source.

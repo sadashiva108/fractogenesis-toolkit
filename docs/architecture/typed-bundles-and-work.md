@@ -47,7 +47,7 @@ numbered directory that carries:
 
 None of that is specific to *a reading of something that exists*. The findings
 bundle is one **species** of a genus, and the genus is what the checkers,
-the allocator, the interviewer, the ladder and `metadata.json` already implement.
+the allocator, the interviewer, the derivation table and `metadata.json` already implement.
 
 **So the change is smaller than it sounds.** A `kind` field already exists and
 already carries four values. What is proposed is that `kind` stops meaning *which
@@ -181,7 +181,7 @@ excludes it. Corrected: a blueprint is a commission's product.
 **The genus stays fixed underneath.** A shape varies **only in its reason
 document**. Numbering, items carrying statuses, decisions with their rejected
 alternatives, ownership, lineage and typed edges are common to every kind, which
-is why the checkers, the ladder and the allocator do not multiply with them.
+is why the checkers, the derivation table and the allocator do not multiply with them.
 
 **A blueprint is what a commission produces**, the way an answer is what a
 findings bundle produces. Each reasoning kind terminates at `answered` — the

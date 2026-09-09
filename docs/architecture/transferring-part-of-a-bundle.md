@@ -38,7 +38,7 @@ says *only the owning session* — for recording to a `decided` finding, for the
 first read that moves a status, for `resolving`. Each becomes *the session owning
 **that** finding*, in the legend, in section 4, and in section 9's prohibitions.
 
-**3. No owner can derive the bundle's standing alone.** The ladder reads every
+**3. No owner can derive the bundle's standing alone.** The derivation table reads every
 finding. With ownership split, neither session sees the whole, and a bundle whose
 remaining findings are all inert while transferred ones are live has no row that
 fits.
@@ -55,7 +55,7 @@ cannot say so.
 The transferred findings become a **new bundle**, owned by the target session,
 with `Relates to` in both directions.
 
-Ownership stays per-bundle. No count changes unit. The ladder stays computable.
+Ownership stays per-bundle. No count changes unit. The derivation table stays computable.
 No permission rule needs qualifying. Nothing in the structure moves.
 
 **Costs.** Findings renumber inside the new bundle, so a citation to `F3` of

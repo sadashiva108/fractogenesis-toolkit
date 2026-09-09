@@ -1,5 +1,14 @@
 # Session prompt — session management
 
+> **Role.** The subject-specific half of the prompt, where the work is session
+> management itself. Pasted after `conformant-prompt.md`.
+>
+> **Authoritative for** nothing. It names no bundles — **your own session
+> bundle's `findings-manifest.md` and `prompt.md` say what is yours.**
+>
+> **Rank 4** of 6, a copy for convenience. Order in
+> [`../../copilot-instructions.md`](../../copilot-instructions.md).
+
 **Last updated:** 2026-09-08 20:47 EST  
 **Current as of:** `APPLY-MANIFEST.md` Revision 238
 
@@ -14,19 +23,34 @@ one says what *this* session is for.
 
 ## Table of Contents
 
-- [[#Your subject|Your subject]]
-- [[#What is waiting for you|What is waiting for you]]
-- [[#Read, in this order|Read, in this order]]
-- [[#The owner's brief|The owner's brief]]
-- [[#Report before you change anything|Report before you change anything]]
-- [[#What is already known to be wrong|What is already known to be wrong]]
-- [[#What is settled and should not be re-litigated without cause|What is settled and should not be re-litigated without cause]]
-- [[#What you own, and what you must not touch|What you own, and what you must not touch]]
-- [[#What this session owes when it ends|What this session owes when it ends]]
+
+**[Part 1 — Your charge](#part-1-your-charge)**
+
+- [Your subject](#your-subject)
+- [The owner's brief](#the-owners-brief)
+- [What is waiting for you](#what-is-waiting-for-you)
+- [What you own, and what you must not touch](#what-you-own-and-what-you-must-not-touch)
+
+**[Part 2 — How to work it](#part-2-how-to-work-it)**
+
+- [Read, in this order](#read-in-this-order)
+- [Report before you change anything](#report-before-you-change-anything)
+
+**[Part 3 — What is already established](#part-3-what-is-already-established)**
+
+- [What is already known to be wrong](#what-is-already-known-to-be-wrong)
+- [What is settled and should not be re-litigated without cause](#what-is-settled-and-should-not-be-re-litigated-without-cause)
+
+**[Part 4 — What this session owes when it ends](#part-4-what-this-session-owes-when-it-ends)**
+
+- [What this session owes when it ends](#what-this-session-owes-when-it-ends)
 
 ---
 
-## Your subject
+## Part 1 — Your charge
+
+
+### Your subject
 
 **How sessions and findings bundles themselves work** — the statuses, the states,
 the rules binding them, the instruction set that carries those rules, and the
@@ -37,7 +61,16 @@ Your findings tree is `docs/session-management-findings/`. Nothing that is not
 strictly about session management goes in it, and the test is one question:
 **would this finding still exist in a project that did something else entirely?**
 
-## What is waiting for you
+
+### The owner's brief
+
+The architecture carries inconsistencies and contradictions, **including among
+the resolved bundles**. Re-evaluate from the ground up. The vocabulary was
+rebuilt in Revisions 198–203 and is current; what has not been re-read is whether
+the decisions underneath it still hold.
+
+
+### What is waiting for you
 
 **This file does not say which bundles are yours.** It cannot: more than one
 session-management session runs at a time, each with a different charge, and a
@@ -66,7 +99,29 @@ the defect it rests on in its own findings table, so the evidence never depended
 on the original staying misshapen. Reformatting is not an edit to the reading.
 Editing what one of them *says* still is, and still needs `reopened`.
 
-## Read, in this order
+
+### What you own, and what you must not touch
+
+Your tree is `docs/session-management-findings/`. The rules live in
+`.github/session-management-instructions.md` and `docs/legend.md`, and those two
+are **project-agnostic by design** — they measure zero project-specific
+references and a checker is not what holds that, you are. If a change would put
+this project's name, paths, revision numbers or finding numbers into either file,
+it belongs in `.github/toolkit-instructions.md` instead.
+
+**One file, one owner.** Other sessions are working the project's own trees. The
+runbooks, `bin/`, `.internal/` and `.github/toolkit-instructions.md` are theirs;
+flag rather than edit. The boundary is the manifests, not the diff — everyone
+composes in their own copy, so the owner's checkout is clean even when three
+sessions are mid-change.
+
+
+---
+
+## Part 2 — How to work it
+
+
+### Read, in this order
 
 1. `docs/legend.md` again, closely — you are about to re-evaluate it
 2. `.github/session-management-instructions.md` end to end
@@ -78,14 +133,8 @@ Editing what one of them *says* still is, and still needs `reopened`.
 6. `docs/sessions/session-responsibilities.md` — **a dated record, not rules.**
    It opens with a table of what has superseded each of its claims
 
-## The owner's brief
 
-The architecture carries inconsistencies and contradictions, **including among
-the resolved bundles**. Re-evaluate from the ground up. The vocabulary was
-rebuilt in Revisions 198–203 and is current; what has not been re-read is whether
-the decisions underneath it still hold.
-
-## Report before you change anything
+### Report before you change anything
 
 The owner reads findings before edits. For each bundle, in the conversation:
 
@@ -99,7 +148,13 @@ The owner reads findings before edits. For each bundle, in the conversation:
   that no longer exists — say so rather than translating silently.
 - **What you would need from the owner** before any of it could be worked.
 
-## What is already known to be wrong
+
+---
+
+## Part 3 — What is already established
+
+
+### What is already known to be wrong
 
 Not a survey. These came up in the course of other work and were recorded rather
 than fixed — expect more.
@@ -137,12 +192,13 @@ than fixed — expect more.
   `docs/architecture/transferring-part-of-a-bundle.md`. It ends on the question
   that decides it: **is a bundle a unit of ownership, or a unit of reading?**
 
-## What is settled and should not be re-litigated without cause
+
+### What is settled and should not be re-litigated without cause
 
 Recorded so you know what is load-bearing rather than accidental.
 
 - **Status is carried by the finding; the bundle derives it** by an ordered
-  ladder. That inversion is what removed the hand-maintained statuses.
+  derivation table. That inversion is what removed the hand-maintained statuses.
 - **Three statuses mean *nobody has looked yet*** and behave identically:
   `un-started`, `reopened`, `transferred`. Reading is the transition.
 - **`resolved` is frozen and `reopened` is the only door** — revising settled
@@ -167,22 +223,13 @@ Recorded so you know what is load-bearing rather than accidental.
   measure zero project-specific references. Keep them that way; a template for
   the third file is in `../instructions-templates/`.
 
-## What you own, and what you must not touch
 
-Your tree is `docs/session-management-findings/`. The rules live in
-`.github/session-management-instructions.md` and `docs/legend.md`, and those two
-are **project-agnostic by design** — they measure zero project-specific
-references and a checker is not what holds that, you are. If a change would put
-this project's name, paths, revision numbers or finding numbers into either file,
-it belongs in `.github/toolkit-instructions.md` instead.
+---
 
-**One file, one owner.** Other sessions are working the project's own trees. The
-runbooks, `bin/`, `.internal/` and `.github/toolkit-instructions.md` are theirs;
-flag rather than edit. The boundary is the manifests, not the diff — everyone
-composes in their own copy, so the owner's checkout is clean even when three
-sessions are mid-change.
+## Part 4 — What this session owes when it ends
 
-## What this session owes when it ends
+
+### What this session owes when it ends
 
 Every bundle it owns, disposed by name in `final-summary.md`. A session may not
 end leaving a bundle owned by a session that has stopped — the unfinished ones
@@ -198,3 +245,4 @@ whose work had been superseded could ever satisfy.
 Releasing a bundle is not a way of finishing it. Say in the summary what was
 answered and what was never read, and leave any status the owner alone may set —
 moving a finding to `decided` is the owner's act — for whoever takes it next.
+

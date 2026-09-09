@@ -1,5 +1,12 @@
 # Runbook prompt — guidance for Copilot
 
+> **Role.** The prompt for creating or migrating a runbook, against
+> `.github/ai-templates/runbook-templates/runbook-template.md.tmpl`.
+>
+> **Rank 4** of 6, a copy for convenience; the conventions it applies live in
+> `.github/toolkit-instructions.md`. Order in
+> [`../../copilot-instructions.md`](../../copilot-instructions.md).
+
 Purpose
 - Guide Copilot to populate .github/ai-templates/runbook-templates/runbook-template.md.tmpl for a specific runbook in this repo. Use it to create a new runbook, or to bring an existing one up to the current conventions.
 

@@ -365,7 +365,7 @@ does before asking anything.
 |---|---|
 | vocabulary and naming | precedent: one name, and retire the other explicitly |
 | schema and shape | precedent: the schema fixes the vocabulary, not the content |
-| status and state semantics | never batched; the ladder is read in order |
+| status and state semantics | never batched; the derivation table is read in order |
 | ownership and routing | proposal; the owner assigns |
 | sequencing and lifecycle | closed choice; ordering errors are expensive |
 | validation coverage | lift first — these findings are usually instances of one rule |
@@ -539,7 +539,7 @@ reasoning rather than memory:
   could use it, where the atomic version can be built while the tree is worked.
 - **One piece of it is undesigned.** `transferring-part-of-a-bundle.md` records
   that a bundle whose remaining findings are inert while transferred ones are
-  live *has no row that fits* in the ladder. Taking option B now means designing
+  live *has no row that fits* in the derivation table. Taking option B now means designing
   that now.
 
 **Nothing here forecloses it.** The graph is finding-level under both; what

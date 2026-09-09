@@ -1,5 +1,11 @@
 # Reimage Toolkit Bash Script Authoring and Review Prompt
 
+> **Role.** The prompt for creating, refactoring or reviewing Bash in this
+> repository — the loader / entrypoint / helper classification and its rules.
+>
+> **Rank 4** of 6, a copy for convenience. Order in
+> [`../../copilot-instructions.md`](../../copilot-instructions.md).
+
 Use this prompt when asking an AI to create, refactor, review, or migrate Bash scripts in `fractogenesis-toolkit`.
 
 ---

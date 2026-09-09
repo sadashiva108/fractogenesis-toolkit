@@ -134,7 +134,7 @@ done
 #
 # 0043 F7: `analyzing` is the else branch and asserts nothing, so a derivation
 # bug always lands there looking plausible. That is why derive_status below
-# states a positive condition for every row it can, and why the ladder is
+# states a positive condition for every row it can, and why the derivation table is
 # spelled out here rather than defaulted.
 derive_status() {
   # derive_status <metadata.json>

@@ -1,5 +1,15 @@
 # Toolkit instructions for fractogenesis-toolkit
 
+> **Role.** The project's own subject — the reimaging workflow, its runbooks,
+> its scripts and its artifacts.
+>
+> **Authoritative for** toolkit conventions. **Not** authoritative for sessions,
+> findings bundles or anything under `docs/`; that is
+> `session-management-instructions.md`.
+>
+> **Rank 3** of 6, in its own domain. Order in
+> [`copilot-instructions.md`](copilot-instructions.md).
+
 **This file governs the reimaging workflow** — the runbooks, the scripts, the
 artifact volume, and the conventions they follow. It says nothing about sessions
 or findings bundles. For those — how work is recorded, who may write what and
