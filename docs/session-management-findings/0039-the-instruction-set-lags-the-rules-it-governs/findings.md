@@ -61,7 +61,7 @@ for.
 | F11 | The header schema binds `findings.md` only, and six of eight architecture records render their header as one run-on paragraph | `framing` |
 | F12 | No status transition names the event that triggers it, so a bulk edit moved twenty-one findings and every checker passed | `resolved` |
 | F13 | The vocabulary file is named for a glance and read as a specification, and moving it is a rename with sixty-three citations | `framing` |
-| F14 | Nothing in the repository is written for someone arriving cold; the entry point is a 724-line instruction set | `framing` |
+| F14 | Nothing in the repository is written for someone arriving cold; the entry point is a 724-line instruction set | `decided` |
 | F15 | A check that validates citations cannot detect their absence: ten decisions cited no finding and every checker passed | `resolved` |
 | F16 | Every check asks whether a document is well formed; none asks whether it is complete, and 162 contaminated fields passed all of them | `resolved` |
 | F17 | Resolving has no procedure: the framework's commonest transition is the only one with no numbered steps, and seven resolutions went unrecorded because of it | `decided` |
@@ -532,6 +532,18 @@ half was ever asked.
 Recorded unanswered on purpose. It was discussed only in a session transcript,
 which is F9's defect one level worse: a transcript is not a file anyone can open,
 and this finding exists so the question survives the session that raised it.
+
+### What became of F14, decided 2026-09-09
+
+**Two of its three parts were answered by changes made elsewhere and nothing
+recorded it.** Revision 246's router carries the six-rank precedence order and
+eleven documents now carry a Role masthead, so *which document wins* is answered;
+Revision 249's `docs/rules/` is the shelf whose absence sent six rules to a
+workspace file. **The first sentence is still true** — `README.md` is the
+project's and a cold reader lands there — and **the number in this finding's own
+title is stale in the wrong direction: 724 has become 951.** D22 gives the
+framework its own door; D23 shortens what is behind it. Neither is carried out
+here.
 
 ## F15 — a check that validates citations cannot detect their absence
 

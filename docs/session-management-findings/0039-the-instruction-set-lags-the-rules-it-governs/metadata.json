@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T04:12:00-04:00",
+  "updatedAt": "2026-09-09T09:05:00-04:00",
   "number": "0039",
   "bundleName": "0039-the-instruction-set-lags-the-rules-it-governs",
   "kind": "session-management",
@@ -16,9 +16,9 @@
   "feltAt": [],
   "scope": "instruction-set. The fix lands in `.github/session-management-instructions.md`, `.claude/CLAUDE.md`, and `docs/architecture/findings-and-sessions.md`. Recorded against `.github/copilot-instructions.md` \u00a7\u00a74b\u20134d, which commit `1c48deb` deleted; D13 re-ruled the address.",
   "read": [],
-  "standing": "transferred",
+  "standing": "analyzing",
   "progress": "analyzing",
-  "ownership": "transferred",
+  "ownership": null,
   "lineage": {
     "supersedes": "0029",
     "on": null
@@ -202,10 +202,10 @@
     {
       "id": "F14",
       "statement": "Nothing in the repository is written for someone arriving cold; the entry point is a 724-line instruction set",
-      "status": "framing",
+      "status": "decided",
       "statusReason": null,
       "statusNote": null,
-      "updatedAt": null,
+      "updatedAt": "2026-09-09T09:05:00-04:00",
       "sectionHeading": "F14 \u2014 nothing here is written for someone arriving cold",
       "reopened": null,
       "withdrawn": null,
@@ -606,6 +606,30 @@
       "answersAsOf": "2026-09-09T03:05:00-04:00",
       "voidedReason": null,
       "sectionHeading": "D21 \u2014 the commit message is one fenced block"
+    },
+    {
+      "id": "D22",
+      "decision": "The framework gets a front door of its own under `docs/rules/`, and `README.md` gains one pointer line to it. `README.md` stays the project's; the framework claims to be reusable as-is, so its entry travels with it",
+      "findings": [
+        "F14"
+      ],
+      "decided": "2026-09-09",
+      "outcome": "accepted",
+      "answersAsOf": "2026-09-09T09:05:00-04:00",
+      "voidedReason": null,
+      "sectionHeading": "D22 \u2014 the front door is the framework's, not the project's"
+    },
+    {
+      "id": "D23",
+      "decision": "The three rule documents stop telling their own history: it moves to a Provenance table at the foot, while a live warning, a currency declaration and the evidence for why a rule exists stay \u2014 the last compressed to one clause inline with the dated account at home. Home before copies, one revision each",
+      "findings": [
+        "F14"
+      ],
+      "decided": "2026-09-09",
+      "outcome": "accepted",
+      "answersAsOf": "2026-09-09T09:05:00-04:00",
+      "voidedReason": null,
+      "sectionHeading": "D23 \u2014 the room behind the door gets shorter"
     }
   ],
   "contributions": [

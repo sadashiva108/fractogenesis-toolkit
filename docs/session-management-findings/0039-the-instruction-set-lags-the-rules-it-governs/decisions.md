@@ -50,6 +50,8 @@ without answering it for rules.
 | D18 | Resolving gets a numbered procedure, §9b: carry out the decision, write the `resolutions.md` row naming the decision and the revision, then move the finding to `resolved` — in that order, because the row is the evidence the status asserts. A `decided` finding whose decisions are all carried out and which has no row is a defect a check can name | F17 | 2026-09-08 | `accepted` |
 | D19 | **The record covers this repository; the rules governing it live in this repository.** Work a session does in another project is not recorded here — no manifest entry, no finding, no `metadata.md` resource row — and a rule the framework depends on is not left in a file outside it. A fourth write kind, `foreign`, names the case so it is excluded deliberately rather than by omission | F19, F9 | 2026-09-08 | `accepted` |
 | D20 | Releasing to `unclaimed` gets §10a, four steps: remove the row from the session's `findings-manifest.md`, set the bundle's index Session cell to `—` and its Status cell to `unclaimed`, decrement the session's counts, and record the disposal in the session. Ownership derives, so there is no status to set | F20 | 2026-09-08 | `accepted` |
+| D22 | **The framework gets a front door of its own, under `docs/rules/`**, and `README.md` gains one pointer line to it. `README.md` stays the project's; the framework claims to be reusable as-is, so its entry travels with it | F14 | 2026-09-09 | `accepted` |
+| D23 | **The three rule documents stop telling their own history.** History moves to a `Provenance` table at the foot; a live warning, a currency declaration and the evidence for why a rule exists stay — the last compressed to one clause inline with the dated account at home. Home before copies: instruction set, then `conformant-prompt.md`, then `session-management-prompt.md`, one revision each | F14 | 2026-09-09 | `accepted` |
 | D21 | The commit message is handed over as **one fenced block tagged `text`** — the fence §11 already requires of every example, for the reason §11 already gives. §7 states it as the other half of the rule it already had: a `git commit` inside the block is something to delete, a message outside one is something to gather, and both cost the owner the same | F23 | 2026-09-09 | `accepted` |
 
 ## Findings 1, 2, 5 and 6 — a rule lives where its kind lives
@@ -1078,3 +1080,71 @@ work was done — and it is created knowingly rather than stumbled into. No
 only the owner closes the deciding. **When F23 moves to `decided`, a resolution
 row naming D21, Revision 240 and its commit is owed immediately**; forgetting it
 is F17 exactly, in the bundle that recorded F17.
+
+## D22 — the front door is the framework's, not the project's
+
+F14 says nothing tells a person who has opened the repository what any of it is
+for. **Two of its three parts have been answered since it was written and this
+one has not.** Revision 246 installed the router — `.github/copilot-instructions.md`,
+73 lines, carrying the six-rank precedence order stated once and nowhere else —
+and eleven documents now carry a `Role / Authoritative for / Rank` masthead, so
+*which document wins* is answered per file. Revision 249 created `docs/rules/`,
+which is the shelf F14 says was missing when six rules went to a workspace file.
+
+**What is still true is F14's first sentence.** `README.md` is 67 lines about
+reimaging a Mac, last updated 2026-08-13, and mentions none of this. It is where
+a cold reader lands.
+
+**Rejected — extend `README.md` with a framework section.** It is the cheapest
+option and it is where the reader already is. It welds two subjects into the one
+file the framework is most careful to keep separable: the session management set
+says of itself *"deliberately project-agnostic and meant to be reusable as-is."*
+A front door written into this project's README does not travel, and the next
+project inherits a framework with no entry.
+
+**Rejected — declare the router the front door and close F14.** The router
+answers *what governs what*. It does not answer *what is this and where do I
+start*, and nobody arrives at it. Recorded as rejected rather than left unsaid,
+because it is the option that looks like progress and is not.
+
+**Not decided here**: what the door says. A first line, a diagram, or the three
+objects and the loop between them are different documents, and that is the
+carrying out.
+
+## D23 — the room behind the door gets shorter
+
+The instruction set was **724 lines when F14 was written and is 951 now** — the
+cost F14 measured grew by 227 while the finding sat unanswered. A front door onto
+a 951-line reference answers half a question.
+
+Much of that length is the file telling its own history inline. The owner's rule,
+taken on `docs/legend.md` at Revision 246 and extended here, cuts four ways rather
+than two:
+
+| Passage | Where it goes |
+|---|---|
+| what this used to be, and why it changed | a `Provenance` table at the foot |
+| this is not settled, and here is who is settling it | **stays**, at the point of use |
+| what this file is current as of | **stays** — it is a staleness declaration, not history |
+| the evidence for why the rule exists | **stays inline, compressed to one clause**; the dated account lives at home |
+
+**The fourth line is the one that matters and it is not reference-versus-prompt.**
+The test is *will this reader ever return to this file?* The legend is consulted,
+so a pointer to the foot works. A prompt is read once, top to bottom, by a session
+with no context; it will never come back, and **a prohibition stripped of its
+mechanism is one a session talks itself out of.**
+
+**Rejected — one pass over all three files.** 61 passages of judgement in one
+revision, and the two that matter most are the two a session is actually pasted.
+Home before copies: the instruction set first, because the prompts are its copies
+and trimming a copy before the home is settled is `0039` F9 in reverse.
+
+**Rejected — leave the length alone and only add the door.** It answers F14's
+first sentence and not its second, and the second is the one with a number
+attached that is still rising.
+
+**This decision carries the fourteen retired read-trigger sites**, which live in
+the same three files: the owner ruled that a write and not a read moves a status,
+`docs/legend.md:67` and §9a already say so, and fourteen prose sites still say the
+opposite. Fixing them in a separate pass over the same paragraphs would be two
+edits where one will do.
