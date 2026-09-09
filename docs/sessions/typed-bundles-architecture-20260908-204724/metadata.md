@@ -48,6 +48,7 @@ release.
 |---|---|---|
 | [`0039`](../../session-management-findings/0039-the-instruction-set-lags-the-rules-it-governs/) | 2026-09-09 | F21 — nothing checks that a vocabulary change reached the prose; five consecutive revisions, measured |
 | [`0039`](../../session-management-findings/0039-the-instruction-set-lags-the-rules-it-governs/) | 2026-09-09 | F22 — the `state-schema` currency watch is correct, unarmed, and cannot report drift |
+| [`0039`](../../session-management-findings/0039-the-instruction-set-lags-the-rules-it-governs/) | 2026-09-09 | F23 and D21 — §7's commit-message rule states what the block excludes and never that there is one |
 
 A contribution to a bundle this session does not own is recorded here and does
 not change ownership. `0039` is owned by

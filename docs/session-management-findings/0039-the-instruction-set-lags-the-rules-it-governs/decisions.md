@@ -50,6 +50,7 @@ without answering it for rules.
 | D18 | Resolving gets a numbered procedure, §9b: carry out the decision, write the `resolutions.md` row naming the decision and the revision, then move the finding to `resolved` — in that order, because the row is the evidence the status asserts. A `decided` finding whose decisions are all carried out and which has no row is a defect a check can name | F17 | 2026-09-08 | `accepted` |
 | D19 | **The record covers this repository; the rules governing it live in this repository.** Work a session does in another project is not recorded here — no manifest entry, no finding, no `metadata.md` resource row — and a rule the framework depends on is not left in a file outside it. A fourth write kind, `foreign`, names the case so it is excluded deliberately rather than by omission | F19, F9 | 2026-09-08 | `accepted` |
 | D20 | Releasing to `unclaimed` gets §10a, four steps: remove the row from the session's `findings-manifest.md`, set the bundle's index Session cell to `—` and its Status cell to `unclaimed`, decrement the session's counts, and record the disposal in the session. Ownership derives, so there is no status to set | F20 | 2026-09-08 | `accepted` |
+| D21 | The commit message is handed over as **one fenced block tagged `text`** — the fence §11 already requires of every example, for the reason §11 already gives. §7 states it as the other half of the rule it already had: a `git commit` inside the block is something to delete, a message outside one is something to gather, and both cost the owner the same | F23 | 2026-09-09 | `accepted` |
 
 ## Findings 1, 2, 5 and 6 — a rule lives where its kind lives
 
@@ -1035,3 +1036,45 @@ released. **Revision 200 found `phase-11b` closed while still holding five**, an
 `0008`, `0011`, `0015`, `0016` and `0017` were released after the fact by a session
 that had to notice the problem first. A written procedure is what makes that a
 step rather than an archaeology.
+
+## D21 — the commit message is one fenced block
+
+**Decided:** 2026-09-09, at the owner's direction, immediately after Revision 239
+demonstrated the gap. **Recorded by `typed-bundles-architecture-20260908-204724`,
+which does not own this bundle** — permitted while F23 is `framing`, and closing
+the deciding stays the owner's act.
+
+§7 gains one paragraph: the message is one fenced block, tagged `text`, and a
+message set as prose or split across paragraphs has to be reassembled before it
+can be pasted.
+
+**Rejected — leave it to convention.** It *was* convention, it held for every
+message before Revision 239, and it failed there without anything noticing. A rule
+obeyed by habit and stated only by half is indistinguishable from a rule nobody
+wrote, which is this bundle's subject.
+
+**Rejected — state it in `conformant-prompt.md` instead.** The prompt is the copy
+and the instruction set is the home, per D19, and adding a rule to the copy is
+exactly how the six rules F9 records came to live outside the repository. The copy
+is deliberately not extended by this decision.
+
+**Rejected — a check.** There is nothing in the tree to check. The message is
+handed over in conversation and never written to a tracked file, so no validator
+can see it. The only instrument is the owner, and saying so is the honest
+position: it is the same class as `0042`, where the instruction to open the
+rendered page exists *because* nothing reads it.
+
+**Not decided here — whether §7's other requirements have the same shape.** The
+section names four things the block must not contain and two it must end with.
+Whether any of the others is one-sided in the same way is a re-reading of §7 that
+this decision does not perform.
+
+### What this decision leaves owed, deliberately
+
+**F23 is `framing` and the work is carried out in the same revision.** That is a
+live instance of F18 in this bundle — `accepted` cannot say whether a decision's
+work was done — and it is created knowingly rather than stumbled into. No
+`resolutions.md` row is owed yet, because §9b's procedure begins at `decided` and
+only the owner closes the deciding. **When F23 moves to `decided`, a resolution
+row naming D21, Revision 240 and its commit is owed immediately**; forgetting it
+is F17 exactly, in the bundle that recorded F17.

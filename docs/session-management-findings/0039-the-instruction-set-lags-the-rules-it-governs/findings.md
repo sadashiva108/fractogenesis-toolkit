@@ -33,6 +33,7 @@ afternoon by the session that had been told it.
 |---|---|---|
 | `allocation-and-inquiry-design-20260906-233205` | 2026-09-06 | Recorded D5 against F7 and set D4's outcome to `superseded → D5` |
 | `typed-bundles-architecture-20260908-204724` | 2026-09-09 | Added F21 and F22, from a cold reading of `docs/legend.md` at Revisions 236 and 237 |
+| `typed-bundles-architecture-20260908-204724` | 2026-09-09 | Added F23 and took D21, from its own failure to hand the Revision 239 message over as a block |
 
 ## Finding status
 
@@ -69,6 +70,7 @@ for.
 | F20 | Releasing a bundle to `unclaimed` has no procedure, though its sibling `transferred` has five numbered steps and the operation strands a bundle when done wrong | `decided` |
 | F21 | Nothing checks that a vocabulary change reached the prose, and five consecutive revisions demonstrate it — the last leaving the legend saying a superseded bundle cannot be read | `framing` |
 | F22 | The currency watch that covers the legend was asserted before the defect existed, has never been armed, and cannot report drift while unarmed | `framing` |
+| F23 | §7 requires the commit message to be nothing but the message and never requires it to be a block, so a session can obey every word of the rule and still hand over one the owner has to reassemble | `framing` |
 
 ---
 
@@ -948,6 +950,42 @@ has just read both ends. **The failure worth catching is zero** — a watch that
 never been confirmed — which is the shape §9's coverage clause and §9b already
 use, and the one shape in this repository that has not yet produced a false
 positive.
+
+## F23 — the commit message rule is half a rule
+
+§7 says **"The block you hand over is the message and nothing else"** and spends a
+paragraph on what must not be inside it — no `git commit`, no `-m`, no quoting
+wrapper — because a command in the block is something the owner has to delete
+before using it.
+
+**It never says the message is a block.** Every requirement in the section is
+about what the block excludes, and nothing in it establishes that there is one. A
+session can therefore satisfy the rule completely — no command, no wrapper,
+nothing but the message, both trailers at the end — and still hand over something
+the owner cannot use as handed.
+
+**Observed at Revision 239.** The message was handed over as ordinary prose in the
+reply, with commentary before and after it. Every word of §7 was obeyed. The owner
+asked for it a second time as a block, and that is the cost: not a wrong message,
+a message that has to be gathered by hand before it reaches `git commit`.
+
+**The two failures are one failure from opposite sides.** A `git commit` inside the
+block is something the owner deletes. A message outside a block is something the
+owner gathers. §7 named the first and had no word for the second, so the rule read
+as complete while covering half its own subject.
+
+**The fence is already required elsewhere in this file, for this reason.** §11
+requires every example to be fenced and tagged `text` — never four-space indented,
+never tagged `markdown` — because renderers disagree about the first and interpret
+the second. A commit message is an example in exactly that sense: inert text that
+must survive rendering unchanged and be copied whole. §7 is the one place the file
+asks for such a block without saying it is one.
+
+**What it costs to leave.** One round trip per commit message — small, recurring,
+and paid by the owner rather than by the session. It also has the shape this bundle
+exists to record: **a rule whose stated half is enforced by habit and whose unstated
+half is found by breaking it.** Nothing checks either half. The only instrument is
+the owner asking twice.
 
 ## What this bundle does not cover
 

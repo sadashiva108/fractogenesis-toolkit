@@ -368,6 +368,15 @@ should not have to ask twice.
 `git commit` and pastes into the editor, so a command in the block is something
 they have to delete before using it.
 
+**It is one fenced block, tagged `text`** — the fence §11 already requires of
+every example, for the reason §11 already gives: it is inert in every renderer,
+and the owner copies it in a single action. A message set as ordinary prose, or
+split across paragraphs with commentary between them, has to be reassembled by
+hand before it can be pasted. **That costs the owner exactly what a `git commit`
+inside the block costs them**, from the other direction — one is something to
+delete, the other something to gather — and the rule above is half a rule
+without it. `0039` F23 and D21.
+
 Anything the owner might need to *run* — a command, a flag, a reminder about
 staging — goes in the conversation beside the block, not inside it.
 

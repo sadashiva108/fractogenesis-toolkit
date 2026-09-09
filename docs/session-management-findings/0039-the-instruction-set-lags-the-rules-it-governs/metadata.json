@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T01:36:00-04:00",
+  "updatedAt": "2026-09-09T03:05:00-04:00",
   "number": "0039",
   "bundleName": "0039-the-instruction-set-lags-the-rules-it-governs",
   "kind": "session-management",
@@ -328,6 +328,18 @@
       "reopened": null,
       "withdrawn": null,
       "resolution": null
+    },
+    {
+      "id": "F23",
+      "statement": "\u00a77 requires the commit message to be nothing but the message and never requires it to be a block, so a session can obey every word of the rule and still hand over one the owner has to reassemble",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-09T03:05:00-04:00",
+      "sectionHeading": "F23 \u2014 the commit message rule is half a rule",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
     }
   ],
   "decisions": [
@@ -582,6 +594,18 @@
       "answersAsOf": null,
       "voidedReason": null,
       "sectionHeading": "D20 \u2014 releasing to `unclaimed` gets a procedure"
+    },
+    {
+      "id": "D21",
+      "decision": "The commit message is handed over as one fenced block tagged `text` \u2014 the fence \u00a711 already requires of every example, for the reason \u00a711 already gives. \u00a77 states it as the other half of the rule it already had: a `git commit` inside the block is something to delete, a message outside one is something to gather, and both cost the owner the same",
+      "findings": [
+        "F23"
+      ],
+      "decided": "2026-09-09",
+      "outcome": "accepted",
+      "answersAsOf": "2026-09-09T03:05:00-04:00",
+      "voidedReason": null,
+      "sectionHeading": "D21 \u2014 the commit message is one fenced block"
     }
   ],
   "contributions": [
@@ -594,6 +618,11 @@
       "session": "typed-bundles-architecture-20260908-204724",
       "date": "2026-09-09",
       "contribution": "Added F21 and F22, from a cold reading of `docs/legend.md` at Revisions 236 and 237"
+    },
+    {
+      "session": "typed-bundles-architecture-20260908-204724",
+      "date": "2026-09-09",
+      "contribution": "Added F23 and took D21, from its own failure to hand the Revision 239 message over as a block"
     }
   ],
   "edges": [
