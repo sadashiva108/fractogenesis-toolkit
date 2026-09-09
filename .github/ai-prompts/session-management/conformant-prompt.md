@@ -368,13 +368,23 @@ whatever else is in flight.
 **Wait to be asked before applying a patch, and then apply it yourself.**
 Composing is not delivering. Show what you made; the owner says when it lands.
 
-**"Write it" is the ask.** So are "save it", "do it" and "apply it". The session
-applies the patch to the checkout, verifies by comparing trees, and reports what
-landed. It does NOT hand over a list of commands and wait -- that makes the owner
-the one running the apply, which is slower and puts the verification in the
-wrong hands. Offer the commands only as an alternative, or when the owner asks
-for them. What the session still never does is `git add`, `git commit` or
-`git push`: the owner commits.
+**"Write it" is the ask.** So are "apply it" and "land it" -- each names a patch
+already handed over. **"Do it" is NOT**, and was never in the instruction set:
+it names a task as readily as a deliverable, and *do step 1* is an instruction to
+compose. **Applying is a response, never an initiation**, and where an
+instruction could be either, compose and ask. `0049` D7.
+
+**Assert the checkout is clean first** -- `git status --porcelain`, empty -- and
+refuse if it is not, naming what is there. More than one session runs against
+that checkout, and between an apply and the owner's commit it is a shared
+resource with no lock on it. `0049` D8.
+
+Then the session applies the patch, verifies by comparing trees, asserts the
+index is still empty, and reports what landed. It does NOT hand over a list of
+commands and wait -- that makes the owner the one running the apply, which is
+slower and puts the verification in the wrong hands. Offer the commands only as
+an alternative, or when the owner asks for them. What the session still never
+does is `git add`, `git commit` or `git push`: the owner commits.
 
 **"Add a commit message" means supply the block**, in the reply, as the message
 and nothing else -- no `git commit`, no `-m`, no quoting wrapper.

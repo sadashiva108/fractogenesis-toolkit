@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T07:10:00+00:00",
+  "updatedAt": "2026-09-09T09:20:00+00:00",
   "number": "0049",
   "bundleName": "0049-the-patch-is-named-as-the-deliverable-and-never-produced",
   "kind": "session-management",
@@ -102,6 +102,26 @@
       "reopened": null,
       "withdrawn": null,
       "resolution": null
+    },
+    {
+      "id": "F6",
+      "statement": "The phrase that authorizes an apply has two definitions, the broader is in the copy, and neither has a precondition on the checkout",
+      "status": "resolved",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-09",
+      "sectionHeading": "F6 — two definitions of the ask, and no precondition on either",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": {
+        "resolvedBy": [
+          "D7",
+          "D8"
+        ],
+        "whatWasDone": "§0 step 6 rewritten: the ask names a delivered artifact, do it retired, applying is a response never an initiation, the checkout must be git status --porcelain empty before applying and the index empty after; the conformant prompt brought onto it",
+        "revision": "258",
+        "commit": null
+      }
     }
   ],
   "decisions": [
@@ -176,6 +196,30 @@
       "answersAsOf": null,
       "voidedReason": null,
       "sectionHeading": "D6 — assert the index is empty, because the tree comparison cannot"
+    },
+    {
+      "id": "D7",
+      "decision": "The authorizing phrase is the source's and do it is retired. Applying is a response to a delivered patch, never an initiation; where an instruction could be either, the session composes and asks",
+      "findings": [
+        "F6"
+      ],
+      "decided": "2026-09-09",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D7 — the ask names a delivered artifact, and never a task"
+    },
+    {
+      "id": "D8",
+      "decision": "A session asserts the checkout is clean before applying and refuses otherwise, naming what is already there",
+      "findings": [
+        "F6"
+      ],
+      "decided": "2026-09-09",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D8 — the checkout must be clean, and this is the coordinator's lock"
     }
   ],
   "contributions": [],

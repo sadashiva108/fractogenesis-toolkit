@@ -48,11 +48,39 @@ once work where earlier attempts did not.**
    `./bin/review-changes.sh` produces it.
 5. **Wait.** The owner reviews and may ask for the full diff, one file, or a
    rationale. Composing is not delivering.
-6. **On *"write it and provide a commit message"* — apply the patch.** That
-   sentence is the owner's instruction to write your work into the checkout and
-   hand back a commit message. It is the one time a session writes there, and
-   the report says **applied at your direction** with what was compared to verify
-   it landed whole.
+6. **On *"write it and provide a commit message"* — apply the patch, if and
+   only if the checkout is clean.** That sentence is the owner's instruction to
+   write your work into the checkout and hand back a commit message. It is the
+   one time a session writes there, and the report says **applied at your
+   direction** with what was compared to verify it landed whole.
+
+   **Applying is a response, never an initiation.** The instruction refers to a
+   patch already handed over. *Write it*, *apply it* and *land it* name that
+   artifact. An instruction naming work **not yet composed** — *do step 1*,
+   *proceed with X*, *go ahead* — is an instruction to compose, and it ends at
+   step 5. **Where an instruction could be either, compose and ask**: composing
+   when an apply was wanted costs one exchange; applying when a review was wanted
+   writes into the checkout without consent. **`do it` is not the ask** — it
+   names a task as readily as a deliverable. `0049` F6 and D7.
+
+   **First, assert the checkout is clean**, and refuse if it is not:
+
+```text
+git status --porcelain          # in the owner's checkout; must be empty
+```
+
+   **Not empty means another party's uncommitted work is there.** Refuse, name
+   what you found, and wait. Do not let `git apply --check` decide it: that
+   compares the patch against file contents and passes whenever the hunks happen
+   not to collide, which is a fact about what the two changes touch rather than
+   about whether it is safe to write. **Between an apply and the owner's commit
+   the checkout is a shared resource with no lock on it**, and more than one
+   session runs against it; two sets of uncommitted work in the files every
+   session touches cannot be committed apart. `0038` F1 and F4; `0049` F6 and D8.
+
+   **After applying, assert the index is still empty** — `git diff --cached
+   --name-only`. An index write leaves the working tree byte-identical, so the
+   tree comparison cannot see it. `0049` F5 and D6.
 7. **The owner runs `git add`, `git commit`, `git push`.** A session never
    stages, never commits, never pushes, and never rewrites history.
 

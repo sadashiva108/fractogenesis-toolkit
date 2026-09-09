@@ -27,6 +27,7 @@ failure**; the reading is offered so it can be checked rather than believed.
 | F3 | `git diff` in a session copy omits every untracked file, so the prescribed patch would have carried 9 of 14 paths | `resolved` |
 | F4 | Nothing detects a write into the owner's checkout, and the signal that used to exist was removed by `0038` | `decided` |
 | F5 | An index write leaves no trace in the working tree, so the tree comparison this bundle prescribes cannot see it | `decided` |
+| F6 | The phrase that authorizes an apply has two definitions, the broader is in the copy, and neither has a precondition on the checkout | `decided` |
 
 ## F1 — what actually happened
 
@@ -154,4 +155,65 @@ in the owner's checkout is."* That sentence was in the copy this session read on
 its first day. **The rule was not missing and was not stale. It was not
 consulted**, because the act did not feel like a write — which is `0049` F1's
 own diagnosis, arriving inside `0049`.
+
+## F6 — two definitions of the ask, and no precondition on either
+
+**Recorded 2026-09-09** by `assurance-coverage-20260908-204724`, after it applied
+a patch on an instruction that authorised composing.
+
+### The two definitions
+
+**`.github/session-management-instructions.md` §0 step 6 — rank 3, the source:**
+
+> **On *"write it and provide a commit message"* — apply the patch.**
+
+**`.github/ai-prompts/session-management/conformant-prompt.md` — rank 4, a copy:**
+
+> **"Write it" is the ask.** So are "save it", "do it" and "apply it".
+
+`.github/copilot-instructions.md` ranks prompts below the instruction sets as
+*copies for convenience*, and says a document disagreeing with something above it
+**is a defect, not a rule**. This copy does not merely restate its source: it is
+**broader**, and broader in the one direction that costs something — a session
+writing into the checkout without being asked.
+
+**The dropped half is the load-bearing half.** *"and provide a commit message"*
+means the owner is committing next. It is what makes step 6 safe, and the copy's
+four-phrase list has no equivalent.
+
+**And *"do it"* names a task as readily as a deliverable.** *Do step 1*, *do the
+analysis*, *proceed to do X* are instructions to work. On 2026-09-09 the owner
+wrote *"Proceed to do step 1"*, this session read it against the copy's list,
+applied Revision 255 into the checkout, and the owner's reply was *"You shouldn't
+have even applied the changes."*
+
+### Neither definition says anything about the state of the checkout
+
+**This is the half that matters to a coordinator**, and no version of the rule
+has it. Step 6 authorises an apply on a phrase and asks nothing about what is
+already in the tree.
+
+Between an apply and the owner's commit, the checkout holds one session's work.
+The owner runs several sessions against one checkout. If a second applies in that
+window, both sets interleave in the files every session touches —
+`APPLY-MANIFEST.md` and the two `INDEX.md` — and **neither can be committed
+alone**, which is `0038` F1. `git status` stops saying whose work is whose, and
+backing one out takes the other with it, which is `0038` F4.
+
+**A dirty checkout is a shared resource and nothing locks it.** Every apply takes
+that lock for an unbounded time — until the owner happens to commit.
+
+### It nearly happened, and only an unrelated failure stopped it
+
+On 2026-09-09 this session ran `git apply --check` for its Revision 250 patch
+while the owner had **10 uncommitted paths** in the checkout — in-flight work on
+`0038`, `0045`, `0047` and both index files. **Three of those files were also in
+the patch.** `--check` failed on the overlap, which is the only reason nothing
+landed. Had the patch touched different files it would have applied cleanly into
+another party's uncommitted work, and the interleaving would have been
+discovered at commit time.
+
+**Nothing in the rule would have refused it.** The refusal came from git noticing
+a context mismatch, which is luck rather than a guard — the same shape as F5,
+where a stale lock rather than a rule prevented an index write.
 

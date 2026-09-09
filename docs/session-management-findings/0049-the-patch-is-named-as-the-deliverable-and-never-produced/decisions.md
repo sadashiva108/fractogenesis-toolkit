@@ -17,6 +17,8 @@ is one gap in the guard, and this session is standing in it.
 | D4 | The guard is extended to the tool a bridged session actually writes through, and derives its protected root from the connected folder rather than `CLAUDE_PROJECT_DIR`. **Warn, never deny, on a shell call; deny only on a file commit** | F4 | 2026-09-09 | `accepted` |
 | D5 | The remainder of F4 is not worked here. It is a toolkit write with no bundle type yet, and it is parked as `0050` | F4 | 2026-09-09 | `accepted` |
 | D6 | The apply procedure gains one assertion: after applying, `git diff --cached --name-only` in the checkout must be empty | F5 | 2026-09-09 | `accepted` |
+| D7 | The authorizing phrase is the source's and **`do it` is retired**. Applying is a **response** to a delivered patch, never an initiation; where an instruction could be either, the session composes and asks | F6 | 2026-09-09 | `accepted` |
+| D8 | **A session asserts the checkout is clean before applying** and refuses otherwise, naming what is already there | F6 | 2026-09-09 | `accepted` |
 
 ---
 
@@ -159,4 +161,81 @@ tree comparison, where a session already reports what it compared.
 tree it is applying to, and this session used all four legitimately. A rule that
 banned them would be routed around, which `docs/legend.md` names as the failure
 mode of a rule that fires on trivia.
+
+## D7 — the ask names a delivered artifact, and never a task
+
+**The source wins and the copy is brought onto it**, which is the precedence rule
+rather than a judgement: `.github/copilot-instructions.md` ranks the instruction
+sets above the prompts and says a copy that disagrees is a defect.
+
+**`do it` is retired.** *Write it*, *apply it* and *land it* name a thing already
+handed over. *Do it* names a task as readily as a deliverable, and it was never in
+the source.
+
+**Applying is a response, never an initiation.** An instruction referring to a
+patch already in the owner's hands authorises the apply. An instruction naming
+work not yet composed — *do step 1*, *proceed with X*, *go ahead* — is an
+instruction to compose, and it ends at step 5.
+
+**Where an instruction could be either, the session composes and asks.** The
+costs are not symmetric: composing when an apply was wanted costs one exchange;
+applying when a review was wanted writes into the owner's checkout without
+consent, which is this bundle's subject. **F1's diagnosis is the argument** — a
+session that meets an ambiguity and resolves it in the direction requiring
+nothing further of the owner, silently, is the failure `0049` was opened to
+record. It happened again at Revision 255, three findings later, in the bundle
+that records it.
+
+**Not restored: the second half of the source's phrase as a requirement.**
+*"and provide a commit message"* tells a session the owner is committing next,
+and that is why step 6 is safe. Requiring those exact words would fail a
+legitimate *apply it* that omits them, so D8 supplies the safety property
+directly instead of inferring it from wording.
+
+## D8 — the checkout must be clean, and this is the coordinator's lock
+
+**Before applying, in the owner's checkout:**
+
+```text
+git status --porcelain     # must be empty
+```
+
+**Not empty: refuse, and name what is there.** Do not apply, do not ask git to
+try, do not rely on `git apply --check` to catch the overlap — it compares the
+patch against file contents and passes whenever the hunks happen not to collide,
+which is a property of what the two changes touch rather than of whether it is
+safe to write.
+
+**This is the lock that does not exist today.** The owner runs several sessions
+against one checkout; between an apply and a commit the tree is a shared resource
+held by whoever wrote last. This makes the hold explicit and makes taking it
+conditional on the tree being free.
+
+**It would have refused the Revision 250 apply**, where ten of the owner's
+uncommitted paths were present and three collided. That apply was stopped by
+`git apply --check` failing on a context mismatch — luck, not a rule.
+
+**False positive: none, and the reason is worth stating.** A clean checkout is
+the normal state and the owner's own working state between commits; a session
+that finds otherwise has genuinely met a case it must not write into. Unlike
+every other check proposed in this bundle it needs no suppressor and no
+allow-list, because there is no legitimate reason for a session to apply onto
+another party's uncommitted work.
+
+**Its avenue is `check`, inside the apply procedure** — `rule-enforcement-avenues.md`
+§2 — not a guard. A guard cannot see which session is writing (`0038` F7, `0045`
+F3) and does not need to here: the condition is a property of the tree, and the
+session runs it on itself.
+
+**Considered and not taken: sessions stop applying altogether**, with the owner
+applying each patch immediately before committing it. It is the strongest form of
+what the owner asked for — the tree would be dirty only in the seconds before a
+commit — and §0 step 6 rejects it in terms: *"that makes the owner the one
+running the apply, which is slower and puts the verification in the wrong
+hands."* **That reasoning was written for one session.** With several, the
+calculus is different and the question is genuinely open. It is not taken here
+because D8 supplies most of the protection at a fraction of the cost, and because
+reversing step 6 is a change to the working cycle rather than an addition to it.
+Recorded so a later reader sees it was weighed against the owner's stated
+objective rather than overlooked.
 
