@@ -1,4 +1,4 @@
-# Findings owned — `assurance-coverage-20260909-004724`
+# Findings owned — `assurance-coverage-20260908-204724`
 
 Authoritative record of the findings bundles this session owns.
 `docs/sessions/INDEX.md` carries the count and points here rather than

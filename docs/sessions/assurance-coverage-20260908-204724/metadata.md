@@ -1,4 +1,4 @@
-# assurance-coverage-20260909-004724 — metadata
+# assurance-coverage-20260908-204724 — metadata
 
 ## Owners
 

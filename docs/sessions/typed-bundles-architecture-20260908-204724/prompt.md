@@ -51,7 +51,7 @@ Your jobs, in order:
 ## What is not yours
 
 `0040`, `0041`, `0042`, `0044`, `0046`, `0049` belong to
-`assurance-coverage-20260909-004724`. Two `relates-to` edges cross to
+`assurance-coverage-20260908-204724`. Two `relates-to` edges cross to
 them — `0049/F1 -> 0038/F1` and `0044/F1 -> 0047/F3`. `relates-to` carries no
 dispatch constraint, so you are not blocked, and you do not read or write those
 bundles. Route anything you need through the owner.

@@ -79,12 +79,12 @@ yours to shape, not to inherit.
 
 **Do not implement.** Building a check is a doing bundle and those do not exist
 yet; `docs/architecture/typed-bundles-and-work.md` is the draft that would create
-them, and it belongs to `typed-bundles-architecture-20260909-004724`.
+them, and it belongs to `typed-bundles-architecture-20260908-204724`.
 
 ## What is not yours
 
 `0037`, `0038`, `0045`, `0047`, `0048` belong to
-`typed-bundles-architecture-20260909-004724`. Two `relates-to` edges cross
+`typed-bundles-architecture-20260908-204724`. Two `relates-to` edges cross
 to them. `relates-to` carries no dispatch constraint, so you are not blocked, and
 you do not read or write those bundles.
 

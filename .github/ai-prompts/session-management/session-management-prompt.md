@@ -1,7 +1,7 @@
 # Session prompt — session management
 
-**Last updated:** 2026-09-06 11:00 EST  
-**Current as of:** `APPLY-MANIFEST.md` Revision 205
+**Last updated:** 2026-09-08 20:47 EST  
+**Current as of:** `APPLY-MANIFEST.md` Revision 238
 
 If the repository is past that revision, this file may have fallen behind — say so
 rather than following it where it disagrees with `docs/legend.md` or the
@@ -25,31 +25,32 @@ strictly about session management goes in it, and the test is one question:
 
 ## What is waiting for you
 
-Seven bundles, all `unclaimed` — parked and closed to every session until the
-owner assigns them to you. Read them in this order; the first two are the ground
-the others stand on.
+**This file does not say which bundles are yours.** It cannot: more than one
+session-management session runs at a time, each with a different charge, and a
+shared prompt that named bundles would hand the same work to both. It listed
+seven `unclaimed` bundles until Revision 238, by which time two of them belonged
+to one session and three to another.
+
+**Your bundles are in your own session bundle**, in two files that are
+authoritative where this one is not:
 
 | | |
 |---|---|
-| `0037` | The findings architecture disagrees with itself and with the tree |
-| `0038` | Sessions compose their changes in the tree the owner commits from |
-| `0039` | The instruction set lags the rules it governs — 7 decided, 1 never decided |
-| `0036` | `verify-doc-paths.sh --all` counts `docs/`, so its OK baseline cannot hold |
-| `0040` | Superseding a bundle whose session is gone is instructed but never defined |
-| `0041` | The index and manifest tables have a shape nothing checks |
-| `0042` | No check reads the rendered page — recorded 2026-09-06, supersedes nothing |
+| `docs/sessions/<yours>/findings-manifest.md` | what you own, and its standing |
+| `docs/sessions/<yours>/prompt.md` | your charge, your reading order, what is not yours |
 
-Each supersedes an original that stays where it was — same number minus ten,
-still in its old tree, still listed by the session that held it, `superseded`.
-**Read the originals.** They carry the reasoning, and `0037` and `0038` are fully
-resolved readings whose resolutions are the thing in question.
+**Read the originals behind whatever you are given.** Each session-management
+bundle supersedes one with the same number minus ten, which stays where it was,
+still listed by the session that held it, `superseded`. The originals carry the
+reasoning, and where the superseded reading was fully resolved, those resolutions
+are the thing in question.
 
-**Their readings are unchanged; their files are not.** Revision 203 brought all
-three onto the header schema, after they had been held back from three revisions
-of reformatting on a rule that turned out to be wrong in its reach — `0041`
-states the defect it rests on in its own findings table, so the evidence never
-depended on the original staying misshapen. Reformatting is not an edit to the
-reading. Editing what one of them *says* still is, and still needs `reopened`.
+**Their readings are unchanged; their files are not.** Revision 203 brought them
+onto the header schema after they had been held back from three revisions of
+reformatting on a rule that turned out to be wrong in its reach — `0041` states
+the defect it rests on in its own findings table, so the evidence never depended
+on the original staying misshapen. Reformatting is not an edit to the reading.
+Editing what one of them *says* still is, and still needs `reopened`.
 
 ## Read, in this order
 
@@ -58,7 +59,8 @@ reading. Editing what one of them *says* still is, and still needs `reopened`.
 3. `docs/architecture/findings-and-sessions.md` — why the shape is what it is,
    and its section 12, which is a list of open questions nobody has answered
 4. `docs/architecture/transferring-part-of-a-bundle.md` — three options, none chosen
-5. The six bundles below, in the order given
+5. The bundles your `findings-manifest.md` lists, in the order your
+   `prompt.md` gives
 6. `docs/sessions/session-responsibilities.md` — **a dated record, not rules.**
    It opens with a table of what has superseded each of its claims
 

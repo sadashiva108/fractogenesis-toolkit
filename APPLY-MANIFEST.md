@@ -1,4 +1,6 @@
 # Apply Manifest
+**Revision 238** — supersedes Revision 237 and earlier. **The shared subject prompt was handing out bundles it no longer owned.** `.github/ai-prompts/session-management/session-management-prompt.md` is one of exactly two files pasted into a new session, and it still read *"Seven bundles, all `unclaimed`"* — a list current at Revision 205 that by Revision 237 named two bundles belonging to one session and three to another. It cannot name bundles at all: more than one session-management session runs at a time, and a shared prompt that names them hands the same work to both. It now points at the session's own `findings-manifest.md` and `prompt.md`, which are authoritative where it is not. **Where a per-session charge belongs is left open — it is `0037`.** Also recorded here: the two session bundles created at Revision 237 were stamped in UTC where `what-a-session-is-given.md` requires America/New_York. That was **not** caught before Revision 237 was committed as `25e8e8d`, so it is a rename after publication — `0035` — and Revision 237's own entry keeps the names it shipped with, because this file is never retro-edited.
+
 **Revision 237** — supersedes Revision 236 and earlier. **The allocation of Revision 234 is carried out.** Two session bundles are created — `typed-bundles-architecture-20260909-004724` and `assurance-coverage-20260909-004724` — and the eleven `unclaimed` session-management bundles are assigned between them. Until now the allocation existed only as a proposal and two pasted prompts: **a prompt saying *you own these* is not ownership**, ownership is derived, and neither session owned anything or could write a Contributions row, because a Contributions row needs a session bundle name and neither session had one. Found by the architecture session, which stopped rather than invent a name. Carrying it out found the second thing: **three documents say `findings-manifest.md` is authoritative for what a session owns, and no code reads it** — every ownership computation reads `ownedBundles` from `metadata.json`.
 
 **Revision 236** — supersedes Revision 235 and earlier. **Revision 235 rewrote the legend's prose and left its table on the old words.** A parallel session reading `docs/legend.md` cold found three defects in it, all real, none of them touched by the revision that claimed to have finished the rename: an eight-row ladder where `state-as-data.md` §4.4 had shrunk it to five, a clause spliced across the Revision 222 edit that leads nowhere, and a sentence saying standing is *"stored nowhere"* eleven revisions after the owner reversed that. The ladder becomes two tables — `progress` derived from the findings, `standing` derived from `progress` — and the file states where the values live and which check fails when they drift.
@@ -602,6 +604,90 @@ exception: `APPLY-MANIFEST.md` itself, where each added its own entry.
 | `scan-archive-contents.sh` | `.internal/home/scan-archive-contents.sh` |
 | `scan-postman-collections.py` | `.internal/home/scan-postman-collections.py` |
 | `assess-office-stability.sh` | `bin/assess-office-stability.sh` |
+
+---
+
+## Revision 238 — the prompt that handed out bundles it no longer owned
+
+### Two files are pasted into a session, and one of them was three revisions stale
+
+`what-a-session-is-given.md` is explicit: *"These two are the prompt; nothing else
+is pasted"* — `conformant-prompt.md` and, for this subject,
+`session-management-prompt.md`. The second was marked *current as of Revision
+205* and offered **"Seven bundles, all `unclaimed` — parked and closed to every
+session until the owner assigns them to you."**
+
+By Revision 237 that sentence was false in three directions at once: `0036` is
+`answered`; `0037` and `0038` belong to `typed-bundles-architecture`; `0040`,
+`0041` and `0042` belong to `assurance-coverage`; and `0039` is owned by
+`session-management-re-evaluation-20260906-110105`. **Every bundle it advertised
+as available was owned.** A session opened against it would have been handed
+another session's work as its first instruction, which is the coincidence
+allocation `0044` exists to prevent, arriving through the prompt rather than
+through the allocator.
+
+### It cannot name bundles at all, and that is the finding
+
+The stale list is the symptom. **The shape is wrong**: this file is shared by
+every session working this subject, more than one of which now runs at a time,
+each with a different charge. Any bundle it names is handed to both. So the list
+does not get refreshed — it gets removed, and the file points at the two records
+that are authoritative per session:
+
+| | |
+|---|---|
+| `docs/sessions/<yours>/findings-manifest.md` | what you own, and its standing |
+| `docs/sessions/<yours>/prompt.md` | your charge, your reading order, what is not yours |
+
+**Where a per-session charge is supposed to live is not settled here.** Each
+bundle's `prompt.md` is doing that job today without anything authorising it —
+`what-a-session-is-given.md` describes `prompt.md` as the *record* of the two
+halves pasted, not as a third half. That is the architecture disagreeing with the
+tree, which is `0037`, and `0037` belongs to the architecture session. This
+revision repairs the false statement and leaves the design question standing.
+
+### The stamp was in the wrong timezone
+
+`what-a-session-is-given.md`: *"`<stamp>` is `YYYYMMDD-HHMMSS` in
+**America/New_York**."* Revision 237 created both session bundles from a UTC
+clock — `20260909-004724`, where the correct name is `20260908-204724`.
+
+**It was not caught in time.** Revision 237 reached a commit, `25e8e8d`, with
+both bundles named wrong, so this is a rename after publication rather than a
+correction before it — which is `0035`, *a lineage rename is a procedure, not an
+operation*, and the procedure is followed here rather than a `mv` being called an
+operation. Two directories renamed; every live reference swept across `.md` and
+`.json` — two session index rows, eleven findings index rows, both `bundleName`
+fields, both `metadata.md` headers, both `findings-manifest.md` headers and the
+cross-reference in each `prompt.md`.
+
+**Revision 237's own manifest entry is deliberately NOT swept and still names the
+old stamp.** It is point-in-time evidence of what that revision created, it is
+committed, and this file is never retro-edited — the same rule under which
+Revision 162's old paths and the two removed session bundles are left standing,
+stated in `docs/sessions/INDEX.md` under *A note on the old paths*. A first pass
+here swept it along with everything else, which would have made the record say
+Revision 237 created a name it did not create.
+
+The mistake is recorded rather than quietly corrected because the rule it broke
+is one line long in a file this session had already read, and because the failure
+is not carelessness about clocks: **the session ran `date` in the environment it
+was in rather than the environment the rule names**, which is the same
+substitution as reasoning about a checker instead of opening it.
+
+It is recorded rather than quietly corrected because the rule it broke is one
+line long in a file this session had already read, and because the failure is not
+carelessness about clocks: **the session ran `date` in the environment it was in
+rather than the environment the rule names**, which is the same substitution as
+reasoning about a checker instead of opening it.
+
+### Verification
+
+- 48 tests pass. `check`: 0 `UNSTAMPED`, 0 `STORED-DISAGREES`.
+- `verify-doc-paths.sh --all` clean; no reference to the old stamp remains in any
+  `.md` or `.json`.
+- The prompt's reading order, owner's brief and report discipline are unchanged;
+  only the assignment block and the two stale pointers to it were replaced.
 
 ---
 
