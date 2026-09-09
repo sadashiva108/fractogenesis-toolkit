@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T03:05:00-04:00",
+  "updatedAt": "2026-09-09T04:12:00-04:00",
   "bundleName": "typed-bundles-architecture-20260908-204724",
   "createdOn": "2026-09-09",
   "owners": [
@@ -48,6 +48,12 @@
       "number": "0038",
       "path": "docs/session-management-findings/0038-sessions-write-into-the-tree-the-owner-commits-from/",
       "assignedOn": "2026-09-09"
+    },
+    {
+      "number": "0039",
+      "path": "docs/session-management-findings/0039-the-instruction-set-lags-the-rules-it-governs/",
+      "assignedOn": "2026-09-09",
+      "notes": "Transferred in from session-management-re-evaluation-20260906-110105 at Revision 248, \u00a710. Not an assignment."
     },
     {
       "number": "0045",

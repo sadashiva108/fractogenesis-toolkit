@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T16:32:42+00:00",
+  "updatedAt": "2026-09-09T04:12:00-04:00",
   "bundleName": "session-management-re-evaluation-20260906-110105",
   "createdOn": "2026-09-06",
   "owners": [
@@ -42,10 +42,6 @@
     {
       "number": "0036",
       "notes": "**Resolved at Revision 225.** Option (iv): docs/ is scanned, and proposed and historical are declarable \u2014 which is also 0046's remedy. 1714 OK / 0 MISSING / 0 broken anchors"
-    },
-    {
-      "number": "0039",
-      "notes": "The keystone, and the most worked. **Four findings resolved** (F7, F12, F15, F16), F8 decided and owed. D13 replaced D1, whose destination 1c48deb had deleted. F13 and F14 recorded unanswered for the owner"
     },
     {
       "number": "0043",

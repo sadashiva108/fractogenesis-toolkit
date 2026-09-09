@@ -10,6 +10,7 @@ concerns, not in a note.
 | Directory | Holds | Index |
 |---|---|---|
 | `architecture/` | Design that outlives the session that wrote it. Read before building the thing it describes. | — |
+| `rules/` | Records about the framework's own rules — where a rule can be enforced, and where nothing can hold it. Not the rules themselves: those live in `docs/legend.md` and the instruction sets. | — |
 | `ledgers/` | Dated statements of what exists, what is stale and what is owed. Re-derived and replaced wholesale, not fixed. | — |
 | | `evidence-conformance.md` — the four-table survey · `capture-script-refactor-2026-09-02.md` — R135 · `script-conformance-2026-09-02.md` — R136/137 · `artifact-migration-2026-09-02.md` — **what cannot be regenerated** · `artifact-conversion-2026-09-02.md` — **what was done about it**, R138 · `allocation-evidence.md` — allocator runs, re-derived per run, R214 | |
 | `sessions/` | Session prompts, the plans they execute, and the handoffs they leave. | [[docs/sessions/INDEX\|sessions/INDEX.md]] |
@@ -19,7 +20,7 @@ concerns, not in a note.
 | `session-management-findings/` | Findings about how sessions and findings bundles themselves work — the statuses, the states, the rules binding them, and the checks that hold them. The fix lands in `.github/session-management-instructions.md` or `docs/legend.md`. | [[docs/session-management-findings/INDEX\|session-management-findings/INDEX.md]] |
 | `cross-cutting-findings/` | Findings whose impact is broad and agnostic to any one runbook, and may affect more than one — not merely findings that touch a shared script. Same numbered shape; one sequence shared with `runbook-findings/`. | [[docs/cross-cutting-findings/INDEX\|cross-cutting-findings/INDEX.md]] |
 
-All seven directories and everything in them are tracked. `docs/gaps/` was retired
+All eight directories and everything in them are tracked. `docs/gaps/` was retired
 in Revision 162: its 25 notes became findings bundles under the two directories
 above.
 

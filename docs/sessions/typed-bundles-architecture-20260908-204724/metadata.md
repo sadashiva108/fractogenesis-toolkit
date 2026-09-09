@@ -42,6 +42,18 @@ Ownership is not stated in this file. It is derived by scanning
 installed — **adding the manifest row IS the assignment**, and removing it is the
 release.
 
+## Transfers
+
+| Bundle | Direction | From / To | Date | Revision |
+|---|---|---|---|---:|
+| [`0039`](../../session-management-findings/0039-the-instruction-set-lags-the-rules-it-governs/) | in | `session-management-re-evaluation-20260906-110105` | 2026-09-09 | 248 |
+
+A transfer is a change of ownership and this file is authoritative for who held
+what and when, which is why it is recorded on both sides. `0039` stands
+`transferred` until this session's first write to it **as owner**; F21, F22,
+F23 and D21 were written here as contributions while the bundle was owned
+elsewhere, and a contribution is not an act of ownership.
+
 ## Contributions
 
 | Bundle | Date | Contribution |

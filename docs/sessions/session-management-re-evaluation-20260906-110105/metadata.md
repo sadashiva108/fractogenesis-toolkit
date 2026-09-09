@@ -48,6 +48,18 @@ platform.
 The artifact volume is deliberately absent. Nothing in this session's tree
 touches evidence, so no evidence write is possible from here even by mistake.
 
+## Transfers
+
+| Bundle | Direction | From / To | Date | Revision |
+|---|---|---|---|---:|
+| [`0039`](../../session-management-findings/0039-the-instruction-set-lags-the-rules-it-governs/) | out | `typed-bundles-architecture-20260908-204724` | 2026-09-09 | 248 |
+
+Transferred at the owner's ruling. This session stands `handoff` with no
+successor named, so it could not perform the owner-only act `0039` F23 needs to
+reach `decided`. Nothing about the reading changed: no finding reverted, no
+decision reopened, and this session's work on `0039` stands as it was.
+`0036` and `0043` are unaffected and remain owned here.
+
 ## Contributions
 
 **None.** This section lists work this session contributed to bundles it does not
