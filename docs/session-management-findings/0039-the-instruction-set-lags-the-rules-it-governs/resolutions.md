@@ -9,6 +9,8 @@ this file records what was actually done.
 
 | Finding | Resolved by | What was done | Revision | Commit |
 |---|---|---|---|---|
+| F26 | D24 | `docs/legend.md` line 199 now reads *a write by the owner is the transition*, with the two grounds recorded; §10 of the instruction set reads *the transfer ends on the target session's first write to the bundle as owner*, and says a contribution does not clear one | 273 | — |
+| F27 | D25 | The session state is `dissolved` in `docs/legend.md`, in `SESSION_STATES`, in `session_state`'s docstring and in the `declaredState` guard; the expected-failure test that held the overlap open is deleted and the disjointness guard now runs with nothing excused | 273 | — |
 | F7 | D5 | Ordering became a typed, directed edge, stored in the asserting bundle and carried in `metadata.json` | 222 | `42d08a4` |
 | F12 | D7, D8, D9, D10, D11, D12 | Every transition in `docs/legend.md` names its triggering event; the reason, outcome and provenance vocabularies are defined; §9 gains the provenance gate and §9a the reopen and withdraw procedures | 221, 223 | `b09a69d`, `5ad7304` |
 | F15 | D15 | A decision must cite at least one `F<n>`, checked in `verify-findings-headers.sh` | 224 | `44c5289` |
@@ -84,3 +86,16 @@ because `state-as-data.md` documents its own marker inside a fenced example; D15
 check at 40 hits of which 10 were frozen and 20 derivable. With `0041`'s lint,
 `0042` F4's audit at 128-of-131 and the parallel session's sweep at 65-of-77, that
 is seven. **The half that reads is wrong; the half that judges is fine.**
+
+**F26 and F27 were carried out in one revision because they edit the same
+paragraphs.** Both are vocabulary changes landing in `docs/legend.md` and the
+instruction set, which `0039` D23 also rewrites; shipping them apart means
+editing those paragraphs twice and giving D23 two moving targets instead of one.
+
+**The order within the revision was decide, carry out, write these rows, move the
+status** — §9b — and the deciding came first for a reason beyond ceremony: §6
+gates a **toolkit** write on a `decided` finding, and the edits to
+`.github/session-management-instructions.md` and to `plan_findings_work.py` are
+toolkit writes. The edits to `docs/legend.md` and
+`docs/architecture/typed-bundles-and-work.md` are **record** writes and are never
+gated.

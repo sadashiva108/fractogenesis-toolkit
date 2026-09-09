@@ -54,6 +54,7 @@ without answering it for rules.
 | D23 | **The three rule documents stop telling their own history.** History moves to a `Provenance` table at the foot; a live warning, a currency declaration and the evidence for why a rule exists stay — the last compressed to one clause inline with the dated account at home. Home before copies: instruction set, then `conformant-prompt.md`, then `session-management-prompt.md`, one revision each | F14 | 2026-09-09 | `accepted` |
 | D21 | The commit message is handed over as **one fenced block tagged `text`** — the fence §11 already requires of every example, for the reason §11 already gives. §7 states it as the other half of the rule it already had: a `git commit` inside the block is something to delete, a message outside one is something to gather, and both cost the owner the same | F23 | 2026-09-09 | `accepted` |
 | D24 | **A status moves on a material change to the record, and a read is not one.** `docs/legend.md` lines 69 and 546 stand; line 199's *reading is the transition* goes, and §10's *the transfer ends when the target session reads the bundle* goes with it. A transfer ends on the target session's **first write to the bundle as owner**, which is what five records have said since Revision 248 | F26 | 2026-09-09 | `accepted` |
+| D25 | **`dissolved` replaces `withdrawn` as a session state.** A session's terminal shutdown and a member's carry the same idea and may not carry the same word. The member sense stays: it is the more specified and the more embedded. `dissolved` sits beside `closed`, is adjectival like `available` and `active`, and appeared nowhere in the record | F27 | 2026-09-09 | `accepted` |
 
 ## Findings 1, 2, 5 and 6 — a rule lives where its kind lives
 
@@ -1214,3 +1215,42 @@ resolved: the carrying out is sequenced behind D23 on the owner's ordering, and
 A finding left `framing` under an accepted decision is `0047` F2's shape — four
 of them were found in `0053` at Revision 264 — and the deciding here genuinely is
 closed: the owner ruled, and what remains is the write.
+
+---
+
+## D25 — the cheap one moves
+
+**`withdrawn` was a member `status` and a session `state`**, which breaks the
+rule `docs/legend.md` states before anything else: no value belongs to two sets.
+A bare word must say which vocabulary it came from, and this one could not.
+
+**The member sense stays, and the asymmetry is the reason.** It carries a
+procedure in §9a, a closed list of nine reasons and a revert requirement; it sits
+in `INERT`, in the `retired` row and the `answered` row of the progress ladder,
+and in `derivation_table`. Moving it means touching the ladder and every test
+over it. **The session sense was one table row and one sentence.** Moving it
+touches five files and no logic. **When two words collide, move the cheap one.**
+
+**`dissolved`** sits beside `closed` as the other terminal, is adjectival like
+`available` and `active`, and had zero uses in the record. A session is closer to
+an institution than a member is, and institutions dissolve.
+
+**Rejected — rename the member sense instead.** It is the more precise word for
+what a withdrawn member is, and it is load-bearing in the derivation. Renaming it
+means editing the ladder, `INERT`, two rows of the progress table and every test
+that reads them, to spare five files.
+
+**Rejected — `disbanded`, `lapsed`, `abandoned`.** `disbanded` is clunkier for no
+gain. `lapsed` and `abandoned` both imply **neglect**, where this is a decision
+taken deliberately — the same reason `withdrawn` was chosen for a member in the
+first place.
+
+**Rejected — leave it and widen the rule.** The rule is what makes a bare value
+legible, and it has already paid for itself twice: `standing` answering three
+questions produced `transferred` read as `unclaimed`, and `superseded` appearing
+in two rows under opposite permissions. An exception costs more than the rename.
+
+**Recorded by `drift-and-the-write-boundary-20260909-053548` as F27 and decided
+here**, because `0039` and `docs/legend.md` belong to this session. That is the
+`framing` rule working as designed: a session that does not own a bundle recorded
+into it, and the owner closed the deciding.

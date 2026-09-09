@@ -75,8 +75,8 @@ for.
 | F23 | §7 requires the commit message to be nothing but the message and never requires it to be a block, so a session can obey every word of the rule and still hand over one the owner has to reassemble | `framing` |
 | F24 | `decisions.md` carries one `Session:` field and the Decisions table has no column for one, so a decision written by a session that does not own the bundle cannot be attributed — and §4 invites exactly that write | `framing` |
 | F25 | *What another session may do* has no row for `transferred`, the one standing under which a non-owner is routinely told to contribute | `framing` |
-| F26 | `docs/legend.md` says a status moves on a write and also that reading is the transition, and §10 sides with the minority against five records and the tree | `decided` |
-| F27 | `withdrawn` is a finding `status` and a session `state`, so the rule that no value belongs to more than one vocabulary is broken in the document that states it | `framing` |
+| F26 | `docs/legend.md` says a status moves on a write and also that reading is the transition, and §10 sides with the minority against five records and the tree | `resolved` |
+| F27 | `withdrawn` is a finding `status` and a session `state`, so the rule that no value belongs to more than one vocabulary is broken in the document that states it | `resolved` |
 
 ---
 

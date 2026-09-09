@@ -196,8 +196,18 @@ A bundle that was `transferred` stops being an ownership row and derives from it
 findings — which, once the ones awaiting a read are `framing`, is `analyzing`.
 
 They are one idea with three origins, and treating them as three rules is what
-makes them look arbitrary. **Reading is the transition**; nothing else moves
-them, and no session but the owner can perform it.
+makes them look arbitrary. **A write by the owner is the transition** — a status
+moves on a material change to the record, and a read is not one. No session but
+the owner can perform it.
+
+**This paragraph said *reading is the transition* until Revision 273**, and
+contradicted this file's own lines above and its Provenance row, both of which
+say a status moves on a write. `0039` D24 settled it for the write on the owner's
+ruling, on two grounds: **nothing records a read**, so the transition it named
+left no trace any instrument could confirm — `0045` F3 — and it fires in bulk,
+moving every member awaiting a first read in one operation with no judgement
+formed about any, which is `0039` F12's incident reached by obeying the rule
+rather than breaking it.
 
 **`framing` is the long one.** It is not a staging post on the way to a decision;
 it is where the work happens, and it runs both ways. Rethinking a decision often
@@ -463,6 +473,17 @@ unrecorded is indistinguishable from a rule nobody agreed to.
 
 ## Session states
 
+**`dissolved`, not `withdrawn`.** A session ends shut down, no further work ever
+— and until Revision 273 that state carried the same word as a finding status,
+which broke the rule this file states first: **no value belongs to two sets.**
+The finding sense is the one that stayed. It is the more specified — a procedure
+in section 9a, nine reasons, a revert requirement — and the more embedded, sitting
+in `INERT`, in two rows of the progress ladder and in the derivation table. The
+session sense was one row. **When two words collide, move the cheap one.**
+`dissolved` sits beside `closed` as the other terminal, is adjectival like
+`available` and `active`, and appeared nowhere in the record. `0039` F27,
+contributed by `drift-and-the-write-boundary-20260909-053548`.
+
 A session is a unit of work. It creates its own bundle, and its state is derived
 from the findings bundles it owns.
 
@@ -472,12 +493,12 @@ from the findings bundles it owns.
 | `active` | Owns at least one bundle that is not `resolved` or `withdrawn`. | `findings-manifest.md` |
 | `handoff` | It has passed its qualifying bundles to a successor. No longer working. | `handoff-<stamp>.md`, one per handover |
 | `closed` | Every bundle it owns is terminal — `resolved`, `superseded` or `withdrawn` — and any that is not has been released to `unclaimed`. | `final-summary.md` |
-| `withdrawn` | Every bundle it owns is `withdrawn`. | `final-summary.md` |
+| `dissolved` | Every bundle it owns is `withdrawn`. | `final-summary.md` |
 
 ```text
 available ──▶ active ──┬─▶ closed       every bundle resolved
                        ├─▶ handoff      bundles carried to a successor
-                       └─▶ withdrawn    every bundle withdrawn
+                       └─▶ dissolved    every bundle withdrawn
 ```
 
 ### How a session begins

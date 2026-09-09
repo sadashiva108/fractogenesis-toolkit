@@ -94,7 +94,7 @@ class Graph(object):
             if (s.get("ended") or {}).get("on"):
                 continue
             # a session that has handed off or closed takes no new work
-            if s.get("declaredState") in ("handoff", "closed", "withdrawn"):
+            if s.get("declaredState") in ("handoff", "closed", "dissolved"):
                 continue
             owned = [self.bundles[str(ob.get("number"))[:4]]
                      for ob in (s.get("ownedBundles") or [])
@@ -323,7 +323,7 @@ def bundle_is_terminal(b):
 
 
 def session_state(g, s):
-    """available, active, closed, handoff or withdrawn -- docs/legend.md.
+    """available, active, closed, handoff or dissolved -- docs/legend.md.
 
     `declaredState` stays: it is what the OWNER declared, and a handoff or a
     withdrawal cannot be derived from what a session holds. `state` is the
@@ -413,7 +413,9 @@ MEMBER_PREFIX = {"findings": "F", "commission": "Q", "charter": "T", "remedy": "
 # derivation and never against a vocabulary, so a state outside the five would
 # have been reported as a disagreement rather than as a word that does not
 # exist. 0047 F11.
-SESSION_STATES = ("available", "active", "closed", "handoff", "withdrawn")
+# `dissolved`, not `withdrawn`: a session state may not share a word with a
+# finding status. 0039 F27, carried out at Revision 273.
+SESSION_STATES = ("available", "active", "closed", "handoff", "dissolved")
 
 # Every closed set in this file, by the field that carries it. The suite asserts
 # that no value appears in two of them except where the design says it must --

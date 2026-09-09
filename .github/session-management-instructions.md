@@ -739,11 +739,17 @@ it from — assign it instead.
     ownership and that file is authoritative for who held what, and when.
 5.  One `APPLY-MANIFEST.md` revision covers the transfer.
 
-**The transfer ends when the target session reads the bundle.** At that point
+**The transfer ends on the target session's first write to the bundle as owner.** At that point
 `transferred` stops applying, the findings awaiting a first read become
 `framing`, and the bundle derives its status normally — which is `analyzing`.
 Nothing else about the reading changes: no finding is reverted, no decision is
 re-opened, and `decisions.md` and `resolutions.md` stand as they were.
+
+**A contribution does not clear a transfer** — *as owner* is load bearing, and
+Revisions 248, 262 and 268 each record a non-owner writing into a `transferred`
+bundle without clearing it. **This sentence read *when the target session reads
+the bundle* until Revision 273**, against four index rows and two manifests that
+already said *first write as owner*; `0039` D24 settled it for the write.
 
 **Transferring part of a bundle is not supported.** The need is real and has
 arisen more than once; the options and what each costs are in

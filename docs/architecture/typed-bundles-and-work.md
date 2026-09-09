@@ -194,9 +194,13 @@ question was answered — and they differ in the artifact that answer takes:
 
 `state-as-data.md` is a blueprint whose four revisions of work were carried by
 `0043`, a findings bundle about a problem, because no commission existed to carry
-them. **`charter` is a blueprint subtype** — one that authorizes a programme of
-work rather than specifying an artifact, which matters because a charter is what
-a run of doing bundles is measured against and a spec is what one is.
+them. **`charter` is not a blueprint subtype, and this sentence used to say it was.**
+It was invented as one because no actionable genus existed to carry *an
+authorized programme of work*, so the word was parked on the nearest available
+object. It now names that genus: a charter **is authorized as a separate act,
+conforms to a blueprint that exists outside it, and may amend that blueprint**,
+which is what distinguishes it from a `remedy`. The subtype has no work left to
+do and is removed. Revision 273.
 
 **An idea is a commission nobody has opened yet** — open question 6.3.
 

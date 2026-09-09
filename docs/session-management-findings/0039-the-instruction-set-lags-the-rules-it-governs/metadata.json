@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T17:25:00-04:00",
+  "updatedAt": "2026-09-09T16:40:00-04:00",
   "number": "0039",
   "bundleName": "0039-the-instruction-set-lags-the-rules-it-governs",
   "genus": "findings",
@@ -369,26 +369,36 @@
     {
       "id": "F26",
       "statement": "`docs/legend.md` says a status moves on a write and also that reading is the transition, and \u00a710 sides with the minority against five records and the tree",
-      "status": "decided",
+      "status": "resolved",
       "statusReason": null,
       "statusNote": null,
-      "updatedAt": "2026-09-09T07:20:00-04:00",
+      "updatedAt": "2026-09-09T16:40:00-04:00",
       "sectionHeading": "F26 \u2014 the legend says a status moves on a write, and also that reading is the transition",
       "reopened": null,
       "withdrawn": null,
-      "resolution": null
+      "resolution": {
+        "resolvedBy": "D24",
+        "whatWasDone": "legend.md line 199 and instruction set \u00a710 both now say a transfer ends on the first write as owner",
+        "revision": 273,
+        "commit": null
+      }
     },
     {
       "id": "F27",
       "statement": "`withdrawn` is a finding `status` and a session `state`, so the rule that no value belongs to more than one vocabulary is broken in the document that states it",
-      "status": "framing",
+      "status": "resolved",
       "statusReason": null,
       "statusNote": null,
-      "updatedAt": "2026-09-09T17:25:00-04:00",
+      "updatedAt": "2026-09-09T16:40:00-04:00",
       "sectionHeading": "F27 \u2014 the rule is broken in the document that states it",
       "reopened": null,
       "withdrawn": null,
-      "resolution": null
+      "resolution": {
+        "resolvedBy": "D25",
+        "whatWasDone": "The session state is `dissolved` in the legend, in SESSION_STATES and its two readers; the expected-failure test is deleted and the disjointness guard runs unexcused",
+        "revision": 273,
+        "commit": null
+      }
     }
   ],
   "decisions": [
@@ -691,6 +701,18 @@
       "answersAsOf": "2026-09-09T07:20:00-04:00",
       "voidedReason": null,
       "sectionHeading": "D24 \u2014 a status moves on a material change to the record, and reading is not one"
+    },
+    {
+      "id": "D25",
+      "decision": "`dissolved` replaces `withdrawn` as a session state. A session's terminal shutdown and a member's may not carry the same word; the member sense stays because it is the more specified and the more embedded, and the session sense was one row",
+      "members": [
+        "F27"
+      ],
+      "decided": "2026-09-09",
+      "outcome": "accepted",
+      "answersAsOf": "2026-09-09T16:40:00-04:00",
+      "voidedReason": null,
+      "sectionHeading": "D25 \u2014 the cheap one moves"
     }
   ],
   "contributions": [

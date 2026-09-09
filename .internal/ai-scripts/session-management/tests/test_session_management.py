@@ -186,8 +186,15 @@ class TestVocabulary(unittest.TestCase):
         self.assertEqual(POINTER_OUTCOMES, ("replaced",))
 
     def test_five_session_states(self):
+        """`dissolved`, not `withdrawn` -- 0039 F27, Revision 273.
+
+        This assertion pinned `withdrawn` and had to move with the rename, which
+        is the pattern Revision 268 named: a test can hold a defect in place as a
+        contract. It is kept as a contract on the SET, not on the word, because a
+        sixth state added without a decision is what it exists to catch.
+        """
         self.assertEqual(sorted(SESSION_STATES), sorted(
-            ("available", "active", "closed", "handoff", "withdrawn")))
+            ("available", "active", "closed", "handoff", "dissolved")))
 
     def test_every_vocabulary_is_in_the_disjointness_set(self):
         # The guard covers what this dict lists and nothing else, so a set added
@@ -203,7 +210,6 @@ class TestVocabulary(unittest.TestCase):
             self.assertIn(name, VOCABULARIES, name)
             self.assertTrue(set(expected) <= VOCABULARIES[name], name)
 
-    KNOWN_UNOWNED = frozenset(("finding.status", "session.state"))
 
     def test_no_undeclared_overlap_between_vocabularies(self):
         """Every pair but one, and the one is named rather than absorbed.
@@ -212,29 +218,13 @@ class TestVocabulary(unittest.TestCase):
         check asserts the two sets are disjoint." This is that check, over every
         pair of closed sets in the module, minus the overlaps DECLARED_OVERLAPS
         licenses -- and minus `finding.status` x `session.state`, which is a
-        real defect in the legend and is not this session's to fix. Excluding it
-        by name rather than widening the rule is what keeps the remaining
-        surface guarded: a NEW overlap fails here immediately.
+        Nothing is excused. The one pair that was -- `withdrawn` as both a
+        finding status and a session state -- was renamed to `dissolved` at
+        Revision 273, so the exclusion and the expected-failure test that
+        guarded it are both gone. A NEW overlap fails here immediately.
         """
-        found = undeclared_overlaps(skip={self.KNOWN_UNOWNED})
+        found = undeclared_overlaps()
         self.assertEqual(found, {}, "undeclared overlap: %s" % found)
-
-    @unittest.expectedFailure
-    def test_every_vocabulary_pair_is_disjoint(self):
-        """The rule as the legend states it, with nothing excused.
-
-        It fails today on exactly one pair: `withdrawn` is a finding `status`
-        and a session `state`. The finding sense has a documented revert
-        procedure in section 9a and is the more embedded; the session sense
-        means "shut down, no further work, ever" and is the one to rename.
-        `docs/legend.md` is the entity-model session's, so this is recorded and
-        not repaired -- 0039 F27.
-
-        **When that lands this test PASSES, and unittest reports it as an
-        unexpected success rather than silently going green.** That is the
-        signal to delete this test and remove KNOWN_UNOWNED from the one above.
-        """
-        self.assertEqual(undeclared_overlaps(), {})
 
     def test_an_outcome_outside_the_vocabulary_is_caught(self):
         for o in ("in progress", "closed", "superseded → D5"):
