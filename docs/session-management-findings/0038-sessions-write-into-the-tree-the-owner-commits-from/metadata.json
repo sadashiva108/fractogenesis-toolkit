@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T00:47:24+00:00",
+  "updatedAt": "2026-09-09T05:40:00-04:00",
   "number": "0038",
   "bundleName": "0038-sessions-write-into-the-tree-the-owner-commits-from",
   "kind": "session-management",
@@ -100,6 +100,18 @@
       "statusNote": null,
       "updatedAt": null,
       "sectionHeading": "F6 \u2014 the write kinds are named but the discipline is not",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F7",
+      "statement": "A rule here is enforceable at write time only where the fact is in `metadata.json`, the actor identifies itself, and a false refusal costs less than the rule \u2014 and none of the four guards that pass those tests is built",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-09T05:40:00-04:00",
+      "sectionHeading": "F7 \u2014 the write discipline has no instrument, and four are available",
       "reopened": null,
       "withdrawn": null,
       "resolution": null

@@ -42,6 +42,7 @@ and that is not what was found.
 | F4 | Backing out one session's change is surgical, because `git checkout` would take the other's too | `framing` |
 | F5 | A session can amend a revision the owner has already committed | `framing` |
 | F6 | The write discipline does not distinguish the write kinds `docs/legend.md` now names | `framing` |
+| F7 | A rule here is enforceable at write time only where the fact is in `metadata.json`, the actor identifies itself, and a false refusal costs less than the rule — and none of the four guards that pass those tests is built | `framing` |
 
 Findings 1 and 2 are the high ones. The revision-number collision that prompted
 the day's investigation is **not** a finding here — it is recorded in
@@ -159,6 +160,39 @@ already safe, and not because of a rule anyone remembers. A session has no write
 permission to the artifact volume by default, and the owner grants it to one
 session at a time. Serialisation by permission, decided per run. Tracked files
 have no equivalent.
+
+### F7 — the write discipline has no instrument, and four are available
+
+Findings 1 through 6 are about what a session's writing costs. This one is about
+what could hold the discipline that answers them, and it is the first finding in
+this bundle that is not a defect in the tree: **nothing is wrong; four things do
+not exist.**
+
+**The reading is `docs/rules/rule-enforcement-avenues.md` and is not restated here** —
+a fact has one home. What belongs in this bundle is the conclusion and its cost.
+
+**Three tests decide whether a rule can be guarded at all**: the fact must be in
+`metadata.json` at the moment of the write, the actor must identify itself, and a
+false refusal must cost less than the rule is worth. Four rules pass all three,
+and each has a recorded incident:
+
+| Guard | Would have caught |
+|---|---|
+| a change committed with no manifest entry | Revisions 241–246, six numbers taken in the log and none written, reconstructed after the fact at 247 |
+| the write-location guard extended to `device_bash` | `0050`; it covers one of the two ways a session can write into the checkout |
+| the §6 gate on a toolkit write | two failures in two days — one where the gate applied and needed an override, one where it did not apply and a checker said it did |
+| only `stamp` writes `standing`, `progress`, `state` | no incident yet; `docs/legend.md` says *"and nothing else may"* and nothing holds it |
+
+**What it costs to leave.** The three guards that exist were each added after a
+rule was broken, which means the set of enforced rules is a record of past
+accidents rather than a decision. **The first item above is the one that has
+already cost archaeology** rather than attention, and it is the cheapest of the
+four.
+
+**What this finding does not claim.** That a guard is the right answer for any of
+them — section 6 of the record argues a guard fails harder here than a checker
+does, and `0047` F6 carries that. This finding says only that the choice has
+never been made deliberately.
 
 ## A tested alternative, offered as evidence not as a decision
 

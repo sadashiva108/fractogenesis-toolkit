@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T00:47:24+00:00",
+  "updatedAt": "2026-09-09T05:40:00-04:00",
   "number": "0045",
   "bundleName": "0045-a-session-whose-output-is-not-a-bundle-has-no-state",
   "kind": "session-management",
@@ -22,8 +22,8 @@
     "`docs/sessions/INDEX.md`, all seven rows",
     "`.github/session-management-instructions.md` section 5"
   ],
-  "standing": "assigned",
-  "progress": "untouched",
+  "standing": "analyzing",
+  "progress": "analyzing",
   "ownership": null,
   "lineage": null,
   "findings": [
@@ -47,6 +47,18 @@
       "statusNote": null,
       "updatedAt": null,
       "sectionHeading": "F2 \u2014 the index shows the work as absent",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F3",
+      "statement": "Every load-bearing permission is keyed on session identity and nothing can enforce one, because a session cannot declare who it is to anything but a human reading a `metadata.md`",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-09T05:40:00-04:00",
+      "sectionHeading": "F3 \u2014 a session cannot say who it is to anything but a reader",
       "reopened": null,
       "withdrawn": null,
       "resolution": null

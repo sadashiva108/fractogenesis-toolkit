@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T00:47:24+00:00",
+  "updatedAt": "2026-09-09T05:40:00-04:00",
   "number": "0047",
   "bundleName": "0047-the-tree-carries-drift-no-check-looks-for",
   "kind": "session-management",
@@ -22,8 +22,8 @@
     "`docs/legend.md`, the ladder and the two permission tables",
     "`docs/architecture/state-as-data.md` sections 4.3 and 4.4"
   ],
-  "standing": "assigned",
-  "progress": "untouched",
+  "standing": "analyzing",
+  "progress": "analyzing",
   "ownership": null,
   "lineage": null,
   "findings": [
@@ -83,6 +83,30 @@
       "statusNote": null,
       "updatedAt": null,
       "sectionHeading": "F5 \u2014 the sweep is wrong before it is right",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F6",
+      "statement": "A guard fails where a checker only reports, and the discipline that exists for checkers \u2014 a clean pass before it is trusted \u2014 has never been stated for guards",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-09T05:40:00-04:00",
+      "sectionHeading": "F6 \u2014 the discipline exists for checkers and has never been stated for guards",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F7",
+      "statement": "`plan_findings_work.py:439` treats `transferred` as `unclaimed` and reports a permitted transfer as a conformance failure, the last executable site of a rule the documents retired",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-09T05:40:00-04:00",
+      "sectionHeading": "F7 \u2014 a check refuses an operation the instruction set permits",
       "reopened": null,
       "withdrawn": null,
       "resolution": null

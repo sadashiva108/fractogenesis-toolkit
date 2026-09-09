@@ -14,6 +14,11 @@
 - `docs/legend.md`, the ladder and the two permission tables
 - `docs/architecture/state-as-data.md` sections 4.3 and 4.4
 
+**Assigned to `typed-bundles-architecture-20260908-204724` on 2026-09-09**, Revision
+237. F1 through F5 remain `un-started`: this session has written F6 and F7 and
+has not written to any of the first five, and moving them without a judgement
+being formed about each is the mass operation `0039` F12 is about.
+
 Recorded `unclaimed`. Not owned. **The retrofit it points at should not begin
 until the state format lands** — doing it in markdown first means doing it twice,
 and `state-as-data.md` makes two of these classes structurally impossible rather
@@ -28,6 +33,8 @@ than checkable.
 | F3 | Three bundles carry resolutions for findings that are not resolved | `un-started` |
 | F4 | Eleven `resolved` bundles have no `decisions.md`, and whether they owe one has never been decided | `un-started` |
 | F5 | A conformance sweep that does not know about superseding clones reports sixty-five false positives | `un-started` |
+| F6 | A guard fails where a checker only reports, and the discipline that exists for checkers — a clean pass before it is trusted — has never been stated for guards | `framing` |
+| F7 | `plan_findings_work.py:439` treats `transferred` as `unclaimed` and reports a permitted transfer as a conformance failure, the last executable site of a rule the documents retired | `framing` |
 
 ## F1 — an `unclaimed` bundle holding a live finding
 
@@ -121,3 +128,68 @@ So the rule belongs in the check before the check is trusted: **a bundle whose
 `Relates to` declares it supersedes another is exempt from the ordering
 comparisons** until its re-reading closes. Without it the sweep would direct a
 retrofit at sixty-five records that are already right.
+
+## F6 — the discipline exists for checkers and has never been stated for guards
+
+F5 is the third instrument in this repository to report mass failure against a
+healthy tree on its first run. The list is now six: `0041`'s lint at 36; `0042`
+F4's rendering audit at 131, of which 128 were its own bugs; the completeness
+check at 18; the one-way guard; F5's own sweep at 65 of 77; and the check F7
+below records.
+
+**Six is a rate, not a run of bad luck.** F5 reads the pattern as *the half that
+reads the tree is wrong, not the half that judges it*, and that holds for all six.
+What F5 does not reach is the consequence for a different kind of instrument.
+
+**A checker that fires wrongly wastes an hour. A guard that fires wrongly stops
+the work.** Three guards live in `.claude/hooks/` and every one was installed
+after a rule was broken; none was run against the whole tree first, because
+nothing said to. The rule that follows is one sentence and it does not exist:
+
+> A guard is installed **warn-only**. It runs against the whole tree, produces
+> zero false positives on a clean pass, and only then becomes a refusal.
+
+**What it costs to leave.** On this tree's own rate, an unproven guard is more
+likely to block correct work than to catch anything — and it blocks it in the one
+place a session cannot route around, which is the moment of the write. The
+reading is `docs/rules/rule-enforcement-avenues.md` §6.
+
+**One thing this finding must not do**: become the argument against guards. The
+same section names four that are worth building. This is the discipline for
+building them, not a case against them.
+
+## F7 — a check refuses an operation the instruction set permits
+
+`.internal/ai-scripts/session-management/plan_findings_work.py:439` treats
+`unclaimed` and `transferred` as one case and asserts that neither may hold a
+finding past `un-started`:
+
+```text
+if b.get("ownership") in ("unclaimed", "transferred"):
+    live = [x["id"] for x in fs if x.get("status") != "un-started"]
+    if live:
+        out.append(("CLOSED-BUNDLE-LIVE-FINDING", n, ...))
+```
+
+**§10 permits transferring a bundle that stands `analyzing`**, and an `analyzing`
+bundle has findings past `un-started` by definition. So the check reports a
+documented, permitted operation as a conformance failure. **Observed live**: the
+transfer of `0039` at Revision 248 moved the count from 38 to 39, and the row
+names all twenty-three of its findings.
+
+The half about `unclaimed` is F1's subject from the other side — F1 records the
+tree holding an `unclaimed` bundle with a `framing` finding, and Revision 228
+then released four more with twenty-two between them, deliberately. **Whichever
+way F1 is decided, this check is asserting it before anyone has.**
+
+**Where it came from.** `docs/legend.md` used to gloss `transferred` as *handed to
+a session that has not opened it*. That gloss was retired when the owner ruled
+that a write and not a read moves a status. Fourteen prose sites carried it;
+`0039` F21 is the reading. **This is the fifteenth and the only executable one**,
+which is why it is here rather than there: prose that lags is read wrongly, and
+code that lags refuses.
+
+**What it costs to leave.** A number that moves on a correct operation, in the
+one report an allocator run puts in front of the owner. `0036` is the standing
+lesson about a baseline that cannot be trusted; this is that, in the conformance
+column.
