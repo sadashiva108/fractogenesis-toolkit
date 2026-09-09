@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T00:47:24+00:00",
+  "updatedAt": "2026-09-09T07:10:00-04:00",
   "number": "0037",
   "bundleName": "0037-findings-architecture-conformance",
   "kind": "session-management",
@@ -32,22 +32,27 @@
     {
       "id": "F1",
       "statement": "\u00a74b and \u00a74c contradict each other on whether a findings bundle takes a manifest revision",
-      "status": "framing",
+      "status": "resolved",
       "statusReason": null,
       "statusNote": null,
-      "updatedAt": null,
+      "updatedAt": "2026-09-09T07:10:00-04:00",
       "sectionHeading": "F1 \u2014 \u00a74b and \u00a74c contradict each other, eighteen lines apart",
       "reopened": null,
       "withdrawn": null,
-      "resolution": null
+      "resolution": {
+        "resolvedBy": "D3",
+        "whatWasDone": "The contradiction has no surface left: `copilot-instructions.md` carries no \u00a74b or \u00a74c, and \u00a77 states \u201cEvery change of any kind takes a revision\u201d",
+        "revision": null,
+        "commit": "1c48deb"
+      }
     },
     {
       "id": "F2",
       "statement": "Four of five `prompt.md` files violate \u00a74d's \"always\" rule",
-      "status": "framing",
+      "status": "decided",
       "statusReason": null,
       "statusNote": null,
-      "updatedAt": null,
+      "updatedAt": "2026-09-09T07:10:00-04:00",
       "sectionHeading": "F2 \u2014 four of five prompts omit the reading \u00a74d makes mandatory",
       "reopened": null,
       "withdrawn": null,
@@ -56,34 +61,44 @@
     {
       "id": "F3",
       "statement": "`docs/sessions/INDEX.md` miscounts a manifest it links to",
-      "status": "framing",
+      "status": "resolved",
       "statusReason": null,
       "statusNote": null,
-      "updatedAt": null,
+      "updatedAt": "2026-09-09T07:10:00-04:00",
       "sectionHeading": "F3 \u2014 an index and the manifest it links to disagree",
       "reopened": null,
       "withdrawn": null,
-      "resolution": null
+      "resolution": {
+        "resolvedBy": "D3",
+        "whatWasDone": "All seven rows of `docs/sessions/INDEX.md` agree with the manifests they link to, verified row by row 2026-09-09",
+        "revision": null,
+        "commit": null
+      }
     },
     {
       "id": "F4",
       "statement": "`docs/INDEX.md` says `ideas/` is empty; it is not",
-      "status": "framing",
+      "status": "resolved",
       "statusReason": null,
       "statusNote": null,
-      "updatedAt": null,
+      "updatedAt": "2026-09-09T07:10:00-04:00",
       "sectionHeading": "F4 \u2014 `docs/INDEX.md` describes a directory it no longer matches",
       "reopened": null,
       "withdrawn": null,
-      "resolution": null
+      "resolution": {
+        "resolvedBy": "D3",
+        "whatWasDone": "\u201cCurrently empty\u201d is gone from `docs/INDEX.md`",
+        "revision": null,
+        "commit": "88aed77"
+      }
     },
     {
       "id": "F5",
       "statement": "Every `resolved` bundle is missing `decisions.md`",
-      "status": "framing",
+      "status": "decided",
       "statusReason": null,
       "statusNote": null,
-      "updatedAt": null,
+      "updatedAt": "2026-09-09T07:10:00-04:00",
       "sectionHeading": "F5 \u2014 every `resolved` bundle is missing `decisions.md`",
       "reopened": null,
       "withdrawn": null,
@@ -92,29 +107,80 @@
     {
       "id": "F6",
       "statement": "The two session-state diagrams disagree",
-      "status": "framing",
+      "status": "resolved",
       "statusReason": null,
       "statusNote": null,
-      "updatedAt": null,
+      "updatedAt": "2026-09-09T07:10:00-04:00",
       "sectionHeading": "F6 \u2014 the two state diagrams disagree",
       "reopened": null,
       "withdrawn": null,
-      "resolution": null
+      "resolution": {
+        "resolvedBy": "D3",
+        "whatWasDone": "One session-state diagram, in `docs/legend.md`; `findings-and-sessions.md` no longer draws one",
+        "revision": null,
+        "commit": "88aed77"
+      }
     },
     {
       "id": "F7",
       "statement": "Two session identifiers recorded as unrecoverable are recoverable",
-      "status": "framing",
+      "status": "resolved",
       "statusReason": null,
       "statusNote": null,
-      "updatedAt": null,
+      "updatedAt": "2026-09-09T07:10:00-04:00",
       "sectionHeading": "F7 \u2014 two identifiers recorded as unrecoverable are recoverable",
       "reopened": null,
       "withdrawn": null,
-      "resolution": null
+      "resolution": {
+        "resolvedBy": "D3",
+        "whatWasDone": "\u00a75 requires any `not recoverable` to name the searches that came back empty",
+        "revision": null,
+        "commit": "1c48deb"
+      }
     }
   ],
-  "decisions": [],
+  "decisions": [
+    {
+      "id": "D1",
+      "decision": "The required-reading rule survives its home being deleted: restated in `.github/session-management-instructions.md`, binding every `prompt.md` written from now. Existing prompts are evidence and are not rewritten",
+      "findings": [
+        "F2"
+      ],
+      "decided": "2026-09-09",
+      "outcome": "accepted",
+      "answersAsOf": "2026-09-09T07:10:00-04:00",
+      "voidedReason": null,
+      "sectionHeading": "D1 \u2014 the required-reading rule survives, forward only"
+    },
+    {
+      "id": "D2",
+      "decision": "The migrated-bundle carve-out is restored: a bundle migrated from an already-closed record carries `resolutions.md` and no `decisions.md`, and says so. One decision answers this bundle's F5 and `0047` F4",
+      "findings": [
+        "F5"
+      ],
+      "decided": "2026-09-09",
+      "outcome": "accepted",
+      "answersAsOf": "2026-09-09T07:10:00-04:00",
+      "voidedReason": null,
+      "sectionHeading": "D2 \u2014 the carve-out is restored, and it answers two bundles"
+    },
+    {
+      "id": "D3",
+      "decision": "F1, F3, F4, F6 and F7 were resolved in `0027`, regressed by `1c48deb`, and hold again against the files that replaced it; each is resolved against where its rule now lives and the regression is named",
+      "findings": [
+        "F1",
+        "F3",
+        "F4",
+        "F6",
+        "F7"
+      ],
+      "decided": "2026-09-09",
+      "outcome": "accepted",
+      "answersAsOf": "2026-09-09T07:10:00-04:00",
+      "voidedReason": null,
+      "sectionHeading": "D3 \u2014 resolved once, regressed, and resolved again"
+    }
+  ],
   "contributions": [
     {
       "session": "restore-apps-outstanding-20260903-000000",
@@ -212,6 +278,16 @@
       "basis": "asserted",
       "asserted_by": "allocation-and-inquiry-design-20260906-233205",
       "asserted_on": "2026-09-08"
+    },
+    {
+      "kind": "co-decides",
+      "from": "0037/F5",
+      "to": "0047/F4",
+      "why": "the same reading in two bundles; D2 answers both",
+      "reason": null,
+      "basis": "asserted",
+      "asserted_by": "typed-bundles-architecture-20260908-204724",
+      "asserted_on": "2026-09-09"
     }
   ],
   "indexNotes": null

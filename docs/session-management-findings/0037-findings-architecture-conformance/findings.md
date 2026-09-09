@@ -30,17 +30,28 @@ arriving at this bundle should not mistake the list for a verdict on the design.
   existing in both the old and new location.
 - Every path cited in §§1–6 resolves, including the two bundles cited by name.
 
+**Read again against the tree, 2026-09-09, by `typed-bundles-architecture-20260908-204724`.** All
+seven were decided and resolved in `0027` at commit `88aed77`. Revision 224
+removed the cloned `decisions.md` and `resolutions.md` from this bundle because
+they were byte-identical to `0027`'s and headed with its name — the clean slate
+`0039` D12 requires — which is why these rows read `framing` over work that had
+been done. **`1c48deb` then split `.github/copilot-instructions.md` and dropped
+the rules five of those resolutions had installed.** Five hold again against the
+files that replaced it and are resolved under D3; F2 and F5 do not, are `decided`
+under D1 and D2, and their carrying out is its own revision. **Nothing detected
+the regression** — `0052` F1.
+
 ## Findings
 
 | # | Finding | Status |
 |---:|---|---|
-| F1 | §4b and §4c contradict each other on whether a findings bundle takes a manifest revision | `framing` |
-| F2 | Four of five `prompt.md` files violate §4d's "always" rule | `framing` |
-| F3 | `docs/sessions/INDEX.md` miscounts a manifest it links to | `framing` |
-| F4 | `docs/INDEX.md` says `ideas/` is empty; it is not | `framing` |
-| F5 | Every `resolved` bundle is missing `decisions.md` | `framing` |
-| F6 | The two session-state diagrams disagree | `framing` |
-| F7 | Two session identifiers recorded as unrecoverable are recoverable | `framing` |
+| F1 | §4b and §4c contradict each other on whether a findings bundle takes a manifest revision | `resolved` |
+| F2 | Four of five `prompt.md` files violate §4d's "always" rule | `decided` |
+| F3 | `docs/sessions/INDEX.md` miscounts a manifest it links to | `resolved` |
+| F4 | `docs/INDEX.md` says `ideas/` is empty; it is not | `resolved` |
+| F5 | Every `resolved` bundle is missing `decisions.md` | `decided` |
+| F6 | The two session-state diagrams disagree | `resolved` |
+| F7 | Two session identifiers recorded as unrecoverable are recoverable | `resolved` |
 
 ### F1 — §4b and §4c contradict each other, eighteen lines apart
 

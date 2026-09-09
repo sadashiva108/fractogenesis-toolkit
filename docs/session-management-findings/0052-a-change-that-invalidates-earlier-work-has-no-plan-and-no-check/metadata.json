@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-09T07:10:00-04:00",
+  "number": "0052",
+  "bundleName": "0052-a-change-that-invalidates-earlier-work-has-no-plan-and-no-check",
+  "kind": "session-management",
+  "subKind": null,
+  "subject": "A change that invalidates earlier work has neither a plan nor a check",
+  "recordedOn": "2026-09-09",
+  "recordedOccasion": "while resolving `0037` and finding its seven resolutions had been undone",
+  "recordedBy": {
+    "sessionBundle": "typed-bundles-architecture-20260908-204724",
+    "sessionId": "session_01QvZrvKpoKwCmyLNjzXzCdQ"
+  },
+  "severity": "F1 is high \u2014 one commit reverted seven resolved findings and no instrument noticed, in the tree whose whole purpose is that work is not lost. F2 is the owner's standing preference with nothing behind it.",
+  "feltAt": [
+    "commit 1c48deb",
+    "0037 F1-F7",
+    "the ten migrated bundles under 0037 D2"
+  ],
+  "scope": "session management. F1 wants a check, F2 wants a rule",
+  "read": [
+    "docs/cross-cutting-findings/0027-findings-architecture-conformance/resolutions.md",
+    "docs/session-management-findings/0037-findings-architecture-conformance/findings.md",
+    ".github/session-management-instructions.md sections 7, 9, 9b",
+    "commit 1c48deb and commit 88aed77"
+  ],
+  "standing": "unclaimed",
+  "progress": "untouched",
+  "ownership": "unclaimed",
+  "lineage": null,
+  "findings": [
+    {
+      "id": "F1",
+      "statement": "Nothing re-verifies that a resolution still holds, and one refactor reverted seven without anything noticing",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F1 \u2014 a resolution is written once and never checked again",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F2",
+      "statement": "A breaking change to a record format has no migration-plan requirement, so what happens to what predates it is decided per change or not at all",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F2 \u2014 a breaking change has no migration plan",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    }
+  ],
+  "decisions": [],
+  "contributions": [],
+  "edges": [
+    {
+      "kind": "relates-to",
+      "from": "0052/F1",
+      "to": "0037/F5",
+      "why": "0037's regressed resolutions are F1's evidence",
+      "reason": null,
+      "basis": "asserted",
+      "asserted_by": "typed-bundles-architecture-20260908-204724",
+      "asserted_on": "2026-09-09"
+    },
+    {
+      "kind": "relates-to",
+      "from": "0052/F2",
+      "to": "0047/F4",
+      "why": "the migrated-bundle class is the instance F2 generalises",
+      "reason": null,
+      "basis": "asserted",
+      "asserted_by": "typed-bundles-architecture-20260908-204724",
+      "asserted_on": "2026-09-09"
+    }
+  ],
+  "indexNotes": "Recorded by `typed-bundles-architecture-20260908-204724`, which does not own it. F1 is the reading behind `0037`'s regression; F2 is the owner's retrofit preference, stated and unbacked"
+}
