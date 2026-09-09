@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T01:45:00+00:00",
+  "updatedAt": "2026-09-09T07:10:00+00:00",
   "number": "0049",
   "bundleName": "0049-the-patch-is-named-as-the-deliverable-and-never-produced",
   "kind": "session-management",
@@ -90,12 +90,24 @@
       "reopened": null,
       "withdrawn": null,
       "resolution": null
+    },
+    {
+      "id": "F5",
+      "statement": "An index write leaves no trace in the working tree, so the tree comparison this bundle prescribes cannot see it",
+      "status": "decided",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-09",
+      "sectionHeading": "F5 — an index write is invisible to the verification this bundle prescribes",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
     }
   ],
   "decisions": [
     {
       "id": "D1",
-      "decision": "Section 6 now defines the patch \u2014 how, where and by whom \u2014 so F2 is closed by Revision 232 rather than by anything decided here",
+      "decision": "Section 6 now defines the patch — how, where and by whom — so F2 is closed by Revision 232 rather than by anything decided here",
       "findings": [
         "F2"
       ],
@@ -103,7 +115,7 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D1 \u2014 the patch is defined, at Revision 232"
+      "sectionHeading": "D1 — the patch is defined, at Revision 232"
     },
     {
       "id": "D2",
@@ -115,7 +127,7 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D2 \u2014 `git add -N`, and F3's measurement is in the fix"
+      "sectionHeading": "D2 — `git add -N`, and F3's measurement is in the fix"
     },
     {
       "id": "D3",
@@ -127,7 +139,7 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D3 \u2014 F1 is behaviour, and closes with the guard"
+      "sectionHeading": "D3 — F1 is behaviour, and closes with the guard"
     },
     {
       "id": "D4",
@@ -139,7 +151,7 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D4 \u2014 the guard does not cover the tool this session writes through"
+      "sectionHeading": "D4 — the guard does not cover the tool this session writes through"
     },
     {
       "id": "D5",
@@ -151,7 +163,19 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D5 \u2014 the remainder is parked, not worked"
+      "sectionHeading": "D5 — the remainder is parked, not worked"
+    },
+    {
+      "id": "D6",
+      "decision": "The apply procedure gains one assertion: after applying, git diff --cached --name-only in the checkout must be empty",
+      "findings": [
+        "F5"
+      ],
+      "decided": "2026-09-09",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D6 — assert the index is empty, because the tree comparison cannot"
     }
   ],
   "contributions": [],

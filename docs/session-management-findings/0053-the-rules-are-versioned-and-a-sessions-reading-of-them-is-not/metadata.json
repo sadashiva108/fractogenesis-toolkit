@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-09T07:15:00+00:00",
+  "number": "0053",
+  "bundleName": "0053-the-rules-are-versioned-and-a-sessions-reading-of-them-is-not",
+  "kind": "session-management",
+  "subKind": null,
+  "subject": "The rules are versioned and a session's reading of them is not",
+  "recordedOn": "2026-09-09",
+  "recordedOccasion": "after a session followed a rule that had been replaced four revisions earlier and the owner asked how it had missed it.",
+  "recordedBy": {
+    "sessionBundle": "assurance-coverage-20260908-204724",
+    "sessionId": "session_01Wd7US5C5Msr594vNidboLn"
+  },
+  "severity": "F1 is the mechanism and is moderate -- it costs a wrong rule followed confidently, which is worse than a rule not found. F2 is the instrument that exists for it and has never been in a position to fire.",
+  "feltAt": [
+    "every session bundle's metadata.json",
+    ".internal/ai-scripts/session-management/doc-currency.json",
+    ".claude/settings.json"
+  ],
+  "scope": "session management. The fix is one field, one comparison, and arming a watch that already exists.",
+  "read": [
+    ".claude/CLAUDE.md and .github/copilot-instructions.md, following the pointer chain",
+    ".github/session-management-instructions.md at blob 2f53282e and at 08332e73",
+    ".internal/ai-scripts/session-management/doc_currency.py and doc-currency.json",
+    ".claude/settings.json, and the hook events it does not use"
+  ],
+  "standing": "unclaimed",
+  "progress": "untouched",
+  "ownership": "unclaimed",
+  "lineage": null,
+  "findings": [
+    {
+      "id": "F1",
+      "statement": "A session records what it read and never which version, so nothing can tell it a rule has moved",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F1 — a read is a point-in-time fact and the record does not treat it as one",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F2",
+      "statement": "The instrument that would say so is critical, correct, and has never been armed",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F2 — the watch is correct, critical, and has never been armed",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    }
+  ],
+  "decisions": [],
+  "contributions": [],
+  "edges": [
+    {
+      "kind": "relates-to",
+      "from": "0053/F2",
+      "to": "0050/F4",
+      "why": "the session-rules watch is 0050 F4's first member; this is what its not firing produced",
+      "reason": null,
+      "basis": "asserted",
+      "asserted_by": "assurance-coverage-20260908-204724",
+      "asserted_on": "2026-09-09"
+    },
+    {
+      "kind": "relates-to",
+      "from": "0053/F1",
+      "to": "0049/F5",
+      "why": "both are a rule that was present and not consulted, from opposite causes -- one stale, one never checked",
+      "reason": null,
+      "basis": "asserted",
+      "asserted_by": "assurance-coverage-20260908-204724",
+      "asserted_on": "2026-09-09"
+    }
+  ],
+  "indexNotes": "Recorded 2026-09-09 by the session that hit it, and not owned. The design it implies is a commission at docs/ideas/knowing-what-you-have-read.md"
+}
