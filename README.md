@@ -19,6 +19,11 @@ Runbooks and scripts for reimaging a Mac (Windows/Linux/other-device reimage wor
 
 Start at [`reimaging-guide.md`](./reimaging-guide.md) — it sequences every phase of the reimage and links out to each individual runbook.
 
+**Working on this repository's records rather than its subject?** The session
+management framework — findings, bundles, sessions and the rules binding them —
+has its own front door at [`docs/rules/README.md`](./docs/rules/README.md). It is
+project-agnostic and does not assume anything about reimaging.
+
 If you're picking this up mid-reimage on a freshly erased Mac with no local checkout yet, see [`reimage-guide-access.md`](./reimage-guide-access.md).
 
 ---

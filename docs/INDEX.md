@@ -10,7 +10,7 @@ concerns, not in a note.
 | Directory | Holds | Index |
 |---|---|---|
 | `architecture/` | Design that outlives the session that wrote it. Read before building the thing it describes. | — |
-| `rules/` | Records about the framework's own rules — where a rule can be enforced, and where nothing can hold it. Not the rules themselves: those live in `docs/legend.md` and the instruction sets. | — |
+| `rules/` | Records **about** the framework's own rules — the front door for someone arriving cold, and where a rule can be enforced. Not the rules themselves: those live in `docs/legend.md` and the instruction sets. | [`rules/README.md`](rules/README.md) |
 | `ledgers/` | Dated statements of what exists, what is stale and what is owed. Re-derived and replaced wholesale, not fixed. | — |
 | | `evidence-conformance.md` — the four-table survey · `capture-script-refactor-2026-09-02.md` — R135 · `script-conformance-2026-09-02.md` — R136/137 · `artifact-migration-2026-09-02.md` — **what cannot be regenerated** · `artifact-conversion-2026-09-02.md` — **what was done about it**, R138 · `allocation-evidence.md` — allocator runs, re-derived per run, R214 | |
 | `sessions/` | Session prompts, the plans they execute, and the handoffs they leave. | [[docs/sessions/INDEX\|sessions/INDEX.md]] |
