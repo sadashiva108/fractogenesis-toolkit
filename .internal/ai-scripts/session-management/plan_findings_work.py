@@ -408,6 +408,63 @@ SHAPE = {"findings": "reasoning", "commission": "reasoning",
          "charter": "actionable", "remedy": "actionable"}
 # A member id carries its genus in its prefix: a finding, a question, a task.
 MEMBER_PREFIX = {"findings": "F", "commission": "Q", "charter": "T", "remedy": "T"}
+# The five of docs/legend.md. A session's `state` was the one closed set with no
+# constant and no check: `conformance` compared the stored value against the
+# derivation and never against a vocabulary, so a state outside the five would
+# have been reported as a disagreement rather than as a word that does not
+# exist. 0047 F11.
+SESSION_STATES = ("available", "active", "closed", "handoff", "withdrawn")
+
+# Every closed set in this file, by the field that carries it. The suite asserts
+# that no value appears in two of them except where the design says it must --
+# `docs/legend.md`: "no word appears in both vocabularies, and a schema check
+# asserts the two sets are disjoint." 0047 F8 built the check for outcomes; F11
+# widened it to every pair. Add a set here when you add one above, or the guard
+# silently stops covering it.
+VOCABULARIES = {
+    "finding.status":    set(FINDING_STATUSES),
+    "dossier.standing":  set(BUNDLE_STANDINGS),
+    "dossier.progress":  set(BUNDLE_PROGRESS),
+    "dossier.ownership": set(x for x in OWNERSHIP if x),
+    "dossier.genus":     set(GENERA),
+    "dossier.kind":      set(KINDS),
+    "dossier.shape":     set(SHAPE.values()),
+    "session.state":     set(SESSION_STATES),
+    "decision.outcome":  set(OUTCOMES) | set(POINTER_OUTCOMES),
+}
+
+# The overlaps the design intends, each licensed by a sentence in the legend.
+# Anything not listed here is a defect, which is the point: the exception is
+# declared once, in data, rather than argued each time someone reads the sets.
+DECLARED_OVERLAPS = {
+    # "standing is progress with ownership and lineage put back in"
+    frozenset(("dossier.standing", "dossier.progress")):
+        {"analyzing", "answered", "revisited", "retired"},
+    # "`standing` -- if `ownership` is set, that value"
+    frozenset(("dossier.standing", "dossier.ownership")):
+        {"unclaimed", "transferred"},
+}
+
+
+def undeclared_overlaps(skip=()):
+    """Every value in two vocabularies that the design does not license.
+
+    `skip` names pairs to leave out, so a known and unowned defect can be
+    excluded from the guarding test without the guard quietly widening to cover
+    it. Returns {frozenset(pair): {values}}.
+    """
+    out = {}
+    names = sorted(VOCABULARIES)
+    for i, a in enumerate(names):
+        for b in names[i + 1:]:
+            pair = frozenset((a, b))
+            if pair in skip:
+                continue
+            shared = VOCABULARIES[a] & VOCABULARIES[b]
+            shared -= DECLARED_OVERLAPS.get(pair, set())
+            if shared:
+                out[pair] = shared
+    return out
 
 
 def shape(b):
@@ -440,6 +497,8 @@ def conformance(g):
     for name, sess in sorted(g.sessions.items()):
         if sess.get("state") is None:
             out.append(("UNSTAMPED", name, "state is null -- run `stamp`"))
+        elif sess["state"] not in SESSION_STATES:
+            out.append(("VOCAB", name, "state %r" % sess["state"]))
         elif sess["state"] != session_state(g, sess):
             out.append(("STORED-DISAGREES", name,
                         "state says %r, the record derives %r"

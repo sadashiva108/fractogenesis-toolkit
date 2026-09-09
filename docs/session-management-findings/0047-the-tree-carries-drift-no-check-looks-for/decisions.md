@@ -11,6 +11,7 @@
 | D1 | The migrated-bundle carve-out is restored to `.github/session-management-instructions.md` §3: a bundle migrated from an already-closed record carries `resolutions.md` and no `decisions.md`, and its `resolutions.md` says so. **This is `0037` D2, taken once and recorded in both bundles** | F4 | 2026-09-09 | `accepted` |
 | D2 | `transferred` leaves the closed-bundle assertion in `plan_findings_work.py` entirely; `unclaimed` keeps it, and its detail names `0047` F1 as the undecided rule the row rests on. The code name is unchanged | F7 | 2026-09-09 | `accepted` |
 | D3 | `OUTCOMES` becomes the legend's six bare outcomes with `replaced` matched by prefix; the two retired prefixes go; and a contract test asserts the disjointness `docs/legend.md` has claimed a schema check performs since Revision 233 | F8 | 2026-09-09 | `accepted` |
+| D5 | The guard is rebuilt over a declared set of vocabularies rather than a hand-listed set of comparisons, and the one pair nobody here may fix is **excluded by name** rather than absorbed. `SESSION_STATES` is added and a session's stored `state` is checked against it | F11 | 2026-09-09 | `accepted` |
 | D4 | F5 is recorded `resolved` against the work that already answered it — `is_clone()`, shipped at Revision 231 — rather than re-done; what the remedy did not cover is opened as F9 and F10 instead of being folded into the resolution | F5 | 2026-09-09 | `accepted` |
 
 **D1 was decided by the session in the header. D2 and D3 were decided by
@@ -180,3 +181,57 @@ is `0052` F1 seen from the recording end: F1 is about a resolution silently
 becoming false, and this is the same gap in the other direction — work silently
 answering a finding. **Both are the record and the tree drifting apart, and only
 one of them has ever been called a defect.**
+
+## D5 — the guard is driven by the sets it guards, and the exception is named
+
+Three changes, and the first is the one that matters.
+
+**`VOCABULARIES` is a dict of every closed set in the module**, and
+`undeclared_overlaps()` compares every pair of it. A vocabulary added to the
+module and not to the dict fails `test_every_vocabulary_is_in_the_disjointness_set`,
+so the guard cannot silently narrow the way it did when Revision 271 added
+`genus` and `shape`.
+
+**`DECLARED_OVERLAPS` licenses the two the design intends** — `standing` ×
+`progress` on four values, because standing *is* progress with ownership put
+back in, and `standing` × `ownership` on two, because standing takes the
+ownership value when one is set. **The exception is data, declared once**,
+rather than an argument reconstructed by whoever next reads the sets.
+
+**`SESSION_STATES` exists and `conformance` uses it.** A session's `state` was
+the one closed set with no constant, so a word outside the five read as
+`STORED-DISAGREES` rather than `VOCAB`.
+
+**Two tests, and the second is the interesting one.**
+`test_no_undeclared_overlap_between_vocabularies` runs every pair **except**
+`finding.status` × `session.state` and passes.
+`test_every_vocabulary_pair_is_disjoint` runs all of them, is marked
+`@unittest.expectedFailure`, and fails on that one pair — so the suite reports
+**`OK (expected failures=1)`** rather than going red. **When the legend is fixed
+the second test passes, and `unittest` reports an *unexpected success*** — a
+loud, specific signal to delete it and fold the pair back into the first. The
+defect retires the instrument that records it.
+
+**Rejected — add the failing pair and let the suite go red.** A red suite is the
+signal every session reads before trusting any number in this repository. Leaving
+it red for a defect **nobody in this session may repair** — `docs/legend.md` is
+the entity-model session's — trains the next reader to scroll past a failure,
+which is `0047` F6's argument arriving one level up: **six instruments here have
+reported mass failure against a healthy tree, and the cost each time was that
+somebody stopped believing the instrument.**
+
+**Rejected — rename the session value so the test passes.** It is one line and it
+would be the inversion `0038` D5 refused: **moving the thing being measured to
+make the measurement come out.** A vocabulary change is the entity-model
+session's under the Revision 261 boundary, and `0039` F27 is where it is
+recorded for them.
+
+**Rejected — skip the pair without naming it.** An exclusion that is not visible
+is a guard that quietly narrowed, which is F11 itself. `KNOWN_UNOWNED` is a named
+constant in the test class and the docstring says which pair, why, and who owns
+the fix.
+
+**Rejected — keep the hand-listed comparisons and add the two missing lines.** It
+would close today's gap and nothing else. **F11's cause is not the missing lines,
+it is that the check was not derived from the sets** — which is why it went from
+covering three pairs of three to three pairs of ten without anyone editing it.

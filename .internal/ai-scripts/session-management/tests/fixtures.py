@@ -54,7 +54,7 @@ def bundle(number, statuses=("un-started",), kind="session-management",
             "contributions": [], "edges": edges or [], "indexNotes": None}
 
 
-def session(name, owned=(), ended_on=None, declared=None):
+def session(name, owned=(), ended_on=None, declared=None, state=None):
     return {"schemaVersion": 1, "updatedAt": "2026-09-08T00:00:00-04:00",
             "bundleName": name, "createdOn": "2026-09-08",
             "owners": [{"from": "2026-09-08", "until": None, "assistant": "Claude",
@@ -63,6 +63,9 @@ def session(name, owned=(), ended_on=None, declared=None):
             "transcript": None, "scratchPath": None, "resources": [],
             "ownedBundles": [{"number": n, "notes": None} for n in owned],
             "contributions": [], "declaredState": declared, "indexNotes": None,
+            # `state` is the STORED derived value. None is the unstamped case and
+            # is the default; pass a word to build a tree that is wrong on purpose.
+            "state": state,
             "ended": {"on": ended_on, "reason": None}}
 
 

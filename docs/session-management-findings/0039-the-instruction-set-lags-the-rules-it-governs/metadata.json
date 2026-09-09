@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T07:20:00-04:00",
+  "updatedAt": "2026-09-09T17:25:00-04:00",
   "number": "0039",
   "bundleName": "0039-the-instruction-set-lags-the-rules-it-governs",
   "genus": "findings",
@@ -377,6 +377,18 @@
       "reopened": null,
       "withdrawn": null,
       "resolution": null
+    },
+    {
+      "id": "F27",
+      "statement": "`withdrawn` is a finding `status` and a session `state`, so the rule that no value belongs to more than one vocabulary is broken in the document that states it",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-09T17:25:00-04:00",
+      "sectionHeading": "F27 \u2014 the rule is broken in the document that states it",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
     }
   ],
   "decisions": [
@@ -701,6 +713,11 @@
       "session": "drift-and-the-write-boundary-20260909-053548",
       "date": "2026-09-09",
       "what": "Added F24 and F25, both found while writing decisions into `0047` \u2014 a bundle it owns, whose `decisions.md` was begun by another session"
+    },
+    {
+      "session": "drift-and-the-write-boundary-20260909-053548",
+      "date": "2026-09-09",
+      "what": "Added F27, found by widening the disjointness guard to every pair of closed vocabularies \u2014 `0047` F11"
     }
   ],
   "edges": [

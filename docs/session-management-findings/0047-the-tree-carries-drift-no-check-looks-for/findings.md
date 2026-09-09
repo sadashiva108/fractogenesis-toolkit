@@ -42,6 +42,8 @@ retrofit is argued.
 | F8 | `plan_findings_work.py` validates decision outcomes against a set the legend replaced: it accepts the two the legend retired and rejects five of the seven it defines, one of which three live decisions already use | `resolved` |
 | F9 | The two ordering comparisons report eight rows against `superseded` bundles, which no session may write to, so the rows cannot be cleared by anyone | `framing` |
 | F10 | The clone exemption is bundle-wide and never expires, so it suppresses the comparisons on a clone whose re-reading has closed — and the `reopened` status, which retains its resolution by design, is reported everywhere else | `framing` |
+| F11 | The disjointness guard covered three of the five closed vocabularies, and the pair it did not cover was the broken one — while a session's `state` had no closed set and no vocabulary check at all | `resolved` |
+| F12 | A revision number can be taken in a commit message, which the helper that exists to prevent collisions cannot see | `framing` |
 
 ## F1 — an `unclaimed` bundle holding a live finding
 
@@ -376,3 +378,84 @@ F8 says about that: a check that has never been exercised against the case it
 governs fails silently, and the first person to hit it reads the failure as their
 own mistake. **The first reopening in this repository will produce a conformance
 failure for doing the thing §9a prescribes.**
+
+## F11 — the guard covered three vocabularies of five, and missed the broken pair
+
+`docs/legend.md` has said since Revision 233 that *"no word appears in both
+vocabularies, and a schema check asserts the two sets are disjoint."* F8 found
+that no such check existed and built one at Revision 268:
+
+```text
+words = set(OUTCOMES) | set(POINTER_OUTCOMES)
+self.assertEqual(words & set(FINDING_STATUSES), set())
+self.assertEqual(words & set(BUNDLE_STANDINGS), set())
+self.assertEqual(words & set(BUNDLE_PROGRESS), set())
+```
+
+**Three comparisons, hand-listed, all of them outcomes against something else.**
+Five closed vocabularies exist — finding `status`, dossier `standing`, dossier
+`progress`, session `state`, decision `outcome` — which is ten pairs. The check
+made three of them, and **`session.state` appeared in none.**
+
+**The pair it did not cover is the pair that is broken.** `withdrawn` is a
+finding `status` and a session `state`. The rule the legend states is violated in
+the legend itself, and has been since both vocabularies were written.
+
+**A hand-listed set of comparisons is the defect, not the missing line.** Nothing
+tied the check to the sets it was checking, so adding a vocabulary — which
+Revision 271 did, twice, with `genus` and `shape` — narrowed the guard's coverage
+without changing a line of it. **The guard silently stopped covering more of the
+surface every time the surface grew.**
+
+**And `session.state` had no closed set at all.** `FINDING_STATUSES`,
+`BUNDLE_STANDINGS`, `BUNDLE_PROGRESS`, `OWNERSHIP`, `OUTCOMES`, `KINDS` and now
+`GENERA` are constants that `conformance` validates against. A session's `state`
+was compared only against its own derivation, so a value outside the five would
+have been reported as `STORED-DISAGREES` — *the record derives something else* —
+rather than as a word that does not exist. **The two failures read very
+differently to whoever gets the report**, and the retired state `owned`, which
+survived in four tag files as late as `1c48deb`, is exactly the case that would
+have produced the wrong one.
+
+**What it costs to leave.** The same as F8, and F8 is the precedent that makes it
+predictable rather than unlucky: a check that has never been exercised against
+the case it governs fails silently. Here it did more than fail silently — **it
+reported a clean pass on a rule the tree breaks**, which is worse than no check,
+because a clean pass is the thing every session reads before quoting a number.
+
+## F12 — a revision number can be taken where the helper cannot look
+
+`.share/check-manifest-revision.sh` exists because *"re-read the header block and
+take the next free number"* could be followed exactly by two sessions who both
+took 167. It scans **both** places a number can be taken in the file — the
+`**Revision N**` header block and the `## Revision N` entry headings — and its
+own comments say the second is the whole point.
+
+**There is a third place, and it is not in the file.** A commit message.
+
+**Observed 2026-09-09.** Commit `636eba0` is titled *"Revision 271: the bundle
+becomes a genus"*. Its contents are Revision 270 — this session's work, ten
+files — committed under the message another session handed over for its own
+revision. `APPLY-MANIFEST.md` gained no 271 entry, so the helper reported 271
+free while `git log` reported it taken. **Two instruments, two answers, and the
+one a session is told to trust is the one that cannot see the commit.**
+
+**This is not new and the manifest records the earlier instance.** Revisions 241
+to 246 are *"six numbers taken in the log and none written here"*, reconstructed
+after the fact at Revision 247. The helper was written before that happened and
+was never widened afterwards.
+
+**It is also `0038` D7's guard arriving from the other side.** That decision
+chose *a change committed with no manifest entry* as the first guard to build,
+on the grounds that it is the only one of the four that has already cost
+archaeology. **It cost archaeology again the same day it was chosen**, which is
+the strongest argument the decision could have had and arrived six hours too late
+to be in it.
+
+**Why this is not simply fixed here.** Reading the log means shelling out to git,
+and `docs/rules/README.md` §6 and this session's own `Resources` note both forbid
+git in the owner's checkout because the lock cannot be cleaned up on the mount.
+Revision 270 established that `git --no-optional-locks` answers that for reads,
+so the route exists — but a helper that reads the log is a different instrument
+from one that reads a file, with a different failure mode when the two disagree,
+and **which one wins is a decision this finding owes rather than assumes.**

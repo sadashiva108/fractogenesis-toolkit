@@ -23,7 +23,8 @@ import fixtures as F                                          # noqa: E402
 from plan_findings_work import (                              # noqa: E402
     Graph, derivation_table, conformance, allocate, select, frontier, rank, is_clone,
     FINDING_STATUSES, BUNDLE_STANDINGS, BUNDLE_PROGRESS, OUTCOMES,
-    POINTER_OUTCOMES, KINDS, INERT, quality,
+    POINTER_OUTCOMES, SESSION_STATES, VOCABULARIES, DECLARED_OVERLAPS,
+    undeclared_overlaps, KINDS, INERT, quality,
     GENERA, SHAPE, MEMBER_PREFIX, shape,
     bundle_standing, bundle_progress, session_state, stamp_derived)
 
@@ -51,9 +52,6 @@ class TestLadder(unittest.TestCase):
     two vocabularies share no word, so every assertion here is also a check that
     the translation happened rather than a value passing straight through.
     """
-
-    def test_the_two_vocabularies_share_no_word(self):
-        self.assertEqual(set(FINDING_STATUSES) & set(BUNDLE_STANDINGS), set())
 
     def test_every_finding_un_started(self):
         self.assertEqual(derivation_table(["un-started", "un-started"]), "untouched")
@@ -187,14 +185,56 @@ class TestVocabulary(unittest.TestCase):
              "voided")))
         self.assertEqual(POINTER_OUTCOMES, ("replaced",))
 
-    def test_outcomes_and_statuses_share_no_word(self):
-        # docs/legend.md: "No word appears in both vocabularies, and a schema
-        # check asserts the two sets are disjoint." Nothing asserted it until
-        # 0047 F8; the legend has claimed this check since Revision 233.
-        words = set(OUTCOMES) | set(POINTER_OUTCOMES)
-        self.assertEqual(words & set(FINDING_STATUSES), set())
-        self.assertEqual(words & set(BUNDLE_STANDINGS), set())
-        self.assertEqual(words & set(BUNDLE_PROGRESS), set())
+    def test_five_session_states(self):
+        self.assertEqual(sorted(SESSION_STATES), sorted(
+            ("available", "active", "closed", "handoff", "withdrawn")))
+
+    def test_every_vocabulary_is_in_the_disjointness_set(self):
+        # The guard covers what this dict lists and nothing else, so a set added
+        # to the module and not to the dict is a guard that silently narrowed.
+        # 0047 F11: for four revisions the check covered three vocabularies of
+        # five, and the pair it did not cover was the broken one.
+        for name, expected in (("finding.status", FINDING_STATUSES),
+                               ("dossier.standing", BUNDLE_STANDINGS),
+                               ("dossier.progress", BUNDLE_PROGRESS),
+                               ("session.state", SESSION_STATES),
+                               ("decision.outcome", OUTCOMES),
+                               ("dossier.kind", KINDS)):
+            self.assertIn(name, VOCABULARIES, name)
+            self.assertTrue(set(expected) <= VOCABULARIES[name], name)
+
+    KNOWN_UNOWNED = frozenset(("finding.status", "session.state"))
+
+    def test_no_undeclared_overlap_between_vocabularies(self):
+        """Every pair but one, and the one is named rather than absorbed.
+
+        docs/legend.md: "no word appears in both vocabularies, and a schema
+        check asserts the two sets are disjoint." This is that check, over every
+        pair of closed sets in the module, minus the overlaps DECLARED_OVERLAPS
+        licenses -- and minus `finding.status` x `session.state`, which is a
+        real defect in the legend and is not this session's to fix. Excluding it
+        by name rather than widening the rule is what keeps the remaining
+        surface guarded: a NEW overlap fails here immediately.
+        """
+        found = undeclared_overlaps(skip={self.KNOWN_UNOWNED})
+        self.assertEqual(found, {}, "undeclared overlap: %s" % found)
+
+    @unittest.expectedFailure
+    def test_every_vocabulary_pair_is_disjoint(self):
+        """The rule as the legend states it, with nothing excused.
+
+        It fails today on exactly one pair: `withdrawn` is a finding `status`
+        and a session `state`. The finding sense has a documented revert
+        procedure in section 9a and is the more embedded; the session sense
+        means "shut down, no further work, ever" and is the one to rename.
+        `docs/legend.md` is the entity-model session's, so this is recorded and
+        not repaired -- 0039 F27.
+
+        **When that lands this test PASSES, and unittest reports it as an
+        unexpected success rather than silently going green.** That is the
+        signal to delete this test and remove KNOWN_UNOWNED from the one above.
+        """
+        self.assertEqual(undeclared_overlaps(), {})
 
     def test_an_outcome_outside_the_vocabulary_is_caught(self):
         for o in ("in progress", "closed", "superseded → D5"):
@@ -312,6 +352,30 @@ class TestRegressions(unittest.TestCase):
             g = graph_of(F.bundle("0100", ("decided",),
                                   decisions=[F.decision("D1", ["F1"], o)]))
             self.assertIn("VOCAB", codes(g), o)
+            g._fixture.close()
+
+    def test_0047_F11_a_session_state_outside_the_five_is_caught(self):
+        """A session's `state` was the one closed set with no vocabulary check.
+
+        `conformance` compared the stored value against the derivation and never
+        against a word list, so `owned` -- a state retired at Revision 180 and
+        still present in four tag files at `1c48deb` -- would have been reported
+        as a disagreement rather than as a word that does not exist.
+        """
+        g = graph_of(F.bundle("0100", ("framing",), ownership=None),
+                     sessions=[F.session("a-session-20260908-000000",
+                                         owned=["0100"], state="owned")])
+        rows = [r for r in conformance(g) if r[0] == "VOCAB"]
+        self.assertTrue(any("state" in d for _, _, d in rows), rows)
+        g._fixture.close()
+
+    def test_0047_F11_a_legal_session_state_is_clean(self):
+        for st in SESSION_STATES:
+            g = graph_of(F.bundle("0100", ("framing",), ownership=None),
+                         sessions=[F.session("a-session-20260908-000000",
+                                             owned=["0100"], state=st)])
+            rows = [d for c, _, d in conformance(g) if c == "VOCAB"]
+            self.assertFalse([d for d in rows if "state" in d], (st, rows))
             g._fixture.close()
 
     def test_0047_F5_a_superseding_clone_is_exempt(self):

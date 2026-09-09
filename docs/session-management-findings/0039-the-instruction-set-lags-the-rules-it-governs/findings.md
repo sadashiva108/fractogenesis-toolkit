@@ -35,6 +35,7 @@ afternoon by the session that had been told it.
 | `typed-bundles-architecture-20260908-204724` | 2026-09-09 | Added F21 and F22, from a cold reading of `docs/legend.md` at Revisions 236 and 237 |
 | `typed-bundles-architecture-20260908-204724` | 2026-09-09 | Added F23 and took D21, from its own failure to hand the Revision 239 message over as a block |
 | `drift-and-the-write-boundary-20260909-053548` | 2026-09-09 | Added F24 and F25, both found while writing decisions into `0047` — a bundle it owns, whose `decisions.md` was begun by another session |
+| `drift-and-the-write-boundary-20260909-053548` | 2026-09-09 | Added F27, found by widening the disjointness guard to every pair of closed vocabularies — `0047` F11 |
 
 ## Finding status
 
@@ -75,6 +76,7 @@ for.
 | F24 | `decisions.md` carries one `Session:` field and the Decisions table has no column for one, so a decision written by a session that does not own the bundle cannot be attributed — and §4 invites exactly that write | `framing` |
 | F25 | *What another session may do* has no row for `transferred`, the one standing under which a non-owner is routinely told to contribute | `framing` |
 | F26 | `docs/legend.md` says a status moves on a write and also that reading is the transition, and §10 sides with the minority against five records and the tree | `decided` |
+| F27 | `withdrawn` is a finding `status` and a session `state`, so the rule that no value belongs to more than one vocabulary is broken in the document that states it | `framing` |
 
 ---
 
@@ -1129,3 +1131,61 @@ answers the other.
 **What it costs to leave.** A session arriving at a transferred bundle reads §10,
 reads the legend, and gets two answers — then reads five records that give a
 third. It resolves the conflict by guessing, and the guess moves statuses.
+
+## F27 — the rule is broken in the document that states it
+
+`docs/legend.md`: *"No word appears in both vocabularies, and a schema check
+asserts the two sets are disjoint."* And, of finding statuses and session
+states, the same file lists **`withdrawn` in both.**
+
+| | Where | Means |
+|---|---|---|
+| finding `status` | the six of *A finding* | work stopped; **anything the finding contributed while `framing` or `decided` is reverted**, by `git revert` against the commit, with an `APPLY-MANIFEST.md` entry naming what was reverted and why — §9a |
+| session `state` | the five of *A session* | *"Shut down. No further work, ever."* |
+
+They are not the same act. One reverts contributions and takes a reason from a
+closed list of nine; the other ends a session and touches nothing it produced.
+**A reader who learns one meaning reads the other wrong**, which is the exact
+sentence the legend uses to explain why `superseded → DX` was retired as an
+outcome.
+
+**Nothing caught it, and the reason is `0047` F11.** The disjointness check built
+at Revision 268 compares decision outcomes against three other vocabularies by
+hand. Five exist, which is ten pairs; it made three, and **`session.state`
+appeared in none of them.** Revision 272 rebuilds the guard over every pair, and
+this is the one it finds.
+
+**The guard now records it rather than repairing it.**
+`test_every_vocabulary_pair_is_disjoint` asserts the rule with nothing excused
+and is marked `expectedFailure`, so the suite reports
+`OK (expected failures=1)` instead of going red for a defect no instruments
+session may fix. **When this finding is resolved that test passes and `unittest`
+reports an *unexpected success***, which is the signal to delete it.
+
+### Which side moves
+
+**The session side**, on three grounds, and this is a reading rather than a
+decision — `docs/legend.md` is this bundle's session's.
+
+1. **The finding sense is the more embedded and the more specified.** It has a
+   procedure in §9a, a closed list of reasons, a revert requirement and a
+   manifest entry. The session sense is one row and one sentence.
+2. **The finding sense is load-bearing in the derivation.** `withdrawn` appears
+   in `INERT`, in the `retired` and `answered` rows of the progress table, and in
+   `derivation_table`. Moving it touches the ladder; moving the session value
+   touches five files.
+3. **`closed` already carries the orderly ending**, so the session vocabulary
+   needs a word for *shut down, no further work, ever* that is not a synonym of
+   a finding's.
+
+**`dissolved`** is the suggestion: adjectival like `available`, `active` and
+`closed`, terminal beside `closed` without being its synonym, and unused
+anywhere in `docs/`. `terminated` is the runner-up and reads as a system event
+rather than a decision; `lapsed` is too soft for *no further work, ever*;
+`abandoned` implies neglect where the legend describes a deliberate act.
+
+**One more thing about the same table, noticed while reading it.** The five
+session states are `available`, `active`, `closed`, `handoff`, `withdrawn` —
+four adjectives and **one noun**. `handoff` is the event, not the state the
+session is in after it. It is the same class of defect and it is a smaller one,
+so it is recorded here rather than given its own finding.
