@@ -142,6 +142,14 @@ they are only legible together:
                      APPLY-MANIFEST.md revision carrying each one.
 ```
 
+**A bundle MIGRATED from an already-closed record carries `resolutions.md` and no
+`decisions.md`**, because the deciding happened before this lifecycle existed; its
+`resolutions.md` says so. Ten bundles are in that class. The sentence was written
+in the file `1c48deb` split, did not survive the split, and is restored here —
+`0037` D2, which answers `0047` F4 with it. **Writing a `decisions.md` into them
+instead would invent deliberation that never happened**, which is the evidence
+rule broken in the direction of tidiness.
+
 The tag is a marker file, **not** a suffix on the directory name. The directory
 name is what prompts, indexes and other bundles cite by path; renaming it on
 every status transition breaks every one of those citations at once, which is why
@@ -192,7 +200,8 @@ three declared values. Both are stamped, never hand-written.
 ```text
 docs/sessions/<title>-<stamp>/
 |-- metadata.json          the data. State DERIVES from it, as in 3.
-|-- prompt.md              what starts the session. Required, always.
+|-- prompt.md              what starts the session. Required, always, and it
+|                          names this file before anything else it asks for.
 |-- metadata.md            who and what has owned it. Required from the start.
 |-- findings-manifest.md   the bundles this session owns. Required once it
 |                          owns one. AUTHORITATIVE for ownership.
@@ -228,6 +237,17 @@ different claim. **Any `not recoverable` names the searches that came back
 empty** — three identifiers so recorded have since been found in the
 `Claude-Session` commit trailer, which the harness writes, so a session looking
 for what it "wrote" finds nothing and concludes wrongly.
+
+**Every `prompt.md` names this file as required reading, before anything else it
+asks the session to read.** A session that begins without being told where the
+rules are is the one failure the reading order exists to prevent, and it holds
+regardless of state, scope or assistant.
+
+**It binds prompts written from now.** The nine that exist name it at lines 44,
+37, 37, 25, 12 and 6, and five belong to sessions that are `closed` or `handoff`.
+**Those are not rewritten**: a closed session's prompt records what that session
+was told, and editing it is what §9 spends three prohibitions preventing. `0037`
+D1, which restores the rule §4d carried until `1c48deb` deleted it.
 
 `docs/legend.md` carries how a session begins — created, cloned, or handoff — and
 exactly what transfers at a handoff. This file does not restate it.
@@ -584,7 +604,9 @@ is written before the status moves.
 
 Reversing steps 2 and 3 produces a `resolved` finding with nothing behind it,
 which nobody can check. `0037` F5 recorded that state from the other direction:
-every `resolved` bundle missing its `decisions.md`.
+every bundle standing `answered` missing its `decisions.md`. **`resolved` is a
+finding status and `answered` is the bundle standing derived from it** — Revision
+233 separated the two vocabularies and this sentence kept the old word.
 
 **A `decided` finding whose decisions have been carried out and which has no row
 is a defect.** Not derivable in full -- whether a toolkit write happened is a fact

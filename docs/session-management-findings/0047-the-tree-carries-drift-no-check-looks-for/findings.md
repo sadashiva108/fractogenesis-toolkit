@@ -31,10 +31,11 @@ than checkable.
 | F1 | Releasing a bundle to `unclaimed` leaves its findings where they were, so a bundle closed to every session holds a readable finding | `un-started` |
 | F2 | Six `accepted` decisions never moved their finding out of `framing` | `un-started` |
 | F3 | Three bundles carry resolutions for findings that are not resolved | `un-started` |
-| F4 | Eleven `resolved` bundles have no `decisions.md`, and whether they owe one has never been decided | `un-started` |
+| F4 | Eleven `resolved` bundles have no `decisions.md`, and whether they owe one has never been decided | `resolved` |
 | F5 | A conformance sweep that does not know about superseding clones reports sixty-five false positives | `un-started` |
 | F6 | A guard fails where a checker only reports, and the discipline that exists for checkers — a clean pass before it is trusted — has never been stated for guards | `framing` |
 | F7 | `plan_findings_work.py:439` treats `transferred` as `unclaimed` and reports a permitted transfer as a conformance failure, the last executable site of a rule the documents retired | `framing` |
+| F8 | `plan_findings_work.py` validates decision outcomes against a set the legend replaced: it accepts the retired `superseded → DX` and rejects four outcomes the legend defines | `framing` |
 
 ## F1 — an `unclaimed` bundle holding a live finding
 
@@ -193,3 +194,38 @@ code that lags refuses.
 one report an allocator run puts in front of the owner. `0036` is the standing
 lesson about a baseline that cannot be trusted; this is that, in the conformance
 column.
+
+## F8 — the outcome check enforces a vocabulary the legend replaced
+
+`.internal/ai-scripts/session-management/plan_findings_work.py`:
+
+```text
+OUTCOMES = ("accepted", "rejected")          # plus `refined -> DX`, `superseded -> DX`
+if o not in OUTCOMES and not o.startswith(("refined", "superseded")):
+```
+
+`docs/legend.md` -> *Decision outcomes* defines **seven**: `proposed`,
+`accepted`, `rejected`, `deferred`, `retracted`, `replaced → DX` and `voided`.
+The check accepts two of them, plus `refined → DX` and `superseded → DX`, and
+**both of those were retired.** `replaced → DX` covers what they divided between
+them, and the legend gives the reason in a sentence this check breaks: *"No
+Outcome value is ever also a status value — `superseded → DX` was, and a reader
+who learned one meaning read the other wrong."*
+
+**So a decision written to the legend fails and a decision written to the retired
+vocabulary passes.** `deferred`, `retracted`, `voided` and `proposed` are all
+rejected by the instrument that exists to validate them, and `proposed` is the
+one the legend says is *stored rather than left empty, so an unset outcome is a
+load error and not a reading* — the default value fails its own check.
+
+**This is F7's defect in the same file, one function apart**, and the same shape:
+a closed set in code that the documents moved on from. F7 is `transferred` read
+as `unclaimed`; this is the outcome vocabulary read as it stood before Revision
+233. **Two instances make it a property of the file rather than a slip**, which is
+why it is recorded here rather than folded into F7.
+
+**What it costs to leave.** Nothing today, because no decision in the tree uses
+the four rejected values — which is itself the point: the check has never been
+exercised against a conformant decision, so its failure is invisible until
+somebody writes one. The first `deferred` outcome written will look like the
+author's mistake.

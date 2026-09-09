@@ -46,10 +46,10 @@ the regression** — `0052` F1.
 | # | Finding | Status |
 |---:|---|---|
 | F1 | §4b and §4c contradict each other on whether a findings bundle takes a manifest revision | `resolved` |
-| F2 | Four of five `prompt.md` files violate §4d's "always" rule | `decided` |
+| F2 | Four of five `prompt.md` files violate §4d's "always" rule | `resolved` |
 | F3 | `docs/sessions/INDEX.md` miscounts a manifest it links to | `resolved` |
 | F4 | `docs/INDEX.md` says `ideas/` is empty; it is not | `resolved` |
-| F5 | Every `resolved` bundle is missing `decisions.md` | `decided` |
+| F5 | Every `resolved` bundle is missing `decisions.md` | `resolved` |
 | F6 | The two session-state diagrams disagree | `resolved` |
 | F7 | Two session identifiers recorded as unrecoverable are recoverable | `resolved` |
 

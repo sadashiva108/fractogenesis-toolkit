@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T07:10:00-04:00",
+  "updatedAt": "2026-09-09T08:20:00-04:00",
   "number": "0037",
   "bundleName": "0037-findings-architecture-conformance",
   "kind": "session-management",
@@ -21,8 +21,8 @@
     "`docs/legend.md`",
     "every bundle and index in `docs/`"
   ],
-  "standing": "analyzing",
-  "progress": "analyzing",
+  "standing": "answered",
+  "progress": "answered",
   "ownership": null,
   "lineage": {
     "supersedes": "0027",
@@ -49,14 +49,19 @@
     {
       "id": "F2",
       "statement": "Four of five `prompt.md` files violate \u00a74d's \"always\" rule",
-      "status": "decided",
+      "status": "resolved",
       "statusReason": null,
       "statusNote": null,
-      "updatedAt": "2026-09-09T07:10:00-04:00",
+      "updatedAt": "2026-09-09T08:20:00-04:00",
       "sectionHeading": "F2 \u2014 four of five prompts omit the reading \u00a74d makes mandatory",
       "reopened": null,
       "withdrawn": null,
-      "resolution": null
+      "resolution": {
+        "resolvedBy": "D1",
+        "whatWasDone": "\u00a75 states the rule the deleted \u00a74d carried: every `prompt.md` names the instruction set before anything else, binding prompts written from now",
+        "revision": 255,
+        "commit": null
+      }
     },
     {
       "id": "F3",
@@ -95,14 +100,19 @@
     {
       "id": "F5",
       "statement": "Every `resolved` bundle is missing `decisions.md`",
-      "status": "decided",
+      "status": "resolved",
       "statusReason": null,
       "statusNote": null,
-      "updatedAt": "2026-09-09T07:10:00-04:00",
+      "updatedAt": "2026-09-09T08:20:00-04:00",
       "sectionHeading": "F5 \u2014 every `resolved` bundle is missing `decisions.md`",
       "reopened": null,
       "withdrawn": null,
-      "resolution": null
+      "resolution": {
+        "resolvedBy": "D2",
+        "whatWasDone": "\u00a73 carries the migrated-bundle carve-out again, and says so",
+        "revision": 255,
+        "commit": null
+      }
     },
     {
       "id": "F6",
