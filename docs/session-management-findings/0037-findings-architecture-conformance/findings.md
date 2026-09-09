@@ -52,6 +52,19 @@ the regression** — `0052` F1.
 | F5 | Every `resolved` bundle is missing `decisions.md` | `resolved` |
 | F6 | The two session-state diagrams disagree | `resolved` |
 | F7 | Two session identifiers recorded as unrecoverable are recoverable | `resolved` |
+| F8 | Nothing says a finding may record **a fact established** and not only a defect, and two definitions of the object put *what it costs to leave* inside it rather than in `Severity:` | `framing` |
+
+**F8 was recorded 2026-09-09 by `entity-model-and-vocabulary-20260909-053548`,
+and it takes this bundle out of `answered`.** Seven of seven stood `resolved` at
+Revision 256 and the bundle derived `answered`; one live finding makes it
+`analyzing` again. **That is the derivation working, not a regression** — a
+reading is not closed by its bundle's arithmetic, and the arithmetic is all
+`answered` reports. The transfer at Revision 261 named this reading as owed and
+did not take it.
+
+**The header is not rewritten.** `Recorded:`, `Session:` and `Severity:` describe
+the reading of 2026-09-03 and are evidence of it. F8's severity is **low** and is
+stated in its own section; nothing above was overlooked.
 
 ### F1 — §4b and §4c contradict each other, eighteen lines apart
 
@@ -218,6 +231,73 @@ means, which is how a mechanical record went unexamined. Any future
 `not recoverable` should name the searches that came back empty, so the next reader
 knows whether to try again.
 
+### F8 — a finding may record a fact established, and two definitions say otherwise
+
+**Severity: low.** Nothing is broken today. What it costs is a genus: it has
+already sent research to the wrong one once, and the record of that is in the
+tree.
+
+`docs/legend.md` defines the object and leaves the conclusion open — *"A findings
+bundle is a reading of something that already exists"* — and never says what such
+a reading may conclude. **Two restatements of that definition close it**, and the
+header schema closes it a third time by requiring the cost:
+
+| Where | What it says |
+|---|---|
+| `.github/session-management-instructions.md` §1 | a reading of something that already exists: *"what was found, where it is felt, what it costs to leave"* |
+| `docs/architecture/findings-and-sessions.md` §2 | *"what was found in something that already exists, where it is felt, what it costs to leave"* |
+| `.github/session-management-instructions.md` §11 | `Severity:` is required of every header, glossed *"what it costs to leave, and which finding is the high one"* |
+
+**`what it costs to leave` is severity's business, and in two of the three it is
+part of what the object is.** A reading whose answer is *and it is sound* has no
+cost to leave, so a required field has to be filled with something invented —
+which is the placeholder rule broken by the schema that states it.
+
+**Two of the three are also copies.** §1 restates a definition inside a file
+whose own opening says *"Nothing here restates a definition"*, and
+`findings-and-sessions.md` restates it again. Which of the three keeps the
+sentence is the deciding rather than the reading; `0039` D3 has already removed
+one copy from that record for the same reason.
+
+#### This bundle is the live instance
+
+Its own **What is conformant** section records seven established facts about the
+tree — six directories present, 26 bundles with no gaps or duplicates, 54 tags
+agreeing with their rows, the two-way pointer holding in both directions — and
+**not one of them is a finding.** They sit in prose above the Findings table
+because no row shape fits a reading whose answer is *yes*, and the section opens
+by apologising for itself: *"stated first because the defects below are small
+against it."*
+
+#### The cost has been paid once already, in the genus
+
+`docs/architecture/typed-bundles-and-work.md` §4.3 records that the first draft
+of that record narrowed the legend to *a reading of something that already exists
+**and is wrong***, which pushed research out of `findings` and into `commission`
+— a reading of what exists filed as an intent to build. The draft names the
+remedy and refuses to apply it there: *"That is a change to a rule and is owed a
+finding, not a quiet edit here."* **This is that finding.**
+
+#### What the fix is, and what it is not
+
+A sentence in `docs/legend.md` saying a finding may record a fact established as
+well as a defect found, and *what it costs to leave* moved out of the two
+definitions into `Severity:`, where it already lives.
+
+**Not** a new status, not a new field, not a subtype. A finding that establishes
+a fact is `framing`, `decided` and `resolved` like any other and its bundle
+terminates at `answered` with the rest; the difference is what the sentence says,
+which is content. The admission rule in `typed-bundles-and-work.md` §4.3 disposes
+of the alternative directly — a new shape must name a field no existing shape has
+— and this names none.
+
+**It is owed to `0039` D23.** That decision moves the history of all three rule
+documents into a `Provenance` table, and two of the three sentences above sit in
+documents it rewrites, so the wording F8 settles is what D23 then carries. That
+is why the owner's ordering parks D23 behind this bundle. Recorded as
+`0037/F8 constrains 0039/F14`; the parking is the owner's direction and is not
+derived from that edge.
+
 ## What it costs to leave
 
 Finding 1 costs the manifest its completeness, quietly and repeatedly, and every
@@ -227,3 +307,8 @@ was written about, in the machinery built to prevent it. Finding 2 costs each ne
 session its ground rules until someone notices. Findings 5 and 6 cost nothing today
 and become wrong answers the first time anyone works a bundle through the full
 lifecycle.
+
+**Finding 8 costs nothing today and has already cost once.** The genus draft
+narrowed the definition to *and is wrong* and filed research under `commission`
+before anything caught it; the correction is in that record and the rule it
+corrects is still unwritten.

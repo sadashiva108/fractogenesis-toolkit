@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T10:50:00-04:00",
+  "updatedAt": "2026-09-09T07:20:00-04:00",
   "number": "0039",
   "bundleName": "0039-the-instruction-set-lags-the-rules-it-governs",
   "kind": "session-management",
@@ -16,9 +16,9 @@
   "feltAt": [],
   "scope": "instruction-set. The fix lands in `.github/session-management-instructions.md`, `.claude/CLAUDE.md`, and `docs/architecture/findings-and-sessions.md`. Recorded against `.github/copilot-instructions.md` \u00a7\u00a74b\u20134d, which commit `1c48deb` deleted; D13 re-ruled the address.",
   "read": [],
-  "standing": "transferred",
+  "standing": "analyzing",
   "progress": "analyzing",
-  "ownership": "transferred",
+  "ownership": null,
   "lineage": {
     "supersedes": "0029",
     "on": null
@@ -364,6 +364,18 @@
       "reopened": null,
       "withdrawn": null,
       "resolution": null
+    },
+    {
+      "id": "F26",
+      "statement": "`docs/legend.md` says a status moves on a write and also that reading is the transition, and \u00a710 sides with the minority against five records and the tree",
+      "status": "decided",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-09T07:20:00-04:00",
+      "sectionHeading": "F26 \u2014 the legend says a status moves on a write, and also that reading is the transition",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
     }
   ],
   "decisions": [
@@ -654,6 +666,18 @@
       "answersAsOf": "2026-09-09T09:05:00-04:00",
       "voidedReason": null,
       "sectionHeading": "D23 \u2014 the room behind the door gets shorter"
+    },
+    {
+      "id": "D24",
+      "decision": "A status moves on a material change to the record, and a read is not one. `docs/legend.md` lines 69 and 546 stand; line 199's *reading is the transition* goes, and \u00a710's *the transfer ends when the target session reads the bundle* goes with it. A transfer ends on the target session's first write to the bundle as owner",
+      "findings": [
+        "F26"
+      ],
+      "decided": "2026-09-09",
+      "outcome": "accepted",
+      "answersAsOf": "2026-09-09T07:20:00-04:00",
+      "voidedReason": null,
+      "sectionHeading": "D24 \u2014 a status moves on a material change to the record, and reading is not one"
     }
   ],
   "contributions": [

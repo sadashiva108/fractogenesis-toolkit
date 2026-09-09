@@ -1,11 +1,21 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T05:45:00-04:00",
+  "updatedAt": "2026-09-09T07:30:00-04:00",
   "bundleName": "entity-model-and-vocabulary-20260909-053548",
   "createdOn": "2026-09-09",
-  "owners": [],
-  "transcript": null,
-  "scratchPath": null,
+  "owners": [
+    {
+      "from": "2026-09-09",
+      "until": null,
+      "assistant": "Claude",
+      "sessionId": "session_01LSgzo7EtPPVJ1gG8s4NVNW",
+      "model": "claude-opus-5",
+      "environment": "Linux VM on the owner's Mac, aarch64, Bash 5.1.16, GNU coreutils 8.32, Python 3.10.12",
+      "environmentNotes": "Not macOS. Every command, check and patch in this session ran in that VM through the desktop bridge, against a scratch copy outside the checkout; the assistant itself runs in a cloud container with no access to the owner's filesystem except through that bridge. The Bash 3.2 debt is extended, not paid."
+    }
+  ],
+  "transcript": "https://claude.ai/code/session_01LSgzo7EtPPVJ1gG8s4NVNW",
+  "scratchPath": "/sessions/rcw-01lsgzo7etppvj1gg8s4nvnw/scratch/fractogenesis-toolkit",
   "resources": [
     {
       "what": "Repository checkout",
@@ -24,13 +34,13 @@
     },
     {
       "what": "Scratch copy",
-      "path": null,
-      "notes": "Filled by the session on its first write."
+      "path": "/sessions/rcw-01lsgzo7etppvj1gg8s4nvnw/scratch/fractogenesis-toolkit",
+      "notes": "In the owner's local Linux VM, outside the checkout and outside every connected folder; it dies with the session. Baselined on the checkout's uncommitted Revision 268 working tree, not on c2e2f01, so the diff carries only this session's work."
     },
     {
       "what": "Commit created against",
-      "path": "13b00b3",
-      "notes": "Revision 260."
+      "path": "c2e2f01",
+      "notes": "Revision 267, plus Revision 268 applied to the checkout and not yet committed. The checkout was NOT clean when this was composed."
     }
   ],
   "ownedBundles": [
@@ -57,6 +67,12 @@
       "path": "docs/session-management-findings/0048-the-session-capacity-limit-has-no-datum/",
       "assignedOn": "2026-09-09",
       "notes": "Transferred in at Revision 261. Untouched; every finding is `un-started`."
+    },
+    {
+      "number": "0043",
+      "path": "docs/session-management-findings/0043-framework-state-lives-in-documents-not-data/",
+      "assignedOn": "2026-09-09",
+      "notes": "Transferred in at the owner's direction from session-management-re-evaluation-20260906-110105, which stands handoff with no successor and could not close the deciding on it. Deliberately open and stays so: transfer moves who may decide, not who may read or record."
     }
   ],
   "contributions": [],

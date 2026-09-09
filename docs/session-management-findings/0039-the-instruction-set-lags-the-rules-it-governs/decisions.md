@@ -53,6 +53,7 @@ without answering it for rules.
 | D22 | **The framework gets a front door of its own, under `docs/rules/`**, and `README.md` gains one pointer line to it. `README.md` stays the project's; the framework claims to be reusable as-is, so its entry travels with it | F14 | 2026-09-09 | `accepted` |
 | D23 | **The three rule documents stop telling their own history.** History moves to a `Provenance` table at the foot; a live warning, a currency declaration and the evidence for why a rule exists stay — the last compressed to one clause inline with the dated account at home. Home before copies: instruction set, then `conformant-prompt.md`, then `session-management-prompt.md`, one revision each | F14 | 2026-09-09 | `accepted` |
 | D21 | The commit message is handed over as **one fenced block tagged `text`** — the fence §11 already requires of every example, for the reason §11 already gives. §7 states it as the other half of the rule it already had: a `git commit` inside the block is something to delete, a message outside one is something to gather, and both cost the owner the same | F23 | 2026-09-09 | `accepted` |
+| D24 | **A status moves on a material change to the record, and a read is not one.** `docs/legend.md` lines 69 and 546 stand; line 199's *reading is the transition* goes, and §10's *the transfer ends when the target session reads the bundle* goes with it. A transfer ends on the target session's **first write to the bundle as owner**, which is what five records have said since Revision 248 | F26 | 2026-09-09 | `accepted` |
 
 ## Findings 1, 2, 5 and 6 — a rule lives where its kind lives
 
@@ -1148,3 +1149,68 @@ the same three files: the owner ruled that a write and not a read moves a status
 `docs/legend.md:67` and §9a already say so, and fourteen prose sites still say the
 opposite. Fixing them in a separate pass over the same paragraphs would be two
 edits where one will do.
+
+---
+
+## D24 — a status moves on a material change to the record, and reading is not one
+
+**The owner's ruling, 2026-09-09**, given when this session put the conflict to
+them rather than acting on it:
+
+> It was originally a read, but since reads aren't recorded it wasn't very
+> effective. What is really required to transfer, along with other directional
+> state changes, is for the state to be materially different. You can't get into
+> a car, boat, or plane without your location changing… if it's the same, which
+> would be the case for read-only, how could there be any force of change — then
+> there would be nothing to transfer to.
+
+**So the rule is one rule and it already exists**: line 69 and line 546 stand,
+line 199 goes, and §10's sentence goes with it. A transfer ends on the target
+session's **first write to the bundle as owner** — which is what the four index
+rows and two manifests have said since Revision 248, so the tree needs no repair
+and the documents come to it.
+
+**`as owner` is load-bearing and is kept.** A contribution to a transferred
+bundle is a write and does not clear the transfer; Revisions 248, 262 and 268
+each record a non-owner contributing to `0039` while it stood `transferred`, and
+none of them cleared it. That is the distinction F25 is about, and this decision
+does not settle F25.
+
+**The generalisation is the owner's and is wider than the transfer**: *other
+directional state changes* take a material change too. This decision does not
+carry it out — it names it, and the three statuses that awaited a first read
+(`un-started`, `reopened`, `transferred`) are where the carrying out lands.
+
+### Rejected — reading clears it, and the records are what get repaired
+
+The reading of §10 as written. It has one real argument: `un-started` and
+`reopened` are invisible to every session but the owner, so *the owner has now
+seen it* is a genuine change in what the world knows.
+
+It loses on three counts. **Nothing records a read**, so the change it names
+leaves no trace and no instrument can confirm it — `0045` F3. **It fires in
+bulk**: one reading of a bundle moves every finding awaiting a first read at
+once, with no judgement formed about any, which is F12's incident reached by
+following the rule instead of breaking it. And **it contradicts two other
+statements in its own file**, so adopting it means editing lines 69 and 546 and
+the Provenance row that cites F12 — repairing the majority to keep the minority.
+
+### Rejected — leave both and let §10 govern transfers only
+
+That is the state today: line 199 for transfers, lines 69 and 546 for everything
+else. It survives only while nobody reads both, and this session read both on its
+first morning. A vocabulary file that answers *what moves a status* twice is the
+defect F21 is the standing warning about.
+
+### What this decision does not do
+
+**It does not carry itself out.** The edit to `docs/legend.md` and to §10 is a
+toolkit write, gated by §6 on the finding being `decided` — which it now is — and
+it lands in the same paragraphs `0039` D23 rewrites. So F26 is `decided` and not
+resolved: the carrying out is sequenced behind D23 on the owner's ordering, and
+§9b's row is owed when it happens.
+
+**F26 goes to `decided` in the sitting that recorded it, and that is deliberate.**
+A finding left `framing` under an accepted decision is `0047` F2's shape — four
+of them were found in `0053` at Revision 264 — and the deciding here genuinely is
+closed: the owner ruled, and what remains is the write.

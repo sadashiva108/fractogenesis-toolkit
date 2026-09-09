@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T07:05:00-04:00",
+  "updatedAt": "2026-09-09T07:30:00-04:00",
   "number": "0043",
   "bundleName": "0043-framework-state-lives-in-documents-not-data",
   "kind": "session-management",
@@ -24,9 +24,9 @@
     "`bin/verify-findings-counts.sh`, `bin/verify-findings-structure.sh`, `bin/verify-findings-headers.sh`",
     "the owner's two draft config files, 2026-09-07"
   ],
-  "standing": "analyzing",
+  "standing": "transferred",
   "progress": "analyzing",
-  "ownership": null,
+  "ownership": "transferred",
   "lineage": null,
   "findings": [
     {

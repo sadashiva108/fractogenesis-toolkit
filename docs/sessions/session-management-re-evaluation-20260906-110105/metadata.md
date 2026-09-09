@@ -53,12 +53,33 @@ touches evidence, so no evidence write is possible from here even by mistake.
 | Bundle | Direction | From / To | Date | Revision |
 |---|---|---|---|---:|
 | [`0039`](../../session-management-findings/0039-the-instruction-set-lags-the-rules-it-governs/) | out | `typed-bundles-architecture-20260908-204724` | 2026-09-09 | 248 |
+| [`0043`](../../session-management-findings/0043-framework-state-lives-in-documents-not-data/) | out | `entity-model-and-vocabulary-20260909-053548` | 2026-09-09 | — |
 
 Transferred at the owner's ruling. This session stands `handoff` with no
 successor named, so it could not perform the owner-only act `0039` F23 needs to
 reach `decided`. Nothing about the reading changed: no finding reverted, no
 decision reopened, and this session's work on `0039` stands as it was.
-`0036` and `0043` are unaffected and remain owned here.
+`0036` and `0043` were unaffected by that move and remained owned here.
+
+**`0043` then moved on 2026-09-09, at the owner's direction, for the same
+reason.** *Framework state lives in documents, not data* is the data-model
+reading the entity-model work rests on, and deciding whether `findings[]` becomes
+`members[]` is a schema decision — it closes deciding, which only an owner may
+do, and this session cannot. Nothing about the reading changed. **It stays
+deliberately open**: transfer moves who may decide, not who may read or record,
+so a non-owner contribution like F10 is as possible after the move as before it.
+Its revision is `—` because the number is taken at apply time.
+
+**`0036` was considered in the same operation and deliberately not moved.** It
+stands `answered` — every finding `resolved` — and §10 permits a transfer only
+while a bundle is `un-started`, `reopened` or `analyzing`; the terminal standings
+have nothing to move. It is finished work correctly listed by the session that
+did it, and its subject is a checker rather than the entity model, so sweeping it
+along with `0043` would have put it under an owner with no reason to hold it.
+
+**With `0043` gone this session holds one terminal bundle and no live reading**,
+which is the first moment its `handoff` has been true as `docs/legend.md` defines
+it: *"it has passed its qualifying bundles to a successor."*
 
 ## Contributions
 

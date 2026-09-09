@@ -74,6 +74,7 @@ for.
 | F23 | §7 requires the commit message to be nothing but the message and never requires it to be a block, so a session can obey every word of the rule and still hand over one the owner has to reassemble | `framing` |
 | F24 | `decisions.md` carries one `Session:` field and the Decisions table has no column for one, so a decision written by a session that does not own the bundle cannot be attributed — and §4 invites exactly that write | `framing` |
 | F25 | *What another session may do* has no row for `transferred`, the one standing under which a non-owner is routinely told to contribute | `framing` |
+| F26 | `docs/legend.md` says a status moves on a write and also that reading is the transition, and §10 sides with the minority against five records and the tree | `decided` |
 
 ---
 
@@ -1082,3 +1083,49 @@ bundle on an instruction, with the rules as written saying they may not, and
 neither wrote down the discrepancy. **A rule broken twice at the owner's own
 direction is not a rule**, and the third session will either stop and ask or not
 notice — and not noticing is worse.
+
+---
+
+## F26 — the legend says a status moves on a write, and also that reading is the transition
+
+**`docs/legend.md` carries both rules, and they cannot both hold.** Three
+statements in one file:
+
+| Line | What it says |
+|---:|---|
+| 69 | *"Every arrow names the event that causes it, and every event is a change to the record. **A status does not move because someone read the finding.**"* |
+| 199 | *"**Reading is the transition**; nothing else moves them"* — of `un-started`, `reopened` and `transferred` |
+| 546 | *"A status moves on a write, not a read"*, in the Provenance table, citing this bundle's F12 |
+
+`.github/session-management-instructions.md:680` sides with the minority:
+*"The transfer ends when the target session reads the bundle."*
+
+**Two rank-3 documents, three statements, and the tree follows the other one.**
+Four index rows and two manifests written at Revisions 248 and 261 all say a
+transfer clears on the target session's **first write as owner** — the phrase is
+repository-wide, not one session's slip — and this session followed them rather
+than §10 when it read all four of its bundles and cleared none.
+
+**Line 199 is unverifiable by construction, and that is the second argument
+against it.** `0045` F3 establishes that no instrument in this framework can see
+which session is acting: a guard sees a tool call and a path, a checker sees the
+tree, and neither sees a session. A read leaves nothing behind, so *the target
+read it* can never be checked by anything. A write is a diff. **A rule that no
+instrument could ever evaluate is `0039` F15's shape** — a check asserting
+something it cannot see, passing vacuously.
+
+**And line 199 has a live cost, not a theoretical one.** `0048` stands
+`transferred` with all three findings `un-started`. Under line 199 this session's
+reading of that bundle moved all three to `framing` in one operation, with no
+judgement formed about any of them. **That is F12 exactly** — the mass edit that
+moved twenty-one rows while every checker passed — reached by obeying the legend
+rather than by neglecting it.
+
+**Relates to F25**, which found the same table incomplete from the other side:
+*What another session may do* has no row for `transferred` at all. F25 asks who
+may write to a transferred bundle; this asks what ends the transfer. Neither
+answers the other.
+
+**What it costs to leave.** A session arriving at a transferred bundle reads §10,
+reads the legend, and gets two answers — then reads five records that give a
+third. It resolves the conflict by guessing, and the guess moves statuses.
