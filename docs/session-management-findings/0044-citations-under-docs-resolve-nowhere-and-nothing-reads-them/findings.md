@@ -20,8 +20,8 @@ owner assigns it.
 
 | # | Finding | Status |
 |---:|---|---|
-| F1 | Four session citations in one index point one directory too high and resolve to nothing | `un-started` |
-| F2 | Two indexes cite an instruction file section that moved when the set was split | `un-started` |
+| F1 | Four session citations in one index point one directory too high and resolve to nothing | `resolved` |
+| F2 | Two indexes cite an instruction file section that moved when the set was split | `resolved` |
 
 ## F1 — four citations resolve one directory too high
 

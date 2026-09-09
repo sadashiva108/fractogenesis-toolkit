@@ -11,10 +11,11 @@
 
 | # | Finding | Status |
 |---:|---|---|
-| F1 | Every checker reads the source; none reads what the source renders as | `un-started` |
-| F2 | Three consecutive revisions shipped a rendering defect that all six checkers passed | `un-started` |
-| F3 | A rendering check needs a markdown parser, which is a dependency the repository does not have | `un-started` |
-| F4 | The audit that did find these ran outside the repository and was never committed | `un-started` |
+| F1 | Every checker reads the source; none reads what the source renders as | `decided` |
+| F2 | Three consecutive revisions shipped a rendering defect that all six checkers passed | `resolved` |
+| F3 | A rendering check needs a markdown parser, which is a dependency the repository does not have | `decided` |
+| F4 | The audit that did find these ran outside the repository and was never committed | `decided` |
+| F5 | No checker reads what a checker emits, and one has printed two errors per invocation for thirteen revisions | `decided` |
 
 ## F1 — Every checker reads the source; none reads what the source renders as
 
@@ -94,6 +95,56 @@ it did not.
 Worth noting against F3: that audit's own first run reported 131 failures, of
 which **128 were bugs in the audit** — a regex matching `<thead>` when it meant
 `<th>`. A rendering check is not free of the problem it is checking for.
+
+## F5 — No checker reads what a checker emits
+
+**Recorded 2026-09-09** by `assurance-coverage-20260908-204724`, from running the
+checkers rather than from reading them.
+
+`bin/verify-doc-paths.sh` lines 39 and 40 are two lines of a comment block that
+lost their leading `#`. Bash reads them as commands. **Every invocation of the
+repository's path checker prints:**
+
+```text
+./bin/verify-doc-paths.sh: line 39: reading: command not found
+./bin/verify-doc-paths.sh: line 40: rather: command not found
+```
+
+Introduced at Revision 221, commit `b09a69d`, confirmed by `git log -L`. **Both
+lines fire, not only the first.**
+
+### Why thirteen revisions passed over it
+
+- **`bash -n` passes.** The syntax is valid; they are commands, and `bash -n` does
+  not ask whether a command exists.
+- **`verify-script-portability.sh` passes** — 0 WARN / 0 FAIL. It reads for
+  constructs that need a newer shell or a GNU userland. A lost `#` is neither.
+- **The output goes to stderr**, and the exit status is 0. A session running
+  `./bin/verify-doc-paths.sh --all | tail`, or piping into `grep` for the summary
+  rows, never sees it. This session did not see it on its first run for exactly
+  that reason.
+- **Nothing reads a checker's output at all.** Each of the six is run *by* a
+  session and read *by* a person, and no instrument stands behind them.
+
+### This is F1 one layer down
+
+F1 says every checker reads the source and none reads what the source renders as.
+**Here: every checker reads a document, and none reads what a checker emits.** The
+artifact that goes unexamined is the checker's own output, and it is unexamined
+for the same structural reason — the assurance layer has no view of the layer
+above it.
+
+That is the argument F1 makes with an instance attached, and it is the first one
+F1 has had that is not about markdown. Six instruments ran over this script for
+thirteen revisions, reported clean every time, and the script was telling them it
+was broken on every run.
+
+### What it is not
+
+**Not a rendering defect**, so `0042` D1's ruling — no parser — does not reach it.
+**Not a portability defect.** **Not a `docs/` defect**, so `0036` and `0044` do
+not reach it either. It is a defect in a checker, found by using it, which is the
+only way any of the four instruments in `0050` were found.
 
 <!-- historical: bin/verify-findings-counts.sh -->
 <!-- historical: bin/verify-findings-headers.sh -->

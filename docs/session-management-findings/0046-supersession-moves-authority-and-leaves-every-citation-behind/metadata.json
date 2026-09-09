@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T00:47:24+00:00",
+  "updatedAt": "2026-09-09T01:45:00+00:00",
   "number": "0046",
   "bundleName": "0046-supersession-moves-authority-and-leaves-every-citation-behind",
   "kind": "session-management",
@@ -22,18 +22,18 @@
     "`.github/session-management-instructions.md` section 9",
     "every document citing `0028`, and `0028` itself"
   ],
-  "standing": "assigned",
-  "progress": "untouched",
+  "standing": "analyzing",
+  "progress": "analyzing",
   "ownership": null,
   "lineage": null,
   "findings": [
     {
       "id": "F1",
       "statement": "Twelve live documents cite `0028`, which is superseded and closed to every session",
-      "status": "un-started",
+      "status": "decided",
       "statusReason": null,
       "statusNote": null,
-      "updatedAt": null,
+      "updatedAt": "2026-09-09",
       "sectionHeading": "F1 \u2014 twelve documents cite a bundle nothing may read",
       "reopened": null,
       "withdrawn": null,
@@ -42,17 +42,55 @@
     {
       "id": "F2",
       "statement": "Nothing distinguishes a citation to a superseded bundle from a citation to a live one",
-      "status": "un-started",
+      "status": "decided",
       "statusReason": null,
       "statusNote": null,
-      "updatedAt": null,
+      "updatedAt": "2026-09-09",
       "sectionHeading": "F2 \u2014 the path resolves, so nothing looks broken",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
     }
   ],
-  "decisions": [],
+  "decisions": [
+    {
+      "id": "D1",
+      "decision": "The marker is chosen and exists: <!-- historical: --> in bin/verify-doc-paths.sh, named there as this bundle's. It covers a path; it does not cover a bundle number cited in prose",
+      "findings": [
+        "F2"
+      ],
+      "decided": "2026-09-09",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D1 \u2014 the marker exists and is narrower than the finding"
+    },
+    {
+      "id": "D2",
+      "decision": "A check is also needed, over prose citations of a bundle number. The one that exists reads asserted edges only and cannot see the twelve documents F1 counts",
+      "findings": [
+        "F1",
+        "F2"
+      ],
+      "decided": "2026-09-09",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D2 \u2014 the check that exists reads the declared set"
+    },
+    {
+      "id": "D3",
+      "decision": "The twelve citations are not repaired, marked, or annotated. Every one is correct as written",
+      "findings": [
+        "F1"
+      ],
+      "decided": "2026-09-09",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D3 \u2014 nothing is repaired"
+    }
+  ],
   "contributions": [],
   "edges": [
     {

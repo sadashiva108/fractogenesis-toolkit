@@ -21,8 +21,8 @@ assigns it.
 
 | # | Finding | Status |
 |---:|---|---|
-| F1 | Twelve live documents cite `0028`, which is superseded and closed to every session | `un-started` |
-| F2 | Nothing distinguishes a citation to a superseded bundle from a citation to a live one | `un-started` |
+| F1 | Twelve live documents cite `0028`, which is superseded and closed to every session | `decided` |
+| F2 | Nothing distinguishes a citation to a superseded bundle from a citation to a live one | `decided` |
 
 ## F1 — twelve documents cite a bundle nothing may read
 

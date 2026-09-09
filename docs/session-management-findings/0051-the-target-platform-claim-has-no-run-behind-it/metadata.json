@@ -1,0 +1,140 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-09T06:20:00+00:00",
+  "number": "0051",
+  "bundleName": "0051-the-target-platform-claim-has-no-run-behind-it",
+  "kind": "session-management",
+  "subKind": null,
+  "subject": "The target-platform claim has no run behind it, nowhere to record one, and no gate that needs one",
+  "recordedOn": "2026-09-09",
+  "recordedOccasion": "after the owner asked what would resolve a disclosure every session repeats.",
+  "recordedBy": {
+    "sessionBundle": "assurance-coverage-20260908-204724",
+    "sessionId": "session_01Wd7US5C5Msr594vNidboLn"
+  },
+  "severity": "F1 is low and permanent — no session can ever close it, which is the part worth writing down. F2 is the one that costs: with nowhere to record a target run, the first one ever performed would have been lost, and it produced the only cross-platform evidence this repository has.",
+  "feltAt": [
+    "every session metadata.md and every handover report since Revision 206",
+    ".github/session-management-instructions.md §5 and §6",
+    "docs/ledgers/"
+  ],
+  "scope": "session management for the rule, the toolkit set for the platform it names. 0039 D2's split applied to verification.",
+  "read": [
+    ".github/session-management-instructions.md §5, §6 and §9b",
+    ".github/toolkit-instructions.md, the portability paragraphs",
+    "bin/verify-script-portability.sh in full",
+    "every metadata.md under docs/sessions/",
+    "the owner's macOS run of three checkers, 2026-09-09"
+  ],
+  "standing": "analyzing",
+  "progress": "analyzing",
+  "ownership": null,
+  "lineage": null,
+  "findings": [
+    {
+      "id": "F1",
+      "statement": "No session can reach the target platform, and the disclosure that says so is repeated where it cannot apply",
+      "status": "decided",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-09",
+      "sectionHeading": "F1 — the gap is real, permanent, and mostly already closed",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F2",
+      "statement": "A run on the target platform has nowhere to be recorded, so the first one ever performed nearly was not",
+      "status": "resolved",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-09",
+      "sectionHeading": "F2 — the first target run had nowhere to go",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": {
+        "resolvedBy": [
+          "D2"
+        ],
+        "whatWasDone": "docs/ledgers/target-platform-verification.md created, carrying the 2026-09-09 run of three checkers under /bin/bash 3.2.57 on arm64-apple-darwin25 against commit 4b721e7, with all eighteen values and the Linux comparison",
+        "revision": "251",
+        "commit": null
+      }
+    },
+    {
+      "id": "F3",
+      "statement": "Nothing requires a target-platform run before a script finding may be resolved",
+      "status": "decided",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-09",
+      "sectionHeading": "F3 — nothing requires the run",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "decision": "The disclosure is scoped: metadata.md always records the environment, and a report carries the untested-on-target sentence only when the change set contains a bin/ or .internal/ executable",
+      "findings": [
+        "F1"
+      ],
+      "decided": "2026-09-09",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D1 — say it where it can bite, and nowhere else"
+    },
+    {
+      "id": "D2",
+      "decision": "A target-platform run is recorded in docs/ledgers/target-platform-verification.md: date, commit, platform, shell version, what was run and every value, beside the same run on the session platform",
+      "findings": [
+        "F2"
+      ],
+      "decided": "2026-09-09",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D2 — the run gets a home, and the home is a ledger"
+    },
+    {
+      "id": "D3",
+      "decision": "A finding whose scope includes an executable may not go resolved until a target-platform run is recorded for it. A record write owes nothing",
+      "findings": [
+        "F3"
+      ],
+      "decided": "2026-09-09",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D3 — a gate, not a disclaimer"
+    }
+  ],
+  "contributions": [],
+  "edges": [
+    {
+      "kind": "relates-to",
+      "from": "0051/F2",
+      "to": "0042/F5",
+      "why": "F5 was inferred from a Linux run and is confirmed on the target by the run this bundle records",
+      "reason": null,
+      "basis": "asserted",
+      "asserted_by": "assurance-coverage-20260908-204724",
+      "asserted_on": "2026-09-09"
+    },
+    {
+      "kind": "relates-to",
+      "from": "0051/F3",
+      "to": "0041/F5",
+      "why": "a resolved script finding asserts something about a platform nothing examines, which is F5's shape one layer out",
+      "reason": null,
+      "basis": "asserted",
+      "asserted_by": "assurance-coverage-20260908-204724",
+      "asserted_on": "2026-09-09"
+    }
+  ],
+  "indexNotes": "Recorded and owned 2026-09-09 at the owner's direction. Carries the repository's only cross-platform verification evidence"
+}

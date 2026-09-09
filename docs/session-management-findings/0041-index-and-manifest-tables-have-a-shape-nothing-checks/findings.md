@@ -16,11 +16,12 @@ and `pre-image-capture-conformance-20260903-194532` still owns it.
 
 | # | Finding | Status |
 |---:|---|---|
-| F1 | The indexes and manifests have a required column shape that no check enforces | `framing` |
-| F2 | `verify-doc-paths.sh` gives false assurance on a malformed row, because links are not shape | `framing` |
-| F3 | The fix is a lint, so this bundle may be in the wrong tree | `framing` |
-| F4 | A patch containing a deletion under-applies silently, and every check passes | `framing` |
-| F5 | Nothing compares a resolution's claim against the tree | `framing` |
+| F1 | The indexes and manifests have a required column shape that no check enforces | `resolved` |
+| F2 | `verify-doc-paths.sh` gives false assurance on a malformed row, because links are not shape | `decided` |
+| F3 | The fix is a lint, so this bundle may be in the wrong tree | `decided` |
+| F4 | A patch containing a deletion under-applies silently, and every check passes | `decided` |
+| F5 | Nothing compares a resolution's claim against the tree | `decided` |
+| F6 | The prose total under an index is wrong in both directions, and the count check passes over it | `decided` |
 
 ---
 
@@ -268,6 +269,57 @@ The owner routed it here. It is noted because the routing is genuinely arguable
 and a later reader should see that it was a choice rather than an oversight —
 and because if the answer is *cross-cutting*, `0027` finding F1's question
 (*where is a rule allowed to live*) reaches this bundle too.
+
+### F6 — the prose total nobody counts
+
+**Recorded 2026-09-09** by `assurance-coverage-20260908-204724`, from
+propagating one.
+
+Every findings index and session manifest ends with a sentence of the form
+**`N bundles · M findings`**. It is prose, not a table cell, and
+`./bin/verify-session-findings.sh counts` does not read it — that check covers
+the per-bundle cells and the session index counts, which is what its own name
+says and what the conformant prompt already warns it means.
+
+**Audited 2026-09-09 across the whole tree. Two such totals existed and both
+were wrong:**
+
+| File | Said | Its own rows gave | How it was corrected |
+|---|---|---|---|
+| `docs/session-management-findings/INDEX.md`, at Revision 238 | 15 bundles · 65 findings | **14 · 74** | by this session, recounting after a refresh |
+| `docs/sessions/session-management-re-evaluation-20260906-110105/findings-manifest.md` | 3 bundles · 30 findings | **3 · 33** | **incidentally, by Revision 248's transfer of `0039`** |
+
+The first was wrong **in both directions at once** — one bundle too many and nine
+findings too few — which is why neither number looked obviously implausible. The
+second went stale when `0039` gained F21, F22 and F23; the rows were updated and
+the sentence beneath them was not.
+
+**Both are correct on the tree today, and neither was corrected by an instrument.**
+The first was caught by a session recounting a column by hand. The second was
+carried along by a transfer that rewrote the manifest for an unrelated reason and
+happened to rewrite the sentence with it. **A defect that is repaired by accident
+is not a defect that has been addressed**, and the population being clean at this
+moment is the weakest possible evidence that it will stay clean — the same
+argument `0026` makes about a baseline that moves for reasons unrelated to the
+change.
+
+`verify-session-findings.sh counts` reported **63 OK / 0 FAIL** over both.
+
+**This finding exists because the session recording it propagated the defect.**
+Composing against Revision 238, it read *15 bundles · 65 findings*, added a
+bundle and some findings, and wrote *16 · 69* — arithmetic on a number that was
+already wrong, in a patch that passed every check. It was caught only by
+recounting from the rows after a refresh, and not by any instrument.
+
+**That is the third measurement error this session made and caught**, and all
+three have one shape: a number was taken from something that looked
+authoritative instead of from the thing it describes. The first compared two
+already-stripped trees and reported no data loss. The second matched a link
+inside an inline code span. This one trusted a total instead of summing a column.
+
+This is `0041` F5 one level out. There, a `resolved` status asserts something
+about the tree that nothing examines. Here, a sentence asserts something about
+the table directly above it that nothing examines — and the table is right there.
 
 <!-- historical: bin/verify-findings-headers.sh -->
 <!-- historical: bin/verify-findings-structure.sh -->

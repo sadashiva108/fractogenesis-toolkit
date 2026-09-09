@@ -1,16 +1,51 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T00:47:24+00:00",
+  "updatedAt": "2026-09-09T06:25:00+00:00",
   "bundleName": "assurance-coverage-20260908-204724",
   "createdOn": "2026-09-09",
-  "owners": [],
-  "transcript": null,
-  "scratchPath": null,
+  "owners": [
+    {
+      "from": "2026-09-09",
+      "until": null,
+      "assistant": "Claude",
+      "sessionId": "session_01Wd7US5C5Msr594vNidboLn",
+      "model": "claude-opus-5",
+      "environment": "Linux VM, Bash 5.1.16(1) aarch64, GNU coreutils. **Not macOS.**",
+      "environmentNotes": "Every command ran in a Linux VM reached over the desktop bridge. Nothing was run on macOS stock Bash 3.2 or BSD userland, which is what this repository targets. No number in this session's records is a claim about the target platform."
+    }
+  ],
+  "transcript": "https://claude.ai/code/session_01Wd7US5C5Msr594vNidboLn",
+  "scratchPath": "/sessions/rcw-01wd7us5c5msr594vnidboln/scratch/fractogenesis-toolkit",
   "resources": [
     {
-      "what": "Repository checkout",
-      "path": "the owner's checkout; the session works in a scratch copy of it",
+      "what": "Resource",
+      "path": "Value",
       "notes": null
+    },
+    {
+      "what": "Repository checkout",
+      "path": "/Users/dkittrell/workspace/shiva/fractogenesis-toolkit",
+      "notes": null
+    },
+    {
+      "what": "Scratch copy",
+      "path": "/sessions/rcw-01wd7us5c5msr594vnidboln/scratch/fractogenesis-toolkit",
+      "notes": "dies with the session"
+    },
+    {
+      "what": "Commit copied from",
+      "path": "52a4376",
+      "notes": "Revision 238, clean tree, no uncommitted work"
+    },
+    {
+      "what": "APPLY-MANIFEST.md at copy time",
+      "path": "Revision 238 applied; 239 next free",
+      "notes": null
+    },
+    {
+      "what": "Artifact root",
+      "path": "/Volumes/Data/reimage-CVG-0002160-500-20260816-open",
+      "notes": "connected, not mounted, not read"
     }
   ],
   "ownedBundles": [
@@ -43,9 +78,19 @@
       "number": "0049",
       "path": "docs/session-management-findings/0049-the-patch-is-named-as-the-deliverable-and-never-produced/",
       "assignedOn": "2026-09-09"
+    },
+    {
+      "number": "0051",
+      "notes": "The target-platform claim has no run behind it. Recorded and owned 2026-09-09 at the owner's direction; F2 resolved by the ledger"
     }
   ],
-  "contributions": [],
+  "contributions": [
+    {
+      "bundle": "0050",
+      "date": "2026-09-09",
+      "what": "Recorded the bundle from the reading that decided 0049 and 0042. Not owned"
+    }
+  ],
   "declaredState": null,
   "indexNotes": null,
   "ended": {

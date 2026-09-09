@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-09T02:05:00+00:00",
+  "number": "0050",
+  "bundleName": "0050-instruments-that-cannot-fire-and-one-that-unmakes-the-record",
+  "kind": "session-management",
+  "subKind": null,
+  "subject": "Three instruments are correct and cannot fire, and one unmakes the record it reads",
+  "recordedOn": "2026-09-09",
+  "recordedOccasion": "while deciding 0049 and 0042 — three of the four were found by trying to use the thing they guard.",
+  "recordedBy": {
+    "sessionBundle": "assurance-coverage-20260908-204724",
+    "sessionId": null
+  },
+  "severity": "F3 is high and is the only one whose damage is partly irrecoverable — one run destroys fifteen asserted edges and a hundred and seven stamped values; the 107 re-derive and the 15 do not, and twelve of those are Revision 234's decisions. F1 and F2 cost nothing today and cost everything on the day they are relied on.",
+  "feltAt": [
+    ".claude/settings.json",
+    ".claude/hooks/write-location-guard.sh",
+    ".internal/ai-scripts/session-management/verify-findings-headers.sh:201",
+    ".internal/ai-scripts/session-management/extract-metadata.py",
+    ".internal/ai-scripts/session-management/doc-currency.json"
+  ],
+  "scope": "session management. Two one-line repairs, one guard on a destructive script, and a class that has no owner.",
+  "read": [
+    ".claude/settings.json and all three hooks in .claude/hooks/",
+    ".internal/ai-scripts/session-management/extract-metadata.py, doc_currency.py, verify-findings-headers.sh",
+    "docs/architecture/state-as-data.md sections 6, 8 and 9",
+    "every metadata.json in docs/, at HEAD and after one extraction run"
+  ],
+  "standing": "unclaimed",
+  "progress": "untouched",
+  "ownership": "unclaimed",
+  "lineage": null,
+  "findings": [
+    {
+      "id": "F1",
+      "statement": "The write-location guard does not cover the tool a bridged session actually writes through, and reads the wrong root",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F1 — the guard does not run where the writing happens",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F2",
+      "statement": "A schema exemption guards on a marker file Revision 222 deleted, so the exemption can never apply",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F2 — an exemption for a file that no longer exists",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F3",
+      "statement": "Running extract-metadata.py on a healthy tree destroys every asserted edge and every stamped value",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F3 — the extractor unmakes the record",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F4",
+      "statement": "Four instruments in three days were correct and could not do their job, and no bundle covers that class",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F4 — the class, and nothing covers it",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    }
+  ],
+  "decisions": [],
+  "contributions": [],
+  "edges": [
+    {
+      "kind": "relates-to",
+      "from": "0050/F1",
+      "to": "0049/F4",
+      "why": "the guard 0049 F4 asked for exists and does not cover the tool a bridged session writes through",
+      "reason": null,
+      "basis": "asserted",
+      "asserted_by": "assurance-coverage-20260908-204724",
+      "asserted_on": "2026-09-09"
+    },
+    {
+      "kind": "relates-to",
+      "from": "0050/F4",
+      "to": "0047/F5",
+      "why": "0047 F5 splits the instrument into a half that reads and a half that judges; none of these four fits either half",
+      "reason": null,
+      "basis": "asserted",
+      "asserted_by": "assurance-coverage-20260908-204724",
+      "asserted_on": "2026-09-09"
+    },
+    {
+      "kind": "relates-to",
+      "from": "0050/F3",
+      "to": "0043/F3",
+      "why": "the markdown parser 0043 F3 is about, run against the data 0043 is designing",
+      "reason": null,
+      "basis": "asserted",
+      "asserted_by": "assurance-coverage-20260908-204724",
+      "asserted_on": "2026-09-09"
+    },
+    {
+      "kind": "relates-to",
+      "from": "0050/F3",
+      "to": "0039/D17",
+      "why": "D17 is the concern F3's existing one-way guard was built for, which is why that guard does not reach the hazard F3 names",
+      "reason": null,
+      "basis": "asserted",
+      "asserted_by": "assurance-coverage-20260908-204724",
+      "asserted_on": "2026-09-09"
+    }
+  ],
+  "indexNotes": "Recorded by the session that owns 0049, from the reading that decided it. Not owned. F3 is high and already costly"
+}

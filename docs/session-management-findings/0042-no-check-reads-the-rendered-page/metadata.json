@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T00:47:24+00:00",
+  "updatedAt": "2026-09-09T02:05:00+00:00",
   "number": "0042",
   "bundleName": "0042-no-check-reads-the-rendered-page",
   "kind": "session-management",
@@ -12,25 +12,25 @@
     "sessionBundle": "restore-apps-outstanding-20260903-000000",
     "sessionId": "session_016EbjB7M527qEFqZFzpv2C9"
   },
-  "severity": "F1 is high. The repository's whole assurance surface is six checkers, and a class of defect passes all six by construction \u2014 not by oversight, but because none of them looks at the artefact a reader sees.",
+  "severity": "F1 is high. The repository's whole assurance surface is six checkers, and a class of defect passes all six by construction — not by oversight, but because none of them looks at the artefact a reader sees.",
   "feltAt": [
     "`bin/verify-doc-paths.sh`, `bin/verify-runbook-structure.sh`, `bin/verify-script-portability.sh`, `bin/verify-findings-counts.sh`, `bin/verify-findings-structure.sh`, `bin/verify-findings-headers.sh`"
   ],
-  "scope": "cross-cutting in effect, session management in subject \u2014 the rule is about what a session must verify before handing work over, not about anything this project does",
+  "scope": "cross-cutting in effect, session management in subject — the rule is about what a session must verify before handing work over, not about anything this project does",
   "read": [],
-  "standing": "assigned",
-  "progress": "untouched",
+  "standing": "analyzing",
+  "progress": "analyzing",
   "ownership": null,
   "lineage": null,
   "findings": [
     {
       "id": "F1",
       "statement": "Every checker reads the source; none reads what the source renders as",
-      "status": "un-started",
+      "status": "decided",
       "statusReason": null,
       "statusNote": null,
-      "updatedAt": null,
-      "sectionHeading": "F1 \u2014 Every checker reads the source; none reads what the source renders as",
+      "updatedAt": "2026-09-09",
+      "sectionHeading": "F1 — Every checker reads the source; none reads what the source renders as",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -38,23 +38,30 @@
     {
       "id": "F2",
       "statement": "Three consecutive revisions shipped a rendering defect that all six checkers passed",
-      "status": "un-started",
+      "status": "resolved",
       "statusReason": null,
       "statusNote": null,
-      "updatedAt": null,
-      "sectionHeading": "F2 \u2014 Three consecutive revisions shipped a rendering defect that all six checkers passed",
+      "updatedAt": "2026-09-09",
+      "sectionHeading": "F2 — Three consecutive revisions shipped a rendering defect that all six checkers passed",
       "reopened": null,
       "withdrawn": null,
-      "resolution": null
+      "resolution": {
+        "resolvedBy": [
+          "D3"
+        ],
+        "whatWasDone": "verify-findings-headers.sh gained the two-space and hard-break assertions on the header block and the fence rules: a four-space indented example fails and a markdown-tagged fence fails",
+        "revision": "202",
+        "commit": "b5a78e5"
+      }
     },
     {
       "id": "F3",
       "statement": "A rendering check needs a markdown parser, which is a dependency the repository does not have",
-      "status": "un-started",
+      "status": "decided",
       "statusReason": null,
       "statusNote": null,
-      "updatedAt": null,
-      "sectionHeading": "F3 \u2014 A rendering check needs a markdown parser, which is a dependency the repository does not have",
+      "updatedAt": "2026-09-09",
+      "sectionHeading": "F3 — A rendering check needs a markdown parser, which is a dependency the repository does not have",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -62,18 +69,97 @@
     {
       "id": "F4",
       "statement": "The audit that did find these ran outside the repository and was never committed",
-      "status": "un-started",
+      "status": "decided",
       "statusReason": null,
       "statusNote": null,
-      "updatedAt": null,
-      "sectionHeading": "F4 \u2014 The audit that did find these ran outside the repository and was never committed",
+      "updatedAt": "2026-09-09",
+      "sectionHeading": "F4 — The audit that did find these ran outside the repository and was never committed",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F5",
+      "statement": "No checker reads what a checker emits, and one has printed two errors per invocation for thirteen revisions",
+      "status": "decided",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-09",
+      "sectionHeading": "F5 — No checker reads what a checker emits",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
     }
   ],
-  "decisions": [],
-  "contributions": [],
+  "decisions": [
+    {
+      "id": "D1",
+      "decision": "No markdown parser and no third-party package. The dependency floor is Python 3 standard library plus POSIX shell, and it is now stated rather than assumed",
+      "findings": [
+        "F3"
+      ],
+      "decided": "2026-09-09",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D1 — the floor is the standard library, and python3 was never the question"
+    },
+    {
+      "id": "D2",
+      "decision": "F1 is answered by narrowing the surface, not by building a renderer. \"No check reads the rendered page\" is accepted as a permanent property",
+      "findings": [
+        "F1"
+      ],
+      "decided": "2026-09-09",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D2 — narrow the surface, and stop the prompt overstating the gap"
+    },
+    {
+      "id": "D3",
+      "decision": "F2 is overtaken. All three defects were in the header block, and all three constructs are checked",
+      "findings": [
+        "F2"
+      ],
+      "decided": "2026-09-09",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D3 — F2 is overtaken"
+    },
+    {
+      "id": "D4",
+      "decision": "F4: commit the audit's rule list, not the audit. The seventh property becomes a named unchecked gap",
+      "findings": [
+        "F4"
+      ],
+      "decided": "2026-09-09",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D4 — commit the rule list, not the audit"
+    },
+    {
+      "id": "D5",
+      "decision": "A checker's own output is an artifact nothing examines. The suite asserts that each checker is silent on stderr against a declared allow-list of one",
+      "findings": [
+        "F5"
+      ],
+      "decided": "2026-09-09",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D5 — the checker's own output is the artifact nobody reads"
+    }
+  ],
+  "contributions": [
+    {
+      "session": "assurance-coverage-20260908-204724",
+      "date": "2026-09-09",
+      "what": "Recorded F5 and decided it: no checker reads what a checker emits"
+    }
+  ],
   "edges": [
     {
       "kind": "co-decides",

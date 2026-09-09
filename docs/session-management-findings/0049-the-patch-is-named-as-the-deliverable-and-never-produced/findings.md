@@ -22,10 +22,10 @@ failure**; the reading is offered so it can be checked rather than believed.
 
 | # | Finding | Status |
 |---:|---|---|
-| F1 | A session composed correctly and then copied into the checkout six times, and never once produced a patch | `un-started` |
-| F2 | Section 6 names the patch as the deliverable and never says how to produce one, where it goes, or who applies it | `un-started` |
-| F3 | `git diff` in a session copy omits every untracked file, so the prescribed patch would have carried 9 of 14 paths | `un-started` |
-| F4 | Nothing detects a write into the owner's checkout, and the signal that used to exist was removed by `0038` | `un-started` |
+| F1 | A session composed correctly and then copied into the checkout six times, and never once produced a patch | `decided` |
+| F2 | Section 6 names the patch as the deliverable and never says how to produce one, where it goes, or who applies it | `resolved` |
+| F3 | `git diff` in a session copy omits every untracked file, so the prescribed patch would have carried 9 of 14 paths | `resolved` |
+| F4 | Nothing detects a write into the owner's checkout, and the signal that used to exist was removed by `0038` | `decided` |
 
 ## F1 — what actually happened
 
