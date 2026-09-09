@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T16:32:42+00:00",
+  "updatedAt": "2026-09-09T06:16:00-04:00",
   "number": "0043",
   "bundleName": "0043-framework-state-lives-in-documents-not-data",
   "kind": "session-management",
@@ -150,6 +150,18 @@
       "reopened": null,
       "withdrawn": null,
       "resolution": null
+    },
+    {
+      "id": "F10",
+      "statement": "A terminal session's disposal exists only in prose: the `ended` lists went unpopulated on all eleven sessions across 230 revisions, and the prose standing in for them is unchecked",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": null,
+      "sectionHeading": "F10 \u2014 a terminal session's disposal exists only in prose",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
     }
   ],
   "decisions": [
@@ -184,6 +196,11 @@
       "session": "allocation-and-inquiry-design-20260906-233205",
       "date": "2026-09-06",
       "contribution": "Read the two draft config files and `schemas.html`; added F6, the draft review below, and a live instance of F4 in `0039`'s own header"
+    },
+    {
+      "session": "typed-bundles-architecture-20260908-204724",
+      "date": "2026-09-09",
+      "contribution": "Added F10, from its own handoff: the `ended` lists went unpopulated on all eleven sessions across 230 revisions, and the prose standing in for them misattributed two revisions in this session's own record"
     }
   ],
   "edges": [],

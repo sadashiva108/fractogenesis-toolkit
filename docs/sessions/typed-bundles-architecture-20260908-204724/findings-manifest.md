@@ -47,7 +47,7 @@ a session that has stopped.
 
 Assigned `0037`, `0038`, `0045`, `0047`, `0048` on 2026-09-09 from the Revision
 234 allocation; `0039` transferred in at Revision 248 and cleared at Revision 257.
-Revisions 237, 239, 240, 247, 248, 252, 253, 256, 257, 259, 261. `0037` reached
+**Created at Revision 237** by `allocation-and-inquiry-design-20260906-233205`; **wrote Revisions 239, 240, 248, 249, 250, 252, 256, 257, 259, 261, 262 and 263** — twelve revisions across eleven commits, 248 and 249 sharing `8a1b5eb`. **Corrected at Revision 266**: the list written at 261 claimed 247 and 253, which belong to `allocation-and-inquiry-design-20260906-233205` and `assurance-coverage-20260908-204724`, and omitted 249, 250, 262 and 263. `ended.commits` now carries the hashes, each of which names this session in its `Claude-Session` trailer. `0037` reached
 `answered` at Revision 256 — the first bundle this session closed, and the first
 toolkit write in this campaign gated by a `decided` finding rather than an owner
 override.

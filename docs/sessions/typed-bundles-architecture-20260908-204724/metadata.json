@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T05:45:00-04:00",
+  "updatedAt": "2026-09-09T06:16:00-04:00",
   "bundleName": "typed-bundles-architecture-20260908-204724",
   "createdOn": "2026-09-09",
   "owners": [
@@ -20,22 +20,27 @@
     {
       "what": "Repository checkout",
       "path": "/Users/dkittrell/workspace/shiva/fractogenesis-toolkit",
-      "notes": null
+      "notes": "Never written to by a git command, and never read by one. `ls` and `cat` only: git takes a lock to read, the connected folder refuses `unlink`, and a `.git/index.lock` left here blocks the owner's next commit. This session caused that twice before adopting the rule, and `bin/verify-doc-paths.sh` shells out to git, so the checks moved to scratch with everything else. Applies were whole-file copies from scratch, never `git apply`."
     },
     {
       "what": "Scratch copy",
       "path": "/sessions/rcw-01qvzrvkpokwcmylnjzxzcdq/scratch/fractogenesis-toolkit",
-      "notes": null
+      "notes": "Where every revision was composed and verified, and where every git command ran. Reset hard to `origin/main` before each revision, so a rebase after a collision was a replay rather than a merge. Dies with the session."
     },
     {
       "what": "Commit copied from",
       "path": "52a4376",
-      "notes": null
+      "notes": "Revision 238's commit, and it is the ONLY tree state this record names. The session went on to work against `13b00b3` (260), `2dfcaa6` (261), `3f367db` (262), `f345f3e` (263) and `d9996f5` (264), and no field records any of them. `0053` is that subject and `0043` F10 is its shape one level up."
     },
     {
       "what": "Patch directory",
       "path": "/Users/dkittrell/reimage-workspace/patches",
-      "notes": null
+      "notes": "Three patches, named by revision: 261, 262, 263. They are the review artefact and not the delivery mechanism \u2014 each revision was applied by copying whole files from scratch, because `git apply` is a git command and the checkout takes no git commands from this session. `0049` is the bundle that argues about what the patch is for."
+    },
+    {
+      "what": "Artifact volume",
+      "path": "the mounted `reimage-CVG-0002160-500-20260816-open` run directory",
+      "notes": "Connected and in scope for the whole session, and never read or written by it. Recorded because *available and unused* is a fact about a session, and an empty row would be read as *not connected*."
     }
   ],
   "ownedBundles": [],
@@ -54,16 +59,96 @@
       "bundle": "0039",
       "date": "2026-09-09",
       "contribution": "F23 and D21 \u2014 \u00a77's commit-message rule states what the block excludes and never that there is one"
+    },
+    {
+      "bundle": "0043",
+      "date": "2026-09-09",
+      "contribution": "F10 \u2014 a terminal session's disposal exists only in prose: the `ended` lists went unpopulated on all eleven sessions across 230 revisions, and the prose standing in for them misattributed two revisions in this session's own record"
     }
   ],
   "declaredState": "handoff",
   "indexNotes": "Handed off at Revision 261 to entity-model-and-vocabulary-20260909-053548 (0037, 0039, 0045, 0048) and drift-and-the-write-boundary-20260909-053548 (0038, 0047). 0052, recorded here and never owned, was assigned to the second. Owns nothing.",
   "ended": {
-    "on": null,
-    "reason": null,
-    "revisions": [],
-    "commits": [],
-    "disposals": []
+    "on": "2026-09-09",
+    "reason": "handoff",
+    "revisions": [
+      239,
+      240,
+      248,
+      249,
+      250,
+      252,
+      256,
+      257,
+      259,
+      261,
+      262,
+      263
+    ],
+    "commits": [
+      "dc9ab80",
+      "43714f6",
+      "8a1b5eb",
+      "4b721e7",
+      "a4a3456",
+      "86359fa",
+      "9c5d064",
+      "3d50bf4",
+      "2dfcaa6",
+      "3f367db",
+      "f345f3e"
+    ],
+    "disposals": [
+      {
+        "bundle": "0037",
+        "disposal": "transferred",
+        "to": "entity-model-and-vocabulary-20260909-053548",
+        "revision": 261,
+        "note": "Left `answered`, seven of seven `resolved`, and owed one reading: that a finding may record a fact established and not only a defect."
+      },
+      {
+        "bundle": "0039",
+        "disposal": "transferred",
+        "to": "entity-model-and-vocabulary-20260909-053548",
+        "revision": 261,
+        "note": "Its second transfer. D23 decided at Revision 257 and deliberately not carried out."
+      },
+      {
+        "bundle": "0045",
+        "disposal": "transferred",
+        "to": "entity-model-and-vocabulary-20260909-053548",
+        "revision": 261,
+        "note": null
+      },
+      {
+        "bundle": "0048",
+        "disposal": "transferred",
+        "to": "entity-model-and-vocabulary-20260909-053548",
+        "revision": 261,
+        "note": null
+      },
+      {
+        "bundle": "0038",
+        "disposal": "transferred",
+        "to": "drift-and-the-write-boundary-20260909-053548",
+        "revision": 261,
+        "note": null
+      },
+      {
+        "bundle": "0047",
+        "disposal": "transferred",
+        "to": "drift-and-the-write-boundary-20260909-053548",
+        "revision": 261,
+        "note": "F7 fires five times on the revision that handed it over."
+      },
+      {
+        "bundle": "0052",
+        "disposal": "assigned",
+        "to": "drift-and-the-write-boundary-20260909-053548",
+        "revision": 261,
+        "note": "Recorded here at Revision 252 and never owned; it stood `unclaimed`. An assignment, not a transfer."
+      }
+    ]
   },
   "state": "handoff"
 }

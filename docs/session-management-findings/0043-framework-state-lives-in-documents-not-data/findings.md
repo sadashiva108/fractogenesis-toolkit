@@ -27,6 +27,7 @@ should record here rather than open a near-duplicate beside it.**
 | Session | Date | Contribution |
 |---|---|---|
 | `allocation-and-inquiry-design-20260906-233205` | 2026-09-06 | Read the two draft config files and `schemas.html`; added F6, the draft review below, and a live instance of F4 in `0039`'s own header |
+| `typed-bundles-architecture-20260908-204724` | 2026-09-09 | Added F10, from its own handoff: the `ended` lists are populated on no session, and the prose standing in for them misattributed two revisions in this session's own record |
 
 ## Findings
 
@@ -41,6 +42,7 @@ should record here rather than open a near-duplicate beside it.**
 | F7 | The derived bundle status has an else branch that asserts nothing, so a derivation bug always lands there | `framing` |
 | F8 | Each vocabulary has exactly one activity-named status, and it is the one a name cannot carry | `framing` |
 | F9 | An edge kind is defined by a description and a behaviour, and the two can disagree | `framing` |
+| F10 | A terminal session's disposal exists only in prose: the `ended` lists went unpopulated on all eleven sessions across 230 revisions, and the prose standing in for them is unchecked | `framing` |
 
 ## F1 — the status is in the filename
 
@@ -484,3 +486,110 @@ migrating later.
 <!-- historical: bin/verify-findings-counts.sh -->
 <!-- historical: bin/verify-findings-headers.sh -->
 <!-- historical: bin/verify-findings-structure.sh -->
+
+## F10 — a terminal session's disposal exists only in prose
+
+**Recorded 2026-09-09** by `typed-bundles-architecture-20260908-204724` as a
+contribution, **from writing its own handoff** — the field was found empty
+because the owner opened the file and asked.
+
+`docs/architecture/state-as-data.md` §4.2 gives every session an `ended` object
+with `on`, `reason`, **`revisions`, `commits` and `disposals`**. Measured on
+2026-09-09, and the measurement moved while this finding was being written:
+
+| | |
+|---|---:|
+| session bundles | 11 |
+| with any of the three lists populated, **across all 230 manifest entries** | **0** |
+| populated at Revision 264, by `assurance-coverage-20260908-204724` on closing | 1 |
+| populated at Revision 266, by this session on handing off | 1 |
+| terminal — four `closed`, three `handoff` | 7 |
+| of those, carrying `on` | 5 |
+| of those five, whose `on` reads `"unknown"` | 2 |
+| of the seven, carrying nothing at all | 2 |
+
+**The two that populated it did so one revision apart, on the same day, and
+neither did it because the schema said to.** Both did it because the owner opened
+a `metadata.json`, saw five empty fields and asked. **Nothing in the schema, the
+instruction set or any checker had asked across 230 revisions** — which is the
+finding, and the fact that it was answered twice within an hour of being noticed
+is the evidence that it was never hard, only invisible.
+
+**The schema shows the fields and never says what an element of `disposals`
+looks like.** `"disposals": []` is the whole specification, so the first session
+to populate it invents the shape — this one did, at Revision 266, and the shape
+it chose is not authority for anything.
+
+**What stands in for the data is prose, and the prose is wrong.** §10a step 4
+sends the disposal to `final-summary.md` on closing and to the handoff document
+otherwise, and both are narrative. Nothing checks either. **The instance is this
+session's own revision list**, written at Revision 261 and corrected at 266: it
+claimed **247 and 253**, which belong to `allocation-and-inquiry-design-20260906-233205`
+and `assurance-coverage-20260908-204724`, and omitted **249, 250, 262 and 263**,
+which are its own. Every one of those commits carries a `Claude-Session` trailer,
+and `docs/sessions/INDEX.md` states in terms that the identifier in its Owner
+column is there so a row can be taken to `git log --grep=<id>`. **One command
+answers it and nothing runs it.**
+
+**Why this is F5's shape and not `0047`'s.** It is not drift between a stored
+value and a derived one — nothing derives these fields, so there is nothing for
+`stamp` to write or `check` to compare. F5 is *authority* assigned to documents;
+this is *history* assigned to documents, and it fails the same way: the fact is
+readable only by a human reading a paragraph, so nobody notices when it stops
+being true.
+
+### A revision and a commit are not one-to-one, and the trailer only names the commit
+
+**Written into this finding an hour after it was drafted, because the draft was
+wrong.** It said `revisions` and `commits` were both derivable from the
+`Claude-Session` trailers. **`commits` is. `revisions` is not.**
+
+`APPLY-MANIFEST.md` carries **230 entries** and at least four commits deliver
+more than one: `8a1b5eb` carries 248 and 249, `25e8e8d` carries **235, 236 and
+237**, `55e753e` carries 226 and 227, `44c5289` carries 224 and 225. **The
+trailer names the session that made the commit, not the session that composed
+each revision inside it** — and Revision 247 is the case that breaks the mapping
+outright: it wrote **six** manifest entries for revisions another session had
+already committed with no entry at all.
+
+**Both sessions corrected their revision lists on the same day, from the
+trailers, and both produced a wrong statement — in opposite directions.** This
+one would have shipped the claim that the trailers settle authorship.
+`assurance-coverage-20260908-204724`'s Revision 266 searched the log for a
+commit whose subject named Revision 237, found none, and recorded that **237 "is
+not a revision that exists"**. It exists: it is in `APPLY-MANIFEST.md`, and it
+was delivered inside `25e8e8d`, whose trailer names
+`allocation-and-inquiry-design-20260906-233205` — a third session again. **A
+revision is a manifest entry; a commit is a delivery vehicle; the two are
+many-to-one and nothing states it.**
+
+That correction stands as a record of what the finding said before it was
+checked, which is the point of writing findings once and not rewriting them to
+match what was later learned.
+
+**The rule this sits inside, and the owner supplied the other half of it.**
+`assurance-coverage-20260908-204724` left `declaredState` null on closing and
+said why: §4.2 line 153 gives `declaredState` a value **only** for `handoff`,
+because that alone is a declaration, while `active`, `closed` and `withdrawn`
+follow from what a session owns — so writing `closed` there would be **a second
+copy of a derived fact**, which is this bundle's whole subject. Put beside F10
+the pair states one rule with two halves: **a derived fact must never be copied,
+and a judgement must never be generated.** The `ended` block straddles it, and
+takes **three** kinds rather than two:
+
+| Field | Kind | What an instrument may do |
+|---|---|---|
+| `commits` | **derivable** — the `Claude-Session` trailer names the committing session exactly | derive it, and fail when the stored list disagrees |
+| `revisions` | **a claim no single source answers** — many-to-one against commits, and the trailer names the commit | written by hand, and only *partly* checkable: every revision named must exist in `APPLY-MANIFEST.md`, every commit named must carry the trailer |
+| `disposals` | **a judgement** — what happened to each bundle and why | nothing. It is written by the session that made the decisions |
+
+**A single instrument treating the block as one kind of thing gets two of the
+three wrong whichever kind it picks**, and the middle row is the one that looks
+derivable and is not — which is how both attempts at it went wrong on the same
+day.
+
+**What this is not.** It is not an argument for generating the block from the
+log. `commits` and `revisions` are mechanically checkable and should be checked;
+**`disposals` is a judgement** — what happened to each bundle and why it was
+disposed of that way — and belongs to the session that made it. A generator would
+produce the two that are checkable and silently assert the one that is not.

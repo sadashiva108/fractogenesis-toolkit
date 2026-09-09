@@ -10,7 +10,7 @@
     {
       "what": "Repository checkout",
       "path": "/Users/dkittrell/workspace/shiva/fractogenesis-toolkit",
-      "notes": null
+      "notes": "`ls` and `cat` only. Git takes a lock to read and the connected folder refuses `unlink`, so a `.git/index.lock` left here blocks the owner's next commit; `bin/verify-doc-paths.sh` shells out to git, so run the checks in scratch too."
     },
     {
       "what": "Artifact volume",
@@ -20,7 +20,7 @@
     {
       "what": "Patch directory",
       "path": "/Users/dkittrell/reimage-workspace/patches",
-      "notes": null
+      "notes": "The review artefact, one per revision, named by revision. It is not how a revision is delivered \u2014 the owner stages and commits."
     },
     {
       "what": "Scratch copy",
