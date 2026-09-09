@@ -4,9 +4,13 @@
 
 | From | Until | Assistant | Session id | Model | Environment |
 |---|---|---|---|---|---|
-| 2026-09-09 | — | Claude | `session_01QvZrvKpoKwCmyLNjzXzCdQ` | `claude-opus-5` | Linux VM on the owner's Mac, reached through the desktop bridge. Bash 5.1.16(1) aarch64, GNU coreutils 8.32, Python 3.10.12. **Not macOS.** |
+| 2026-09-09 | 2026-09-09 | Claude | `session_01QvZrvKpoKwCmyLNjzXzCdQ` | `claude-opus-5` | Linux VM on the owner's Mac, reached through the desktop bridge. Bash 5.1.16(1) aarch64, GNU coreutils 8.32, Python 3.10.12. **Not macOS.** |
 
 **Filled by the session on its first write, Revision 239.** It was empty on purpose until then.
+**`Until` closed at Revision 267**, when the handoff completed. A handoff ends an
+owner's stint exactly as closing does — `run-index-design-20260901-000000` set the
+precedent, closing its row at its 2026-09-02 handoff and opening a second one when
+it resumed.
 Only the session itself knows its identifier, the model it was configured for and
 the environment it actually runs in, and this bundle was created ahead of it by
 `allocation-and-inquiry-design-20260906-233205` on the owner's allocation. Writing

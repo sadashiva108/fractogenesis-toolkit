@@ -18,11 +18,6 @@
   "scratchPath": null,
   "resources": [
     {
-      "what": "Resource",
-      "path": "Value",
-      "notes": null
-    },
-    {
       "what": "Repository checkout",
       "path": "/Users/dkittrell/workspace/shiva/fractogenesis-toolkit",
       "notes": null

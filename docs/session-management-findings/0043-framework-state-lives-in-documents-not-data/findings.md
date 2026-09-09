@@ -28,6 +28,7 @@ should record here rather than open a near-duplicate beside it.**
 |---|---|---|
 | `allocation-and-inquiry-design-20260906-233205` | 2026-09-06 | Read the two draft config files and `schemas.html`; added F6, the draft review below, and a live instance of F4 in `0039`'s own header |
 | `typed-bundles-architecture-20260908-204724` | 2026-09-09 | Added F10, from its own handoff: the `ended` lists are populated on no session, and the prose standing in for them misattributed two revisions in this session's own record |
+| `typed-bundles-architecture-20260908-204724` | 2026-09-09 | Sharpened F3 with a third and fourth instance: four table header rows captured as `resources` entries across three session records, and two `owners.until` values missing from the home while a copy carried them
 
 ## Findings
 
@@ -139,6 +140,45 @@ of that lint reported 36 failures against a tree every other validator passed.**
 
 `0042` finding 4 has the same shape one layer out: a rendering audit whose first
 run reported 131 failures, of which 128 were bugs in the audit.
+
+### A third instance, 2026-09-09 — the parser took table headers as records
+
+Found by the owner reading a `metadata.json`, not by a checker. **Four
+`resources` entries across three session records are the header rows of markdown
+tables**, and two of them are headers of tables that are not the Resources
+table at all:
+
+| Record | Entry | Came from |
+|---|---|---|
+| `allocation-and-inquiry-design-20260906-233205` | `{"what": "Resource", "path": "Value"}` | its Resources table header |
+| `assurance-coverage-20260908-204724` | `{"what": "Resource", "path": "Value"}` | its Resources table header |
+| `phase-11b-hydrate-and-bookends-20260903-141500` | `{"what": "File", "path": "Was"}` | **a different table**, `metadata.md:27` |
+| `phase-11b-hydrate-and-bookends-20260903-141500` | `{"what": "Revisions", "path": "What"}` | **a different table**, `metadata.md:94` |
+
+**That is worse than a missing header skip.** Two of the four came from tables
+elsewhere in the file, so the extraction was not reading *the Resources table
+and skipping its header* — it was collecting two-column rows from the document
+and could not tell one table from another. `phase-11b`'s own Resources header,
+`| What | Path |`, was correctly absent, which is the detail that rules out a
+simple off-by-one.
+
+**The records asserted it for weeks and every checker passed**, because nothing
+compares a `resources` array against the table it was made from. Two live
+records claimed a resource named *Resource* at a path named *Value*.
+
+Removed at Revision 267. **The extraction that produced them is not repaired**,
+and the same run is `0050` F3's subject from the other side: what it destroys is
+recorded, what it fabricates was not.
+
+### A fourth, from the same reading — a field empty in the home and filled in the copy
+
+`owners[].until` was `null` on `phase-11b-hydrate-and-bookends-20260903-141500`
+while `docs/sessions/INDEX.md` — which its own preamble calls **a copy for
+reach** — carried *to 2026-09-03*. `metadata.md` is authoritative for who owned
+what and when, so **the authoritative record was empty and the convenience copy
+held the fact.** Filled from the copy at Revision 267, which is the only
+direction that recovers anything, and is exactly the dependency F5 says the
+framework should not have.
 
 ## F4 — no boundary between what is authored and what is derived
 

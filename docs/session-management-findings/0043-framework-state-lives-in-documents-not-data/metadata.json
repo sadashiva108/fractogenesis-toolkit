@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T06:16:00-04:00",
+  "updatedAt": "2026-09-09T07:05:00-04:00",
   "number": "0043",
   "bundleName": "0043-framework-state-lives-in-documents-not-data",
   "kind": "session-management",
@@ -201,6 +201,11 @@
       "session": "typed-bundles-architecture-20260908-204724",
       "date": "2026-09-09",
       "contribution": "Added F10, from its own handoff: the `ended` lists went unpopulated on all eleven sessions across 230 revisions, and the prose standing in for them misattributed two revisions in this session's own record"
+    },
+    {
+      "session": "typed-bundles-architecture-20260908-204724",
+      "date": "2026-09-09",
+      "contribution": "Sharpened F3 with a third and fourth instance: four table header rows captured as `resources` entries across three session records, and two `owners.until` values missing from the home while a copy carried them"
     }
   ],
   "edges": [],

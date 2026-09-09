@@ -6,7 +6,7 @@
   "owners": [
     {
       "from": "2026-09-02",
-      "until": null,
+      "until": "2026-09-03",
       "assistant": "Claude",
       "sessionId": "session_019yzcjm2QneJ5ymVEQDi1bu",
       "model": "configured claude-opus-5",
@@ -17,11 +17,6 @@
   "transcript": "https://claude.ai/code/session_019yzcjm2QneJ5ymVEQDi1bu",
   "scratchPath": null,
   "resources": [
-    {
-      "what": "File",
-      "path": "Was",
-      "notes": null
-    },
     {
       "what": "Repository",
       "path": "/Users/dkittrell/workspace/shiva/fractogenesis-toolkit",
@@ -36,11 +31,6 @@
       "what": "Workspace root",
       "path": "/Users/dkittrell/reimage-workspace",
       "notes": "the clone plan fragments"
-    },
-    {
-      "what": "Revisions",
-      "path": "What",
-      "notes": null
     }
   ],
   "ownedBundles": [

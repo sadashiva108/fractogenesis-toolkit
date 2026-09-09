@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T06:16:00-04:00",
+  "updatedAt": "2026-09-09T07:05:00-04:00",
   "bundleName": "typed-bundles-architecture-20260908-204724",
   "createdOn": "2026-09-09",
   "owners": [
     {
       "from": "2026-09-09",
-      "until": null,
+      "until": "2026-09-09",
       "assistant": "Claude",
       "sessionId": "session_01QvZrvKpoKwCmyLNjzXzCdQ",
       "model": "claude-opus-5",
