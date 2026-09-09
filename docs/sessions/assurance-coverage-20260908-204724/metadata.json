@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T12:00:00+00:00",
+  "updatedAt": "2026-09-09T14:00:00+00:00",
   "bundleName": "assurance-coverage-20260908-204724",
   "createdOn": "2026-09-09",
   "owners": [
@@ -64,20 +64,28 @@
   ],
   "contributions": [],
   "declaredState": null,
-  "indexNotes": null,
+  "indexNotes": "**The assurance session.** Assigned `0040`, `0041`, `0042`, `0044`, `0046`, `0049` from the Revision 234 allocation; `0050`, `0051` and `0053` recorded here and assigned after. **Closed 2026-09-09 holding `0040` and `0044`, both `answered`; the other seven released to `unclaimed`** with their disposals in `final-summary.md`. Its answer is `0041` D1 — a check answers for the artifact as it will be read, not a curated proxy. Recorded `0054`, not owned, and two commissions, `docs/ideas/the-collection-and-the-project.md` and `docs/ideas/anchoring-a-reading.md`. Revisions 251, 253, 254, 255, 258, 260, 264",
   "ended": {
     "on": "2026-09-09",
     "reason": "closed at the owner's direction; the coverage question is answered once in 0041 D1 and the two terminal bundles are finished",
     "revisions": [
-      "239",
       "251",
+      "253",
       "254",
-      "256",
+      "255",
       "258",
       "260",
       "264"
     ],
-    "commits": [],
+    "commits": [
+      "9394c36",
+      "6b48304",
+      "be41a23",
+      "6de71d6",
+      "17c656f",
+      "13b00b3",
+      "d9996f5"
+    ],
     "disposals": [
       {
         "number": "0041",

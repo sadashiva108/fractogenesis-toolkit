@@ -92,6 +92,35 @@ session's own finding about itself, and it is `0041` D1 from the inside.
   target Mac alike. Recorded as `0042` F5; the repair is two characters and was
   never made.
 
+## A correction made after closing, at Revision 265
+
+The owner asked for `ended.commits` and `indexNotes`, both empty. Deriving the
+first from the commit trailers rather than from memory showed **both existing
+records of this session's revisions were wrong, and they disagreed with each
+other**:
+
+| | said | |
+|---|---|---|
+| `ended.revisions` | 239, 251, 254, **256**, 258, 260, 264 | `239` and `256` belong to `session_01QvZ…`, not this one; 253 and 255 missing |
+| the index Notes cell | **237**, 251, 253, 254, 255, 258, 260, **261** | `237` is not a revision that exists; `261` is the other session's; 264 postdated it |
+
+Derived from `Claude-Session` in each commit body, the answer is
+**251, 253, 254, 255, 258, 260, 264** — seven, and `ended.commits` now carries
+`9394c36`, `6b48304`, `be41a23`, `6de71d6`, `17c656f`, `13b00b3`, `d9996f5`.
+
+**Two homes for one fact and both wrong is `0043`'s subject, arriving inside this
+session's own closing record** — written by hand, twice, from memory, at two
+different moments, and neither checked against the thing that knows. The datum
+was in the commit trailers the whole time. `0041` D6 would not have caught it;
+nothing would.
+
+`declaredState` stays `null`, and that is not an omission.
+`docs/architecture/state-as-data.md` line 153: it *"carries a value only for
+`handoff`, which is a declaration: a session says it handed on, where `active`,
+`closed` and `withdrawn` follow from what it owns."* This session's `closed`
+derives from `ended.on` and from holding two terminal bundles. Writing `closed`
+there would be a second copy of a derived fact, which is the defect, not the fix.
+
 ## What was never verified
 
 - **Nothing ran on macOS stock Bash 3.2 and BSD userland by this session.** The
