@@ -3,6 +3,7 @@
   "updatedAt": "2026-09-08T16:32:42+00:00",
   "number": "0005",
   "bundleName": "0005-boundary-runs-recorded-long-after-their-phase",
+  "genus": "findings",
   "kind": "cross-cutting",
   "subKind": null,
   "subject": "Four boundary runs are dated the day the recorder was extended, not the day the phase ran",
@@ -20,7 +21,7 @@
   "progress": "answered",
   "ownership": null,
   "lineage": null,
-  "findings": [
+  "members": [
     {
       "id": "F1",
       "statement": "Four boundary runs are dated the day the recorder was extended, not the day the phase ran",
@@ -48,7 +49,7 @@
     {
       "id": "D1",
       "decision": "Nothing is re-run, and nothing on the volume is repaired",
-      "findings": [
+      "members": [
         "F1"
       ],
       "decided": "2026-09-04",
@@ -60,7 +61,7 @@
     {
       "id": "D2",
       "decision": "`entry` and `initial` are first-wins",
-      "findings": [
+      "members": [
         "F1"
       ],
       "decided": "2026-09-04",
@@ -72,7 +73,7 @@
     {
       "id": "D3",
       "decision": "A later run at a first-wins point is flagged for a person, never rejected",
-      "findings": [
+      "members": [
         "F1"
       ],
       "decided": "2026-09-04",
@@ -84,7 +85,7 @@
     {
       "id": "D4",
       "decision": "The hazard is written where the machinery is read",
-      "findings": [
+      "members": [
         "F1"
       ],
       "decided": "2026-09-04",
@@ -96,7 +97,7 @@
     {
       "id": "D5",
       "decision": "`--note` is added to both recorders",
-      "findings": [
+      "members": [
         "F1"
       ],
       "decided": "2026-09-04",
@@ -108,7 +109,7 @@
     {
       "id": "D6",
       "decision": "Five pointers move, one is pinned back, four are the owner's to decide",
-      "findings": [
+      "members": [
         "F1"
       ],
       "decided": "2026-09-04",

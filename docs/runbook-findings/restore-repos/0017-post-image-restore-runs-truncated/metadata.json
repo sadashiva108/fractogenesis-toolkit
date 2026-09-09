@@ -3,6 +3,7 @@
   "updatedAt": "2026-09-08T16:32:42+00:00",
   "number": "0017",
   "bundleName": "0017-post-image-restore-runs-truncated",
+  "genus": "findings",
   "kind": "runbook",
   "subKind": null,
   "subject": "Every post-image-restore run on disk stops before its report",
@@ -20,7 +21,7 @@
   "progress": "untouched",
   "ownership": "unclaimed",
   "lineage": null,
-  "findings": [
+  "members": [
     {
       "id": "F1",
       "statement": "Every post-image-restore run on disk stops before its report",

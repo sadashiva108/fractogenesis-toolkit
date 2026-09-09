@@ -3,6 +3,7 @@
   "updatedAt": "2026-09-09T12:00:00+00:00",
   "number": "0051",
   "bundleName": "0051-the-target-platform-claim-has-no-run-behind-it",
+  "genus": "findings",
   "kind": "session-management",
   "subKind": null,
   "subject": "The target-platform claim has no run behind it, nowhere to record one, and no gate that needs one",
@@ -12,15 +13,15 @@
     "sessionBundle": "assurance-coverage-20260908-204724",
     "sessionId": "session_01Wd7US5C5Msr594vNidboLn"
   },
-  "severity": "F1 is low and permanent — no session can ever close it, which is the part worth writing down. F2 is the one that costs: with nowhere to record a target run, the first one ever performed would have been lost, and it produced the only cross-platform evidence this repository has.",
+  "severity": "F1 is low and permanent \u2014 no session can ever close it, which is the part worth writing down. F2 is the one that costs: with nowhere to record a target run, the first one ever performed would have been lost, and it produced the only cross-platform evidence this repository has.",
   "feltAt": [
     "every session metadata.md and every handover report since Revision 206",
-    ".github/session-management-instructions.md §5 and §6",
+    ".github/session-management-instructions.md \u00a75 and \u00a76",
     "docs/ledgers/"
   ],
   "scope": "session management for the rule, the toolkit set for the platform it names. 0039 D2's split applied to verification.",
   "read": [
-    ".github/session-management-instructions.md §5, §6 and §9b",
+    ".github/session-management-instructions.md \u00a75, \u00a76 and \u00a79b",
     ".github/toolkit-instructions.md, the portability paragraphs",
     "bin/verify-script-portability.sh in full",
     "every metadata.md under docs/sessions/",
@@ -30,7 +31,7 @@
   "progress": "analyzing",
   "ownership": "unclaimed",
   "lineage": null,
-  "findings": [
+  "members": [
     {
       "id": "F1",
       "statement": "No session can reach the target platform, and the disclosure that says so is repeated where it cannot apply",
@@ -38,7 +39,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": "2026-09-09",
-      "sectionHeading": "F1 — the gap is real, permanent, and mostly already closed",
+      "sectionHeading": "F1 \u2014 the gap is real, permanent, and mostly already closed",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -50,7 +51,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": "2026-09-09",
-      "sectionHeading": "F2 — the first target run had nowhere to go",
+      "sectionHeading": "F2 \u2014 the first target run had nowhere to go",
       "reopened": null,
       "withdrawn": null,
       "resolution": {
@@ -69,7 +70,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": "2026-09-09",
-      "sectionHeading": "F3 — nothing requires the run",
+      "sectionHeading": "F3 \u2014 nothing requires the run",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -79,38 +80,38 @@
     {
       "id": "D1",
       "decision": "The disclosure is scoped: metadata.md always records the environment, and a report carries the untested-on-target sentence only when the change set contains a bin/ or .internal/ executable",
-      "findings": [
+      "members": [
         "F1"
       ],
       "decided": "2026-09-09",
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D1 — say it where it can bite, and nowhere else"
+      "sectionHeading": "D1 \u2014 say it where it can bite, and nowhere else"
     },
     {
       "id": "D2",
       "decision": "A target-platform run is recorded in docs/ledgers/target-platform-verification.md: date, commit, platform, shell version, what was run and every value, beside the same run on the session platform",
-      "findings": [
+      "members": [
         "F2"
       ],
       "decided": "2026-09-09",
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D2 — the run gets a home, and the home is a ledger"
+      "sectionHeading": "D2 \u2014 the run gets a home, and the home is a ledger"
     },
     {
       "id": "D3",
       "decision": "A finding whose scope includes an executable may not go resolved until a target-platform run is recorded for it. A record write owes nothing",
-      "findings": [
+      "members": [
         "F3"
       ],
       "decided": "2026-09-09",
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D3 — a gate, not a disclaimer"
+      "sectionHeading": "D3 \u2014 a gate, not a disclaimer"
     }
   ],
   "contributions": [],

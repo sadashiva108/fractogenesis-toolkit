@@ -3,6 +3,7 @@
   "updatedAt": "2026-09-08T16:32:42+00:00",
   "number": "0029",
   "bundleName": "0029-the-instruction-set-lags-the-rules-it-governs",
+  "genus": "findings",
   "kind": "instruction-set",
   "subKind": null,
   "subject": "The instruction set lags the rules it governs",
@@ -23,7 +24,7 @@
     "supersededBy": "0039",
     "on": null
   },
-  "findings": [
+  "members": [
     {
       "id": "F1",
       "statement": "Five rules exist only in `docs/legend.md` and not in the instruction set",
@@ -125,7 +126,7 @@
     {
       "id": "D1",
       "decision": "`docs/legend.md` holds VOCABULARY. `.github/copilot-instructions.md` sections 4b\u20134d hold PROCEDURE. Each points at the other for the kind it does not hold, and the legend is named in \u00a74 as required reading",
-      "findings": [
+      "members": [
         "F1",
         "F2",
         "F5",
@@ -140,7 +141,7 @@
     {
       "id": "D2",
       "decision": "the write categories split. The legend keeps three one-line definitions of what a record, toolkit and evidence write IS. \u00a74b takes the gating",
-      "findings": [
+      "members": [
         "F5"
       ],
       "decided": "2026-09-04",
@@ -152,7 +153,7 @@
     {
       "id": "D3",
       "decision": "`docs/INDEX.md` owns the enumeration of the `docs/` directories. \u00a74b and `docs/architecture/findings-and-sessions.md` \u00a72 stop listing them and point at it",
-      "findings": [
+      "members": [
         "F3",
         "F4"
       ],
@@ -165,7 +166,7 @@
     {
       "id": "D4",
       "decision": "a bundle waiting on another's decision says so in prose inside its `Relates to` line, and \u00a74c requires the bundle's INDEX.md Notes cell to say it too. `Decide after:` does not become vocabulary",
-      "findings": [
+      "members": [
         "F7"
       ],
       "decided": "2026-09-04",

@@ -3,6 +3,7 @@
   "updatedAt": "2026-09-08T16:32:42+00:00",
   "number": "0032",
   "bundleName": "0032-index-and-manifest-tables-have-a-shape-nothing-checks",
+  "genus": "findings",
   "kind": "instruction-set",
   "subKind": null,
   "subject": "The index and manifest tables have a shape nothing checks",
@@ -23,7 +24,7 @@
     "supersededBy": "0041",
     "on": null
   },
-  "findings": [
+  "members": [
     {
       "id": "F1",
       "statement": "The indexes and manifests have a required column shape that no check enforces",
@@ -105,7 +106,7 @@
     {
       "id": "D1",
       "decision": "One new validator, `bin/verify-findings-structure.sh`",
-      "findings": [],
+      "members": [],
       "decided": "2026-09-04",
       "outcome": "accepted",
       "answersAsOf": null,
@@ -115,7 +116,7 @@
     {
       "id": "D2",
       "decision": "`verify-doc-paths.sh` is not changed, and the reason is finding F2's point",
-      "findings": [],
+      "members": [],
       "decided": "2026-09-04",
       "outcome": "accepted",
       "answersAsOf": null,
@@ -125,7 +126,7 @@
     {
       "id": "D3",
       "decision": "The bundle stays in `docs/session-management-findings/`, and the two tests disagree",
-      "findings": [],
+      "members": [],
       "decided": "2026-09-03",
       "outcome": "accepted",
       "answersAsOf": null,
@@ -135,7 +136,7 @@
     {
       "id": "D4",
       "decision": "Finding 4 cannot be fixed in this repository, and D1 catches its residue",
-      "findings": [],
+      "members": [],
       "decided": "2026-09-04",
       "outcome": "accepted",
       "answersAsOf": null,

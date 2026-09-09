@@ -3,6 +3,7 @@
   "updatedAt": "2026-09-08T16:32:42+00:00",
   "number": "0015",
   "bundleName": "0015-portability-lint-cannot-see-heredoc-context",
+  "genus": "findings",
   "kind": "cross-cutting",
   "subKind": null,
   "subject": "The portability lint cannot see a defect that needs heredoc context",
@@ -20,7 +21,7 @@
   "progress": "untouched",
   "ownership": "unclaimed",
   "lineage": null,
-  "findings": [
+  "members": [
     {
       "id": "F1",
       "statement": "The portability lint cannot see a defect that needs heredoc context",

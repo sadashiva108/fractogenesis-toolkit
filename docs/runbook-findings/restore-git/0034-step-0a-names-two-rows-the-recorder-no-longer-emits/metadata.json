@@ -3,6 +3,7 @@
   "updatedAt": "2026-09-08T16:32:42+00:00",
   "number": "0034",
   "bundleName": "0034-step-0a-names-two-rows-the-recorder-no-longer-emits",
+  "genus": "findings",
   "kind": "runbook",
   "subKind": null,
   "subject": "`restore-git.md` Step 0a names two rows the recorder no longer emits",
@@ -20,7 +21,7 @@
   "progress": "untouched",
   "ownership": null,
   "lineage": null,
-  "findings": [
+  "members": [
     {
       "id": "F1",
       "statement": "Step 0a names two rows the recorder no longer emits",

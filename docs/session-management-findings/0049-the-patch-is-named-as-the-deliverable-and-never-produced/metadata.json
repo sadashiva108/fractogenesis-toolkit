@@ -3,6 +3,7 @@
   "updatedAt": "2026-09-09T13:00:00+00:00",
   "number": "0049",
   "bundleName": "0049-the-patch-is-named-as-the-deliverable-and-never-produced",
+  "genus": "findings",
   "kind": "session-management",
   "subKind": null,
   "subject": "The patch is named as the deliverable, never defined, and would drop half the work if produced",
@@ -28,7 +29,7 @@
   "progress": "analyzing",
   "ownership": "unclaimed",
   "lineage": null,
-  "findings": [
+  "members": [
     {
       "id": "F1",
       "statement": "A session composed correctly and then copied into the checkout six times, and never once produced a patch",
@@ -98,7 +99,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": "2026-09-09",
-      "sectionHeading": "F5 — an index write is invisible to the verification this bundle prescribes",
+      "sectionHeading": "F5 \u2014 an index write is invisible to the verification this bundle prescribes",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -110,7 +111,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": "2026-09-09",
-      "sectionHeading": "F6 — two definitions of the ask, and no precondition on either",
+      "sectionHeading": "F6 \u2014 two definitions of the ask, and no precondition on either",
       "reopened": null,
       "withdrawn": null,
       "resolution": {
@@ -118,7 +119,7 @@
           "D7",
           "D8"
         ],
-        "whatWasDone": "§0 step 6 rewritten: the ask names a delivered artifact, do it retired, applying is a response never an initiation, the checkout must be git status --porcelain empty before applying and the index empty after; the conformant prompt brought onto it",
+        "whatWasDone": "\u00a70 step 6 rewritten: the ask names a delivered artifact, do it retired, applying is a response never an initiation, the checkout must be git status --porcelain empty before applying and the index empty after; the conformant prompt brought onto it",
         "revision": "258",
         "commit": null
       }
@@ -130,7 +131,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": "2026-09-09",
-      "sectionHeading": "F7 — `git add -N` is required to produce the patch and empties every new file the next `checkout -f` touches",
+      "sectionHeading": "F7 \u2014 `git add -N` is required to produce the patch and empties every new file the next `checkout -f` touches",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -139,99 +140,99 @@
   "decisions": [
     {
       "id": "D1",
-      "decision": "Section 6 now defines the patch — how, where and by whom — so F2 is closed by Revision 232 rather than by anything decided here",
-      "findings": [
+      "decision": "Section 6 now defines the patch \u2014 how, where and by whom \u2014 so F2 is closed by Revision 232 rather than by anything decided here",
+      "members": [
         "F2"
       ],
       "decided": "2026-09-09",
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D1 — the patch is defined, at Revision 232"
+      "sectionHeading": "D1 \u2014 the patch is defined, at Revision 232"
     },
     {
       "id": "D2",
       "decision": "`git add -N` is the whole of F3's fix and Revision 232 recorded it, with F3's own measurement quoted",
-      "findings": [
+      "members": [
         "F3"
       ],
       "decided": "2026-09-09",
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D2 — `git add -N`, and F3's measurement is in the fix"
+      "sectionHeading": "D2 \u2014 `git add -N`, and F3's measurement is in the fix"
     },
     {
       "id": "D3",
       "decision": "F1 needs no remedy of its own. It reports behaviour, and the thing that would have stopped it is F4's guard",
-      "findings": [
+      "members": [
         "F1"
       ],
       "decided": "2026-09-09",
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D3 — F1 is behaviour, and closes with the guard"
+      "sectionHeading": "D3 \u2014 F1 is behaviour, and closes with the guard"
     },
     {
       "id": "D4",
       "decision": "The guard is extended to the tool a bridged session actually writes through, and derives its protected root from the connected folder rather than CLAUDE_PROJECT_DIR. Warn, never deny, on a shell call; deny only on a file commit",
-      "findings": [
+      "members": [
         "F4"
       ],
       "decided": "2026-09-09",
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D4 — the guard does not cover the tool this session writes through"
+      "sectionHeading": "D4 \u2014 the guard does not cover the tool this session writes through"
     },
     {
       "id": "D5",
       "decision": "The remainder of F4 is not worked here. It is a toolkit write with no bundle type yet, and it is parked as 0050",
-      "findings": [
+      "members": [
         "F4"
       ],
       "decided": "2026-09-09",
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D5 — the remainder is parked, not worked"
+      "sectionHeading": "D5 \u2014 the remainder is parked, not worked"
     },
     {
       "id": "D6",
       "decision": "The apply procedure gains one assertion: after applying, git diff --cached --name-only in the checkout must be empty",
-      "findings": [
+      "members": [
         "F5"
       ],
       "decided": "2026-09-09",
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D6 — assert the index is empty, because the tree comparison cannot"
+      "sectionHeading": "D6 \u2014 assert the index is empty, because the tree comparison cannot"
     },
     {
       "id": "D7",
       "decision": "The authorizing phrase is the source's and do it is retired. Applying is a response to a delivered patch, never an initiation; where an instruction could be either, the session composes and asks",
-      "findings": [
+      "members": [
         "F6"
       ],
       "decided": "2026-09-09",
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D7 — the ask names a delivered artifact, and never a task"
+      "sectionHeading": "D7 \u2014 the ask names a delivered artifact, and never a task"
     },
     {
       "id": "D8",
       "decision": "A session asserts the checkout is clean before applying and refuses otherwise, naming what is already there",
-      "findings": [
+      "members": [
         "F6"
       ],
       "decided": "2026-09-09",
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D8 — the checkout must be clean, and this is the coordinator's lock"
+      "sectionHeading": "D8 \u2014 the checkout must be clean, and this is the coordinator's lock"
     }
   ],
   "contributions": [],

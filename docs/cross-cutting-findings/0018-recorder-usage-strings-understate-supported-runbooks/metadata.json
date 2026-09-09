@@ -3,6 +3,7 @@
   "updatedAt": "2026-09-08T16:32:42+00:00",
   "number": "0018",
   "bundleName": "0018-recorder-usage-strings-understate-supported-runbooks",
+  "genus": "findings",
   "kind": "cross-cutting",
   "subKind": null,
   "subject": "Two recorders still tell you your own phase is unsupported",
@@ -20,7 +21,7 @@
   "progress": "answered",
   "ownership": null,
   "lineage": null,
-  "findings": [
+  "members": [
     {
       "id": "F1",
       "statement": "Two recorders still tell you your own phase is unsupported",

@@ -3,6 +3,7 @@
   "updatedAt": "2026-09-08T16:32:42+00:00",
   "number": "0026",
   "bundleName": "0026-verify-doc-paths-counts-gitignored-docs",
+  "genus": "findings",
   "kind": "cross-cutting",
   "subKind": null,
   "subject": "`verify-doc-paths.sh --all` counts `docs/`, so its OK baseline cannot hold",
@@ -23,7 +24,7 @@
     "supersededBy": "0036",
     "on": null
   },
-  "findings": [
+  "members": [
     {
       "id": "F1",
       "statement": "`verify-doc-paths.sh --all` counts `docs/`, so its OK baseline cannot hold",

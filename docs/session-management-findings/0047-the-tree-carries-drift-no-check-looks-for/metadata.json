@@ -3,6 +3,7 @@
   "updatedAt": "2026-09-09T10:45:00-04:00",
   "number": "0047",
   "bundleName": "0047-the-tree-carries-drift-no-check-looks-for",
+  "genus": "findings",
   "kind": "session-management",
   "subKind": null,
   "subject": "The tree carries status drift that no check looks for",
@@ -26,7 +27,7 @@
   "progress": "analyzing",
   "ownership": null,
   "lineage": null,
-  "findings": [
+  "members": [
     {
       "id": "F1",
       "statement": "Releasing a bundle to `unclaimed` leaves its findings where they were, so a bundle closed to every session holds a readable finding",
@@ -172,7 +173,7 @@
     {
       "id": "D1",
       "decision": "The migrated-bundle carve-out is restored to \u00a73: a bundle migrated from an already-closed record carries `resolutions.md` and no `decisions.md`, and says so. This is `0037` D2, taken once and recorded in both bundles",
-      "findings": [
+      "members": [
         "F4"
       ],
       "decided": "2026-09-09",
@@ -184,7 +185,7 @@
     {
       "id": "D2",
       "decision": "`transferred` leaves the closed-bundle assertion in `plan_findings_work.py` entirely; `unclaimed` keeps it, and its detail names `0047` F1 as the undecided rule the row rests on. The code name is unchanged",
-      "findings": [
+      "members": [
         "F7"
       ],
       "decided": "2026-09-09",
@@ -196,7 +197,7 @@
     {
       "id": "D3",
       "decision": "`OUTCOMES` becomes the legend's six bare outcomes with `replaced` matched by prefix; the two retired prefixes go; and a contract test asserts the disjointness `docs/legend.md` has claimed a schema check performs since Revision 233",
-      "findings": [
+      "members": [
         "F8"
       ],
       "decided": "2026-09-09",
@@ -208,7 +209,7 @@
     {
       "id": "D4",
       "decision": "F5 is recorded `resolved` against the work that already answered it \u2014 `is_clone()`, shipped at Revision 231 \u2014 rather than re-done; what the remedy did not cover is opened as F9 and F10 instead of being folded into the resolution",
-      "findings": [
+      "members": [
         "F5"
       ],
       "decided": "2026-09-09",

@@ -3,6 +3,7 @@
   "updatedAt": "2026-09-08T16:32:42+00:00",
   "number": "0004",
   "bundleName": "0004-boundary-runs-name-their-record-a-checklist",
+  "genus": "findings",
   "kind": "cross-cutting",
   "subKind": null,
   "subject": "Boundary runs call their record a `checklist`, and it is not one",
@@ -20,7 +21,7 @@
   "progress": "answered",
   "ownership": null,
   "lineage": null,
-  "findings": [
+  "members": [
     {
       "id": "F1",
       "statement": "Boundary runs call their record a `checklist`, and it is not one",

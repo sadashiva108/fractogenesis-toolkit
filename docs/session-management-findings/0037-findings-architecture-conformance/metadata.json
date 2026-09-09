@@ -3,6 +3,7 @@
   "updatedAt": "2026-09-09T07:05:00-04:00",
   "number": "0037",
   "bundleName": "0037-findings-architecture-conformance",
+  "genus": "findings",
   "kind": "session-management",
   "subKind": null,
   "subject": "The findings-and-sessions architecture disagrees with itself and with the tree",
@@ -28,7 +29,7 @@
     "supersedes": "0027",
     "on": null
   },
-  "findings": [
+  "members": [
     {
       "id": "F1",
       "statement": "\u00a74b and \u00a74c contradict each other on whether a findings bundle takes a manifest revision",
@@ -165,7 +166,7 @@
     {
       "id": "D1",
       "decision": "The required-reading rule survives its home being deleted: restated in `.github/session-management-instructions.md`, binding every `prompt.md` written from now. Existing prompts are evidence and are not rewritten",
-      "findings": [
+      "members": [
         "F2"
       ],
       "decided": "2026-09-09",
@@ -177,7 +178,7 @@
     {
       "id": "D2",
       "decision": "The migrated-bundle carve-out is restored: a bundle migrated from an already-closed record carries `resolutions.md` and no `decisions.md`, and says so. One decision answers this bundle's F5 and `0047` F4",
-      "findings": [
+      "members": [
         "F5"
       ],
       "decided": "2026-09-09",
@@ -189,7 +190,7 @@
     {
       "id": "D3",
       "decision": "F1, F3, F4, F6 and F7 were resolved in `0027`, regressed by `1c48deb`, and hold again against the files that replaced it; each is resolved against where its rule now lives and the regression is named",
-      "findings": [
+      "members": [
         "F1",
         "F3",
         "F4",

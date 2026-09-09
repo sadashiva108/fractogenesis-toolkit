@@ -3,6 +3,7 @@
   "updatedAt": "2026-09-09T01:45:00+00:00",
   "number": "0040",
   "bundleName": "0040-superseding-a-bundle-whose-session-is-gone",
+  "genus": "findings",
   "kind": "session-management",
   "subKind": null,
   "subject": "Superseding a bundle whose session is gone is instructed but never defined",
@@ -23,7 +24,7 @@
     "supersedes": "0031",
     "on": null
   },
-  "findings": [
+  "members": [
     {
       "id": "F1",
       "statement": "\u00a74d instructs a session to mark bundles `superseded`; \u00a74c never defines what that means or requires",
@@ -105,7 +106,7 @@
     {
       "id": "D1",
       "decision": "All four findings are overtaken. Revision 200 restored the supersession procedure as section 9, and it answers each of them in the finding's own terms",
-      "findings": [
+      "members": [
         "F1",
         "F2",
         "F3",
@@ -120,7 +121,7 @@
     {
       "id": "D2",
       "decision": "What is left is enforcement, not procedure: section 9's step 5 and both provenance gates are stated and unchecked. Specified here, built elsewhere",
-      "findings": [
+      "members": [
         "F1",
         "F4"
       ],

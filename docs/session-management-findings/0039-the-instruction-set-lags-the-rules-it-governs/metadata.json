@@ -3,6 +3,7 @@
   "updatedAt": "2026-09-09T07:20:00-04:00",
   "number": "0039",
   "bundleName": "0039-the-instruction-set-lags-the-rules-it-governs",
+  "genus": "findings",
   "kind": "session-management",
   "subKind": null,
   "subject": "The instruction set lags the rules it governs",
@@ -23,7 +24,7 @@
     "supersedes": "0029",
     "on": null
   },
-  "findings": [
+  "members": [
     {
       "id": "F1",
       "statement": "Five rules exist only in `docs/legend.md` and not in the instruction set",
@@ -382,7 +383,7 @@
     {
       "id": "D1",
       "decision": "`docs/legend.md` holds VOCABULARY. `.github/copilot-instructions.md` sections 4b\u20134d hold PROCEDURE. Each points at the other for the kind it does not hold, and the legend is named in \u00a74 as required reading",
-      "findings": [
+      "members": [
         "F1",
         "F2",
         "F5",
@@ -397,7 +398,7 @@
     {
       "id": "D2",
       "decision": "the write categories split. The legend keeps three one-line definitions of what a record, toolkit and evidence write IS. \u00a74b takes the gating",
-      "findings": [
+      "members": [
         "F5"
       ],
       "decided": "2026-09-04",
@@ -409,7 +410,7 @@
     {
       "id": "D3",
       "decision": "`docs/INDEX.md` owns the enumeration of the `docs/` directories. \u00a74b and `docs/architecture/findings-and-sessions.md` \u00a72 stop listing them and point at it",
-      "findings": [
+      "members": [
         "F3",
         "F4"
       ],
@@ -422,7 +423,7 @@
     {
       "id": "D4",
       "decision": "a bundle waiting on another's decision says so in prose inside its `Relates to` line, and \u00a74c requires the bundle's INDEX.md Notes cell to say it too. `Decide after:` does not become vocabulary",
-      "findings": [
+      "members": [
         "F7"
       ],
       "decided": "2026-09-04",
@@ -434,7 +435,7 @@
     {
       "id": "D5",
       "decision": "ordering between findings is a typed, directed edge \u2014 `blocks` or `evidences` \u2014 asserted in the bundle whose session states it, validated at both ends, and expiring when either endpoint goes inert",
-      "findings": [
+      "members": [
         "F7"
       ],
       "decided": "2026-09-06",
@@ -446,7 +447,7 @@
     {
       "id": "D6",
       "decision": "a hand-over step joins the composition rule in section 6: the session reports what it composed and shows it, and the patch is applied only when the owner asks",
-      "findings": [
+      "members": [
         "F8"
       ],
       "decided": "2026-09-07",
@@ -458,7 +459,7 @@
     {
       "id": "D7",
       "decision": "A status moves on a **material change to the record**, never on a reading. `reopened` persists until one occurs: a write to the finding or a contribution moves it to `framing`, an accepted decision to `decided`, an executed resolution to `resolved`, and it may be `withdrawn` from there like any live status",
-      "findings": [
+      "members": [
         "F12"
       ],
       "decided": "2026-09-08",
@@ -470,7 +471,7 @@
     {
       "id": "D8",
       "decision": "**Reframing a finding invalidates the decisions under it.** One rule, two visible effects: at `decided` the status rolls back to `framing`; at `framing` there is no status to move, so the effect is confined to the decisions. The rollback is the DEFAULT and a session may decline it in writing, recording in `decisions.md` that the edit was non-material and why. `resolved` and `withdrawn` are frozen and unreachable by it",
-      "findings": [
+      "members": [
         "F12",
         "F10"
       ],
@@ -483,7 +484,7 @@
     {
       "id": "D9",
       "decision": "A decision's `Outcome` is one of seven \u2014 `proposed`, `accepted`, `rejected`, `deferred`, `retracted`, `replaced \u2192 DX`, `voided` \u2014 and **no word appears in both an Outcome and a status vocabulary**, which a schema check asserts. `refined \u2192 DX` and `superseded \u2192 DX` collapse into `replaced \u2192 DX`",
-      "findings": [
+      "members": [
         "F10",
         "F12"
       ],
@@ -496,7 +497,7 @@
     {
       "id": "D10",
       "decision": "**Reopening requires a reason** from a nine-value enumeration, an optional note, `reopened_at`, and the commit SHA at reopen time. The reason determines the exit status rather than leaving it to judgement. `reopened.md` is GENERATED from those fields, never hand-written",
-      "findings": [
+      "members": [
         "F12"
       ],
       "decided": "2026-09-08",
@@ -508,7 +509,7 @@
     {
       "id": "D11",
       "decision": "**Withdrawing requires a reason**, an optional note and `withdrawn_at`, per finding \u2014 a bundle-level withdrawal needs one for every finding in it. A `resolved` finding is reopened first; `withdrawn` reaches every status except `resolved`",
-      "findings": [
+      "members": [
         "F12"
       ],
       "decided": "2026-09-08",
@@ -520,7 +521,7 @@
     {
       "id": "D12",
       "decision": "**Supersession carries provenance as typed edges at finding granularity, stored in the new bundle only.** `carried`, `successor`, `split`, `merged` and `dropped`; `new` is derived from the absence of an incoming edge. Coverage and exclusivity gate the `superseded` tag. The new bundle gets no `decisions.md`. A superseded bundle is readable by any session and writable by none",
-      "findings": [
+      "members": [
         "F12"
       ],
       "decided": "2026-09-08",
@@ -532,7 +533,7 @@
     {
       "id": "D13",
       "decision": "`docs/legend.md` holds VOCABULARY. **`.github/session-management-instructions.md` holds PROCEDURE** \u2014 D1 said \u00a7\u00a74b\u20134d of `copilot-instructions.md`, which commit `1c48deb` deleted. Each points at the other for the kind it does not hold. D2's unfinished half is carried out: the legend keeps three one-line definitions of the write categories and the gating moves to \u00a76",
-      "findings": [
+      "members": [
         "F1",
         "F2",
         "F5",
@@ -548,7 +549,7 @@
     {
       "id": "D14",
       "decision": "The four pre-D12 supersession successors get the clean slate D12 requires. `0037`, `0038`, `0040` keep only `findings.md` and `metadata.json`; `0036` loses the cloned `resolutions.md` and keeps its own `decisions.md`. `0041`'s pair is MOVED to `0032` rather than deleted \u2014 sole copies, and both headers name `0032`",
-      "findings": [
+      "members": [
         "F12",
         "F15"
       ],
@@ -561,7 +562,7 @@
     {
       "id": "D15",
       "decision": "A decision row must cite at least one `F<n>`. The checker validates citations that exist and cannot see their absence, so the rule states the positive condition \u2014 the same shape as D12's coverage clause",
-      "findings": [
+      "members": [
         "F15"
       ],
       "decided": "2026-09-08",
@@ -573,7 +574,7 @@
     {
       "id": "D16",
       "decision": "A `completeness` check joins the verify group: it asserts that no atomic value carries markdown ornament, that a list in a document is a list of the same length in the data, and that every header field the markdown has reaches a non-empty key. Deliberately NOT a second parser \u2014 a second reader shares the first's blind spots",
-      "findings": [
+      "members": [
         "F16"
       ],
       "decided": "2026-09-08",
@@ -585,7 +586,7 @@
     {
       "id": "D17",
       "decision": "The extractor is **single-use** and refuses to run once any generated-region marker exists in a file a generator writes. Parsing generated markdown back into the data that generated it can only lose, and it would look like a successful run",
-      "findings": [
+      "members": [
         "F16"
       ],
       "decided": "2026-09-08",
@@ -597,7 +598,7 @@
     {
       "id": "D18",
       "decision": "Resolving gets a numbered procedure, \u00a79b: carry out the decision, write the `resolutions.md` row naming the decision and the revision, then move the finding to `resolved` \u2014 in that order, because the row is the evidence the status asserts. A `decided` finding whose decisions are all carried out and which has no row is a defect a check can name",
-      "findings": [
+      "members": [
         "F17"
       ],
       "decided": "2026-09-08",
@@ -609,7 +610,7 @@
     {
       "id": "D19",
       "decision": "**The record covers this repository; the rules governing it live in this repository.** Work a session does in another project is not recorded here \u2014 no manifest entry, no finding, no `metadata.md` resource row \u2014 and a rule the framework depends on is not left in a file outside it. A fourth write kind, `foreign`, names the case so it is excluded deliberately rather than by omission",
-      "findings": [
+      "members": [
         "F19",
         "F9"
       ],
@@ -622,7 +623,7 @@
     {
       "id": "D20",
       "decision": "Releasing to `unclaimed` gets \u00a710a, four steps: remove the row from the session's `findings-manifest.md`, set the bundle's index Session cell to `\u2014` and its Status cell to `unclaimed`, decrement the session's counts, and record the disposal in the session. Ownership derives, so there is no status to set",
-      "findings": [
+      "members": [
         "F20"
       ],
       "decided": "2026-09-08",
@@ -634,7 +635,7 @@
     {
       "id": "D21",
       "decision": "The commit message is handed over as one fenced block tagged `text` \u2014 the fence \u00a711 already requires of every example, for the reason \u00a711 already gives. \u00a77 states it as the other half of the rule it already had: a `git commit` inside the block is something to delete, a message outside one is something to gather, and both cost the owner the same",
-      "findings": [
+      "members": [
         "F23"
       ],
       "decided": "2026-09-09",
@@ -646,7 +647,7 @@
     {
       "id": "D22",
       "decision": "The framework gets a front door of its own under `docs/rules/`, and `README.md` gains one pointer line to it. `README.md` stays the project's; the framework claims to be reusable as-is, so its entry travels with it",
-      "findings": [
+      "members": [
         "F14"
       ],
       "decided": "2026-09-09",
@@ -658,7 +659,7 @@
     {
       "id": "D23",
       "decision": "The three rule documents stop telling their own history: it moves to a Provenance table at the foot, while a live warning, a currency declaration and the evidence for why a rule exists stay \u2014 the last compressed to one clause inline with the dated account at home. Home before copies, one revision each",
-      "findings": [
+      "members": [
         "F14"
       ],
       "decided": "2026-09-09",
@@ -670,7 +671,7 @@
     {
       "id": "D24",
       "decision": "A status moves on a material change to the record, and a read is not one. `docs/legend.md` lines 69 and 546 stand; line 199's *reading is the transition* goes, and \u00a710's *the transfer ends when the target session reads the bundle* goes with it. A transfer ends on the target session's first write to the bundle as owner",
-      "findings": [
+      "members": [
         "F26"
       ],
       "decided": "2026-09-09",

@@ -3,6 +3,7 @@
   "updatedAt": "2026-09-09T07:30:00-04:00",
   "number": "0043",
   "bundleName": "0043-framework-state-lives-in-documents-not-data",
+  "genus": "findings",
   "kind": "session-management",
   "subKind": null,
   "subject": "The framework's own state lives in documents rather than in data",
@@ -28,7 +29,7 @@
   "progress": "analyzing",
   "ownership": "transferred",
   "lineage": null,
-  "findings": [
+  "members": [
     {
       "id": "F1",
       "statement": "A bundle's status is carried in a filename, so every transition is a delete plus a create",
@@ -168,7 +169,7 @@
     {
       "id": "D1",
       "decision": "Findings are addressed as `<bundle>/F<n>`, relationships are typed edges, an edge is stored in the bundle whose session asserted it, stored edges are assertions, and `Relates to` becomes a projection",
-      "findings": [
+      "members": [
         "F5",
         "F6"
       ],
@@ -181,7 +182,7 @@
     {
       "id": "D2",
       "decision": "\u00a79 step 3 changes from *write this line* to *assert this edge* in the revision that ships the projection, and not before",
-      "findings": [
+      "members": [
         "F5"
       ],
       "decided": "2026-09-07",

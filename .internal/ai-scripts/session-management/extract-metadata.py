@@ -244,7 +244,7 @@ def bundle_json(tree, name):
             if out and out.startswith("refined"):    out = out.replace("refined","replaced",1)
             decisions.append({
                 "id": c[0], "decision": c[1],
-                "findings": [x.strip() for x in c[2].split(",") if x.strip() and x.strip() not in ("—","-")],
+                "members": [x.strip() for x in c[2].split(",") if x.strip() and x.strip() not in ("—","-")],
                 "decided": unwrap(c[3]), "outcome": out or "proposed",
                 "answersAsOf": None, "voidedReason": None,
                 "sectionHeading": section_heading_for(dmd, c[0])})
@@ -287,7 +287,7 @@ def bundle_json(tree, name):
       "progress": None,
       "ownership": None,   # computed in main() by scanning session manifests
       "lineage": None,
-      "findings": findings, "decisions": decisions,
+      "members": findings, "decisions": decisions,
       "contributions": contributions, "edges": [],
       "indexNotes": None }
 
@@ -528,7 +528,7 @@ def check_completeness():
         # 4. Row counts. A table row that did not become an object is the
         #    failure mode a well-formedness check cannot see.
         if "number" in d:
-            for pat, key in ((r'^\| *F\d+ *\|', "findings"), (r'^\| *D\d+ *\|', "decisions")):
+            for pat, key in ((r'^\| *F\d+ *\|', "members"), (r'^\| *D\d+ *\|', "decisions")):
                 n = len(re.findall(pat, md, re.M))
                 if key == "decisions":
                     dm = read(os.path.join(os.path.dirname(rel), "decisions.md"))
@@ -642,7 +642,7 @@ def main():
     # applying it by hand never needed it to be.
     for num,(rel,j) in bundles.items():
         if (j.get("lineage") or {}).get("supersededBy"): continue
-        prog,_ = derive_progress(j["findings"])
+        prog,_ = derive_progress(j["members"])
         if prog in ("resolved","withdrawn"): continue
         if num not in live_owned:
             j["ownership"] = "unclaimed"
@@ -650,7 +650,7 @@ def main():
     for num,(rel,j) in sorted(bundles.items()):
         p=os.path.join(rel,"metadata.json")
         if not DRY: open(os.path.join(ROOT,p),"w").write(json.dumps(j,indent=2,ensure_ascii=False)+"\n")
-        written.append((p, len(j["findings"]), len(j["decisions"]), len(j["edges"])))
+        written.append((p, len(j["members"]), len(j["decisions"]), len(j["edges"])))
 
     sess_written=[]
     sbase=os.path.join(ROOT,"docs/sessions")

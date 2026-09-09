@@ -3,6 +3,7 @@
   "updatedAt": "2026-09-08T16:32:42+00:00",
   "number": "0011",
   "bundleName": "0011-emit-extra-remotes-readds-the-clone-url",
+  "genus": "findings",
   "kind": "runbook",
   "subKind": null,
   "subject": "`emit_extra_remotes` re-adds the URL the clone already used",
@@ -20,7 +21,7 @@
   "progress": "untouched",
   "ownership": "unclaimed",
   "lineage": null,
-  "findings": [
+  "members": [
     {
       "id": "F1",
       "statement": "`emit_extra_remotes` re-adds the URL the clone already used",

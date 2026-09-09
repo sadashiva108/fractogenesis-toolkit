@@ -18,8 +18,8 @@ def finding(fid, status="un-started", resolution=None, updated=None):
             "reopened": None, "withdrawn": None, "resolution": resolution}
 
 
-def decision(did, findings=None, outcome="accepted"):
-    return {"id": did, "decision": "a decision", "findings": findings or [],
+def decision(did, members=None, outcome="accepted"):
+    return {"id": did, "decision": "a decision", "members": members or [],
             "decided": "2026-09-08", "outcome": outcome,
             "sectionHeading": "%s -- a heading" % did}
 
@@ -31,15 +31,18 @@ def edge(kind, frm, to, basis="asserted", why="because"):
 
 def bundle(number, statuses=("un-started",), kind="session-management",
            ownership="unclaimed", decisions=None, edges=None, lineage=None,
-           resolutions=None, subject=None):
+           resolutions=None, subject=None, genus="findings"):
     fs = []
+    prefix = {"findings": "F", "commission": "Q",
+              "charter": "T", "remedy": "T"}[genus]
     for i, st in enumerate(statuses, 1):
         res = None
-        if resolutions and ("F%d" % i) in resolutions:
+        if resolutions and ("%s%d" % (prefix, i)) in resolutions:
             res = {"resolvedBy": "D1", "what": "done", "revision": 1, "commit": "abc1234"}
-        fs.append(finding("F%d" % i, st, resolution=res))
+        fs.append(finding("%s%d" % (prefix, i), st, resolution=res))
     return {"schemaVersion": 1, "updatedAt": "2026-09-08T00:00:00-04:00",
-            "number": number, "bundleName": "%s-a-bundle" % number, "kind": kind,
+            "number": number, "bundleName": "%s-a-bundle" % number,
+            "genus": genus, "kind": kind,
             "subKind": None, "subject": subject or "a subject for %s" % number,
             "recordedOn": "2026-09-08", "recordedOccasion": "a test",
             "recordedBy": {"sessionBundle": "a-session-20260908-000000",
@@ -47,7 +50,7 @@ def bundle(number, statuses=("un-started",), kind="session-management",
             "severity": "a sentence about severity",
             "feltAt": ["somewhere"], "scope": "session management",
             "read": ["something"], "progress": None, "ownership": ownership,
-            "lineage": lineage, "findings": fs, "decisions": decisions or [],
+            "lineage": lineage, "members": fs, "decisions": decisions or [],
             "contributions": [], "edges": edges or [], "indexNotes": None}
 
 

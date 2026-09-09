@@ -3,16 +3,17 @@
   "updatedAt": "2026-09-09T12:10:00+00:00",
   "number": "0050",
   "bundleName": "0050-instruments-that-cannot-fire-and-one-that-unmakes-the-record",
+  "genus": "findings",
   "kind": "session-management",
   "subKind": null,
   "subject": "Three instruments are correct and cannot fire, and one unmakes the record it reads",
   "recordedOn": "2026-09-09",
-  "recordedOccasion": "while deciding 0049 and 0042 — three of the four were found by trying to use the thing they guard.",
+  "recordedOccasion": "while deciding 0049 and 0042 \u2014 three of the four were found by trying to use the thing they guard.",
   "recordedBy": {
     "sessionBundle": "assurance-coverage-20260908-204724",
     "sessionId": null
   },
-  "severity": "F3 is high and is the only one whose damage is partly irrecoverable — one run destroys fifteen asserted edges and a hundred and seven stamped values; the 107 re-derive and the 15 do not, and twelve of those are Revision 234's decisions. F1 and F2 cost nothing today and cost everything on the day they are relied on.",
+  "severity": "F3 is high and is the only one whose damage is partly irrecoverable \u2014 one run destroys fifteen asserted edges and a hundred and seven stamped values; the 107 re-derive and the 15 do not, and twelve of those are Revision 234's decisions. F1 and F2 cost nothing today and cost everything on the day they are relied on.",
   "feltAt": [
     ".claude/settings.json",
     ".claude/hooks/write-location-guard.sh",
@@ -31,7 +32,7 @@
   "progress": "analyzing",
   "ownership": "unclaimed",
   "lineage": null,
-  "findings": [
+  "members": [
     {
       "id": "F1",
       "statement": "The write-location guard does not cover the tool a bridged session actually writes through, and reads the wrong root",
@@ -39,7 +40,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": "2026-09-09",
-      "sectionHeading": "F1 — the guard does not run where the writing happens",
+      "sectionHeading": "F1 \u2014 the guard does not run where the writing happens",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -51,7 +52,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": "2026-09-09",
-      "sectionHeading": "F2 — an exemption for a file that no longer exists",
+      "sectionHeading": "F2 \u2014 an exemption for a file that no longer exists",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -63,7 +64,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": "2026-09-09",
-      "sectionHeading": "F3 — the extractor unmakes the record",
+      "sectionHeading": "F3 \u2014 the extractor unmakes the record",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -75,7 +76,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": "2026-09-09",
-      "sectionHeading": "F4 — the class, and nothing covers it",
+      "sectionHeading": "F4 \u2014 the class, and nothing covers it",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -87,7 +88,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": "2026-09-09",
-      "sectionHeading": "F5 — the instrument that reports the gap has a gap it cannot report",
+      "sectionHeading": "F5 \u2014 the instrument that reports the gap has a gap it cannot report",
       "reopened": null,
       "withdrawn": null,
       "resolution": {
@@ -106,7 +107,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": "2026-09-09",
-      "sectionHeading": "F6 — F3 measured two field families out of twenty, and the procedure that needs the extractor has no step for running it",
+      "sectionHeading": "F6 \u2014 F3 measured two field families out of twenty, and the procedure that needs the extractor has no step for running it",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -116,26 +117,26 @@
     {
       "id": "D1",
       "decision": "The coverage sweep derives its roots from docs/INDEX.md instead of keeping a second copy, and reports the repository-root runbooks and references/ explicitly",
-      "findings": [
+      "members": [
         "F5"
       ],
       "decided": "2026-09-09",
-      "outcome": "replaced → D2",
+      "outcome": "replaced \u2192 D2",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D1 — take the list from the file that owns it"
+      "sectionHeading": "D1 \u2014 take the list from the file that owns it"
     },
     {
       "id": "D2",
       "decision": "Derive the roots, default in and explicitly out: a directory in docs/INDEX.md is swept from the moment it appears, and excluding one is a declaration in doc-currency.json carrying its reason",
-      "findings": [
+      "members": [
         "F5"
       ],
       "decided": "2026-09-09",
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D2 — default in, explicitly out, and the records are declared out with a reason"
+      "sectionHeading": "D2 \u2014 default in, explicitly out, and the records are declared out with a reason"
     }
   ],
   "contributions": [],

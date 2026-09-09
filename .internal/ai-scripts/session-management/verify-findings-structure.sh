@@ -143,7 +143,7 @@ import json, sys
 d = json.load(open(sys.argv[1]))
 if d.get("ownership"):                                   print(d["ownership"]); raise SystemExit
 if (d.get("lineage") or {}).get("supersededBy"):         print("superseded");   raise SystemExit
-st = [f["status"] for f in d.get("findings", [])]
+st = [f["status"] for f in d.get("members", [])]
 INERT = ("resolved", "withdrawn")
 if not st or all(s == "un-started" for s in st):                       print("assigned" if not d.get("ownership") else "untouched")
 elif all(s == "withdrawn" for s in st):                                print("retired")

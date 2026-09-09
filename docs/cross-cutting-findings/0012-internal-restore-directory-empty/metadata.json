@@ -3,6 +3,7 @@
   "updatedAt": "2026-09-08T16:32:42+00:00",
   "number": "0012",
   "bundleName": "0012-internal-restore-directory-empty",
+  "genus": "findings",
   "kind": "cross-cutting",
   "subKind": null,
   "subject": "`.internal/restore/` is empty, and is not tracked",
@@ -20,7 +21,7 @@
   "progress": "answered",
   "ownership": null,
   "lineage": null,
-  "findings": [
+  "members": [
     {
       "id": "F1",
       "statement": "`.internal/restore/` is empty, and is not tracked",
@@ -45,7 +46,7 @@
     {
       "id": "D1",
       "decision": "Fix the sentence, not the directory",
-      "findings": [
+      "members": [
         "F1"
       ],
       "decided": "2026-09-04",
@@ -57,7 +58,7 @@
     {
       "id": "D2",
       "decision": "The empty directory is removed locally, and that is not a repository change",
-      "findings": [
+      "members": [
         "F1"
       ],
       "decided": "2026-09-04",
@@ -69,7 +70,7 @@
     {
       "id": "D3",
       "decision": "`reimaging-scripts-guide.md`'s tree is a separate finding, and is bigger than this one",
-      "findings": [
+      "members": [
         "F1"
       ],
       "decided": "2026-09-04",

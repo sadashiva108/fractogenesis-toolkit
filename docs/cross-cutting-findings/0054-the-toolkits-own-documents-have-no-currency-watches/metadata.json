@@ -3,6 +3,7 @@
   "updatedAt": "2026-09-09T09:43:23+00:00",
   "number": "0054",
   "bundleName": "0054-the-toolkits-own-documents-have-no-currency-watches",
+  "genus": "findings",
   "kind": "cross-cutting",
   "subKind": null,
   "subject": "The toolkit's own documents have no currency watches",
@@ -12,7 +13,7 @@
     "sessionBundle": "assurance-coverage-20260908-204724",
     "sessionId": null
   },
-  "severity": "moderate. Eleven references and five architecture records describe machinery that changes without them, and one — `master-directory-reference.md` — is cited by 31 documents, so a stale one misleads broadly.",
+  "severity": "moderate. Eleven references and five architecture records describe machinery that changes without them, and one \u2014 `master-directory-reference.md` \u2014 is cited by 31 documents, so a stale one misleads broadly.",
   "feltAt": [
     "`references/` (11 files, none watched); `docs/architecture/restore-repos-clone-plan.md`, `restore-docker-teardown-and-test.md`, `sign-off-consolidation.md`, `time-machine-run-index.md`; `docs/ledgers/evidence-conformance.md`"
   ],
@@ -27,7 +28,7 @@
   "progress": "untouched",
   "ownership": "unclaimed",
   "lineage": null,
-  "findings": [
+  "members": [
     {
       "id": "F1",
       "statement": "Eleven reference documents describe machinery that changes without them, and none is watched",
@@ -35,7 +36,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F1 — the references describe the machinery and nothing watches them",
+      "sectionHeading": "F1 \u2014 the references describe the machinery and nothing watches them",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -47,7 +48,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F2 — the architecture records and one ledger",
+      "sectionHeading": "F2 \u2014 the architecture records and one ledger",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -59,7 +60,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": null,
-      "sectionHeading": "F3 — the test was run in the wrong direction",
+      "sectionHeading": "F3 \u2014 the test was run in the wrong direction",
       "reopened": null,
       "withdrawn": null,
       "resolution": null

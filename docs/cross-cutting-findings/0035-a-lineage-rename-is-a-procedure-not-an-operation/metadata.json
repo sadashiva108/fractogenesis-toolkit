@@ -3,6 +3,7 @@
   "updatedAt": "2026-09-08T16:32:42+00:00",
   "number": "0035",
   "bundleName": "0035-a-lineage-rename-is-a-procedure-not-an-operation",
+  "genus": "findings",
   "kind": "cross-cutting",
   "subKind": null,
   "subject": "A lineage rename is a procedure, not an operation",
@@ -20,7 +21,7 @@
   "progress": "untouched",
   "ownership": null,
   "lineage": null,
-  "findings": [
+  "members": [
     {
       "id": "F1",
       "statement": "A rename is three manual acts with no defined order and no operation that performs them",
@@ -83,7 +84,7 @@
     {
       "id": "D1",
       "decision": "`artifact_run_rename_lineage` is built, because the sequence turns out to be composable",
-      "findings": [],
+      "members": [],
       "decided": "2026-09-04",
       "outcome": "accepted",
       "answersAsOf": null,
@@ -93,7 +94,7 @@
     {
       "id": "D2",
       "decision": "Finding 2 is corrected: rebuild is loud, `reindex` is the silent one",
-      "findings": [],
+      "members": [],
       "decided": "2026-09-04",
       "outcome": "accepted",
       "answersAsOf": null,
@@ -103,7 +104,7 @@
     {
       "id": "D3",
       "decision": "No per-run identity marker",
-      "findings": [],
+      "members": [],
       "decided": "2026-09-04",
       "outcome": "accepted",
       "answersAsOf": null,

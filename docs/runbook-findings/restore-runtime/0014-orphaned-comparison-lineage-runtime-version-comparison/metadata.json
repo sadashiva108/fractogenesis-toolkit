@@ -3,6 +3,7 @@
   "updatedAt": "2026-09-08T16:32:42+00:00",
   "number": "0014",
   "bundleName": "0014-orphaned-comparison-lineage-runtime-version-comparison",
+  "genus": "findings",
   "kind": "runbook",
   "subKind": null,
   "subject": "`restore-runtime-version-comparison` is a lineage with no producer",
@@ -20,7 +21,7 @@
   "progress": "untouched",
   "ownership": null,
   "lineage": null,
-  "findings": [
+  "members": [
     {
       "id": "F1",
       "statement": "`restore-runtime-version-comparison` is a lineage with no producer",

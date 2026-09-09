@@ -3,6 +3,7 @@
   "updatedAt": "2026-09-08T16:32:42+00:00",
   "number": "0025",
   "bundleName": "0025-staged-ignored-files-live-parent-root-bundles",
+  "genus": "findings",
   "kind": "runbook",
   "subKind": null,
   "subject": "`staged-ignored-files/live/` holds two bundles no lookup can reach",
@@ -20,7 +21,7 @@
   "progress": "answered",
   "ownership": null,
   "lineage": null,
-  "findings": [
+  "members": [
     {
       "id": "F1",
       "statement": "`staged-ignored-files/live/` holds two bundles no lookup can reach",
@@ -45,7 +46,7 @@
     {
       "id": "D1",
       "decision": "The question the finding asks is answered, and the answer is *no restore path is needed*",
-      "findings": [
+      "members": [
         "F1"
       ],
       "decided": "2026-09-03",
@@ -57,7 +58,7 @@
     {
       "id": "D2",
       "decision": "The finding's \"no restore path\" is true of `restore-repos.sh` and not of the workflow",
-      "findings": [
+      "members": [
         "F1"
       ],
       "decided": "2026-09-03",
@@ -69,7 +70,7 @@
     {
       "id": "D3",
       "decision": "The two zips are not restored either, and are not the same case",
-      "findings": [
+      "members": [
         "F1"
       ],
       "decided": "2026-09-03",
@@ -81,7 +82,7 @@
     {
       "id": "D4",
       "decision": "No code change, and the producer is not fixed",
-      "findings": [
+      "members": [
         "F1"
       ],
       "decided": "2026-09-03",
@@ -93,7 +94,7 @@
     {
       "id": "D5",
       "decision": "What this bundle does not take",
-      "findings": [
+      "members": [
         "F1"
       ],
       "decided": "2026-09-03",

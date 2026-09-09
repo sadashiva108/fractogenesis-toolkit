@@ -63,8 +63,8 @@ class Graph(object):
             with io.open(f, encoding="utf-8") as fh:
                 d = json.load(fh)
             d["_dir"] = os.path.relpath(os.path.dirname(f), r)
-            d["_findings"] = d.get("findings") or []
-            d["_progress"] = derivation_table([x.get("status") for x in d["_findings"]])
+            d["_members"] = d.get("members") or []
+            d["_progress"] = derivation_table([x.get("status") for x in d["_members"]])
             d["_wc"] = write_category(d.get("scope"))
             self.bundles[d["number"]] = d
             for e in d.get("edges") or []:
@@ -99,7 +99,7 @@ class Graph(object):
             owned = [self.bundles[str(ob.get("number"))[:4]]
                      for ob in (s.get("ownedBundles") or [])
                      if str(ob.get("number"))[:4] in self.bundles]
-            open_f = sum(1 for b in owned for x in b["_findings"]
+            open_f = sum(1 for b in owned for x in b["_members"]
                          if x.get("status") not in INERT)
             s["_open"] = open_f
             s["_bundles"] = len(owned)
@@ -107,7 +107,7 @@ class Graph(object):
         return out
 
     def cost(self, b):
-        live = [x for x in b["_findings"] if x.get("status") not in INERT]
+        live = [x for x in b["_members"] if x.get("status") not in INERT]
         return round(len(live) * WC[b["_wc"]], 2)
 
 
@@ -243,7 +243,7 @@ def frontier(g):
                 blocked.add(str(e["to"]))
     for n, b in g.bundles.items():
         owned = b.get("ownership") is None
-        for x in b["_findings"]:
+        for x in b["_members"]:
             fid = "%s/%s" % (n, x["id"])
             if x.get("status") != "framing":
                 continue
@@ -256,16 +256,16 @@ def frontier(g):
 def rank(g, fr):
     for r in fr:
         b = r["bundle"]
-        sib = [x for x in b["_findings"] if x.get("status") == "framing"]
+        sib = [x for x in b["_members"] if x.get("status") == "framing"]
         dec = b.get("decisions") or []
         cited = set()
         for d in dec:
-            for fid in (d.get("findings") or []):
+            for fid in (d.get("members") or []):
                 cited.add(fid)
         r["undecided"] = r["f"] not in cited
         r["gate"] = 1.0 if (r["undecided"] and len(dec) > 0
                             and all(x["id"] in cited or x["id"] == r["f"]
-                                    for x in b["_findings"])) else (0.5 if r["undecided"] else 0.0)
+                                    for x in b["_members"])) else (0.5 if r["undecided"] else 0.0)
         r["wc"] = b["_wc"]
         r["gain"] = r["gate"] * len(sib) * 2 + b["_blast"] * 0.5 + (len(sib) - 1) * 0.3
         r["score"] = 0 if r["blocked"] else r["gain"] + WC[r["wc"]]
@@ -315,7 +315,7 @@ def bundle_standing(b):
 
 def bundle_progress(b):
     """The pure derivation over the finding rows, with nothing layered on it."""
-    return derivation_table([x.get("status") for x in (b.get("findings") or [])])
+    return derivation_table([x.get("status") for x in (b.get("members") or [])])
 
 
 def bundle_is_terminal(b):
@@ -400,6 +400,19 @@ OWNERSHIP = (None, "unclaimed", "transferred")
 OUTCOMES = ("proposed", "accepted", "rejected", "deferred", "retracted", "voided")
 POINTER_OUTCOMES = ("replaced",)             # `replaced -> DX`, pointer required
 KINDS = ("runbook", "cross-cutting", "instruction-set", "session-management")
+# `genus` is what sort of bundle this is; `kind` stays the subject domain it has
+# always been. Two shapes, four genera, and SHAPE IS DERIVED -- never stored,
+# because nothing derivable is stored.
+GENERA = ("findings", "commission", "charter", "remedy")
+SHAPE = {"findings": "reasoning", "commission": "reasoning",
+         "charter": "actionable", "remedy": "actionable"}
+# A member id carries its genus in its prefix: a finding, a question, a task.
+MEMBER_PREFIX = {"findings": "F", "commission": "Q", "charter": "T", "remedy": "T"}
+
+
+def shape(b):
+    """Derived, never read from the record."""
+    return SHAPE.get(b.get("genus") or "findings")
 
 
 def is_clone(b):
@@ -432,7 +445,7 @@ def conformance(g):
                         "state says %r, the record derives %r"
                         % (sess["state"], session_state(g, sess))))
     for n, b in sorted(g.bundles.items()):
-        fs = b["_findings"]
+        fs = b["_members"]
         sts = [x.get("status") for x in fs]
         clone = is_clone(b)
         for x in fs:
@@ -442,6 +455,17 @@ def conformance(g):
             out.append(("VOCAB", n, "ownership %r" % b.get("ownership")))
         if b.get("kind") not in KINDS:
             out.append(("VOCAB", n, "kind %r" % b.get("kind")))
+        gen = b.get("genus")
+        if gen not in GENERA:
+            out.append(("VOCAB", n, "genus %r" % gen))
+        else:
+            want = MEMBER_PREFIX[gen]
+            for x in (b.get("members") or []):
+                mid = x.get("id") or ""
+                if not mid.startswith(want):
+                    out.append(("MEMBER-PREFIX", n,
+                                "%s is a %s member and should start %s"
+                                % (mid, gen, want)))
         # A bundle closed to every session must hold nothing open to one.
         # `unclaimed` is that bundle. `transferred` is NOT: docs/legend.md and
         # section 10 both permit transferring a bundle that stands `analyzing`,
@@ -473,9 +497,9 @@ def conformance(g):
             o = d.get("outcome") or ""
             if o not in OUTCOMES and not o.startswith(POINTER_OUTCOMES):
                 out.append(("VOCAB", n, "%s outcome %r" % (d.get("id"), o)))
-            fl = d.get("findings") or []
+            fl = d.get("members") or []
             if not fl:
-                out.append(("UNCITED-DECISION", n, "%s cites no finding" % d.get("id")))
+                out.append(("UNCITED-DECISION", n, "%s cites no member" % d.get("id")))
             for fid in fl:
                 cited.add(fid)
                 if fid not in ids:
@@ -486,7 +510,7 @@ def conformance(g):
                 if x.get("status") in ("framing", "un-started") and x["id"] in cited:
                     if all(((d.get("outcome") or "") == "accepted")
                            for d in (b.get("decisions") or [])
-                           if x["id"] in (d.get("findings") or [])):
+                           if x["id"] in (d.get("members") or [])):
                         out.append(("DECISION-AHEAD-OF-FINDING", n,
                                     "%s is %s with every decision accepted"
                                     % (x["id"], x["status"])))
@@ -532,7 +556,7 @@ def quality(g):
         if not owned:
             continue
         load = sum(g.cost(b) for b in owned)
-        nf = sum(len(b["_findings"]) for b in owned)
+        nf = sum(len(b["_members"]) for b in owned)
         dec = redone = 0
         for b in owned:
             for d in (b.get("decisions") or []):
@@ -540,7 +564,7 @@ def quality(g):
                 o = (d.get("outcome") or "")
                 if o and o != "accepted":
                     redone += 1
-            for x in b["_findings"]:
+            for x in b["_members"]:
                 if x.get("status") == "reopened" or x.get("reopened"):
                     redone += 1
             if (b.get("lineage") or {}).get("supersededBy"):
@@ -572,13 +596,13 @@ def stamp():
 def cmd_graph(g, a):
     q = [b for b in g.bundles.values() if b.get("ownership") == "unclaimed"]
     print("GRAPH  %d bundles  %d findings  %d edges  %d live sessions"
-          % (len(g.bundles), sum(len(b["_findings"]) for b in g.bundles.values()),
+          % (len(g.bundles), sum(len(b["_members"]) for b in g.bundles.values()),
              len(g.edges), len(g.live_sessions())))
     print("  edge kinds: %s" % dict(Counter(e.get("kind") for e in g.edges)))
     print("  unclaimed:  %d bundles, %d findings, %.1f cost units"
-          % (len(q), sum(len(b["_findings"]) for b in q), sum(g.cost(b) for b in q)))
+          % (len(q), sum(len(b["_members"]) for b in q), sum(g.cost(b) for b in q)))
     drift = [(b["number"], x["id"], x["status"]) for b in q
-             for x in b["_findings"] if x.get("status") != "un-started"]
+             for x in b["_members"] if x.get("status") != "un-started"]
     if drift:
         print("  ** %d findings are live inside unclaimed bundles (0047 F1):" % len(drift))
         for n, f, s in drift[:8]:
@@ -637,11 +661,11 @@ def cmd_allocate(g, a):
         print("no live sessions and no new ones requested; pass --new-sessions N")
         return
     print("QUEUE  %d bundles, %d findings, %.1f cost units"
-          % (len(r["queue"]), sum(len(b["_findings"]) for b in r["queue"].values()),
+          % (len(r["queue"]), sum(len(b["_members"]) for b in r["queue"].values()),
              sum(g.cost(b) for b in r["queue"].values())))
     stranded = 0
     for n, es in sorted(r["held"].items()):
-        ready = len(r["queue"][n]["_findings"])
+        ready = len(r["queue"][n]["_members"])
         stranded += ready
         print("  HOLD %s (%d ready) <- %s from %s" % (n, ready, es[0]["kind"], es[0]["from"]))
     print("  held %d, held-back ready findings %d" % (len(r["held"]), stranded))
@@ -670,7 +694,7 @@ def cmd_allocate(g, a):
             title = "%s-%s" % (kinds.most_common(1)[0][0], bs[0])
             print("  docs/sessions/%s-%s/" % (title, st))
             print("      %d bundles, %d findings, load %.1f: %s"
-                  % (len(bs), sum(len(g.bundles[b]["_findings"]) for b in bs),
+                  % (len(bs), sum(len(g.bundles[b]["_members"]) for b in bs),
                      r["parts"]["load"][n], ", ".join(bs)))
     if newnames:
         print("\n  DRY RUN -- nothing here exists yet. For each new bundle:")
@@ -719,9 +743,9 @@ def cmd_ask(g, a):
     ranked = rank(g, fr)
     askable = [r for r in ranked if r["owned"] and not r["blocked"]]
     print("FRONTIER  %d findings in the tree, %d `framing`, %d askable"
-          % (sum(len(b["_findings"]) for b in g.bundles.values()), len(fr), len(askable)))
+          % (sum(len(b["_members"]) for b in g.bundles.values()), len(fr), len(askable)))
     print("  dropped: %d not `framing`, %d in unclaimed bundles, %d blocked"
-          % (sum(len(b["_findings"]) for b in g.bundles.values()) - len(fr),
+          % (sum(len(b["_members"]) for b in g.bundles.values()) - len(fr),
              len([r for r in fr if not r["owned"]]),
              len([r for r in fr if r["blocked"]])))
     if not askable:

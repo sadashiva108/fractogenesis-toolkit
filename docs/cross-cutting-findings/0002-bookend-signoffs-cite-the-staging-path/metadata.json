@@ -3,6 +3,7 @@
   "updatedAt": "2026-09-08T16:32:42+00:00",
   "number": "0002",
   "bundleName": "0002-bookend-signoffs-cite-the-staging-path",
+  "genus": "findings",
   "kind": "cross-cutting",
   "subKind": null,
   "subject": "Bookend sign-offs cite the `.incomplete` staging path",
@@ -20,7 +21,7 @@
   "progress": "answered",
   "ownership": null,
   "lineage": null,
-  "findings": [
+  "members": [
     {
       "id": "F1",
       "statement": "Bookend sign-offs cite the `.incomplete` staging path",

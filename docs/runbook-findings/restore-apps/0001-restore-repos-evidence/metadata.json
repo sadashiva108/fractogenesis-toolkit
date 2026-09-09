@@ -3,6 +3,7 @@
   "updatedAt": "2026-09-08T16:32:42+00:00",
   "number": "0001",
   "bundleName": "0001-restore-repos-evidence",
+  "genus": "findings",
   "kind": "runbook",
   "subKind": null,
   "subject": "Phase 11B evidence review \u2014 what `restore-repos` actually left behind",
@@ -20,7 +21,7 @@
   "progress": "analyzing",
   "ownership": "unclaimed",
   "lineage": null,
-  "findings": [
+  "members": [
     {
       "id": "F1",
       "statement": "The official run reports `repo-secrets` as blocked, although it succeeded",
@@ -146,7 +147,7 @@
     {
       "id": "D1",
       "decision": "the work succeeded and nothing is owed",
-      "findings": [
+      "members": [
         "F1"
       ],
       "decided": null,
@@ -158,7 +159,7 @@
     {
       "id": "D2",
       "decision": "verify, do not remember (option E)",
-      "findings": [
+      "members": [
         "F1"
       ],
       "decided": null,
@@ -170,7 +171,7 @@
     {
       "id": "D3",
       "decision": "`unknown` when the source is unreachable (option D)",
-      "findings": [
+      "members": [
         "F1"
       ],
       "decided": null,
@@ -182,7 +183,7 @@
     {
       "id": "D4",
       "decision": "the outcome vocabulary",
-      "findings": [
+      "members": [
         "F1"
       ],
       "decided": null,
@@ -194,7 +195,7 @@
     {
       "id": "D5",
       "decision": "an unreachable source is recorded, not refused",
-      "findings": [
+      "members": [
         "F1"
       ],
       "decided": null,
@@ -206,7 +207,7 @@
     {
       "id": "D6",
       "decision": "how strict the comparison is depends on the gap",
-      "findings": [
+      "members": [
         "F1"
       ],
       "decided": null,

@@ -3,6 +3,7 @@
   "updatedAt": "2026-09-08T16:32:42+00:00",
   "number": "0027",
   "bundleName": "0027-findings-architecture-conformance",
+  "genus": "findings",
   "kind": "cross-cutting",
   "subKind": null,
   "subject": "The findings-and-sessions architecture disagrees with itself and with the tree",
@@ -28,7 +29,7 @@
     "supersededBy": "0037",
     "on": null
   },
-  "findings": [
+  "members": [
     {
       "id": "F1",
       "statement": "\u00a74b and \u00a74c contradict each other on whether a findings bundle takes a manifest revision",
@@ -172,7 +173,7 @@
     {
       "id": "D1",
       "decision": "\u00a74b stands. \u00a74c's contradicting sentence is deleted",
-      "findings": [
+      "members": [
         "F1"
       ],
       "decided": "2026-09-03",
@@ -184,7 +185,7 @@
     {
       "id": "D2",
       "decision": "\u00a74d's \"always\" binds a `prompt.md` for a session that is `unclaimed`, `owned` or `handoff`. A `closed` or `withdrawn` session's prompt is a record of what was given and is not retro-edited",
-      "findings": [
+      "members": [
         "F2"
       ],
       "decided": "2026-09-03",
@@ -196,7 +197,7 @@
     {
       "id": "D3",
       "decision": "a fact is written down once, and everywhere else links to it",
-      "findings": [
+      "members": [
         "F3",
         "F4"
       ],
@@ -209,7 +210,7 @@
     {
       "id": "D4",
       "decision": "a derived fact may be displayed, if something catches it drifting",
-      "findings": [
+      "members": [
         "F3",
         "F4"
       ],
@@ -222,7 +223,7 @@
     {
       "id": "D5",
       "decision": "a session's row shows bundles owned *and* findings carried",
-      "findings": [
+      "members": [
         "F3",
         "F4"
       ],
@@ -235,7 +236,7 @@
     {
       "id": "D6",
       "decision": "a findings bundle migrated into this shape from an already-closed record carries `resolutions.md` and no `decisions.md`, and its `resolutions.md` says so",
-      "findings": [
+      "members": [
         "F5"
       ],
       "decided": "2026-09-03",
@@ -247,7 +248,7 @@
     {
       "id": "D7",
       "decision": "four session states: `owned`, `handoff`, `closed`, `withdrawn`. `unclaimed` is dropped",
-      "findings": [
+      "members": [
         "F6"
       ],
       "decided": "2026-09-04",
@@ -259,7 +260,7 @@
     {
       "id": "D8",
       "decision": "the three terminal states differ by what happens to the findings",
-      "findings": [
+      "members": [
         "F6"
       ],
       "decided": "2026-09-04",
@@ -271,7 +272,7 @@
     {
       "id": "D9",
       "decision": "any `not recoverable` in a `metadata.md` lists the searches that came back empty",
-      "findings": [
+      "members": [
         "F7"
       ],
       "decided": "2026-09-04",

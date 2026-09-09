@@ -3,6 +3,7 @@
   "updatedAt": "2026-09-09T05:45:00-04:00",
   "number": "0048",
   "bundleName": "0048-the-session-capacity-limit-has-no-datum",
+  "genus": "findings",
   "kind": "session-management",
   "subKind": null,
   "subject": "The session capacity limit has no datum, and its only proxy points the wrong way",
@@ -29,7 +30,7 @@
   "progress": "untouched",
   "ownership": "transferred",
   "lineage": null,
-  "findings": [
+  "members": [
     {
       "id": "F1",
       "statement": "A session's length is recorded nowhere, so the limit the owner means cannot be derived",

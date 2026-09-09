@@ -24,6 +24,7 @@ from plan_findings_work import (                              # noqa: E402
     Graph, derivation_table, conformance, allocate, select, frontier, rank, is_clone,
     FINDING_STATUSES, BUNDLE_STANDINGS, BUNDLE_PROGRESS, OUTCOMES,
     POINTER_OUTCOMES, KINDS, INERT, quality,
+    GENERA, SHAPE, MEMBER_PREFIX, shape,
     bundle_standing, bundle_progress, session_state, stamp_derived)
 
 
@@ -89,6 +90,77 @@ class TestLadder(unittest.TestCase):
         self.assertIsNone(g.bundles["0100"]["progress"])
         self.assertEqual(g.bundles["0100"]["_progress"], "analyzing")
         g._fixture.close()
+
+
+class TestGenusAndShape(unittest.TestCase):
+    """The genus is stored; the shape is derived from it and never stored.
+
+    Revision 270 introduced both. These assert the properties the rename was
+    made to protect, because a rename nothing guards is a rename that comes
+    undone the first time somebody adds a genus and forgets half of it.
+    """
+
+    def test_four_genera(self):
+        self.assertEqual(len(GENERA), 4)
+        self.assertEqual(set(GENERA),
+                         {"findings", "commission", "charter", "remedy"})
+
+    def test_every_genus_has_a_shape_and_a_prefix(self):
+        """A genus the maps do not cover is the half-added genus this guards."""
+        for g in GENERA:
+            self.assertIn(g, SHAPE, "%s has no shape" % g)
+            self.assertIn(g, MEMBER_PREFIX, "%s has no member prefix" % g)
+        self.assertEqual(set(SHAPE), set(GENERA))
+        self.assertEqual(set(MEMBER_PREFIX), set(GENERA))
+
+    def test_two_shapes_and_they_are_not_genera(self):
+        """`reasoning` and `actionable` are shapes and never appear as a genus,
+        which is Revision 243's tier-1 rule: no value shared between two sets."""
+        self.assertEqual(set(SHAPE.values()), {"reasoning", "actionable"})
+        self.assertFalse(set(SHAPE.values()) & set(GENERA))
+
+    def test_no_shape_word_is_also_a_status_standing_or_outcome(self):
+        other = set(FINDING_STATUSES) | set(BUNDLE_STANDINGS) \
+            | set(BUNDLE_PROGRESS) | set(OUTCOMES) | set(GENERA)
+        self.assertFalse(set(SHAPE.values()) & other)
+
+    def test_shape_is_derived_not_read(self):
+        """A bundle carrying a stored shape is ignored: the map decides."""
+        b = F.bundle("0001", genus="commission")
+        b["shape"] = "actionable"
+        self.assertEqual(shape(b), "reasoning")
+
+    def test_a_genus_outside_the_set_is_caught(self):
+        b = F.bundle("0001", ("framing",))
+        b["genus"] = "undertaking"
+        self.assertIn("VOCAB", codes(graph_of(b)))
+
+    def test_a_member_prefix_that_disagrees_with_the_genus_is_caught(self):
+        """A commission holding `F1` says two things about what it is."""
+        b = F.bundle("0001", ("framing",), genus="commission")
+        b["members"][0]["id"] = "F1"
+        self.assertIn("MEMBER-PREFIX", codes(graph_of(b)))
+
+    def test_a_conformant_commission_is_clean_of_both(self):
+        b = F.bundle("0001", ("framing",), genus="commission")
+        self.assertEqual([m["id"] for m in b["members"]], ["Q1"])
+        c = codes(graph_of(b))
+        self.assertNotIn("VOCAB", c)
+        self.assertNotIn("MEMBER-PREFIX", c)
+
+    def test_an_actionable_bundle_holds_tasks(self):
+        for gen in ("charter", "remedy"):
+            b = F.bundle("0001", ("framing",), genus=gen)
+            self.assertEqual([m["id"] for m in b["members"]], ["T1"])
+            self.assertEqual(shape(b), "actionable")
+
+    def test_the_derivation_does_not_care_which_genus(self):
+        """Standing derives from member statuses alone -- that is what makes the
+        genus cheap. `0037` answered on findings must answer on tasks too."""
+        for gen in GENERA:
+            b = F.bundle("0001", ("resolved", "resolved"),
+                         genus=gen, ownership=None)
+            self.assertEqual(bundle_progress(b), "answered")
 
 
 class TestVocabulary(unittest.TestCase):

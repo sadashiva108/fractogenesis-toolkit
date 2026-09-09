@@ -3,6 +3,7 @@
   "updatedAt": "2026-09-08T16:32:42+00:00",
   "number": "0033",
   "bundleName": "0033-styling-is-copied-into-every-script-and-lands-in-evidence",
+  "genus": "findings",
   "kind": "cross-cutting",
   "subKind": null,
   "subject": "Styling is copied into every script, and it lands in the evidence",
@@ -20,7 +21,7 @@
   "progress": "untouched",
   "ownership": "unclaimed",
   "lineage": null,
-  "findings": [
+  "members": [
     {
       "id": "F1",
       "statement": "Seventeen scripts each define the palette; there is no shared source",

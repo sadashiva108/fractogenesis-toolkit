@@ -3,6 +3,7 @@
   "updatedAt": "2026-09-08T16:32:42+00:00",
   "number": "0006",
   "bundleName": "0006-caller-environment-precedence-covers-only-listed-keys",
+  "genus": "findings",
   "kind": "cross-cutting",
   "subKind": null,
   "subject": "Caller-environment precedence holds only for the keys `artifact-config.sh` lists",
@@ -20,7 +21,7 @@
   "progress": "answered",
   "ownership": null,
   "lineage": null,
-  "findings": [
+  "members": [
     {
       "id": "F1",
       "statement": "Caller-environment precedence holds only for the keys `artifact-config.sh` lists",

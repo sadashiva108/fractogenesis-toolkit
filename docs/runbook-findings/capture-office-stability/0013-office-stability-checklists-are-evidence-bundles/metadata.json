@@ -3,6 +3,7 @@
   "updatedAt": "2026-09-08T16:32:42+00:00",
   "number": "0013",
   "bundleName": "0013-office-stability-checklists-are-evidence-bundles",
+  "genus": "findings",
   "kind": "runbook",
   "subKind": null,
   "subject": "`office-stability/checklists/` does not hold checklists",
@@ -20,7 +21,7 @@
   "progress": "answered",
   "ownership": null,
   "lineage": null,
-  "findings": [
+  "members": [
     {
       "id": "F1",
       "statement": "`office-stability/checklists/` does not hold checklists",
@@ -43,7 +44,7 @@
     {
       "id": "D1",
       "decision": "The finding is resolved by work already shipped, not by new work",
-      "findings": [
+      "members": [
         "F1"
       ],
       "decided": "2026-09-03",
@@ -55,7 +56,7 @@
     {
       "id": "D2",
       "decision": "The two lineages stand, and the names are correct",
-      "findings": [
+      "members": [
         "F1"
       ],
       "decided": "2026-09-03",
@@ -67,7 +68,7 @@
     {
       "id": "D3",
       "decision": "Define the two words where a reader looks for them",
-      "findings": [
+      "members": [
         "F1"
       ],
       "decided": "2026-09-03",
@@ -79,7 +80,7 @@
     {
       "id": "D4",
       "decision": "The item 4 dependency is discharged",
-      "findings": [
+      "members": [
         "F1"
       ],
       "decided": "2026-09-03",
@@ -91,7 +92,7 @@
     {
       "id": "D5",
       "decision": "What is not taken into this bundle",
-      "findings": [
+      "members": [
         "F1"
       ],
       "decided": "2026-09-03",

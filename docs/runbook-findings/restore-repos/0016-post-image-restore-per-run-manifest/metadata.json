@@ -3,6 +3,7 @@
   "updatedAt": "2026-09-08T16:32:42+00:00",
   "number": "0016",
   "bundleName": "0016-post-image-restore-per-run-manifest",
+  "genus": "findings",
   "kind": "runbook",
   "subKind": null,
   "subject": "`MANIFEST.txt` duplicates the category run index",
@@ -20,7 +21,7 @@
   "progress": "untouched",
   "ownership": "unclaimed",
   "lineage": null,
-  "findings": [
+  "members": [
     {
       "id": "F1",
       "statement": "`MANIFEST.txt` duplicates the category run index",

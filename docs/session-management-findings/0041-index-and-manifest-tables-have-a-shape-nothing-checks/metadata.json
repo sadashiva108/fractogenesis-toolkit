@@ -3,6 +3,7 @@
   "updatedAt": "2026-09-09T12:00:00+00:00",
   "number": "0041",
   "bundleName": "0041-index-and-manifest-tables-have-a-shape-nothing-checks",
+  "genus": "findings",
   "kind": "session-management",
   "subKind": null,
   "subject": "The index and manifest tables have a shape nothing checks",
@@ -14,7 +15,7 @@
   },
   "severity": "low per instance, and it defeats the check a session actually runs. Every validator in the repository passed on both broken rows.",
   "feltAt": [],
-  "scope": "instruction set. §§4c–4d define these tables; nothing validates them. Whether the *fix* belongs here is finding F3.",
+  "scope": "instruction set. \u00a7\u00a74c\u20134d define these tables; nothing validates them. Whether the *fix* belongs here is finding F3.",
   "read": [],
   "standing": "unclaimed",
   "progress": "analyzing",
@@ -23,7 +24,7 @@
     "supersedes": "0032",
     "on": null
   },
-  "findings": [
+  "members": [
     {
       "id": "F1",
       "statement": "The indexes and manifests have a required column shape that no check enforces",
@@ -31,7 +32,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": "2026-09-09",
-      "sectionHeading": "F1 — a required shape, unenforced",
+      "sectionHeading": "F1 \u2014 a required shape, unenforced",
       "reopened": null,
       "withdrawn": null,
       "resolution": {
@@ -50,7 +51,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": "2026-09-09",
-      "sectionHeading": "F2 — the check that runs gives the wrong assurance",
+      "sectionHeading": "F2 \u2014 the check that runs gives the wrong assurance",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -62,7 +63,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": "2026-09-09",
-      "sectionHeading": "F3 — this may be in the wrong tree",
+      "sectionHeading": "F3 \u2014 this may be in the wrong tree",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -74,7 +75,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": "2026-09-09",
-      "sectionHeading": "F4 — a patch containing a deletion under-applies silently, and every check passes",
+      "sectionHeading": "F4 \u2014 a patch containing a deletion under-applies silently, and every check passes",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -86,7 +87,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": "2026-09-09",
-      "sectionHeading": "F5 — nothing compares a resolution's claim against the tree",
+      "sectionHeading": "F5 \u2014 nothing compares a resolution's claim against the tree",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -98,7 +99,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": "2026-09-09",
-      "sectionHeading": "F6 — the prose total nobody counts",
+      "sectionHeading": "F6 \u2014 the prose total nobody counts",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -108,74 +109,74 @@
     {
       "id": "D1",
       "decision": "A check is responsible for the artifact as it will be read, not for a curated proxy of it. Where it can only see a declared subset, the undeclared remainder must fail rather than inform",
-      "findings": [
+      "members": [
         "F2"
       ],
       "decided": "2026-09-09",
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D1 — what the assurance layer is responsible for seeing"
+      "sectionHeading": "D1 \u2014 what the assurance layer is responsible for seeing"
     },
     {
       "id": "D2",
       "decision": "F1 is overtaken. The column-count check was built at Revision 195 and the Bundle: value defect it later gained is clean in all ten files",
-      "findings": [
+      "members": [
         "F1"
       ],
       "decided": "2026-09-09",
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D2 — F1 is overtaken"
+      "sectionHeading": "D2 \u2014 F1 is overtaken"
     },
     {
       "id": "D3",
       "decision": "This bundle stays in docs/session-management-findings/. The subject decides the tree, not the fix",
-      "findings": [
+      "members": [
         "F3"
       ],
       "decided": "2026-09-09",
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D3 — the tree is decided by subject"
+      "sectionHeading": "D3 \u2014 the tree is decided by subject"
     },
     {
       "id": "D4",
       "decision": "F4's record half is closed by section 6. Its \"and every check passes\" half is D1 and is not separately decided",
-      "findings": [
+      "members": [
         "F4"
       ],
       "decided": "2026-09-09",
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D4 — F4 is closed on the record and open on the check"
+      "sectionHeading": "D4 \u2014 F4 is closed on the record and open on the check"
     },
     {
       "id": "D5",
-      "decision": "A resolution names a verifiable referent — a file and a construct in it — never a section number",
-      "findings": [
+      "decision": "A resolution names a verifiable referent \u2014 a file and a construct in it \u2014 never a section number",
+      "members": [
         "F5"
       ],
       "decided": "2026-09-09",
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D5 — a resolution names something grep can answer"
+      "sectionHeading": "D5 \u2014 a resolution names something grep can answer"
     },
     {
       "id": "D6",
       "decision": "A total is summed from the rows it describes, or it is not written. The count check gains the one assertion it has always been read as making",
-      "findings": [
+      "members": [
         "F6"
       ],
       "decided": "2026-09-09",
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D6 — sum the column, or delete the sentence"
+      "sectionHeading": "D6 \u2014 sum the column, or delete the sentence"
     }
   ],
   "contributions": [],

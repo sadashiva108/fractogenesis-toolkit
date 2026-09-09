@@ -3,6 +3,7 @@
   "updatedAt": "2026-09-09T05:30:00+00:00",
   "number": "0044",
   "bundleName": "0044-citations-under-docs-resolve-nowhere-and-nothing-reads-them",
+  "genus": "findings",
   "kind": "session-management",
   "subKind": null,
   "subject": "Citations under `docs/` resolve nowhere, and nothing reads them",
@@ -12,7 +13,7 @@
     "sessionBundle": "allocation-and-inquiry-design-20260906-233205",
     "sessionId": "session_015FpYVBF7dDoDrHfKDkq8fn"
   },
-  "severity": "low each, and F1 is the first demonstrated instance of `0036` — a broken link inside `docs/` that every validator passes.",
+  "severity": "low each, and F1 is the first demonstrated instance of `0036` \u2014 a broken link inside `docs/` that every validator passes.",
   "feltAt": [
     "`docs/cross-cutting-findings/INDEX.md` rows 0003, 0005, 0006 and 0030; line 15 of the same file; `docs/sessions/INDEX.md` line 8"
   ],
@@ -26,7 +27,7 @@
   "progress": "answered",
   "ownership": null,
   "lineage": null,
-  "findings": [
+  "members": [
     {
       "id": "F1",
       "statement": "Four session citations in one index point one directory too high and resolve to nothing",
@@ -34,14 +35,14 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": "2026-09-09",
-      "sectionHeading": "F1 — four citations resolve one directory too high",
+      "sectionHeading": "F1 \u2014 four citations resolve one directory too high",
       "reopened": null,
       "withdrawn": null,
       "resolution": {
         "resolvedBy": [
           "D1"
         ],
-        "whatWasDone": "docs/cross-cutting-findings/INDEX.md — eight Session cells changed from ../../sessions/ to ../sessions/; grep -c for the broken spelling in that file returns 0",
+        "whatWasDone": "docs/cross-cutting-findings/INDEX.md \u2014 eight Session cells changed from ../../sessions/ to ../sessions/; grep -c for the broken spelling in that file returns 0",
         "revision": "251",
         "commit": null
       }
@@ -53,7 +54,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": "2026-09-09",
-      "sectionHeading": "F2 — two indexes cite a file section that moved",
+      "sectionHeading": "F2 \u2014 two indexes cite a file section that moved",
       "reopened": null,
       "withdrawn": null,
       "resolution": {
@@ -70,31 +71,31 @@
     {
       "id": "D1",
       "decision": "The eight broken citations are repaired now, as a record write. The repair is undone by the next writer until the check exists, and saying so is the argument for building it",
-      "findings": [
+      "members": [
         "F1"
       ],
       "decided": "2026-09-09",
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D1 — repair the eight, and say what the repair does not buy"
+      "sectionHeading": "D1 \u2014 repair the eight, and say what the repair does not buy"
     },
     {
       "id": "D2",
       "decision": "A citation to a rule that moved is repaired; a citation to a record's own moment is marked historical and never repaired. F2 is the first kind",
-      "findings": [
+      "members": [
         "F2"
       ],
       "decided": "2026-09-09",
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D2 — repair what moved, mark what is frozen"
+      "sectionHeading": "D2 \u2014 repair what moved, mark what is frozen"
     },
     {
       "id": "D3",
       "decision": "The check 0041 D1 specifies is not built here. It is a toolkit write with no bundle type yet",
-      "findings": [
+      "members": [
         "F1",
         "F2"
       ],
@@ -102,7 +103,7 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D3 — the check is specified here and built elsewhere"
+      "sectionHeading": "D3 \u2014 the check is specified here and built elsewhere"
     }
   ],
   "contributions": [],

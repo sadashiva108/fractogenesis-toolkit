@@ -3,6 +3,7 @@
   "updatedAt": "2026-09-08T16:32:42+00:00",
   "number": "0022",
   "bundleName": "0022-restore-repos-missing-exit-recorder-steps",
+  "genus": "findings",
   "kind": "runbook",
   "subKind": null,
   "subject": "`restore-repos.md` opens its boundary but never closes it",
@@ -20,7 +21,7 @@
   "progress": "answered",
   "ownership": null,
   "lineage": null,
-  "findings": [
+  "members": [
     {
       "id": "F1",
       "statement": "`restore-repos.md` opens its boundary but never closes it",

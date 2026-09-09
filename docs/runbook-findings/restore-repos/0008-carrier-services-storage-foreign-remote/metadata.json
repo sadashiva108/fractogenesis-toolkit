@@ -3,6 +3,7 @@
   "updatedAt": "2026-09-08T16:32:42+00:00",
   "number": "0008",
   "bundleName": "0008-carrier-services-storage-foreign-remote",
+  "genus": "findings",
   "kind": "runbook",
   "subKind": null,
   "subject": "`carrier-services-storage` carries a remote pointing at `dotfiles`",
@@ -20,7 +21,7 @@
   "progress": "untouched",
   "ownership": "unclaimed",
   "lineage": null,
-  "findings": [
+  "members": [
     {
       "id": "F1",
       "statement": "`carrier-services-storage` carries a remote pointing at `dotfiles`",

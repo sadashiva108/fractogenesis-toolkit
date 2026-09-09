@@ -3,6 +3,7 @@
   "updatedAt": "2026-09-08T16:32:42+00:00",
   "number": "0024",
   "bundleName": "0024-restore-docker-stack-differs-from-pre-image",
+  "genus": "findings",
   "kind": "runbook",
   "subKind": null,
   "subject": "The running Docker stack is not the one `restore-docker.md` restores",
@@ -20,7 +21,7 @@
   "progress": "untouched",
   "ownership": "unclaimed",
   "lineage": null,
-  "findings": [
+  "members": [
     {
       "id": "F1",
       "statement": "The running Docker stack is not the one `restore-docker.md` restores",

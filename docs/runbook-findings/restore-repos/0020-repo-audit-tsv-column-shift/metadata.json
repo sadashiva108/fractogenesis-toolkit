@@ -3,6 +3,7 @@
   "updatedAt": "2026-09-08T16:32:42+00:00",
   "number": "0020",
   "bundleName": "0020-repo-audit-tsv-column-shift",
+  "genus": "findings",
   "kind": "runbook",
   "subKind": null,
   "subject": "`repos.tsv` remote column is shifted by embedded tabs",
@@ -20,7 +21,7 @@
   "progress": "answered",
   "ownership": null,
   "lineage": null,
-  "findings": [
+  "members": [
     {
       "id": "F1",
       "statement": "`repos.tsv` remote column is shifted by embedded tabs",

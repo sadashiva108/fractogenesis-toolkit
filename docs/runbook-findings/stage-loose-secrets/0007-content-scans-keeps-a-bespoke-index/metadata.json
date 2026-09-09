@@ -3,6 +3,7 @@
   "updatedAt": "2026-09-08T16:32:42+00:00",
   "number": "0007",
   "bundleName": "0007-content-scans-keeps-a-bespoke-index",
+  "genus": "findings",
   "kind": "runbook",
   "subKind": null,
   "subject": "`content-scans/` looks like a run category and is not one",
@@ -20,7 +21,7 @@
   "progress": "answered",
   "ownership": null,
   "lineage": null,
-  "findings": [
+  "members": [
     {
       "id": "F1",
       "statement": "`content-scans/` looks like a run category and is not one",

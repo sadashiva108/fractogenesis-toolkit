@@ -3,6 +3,7 @@
   "updatedAt": "2026-09-08T16:32:42+00:00",
   "number": "0021",
   "bundleName": "0021-restore-access-exit-predates-its-own-state-walk",
+  "genus": "findings",
   "kind": "runbook",
   "subKind": null,
   "subject": "The Phase 10B exit was recorded a week before the evidence it stands on",
@@ -20,7 +21,7 @@
   "progress": "untouched",
   "ownership": null,
   "lineage": null,
-  "findings": [
+  "members": [
     {
       "id": "F1",
       "statement": "The Phase 10B exit was recorded a week before the evidence it stands on",

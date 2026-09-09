@@ -3,6 +3,7 @@
   "updatedAt": "2026-09-08T16:32:42+00:00",
   "number": "0010",
   "bundleName": "0010-docker-capture-empty-section-passes-unnoticed",
+  "genus": "findings",
   "kind": "cross-cutting",
   "subKind": null,
   "subject": "An empty Docker section captures cleanly and nothing downstream notices",
@@ -20,7 +21,7 @@
   "progress": "untouched",
   "ownership": "unclaimed",
   "lineage": null,
-  "findings": [
+  "members": [
     {
       "id": "F1",
       "statement": "An empty Docker section captures cleanly and nothing downstream notices",

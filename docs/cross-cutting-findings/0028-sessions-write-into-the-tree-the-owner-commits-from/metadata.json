@@ -3,6 +3,7 @@
   "updatedAt": "2026-09-08T16:32:42+00:00",
   "number": "0028",
   "bundleName": "0028-sessions-write-into-the-tree-the-owner-commits-from",
+  "genus": "findings",
   "kind": "cross-cutting",
   "subKind": null,
   "subject": "Sessions write into the tree the owner commits from",
@@ -31,7 +32,7 @@
     "supersededBy": "0038",
     "on": null
   },
-  "findings": [
+  "members": [
     {
       "id": "F1",
       "statement": "Two sessions' uncommitted work interleaves in shared files, so neither can be committed alone",
@@ -151,7 +152,7 @@
     {
       "id": "D1",
       "decision": "a session composes its changes in a copy of the repository outside the connected folder, runs the validators there against its own change alone, and hands the owner a patch",
-      "findings": [
+      "members": [
         "F1"
       ],
       "decided": "2026-09-04",
@@ -163,7 +164,7 @@
     {
       "id": "D2",
       "decision": "no separate decision",
-      "findings": [
+      "members": [
         "F2",
         "F3",
         "F4"
@@ -177,7 +178,7 @@
     {
       "id": "D3",
       "decision": "an entry is composed with its number left open and numbered when the patch is applied",
-      "findings": [
+      "members": [
         "F5"
       ],
       "decided": "2026-09-04",
@@ -189,7 +190,7 @@
     {
       "id": "D4",
       "decision": "the three write categories continue to answer *when* a write is allowed. *Where* it is composed becomes its own rule, applying to all three",
-      "findings": [
+      "members": [
         "F6"
       ],
       "decided": "2026-09-04",

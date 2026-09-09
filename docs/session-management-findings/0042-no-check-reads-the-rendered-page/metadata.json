@@ -3,6 +3,7 @@
   "updatedAt": "2026-09-09T12:00:00+00:00",
   "number": "0042",
   "bundleName": "0042-no-check-reads-the-rendered-page",
+  "genus": "findings",
   "kind": "session-management",
   "subKind": null,
   "subject": "No check reads the rendered page, and three revisions shipped defects that only the rendering showed",
@@ -12,17 +13,17 @@
     "sessionBundle": "restore-apps-outstanding-20260903-000000",
     "sessionId": "session_016EbjB7M527qEFqZFzpv2C9"
   },
-  "severity": "F1 is high. The repository's whole assurance surface is six checkers, and a class of defect passes all six by construction — not by oversight, but because none of them looks at the artefact a reader sees.",
+  "severity": "F1 is high. The repository's whole assurance surface is six checkers, and a class of defect passes all six by construction \u2014 not by oversight, but because none of them looks at the artefact a reader sees.",
   "feltAt": [
     "`bin/verify-doc-paths.sh`, `bin/verify-runbook-structure.sh`, `bin/verify-script-portability.sh`, `bin/verify-findings-counts.sh`, `bin/verify-findings-structure.sh`, `bin/verify-findings-headers.sh`"
   ],
-  "scope": "cross-cutting in effect, session management in subject — the rule is about what a session must verify before handing work over, not about anything this project does",
+  "scope": "cross-cutting in effect, session management in subject \u2014 the rule is about what a session must verify before handing work over, not about anything this project does",
   "read": [],
   "standing": "unclaimed",
   "progress": "analyzing",
   "ownership": "unclaimed",
   "lineage": null,
-  "findings": [
+  "members": [
     {
       "id": "F1",
       "statement": "Every checker reads the source; none reads what the source renders as",
@@ -30,7 +31,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": "2026-09-09",
-      "sectionHeading": "F1 — Every checker reads the source; none reads what the source renders as",
+      "sectionHeading": "F1 \u2014 Every checker reads the source; none reads what the source renders as",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -42,7 +43,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": "2026-09-09",
-      "sectionHeading": "F2 — Three consecutive revisions shipped a rendering defect that all six checkers passed",
+      "sectionHeading": "F2 \u2014 Three consecutive revisions shipped a rendering defect that all six checkers passed",
       "reopened": null,
       "withdrawn": null,
       "resolution": {
@@ -61,7 +62,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": "2026-09-09",
-      "sectionHeading": "F3 — A rendering check needs a markdown parser, which is a dependency the repository does not have",
+      "sectionHeading": "F3 \u2014 A rendering check needs a markdown parser, which is a dependency the repository does not have",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -73,7 +74,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": "2026-09-09",
-      "sectionHeading": "F4 — The audit that did find these ran outside the repository and was never committed",
+      "sectionHeading": "F4 \u2014 The audit that did find these ran outside the repository and was never committed",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -85,7 +86,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": "2026-09-09",
-      "sectionHeading": "F5 — No checker reads what a checker emits",
+      "sectionHeading": "F5 \u2014 No checker reads what a checker emits",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -95,62 +96,62 @@
     {
       "id": "D1",
       "decision": "No markdown parser and no third-party package. The dependency floor is Python 3 standard library plus POSIX shell, and it is now stated rather than assumed",
-      "findings": [
+      "members": [
         "F3"
       ],
       "decided": "2026-09-09",
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D1 — the floor is the standard library, and python3 was never the question"
+      "sectionHeading": "D1 \u2014 the floor is the standard library, and python3 was never the question"
     },
     {
       "id": "D2",
       "decision": "F1 is answered by narrowing the surface, not by building a renderer. \"No check reads the rendered page\" is accepted as a permanent property",
-      "findings": [
+      "members": [
         "F1"
       ],
       "decided": "2026-09-09",
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D2 — narrow the surface, and stop the prompt overstating the gap"
+      "sectionHeading": "D2 \u2014 narrow the surface, and stop the prompt overstating the gap"
     },
     {
       "id": "D3",
       "decision": "F2 is overtaken. All three defects were in the header block, and all three constructs are checked",
-      "findings": [
+      "members": [
         "F2"
       ],
       "decided": "2026-09-09",
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D3 — F2 is overtaken"
+      "sectionHeading": "D3 \u2014 F2 is overtaken"
     },
     {
       "id": "D4",
       "decision": "F4: commit the audit's rule list, not the audit. The seventh property becomes a named unchecked gap",
-      "findings": [
+      "members": [
         "F4"
       ],
       "decided": "2026-09-09",
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D4 — commit the rule list, not the audit"
+      "sectionHeading": "D4 \u2014 commit the rule list, not the audit"
     },
     {
       "id": "D5",
       "decision": "A checker's own output is an artifact nothing examines. The suite asserts that each checker is silent on stderr against a declared allow-list of one",
-      "findings": [
+      "members": [
         "F5"
       ],
       "decided": "2026-09-09",
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D5 — the checker's own output is the artifact nobody reads"
+      "sectionHeading": "D5 \u2014 the checker's own output is the artifact nobody reads"
     }
   ],
   "contributions": [

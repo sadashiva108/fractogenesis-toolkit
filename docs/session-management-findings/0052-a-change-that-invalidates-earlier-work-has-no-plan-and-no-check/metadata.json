@@ -3,6 +3,7 @@
   "updatedAt": "2026-09-09T12:15:00-04:00",
   "number": "0052",
   "bundleName": "0052-a-change-that-invalidates-earlier-work-has-no-plan-and-no-check",
+  "genus": "findings",
   "kind": "session-management",
   "subKind": null,
   "subject": "A change that invalidates earlier work has neither a plan nor a check",
@@ -29,7 +30,7 @@
   "progress": "analyzing",
   "ownership": null,
   "lineage": null,
-  "findings": [
+  "members": [
     {
       "id": "F1",
       "statement": "Nothing re-verifies that a resolution still holds, and one refactor reverted seven without anything noticing",

@@ -3,6 +3,7 @@
   "updatedAt": "2026-09-08T16:32:42+00:00",
   "number": "0036",
   "bundleName": "0036-verify-doc-paths-counts-gitignored-docs",
+  "genus": "findings",
   "kind": "session-management",
   "subKind": null,
   "subject": "`verify-doc-paths.sh --all` counts `docs/`, so its OK baseline cannot hold",
@@ -23,7 +24,7 @@
     "supersedes": "0026",
     "on": null
   },
-  "findings": [
+  "members": [
     {
       "id": "F1",
       "statement": "`verify-doc-paths.sh --all` scans `docs/`, so its OK baseline cannot hold",
@@ -48,7 +49,7 @@
     {
       "id": "D1",
       "decision": "Option (iv): scan `docs/`, and let a reading declare a path *proposed* so a citation to something that does not exist yet is not a broken citation",
-      "findings": [
+      "members": [
         "F1"
       ],
       "decided": "2026-09-07",

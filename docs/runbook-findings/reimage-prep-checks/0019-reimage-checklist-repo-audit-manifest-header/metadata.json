@@ -3,6 +3,7 @@
   "updatedAt": "2026-09-08T16:32:42+00:00",
   "number": "0019",
   "bundleName": "0019-reimage-checklist-repo-audit-manifest-header",
+  "genus": "findings",
   "kind": "runbook",
   "subKind": null,
   "subject": "Phase 6B records FAIL against a correct repository-audit manifest",
@@ -20,7 +21,7 @@
   "progress": "answered",
   "ownership": null,
   "lineage": null,
-  "findings": [
+  "members": [
     {
       "id": "F1",
       "statement": "Phase 6B records FAIL against a correct repository-audit manifest",

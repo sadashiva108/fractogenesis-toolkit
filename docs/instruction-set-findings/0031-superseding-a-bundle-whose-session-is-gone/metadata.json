@@ -3,6 +3,7 @@
   "updatedAt": "2026-09-08T16:32:42+00:00",
   "number": "0031",
   "bundleName": "0031-superseding-a-bundle-whose-session-is-gone",
+  "genus": "findings",
   "kind": "instruction-set",
   "subKind": null,
   "subject": "Superseding a bundle whose session is gone is instructed but never defined",
@@ -23,7 +24,7 @@
     "supersededBy": "0040",
     "on": null
   },
-  "findings": [
+  "members": [
     {
       "id": "F1",
       "statement": "\u00a74d instructs a session to mark bundles `superseded`; \u00a74c never defines what that means or requires",
@@ -97,7 +98,7 @@
     {
       "id": "D1",
       "decision": "The procedure goes in \u00a74c, as a new subsection",
-      "findings": [],
+      "members": [],
       "decided": "2026-09-03",
       "outcome": "accepted",
       "answersAsOf": null,
@@ -107,7 +108,7 @@
     {
       "id": "D2",
       "decision": "The superseding session performs it and does not take ownership",
-      "findings": [],
+      "members": [],
       "decided": "2026-09-03",
       "outcome": "accepted",
       "answersAsOf": null,
@@ -117,7 +118,7 @@
     {
       "id": "D3",
       "decision": "The three prohibitions are stated in the procedure, not cross-referenced",
-      "findings": [],
+      "members": [],
       "decided": "2026-09-03",
       "outcome": "accepted",
       "answersAsOf": null,
@@ -127,7 +128,7 @@
     {
       "id": "D4",
       "decision": "The pointer goes in the Status cell, as a link",
-      "findings": [],
+      "members": [],
       "decided": "2026-09-03",
       "outcome": "accepted",
       "answersAsOf": null,
@@ -137,7 +138,7 @@
     {
       "id": "D5",
       "decision": "The subsection covers the ownerless case and defers the other",
-      "findings": [],
+      "members": [],
       "decided": "2026-09-03",
       "outcome": "accepted",
       "answersAsOf": null,
@@ -147,7 +148,7 @@
     {
       "id": "D6",
       "decision": "`0032` is not decided here",
-      "findings": [],
+      "members": [],
       "decided": "2026-09-03",
       "outcome": "accepted",
       "answersAsOf": null,

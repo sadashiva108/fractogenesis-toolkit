@@ -3,6 +3,7 @@
   "updatedAt": "2026-09-08T16:32:42+00:00",
   "number": "0009",
   "bundleName": "0009-dated-artifacts-cite-run-ids-a-rename-breaks",
+  "genus": "findings",
   "kind": "cross-cutting",
   "subKind": null,
   "subject": "Renaming a lineage silently breaks every citation already written",
@@ -23,7 +24,7 @@
     "supersededBy": "0030",
     "on": null
   },
-  "findings": [
+  "members": [
     {
       "id": "F1",
       "statement": "Renaming a lineage silently breaks every citation already written",

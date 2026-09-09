@@ -3,6 +3,7 @@
   "updatedAt": "2026-09-08T16:32:42+00:00",
   "number": "0030",
   "bundleName": "0030-renames-break-citations-and-which-may-be-repaired",
+  "genus": "findings",
   "kind": "cross-cutting",
   "subKind": null,
   "subject": "Renames break citations, and only a record's values are frozen",
@@ -23,7 +24,7 @@
     "supersedes": "0009",
     "on": null
   },
-  "findings": [
+  "members": [
     {
       "id": "F1",
       "statement": "A lineage rename leaves every prior citation naming something gone, and nothing detects it",
@@ -124,7 +125,7 @@
     {
       "id": "D1",
       "decision": "Supersede `0009`; do not edit it and do not withdraw it",
-      "findings": [],
+      "members": [],
       "decided": "2026-09-03",
       "outcome": "accepted",
       "answersAsOf": null,
@@ -134,7 +135,7 @@
     {
       "id": "D2",
       "decision": "A record's values are frozen; its references are not",
-      "findings": [],
+      "members": [],
       "decided": "2026-09-03",
       "outcome": "accepted",
       "answersAsOf": null,
@@ -144,7 +145,7 @@
     {
       "id": "D3",
       "decision": "Finding 5's two lines are repaired, and the repair is recorded",
-      "findings": [],
+      "members": [],
       "decided": "2026-09-03",
       "outcome": "accepted",
       "answersAsOf": null,
@@ -154,7 +155,7 @@
     {
       "id": "D4",
       "decision": "`0009`'s own stale path is not repaired",
-      "findings": [],
+      "members": [],
       "decided": "2026-09-03",
       "outcome": "accepted",
       "answersAsOf": null,
@@ -164,7 +165,7 @@
     {
       "id": "D5",
       "decision": "The `bookend.md` citation is not repaired by this bundle",
-      "findings": [],
+      "members": [],
       "decided": "2026-09-03",
       "outcome": "accepted",
       "answersAsOf": null,
@@ -174,7 +175,7 @@
     {
       "id": "D6",
       "decision": "Finding 3 is held open deliberately",
-      "findings": [],
+      "members": [],
       "decided": "2026-09-03",
       "outcome": "accepted",
       "answersAsOf": null,
@@ -184,7 +185,7 @@
     {
       "id": "D7",
       "decision": "Category manifests get a `rename` row, filed under the surviving lineage",
-      "findings": [],
+      "members": [],
       "decided": "2026-09-04",
       "outcome": "accepted",
       "answersAsOf": null,
@@ -194,7 +195,7 @@
     {
       "id": "D8",
       "decision": "Detection is deferred, and it is downstream of D7 rather than parallel to it",
-      "findings": [],
+      "members": [],
       "decided": "2026-09-03",
       "outcome": "accepted",
       "answersAsOf": null,

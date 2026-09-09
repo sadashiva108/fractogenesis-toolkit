@@ -3,6 +3,7 @@
   "updatedAt": "2026-09-09T12:10:00-04:00",
   "number": "0038",
   "bundleName": "0038-sessions-write-into-the-tree-the-owner-commits-from",
+  "genus": "findings",
   "kind": "session-management",
   "subKind": null,
   "subject": "Sessions write into the tree the owner commits from",
@@ -31,7 +32,7 @@
     "supersedes": "0028",
     "on": null
   },
-  "findings": [
+  "members": [
     {
       "id": "F1",
       "statement": "Two sessions' uncommitted work interleaves in shared files, so neither can be committed alone",
@@ -151,7 +152,7 @@
     {
       "id": "D1",
       "decision": "The shared-tree collision is not prevented and is not meant to be: it moves to the patch, where it is visible. \u00a70 gains the rebase step, and `git --no-optional-locks` for every git read of the checkout",
-      "findings": [
+      "members": [
         "F1"
       ],
       "decided": "2026-09-09",
@@ -163,7 +164,7 @@
     {
       "id": "D2",
       "decision": "F2 is answered by \u00a70 step 2 and by the standing rule never to quote an `OK` total; the enforcement half is F7's and is not folded in here",
-      "findings": [
+      "members": [
         "F2"
       ],
       "decided": "2026-09-09",
@@ -175,7 +176,7 @@
     {
       "id": "D3",
       "decision": "F3 is answered by \u00a70 steps 3\u20134 and `bin/review-changes.sh`, both installed at Revision 232",
-      "findings": [
+      "members": [
         "F3"
       ],
       "decided": "2026-09-09",
@@ -187,7 +188,7 @@
     {
       "id": "D4",
       "decision": "F4's remedy holds and has never been stated: declining a patch is free and reverting a commit is not. \u00a70 step 5 now says so",
-      "findings": [
+      "members": [
         "F4"
       ],
       "decided": "2026-09-09",
@@ -199,7 +200,7 @@
     {
       "id": "D5",
       "decision": "F5 is answered by \u00a77; the artifact `0028` named is at a different path and the citation is corrected rather than the tool moved back",
-      "findings": [
+      "members": [
         "F5"
       ],
       "decided": "2026-09-09",
@@ -211,7 +212,7 @@
     {
       "id": "D6",
       "decision": "F6 is answered by \u00a76's four write kinds; the legend section `0028` created for it no longer exists, the rule having moved to the instruction set, and the relocation is recorded rather than reversed",
-      "findings": [
+      "members": [
         "F6"
       ],
       "decided": "2026-09-09",
@@ -223,7 +224,7 @@
     {
       "id": "D7",
       "decision": "Of the four guards F7 names, the manifest-entry guard is built first, warn-only until a clean pass. Nothing is built in this revision and F7 stays `decided`",
-      "findings": [
+      "members": [
         "F7"
       ],
       "decided": "2026-09-09",

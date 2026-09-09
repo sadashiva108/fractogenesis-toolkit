@@ -3,6 +3,7 @@
   "updatedAt": "2026-09-09T12:00:00+00:00",
   "number": "0046",
   "bundleName": "0046-supersession-moves-authority-and-leaves-every-citation-behind",
+  "genus": "findings",
   "kind": "session-management",
   "subKind": null,
   "subject": "Supersession moves authority and leaves every citation behind",
@@ -26,7 +27,7 @@
   "progress": "analyzing",
   "ownership": "unclaimed",
   "lineage": null,
-  "findings": [
+  "members": [
     {
       "id": "F1",
       "statement": "Twelve live documents cite `0028`, which is superseded and closed to every session",
@@ -34,7 +35,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": "2026-09-09",
-      "sectionHeading": "F1 — twelve documents cite a bundle nothing may read",
+      "sectionHeading": "F1 \u2014 twelve documents cite a bundle nothing may read",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -46,7 +47,7 @@
       "statusReason": null,
       "statusNote": null,
       "updatedAt": "2026-09-09",
-      "sectionHeading": "F2 — the path resolves, so nothing looks broken",
+      "sectionHeading": "F2 \u2014 the path resolves, so nothing looks broken",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -56,19 +57,19 @@
     {
       "id": "D1",
       "decision": "The marker is chosen and exists: <!-- historical: --> in bin/verify-doc-paths.sh, named there as this bundle's. It covers a path; it does not cover a bundle number cited in prose",
-      "findings": [
+      "members": [
         "F2"
       ],
       "decided": "2026-09-09",
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D1 — the marker exists and is narrower than the finding"
+      "sectionHeading": "D1 \u2014 the marker exists and is narrower than the finding"
     },
     {
       "id": "D2",
       "decision": "A check is also needed, over prose citations of a bundle number. The one that exists reads asserted edges only and cannot see the twelve documents F1 counts",
-      "findings": [
+      "members": [
         "F1",
         "F2"
       ],
@@ -76,19 +77,19 @@
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D2 — the check that exists reads the declared set"
+      "sectionHeading": "D2 \u2014 the check that exists reads the declared set"
     },
     {
       "id": "D3",
       "decision": "The twelve citations are not repaired, marked, or annotated. Every one is correct as written",
-      "findings": [
+      "members": [
         "F1"
       ],
       "decided": "2026-09-09",
       "outcome": "accepted",
       "answersAsOf": null,
       "voidedReason": null,
-      "sectionHeading": "D3 — nothing is repaired"
+      "sectionHeading": "D3 \u2014 nothing is repaired"
     }
   ],
   "contributions": [],

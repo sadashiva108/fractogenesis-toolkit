@@ -163,6 +163,7 @@ for `handoff`, which is a **declaration**: a session says it handed on, where
 
   "number": "0043",
   "bundleName": "0043-framework-state-lives-in-documents-not-data",
+  "genus": "findings",
   "kind": "session-management",
   "subKind": null,
   "subject": "The framework's own state lives in documents rather than in data",
@@ -180,7 +181,7 @@ for `handoff`, which is a **declaration**: a session says it handed on, where
   "ownership": null,
   "lineage": null,
 
-  "findings": [
+  "members": [
     { "id": "F1",
       "statement": "A bundle's status is carried in a filename",
       "status": "framing",
@@ -194,7 +195,7 @@ for `handoff`, which is a **declaration**: a session says it handed on, where
   ],
 
   "decisions": [
-    { "id": "D1", "decision": "…", "findings": ["F5", "F6"],
+    { "id": "D1", "decision": "…", "members": ["F5", "F6"],
       "decided": "2026-09-07", "outcome": "accepted",
       "answersAsOf": "2026-09-06T23:41:00-04:00",
       "voidedReason": null,
@@ -224,6 +225,25 @@ for `handoff`, which is a **declaration**: a session says it handed on, where
   "indexNotes": "Deliberately open — a parallel architecture is in design"
 }
 ```
+
+**`genus` says what sort of bundle this is, and the shape is DERIVED from it** --
+Revision 270. Four genera -- `findings`, `commission`, `charter`, `remedy` -- in
+two shapes, `reasoning` and `actionable`. **The shape is never stored**, because
+nothing derivable is stored; `plan_findings_work.py` holds the map and `shape()`
+is its only reader. **`kind` is unchanged and still means the subject domain**,
+which is the second thing that field was never asked to carry.
+
+**`findings[]` is `members[]`, and a decision cites `members` too.** Same
+revision, and it was done **before** a second genus existed rather than after: a
+commission holds questions and an actionable bundle holds tasks, so an array
+named for one species cannot name the genus. Doing it afterwards is a breaking
+change with no migration plan, which is `0052` F2. **The member id carries the
+genus in its prefix** -- `F` a finding, `Q` a question, `T` a task -- and
+`MEMBER-PREFIX` is the conformance code for a bundle whose members disagree with
+what it says it is. **Verified by deriving `standing`, `progress`, `ownership`
+and every member status for all 54 bundles on both sides of the rename and
+comparing: 188 rows, byte-identical**, which is §9 step 2's round trip run on a
+field rather than on the whole file.
 
 **The four reason fields are `0039` D7 through D12.** `statusReason` carries the
 enumerated reason for the transition that produced the current status, and
