@@ -7,7 +7,7 @@ project's game engine that another project's intake docs need updating, and how
 a real drift hides in a page of noise. An entry nobody wrote does not exist, and
 that is the correct failure: it is visible in `--coverage`.
 """
-import json, io, os, sys, hashlib, datetime, argparse
+import json, io, os, re, sys, hashlib, datetime, argparse
 
 CONFIG = "doc-currency.json"
 TIERS = ("critical", "normal")
@@ -95,13 +95,48 @@ def cmd_check(r, d, a):
     return 1 if [x for x in bad if x["w"].get("tier") == "critical"] else 0
 
 
+def coverage_roots(r, d):
+    """Where to sweep. DERIVED from docs/INDEX.md, which owns the directory list.
+
+    The roots were a tuple in this file until 0050 F5. docs/INDEX.md is
+    authoritative for the directories under docs/ and already listed rules/;
+    this file kept a second copy and that copy went stale the day Revision 249
+    created the directory, so 43 files were invisible to the report whose whole
+    job is to make the gap visible.
+
+    DEFAULT IN, EXPLICITLY OUT. A directory added to docs/INDEX.md is swept from
+    the moment it appears. Excluding one is a declaration in doc-currency.json
+    carrying its reason -- which is 0041 D1's rule: the undeclared remainder is
+    visible, and declaring something out is deliberate.
+    """
+    cfg = d.get("coverage") or {}
+    roots = []
+    idx = os.path.join(r, "docs", "INDEX.md")
+    if os.path.isfile(idx):
+        with io.open(idx, encoding="utf-8") as fh:
+            for line in fh:
+                m = re.match(r"^\|\s*`([A-Za-z0-9._-]+)/`\s*\|", line)
+                if m:
+                    roots.append(os.path.join("docs", m.group(1)))
+    roots.extend(cfg.get("alsoWalk") or [])
+    drop = [x["path"].rstrip("/") for x in (cfg.get("exclude") or [])]
+    keep = []
+    for base in roots:
+        b = base.rstrip("/")
+        if any(b == x or b.startswith(x + "/") for x in drop):
+            continue
+        if b not in keep:
+            keep.append(b)
+    return sorted(keep), drop
+
+
 def cmd_coverage(r, d, a):
     """What is NOT watched. An unasserted edge is invisible, so name the gap."""
     watched = set()
     for w in d["watches"]:
         watched.update(w["sources"])
         watched.update(w["dependents"])
-    roots = (".claude", ".github", "docs/architecture", "docs/ledgers", "docs/ideas")
+    roots, dropped = coverage_roots(r, d)
     unwatched = []
     for base in roots:
         for dp, _, fns in os.walk(os.path.join(r, base)):
@@ -109,12 +144,21 @@ def cmd_coverage(r, d, a):
                 rel = os.path.relpath(os.path.join(dp, fn), r)
                 if rel.endswith((".md", ".json", ".sh", ".py")) and rel not in watched:
                     unwatched.append(rel)
-    for f in ("docs/legend.md", "README.md", "APPLY-MANIFEST.md", ".envrc"):
+    # Repository-root documents: the runbooks and the four named files. They
+    # belong to no index and had no root of their own -- 0050 F5.
+    for fn in sorted(os.listdir(r)):
+        if fn.endswith(".md") and os.path.isfile(os.path.join(r, fn)) and fn not in watched:
+            unwatched.append(fn)
+    for f in ("docs/legend.md", ".envrc"):
         if os.path.exists(os.path.join(r, f)) and f not in watched:
             unwatched.append(f)
+    unwatched = sorted(set(unwatched))
     print("COVERAGE  %d files watched, %d not\n" % (len(watched), len(unwatched)))
-    for p in sorted(unwatched):
+    for p in unwatched:
         print("  unwatched  %s" % p)
+    print("\n  Swept: %s" % ", ".join(roots))
+    if dropped:
+        print("  Declared out, with reasons in doc-currency.json: %s" % ", ".join(dropped))
     print("\n  An unwatched file is not protected. Add it to a watch, or accept it"
           "\n  deliberately -- the point is that the gap is visible rather than assumed.")
     return 0

@@ -11,7 +11,8 @@ that can hold a build, and F4 is a class whose members are still arriving.
 
 | # | Decision | Findings | Decided | Outcome |
 |---|---|---|---|---|
-| D1 | The coverage sweep derives its roots from `docs/INDEX.md` instead of keeping a second copy, and reports the repository-root runbooks and `references/` explicitly | F5 | 2026-09-09 | `accepted` |
+| D1 | The coverage sweep derives its roots from `docs/INDEX.md` instead of keeping a second copy, and reports the repository-root runbooks and `references/` explicitly | F5 | 2026-09-09 | `replaced → D2` |
+| D2 | Derive the roots, **default in and explicitly out**: a directory in `docs/INDEX.md` is swept from the moment it appears, and excluding one is a declaration in `doc-currency.json` carrying its reason | F5 | 2026-09-09 | `accepted` |
 
 ---
 
@@ -52,3 +53,64 @@ deliberately, the check would fail permanently from its first run. **The
 declaration mechanism has to exist first** — a way to mark a file *watched by
 nobody, on purpose* — and it does not. Recorded so the gap is deliberate rather
 than an omission, and so `0041` D1 is not quoted as satisfied here.
+
+## D2 — default in, explicitly out, and the records are declared out with a reason
+
+**D1 was under-specified and implementing it found the gap**, which is what
+implementing a decision is for. Its prose says *every directory `docs/INDEX.md`
+lists*. Taken literally that sweeps `docs/runbook-findings/`,
+`docs/cross-cutting-findings/`, `docs/instruction-set-findings/`,
+`docs/session-management-findings/` and `docs/sessions/` — **179 files, of which
+157 are findings and session records.**
+
+**Those are evidence.** A `findings.md` is a reading taken at a moment; a
+handoff records what a session held and when. The standing constraint is that
+evidence is never rewritten to match a later rule, and §9 spends three
+prohibitions keeping a superseded reading exactly as it was. **A staleness report
+over them would be asking for precisely the retrofit that is forbidden**, and it
+would bury the 22 documents that can go stale under 157 that cannot.
+
+D1's own false-positive estimate said the count would go 21 → 64, which is the
+*correct* reading. **The prose and the measurement in one decision disagreed**,
+and the prose was wrong.
+
+### The rule D2 states
+
+**Roots are derived from `docs/INDEX.md`**, which owns the directory list, plus
+what that file does not govern — `.claude/`, `.github/`, `references/` — and the
+repository-root runbooks, which belong to no index.
+
+**Exclusion is a declaration, not a rule in code.** `doc-currency.json` gains a
+`coverage` block naming the five excluded paths, each with its reason. A
+directory added to `docs/INDEX.md` is **swept from the moment it appears**;
+keeping it out takes a deliberate line in a file a reader opens.
+
+That inverts the failure direction. Before, a new directory was silently
+invisible — which is how `docs/rules/` was missed for four revisions. After, a
+new directory is noisy until somebody declares it out. **`0041` D1's rule
+exactly: the undeclared remainder is visible, and declaring something out is
+deliberate.**
+
+**Rejected: inferring the split from `docs/INDEX.md`'s Index column.** It
+correlates perfectly today — the four findings trees and `sessions/` carry an
+index link, the four description directories carry `—`. It is still an
+inference, and `doc_currency.py`'s own docstring is the argument against it:
+*"an inferred edge is how a checker tells one project's game engine that another
+project's intake docs need updating."* A correlation that holds today is not a
+declaration.
+
+**Rejected: hard-coding the exclusions in the script.** That is the defect being
+fixed, moved one line down.
+
+### Measured, after
+
+**21 → 62 unwatched.** Not the 64 D1 predicted, and the two are accounted for:
+`README.md` is a dependent in two watches so it was never unwatched, and
+`APPLY-MANIFEST.md` was already in the 21 as a named file rather than arriving
+with the root sweep. **The estimate was high by two and the difference is
+explainable**, which is the only reason to state a prediction before measuring.
+
+`docs/rules/rule-enforcement-avenues.md` and all eleven `references/` documents
+now appear. The run prints what it swept and what was declared out, so the
+number can be read without opening the config.
+

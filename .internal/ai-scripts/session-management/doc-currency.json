@@ -2,6 +2,36 @@
   "schemaVersion": 1,
   "note": "Which documents go stale when which sources change. Every edge is ASSERTED, never inferred from similarity -- that is what keeps a checker from telling one project's game engine that another project's intake docs need updating. An entry nobody wrote does not exist, and that is the correct failure.",
   "howToConfirm": "After reviewing a dependent and finding it current, re-stamp with: ./bin/verify-doc-currency.sh --confirm <id>",
+  "coverage": {
+    "note": "Where --coverage sweeps. The docs/ roots are DERIVED from docs/INDEX.md, which owns that list; this block adds what that file does not govern and declares what is deliberately out. A directory added to docs/INDEX.md is swept from the moment it appears -- 0050 F5.",
+    "alsoWalk": [
+      ".claude",
+      ".github",
+      "references"
+    ],
+    "exclude": [
+      {
+        "path": "docs/runbook-findings",
+        "why": "a findings bundle is a reading taken at a moment and never refreshed against a later source; staleness does not apply to evidence"
+      },
+      {
+        "path": "docs/cross-cutting-findings",
+        "why": "as above"
+      },
+      {
+        "path": "docs/instruction-set-findings",
+        "why": "as above"
+      },
+      {
+        "path": "docs/session-management-findings",
+        "why": "as above"
+      },
+      {
+        "path": "docs/sessions",
+        "why": "session records are evidence of what a session held and when; a handoff or final-summary is never edited to match a later state"
+      }
+    ]
+  },
   "watches": [
     {
       "id": "session-rules",
