@@ -11,6 +11,8 @@
 | D1 | The migrated-bundle carve-out is restored to `.github/session-management-instructions.md` §3: a bundle migrated from an already-closed record carries `resolutions.md` and no `decisions.md`, and its `resolutions.md` says so. **This is `0037` D2, taken once and recorded in both bundles** | F4 | 2026-09-09 | `accepted` |
 | D2 | `transferred` leaves the closed-bundle assertion in `plan_findings_work.py` entirely; `unclaimed` keeps it, and its detail names `0047` F1 as the undecided rule the row rests on. The code name is unchanged | F7 | 2026-09-09 | `accepted` |
 | D3 | `OUTCOMES` becomes the legend's six bare outcomes with `replaced` matched by prefix; the two retired prefixes go; and a contract test asserts the disjointness `docs/legend.md` has claimed a schema check performs since Revision 233 | F8 | 2026-09-09 | `accepted` |
+| D8 | A `superseded` bundle is exempt from both ordering comparisons, and `check` **counts** the suppression and names the bundles rather than asserting it in a footer | F9 | 2026-09-10 | `accepted` |
+| D9 | The clone exemption becomes **per member and expires with the re-reading window**, keyed on the member's own status; and `reopened` is exempt from the resolution comparison **in every bundle**, because nothing is reverted when a member is reopened | F10 | 2026-09-10 | `accepted` |
 | D7 | The warn-only discipline goes into §6 as a gate on what may **refuse** a write, with the second half F6 did not have: a guard must be shown to fire on a case it should catch, not only to stay quiet on correct work | F6 | 2026-09-10 | `accepted` |
 | D6 | The number helper consults the **log as a third place** and takes the highest of the three, because a number is taken if it is taken anywhere. Conformance is a different question and gets its own checker, `bin/verify-manifest-coverage.sh` | F12 | 2026-09-10 | `accepted` |
 | D5 | The guard is rebuilt over a declared set of vocabularies rather than a hand-listed set of comparisons, and the one pair nobody here may fix is **excluded by name** rather than absorbed. `SESSION_STATES` is added and a session's stored `state` is checked against it | F11 | 2026-09-09 | `accepted` |
@@ -363,3 +365,73 @@ Tempting because they are installed and nothing has visibly broken. **One of the
 three has never fired**, which is the argument against: *nothing has visibly
 broken* is exactly what an instrument that is not looking produces. What the rule
 asks of them is one pass each, and it is owed rather than done here.
+
+## D8 — a row nobody may clear is not reported, and the silence is counted
+
+§9 and `docs/legend.md` agree without qualification: a `superseded` bundle is
+**readable by any session and writable by none, including the session that owns
+it**, and §9 spends three prohibitions keeping its `findings.md` unedited. So the
+eight rows in `0031` and `0032` name work that must not be done, by anyone,
+permanently.
+
+**They go. And the count stays**, which is the half F9 did not ask for.
+
+F5's remedy is the precedent and the warning: it suppressed **65 rows** correctly
+and recorded the fact in a footer sentence — *"superseding clones are exempt from
+the two ordering comparisons"* — **which could not move whatever the tree did.**
+Revision 280 has just ruled that an instrument reporting nothing looks exactly
+like an instrument with nothing to report; a suppression stated in prose is the
+same defect one level down. Both exemptions now print their count and their
+bundles, and the clone exemption's number — **11 rows in `0030` and `0039`** —
+had never been seen by anyone.
+
+**Rejected — report them under a separate code that warns rather than fails.**
+The shape Revision 278 used for `ORPHANED`, and it does not transfer: `check`
+has no exit status and no severity, so a second code would be a second row in the
+same list, and the number still could only rise.
+
+**Rejected — leave them and let the reader subtract.** The reader has to know
+which bundles are superseded to do it, which is the work the instrument exists to
+save. `0036` is the standing lesson about a baseline that has to be argued with
+before it can be used.
+
+**Rejected — exempt every terminal standing, not just `superseded`.** An
+`answered` or `retired` bundle is still writable by its owner, so a row against
+one can be cleared. **The property is not being finished; it is being frozen**,
+and only `superseded` is frozen.
+
+## D9 — the exemption belongs to the member, and one half of it belongs to a status
+
+**F10 asked for the clone exemption to expire when the re-reading closes.**
+Nothing records that event. **The member's status does**: a clone's members are
+reset to `un-started` or `framing` for re-examination, so the exemption applies
+exactly while a member sits in that window and lapses the moment it is `decided`.
+No new field, no bundle-level flag, no event to record — and it expires **per
+member**, which is what F10 identified as the defect: *the status is on the member
+and the exemption is on the bundle, one level up from the fact it depends on.*
+
+**The second half is not a clone rule at all.** `reopened` keeps its resolution
+row **by design** — *"nothing is reverted"* — so the comparison must not fire on
+it in **any** bundle. It was written as a clone exemption in the finding because
+that is where the finding found it; it belongs to the status.
+
+**It changes no number today and that is the point.** No member in the tree is
+`reopened`. **The first reopening in this repository would have produced a
+conformance failure for doing exactly what §9a prescribes**, and the author would
+have read it as their own mistake — which is F8's sentence, and F8 is why this
+one was looked for.
+
+**Rejected — keep the exemption bundle-wide and add an expiry field.** A field
+recording that a re-reading has closed is a second copy of what the member
+statuses already say, and `docs/legend.md` is explicit that nothing derivable is
+stored.
+
+**Rejected — exempt `reopened` only in clones.** It is the reading F10 states,
+and following it would leave the comparison firing on every reopened member in
+every ordinary bundle, which is the commoner case by far and the one §9a
+describes.
+
+**Rejected — leave `reopened` alone until a member is actually reopened.** That
+is the argument for every one of F8's four never-written outcomes, and F8 records
+what it costs: the first person to write the conforming thing reads the failure
+as their own.

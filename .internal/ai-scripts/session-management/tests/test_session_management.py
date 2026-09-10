@@ -22,6 +22,7 @@ sys.path.insert(0, HERE)
 import fixtures as F                                          # noqa: E402
 from plan_findings_work import (                              # noqa: E402
     Graph, derivation_table, conformance, allocate, select, frontier, rank, is_clone,
+    ordering_exemptions, RE_READING,
     FINDING_STATUSES, BUNDLE_STANDINGS, BUNDLE_PROGRESS, OUTCOMES,
     POINTER_OUTCOMES, SESSION_STATES, VOCABULARIES, DECLARED_OVERLAPS,
     undeclared_overlaps, KINDS, INERT, quality,
@@ -373,6 +374,58 @@ class TestRegressions(unittest.TestCase):
             rows = [d for c, _, d in conformance(g) if c == "VOCAB"]
             self.assertFalse([d for d in rows if "state" in d], (st, rows))
             g._fixture.close()
+
+    def test_0047_F9_a_superseded_bundle_is_exempt_and_counted(self):
+        """Its rows could never be cleared: writable by none, section 9.
+
+        Eight of the eleven RESOLUTION-AHEAD rows standing at Revision 280 were
+        in `0031` and `0032`, both superseded. A number that can only rise is
+        not a signal -- so the rows go, and the suppression is COUNTED rather
+        than asserted in a footer.
+        """
+        b = F.bundle("0100", ("framing", "framing"), ownership=None,
+                     resolutions=("F1", "F2"),
+                     lineage={"supersededBy": "0101", "on": None})
+        g = graph_of(b)
+        self.assertNotIn("RESOLUTION-AHEAD-OF-FINDING", codes(g))
+        frozen, cloned = ordering_exemptions(g)
+        self.assertEqual(len(frozen), 2)
+        self.assertEqual(cloned, [])
+        g._fixture.close()
+
+    def test_0047_F10_a_clone_is_exempt_only_while_it_is_being_re_read(self):
+        """The exemption used to be the whole bundle for its whole life.
+
+        A clone that closed its re-reading and later acquired a genuine defect
+        was the one bundle in the tree nothing would report.
+        """
+        for st in RE_READING:
+            g = graph_of(F.bundle("0100", (st,), ownership=None,
+                                  resolutions=("F1",),
+                                  edges=[F.edge("carried", "0100/F1", "0090/F1", "derived")]))
+            self.assertNotIn("RESOLUTION-AHEAD-OF-FINDING", codes(g), st)
+            self.assertEqual(len(ordering_exemptions(g)[1]), 1, st)
+            g._fixture.close()
+        # past the re-reading window, the same clone is on its own
+        g = graph_of(F.bundle("0100", ("decided",), ownership=None,
+                              resolutions=("F1",),
+                              edges=[F.edge("carried", "0100/F1", "0090/F1", "derived")]))
+        self.assertIn("RESOLUTION-AHEAD-OF-FINDING", codes(g))
+        self.assertEqual(ordering_exemptions(g)[1], [])
+        g._fixture.close()
+
+    def test_0047_F10_a_reopened_member_keeps_its_resolution(self):
+        """docs/legend.md: a reopened member is one put back in play and
+        "NOTHING IS REVERTED" -- so the resolution row stands by design, in any
+        bundle, clone or not. Reporting it is reporting the procedure being
+        followed. No member in the tree is `reopened`, which is why nothing
+        noticed: the same shape as F8's four never-written outcomes.
+        """
+        g = graph_of(F.bundle("0100", ("reopened",), ownership=None,
+                              resolutions=("F1",)))
+        self.assertNotIn("RESOLUTION-AHEAD-OF-FINDING", codes(g))
+        self.assertEqual(ordering_exemptions(g), ([], []))   # not an exemption: not a hit
+        g._fixture.close()
 
     def test_0047_F5_a_superseding_clone_is_exempt(self):
         """The sweep's first run reported 77 hits of which 65 were correct.

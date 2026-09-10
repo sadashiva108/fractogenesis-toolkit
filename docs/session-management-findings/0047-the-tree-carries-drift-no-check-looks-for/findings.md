@@ -40,8 +40,8 @@ retrofit is argued.
 | F6 | A guard fails where a checker only reports, and the discipline that exists for checkers — a clean pass before it is trusted — has never been stated for guards | `resolved` |
 | F7 | `plan_findings_work.py:439` treats `transferred` as `unclaimed` and reports a permitted transfer as a conformance failure, the last executable site of a rule the documents retired | `resolved` |
 | F8 | `plan_findings_work.py` validates decision outcomes against a set the legend replaced: it accepts the two the legend retired and rejects five of the seven it defines, one of which three live decisions already use | `resolved` |
-| F9 | The two ordering comparisons report eight rows against `superseded` bundles, which no session may write to, so the rows cannot be cleared by anyone | `framing` |
-| F10 | The clone exemption is bundle-wide and never expires, so it suppresses the comparisons on a clone whose re-reading has closed — and the `reopened` status, which retains its resolution by design, is reported everywhere else | `framing` |
+| F9 | The two ordering comparisons report eight rows against `superseded` bundles, which no session may write to, so the rows cannot be cleared by anyone | `resolved` |
+| F10 | The clone exemption is bundle-wide and never expires, so it suppresses the comparisons on a clone whose re-reading has closed — and the `reopened` status, which retains its resolution by design, is reported everywhere else | `resolved` |
 | F11 | The disjointness guard covered three of the five closed vocabularies, and the pair it did not cover was the broken one — while a session's `state` had no closed set and no vocabulary check at all | `resolved` |
 | F12 | A revision number can be taken in a commit message, which the helper that exists to prevent collisions cannot see | `resolved` |
 
@@ -501,3 +501,36 @@ Revision 270 established that `git --no-optional-locks` answers that for reads,
 so the route exists — but a helper that reads the log is a different instrument
 from one that reads a file, with a different failure mode when the two disagree,
 and **which one wins is a decision this finding owes rather than assumes.**
+
+### F9 and F10, amended 2026-09-10 by the owning session on resolving them
+
+**F9's eight rows are exempt and the exemption is counted.** `check` goes from
+43 conformance rows to **35**. What the finding did not reach is that the fix has
+a second half: **F5's remedy suppressed 65 rows and said so in a footer**, a
+sentence that could not move whatever the tree did. Both exemptions now print
+their own count and name their own bundles, so **a suppression is visible rather
+than asserted** — Revision 280's rule about an instrument that reports nothing.
+
+**Measured on the same run: the clone exemption suppresses 11 rows in `0030` and
+`0039`**, a number nobody had ever seen because F5's remedy never printed one.
+
+**F10's first half narrowed further than the finding proposed.** It asked for the
+exemption to expire *when the re-reading closes*, which is a bundle-level event
+nothing records. **The member's own status is the fact**: a clone's members are
+reset to `un-started` or `framing` for re-examination, so the exemption applies
+exactly while a member is in that window and lapses the moment it is `decided`.
+No new field, no bundle-level flag, and it expires per member rather than per
+bundle — which is what F10 says the defect was.
+
+**F10's second half is a straight correction and it is universal.**
+`docs/legend.md`: a `reopened` member is *"a `resolved` finding put back in play …
+**Nothing is reverted**"* — so it keeps its resolution row **by design**, and
+reporting it reports the procedure being followed. The exemption is therefore not
+a clone exemption at all: it belongs to the status, in every bundle. **Nothing in
+the tree is `reopened`, so this changes no number today** — which is the whole of
+why it went unnoticed, and F8's shape exactly.
+
+**One thing the fix did that neither finding asked for.** The two comparisons now
+live in one function, `ordering_hits()`, read by both the reporter and the
+counter. **Two copies of a comparison drift**, and that is F11 measured in the
+vocabulary sets one revision earlier.

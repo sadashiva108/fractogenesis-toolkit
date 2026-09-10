@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-10T12:10:00-04:00",
+  "updatedAt": "2026-09-10T13:20:00-04:00",
   "number": "0047",
   "bundleName": "0047-the-tree-carries-drift-no-check-looks-for",
   "genus": "findings",
@@ -152,26 +152,36 @@
     {
       "id": "F9",
       "statement": "The two ordering comparisons report eight rows against `superseded` bundles, which no session may write to, so the rows cannot be cleared by anyone",
-      "status": "framing",
+      "status": "resolved",
       "statusReason": null,
       "statusNote": null,
-      "updatedAt": "2026-09-09T10:45:00-04:00",
+      "updatedAt": "2026-09-10T13:20:00-04:00",
       "sectionHeading": "F9 \u2014 the sweep reports rows that nobody is permitted to clear",
       "reopened": null,
       "withdrawn": null,
-      "resolution": null
+      "resolution": {
+        "resolvedBy": "D8",
+        "whatWasDone": "A `superseded` bundle is exempt from both ordering comparisons \u2014 8 rows in `0031` and `0032` \u2014 and `check` counts both exemptions and names their bundles instead of asserting one in a footer",
+        "revision": 281,
+        "commit": null
+      }
     },
     {
       "id": "F10",
       "statement": "The clone exemption is bundle-wide and never expires, so it suppresses the comparisons on a clone whose re-reading has closed \u2014 and the `reopened` status, which retains its resolution by design, is reported everywhere else",
-      "status": "framing",
+      "status": "resolved",
       "statusReason": null,
       "statusNote": null,
-      "updatedAt": "2026-09-09T10:45:00-04:00",
+      "updatedAt": "2026-09-10T13:20:00-04:00",
       "sectionHeading": "F10 \u2014 the exemption has no expiry, and one status is exempted nowhere",
       "reopened": null,
       "withdrawn": null,
-      "resolution": null
+      "resolution": {
+        "resolvedBy": "D9",
+        "whatWasDone": "The clone exemption is per member and lapses when the member leaves `un-started`/`framing`; `reopened` is exempt from the resolution comparison in every bundle. Both comparisons move into one `ordering_hits()` read by the reporter and the counter",
+        "revision": 281,
+        "commit": null
+      }
     },
     {
       "id": "F11",
@@ -292,6 +302,30 @@
       "answersAsOf": "2026-09-10T12:10:00-04:00",
       "voidedReason": null,
       "sectionHeading": "D7 \u2014 a guard proves two things, and F6's sentence only asked for one"
+    },
+    {
+      "id": "D8",
+      "decision": "A `superseded` bundle is exempt from both ordering comparisons, and `check` counts the suppression and names the bundles rather than asserting it in a footer",
+      "members": [
+        "F9"
+      ],
+      "decided": "2026-09-10",
+      "outcome": "accepted",
+      "answersAsOf": "2026-09-10T13:20:00-04:00",
+      "voidedReason": null,
+      "sectionHeading": "D8 \u2014 a row nobody may clear is not reported, and the silence is counted"
+    },
+    {
+      "id": "D9",
+      "decision": "The clone exemption becomes per member and expires with the re-reading window, keyed on the member's own status; and `reopened` is exempt from the resolution comparison in every bundle, because nothing is reverted when a member is reopened",
+      "members": [
+        "F10"
+      ],
+      "decided": "2026-09-10",
+      "outcome": "accepted",
+      "answersAsOf": "2026-09-10T13:20:00-04:00",
+      "voidedReason": null,
+      "sectionHeading": "D9 \u2014 the exemption belongs to the member, and one half of it belongs to a status"
     }
   ],
   "contributions": [],

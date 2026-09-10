@@ -489,6 +489,73 @@ def is_clone(b):
     return bool((b.get("lineage") or {}).get("supersedes"))
 
 
+# A clone's members are RESET to these while it is re-read; the originals'
+# decisions and resolutions are carried forward, so a decision or a resolution
+# ahead of a member is what a correct clone looks like -- but only while the
+# member is still awaiting that re-reading. 0047 F10.
+RE_READING = ("un-started", "framing")
+
+
+def ordering_hits(b, x, cited):
+    """The two ordering comparisons, for one member. Codes only, no exemptions.
+
+    ONE HOME for the comparison, because `conformance` reports it and
+    `ordering_exemptions` counts what it suppresses, and two copies of a
+    comparison drift -- which is 0047 F11 in the vocabulary sets.
+    """
+    hits = []
+    st = x.get("status")
+    if st in ("framing", "un-started") and x["id"] in cited:
+        if all(((d.get("outcome") or "") == "accepted")
+               for d in (b.get("decisions") or [])
+               if x["id"] in (d.get("members") or [])):
+            hits.append(("DECISION-AHEAD-OF-FINDING",
+                         "%s is %s with every decision accepted" % (x["id"], st)))
+    # `reopened` is EXEMPT everywhere and not only in a clone. docs/legend.md:
+    # a reopened member is "a resolved finding put back in play ... NOTHING IS
+    # REVERTED", so it keeps the resolution row by design and reporting it is
+    # reporting the procedure being followed. 0047 F10. No member in the tree is
+    # `reopened` today, which is why nothing has noticed -- the same shape as F8,
+    # whose four rejected outcomes had never been written either.
+    if x.get("resolution") and st not in INERT and st != "reopened":
+        hits.append(("RESOLUTION-AHEAD-OF-FINDING",
+                     "%s is %s and carries a resolution" % (x["id"], st)))
+    return hits
+
+
+def cited_members(b):
+    c = set()
+    for d in (b.get("decisions") or []):
+        for fid in (d.get("members") or []):
+            c.add(fid)
+    return c
+
+
+def ordering_exemptions(g):
+    """What the two ordering comparisons do not report, and on what ground.
+
+    Returned so `check` can COUNT the exemptions rather than assert them in a
+    footer. 0047 F5's remedy suppressed 65 rows correctly and said so only in
+    prose; a suppression nobody can see is indistinguishable from a comparison
+    nobody is making -- which is Revision 280's rule about an instrument that
+    reports nothing.
+    """
+    frozen, cloned = [], []
+    for n, b in sorted(g.bundles.items()):
+        sup = bool((b.get("lineage") or {}).get("supersededBy"))
+        cl = is_clone(b)
+        if not sup and not cl:
+            continue
+        cited = cited_members(b)
+        for x in b["_members"]:
+            for code, _detail in ordering_hits(b, x, cited):
+                if sup:
+                    frozen.append((n, x["id"], code))
+                elif x.get("status") in RE_READING:
+                    cloned.append((n, x["id"], code))
+    return frozen, cloned
+
+
 def conformance(g):
     """Every comparison the six checkers do not make. Returns (code, bundle, detail)."""
     out = []
@@ -566,19 +633,25 @@ def conformance(g):
                 if fid not in ids:
                     out.append(("DANGLING-CITATION", n,
                                 "%s cites %s, which does not exist" % (d.get("id"), fid)))
-        if not clone:
-            for x in fs:
-                if x.get("status") in ("framing", "un-started") and x["id"] in cited:
-                    if all(((d.get("outcome") or "") == "accepted")
-                           for d in (b.get("decisions") or [])
-                           if x["id"] in (d.get("members") or [])):
-                        out.append(("DECISION-AHEAD-OF-FINDING", n,
-                                    "%s is %s with every decision accepted"
-                                    % (x["id"], x["status"])))
-                if x.get("resolution") and x.get("status") not in INERT:
-                    out.append(("RESOLUTION-AHEAD-OF-FINDING", n,
-                                "%s is %s and carries a resolution"
-                                % (x["id"], x["status"])))
+        # A SUPERSEDED bundle is exempt from both ordering comparisons.
+        # docs/legend.md and section 9: it is "readable by any session and
+        # writable by NONE, including the session that owns it", and section 9
+        # spends three prohibitions keeping its findings.md unedited. So a row
+        # against one names work that must not be done, and the number can only
+        # rise -- 0047 F9. `check` counts the suppression instead.
+        #
+        # A CLONE is exempt only while the member is still awaiting its
+        # re-reading. The exemption used to be the whole bundle for its whole
+        # life, so a clone that closed its re-reading and later acquired a
+        # genuine defect was the one bundle nothing would report -- 0047 F10.
+        superseded = bool((b.get("lineage") or {}).get("supersededBy"))
+        for x in fs:
+            if superseded:
+                continue
+            if clone and x.get("status") in RE_READING:
+                continue
+            for code, detail in ordering_hits(b, x, cited):
+                out.append((code, n, detail))
         if b.get("progress") is None:
             out.append(("UNSTAMPED", n, "progress is null -- run `stamp`"))
         elif b["progress"] != bundle_progress(b):
@@ -882,8 +955,19 @@ def cmd_check(g, a):
         print()
     if not rows:
         print("  Nothing. Every comparison the six checkers do not make, holds.")
-    print("  Superseding clones are exempt from the two ordering comparisons"
-          " -- 0047 F5.")
+    frozen, cloned = ordering_exemptions(g)
+    print("  ORDERING COMPARISONS -- what was not reported, and why:")
+    print("    %3d row(s) in %d superseded bundle(s): readable by any session and"
+          % (len(frozen), len(set(n for n, _, _ in frozen))))
+    print("           writable by none, so the row could never be cleared -- 0047 F9.")
+    if frozen:
+        print("           %s" % ", ".join(sorted(set(n for n, _, _ in frozen))))
+    print("    %3d row(s) in %d clone(s) still being re-read: a decision or a"
+          % (len(cloned), len(set(n for n, _, _ in cloned))))
+    print("           resolution ahead of a member is what a correct clone looks")
+    print("           like, until the re-reading closes -- 0047 F5 and F10.")
+    if cloned:
+        print("           %s" % ", ".join(sorted(set(n for n, _, _ in cloned))))
 
 
 def main():

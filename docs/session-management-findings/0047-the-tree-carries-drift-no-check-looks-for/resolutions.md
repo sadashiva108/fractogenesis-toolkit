@@ -13,24 +13,30 @@
 | F6 | D7 | `.github/session-management-instructions.md` §6 gains the warn-only rule for anything that refuses a write, in both directions — shown not to fire on correct work **and** shown to fire on a case it should catch — with the three clauses `0047` F9, Revision 278 and the never-quote-`OK` rule supply | 280 | — |
 | F7 | D2 | `plan_findings_work.py` no longer reports a `transferred` bundle under `CLOSED-BUNDLE-LIVE-FINDING`; the `unclaimed` half stays and its detail names `0047` F1 as undecided. `test_transferred_is_treated_the_same` is replaced by `test_a_transferred_bundle_may_hold_worked_findings` over three standings, and `test_0047_F7_a_transfer_of_worked_findings_is_not_a_failure` reproduces Revision 248's twenty-three-finding transfer | 268 | — |
 | F8 | D3 | `OUTCOMES` is the legend's six bare values with `replaced` matched by prefix, and the two retired prefixes are gone. Two contract tests replaced, two regressions added, and `test_outcomes_and_statuses_share_no_word` is the disjointness assertion `docs/legend.md` has claimed since Revision 233 and nothing performed | 268 | — |
+| F9 | D8 | A `superseded` bundle is exempt from both ordering comparisons — 8 rows in `0031` and `0032` — and `check` now counts both exemptions and names their bundles instead of asserting one in a footer. `check` 43 → 35 | 281 | — |
+| F10 | D9 | The clone exemption is per member and lapses when the member leaves `un-started`/`framing`; `reopened` is exempt from the resolution comparison in every bundle, because nothing is reverted when a member is reopened. The two comparisons move into one `ordering_hits()` read by the reporter and the counter | 281 | — |
 | F11 | D5 | `VOCABULARIES` and `DECLARED_OVERLAPS` replace three hand-listed comparisons with every pair of every closed set, `SESSION_STATES` is added and `conformance` reports `VOCAB` on a session state outside it, and the one unowned pair is excluded by a named constant and asserted separately under `expectedFailure`. Suite 64 → 68, `OK (expected failures=1)` | 272 | — |
 | F12 | D6 | `.share/check-manifest-revision.sh` scans the commit log as a third place and takes the highest of the three, degrading to the file's two places where git is unavailable; `bin/verify-manifest-coverage.sh` is new and reports `MISSING` / `ORPHANED` / `DUPLICATE` against the log, failing only on `MISSING` | 278 | — |
 
-F1, F2 and F3 are untouched and remain `un-started`; F9 and F10 stand `framing`; **F12 was recorded at
-Revision 272 and stands `framing`, deliberately undecided** — reading the git log
-to find a number taken there is a different instrument from reading a file, and
-which wins when they disagree is what F12 owes. F6 was
-written to at Revision 255 and stands `framing`; F9 and F10 were recorded at
-Revision 268 and stand `framing`.
+**Three of twelve members remain live, and all three are `un-started`: F1, F2
+and F3.** They are the drift the tree already carries, and they are parked behind
+the entity model at the owner's direction — the retrofit they point at should not
+begin until the state format lands, and F1's question is what an `unclaimed`
+bundle may hold, which is a vocabulary ruling rather than an instrument one.
+**F1 has grown while it waited**: one live instance at Revision 267, **33 across
+eight bundles** at Revision 270, after the assurance session closed and released
+seven.
 
-**F7 and F8 are one change to one file and two decisions, so they are two rows.**
-`check` goes from **52** conformance findings to **43**: five
-`CLOSED-BUNDLE-LIVE-FINDING` rows clear, one per bundle Revision 261 transferred,
-and four `VOCAB` rows on `replaced → DX` clear. The suite goes from 48 tests to
-54, all passing. **Neither number is an `OK` total** — both are failure counts,
-and both were measured in the session copy against Revision 267. Every other
-baseline is unmoved: `headers` 11 FAIL, runbook structure 25 FAIL, doc-paths 0
-MISSING and 0 ANCHOR BROKEN, portability 0 FAIL, `stamp` writing nothing.
+**The other nine are `resolved`, and eight of the nine were defects in the
+instruments rather than in the tree.** F4 at Revision 255; F5 against Revision
+231, which shipped its remedy and never moved the finding; F7 and F8 at 268; F11
+at 272; F12 at 278; F6 at 280; F9 and F10 here. **`check` has gone from 52
+conformance rows to 35 across those six revisions, and not one row was cleared by
+editing a record** — every one was an instrument reporting something that was not
+true, or reporting something nobody was permitted to act on.
+
+**The revision on each row is the one that did the work, not the one that
+noticed.** F5's names Revision 231 and commit `c1da011`; the rest name their own.
 
 **The revision was re-taken at apply time.** This work was composed against
 Revision 263 and the checkout was at 267 when the owner called for it, so the
