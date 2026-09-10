@@ -39,24 +39,61 @@ avenue is not thereby unimportant; it is a rule whose only instrument is a perso
 remembering, and saying so is what stops it being quoted as enforced. `0039` D21
 took that answer explicitly for the commit-message rule.
 
-## 3. Three tests that decide the avenue
+## 3. Four tests that decide the avenue, and the first one is new
 
-**Is the fact in the data at the moment of the write?** `state-as-data.md` §4 put
-status, ownership, kind, scope, dates and edges into `metadata.json`. Anything
+**Added 2026-09-10 at Revision 283, from building two of the four below.**
+`0038` F7, F8 and F9.
+
+### 3.0 Can the instrument observe the act at all?
+
+**Ask this first, because it disqualifies before the other three are worth
+applying, and because all four candidates in section 4 fail it today.** The three
+tests below assume an instrument that runs at the moment of the write. Whether
+one does is a separate question and it was never asked.
+
+**Three routes by which it fails here**, each measured:
+
+| | The act | Why nothing sees it |
+|---|---|---|
+| **outside the harness** | the owner's `git add`, `git commit`, `git push` — §0 step 7 | there is no hook of any kind at a person's shell. **Every recorded instance of a change committed with no entry is this** — Revisions 241–246, and commit `636eba0` |
+| **a call the matcher does not name** | a session writing through a desktop bridge calls `mcp__remote-devices__device_bash` | `write-location-guard.sh` matches `Edit\|Write\|MultiEdit\|Bash` and **has never evaluated a single write** — `0045` F4, `0050` F1. Adding the name fixes one harness and re-creates the defect for the next |
+| **a tree the instrument cannot locate** | composing in a scratch copy, §0 step 1 | nothing is told where that copy is. `session-guard.sh` and `runbook-guard.sh` are scoped to `CLAUDE_PROJECT_DIR` and produced **0 notes across 473 tracked files** in a session copy — `0038` F9, `docs/ledgers/guard-conformance.md` |
+
+**Routes two and three are one cause.** A session cannot declare who it is or
+where it is working, to any instrument — `0045` F3. Route one is not that: it is
+a person, outside the system, and no amount of self-declaration reaches them.
+
+**What passing this test does not require.** That the instrument be perfect, only
+that the act reach it. A guard that sees the write and judges it wrongly is
+sections 3.1 to 3.3 and section 6; a guard that never sees the write is not a
+guard, and **it will report a clean pass forever** — which is Revision 280's
+second direction and the reason it exists.
+
+### 3.1 Is the fact in the data at the moment of the write?
+
+`state-as-data.md` §4 put status, ownership, kind, scope, dates and edges into `metadata.json`. Anything
 derivable from those files is decidable by a guard without parsing prose — which
 is the whole reason that migration was worth its cost, and the enforcement
 dividend has not been drawn.
 
-**Does the actor identify itself?** A guard sees a tool call and a path. It does
-not see which session is writing. Every rule of the form *the owning session may*
+### 3.2 Does the actor identify itself?
+
+A guard sees a tool call and a path. It does not see which session is writing. Every rule of the form *the owning session may*
 therefore has no guard available to it, however clean the data is. Section 5.1.
 
-**Is the failure worth blocking?** A guard that fires wrongly stops correct work.
+### 3.3 Is the failure worth blocking?
+
+A guard that fires wrongly stops correct work.
 Section 6 argues that in this repository that bar is higher than it looks.
 
 ## 4. What a guard could hold today
 
 Four, each stated with the incident it would have caught.
+
+**Re-scored against test 3.0 at Revision 283, and all four fail it.** The
+heading is left as it was written, because what changed is not the list but what
+is known about it — and *could hold today* turns out to have been a claim about
+the rules rather than about the instruments. Each entry carries its route below.
 
 ### 4.1 A change committed with no manifest entry
 
@@ -70,12 +107,24 @@ time, because it reads the manifest and not the log. Revision 247 reconstructed
 six entries after the fact. This is the highest-value guard on the list, and the
 only one whose absence has already cost archaeology rather than attention.
 
+**Test 3.0: fails by routes one and three.** The committing is the owner's and
+reaches no hook; and a `Stop` hook comparing the tree would have to know **which**
+tree — the session composes in a copy nothing is told the location of, and reading
+git in the checkout is what §0 forbids. **Built instead as a checker at Revision
+278**, `bin/verify-manifest-coverage.sh`, which reports after the fact and cannot
+refuse. `0038` F8.
+
 ### 4.2 The write-location guard, extended to the bridge
 
 Section 0's whole cycle rests on composing outside the owner's checkout. The
 guard covers writes made one way and not the other; `0050` is the reading. Not
 new work, and the rule it protects is the one `0049` records seven revisions
 skipping.
+
+**Test 3.0: fails by route two, and extending it does not pass.** `0045` F4 is
+exact — naming `mcp__remote-devices__device_bash` in the matcher fixes one
+harness and re-creates the defect for the next, **which is the shape of every
+enumeration of callers ever written.**
 
 ### 4.3 The §6 gate on a toolkit write
 
@@ -88,12 +137,21 @@ a `decided` finding names it.
 where the gate genuinely applied and an override was needed, once where it did not
 apply at all and a checker claimed it did.
 
+**Test 3.0: fails by route three**, and section 7 adds a second blocker of its
+own. The toolkit write happens in the session copy, and a guard would have to
+know that copy is a copy of this repository before any `metadata.json` walk
+means anything.
+
 ### 4.4 Stored derivations
 
 `docs/legend.md` says `standing`, `progress` and `state` are written by
 `plan-findings-work.sh stamp` **and by nothing else**. That sentence is a rule with
 no instrument. A guard refusing any other writer to those three keys makes it true,
 and it is the narrowest useful guard here: three key names in one file shape.
+
+**Test 3.0: fails by routes two and three.** A hand edit to those keys is an
+`Edit` on a `metadata.json` **in the session copy**, so the guard neither sees the
+call nor recognises the tree. Narrowest is not nearest.
 
 ## 5. Where enforcement stops
 

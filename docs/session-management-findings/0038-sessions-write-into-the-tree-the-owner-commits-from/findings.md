@@ -42,9 +42,9 @@ and that is not what was found.
 | F4 | Backing out one session's change is surgical, because `git checkout` would take the other's too | `resolved` |
 | F5 | A session can amend a revision the owner has already committed | `resolved` |
 | F6 | The write discipline does not distinguish the write kinds `docs/legend.md` now names | `resolved` |
-| F7 | A rule here is enforceable at write time only where the fact is in `metadata.json`, the actor identifies itself, and a false refusal costs less than the rule — and none of the four guards that pass those tests is built | `decided` |
-| F8 | The guard D7 chose cannot fire at the moment that has actually failed: every recorded instance is the owner committing, and no session-side hook observes that | `framing` |
-| F9 | Two of the three hooks are annotators that cannot refuse anything, and both are scoped to the one directory a session must never write in — so they can only speak about a write the third hook refuses | `framing` |
+| F7 | A rule here is enforceable at write time only where the fact is in `metadata.json`, the actor identifies itself, and a false refusal costs less than the rule — and none of the four guards that pass those tests is built | `resolved` |
+| F8 | The guard D7 chose cannot fire at the moment that has actually failed: every recorded instance is the owner committing, and no session-side hook observes that | `resolved` |
+| F9 | Two of the three hooks are annotators that cannot refuse anything, and both are scoped to the one directory a session must never write in — so they can only speak about a write the third hook refuses | `resolved` |
 
 **Read as a re-verification on 2026-09-09, at Revision 269**, by
 `drift-and-the-write-boundary-20260909-053548`. `0028`, which this bundle
@@ -356,3 +356,39 @@ hook is not told where that is, and cannot be: `0045` F3 records that a session
 cannot declare who or where it is to any instrument. **The fix is not available
 at this layer**, which is the same wall F7's four guards meet and the reason this
 is recorded rather than repaired.
+
+### F7, F8 and F9, on resolving them together at Revision 283
+
+**They are three instances of one missing test.** F7 says four rules pass the
+three guardability tests and none is built. F8 says the one D7 chose cannot fire
+where the failure happens. F9 says two of the three installed hooks are pointed
+at the directory nothing may be written in. **Each was read as a defect in a
+particular instrument, and each is the same question never asked: can the
+instrument observe the act at all?**
+
+`docs/rules/rule-enforcement-avenues.md` §3 now asks it first, as **test 3.0**,
+and §4 re-scores all four candidates against it. **All four fail**, by three
+routes:
+
+| Route | The act | Instances |
+|---|---|---|
+| outside the harness | the owner's `git commit` | Revisions 241–246; commit `636eba0` |
+| a call the matcher does not name | a bridge session's write | `0045` F4, `0050` F1 — **never evaluated a single write** |
+| a tree the instrument cannot locate | composing in a scratch copy | F9's annotators — **0 notes across 473 files** |
+
+**Routes two and three are one cause and it is not this framework's to fix**: a
+session cannot declare who it is or where it is working, to any instrument —
+`0045` F3. **Route one is not that at all.** It is a person at a shell, outside
+the system, and no amount of self-declaration reaches them.
+
+**So F7's answer is not the one it expected.** It asks for the choice to be made
+deliberately; it has been, twice — D7 chose, and building revealed the choice was
+not a guard. What the re-scoring establishes is that **the enforcement dividend
+§3.1 says *has not been drawn* cannot be drawn at this layer**, and that the
+avenue actually available is the checker: two were built, at Revisions 278 and
+282, and both report after the fact and refuse nothing.
+
+**One thing this must not be read as.** Not an argument that the four rules do
+not matter — §4 states each with the incident it would have caught, and those
+incidents are real. **The rules are worth holding and the layer cannot hold
+them**, which is a different sentence and the one the record now carries.

@@ -26,6 +26,7 @@ which is the thing `0039` F12 asks for.
 | D4 | F4's remedy holds and has never been stated: declining a patch is free and reverting a commit is not. §0 step 5 now says so | F4 | 2026-09-09 | `accepted` |
 | D5 | F5 is answered by §7; **the artifact `0028` named is at a different path** and the citation is corrected rather than the tool moved back | F5 | 2026-09-09 | `accepted` |
 | D6 | F6 is answered by §6's four write kinds; **the legend section `0028` created for it no longer exists**, the rule having moved to the instruction set, and the relocation is recorded rather than reversed | F6 | 2026-09-09 | `accepted` |
+| D8 | A fourth test goes into `docs/rules/rule-enforcement-avenues.md` §3, **first**, and it asks whether the instrument can observe the act at all. All four candidates in §4 are re-scored against it and **all four fail**, by three routes. The installed set is corrected: one guard, two annotators | F7, F8, F9 | 2026-09-10 | `accepted` |
 | D7 | Of the four guards F7 names, the manifest-entry guard is built first, warn-only until a clean pass. **Nothing is built in this revision** and F7 stays `decided` | F7 | 2026-09-09 | `accepted` |
 
 ## D1 — the collision is not prevented, it is made visible
@@ -241,3 +242,81 @@ which is the other session's and is the critical path.
 **Rejected — build none and leave F7 `framing`.** The finding's complaint is that
 the enforced set is a record of past accidents rather than a decision. Leaving it
 undecided is the complaint continuing.
+
+## D8 — the test that disqualifies before the other three are worth applying
+
+**One decision for three findings, and that is the ruling rather than a
+shortcut.** F7, F8 and F9 were each read as a defect in a particular instrument.
+They are one question never asked, and answering it three times in three places
+would be the copy §8 forbids — **a fact has one home, and this one's home is
+§3.**
+
+### What the test says
+
+> **Can the instrument observe the act at all?** Ask it first. The other three
+> tests assume an instrument that runs at the moment of the write; whether one
+> does is a separate question.
+
+**It disqualifies cheaply.** Sections 3.1 to 3.3 ask about data, actor and cost —
+all of which take reading to answer. This one takes looking at where the act
+happens, and it removes candidates before the expensive questions are put.
+
+### The three routes, each measured rather than reasoned
+
+**Outside the harness.** The owner's `git add`, `git commit`, `git push` — §0 step
+7 makes them the owner's, and there is no hook at a person's shell. **Every
+recorded instance of a change committed with no entry is this route**: Revisions
+241–246, and `636eba0`.
+
+**A call the matcher does not name.** `write-location-guard.sh` matches
+`Edit|Write|MultiEdit|Bash`; a session on a desktop bridge writes with
+`mcp__remote-devices__device_bash`. It has never evaluated a single write —
+`0045` F4. **And extending it does not pass the test**: naming that tool fixes one
+harness and re-creates the defect for the next, *which is the shape of every
+enumeration of callers ever written.*
+
+**A tree the instrument cannot locate.** `session-guard.sh` and
+`runbook-guard.sh` are scoped to `CLAUDE_PROJECT_DIR` and produced **0 notes
+across 473 tracked files** in a session copy — Revision 282's pass. §4.1's
+proposed `Stop` hook meets the same wall from the other side: it compares the
+tree, and nothing tells it **which** tree.
+
+**Routes two and three reduce to `0045` F3** — a session cannot declare who it is
+or where it works. **Route one does not**, and that distinction is why the test
+lists three routes rather than one: two are a gap in what the framework can say
+about itself, and one is a person standing outside it.
+
+### The installed set is corrected
+
+Three hooks, **one guard and two annotators**. `session-guard.sh` and
+`runbook-guard.sh` are `PostToolUse` and each says in its own header that it
+always exits 0. §4 and `0038` F7 both counted three. **Revision 280's promotion
+rule governs one of them**, and there is nothing in the other two to promote.
+
+### Rejected — record it as a fourth avenue in §2 rather than a test in §3
+
+§2's four avenues are *where* a rule can be held — guard, check, review, nowhere.
+This is not a place; it is **a precondition on one of them**, and putting it in
+§2 would create a fifth avenue named *cannot be observed*, which is `nowhere`
+under another name.
+
+### Rejected — resolve F8 and F9 and leave F7 open until a guard is built
+
+The reading F7 asks for is a deliberate choice, and it has been made twice —
+D7 chose, and building revealed the choice was not a guard. **Holding F7 open
+until something is built would make it a work item rather than a reading**, and
+the thing that would close it is not available at this layer.
+
+### Rejected — propose the harness change that would fix routes two and three
+
+A session declaring its identity and its working directory to a hook is the fix,
+and it is **not this repository's to make**. `0045` F3 owns the reading and it is
+another session's. Naming a remedy in someone else's bundle from inside a
+decision is the boundary breach the Revision 261 split exists to prevent.
+
+### Rejected — delete §4 now that all four fail
+
+**The rules are worth holding and the layer cannot hold them**, which is two
+statements and the second does not retire the first. §4 states each candidate
+with the incident it would have caught, and those incidents happened. Deleting it
+would lose the reason anyone would build the avenue if one appeared.

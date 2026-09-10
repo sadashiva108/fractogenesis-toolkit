@@ -19,12 +19,25 @@ and what `0047` D4 established. Only F1 and F4 are carried out here.
 | F4 | D4 | §0 step 5 now states the asymmetry it always relied on: declining a patch is free because nothing is in the checkout to reverse, and reverting after an apply is a hand edit per file | 270 | — |
 | F5 | D5 | Nothing here. §7 takes the number at apply time against the tree being applied to and never retro-edits an entry. **The helper `0028` named as `bin/check-manifest-revision.sh` is `.share/check-manifest-revision.sh`**, invoked as `./bin/verify-session-findings.sh manifest-revision`; the citation is corrected here and the tool is not moved back | 181 | `87ff205` |
 | F6 | D6 | Nothing here. §6 carries four write kinds — `record`, `toolkit`, `evidence`, `foreign` — with gating per kind and composition stated once for all three tracked kinds. **The `docs/legend.md` section `0028` created for this no longer exists**; `0039` D2 and D13 moved the rule to the instruction set and widened it, and nothing connected the move to the resolution that pointed at it | 226 | `55e753e` |
+| F7 | D8 | Nothing built. `docs/rules/rule-enforcement-avenues.md` §3 gains test 3.0 and §4 re-scores all four candidates against it; the answer F7 asked for is that the enforcement dividend cannot be drawn at this layer, and the avenue available is the checker | 283 | — |
+| F8 | D8 | §4.1 carries its route — the committing is the owner's and reaches no hook, and a `Stop` hook would have to know which tree. Built as a checker at Revision 278 instead | 283 | — |
+| F9 | D8 | §3.0's third route, with Revision 282's measurement; and the installed set is corrected in §4 to one guard and two annotators | 283 | — |
 
-**F7 is `decided` and not resolved.** D7 chooses which of the four guards is
-built first and the discipline it is built under; the build is a toolkit write
-with its own composing, its own warn-only pass across the whole tree and its own
-review. **A decision carried out is what makes a resolution**, and this one has
-not been.
+**All nine members are `resolved` and the bundle derives `answered`.** Six were
+carried out before this bundle was read, in revisions that answered `0028`; F1
+and F4 at Revision 270; F7, F8 and F9 at Revision 283.
+
+**F7 stood `decided` from Revision 270 to Revision 283**, deliberately. D7 chose
+which of the four guards to build first and under what discipline; **building it
+is what found that the choice was not a guard at all**, and D8 is that reading
+turned into a test. A finding held open between a decision and its carrying-out
+is the state §9b describes, and this is what it looks like when the carrying-out
+changes the answer.
+
+**Nothing was built for F7, F8 or F9 and the resolution rows say so.** What was
+written is a test and a re-scoring — `docs/rules/rule-enforcement-avenues.md` §3.0
+and §4 — because **the rules are worth holding and this layer cannot hold them**,
+and the record now carries the second sentence as well as the first.
 
 ## What re-verification found, and it is the reason this file reads as it does
 

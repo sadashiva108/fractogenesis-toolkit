@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-10T14:30:00-04:00",
+  "updatedAt": "2026-09-10T15:30:00-04:00",
   "number": "0038",
   "bundleName": "0038-sessions-write-into-the-tree-the-owner-commits-from",
   "genus": "findings",
@@ -25,8 +25,8 @@
     "\u00a7\u00a74b\u20134d, in `.github/copilot-instructions.md`",
     "all 27 existing findings bundles, checked for overlap"
   ],
-  "standing": "analyzing",
-  "progress": "analyzing",
+  "standing": "answered",
+  "progress": "answered",
   "ownership": null,
   "lineage": {
     "supersedes": "0028",
@@ -138,38 +138,53 @@
     {
       "id": "F7",
       "statement": "A rule here is enforceable at write time only where the fact is in `metadata.json`, the actor identifies itself, and a false refusal costs less than the rule \u2014 and none of the four guards that pass those tests is built",
-      "status": "decided",
+      "status": "resolved",
       "statusReason": null,
       "statusNote": null,
-      "updatedAt": "2026-09-09T12:10:00-04:00",
+      "updatedAt": "2026-09-10T15:30:00-04:00",
       "sectionHeading": "F7 \u2014 the write discipline has no instrument, and four are available",
       "reopened": null,
       "withdrawn": null,
-      "resolution": null
+      "resolution": {
+        "resolvedBy": "D8",
+        "whatWasDone": "Nothing built. \u00a73 of `rule-enforcement-avenues.md` gains test 3.0 and \u00a74 re-scores all four candidates against it; the avenue available is the checker",
+        "revision": 283,
+        "commit": null
+      }
     },
     {
       "id": "F8",
       "statement": "The guard D7 chose cannot fire at the moment that has actually failed: every recorded instance is the owner committing, and no session-side hook observes that",
-      "status": "framing",
+      "status": "resolved",
       "statusReason": null,
       "statusNote": null,
-      "updatedAt": "2026-09-10T11:05:00-04:00",
+      "updatedAt": "2026-09-10T15:30:00-04:00",
       "sectionHeading": "F8 \u2014 the first guard cannot guard the half that has failed",
       "reopened": null,
       "withdrawn": null,
-      "resolution": null
+      "resolution": {
+        "resolvedBy": "D8",
+        "whatWasDone": "\u00a74.1 carries its route \u2014 the committing is the owner's and reaches no hook. Built as a checker at Revision 278 instead",
+        "revision": 283,
+        "commit": null
+      }
     },
     {
       "id": "F9",
       "statement": "Two of the three hooks are annotators that cannot refuse anything, and both are scoped to the one directory a session must never write in \u2014 so they can only speak about a write the third hook refuses",
-      "status": "framing",
+      "status": "resolved",
       "statusReason": null,
       "statusNote": null,
-      "updatedAt": "2026-09-10T14:30:00-04:00",
+      "updatedAt": "2026-09-10T15:30:00-04:00",
       "sectionHeading": "F9 \u2014 the two annotators can only speak about a write that does not happen",
       "reopened": null,
       "withdrawn": null,
-      "resolution": null
+      "resolution": {
+        "resolvedBy": "D8",
+        "whatWasDone": "\u00a73.0's third route, with Revision 282's measurement; the installed set is corrected to one guard and two annotators",
+        "revision": 283,
+        "commit": null
+      }
     }
   ],
   "decisions": [
@@ -256,6 +271,20 @@
       "answersAsOf": "2026-09-09T12:10:00-04:00",
       "voidedReason": null,
       "sectionHeading": "D7 \u2014 the order is decided and nothing is built"
+    },
+    {
+      "id": "D8",
+      "decision": "A fourth test goes into `docs/rules/rule-enforcement-avenues.md` \u00a73, first, and it asks whether the instrument can observe the act at all. All four candidates in \u00a74 are re-scored against it and all four fail, by three routes. The installed set is corrected: one guard, two annotators",
+      "members": [
+        "F7",
+        "F8",
+        "F9"
+      ],
+      "decided": "2026-09-10",
+      "outcome": "accepted",
+      "answersAsOf": "2026-09-10T15:30:00-04:00",
+      "voidedReason": null,
+      "sectionHeading": "D8 \u2014 the test that disqualifies before the other three are worth applying"
     }
   ],
   "contributions": [],
