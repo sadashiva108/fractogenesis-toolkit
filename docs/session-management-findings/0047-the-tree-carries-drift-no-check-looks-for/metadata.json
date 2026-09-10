@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-10T11:00:00-04:00",
+  "updatedAt": "2026-09-10T12:10:00-04:00",
   "number": "0047",
   "bundleName": "0047-the-tree-carries-drift-no-check-looks-for",
   "genus": "findings",
@@ -101,14 +101,19 @@
     {
       "id": "F6",
       "statement": "A guard fails where a checker only reports, and the discipline that exists for checkers \u2014 a clean pass before it is trusted \u2014 has never been stated for guards",
-      "status": "framing",
+      "status": "resolved",
       "statusReason": null,
       "statusNote": null,
-      "updatedAt": "2026-09-09T05:40:00-04:00",
+      "updatedAt": "2026-09-10T12:10:00-04:00",
       "sectionHeading": "F6 \u2014 the discipline exists for checkers and has never been stated for guards",
       "reopened": null,
       "withdrawn": null,
-      "resolution": null
+      "resolution": {
+        "resolvedBy": "D7",
+        "whatWasDone": "\u00a76 gains the warn-only rule for anything that refuses a write, in both directions \u2014 shown not to fire on correct work and shown to fire on a case it should catch",
+        "revision": 280,
+        "commit": null
+      }
     },
     {
       "id": "F7",
@@ -275,6 +280,18 @@
       "answersAsOf": "2026-09-10T11:00:00-04:00",
       "voidedReason": null,
       "sectionHeading": "D6 \u2014 the file and the log are two incomplete registers of one sequence"
+    },
+    {
+      "id": "D7",
+      "decision": "The warn-only discipline goes into \u00a76 as a gate on what may refuse a write, with the second half F6 did not have: a guard must be shown to fire on a case it should catch, not only to stay quiet on correct work",
+      "members": [
+        "F6"
+      ],
+      "decided": "2026-09-10",
+      "outcome": "accepted",
+      "answersAsOf": "2026-09-10T12:10:00-04:00",
+      "voidedReason": null,
+      "sectionHeading": "D7 \u2014 a guard proves two things, and F6's sentence only asked for one"
     }
   ],
   "contributions": [],

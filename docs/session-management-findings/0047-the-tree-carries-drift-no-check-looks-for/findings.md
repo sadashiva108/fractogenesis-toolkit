@@ -37,7 +37,7 @@ retrofit is argued.
 | F3 | Three bundles carry resolutions for findings that are not resolved | `un-started` |
 | F4 | Eleven `resolved` bundles have no `decisions.md`, and whether they owe one has never been decided | `resolved` |
 | F5 | A conformance sweep that does not know about superseding clones reports sixty-five false positives | `resolved` |
-| F6 | A guard fails where a checker only reports, and the discipline that exists for checkers — a clean pass before it is trusted — has never been stated for guards | `framing` |
+| F6 | A guard fails where a checker only reports, and the discipline that exists for checkers — a clean pass before it is trusted — has never been stated for guards | `resolved` |
 | F7 | `plan_findings_work.py:439` treats `transferred` as `unclaimed` and reports a permitted transfer as a conformance failure, the last executable site of a rule the documents retired | `resolved` |
 | F8 | `plan_findings_work.py` validates decision outcomes against a set the legend replaced: it accepts the two the legend retired and rejects five of the seven it defines, one of which three live decisions already use | `resolved` |
 | F9 | The two ordering comparisons report eight rows against `superseded` bundles, which no session may write to, so the rows cannot be cleared by anyone | `framing` |
@@ -191,6 +191,37 @@ reading is `docs/rules/rule-enforcement-avenues.md` §6.
 **One thing this finding must not do**: become the argument against guards. The
 same section names four that are worth building. This is the discipline for
 building them, not a case against them.
+
+### Amended 2026-09-10 by the owning session: the list is eight, and it runs in two directions
+
+**Two more of the over-firing kind, both this session's own.** F8 found the
+outcome check **rejecting four conformant decisions** while accepting two values
+the legend had retired. And `bin/verify-manifest-coverage.sh` read *"Revision
+256: 0037 reaches answered"* as a range and **reported a bundle number as a
+missing revision** — the seventh instance, and **the first caught before it
+shipped rather than after.** What caught it was running it against the whole tree
+before quoting its output, which is this finding's own rule obeyed before it was
+written.
+
+**And one that fails the other way, which this finding did not see.**
+`.claude/hooks/write-location-guard.sh` is wired on `Edit|Write|MultiEdit|Bash`
+and a session writing through a desktop bridge uses none of those, so **it has
+never evaluated a single write** — including two into the owner's checkout that
+were caught by hand. `0045` F4 and `0050` F1.
+
+**That is a different failure and the proposed sentence does not catch it.**
+*Zero false positives on a clean pass* is satisfied perfectly by an instrument
+that is not looking at anything, **because an instrument reporting nothing looks
+exactly like an instrument with nothing to report.** A guard must be shown both
+**not to fire on what is correct** and **to fire on what is not**, and only the
+second requires deliberately giving it something to catch.
+
+**So the rule that goes into §6 is the proposed sentence with its second half
+supplied**, plus three clauses each of which has already cost something: a clean
+pass is zero rows the instrument is *wrong* about rather than zero rows; a class
+of hit nobody can ever clear warns rather than fails, or the number can only rise
+— `0047` F9; and the standing baseline lives in the instrument's own header,
+because *never quote `OK`* is unreadable without a number to read against.
 
 ## F7 — a check refuses an operation the instruction set permits
 

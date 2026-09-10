@@ -449,6 +449,56 @@ genus, and renaming it after a commission is written costs every commission as
 well. **Where a change is known to be coming, it goes before the thing that would
 multiply it**, and the revision says that is why it is being done now.
 
+### An instrument that refuses a write is installed warn-only first
+
+**A checker that fires wrongly wastes an hour. A guard that fires wrongly stops
+the work**, at the one point a session cannot route around — the moment of the
+write. So the bar is higher, and it is met before the refusal is switched on and
+not after.
+
+> **A guard is installed warn-only. It runs against the whole tree, and against a
+> case it is supposed to catch. It becomes a refusal only when it has been shown
+> both not to fire on what is correct and to fire on what is not — and the
+> promotion is a recorded act.**
+
+**A guard fails in two directions and this repository has both on record.**
+
+| | Instances |
+|---|---|
+| **fires on what is correct** | seven. `0041`'s lint at 36; `0042` F4's rendering audit at 131, of which **128 were its own bugs**; the completeness check at 18; `0047` F5's sweep at **65 of 77**; the check `0047` F7 records, refusing a permitted transfer; `0047` F8, rejecting four conformant decisions; and `bin/verify-manifest-coverage.sh`, which read a bundle number as a revision — **the only one caught before it shipped, and running it against the whole tree is what caught it** |
+| **never fires at all** | `.claude/hooks/write-location-guard.sh`, wired on `Edit\|Write\|MultiEdit\|Bash` and blind to a session writing through a desktop bridge. It **has never evaluated a single write**, including two into the owner's checkout that were caught by hand — `0045` F4, `0050` F1 |
+
+**The second direction is the one a clean pass does not prove.** An instrument
+that reports nothing looks exactly like an instrument with nothing to report.
+That is why the discipline is *run it against the whole tree* **and** *against a
+case it should catch*: the first shows it is not lying about correct work, the
+second shows it is looking at all.
+
+**Three things follow, and each is here because leaving it out has cost
+something.**
+
+**A clean pass is zero rows the instrument is wrong about, not zero rows.**
+`bin/verify-manifest-coverage.sh` reports four at Revision 278 and every one is
+an incident already in the record. **Zero rows would have meant it was not
+looking.**
+
+**A row nobody can clear is not a signal.** Where a class of hit is real and
+permanently unfixable — a `superseded` bundle nobody may write to, a commit that
+cannot be rewritten — it warns and does not fail, or the number can only rise and
+stops being read. `0047` F9 is that failure; Revision 278's split of `MISSING`
+from `ORPHANED` is that rule applied.
+
+**The instrument carries its own baseline.** *Quote `MISSING`, `FAIL`, `WARN`;
+never `OK`* is unreadable without a number to read against, so the standing
+counts live in the instrument's own header, dated and attributed —
+`verify-session-findings.sh headers` at 11, `verify-manifest-coverage.sh` at
+0/3/1.
+
+**What this is not.** It is not an argument against guards.
+`docs/rules/rule-enforcement-avenues.md` names four rules worth enforcing and
+this repository has three guards installed, each after a rule was broken. **This
+is the discipline for building them**, and its cost is one pass over the tree.
+
 Where a write is composed is a separate rule and applies to all three:
 
 - **Compose in a copy of the repository outside the owner's checkout.** Copy the

@@ -11,6 +11,7 @@
 | D1 | The migrated-bundle carve-out is restored to `.github/session-management-instructions.md` §3: a bundle migrated from an already-closed record carries `resolutions.md` and no `decisions.md`, and its `resolutions.md` says so. **This is `0037` D2, taken once and recorded in both bundles** | F4 | 2026-09-09 | `accepted` |
 | D2 | `transferred` leaves the closed-bundle assertion in `plan_findings_work.py` entirely; `unclaimed` keeps it, and its detail names `0047` F1 as the undecided rule the row rests on. The code name is unchanged | F7 | 2026-09-09 | `accepted` |
 | D3 | `OUTCOMES` becomes the legend's six bare outcomes with `replaced` matched by prefix; the two retired prefixes go; and a contract test asserts the disjointness `docs/legend.md` has claimed a schema check performs since Revision 233 | F8 | 2026-09-09 | `accepted` |
+| D7 | The warn-only discipline goes into §6 as a gate on what may **refuse** a write, with the second half F6 did not have: a guard must be shown to fire on a case it should catch, not only to stay quiet on correct work | F6 | 2026-09-10 | `accepted` |
 | D6 | The number helper consults the **log as a third place** and takes the highest of the three, because a number is taken if it is taken anywhere. Conformance is a different question and gets its own checker, `bin/verify-manifest-coverage.sh` | F12 | 2026-09-10 | `accepted` |
 | D5 | The guard is rebuilt over a declared set of vocabularies rather than a hand-listed set of comparisons, and the one pair nobody here may fix is **excluded by name** rather than absorbed. `SESSION_STATES` is added and a session's stored `state` is checked against it | F11 | 2026-09-09 | `accepted` |
 | D4 | F5 is recorded `resolved` against the work that already answered it — `is_clone()`, shipped at Revision 231 — rather than re-done; what the remedy did not cover is opened as F9 and F10 instead of being folded into the resolution | F5 | 2026-09-09 | `accepted` |
@@ -295,3 +296,70 @@ happened with a helper that could have been asked and was not.
 two contracts: the helper must work on a checkout with no git, the checker
 cannot work without it. Merging them would make the number unobtainable exactly
 where the helper was written to work.
+
+## D7 — a guard proves two things, and F6's sentence only asked for one
+
+F6 proposes: *a guard is installed warn-only, runs against the whole tree,
+produces zero false positives on a clean pass, and only then becomes a
+refusal.* **That is right and it is half.**
+
+**An instrument that reports nothing looks exactly like an instrument with
+nothing to report.** `.claude/hooks/write-location-guard.sh` has been wired since
+Revision 232 and **has never evaluated a single write** — its matchers name
+`Bash`, and a session reaching the checkout through a desktop bridge calls
+something else. It would have passed F6's test on every run it never made. That
+is `0045` F4, recorded three hours before this decision and by another session.
+
+So the rule requires both directions: **run it against the whole tree**, which
+shows it is not lying about correct work, **and against a case it is supposed to
+catch**, which shows it is looking at all. **Only the second needs a deliberate
+violation**, and it is the half nobody thinks to perform.
+
+### Where it lands
+
+**§6.** A guard refuses a write, and §6 is the section that answers whether a
+write may happen at all. The *reading* stays in
+`docs/rules/rule-enforcement-avenues.md` §6 — F6 says so and a fact has one home
+— and what goes into the instruction set is the rule, not the argument.
+
+### The three clauses that came from the tree rather than the finding
+
+**A clean pass is zero rows the instrument is wrong about, not zero rows.**
+`bin/verify-manifest-coverage.sh` reports four and every one is an incident
+already recorded; zero would have meant it was not looking. F6's phrasing is
+*zero false positives*, which is already this — but the distinction is the one
+everyone gets wrong, so it is stated rather than implied.
+
+**A class nobody can clear warns rather than fails.** `0047` F9, applied at
+Revision 278 when `ORPHANED` and `DUPLICATE` were separated from `MISSING`.
+
+**The baseline lives in the instrument.** *Never quote `OK`* is unreadable
+without a number to read against, and a baseline in a session's memory is one
+`0026` already showed is worthless.
+
+### Rejected — state it in `docs/rules/rule-enforcement-avenues.md` and nowhere else
+
+That is where the reading is, and a reading is *cited, not obeyed* — rank 5. A
+rule a session must follow before switching on a refusal has to be in the
+document a session is told to read, which is rank 3.
+
+### Rejected — make it a check rather than a rule
+
+Nothing can measure whether a guard was run warn-only first: the evidence is a
+run that happened before the instrument existed in its final form. **It is a rule
+about how a thing is built, and those are followed or not.** What can be checked
+is the consequence — that is `0045` F4's territory, and it needs a session to be
+able to identify itself, which `0045` F3 says it cannot.
+
+### Rejected — require a clean pass and leave the firing half to judgement
+
+The rejected version is F6's own sentence, and this session used it for four
+revisions before finding the case it misses. **Two live guards in this repository
+have never fired**, and both would have satisfied it.
+
+### Rejected — grandfather the three guards already installed
+
+Tempting because they are installed and nothing has visibly broken. **One of the
+three has never fired**, which is the argument against: *nothing has visibly
+broken* is exactly what an instrument that is not looking produces. What the rule
+asks of them is one pass each, and it is owed rather than done here.
