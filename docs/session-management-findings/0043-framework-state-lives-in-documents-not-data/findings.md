@@ -44,6 +44,9 @@ should record here rather than open a near-duplicate beside it.**
 | F8 | Each vocabulary has exactly one activity-named status, and it is the one a name cannot carry | `framing` |
 | F9 | An edge kind is defined by a description and a behaviour, and the two can disagree | `framing` |
 | F10 | A terminal session's disposal exists only in prose: the `ended` lists went unpopulated on all eleven sessions across 230 revisions, and the prose standing in for them is unchecked | `framing` |
+| F11 | Twenty-eight stored fields are read by no live instrument, and `answersAsOf` — the field a rule is said to rest on — is one of them | `framing` |
+| F12 | Six fields are populated on no record in the tree; two of them are defects and four mark lifecycle branches that have never run | `framing` |
+| F13 | Edge kinds have no closed set and no reason is validated anywhere, against a legend that says a checker does both | `framing` |
 
 ## F1 — the status is in the filename
 
@@ -387,6 +390,111 @@ finding is. The fix, whichever is chosen, lands in
 `docs/architecture/allocation-and-inquiry.md` §3.2 rather than here — this bundle
 records that the defect exists and how it was found, because it was found by the
 state format's first real use.
+
+## F11 — twenty-eight stored fields are read by no live instrument, and one of them is what a rule rests on
+
+**Measured 2026-09-10 across all 54 dossier records.** Sixty-three distinct field
+paths exist in the schema. **Twenty-eight carry values on at least one record and
+their name appears in no instrument that runs** — not in `plan_findings_work.py`,
+not in any checker, not in any entrypoint. The only script that reads several of
+them is `extract-metadata.py`, which **must never be run**.
+
+That is not by itself a defect: a record is for reading, and most of these are
+prose a person reads. `severity`, `feltAt`, `read`, `recordedOccasion` and every
+`sectionHeading` are written for a human and it is right that no instrument
+consults them.
+
+**The defect is the ones that were written to be enforced.**
+
+| Field | What it was for | What reads it |
+|---|---|---|
+| `decisions.answersAsOf` | `docs/architecture/state-as-data.md`: *"what makes `0039` D8 enforceable"* — a decision whose `answersAsOf` predates its member's `updatedAt` was answered against a statement that has since changed, and *"`--check` flags it"* | **nothing** |
+| `edges.basis` | tells an asserted edge from a derived one — the distinction the edge contract was built on | nothing |
+| `edges.why`, `edges.reason` | the reason an edge exists at all | nothing |
+| `edges.asserted_by`, `edges.asserted_on` | who claimed it and when — the provenance of a claim that changes what other sessions are shown | nothing |
+
+**`answersAsOf` is the one that matters.** The design record states a rule, names
+the field that makes it enforceable, and says a checker flags the violation. **No
+checker does.** So the reframing rule the field exists to protect depends entirely
+on someone remembering the rule exists — which is the state the field was added
+to end, described in the same paragraph that added it.
+
+**This is F5's shape from underneath.** F5 is *authority sits on documents, not on
+data*; this is authority sitting on a **field**, with nothing behind it. A stored
+value nothing reads is not a fact — it is a note in a format that looks like a
+fact, and the format is what makes it convincing.
+
+**What it costs to leave.** Nothing today, and a wrong answer the first time
+anyone quotes the rule as enforced. The cheap remedy is not to build five
+checkers: it is to **say in the schema which fields are for instruments and which
+are for readers**, so a claim of enforcement can be checked against a list rather
+than against a hope.
+
+## F12 — six fields are populated on no record in the tree
+
+**Measured 2026-09-10.** Of sixty-three field paths, six carry a value on **zero**
+of 54 dossiers:
+
+| Field | Why it is empty |
+|---|---|
+| `members.statusReason` | **the reason vocabulary is unused.** Nine reopen reasons and five rollback reasons are defined and not one has ever been recorded |
+| `members.reopened` | no member in the tree has ever been reopened |
+| `members.withdrawn` | none has been withdrawn |
+| `decisions.voidedReason` | no decision has been voided |
+| `lineage.on` | supersession records *what* replaced a reading and never *when* |
+| `subKind` | added with `kind` and never given a meaning |
+
+**Four of the six are not defects.** `reopened`, `withdrawn`, `voidedReason` and
+`statusReason` are empty because those events have not happened, and a schema
+that anticipates them is doing its job. **They are recorded here because their
+emptiness is load-bearing in the other direction**: several checks and one whole
+lifecycle branch have therefore **never executed against real data**, and
+`0050` F8 is the shape of what that hides — a reopened member retains its
+resolution by design and is exempted nowhere, latent only because none exists.
+
+**Two are defects.** `lineage.on` is a field the supersession procedure never
+fills, so no superseded dossier records when it was superseded. And **`subKind`
+has no definition anywhere** — it was added beside `kind`, has never held a value,
+and no document says what would go in it. It is the shape of a field added
+speculatively and then inherited by 54 records.
+
+## F13 — two vocabularies are called closed and are not
+
+`docs/legend.md` presents its sets as closed, and a schema check is said to assert
+it. **Measured 2026-09-10, two are not closed by anything.**
+
+**Edge kinds.** There is **no `EDGE_KINDS` constant** in
+`plan_findings_work.py`. What exists is `W`, a weight map of twelve kinds, and
+every read of it is `W.get(kind, 1)`. **An edge kind outside the vocabulary is
+therefore accepted, given weight 1, and passes every check in silence** — it
+contributes to cohesion scoring as though it were `relates-to`. The
+`conformance()` pass validates `kind`, `genus`, `ownership` and decision
+outcomes, and does not look at edges at all.
+
+That is live rather than theoretical: `shapes.md` names **`serves`** as the edge
+joining an actionable dossier to its reason. It is in no closed set. The first
+one written will be accepted, weighted 1, and never questioned.
+
+**Reasons — all three sets.** `docs/legend.md` states, of the nine reopen reasons:
+*"the reason is a field rather than prose so a later reader can group by it **and
+a checker can validate it**."* **No checker validates any reason, in any of the
+three vocabularies.** The only occurrence of a reason value anywhere in code is a
+hardcoded `"reason": "no-longer-applies"` at `extract-metadata.py:189` — a value
+being **written**, by the one script that must never be run.
+
+**So the sentence in the legend describes an instrument that does not exist**,
+and it has been read as a description of one since it was written.
+
+**Why this belongs here rather than in a checker bundle.** The claim *this set is
+closed* is a statement about the data, made by a document, with nothing in the
+data to hold it — which is this bundle's subject exactly. F12 is the same failure
+from the other side: the reason fields are empty **because** nothing requires or
+validates them, so the vocabulary's disuse and its unenforceability are one fact.
+
+**What it costs to leave.** An unvalidated closed set is indistinguishable from a
+suggestion, and the first divergence is silent by construction. **A count of
+edges by kind will one day include a kind nobody defined**, and nothing in the
+tree will say when it arrived.
 
 ## What it costs to leave
 

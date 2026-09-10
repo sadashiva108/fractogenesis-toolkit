@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T05:45:00-04:00",
+  "updatedAt": "2026-09-10T02:30:00-04:00",
   "number": "0045",
   "bundleName": "0045-a-session-whose-output-is-not-a-bundle-has-no-state",
   "genus": "findings",
@@ -23,9 +23,9 @@
     "`docs/sessions/INDEX.md`, all seven rows",
     "`.github/session-management-instructions.md` section 5"
   ],
-  "standing": "transferred",
+  "standing": "analyzing",
   "progress": "analyzing",
-  "ownership": "transferred",
+  "ownership": null,
   "lineage": null,
   "members": [
     {
@@ -63,10 +63,40 @@
       "reopened": null,
       "withdrawn": null,
       "resolution": null
+    },
+    {
+      "id": "F4",
+      "statement": "The guard written to stop a session writing in the owner's checkout matches on tool name, so a bridged session is invisible to it and it has never fired",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-10T02:30:00-04:00",
+      "sectionHeading": "F4 \u2014 the guard written to stop a session writing in the checkout has never once fired on this session",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F5",
+      "statement": "A session's state is stored in `metadata.json` and in the index and they disagree, because `handoff` is declared and cannot be recomputed",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-10T02:30:00-04:00",
+      "sectionHeading": "F5 \u2014 a session's state is stored in two places and they disagree",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
     }
   ],
   "decisions": [],
-  "contributions": [],
+  "contributions": [
+    {
+      "session": "entity-model-and-vocabulary-20260909-053548",
+      "date": "2026-09-10",
+      "contribution": "Recorded F4 and F5 \u2014 F3's cost measured on a live guard, and a session state stored in two places that disagree"
+    }
+  ],
   "edges": [
     {
       "kind": "constrains",

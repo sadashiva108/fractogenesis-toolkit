@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T07:05:00-04:00",
+  "updatedAt": "2026-09-10T02:25:00-04:00",
   "number": "0037",
   "bundleName": "0037-findings-architecture-conformance",
   "genus": "findings",
@@ -157,6 +157,18 @@
       "statusNote": null,
       "updatedAt": "2026-09-09T07:05:00-04:00",
       "sectionHeading": "F8 \u2014 a finding may record a fact established, and two definitions say otherwise",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F9",
+      "statement": "Three architecture records describe machinery that does not match the code, and the currency watch aimed at exactly that pair has never been armed",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-10T02:25:00-04:00",
+      "sectionHeading": "F9 \u2014 three architecture records describe machinery that does not match the code",
       "reopened": null,
       "withdrawn": null,
       "resolution": null

@@ -53,6 +53,7 @@ the regression** — `0052` F1.
 | F6 | The two session-state diagrams disagree | `resolved` |
 | F7 | Two session identifiers recorded as unrecoverable are recoverable | `resolved` |
 | F8 | Nothing says a finding may record **a fact established** and not only a defect, and two definitions of the object put *what it costs to leave* inside it rather than in `Severity:` | `framing` |
+| F9 | Three architecture records describe machinery that does not match the code, and the currency watch aimed at exactly that pair has never been armed | `framing` |
 
 **F8 was recorded 2026-09-09 by `entity-model-and-vocabulary-20260909-053548`,
 and it takes this bundle out of `answered`.** Seven of seven stood `resolved` at
@@ -297,6 +298,80 @@ documents it rewrites, so the wording F8 settles is what D23 then carries. That
 is why the owner's ordering parks D23 behind this bundle. Recorded as
 `0037/F8 constrains 0039/F14`; the parking is the owner's direction and is not
 derived from that edge.
+
+### F9 — three architecture records describe machinery that does not match the code
+
+**This bundle's subject is a record disagreeing with itself and with the tree.**
+F1 through F7 were about the instruction set and the indexes. **The same failure
+is in the architecture records** — and the instrument that would have caught it
+**exists, points the right way, and has never been armed.**
+
+`.internal/ai-scripts/session-management/doc-currency.json` carries a watch named
+`allocation-tooling`. Its sources are `plan_findings_work.py` and
+`bin/plan-findings-work.sh`; its dependents are
+`docs/architecture/allocation-and-inquiry.md` and
+`docs/ledgers/allocation-evidence.md`; and its stated reason is:
+
+```text
+"why": "The allocator and interviewer. Their architecture record describes
+        what the code does."
+```
+
+**That is this finding, written in advance, by someone who saw it coming.** All
+seven watches carry `"sourceDigest": null`, and `doc_currency.py:evaluate()`
+tests the null before it compares, so every watch reports `UNCONFIRMED` and
+`DRIFTED` is unreachable — `0039` F22.
+
+**So the correct reading is not that nothing watches.** It is that **the drift
+below is drift the framework predicted, aimed an instrument at, and could not
+report** — which is worse, and is a different finding from one nobody anticipated.
+An earlier draft of this section claimed no architecture record was watched at
+all; that was checked against the file and was wrong, and the correction is
+recorded rather than quietly made because it changes what the finding says.
+
+Measured 2026-09-09 and re-verified 2026-09-10 against `plan_findings_work.py`,
+which Revisions 276 to 278 did not change.
+
+**`allocation-and-inquiry.md` against the allocator.** §4.2 lists a `− w_hold`
+term in the objective; `score()` has six weights and **no hold term** — held-back
+findings are printed and never scored. §4.1 constraint 2 requires
+`co-decides`/`contradicts`/`duplicates` dossiers to go to one session; **no code
+enforces it**, and the default run split `co-decides 0042/F1 → 0041/F1` across
+two sessions. §3.2 names four hard kinds and the code has five. §9's
+topological-order invariant and §4.4's patch emission are **not implemented**.
+`blast_radius` is defined as document-and-script reach and implemented as a JSON
+substring count.
+
+**The same record against the interviewer.** Of the six stages the design names,
+**only two exist**: `frontier()` and `rank()`. **Precedent, Lifting, Mode and
+Propagate have no code at all.** `rank()` consults **no edge**, though the design
+defines its gain through `constrains` and `generalises`. And **`ask` ignores every
+flag it accepts** — four invocations with `--only`, `--capacity` and `--only-kind`
+produced byte-identical output, md5 `fc1ec40ddaa9`.
+
+**`state-as-data.md` against the data.** Eleven statements in §4 have drifted from
+the records they specify, and §4.3's example still showed `findings[]` until
+Revision 271 moved it.
+
+**Why one finding and not twenty.** Each instance is a symptom; **the reading is
+that an architecture record is written once and then diverges with nothing
+watching.** Opening twenty findings would file the symptoms and lose the shape.
+The instances are listed so the reading can be checked, not so they can be fixed
+one at a time.
+
+**What it costs to leave.** These records are cited as specifications — this
+session read all three as though they described the code, and had to re-derive the
+code's actual behaviour to write `prism.md` and `lumen.md`. **A record that is
+trusted and wrong costs more than one nobody reads.**
+
+**And the remedy is one field, not a project.** Arming `allocation-tooling` is
+writing a digest into a JSON file. The watch, its sources, its dependents and its
+reason are already correct. **What is missing is the act of confirming it once**,
+and nothing in any procedure says whose job that is or when it happens — which is
+the gap `0039` F22 names and this finding is the first measured cost of.
+
+**Relates to `0039` F22** — the unarmed watch — and to `0043` F11, which is the
+same divergence at field granularity.
 
 ## What it costs to leave
 

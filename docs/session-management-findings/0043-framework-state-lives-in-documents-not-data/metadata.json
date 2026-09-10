@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T07:30:00-04:00",
+  "updatedAt": "2026-09-10T02:20:00-04:00",
   "number": "0043",
   "bundleName": "0043-framework-state-lives-in-documents-not-data",
   "genus": "findings",
@@ -25,9 +25,9 @@
     "`bin/verify-findings-counts.sh`, `bin/verify-findings-structure.sh`, `bin/verify-findings-headers.sh`",
     "the owner's two draft config files, 2026-09-07"
   ],
-  "standing": "transferred",
+  "standing": "analyzing",
   "progress": "analyzing",
-  "ownership": "transferred",
+  "ownership": null,
   "lineage": null,
   "members": [
     {
@@ -163,6 +163,42 @@
       "reopened": null,
       "withdrawn": null,
       "resolution": null
+    },
+    {
+      "id": "F11",
+      "statement": "Twenty-eight stored fields are read by no live instrument, and `answersAsOf` \u2014 the field a rule is said to rest on \u2014 is one of them",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-10T02:20:00-04:00",
+      "sectionHeading": "F11 \u2014 twenty-eight stored fields are read by no live instrument, and one of them is what a rule rests on",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F12",
+      "statement": "Six fields are populated on no record in the tree; two of them are defects and four mark lifecycle branches that have never run",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-10T02:20:00-04:00",
+      "sectionHeading": "F12 \u2014 six fields are populated on no record in the tree",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F13",
+      "statement": "Edge kinds have no closed set and no reason is validated anywhere, against a legend that says a checker does both",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-10T02:20:00-04:00",
+      "sectionHeading": "F13 \u2014 two vocabularies are called closed and are not",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
     }
   ],
   "decisions": [
@@ -207,6 +243,11 @@
       "session": "typed-bundles-architecture-20260908-204724",
       "date": "2026-09-09",
       "contribution": "Sharpened F3 with a third and fourth instance: four table header rows captured as `resources` entries across three session records, and two `owners.until` values missing from the home while a copy carried them"
+    },
+    {
+      "session": "entity-model-and-vocabulary-20260909-053548",
+      "date": "2026-09-10",
+      "contribution": "Recorded F11, F12 and F13 from measuring the schema against the code while writing iris/schema.md and iris/vocabulary.md"
     }
   ],
   "edges": [],
