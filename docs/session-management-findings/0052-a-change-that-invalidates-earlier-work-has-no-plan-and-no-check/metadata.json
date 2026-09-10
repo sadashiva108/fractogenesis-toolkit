@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-10T09:30:00-04:00",
+  "updatedAt": "2026-09-10T16:40:00-04:00",
   "number": "0052",
   "bundleName": "0052-a-change-that-invalidates-earlier-work-has-no-plan-and-no-check",
   "genus": "findings",
@@ -26,22 +26,27 @@
     ".github/session-management-instructions.md sections 7, 9, 9b",
     "commit 1c48deb and commit 88aed77"
   ],
-  "standing": "analyzing",
-  "progress": "analyzing",
+  "standing": "answered",
+  "progress": "answered",
   "ownership": null,
   "lineage": null,
   "members": [
     {
       "id": "F1",
       "statement": "Nothing re-verifies that a resolution still holds, and one refactor reverted seven without anything noticing",
-      "status": "framing",
+      "status": "resolved",
       "statusReason": null,
-      "statusNote": "Read 2026-09-09 by `drift-and-the-write-boundary-20260909-053548`. The sweep was run on one bundle: two of `0028`'s six resolutions hold as written, three name a home that no longer exists, one was never stated, and no remedy was lost. The count of `resolved` findings is 59, not 36.",
-      "updatedAt": "2026-09-09T12:15:00-04:00",
+      "statusNote": null,
+      "updatedAt": "2026-09-10T16:40:00-04:00",
       "sectionHeading": "F1 \u2014 a resolution is written once and never checked again",
       "reopened": null,
       "withdrawn": null,
-      "resolution": null
+      "resolution": {
+        "resolvedBy": "D2",
+        "whatWasDone": "`bin/verify-doc-paths.sh` moves its historical branch below the resolution fallbacks and renames the count `DECAYED`; 36 decayed citations across 271 documents, six relocations accounting for nearly all",
+        "revision": 284,
+        "commit": null
+      }
     },
     {
       "id": "F2",
@@ -73,6 +78,18 @@
       "answersAsOf": "2026-09-10T09:30:00-04:00",
       "voidedReason": null,
       "sectionHeading": "D1 \u2014 the gate, the test, and the five things"
+    },
+    {
+      "id": "D2",
+      "decision": "The instrument is the resolver that already exists, corrected \u2014 `HISTORICAL` moves below the resolution fallbacks and becomes `DECAYED`, meaning cited by a record and no longer there. No second checker, and the reading half is declared irreducible rather than implied covered",
+      "members": [
+        "F1"
+      ],
+      "decided": "2026-09-10",
+      "outcome": "accepted",
+      "answersAsOf": "2026-09-10T16:40:00-04:00",
+      "voidedReason": null,
+      "sectionHeading": "D2 \u2014 the signal was already being computed and half of it was mislabelled"
     }
   ],
   "contributions": [],

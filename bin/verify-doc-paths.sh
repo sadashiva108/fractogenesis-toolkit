@@ -49,14 +49,31 @@
 #       <!-- proposed: bin/verify-session-findings.sh -->
 #
 #   A record that cites a path as it STOOD -- a resolutions.md, a handoff, a
-#   ledger -- declares that instead, and the path is reported HISTORICAL:
+#   ledger -- declares that instead. Such a path is resolved like any other, and
+#   reported DECAYED only if it no longer resolves:
 #
 #       <!-- historical: bin/verify-findings-counts.sh -->
 #       <!-- historical-record -->
 #
 #   The second form covers the whole document, for a record whose every path
 #   is a citation of its own moment. Repairing such a path would falsify the
-#   record, so HISTORICAL never fails the run. This is 0046's marker.
+#   record, so DECAYED never fails the run. This is 0046's marker.
+#
+#   DECAYED IS A SIGNAL AND NOT A DEFECT, and until Revision 284 it was neither.
+#   The branch sat above the resolution fallbacks, so in a `historical-record`
+#   document EVERY bare filename was counted HISTORICAL whether or not it still
+#   resolved -- 70 across the repository, of which 34 resolved perfectly well,
+#   `verify-doc-paths.sh` itself among them. The count meant "cited by a record",
+#   a property of the document. It now means "cited by a record AND no longer
+#   there", a property of the tree, which is the one mechanical signal that a
+#   resolution has stopped pointing at anything. `0052` F1.
+#
+#   Baseline at Revision 284: --all reports 36 DECAYED over 271 documents, and
+#   the default doc set reports 0. Almost all of the 36 are one class -- three
+#   checkers that moved from bin/ into .internal/ai-scripts/session-management/,
+#   and are now reached through ./bin/verify-session-findings.sh. Every one this
+#   session traced is a RELOCATION rather than a reversal: the rule the
+#   resolution installed is alive, and only the citation is not.
 #
 #   One path per marker, repeatable, anywhere in the document. It applies to that
 #   document only. PROPOSED is reported, counted separately, and does NOT fail
@@ -463,22 +480,35 @@ for doc in "${DOCS[@]}"; do
       # so a genuinely absent bin/foo.sh is still MISSING.
       ok_count=$((ok_count + 1))
       $VERBOSE && doc_findings="${doc_findings}$(printf "\n  ${GRN}OK       %s  (wikilink target, resolves as %s.md)${RST}" "$reference" "$reference")"
+    elif filename_exists_in_repo "$reference"; then
+      # Prose naming a real file that lives in a subdirectory.
+      #
+      # MOVED ABOVE THE HISTORICAL BRANCH at Revision 284. It was below it, so
+      # in a `historical-record` document every bare filename was counted
+      # HISTORICAL whether or not it still resolved -- `verify-doc-paths.sh`
+      # itself among them. That made HISTORICAL mean "cited by a record", which
+      # is a property of the document, when the useful meaning is "cited by a
+      # record AND no longer there", which is a property of the tree. Resolution
+      # is tried first now, so a name that resolves is OK wherever it is cited.
+      # `0052` F1. It cannot turn anything MISSING: this branch only ever
+      # produces OK, and only for a bare name.
+      ok_count=$((ok_count + 1))
+      $VERBOSE && doc_findings="${doc_findings}$(printf "\n  ${GRN}OK       %s  (resolves elsewhere in the repo)${RST}" "$reference")"
     elif [[ "$proposed_paths" == *" $reference "* ]]; then
       # Declared by this document as not yet existing. Reported, never fatal.
       proposed_count=$((proposed_count + 1))
       doc_findings="${doc_findings}$(printf "\n  ${YEL}PROPOSED %s  (declared not-yet-existing)${RST}" "$reference")"
     elif $historical_doc || [[ "$historical_paths" == *" $reference "* ]]; then
-      # A record citing a path as it stood. Repairing it would falsify the
-      # record, so this is not a defect and never fails the run.
+      # A record citing a path as it stood, WHICH NO LONGER RESOLVES -- every
+      # branch above has been tried. Repairing it would falsify the record, so
+      # it never fails the run; but it is the one signal that a resolution has
+      # stopped pointing at anything, and `0052` F1 is the reading. Reported
+      # under DECAYED in the summary rather than left silent.
       historical_count=$((historical_count + 1))
-      $VERBOSE && doc_findings="${doc_findings}$(printf "\n  ${DIM}HISTORY  %s  (cited as it stood)${RST}" "$reference")"
+      doc_findings="${doc_findings}$(printf "\n  ${DIM}DECAYED  %s  (cited as it stood; no longer resolves)${RST}" "$reference")"
     elif [[ "$reference" == */* ]]; then
       missing_count=$((missing_count + 1))
       doc_findings="${doc_findings}$(printf "\n  ${RED}MISSING  %s${RST}" "$reference")"
-    elif filename_exists_in_repo "$reference"; then
-      # Prose naming a real file that lives in a subdirectory.
-      ok_count=$((ok_count + 1))
-      $VERBOSE && doc_findings="${doc_findings}$(printf "\n  ${GRN}OK       %s  (resolves elsewhere in the repo)${RST}" "$reference")"
     else
       warn_count=$((warn_count + 1))
       doc_findings="${doc_findings}$(printf "\n  ${YEL}WARN     %s  (no file by this name anywhere in the repo)${RST}" "$reference")"
@@ -531,7 +561,7 @@ printf "  %-14s %s\n" "OK:"             "$ok_count"
 printf "  %-14s %s\n" "WARN:"           "$warn_count"
 printf "  %-14s %s\n" "SKIP:"           "$skip_count"
 printf "  %-14s %s\n" "PROPOSED:"       "$proposed_count"
-printf "  %-14s %s\n" "HISTORICAL:"     "$historical_count"
+printf "  %-14s %s\n" "DECAYED:"        "$historical_count"
 printf "  %-14s %s\n" "MISSING:"        "$missing_count"
 printf "  %-14s %s\n" "ANCHOR OK:"      "$anchor_ok_count"
 printf "  %-14s %s\n" "ANCHOR BROKEN:"  "$anchor_missing_count"

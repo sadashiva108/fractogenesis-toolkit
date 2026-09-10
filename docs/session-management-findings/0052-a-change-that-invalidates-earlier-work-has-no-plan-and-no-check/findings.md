@@ -23,7 +23,7 @@ recording is not owning.
 
 | # | Finding | Status |
 |---:|---|---|
-| F1 | Nothing re-verifies that a resolution still holds, and one refactor reverted seven without anything noticing | `framing` |
+| F1 | Nothing re-verifies that a resolution still holds, and one refactor reverted seven without anything noticing | `resolved` |
 | F2 | A breaking change to a record format has no migration-plan requirement, so what happens to what predates it is decided per change or not at all | `resolved` |
 
 ## F1 — a resolution is written once and never checked again
@@ -142,3 +142,45 @@ renamed the members array **before a second genus existed** because doing it
 after would have cost every commission as well. Revision 273 renamed a value in
 five files after checking the replacement had zero prior uses. **Each of D1's
 five clauses names one of these.**
+
+### Read again 2026-09-10, and the sweep is now an instrument
+
+**36 decayed citations across 271 documents.** Every `resolutions.md`, handoff and
+ledger cites paths, and 36 of those paths no longer resolve.
+
+**Almost all of them are one class.** `bin/verify-findings-counts.sh`,
+`bin/verify-findings-headers.sh` and `bin/verify-findings-structure.sh` moved into
+`.internal/ai-scripts/session-management/` and are reached through
+`./bin/verify-session-findings.sh`; `bin/check-manifest-revision.sh` moved to
+`.share/`; `.github/copilot-prompts/` and `copilot-templates/` became
+`ai-prompts/` and `ai-templates/`; `.internal/restore/record-restore-prereqs.sh`
+moved to `bin/`. **Six relocations account for nearly all 36**, and **every rule
+those resolutions installed is still alive.**
+
+**So the number this finding said it existed to produce is not the number it
+gets.** It asks how many resolutions are **false**. Mechanically that is
+unanswerable — whether a rule still holds is a reading. What is answerable
+exactly, and now is: **how many have stopped pointing at anything.**
+
+**The same relocation is loud in one place and silent in another.** The identical
+path, `bin/check-manifest-revision.sh`, is reported **MISSING three times** in
+live documents that carry no historical marker, and was **silent in every record
+that cited it** — because the marker exempting records from repair also exempted
+them from being counted. One move, two signals, and only the records said
+nothing.
+
+**And the instrument was already there.** `bin/verify-doc-paths.sh` resolves
+every citation in the repository and has done since long before this finding. Its
+`HISTORICAL` branch sat **above** the resolution fallbacks, so in a
+`historical-record` document every bare filename was counted historical whether
+or not it resolved — **70 of them, of which 34 resolved perfectly well**,
+`verify-doc-paths.sh` itself among them. The count meant *cited by a record*, a
+property of the document. **One reordering makes it mean *cited by a record and
+no longer there*, a property of the tree**, which is the signal.
+
+**What it still does not do, and cannot.** Tell you whether the rule a resolution
+installed still holds. `0038`'s re-verification at Revision 270 needed a session
+to read six resolutions against the tree and judge each; **two held as written,
+three named a home that had moved, one had never been written down at all.** Only
+the middle three are mechanical. The rest is a reading, and D2 says so rather
+than implying the checker covers it.

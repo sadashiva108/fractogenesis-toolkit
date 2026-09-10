@@ -8,11 +8,17 @@
 
 | Member | Resolved by | What was done | Revision | Commit |
 |---|---|---|---|---|
+| F1 | D2 | `bin/verify-doc-paths.sh` moves its historical branch below the resolution fallbacks and renames the count `DECAYED`, so it means *cited by a record and no longer there*. Round trip over 271 documents: OK 2271 → 2305, HISTORICAL 70 → DECAYED 36, PROPOSED and MISSING identical. **36 decayed citations, six relocations accounting for nearly all** | 284 | — |
 | F2 | D1 | `.github/session-management-instructions.md` §6 gains the migration-plan gate: the conformance test with its six-row table of what needs a plan and what does not, the five things a plan names, and the one-format-change-per-revision rule. Each clause names the revision that already did it | 277 | — |
 
-**F1 is untouched by this revision and remains `framing`.** It was read at
-Revision 270 and the sweep run on one bundle; what it still owes is the shape of
-the instrument, and that is not what F2 decided.
+**Both members are `resolved` and the bundle derives `answered`.** F2 at
+Revision 277, F1 here.
+
+**F1 is resolved on the shape of the instrument, which is what it owed** — not on
+the number it said it wanted. It asks how many resolutions are false; that is a
+reading and stays one. What it gets is the mechanical half, exactly: **36
+citations that point at nothing**, and the reading half declared irreducible in
+D2 rather than implied covered.
 
 **What this resolution does not do.** It writes a rule and builds nothing. The
 check that would hold the rule is rejected in D1 as premature — it would have to
