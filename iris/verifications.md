@@ -330,7 +330,7 @@ broken.** `0042` F5: it has printed two `command not found` errors per invocatio
 since Revision 221, past six instruments and thirteen revisions. It still does,
 from lines 39–40, and the run still exits 0.
 
-### `extract-metadata.py` must never be run
+### `extract-metadata.py` must never be run — **and as of Revision 299 it cannot be**
 
 Recorded by **`0050`, findings F3 and F6**, and stated in `APPLY-MANIFEST.md`
 Revision 263 as *one instrument must never be run*. It regenerates every
@@ -357,7 +357,13 @@ session's `state` are emptied** — `docs/legend.md` gives a session exactly thr
 live values, and one run leaves all eleven with none. The instrument that exists to
 make the data authoritative is the one thing that can empty it.
 
-**It has no safe no-op.** The plain invocation writes; `--dry-run` is the only
+**Retired at Revision 299**, carrying out `0050` D3. The extraction half is
+deleted and the `--check` half is now
+`.internal/ai-scripts/session-management/check-metadata-completeness.py`, which
+`check-completeness.sh` calls. **The section below is retained as the reading
+that decided it**, and its measurements stand.
+
+**It had no safe no-op.** The plain invocation writes; `--dry-run` is the only
 non-writing path, and the run that first measured the damage was an unrecognised
 `--help` that the script treated as live — anything that is not exactly
 `--dry-run` or `--check` is a live run. The stamped values re-derive with

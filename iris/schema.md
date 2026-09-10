@@ -44,7 +44,7 @@ integer on 15, `null` on 37 — neither caught, because no reader consults the f
 at all ([§7](#7-fields-nothing-reads)).
 
 **2. No presentation in the data.** `null`, never `"—"`; `null`, never `""`. This
-half **is** enforced: `extract-metadata.py --check` walks every string at every
+half **is** enforced: `check-metadata-completeness.py` walks every string at every
 depth and fails on a dash, an empty string, a bold marker or a leading backtick.
 **Measured: 0 problems across all 65 records.** *No object whose fields are all
 empty* is the unenforced half, and **16 such objects stand in the tree**: 10 of 54
@@ -390,7 +390,7 @@ all 65 records and gates no migration because nothing consults it.**
 **Three qualifications, because the claim would otherwise be too strong.**
 
 1. **A second instrument reads six of them for existence, never for content.**
-   `extract-metadata.py --check` asserts `recordedOn`, `recordedBy`, `severity`,
+   `check-metadata-completeness.py` asserts `recordedOn`, `recordedBy`, `severity`,
    `feltAt`, `scope` and `read` are non-empty wherever the markdown header carries
    the matching label, and that `feltAt` and `read` hold as many elements as the
    header has bullets — a check on *presence and count*; nothing acts on the value.

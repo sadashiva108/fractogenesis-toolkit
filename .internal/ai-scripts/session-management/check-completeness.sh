@@ -16,9 +16,13 @@
 #
 # CLASSIFICATION: .internal/ai-scripts/session-management/ helper. A thin shell
 # wrapper so bin/verify-session-findings.sh can dispatch it like the other
-# three; the checks themselves live in extract-metadata.py --check, beside the
-# extractor whose output they audit. Two copies of the schema's invariants would
-# be exactly the drift this repository keeps recording.
+# three; the checks themselves live in check-metadata-completeness.py. Two
+# copies of the schema's invariants would be exactly the drift this repository
+# keeps recording.
+#
+# They lived in extract-metadata.py until Revision 299, beside the extractor
+# whose output they audit -- which put the destructive half of that file one
+# argv token from this routine call, and is why `0050` D3 separated them.
 #
 # --- BEGIN USAGE ---
 # Usage:
@@ -50,4 +54,4 @@ if ! command -v python3 >/dev/null 2>&1; then
 fi
 
 printf '\nCompleteness — data against the markdown it came from\n\n'
-exec python3 "$SCRIPT_DIR/extract-metadata.py" --check
+exec python3 "$SCRIPT_DIR/check-metadata-completeness.py"

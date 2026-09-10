@@ -253,3 +253,8 @@ answered.
 **The build is not done in this revision.** §6 gates a toolkit write on a
 `decided` finding; this decision is what creates that gate, and carrying it out
 is the next one.
+
+<!-- historical: .internal/ai-scripts/session-management/extract-metadata.py -->
+<!-- Deleted at Revision 299, carrying out D3. This document is the record of
+     that decision and its carrying-out, so the citation is evidence and is not
+     repaired. The check half is now check-metadata-completeness.py. -->

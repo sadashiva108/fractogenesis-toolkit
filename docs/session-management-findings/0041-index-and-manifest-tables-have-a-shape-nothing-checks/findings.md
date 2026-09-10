@@ -22,6 +22,7 @@ and `pre-image-capture-conformance-20260903-194532` still owns it.
 | F4 | A patch containing a deletion under-applies silently, and every check passes | `decided` |
 | F5 | Nothing compares a resolution's claim against the tree | `decided` |
 | F6 | The prose total under an index is wrong in both directions, and the count check passes over it | `resolved` |
+| F7 | Section 6's own patch recipe drops a deletion before `git apply` ever sees it | `framing` |
 
 ---
 
@@ -341,6 +342,67 @@ three different sessions.
 **So the population was never two.** It was two *that anyone had counted*, and
 the reason a third went unseen for eleven revisions is the reason D6 gives: the
 sentence is free, and a number that is only ever adjusted is never checked.
+
+## F7 — the recipe drops the deletion before `git apply` can under-apply it
+
+**Recorded 2026-09-10**, from carrying out `0050` D3, whose whole content is
+deleting a file. **Measured on that patch.**
+
+F4 says a patch *containing* a deletion under-applies silently. **This is one
+step upstream: the patch does not contain it.**
+
+`.github/session-management-instructions.md` §6 gives the recipe verbatim:
+
+```text
+git add -N .
+git diff > "$PATCH_DIR/<revision>-<slug>.patch"
+```
+
+**`git add -N .` stages a deletion outright.** It records an intent-to-add for an
+untracked file, which is what §6 wants it for — *"a patch made without it drops
+every file the session created"* — and for a **deleted** tracked file it does not
+record an intent, it stages the removal. `git status` then reads `D ` in the
+first column, and **`git diff`, which reads the working tree against the index,
+has nothing left to report.**
+
+**Measured on Revision 299's own change set:**
+
+| | files | deletions carried |
+|---|---:|---:|
+| `git add -N .` then `git diff` — **the recipe** | 16 | **0** |
+| `git add -N .` then `git diff HEAD` | 17 | **1** |
+
+**The 673-line file the whole revision exists to remove was not in the patch**, and
+nothing about the patch said so: it applied every other file, `git apply` exited
+0, and the deletion simply never happened. The file list read 16 of a 17-file
+change set, which §6 elsewhere says to check — *"read the patch's file list
+against your own change set before handing it over"* — **and that is the only
+thing that caught it.**
+
+### Why this is not F4, and why it is worse
+
+F4's failure happens at **apply** time, on the owner's machine, because the mount
+refuses `unlink`. It is a property of where the patch lands. **This one happens at
+compose time**, on any filesystem, and is a property of the recipe. **A patch that
+never carried the deletion cannot under-apply it** — there is nothing to fail.
+
+**And the two compose.** A session following §6 exactly produces a patch missing
+its deletion; if it noticed and re-made the patch correctly, the apply would then
+hit F4 and warn without failing. **Two independent silent drops on the same class
+of change**, and this repository has recorded four instances of the second and
+none of the first, because the first leaves no warning at all.
+
+### The fix is one word
+
+`git diff HEAD` reports the working tree against **HEAD** rather than against the
+index, so it carries staged and unstaged alike, including a staged deletion. It is
+a strict superset of what §6 asks for and produces an identical patch on any
+change set with no deletion in it — verified here: 16 identical files, plus the
+one.
+
+**Not decided.** §6 is `.github/session-management-instructions.md`'s and belongs
+to `entity-model-and-vocabulary-20260909-053548`. This revision's own patch was
+made with `git diff HEAD` and says so; the rule is theirs to change.
 
 <!-- historical: bin/verify-findings-headers.sh -->
 <!-- historical: bin/verify-findings-structure.sh -->

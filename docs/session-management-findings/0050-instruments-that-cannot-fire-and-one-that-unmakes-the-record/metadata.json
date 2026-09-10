@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-10T05:20:00-04:00",
+  "updatedAt": "2026-09-10T06:00:00-04:00",
   "number": "0050",
   "bundleName": "0050-instruments-that-cannot-fire-and-one-that-unmakes-the-record",
   "genus": "findings",
@@ -60,14 +60,21 @@
     {
       "id": "F3",
       "statement": "Running extract-metadata.py on a healthy tree destroys every asserted edge and every stamped value",
-      "status": "decided",
+      "status": "resolved",
       "statusReason": null,
       "statusNote": null,
       "updatedAt": "2026-09-10",
       "sectionHeading": "F3 \u2014 the extractor unmakes the record",
       "reopened": null,
       "withdrawn": null,
-      "resolution": null
+      "resolution": {
+        "resolvedBy": [
+          "D3"
+        ],
+        "whatWasDone": "extract-metadata.py is deleted; its --check half is check-metadata-completeness.py, holding ATOMIC and check_completeness() unchanged and self-locating rather than shelling out to git rev-parse. check-completeness.sh execs it. Nothing in the new file writes. Fired on all three of its classes in a throwaway and is silent on the tree.",
+        "revision": "299",
+        "commit": null
+      }
     },
     {
       "id": "F4",
@@ -103,14 +110,21 @@
     {
       "id": "F6",
       "statement": "`0050` F3 counted two field families of twenty: one run destroys 429 recorded values, and section 10a routes a session into running it",
-      "status": "decided",
+      "status": "resolved",
       "statusReason": null,
       "statusNote": null,
       "updatedAt": "2026-09-10",
       "sectionHeading": "F6 \u2014 F3 measured two field families out of twenty, and the procedure that needs the extractor has no step for running it",
       "reopened": null,
       "withdrawn": null,
-      "resolution": null
+      "resolution": {
+        "resolvedBy": [
+          "D3"
+        ],
+        "whatWasDone": "The same deletion. The measurement half is answered by the re-measurement in F3; the procedure half is not resolved here, section 10a still having no fifth step and belonging to another session. The deletion removes the hazard, not the gap.",
+        "revision": "299",
+        "commit": null
+      }
     },
     {
       "id": "F7",

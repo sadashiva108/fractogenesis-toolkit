@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-10T02:40:00-04:00",
+  "updatedAt": "2026-09-10T06:20:00-04:00",
   "number": "0041",
   "bundleName": "0041-index-and-manifest-tables-have-a-shape-nothing-checks",
   "genus": "findings",
@@ -110,6 +110,18 @@
         "revision": "288",
         "commit": null
       }
+    },
+    {
+      "id": "F7",
+      "statement": "Section 6's own patch recipe drops a deletion before git apply ever sees it",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-10",
+      "sectionHeading": "F7 \u2014 the recipe drops the deletion before `git apply` can under-apply it",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
     }
   ],
   "decisions": [
@@ -237,6 +249,16 @@
       "basis": "asserted",
       "asserted_by": "allocation-and-inquiry-design-20260906-233205",
       "asserted_on": "2026-09-08"
+    },
+    {
+      "kind": "relates-to",
+      "from": "0041/F7",
+      "to": "0041/F4",
+      "why": "F4 is a deletion-bearing patch under-applying at apply time on a mount that refuses unlink; F7 is one step upstream, the recipe never putting the deletion in the patch, which happens at compose time on any filesystem",
+      "reason": null,
+      "basis": "asserted",
+      "asserted_by": "instruments-and-blind-spots-20260909-220203",
+      "asserted_on": "2026-09-10"
     }
   ],
   "indexNotes": null

@@ -78,7 +78,7 @@
       ],
       "dependents": [
         ".internal/ai-scripts/session-management/plan_findings_work.py",
-        ".internal/ai-scripts/session-management/extract-metadata.py",
+        ".internal/ai-scripts/session-management/check-metadata-completeness.py",
         ".internal/ai-scripts/session-management/tests/fixtures.py",
         "docs/architecture/the-record-and-the-graph.md",
         "docs/legend.md"

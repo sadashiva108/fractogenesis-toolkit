@@ -191,9 +191,11 @@ on either.
 | `transferred` | `ownership` | it records that a **named** target has not yet written as owner. Two bundles with identical member rows differ only in whether a handover is outstanding |
 | `superseded` | `lineage.supersededBy` | a **later bundle** replaced this reading. The evidence lives outside the bundle entirely, and the predecessor is never edited |
 
-**`unclaimed` is declared in `plan_findings_work.py` and derived in
-`extract-metadata.py`, and the two are one pipeline.** The extractor scans every
-manifest and writes `"ownership": "unclaimed"` into any bundle no live one lists;
+**`unclaimed` was declared in `plan_findings_work.py` and derived in
+`extract-metadata.py`, and the two were one pipeline. Revision 299 retired the
+extractor, so the derivation half is gone and nothing replaces it.** The
+extractor scanned every manifest and wrote `"ownership": "unclaimed"` into any
+bundle no live one listed;
 `bundle_standing` reads that field. So §10a's *removing the row **is** the
 release* holds — but only across a re-extraction. In between, `ORPHAN` catches
 the shape, and fires on `0002` and `0004` today.
@@ -369,8 +371,12 @@ session may not end still holding one (`0039` D20).
 Provenance is a property of the *relationship*, so it is a typed edge at member
 granularity stored in the **new** bundle only — the predecessor is never edited,
 so it could not live there. The kinds are in
-[vocabulary.md § 8](vocabulary.md#8-edge-kinds). Both gates are enforced in
-`provenance()` in `extract-metadata.py`, in this order.
+[vocabulary.md § 8](vocabulary.md#8-edge-kinds). **Both gates were enforced in
+`provenance()` in `extract-metadata.py`, and Revision 299 retired that file, so
+neither has a live enforcer.** They were only ever enforced during an extraction
+run, and `0050` F3 established that such a run must not happen — so the gates
+have been unenforceable for as long as they have been documented, and the
+deletion makes that visible rather than causing it. `0050` F8's class.
 
 **Coverage.** Every predecessor member is named by **at least one** disposition
 edge:
@@ -437,10 +443,11 @@ comes from `derivation_table`, whose values are `untouched`, `retired`,
 `answered`, `revisited`, `analyzing`. Neither guard word is reachable, so **the
 condition can never be false** and a hold is never released by its source.
 
-The cause is two derivation functions with one job and two vocabularies:
-`derive_progress` in `extract-metadata.py` still returns `un-started`,
-`withdrawn`, `resolved`, `reopened`, `analyzing` — **member statuses used as
-bundle progress**, the collision Revision 233 separated. The identical guard in
+The cause was two derivation functions with one job and two vocabularies:
+`derive_progress` in `extract-metadata.py` returned `un-started`, `withdrawn`,
+`resolved`, `reopened`, `analyzing` — **member statuses used as bundle
+progress**, the collision Revision 233 separated. **Revision 299 retired that
+file, so the defective copy is gone and one derivation remains.** The identical guard in
 that file is live; this one is dead. Same two words, opposite behaviour.
 
 ### The honest state of this file

@@ -59,7 +59,7 @@ and reading its exit status and its output, not by reading its source.
 | `bin/verify-script-portability.sh` | **no** — standalone | **yes** | CLEAN 91, WARN 0, FAIL 0 — **a reading of source, never a run on the target** |
 | `bin/test-session-management.sh` | **no** — standalone, **no caller** | **yes**, against fixtures | 69 tests, all passing. It never reads `docs/` |
 | `bin/review-changes.sh` | **no** — standalone, **no caller** | n/a — a reading aid | Runs `git add -N .` |
-| `extract-metadata.py --check` | **yes** — `check-completeness.sh` line 53 `exec`s it | **yes** | The safe half of the instrument `0050` D3 retires. **One argv token from the destructive half** |
+| `check-metadata-completeness.py` | **yes** — `check-completeness.sh` `exec`s it | **yes** | **Its own file as of Revision 299.** It was `extract-metadata.py --check`, one argv token from a half that destroyed 740 values; that half is deleted and this one writes nothing |
 | `.claude/hooks/write-location-guard.sh` | **NO for this session** | **yes** in principle | Matches `Edit\|Write\|MultiEdit\|Bash`; `.claude/settings.json` names `remote-devices` **0 times**. Has never evaluated a write from a bridged session |
 | `.claude/hooks/session-guard.sh` | conditionally | **NO** — `PostToolUse`; its own header says it always exits 0 | 0 notes on 473 tracked files |
 | `.claude/hooks/runbook-guard.sh` | conditionally | **NO** — same | 0 notes on 473 tracked files |
@@ -124,3 +124,38 @@ working; the count treats them identically to the three that arrived by split.
 **Whether any of this holds on the target platform.** Every figure here was taken
 in a Linux VM. `verify-script-portability.sh` is the only instrument aimed at that
 gap and it reads source rather than running it.
+
+---
+
+## 2026-09-10 — commit to be taken, Revision 299
+
+**What changed.** `0050` D3 carried out. `extract-metadata.py` is deleted; its
+`--check` half is `.internal/ai-scripts/session-management/check-metadata-completeness.py`.
+
+**Re-measured, the rows that moved:**
+
+| Instrument | Reached | Firable | Measured |
+|---|---|---|---|
+| `check-metadata-completeness.py` | **yes** — `check-completeness.sh` `exec`s it | **yes** | 0 problems on the tree. **Fired on all three of its classes** in a throwaway: a dash where `null` belongs, a bold marker in an `ATOMIC` value, and a markdown row that did not become an object |
+| `extract-metadata.py` | — | — | **gone** |
+
+**Three capabilities went with it, and all three lived in code nobody was
+permitted to run.**
+
+| What | What it did | State now |
+|---|---|---|
+| the `unclaimed` derivation | scanned every manifest and wrote `"ownership": "unclaimed"` into any bundle no live one listed | **nothing derives it.** `0050` F6's by-hand procedure is now the only one, which it already was in practice |
+| `provenance()` | enforced the supersession **coverage** and **exclusivity** gates | **no live enforcer.** They ran only during extraction, and `0050` F3 established extraction must not happen — **so the gates were unenforceable for as long as they were documented**, and the deletion makes that visible rather than causing it |
+| `derive_progress` | a second derivation returning member statuses as bundle progress — the collision Revision 233 separated | **removed, and this one is a gain**: one derivation remains where there were two, and the deleted one was the wrong one |
+
+**The first two are `0050` F8's class, found by removing the thing rather than by
+running it.** An instrument nobody may run is indistinguishable from an absent
+one until somebody deletes it and reads what stopped being true.
+
+**Numbers.** `counts` FAIL 0; `headers` FAIL 11, unmoved; `structure` FAIL 0;
+completeness **0 problems, now from its own file**; suite 69 passing;
+`stamp --dry-run` writes nothing. doc-paths `--all` **MISSING 8 → 10**: three
+records cite the deleted path, one of which is marked here and two of which
+belong to other sessions and are flagged rather than edited. Linux VM, Bash
+5.1.16, **not the macOS Bash 3.2 target**.
+
