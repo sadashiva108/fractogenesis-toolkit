@@ -32,6 +32,8 @@ writes, and the bundle type for those does not exist yet.
 | F5 | The coverage sweep keeps a second copy of a directory list `docs/INDEX.md` owns, and 43 files are invisible to it | `framing` |
 | F6 | `0050` F3 counted two field families of twenty: one run destroys 429 recorded values, and section 10a routes a session into running it | `decided` |
 | F7 | Nothing compares a commit message's assertion against what the commit contains, and a mis-scoped message burns a revision number | `framing` |
+| F8 | The instrument that catches a revision number taken and never written is correct, fires, and is run by nothing | `framing` |
+| F9 | When it fires, nothing says who owes the missing entry or how a late one is written | `framing` |
 
 ## F1 — the guard does not run where the writing happens
 
@@ -435,3 +437,103 @@ which is the move `0041` D1 and `0050` D2 both refuse.
 
 **So F7 is recorded `framing` and stays there**, with a `blocks` edge from the
 rule to the check rather than a decision taken ahead of it.
+
+## F8 — the instrument is correct, it fires, and nothing runs it
+
+**Recorded 2026-09-10**, after this session told the owner that two manifest gaps
+were undetected and permanent. **Both halves of that were wrong**, and finding out
+how they were wrong is the finding.
+
+`bin/verify-manifest-coverage.sh` compares the commit log against
+`APPLY-MANIFEST.md` and reports three conditions. Run against `15069fe`:
+
+```text
+MISSING    Revision 285  claimed by 889b8ac — no entry in the manifest
+MISSING    Revision 291  claimed by 15069fe — no entry in the manifest
+ORPHANED   Revision 271  claimed by 636eba0 — entry introduced by 30b0c36
+ORPHANED   Revision 290  claimed by eb8b6de — entry introduced by 15069fe
+DUPLICATE  Revision 265  claimed by 3fa5416 a8867ef
+
+MISSING: 2   ORPHANED: 4   DUPLICATE: 1
+Baseline at Revision 277: MISSING 0, ORPHANED 3, DUPLICATE 1.
+```
+
+**It names both gaps, by number and by commit, and it prescribes the repair** —
+*"Write the entry; do not renumber the commit."* So the numbers are not burned
+and the condition is not invisible. **Everything this session said was missing was
+already built.**
+
+**What is true is worse and quieter: nothing runs it.**
+
+| | |
+|---|---|
+| in `bin/verify-session-findings.sh`'s subcommand table | **no** |
+| in `all` | **no**, and therefore in nothing a session runs routinely |
+| executed by any script, hook or config in the tree | **no** — `grep` over `*.sh`, `*.json`, `*.yml` finds no caller |
+| named anywhere a session reads | prose only: the instruction set, `rule-enforcement-avenues.md`, `0047`'s record |
+
+**The one runtime pointer to it is itself unreachable by default.**
+`.share/check-manifest-revision.sh` prints *"a number is taken in the log and
+written nowhere in the manifest … `bin/verify-manifest-coverage.sh` names which"*
+— **on stderr, under `--verbose` only**. §7 tells a session to run the plain form,
+which prints one integer. And `manifest-revision` is itself excluded from `all`,
+`iris/verifications.md` giving the reason: *a report, not a verdict*. So the chain
+is **`all` → excludes the helper → `--verbose` → a note → a script nothing runs.**
+
+### This is F4's class in a form none of its four members has
+
+F1 through F4 are instruments wired to the wrong tool, guarding a deleted file, or
+never armed. **This one is built correctly, reports correctly, and is simply never
+invoked.** `iris/verifications.md` §7 opens by saying its subject is *"instruments
+that report success because they cannot report anything else"*; F8 is an
+instrument that reports the truth to nobody.
+
+**Tonight is the measurement.** Across four commits — `eb8b6de`, `15069fe` and
+the two before them — `MISSING` went **0 → 2** and `ORPHANED` **3 → 4**, while
+every check a session actually runs held its baseline exactly: `counts` FAIL 0,
+`headers` FAIL 11, `structure` FAIL 0, completeness 0. **The tree acquired three
+new conformance failures and the assurance layer did not move**, because the one
+instrument watching that surface was not asked.
+
+### One trap found on the way, and it is why the first reading was wrong
+
+**The manifest has two entry formats.** 257 entries are `**Revision N**` bold
+headers and 202 are `## Revision N` headings. A scan reading only the first form
+reports **Revision 33 as a gap**; it is not one, its entry is at line 17082 in the
+older form. `check-manifest-revision.sh` reads both and says so in its header.
+**So a person or a session hand-scanning the manifest gets a different answer from
+the instrument**, in the direction of inventing a defect — which is what happened
+here, and it is worth naming because the fix for it is *run the instrument*, which
+is F8.
+
+## F9 — it fires, and nothing says who repairs it or how
+
+`verify-manifest-coverage.sh` says **write the entry**. It does not say **who**,
+and the two outstanding cases have different answers: **285** was claimed by
+`889b8ac`, which is `entity-model-and-vocabulary-20260909-053548`'s; **291** was
+claimed by `15069fe`, a commit that carried this session's Revision 289 record and
+another session's stranded Revision 290 entry under a third number. **The commit
+that produced the gap is not owned by the session whose work is in it.**
+
+**And §7 has no shape for a late entry.** It says entries are never retro-edited
+and that a revert is a new entry naming what it reverted. A number claimed in the
+log and never written is neither: nothing was reverted and nothing is being
+retro-edited, because there is no entry to edit. **Revision 247 did this once**,
+reconstructing six entries for Revisions 241 to 246 after the fact — the precedent
+exists and the procedure does not, so the next session to face it re-derives what
+that one worked out.
+
+**Three questions have no home**: who owes the entry when the commit's author and
+the work's author differ; whether a late entry is written at its own number or
+declared as one; and whether it says, in itself, that it was written late. The
+last matters most — **an entry that does not say it arrived after its commit is
+indistinguishable from one that arrived with it**, which is the property
+`APPLY-MANIFEST.md` exists to have.
+
+**Not decided here.** The procedure is `.github/session-management-instructions.md`
+§7's and belongs to `entity-model-and-vocabulary-20260909-053548`. F9 records the
+gap and names the owner; it does not write the rule, for the reason F7 gives.
+
+**And the repair itself is not this finding.** Two entries are owed and that is
+`0038` F7's class — the tool says so in its own output. Recording F9 does not
+discharge them, and `MISSING` stays at 2 until someone writes them.

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-10T03:10:00-04:00",
+  "updatedAt": "2026-09-10T04:00:00-04:00",
   "number": "0050",
   "bundleName": "0050-instruments-that-cannot-fire-and-one-that-unmakes-the-record",
   "genus": "findings",
@@ -123,6 +123,30 @@
       "reopened": null,
       "withdrawn": null,
       "resolution": null
+    },
+    {
+      "id": "F8",
+      "statement": "The instrument that catches a revision number taken and never written is correct, fires, and is run by nothing",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-10",
+      "sectionHeading": "F8 \u2014 the instrument is correct, it fires, and nothing runs it",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F9",
+      "statement": "When it fires, nothing says who owes the missing entry or how a late one is written",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-10",
+      "sectionHeading": "F9 \u2014 it fires, and nothing says who repairs it or how",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
     }
   ],
   "decisions": [
@@ -211,6 +235,26 @@
       "from": "0050/F7",
       "to": "0047/F12",
       "why": "F12 made check-manifest-revision.sh read commit subjects, which is why a mis-scoped subject consumes a revision number rather than merely misdescribing one",
+      "reason": null,
+      "basis": "asserted",
+      "asserted_by": "instruments-and-blind-spots-20260909-220203",
+      "asserted_on": "2026-09-10"
+    },
+    {
+      "kind": "relates-to",
+      "from": "0050/F8",
+      "to": "0050/F7",
+      "why": "F7 is the act that creates the condition F8's instrument reports; F7 measured it by hand because F8's instrument was never run",
+      "reason": null,
+      "basis": "asserted",
+      "asserted_by": "instruments-and-blind-spots-20260909-220203",
+      "asserted_on": "2026-09-10"
+    },
+    {
+      "kind": "blocks",
+      "from": "0050/F9",
+      "to": "0050/F8",
+      "why": "an instrument nobody runs cannot be usefully wired into all until there is a procedure for what to do when it fires; adding it first would install a permanent failing row, which is 0047 F9",
       "reason": null,
       "basis": "asserted",
       "asserted_by": "instruments-and-blind-spots-20260909-220203",
