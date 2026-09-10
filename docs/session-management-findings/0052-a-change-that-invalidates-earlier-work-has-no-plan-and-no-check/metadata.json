@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T12:15:00-04:00",
+  "updatedAt": "2026-09-10T09:30:00-04:00",
   "number": "0052",
   "bundleName": "0052-a-change-that-invalidates-earlier-work-has-no-plan-and-no-check",
   "genus": "findings",
@@ -46,17 +46,35 @@
     {
       "id": "F2",
       "statement": "A breaking change to a record format has no migration-plan requirement, so what happens to what predates it is decided per change or not at all",
-      "status": "un-started",
+      "status": "resolved",
       "statusReason": null,
       "statusNote": null,
-      "updatedAt": null,
+      "updatedAt": "2026-09-10T09:30:00-04:00",
       "sectionHeading": "F2 \u2014 a breaking change has no migration plan",
       "reopened": null,
       "withdrawn": null,
-      "resolution": null
+      "resolution": {
+        "resolvedBy": "D1",
+        "whatWasDone": "`.github/session-management-instructions.md` \u00a76 gains the migration-plan gate: the conformance test, the five things a plan names, and one format change per revision",
+        "revision": 277,
+        "commit": null
+      }
     }
   ],
-  "decisions": [],
+  "decisions": [
+    {
+      "id": "D1",
+      "decision": "A write that makes existing records non-conformant is gated on a migration plan as well as on the finding. The test is whether a checker would report existing records as failures, not whether the author calls it a format change. A plan names five things, and one format change goes per revision",
+      "members": [
+        "F2"
+      ],
+      "decided": "2026-09-10",
+      "outcome": "accepted",
+      "answersAsOf": "2026-09-10T09:30:00-04:00",
+      "voidedReason": null,
+      "sectionHeading": "D1 \u2014 the gate, the test, and the five things"
+    }
+  ],
   "contributions": [],
   "edges": [
     {

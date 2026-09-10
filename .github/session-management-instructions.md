@@ -383,6 +383,72 @@ has run into.
 artifact volume is read-only unless the owner has said otherwise for that run.
 A bad evidence write may be unrecoverable.
 
+**A write that makes existing records non-conformant is gated on a migration
+plan, as well as on the finding.** That is one further gate on one class of
+toolkit write, and the rest of this section is unchanged.
+
+### When a plan is required, and the test is not *format versus wording*
+
+**The test is whether a checker would report existing records as failures after
+the change.** It is a question about the tree, and it is answered by running the
+checks against a copy, not by classifying the change.
+
+| | Plan | Why |
+|---|---|---|
+| a new **optional** field | no | nothing becomes non-conformant |
+| a new **required** field | **yes** | every existing record lacks it |
+| renaming a field or a value **that is in use** | **yes** | every record carrying it stops conforming |
+| retiring a value **nothing uses** | no — **once counted** | the count is the plan, and it is one query |
+| a new genus, kind or member type | no | nothing existing changes shape |
+| prose, a heading, a rule's wording | no | records are not measured against prose |
+
+**Counting is not a formality and it is the cheapest half of this rule.**
+Revision 268 retired two decision outcomes and added four, having first read all
+129 decisions in the tree and found two values in use. **That measurement is what
+turned *no plan needed* from an assumption into a fact**, and it cost one query.
+A change that claims no plan says what it counted.
+
+### What a plan names
+
+Five things, and each is here because a revision that did it well is on record.
+
+1.  **What predates the change**, counted from the data rather than estimated.
+2.  **Retrofitted or exempted, per class — and the retrofit is the default.** An
+    exemption needs a reason, and the reason this repository accepts is narrow:
+    where what is missing records a **deliberation or a measurement that never
+    happened**, inventing it is worse than the gap. `0037` D2 and `0047` D1 are
+    that reason applied to ten bundles; anything else is a preference.
+3.  **Where the exemption is written**, so a checker does not report the exempt
+    class forever. An unwritten exemption is a permanent failure row, which
+    `0047` F9 records from the other end.
+4.  **The instrument: a script, self-locating and idempotent — not a hand edit.**
+    Revision 271's migration was **rebased twice while in review**, once when
+    another revision was committed under it and once when a third arrived
+    uncommitted in the checkout. A hand edit would have been redone by hand
+    twice; the script was re-run, and reported `migrated 0 of 54; 54 already
+    conformant` on the second pass. **`0038` F1 is why this is not optional**:
+    the tree moves under a composition, and a migration that cannot be re-run is
+    a migration that decays while it waits for the owner.
+5.  **A round trip, taken before and after and compared.** Revision 271 derived
+    `standing`, `progress`, `ownership`, every member id with its status and
+    every decision's outcome and citations across all 54 bundles — **195 rows,
+    before and after, identical.** A checker answers whether the tree is well
+    formed; only the round trip answers whether it still says the same thing.
+
+### One format change per revision
+
+**Two make neither verifiable against the other.** Revision 271 added `genus` and
+renamed `findings[]` to `members[]` and **deliberately left `kind` alone**,
+though the same design changes its meaning too, because moving `kind` in the same
+revision would have left no fixed point to check either rename against.
+
+**And a format change gets cheaper the earlier it is made.** The same revision
+renamed the members array *"before a second genus existed, and that is the entire
+reason it was done today"* — an array named for one species cannot name the
+genus, and renaming it after a commission is written costs every commission as
+well. **Where a change is known to be coming, it goes before the thing that would
+multiply it**, and the revision says that is why it is being done now.
+
 Where a write is composed is a separate rule and applies to all three:
 
 - **Compose in a copy of the repository outside the owner's checkout.** Copy the

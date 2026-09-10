@@ -24,7 +24,7 @@ recording is not owning.
 | # | Finding | Status |
 |---:|---|---|
 | F1 | Nothing re-verifies that a resolution still holds, and one refactor reverted seven without anything noticing | `framing` |
-| F2 | A breaking change to a record format has no migration-plan requirement, so what happens to what predates it is decided per change or not at all | `un-started` |
+| F2 | A breaking change to a record format has no migration-plan requirement, so what happens to what predates it is decided per change or not at all | `resolved` |
 
 ## F1 — a resolution is written once and never checked again
 
@@ -123,3 +123,22 @@ four instances were handled.
 **What this finding does not propose.** That every change carry one. A format
 change does; a wording change does not, and where that line falls is what F2
 owes.
+
+### Read 2026-09-10, and the line is not where this finding looks for it
+
+**All four instances above were made by authors who did not believe they were
+changing a format.** Revision 162 converted parked notes, Revision 203 ran a
+schema pass, Revision 224 declared a clean slate, `0037` D2 restored a carve-out.
+So *format change versus wording change* asks for the judgement the failures
+show is not made — and D1 replaces it with a question about the tree: **would a
+checker report existing records as failures after this change?**
+
+**Two format changes have gone right since this was written**, and the rule is
+derived from them rather than invented. Revision 271 migrated 54 bundles by an
+**idempotent script** that was re-run through **two rebases**, and verified by a
+**195-row derivation round trip** taken before and after; it deliberately left
+`kind` alone so each rename had a fixed point to be checked against, and it
+renamed the members array **before a second genus existed** because doing it
+after would have cost every commission as well. Revision 273 renamed a value in
+five files after checking the replacement had zero prior uses. **Each of D1's
+five clauses names one of these.**
