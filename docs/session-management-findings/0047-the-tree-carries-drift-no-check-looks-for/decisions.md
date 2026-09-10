@@ -12,6 +12,7 @@
 | D2 | `transferred` leaves the closed-bundle assertion in `plan_findings_work.py` entirely; `unclaimed` keeps it, and its detail names `0047` F1 as the undecided rule the row rests on. The code name is unchanged | F7 | 2026-09-09 | `accepted` |
 | D3 | `OUTCOMES` becomes the legend's six bare outcomes with `replaced` matched by prefix; the two retired prefixes go; and a contract test asserts the disjointness `docs/legend.md` has claimed a schema check performs since Revision 233 | F8 | 2026-09-09 | `accepted` |
 | D10 | `CLOSED-BUNDLE-LIVE-FINDING` is removed entirely, both halves having been overtaken; and `unclaimed` joins `superseded` in the counted ordering exemptions, on the ground that nobody may perform the act that would clear the row | F1, F2 | 2026-09-10 | `accepted` |
+| D11 | F3 is answered with no instrument change: a resolution may run ahead of a status while a reading is open and not once it closes, and `0035` is not that case because its statuses were never written. The three rows stay, their owner being live and able to clear them, and the cause is recorded as F13 | F3 | 2026-09-10 | `accepted` |
 | D8 | A `superseded` bundle is exempt from both ordering comparisons, and `check` **counts** the suppression and names the bundles rather than asserting it in a footer | F9 | 2026-09-10 | `accepted` |
 | D9 | The clone exemption becomes **per member and expires with the re-reading window**, keyed on the member's own status; and `reopened` is exempt from the resolution comparison **in every bundle**, because nothing is reverted when a member is reopened | F10 | 2026-09-10 | `accepted` |
 | D7 | The warn-only discipline goes into §6 as a gate on what may **refuse** a write, with the second half F6 did not have: a guard must be shown to fire on a case it should catch, not only to stay quiet on correct work | F6 | 2026-09-10 | `accepted` |
@@ -497,3 +498,26 @@ The tempting repair, and it is the one act the ruling forbids. `0001` is
 unclaimed; **this session is not its owner and neither is any other.** Doing it
 would be a session performing the owner's act, in the bundle whose finding says
 that is exactly what may not happen.
+
+## D11 — a resolution may run ahead of a status, and `0035` never was that case
+
+**F3 asked whether a resolution may precede the status it implies.** The answer
+is yes while a reading is open and no once it closes, and the tree had
+demonstrated both halves before this decision was written. `0036` cleared itself
+when its F1 reached `resolved`. `0030` is licensed by the clone exemption
+Revision 231 built and Revision 281 made countable. **`0035` is neither: nothing
+ran ahead of anything, because the statuses were never written.**
+
+**So F3 is answered without an instrument change, and the rows keep firing.**
+The three `0035` rows are a true positive whose owner is `active` and may clear
+them — unlike F1, F2, F5 and F9, every one of which ended in an exemption
+because nobody was permitted to act. `0047` F9's rule is that *a row nobody may
+clear is not a signal*; someone may clear these, so they stay.
+
+**Rejected: exempting `assigned` bundles**, which would suppress the only class
+of ordering row anyone can still act on and would leave a comparison that cannot
+fire — Revision 280's own failure case. **Rejected: moving `0035`'s members at
+source**, which is its owner's act; F2 settled that a session may not perform an
+owner's act in a bundle it does not own, and this session does not own `0035`.
+**Rejected: folding the cause into `0043` F5**, which is `resolved` and whose
+remedy demonstrably does not reach it.

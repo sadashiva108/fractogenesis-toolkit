@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-10T18:20:00-04:00",
+  "updatedAt": "2026-09-10T20:10:00-04:00",
   "number": "0047",
   "bundleName": "0047-the-tree-carries-drift-no-check-looks-for",
   "genus": "findings",
@@ -65,14 +65,19 @@
     {
       "id": "F3",
       "statement": "Three bundles carry resolutions for findings that are not resolved",
-      "status": "un-started",
+      "status": "resolved",
       "statusReason": null,
       "statusNote": null,
-      "updatedAt": null,
+      "updatedAt": "2026-09-10T20:10:00-04:00",
       "sectionHeading": "F3 \u2014 resolutions for findings that are not resolved",
       "reopened": null,
       "withdrawn": null,
-      "resolution": null
+      "resolution": {
+        "resolvedBy": "D11",
+        "whatWasDone": "Answered with no instrument change. `0036` cleared itself when its F1 reached `resolved` and `0030` is inside the clone exemption; `0035` alone still reports, and its three rows are a true positive its live owner may clear. The cause is recorded as F13",
+        "revision": 298,
+        "commit": null
+      }
     },
     {
       "id": "F4",
@@ -226,6 +231,18 @@
         "revision": 278,
         "commit": null
       }
+    },
+    {
+      "id": "F13",
+      "statement": "Closing a findings bundle has no single act: a session records closure where people read it and the members stay where the instrument reads them",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-10T20:10:00-04:00",
+      "sectionHeading": "F13 \u2014 closing a bundle has no single act",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
     }
   ],
   "decisions": [
@@ -349,6 +366,18 @@
       "answersAsOf": "2026-09-10T18:20:00-04:00",
       "voidedReason": null,
       "sectionHeading": "D10 \u2014 the check outlived its question by one revision, and was written not to"
+    },
+    {
+      "id": "D11",
+      "decision": "F3 is answered without an instrument change: a resolution may run ahead of a status while a reading is open and not once it closes, and `0035` is not that case because its statuses were never written. The three rows stay, their owner being live and able to clear them, and the cause is recorded as F13",
+      "members": [
+        "F3"
+      ],
+      "decided": "2026-09-10",
+      "outcome": "accepted",
+      "answersAsOf": "2026-09-10T20:10:00-04:00",
+      "voidedReason": null,
+      "sectionHeading": "D11 \u2014 a resolution may run ahead of a status, and `0035` never was that case"
     }
   ],
   "contributions": [],
@@ -362,6 +391,16 @@
       "basis": "asserted",
       "asserted_by": "allocation-and-inquiry-design-20260906-233205",
       "asserted_on": "2026-09-08"
+    },
+    {
+      "kind": "relates-to",
+      "from": "0047/F13",
+      "to": "0043/F5",
+      "why": "one contradiction read at two layers: F5 answers the stored bundle status and is `resolved`; the member statuses its remedy does not reach are why `0035` is still live",
+      "reason": null,
+      "basis": "asserted",
+      "asserted_by": "drift-and-the-write-boundary-20260909-053548",
+      "asserted_on": "2026-09-10"
     }
   ],
   "indexNotes": null

@@ -34,7 +34,7 @@ retrofit is argued.
 |---:|---|---|
 | F1 | Releasing a bundle to `unclaimed` leaves its findings where they were, so a bundle closed to every session holds a readable finding | `resolved` |
 | F2 | Six `accepted` decisions never moved their finding out of `framing` | `resolved` |
-| F3 | Three bundles carry resolutions for findings that are not resolved | `un-started` |
+| F3 | Three bundles carry resolutions for findings that are not resolved | `resolved` |
 | F4 | Eleven `resolved` bundles have no `decisions.md`, and whether they owe one has never been decided | `resolved` |
 | F5 | A conformance sweep that does not know about superseding clones reports sixty-five false positives | `resolved` |
 | F6 | A guard fails where a checker only reports, and the discipline that exists for checkers — a clean pass before it is trusted — has never been stated for guards | `resolved` |
@@ -44,6 +44,7 @@ retrofit is argued.
 | F10 | The clone exemption is bundle-wide and never expires, so it suppresses the comparisons on a clone whose re-reading has closed — and the `reopened` status, which retains its resolution by design, is reported everywhere else | `resolved` |
 | F11 | The disjointness guard covered three of the five closed vocabularies, and the pair it did not cover was the broken one — while a session's `state` had no closed set and no vocabulary check at all | `resolved` |
 | F12 | A revision number can be taken in a commit message, which the helper that exists to prevent collisions cannot see | `resolved` |
+| F13 | Closing a findings bundle has no single act: a session records closure where people read it and the members stay where the instrument reads them | `framing` |
 
 ## F1 — an `unclaimed` bundle holding a live finding
 
@@ -502,6 +503,45 @@ so the route exists — but a helper that reads the log is a different instrumen
 from one that reads a file, with a different failure mode when the two disagree,
 and **which one wins is a decision this finding owes rather than assumes.**
 
+## F13 — closing a bundle has no single act
+
+`0035` is `assigned` with three members `un-started`, three `accepted` decisions
+dated 2026-09-04 and three substantive resolution rows. Its owner,
+`pre-image-capture-conformance-20260903-194532`, is `active`, and that session's
+own `ownedBundles` note reads *"Closed 2026-09-04. Recorded and resolved in one
+sitting."* **Both statements are the same session's, made the same day, and they
+disagree.**
+
+**Closure was recorded where people read it and not where the instrument reads
+it.** A session's note is prose in its own record; a member's `status` is the
+field every check derives from. Nothing makes the two one act and nothing
+compares them, so a bundle can be finished by every account a person consults
+and live by every account a checker consults.
+
+**The population is two, and they are the only two owned live bundles in their
+tree.** `0030` — `analyzing`, five members `framing`, note *"Closed
+2026-09-04"* — and `0035`. Same owner, same day. Of the other fifteen bundles in
+`docs/cross-cutting-findings/`, seven are `answered` holding no live member,
+four are `superseded` and four `unclaimed`, so **every live row in that tree is
+either exempt or belongs to these two.** The tree reads as finished and carries
+three reporting rows.
+
+**`0043` F5 is the same evidence and a different finding, and it is already
+`resolved`.** F5 reads `0035`'s stored status against its note and concludes
+that a derivable status must not be stored. That answer landed, and **`0035` is
+still `un-started`** — because the contradiction F5 removes sits one layer above
+this one. Derive the bundle standing perfectly from three `un-started` members
+and the bundle is still live. **A resolved finding whose remedy cannot reach the
+defect its own evidence came from** is why this is recorded separately rather
+than folded into F5.
+
+**Nothing is built, and that is the finding's own recommendation.** The signal is
+the word *closed* inside a prose note, and a matcher over it is `0041` D1's
+problem a fifth time — the trap that would have made Revision 288's total-checker
+wrong nine times in fourteen. Two instances from one session on one day is not a
+population to design against. **What is owed first is the act, not the check:**
+if closing a bundle moved its members, there would be nothing to compare.
+
 ### F9 and F10, amended 2026-09-10 by the owning session on resolving them
 
 **F9's eight rows are exempt and the exemption is counted.** `check` goes from
@@ -578,3 +618,18 @@ instance is `0035` — `assigned`, all members `un-started`, three resolution ro
 owned by a live session. That is a bundle whose statuses never moved with an
 owner who could have moved them, which is a different question from either of
 these.
+
+### F3, read and resolved 2026-09-10 at Revision 298
+
+**Two of the three bundles F3 named answered themselves while it waited.**
+`0036` — which F3 called the mildest and doubted was a defect at all — reached
+`resolved` on its F1 and the row is gone, the status having caught up exactly as
+F3 supposed. `0030` sits inside the counted clone exemption, where a resolution
+ahead of a member is what a correct clone looks like until the re-reading closes.
+**`0035` alone still reports, three rows.**
+
+**F3's owed question is answered and does not decide its own surviving case.**
+It asked whether a resolution may precede the status it implies; the answer is
+yes while a reading is open and no once it closes. **Nothing ran ahead of
+anything in `0035`** — the statuses were never written. That cause is recorded as
+F13, and the rows stay, because their owner is live and may clear them.
