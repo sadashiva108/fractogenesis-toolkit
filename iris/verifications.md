@@ -91,7 +91,7 @@ than a requirement.
 | Instrument | Examines | Does **not** examine | Run it | Standing baseline (measured) |
 |---|---|---|---|---|
 | `bin/verify-session-findings.sh` | Dispatcher. Resolves a subcommand from one table and runs it from the root. Prints one summary. | Anything not in its table — deliberately not `verify-doc-paths.sh`, `verify-runbook-structure.sh`, `verify-script-portability.sh`, which belong to the reimage workflow rather than to this framework | `./bin/verify-session-findings.sh` (= `all`) | **exit 1 on a clean tree**, because `headers` fails. `list` and `manifest-revision` exit 0 |
-| `… counts` | Every displayed count against the file that owns it: a bundle's `Findings` against its own finding table; a session's `Bundles` and `Findings` against its `findings-manifest.md` | Whether the counted thing is the right thing in any other sense; anything not a count | `./bin/verify-session-findings.sh counts` | **OK 72, FAIL 0** |
+| `… counts` | Every displayed count against the file that owns it: a bundle's `Findings` against its own finding table; a session's `Bundles` and `Findings` against its `findings-manifest.md`; and, since Revision 288, **every prose total of the form `N bundles · M findings` against the table it sits beneath** | Whether the counted thing is the right thing in any other sense; anything not a count. A total in a document that holds no bundle-numbered table is not read — it is a quotation, not a claim | `./bin/verify-session-findings.sh counts` | **FAIL 0** at Revision 288, after the one its fourth section raised was repaired |
 | `… headers` | The `findings.md` header schema — required fields, no off-schema field, field order, one field per line with hard breaks; the finding-table shape; the six finding statuses; F- and D-number cross-references; that every decision cites a finding (0039 D15); fenced-not-indented code blocks | The rendered page; whether a header's *content* is true; `Scope` is never required | `./bin/verify-session-findings.sh headers [--verbose]` | **OK 1353, FAIL 11 — this is the baseline, not a regression.** All 11 are D15 uncited decisions in two bundles: `0030` (D1–D8) and `0035` (D1–D3). See the note below the table |
 | `… structure` | Two invariants nothing else tests: every data row carries its own table's cell count, per table not per file; and every bundle's **derived** standing agrees with its `INDEX.md` row | Blank cells (legal, meaning "same as above"); table content; anything outside the four `INDEX.md` / `findings-manifest.md` shapes | `./bin/verify-session-findings.sh structure [--verbose]` | **OK 68, FAIL 0** |
 | `… completeness` | Whether each `metadata.json` carries everything the markdown it came from holds. The only one that asks whether something is **missing** rather than whether what is present is well formed | Well-formedness (the other three do that); anything the extractor never tried to capture | `./bin/verify-session-findings.sh completeness` | **0 completeness problems** |
@@ -398,6 +398,19 @@ were composed, verified, applied and committed with **no entry**, while
 `check-manifest-revision.sh` reported the numbers free the whole time — it reads
 the manifest, not the log. Revision 247 reconstructed six entries after the fact.
 This is the highest-value guard not built.
+
+**And the inverse of it, which is worse.** `0050` F7, recorded 2026-09-10:
+nothing compares what a commit **message** asserts against what the commit
+**contains**. Three instances measured — `636eba0` titled *Revision 271* adds
+Revision 270, `889b8ac` titled *Revision 285* adds Revision 284, both another
+session's; `777f468` titled *Revision 287* adds 286 and 287, both its author's and
+therefore legitimate. **The discriminator is whose revision, not how many**, since
+Revision 266 established that a commit may carry several. The cost is not
+cosmetic: `check-manifest-revision.sh` has read commit subjects since Revision 278
+(`0047` F12), so **a mis-scoped subject consumes a number** — `APPLY-MANIFEST.md`
+runs 287 · 286 · 284 and **no entry is numbered 285, nor can one be**. The
+instrument that reads the log correctly is what makes a wrong sentence
+irreversible.
 
 **The quality of a reading.** §5.3 and `0039` F21: whether a decision's rejected
 alternatives are real, whether a severity is honest, whether prose restates a fact

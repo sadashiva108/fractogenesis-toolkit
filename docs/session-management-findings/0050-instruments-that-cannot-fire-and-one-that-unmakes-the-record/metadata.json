@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T22:02:03-04:00",
+  "updatedAt": "2026-09-10T02:40:00-04:00",
   "number": "0050",
   "bundleName": "0050-instruments-that-cannot-fire-and-one-that-unmakes-the-record",
   "genus": "findings",
@@ -111,6 +111,18 @@
       "reopened": null,
       "withdrawn": null,
       "resolution": null
+    },
+    {
+      "id": "F7",
+      "statement": "Nothing compares a commit message's assertion against what the commit contains, and a mis-scoped message burns a revision number",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-10",
+      "sectionHeading": "F7 \u2014 the message asserts, the commit contains, and nothing compares the two",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
     }
   ],
   "decisions": [
@@ -180,6 +192,16 @@
       "basis": "asserted",
       "asserted_by": "assurance-coverage-20260908-204724",
       "asserted_on": "2026-09-09"
+    },
+    {
+      "kind": "relates-to",
+      "from": "0050/F7",
+      "to": "0047/F12",
+      "why": "F12 made check-manifest-revision.sh read commit subjects, which is why a mis-scoped subject consumes a revision number rather than merely misdescribing one",
+      "reason": null,
+      "basis": "asserted",
+      "asserted_by": "instruments-and-blind-spots-20260909-220203",
+      "asserted_on": "2026-09-10"
     }
   ],
   "indexNotes": "Assigned 2026-09-09 and read on assignment. F5 added from the reading: the coverage report is blind to 43 files"

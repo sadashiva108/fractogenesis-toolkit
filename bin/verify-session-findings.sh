@@ -84,7 +84,8 @@
 # Subcommands:
 #   all                Every check in the `verify` group. The default.
 #
-#   counts             Does every displayed finding count agree with its source?
+#   counts             Does every displayed finding count -- and every prose
+#                      total beneath a table -- agree with its source?
 #   headers            Does every findings-bundle header conform to the schema?
 #   structure          Is every table well formed and every tag agreeing with its row?
 #   completeness       Does metadata.json carry everything its markdown holds?

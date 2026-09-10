@@ -31,6 +31,7 @@ writes, and the bundle type for those does not exist yet.
 | F4 | Four instruments in three days were correct and could not do their job, and no bundle covers that class | `framing` |
 | F5 | The coverage sweep keeps a second copy of a directory list `docs/INDEX.md` owns, and 43 files are invisible to it | `framing` |
 | F6 | `0050` F3 counted two field families of twenty: one run destroys 429 recorded values, and section 10a routes a session into running it | `framing` |
+| F7 | Nothing compares a commit message's assertion against what the commit contains, and a mis-scoped message burns a revision number | `framing` |
 
 ## F1 — the guard does not run where the writing happens
 
@@ -306,3 +307,102 @@ composed changes and wants the derived fields to match them. **A guard here is
 warn-only or it is the wrong instrument**, and the durable fix is not a guard at
 all: the run should preserve every field it does not derive, at which point
 there is nothing to guard against.
+
+## F7 — the message asserts, the commit contains, and nothing compares the two
+
+**Recorded 2026-09-10**, from reading a commit whose message described work the
+commit did not carry, and sharpened by a relay from
+`entity-model-and-vocabulary-20260909-053548` which had two further instances.
+
+`.share/check-manifest-revision.sh` compares the **manifest** against the
+revision. Nothing compares the **message** against the diff. So a commit may
+assert in prose that it did something it did not do, and every instrument in the
+repository passes.
+
+### Three instances, measured at `777f468`
+
+| Commit | Subject names | Manifest entries it actually adds |
+|---|---|---|
+| `636eba0` | Revision 271 | **Revision 270** — another session's |
+| `889b8ac` | Revision 285 | **Revision 284** — another session's |
+| `777f468` | Revision 287 | **287 and 286**, both its author's |
+
+**The third is not the defect and separating it is the whole difficulty.**
+Revision 266 established that a revision and a commit are not one-to-one, so a
+commit carrying two revisions is correct. **A commit carrying someone else's
+revision under your subject line is not.** A check that cannot tell those apart
+fires on every legitimate multi-revision commit, which is six instruments' worth
+of first-run false positives in this repository already.
+
+**The discriminating question is not *how many* but *whose*.** `777f468` adds two
+entries and both belong to the session that wrote the message; `889b8ac` adds one
+and it belongs to a session that was not the author. That is mechanical: the
+entry's own text names what it did, and `git log` names who committed.
+
+### The second-order cost, which is worse than the first
+
+**`check-manifest-revision.sh` has read commit subjects since Revision 278** —
+`0047` F12 — so it sees `Revision 285` in the log and will not hand 285 out again.
+**A mis-scoped subject therefore consumes a number.** Measured: `APPLY-MANIFEST.md`
+contains one occurrence of the string *Revision 285*, and it is Revision 286's
+`supersedes Revision 285 and earlier`. **No entry is numbered 285, and none ever
+can be.** The manifest reads 287 · 286 · 284, and the gap is permanent.
+
+This is the sharpest kind of instance the bundle has: the instrument that reads
+the log is **correct**, and reading the log correctly is what turns a wrong
+sentence into an irreversible one. **`.share/check-manifest-revision.sh` says so
+in its own header** — lines 27–28 name `636eba0` as the reason it consults the
+log at all. **The remedy for the first instance is what made the second
+permanent.**
+
+### All three commits are one session's, and the mechanism is renumbering
+
+The three do not show three sessions making one mistake. **Every one carries
+`session_01LSgzo7EtPPVJ1gG8s4NVNW`** —
+`entity-model-and-vocabulary-20260909-053548`. That changes what is being
+described: not a habit spread across the tree, but one session's composing loop.
+
+**`889b8ac`'s own message states the loop.** *"Composed as 280, renumbered to 282,
+283 and 285 while in review, and rebuilt by script after the first rebase produced
+a patch that would have reverted two of the other session's revisions."* The patch
+directory holds the evidence as five files for one composition —
+`280-a-third-session.patch` at 17 files, then `282`, `283`, `285` and `286` at
+nine files apiece. **One stable composition, renumbered four times.**
+
+**So the subject and the entry come from different moments.** §7 says take the
+number at apply time; a number re-taken three times during review is taken at
+compose time, three times over. The subject is written from the most recent number
+taken, while the entry actually sitting in the tree is the previous apply's — which
+is exactly the off-by-one both mismatched commits show: subject 271 over entry 270,
+subject 285 over entry 284.
+
+**That makes the check narrower and more buildable than it first looked.** It does
+not need to judge a message against a diff in general. It needs one comparison:
+**the revision named in the subject must be among the entries the commit adds.**
+`777f468` passes — it names 287 and adds 286 and 287. `636eba0` and `889b8ac` fail.
+And the *whose-revision* test stays as the second clause, because a commit adding
+an entry that names another session remains wrong even when the arithmetic works.
+
+### Why this is in `0050` and how it differs from F4
+
+F4's four members are **instruments that exist, are correct, and cannot fire.**
+F7 is the other side of the same reading: **a region with no instrument at all.**
+`docs/rules/rule-enforcement-avenues.md` §2 calls that `nowhere` and says it has
+to be written down as one, *"because a rule with no instrument is otherwise quoted
+as enforced"* — and `iris/verifications.md` §8 already names this exact region
+**the highest-value guard not built**, on the strength of Revisions 241–246, which
+were composed, verified, applied and committed with no entry at all. Those are the
+inverse of these three: a change with no entry, against an entry with no change.
+
+### What this finding does not decide
+
+**The rule is not this bundle's to write.** A commit message is valid only for the
+patch it was handed over with, and that sentence belongs in
+`.github/session-management-instructions.md` §7, which is
+`entity-model-and-vocabulary-20260909-053548`'s, the three rule documents being
+that session's. It has said it will take it. **The instrument is this bundle's**, and it is not built here either —
+building it before the rule exists would mean inventing the rule inside a checker,
+which is the move `0041` D1 and `0050` D2 both refuse.
+
+**So F7 is recorded `framing` and stays there**, with a `blocks` edge from the
+rule to the check rather than a decision taken ahead of it.

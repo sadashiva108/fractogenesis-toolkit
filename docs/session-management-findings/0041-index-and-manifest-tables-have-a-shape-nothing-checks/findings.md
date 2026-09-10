@@ -21,7 +21,7 @@ and `pre-image-capture-conformance-20260903-194532` still owns it.
 | F3 | The fix is a lint, so this bundle may be in the wrong tree | `decided` |
 | F4 | A patch containing a deletion under-applies silently, and every check passes | `decided` |
 | F5 | Nothing compares a resolution's claim against the tree | `decided` |
-| F6 | The prose total under an index is wrong in both directions, and the count check passes over it | `decided` |
+| F6 | The prose total under an index is wrong in both directions, and the count check passes over it | `resolved` |
 
 ---
 
@@ -320,6 +320,27 @@ inside an inline code span. This one trusted a total instead of summing a column
 This is `0041` F5 one level out. There, a `resolved` status asserts something
 about the tree that nothing examines. Here, a sentence asserts something about
 the table directly above it that nothing examines — and the table is right there.
+
+#### Answered at Revision 288, and the silent first run did not happen
+
+D6 expected nothing: both known instances had been repaired by Revision 249, so
+*"its first run against the tree it would ship into would be silent"* and
+**"nobody should read a silent first run as evidence it works."** The check was
+built at Revision 288 and **its first run raised one, in this tree, uncorrected**
+— `docs/session-management-findings/INDEX.md` line 53 reading **18 bundles · 113
+findings** against rows summing to **120**.
+
+**The git history of that one line is the finding restated as a mechanism.**
+`git log -L53,53` shows the number hand-incremented **111 → 112 → 113** across
+Revisions 272, 278 and 282 while the column beneath it moved by seven more than
+the increments did. Nobody mistyped it. Three sessions in a row each added what
+they had just added to a figure that was already wrong — **which is exactly what
+F6 records this session doing at Revision 238**, three revisions later and by
+three different sessions.
+
+**So the population was never two.** It was two *that anyone had counted*, and
+the reason a third went unseen for eleven revisions is the reason D6 gives: the
+sentence is free, and a number that is only ever adjusted is never checked.
 
 <!-- historical: bin/verify-findings-headers.sh -->
 <!-- historical: bin/verify-findings-structure.sh -->

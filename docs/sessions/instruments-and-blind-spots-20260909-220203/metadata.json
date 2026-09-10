@@ -1,11 +1,21 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T22:02:03-04:00",
+  "updatedAt": "2026-09-10T02:40:00-04:00",
   "bundleName": "instruments-and-blind-spots-20260909-220203",
   "createdOn": "2026-09-09",
-  "owners": [],
-  "transcript": null,
-  "scratchPath": null,
+  "owners": [
+    {
+      "from": "2026-09-10",
+      "until": null,
+      "assistant": "Claude",
+      "sessionId": "session_01Fo6sBeux1JTyDzgKhCx2KU",
+      "model": "claude-opus-5",
+      "environment": "Linux VM on the owner's machine, Bash 5.1.16, GNU awk 5.1.0, aarch64",
+      "environmentNotes": "Not the macOS Bash 3.2 target. The assistant runs in a cloud container and reaches the repository through a desktop bridge; every command and every number quoted was run in that VM. verify-script-portability.sh stands in for the target platform and is a reading of the source, not a run on it."
+    }
+  ],
+  "transcript": "https://claude.ai/code/session_01Fo6sBeux1JTyDzgKhCx2KU",
+  "scratchPath": "/sessions/rcw-01fo6sbeux1jtydzgkhcx2ku/scratch/work",
   "resources": [
     {
       "what": "Repository checkout",
@@ -24,13 +34,13 @@
     },
     {
       "what": "Scratch copy",
-      "path": null,
-      "notes": "Filled by the session on its first write."
+      "path": "/sessions/rcw-01fo6sbeux1jtydzgkhcx2ku/scratch/work",
+      "notes": "Inside the Linux VM on the owner's machine. This path does not exist on the Mac and dies with the session; the patch directory above holds the surviving artifact."
     },
     {
       "what": "Commit created against",
-      "path": null,
-      "notes": "Filled by the session on its first write."
+      "path": "777f468",
+      "notes": "Revision 287."
     }
   ],
   "ownedBundles": [
@@ -38,18 +48,18 @@
       "number": "0041",
       "path": "docs/session-management-findings/0041-index-and-manifest-tables-have-a-shape-nothing-checks/",
       "assignedOn": "2026-09-09",
-      "notes": "Assigned at the owner's direction, Revision 286. Unclaimed since Revision 286. Five members stand decided with no work done on any of them; D6 is the count check released unbuilt."
+      "notes": "Assigned at the owner's direction, Revision 286; unclaimed since Revision 264. D6 carried out at Revision 288 and F6 resolved -- the count check now sums the prose total beneath a table, and its first run corrected this tree's own index total, 113 against 120. Four members still stand decided, three of them D1's question."
     },
     {
       "number": "0050",
       "path": "docs/session-management-findings/0050-instruments-that-cannot-fire-and-one-that-unmakes-the-record/",
       "assignedOn": "2026-09-09",
-      "notes": "Assigned at the owner's direction, Revision 286. Unclaimed since Revision 286. F3 is the destructive regenerator and is the emergency; F1 is the guard a bridged session is invisible to."
+      "notes": "Assigned at the owner's direction, Revision 286; unclaimed since Revision 264. F3 is the destructive regenerator and is the emergency; F1 is the guard a bridged session is invisible to; F7 recorded at Revision 288 -- nothing compares a commit message's assertion against what the commit contains."
     }
   ],
   "contributions": [],
   "declaredState": null,
-  "indexNotes": "**The instruments session.** `0050` and `0041` assigned from `unclaimed` at the owner's direction. Between them they answer *how do I know this framework works*: one bundle is instruments that cannot fire, the other a required shape nothing checks and a check released unbuilt.",
+  "indexNotes": "**The instruments session.** `0050` and `0041` assigned from `unclaimed` at the owner's direction. Between them they answer *how do I know this framework works*: one bundle is instruments that cannot fire, the other a required shape nothing checks and a check released unbuilt. **First write Revision 288**: `0041` D6 built, F6 `resolved`, and the check's first run corrected an index total that had been hand-incremented across three revisions. `0050` F7 recorded.",
   "ended": {
     "on": null,
     "reason": null,

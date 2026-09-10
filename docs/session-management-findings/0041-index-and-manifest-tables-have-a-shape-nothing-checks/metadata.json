@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T22:02:03-04:00",
+  "updatedAt": "2026-09-10T02:40:00-04:00",
   "number": "0041",
   "bundleName": "0041-index-and-manifest-tables-have-a-shape-nothing-checks",
   "genus": "findings",
@@ -95,14 +95,21 @@
     {
       "id": "F6",
       "statement": "The prose total under an index is wrong in both directions, and the count check passes over it",
-      "status": "decided",
+      "status": "resolved",
       "statusReason": null,
       "statusNote": null,
-      "updatedAt": "2026-09-09",
+      "updatedAt": "2026-09-10",
       "sectionHeading": "F6 \u2014 the prose total nobody counts",
       "reopened": null,
       "withdrawn": null,
-      "resolution": null
+      "resolution": {
+        "resolvedBy": [
+          "D6"
+        ],
+        "whatWasDone": "verify-findings-counts.sh gained section 4 with total_lines() and members_column_of(): in any document holding a table with a Findings or Members column over bundle-numbered rows, every prose total of the form N bundles / M findings is compared against that table's row count and column sum. Fenced blocks, inline code spans and table rows are excluded; a document carrying the historical-record marker is skipped. First run raised 1 FAIL, docs/session-management-findings/INDEX.md line 53",
+        "revision": "288",
+        "commit": null
+      }
     }
   ],
   "decisions": [

@@ -5,12 +5,18 @@
 # Verifies the counts displayed about findings bundles and sessions against the
 # files that own them.
 #
-# Three numbers are shown in a second place for a reader's benefit, and each is
+# Four numbers are shown in a second place for a reader's benefit, and each is
 # a copy of something authoritative elsewhere:
 #
 #   a findings index row's `Findings`  <- the per-finding table in findings.md
 #   a session row's `Bundles`          <- the rows in its findings-manifest.md
 #   a session row's `Findings`         <- the sum of those bundles' counts
+#   `N bundles · M findings` in prose  <- the table the sentence sits beneath
+#
+# The fourth was added at Revision 288, carrying out `0041` D6. It is the one a
+# reader has always believed this check was making -- the conformant prompt says
+# so in as many words -- and until then nothing read it. Section 4 has the
+# argument.
 #
 # Revision 179 decided that a derived fact may be displayed where something
 # catches it drifting. This is that something. The rule it enforces is in
@@ -51,7 +57,8 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 cd "$REPO_ROOT" || exit 2
 
 tmp_rows="${TMPDIR:-/tmp}/verify-findings-counts.$$"
-trap 'rm -f "$tmp_rows"' EXIT
+tmp_totals="${TMPDIR:-/tmp}/verify-findings-counts-totals.$$"
+trap 'rm -f "$tmp_rows" "$tmp_totals"' EXIT
 
 ok_count=0
 fail_count=0
@@ -147,6 +154,122 @@ if [ -f "$sessions_index" ]; then
     if [ "$shown_findings" = "$src_findings" ]; then pass
     else fail "$session  Findings column" "${shown_findings:-—}" "$src_findings (sum of its bundles)"; fi
   done
+fi
+
+# --- 4. the prose total against the table it describes ------------------------
+#
+# `0041` D6. Every findings index and session manifest may close with a sentence
+# of the form `N bundles · M findings`. It is prose, not a table cell, and until
+# this section nothing read it -- which is what `0041` F6 records: two such
+# totals were wrong for days across six instruments, one was corrected by a
+# person recounting a column and the other by accident, during a transfer that
+# rewrote the manifest for an unrelated reason.
+#
+# THE SUBJECT IS A DOCUMENT THAT HAS THE TABLE, not a document that has the
+# sentence. A total-shaped run of words appears fourteen times in the tree and
+# only five of them are a document's own total; the other nine are quotations of
+# a wrong number, schema placeholders, and a ledger counting something else. So
+# the qualifying condition is read off the TABLE -- a header carrying a
+# `Findings` or `Members` column, over data rows numbered by bundle -- and a
+# document without one is not making this claim and is not measured for it.
+#
+# Three exclusions, and each one is a real instance in this tree rather than a
+# precaution:
+#
+#   a fenced block          -- an example is not a claim
+#   an inline code span     -- `session-management-re-evaluation-.../
+#                              findings-manifest.md` line 40 quotes its own
+#                              former, wrong total inside backticks while
+#                              recording that it was corrected. Reading it as a
+#                              claim would fail the file for saying what it had
+#                              once got wrong
+#   a table row             -- `0041/findings.md` states both known instances as
+#                              rows of the table that records them
+#
+# The code-context requirement is `0041` D1's third instance of `0015`: an
+# extractor that cannot see code context raises on the documentation of the very
+# defect it looks for.
+#
+# `Members` is matched beside `Findings`, and `members` beside `findings`,
+# because Revision 271 renamed the array and two manifests have followed it. A
+# check that knew only the older word would go quiet on the newer documents,
+# which is the failure this whole section exists for.
+#
+# A document carrying `<!-- historical-record -->` is SKIPPED and counted.
+# `0046`'s marker already means *this is a statement about a moment, do not
+# repair it*, and a session's own total at the moment it stopped is exactly
+# that. Reusing it was D6's instruction; inventing a second marker for one class
+# of statement is the copy this repository keeps finding.
+
+total_lines() {
+  awk '
+    /^[ \t]*```/ { fence = !fence; next }
+    fence        { next }
+    /^[ \t]*\|/  { next }
+    {
+      out = ""; n = split($0, seg, "`")
+      for (i = 1; i <= n; i += 2) out = out seg[i]
+      if (n % 2 == 0) out = out seg[n]
+      if (match(out, /[0-9]+ bundles? · [0-9]+ (finding|member)s?/)) {
+        printf "%d\t%s\n", NR, substr(out, RSTART, RLENGTH)
+      }
+    }
+  ' "$1"
+}
+
+members_column_of() {
+  awk -F'|' '
+    /^\|/ {
+      for (i = 1; i <= NF; i++) {
+        h = $i; gsub(/^[ ]+|[ ]+$/, "", h)
+        if (h == "Findings" || h == "Members") { print i; exit }
+      }
+    }' "$1"
+}
+
+# The filesystem, not `git ls-files`. A session bundle created in this revision
+# is untracked until the owner commits, and the index is the one place its
+# manifest is guaranteed absent -- so reading the index would make the check
+# blind to precisely the document most likely to carry a fresh total.
+find docs \( -name 'INDEX.md' -o -name 'findings-manifest.md' \) -print | sort | while IFS= read -r doc; do
+  [ -f "$doc" ] || continue
+  col="$(members_column_of "$doc")"
+  [ -n "$col" ] || continue
+  rows="$(grep -cE '^\|[ ]*[0-9]{4}[ ]*\|' "$doc")"
+  [ "$rows" -gt 0 ] || continue
+
+  totals="$(total_lines "$doc")"
+  [ -n "$totals" ] || continue
+
+  if grep -q 'historical-record' "$doc"; then
+    printf '  SKIP  %s  declared a historical record\n' "$doc"
+    continue
+  fi
+
+  sum="$(awk -F'|' -v c="$col" '
+    $2 ~ /^[ ]*[0-9]{4}[ ]*$/ { v = $c; gsub(/[^0-9]/, "", v); t += v }
+    END { print t + 0 }' "$doc")"
+
+  printf '%s\n' "$totals" | while IFS="$(printf '\t')" read -r lineno claim; do
+    said_b="$(printf '%s' "$claim" | awk '{print $1}')"
+    said_m="$(printf '%s' "$claim" | awk '{print $4}')"
+    if [ "$said_b" = "$rows" ] && [ "$said_m" = "$sum" ]; then
+      printf 'PASS\n' >> "$tmp_totals"
+    else
+      printf 'FAIL\t%s:%s  the total beneath the table\t%s\t%s\n' \
+        "$doc" "$lineno" "$said_b bundles / $said_m" "$rows rows / $sum summed" >> "$tmp_totals"
+    fi
+  done
+done
+
+# The loop above runs in a subshell, so its verdicts come back through a file
+# rather than through the counters. Bash 3.2 has no lastpipe and this repository
+# targets it.
+if [ -f "$tmp_totals" ]; then
+  while IFS="$(printf '\t')" read -r verdict what shown source; do
+    if [ "$verdict" = "PASS" ]; then pass
+    else fail "$what" "$shown" "$source"; fi
+  done < "$tmp_totals"
 fi
 
 echo ""
