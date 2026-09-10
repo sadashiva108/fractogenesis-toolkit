@@ -38,10 +38,41 @@ once work where earlier attempts did not.**
 1. **Compose in a scratch tree outside the owner's checkout.** Copy the checkout
    to session-local storage and edit there. **Never edit the checkout directly**
    — not once, not for a one-line fix.
+
+   **Record what is already dirty, at copy time.**
+   `git --no-optional-locks status --porcelain` in the checkout, saved beside the
+   scratch tree. **The copy is not required to be clean** — another session is in
+   flight most of the time, and serialising sessions is the cost `0038` exists to
+   avoid. But a copy taken dirty carries another session's uncommitted work, and
+   from that moment `git diff` in the copy cannot tell it from yours. **Write down
+   what was there before it stops being distinguishable.**
 2. **Run every verification and test in the scratch tree.** Only there do the
-   numbers describe your change rather than whoever else is writing.
-3. **Produce the patch.** `git add -N .` then `git diff` to the project's
-   `PATCH_DIR`. It is the reviewable artifact and the record of what you did.
+   numbers describe your change rather than whoever else is writing — **which is
+   true of a clean copy and inverted for a dirty one**, whose numbers describe
+   your change plus theirs. That is why step 1 records what it records.
+3. **Produce the patch.** `git add -N .` then **`git diff HEAD`** to the
+   project's `PATCH_DIR`. It is the reviewable artifact and the record of what
+   you did.
+
+   **`HEAD` is not optional and the reason is a deletion.** `git add -N`
+   records intent-to-add for an untracked file, but for a **deleted** tracked
+   file it stages the removal — and bare `git diff` then compares the working
+   tree against the index and finds nothing to report. **The deletion drops
+   out of the patch, `git apply` exits 0, and nothing warns.** Measured at
+   Revision 299: a 17-file change set produced a 16-file patch with 0
+   deletions, and the 673-line file the revision existed to remove was simply
+   absent. `git diff HEAD` compares against the commit and reports it. **On a
+   change set with no deletion the two produce byte-identical output**, so
+   there is no case in which the shorter form is preferable.
+
+   **Compare the patch's file list against step 1's capture before handing it
+   over.** Any path in both is another party's work that `git diff` could not
+   distinguish from yours; take it out and say so in the review. **This is the
+   mechanical form of section 6's comparison, and it catches the direction that
+   rationale does not point at.** Section 6 explains the comparison as what
+   catches a patch that silently DROPS a file, so a session which created no new
+   files reads it, correctly concludes it has none to drop, and skips it —
+   while the failure it has just skipped is a patch that silently INCLUDES.
 4. **Report a review, not a diff.** A grouped summary the owner can read in a
    minute: what changed, by area, with risk flagged. A raw diff can run to
    thousands of lines and reviewing it is not the owner's job.

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-10T20:10:00-04:00",
+  "updatedAt": "2026-09-10T21:30:00-04:00",
   "number": "0047",
   "bundleName": "0047-the-tree-carries-drift-no-check-looks-for",
   "genus": "findings",
@@ -23,8 +23,8 @@
     "`docs/legend.md`, the ladder and the two permission tables",
     "`docs/architecture/state-as-data.md` sections 4.3 and 4.4"
   ],
-  "standing": "analyzing",
-  "progress": "analyzing",
+  "standing": "answered",
+  "progress": "answered",
   "ownership": null,
   "lineage": null,
   "members": [
@@ -235,14 +235,19 @@
     {
       "id": "F13",
       "statement": "Closing a findings bundle has no single act: a session records closure where people read it and the members stay where the instrument reads them",
-      "status": "framing",
+      "status": "resolved",
       "statusReason": null,
       "statusNote": null,
-      "updatedAt": "2026-09-10T20:10:00-04:00",
+      "updatedAt": "2026-09-10T21:30:00-04:00",
       "sectionHeading": "F13 \u2014 closing a bundle has no single act",
       "reopened": null,
       "withdrawn": null,
-      "resolution": null
+      "resolution": {
+        "resolvedBy": "D12",
+        "whatWasDone": "Nothing built. The remedy is a numbered procedure for closing a bundle, in \u00a79b's shape, and \u00a79 is not this session's section; the two instances are their owner's to move. The three `0035` rows keep firing, so the defect stays visible without the finding",
+        "revision": 300,
+        "commit": null
+      }
     }
   ],
   "decisions": [
@@ -378,6 +383,18 @@
       "answersAsOf": "2026-09-10T20:10:00-04:00",
       "voidedReason": null,
       "sectionHeading": "D11 \u2014 a resolution may run ahead of a status, and `0035` never was that case"
+    },
+    {
+      "id": "D12",
+      "decision": "F13 is answered without building: the remedy is a numbered procedure for closing a bundle, which belongs to \u00a79's owner, and the two instances belong to their bundles' owner. Nothing is lost by resolving, the three `0035` rows being the durable record",
+      "members": [
+        "F13"
+      ],
+      "decided": "2026-09-10",
+      "outcome": "accepted",
+      "answersAsOf": "2026-09-10T21:30:00-04:00",
+      "voidedReason": null,
+      "sectionHeading": "D12 \u2014 the remedy is a section that does not exist, and it belongs to someone else"
     }
   ],
   "contributions": [],

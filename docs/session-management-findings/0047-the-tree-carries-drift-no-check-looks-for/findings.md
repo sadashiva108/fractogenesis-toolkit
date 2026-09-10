@@ -44,7 +44,7 @@ retrofit is argued.
 | F10 | The clone exemption is bundle-wide and never expires, so it suppresses the comparisons on a clone whose re-reading has closed — and the `reopened` status, which retains its resolution by design, is reported everywhere else | `resolved` |
 | F11 | The disjointness guard covered three of the five closed vocabularies, and the pair it did not cover was the broken one — while a session's `state` had no closed set and no vocabulary check at all | `resolved` |
 | F12 | A revision number can be taken in a commit message, which the helper that exists to prevent collisions cannot see | `resolved` |
-| F13 | Closing a findings bundle has no single act: a session records closure where people read it and the members stay where the instrument reads them | `framing` |
+| F13 | Closing a findings bundle has no single act: a session records closure where people read it and the members stay where the instrument reads them | `resolved` |
 
 ## F1 — an `unclaimed` bundle holding a live finding
 
@@ -633,3 +633,37 @@ It asked whether a resolution may precede the status it implies; the answer is
 yes while a reading is open and no once it closes. **Nothing ran ahead of
 anything in `0035`** — the statuses were never written. That cause is recorded as
 F13, and the rows stay, because their owner is live and may clear them.
+
+### F13, read and resolved 2026-09-10 at Revision 300
+
+**The remedy is a numbered procedure, and it is not this session's to write.**
+`.github/session-management-instructions.md` has §9 for superseding, §9a for
+reopening and withdrawing, §9b for resolving a finding, §10 for transferring and
+§10a for releasing to `unclaimed`. **There is no section for an owner being done
+with a bundle.** Every state a bundle can leave by has numbered steps except the
+one it leaves by most often.
+
+**§9b already wrote this finding down, one level lower.** Its closing paragraph
+reads: *"Every other lifecycle event — superseding, reopening, withdrawing,
+transferring — had numbered steps; the commonest one had a file schema and no
+instructions, and seven resolutions went unwritten across five revisions because
+nothing prompted them."* That was `0039` F17 about resolving a **finding**.
+**F13 is the same sentence about closing a **bundle**, and its cost is `0030` and
+`0035`.** The fix has the same shape as §9b's: state the steps, in order, so the
+members move before the note is written.
+
+**Nothing is built here and nothing is lost by resolving.** The three `0035` rows
+`RESOLUTION-AHEAD-OF-FINDING` reports do not depend on F13 being open — they are
+the durable record, they have a live owner who may clear them, and Revision 298
+decided they keep firing. **A finding is not the thing that keeps a defect
+visible; the instrument is.** What F13 owed was the explanation of why those rows
+exist, and that is now written in three places that outlive it.
+
+**What is owed, and by whom.** The procedure belongs to §9's owner,
+`entity-model-and-vocabulary-20260909-053548` — §§0 and 6 are this session's and
+§9 is not. The two instances belong to `pre-image-capture-conformance-20260903-194532`,
+which is `active` and may move its own members. **Neither is this session's act**,
+and F13 stays resolved rather than open, because a finding held open against
+somebody else's work is a row nobody may clear — `0047` F9, in the bundle that
+recorded it.
+

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-10T15:30:00-04:00",
+  "updatedAt": "2026-09-10T22:15:00-04:00",
   "number": "0038",
   "bundleName": "0038-sessions-write-into-the-tree-the-owner-commits-from",
   "genus": "findings",
@@ -25,8 +25,8 @@
     "\u00a7\u00a74b\u20134d, in `.github/copilot-instructions.md`",
     "all 27 existing findings bundles, checked for overlap"
   ],
-  "standing": "answered",
-  "progress": "answered",
+  "standing": "analyzing",
+  "progress": "analyzing",
   "ownership": null,
   "lineage": {
     "supersedes": "0028",
@@ -185,6 +185,52 @@
         "revision": 283,
         "commit": null
       }
+    },
+    {
+      "id": "F10",
+      "statement": "\u00a70 step 1 places no condition on the checkout it copies and keeps no record of its state, so a patch composed from a dirty copy silently includes another session's work and step 2's promise about the numbers is inverted",
+      "status": "resolved",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-10T21:30:00-04:00",
+      "sectionHeading": "F10 \u2014 the copy is taken without a condition and without a record",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": {
+        "resolvedBy": "D9",
+        "whatWasDone": "\u00a70 step 1 records `git status --porcelain` at copy time, step 3 compares the patch's file list against it, and step 2's promise is qualified to the clean case",
+        "revision": 300,
+        "commit": null
+      }
+    },
+    {
+      "id": "F11",
+      "statement": "\u00a70's patch recipe drops a deletion: `git add -N .` stages a removal, and bare `git diff` then compares the working tree against the index and reports nothing, so the patch omits the file silently and `git apply` exits 0",
+      "status": "resolved",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-10T22:15:00-04:00",
+      "sectionHeading": "F11 \u2014 the patch recipe drops a deletion, silently",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": {
+        "resolvedBy": "D10",
+        "whatWasDone": "\u00a70 step 3's recipe is `git diff HEAD`, with the reason recorded in the step; the two forms are byte-identical wherever no deletion is present",
+        "revision": 300,
+        "commit": null
+      }
+    },
+    {
+      "id": "F12",
+      "statement": "`verify-doc-paths.sh --all` reads untracked files, so it returns a different verdict in the owner's checkout than in the scratch clone \u00a70 step 2 requires every verification to be run in",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-10T22:15:00-04:00",
+      "sectionHeading": "F12 \u2014 an instrument answers differently in the checkout and in the clone",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
     }
   ],
   "decisions": [
@@ -285,6 +331,30 @@
       "answersAsOf": "2026-09-10T15:30:00-04:00",
       "voidedReason": null,
       "sectionHeading": "D8 \u2014 the test that disqualifies before the other three are worth applying"
+    },
+    {
+      "id": "D9",
+      "decision": "Record the dirt rather than require a clean copy: `git status --porcelain` captured at \u00a70 step 1, compared against the patch's file list at step 3, and step 2's promise qualified to the clean case",
+      "members": [
+        "F10"
+      ],
+      "decided": "2026-09-10",
+      "outcome": "accepted",
+      "answersAsOf": "2026-09-10T21:30:00-04:00",
+      "voidedReason": null,
+      "sectionHeading": "D9 \u2014 record the dirt, because requiring a clean copy costs more than it saves"
+    },
+    {
+      "id": "D10",
+      "decision": "\u00a70 step 3's recipe becomes `git diff HEAD`, the two forms being byte-identical wherever no deletion is present, so the correct one is never worse",
+      "members": [
+        "F11"
+      ],
+      "decided": "2026-09-10",
+      "outcome": "accepted",
+      "answersAsOf": "2026-09-10T22:15:00-04:00",
+      "voidedReason": null,
+      "sectionHeading": "D10 \u2014 `git diff HEAD`, because the short form is never better"
     }
   ],
   "contributions": [],

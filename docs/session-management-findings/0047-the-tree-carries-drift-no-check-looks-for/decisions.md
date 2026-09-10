@@ -13,6 +13,7 @@
 | D3 | `OUTCOMES` becomes the legend's six bare outcomes with `replaced` matched by prefix; the two retired prefixes go; and a contract test asserts the disjointness `docs/legend.md` has claimed a schema check performs since Revision 233 | F8 | 2026-09-09 | `accepted` |
 | D10 | `CLOSED-BUNDLE-LIVE-FINDING` is removed entirely, both halves having been overtaken; and `unclaimed` joins `superseded` in the counted ordering exemptions, on the ground that nobody may perform the act that would clear the row | F1, F2 | 2026-09-10 | `accepted` |
 | D11 | F3 is answered with no instrument change: a resolution may run ahead of a status while a reading is open and not once it closes, and `0035` is not that case because its statuses were never written. The three rows stay, their owner being live and able to clear them, and the cause is recorded as F13 | F3 | 2026-09-10 | `accepted` |
+| D12 | F13 is answered without building: the remedy is a numbered procedure for closing a bundle, which belongs to §9's owner, and the two instances belong to their bundles' owner. Nothing is lost by resolving, the three `0035` rows being the durable record | F13 | 2026-09-10 | `accepted` |
 | D8 | A `superseded` bundle is exempt from both ordering comparisons, and `check` **counts** the suppression and names the bundles rather than asserting it in a footer | F9 | 2026-09-10 | `accepted` |
 | D9 | The clone exemption becomes **per member and expires with the re-reading window**, keyed on the member's own status; and `reopened` is exempt from the resolution comparison **in every bundle**, because nothing is reverted when a member is reopened | F10 | 2026-09-10 | `accepted` |
 | D7 | The warn-only discipline goes into §6 as a gate on what may **refuse** a write, with the second half F6 did not have: a guard must be shown to fire on a case it should catch, not only to stay quiet on correct work | F6 | 2026-09-10 | `accepted` |
@@ -521,3 +522,27 @@ source**, which is its owner's act; F2 settled that a session may not perform an
 owner's act in a bundle it does not own, and this session does not own `0035`.
 **Rejected: folding the cause into `0043` F5**, which is `resolved` and whose
 remedy demonstrably does not reach it.
+
+## D12 — the remedy is a section that does not exist, and it belongs to someone else
+
+**F13's fix is a numbered procedure for closing a bundle**, in the shape §9b
+already uses for resolving a finding: move the members, then write the note.
+**The instruction set has one for every other lifecycle event and none for this
+one**, which is why closure could be recorded in a session's prose while the
+members stayed still.
+
+**Not written here.** §§0 and 6 of the instruction set are this session's and §9
+is not; writing §9c would be this session legislating in another's section, which
+is the boundary the prompt sets and `0038` exists to protect.
+
+**Resolved rather than left open.** The `0035` rows keep firing by Revision 298's
+decision and have an owner who may clear them, so the defect stays visible
+without F13. **A finding held open against another party's act is a row nobody
+may clear** — `0047` F9's rule, applied to this bundle's own member.
+
+**Rejected: writing §9c anyway** and announcing it in review, which §§0 and 6's
+carve-out does not extend to. **Rejected: moving `0030` and `0035`'s members**,
+their owner's act. **Rejected: leaving F13 `framing`** so the tree carries a
+standing reminder, which is the same reminder the three check rows already are,
+and would leave this bundle `analyzing` on a member nobody here may act on.
+

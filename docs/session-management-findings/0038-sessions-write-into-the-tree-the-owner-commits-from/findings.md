@@ -45,6 +45,9 @@ and that is not what was found.
 | F7 | A rule here is enforceable at write time only where the fact is in `metadata.json`, the actor identifies itself, and a false refusal costs less than the rule — and none of the four guards that pass those tests is built | `resolved` |
 | F8 | The guard D7 chose cannot fire at the moment that has actually failed: every recorded instance is the owner committing, and no session-side hook observes that | `resolved` |
 | F9 | Two of the three hooks are annotators that cannot refuse anything, and both are scoped to the one directory a session must never write in — so they can only speak about a write the third hook refuses | `resolved` |
+| F10 | §0 step 1 places no condition on the checkout it copies and keeps no record of its state, so a patch composed from a dirty copy silently includes another session's work and step 2's promise about the numbers is inverted | `resolved` |
+| F11 | §0's patch recipe drops a deletion: `git add -N .` stages a removal, and bare `git diff` then compares the working tree against the index and reports nothing, so the patch omits the file silently and `git apply` exits 0 | `resolved` |
+| F12 | `verify-doc-paths.sh --all` reads untracked files, so it returns a different verdict in the owner's checkout than in the scratch clone §0 step 2 requires every verification to be run in | `framing` |
 
 **Read as a re-verification on 2026-09-09, at Revision 269**, by
 `drift-and-the-write-boundary-20260909-053548`. `0028`, which this bundle
@@ -392,3 +395,98 @@ avenue actually available is the checker: two were built, at Revisions 278 and
 not matter — §4 states each with the incident it would have caught, and those
 incidents are real. **The rules are worth holding and the layer cannot hold
 them**, which is a different sentence and the one the record now carries.
+
+## F10 — the copy is taken without a condition and without a record
+
+**§0 step 1 said *copy the checkout and edit there*, and nothing more.** No
+condition on what the checkout held at that moment, and no record of it. **From
+the instant the copy is taken, `git diff` inside it cannot separate this
+session's work from whatever was already uncommitted** — the two are the same
+difference against the same base.
+
+**Step 2 then made a promise that is exactly inverted for such a copy.** *"Only
+there do the numbers describe your change rather than whoever else is writing"*
+is true of a clean copy and false of a dirty one, where the numbers describe this
+change **plus theirs** — and the contamination reaches the verification figures in
+the review, which is the evidence the owner decides on.
+
+**Two instances, neither landed, both caught by hand.** This session's first patch
+for `0047` carried **five files of another session's uncommitted work** — `0050`,
+its session bundle and both `INDEX.md`s — and was caught by reading the patch's
+file list against the change set. `instruments-and-blind-spots-20260909-220203`
+produced one that would have reverted Revisions 280 and 281 from a stale overlay.
+**`git apply --check` passes in both**: it tests whether hunks apply, not whose
+work they are.
+
+**Section 6's comparison is the remedy and points the wrong way.** It is
+documented as *"what catches a dropped file"*, so a session that created no new
+files reads it, correctly concludes it has none to drop, and skips it — and the
+failure it skipped is the opposite one. **Both instances were caught by running
+that comparison in the direction its own rationale does not name.**
+
+**Recorded by `assurance-coverage-20260908-204724` as `0049` F8** at Revision
+293, which named §0 as the owner of the fix and left it. §0 is this session's, so
+the fix is written here rather than there, and F10 exists so the write has the
+finding §6 requires.
+
+## F11 — the patch recipe drops a deletion, silently
+
+**§0 step 3 said `git add -N .` then `git diff`.** `git add -N` records
+intent-to-add for an **untracked** file, which is why the recipe has it — a new
+file is invisible to `git diff` without it. But for a **deleted tracked** file it
+stages the removal, and bare `git diff` compares the working tree against the
+**index**, where the file is already gone. **There is nothing left to report, so
+the deletion is not in the patch.**
+
+**Measured by `instruments-and-blind-spots-20260909-220203` at Revision 299**, on
+the patch that revision existed to produce: **a 17-file change set produced a
+16-file patch with 0 deletions**, and the 673-line file being retired was absent
+from it. **`git apply` exits 0 and nothing warns**, because a patch that omits a
+file is a valid patch.
+
+**Reproduced here before the rule was written.** In a throwaway repository with
+one edit, one addition and one deletion: `git add -N . && git diff` yields two
+files and **zero** deletions; `git diff HEAD` yields three files and one. **And on
+a change set with no deletion the two are byte-identical** — 345 bytes each, same
+bytes — so the correct form is never worse and there is no case for the shorter
+one.
+
+**This session's own patches were unaffected and that is luck, not care.** Every
+one used `git diff HEAD`, and every one had zero deletions, so the recipe's defect
+could not have shown itself here either way.
+
+**Recorded as `0041` F7 by the session that found it**, which named §6 and §7 as
+the sections that would carry a rule and left it. **The recipe itself is §0 step
+3**, which is this session's, so the one-word fix is written here and F11 exists
+to satisfy §6's gate.
+
+## F12 — an instrument answers differently in the checkout and in the clone
+
+**§0 step 2 requires every verification to run in the scratch tree.**
+`bin/verify-doc-paths.sh --all` does not give the same answer there.
+
+**Measured at Revision 299**, same commit, two trees:
+
+| tree | `MISSING` |
+|---|---:|
+| the owner's checkout | **10** |
+| a fresh clone of it | **20** |
+
+**The difference is `.internal/restore/`, which exists in the checkout and is in
+no commit.** Ten citations resolve against an untracked directory. A session
+verifying where §0 tells it to sees ten failures that the owner, looking at the
+same commit, does not — and the owner's number is the one that gets quoted.
+
+**This is `0038`'s subject turned around.** The bundle records that a session's
+view of the tree is contaminated by what the owner has uncommitted; F12 records
+that the **owner's** view is contaminated the same way, and that an instrument
+reading the filesystem rather than the index cannot tell a tracked file from a
+leftover.
+
+**Not decided and nothing built.** Whether a doc-path check should read the index,
+the filesystem, or both is a question about what a citation means, and
+`verify-doc-paths.sh` is not this session's to change. **The measurement is
+recorded so that two sessions quoting different baselines can find out why**, which
+is what happened on 2026-09-10: one session reported `MISSING 10` against a
+baseline of 8 while this one measured 20 for the same commit.
+

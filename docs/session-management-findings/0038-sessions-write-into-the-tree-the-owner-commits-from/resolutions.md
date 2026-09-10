@@ -22,6 +22,8 @@ and what `0047` D4 established. Only F1 and F4 are carried out here.
 | F7 | D8 | Nothing built. `docs/rules/rule-enforcement-avenues.md` §3 gains test 3.0 and §4 re-scores all four candidates against it; the answer F7 asked for is that the enforcement dividend cannot be drawn at this layer, and the avenue available is the checker | 283 | — |
 | F8 | D8 | §4.1 carries its route — the committing is the owner's and reaches no hook, and a `Stop` hook would have to know which tree. Built as a checker at Revision 278 instead | 283 | — |
 | F9 | D8 | §3.0's third route, with Revision 282's measurement; and the installed set is corrected in §4 to one guard and two annotators | 283 | — |
+| F10 | D9 | §0 step 1 records `git status --porcelain` at copy time, step 3 compares the patch's file list against it, and step 2's promise is qualified to the clean case. Recorded as `0049` F8 by another session, which named §0 as the owner of the fix | 300 | — |
+| F11 | D10 | §0 step 3's recipe is `git diff HEAD`, with the reason recorded in the step: `git add -N` stages a deletion out of a bare `git diff`, and the two forms are byte-identical wherever no deletion is present | 300 | — |
 
 **All nine members are `resolved` and the bundle derives `answered`.** Six were
 carried out before this bundle was read, in revisions that answered `0028`; F1

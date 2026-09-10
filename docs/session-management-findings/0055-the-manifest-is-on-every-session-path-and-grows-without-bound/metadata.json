@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-10T21:30:00-04:00",
+  "number": "0055",
+  "bundleName": "0055-the-manifest-is-on-every-session-path-and-grows-without-bound",
+  "genus": "findings",
+  "kind": "session-management",
+  "subKind": null,
+  "subject": "APPLY-MANIFEST.md is on every session's path and grows without bound",
+  "recordedOn": "2026-09-10",
+  "recordedOccasion": "from a session that measured the file while rebasing onto it three times, and from the owner having raised its read cost twice with nothing written down.",
+  "recordedBy": {
+    "sessionBundle": "drift-and-the-write-boundary-20260909-053548",
+    "sessionId": null
+  },
+  "severity": "moderate. The file is read by every revision to take a number and appended by every revision to record one, so its cost is paid by every session at once; and it is the file that conflicts in every rebase.",
+  "feltAt": [
+    "`APPLY-MANIFEST.md`; `.share/check-manifest-revision.sh`; `bin/verify-manifest-coverage.sh`; every rebase performed on 2026-09-10"
+  ],
+  "scope": "the manifest itself and what reads it. The rules governing it are section 7 of `.github/session-management-instructions.md`, which is `entity-model-and-vocabulary-20260909-053548`'s.",
+  "read": [
+    "`APPLY-MANIFEST.md` size, line and entry counts at Revision 298",
+    "its size at each of the last 30 commits that touched it, from the object store",
+    "`.share/check-manifest-revision.sh` and `bin/verify-manifest-coverage.sh`",
+    "the three rebases this session performed, and which files conflicted in each"
+  ],
+  "standing": "unclaimed",
+  "progress": "analyzing",
+  "ownership": "unclaimed",
+  "lineage": null,
+  "members": [
+    {
+      "id": "F1",
+      "statement": "`APPLY-MANIFEST.md` is read and appended by every session and grows without bound, so its cost rises for everyone at once and no rule bounds it",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-10T21:30:00-04:00",
+      "sectionHeading": "F1 \u2014 one file on every session's read path, growing without a bound",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F2",
+      "statement": "The manifest is the file that conflicts in every rebase, because every session appends at the same place",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-10T21:30:00-04:00",
+      "sectionHeading": "F2 \u2014 the conflict is structural, not incidental",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    }
+  ],
+  "decisions": [],
+  "contributions": [
+    {
+      "session": "drift-and-the-write-boundary-20260909-053548",
+      "date": "2026-09-10",
+      "contribution": "Recorded both findings from measurements taken while rebasing onto the file three times"
+    }
+  ],
+  "edges": [
+    {
+      "kind": "relates-to",
+      "from": "0055/F2",
+      "to": "0038/F1",
+      "why": "one named file guarantees the collision 0038 describes in general, even between sessions that overlap nowhere else",
+      "reason": null,
+      "basis": "asserted",
+      "asserted_by": "drift-and-the-write-boundary-20260909-053548",
+      "asserted_on": "2026-09-10"
+    }
+  ],
+  "indexNotes": "Recorded 2026-09-10 by `drift-and-the-write-boundary-20260909-053548`, which does not own it. **Measurement only, no remedy proposed** \u2014 every plausible fix changes what \u00a77 governs and \u00a77 is another session's."
+}

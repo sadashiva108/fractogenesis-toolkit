@@ -104,6 +104,13 @@ The three are one subject seen from three sides:
 
 ### One instrument you must never run
 
+<!-- historical: .internal/ai-scripts/session-management/extract-metadata.py -->
+<!-- The file was deleted at Revision 299, which retired the extraction half and
+     left `check-metadata-completeness.py` in its place. This prompt is not
+     rewritten — §5 — so the citation stays and the marker records that its
+     target is gone. The instruction below was true when it was written and is
+     now unreachable, which is the safest way for it to end. -->
+
 **`.internal/ai-scripts/session-management/extract-metadata.py` regenerates the
 data from the markdown, and on a healthy tree it unmakes the record.** One run,
 measured by the assurance session on 2026-09-09: **62 files rewritten, 20 fields

@@ -27,6 +27,8 @@ which is the thing `0039` F12 asks for.
 | D5 | F5 is answered by §7; **the artifact `0028` named is at a different path** and the citation is corrected rather than the tool moved back | F5 | 2026-09-09 | `accepted` |
 | D6 | F6 is answered by §6's four write kinds; **the legend section `0028` created for it no longer exists**, the rule having moved to the instruction set, and the relocation is recorded rather than reversed | F6 | 2026-09-09 | `accepted` |
 | D8 | A fourth test goes into `docs/rules/rule-enforcement-avenues.md` §3, **first**, and it asks whether the instrument can observe the act at all. All four candidates in §4 are re-scored against it and **all four fail**, by three routes. The installed set is corrected: one guard, two annotators | F7, F8, F9 | 2026-09-10 | `accepted` |
+| D9 | Record the dirt rather than require a clean copy: `git status --porcelain` captured at step 1, compared against the patch's file list at step 3, and step 2's promise qualified | F10 | 2026-09-10 | `accepted` |
+| D10 | §0 step 3's recipe becomes `git diff HEAD`, the two forms being byte-identical wherever no deletion is present, so the correct one is never worse | F11 | 2026-09-10 | `accepted` |
 | D7 | Of the four guards F7 names, the manifest-entry guard is built first, warn-only until a clean pass. **Nothing is built in this revision** and F7 stays `decided` | F7 | 2026-09-09 | `accepted` |
 
 ## D1 — the collision is not prevented, it is made visible
@@ -320,3 +322,56 @@ decision is the boundary breach the Revision 261 split exists to prevent.
 statements and the second does not retire the first. §4 states each candidate
 with the incident it would have caught, and those incidents happened. Deleting it
 would lose the reason anyone would build the avenue if one appeared.
+
+## D9 — record the dirt, because requiring a clean copy costs more than it saves
+
+**Rejected first: require the copy to be clean.** It is the obvious fix and it is
+the wrong one. Another session has work in flight most of the time — this tree
+held eight foreign dirty files for several hours today — so the rule would stall
+composition on somebody else's commit timing, and **serialising sessions is the
+cost `0038` exists to avoid.** A rule that cannot be followed is followed
+selectively.
+
+**Accepted: record it.** `git --no-optional-locks status --porcelain` at step 1,
+saved beside the scratch tree; at step 3 the patch's file list is compared against
+that capture and anything in both comes out. **The scope of the change is
+declared at copy time instead of derived at hand-over time**, which is the whole
+defect: `git diff` computes *what this session changed* from *what differs from
+HEAD*, and that is only true if nothing else is in the tree.
+
+**Step 2's sentence is qualified rather than deleted.** It is right about a clean
+copy and it is the reason the step exists; leaving it unqualified is what let a
+dirty copy inherit its authority.
+
+**Rejected: a checker.** The capture lives outside the repository in
+session-local storage, so nothing in the tree can read it — enforcement
+reachability, `docs/rules/rule-enforcement-avenues.md` test 3.0, failed at the
+first question. **Rejected: putting the capture in the repo** so a checker could
+reach it, which writes a session's scratch state into the tree the finding is
+about. **Rejected: leaving it to section 6**, whose comparison is the remedy and
+whose stated rationale sends a session past it.
+
+## D10 — `git diff HEAD`, because the short form is never better
+
+**One word, and the argument for it is that it costs nothing.** On a change set
+with no deletion, `git add -N . && git diff` and `git add -N . && git diff HEAD`
+produce **byte-identical** output — verified on a three-file set, 345 bytes each.
+On a change set with one, the short form silently omits it. **There is no case in
+which the shorter form is preferable**, so this is not a trade-off and does not
+need one argued.
+
+**`git add -N .` is kept.** It is what makes an untracked new file visible, and
+this revision adds two such files; dropping it to "simplify" would trade one
+silent omission for another in the opposite direction.
+
+**Rejected: a checker that compares the patch's file list against `git status`.**
+§0 step 3 already gains that comparison in this revision for a different reason —
+foreign work — and it would catch a dropped deletion too. **But it is a check on
+the patch, and this is a defect in the instruction that produces it**; fixing the
+instruction removes the failure rather than reporting it, and `0047` F9's rule
+prefers not reporting what cannot happen.
+
+**Rejected: writing the rule into §6 or §7**, which is where `0041` F7 put it.
+Those are `entity-model-and-vocabulary-20260909-053548`'s, and the recipe is §0
+step 3's own sentence.
+
