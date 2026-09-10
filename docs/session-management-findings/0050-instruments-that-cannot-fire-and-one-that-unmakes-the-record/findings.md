@@ -34,6 +34,7 @@ writes, and the bundle type for those does not exist yet.
 | F7 | Nothing compares a commit message's assertion against what the commit contains, and a mis-scoped message burns a revision number | `framing` |
 | F8 | The instrument that catches a revision number taken and never written is correct, fires, and is run by nothing | `framing` |
 | F9 | When it fires, nothing says who owes the missing entry or how a late one is written | `framing` |
+| F10 | Clearing a `MISSING` requires creating a permanent `ORPHANED`, so the count moves the wrong way when someone does the right thing | `framing` |
 
 ## F1 — the guard does not run where the writing happens
 
@@ -438,6 +439,52 @@ which is the move `0041` D1 and `0050` D2 both refuse.
 **So F7 is recorded `framing` and stays there**, with a `blocks` edge from the
 rule to the check rather than a decision taken ahead of it.
 
+### The subject is not the only half, and `15069fe` proves it twice
+
+**Recorded 2026-09-10** from reading the commit that carried this session's own
+Revision 289. Everything above is about the **subject line**. The body and the
+trailers fail in ways the subject test cannot reach, and one commit demonstrates
+both.
+
+**A literal unfilled template slot reached the log and cannot be removed.**
+`15069fe`'s message reads:
+
+```text
+Revision 291: a check outlived its question, and 0050's decisions land
+
+<0050 half — one paragraph, written by whoever did that work>
+
+0047 F1 and F2 resolve against one decision. …
+```
+
+The angle-bracketed line is a placeholder. `.github/session-management-instructions.md`
+§5 states the rule it breaks — *"a placeholder belongs in a schema or a template,
+never in a record"* — and a commit message is the one record in this repository
+that **cannot be corrected**, because history is never rewritten. **Twenty-three
+`Session: —` headers are gaps a later session can fill; this is a gap nobody can.**
+Unlike the subject mismatch, this needs no comparison against anything: it is
+decidable from the message alone, which makes it the cheapest check in the family
+and the only one here that could be a `PreToolUse` refusal rather than a report.
+
+**And the trailer attributes the work to the wrong session.** `15069fe`'s
+`Claude-Session` is `session_01H9nWPECCmRoZDipJSYA2iS` —
+`drift-and-the-write-boundary-20260909-053548` — on a commit whose eight files are
+`instruments-and-blind-spots-20260909-220203`'s Revision 289. The message was
+composed by the first session for a different ten-file change set and applied to a
+commit containing none of it.
+
+**That inverts a mechanism the repository already relies on.**
+`iris/verifications.md` §5 records three session identifiers recovered *from this
+trailer* when nothing else held them, and warns that a session looking for what it
+wrote "finds nothing and concludes wrongly". Here the failure runs the other way:
+the log asserts a session wrote work it did not write, and the trailer is the only
+machine-readable field in the message. **`metadata.md` is authoritative for who
+did what**, and for this commit the two disagree, permanently.
+
+**Neither is a fifth instance.** Both are the same commit as the fourth, read
+below the subject line — which is the point: the subject test F7 proposes would
+have passed the body and the trailer without looking at them.
+
 ## F8 — the instrument is correct, it fires, and nothing runs it
 
 **Recorded 2026-09-10**, after this session told the owner that two manifest gaps
@@ -537,3 +584,91 @@ gap and names the owner; it does not write the rule, for the reason F7 gives.
 **And the repair itself is not this finding.** Two entries are owed and that is
 `0038` F7's class — the tool says so in its own output. Recording F9 does not
 discharge them, and `MISSING` stays at 2 until someone writes them.
+
+### The precedent, measured, and the practice that now exists once
+
+**`d1e5f96` is Revision 247** — *"six revision numbers taken in the log and none
+written here"* — and it wrote entries for 241 through 246 in one commit. **All six
+were checked here and every one is silent about being late.** They are today
+indistinguishable from contemporaneous entries, which answers F9's third question
+by demonstration rather than by argument: when nothing requires the statement,
+nobody makes it, and the record loses the distinction permanently.
+
+**Revision 293's entry for 285 is the counter-instance and it is one.** It opens
+*"This entry was written late, at Revision 293, and Revision 285 contains no
+work"* — the fact stated in the first sentence, where a reader cannot miss it.
+
+**So the practice stands at one instance in seven, with no rule either way**, which
+is the state `0039` F9 names: a rule with no home is quoted as though it were
+enforced. And Revision 293's entry declines to install a machine-readable marker
+for the reason that matters here — *"adding the marker alone would install exactly
+what `0050` F8 records"* — so the prose statement is a deliberate choice against a
+worse alternative, not a shortcut. **F9 owns whether it becomes procedure**, and
+that is `.github/session-management-instructions.md` §7's to write.
+
+## F10 — clearing a `MISSING` can only be done by creating a permanent `ORPHANED`
+
+**Recorded 2026-09-10**, from `entity-model-and-vocabulary-20260909-053548` and
+`drift-and-the-write-boundary-20260909-053548` independently reaching it, and
+measured here against `bin/verify-manifest-coverage.sh` itself.
+
+**The test is structural and has no notion of why.** The script's own header,
+line 20: *"`ORPHANED` — the entry for N exists, and was introduced by a commit
+OTHER than the one claiming N."*
+
+**So repair is the only exit from `MISSING`, and it is a one-way conversion into a
+row the tool says can never be cleared.** Writing a late entry necessarily
+introduces it from a commit other than the claimant — that is what *late* means —
+so the condition moves rather than clearing. The script states the second half in
+its own output: *"`ORPHANED` and `DUPLICATE` cannot be cleared."*
+
+**Measured across Revisions 292 and 293:**
+
+| | R292 | R293 |
+|---|---:|---:|
+| `MISSING` | 2 | **1** |
+| `ORPHANED` | 4 | **5** |
+
+`MISSING Revision 285` became `ORPHANED Revision 285 — entry introduced by
+c9f586b`. **Nothing went wrong. Somebody did the prescribed thing and both numbers
+moved the way a regression moves.**
+
+### One label, two histories, and the baseline already mixes them
+
+At five, `ORPHANED` holds:
+
+| Revision | How it arrived |
+|---:|---|
+| 241, 246 | **repair** — `d1e5f96`, Revision 247, six late entries in one commit |
+| 285 | **repair** — `c9f586b`, Revision 293 |
+| 271, 290 | **split** — the entry was never missing and rode out in a later, differently-numbered commit |
+
+**The published baseline is `ORPHANED 3` and two of those three are repairs.** So
+the number a session compares against has never meant one thing, and the
+comparison it invites — *five against three* — is between two quantities that are
+not the same quantity.
+
+### Why this is not F8, and why it is worse than ambiguity
+
+F8 is about **invocation**: a correct instrument nobody runs. F10 is about what the
+output **means** once it is run. They compound — the instrument nobody runs also
+cannot be gated on, and F10 is the reason it cannot: *"a row nobody can clear is
+not a signal"* is §6's rule, and `ORPHANED` honours it by warning rather than
+failing.
+
+**The failure is one turn further out.** A metric that rises when the prescribed
+repair is performed does not merely fail to inform — **it argues against the
+repair**, to the one reader positioned to make it. `0038` F4's asymmetry is the
+same shape from the other side: declining a patch is free before the apply and
+expensive after, and the procedure was built around that asymmetry once it was
+named. This one has not been named until now.
+
+### Not decided, and the obvious fix is F8's defect
+
+Splitting the label — `REPAIRED` beside `ORPHANED`, or a marker on a late entry —
+is derivable, since the entry that repairs a `MISSING` is written by a known commit
+at a known revision. **But a marker with no reader is a correct thing nothing
+runs**, which is F8, and Revision 293's entry for 285 says exactly that in
+rejecting the same idea: *"adding the marker alone would install exactly what
+`0050` F8 records."* **F10 is recorded and left open** because its remedy sits
+behind F8's, and F8's sits behind F9's.

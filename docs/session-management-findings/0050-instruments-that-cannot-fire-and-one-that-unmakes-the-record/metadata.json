@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-10T04:00:00-04:00",
+  "updatedAt": "2026-09-10T04:40:00-04:00",
   "number": "0050",
   "bundleName": "0050-instruments-that-cannot-fire-and-one-that-unmakes-the-record",
   "genus": "findings",
@@ -147,6 +147,18 @@
       "reopened": null,
       "withdrawn": null,
       "resolution": null
+    },
+    {
+      "id": "F10",
+      "statement": "Clearing a MISSING requires creating a permanent ORPHANED, so the count moves the wrong way when someone does the right thing",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-10",
+      "sectionHeading": "F10 \u2014 clearing a `MISSING` can only be done by creating a permanent `ORPHANED`",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
     }
   ],
   "decisions": [
@@ -255,6 +267,26 @@
       "from": "0050/F9",
       "to": "0050/F8",
       "why": "an instrument nobody runs cannot be usefully wired into all until there is a procedure for what to do when it fires; adding it first would install a permanent failing row, which is 0047 F9",
+      "reason": null,
+      "basis": "asserted",
+      "asserted_by": "instruments-and-blind-spots-20260909-220203",
+      "asserted_on": "2026-09-10"
+    },
+    {
+      "kind": "constrains",
+      "from": "0050/F8",
+      "to": "0050/F10",
+      "why": "the remedy for F10 is a split label or a marker, and installing either without a reader is F8's defect, so F8 bounds what F10 may decide",
+      "reason": null,
+      "basis": "asserted",
+      "asserted_by": "instruments-and-blind-spots-20260909-220203",
+      "asserted_on": "2026-09-10"
+    },
+    {
+      "kind": "relates-to",
+      "from": "0050/F10",
+      "to": "0038/F4",
+      "why": "0038 F4 names an asymmetry between a cheap act and an expensive one and built the procedure around it once named; F10 is the same shape unnamed, where the metric rises when the prescribed repair is performed",
       "reason": null,
       "basis": "asserted",
       "asserted_by": "instruments-and-blind-spots-20260909-220203",
