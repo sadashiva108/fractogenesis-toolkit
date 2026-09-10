@@ -32,8 +32,8 @@ retrofit is argued.
 
 | # | Finding | Status |
 |---:|---|---|
-| F1 | Releasing a bundle to `unclaimed` leaves its findings where they were, so a bundle closed to every session holds a readable finding | `un-started` |
-| F2 | Six `accepted` decisions never moved their finding out of `framing` | `un-started` |
+| F1 | Releasing a bundle to `unclaimed` leaves its findings where they were, so a bundle closed to every session holds a readable finding | `resolved` |
+| F2 | Six `accepted` decisions never moved their finding out of `framing` | `resolved` |
 | F3 | Three bundles carry resolutions for findings that are not resolved | `un-started` |
 | F4 | Eleven `resolved` bundles have no `decisions.md`, and whether they owe one has never been decided | `resolved` |
 | F5 | A conformance sweep that does not know about superseding clones reports sixty-five false positives | `resolved` |
@@ -534,3 +534,47 @@ why it went unnoticed, and F8's shape exactly.
 live in one function, `ordering_hits()`, read by both the reporter and the
 counter. **Two copies of a comparison drift**, and that is F11 measured in the
 vocabulary sets one revision earlier.
+
+### F1 and F2, read and resolved 2026-09-10 at Revision 295
+
+**Both were parked behind the entity model at the owner's direction, and the
+ruling arrived at Revision 287.** `0039` F28 and D26 took `unclaimed` out of
+`docs/legend.md`'s *nothing is readable* row and gave it one of its own:
+**readable as `analyzing`, withholding only the owner's two acts** — no session
+may move a member to `decided` or `resolved`, because those are the owner's and
+there is no owner. R287's own entry says the instrument half is this finding and
+leaves it here, asserting `0039/F28 evidences 0047/F1` rather than answering it.
+
+**F1's premise is dissolved rather than repaired.** It recorded a contradiction
+between what `unclaimed` promised — nothing readable — and what the tree held.
+The promise was wrong, and it was the promise that moved. **Measured before the
+change: 17 unclaimed bundles held 52 live members, 19 of them `decided` — their
+deciding closed and their reasoning unreadable.**
+
+**So the instrument half is a removal.** `CLOSED-BUNDLE-LIVE-FINDING` asserted
+that an `unclaimed` bundle may hold nothing past `un-started`. It reported six
+bundles at Revision 288, and its own detail text read *"0047 F1, which is
+undecided"* — **written that way at Revision 268 precisely so it would not
+outlive the ruling.** F1 is decided, and decided against the check. Both halves
+of that comparison are now gone: `transferred` at Revision 268, `unclaimed`
+here, and the code with them.
+
+**F2 is answered by the same sentence and it is the more interesting half.** It
+records six `accepted` decisions in `0001` that never moved F1 out of `framing`,
+and reads that as drift. **It is not drift. It is the only state the rules
+permit**: `0001` is unclaimed, moving a member to `decided` is the owner's act,
+and `0001` has no owner. **The six decisions could not have moved it and no session
+was at fault.** What F2 found was the rule working, described as a defect because
+the rule was not written down until three days later.
+
+**And the row it produced is `0047` F9's shape exactly** — a hit nobody may
+clear. So `unclaimed` joins `superseded` in the counted ordering exemptions,
+under the same ground and beside the clone exemption which is there for a
+different one. `DECISION-AHEAD-OF-FINDING` falls to **zero across the tree**;
+`0001` was its only row.
+
+**F3 is not touched by any of this and stays `un-started`.** Its surviving
+instance is `0035` — `assigned`, all members `un-started`, three resolution rows,
+owned by a live session. That is a bundle whose statuses never moved with an
+owner who could have moved them, which is a different question from either of
+these.

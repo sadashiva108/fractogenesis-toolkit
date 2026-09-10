@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-10T13:20:00-04:00",
+  "updatedAt": "2026-09-10T18:20:00-04:00",
   "number": "0047",
   "bundleName": "0047-the-tree-carries-drift-no-check-looks-for",
   "genus": "findings",
@@ -31,26 +31,36 @@
     {
       "id": "F1",
       "statement": "Releasing a bundle to `unclaimed` leaves its findings where they were, so a bundle closed to every session holds a readable finding",
-      "status": "un-started",
+      "status": "resolved",
       "statusReason": null,
       "statusNote": null,
-      "updatedAt": null,
+      "updatedAt": "2026-09-10T18:20:00-04:00",
       "sectionHeading": "F1 \u2014 an `unclaimed` bundle holding a live finding",
       "reopened": null,
       "withdrawn": null,
-      "resolution": null
+      "resolution": {
+        "resolvedBy": "D10",
+        "whatWasDone": "`CLOSED-BUNDLE-LIVE-FINDING` removed; `unclaimed` joins the counted ordering exemptions. Revision 287 dissolved the premise, so this is a removal rather than a repair",
+        "revision": 295,
+        "commit": null
+      }
     },
     {
       "id": "F2",
       "statement": "Six `accepted` decisions never moved their finding out of `framing`",
-      "status": "un-started",
+      "status": "resolved",
       "statusReason": null,
       "statusNote": null,
-      "updatedAt": null,
+      "updatedAt": "2026-09-10T18:20:00-04:00",
       "sectionHeading": "F2 \u2014 six decisions that moved nothing",
       "reopened": null,
       "withdrawn": null,
-      "resolution": null
+      "resolution": {
+        "resolvedBy": "D10",
+        "whatWasDone": "Nothing repaired. The six accepted decisions in `0001` could not have moved its F1: `decided` is the owner's act and `0001` has no owner",
+        "revision": 295,
+        "commit": null
+      }
     },
     {
       "id": "F3",
@@ -326,6 +336,19 @@
       "answersAsOf": "2026-09-10T13:20:00-04:00",
       "voidedReason": null,
       "sectionHeading": "D9 \u2014 the exemption belongs to the member, and one half of it belongs to a status"
+    },
+    {
+      "id": "D10",
+      "decision": "`CLOSED-BUNDLE-LIVE-FINDING` is removed entirely, both halves having been overtaken; and `unclaimed` joins `superseded` in the counted ordering exemptions, on the ground that nobody may perform the act that would clear the row",
+      "members": [
+        "F1",
+        "F2"
+      ],
+      "decided": "2026-09-10",
+      "outcome": "accepted",
+      "answersAsOf": "2026-09-10T18:20:00-04:00",
+      "voidedReason": null,
+      "sectionHeading": "D10 \u2014 the check outlived its question by one revision, and was written not to"
     }
   ],
   "contributions": [],

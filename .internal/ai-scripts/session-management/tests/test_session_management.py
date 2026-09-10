@@ -250,28 +250,23 @@ class TestVocabulary(unittest.TestCase):
 
 
 class TestPermissionShape(unittest.TestCase):
-    """docs/legend.md: a bundle closed to every session holds nothing open to one."""
+    """docs/legend.md: readability is a property of the MEMBER, not of ownership.
 
-    def test_unclaimed_with_a_framing_finding_is_caught(self):
-        g = graph_of(F.bundle("0100", ("framing",), ownership="unclaimed"))
-        self.assertIn("CLOSED-BUNDLE-LIVE-FINDING", codes(g))
-        g._fixture.close()
+    There was a check here asserting that a bundle closed to every session holds
+    nothing open to one. Both halves of it are gone: `transferred` at Revision
+    268 -- section 10 permits transferring a bundle that stands `analyzing` --
+    and `unclaimed` at Revision 289, when Revision 287 took `unclaimed` out of
+    the legend's *nothing is readable* row. `0047` F7 and F1.
+    """
 
-    def test_unclaimed_with_only_un_started_is_clean(self):
-        g = graph_of(F.bundle("0100", ("un-started", "un-started")))
-        self.assertNotIn("CLOSED-BUNDLE-LIVE-FINDING", codes(g))
-        g._fixture.close()
-
-    def test_a_transferred_bundle_may_hold_worked_findings(self):
-        # docs/legend.md: "A bundle may be transferred while it stands
-        # `assigned`, `revisited` or `analyzing`", and section 10 says the same.
-        # An `analyzing` bundle has findings past `un-started` by definition, so
-        # a transfer of worked findings is permitted and not a failure.
-        for statuses in (("framing",), ("decided", "resolved"),
-                         ("reopened", "resolved")):
-            g = graph_of(F.bundle("0100", statuses, ownership="transferred"))
-            self.assertNotIn("CLOSED-BUNDLE-LIVE-FINDING", codes(g), statuses)
-            g._fixture.close()
+    def test_no_ownership_value_makes_a_worked_member_a_failure(self):
+        for own in (None, "unclaimed", "transferred"):
+            for statuses in (("framing",), ("decided", "resolved"),
+                             ("reopened", "resolved")):
+                g = graph_of(F.bundle("0100", statuses, ownership=own))
+                self.assertNotIn("CLOSED-BUNDLE-LIVE-FINDING", codes(g),
+                                 (own, statuses))
+                g._fixture.close()
 
 
 class TestCrossFileAgreement(unittest.TestCase):
@@ -318,12 +313,33 @@ class TestRegressions(unittest.TestCase):
         self.assertNotIn("CLOSED-BUNDLE-LIVE-FINDING", codes(g))
         g._fixture.close()
 
-    def test_0047_F7_unclaimed_is_still_reported(self):
-        """Only the `transferred` half went. `0001` is the live instance."""
-        g = graph_of(F.bundle("0100", ("framing",), ownership="unclaimed"))
-        rows = [r for r in conformance(g) if r[0] == "CLOSED-BUNDLE-LIVE-FINDING"]
-        self.assertEqual(len(rows), 1)
-        self.assertIn("0047 F1", rows[0][2])       # the rule it rests on is open
+    def test_0047_F1_an_unclaimed_bundle_is_exempt_and_counted(self):
+        """Nobody may clear the row, so it is not reported -- and not silent.
+
+        `docs/legend.md` since Revision 287: moving a member to `decided` or
+        `resolved` is the owner's act, and an `unclaimed` bundle has no owner.
+        `0001` F1 is `framing` with six accepted decisions and **cannot** be
+        moved by anyone until the bundle is assigned. That is `0047` F2's drift,
+        and it turns out not to be drift.
+        """
+        g = graph_of(F.bundle("0100", ("framing",), ownership="unclaimed",
+                              decisions=[F.decision("D1", ["F1"])]))
+        self.assertNotIn("DECISION-AHEAD-OF-FINDING", codes(g))
+        frozen, cloned, unowned = ordering_exemptions(g)
+        self.assertEqual(len(unowned), 1)
+        self.assertEqual((frozen, cloned), ([], []))
+        g._fixture.close()
+
+    def test_0047_F1_an_owned_bundle_in_the_same_state_is_still_reported(self):
+        """The exemption is ownership, not the shape. An owned bundle whose
+        decisions are all accepted while the member sits in `framing` is drift,
+        and stays reported."""
+        g = graph_of(F.bundle("0100", ("framing",), ownership=None,
+                              decisions=[F.decision("D1", ["F1"])]),
+                     sessions=[F.session("a-session-20260908-000000",
+                                         owned=["0100"], state="active")])
+        self.assertIn("DECISION-AHEAD-OF-FINDING", codes(g))
+        self.assertEqual(ordering_exemptions(g)[2], [])
         g._fixture.close()
 
     def test_0047_F8_a_legend_outcome_is_not_a_vocabulary_failure(self):
@@ -388,9 +404,9 @@ class TestRegressions(unittest.TestCase):
                      lineage={"supersededBy": "0101", "on": None})
         g = graph_of(b)
         self.assertNotIn("RESOLUTION-AHEAD-OF-FINDING", codes(g))
-        frozen, cloned = ordering_exemptions(g)
+        frozen, cloned, unowned = ordering_exemptions(g)
         self.assertEqual(len(frozen), 2)
-        self.assertEqual(cloned, [])
+        self.assertEqual((cloned, unowned), ([], []))
         g._fixture.close()
 
     def test_0047_F10_a_clone_is_exempt_only_while_it_is_being_re_read(self):
@@ -424,7 +440,7 @@ class TestRegressions(unittest.TestCase):
         g = graph_of(F.bundle("0100", ("reopened",), ownership=None,
                               resolutions=("F1",)))
         self.assertNotIn("RESOLUTION-AHEAD-OF-FINDING", codes(g))
-        self.assertEqual(ordering_exemptions(g), ([], []))   # not an exemption: not a hit
+        self.assertEqual(ordering_exemptions(g), ([], [], []))  # not an exemption: not a hit
         g._fixture.close()
 
     def test_0047_F5_a_superseding_clone_is_exempt(self):

@@ -539,21 +539,33 @@ def ordering_exemptions(g):
     prose; a suppression nobody can see is indistinguishable from a comparison
     nobody is making -- which is Revision 280's rule about an instrument that
     reports nothing.
+
+    Three grounds, and two of them are the same ground: NOBODY MAY CLEAR THE ROW.
+    A `superseded` bundle is writable by none. An `unclaimed` one has no owner,
+    and `docs/legend.md` is explicit since Revision 287 that moving a member to
+    `decided` or `resolved` is the owner's act -- so a decision ahead of a member
+    there is not drift, it is the state the rules require until somebody is
+    assigned. 0047 F1 and F2. The third ground is different: a clone is exempt
+    because the state is CORRECT while it is being re-read, not because it is
+    unfixable.
     """
-    frozen, cloned = [], []
+    frozen, cloned, unowned = [], [], []
     for n, b in sorted(g.bundles.items()):
         sup = bool((b.get("lineage") or {}).get("supersededBy"))
+        unc = b.get("ownership") == "unclaimed"
         cl = is_clone(b)
-        if not sup and not cl:
+        if not sup and not cl and not unc:
             continue
         cited = cited_members(b)
         for x in b["_members"]:
             for code, _detail in ordering_hits(b, x, cited):
                 if sup:
                     frozen.append((n, x["id"], code))
+                elif unc:
+                    unowned.append((n, x["id"], code))
                 elif x.get("status") in RE_READING:
                     cloned.append((n, x["id"], code))
-    return frozen, cloned
+    return frozen, cloned, unowned
 
 
 def conformance(g):
@@ -594,26 +606,22 @@ def conformance(g):
                     out.append(("MEMBER-PREFIX", n,
                                 "%s is a %s member and should start %s"
                                 % (mid, gen, want)))
-        # A bundle closed to every session must hold nothing open to one.
-        # `unclaimed` is that bundle. `transferred` is NOT: docs/legend.md and
-        # section 10 both permit transferring a bundle that stands `analyzing`,
-        # and such a bundle has findings past `un-started` by definition -- so
-        # this reported a documented, permitted operation as a conformance
-        # failure, once at Revision 248 and five times at Revision 261. It was
-        # the last executable site of the retired gloss `transferred: handed to
-        # a session that has not opened it`. 0047 F7.
+        # THE CLOSED-BUNDLE ASSERTION IS GONE, both halves of it.
         #
-        # The half that remains rests on a rule nobody has decided: what happens
-        # to a finding when its bundle is released is 0047 F1, and it is open.
-        # The row is kept because the tree really does hold that state, and the
-        # detail says the rule is undecided rather than asserting it.
-        if b.get("ownership") == "unclaimed":
-            live = [x["id"] for x in fs if x.get("status") != "un-started"]
-            if live:
-                out.append(("CLOSED-BUNDLE-LIVE-FINDING", n,
-                            "%s is unclaimed but %s are past un-started"
-                            " -- 0047 F1, which is undecided"
-                            % (n, ",".join(live))))
+        # It asserted that a bundle closed to every session holds nothing open to
+        # one. `transferred` left at Revision 268: section 10 permits transferring
+        # a bundle that stands `analyzing`, so the check reported a documented
+        # operation as a failure -- 0047 F7. `unclaimed` leaves here, and this
+        # time the rule moved rather than the reading of it: Revision 287 took
+        # `unclaimed` out of the legend's *nothing is readable* row, because
+        # readability is a property of the MEMBER and that row is about
+        # ownership. 0039 F28 and D26; 0047 F1.
+        #
+        # The detail this check printed said "0047 F1, which is undecided". F1 is
+        # decided, and decided against the check. Nineteen `decided` and seven
+        # `framing` members across seventeen bundles were being reported as a
+        # conformance failure for being in the state the legend now describes as
+        # correct.
         # ownership null and in no manifest: owned by nobody, or nobody said
         if b.get("ownership") is None and n not in owned \
            and b["_progress"] not in ("resolved", "withdrawn") \
@@ -645,8 +653,9 @@ def conformance(g):
         # life, so a clone that closed its re-reading and later acquired a
         # genuine defect was the one bundle nothing would report -- 0047 F10.
         superseded = bool((b.get("lineage") or {}).get("supersededBy"))
+        unclaimed = b.get("ownership") == "unclaimed"
         for x in fs:
-            if superseded:
+            if superseded or unclaimed:
                 continue
             if clone and x.get("status") in RE_READING:
                 continue
@@ -955,7 +964,7 @@ def cmd_check(g, a):
         print()
     if not rows:
         print("  Nothing. Every comparison the six checkers do not make, holds.")
-    frozen, cloned = ordering_exemptions(g)
+    frozen, cloned, unowned = ordering_exemptions(g)
     print("  ORDERING COMPARISONS -- what was not reported, and why:")
     print("    %3d row(s) in %d superseded bundle(s): readable by any session and"
           % (len(frozen), len(set(n for n, _, _ in frozen))))
@@ -968,6 +977,12 @@ def cmd_check(g, a):
     print("           like, until the re-reading closes -- 0047 F5 and F10.")
     if cloned:
         print("           %s" % ", ".join(sorted(set(n for n, _, _ in cloned))))
+    print("    %3d row(s) in %d unclaimed bundle(s): moving a member to `decided`"
+          % (len(unowned), len(set(n for n, _, _ in unowned))))
+    print("           or `resolved` is the owner's act and there is no owner, so")
+    print("           nobody may clear the row -- 0047 F1 and F2.")
+    if unowned:
+        print("           %s" % ", ".join(sorted(set(n for n, _, _ in unowned))))
 
 
 def main():

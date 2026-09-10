@@ -11,6 +11,7 @@
 | D1 | The migrated-bundle carve-out is restored to `.github/session-management-instructions.md` §3: a bundle migrated from an already-closed record carries `resolutions.md` and no `decisions.md`, and its `resolutions.md` says so. **This is `0037` D2, taken once and recorded in both bundles** | F4 | 2026-09-09 | `accepted` |
 | D2 | `transferred` leaves the closed-bundle assertion in `plan_findings_work.py` entirely; `unclaimed` keeps it, and its detail names `0047` F1 as the undecided rule the row rests on. The code name is unchanged | F7 | 2026-09-09 | `accepted` |
 | D3 | `OUTCOMES` becomes the legend's six bare outcomes with `replaced` matched by prefix; the two retired prefixes go; and a contract test asserts the disjointness `docs/legend.md` has claimed a schema check performs since Revision 233 | F8 | 2026-09-09 | `accepted` |
+| D10 | `CLOSED-BUNDLE-LIVE-FINDING` is removed entirely, both halves having been overtaken; and `unclaimed` joins `superseded` in the counted ordering exemptions, on the ground that nobody may perform the act that would clear the row | F1, F2 | 2026-09-10 | `accepted` |
 | D8 | A `superseded` bundle is exempt from both ordering comparisons, and `check` **counts** the suppression and names the bundles rather than asserting it in a footer | F9 | 2026-09-10 | `accepted` |
 | D9 | The clone exemption becomes **per member and expires with the re-reading window**, keyed on the member's own status; and `reopened` is exempt from the resolution comparison **in every bundle**, because nothing is reverted when a member is reopened | F10 | 2026-09-10 | `accepted` |
 | D7 | The warn-only discipline goes into §6 as a gate on what may **refuse** a write, with the second half F6 did not have: a guard must be shown to fire on a case it should catch, not only to stay quiet on correct work | F6 | 2026-09-10 | `accepted` |
@@ -435,3 +436,64 @@ describes.
 is the argument for every one of F8's four never-written outcomes, and F8 records
 what it costs: the first person to write the conforming thing reads the failure
 as their own.
+
+## D10 — the check outlived its question by one revision, and was written not to
+
+**One decision for F1 and F2 because Revision 287 answered both with one
+sentence**, and recording it twice would be the copy §8 forbids.
+
+### The removal
+
+`CLOSED-BUNDLE-LIVE-FINDING` asserted that a bundle closed to every session
+holds nothing open to one. **Neither half of that survives.** `transferred` left
+at Revision 268 — §10 permits transferring a bundle that stands `analyzing`.
+`unclaimed` leaves here, and this time **the rule moved rather than the reading
+of it**: `docs/legend.md` no longer says an unclaimed bundle is unreadable, so
+there is nothing left for the check to assert.
+
+**The detail text was written for this.** At Revision 268 the surviving half was
+kept with *"0047 F1, which is undecided"* printed beside every row, so the check
+would announce the open question it rested on rather than imply a settled rule.
+**It rested on F1 for twenty-one revisions and named it the whole time.** That is
+the only reason this removal is a two-line change instead of an archaeology.
+
+### The exemption
+
+`0001` F1 is `framing` with six accepted decisions, and **no session may move
+it** — `decided` is the owner's act and `0001` has no owner. The row
+`DECISION-AHEAD-OF-FINDING` produced is therefore one nobody may clear, which is
+`0047` F9's ground exactly, so `unclaimed` joins `superseded` in the counted
+exemptions. **The clone exemption sits beside them on a different ground** and
+the counter says so: a clone's state is *correct while it is re-read*, not
+*unfixable*.
+
+`DECISION-AHEAD-OF-FINDING` falls to **zero across the tree.** `check` goes
+**33 → 26**.
+
+### Rejected — narrow the check instead of removing it
+
+There is a true statement nearby: an `unclaimed` bundle may not have a member
+moved to `decided`. But **nothing in the data records when a member moved**, so
+the check could only compare a state, and every state it could compare is now
+legitimate. A check that cannot fail is `0038` F9's annotators one layer up.
+
+### Rejected — keep it and exempt `unclaimed`, as was done for `superseded`
+
+That is what the ordering exemptions do, and it is right *there* because those
+comparisons still say something true about owned bundles. **This check said only
+one thing and that thing is now false.** Exempting the only case it reported
+leaves a comparison that cannot fire — Revision 280's rule names an instrument
+that reports nothing as the failure a clean pass cannot distinguish.
+
+### Rejected — resolve F1 and leave F2 open
+
+F2 reads *six accepted decisions never moved their finding* as drift, and one
+sentence of Revision 287 makes it the only permitted state. **Leaving it open
+would leave the tree carrying a finding that describes the rules being obeyed.**
+
+### Rejected — move `0001` F1 to `decided` and clear the state at source
+
+The tempting repair, and it is the one act the ruling forbids. `0001` is
+unclaimed; **this session is not its owner and neither is any other.** Doing it
+would be a session performing the owner's act, in the bundle whose finding says
+that is exactly what may not happen.

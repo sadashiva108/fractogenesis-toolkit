@@ -97,6 +97,29 @@ git --no-optional-locks status --porcelain    # in the owner's checkout; must be
    session runs against it; two sets of uncommitted work in the files every
    session touches cannot be committed apart. `0038` F1 and F4; `0049` F6 and D8.
 
+   **Take the revision number again, every time, and correct it everywhere the
+   composition wrote it.** §7 says take it at apply time and it is right; what it
+   does not say is that **the number is not only in the manifest entry.** This
+   revision wrote its own number **eleven times across six files** — the entry, two
+   sentences in a late entry for another number, two `resolutions.md` rows, two
+   `resolution.revision` fields in `metadata.json`, the tree `INDEX.md` note, the
+   finding's prose and the session's `findings-manifest.md`. §7 governs the first
+   of those six. **Count them in your own diff, not in the tree** — by apply time
+   the tree holds other sessions' uses of the same number, and this revision's
+   count rose from nine to eleven between two composings.
+
+   **It is not conditional on a rebase.** Until this revision the renumber was a
+   step inside the rebase block above, so a composition whose base had not moved
+   kept its number — and a number can be taken out from under you without HEAD
+   moving at all: by an entry written into the working tree, by a commit
+   claiming it, or by another session applying first while yours waits. **All
+   three happened here.** This revision was composed as **290**, the number the
+   helper reported free; **290 was then taken at apply time by a session that
+   composed later and applied sooner.** Both sessions followed §7 exactly. **Only
+   one of them could be right, and it is the one that took it last** — which is
+   the whole reason §7 says apply time and the reason this step now says it
+   again, unconditionally, and says where else to look.
+
    **After applying, assert the index is still empty** — `git --no-optional-locks
    diff --cached --name-only`. An index write leaves the working tree
    byte-identical, so the tree comparison cannot see it. `0049` F5 and D6.
@@ -134,12 +157,9 @@ it across**, and let `verify-findings-counts.sh` decide; arithmetic on two
 figures neither of which is current is how a total goes wrong in both directions
 at once.
 
-**Then take the revision number again** — §7, against the tree being applied to —
-and **correct every place the composed number appears**: the manifest entry, the
-`Revision` column of any `resolutions.md` row, and any prose naming it. Re-measure
-every number the entry quotes against the new base before rebuilding the patch,
-because the baselines moved with the tree and a figure carried over is a claim
-about a commit nobody is applying to.
+**Re-measure every number the entry quotes against the new base** before
+rebuilding the patch, because the baselines moved with the tree and a figure
+carried over is a claim about a commit nobody is applying to.
 
 **Measured twice, at Revisions 264→268 and again here.** Both times twelve to
 fourteen files applied clean and the conflicts were exactly the three named
