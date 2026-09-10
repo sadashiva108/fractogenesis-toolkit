@@ -29,7 +29,7 @@ writes, and the bundle type for those does not exist yet.
 | F2 | A schema exemption guards on a marker file Revision 222 deleted, so the exemption can never apply | `framing` |
 | F3 | Running `extract-metadata.py` on a healthy tree destroys every asserted edge and every stamped value | `resolved` |
 | F4 | Four instruments in three days were correct and could not do their job, and no bundle covers that class | `framing` |
-| F5 | The coverage sweep keeps a second copy of a directory list `docs/INDEX.md` owns, and 43 files are invisible to it | `framing` |
+| F5 | The coverage sweep keeps a second copy of a directory list `docs/INDEX.md` owns, and 43 files are invisible to it | `resolved` |
 | F6 | `0050` F3 counted two field families of twenty: one run destroys 429 recorded values, and section 10a routes a session into running it | `resolved` |
 | F7 | Nothing compares a commit message's assertion against what the commit contains, and a mis-scoped message burns a revision number | `framing` |
 | F8 | The instrument that catches a revision number taken and never written is correct, fires, and is run by nothing | `framing` |

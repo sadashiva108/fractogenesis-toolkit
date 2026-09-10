@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-10T06:20:00-04:00",
+  "updatedAt": "2026-09-10T08:00:00-04:00",
   "number": "0041",
   "bundleName": "0041-index-and-manifest-tables-have-a-shape-nothing-checks",
   "genus": "findings",
@@ -122,6 +122,18 @@
       "reopened": null,
       "withdrawn": null,
       "resolution": null
+    },
+    {
+      "id": "F8",
+      "statement": "Eleven classes of output are declared projections, nothing generates them, and the drift sits only where nothing checks",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-10",
+      "sectionHeading": "F8 \u2014 the projected surface is hand-maintained, and the drift is exactly where nothing looks",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
     }
   ],
   "decisions": [
@@ -196,6 +208,18 @@
       "answersAsOf": null,
       "voidedReason": null,
       "sectionHeading": "D6 \u2014 sum the column, or delete the sentence"
+    },
+    {
+      "id": "D7",
+      "decision": "verify-findings-structure.sh gains the two projected values nothing compares -- a session manifest's Standing and a session's State in docs/sessions/INDEX.md -- measured against the data each derives from",
+      "members": [
+        "F8"
+      ],
+      "decided": "2026-09-10",
+      "outcome": "accepted",
+      "answersAsOf": "a91b451",
+      "voidedReason": null,
+      "sectionHeading": "D7 \u2014 check the two tables that display a derived value and are compared to nothing"
     }
   ],
   "contributions": [],
@@ -255,6 +279,16 @@
       "from": "0041/F7",
       "to": "0041/F4",
       "why": "F4 is a deletion-bearing patch under-applying at apply time on a mount that refuses unlink; F7 is one step upstream, the recipe never putting the deletion in the patch, which happens at compose time on any filesystem",
+      "reason": null,
+      "basis": "asserted",
+      "asserted_by": "instruments-and-blind-spots-20260909-220203",
+      "asserted_on": "2026-09-10"
+    },
+    {
+      "kind": "relates-to",
+      "from": "0041/F8",
+      "to": "0043/F3",
+      "why": "0043 D3 rules section 6.1 a map rather than a plan, which is what makes F8's surface permanently hand-maintained and D7 the mechanism rather than a stopgap",
       "reason": null,
       "basis": "asserted",
       "asserted_by": "instruments-and-blind-spots-20260909-220203",

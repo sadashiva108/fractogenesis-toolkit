@@ -23,6 +23,7 @@ and `pre-image-capture-conformance-20260903-194532` still owns it.
 | F5 | Nothing compares a resolution's claim against the tree | `decided` |
 | F6 | The prose total under an index is wrong in both directions, and the count check passes over it | `resolved` |
 | F7 | Section 6's own patch recipe drops a deletion before `git apply` ever sees it | `framing` |
+| F8 | Eleven classes of output are declared projections, nothing generates them, and the drift sits only where nothing checks | `framing` |
 
 ---
 
@@ -400,9 +401,105 @@ a strict superset of what §6 asks for and produces an identical patch on any
 change set with no deletion in it — verified here: 16 identical files, plus the
 one.
 
-**Not decided.** §6 is `.github/session-management-instructions.md`'s and belongs
-to `entity-model-and-vocabulary-20260909-053548`. This revision's own patch was
-made with `git diff HEAD` and says so; the rule is theirs to change.
+**Not decided, and settled as such.** The recipe is §0's sentence and §0 is
+`drift-and-the-write-boundary-20260909-053548`'s. **They wrote the fix** — §0 step
+3 now reads `git diff HEAD` — and carried it under their own `0038` F11 and D10
+rather than borrowing this finding, because §6 gates a toolkit write on a
+`decided` member and F7 is not theirs to decide.
+
+**F7 therefore stays `framing`, with the remedy recorded as having landed
+elsewhere.** Drift proposed it and this bundle agrees: **a resolution row pointing
+at another bundle's decision is a citation dressed as ownership**, and `0041`
+reaching `answered` on a remedy it did not write is the tidiness that costs the
+record its meaning. §9b requires `Resolved by` to name a decision in this bundle,
+and there is none to name.
+
+**Drift reproduced it independently before writing the rule**, in a throwaway repo
+with one edit, one addition and one deletion: `git add -N . && git diff` yields two
+files and **zero** deletions; `git diff HEAD` yields three and one. **On a change
+set with no deletion the two are byte-identical, 345 bytes each** — so the correct
+form is never worse and there is no trade-off to argue.
+
+## F8 — the projected surface is hand-maintained, and the drift is exactly where nothing looks
+
+**Recorded 2026-09-10** at the request of
+`drift-and-the-write-boundary-20260909-053548`, who found two rows of it by hand
+and said correctly that **the number is the finding, not the two rows.**
+
+`docs/architecture/state-as-data.md` §6.1 maps eleven classes of output to the
+data each column derives from. **Nothing generates any of them.** Measured: **zero
+generated regions exist in the tree**; the only two `<!-- generated:` occurrences
+are §6.2's own example and a sentence in `0050` describing a guard that greps for
+them.
+
+**`0043` D3 settled what that means, at Revision 303**: §6.1 is a **map, not a
+plan** — it states the projection relation, and *"is not a commitment to build a
+generator."* **So the surface is hand-maintained by design**, and the question is
+not when a generator arrives but how much of it currently disagrees with its own
+data.
+
+### Measured at Revision 303, `a91b451`
+
+| §6.1 class | Checked by | Rows | Disagree |
+|---|---|---:|---:|
+| `<tree>/INDEX.md` Standing | `structure` | 56 | **0** |
+| `decisions.md` Outcome | nothing | 163 | **0** |
+| `resolutions.md` rows | `completeness`, count only | 110 | **0** |
+| `<session>/metadata.md` Owners | nothing | 12 | **0** |
+| **`<session>/findings-manifest.md` Standing** | **nothing** | 37 | **2** |
+| **`docs/sessions/INDEX.md` State** | **nothing** | 12 | **1** |
+| **`findings.md` member status** | **nothing** | 222 | **2** |
+| | | **612** | **5** |
+
+**Five in six hundred and twelve, and the distribution is the finding.** Every one
+sits in a class nothing compares. **Not one of the 329 rows in the classes
+something does check disagrees.** The surface is not decaying evenly and then
+being caught in places; it is **intact wherever an instrument looks and drifting
+wherever none does.**
+
+**The five, named:**
+
+| Row | Shows | Data |
+|---|---|---|
+| `drift-…/findings-manifest.md` `0038` | `answered` | `analyzing` |
+| `drift-…/findings-manifest.md` `0047` | `analyzing` | `answered` |
+| `docs/sessions/INDEX.md` `run-index-design-20260901-000000` | `active` | `handoff` |
+| `0050/findings.md` F5 | `framing` | `resolved` |
+| `0049/findings.md` F6 | `decided` | `resolved` |
+
+**Two were already known and three were not.** Drift reported the first pair. The
+`run-index-design` row is the same class in a different table and belonged to
+nobody's attention; `stamp --dry-run` writes 0 records against it, so **the data is
+right and only the display is wrong.**
+
+### Why `structure` passes while two of its neighbours drift
+
+`verify-findings-structure.sh` compares a bundle's **derived standing** against the
+`INDEX.md` above it and stops there. **A session manifest's copy of that same
+standing is compared to nothing**, and neither is a session's state in
+`docs/sessions/INDEX.md`. The check is correct and its 70/0 is honest; it covers
+one of the three tables that display the value.
+
+**This is `0041` F1 in its original words** — *a required shape, unenforced* —
+except that the shape here is not a column count but a value, and the enforcement
+gap is one table wide rather than absent.
+
+### What this finding does not claim
+
+**Not that the surface is decaying.** Five in six hundred and twelve after weeks of
+hand maintenance is a low rate, and three of the five were introduced within two
+days by sessions moving fast. **The claim is about where they are, not how many.**
+
+**And the sweep that produced it failed four times first.** Recorded because it
+bears on the number: first run **18**, of which 13 were the sweep's own fault — a
+status cell read as a bare word when §9 step 5 **requires** `superseded` to be a
+link, so seven conformant rows read as broken. Second run **13**, of which 8 were a
+header-index lookup against a header that table does not carry, reporting eight
+sessions as having no state at all. Third run **6**, one of which was a date-shaped
+row matched in an Assignment table. Fourth run **5**, all real. **Every error ran in
+the direction of making the tree look worse**, and every one was caught the same
+way — by reading the rows rather than the total. Eighth instrument in this
+repository to fail loudly on first contact and the third caught before shipping.
 
 <!-- historical: bin/verify-findings-headers.sh -->
 <!-- historical: bin/verify-findings-structure.sh -->
