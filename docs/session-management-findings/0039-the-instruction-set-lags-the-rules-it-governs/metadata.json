@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-10T01:08:54-04:00",
+  "updatedAt": "2026-09-10T02:30:00-04:00",
   "number": "0039",
   "bundleName": "0039-the-instruction-set-lags-the-rules-it-governs",
   "genus": "findings",
@@ -435,6 +435,25 @@
         "revision": "296",
         "commit": null
       }
+    },
+    {
+      "id": "F30",
+      "statement": "\u00a76's patch recipe drops a deletion: `git add -N .` stages the removal and plain `git diff` then finds nothing, so a patch that removes a file carries every addition and no deletion",
+      "status": "resolved",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-10",
+      "sectionHeading": "F30 \u2014 the step that makes new files visible makes deletions invisible",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": {
+        "resolvedBy": [
+          "D28"
+        ],
+        "whatWasDone": "\u00a76's recipe uses git diff HEAD and gains the mechanism and the measurement; \u00a70 step 3 is the write-boundary session's; the conformant prompt carries the short form",
+        "revision": "301",
+        "commit": null
+      }
     }
   ],
   "decisions": [
@@ -773,6 +792,18 @@
       "answersAsOf": null,
       "voidedReason": null,
       "sectionHeading": "D27 \u2014 a message is valid only for the patch it was handed over with"
+    },
+    {
+      "id": "D28",
+      "decision": "The patch is made with `git diff HEAD`; `git add -N .` stages a deletion and plain `git diff` then omits it",
+      "members": [
+        "F30"
+      ],
+      "decided": "2026-09-10",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D28 \u2014 the patch is made with `git diff HEAD`"
     }
   ],
   "contributions": [
@@ -898,6 +929,16 @@
       "from": "0039/F29",
       "to": "0050/F7",
       "why": "0050 F7 asks for the rule before the instrument, and names this section and this session as where it belongs",
+      "reason": null,
+      "basis": "asserted",
+      "asserted_by": "entity-model-and-vocabulary-20260909-053548",
+      "asserted_on": "2026-09-10"
+    },
+    {
+      "kind": "relates-to",
+      "from": "0039/F30",
+      "to": "0041/F7",
+      "why": "0041 F7 measured the live instance and handed the rule here because \u00a76 is this bundle's; whether an instrument checks it stays F7's",
       "reason": null,
       "basis": "asserted",
       "asserted_by": "entity-model-and-vocabulary-20260909-053548",

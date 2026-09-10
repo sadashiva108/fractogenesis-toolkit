@@ -79,6 +79,7 @@ for.
 | F27 | `withdrawn` is a finding `status` and a session `state`, so the rule that no value belongs to more than one vocabulary is broken in the document that states it | `resolved` |
 | F28 | `unclaimed` sits in a readability row it does not earn, so releasing a bundle makes 19 `decided` and 7 `framing` members unreadable for a reason about ownership | `resolved` |
 | F29 | Nothing says a commit message is valid only for the patch it was handed over with, and three of the last seven commits name a revision the commit does not add | `resolved` |
+| F30 | §6's patch recipe drops a deletion: `git add -N .` stages the removal and plain `git diff` then finds nothing, so a patch that removes a file carries every addition and no deletion | `resolved` |
 
 ---
 
@@ -1315,3 +1316,56 @@ once rather than as two rules.
 first would mean inventing the rule inside it, which `0041` D1 and `0050` D2 both
 refuse — and `0050` F7 says so explicitly, naming this section and this session
 as where the rule belongs. This records the rule. Arming it is theirs.
+
+## F30 — the step that makes new files visible makes deletions invisible
+
+`0049` F3 is a patch that drops every **new** file. This is the same recipe
+dropping every **deleted** one, and the fix for the first is the cause of the
+second.
+
+`git add -N .` does not only record intent-to-add for untracked files. **For a
+tracked file that has been removed, it stages the removal.** `git diff` then
+compares the working tree against that index, finds no difference, and emits
+nothing for it.
+
+Measured on a three-file change set — one modified, one added, one deleted:
+
+| | `git diff` after `git add -N .` | `git diff HEAD` |
+|---|---:|---:|
+| files in the patch | 2 | **3** |
+| deletions carried | **0** | **1** |
+
+And directly, on the index:
+
+```text
+after rm, before `git add -N .`   git diff: D doomed.txt   index vs HEAD: (empty)
+after `git add -N .`              git diff: (empty)        index vs HEAD: D doomed.txt
+```
+
+**On a change set containing no deletion the two commands produce byte-identical
+output**, so `HEAD` costs nothing and is always correct.
+
+### The live instance, and who found it
+
+`0041` F7, recorded by `instruments-and-blind-spots-20260909-220203`. Revision
+299's patch — the revision whose entire purpose was removing a 673-line
+destructive script — carried **16 files and 0 deletions against a 17-file change
+set**, with that file absent. **`git apply` exited 0.** Nothing warned.
+
+Reproduced here independently before the rule was written, because a rule in §6
+written on another session's measurement is a rule nobody checked.
+
+### Why the rule is here and the finding is not
+
+`0041` is `instruments-and-blind-spots-20260909-220203`'s and F7 is `framing`.
+**§6 and §7 are this bundle's**, and that session said so when it handed the
+measurement over: *"the rule is yours to write."* This records the rule and the
+measurement; **whether an instrument should check it is `0041` F7's**, and
+nothing here decides that.
+
+### The third instance of one shape
+
+`0049` F3 — the patch omits new files. `0049` F7 — `git add -N` empties them on
+the next `checkout -f`. **F30 — the patch omits deletions.** All three are one
+step, `git add -N .`, doing something other than what the sentence beside it
+says, and **all three are silent**: `git apply` exits 0 in every case.

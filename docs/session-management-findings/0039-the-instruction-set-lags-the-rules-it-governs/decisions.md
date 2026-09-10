@@ -57,6 +57,7 @@ without answering it for rules.
 | D25 | **`dissolved` replaces `withdrawn` as a session state.** A session's terminal shutdown and a member's carry the same idea and may not carry the same word. The member sense stays: it is the more specified and the more embedded. `dissolved` sits beside `closed`, is adjectival like `available` and `active`, and appeared nowhere in the record | F27 | 2026-09-09 | `accepted` |
 | D26 | **Readability is a property of the member, never of the bundle's ownership.** `unclaimed` leaves the *nothing is readable* row and gets its own: read as `analyzing`, and **no session may move a member to `decided` or `resolved`**, those being the owner's acts with no owner to perform them | F28 | 2026-09-10 | `accepted` |
 | D27 | **A commit message is valid only for the patch it was handed over with.** The revision named in the subject must be among the entries that patch adds; a message whose patch was not applied, was applied after the tree moved, or was renumbered is void. The corollary: the manifest entry ships in the same commit as the work it explains | F29 | 2026-09-10 | `accepted` |
+| D28 | **The patch is made with `git diff HEAD`.** `git add -N .` stages a deletion and plain `git diff` then omits it, so a patch that removes a file carries every addition and no removal. `HEAD` is byte-identical on any change set without a deletion, so it is always correct | F30 | 2026-09-10 | `accepted` |
 
 ## Findings 1, 2, 5 and 6 — a rule lives where its kind lives
 
@@ -1355,3 +1356,27 @@ part of that report and not a detachable artifact.
 
 **What this decision does not do.** It does not arm anything. `0050` F7 owns the
 instrument, and its own reading is that the rule had to exist first.
+
+## D28 — the patch is made with `git diff HEAD`
+
+**Accepted.** **§6's recipe block** changes `git diff` to `git diff HEAD`, and §6 gains the
+measurement and the mechanism. **§0 step 3 is not touched here**: the write-boundary
+session wrote the same rule into it independently and §0 is theirs. The conformant
+prompt carries the short form.
+
+**Why one word and not a check.** `HEAD` produces byte-identical output on any
+change set with no deletion, so it is free and cannot regress anything. **A
+check would have to be written against a rule that did not exist** — which is
+`0041` D1's and `0050` D2's refusal, and the reason `0041` F7 was handed here
+rather than built there.
+
+**Two rejections.** **Drop `git add -N .` and use `git diff HEAD` alone** —
+rejected: `HEAD` compares against the commit, so an untracked file is still
+invisible to it. **Both steps are needed**, and that is worth stating because the
+two look redundant. **Warn when a change set contains a deletion** — rejected as
+a guard on a hazard the one-word fix removes entirely, and §6 requires a guard be
+shown to fire on a case it should catch, which this one would never see again.
+
+**What this does not decide.** Whether anything should verify a patch's file list
+against the session's change set mechanically. That is `0041` F7's and `0049`
+F8's, and both are `framing` in bundles this session does not own.

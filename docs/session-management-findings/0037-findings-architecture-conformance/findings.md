@@ -52,8 +52,8 @@ the regression** — `0052` F1.
 | F5 | Every `resolved` bundle is missing `decisions.md` | `resolved` |
 | F6 | The two session-state diagrams disagree | `resolved` |
 | F7 | Two session identifiers recorded as unrecoverable are recoverable | `resolved` |
-| F8 | Nothing says a finding may record **a fact established** and not only a defect, and two definitions of the object put *what it costs to leave* inside it rather than in `Severity:` | `framing` |
-| F9 | Three architecture records describe machinery that does not match the code, and the currency watch aimed at exactly that pair has never been armed | `framing` |
+| F8 | Nothing says a finding may record **a fact established** and not only a defect, and two definitions of the object put *what it costs to leave* inside it rather than in `Severity:` | `resolved` |
+| F9 | Three architecture records describe machinery that does not match the code, and the currency watch aimed at exactly that pair has never been armed | `resolved` |
 
 **F8 was recorded 2026-09-09 by `entity-model-and-vocabulary-20260909-053548`,
 and it takes this bundle out of `answered`.** Seven of seven stood `resolved` at

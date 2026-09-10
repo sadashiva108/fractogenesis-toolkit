@@ -206,7 +206,9 @@ and 5 and went straight to 6 on a shorter phrase.
 ## 1. The two objects
 
 A **findings bundle** is a *reading* of something that already exists: what was
-found, where it is felt, what it costs to leave. It holds findings; each finding
+found and where it is felt. **A reading may conclude that the thing is sound.**
+What it costs to leave is `Severity:`'s, not the object's — `docs/legend.md` is
+authoritative and this does not restate it further. It holds findings; each finding
 carries its own status, and the bundle's **standing** is derived from them.
 
 A **session** is a unit of work with an owner. It creates its own bundle, owns
@@ -590,7 +592,7 @@ Where a write is composed is a separate rule and applies to all three:
 
 ```text
 git add -N .
-git diff > "$PATCH_DIR/<revision>-<slug>.patch"
+git diff HEAD > "$PATCH_DIR/<revision>-<slug>.patch"
 ```
 
   **`git add -N` is not optional and its absence is silent.** `git diff` carries
@@ -601,8 +603,30 @@ git diff > "$PATCH_DIR/<revision>-<slug>.patch"
   guard.** This is the trap two bullets up, which the section described for tag
   renames and left as a special case; it is the general one.
 
+  **`git diff HEAD`, not `git diff` — and this is the other half of the same
+  trap.** `git add -N .` does not only record intent-to-add for new files; **it
+  stages the removal of a deleted one**. `git diff` then compares the working
+  tree against that index and finds no difference, so **the deletion vanishes
+  from the patch** while every new file appears. **The step that exists to make
+  new files visible is the step that makes deletions invisible.**
+
+  Measured on a three-file change set — one modified, one added, one deleted:
+
+```text
+git add -N . ; git diff        ->  2 files, 0 deletions   (the delete is gone)
+git diff HEAD                  ->  3 files, 1 deletion    (correct)
+```
+
+  **On a change set with no deletion the two are byte-identical**, so `HEAD`
+  costs nothing and is always right. `0041` F7 measured the live instance:
+  Revision 299's patch carried **16 files and 0 deletions against a 17-file
+  change set**, with the 673-line file the revision existed to remove simply
+  absent, and `git apply` exited 0.
+
   **Read the patch's file list against your own change set before handing it
-  over.** That comparison is what catches a dropped file, and nothing else does.
+  over.** That comparison is what catches a dropped file — **and a dropped
+  deletion, which is the same failure with the sign reversed** — and nothing
+  else does.
 - **Say which you did.** A report ends with *handed over* and the patch path, or
   *applied at your direction* and what was compared. Those are different claims
   and a reader six weeks out cannot tell them apart otherwise.

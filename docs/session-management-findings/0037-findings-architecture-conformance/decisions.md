@@ -19,6 +19,8 @@ below are taken against the tree as it stands, not against `0027`'s.
 | D1 | The required-reading rule survives its home being deleted: it is restated in `.github/session-management-instructions.md` and binds every `prompt.md` written from now. **Existing prompts are evidence and are not rewritten** | F2 | 2026-09-09 | `accepted` |
 | D2 | The migrated-bundle carve-out is restored: a bundle migrated from an already-closed record carries `resolutions.md` and no `decisions.md`, and its `resolutions.md` says so. **One decision answers this bundle's F5 and `0047` F4**, which are the same reading in two bundles | F5 | 2026-09-09 | `accepted` |
 | D3 | F1, F3, F4, F6 and F7 were resolved in `0027`, regressed by `1c48deb`, and hold again against the files that replaced it. Each is resolved here against where its rule now lives, and the regression is named rather than smoothed over | F1, F3, F4, F6, F7 | 2026-09-09 | `accepted` |
+| D4 | **A reading may conclude that the thing is sound.** `docs/legend.md` says a finding records a fact established as readily as a defect found, and *what it costs to leave* moves out of the definition of the object into `Severity:`. The two restatements drop the clause and defer to the legend | F8 | 2026-09-10 | `accepted` |
+| D5 | **The architecture records are marked current-as-of, not repaired.** Each of the three gains a currency line naming the measured drift and stating the reasoning is retained. The watch is deliberately left unarmed, and the code is not corrected | F9 | 2026-09-10 | `accepted` |
 
 ## D1 — the required-reading rule survives, forward only
 
@@ -87,3 +89,67 @@ decision exists so the five rows can cite something real.
 **What this decision does not claim**: that the regression was detected. It was
 not. Nothing re-verifies a resolution once written, and that is parked as `0052`
 F1.
+
+## D4 — a reading may conclude that the thing is sound
+
+**Accepted.** `docs/legend.md` gains the sentence: **a finding records a fact
+established as readily as a defect found**, and **what it costs to leave** moves
+out of the definition of the object into `Severity:`, where §11 already puts it.
+The two restatements — §1 of the instruction set and §2 of
+`findings-and-sessions.md` — drop the clause and defer to the legend rather than
+repeating it, which also removes a copy from a file whose own opening says
+*"Nothing here restates a definition."*
+
+**Not a new status, field or subtype.** A finding that establishes a fact is
+`framing`, `decided` and `resolved` like any other. `typed-bundles-and-work.md`
+§4.3's admission rule disposes of the alternative directly — a new shape must
+name a field no existing shape has, and this names none.
+
+**Two rejections.** **Leave it and treat the seven conformant facts as prose**, as
+this bundle already does — rejected because the prose apologises for itself
+(*"stated first because the defects below are small against it"*) and because the
+cost has already been paid once: `typed-bundles-and-work.md` §4.3 records a draft
+narrowing the legend to *a reading of something that already exists and is wrong*,
+which pushed research out of `findings` into `commission`. **A `conformance` genus
+for readings whose answer is yes** — rejected on the same admission rule, and
+because it would split one object by its conclusion, which is the property
+`Severity:` records.
+
+**The wording is what `0039` D23 carries.** D23 moves the history of all three
+rule documents into a `Provenance` table and two of the three sentences sit in
+documents it rewrites, which is why the owner parked D23 behind this bundle.
+`0037/F8 constrains 0039/F14` is asserted and the parking is the owner's
+direction, not derived from it.
+
+## D5 — the architecture records are marked current-as-of rather than repaired
+
+**Accepted.** Each of the three records named in F9 gains a **currency line** in
+its header block, naming the measured drift and stating that the reasoning is
+retained and the claims about the code are not current.
+`findings-and-sessions.md` already carried a `Brought current:` line, so this
+reuses a convention rather than inventing one.
+
+**Why marking and not repairing.** F9's reading is that **an architecture record
+is written once and then diverges with nothing watching** — not that any
+particular sentence is wrong. Repairing the twenty-odd instances would file the
+symptoms and lose the shape, which F9 says in its own last paragraph. A record
+that says *this is what we decided and here is where the code has since gone* is
+worth more than one silently corrected to match today's code, because the second
+destroys the evidence that drift happened.
+
+**What this decision does not do.** **It does not arm the watch.** The
+`allocation-tooling` watch in `doc-currency.json` exists, points at exactly this
+pair, and reports `UNCONFIRMED` because all seven watches carry
+`"sourceDigest": null` and `doc_currency.py:evaluate()` tests the null before it
+compares. That is **`0039` F22** and is a toolkit write gated on that finding
+being decided. **Naming what an instrument should do is not doing it** — the same
+boundary D26 kept at Revision 287.
+
+**And it does not correct the code.** §4.2's missing `− w_hold`, the unenforced
+`co-decides` constraint, the unimplemented topological invariant and `ask`
+ignoring every flag are `0050`'s and `0045`'s territory. F9 measured them so the
+reading can be checked; fixing them one at a time is what it warns against.
+
+**One rejection.** **Rewriting the three records to match the code** — rejected
+above, and rejected a second time on `0038` D5's ground: moving a working record
+to match today's tree inverts which of the two is authoritative.

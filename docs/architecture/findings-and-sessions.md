@@ -3,6 +3,10 @@
 **Written:** 2026-09-03, restore-apps session, covering the design that shipped  
 over Revisions 160 through 164.  
 **Brought current:** 2026-09-07, `session-management-re-evaluation-20260906-110105`.  
+**Currency, 2026-09-10, `0037` F8 and F9:** §2's definition no longer carries *what
+it costs to leave*, which is `Severity:`'s. This record is one of three `0037` F9
+measured against the code; the other two carry their own line.  
+
 Eleven passages carried a vocabulary retired in Revision 198 or pointed at  
 `.github/copilot-instructions.md` sections that stopped existing when it was  
 split. **The reasoning is unchanged**; only the words and the pointers moved,  
@@ -35,7 +39,9 @@ was considered, and never what somebody looked at and decided not to change.
 ## 2. The two objects
 
 **A findings bundle** is a *reading*: what was found in something that already
-exists, where it is felt, what it costs to leave. **`docs/INDEX.md` owns the
+exists and where it is felt. **A reading may conclude that the thing is sound**,
+and what it costs to leave is `Severity:`'s rather than the object's —
+`docs/legend.md` is authoritative for both. **`docs/INDEX.md` owns the
 list of trees it may live in**; this record does not enumerate them, because a
 list restated away from the table it counts is the copy `0039` D3 removed.
 

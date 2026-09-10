@@ -3,6 +3,16 @@
 **Written:** 2026-09-06, `allocation-and-inquiry-design-20260906-233205`, from  
 two briefs the owner wrote separately and one problem underneath them.  
 **Scope:** how `unclaimed` findings bundles are proposed to sessions, and how a  
+**Currency, 2026-09-10, `0037` F9:** this record describes machinery the code does
+not have. Measured: §4.2's `− w_hold` term is absent from `score()`; §4.1
+constraint 2 is enforced by no code and the default run split a `co-decides` pair
+across two sessions; §3.2 names four hard kinds against the code's five; §9's
+topological invariant and §4.4's patch emission are unimplemented; `blast_radius`
+is specified as document-and-script reach and implemented as a JSON substring
+count. Of the interviewer's six stages only `frontier()` and `rank()` exist, and
+`ask` ignores every flag it accepts. **The reasoning is retained; the claims about
+the code are not current.**  
+
 session decides what to put to the owner next and how much of it to show.  
 **Depends on:** `docs/session-management-findings/0043-framework-state-lives-in-documents-not-data/`.  
 Written to be readable by someone who has never seen this repository, because  

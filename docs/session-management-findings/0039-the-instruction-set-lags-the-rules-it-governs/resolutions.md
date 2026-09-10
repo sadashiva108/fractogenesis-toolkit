@@ -2,13 +2,14 @@
 
 **Bundle:** `0039-the-instruction-set-lags-the-rules-it-governs`  
 **Session:** `session-management-re-evaluation-20260906-110105` (`session_01FhFbEgG4wmrtJqUCcryNVQ`)  
-**Decisions:** `decisions.md`, twenty-seven across twenty-three findings.
+**Decisions:** `decisions.md`, twenty-eight across twenty-four findings.
 
-Nine findings are closed. The reasoning is in `decisions.md` and is not repeated;
+Ten findings are closed. The reasoning is in `decisions.md` and is not repeated;
 this file records what was actually done.
 
 | Finding | Resolved by | What was done | Revision | Commit |
 |---|---|---|---|---|
+| F30 | D28 | §6's recipe block uses `git diff HEAD` and gains the mechanism, the three-file measurement and the byte-identical note. The conformant prompt carries the short form | 301 | — |
 | F29 | D27 | §7's commit-message subsection states that a message is valid only for the patch it was handed over with, gives the one-line test — the revision in the subject must be among the entries the patch adds — records the nine-commit measurement, and states the corollary that the manifest entry ships in the same commit as the work. `conformant-prompt.md` carries the short form | 296 | — |
 | F28 | D26 | `docs/legend.md`'s permission table splits the old row: `assigned` and `retired` keep *nothing is readable* with the reason they follow from member status, and **`unclaimed` gets its own row reading as `analyzing`** with the owner's two acts withheld. The prose at *A bundle* no longer says an `unclaimed` bundle is closed to every session | 287 | — |
 | F26 | D24 | `docs/legend.md` line 199 now reads *a write by the owner is the transition*, with the two grounds recorded; §10 of the instruction set reads *the transfer ends on the target session's first write to the bundle as owner*, and says a contribution does not clear one | 273 | — |
@@ -44,6 +45,7 @@ checks, with the three findings checkers moved to
 decision row with no `F<n>` now fails (D15). The check that existed asked whether
 every citation resolved, which is vacuously true of a row with none.
 
+<!-- historical: .internal/ai-scripts/session-management/extract-metadata.py -->
 **`.internal/ai-scripts/session-management/extract-metadata.py`** — `--check`
 asserts completeness rather than well-formedness (D16), and a one-way guard
 refuses extraction once any generated-region marker exists (D17).

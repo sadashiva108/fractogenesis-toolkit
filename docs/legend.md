@@ -37,7 +37,13 @@ the tree, and the two must agree.
 
 ## Findings statuses
 
-A findings bundle is a reading of something that already exists. **Status is
+A findings bundle is a reading of something that already exists. **A reading may
+conclude that the thing is sound**: a finding records a fact established as
+readily as a defect found, and needs no defect to be worth recording. **What it
+costs to leave** is `Severity:`'s business and belongs in that field, not in the
+definition of the object — a reading whose answer is *and it is sound* has no
+cost to leave, and a required field filled with an invented value is the
+placeholder rule broken by the schema that states it. **Status is
 carried by each finding; the bundle's standing is derived from them.** The status
 says how far a reading has been taken, never how anyone feels about it.
 

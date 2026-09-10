@@ -12,6 +12,8 @@ split. `Resolved by` cites D3, which is the decision that reads them that way.
 
 | Finding | Resolved by | What was done | Revision | Commit |
 |---|---|---|---|---|
+| F8 | D4 | `docs/legend.md` says a reading may conclude the thing is sound and a finding records a fact established; *what it costs to leave* moved out of the definition into `Severity:`. §1 of the instruction set and §2 of `findings-and-sessions.md` drop the clause and defer to the legend | 301 | — |
+| F9 | D5 | Each of the three architecture records gains a currency line naming the measured drift and stating that the reasoning is retained. The watch is deliberately left unarmed, that being the other bundle's finding on the null source digest, and the code is not corrected | 301 | — |
 | F1 | D3 | The contradiction has no surface left: `copilot-instructions.md` carries no §4b or §4c, and `.github/session-management-instructions.md` §7 states *"Every change of any kind takes a revision"* with `docs/INDEX.md` agreeing | — | `1c48deb` |
 | F3 | D3 | All seven rows of `docs/sessions/INDEX.md` agree with the manifests they link to, verified row by row 2026-09-09 | — | — |
 | F4 | D3 | *"Currently empty"* is gone from `docs/INDEX.md`; the directory table is generated against what exists | — | `88aed77` |

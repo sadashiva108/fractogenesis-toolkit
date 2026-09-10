@@ -3,6 +3,11 @@
 **Written:** 2026-09-07, `session-management-re-evaluation-20260906-110105`, from  
 the owner's proposal that a JSON config become the single source of truth.  
 **Scope:** where the framework stores status, ownership, counts, relationships  
+**Currency, 2026-09-10, `0037` F9:** eleven statements in §4 have drifted from the
+records they specify. §4.3's example carried the retired `findings[]` key until
+Revision 271. **The reasoning is retained; the claims about the data are not
+current.**  
+
 and dates, and how the markdown that displays them is produced.  
 **Depends on:** `docs/session-management-findings/0043-framework-state-lives-in-documents-not-data/`,  
 whose nine findings are the reading this design answers.  

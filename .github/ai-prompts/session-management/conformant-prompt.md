@@ -367,7 +367,9 @@ file being behind.
 reviews and commits everything.
 
 **Compose outside the checkout.** Copy the repository to session-local storage,
-edit there, run the validators there, `git diff` and hand over a patch. Working
+edit there, run the validators there, **`git add -N .` then `git diff HEAD`** —
+`HEAD` because `git add -N` stages a deletion and plain `git diff` then drops it
+from the patch — and hand over a patch. Working
 directly in the owner's tree produces a diff that cannot be committed apart from
 whatever else is in flight.
 
