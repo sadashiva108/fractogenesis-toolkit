@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-10T04:40:00-04:00",
+  "updatedAt": "2026-09-10T05:20:00-04:00",
   "bundleName": "instruments-and-blind-spots-20260909-220203",
   "createdOn": "2026-09-09",
   "owners": [
@@ -54,12 +54,19 @@
       "number": "0050",
       "path": "docs/session-management-findings/0050-instruments-that-cannot-fire-and-one-that-unmakes-the-record/",
       "assignedOn": "2026-09-09",
-      "notes": "Assigned at the owner's direction, Revision 286; unclaimed since Revision 264. F7 recorded at Revision 288. F3 and F6 decided at Revision 289 against D3: the extraction half of extract-metadata.py is retired rather than guarded, measured at 740 values destroyed and 620 irrecoverable after stamp. F1, F2, F4 and F7 remain framing. F8 and F9 recorded at Revision 292: verify-manifest-coverage.sh is correct, fires, names both manifest gaps and prescribes the repair, and nothing runs it; and when it fires nothing says who owes the missing entry or how a late one is written. F10 recorded at Revision 294: clearing a MISSING can only be done by creating a permanent ORPHANED, so the count penalises the repair; F7 extended with the unfilled template slot and the misattributing Claude-Session trailer in 15069fe, and F9 with Revision 247's six silent late entries."
+      "notes": "Assigned at the owner's direction, Revision 286; unclaimed since Revision 264. F7 recorded at Revision 288. F3 and F6 decided at Revision 289 against D3: the extraction half of extract-metadata.py is retired rather than guarded, measured at 740 values destroyed and 620 irrecoverable after stamp. F1, F2, F4 and F7 remain framing. F8 and F9 recorded at Revision 292: verify-manifest-coverage.sh is correct, fires, names both manifest gaps and prescribes the repair, and nothing runs it; and when it fires nothing says who owes the missing entry or how a late one is written. F10 recorded at Revision 294: clearing a MISSING can only be done by creating a permanent ORPHANED, so the count penalises the repair; F7 extended with the unfilled template slot and the misattributing Claude-Session trailer in 15069fe, and F9 with Revision 247's six silent late entries. F1 settled against 0045 F4 at Revision 297: two findings, not one, joined by relates-to because generalises has no defined direction."
     }
   ],
-  "contributions": [],
+  "contributions": [
+    {
+      "bundle": "0043",
+      "member": "F13",
+      "on": "2026-09-10",
+      "what": "A measured instance: generalises is given opposite directions by iris/vocabulary.md and the conformant prompt, is absent from docs/legend.md, and is undirected in the code, so the stated tiebreak cannot settle it. Found while trying to assert one."
+    }
+  ],
   "declaredState": null,
-  "indexNotes": "**The instruments session.** `0050` and `0041` assigned from `unclaimed` at the owner's direction. Between them they answer *how do I know this framework works*: one bundle is instruments that cannot fire, the other a required shape nothing checks and a check released unbuilt. **First write Revision 288**: `0041` D6 built, F6 `resolved`, and the check's first run corrected an index total that had been hand-incremented across three revisions. `0050` F7 recorded. **Revision 289**: `0050` D3 retires the extraction half of `extract-metadata.py` rather than guarding it, on a re-measurement of 740 values destroyed and 620 irrecoverable. **Revision 292**: `0050` F8 and F9 \u2014 an instrument that is correct, fires, and is run by nothing, recorded after this session reported its condition as undetected and was wrong. **Revision 294**: `0050` F10, and F7 and F9 extended \u2014 the metric that argues against its own prescribed repair, and the two halves of a commit message the subject test cannot reach.",
+  "indexNotes": "**The instruments session.** `0050` and `0041` assigned from `unclaimed` at the owner's direction. Between them they answer *how do I know this framework works*: one bundle is instruments that cannot fire, the other a required shape nothing checks and a check released unbuilt. **First write Revision 288**: `0041` D6 built, F6 `resolved`, and the check's first run corrected an index total that had been hand-incremented across three revisions. `0050` F7 recorded. **Revision 289**: `0050` D3 retires the extraction half of `extract-metadata.py` rather than guarding it, on a re-measurement of 740 values destroyed and 620 irrecoverable. **Revision 292**: `0050` F8 and F9 \u2014 an instrument that is correct, fires, and is run by nothing, recorded after this session reported its condition as undetected and was wrong. **Revision 294**: `0050` F10, and F7 and F9 extended \u2014 the metric that argues against its own prescribed repair, and the two halves of a commit message the subject test cannot reach. **Revision 297**: `docs/ledgers/instrument-firing.md` \u2014 the written answer this session owed \u2014 plus `0050` F1 settled and a contribution to `0043` F13.",
   "ended": {
     "on": null,
     "reason": null,

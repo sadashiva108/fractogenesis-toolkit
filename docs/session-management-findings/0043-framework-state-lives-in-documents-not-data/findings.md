@@ -29,6 +29,7 @@ should record here rather than open a near-duplicate beside it.**
 | `allocation-and-inquiry-design-20260906-233205` | 2026-09-06 | Read the two draft config files and `schemas.html`; added F6, the draft review below, and a live instance of F4 in `0039`'s own header |
 | `typed-bundles-architecture-20260908-204724` | 2026-09-09 | Added F10, from its own handoff: the `ended` lists are populated on no session, and the prose standing in for them misattributed two revisions in this session's own record |
 | `typed-bundles-architecture-20260908-204724` | 2026-09-09 | Sharpened F3 with a third and fourth instance: four table header rows captured as `resources` entries across three session records, and two `owners.until` values missing from the home while a copy carried them
+| `instruments-and-blind-spots-20260909-220203` | 2026-09-10 | Sharpened F13 with a measured instance: `generalises` is given opposite directions by `iris/vocabulary.md` and the conformant prompt, is absent from `docs/legend.md`, and is undirected in the code, so the tiebreak cannot settle it — found while trying to assert one |
 
 ## Findings
 
@@ -496,6 +497,37 @@ suggestion, and the first divergence is silent by construction. **A count of
 edges by kind will one day include a kind nobody defined**, and nothing in the
 tree will say when it arrived.
 
+
+### A measured instance: one kind whose direction nothing defines
+
+**Contributed 2026-09-10** by `instruments-and-blind-spots-20260909-220203`, from
+trying to assert an edge and finding it could not be done honestly.
+
+F13 says the set is open and no reason is validated. **`generalises` is worse than
+unvalidated: its direction is contradicted.**
+
+| Where | What it says |
+|---|---|
+| `iris/vocabulary.md` §8 | *"A is the general case of B"* — the **source** is general |
+| the conformant prompt, Tier 3 | *"the target is the general case of the source"* — the **target** is general |
+| `docs/legend.md` | **the word does not appear at all** |
+| `plan_findings_work.py` | the weight, `3`, and **no direction** |
+
+**The stated tiebreak cannot settle it.** *When the legend, a prompt and the code
+disagree, the code is what the data was stamped from* — but direction is not
+encoded in a weight table, so the code has nothing to say, and the rank-3 home is
+silent. **Two rank-4 copies disagree with each other and there is nothing above
+them.**
+
+**Measured: `generalises` has zero instances in the tree**, which is why this has
+survived. Six of the twelve kinds have none; this is the first to be reached for
+and refused. **The refusal is the evidence** — an edge was wanted, the kind fitted,
+and it was recorded as `relates-to` instead, because asserting a direction chosen
+from two contradictory copies would be a judgement dressed as data. `0050` F1
+carries that reasoning.
+
+**Not decided here.** `docs/legend.md` and the closed set are this bundle's
+session's, and the fix is one sentence in the home rather than a third copy.
 ## What it costs to leave
 
 F1 costs a permission prompt and an unlink failure on every status change, and

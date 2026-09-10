@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-10T04:40:00-04:00",
+  "updatedAt": "2026-09-10T05:20:00-04:00",
   "number": "0050",
   "bundleName": "0050-instruments-that-cannot-fire-and-one-that-unmakes-the-record",
   "genus": "findings",
@@ -287,6 +287,16 @@
       "from": "0050/F10",
       "to": "0038/F4",
       "why": "0038 F4 names an asymmetry between a cheap act and an expensive one and built the procedure around it once named; F10 is the same shape unnamed, where the metric rises when the prescribed repair is performed",
+      "reason": null,
+      "basis": "asserted",
+      "asserted_by": "instruments-and-blind-spots-20260909-220203",
+      "asserted_on": "2026-09-10"
+    },
+    {
+      "kind": "relates-to",
+      "from": "0050/F1",
+      "to": "0045/F4",
+      "why": "the same guard from two sides: F1 names two repairable defects in the matcher and the root, F4 names the property no repair reaches. F4's answer subsumes F1's and not the reverse, so generalises is the kind that fits; it is not asserted because its direction is given oppositely by iris/vocabulary.md and the conformant prompt, is absent from docs/legend.md, and is undirected in the code. 0043 F13.",
       "reason": null,
       "basis": "asserted",
       "asserted_by": "instruments-and-blind-spots-20260909-220203",

@@ -59,6 +59,51 @@ This is `0049` F4 in its own words — *"the Revision 231 guard matched
 `cp` inside a Bash call"* — one revision later and one tool boundary out. The
 fix and the false positive it produces are decided in `0049` D4.
 
+### Settled against `0045` F4: two findings, and the edge is the weakest one
+
+**The session prompt named `duplicates` or `co-decides` as the honest options.
+Neither is right, and the kind that is cannot be asserted.**
+
+**Not `duplicates`.** `0045` F4 says so from its own side — *"it is not `0050` F1
+… that reading is about the matcher, and this one is about what the matcher can be
+a proxy for"* — and the test agrees from this one. F1 names two concrete defects
+in one file: a matcher that does not name the tool, and a `$CLAUDE_PROJECT_DIR`
+that resolves to the assistant's container rather than the checkout. **Both are
+repairable in principle.** F4 names a property no repair reaches: a tool name is a
+property of the harness, so any enumeration of tool names is right for one harness
+and wrong for the next.
+
+**Not `co-decides`, and the reason is asymmetry.** *One decision answers both* has
+to hold in both directions and it does not. A decision to **delete the guard or
+demote it to a note** answers F4 and leaves F1 with nothing to fix. A decision to
+**add `mcp__remote-devices__device_bash` to the matcher and correct the root**
+answers F1 and **F4 explicitly rejects it.** So F4's answer subsumes F1's; F1's
+does not touch F4's. **Asserting a hard edge would also bind two sessions'
+deciding together**, against F4's closing sentence that the choice *"remains this
+bundle's to decide"* — and that bundle is not this one.
+
+**The kind that fits is `generalises`, and it is not assertable today.** Its
+direction is defined in two documents that contradict each other and in neither
+authority:
+
+| Where | What it says |
+|---|---|
+| `iris/vocabulary.md` §8 | *"A is the general case of B"* — the **source** is general |
+| the conformant prompt, Tier 3 | *"the target is the general case of the source"* — the **target** is general |
+| `docs/legend.md` | **the word does not appear** |
+| `plan_findings_work.py` | carries the weight, `3`, and no direction |
+
+**The tiebreak is the code and the code is silent**, because direction is not a
+thing the weight table encodes. And `generalises` has **zero instances in the
+tree**, which is why the contradiction has survived: nothing has ever had to read
+one.
+
+**So `relates-to` is asserted**, weight 1, obliging nothing — the one kind whose
+meaning is not in dispute — with the subsumption stated here in prose. **Recording
+why the stronger edge was declined is the point**: an edge asserted in a direction
+picked from two contradictory copies would be a judgement dressed as data, and
+`0043` F13 is where the defect belongs. It has been recorded there.
+
 ## F2 — an exemption for a file that no longer exists
 
 `.internal/ai-scripts/session-management/verify-findings-headers.sh` line 201
