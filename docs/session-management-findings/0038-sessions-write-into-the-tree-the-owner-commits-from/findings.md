@@ -44,6 +44,7 @@ and that is not what was found.
 | F6 | The write discipline does not distinguish the write kinds `docs/legend.md` now names | `resolved` |
 | F7 | A rule here is enforceable at write time only where the fact is in `metadata.json`, the actor identifies itself, and a false refusal costs less than the rule — and none of the four guards that pass those tests is built | `decided` |
 | F8 | The guard D7 chose cannot fire at the moment that has actually failed: every recorded instance is the owner committing, and no session-side hook observes that | `framing` |
+| F9 | Two of the three hooks are annotators that cannot refuse anything, and both are scoped to the one directory a session must never write in — so they can only speak about a write the third hook refuses | `framing` |
 
 **Read as a re-verification on 2026-09-09, at Revision 269**, by
 `drift-and-the-write-boundary-20260909-053548`. `0028`, which this bundle
@@ -300,3 +301,58 @@ not; the half that breaks is the half nobody is watching.
 A patch that carries no manifest entry is a real defect and refusing it is
 cheap. It claims only that catching it does not catch what has actually gone
 wrong, and that the record should say so before anyone builds against it.
+
+## F9 — the two annotators can only speak about a write that does not happen
+
+**Measured 2026-09-10 against Revision 281**, in the pass Revision 280 requires;
+the run is `docs/ledgers/guard-conformance.md`.
+
+**Three hooks, and only one of them can refuse.** `write-location-guard.sh` is a
+`PreToolUse` hook and emits `permissionDecision: deny`. `session-guard.sh` and
+`runbook-guard.sh` are `PostToolUse`, and each says so in its own header: *"It
+always exits 0. PostToolUse runs AFTER the edit; there is nothing left to block,
+so a rule is reported as context, not as a failure."* **They are annotators.**
+`0038` F7 counts three guards and `docs/rules/rule-enforcement-avenues.md` §4
+reads the same way; **the set is one guard and two annotators**, which matters
+because Revision 280's promotion rule governs one of the three and there is
+nothing in the other two to promote.
+
+**All three key off `CLAUDE_PROJECT_DIR` and they disagree about what it means.**
+
+| Hook | What it takes `CLAUDE_PROJECT_DIR` to be |
+|---|---|
+| `write-location-guard.sh` | **the forbidden zone.** Any write inside it is denied |
+| `session-guard.sh` | **the working area.** `rel=${path#"$root"/}`, then `case "$rel" in docs/*-findings/*)` — a path outside it never matches |
+| `runbook-guard.sh` | the same |
+
+**So for any write, at most one of the three can say anything, and which one is
+decided by the same variable read two opposite ways.** A write **inside**
+`CLAUDE_PROJECT_DIR` is denied by the first and annotated by the other two — but
+it does not happen, because it is denied. A write **outside** it — the session
+copy, where all composing happens under §0 step 1 — is allowed by the first and
+**invisible to the other two.**
+
+**Measured: 473 tracked files fed as writes in a session copy produced zero
+notes from either annotator.** Both fire on the same paths when those paths sit
+inside `CLAUDE_PROJECT_DIR` — `session-guard` on a findings document,
+`runbook-guard` on `bin/backup-repos.sh` — so **they work, and they are aimed at
+the one place nothing may be written.**
+
+**This is `0045` F4's shape and not its cause.** F4 records a hook that cannot
+see the caller because it matches on a tool name. This is two hooks that see the
+caller perfectly and are pointed at the wrong directory. **Both reduce to a hook
+whose wiring encodes an assumption about where a session works**, and §0 step 1
+moved that somewhere the wiring was never told about.
+
+**What it costs to leave.** Not a missed refusal — neither can refuse. What is
+lost is the whole of their purpose: `session-guard` exists to name the rule
+governing a session-management record **at the moment one is edited**, and every
+such edit this session made — nine revisions of them — was made in a copy, where
+it said nothing. **A rule stated only where the write is forbidden is a rule
+nobody is told at the moment they need it.**
+
+**What this finding does not propose.** Pointing them at the session copy. The
+hook is not told where that is, and cannot be: `0045` F3 records that a session
+cannot declare who or where it is to any instrument. **The fix is not available
+at this layer**, which is the same wall F7's four guards meet and the reason this
+is recorded rather than repaired.

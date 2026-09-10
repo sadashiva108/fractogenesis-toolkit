@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-10T11:05:00-04:00",
+  "updatedAt": "2026-09-10T14:30:00-04:00",
   "number": "0038",
   "bundleName": "0038-sessions-write-into-the-tree-the-owner-commits-from",
   "genus": "findings",
@@ -155,6 +155,18 @@
       "statusNote": null,
       "updatedAt": "2026-09-10T11:05:00-04:00",
       "sectionHeading": "F8 \u2014 the first guard cannot guard the half that has failed",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F9",
+      "statement": "Two of the three hooks are annotators that cannot refuse anything, and both are scoped to the one directory a session must never write in \u2014 so they can only speak about a write the third hook refuses",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-10T14:30:00-04:00",
+      "sectionHeading": "F9 \u2014 the two annotators can only speak about a write that does not happen",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
