@@ -27,10 +27,10 @@ writes, and the bundle type for those does not exist yet.
 |---:|---|---|
 | F1 | The write-location guard does not cover the tool a bridged session actually writes through, and reads the wrong root | `framing` |
 | F2 | A schema exemption guards on a marker file Revision 222 deleted, so the exemption can never apply | `framing` |
-| F3 | Running `extract-metadata.py` on a healthy tree destroys every asserted edge and every stamped value | `framing` |
+| F3 | Running `extract-metadata.py` on a healthy tree destroys every asserted edge and every stamped value | `decided` |
 | F4 | Four instruments in three days were correct and could not do their job, and no bundle covers that class | `framing` |
 | F5 | The coverage sweep keeps a second copy of a directory list `docs/INDEX.md` owns, and 43 files are invisible to it | `framing` |
-| F6 | `0050` F3 counted two field families of twenty: one run destroys 429 recorded values, and section 10a routes a session into running it | `framing` |
+| F6 | `0050` F3 counted two field families of twenty: one run destroys 429 recorded values, and section 10a routes a session into running it | `decided` |
 | F7 | Nothing compares a commit message's assertion against what the commit contains, and a mis-scoped message burns a revision number | `framing` |
 
 ## F1 — the guard does not run where the writing happens
@@ -150,6 +150,35 @@ down, because **the first test of this finding was run against the wrong baselin
 and reported no loss at all** — two post-extraction trees compared against each
 other, both already stripped. The clean result was the wrong result, and the only
 thing that caught it was refusing to trust it.
+
+### Re-measured at Revision 288, and the asymmetry is forty-one times wider
+
+**F3's argument is right and its numbers were the smallest of three
+measurements.** Snapshot, live run, flatten and count: **66 of 66 files
+rewritten, 740 recorded values destroyed, 22 distinct fields.** Then
+`plan-findings-work.sh stamp` on the stripped tree and count again: **it restores
+120 and 620 do not come back.** F3 above says *the 107 re-derive, the 15 do not*.
+
+**`genus` is 54 of the 620 and is the fact that decides D3.** The field arrived
+with Revision 271's migration; the parser was written at Revision 224 and has
+never heard of it, and `stamp` does not restore it because `genus` is stored
+rather than derived. **A run does not re-migrate the tree, it reverts it to a
+schema that no longer exists** — silently, because a parser cannot report a field
+it does not know about.
+
+**And the suite executes this script.** `check-completeness.sh` line 53 is
+`exec python3 "$SCRIPT_DIR/extract-metadata.py" --check`, and `completeness` is in
+`verify-session-findings.sh`'s `all`. `DRY` is `"--dry-run" in sys.argv`, so the
+safe invocation is the one a session runs several times an hour and **one argv
+token separates it from the destructive one.**
+
+**Afterwards the instruments report a nearly clean tree**: `counts` FAIL 0,
+`headers` FAIL 11 — the standing baseline, unmoved — `structure` FAIL 1,
+completeness 3 problems. **Four rows against 620 destroyed judgements**, and 52
+of the 66 files reformatted end to end besides, because this script writes
+`ensure_ascii=False` where `plan_findings_work.py` writes the default. That is
+`0050` F4's class arriving inside `0050` F3: the record can be unmade and the
+assurance layer barely moves.
 
 ## F4 — the class, and nothing covers it
 

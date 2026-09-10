@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-10T02:40:00-04:00",
+  "updatedAt": "2026-09-10T03:10:00-04:00",
   "number": "0050",
   "bundleName": "0050-instruments-that-cannot-fire-and-one-that-unmakes-the-record",
   "genus": "findings",
@@ -60,10 +60,10 @@
     {
       "id": "F3",
       "statement": "Running extract-metadata.py on a healthy tree destroys every asserted edge and every stamped value",
-      "status": "framing",
+      "status": "decided",
       "statusReason": null,
       "statusNote": null,
-      "updatedAt": "2026-09-09",
+      "updatedAt": "2026-09-10",
       "sectionHeading": "F3 \u2014 the extractor unmakes the record",
       "reopened": null,
       "withdrawn": null,
@@ -103,10 +103,10 @@
     {
       "id": "F6",
       "statement": "`0050` F3 counted two field families of twenty: one run destroys 429 recorded values, and section 10a routes a session into running it",
-      "status": "framing",
+      "status": "decided",
       "statusReason": null,
       "statusNote": null,
-      "updatedAt": "2026-09-09",
+      "updatedAt": "2026-09-10",
       "sectionHeading": "F6 \u2014 F3 measured two field families out of twenty, and the procedure that needs the extractor has no step for running it",
       "reopened": null,
       "withdrawn": null,
@@ -149,6 +149,19 @@
       "answersAsOf": null,
       "voidedReason": null,
       "sectionHeading": "D2 \u2014 default in, explicitly out, and the records are declared out with a reason"
+    },
+    {
+      "id": "D3",
+      "decision": "The extraction half of extract-metadata.py is retired and the --check half is separated from it. The parser is not made safe; it is removed, because every way of making it safe is an enumeration of what to protect, and the enumeration is already one schema behind.",
+      "members": [
+        "F3",
+        "F6"
+      ],
+      "decided": "2026-09-10",
+      "outcome": "accepted",
+      "answersAsOf": "777f468",
+      "voidedReason": null,
+      "sectionHeading": "D3 \u2014 retire the parser, keep the check, and do not build a guard"
     }
   ],
   "contributions": [],

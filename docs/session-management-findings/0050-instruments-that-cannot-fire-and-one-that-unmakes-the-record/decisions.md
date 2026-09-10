@@ -1,18 +1,21 @@
 # Decisions — instruments that cannot fire, and one that unmakes the record
 
 **Bundle:** `0050-instruments-that-cannot-fire-and-one-that-unmakes-the-record`  
-**Session:** `assurance-coverage-20260908-204724`  
-**Decided:** 2026-09-09
+**Session:** `assurance-coverage-20260908-204724`, and `instruments-and-blind-spots-20260909-220203` for D3  
+**Decided:** 2026-09-09, and 2026-09-10 for D3
 
-Assigned by the owner on 2026-09-09 and read on assignment. **Only F5 is decided
-here.** F1 through F4 are `framing` and stay there: F1's remedy is already
-decided as `0049` D4, F2 and F3 are one-line repairs waiting on a bundle type
-that can hold a build, and F4 is a class whose members are still arriving.
+Assigned by the owner on 2026-09-09 and read on assignment. **F5 was decided on
+that day and F3 and F6 on 2026-09-10**, by the session this bundle was assigned
+to at Revision 286. F1, F2, F4 and F7 are `framing` and stay there: F1's remedy
+is already decided as `0049` D4 and its relationship to `0045` F4 is an edge to
+settle rather than a decision to take; F2 is a one-line repair; F4 is a class
+whose members are still arriving, and F7 is its newest.
 
 | # | Decision | Findings | Decided | Outcome |
 |---|---|---|---|---|
 | D1 | The coverage sweep derives its roots from `docs/INDEX.md` instead of keeping a second copy, and reports the repository-root runbooks and `references/` explicitly | F5 | 2026-09-09 | `replaced → D2` |
 | D2 | Derive the roots, **default in and explicitly out**: a directory in `docs/INDEX.md` is swept from the moment it appears, and excluding one is a declaration in `doc-currency.json` carrying its reason | F5 | 2026-09-09 | `accepted` |
+| D3 | **The extraction half of `extract-metadata.py` is retired and the `--check` half is separated from it.** The parser is not made safe; it is removed, because every way of making it safe is an enumeration of what to protect, and the enumeration is already one schema behind | F3, F6 | 2026-09-10 | `accepted` |
 
 ---
 
@@ -114,3 +117,139 @@ explainable**, which is the only reason to state a prediction before measuring.
 now appear. The run prints what it swept and what was declared out, so the
 number can be read without opening the config.
 
+## D3 — retire the parser, keep the check, and do not build a guard
+
+**Re-measured first, at Revision 288**, in a throwaway copy: snapshot every
+`metadata.json`, run the script with no arguments, flatten both trees and count
+every scalar that goes from a value to `null` or absent.
+
+| | Revision 260 (F6) | Revision 274 (`iris`) | **Revision 288** |
+|---|---:|---:|---:|
+| files rewritten | 62 | 65 of 65 | **66 of 66** |
+| recorded values destroyed | 429 | 601 | **740** |
+| distinct fields losing a value | 20 | 38 | **22** |
+
+**F3's asymmetry is the right argument and its numbers were out by a factor of
+forty-one.** F3 says *the 107 re-derive, the 15 do not*. Measured here by running
+`./bin/plan-findings-work.sh stamp` on the stripped tree and counting again:
+**`stamp` restores 120. Six hundred and twenty do not come back.**
+
+| field | still lost after `stamp` |
+|---|---:|
+| `edges` | 210 |
+| `members` | 113 |
+| **`genus`** | **54** |
+| `disposals` | 53 |
+| `decisions` | 32 |
+| `resources` | 30 |
+| `ownedBundles` | 26 |
+| `contributions` | 23 |
+| `revisions`, `commits` | 19, 18 |
+| `feltAt`, `indexNotes`, `owners`, `scratchPath` | 13, 11, 5, 5 |
+
+### Three facts that were not in F3 or F6, and each decides something
+
+**1. `genus` is destroyed, and `genus` is Revision 271's migration.** Fifty-four
+values, and `stamp` does not restore them because `genus` is stored rather than
+derived. The script was written at Revision 224; the field arrived at 271. **The
+parser does not re-migrate the tree — it reverts it to a schema that no longer
+exists**, and it does so silently, because a parser cannot report a field it has
+never heard of.
+
+**2. The suite runs it.** `.internal/ai-scripts/session-management/check-completeness.sh`
+line 53 is `exec python3 "$SCRIPT_DIR/extract-metadata.py" --check`, and
+`completeness` is in `verify-session-findings.sh`'s `all`. **So the destructive
+script is executed on every routine verification run**, and `DRY` is
+`"--dry-run" in sys.argv`, so **anything that is not exactly `--dry-run` or
+`--check` is a live run.** F3 says *it has no safe no-op*; the sharper statement
+is that its safe invocation is the one a session runs several times an hour, and
+one token separates it from the other.
+
+**3. The instruments cannot see the damage.** On the tree with 740 values gone
+and `stamp` re-run: `counts` **FAIL 0**, `headers` **FAIL 11** — the standing
+baseline, unmoved — `structure` **FAIL 1**, completeness **3 problems**. **Four
+rows, against six hundred and twenty destroyed judgements.** That is `0050` F4's
+class arriving inside `0050` F3: the record can be unmade and the assurance layer
+reports very nearly a clean tree. A fifth fact belongs beside it — the script
+writes `ensure_ascii=False` where `plan_findings_work.py` writes the default, so
+**52 of 66 files are reformatted end to end**, and whatever the four rows do say
+is buried in a whole-tree diff.
+
+### The decision
+
+**The extraction half is retired. The `--check` half becomes its own file, which
+is what `check-completeness.sh` calls.**
+
+`docs/architecture/state-as-data.md` §9 is the authority for why this is a
+retirement rather than a repair. Steps 1 to 4 are the migration and they are
+done: the JSON is committed alongside the markdown and everything since reads
+JSON. Step 2 describes `--check` as *"`--check` doing its first job before it has
+a second"* — **the second job is the completeness check, and it is the only half
+of this file that is still live.** The script's own docstring says the rest:
+*"Written ONCE and thrown away is the point."* It was not thrown away, and four
+revisions of findings are what that cost.
+
+**The migration did not complete cleanly, and that is the argument.** §9 step 5's
+authority flip has not happened — the guard greps for `<!-- generated:` markers
+and there are none — so the markdown is still authoritative for what it holds.
+But `genus`, `edges`, `standing`, `ownership` and six hundred more values live in
+the JSON and have never been in the markdown. **The tree is in a mixed state the
+parser has no model of**, and re-running it does not move the migration forward
+by one step; it discards the half that got ahead.
+
+### Rejected, and the second one is F6's own proposal
+
+**An interlock that counts the JSON-only fields and refuses** — F3's remedy.
+Rejected on two grounds. It is a guard on a destructive act rather than the
+removal of the destruction, and §6 requires a guard be installed warn-only first
+and shown both not to fire on what is correct and to fire on what is not — a pass
+this one cannot have, because the case it must catch destroys the tree it is run
+against. And **the count is an enumeration of what to protect**, which is the
+shape `0038` F7 rejected in the write-location guard and `0050` F1 records: it is
+right on the day it is written and wrong the next time a field is added. `genus`
+is that having already happened once.
+
+**Preserve every field the parser does not derive — merge rather than replace.**
+This is F6's own durable fix — *"the run should preserve every field it does not
+derive, at which point there is nothing to guard against"* — and it is the
+strongest alternative. **Rejected, and it needs the argument.** *Derive* is doing
+work the parser cannot do: the parser does not derive anything, it parses, so the
+preserve set is not computed but listed, and it is the same enumeration one
+paragraph up wearing a friendlier name. It also keeps a parser of authoritative
+markdown alive after the markdown stopped being authoritative for six hundred
+values, and it leaves the file wired into `all` by an `exec`, so the argv distance
+between the routine run and the destructive one stays exactly one token. **A
+preserve-list would have preserved nothing about `genus`, because nobody would
+have added it.**
+
+**A warning rather than a refusal.** Rejected on F3's own reasoning, which
+stands: the run reports success, so a warning is read as noise by the session that
+most needs it.
+
+**Delete the file entirely.** Rejected. `check-completeness.sh` execs it, and that
+check is live and works — at Revision 288 it caught a data error in this
+session's own write, `—` written into `resolution.commit` where `null` belongs,
+which no other instrument looks for. Removing a working instrument to retire a
+spent one trades the wrong way.
+
+**Leave it, and rely on the record saying it must never be run.** Rejected.
+`docs/rules/rule-enforcement-avenues.md` §2: `nowhere` is a real answer and has to
+be written down as one, *"because a rule with no instrument is otherwise quoted as
+enforced"* — and F6 records that §10a still routes a session toward running it.
+A prohibition that lives only in prose, against a script the suite already
+executes, is the weakest arrangement available.
+
+### What D3 does not decide
+
+**§10a's missing fifth step is not this bundle's.** F6 records that a release
+leaves `structure` failing and that the extractor is the only thing that clears
+it. With the extraction half retired, the safe act F6 already names — set
+`ownership` by hand, run `stamp`, run `check` — becomes the only act, so the
+hazard goes even though the procedure gap stays. **The gap is
+`.github/session-management-instructions.md` §10a's**, which belongs to
+`entity-model-and-vocabulary-20260909-053548`, and it is named here rather than
+answered.
+
+**The build is not done in this revision.** §6 gates a toolkit write on a
+`decided` finding; this decision is what creates that gate, and carrying it out
+is the next one.
