@@ -145,7 +145,7 @@ So the doing side needs no separate type field: **the kind is the type.**
 noun and — for doing kinds — whether an agent may take it. A kind nobody
 registered is a defect the checker names, the same discipline as an asserted edge.
 
-### 4.3 Why deciding shapes multiply and the doing shape does not
+### 4.3 Why reasoning shapes multiply and the actioning shape does not
 
 **Doing is uniform in structure and varied in content.** `refactor`, `retrofit`
 and `verify` differ in *what* they do and need identical things *recorded* — a

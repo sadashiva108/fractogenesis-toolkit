@@ -58,6 +58,7 @@ without answering it for rules.
 | D26 | **Readability is a property of the member, never of the bundle's ownership.** `unclaimed` leaves the *nothing is readable* row and gets its own: read as `analyzing`, and **no session may move a member to `decided` or `resolved`**, those being the owner's acts with no owner to perform them | F28 | 2026-09-10 | `accepted` |
 | D27 | **A commit message is valid only for the patch it was handed over with.** The revision named in the subject must be among the entries that patch adds; a message whose patch was not applied, was applied after the tree moved, or was renumbered is void. The corollary: the manifest entry ships in the same commit as the work it explains | F29 | 2026-09-10 | `accepted` |
 | D28 | **The patch is made with `git diff HEAD`.** `git add -N .` stages a deletion and plain `git diff` then omits it, so a patch that removes a file carries every addition and no removal. `HEAD` is byte-identical on any change set without a deletion, so it is always correct | F30 | 2026-09-10 | `accepted` |
+| D29 | **The checkers match the genus prefix, not the letter `F`.** `verify-findings-headers.sh` and `verify-findings-counts.sh` match `[FQT]`, which is `MEMBER_PREFIX`'s own range. The prefix stays per-genus; the checkers stop assuming one genus | F31 | 2026-09-10 | `accepted` |
 
 ## Findings 1, 2, 5 and 6 — a rule lives where its kind lives
 
@@ -1380,3 +1381,31 @@ shown to fire on a case it should catch, which this one would never see again.
 **What this does not decide.** Whether anything should verify a patch's file list
 against the session's change set mechanically. That is `0041` F7's and `0049`
 F8's, and both are `framing` in bundles this session does not own.
+
+## D29 — the checkers match the genus prefix, not the letter `F`
+
+**Accepted.** Five sites across two files change `F` to `[FQT]`, which is exactly
+the range `MEMBER_PREFIX` already defines. **The schema is not changed** — it was
+right; the checkers had simply never been told about it.
+
+**Gated correctly.** This is a toolkit write and section 6 requires a `decided`
+member. F31 is that member, decided here, in the bundle whose subject it is.
+`0056`'s Q3 records the same collision from the commission's side and **is
+deliberately not decided**: `0056` is `unclaimed`, and Revision 287's D26 says no
+session may move a member of an unowned bundle to `decided`.
+
+**Two rejections.** **Write `0056`'s members as `F1`–`F3` and move on** —
+rejected: it passes two checkers by violating the schema the third enforces, and
+it would put the first commission in the tree on record as mislabelling its own
+members, which is the defect rather than a workaround for it. **Widen the match to
+`[A-Z]`** — rejected: `MEMBER_PREFIX` is a closed set of three letters and a
+checker matching more than the schema allows would accept an id the schema
+forbids, which is `0038` F7's shape — an enumeration that drifts from the thing it
+enumerates. `[FQT]` is copied from the map and is wrong the moment the map
+changes, **which is the correct failure**: a fifth genus should break the checkers
+loudly rather than be silently uncounted.
+
+**What this does not do.** It does not settle whether a commission's table should
+be headed `Findings` or `Questions`, or whether its column should read `Finding`.
+That is `0056` Q3's, and it is a vocabulary question for the bundle that owns it.
+This decision only makes the checkers see what is there.

@@ -229,9 +229,10 @@ repository rather than designed in advance, so parts of it are load-bearing and
 parts are drafts arguing with each other. The documents above say which is which,
 and where they do not, that is a defect worth recording.
 
-**The honest summary as of Revision 274:** the reasoning side is real and
-running — four genera in the schema, derivations stamped by one instrument,
-checks with published baselines, 67 tests. **The actionable side exists in data
+**The honest summary**, and the numbers are in [status.md](status.md) rather
+than here, because a count written into prose is a count that goes stale: the
+reasoning side is real and running — four genera in the schema, derivations
+stamped by one instrument, checks with published baselines, a passing suite. **The actionable side exists in data
 and in nothing else**: no charter and no remedy has ever been written, and the
 two words for them were chosen the day this was written. The `serves` edge that
 joins doing to reason is named in [shapes.md](shapes.md) and is not in the closed

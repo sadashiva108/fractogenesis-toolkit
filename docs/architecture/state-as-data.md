@@ -377,6 +377,43 @@ today.
 
 ## 6. Generation
 
+> **Ruling, 2026-09-10, `0043` D3 — section 6.1 is a map, not a plan.** It
+> specifies the projection relation: which column derives from which field. That
+> is a fact about the model and is true whether or not a program ever runs.
+> **It is not a commitment to build a generator**, and nothing downstream should
+> read it as one.
+>
+> **The checker is the mechanism, not a backstop**, until the two preconditions
+> section 7 names are met — a `--check` mode and a fixture set that pins
+> `analyzing`. Section 7 already weighed this and did not choose generation:
+> *"Today drift is possible and the checkers catch it. Under generation drift is
+> impossible — and a bug rewrites forty files at once, silently, which nothing
+> catches."* **A detectable failure beats an undetectable one**, and that is the
+> whole of it.
+>
+> **Measured 2026-09-10: zero generated regions exist in the tree.** The only two
+> `<!-- generated:` occurrences are section 6.2's own example and a sentence in
+> `0050` describing a guard that greps for them. The surface this section
+> describes — 6 tree indexes, 10 findings-manifests, 12 session `metadata.md`,
+> and 118 findings/decisions/resolutions across 55 bundles — **is entirely
+> hand-maintained and always has been.**
+>
+> **A generator would be a checker's bug class with write access to all of it.**
+> Section 7 cites `0042` F4, whose first run reported 131 failures of which 128
+> were the audit's own, and `0043` F3, whose first run reported 36 against a
+> clean tree. **A third instance was produced while composing this ruling**: a
+> nine-line scan of manifest-against-metadata reported 37 drifted rows; corrected,
+> it reports **2 of 31** — the two the owner had already found by eye.
+>
+> **What to build, in order.** The fixture set first, because it is what makes
+> either a checker or a generator trustworthy and `0043` F7 says why it is hard —
+> every derivation row states a positive condition with a witness except
+> `analyzing`, which is *any other combination*, so a derivation bug always lands
+> there and looks plausible. Then a report-only checker over the map below. **A
+> checker validated by a fixture set is a generator's `--check` mode with the
+> write half removed**; build that, run it, and whether to add the write half
+> answers itself from its own record.
+
 ### 6.1 The map
 
 Every table in the tree, its row source, and where each column comes from.

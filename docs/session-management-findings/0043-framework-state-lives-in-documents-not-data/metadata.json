@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-10T02:20:00-04:00",
+  "updatedAt": "2026-09-10T03:15:00-04:00",
   "number": "0043",
   "bundleName": "0043-framework-state-lives-in-documents-not-data",
   "genus": "findings",
@@ -199,6 +199,25 @@
       "reopened": null,
       "withdrawn": null,
       "resolution": null
+    },
+    {
+      "id": "F14",
+      "statement": "`state-as-data` \u00a76.1 declares eleven classes of output generated projections, no generator exists, and nothing said whether the section is a commitment or a description",
+      "status": "resolved",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-10",
+      "sectionHeading": "F14 \u2014 eleven declared projections, no generator, and no ruling either way",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": {
+        "resolvedBy": [
+          "D3"
+        ],
+        "whatWasDone": "state-as-data \u00a76 gains a ruling block: \u00a76.1 is a map, not a plan; the checker is the mechanism until \u00a77's preconditions exist; the fixture set comes first",
+        "revision": "303",
+        "commit": null
+      }
     }
   ],
   "decisions": [
@@ -226,6 +245,18 @@
       "answersAsOf": null,
       "voidedReason": null,
       "sectionHeading": "D2 \u2014 the procedure changes when the format exists, not before"
+    },
+    {
+      "id": "D3",
+      "decision": "state-as-data \u00a76.1 is a map and not a plan; the checker is the mechanism until \u00a77's --check mode and fixture set exist, and the fixture set is built first",
+      "members": [
+        "F14"
+      ],
+      "decided": "2026-09-10",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D3 \u2014 \u00a76.1 is a map, not a plan"
     }
   ],
   "contributions": [
@@ -248,6 +279,11 @@
       "session": "entity-model-and-vocabulary-20260909-053548",
       "date": "2026-09-10",
       "contribution": "Recorded F11, F12 and F13 from measuring the schema against the code while writing iris/schema.md and iris/vocabulary.md"
+    },
+    {
+      "from": "drift-and-the-write-boundary-20260909-053548",
+      "on": "2026-09-10",
+      "what": "measured that no generated region exists and asked for the ruling rather than taking it, on the ground that \u00a76 is this bundle's section"
     }
   ],
   "edges": [],

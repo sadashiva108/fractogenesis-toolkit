@@ -272,8 +272,13 @@ is a thing that can be amended.
 Stated because the rest of this document reads as though it were.
 
 - **No commission, charter or remedy exists.** All 54 dossiers are `findings`.
-- **`evidences` and `contradicts` both stand at zero instances**, so no trial has
-  been recorded and section 7 describes machinery that has never run.
+- **A trial has been recorded once and no more.** The instance counts for
+  `evidences` and `contradicts` are in [status.md](status.md) section 2, which
+  measures them; **this section deliberately no longer carries the number.** It
+  said *both stand at zero* and was overtaken on 2026-09-10 by an `evidences`
+  edge asserted at Revision 287 — a hand-carried count in exactly the class
+  `status.md` exists to retire. Section 7 still describes machinery that has
+  barely run.
 - **`serves` is not an edge kind yet.** Section 6 names it; the closed set does
   not contain it, and there is no closed set of edge kinds at all.
 - **No authorization field exists**, so *authorized as a separate act* is a rule

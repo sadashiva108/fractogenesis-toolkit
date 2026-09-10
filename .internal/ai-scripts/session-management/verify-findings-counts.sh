@@ -71,9 +71,12 @@ fail() {
 }
 
 # Findings held by one bundle: the rows of its finding table. Rows are numbered
-# `F1`, `F2` since the header schema was adopted -- the F makes a cross-reference
-# from decisions.md unambiguous. The bare-digit form is still matched, because
-# nothing forces a bundle onto the schema until it is next worked.
+# `F1`, `F2` since the header schema was adopted -- the letter makes a
+# cross-reference from decisions.md unambiguous. `Q` for a commission's questions
+# and `T` for a charter's or remedy's tasks: the prefix carries the genus, and
+# matching only `F` counted a three-question commission as holding one finding.
+# 0039 F31. The bare-digit form is still matched, because nothing forces a bundle
+# onto the schema until it is next worked.
 #
 # The table is found by its SHAPE -- the first run of rows beginning `| <n> |`
 # -- rather than by the heading above it, because bundles head it either
@@ -81,7 +84,7 @@ fail() {
 # such table holds one finding.
 findings_in_bundle() {
   awk '
-    /^\|[ ]*F?[0-9]+[ ]*\|/ { if (!done) { n++; seen = 1 }; next }
+    /^\|[ ]*[FQT]?[0-9]+[ ]*\|/ { if (!done) { n++; seen = 1 }; next }
     seen && !/^\|/         { done = 1 }
     END { print (n ? n : 1) }
   ' "$1/findings.md"

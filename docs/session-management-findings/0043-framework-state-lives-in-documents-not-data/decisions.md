@@ -14,6 +14,7 @@ one level out.
 |---|---|---|---|---|
 | D1 | Findings are addressed as `<bundle>/F<n>`, relationships are typed edges, an edge is stored in the bundle whose session asserted it, stored edges are assertions, and `Relates to` becomes a projection | F5, F6 | 2026-09-07 | `accepted` |
 | D2 | §9 step 3 changes from *write this line* to *assert this edge* in the revision that ships the projection, and not before | F5 | 2026-09-07 | `accepted` |
+| D3 | **§6.1 is a map, not a plan.** It states the projection relation and is true whether or not a program runs. **The checker is the mechanism**, not a backstop, until §7's two preconditions are met — a `--check` mode and a fixture set that pins `analyzing`. Build the fixture set first, then a report-only checker | F14 | 2026-09-10 | `accepted` |
 
 ## D1 — the edge contract
 
@@ -98,3 +99,43 @@ convention, `--check`, and the migration are designed in
 [`docs/architecture/state-as-data.md`](../../architecture/state-as-data.md) and
 are **not decided** by it either — an architecture record sets out the shape and
 what it costs; the decisions belong here, and none of them has been taken.
+
+## D3 — §6.1 is a map, not a plan
+
+**Accepted.** `state-as-data` §6 gains a ruling block saying so, and saying that
+**the checker is the mechanism rather than a backstop** until §7's two named
+preconditions are met.
+
+**§7 already weighed this and did not choose generation.** *"Today drift is
+possible and the checkers catch it. Under generation drift is impossible — and a
+bug rewrites forty files at once, silently, which nothing catches."* A detectable
+failure beats an undetectable one, and F14's measurement puts a number on the
+detectable side: **2 drifted rows out of 31**, both already found by eye.
+
+**The evidence for §7's caution gained a third instance while this was being
+decided.** §7 cites `0042` F4 — first run, 131 failures, **128 of them the
+audit's own** — and `0043` F3, first run, 36 against a clean tree. Composing this
+decision produced the third: a nine-line scan of manifests against metadata
+reported **37** drifted rows; corrected, **2**. **A generator is that bug class
+with write access to 146 documents.**
+
+**Order matters and is part of the decision.** The fixture set comes first,
+because F7 says why it is hard — every derivation row states a positive condition
+with a witness except `analyzing`, which is *any other combination*, so a
+derivation bug always lands there and looks entirely plausible. Checking it means
+proving a negative. **A checker validated by a fixture set is a generator's
+`--check` mode with the write half removed**, so building it settles the
+generator question from its own record rather than from anyone's judgement.
+
+**Three rejections.** **Read §6.1 as a commitment and build the generator** —
+rejected on §7's own reasoning, and because no fixture set exists to catch the
+derivation bug that §7 says is the risk. **Delete §6.1 as unbuilt** — rejected:
+the map is correct and is what a checker needs; deleting it would destroy the
+specification and leave the hand-maintenance unspecified. **Leave it ambiguous
+and let each session decide** — rejected because that is the state that produced
+the question, and because a session hand-editing a projection currently cannot
+tell whether it is doing maintenance or papering over a gap.
+
+**What this does not decide.** Whether the generator is ever built. It moves the
+question behind a checker and a fixture set, both of which have to exist first,
+and both of which are worth building on their own.

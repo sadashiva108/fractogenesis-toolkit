@@ -165,7 +165,10 @@ def check_completeness():
         # 4. Row counts. A table row that did not become an object is the
         #    failure mode a well-formedness check cannot see.
         if "number" in d:
-            for pat, key in ((r'^\| *F\d+ *\|', "members"), (r'^\| *D\d+ *\|', "decisions")):
+            # [FQT], not F: a member id carries its genus in its prefix --
+            # F a finding, Q a question, T a task. Matching only F counted a
+            # commission's members as zero against three in the data. 0039 F31.
+            for pat, key in ((r'^\| *[FQT]\d+ *\|', "members"), (r'^\| *D\d+ *\|', "decisions")):
                 n = len(re.findall(pat, md, re.M))
                 if key == "decisions":
                     dm = read(os.path.join(os.path.dirname(rel), "decisions.md"))

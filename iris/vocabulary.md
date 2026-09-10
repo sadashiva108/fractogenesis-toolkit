@@ -31,6 +31,7 @@ restates a definition from it.
 - [11. What another session may do](#11-what-another-session-may-do)
 - [12. `Relates to`](#12-relates-to)
 - [13. What is validated, and what is not](#13-what-is-validated-and-what-is-not)
+- [14. How to cite one of these in writing](#14-how-to-cite-one-of-these-in-writing)
 
 ---
 
@@ -386,5 +387,36 @@ closed and is not is worse than one that admits where it is open.
 **Six of the twelve edge kinds have zero instances**, and two of those six —
 `evidences` and `contradicts` — are the pair that makes a trial recordable. The
 machinery is present and unexercised.
+
+[&#8593; Contents](#contents)
+
+## 14. How to cite one of these in writing
+
+**A bare `§` is legal only inside the document it refers to.** Everywhere else —
+a chat message, a manifest entry, another document — it names its document first.
+Five documents in this repository have numbered sections, and a bare `§6` has
+meant a different one of them in consecutive sentences.
+
+| Write | To mean |
+|---|---|
+| `state-as-data §6.1` | that section of `docs/architecture/state-as-data.md` |
+| `instructions §9b` | `.github/session-management-instructions.md` |
+| `procedure §4` | `iris/procedure.md` |
+| `typed-bundles §4.3` | `docs/architecture/typed-bundles-and-work.md` |
+| `legend` | `docs/legend.md`, which has no numbered sections |
+
+**The record objects already read unambiguously and need no prefix**, because
+their shapes do not collide with anything else:
+
+| Write | To mean |
+|---|---|
+| `0043` | a bundle |
+| `0043/F7` | a member of one |
+| `0043/D12` | a decision of one |
+| `R301` | a revision |
+| `2b079c9` | a commit |
+
+**It is only `§` that is overloaded**, and only because several documents each
+have one. Nothing else here needed a rule.
 
 [&#8593; Contents](#contents)

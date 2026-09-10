@@ -161,7 +161,12 @@ EOF
   # the Findings table exists. A bundle with one finding used to omit it, and
   # `verify-findings-counts.sh` returns 1 when it finds no table -- so a missing
   # table read as "one finding" and agreed with every index. 26 bundles had none.
-  if grep -qE '^\|[ ]*F[0-9]+[ ]*\|' "$doc"; then
+  # [FQT], not F: a member id carries its genus in its prefix -- F a finding,
+  # Q a question, T a task (plan_findings_work.py MEMBER_PREFIX). This matched
+  # only F, so a commission's questions were invisible to every rule below and
+  # the first commission written could not be made conformant: `check` accepted
+  # its Q members and this file reported it had no table at all. 0039 F31.
+  if grep -qE '^\|[ ]*[FQT][0-9]+[ ]*\|' "$doc"; then
     pass "$bundle  findings table present"
   else
     bad "$bundle" "no Findings table -- every bundle has one, even with a single finding"
@@ -217,10 +222,10 @@ EOF
   fi
 
   # cross-reference: what the sibling documents cite must exist here
-  have_f="$(grep -oE '^\|[ ]*F[0-9]+' "$doc" | tr -d '| ' | sort -u)"
+  have_f="$(grep -oE '^\|[ ]*[FQT][0-9]+' "$doc" | tr -d '| ' | sort -u)"
   for sib in "$dir/decisions.md" "$dir/resolutions.md"; do
     [ -f "$sib" ] || continue
-    cited="$(awk -F'|' '/^\|/ { print $2 "\n" $4 }' "$sib" | grep -oE 'F[0-9]+' | sort -u)"
+    cited="$(awk -F'|' '/^\|/ { print $2 "\n" $4 }' "$sib" | grep -oE '[FQT][0-9]+' | sort -u)"
 
     # 0039 D15: a decision must cite AT LEAST ONE finding.
     #
@@ -247,7 +252,7 @@ EOF
       while IFS= read -r drow; do
         [ -n "$drow" ] || continue
         did="$(printf '%s' "$drow" | awk -F'|' '{ gsub(/^[ \t]+|[ \t]+$/, "", $2); print $2 }')"
-        dfind="$(printf '%s' "$drow" | awk -F'|' '{ print $4 }' | grep -oE 'F[0-9]+' | head -1)"
+        dfind="$(printf '%s' "$drow" | awk -F'|' '{ print $4 }' | grep -oE '[FQT][0-9]+' | head -1)"
         # NO single-finding exemption. A first draft of this check had one, on
         # the reasoning that findings-and-sessions.md 4a made the citation
         # derivable for a one-finding bundle. That convention was RETIRED at

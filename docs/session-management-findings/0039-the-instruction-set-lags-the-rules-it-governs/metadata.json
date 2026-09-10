@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-10T02:30:00-04:00",
+  "updatedAt": "2026-09-10T03:30:00-04:00",
   "number": "0039",
   "bundleName": "0039-the-instruction-set-lags-the-rules-it-governs",
   "genus": "findings",
@@ -454,6 +454,25 @@
         "revision": "301",
         "commit": null
       }
+    },
+    {
+      "id": "F31",
+      "statement": "A member id carries its genus in its prefix and three checkers match only `F`, so a commission's questions are invisible to them and no commission can be made conformant",
+      "status": "resolved",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-10",
+      "sectionHeading": "F31 \u2014 the schema says `Q`, and two checkers can only see `F`",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": {
+        "resolvedBy": [
+          "D29"
+        ],
+        "whatWasDone": "six sites across verify-findings-headers.sh, verify-findings-counts.sh and check-metadata-completeness.py match [FQT] rather than F, the range MEMBER_PREFIX defines",
+        "revision": "303",
+        "commit": null
+      }
     }
   ],
   "decisions": [
@@ -804,6 +823,18 @@
       "answersAsOf": null,
       "voidedReason": null,
       "sectionHeading": "D28 \u2014 the patch is made with `git diff HEAD`"
+    },
+    {
+      "id": "D29",
+      "decision": "The checkers match the genus prefix [FQT] rather than the letter F; the schema is unchanged",
+      "members": [
+        "F31"
+      ],
+      "decided": "2026-09-10",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D29 \u2014 the checkers match the genus prefix, not the letter `F`"
     }
   ],
   "contributions": [
@@ -939,6 +970,16 @@
       "from": "0039/F30",
       "to": "0041/F7",
       "why": "0041 F7 measured the live instance and handed the rule here because \u00a76 is this bundle's; whether an instrument checks it stays F7's",
+      "reason": null,
+      "basis": "asserted",
+      "asserted_by": "entity-model-and-vocabulary-20260909-053548",
+      "asserted_on": "2026-09-10"
+    },
+    {
+      "kind": "relates-to",
+      "from": "0039/F31",
+      "to": "0056/Q3",
+      "why": "the same collision from the commission's side; Q3 asks which vocabulary the shape should use and is not decided here because 0056 is unclaimed",
       "reason": null,
       "basis": "asserted",
       "asserted_by": "entity-model-and-vocabulary-20260909-053548",

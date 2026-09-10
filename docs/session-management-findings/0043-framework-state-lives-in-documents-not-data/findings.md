@@ -48,6 +48,7 @@ should record here rather than open a near-duplicate beside it.**
 | F11 | Twenty-eight stored fields are read by no live instrument, and `answersAsOf` — the field a rule is said to rest on — is one of them | `framing` |
 | F12 | Six fields are populated on no record in the tree; two of them are defects and four mark lifecycle branches that have never run | `framing` |
 | F13 | Edge kinds have no closed set and no reason is validated anywhere, against a legend that says a checker does both | `framing` |
+| F14 | `state-as-data` §6.1 declares eleven classes of output generated projections, no generator exists, and nothing said whether the section is a commitment or a description | `resolved` |
 
 ## F1 — the status is in the filename
 
@@ -773,3 +774,43 @@ log. `commits` and `revisions` are mechanically checkable and should be checked;
 **`disposals` is a judgement** — what happened to each bundle and why it was
 disposed of that way — and belongs to the session that made it. A generator would
 produce the two that are checkable and silently assert the one that is not.
+
+## F14 — eleven declared projections, no generator, and no ruling either way
+
+`state-as-data` §6.1 is titled *The map* and lists eleven outputs with their row
+source and the origin of every column: the three tree `INDEX.md`, each session's
+`findings-manifest.md` and `metadata.md`, and `findings.md` / `decisions.md` /
+`resolutions.md` per bundle. §6.2 fences generated regions with
+`<!-- generated:… -->` markers. §6.3 constrains the generator to refreshing
+regions that already exist.
+
+**Measured 2026-09-10: there are zero generated regions in the tree.** The only
+two `<!-- generated:` occurrences are §6.2's own example and a sentence in `0050`
+describing a guard that greps for them.
+
+So the whole surface is hand-maintained, and it is larger than anyone had
+counted:
+
+| Projection | Count |
+|---|---:|
+| tree `INDEX.md` | 6 |
+| `<session>/findings-manifest.md` | 10 |
+| `<session>/metadata.md` | 12 |
+| `findings.md` · `decisions.md` · `resolutions.md` | 118, across 55 bundles |
+
+**The drift is real and small.** Two rows in one session's manifest stood exactly
+inverted against their `metadata.json` — `0038` shown `answered` against data
+`analyzing`, `0047` the reverse. Measured across every manifest in the tree:
+**2 of 31 rows.** The owner found both by eye before any instrument did.
+
+### What was actually missing
+
+Not the generator. **A ruling.** §6.1 could be read as a commitment to build one
+or as a description of what one would produce, and everything downstream depends
+on which: whether a checker is the mechanism or a stopgap, whether the fixture
+set `0043` F7 calls for is on the critical path, and whether a session
+hand-editing a projection is doing maintenance or working around a gap.
+
+The reading was contributed by `drift-and-the-write-boundary-20260909-053548`,
+which asked for the ruling rather than taking it, on the ground that §6 is this
+bundle's section. That is the boundary working.

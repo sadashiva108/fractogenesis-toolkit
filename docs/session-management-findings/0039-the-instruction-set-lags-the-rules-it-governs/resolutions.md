@@ -9,6 +9,7 @@ this file records what was actually done.
 
 | Finding | Resolved by | What was done | Revision | Commit |
 |---|---|---|---|---|
+| F31 | D29 | `verify-findings-headers.sh` matches `[FQT][0-9]+` in its four sites and `verify-findings-counts.sh` matches `[FQT]?[0-9]+` in `findings_in_bundle()`, and `check-metadata-completeness.py` matches `[FQT]\d+` in its row count; all three carry a comment naming `MEMBER_PREFIX` as the source of the range. Verified by `0056`, a three-question commission, passing both | 303 | — |
 | F30 | D28 | §6's recipe block uses `git diff HEAD` and gains the mechanism, the three-file measurement and the byte-identical note. The conformant prompt carries the short form | 301 | — |
 | F29 | D27 | §7's commit-message subsection states that a message is valid only for the patch it was handed over with, gives the one-line test — the revision in the subject must be among the entries the patch adds — records the nine-commit measurement, and states the corollary that the manifest entry ships in the same commit as the work. `conformant-prompt.md` carries the short form | 296 | — |
 | F28 | D26 | `docs/legend.md`'s permission table splits the old row: `assigned` and `retired` keep *nothing is readable* with the reason they follow from member status, and **`unclaimed` gets its own row reading as `analyzing`** with the owner's two acts withheld. The prose at *A bundle* no longer says an `unclaimed` bundle is closed to every session | 287 | — |

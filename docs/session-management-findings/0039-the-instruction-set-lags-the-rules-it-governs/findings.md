@@ -80,6 +80,7 @@ for.
 | F28 | `unclaimed` sits in a readability row it does not earn, so releasing a bundle makes 19 `decided` and 7 `framing` members unreadable for a reason about ownership | `resolved` |
 | F29 | Nothing says a commit message is valid only for the patch it was handed over with, and three of the last seven commits name a revision the commit does not add | `resolved` |
 | F30 | §6's patch recipe drops a deletion: `git add -N .` stages the removal and plain `git diff` then finds nothing, so a patch that removes a file carries every addition and no deletion | `resolved` |
+| F31 | A member id carries its genus in its prefix and three checkers match only `F`, so a commission's questions are invisible to them and no commission can be made conformant | `resolved` |
 
 ---
 
@@ -1369,3 +1370,50 @@ nothing here decides that.
 the next `checkout -f`. **F30 — the patch omits deletions.** All three are one
 step, `git add -N .`, doing something other than what the sentence beside it
 says, and **all three are silent**: `git apply` exits 0 in every case.
+
+## F31 — the schema says `Q`, and two checkers can only see `F`
+
+`plan_findings_work.py` has carried this since Revision 271:
+
+```python
+MEMBER_PREFIX = {"findings": "F", "commission": "Q", "charter": "T", "remedy": "T"}
+```
+
+`check` enforces it. **Three checkers were never told.**
+`verify-findings-headers.sh` matched `F[0-9]+` in four places,
+`verify-findings-counts.sh` matched `F?[0-9]+` in one, and
+`check-metadata-completeness.py` matched `^\| *F\d+ *\|` in one more.
+
+**The third was found only after the first two were fixed**, because until
+`counts` and `headers` passed, `completeness` had nothing to be the last failure
+of. This finding said *two* until it was run.
+
+**So a conformant commission was impossible**, and the two halves fail in
+opposite directions:
+
+| Write the members as | `check` | `counts` | `headers` |
+|---|---|---|---|
+| `Q1`, `Q2`, `Q3` | passes | **counts the bundle as holding 1** | **"no Findings table"** |
+
+and `completeness` reports **0 members in markdown against 3 in data**.
+| `F1`, `F2`, `F3` | **MEMBER-PREFIX fails** | passes | passes |
+
+`counts` is the quieter of the two and the worse. Its `findings_in_bundle()` ends
+`print (n ? n : 1)` — **a bundle whose members it cannot see is reported as
+holding one member**, not zero, so a three-question commission reads as a
+one-finding bundle and the failure looks like an off-by-two in an index row
+rather than a parser that saw nothing.
+
+### Found by doing it, not by reading it
+
+This was measured while creating `0056`, the first `commission` in the tree, in a
+throwaway copy before the bundle was written for real. **Nothing in three days of
+reading these files surfaced it**, because every bundle in the tree is `findings`
+and every member is `F`. The genus was added at Revision 271, the prefix map with
+it, and **the first instance that would exercise it arrived thirty-two revisions
+later.**
+
+That is this bundle's subject exactly: the instruction set — and here the
+checkers that enforce it — lagging a rule the code already carried. It is also
+`0050`'s class from the other side: not an instrument that cannot fire, but one
+that fires confidently on a population it cannot see.

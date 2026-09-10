@@ -913,6 +913,19 @@ is written before the status moves.
     it, what was actually done, the revision, the commit. The revision is taken
     at apply time like any other. The file's shape is in section 11.
 3.  **Move the finding to `resolved`.**
+4.  **Refresh every projection that reads the status you just moved.** The
+    bundle's own `INDEX.md` row, the owning session's `findings-manifest.md`
+    row, and `docs/sessions/INDEX.md` if the session's counts changed.
+    `docs/architecture/state-as-data.md` section 6.1 maps which table reads
+    which field; **no generator refreshes them and none is planned**, so this
+    step is a hand edit and is why it is written down.
+
+**Step 4 was missing and the omission is measurable.** Two rows in one session's
+`findings-manifest.md` stood exactly inverted against their `metadata.json` —
+`0038` shown `answered` against data `analyzing`, `0047` the reverse — because
+resolving moved the status and nothing said to move the row. Measured across the
+tree at Revision 303: **2 of 31 manifest rows drifted.** `0047` F13 is the same
+defect at the bundle level.
 
 Reversing steps 2 and 3 produces a `resolved` finding with nothing behind it,
 which nobody can check. `0037` F5 recorded that state from the other direction:
@@ -934,6 +947,34 @@ This procedure exists because it did not. Every other lifecycle event -- superse
 reopening, withdrawing, transferring -- had numbered steps; the commonest one had a
 file schema and no instructions, and seven resolutions went unwritten across five
 revisions because nothing prompted them. `0039` F17 and D18.
+
+## 9c. Closing a bundle
+
+**A bundle is not closed by an act. It closes because its members did**, and this
+section exists because that sentence has been true and unwritten.
+
+1.  **Resolve or withdraw every live member**, each by section 9b or 9a. There is
+    no bulk form and no shortcut: a bundle with one `framing` member is not
+    closeable, and making it so would be moving a status without its evidence.
+2.  **Run `stamp`.** The standing is derived, never typed. `answered` is *every
+    member inert, and at least one `resolved`*; `retired` is every member
+    `withdrawn`. **If `stamp` does not move the bundle, it is not closed** — and
+    the reason is in the members, not in the standing.
+3.  **Refresh the projections**, as section 9b step 4.
+4.  **Record it in the manifest entry** with what closed and against which
+    decisions.
+
+**What closing does not do.** It does not release ownership — that is section
+10a — and it does not make the bundle unreadable: a `resolved` member is read
+only, not gone. **A closed bundle that someone reopens is section 9a**, and its
+standing follows its members back.
+
+**Why there were no steps until now.** Every other lifecycle event — superseding,
+reopening, withdrawing, transferring, releasing — has numbered steps in this
+document. Being *done* with a dossier had none, which is `0047` F13: closure gets
+recorded where people read it and not where the instrument reads it, and nothing
+makes those one act. **Section 9b's own closing paragraph is this finding one
+level lower** and was written five revisions before anyone noticed it generalised.
 
 ## 10. Transferring a bundle
 

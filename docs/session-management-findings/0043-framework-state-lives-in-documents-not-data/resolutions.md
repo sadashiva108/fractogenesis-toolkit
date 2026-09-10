@@ -9,6 +9,7 @@ Two findings are closed. The reasoning is in `decisions.md` and in
 
 | Finding | Resolved by | What was done | Revision | Commit |
 |---|---|---|---|---|
+| F14 | D3 | `docs/architecture/state-as-data.md` §6 gains a ruling block: §6.1 is a map and not a plan, the checker is the mechanism until §7's `--check` and fixture set exist, and the fixture set comes first. The zero-generated-regions measurement and the 2-of-31 drift are recorded in it | 303 | — |
 | F5 | D1 | Authority moved from documents to data: 54 `metadata.json` files, and the `STATUS-`/`STATE-` tag files deleted | 222 | `42d08a4` |
 | F6 | D1 | Every repeatable field is an array, and `Relates to` became a projection over typed edges | 222 | `42d08a4` |
 

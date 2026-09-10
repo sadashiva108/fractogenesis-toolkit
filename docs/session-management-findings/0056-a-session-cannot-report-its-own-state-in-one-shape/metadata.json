@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-10T03:15:00-04:00",
+  "number": "0056",
+  "bundleName": "0056-a-session-cannot-report-its-own-state-in-one-shape",
+  "genus": "commission",
+  "kind": "session-management",
+  "subKind": null,
+  "subject": "A session cannot report its own state in one shape",
+  "recordedOn": "2026-09-10",
+  "recordedOccasion": "after the owner asked why every session's state report looks different and proposed a table.",
+  "recordedBy": {
+    "sessionBundle": "entity-model-and-vocabulary-20260909-053548",
+    "sessionId": "session_01LSgzo7EtPPVJ1gG8s4NVNW"
+  },
+  "severity": "Q1 is load-bearing -- without a shape, a printed report and a chat answer cannot be checked against each other.",
+  "feltAt": [
+    "every session hand-off in this tree",
+    "iris/status.md",
+    ".internal/ai-scripts/session-management/measure-iris-status.py"
+  ],
+  "scope": "session management. This is a commission: its deliverable is a blueprint under docs/architecture/, not a script.",
+  "read": [
+    "docs/architecture/state-as-data.md section 6.1",
+    "iris/status.md and its generator",
+    "docs/sessions/*/findings-manifest.md"
+  ],
+  "standing": "unclaimed",
+  "progress": "analyzing",
+  "ownership": "unclaimed",
+  "lineage": null,
+  "members": [
+    {
+      "id": "Q1",
+      "statement": "What is the shape of a session state report -- what does a dossier row carry, what does a member row carry, and what makes a member recently changed",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-10",
+      "sectionHeading": "Q1 -- what is the shape",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "Q2",
+      "statement": "Is the printed report and the chat-response schema one artifact or two, and if one, what makes a chat answer checkable against it",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-10",
+      "sectionHeading": "Q2 -- one artifact or two",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "Q3",
+      "statement": "Does a dossier's member table take the vocabulary of its genus -- Questions, Tasks -- or one word for all four, given the prefix already carries the genus",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-10",
+      "sectionHeading": "Q3 -- a commission's members are questions, and the checkers said Findings",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    }
+  ],
+  "decisions": [],
+  "contributions": [],
+  "edges": [
+    {
+      "kind": "relates-to",
+      "from": "0056/Q1",
+      "to": "0043/F14",
+      "why": "a state report is another reader of the projection map F14 ruled on; it must read the data and not the projections",
+      "reason": null,
+      "basis": "asserted",
+      "asserted_by": "entity-model-and-vocabulary-20260909-053548",
+      "asserted_on": "2026-09-10"
+    },
+    {
+      "kind": "relates-to",
+      "from": "0056/Q3",
+      "to": "0039/F31",
+      "why": "F31 fixed the checkers that could not see Q members; Q3 is the vocabulary half and is not decided while this bundle is unclaimed",
+      "reason": null,
+      "basis": "asserted",
+      "asserted_by": "entity-model-and-vocabulary-20260909-053548",
+      "asserted_on": "2026-09-10"
+    }
+  ],
+  "indexNotes": "The first commission in the tree. Recorded unclaimed and deliberately not assigned."
+}
