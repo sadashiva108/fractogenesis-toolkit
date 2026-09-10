@@ -56,6 +56,7 @@ without answering it for rules.
 | D24 | **A status moves on a material change to the record, and a read is not one.** `docs/legend.md` lines 69 and 546 stand; line 199's *reading is the transition* goes, and §10's *the transfer ends when the target session reads the bundle* goes with it. A transfer ends on the target session's **first write to the bundle as owner**, which is what five records have said since Revision 248 | F26 | 2026-09-09 | `accepted` |
 | D25 | **`dissolved` replaces `withdrawn` as a session state.** A session's terminal shutdown and a member's carry the same idea and may not carry the same word. The member sense stays: it is the more specified and the more embedded. `dissolved` sits beside `closed`, is adjectival like `available` and `active`, and appeared nowhere in the record | F27 | 2026-09-09 | `accepted` |
 | D26 | **Readability is a property of the member, never of the bundle's ownership.** `unclaimed` leaves the *nothing is readable* row and gets its own: read as `analyzing`, and **no session may move a member to `decided` or `resolved`**, those being the owner's acts with no owner to perform them | F28 | 2026-09-10 | `accepted` |
+| D27 | **A commit message is valid only for the patch it was handed over with.** The revision named in the subject must be among the entries that patch adds; a message whose patch was not applied, was applied after the tree moved, or was renumbered is void. The corollary: the manifest entry ships in the same commit as the work it explains | F29 | 2026-09-10 | `accepted` |
 
 ## Findings 1, 2, 5 and 6 — a rule lives where its kind lives
 
@@ -1321,3 +1322,36 @@ the rule this decision changes, and its own detail string defers to `0047` F1. A
 toolkit write against it is gated on **that** finding being `decided`, by a
 session that owns it. **Naming what an instrument should now do is not the same as
 doing it**, and the boundary is the point.
+
+## D27 — a message is valid only for the patch it was handed over with
+
+**Accepted.** §7's commit-message subsection gains the rule and one test: **the
+revision named in the subject must be among the entries the patch adds.** A
+message whose patch was not applied, was applied after the tree moved, or was
+renumbered between the offer and the commit is **void**, and the session says so
+and offers a new one. The corollary is stated because two of the four instances
+are that shape: **the manifest entry ships in the same commit as the work it
+explains.**
+
+**Three alternatives are recorded rejected.**
+
+**Build the check first**, which is where this started. Rejected because `0050`
+F7 asks for exactly the opposite and gives the reason: a rule invented inside a
+checker is a rule nobody agreed, and `0041` D1 and `0050` D2 both refused the same
+move. There is a second reason here — the checker would have to distinguish a
+legitimate multi-revision commit from a mis-scoped one, and **that discriminator
+is the rule**. It cannot be derived from the log.
+
+**Forbid multi-revision commits**, which would make the test trivial. Rejected:
+Revision 266 settled that a commit may carry several, four of the nine measured
+commits do, and every one of those four is correct. The defect is never the
+count.
+
+**Say it in §0 step 6 instead**, beside the apply. Rejected because the failure
+is not in applying — it is in a block of text outliving the thing it described,
+and §7 is where the message is defined. Step 6 already says the report ends with
+*applied at your direction*; what it lacked was a statement that the message is
+part of that report and not a detachable artifact.
+
+**What this decision does not do.** It does not arm anything. `0050` F7 owns the
+instrument, and its own reading is that the rule had to exist first.

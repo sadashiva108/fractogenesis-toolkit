@@ -344,6 +344,12 @@ door back.
   and nothing else** — no `git commit`, no `-m`, no quoting wrapper. The owner
   commits with a plain `git commit` and pastes into the editor. Commands and
   reminders go in the conversation beside the block, never inside it.
+  **The message is valid only for the patch it was handed over with**: if that
+  patch is not applied, or the tree moved, or the number changed, the block is
+  void — offer a new one. **The revision in the subject must be among the
+  entries the patch adds**, which also means the manifest entry ships in the
+  same commit as the work. Three of the seven commits through Revision 294 fail
+  that test. §7.
 
 
 ### The rules you will break if nobody tells you

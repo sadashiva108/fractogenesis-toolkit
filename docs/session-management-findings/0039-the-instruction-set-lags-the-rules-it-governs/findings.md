@@ -78,6 +78,7 @@ for.
 | F26 | `docs/legend.md` says a status moves on a write and also that reading is the transition, and §10 sides with the minority against five records and the tree | `resolved` |
 | F27 | `withdrawn` is a finding `status` and a session `state`, so the rule that no value belongs to more than one vocabulary is broken in the document that states it | `resolved` |
 | F28 | `unclaimed` sits in a readability row it does not earn, so releasing a bundle makes 19 `decided` and 7 `framing` members unreadable for a reason about ownership | `resolved` |
+| F29 | Nothing says a commit message is valid only for the patch it was handed over with, and three of the last seven commits name a revision the commit does not add | `resolved` |
 
 ---
 
@@ -1254,3 +1255,63 @@ defect from the instrument's side — `plan_findings_work.py:614` emits
 `CLOSED-BUNDLE-LIVE-FINDING` with the detail *"0047 F1, which is undecided"*,
 deferring to a ruling nobody had made. **This finding is the vocabulary half and
 is not a decision on F1**, which is not this session's to take.
+
+## F29 — a commit message outlives the patch it was written for, and nothing says it should not
+
+§7 says take the revision number at apply time. It does not say what happens to a
+message already handed over when the patch it named is not the patch that lands.
+**Measured over the nine commits through Revision 295: six pass, three fail.**
+
+| commit | subject | entries it adds | |
+|---|---|---|---|
+| `aea2006` | 295 | 295, 291 | pass |
+| `c929a00` | 294 | 294 | pass |
+| `c9f586b` | 293 | 293, 285 | pass |
+| `905beed` | 292 | 292 | pass |
+| `15069fe` | 291 | 290, 289 | **fail** |
+| `eb8b6de` | 290 | *(none)* | **fail** |
+| `8b45285` | 288 | 288 | pass |
+| `777f468` | 287 | 287, 286 | pass |
+| `889b8ac` | 285 | 284 | **fail** |
+
+`636eba0` is the same failure earlier — titled *Revision 271*, carrying Revision
+270's work.
+
+**A commit may legitimately carry several revisions.** Revision 266 settled that,
+so the test is **membership, not count**: `777f468` adds 287 and 286 under the
+subject *Revision 287* and is correct. The discriminator is whether the subject's
+own number is among them.
+
+### Why a wrong subject cannot be taken back
+
+`.share/check-manifest-revision.sh` has read commit subjects since Revision 278 —
+`0047` F12, the third place a number is taken. **The subject consumes the number
+whether or not any entry uses it**, and history is not rewritten by a session, so
+the number is gone. `bin/verify-manifest-coverage.sh` names the two resulting
+states, and `0050` F8, F9 and F10 record what happens next: the tool is correct,
+nothing runs it, nothing says who repairs it, and **the only exit from `MISSING`
+creates a permanent `ORPHANED`**.
+
+So this finding sits upstream of that whole chain. Every row in
+`verify-manifest-coverage.sh`'s report except `DUPLICATE` traces to a subject
+line written against a patch other than the one committed.
+
+### The two failure shapes are different acts
+
+**`889b8ac` and `636eba0` are a message reused.** A block was handed over for one
+patch and pasted onto another — the message outlived its subject.
+
+**`eb8b6de` and `15069fe` are a change set split.** The message was right about
+its own revision; the manifest entry simply was not in the commit. `eb8b6de` is
+this session's, and its entry rode out two commits later in `15069fe`, which is
+how one mistake produced two failing rows and one permanent `ORPHANED`.
+
+Both are caught by the same one-line test, which is the argument for stating it
+once rather than as two rules.
+
+### What this does not decide
+
+**The instrument is `0050` F7's** and is not built here. Writing the checker
+first would mean inventing the rule inside it, which `0041` D1 and `0050` D2 both
+refuse — and `0050` F7 says so explicitly, naming this section and this session
+as where the rule belongs. This records the rule. Arming it is theirs.

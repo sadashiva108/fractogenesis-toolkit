@@ -639,6 +639,37 @@ staging — goes in the conversation beside the block, not inside it.
 
 End with the `Co-Authored-By` and `Claude-Session` trailers.
 
+**A message is valid only for the patch it was handed over with.** The subject
+names a revision, and that is a claim about what the commit contains. If the
+patch is not applied, is applied after the tree has moved, or is renumbered
+between the offer and the commit, **the message is void**: say so and offer a
+new one rather than letting the old block stand. A message handed over before
+the apply is a message written against a guess.
+
+**The test is one line — the revision named in the subject must be among the
+entries the patch adds.** Measured over the seven commits through Revision 294,
+**three fail it**: `889b8ac` is titled *Revision 285* and adds Revision 284's
+entry; `eb8b6de` is titled *Revision 290* and adds no entry at all; `15069fe`
+is titled *Revision 291* and adds 290 and 289. `636eba0` is the same failure
+earlier, titled *Revision 271* and carrying Revision 270. **A commit may carry
+several revisions** — Revision 266 settled that — so the test is membership,
+not count, and `777f468` adding 287 and 286 under the subject *Revision 287*
+passes.
+
+**A wrong subject is neither cosmetic nor reversible.**
+`.share/check-manifest-revision.sh` has read commit subjects since Revision 278
+(`0047` F12), so **the subject consumes the number** whether or not any entry
+uses it, and history is not rewritten to release it.
+`bin/verify-manifest-coverage.sh` reports the two states that follow —
+`MISSING` where a number is claimed and never written, `ORPHANED` where the
+entry arrived in some other commit — and it states that `ORPHANED` cannot be
+cleared.
+
+**So the manifest entry travels in the same commit as the work it explains.** A
+patch that changes files and leaves its entry for later produces `ORPHANED`
+against its own revision: that is what `eb8b6de` did, and the entry rode out two
+commits behind the code it described.
+
 ## 8. Reading before working
 
 - `docs/legend.md` — every status and state. Required.

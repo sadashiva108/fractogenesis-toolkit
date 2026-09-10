@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-10T03:15:00-04:00",
+  "updatedAt": "2026-09-10T01:08:54-04:00",
   "number": "0039",
   "bundleName": "0039-the-instruction-set-lags-the-rules-it-governs",
   "genus": "findings",
@@ -416,6 +416,25 @@
         "revision": 287,
         "commit": null
       }
+    },
+    {
+      "id": "F29",
+      "statement": "Nothing says a commit message is valid only for the patch it was handed over with, and three of the last seven commits name a revision the commit does not add",
+      "status": "resolved",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-10",
+      "sectionHeading": "F29 \u2014 a commit message outlives the patch it was written for, and nothing says it should not",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": {
+        "resolvedBy": [
+          "D27"
+        ],
+        "whatWasDone": "\u00a77's commit-message subsection states that a message is valid only for the patch it was handed over with, with the membership test and the nine-commit measurement; the conformant prompt carries the short form",
+        "revision": "296",
+        "commit": null
+      }
     }
   ],
   "decisions": [
@@ -742,6 +761,18 @@
       "answersAsOf": "2026-09-10T03:10:00-04:00",
       "voidedReason": null,
       "sectionHeading": "D26 \u2014 readability is a property of the member, never of the bundle's ownership"
+    },
+    {
+      "id": "D27",
+      "decision": "A commit message is valid only for the patch it was handed over with, and the revision named in its subject must be among the entries that patch adds",
+      "members": [
+        "F29"
+      ],
+      "decided": "2026-09-10",
+      "outcome": "accepted",
+      "answersAsOf": null,
+      "voidedReason": null,
+      "sectionHeading": "D27 \u2014 a message is valid only for the patch it was handed over with"
     }
   ],
   "contributions": [
@@ -857,6 +888,16 @@
       "from": "0039/F28",
       "to": "0047/F1",
       "why": "F28 rules what `unclaimed` means in docs/legend.md, which is the vocabulary half of the same defect; F1 is the instrument half \u2014 whether CLOSED-BUNDLE-LIVE-FINDING should fire and what a release owes its live members \u2014 and is not this session's to decide",
+      "reason": null,
+      "basis": "asserted",
+      "asserted_by": "entity-model-and-vocabulary-20260909-053548",
+      "asserted_on": "2026-09-10"
+    },
+    {
+      "kind": "blocks",
+      "from": "0039/F29",
+      "to": "0050/F7",
+      "why": "0050 F7 asks for the rule before the instrument, and names this section and this session as where it belongs",
       "reason": null,
       "basis": "asserted",
       "asserted_by": "entity-model-and-vocabulary-20260909-053548",
