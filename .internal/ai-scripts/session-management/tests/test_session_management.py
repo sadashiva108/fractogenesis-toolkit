@@ -212,16 +212,22 @@ class TestVocabulary(unittest.TestCase):
 
 
     def test_no_undeclared_overlap_between_vocabularies(self):
-        """Every pair but one, and the one is named rather than absorbed.
+        """Every pair, and nothing is excused.
 
         docs/legend.md: "no word appears in both vocabularies, and a schema
         check asserts the two sets are disjoint." This is that check, over every
-        pair of closed sets in the module, minus the overlaps DECLARED_OVERLAPS
-        licenses -- and minus `finding.status` x `session.state`, which is a
-        Nothing is excused. The one pair that was -- `withdrawn` as both a
-        finding status and a session state -- was renamed to `dissolved` at
-        Revision 273, so the exclusion and the expected-failure test that
-        guarded it are both gone. A NEW overlap fails here immediately.
+        pair of closed sets in the module, minus only the overlaps
+        DECLARED_OVERLAPS licenses.
+
+        It carried an exclusion until Revision 273. `withdrawn` was both a
+        finding status and a session state, so the rule was broken in the
+        document that states it -- `0039` F27 -- and `docs/legend.md` was not
+        the instruments session's to change. The pair was skipped here by name
+        and asserted separately under `expectedFailure`, so the suite reported
+        the defect without going red for it. Revision 273 renamed the session
+        value to `dissolved`; the skip and that second test are both gone, and
+        this one now covers the whole surface. A NEW overlap fails here
+        immediately.
         """
         found = undeclared_overlaps()
         self.assertEqual(found, {}, "undeclared overlap: %s" % found)
