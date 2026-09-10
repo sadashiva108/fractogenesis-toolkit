@@ -5,6 +5,11 @@ Every session is a bundle: `docs/sessions/<title>-<stamp>/`, holding a
 finding, one `handoff-<stamp>.md` per handover, and `final-summary.md` when it
 reaches `closed` or `withdrawn`.
 
+**Three sessions are building IRIS concurrently. Who writes what, and the working
+rules that came out of it, are in [`IRIS-COORDINATION.md`](IRIS-COORDINATION.md)** —
+in this repository since Revision 302, having previously lived in a connected
+folder where a concurrent write destroyed one silently.
+
 The shape and what each state owes are in
 `.github/session-management-instructions.md` section 5. **What the states mean is in [`docs/legend.md`](../legend.md)**,
 alongside the findings statuses. This file carries the rows.
