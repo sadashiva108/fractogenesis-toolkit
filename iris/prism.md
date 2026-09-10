@@ -1,11 +1,13 @@
 # Prism — the allocator: how work is grouped and put to a session
 
-> **DRAFT — Revision 273.** Written before the genus rename landed, so it still
-> says `findings[]` where the schema now says `members[]`, and *finding* where
-> the vocabulary now says *member*. **Its measurements and its findings about the
-> code are current and were taken against the tree**; its vocabulary is not.
-> [vocabulary.md](vocabulary.md) is authoritative where the two disagree.
-
+> **Written before the genus rename, and checked against it at Revision 274.**
+> Its measurements were taken against the tree and are current. Its vocabulary
+> predates `members[]` and the four genera, so where it says *finding* it means
+> what [vocabulary.md](vocabulary.md) now calls a **member**, and where it names
+> a *bundle* the unit noun is under review. **No contradiction with the current
+> vocabulary was found in it** — the check was for the session state `withdrawn`,
+> which is now `dissolved`, and for the retired `findings[]` key. Neither
+> appears. `vocabulary.md` is authoritative where the two ever disagree.
 > **Role:** the reference for `bin/plan-findings-work.sh allocate` and the graph it
 > reasons over. Authoritative for the allocator's *mechanism* — the nodes and edges,
 > which edges the running code treats as hard, how a proposal is scored, and what a
@@ -42,6 +44,8 @@ has taken, so an irreversible assignment is spent on work that cannot proceed.
 The allocator replaces that with one scored proposal over the whole queue.
 **It proposes; it never assigns.** `plan_findings_work.py` opens no file for writing
 on any allocation path. Approving a proposal is one decision instead of seventeen.
+
+[&#8593; Contents](#contents)
 
 ## 2. The graph it runs on
 
@@ -137,6 +141,8 @@ if fb == tb or tb not in queue or fb in queue:
    the field cannot hold, so it is always true and a settled bundle still blocks. The
    identical dead comparison is in `frontier()`. `0050` F4 opened this class.
 
+[&#8593; Contents](#contents)
+
 ## 3. How it groups
 
 There is no clustering pass and no partition step. The allocator searches assignments
@@ -173,6 +179,8 @@ it prices the cost of bundle atomicity directly into the objective". `score()` t
 six weights and none is `w_hold`. Held-back ready findings are counted and printed;
 they never enter the score. The counter section 8 nominates as "the counter that
 decides the revisit" is emitted, and the objective it was said to steer cannot see it.
+
+[&#8593; Contents](#contents)
 
 ## 4. Cost, load, and capacity
 
@@ -212,6 +220,8 @@ normalises by decisions, so a session that decided more had more chances to be r
 and it counts what came back rather than what should have, so a poor decision nobody
 revisited scores clean. **A capacity is a judgement. Set it with `--capacity N` and
 say it was chosen.**
+
+[&#8593; Contents](#contents)
 
 ## 5. Running it
 
@@ -332,6 +342,8 @@ Six bundles over four sessions is 4,096 arrangements, so this is the exact searc
 negative score carries no meaning alone; the objective is only ever compared against
 other arrangements of the same queue.
 
+[&#8593; Contents](#contents)
+
 ## 6. What it does not model
 
 | Not modelled | Why, and where it bites |
@@ -344,6 +356,8 @@ other arrangements of the same queue.
 | **the topological invariant** | Section 9 claims "every proposed order is a valid topological order of the `blocks` and `evidences` edges". No such check exists in `plan_findings_work.py` |
 | **the patch** | Section 4.4 specifies the allocator emitting the assignment patch — tag, index rows, manifest rows. The implementation prints a proposal and a `DRY RUN` notice; the owner creates the sessions, assigns, and commits |
 | **anything below the bundle** | Ownership is per-bundle by the decision in section 12, so a bundle whose findings are ready is held whole when one sibling is blocked |
+
+[&#8593; Contents](#contents)
 
 ## 7. Open questions
 
@@ -372,3 +386,5 @@ allocator excludes such edges from neither `keep` nor `pull`.
 **Whether per-bundle ownership is costing anything.** Section 12 of the design record
 is the decision, section 8 is the counter meant to revisit it, and that counter is not
 in the objective.
+
+[&#8593; Contents](#contents)

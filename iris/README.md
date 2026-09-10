@@ -63,6 +63,8 @@ set of failures, and they are the reason this exists.
 lost, and why, is the highest-value signal in it, and no other artifact in a
 working life keeps it.
 
+[&#8593; Contents](#contents)
+
 ## 2. Three objects and one loop
 
 | | |
@@ -84,6 +86,8 @@ asserts.
 Full vocabulary in [vocabulary.md](vocabulary.md); the derivations in
 [lifecycles.md](lifecycles.md).
 
+[&#8593; Contents](#contents)
+
 ## 3. Where this comes from
 
 **The field is called design rationale capture, and it is fifty years old.** Most
@@ -102,6 +106,8 @@ which is why a trial is recorded as a member that `evidences` or `contradicts` a
 proposed decision, rather than as a footnote. From the whole tradition, the one
 rule none of them enforced: **a decision without its rejected alternatives is an
 assertion.**
+
+[&#8593; Contents](#contents)
 
 ## 4. The capture bottleneck, and why it is different now
 
@@ -123,6 +129,8 @@ session knowing nothing. That reader now exists, and turns up several times a
 day. **IRIS is design rationale capture at the moment its economics finally
 work** — that is the one sentence.
 
+[&#8593; Contents](#contents)
+
 ## 5. What engineers will already recognise
 
 | | |
@@ -140,6 +148,8 @@ to **May 2026** and that category moves monthly. Anything in it may have been
 superseded; treat it as a pointer to a space, not a survey of it. The four rows
 above it are historical and will not move.
 
+[&#8593; Contents](#contents)
+
 ## 6. What IRIS is not
 
 - **Not an issue tracker.** Nothing here is assigned to a person with a due date.
@@ -153,6 +163,8 @@ above it are historical and will not move.
 - **Not a replacement for version control.** Git answers *what did this look like
   before*. IRIS answers *how did we get here, and what did we decide not to do*.
   They are different questions and only one of them has a tool.
+
+[&#8593; Contents](#contents)
 
 ## 6a. The atelier
 
@@ -178,6 +190,8 @@ not the work — carrying out a closing produces a commission for something noti
 on the way. Without a home at the moment of noticing, that intent evaporates,
 which is section 1's first failure arriving one layer up.
 
+[&#8593; Contents](#contents)
+
 ## 7. The documents
 
 | Document | For |
@@ -194,6 +208,8 @@ which is section 1's first failure arriving one layer up.
 | [why.md](why.md) | the longer answer to *why not just use the assistant directly* |
 | [directory-reference.md](directory-reference.md) | what lives where, and why the machinery and the record are separate directories |
 
+[&#8593; Contents](#contents)
+
 ## 8. Reading order
 
 1. This file.
@@ -204,6 +220,8 @@ which is section 1's first failure arriving one layer up.
 Then the prompt for your kind of work. A session that has to be told something
 not in those files is a finding against them.
 
+[&#8593; Contents](#contents)
+
 ## 9. Status
 
 **IRIS is in use and is not finished.** It was extracted from a working
@@ -211,12 +229,32 @@ repository rather than designed in advance, so parts of it are load-bearing and
 parts are drafts arguing with each other. The documents above say which is which,
 and where they do not, that is a defect worth recording.
 
-**The honest summary as of Revision 271:** the reasoning side is real and
+**The honest summary as of Revision 274:** the reasoning side is real and
 running — four genera in the schema, derivations stamped by one instrument,
-checks with published baselines. The actionable side exists in data and not yet
-in practice, and the two words for it were chosen the day this was written.
+checks with published baselines, 67 tests. **The actionable side exists in data
+and in nothing else**: no charter and no remedy has ever been written, and the
+two words for them were chosen the day this was written. The `serves` edge that
+joins doing to reason is named in [shapes.md](shapes.md) and is not in the closed
+set — and there is no closed set of edge kinds at all.
+
+**Four of the documents below predate the genus rename** and carry a currency
+note saying so: [prism.md](prism.md), [lumen.md](lumen.md), [rules.md](rules.md)
+and [verifications.md](verifications.md). **They were checked against the current
+vocabulary at Revision 274 and no contradiction was found** — the checks were for
+the retired `findings[]` key and for `withdrawn` as a session state, and neither
+appears in any of the four. Their measurements were taken against the tree and
+are current.
+
+**And the layout this describes is not the layout on disk.**
+[directory-reference.md](directory-reference.md) section 5 says exactly how far
+apart they are. Seven changes are queued behind one unwritten requirement, which
+is `0052` F2 — that a breaking change to a record format must arrive with a
+migration plan.
+
 IRIS is a working system with an unfinished half, and saying so is cheaper than
 discovering it.
+
+[&#8593; Contents](#contents)
 
 ## 10. Provenance — how it got its name
 
@@ -342,10 +380,4 @@ a product name is not.
 category, and no value may belong to two vocabularies at once — the rule this
 system applies to its own statuses, applied to its own name.
 
-<!-- proposed: iris/vocabulary.md -->
-<!-- proposed: iris/lifecycles.md -->
-<!-- proposed: iris/schema.md -->
-<!-- proposed: iris/shapes.md -->
-<!-- proposed: iris/procedure.md -->
-<!-- proposed: iris/why.md -->
-<!-- proposed: iris/directory-reference.md -->
+[&#8593; Contents](#contents)

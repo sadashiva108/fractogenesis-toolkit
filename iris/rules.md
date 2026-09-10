@@ -1,11 +1,13 @@
 # The rules, by type and by home
 
-> **DRAFT — Revision 273.** Written before the genus rename landed, so it still
-> says `findings[]` where the schema now says `members[]`, and *finding* where
-> the vocabulary now says *member*. **Its measurements and its findings about the
-> code are current and were taken against the tree**; its vocabulary is not.
-> [vocabulary.md](vocabulary.md) is authoritative where the two disagree.
-
+> **Written before the genus rename, and checked against it at Revision 274.**
+> Its measurements were taken against the tree and are current. Its vocabulary
+> predates `members[]` and the four genera, so where it says *finding* it means
+> what [vocabulary.md](vocabulary.md) now calls a **member**, and where it names
+> a *bundle* the unit noun is under review. **No contradiction with the current
+> vocabulary was found in it** — the check was for the session state `withdrawn`,
+> which is now `dissolved`, and for the retired `findings[]` key. Neither
+> appears. `vocabulary.md` is authoritative where the two ever disagree.
 > **Role.** The map of the rule set: what kinds of rule this framework has, which
 > document is authoritative for each kind, and what happens when two documents
 > answer the same question differently. It is authoritative for **nothing but the
@@ -69,6 +71,8 @@ rule-bearing sets declare none and should —
 [`rule-enforcement-avenues.md`](rules/rule-enforcement-avenues.md), which has no
 masthead at all, and the ten files under `docs/architecture/`.
 
+[&#8593; Contents](#contents)
+
 ---
 
 ## 2. The layers
@@ -131,6 +135,8 @@ it points at, the other wins.
 is authoritative for the *inventory* of what a session receives and for nothing
 in the contents of anything it lists.
 
+[&#8593; Contents](#contents)
+
 ---
 
 ## 3. Rules by type
@@ -156,6 +162,8 @@ vocabulary's words, which is exactly how `0039` F21's defect got in — a table 
 bundle standings carrying two finding statuses. And **a convention is not a weak
 rule**; it is one whose answer would differ in another project. Section 4 is the
 test.
+
+[&#8593; Contents](#contents)
 
 ---
 
@@ -192,6 +200,8 @@ session management.*
 where it is generated, or where a check fails when it drifts. Its home is
 [instruction set §8](../.github/session-management-instructions.md); section 6
 records that two scripts and the toolkit set cite a different address for it.
+
+[&#8593; Contents](#contents)
 
 ---
 
@@ -236,6 +246,8 @@ restated with a better address: the overflow no longer leaves the repository, it
 collects in the copies — the one place a session may still write, because a
 toolkit write is gated on a `decided` finding and the findings that would carry
 these are all `framing`. **The gate is working, and this is its exhaust.**
+
+[&#8593; Contents](#contents)
 
 ---
 
@@ -323,6 +335,8 @@ loader/entrypoint/helper rules* — which is a description of the toolkit set.
 **The toolkit set wins**; the router is authoritative for routing and precedence
 and explicitly not for the rules. Both offenders are rank 4.
 
+[&#8593; Contents](#contents)
+
 ---
 
 ## 7. Enforceable, and merely conventional
@@ -375,6 +389,8 @@ for adding an identity mechanism but for not writing checks that pretend
 otherwise.** Whether that is a defect to fix or a property to document is
 `0045`'s to take, and nothing has taken it.
 
+[&#8593; Contents](#contents)
+
 ---
 
 ## 8. Reading order for someone arriving cold
@@ -399,6 +415,8 @@ a lesser rule — it is a restatement**, which means the thing it restates can m
 without it. Nine of the twelve homeless rules in section 5 sit in one, and five
 of the six disagreements in section 6 involve one.
 
+[&#8593; Contents](#contents)
+
 ## Provenance
 
 **This file states where things are. Why each is where it is lives in the bundle
@@ -422,3 +440,5 @@ that decided it.**
      `historical` is used: it is the marker that means do not repair this, and
      repairing it here would delete the finding. The missing marker is itself a
      small gap in the checker and is recorded rather than worked around silently. -->
+
+[&#8593; Contents](#contents)

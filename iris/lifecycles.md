@@ -73,6 +73,8 @@ a read is one no check can defend.
 sequenced behind `0039` D23, which rewrites the same paragraphs. The tree is
 right and the documents are behind it, which is the cheaper direction.
 
+[&#8593; Contents](#contents)
+
 ## 2. The member lifecycle
 
 **Six statuses, eight transitions, and every arrow is an event that changed the
@@ -126,6 +128,8 @@ through `framing` would assert the problem statement is being reworked.
 **Measured today: 191 members across 54 bundles** — 66 `resolved`, 47
 `un-started`, 46 `framing`, 32 `decided`, and **zero `reopened`, zero
 `withdrawn`.** Arrows 6, 7a, 7b and 8 have never fired here.
+
+[&#8593; Contents](#contents)
 
 ## 3. What is derived and what is declared
 
@@ -214,6 +218,8 @@ and `check` on the same tree reports 43 findings.
 both inside `stamp_derived`, and neither passes a `status` key — so every one of
 the eight arrows in [§2](#2-the-member-lifecycle) is performed by hand.
 
+[&#8593; Contents](#contents)
+
 ## 4. The session lifecycle
 
 **Five states. One is declared; the rest follow from what the session owns.**
@@ -249,6 +255,8 @@ All three `handoff` values are declared; the other eight carry a null
 `declaredState`. `typed-bundles-architecture` carries both a `handoff`
 declaration and an `ended.on` of 2026-09-09 and reads `handoff` — row 1 beating
 row 2, the order working.
+
+[&#8593; Contents](#contents)
 
 ## 5. The procedures
 
@@ -353,6 +361,8 @@ the index row names nobody — so the disposal record is where the history goes.
 Transfer names a target and the bundle stays owned; release names none, and a
 session may not end still holding one (`0039` D20).
 
+[&#8593; Contents](#contents)
+
 ## 6. Provenance and the two gates
 
 **When a bundle is superseded, every member of the predecessor is accounted for.**
@@ -398,6 +408,8 @@ coverage or exclusivity comparison at all. A hand-authored set is ungated.
 4, `constrains` 3, `successor` 2. **`dropped`, `split` and `merged` stand at
 zero**, which follows: the extractor emits three of the five kinds and never the
 other two.
+
+[&#8593; Contents](#contents)
 
 ## 7. What is not implemented
 
@@ -449,3 +461,5 @@ rather than asserting one, the right shape for an unanswered question.
 **The lifecycle is written down and walked by hand.** One instrument stamps three
 derived fields; one gates provenance during extraction. Everything else here is a
 procedure a session follows because it read it.
+
+[&#8593; Contents](#contents)

@@ -55,6 +55,8 @@ written by `plan-findings-work.sh stamp` and by nothing else; `check` reports
 `UNSTAMPED` for a null and `STORED-DISAGREES` for a value that has come adrift. A
 hand-edited standing is a defect the next `check` names.
 
+[&#8593; Contents](#contents)
+
 ## 2. Genus and shape
 
 **A bundle is a numbered directory of members.** The `genus` says what sort of
@@ -91,6 +93,8 @@ rather than a field, which is why they are two genera and not one with a flag:
 carries `runbook`, `cross-cutting`, `instruction-set`, `session-management`. It
 is not the genus and never has been.
 
+[&#8593; Contents](#contents)
+
 ## 3. Member statuses
 
 **Six, and the status says how far a reading has been taken — never how anyone
@@ -118,6 +122,8 @@ is the only thing `decided` marks.
 Assignment does not move it. A sweep does not. A rename does not. Each of those
 touches a status without a judgement being formed, and each is a mass operation,
 so a wrong one damages every member it passes over.
+
+[&#8593; Contents](#contents)
 
 ## 4. Progress and standing
 
@@ -151,6 +157,8 @@ the one `progress` has that `standing` does not.
 reopened member beside a `framing` one is a genuinely mixed bundle, and that is
 `analyzing`.
 
+[&#8593; Contents](#contents)
+
 ## 5. Ownership and lineage
 
 **Ownership is derived by scanning the session manifests** — adding the row *is*
@@ -166,6 +174,8 @@ the two declared exceptions:
 **`superseded` is declared**, not derived from members: a later bundle replaced
 this reading whole. It reaches a bundle at any standing, and the superseded
 bundle is **readable by any session and writable by none**, including its owner.
+
+[&#8593; Contents](#contents)
 
 ## 6. Session states
 
@@ -187,6 +197,8 @@ reasons, a revert requirement, and a place in `INERT` and in two rows of the
 progress ladder. The session sense was one table row. **When two words collide,
 move the cheap one.**
 
+[&#8593; Contents](#contents)
+
 ## 7. Decision outcomes
 
 **Statuses are adjectives about a condition — *where is this?* Outcomes are
@@ -206,6 +218,8 @@ in both sets, and a test asserts it.
 **`proposed` is stored rather than left empty**, so an unset outcome is a load
 error and not a reading. **A rejected decision keeps its row and its section** —
 that is the record of what was considered, and deleting it leaves an assertion.
+
+[&#8593; Contents](#contents)
 
 ## 8. Edge kinds
 
@@ -242,6 +256,8 @@ surviving option is therefore countable, and a decision whose alternatives were
 rejected on argument alone is visibly weaker than one whose alternatives were
 killed by a trial. **Both are at zero today**, so nothing in the tree has yet
 been tested this way.
+
+[&#8593; Contents](#contents)
 
 ## 9. Reasons
 
@@ -286,6 +302,8 @@ or the **framing** returns it to `framing`.
 so a member nobody can resolve never arrives at that door: it stays `decided`, or
 it is `withdrawn`.
 
+[&#8593; Contents](#contents)
+
 ## 10. Write categories
 
 Four kinds, told apart by what is being written.
@@ -299,6 +317,8 @@ Four kinds, told apart by what is being written.
 
 `foreign` is named so the case is excluded deliberately rather than by omission:
 an unnamed case reads as *not covered* and behaves as *not thought about*.
+
+[&#8593; Contents](#contents)
 
 ## 11. What another session may do
 
@@ -328,6 +348,8 @@ right for it, and the third row says the same thing again where it ends
 `withdrawn — not readable`. **Which side is right is a reading, not a repair.**
 `0039` F21 owns it.
 
+[&#8593; Contents](#contents)
+
 ## 12. `Relates to`
 
 A bundle may name another it bears on without either replacing the other.
@@ -336,6 +358,8 @@ A bundle may name another it bears on without either replacing the other.
 obliges nobody.** It exists because two readings of one mechanism from different
 angles are common, and a reader who finds one should be able to find the other.
 `superseded` uses the same field to name what it replaced.
+
+[&#8593; Contents](#contents)
 
 ## 13. What is validated, and what is not
 
@@ -362,3 +386,5 @@ closed and is not is worse than one that admits where it is open.
 **Six of the twelve edge kinds have zero instances**, and two of those six —
 `evidences` and `contradicts` — are the pair that makes a trial recordable. The
 machinery is present and unexercised.
+
+[&#8593; Contents](#contents)

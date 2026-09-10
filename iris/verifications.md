@@ -1,11 +1,13 @@
 # Built-in verifications
 
-> **DRAFT — Revision 273.** Written before the genus rename landed, so it still
-> says `findings[]` where the schema now says `members[]`, and *finding* where
-> the vocabulary now says *member*. **Its measurements and its findings about the
-> code are current and were taken against the tree**; its vocabulary is not.
-> [vocabulary.md](vocabulary.md) is authoritative where the two disagree.
-
+> **Written before the genus rename, and checked against it at Revision 274.**
+> Its measurements were taken against the tree and are current. Its vocabulary
+> predates `members[]` and the four genera, so where it says *finding* it means
+> what [vocabulary.md](vocabulary.md) now calls a **member**, and where it names
+> a *bundle* the unit noun is under review. **No contradiction with the current
+> vocabulary was found in it** — the check was for the session state `withdrawn`,
+> which is now `dissolved`, and for the retired `findings[]` key. Neither
+> appears. `vocabulary.md` is authoritative where the two ever disagree.
 > **Role.** The reference for everything in this repository that stops a person or an
 > AI doing something stupid, and everything that catches drift. It is authoritative
 > for **what each instrument examines, what it does not examine, how to run it, and
@@ -76,6 +78,8 @@ checker's output, and `0042` F5 records `verify-doc-paths.sh` printing two
 noticing. It still does, from lines 39–40 of its own usage block, where two
 comment lines lost their leading `#`.
 
+[&#8593; Contents](#contents)
+
 ---
 
 ## 2. The instrument table
@@ -116,6 +120,8 @@ empty blob. `0049` F7 records a later `git checkout -f` truncating all four of a
 closing's new files to zero — 22,813 bytes — while `git status` went on listing
 them as `A`, caught by a `json.load` raising and by nothing else.
 
+[&#8593; Contents](#contents)
+
 ---
 
 ## 3. Derivation as prevention
@@ -154,6 +160,8 @@ index row — measured there as 65 OK / 0 FAIL becoming 59 OK / 7 FAIL in
 correct handling of a procedure gap: name it, do the safe thing, run `stamp`, then
 let `check` name what was missed.
 
+[&#8593; Contents](#contents)
+
 ---
 
 ## 4. Single source of truth, and projections
@@ -184,6 +192,8 @@ Two copies in the tree today satisfy neither condition, and both are named above
 the `§4b` citation in `verify-findings-counts.sh` and `toolkit-instructions.md`
 pointing at a section that no longer exists, and the six-bundle baseline list in
 `verify-session-findings.sh` of which two are still true.
+
+[&#8593; Contents](#contents)
 
 ---
 
@@ -234,6 +244,8 @@ field, reordering a header, moving an off-schema field into prose — is not an 
 to the reading, and does not need `reopened` even on a `resolved` or `superseded`
 bundle. What is frozen is the content.
 
+[&#8593; Contents](#contents)
+
 ---
 
 ## 6. No hardcoding
@@ -275,6 +287,8 @@ personal or company path, secret, or live placeholder path.
 example counterpart, and `REIMAGE_ARTIFACT_ROOT` — which the example declares and
 scripts read — is absent from the local file. `bin/check-reimage-env.sh` is
 diagnostic-only and greps four key names; nothing compares the two files.
+
+[&#8593; Contents](#contents)
 
 ---
 
@@ -353,6 +367,8 @@ The safe act, when a release or a transfer has left `structure` failing: set
 `ownership` by hand, run `./bin/plan-findings-work.sh stamp`, then run
 `./bin/plan-findings-work.sh check` and let it name what was missed.
 
+[&#8593; Contents](#contents)
+
 ---
 
 ## 8. What nothing checks at all
@@ -408,3 +424,5 @@ declares. Section 6 measures the current gap at 15 keys one way and one the othe
 **What a checker emits.** `0042` F5. No instrument reads another instrument's
 output, which is why item 5 in section 7 survived thirteen revisions, and why the
 first four items in that section survived at all.
+
+[&#8593; Contents](#contents)

@@ -1,11 +1,13 @@
 # Lumen — the interviewer: how the next question is chosen
 
-> **DRAFT — Revision 273.** Written before the genus rename landed, so it still
-> says `findings[]` where the schema now says `members[]`, and *finding* where
-> the vocabulary now says *member*. **Its measurements and its findings about the
-> code are current and were taken against the tree**; its vocabulary is not.
-> [vocabulary.md](vocabulary.md) is authoritative where the two disagree.
-
+> **Written before the genus rename, and checked against it at Revision 274.**
+> Its measurements were taken against the tree and are current. Its vocabulary
+> predates `members[]` and the four genera, so where it says *finding* it means
+> what [vocabulary.md](vocabulary.md) now calls a **member**, and where it names
+> a *bundle* the unit noun is under review. **No contradiction with the current
+> vocabulary was found in it** — the check was for the session state `withdrawn`,
+> which is now `dissolved`, and for the retired `findings[]` key. Neither
+> appears. `vocabulary.md` is authoritative where the two ever disagree.
 > **Role:** the reference for `bin/plan-findings-work.sh ask` and the selection it
 > performs. Authoritative for the interviewer's *mechanism* — what reaches the
 > frontier, what is dropped and under what test, how a candidate is scored, and
@@ -53,6 +55,8 @@ line as printed is partly wrong — exactly the failure this discipline exists t
 expose, and it exposed it. The tool proposes and never assigns; no `ask` path
 opens a file for writing.
 
+[&#8593; Contents](#contents)
+
 ## 2. The frontier
 
 `frontier(g)` builds the candidate set. It applies two tests, in this order:
@@ -97,6 +101,8 @@ the frontier do not intersect, so this test has never removed a candidate on rea
 data — the class `0050` F4 names, *four instruments in three days were correct
 and could not do their job.* A zero here means the instrument did not fire, and
 reading it as health is the mistake the drop line prevents.
+
+[&#8593; Contents](#contents)
 
 ## 3. The six stages
 
@@ -232,6 +238,8 @@ The propagation block is the design's stated payoff for the whole model — the
 reason narrowing is claimed not to lose nuance but to "relocate" it — and it is
 entirely unbuilt.
 
+[&#8593; Contents](#contents)
+
 ## 4. Ties
 
 The default run ends like this:
@@ -278,6 +286,8 @@ runs 54 tests, all passing; `TestInterviewer` holds three and all three test
 Feasibility. Nothing tests `gate`, the gain formula, the drop-line arithmetic, or
 the tie.
 
+[&#8593; Contents](#contents)
+
 ## 5. Running it
 
 ```text
@@ -303,6 +313,8 @@ findings, 82.0 cost units`, and a warning that `33 findings are live inside
 unclaimed bundles (0047 F1)`. Those 33 are part of the population the drop line
 mislabels, and `0047` F1 records that the rule governing them is undecided.
 
+[&#8593; Contents](#contents)
+
 ## 6. What is designed and not built
 
 | Design element | Home | Status in code |
@@ -325,6 +337,8 @@ Plainly: **`ask` today is a frontier filter with a bundle-level score attached,
 and the parts that would make it an interview — precedent, mode, propagation —
 are absent.** It remains useful, because the filter alone takes 191 findings to
 29 and says what it dropped.
+
+[&#8593; Contents](#contents)
 
 ## 7. Open questions
 
@@ -364,3 +378,5 @@ the ranker.
 and design record §13.2. The rules are versioned and a session's reading of them
 is not; if the interview is a way of working rather than a script, what a session
 was shown when it answered is itself unrecorded state.
+
+[&#8593; Contents](#contents)
