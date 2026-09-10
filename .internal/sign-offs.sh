@@ -141,22 +141,49 @@ signoff_latest() {
     _signoffs_err "signoff_latest <signoff-root> <context>"
     return 2
   fi
-  pointer="$(_signoffs_pointer_path "$root" "$context")"
-  if [ -f "$pointer" ]; then
-    IFS= read -r value < "$pointer"
-    if [ -n "${value:-}" ] && [ -f "$root/$value.md" ]; then
-      printf '%s\n' "$value"
-      return 0
-    fi
-  fi
+  # THE GLOB IS COMPUTED FIRST AND ALWAYS. The comment above this function has
+  # said "a missing or stale one falls back to the glob" since it was written,
+  # and the code did not: the fallback ran only when the pointer was absent or
+  # named a file that did not exist. A pointer naming a real but older sign-off
+  # was returned unchallenged, because nothing compared it to anything.
+  #
+  # That is not hypothetical. On the 20260816 volume
+  # `latest-post-image-restore.txt` names `post-image-restore-20260903-004412`
+  # while four newer sign-offs sit beside it, and carry-forward has been reading
+  # the older one. The header's safety argument -- "the newest file is a superset
+  # of the one before it, so latest-wins is safe by construction" -- holds only
+  # if this function returns the newest, so a stale pointer silently drops every
+  # answer recorded after it.
+  #
+  # Run ids end in `-YYYYMMDD-HHMMSS`, so lexical order is chronological and a
+  # string compare is the whole test.
   newest=""
   for f in "$root/$context"-*.md; do
     [ -f "$f" ] || continue
     newest="$f"
   done
+  if [ -n "$newest" ]; then
+    newest="$(basename "$newest")"
+    newest="${newest%.md}"
+  fi
+
+  pointer="$(_signoffs_pointer_path "$root" "$context")"
+  if [ -f "$pointer" ]; then
+    IFS= read -r value < "$pointer"
+    if [ -n "${value:-}" ] && [ -f "$root/$value.md" ]; then
+      if [ -z "$newest" ] || [ "$value" = "$newest" ]; then
+        printf '%s\n' "$value"
+        return 0
+      fi
+      # The files on disk are the source of truth. Say so rather than
+      # correcting it silently: a pointer this far behind means a finalize
+      # failed to write it, and that is worth seeing once per read.
+      _signoffs_note "pointer for '$context' names $value; $newest is newer — using the newer"
+    fi
+  fi
+
   [ -n "$newest" ] || return 1
-  f="$(basename "$newest")"
-  printf '%s\n' "${f%.md}"
+  printf '%s\n' "$newest"
   return 0
 }
 
@@ -388,9 +415,27 @@ signoff_finalize() {
   }
 
   # Pointer last, and via a temp, so a crash leaves a stale pointer that the
-  # glob fallback in signoff_latest still reads correctly.
+  # glob in signoff_latest now overrides.
+  #
+  # This was the only write in this function without an error branch, and it is
+  # the one most likely to fail: the artifact volume refuses `unlink` for the
+  # session that writes it, so a `mv` over an existing pointer can fail where
+  # every write above it succeeded. `&&` then swallows it and the function
+  # returns 0 having left the pointer behind. Not fatal -- the sign-off itself
+  # is already promoted and signoff_latest prefers the newer file -- so this
+  # reports and continues rather than aborting a completed sign-off.
   pointer="$(_signoffs_pointer_path "$SIGNOFF_ROOT" "$SIGNOFF_CONTEXT")"
-  printf '%s\n' "$SIGNOFF_RUN_ID" > "$pointer.tmp" && mv "$pointer.tmp" "$pointer"
+  if printf '%s\n' "$SIGNOFF_RUN_ID" > "$pointer.tmp" 2>/dev/null; then
+    mv "$pointer.tmp" "$pointer" 2>/dev/null || {
+      rm -f "$pointer.tmp" 2>/dev/null
+      _signoffs_note "could not update the pointer: $pointer"
+      _signoffs_note "  the sign-off is written; reads fall back to the newest file on disk"
+    }
+  else
+    rm -f "$pointer.tmp" 2>/dev/null
+    _signoffs_note "could not stage the pointer: $pointer.tmp"
+    _signoffs_note "  the sign-off is written; reads fall back to the newest file on disk"
+  fi
 
   rm -f "$_SIGNOFFS_ROWS_TMP"
   _SIGNOFFS_ROWS_TMP=""

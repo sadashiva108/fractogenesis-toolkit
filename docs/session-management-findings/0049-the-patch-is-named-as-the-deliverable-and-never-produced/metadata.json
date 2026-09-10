@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T13:00:00+00:00",
+  "updatedAt": "2026-09-10T00:00:00+00:00",
   "number": "0049",
   "bundleName": "0049-the-patch-is-named-as-the-deliverable-and-never-produced",
   "genus": "findings",
@@ -135,6 +135,18 @@
       "reopened": null,
       "withdrawn": null,
       "resolution": null
+    },
+    {
+      "id": "F8",
+      "statement": "\u00a70 step 1 never says the copy must be clean, so a patch built from a dirty one carries another session's work \u2014 the inclusion half of F3's omission",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-10",
+      "sectionHeading": "F8 \u2014 \u00a70 step 1 never says the copy must be clean, and the patch carries whatever the copy was carrying",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
     }
   ],
   "decisions": [
@@ -256,6 +268,16 @@
       "basis": "asserted",
       "asserted_by": "allocation-and-inquiry-design-20260906-233205",
       "asserted_on": "2026-09-08"
+    },
+    {
+      "kind": "relates-to",
+      "from": "0049/F8",
+      "to": "0049/F3",
+      "why": "one instruction, two silent failures: F3 is the patch omitting the session's own work, F8 is the patch including another session's",
+      "reason": null,
+      "basis": "asserted",
+      "asserted_by": "entity-model-and-vocabulary-20260909-053548",
+      "asserted_on": "2026-09-10"
     },
     {
       "kind": "relates-to",

@@ -29,6 +29,7 @@ failure**; the reading is offered so it can be checked rather than believed.
 | F5 | An index write leaves no trace in the working tree, so the tree comparison this bundle prescribes cannot see it | `decided` |
 | F6 | The phrase that authorizes an apply has two definitions, the broader is in the copy, and neither has a precondition on the checkout | `decided` |
 | F7 | `git add -N` is required to produce the patch and empties every new file the next `checkout -f` touches | `framing` |
+| F8 | §0 step 1 never says the copy must be clean, so a patch built from a dirty one carries another session's work — the inclusion half of F3's omission | `framing` |
 
 ## F1 — what actually happened
 
@@ -268,3 +269,77 @@ files* fails five times on a clean tree on its first run. Excluding `.gitkeep`
 by name leaves **zero** on this tree, which is the only reason the check is worth
 installing — it can be added refusing rather than warn-only, because its clean
 pass is already measured.
+## F8 — §0 step 1 never says the copy must be clean, and the patch carries whatever the copy was carrying
+
+F3 is a patch that silently **omits**. This is the same instruction producing a
+patch that silently **includes**.
+
+§0 step 1 is *"Copy the checkout to session-local storage and edit there."* It
+places no condition on the state of the checkout being copied. Step 6 does
+require the checkout to be clean — but that assertion is made **at apply time**,
+which is after the foreign work is already inside the patch. The precondition
+guards the wrong end of the cycle.
+
+### Two instances, both caught by hand
+
+| | |
+|---|---|
+| `drift-and-the-write-boundary-20260909-053548` | first patch carried **five** of another session's files |
+| `entity-model-and-vocabulary-20260909-053548` | an `rsync --delete` overlay of a stale tree produced a patch that would have **reverted Revisions 280 and 281** |
+
+Neither landed. Both were caught by reading the patch's file list against the
+change set, and by nothing else. `git apply --check` passes in both cases: it
+tests whether hunks apply, not whose work they are. **Content collision and
+scope are different questions, and only the first has an instrument.**
+
+### Step 2 is falsified by the same gap
+
+> **Run every verification and test in the scratch tree.** Only there do the
+> numbers describe your change rather than whoever else is writing.
+
+For a copy taken dirty, that is exactly inverted: the numbers describe your
+change **plus** whoever else was writing when you copied. So the contamination
+does not stop at the patch — it reaches the verification figures in the review,
+which is the evidence the owner uses to decide whether to say *write it*. The
+sentence telling a session those numbers are trustworthy is the one the gap
+makes untrue.
+
+### The defence exists and is documented pointing one way
+
+§6 says:
+
+> **Read the patch's file list against your own change set before handing it
+> over.** That comparison is what catches a dropped file, and nothing else does.
+
+That was written for F3 — `git add -N` missing, files dropped. Both instances
+above were caught by running the same comparison in the **opposite** direction,
+and the instruction does not say it does that. A session that created no new
+files reads *catches a dropped file*, correctly concludes it has none to drop,
+and skips the one step that would have caught the contamination.
+
+### The shape
+
+**A change set derived by differencing two trees is a difference, not a change
+set.** Nothing declares the scope, so anything already different is inside it.
+
+That is the same defect this session spent Revision 290 fixing one level down:
+`record-restore-state.sh --point delta` joined a before-state against an
+after-state, called the result *"What this phase changed on disk"*, and — because
+`before` is first-wins — swept in eight days of unrelated work. **§0 step 3 is
+`emit_delta` for the repository.** `git status` at copy time is the before-state,
+it is first-wins by omission rather than by design, and the window is however
+long the session composes for.
+
+### The check this implies
+
+**Requiring a clean copy is the wrong repair.** Another session has work in
+flight most of the time here; this bundle's own tree had eight dirty files from
+a third session while this member was being written. Requiring clean would
+serialise sessions, which is what `0038`'s design exists to avoid, and it would
+have blocked a change whose files never touched the other session's.
+
+The cheap version is to **record the dirt rather than forbid it**: capture
+`git status --porcelain` into the scratch tree at step 1, and have step 3 compare
+the patch's file list against it. Anything in both is foreign until the session
+says otherwise. That makes §6's comparison mechanical instead of something a
+session has to remember to perform in a direction the instruction does not name.

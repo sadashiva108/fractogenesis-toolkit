@@ -1668,15 +1668,29 @@ printf "\n"
 # construction, so its sign-off sits beside its own reports rather than being
 # forced into a post-image category. Post-image is a category under
 # reimaged-system/, so its sign-off is a sibling of checklists/, not a child.
+# WHERE the sign-off goes is a real branch and stays one. WHAT it is called is
+# not: `.internal/sign-offs.sh` states that a sign-off is named for its run --
+# "the `Answered against` column holds a run id that names a real run directory"
+# -- so the name has to be this run's id and nothing else.
+#
+# It was a second context for a while. `SIGNOFF_CONTEXT` held `reimage-prep-checks`
+# against `CHECKLIST_CONTEXT`'s `pre-image`, so one run produced
+# `runs/pre-image-<stamp>/` beside `sign-offs/reimage-prep-checks-<stamp>.md`, and
+# the eleven reports on the volume cite a sign-off path that does not resolve.
+# The files there are half-converted and say so themselves: every one is named
+# `reimage-prep-checks-*` and every one opens `# Sign-Off — pre-image`, because
+# that header is written from this variable and the rename did not touch it.
+# `signoff_begin` cannot catch the split -- it checks the run id against the
+# context it was handed, and both came from the same wrong one.
 if [[ "$PHASE" == "pre" ]]; then
-  SIGNOFF_CONTEXT="reimage-prep-checks"
   SIGNOFF_ROOT="$OUTPUT_ROOT/sign-offs"
 else
-  SIGNOFF_CONTEXT="reimaged-system-checks"
   SIGNOFF_ROOT="$(dirname "$OUTPUT_ROOT")/sign-offs"
 fi
 
-if ! signoff_begin "$SIGNOFF_ROOT" "$SIGNOFF_CONTEXT" "$SIGNOFF_CONTEXT-$TIMESTAMP"; then
+# $ARTIFACT_RUN_ID, not "$CONTEXT-$TIMESTAMP": the run id is already computed and
+# already indexed, and rebuilding it from parts is how the two drifted apart.
+if ! signoff_begin "$SIGNOFF_ROOT" "$CHECKLIST_CONTEXT" "$ARTIFACT_RUN_ID"; then
   echo "ERROR: cannot open a sign-off under: $SIGNOFF_ROOT" >&2
   exit 2
 fi
