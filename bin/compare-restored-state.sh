@@ -887,7 +887,19 @@ emit_note() {
     if saw 'no baseline'; then printf -- '- **no baseline** on a `jssecacerts` row means that JDK was installed after the pre-image capture, so nothing recorded a hash for it. That JVM has no corporate trust unless you put it there.\n'; fi
     if saw 'expected later'; then printf -- '- **expected later** means the value is real but a later runbook sets it. `restore-git.md` owns the global Git configuration, so `credential.helper` and `init.defaultBranch` reading `not set yet` here is the sequence working. Re-run this comparison after that runbook.\n'; fi
     if saw 'correctly dropped'; then printf -- '- **correctly dropped** is a PASS, and the row is inverted on purpose. `http.sslverify = false` was recorded pre-image and is in the dotfiles backup; carrying it forward disables TLS verification for every Git HTTPS remote. That defeats the Git half of Step 7 — `npm`, `pip`, `curl` and Node read their own settings and are unaffected, which is what makes it easy to miss: everything else still verifies.\n'; fi
-    if saw 'correctly dropped'; then printf -- '- That row passes right now for a weaker reason than it looks. While `~/.gitconfig` is absent there is no file to hold the value, so nothing was reviewed and dropped — it was never restored. It can come back twice: at Step 8 of this runbook, which lists `.gitconfig` among the selective restores, and again at `restore-git.md`. Re-check after each.\n'; fi
+    # Every other line in this block defines a verdict, which is timeless. This
+    # one asserted a fact about the machine -- that `~/.gitconfig` was absent --
+    # and printed it whether or not it held. On 2026-09-01 it was printed
+    # fifteen minutes after `restore-git-delta` recorded that file present and
+    # content-changed, so the comparison told the reader the opposite of the
+    # record. A claim about live state has to be tested at the moment it is made.
+    if saw 'correctly dropped'; then
+      if [ -f "$HOME/.gitconfig" ] || [ -f "$HOME/.config/git/config" ]; then
+        printf -- '- That row is a real result. A global Git config file exists, so `http.sslverify` is absent from a file that could have held it — it was reviewed and left out, or never written back. It can still come back twice: at Step 8 of this runbook, which lists `.gitconfig` among the selective restores, and again at `restore-git.md`. Re-check after each.\n'
+      else
+        printf -- '- That row passes right now for a weaker reason than it looks. There is no global Git config file yet — neither `~/.gitconfig` nor `~/.config/git/config` — so nothing was reviewed and dropped; it was never restored. It can come back twice: at Step 8 of this runbook, which lists `.gitconfig` among the selective restores, and again at `restore-git.md`. Re-check after each.\n'
+      fi
+    fi
     if saw '**CARRIED FORWARD**'; then printf -- '- **CARRIED FORWARD** on that row means the pre-image value came back. Remove it: `git config --global --unset http.sslverify`. Before reaching for a per-host exemption, check whether one is still needed: Step 7 puts the corporate root in the CA bundle, so an internal host that failed to verify before may verify now. If one genuinely does not, `restore-git.md` -> Troubleshooting -> *An internal Enterprise Server host fails TLS verification* scopes the exemption to that single host instead of every remote.\n'; fi
     if saw 'same'; then printf -- '- **same** means the live value is exactly what the capture recorded. Unlike the version rows \`restore-runtime\` produces, these are compared as literal strings — a config value either is what it was or is not.\n'; fi
     if saw 'differs'; then printf -- '- **differs** on a value row is worth reading rather than dismissing. A rebuild is expected to bring newer *versions*; a login shell or a config value that changed is a decision someone made, or one made for them.\n'; fi

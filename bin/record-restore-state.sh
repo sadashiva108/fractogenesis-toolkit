@@ -366,6 +366,53 @@ OUTPUT_ROOT="$(absolute_path "$OUTPUT_ROOT")"
 # Writing it here also means it cannot go stale: a delta exists only inside the
 # after-run it was computed from, and re-capturing produces a new one.
 # ---------------------------------------------------------------------------
+# Elapsed time between the two recordings, from their run ids. `before` is
+# first-wins and `after` is latest-wins, so this only ever widens -- and every
+# unrelated change made inside it lands in the table below as if this phase had
+# made it. Printing it is what lets a reader discount a row.
+#
+# Arithmetic rather than `date`: this has to give the same answer under the
+# BSD date macOS ships and the GNU one a Linux checkout has, and the two take
+# incompatible flags for parsing a stamp. A day number is eleven tokens of
+# integer maths and needs neither.
+_delta_daynum() {
+  # <YYYY> <MM> <DD> -> days since an arbitrary fixed epoch. Standard
+  # civil-to-Julian conversion; only the difference of two results is used.
+  local y="$1" m="$2" d="$3" a yy mm
+  a=$(( (14 - m) / 12 )); yy=$(( y + 4800 - a )); mm=$(( m + 12 * a - 3 ))
+  printf '%s\n' "$(( d + (153 * mm + 2) / 5 + 365 * yy + yy / 4 - yy / 100 + yy / 400 - 32045 ))"
+}
+
+delta_window() {
+  local b="$1" a="$2" bd bt ad at secs d h m
+  bd="$(printf '%s' "$b" | sed -n 's/.*-\([0-9][0-9]*\)-\([0-9][0-9]*\)$/\1/p')"
+  bt="$(printf '%s' "$b" | sed -n 's/.*-\([0-9][0-9]*\)-\([0-9][0-9]*\)$/\2/p')"
+  ad="$(printf '%s' "$a" | sed -n 's/.*-\([0-9][0-9]*\)-\([0-9][0-9]*\)$/\1/p')"
+  at="$(printf '%s' "$a" | sed -n 's/.*-\([0-9][0-9]*\)-\([0-9][0-9]*\)$/\2/p')"
+  case "$bd$bt$ad$at" in
+    ''|*[!0-9]*) printf 'unknown\n'; return 0 ;;
+  esac
+  [ "${#bd}" -eq 8 ] && [ "${#ad}" -eq 8 ] && [ "${#bt}" -eq 6 ] && [ "${#at}" -eq 6 ] || {
+    printf 'unknown\n'; return 0; }
+  # 10# so a leading zero is not read as octal -- `08` and `09` are the two
+  # values that would otherwise abort the whole script under `set -e`.
+  local bday aday
+  bday="$(_delta_daynum "10#${bd:0:4}" "10#${bd:4:2}" "10#${bd:6:2}")"
+  aday="$(_delta_daynum "10#${ad:0:4}" "10#${ad:4:2}" "10#${ad:6:2}")"
+  secs=$(( (aday - bday) * 86400 \
+         + (10#${at:0:2} * 3600 + 10#${at:2:2} * 60 + 10#${at:4:2}) \
+         - (10#${bt:0:2} * 3600 + 10#${bt:2:2} * 60 + 10#${bt:4:2}) ))
+  if [ "$secs" -lt 0 ]; then
+    printf 'after precedes before (%s-%s to %s-%s)\n' "$bd" "$bt" "$ad" "$at"; return 0
+  fi
+  d=$(( secs / 86400 )); h=$(( (secs % 86400) / 3600 )); m=$(( (secs % 3600) / 60 ))
+  if [ "$d" -gt 0 ]; then
+    printf '%sd %sh %sm — every unrelated change inside it lands in the table below\n' "$d" "$h" "$m"
+  else
+    printf '%sh %sm\n' "$h" "$m"
+  fi
+}
+
 emit_delta() {
   local before_rel before_dir after_rel after_dir
   before_rel="$(artifact_run_official "$OUTPUT_ROOT" "${PHASE_RUNBOOK%.md}-before" 2>/dev/null)" || return 1
@@ -378,23 +425,60 @@ emit_delta() {
   after_dir="$OUTPUT_ROOT/$after_rel"
   [ -f "$after_dir/state.tsv" ] || return 1
 
+  # The join is read twice: once for the row table, once to summarise which
+  # declared targets produced rows. Both guard-failure returns above happen
+  # before this, so one rm at the end of the function is the whole lifecycle.
+  local delta_rows
+  delta_rows="$(mktemp)"
+
+  local before_id after_id notes_before notes_after
+  before_id="${before_rel#runs/}"
+  after_id="${after_rel#runs/}"
+
   printf '# %s — Phase Delta — %s\n\n' "${PHASE_RUNBOOK%.md}" "$STAMP"
   printf 'What this phase changed on disk: the official before-state joined against\n'
   printf 'the official after-state. Both sides are recordings, so nothing here can go\n'
   printf 'stale; re-run this point if either side is re-recorded or re-pinned.\n\n'
   printf -- '- before: `%s`\n' "$before_rel"
-  printf -- '- after:  `%s`\n\n' "$after_rel"
-  printf '| Path | After | Before | Verdict |\n| --- | --- | --- | --- |\n'
+  printf -- '- after:  `%s`\n' "$after_rel"
+  printf -- '- window: %s\n\n' "$(delta_window "$before_id" "$after_id")"
 
+  # The index qualifies the recordings; the recordings cannot qualify
+  # themselves. See artifact_run_notes for why this is not optional.
+  notes_before="$(artifact_run_notes "$OUTPUT_ROOT" "$before_id" 2>/dev/null || true)"
+  notes_after="$(artifact_run_notes "$OUTPUT_ROOT" "$after_id" 2>/dev/null || true)"
+  if [ -n "$notes_before" ] || [ -n "$notes_after" ]; then
+    printf '> [!warning] The index carries notes on these recordings\n'
+    printf '> Read these before the table. A note narrows what this join is entitled\n'
+    printf '> to claim, and the join has no way to detect what the note says.\n>\n'
+    printf '%s\n' "$notes_before" | while IFS="$(printf '\t')" read -r _k _n; do
+      [ -n "$_n" ] || continue
+      printf '> - **before** · `%s` — %s\n' "$_k" "$_n"
+    done
+    printf '%s\n' "$notes_after" | while IFS="$(printf '\t')" read -r _k _n; do
+      [ -n "$_n" ] || continue
+      printf '> - **after** · `%s` — %s\n' "$_k" "$_n"
+    done
+    printf '\n'
+  fi
+
+  printf '| Path | Declared target | After | Before | Verdict |\n'
+  printf '| --- | --- | --- | --- | --- |\n'
+
+  # $1 is the declared target that produced the row and $8 is the absolute path.
+  # The join key is the path; the target rides along because without it a reader
+  # cannot tell an in-scope row from a row this phase merely observes. For a
+  # path on both sides the after-run's declaration wins -- it is the current one.
   awk -F'\t' '
-    FNR == NR { b[$8] = $2 " " $4 " " $7; next }
+    FNR == NR { b[$8] = $2 " " $4 " " $7; bt[$8] = $1; next }
     {
       a = $2 " " $4 " " $7
-      if ($8 in b) { print $8 "\t" a "\t" b[$8]; delete b[$8] }
-      else         { print $8 "\t" a "\tABSENT" }
+      if ($8 in b) { print $8 "\t" a "\t" b[$8] "\t" $1; delete b[$8]; delete bt[$8] }
+      else         { print $8 "\t" a "\tABSENT\t" $1 }
     }
-    END { for (path in b) print path "\tABSENT\t" b[path] }
-  ' "$before_dir/state.tsv" "$after_dir/state.tsv" | sort | while IFS=$'\t' read -r path after before; do
+    END { for (path in b) print path "\tABSENT\t" b[path] "\t" bt[path] }
+  ' "$before_dir/state.tsv" "$after_dir/state.tsv" | sort | tee "$delta_rows" \
+  | while IFS=$'\t' read -r path after before target; do
     # An absolute path is the join key. A row without one is a corrupted line --
     # a `stat` that returned multi-line output, a truncated write -- and joining
     # on it produces phantom adds and removes. Skip rather than report fiction.
@@ -415,14 +499,40 @@ emit_delta() {
       elif [ "$ma" != "$mb" ]; then verdict="mode changed"
       else verdict="changed"; fi
     fi
-    printf '| %s | `%s` | `%s` | %s |\n' "$path" "$after" "$before" "$verdict"
+    printf '| %s | `%s` | `%s` | `%s` | %s |\n' \
+      "$path" "${target:-—}" "$after" "$before" "$verdict"
   done
+
+  printf '\n## Declared targets\n\n'
+  printf 'Every row above came from one of these. A declared target is this phase'"'"'s\n'
+  printf '**observation** scope, not a claim of authorship: the note says what the path\n'
+  printf 'is for, and several say plainly that another phase owns the content.\n\n'
+  printf '| Declared target | Rows | What it is for |\n| --- | --- | --- |\n'
+  # The note text comes from the after-run's own state.md, not from the target
+  # table as it reads today. A delta describes two recordings; re-reading the
+  # live table would let a later edit rewrite the past.
+  awk -F'\t' '{ n[$4]++ } END { for (t in n) printf "%s\t%s\n", t, n[t] }' "$delta_rows" \
+  | sort | while IFS=$'\t' read -r target rows; do
+      [ -n "$target" ] || continue
+      note="$(awk -F'|' -v want="$target" '
+        /^\| `/ {
+          t = $2; w = $8
+          gsub(/^[ \t`]+|[ \t`]+$/, "", t)
+          gsub(/^[ \t]+|[ \t]+$/, "", w)
+          if (t == want) { print w; exit }
+        }' "$after_dir/state.md" 2>/dev/null)"
+      printf '| `%s` | %s | %s |\n' "$target" "$rows" "${note:-—}"
+    done
 
   printf '\n'
   printf -- '- **added** and **content changed** are the phase working.\n'
   printf -- '- **removed** is the verdict to read twice: this phase restores, and should rarely delete.\n'
   printf -- '- **mode changed** on a key file is intended tightening; on anything else it is worth a look.\n'
   printf -- '- Each column is `<state> <mode> <sha256>`. A `-` means the field does not apply.\n'
+  printf -- '- A verdict says the path changed between the two recordings. It does **not** say this phase changed it: anything else running inside the window above lands here too. Read the window and the declared target before attributing a row.\n'
+  printf -- '- `~/Library/Keychains/` churns on every keychain access, so **content changed** there proves nothing on its own. Read the file list rather than the hashes.\n'
+
+  rm -f "$delta_rows"
 }
 
 # `delta` walks nothing: it joins two runs that already exist. The whole

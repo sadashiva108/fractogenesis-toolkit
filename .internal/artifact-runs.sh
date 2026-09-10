@@ -464,6 +464,40 @@ artifact_run_finalize() {
 # Public: query and override
 # ---------------------------------------------------------------------------
 
+# Every note the manifest carries about one run, oldest first, as
+# `<kind><TAB><note>`. Silent when the run has none.
+#
+# WHY THIS IS NOT OPTIONAL FOR ANYTHING THAT JOINS TWO RUNS. A pin note is where
+# a caveat about a recording lives -- "captured after Steps 1-3 had already run,
+# so the twelve ~/.ssh/ rows are not pre-phase". The recording itself cannot say
+# that; only the index can. A tool that reads the pointer and not the note turns
+# a qualified input into a confident document, and drops the qualification
+# exactly where it was needed. `restore-access` has four deltas on the volume
+# built that way.
+artifact_run_notes() {
+  local category_root="$1" run_id="$2" manifest
+  if [ -z "${category_root:-}" ] || [ -z "${run_id:-}" ]; then
+    _artifact_runs_err "artifact_run_notes <category-root> <run-id>"
+    return 2
+  fi
+  manifest="$(_artifact_runs_manifest_path "$category_root")"
+  [ -f "$manifest" ] || return 0
+  # Same row shape and the same literal date class as _artifact_runs_rows_for;
+  # see the note there about interval expressions on the macOS awk.
+  awk -F'|' -v want="$run_id" '
+    /^\| [0-9][0-9][0-9][0-9]-/ {
+      k = $3; r = $6; n = $8
+      gsub(/^[ \t]+|[ \t]+$/, "", k)
+      gsub(/^[ \t`]+|[ \t`]+$/, "", r)
+      gsub(/^[ \t]+|[ \t]+$/, "", n)
+      if (r != want) next
+      # An em dash or a hyphen is how the manifest writes "no note".
+      if (n == "" || n == "-" || n == "\342\200\224") next
+      printf "%s\t%s\n", k, n
+    }' "$manifest"
+  return 0
+}
+
 artifact_run_official() {
   local category_root="$1" context="$2" pointer value
   if [ -z "${category_root:-}" ] || [ -z "${context:-}" ]; then
