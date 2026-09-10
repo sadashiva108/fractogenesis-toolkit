@@ -10,13 +10,30 @@
 # because AN UNCOMMITTED ENTRY IS NOT IN THE HEADER BLOCK THE OTHER SESSION
 # READS. The same collision happened again two revisions later.
 #
-# So this scans BOTH places a number can be taken:
+# So this scans EVERY place a number can be taken. Two are in the file:
 #
 #   **Revision N** -- the header block at the top of the file
 #   ## Revision N  -- the entry headings in the body
 #
 # An entry written but not yet summarised in the header is visible to the second
-# scan, which is the whole point. Run it against the tree the patch will be
+# scan, which is the whole point.
+#
+# And the THIRD is not in the file at all:
+#
+#   Revision N     -- in a commit subject, per `git log`
+#
+# That is `0047` F12. Revisions 241-246 were six numbers taken in the log and
+# never written here, reconstructed after the fact at Revision 247; and commit
+# 636eba0 claimed 271 in its subject while carrying Revision 270's work, so this
+# helper reported 271 free while `git log` reported it taken. A number is taken
+# if it is taken ANYWHERE, so the answer is the highest of the three -- the file
+# and the log are not rivals here, they are two incomplete registers of one
+# sequence. Conformance is a different question and `bin/verify-manifest-coverage.sh`
+# asks it.
+#
+# The log scan degrades rather than failing: no git, no repository, or a shallow
+# clone falls back to the file's two places and says so under --verbose. That
+# keeps the contract below -- this must work on a fresh checkout. Run it against the tree the patch will be
 # APPLIED to, at the moment it is applied -- section 0028's decision 5.1: an
 # entry is composed with its number left open and numbered at apply time, when
 # the next free number is a fact rather than a guess.
@@ -45,8 +62,10 @@
 #   --current       Print the highest revision number already taken.
 #   --free N        Exit 0 if N is free, 1 if it is taken.
 #   --manifest PATH Read this manifest instead of ./APPLY-MANIFEST.md.
-#   --verbose       Also report the highest number found in each of the two
-#                   places, so a header that lags its entries is visible.
+#   --no-log        Do not consult the git log. The file's two places only.
+#   --verbose       Also report the highest number found in each of the three
+#                   places, so a header that lags its entries -- or a number
+#                   taken in the log and never written here -- is visible.
 #   -h, --help      Show this message and exit.
 #
 # Exit codes:
@@ -70,6 +89,7 @@ MANIFEST="$REPO_ROOT/APPLY-MANIFEST.md"
 MODE="next"
 CHECK_N=""
 VERBOSE=false
+USE_LOG=true
 
 usage() {
   sed -n '/^# --- BEGIN USAGE ---$/,/^# --- END USAGE ---$/p' "$0" \
@@ -88,6 +108,7 @@ while [ $# -gt 0 ]; do
     --current)  MODE="current"; shift ;;
     --free)     require_value "$1" "${2:-}"; MODE="free"; CHECK_N="$2"; shift 2 ;;
     --manifest) require_value "$1" "${2:-}"; MANIFEST="$2"; shift 2 ;;
+    --no-log)   USE_LOG=false; shift ;;
     --verbose)  VERBOSE=true; shift ;;
     -h|--help)  usage; exit 0 ;;
     *) echo "ERROR: unknown option: $1" >&2; usage >&2; exit 2 ;;
@@ -115,14 +136,30 @@ highest() {
 header_high="$(highest 's/^\*\*Revision \([0-9][0-9]*\)\*\*.*/\1/p')"
 entry_high="$(highest  's/^## Revision \([0-9][0-9]*\)[^0-9].*/\1/p')"
 
+# The third place: a commit subject. `--no-optional-locks` because this is run
+# at apply time against the owner's checkout, where `git status`-style index
+# refreshes leave a `.git/index.lock` that cannot be cleaned up on a mounted
+# folder and blocks the owner's next commit -- section 0.
+log_highest() {
+  command -v git >/dev/null 2>&1 || return 0
+  git -C "$REPO_ROOT" --no-optional-locks rev-parse --git-dir >/dev/null 2>&1 || return 0
+  git -C "$REPO_ROOT" --no-optional-locks log --format=%s 2>/dev/null \
+    | sed -n 's/.*[Rr]evisions\{0,1\} \([0-9][0-9]*\)[^0-9]*\([0-9][0-9]*\)\{0,1\}.*/\1\
+\2/p' \
+    | sed '/^$/d' | sort -n | tail -1
+}
+
 header_high="${header_high:-0}"
 entry_high="${entry_high:-0}"
-
-if [ "$header_high" -ge "$entry_high" ]; then
-  current="$header_high"
-else
-  current="$entry_high"
+log_high=0
+if [ "$USE_LOG" = true ]; then
+  log_high="$(log_highest)"
+  log_high="${log_high:-0}"
 fi
+
+current="$header_high"
+[ "$entry_high" -gt "$current" ] && current="$entry_high"
+[ "$log_high"   -gt "$current" ] && current="$log_high"
 
 if [ "$current" -eq 0 ]; then
   echo "ERROR: no revision numbers found in $MANIFEST" >&2
@@ -132,8 +169,20 @@ fi
 if [ "$VERBOSE" = true ]; then
   printf 'header block: %s\n' "$header_high" >&2
   printf 'entry bodies: %s\n' "$entry_high" >&2
+  if [ "$USE_LOG" = true ]; then
+    printf 'commit log:   %s\n' "$log_high" >&2
+  else
+    printf 'commit log:   not consulted (--no-log)\n' >&2
+  fi
   if [ "$entry_high" -gt "$header_high" ]; then
     printf 'note: an entry exists that the header block does not summarise.\n' >&2
+  fi
+  if [ "$log_high" -gt "$header_high" ] && [ "$log_high" -gt "$entry_high" ]; then
+    printf 'note: a number is taken in the log and written nowhere in the manifest.\n' >&2
+    printf '      that is 0047 F12; bin/verify-manifest-coverage.sh names which.\n' >&2
+  fi
+  if [ "$USE_LOG" = true ] && [ "$log_high" -eq 0 ]; then
+    printf 'note: the log was not readable here; the file'"'"'s two places only.\n' >&2
   fi
 fi
 

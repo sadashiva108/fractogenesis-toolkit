@@ -11,6 +11,7 @@
 | D1 | The migrated-bundle carve-out is restored to `.github/session-management-instructions.md` §3: a bundle migrated from an already-closed record carries `resolutions.md` and no `decisions.md`, and its `resolutions.md` says so. **This is `0037` D2, taken once and recorded in both bundles** | F4 | 2026-09-09 | `accepted` |
 | D2 | `transferred` leaves the closed-bundle assertion in `plan_findings_work.py` entirely; `unclaimed` keeps it, and its detail names `0047` F1 as the undecided rule the row rests on. The code name is unchanged | F7 | 2026-09-09 | `accepted` |
 | D3 | `OUTCOMES` becomes the legend's six bare outcomes with `replaced` matched by prefix; the two retired prefixes go; and a contract test asserts the disjointness `docs/legend.md` has claimed a schema check performs since Revision 233 | F8 | 2026-09-09 | `accepted` |
+| D6 | The number helper consults the **log as a third place** and takes the highest of the three, because a number is taken if it is taken anywhere. Conformance is a different question and gets its own checker, `bin/verify-manifest-coverage.sh` | F12 | 2026-09-10 | `accepted` |
 | D5 | The guard is rebuilt over a declared set of vocabularies rather than a hand-listed set of comparisons, and the one pair nobody here may fix is **excluded by name** rather than absorbed. `SESSION_STATES` is added and a session's stored `state` is checked against it | F11 | 2026-09-09 | `accepted` |
 | D4 | F5 is recorded `resolved` against the work that already answered it — `is_clone()`, shipped at Revision 231 — rather than re-done; what the remedy did not cover is opened as F9 and F10 instead of being folded into the resolution | F5 | 2026-09-09 | `accepted` |
 
@@ -235,3 +236,62 @@ the fix.
 would close today's gap and nothing else. **F11's cause is not the missing lines,
 it is that the check was not derived from the sets** — which is why it went from
 covering three pairs of three to three pairs of ten without anyone editing it.
+
+## D6 — the file and the log are two incomplete registers of one sequence
+
+**F12 asks which instrument wins when they disagree. Neither: for choosing a
+number they are added.** `.share/check-manifest-revision.sh` already scanned two
+places in the file, on the reasoning that an entry written but not yet
+summarised in the header is invisible to a reader of the header. **A commit
+subject is the same problem one register further out**, so it is scanned too and
+the answer is the highest of the three.
+
+**The log scan degrades rather than failing.** No git, no repository, or a
+shallow clone falls back to the file's two places and says so under `--verbose`,
+because that helper's stated contract is that it must work on a fresh checkout
+with no `reimage.env`. Every git call passes `--no-optional-locks`: this runs at
+apply time against the owner's checkout, where an index refresh leaves a lock
+that cannot be cleaned up on a mounted folder.
+
+**Conformance is a separate instrument because it has a separate contract.**
+`bin/verify-manifest-coverage.sh` reports three conditions — a claimed number
+with no entry (`MISSING`, which fails the run), an entry introduced by a commit
+other than the one claiming the number (`ORPHANED`), and one number claimed
+twice (`DUPLICATE`). It shells out to git unconditionally and must run in a
+scratch copy. **A helper that must work without git and a checker that cannot
+work without it are not the same program.**
+
+**Two of the three only warn, and that is a ruling rather than softness.**
+Entries are never retro-edited and commits are never rewritten, so a historical
+`ORPHANED` or `DUPLICATE` row **can never be cleared by anyone**. A check whose
+number can only rise is not a signal — which is `0047` F9, recorded against two
+`superseded` bundles for exactly this. `MISSING` is the one a session can still
+avoid causing, so `MISSING` is the one that fails, and it is **0** today.
+
+**The checker found two false positives on its own first run and they were its
+own.** An unanchored subject pattern read *"Revision 256: 0037 reaches
+answered"* as the range 256 to 0037 and reported a bundle number as a missing
+revision. **That is `0047` F6 arriving inside the instrument written to answer
+`0047` F12** — the seventh instrument in this repository to fail loudly on first
+contact, and the first to be caught before it shipped rather than after.
+Anchoring the pattern also settled a question the finding never asked: **a
+mention is not a claim.** *"Undo Revision 156's over-reach"* refers to a
+revision without taking one, and the unanchored pattern counted two such
+mentions as claims.
+
+**Rejected — make the log authoritative and derive the manifest from it.** 250
+entries against 50 claimed numbers: **200 revisions predate the convention of
+naming the number in the subject**, and deriving the record from the log would
+lose every one of them.
+
+**Rejected — leave the manifest authoritative and ignore the log.** That is the
+status quo, and the status quo handed out 271 while `git log` already held it.
+
+**Rejected — put the log scan behind a flag.** A safety that must be asked for
+is one that is not asked for. Revisions 241–246 and commit `636eba0` both
+happened with a helper that could have been asked and was not.
+
+**Rejected — let the coverage checker hand out numbers too.** One instrument,
+two contracts: the helper must work on a checkout with no git, the checker
+cannot work without it. Merging them would make the number unobtainable exactly
+where the helper was written to work.

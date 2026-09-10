@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T17:20:00-04:00",
+  "updatedAt": "2026-09-10T11:00:00-04:00",
   "number": "0047",
   "bundleName": "0047-the-tree-carries-drift-no-check-looks-for",
   "genus": "findings",
@@ -188,14 +188,19 @@
     {
       "id": "F12",
       "statement": "A revision number can be taken in a commit message, which the helper that exists to prevent collisions cannot see",
-      "status": "framing",
+      "status": "resolved",
       "statusReason": null,
       "statusNote": null,
-      "updatedAt": "2026-09-09T17:20:00-04:00",
+      "updatedAt": "2026-09-10T11:00:00-04:00",
       "sectionHeading": "F12 \u2014 a revision number can be taken where the helper cannot look",
       "reopened": null,
       "withdrawn": null,
-      "resolution": null
+      "resolution": {
+        "resolvedBy": "D6",
+        "whatWasDone": "`.share/check-manifest-revision.sh` scans the commit log as a third place; `bin/verify-manifest-coverage.sh` is new and reports MISSING, ORPHANED and DUPLICATE against the log, failing only on MISSING",
+        "revision": 278,
+        "commit": null
+      }
     }
   ],
   "decisions": [
@@ -258,6 +263,18 @@
       "answersAsOf": "2026-09-09T17:20:00-04:00",
       "voidedReason": null,
       "sectionHeading": "D5 \u2014 the guard is driven by the sets it guards, and the exception is named"
+    },
+    {
+      "id": "D6",
+      "decision": "The number helper consults the log as a third place and takes the highest of the three, because a number is taken if it is taken anywhere. Conformance is a different question and gets its own checker, `bin/verify-manifest-coverage.sh`",
+      "members": [
+        "F12"
+      ],
+      "decided": "2026-09-10",
+      "outcome": "accepted",
+      "answersAsOf": "2026-09-10T11:00:00-04:00",
+      "voidedReason": null,
+      "sectionHeading": "D6 \u2014 the file and the log are two incomplete registers of one sequence"
     }
   ],
   "contributions": [],

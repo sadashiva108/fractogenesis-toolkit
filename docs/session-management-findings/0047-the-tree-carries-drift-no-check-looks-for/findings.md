@@ -43,7 +43,7 @@ retrofit is argued.
 | F9 | The two ordering comparisons report eight rows against `superseded` bundles, which no session may write to, so the rows cannot be cleared by anyone | `framing` |
 | F10 | The clone exemption is bundle-wide and never expires, so it suppresses the comparisons on a clone whose re-reading has closed — and the `reopened` status, which retains its resolution by design, is reported everywhere else | `framing` |
 | F11 | The disjointness guard covered three of the five closed vocabularies, and the pair it did not cover was the broken one — while a session's `state` had no closed set and no vocabulary check at all | `resolved` |
-| F12 | A revision number can be taken in a commit message, which the helper that exists to prevent collisions cannot see | `framing` |
+| F12 | A revision number can be taken in a commit message, which the helper that exists to prevent collisions cannot see | `resolved` |
 
 ## F1 — an `unclaimed` bundle holding a live finding
 
@@ -451,6 +451,17 @@ on the grounds that it is the only one of the four that has already cost
 archaeology. **It cost archaeology again the same day it was chosen**, which is
 the strongest argument the decision could have had and arrived six hours too late
 to be in it.
+
+**Measured 2026-09-10, and the shape of it is not what this finding assumed.**
+Across 229 commits, **50 numbers are claimed in a commit subject** and 250
+entries exist in the manifest — so the convention of naming the revision in the
+subject is recent, and **178 of 229 commits name none.** A checker asserting
+that every commit names a revision would report 178 failures against a healthy
+tree, which is the sixth instrument here to do that. What is checkable is
+narrower and all of it is true: **no claimed number lacks an entry** (0),
+**three entries were introduced by a commit other than the one claiming the
+number** — `241` and `246`, the batch reconstructed at Revision 247, and `271`,
+which is `636eba0` — and **one number is claimed by two commits** (`265`).
 
 **Why this is not simply fixed here.** Reading the log means shelling out to git,
 and `docs/rules/README.md` §6 and this session's own `Resources` note both forbid

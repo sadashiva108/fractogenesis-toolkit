@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T12:10:00-04:00",
+  "updatedAt": "2026-09-10T11:05:00-04:00",
   "number": "0038",
   "bundleName": "0038-sessions-write-into-the-tree-the-owner-commits-from",
   "genus": "findings",
@@ -143,6 +143,18 @@
       "statusNote": null,
       "updatedAt": "2026-09-09T12:10:00-04:00",
       "sectionHeading": "F7 \u2014 the write discipline has no instrument, and four are available",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F8",
+      "statement": "The guard D7 chose cannot fire at the moment that has actually failed: every recorded instance is the owner committing, and no session-side hook observes that",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-10T11:05:00-04:00",
+      "sectionHeading": "F8 \u2014 the first guard cannot guard the half that has failed",
       "reopened": null,
       "withdrawn": null,
       "resolution": null

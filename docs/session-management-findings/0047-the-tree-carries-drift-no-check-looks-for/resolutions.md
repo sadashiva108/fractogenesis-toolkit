@@ -13,8 +13,9 @@
 | F7 | D2 | `plan_findings_work.py` no longer reports a `transferred` bundle under `CLOSED-BUNDLE-LIVE-FINDING`; the `unclaimed` half stays and its detail names `0047` F1 as undecided. `test_transferred_is_treated_the_same` is replaced by `test_a_transferred_bundle_may_hold_worked_findings` over three standings, and `test_0047_F7_a_transfer_of_worked_findings_is_not_a_failure` reproduces Revision 248's twenty-three-finding transfer | 268 | — |
 | F8 | D3 | `OUTCOMES` is the legend's six bare values with `replaced` matched by prefix, and the two retired prefixes are gone. Two contract tests replaced, two regressions added, and `test_outcomes_and_statuses_share_no_word` is the disjointness assertion `docs/legend.md` has claimed since Revision 233 and nothing performed | 268 | — |
 | F11 | D5 | `VOCABULARIES` and `DECLARED_OVERLAPS` replace three hand-listed comparisons with every pair of every closed set, `SESSION_STATES` is added and `conformance` reports `VOCAB` on a session state outside it, and the one unowned pair is excluded by a named constant and asserted separately under `expectedFailure`. Suite 64 → 68, `OK (expected failures=1)` | 272 | — |
+| F12 | D6 | `.share/check-manifest-revision.sh` scans the commit log as a third place and takes the highest of the three, degrading to the file's two places where git is unavailable; `bin/verify-manifest-coverage.sh` is new and reports `MISSING` / `ORPHANED` / `DUPLICATE` against the log, failing only on `MISSING` | 278 | — |
 
-F1, F2 and F3 are untouched and remain `un-started`; **F12 was recorded at
+F1, F2 and F3 are untouched and remain `un-started`; F6, F9 and F10 stand `framing`; **F12 was recorded at
 Revision 272 and stands `framing`, deliberately undecided** — reading the git log
 to find a number taken there is a different instrument from reading a file, and
 which wins when they disagree is what F12 owes. F6 was

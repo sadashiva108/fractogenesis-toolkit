@@ -43,6 +43,7 @@ and that is not what was found.
 | F5 | A session can amend a revision the owner has already committed | `resolved` |
 | F6 | The write discipline does not distinguish the write kinds `docs/legend.md` now names | `resolved` |
 | F7 | A rule here is enforceable at write time only where the fact is in `metadata.json`, the actor identifies itself, and a false refusal costs less than the rule — and none of the four guards that pass those tests is built | `decided` |
+| F8 | The guard D7 chose cannot fire at the moment that has actually failed: every recorded instance is the owner committing, and no session-side hook observes that | `framing` |
 
 **Read as a re-verification on 2026-09-09, at Revision 269**, by
 `drift-and-the-write-boundary-20260909-053548`. `0028`, which this bundle
@@ -255,3 +256,47 @@ Finding 2 is the one that compounds. Every revision written under a shared tree
 records a baseline that cannot be attributed to it, and those baselines are what
 the next reader compares against. Nothing detects it, nothing fails, and the
 record quietly stops meaning what it says.
+
+## F8 — the first guard cannot guard the half that has failed
+
+D7 chose *a change committed with no manifest entry* as the first of F7's four
+to build, on the ground that it is the only one that has already cost
+archaeology. Building the instrument for it at Revision 278 found something D7
+could not have known and F7's list does not carry.
+
+**The rule has two halves and only one of them is a session's.**
+
+| Who | What they do | Can a session-side guard see it? |
+|---|---|---|
+| the **session** | composes a patch, and may apply it on the owner's word | **yes** — a `PreToolUse` guard already refuses a write into the checkout, and could as easily refuse a patch carrying no manifest entry |
+| the **owner** | runs `git add`, `git commit`, `git push` — §0 step 7 | **no.** It happens outside every session, in a terminal no hook is installed in |
+
+**Every recorded instance is the owner's half.** Revisions 241–246 are six
+numbers taken in the log and never written, reconstructed at Revision 247.
+Commit `636eba0` claims Revision 271 and carries Revision 270's work. Revision
+265 is claimed by two commits. **In each, a patch was composed correctly and the
+commit is where the record and the tree parted company.**
+
+So `docs/rules/rule-enforcement-avenues.md` §4.1 lists this rule as a guard that
+passes all three tests, and it passes them **against a session**. Against the
+owner it fails the second outright: *the actor must identify itself*, and the
+actor is a person at a shell this framework has no presence in.
+
+**What that leaves, and it is not nothing.** A checker — built at Revision 278 —
+which the owner or a session runs and which reports the divergence after the
+fact. **`0047` F6's distinction is the whole of the difference**: a guard fails
+where a checker only reports, and here the only available instrument is the one
+that reports. **F7 therefore stays `decided` rather than resolving on this
+work**: a checker is not write-time enforcement, and F7's claim is about write
+time.
+
+**What it costs to leave.** F7's four are the deliberate set this repository
+would enforce, and one of the four is not enforceable in the direction that has
+failed. **Left unrecorded, the next session to read §4.1 builds the guard, finds
+it green on every session-side write, and concludes the rule is held.** It is
+not; the half that breaks is the half nobody is watching.
+
+**What this finding does not claim.** That the session-side half is worthless.
+A patch that carries no manifest entry is a real defect and refusing it is
+cheap. It claims only that catching it does not catch what has actually gone
+wrong, and that the record should say so before anyone builds against it.
