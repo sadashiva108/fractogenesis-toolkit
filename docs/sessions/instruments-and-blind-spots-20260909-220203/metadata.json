@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-09T22:02:03-04:00",
+  "bundleName": "instruments-and-blind-spots-20260909-220203",
+  "createdOn": "2026-09-09",
+  "owners": [],
+  "transcript": null,
+  "scratchPath": null,
+  "resources": [
+    {
+      "what": "Repository checkout",
+      "path": "/Users/dkittrell/workspace/shiva/fractogenesis-toolkit",
+      "notes": null
+    },
+    {
+      "what": "Artifact volume",
+      "path": "the mounted `reimage-\u2026` run directory",
+      "notes": "Read-only unless the owner grants a write per run."
+    },
+    {
+      "what": "Patch directory",
+      "path": "/Users/dkittrell/reimage-workspace/patches",
+      "notes": null
+    },
+    {
+      "what": "Scratch copy",
+      "path": null,
+      "notes": "Filled by the session on its first write."
+    },
+    {
+      "what": "Commit created against",
+      "path": null,
+      "notes": "Filled by the session on its first write."
+    }
+  ],
+  "ownedBundles": [
+    {
+      "number": "0041",
+      "path": "docs/session-management-findings/0041-index-and-manifest-tables-have-a-shape-nothing-checks/",
+      "assignedOn": "2026-09-09",
+      "notes": "Assigned at the owner's direction, Revision 286. Unclaimed since Revision 286. Five members stand decided with no work done on any of them; D6 is the count check released unbuilt."
+    },
+    {
+      "number": "0050",
+      "path": "docs/session-management-findings/0050-instruments-that-cannot-fire-and-one-that-unmakes-the-record/",
+      "assignedOn": "2026-09-09",
+      "notes": "Assigned at the owner's direction, Revision 286. Unclaimed since Revision 286. F3 is the destructive regenerator and is the emergency; F1 is the guard a bridged session is invisible to."
+    }
+  ],
+  "contributions": [],
+  "declaredState": null,
+  "indexNotes": "**The instruments session.** `0050` and `0041` assigned from `unclaimed` at the owner's direction. Between them they answer *how do I know this framework works*: one bundle is instruments that cannot fire, the other a required shape nothing checks and a check released unbuilt.",
+  "ended": {
+    "on": null,
+    "reason": null,
+    "revisions": [],
+    "commits": [],
+    "disposals": []
+  },
+  "state": "active"
+}

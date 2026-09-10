@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T12:10:00+00:00",
+  "updatedAt": "2026-09-09T22:02:03-04:00",
   "number": "0050",
   "bundleName": "0050-instruments-that-cannot-fire-and-one-that-unmakes-the-record",
   "genus": "findings",
@@ -28,9 +28,9 @@
     "docs/architecture/state-as-data.md sections 6, 8 and 9",
     "every metadata.json in docs/, at HEAD and after one extraction run"
   ],
-  "standing": "unclaimed",
+  "standing": "analyzing",
   "progress": "analyzing",
-  "ownership": "unclaimed",
+  "ownership": null,
   "lineage": null,
   "members": [
     {

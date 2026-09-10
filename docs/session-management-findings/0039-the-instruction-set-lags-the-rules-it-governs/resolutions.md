@@ -9,6 +9,7 @@ this file records what was actually done.
 
 | Finding | Resolved by | What was done | Revision | Commit |
 |---|---|---|---|---|
+| F28 | D26 | `docs/legend.md`'s permission table splits the old row: `assigned` and `retired` keep *nothing is readable* with the reason they follow from member status, and **`unclaimed` gets its own row reading as `analyzing`** with the owner's two acts withheld. The prose at *A bundle* no longer says an `unclaimed` bundle is closed to every session | 287 | — |
 | F26 | D24 | `docs/legend.md` line 199 now reads *a write by the owner is the transition*, with the two grounds recorded; §10 of the instruction set reads *the transfer ends on the target session's first write to the bundle as owner*, and says a contribution does not clear one | 273 | — |
 | F27 | D25 | The session state is `dissolved` in `docs/legend.md`, in `SESSION_STATES`, in `session_state`'s docstring and in the `declaredState` guard; the expected-failure test that held the overlap open is deleted and the disjointness guard now runs with nothing excused | 273 | — |
 | F7 | D5 | Ordering became a typed, directed edge, stored in the asserting bundle and carried in `metadata.json` | 222 | `42d08a4` |

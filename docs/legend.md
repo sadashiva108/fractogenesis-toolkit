@@ -317,8 +317,11 @@ reopening is the whole of the live work.
 
 `unclaimed` is the exception because it is about **ownership, not progress**. A
 bundle is `unclaimed` when no session owns it — created without an owner
-declared, or released back to the queue by one. It is closed to every session,
-appears in no `findings-manifest.md`, and is carried only by its index row. The
+declared, or released back to the queue by one. It appears in no
+`findings-manifest.md` and is carried only by its index row. **It is not closed to
+every session**: its members are read by their own status, like any other
+bundle's. What it withholds is the two acts that need an owner — closing the
+deciding, and resolving. The
 owner assigns it; that makes the receiving session `active` and moves the bundle
 to whatever its findings derive, which for a bundle nobody has read is
 `assigned`.
@@ -364,11 +367,21 @@ other session checks the bundle first, then the finding.
 | Bundle standing | Then, inside it |
 |---|---|
 | `superseded` | **readable by any session, writable by none** — including the session that owns it. The reading is retained precisely so it can be read; §9 spends three prohibitions keeping it that way |
-| `assigned`, `unclaimed`, `retired` | nothing is readable |
+| `assigned`, `retired` | nothing is readable — **and both follow from what is inside**: every member `un-started`, or every member `withdrawn` |
+| `unclaimed` | **as `analyzing`** — `framing` read and record · `decided` read only · `resolved` read only. **No session may move a member to `decided` or `resolved`**: those are the owner's acts and there is no owner |
 | `analyzing`, `revisited`, `answered` | `framing` — read and record · `decided` — read only · `resolved` — read only · `un-started`, `reopened`, `withdrawn` — not readable |
 
 An `assigned` bundle offers nothing to anyone but its owner, by definition: all
 its findings are `un-started`, and the owner's first reading is what opens them.
+
+**`unclaimed` left that row at Revision 287** — `0039` D26. It was there for a
+reason about **ownership**, while the other two values are there because of what
+is **inside the bundle**, and readability is a property of the member. Releasing a
+bundle is a normal operation; making its reading unreadable was not the intent and
+was the effect. Measured before the change: 17 `unclaimed` bundles held 52 live
+members, of which **19 were `decided` — their deciding closed and their reasoning
+unreadable** — and 7 were `framing`, which every other bundle opens to every
+session. **What `unclaimed` withholds is the owner's acts, not the reading.**
 
 **The three rows are disjoint, so no tie-break is needed.**
 

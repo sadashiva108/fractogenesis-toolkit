@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T16:40:00-04:00",
+  "updatedAt": "2026-09-10T03:15:00-04:00",
   "number": "0039",
   "bundleName": "0039-the-instruction-set-lags-the-rules-it-governs",
   "genus": "findings",
@@ -399,6 +399,23 @@
         "revision": 273,
         "commit": null
       }
+    },
+    {
+      "id": "F28",
+      "statement": "`unclaimed` sits in a readability row it does not earn, so releasing a bundle makes 19 `decided` and 7 `framing` members unreadable for a reason about ownership",
+      "status": "resolved",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-10T03:15:00-04:00",
+      "sectionHeading": "F28 \u2014 `unclaimed` answers two questions, and one of them freezes 52 members",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": {
+        "resolvedBy": "D26",
+        "whatWasDone": "The permission table splits the row; `unclaimed` reads as `analyzing` with the owner's acts withheld, and the prose no longer says it is closed to every session",
+        "revision": 287,
+        "commit": null
+      }
     }
   ],
   "decisions": [
@@ -713,6 +730,18 @@
       "answersAsOf": "2026-09-09T16:40:00-04:00",
       "voidedReason": null,
       "sectionHeading": "D25 \u2014 the cheap one moves"
+    },
+    {
+      "id": "D26",
+      "decision": "Readability is a property of the member, never of the bundle's ownership. `unclaimed` leaves the *nothing is readable* row and gets its own: read as `analyzing`, and no session may move a member to `decided` or `resolved`",
+      "members": [
+        "F28"
+      ],
+      "decided": "2026-09-10",
+      "outcome": "accepted",
+      "answersAsOf": "2026-09-10T03:10:00-04:00",
+      "voidedReason": null,
+      "sectionHeading": "D26 \u2014 readability is a property of the member, never of the bundle's ownership"
     }
   ],
   "contributions": [
@@ -822,6 +851,16 @@
       "basis": "derived",
       "asserted_by": "session_016EbjB7M527qEFqZFzpv2C9",
       "asserted_on": "2026-09-08"
+    },
+    {
+      "kind": "evidences",
+      "from": "0039/F28",
+      "to": "0047/F1",
+      "why": "F28 rules what `unclaimed` means in docs/legend.md, which is the vocabulary half of the same defect; F1 is the instrument half \u2014 whether CLOSED-BUNDLE-LIVE-FINDING should fire and what a release owes its live members \u2014 and is not this session's to decide",
+      "reason": null,
+      "basis": "asserted",
+      "asserted_by": "entity-model-and-vocabulary-20260909-053548",
+      "asserted_on": "2026-09-10"
     }
   ],
   "indexNotes": null

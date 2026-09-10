@@ -55,6 +55,7 @@ without answering it for rules.
 | D21 | The commit message is handed over as **one fenced block tagged `text`** — the fence §11 already requires of every example, for the reason §11 already gives. §7 states it as the other half of the rule it already had: a `git commit` inside the block is something to delete, a message outside one is something to gather, and both cost the owner the same | F23 | 2026-09-09 | `accepted` |
 | D24 | **A status moves on a material change to the record, and a read is not one.** `docs/legend.md` lines 69 and 546 stand; line 199's *reading is the transition* goes, and §10's *the transfer ends when the target session reads the bundle* goes with it. A transfer ends on the target session's **first write to the bundle as owner**, which is what five records have said since Revision 248 | F26 | 2026-09-09 | `accepted` |
 | D25 | **`dissolved` replaces `withdrawn` as a session state.** A session's terminal shutdown and a member's carry the same idea and may not carry the same word. The member sense stays: it is the more specified and the more embedded. `dissolved` sits beside `closed`, is adjectival like `available` and `active`, and appeared nowhere in the record | F27 | 2026-09-09 | `accepted` |
+| D26 | **Readability is a property of the member, never of the bundle's ownership.** `unclaimed` leaves the *nothing is readable* row and gets its own: read as `analyzing`, and **no session may move a member to `decided` or `resolved`**, those being the owner's acts with no owner to perform them | F28 | 2026-09-10 | `accepted` |
 
 ## Findings 1, 2, 5 and 6 — a rule lives where its kind lives
 
@@ -1254,3 +1255,69 @@ in two rows under opposite permissions. An exception costs more than the rename.
 here**, because `0039` and `docs/legend.md` belong to this session. That is the
 `framing` rule working as designed: a session that does not own a bundle recorded
 into it, and the owner closed the deciding.
+
+---
+
+## D26 — readability is a property of the member, never of the bundle's ownership
+
+**`unclaimed` says nobody owns this. It does not say nobody may read it.**
+
+The ruling, in one sentence: **an `unclaimed` bundle is read exactly as an
+`analyzing` one, and what `unclaimed` withholds is the owner's acts** — closing
+the deciding, and resolving — **because there is no owner to perform them.**
+
+So the row `assigned`, `unclaimed`, `retired` → *nothing is readable* loses
+`unclaimed`, and `unclaimed` gets its own row:
+
+```text
+| `unclaimed` | as `analyzing` — `framing` read and record · `decided` read only ·
+|             | `resolved` read only. NO session may move a member to `decided`
+|             | or `resolved`: those are the owner's acts and there is no owner
+```
+
+**Why this and not the reverse.** The other two values in the old row are
+**derived from member status** — every member `un-started`, every member
+`withdrawn`. Readability follows from what is inside the bundle. **Ownership is
+the one input in that row that says nothing about any member**, so it is the one
+that does not belong there. Removing it makes the row mean one thing.
+
+**What it unlocks, stated as a number.** 19 `decided` members become readable and
+7 `framing` members become readable **and recordable**, which is what `framing`
+already promises everywhere else. The 26 `un-started` members stay closed, because
+those are closed by their own status and always were.
+
+**Rejected — leave it, because an unowned bundle should not accumulate work
+nobody will finish.** The real risk, and it is not what the cell protects
+against. Recording to a `framing` member is open to every session *by design*,
+in every other bundle, precisely so that work accumulates where it belongs rather
+than beside it. **An unowned bundle is the case where that matters most**, because
+there is no owner to notice a near-duplicate opening next door. And the risk is
+bounded by what ownership actually gates: nothing can be **closed** without an
+owner, so no unowned bundle can quietly declare itself finished.
+
+**Rejected — readable but not recordable.** A half-measure that keeps the 19 and
+drops the 7. It splits `framing` into two behaviours depending on a property of
+the bundle, which is the defect this decision removes, re-introduced one level
+down.
+
+**Rejected — rule that a release must first move live members somewhere.** This
+was considered because it fixes the cause rather than the symptom. It fails on
+`0001`, released with ten live members and no destination, and it would make
+releasing more expensive than closing — which inverts §10a's purpose, since
+release exists so a session that must stop can stop.
+
+### What this decision does NOT do
+
+**It does not decide `0047` F1.** That finding is `un-started` and belongs to
+`drift-and-the-write-boundary-20260909-053548`. This is the **vocabulary** half —
+what `unclaimed` means, in `docs/legend.md`, which is this session's document.
+F1 is the **instrument** half: whether `CLOSED-BUNDLE-LIVE-FINDING` should fire
+at all, and what a release owes its live members. **This decision is an input to
+that one and is recorded as an edge**, `0039/F28 evidences 0047/F1`, not as an
+answer to it.
+
+**It does not touch `plan_findings_work.py:614`.** That check exists because of
+the rule this decision changes, and its own detail string defers to `0047` F1. A
+toolkit write against it is gated on **that** finding being `decided`, by a
+session that owns it. **Naming what an instrument should now do is not the same as
+doing it**, and the boundary is the point.

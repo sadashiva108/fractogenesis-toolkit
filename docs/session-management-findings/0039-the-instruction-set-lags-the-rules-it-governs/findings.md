@@ -77,6 +77,7 @@ for.
 | F25 | *What another session may do* has no row for `transferred`, the one standing under which a non-owner is routinely told to contribute | `framing` |
 | F26 | `docs/legend.md` says a status moves on a write and also that reading is the transition, and §10 sides with the minority against five records and the tree | `resolved` |
 | F27 | `withdrawn` is a finding `status` and a session `state`, so the rule that no value belongs to more than one vocabulary is broken in the document that states it | `resolved` |
+| F28 | `unclaimed` sits in a readability row it does not earn, so releasing a bundle makes 19 `decided` and 7 `framing` members unreadable for a reason about ownership | `resolved` |
 
 ---
 
@@ -1189,3 +1190,67 @@ session states are `available`, `active`, `closed`, `handoff`, `withdrawn` —
 four adjectives and **one noun**. `handoff` is the event, not the state the
 session is in after it. It is the same class of defect and it is a smaller one,
 so it is recorded here rather than given its own finding.
+
+## F28 — `unclaimed` answers two questions, and one of them freezes 52 members
+
+`docs/legend.md` says two things about `unclaimed` and they are not the same
+thing.
+
+| Line | What it says | Which question |
+|---:|---|---|
+| 319 | *"a bundle is `unclaimed` when **no session owns it**"* | **who owns this** |
+| 367 | `assigned`, `unclaimed`, `retired` → **"nothing is readable"** | **what may be read** |
+
+**The other two values in that row earn their place; `unclaimed` does not.** An
+`assigned` bundle is unreadable because **every member is `un-started`** — the
+row is derived from member status. A `retired` bundle is unreadable because every
+member is `withdrawn`. **`unclaimed` is in that row for a reason about
+ownership**, which says nothing about any member's status, and is therefore the
+one cell in the table that does not follow from what is inside the bundle.
+
+**Measured 2026-09-10.** Seventeen bundles stand `unclaimed`, holding **52 live
+members**:
+
+| Status | Count | What the table does to them |
+|---|---:|---|
+| `un-started` | 26 | correctly closed — nobody has read them |
+| **`decided`** | **19** | **the deciding is closed and the reasoning is unreadable** |
+| `framing` | 7 | open to every session by rule, and closed by this cell |
+
+**Nineteen members carry accepted decisions that no session may read.** The
+thinking was done, the alternatives were recorded, and releasing the bundle put
+all of it behind a cell that was written about ownership. `0041` has five,
+`0042` four, `0053` three, `0049` three, `0046` two, `0051` two.
+
+**Releasing is a normal, correct operation and this is its cost.** Revision 264
+released seven bundles when `assurance-coverage-20260908-204724` closed — §10a
+followed exactly — and in one revision the tree went from one bundle in this
+state to eight. **A procedure carried out correctly should not make a reading
+unreadable.**
+
+**The seven `framing` members are the sharpest case.** `framing` is defined as
+*live and open, any session may read and record* — that is the property the
+framework is proudest of, and the one that stops a near-duplicate being opened
+beside an existing reading. **This cell revokes it for a reason that has nothing
+to do with the finding.**
+
+**What it costs to leave.** Two things, and the second is worse. A session that
+needs what is in `0050` cannot read it, so it re-derives it or opens a
+near-duplicate — which is the exact failure `framing`'s openness exists to
+prevent. And **`0043`'s standing note is now unenforceable in general**: it says
+the bundle is *deliberately open so another session can record rather than open a
+near-duplicate beside it*, which is a property any bundle should be able to have
+and which release silently removes.
+
+**Relates to `0039` F21 and F25.** F21 records that this table carries rows under
+contradictory rules and that the `retired`/`withdrawn` cells disagree with
+section 3; F25 that it has no row for `transferred` at all. **This is the third
+defect in one four-row table**, and the pattern is that the table mixes
+*ownership* rows with *member-status* rows and does not say which it is doing.
+
+**Relates to `0047` F1**, which is `un-started` and belongs to
+`drift-and-the-write-boundary-20260909-053548`. That finding reads the same
+defect from the instrument's side — `plan_findings_work.py:614` emits
+`CLOSED-BUNDLE-LIVE-FINDING` with the detail *"0047 F1, which is undecided"*,
+deferring to a ruling nobody had made. **This finding is the vocabulary half and
+is not a decision on F1**, which is not this session's to take.
