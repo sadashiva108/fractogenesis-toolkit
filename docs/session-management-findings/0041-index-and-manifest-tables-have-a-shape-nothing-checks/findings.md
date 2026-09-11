@@ -472,6 +472,16 @@ wherever none does.**
 nobody's attention; `stamp --dry-run` writes 0 records against it, so **the data is
 right and only the display is wrong.**
 
+**One reading in this finding was wrong and is corrected at Revision 307.** It said
+the `run-index-design` row *"belongs to a session that stands `handoff` with no
+successor, so nobody is positioned to fix it"*, and flagged it four times on that
+basis. **A projection belongs to its source, not to its subject.**
+`docs/sessions/INDEX.md` is shared — **12 of the last 15 revisions touched it**, by
+all three live sessions — and §6.1 declares that column a *derived state*, one row
+per session file. **Re-deriving a cell is not deciding**, which is the act an
+absent session cannot perform. The row is re-derived and the surface's unattended
+half is now empty.
+
 ### Why `structure` passes while two of its neighbours drift
 
 `verify-findings-structure.sh` compares a bundle's **derived standing** against the

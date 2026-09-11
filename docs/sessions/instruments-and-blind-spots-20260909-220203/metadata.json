@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-11T00:00:00-04:00",
+  "updatedAt": "2026-09-11T01:00:00-04:00",
   "bundleName": "instruments-and-blind-spots-20260909-220203",
   "createdOn": "2026-09-09",
   "owners": [
@@ -72,7 +72,7 @@
     }
   ],
   "declaredState": null,
-  "indexNotes": "**The instruments session.** `0050` and `0041` assigned from `unclaimed` at the owner's direction. Between them they answer *how do I know this framework works*: one bundle is instruments that cannot fire, the other a required shape nothing checks and a check released unbuilt. **First write Revision 288**: `0041` D6 built, F6 `resolved`, and the check's first run corrected an index total that had been hand-incremented across three revisions. `0050` F7 recorded. **Revision 289**: `0050` D3 retires the extraction half of `extract-metadata.py` rather than guarding it, on a re-measurement of 740 values destroyed and 620 irrecoverable. **Revision 292**: `0050` F8 and F9 \u2014 an instrument that is correct, fires, and is run by nothing, recorded after this session reported its condition as undetected and was wrong. **Revision 294**: `0050` F10, and F7 and F9 extended \u2014 the metric that argues against its own prescribed repair, and the two halves of a commit message the subject test cannot reach. **Revision 297**: `docs/ledgers/instrument-firing.md` \u2014 the written answer this session owed \u2014 plus `0050` F1 settled and a contribution to `0043` F13. **Revision 299**: D3 carried out \u2014 the extractor is deleted, the completeness check is its own file, and `0050` F3 and F6 are `resolved`. **Revision 306**: D7's precondition \u2014 the derivation fixture set, and `0043` F7 answered by enumeration.",
+  "indexNotes": "**The instruments session.** `0050` and `0041` assigned from `unclaimed` at the owner's direction. Between them they answer *how do I know this framework works*: one bundle is instruments that cannot fire, the other a required shape nothing checks and a check released unbuilt. **First write Revision 288**: `0041` D6 built, F6 `resolved`, and the check's first run corrected an index total that had been hand-incremented across three revisions. `0050` F7 recorded. **Revision 289**: `0050` D3 retires the extraction half of `extract-metadata.py` rather than guarding it, on a re-measurement of 740 values destroyed and 620 irrecoverable. **Revision 292**: `0050` F8 and F9 \u2014 an instrument that is correct, fires, and is run by nothing, recorded after this session reported its condition as undetected and was wrong. **Revision 294**: `0050` F10, and F7 and F9 extended \u2014 the metric that argues against its own prescribed repair, and the two halves of a commit message the subject test cannot reach. **Revision 297**: `docs/ledgers/instrument-firing.md` \u2014 the written answer this session owed \u2014 plus `0050` F1 settled and a contribution to `0043` F13. **Revision 299**: D3 carried out \u2014 the extractor is deleted, the completeness check is its own file, and `0050` F3 and F6 are `resolved`. **Revision 306**: D7's precondition \u2014 the derivation fixture set, and `0043` F7 answered by enumeration. **Revision 307**: the last unattended projection row re-derived and the ledger's unclearable/unattended conflation corrected, at Drift's prompting.",
   "ended": {
     "on": null,
     "reason": null,
