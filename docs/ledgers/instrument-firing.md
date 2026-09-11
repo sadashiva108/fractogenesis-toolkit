@@ -138,6 +138,7 @@ gap and it reads source rather than running it.
 |---|---|---|---|
 | `check-metadata-completeness.py` | **yes** — `check-completeness.sh` `exec`s it | **yes** | 0 problems on the tree. **Fired on all three of its classes** in a throwaway: a dash where `null` belongs, a bold marker in an `ATOMIC` value, and a markdown row that did not become an object |
 | `extract-metadata.py` | — | — | **gone** |
+| `measure-iris-status.py` | **NO** — not in the table, not in `all`, **no executing caller anywhere in the tree** | **yes**, and correctly, and it *writes* | Rewrote **3 of 3** blocks at `fc2836b`: 55→56 dossiers, 217→224 members, 73→77 edges. Last run at Revision 301 |
 
 **Three capabilities went with it, and all three lived in code nobody was
 permitted to run.**
@@ -191,6 +192,30 @@ the Revision 308 script passes.
 running anything. That is this ledger's own subject arriving inside it: the third
 copy went at Revision 299 by *deleting* a file, this one at Revision 308 by
 *needing* one thing twice, and **none of the three was found by a check.**
+
+## A generator nobody runs, found at Revision 309
+
+**`0050` F8's third instance, and the first where the unrun instrument writes.**
+`measure-iris-status.py` was built at Revision 301 for exactly the reason this
+ledger exists: `iris/status.md`'s three measured sections sit between
+`<!-- MEASURED: -->` markers so that no number in them is ever hand-carried. It
+worked once and was never run again.
+
+**Reached by nothing.** Named in `iris/status.md`'s own prose, in one findings
+document and in the manifest — and in no dispatcher, no `bin/` entrypoint, no
+`verify.sh` group, no prompt. Run at `fc2836b` it rewrote **3 of 3 blocks**, and a
+second run changed nothing further.
+
+**Silence here is worse than silence anywhere else in this table.** Every other
+unrun instrument above leaves a question unanswered. **A generator nobody runs
+leaves a wrong answer published**, under markers that tell a reader the numbers
+were machine-derived and are therefore trustworthy. `status.md` said 55 dossiers,
+217 members and 73 edges while the tree held 56, 224 and 77.
+
+**The blocks are regenerated in this revision. The cause is not repaired** — the
+script is still reached by nothing, and `0057` F1 holds the condition.
+
+---
 
 **Numbers after the repair.** `counts` FAIL 0; `headers` FAIL 11, unmoved;
 `structure` **OK 120, FAIL 0**; completeness 0 problems; suite **74** passing;

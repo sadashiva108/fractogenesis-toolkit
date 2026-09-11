@@ -159,6 +159,39 @@ checkout-measured and a clone of the same commit reads 20, the gap being untrack
 same way at Revision 297 and say so nowhere. Every figure in the Iris audit comes
 from **tracked** records and is unaffected; **path resolution is not**.
 
+**Corrected at Revision 309, on both halves.**
+
+**The claim about where it was written was false for nine revisions.** *"It is now
+written into the method section of `docs/ledgers/iris-conformance.md`"* — that
+document did not exist. It was composed at Revision 299, never landed, and cited
+as existing here and in `docs/ledgers/projection-conformance.md` §34. **Both
+citations resolved to nothing and `verify-doc-paths.sh` reported the second as a
+WARN that nobody read.** The ledger is landed in this revision, so the sentence is
+now true; it is left standing rather than rewritten, with this note beneath it,
+because the record of what was accepted is not the place to hide that it was
+wrong.
+
+**And the mechanism was wrong, which matters more.** `.internal/restore/` is not
+untracked. **It is an empty directory** — `git status --untracked-files=all`
+reports nothing, `git check-ignore` finds no rule, and `git ls-files` under it
+returns 0. Git does not represent empty directories at all, so **no commit can
+close this gap** and the checkout will disagree with every clone permanently. The
+sentence has now been written three times as though a commit would settle it:
+Revision 301, the audit's method section, and here.
+
+**Re-measured at `fc2836b`:** `--all` MISSING reads **8** in the checkout and
+**21** in a clone of the same commit — thirteen instances of one path in two
+spellings, and nothing else. **The default set, which is what a session actually
+runs, reads 0 / 0 in both.** So F12 is true and has never cost a session anything;
+it lives entirely in a mode no runbook, dispatcher or prompt invokes.
+
+**The remedy is a decision nobody closed, not new work.** `0012` D2 — *"the empty
+directory is removed locally, and that is not a repository change"* — was accepted
+at **Revision 193** and never carried out, and `0012` D1 already ruled that the
+sentences citing the path be rewritten rather than the directory created. `0038`
+is `drift-and-the-write-boundary-20260909-053548`'s; **this is a measurement
+contributed to F12, and the act is not taken here.**
+
 **Accepted:** recompute a total, never increment it. Revision 300 held 125→126
 while the tree reached 128 and the answer was 133; Spots hit the same thing twice
 in one night, both times caught by the check built at Revision 288 firing on the

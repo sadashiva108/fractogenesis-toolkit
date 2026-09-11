@@ -1,0 +1,127 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-10T07:00:00-04:00",
+  "number": "0057",
+  "bundleName": "0057-the-manual-measures-a-tree-that-has-moved",
+  "genus": "findings",
+  "kind": "session-management",
+  "subKind": null,
+  "subject": "The manual measures a tree that has moved, and its documents disagree with each other",
+  "recordedOn": "2026-09-10",
+  "recordedOccasion": "from auditing all thirteen iris/ documents against the tree before building anything on them.",
+  "recordedBy": {
+    "sessionBundle": "instruments-and-blind-spots-20260909-220203",
+    "sessionId": "session_01Fo6sBeux1JTyDzgKhCx2KU"
+  },
+  "severity": "F2 is the high one -- the census it corrects is the evidence for a claim iris/README.md repeats as the honest summary of the system. F3 and F4 are one line each. F5 costs nothing today and is the largest unexercised mechanism in the framework.",
+  "feltAt": [
+    "iris/vocabulary.md",
+    "iris/schema.md",
+    "iris/prism.md",
+    "iris/lumen.md",
+    "iris/verifications.md",
+    "iris/README.md",
+    "iris/lifecycles.md"
+  ],
+  "scope": "iris/. No rule document and no docs/ record is implicated; every defect here is in the manual.",
+  "read": [
+    "all thirteen documents under iris/",
+    "every metadata.json under docs/, at d127b0e",
+    "docs/legend.md Session states",
+    "bin/test-session-management.sh, bin/verify-doc-paths.sh --all"
+  ],
+  "standing": "unclaimed",
+  "progress": "untouched",
+  "ownership": "unclaimed",
+  "lineage": {
+    "supersedes": null,
+    "on": null
+  },
+  "members": [
+    {
+      "id": "F1",
+      "statement": "Every measured figure in the manual has moved, by different amounts, and two documents already disagreed with each other",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-10",
+      "sectionHeading": "F1 \u2014 every figure has moved, and by different amounts",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F2",
+      "statement": "The edge census is wrong in four of twelve rows, and one row falsifies the claim the section rests on",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-10",
+      "sectionHeading": "F2 \u2014 the census is wrong in four rows, and one of them is load-bearing",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F3",
+      "statement": "The sentence that says the code is the tiebreak cites a path that does not exist",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-10",
+      "sectionHeading": "F3 \u2014 the tiebreak points at a path that does not exist",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F4",
+      "statement": "A session state's `Produces` column names a file that has never existed, against the legend",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-10",
+      "sectionHeading": "F4 \u2014 a `Produces` column names a file that has never existed",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F5",
+      "statement": "The reopen lifecycle is fully specified, has a generated document, and has never run",
+      "status": "un-started",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-10",
+      "sectionHeading": "F5 \u2014 the reopen lifecycle is fully specified and has never run",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    }
+  ],
+  "decisions": [],
+  "contributions": [],
+  "edges": [
+    {
+      "kind": "relates-to",
+      "from": "0057/F2",
+      "to": "0050/F8",
+      "why": "0050 F8 is an instrument that could report a condition and is reached by nothing; 0057 F2 is a condition derivable by one query held as a hand-typed copy nobody re-derives -- the same failure one layer up",
+      "reason": null,
+      "basis": "asserted",
+      "asserted_by": "instruments-and-blind-spots-20260909-220203",
+      "asserted_on": "2026-09-10"
+    },
+    {
+      "kind": "relates-to",
+      "from": "0057/F2",
+      "to": "0043/F13",
+      "why": "0043 F13 owns the closed set of edge kinds; F2 is that set's census against the tree rather than the set itself",
+      "reason": null,
+      "basis": "asserted",
+      "asserted_by": "instruments-and-blind-spots-20260909-220203",
+      "asserted_on": "2026-09-10"
+    }
+  ],
+  "indexNotes": null
+}

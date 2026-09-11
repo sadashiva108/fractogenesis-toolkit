@@ -38,28 +38,28 @@ Everything below is that sentence with its evidence attached.
 ## 2. The record, measured
 
 <!-- MEASURED:RECORD -->
-**55 dossiers, 217 members, 73 edges.** Sessions are excluded — `docs/sessions/`
+**57 dossiers, 229 members, 79 edges.** Sessions are excluded — `docs/sessions/`
 holds session records, not dossiers.
 
 | Genus | Dossiers |
 |---|---:|
-| `findings` | **55** |
-| `commission` | 0 |
+| `findings` | **56** |
+| `commission` | 1 |
 | `charter` | 0 |
 | `remedy` | 0 |
 
 | Member status | Count |
 |---|---:|
-| `resolved` | 92 |
-| `framing` | 53 |
-| `un-started` | 43 |
+| `resolved` | 95 |
+| `framing` | 57 |
+| `un-started` | 48 |
 | `decided` | 29 |
 | `withdrawn` | 0 |
 
 | Edge kind | Instances |
 |---|---:|
+| `relates-to` | 31 |
 | `carried` | 29 |
-| `relates-to` | 25 |
 | `blocks` | 7 |
 | `constrains` | 5 |
 | `co-decides` | 4 |
@@ -68,24 +68,24 @@ holds session records, not dossiers.
 | `contradicts` · `duplicates` · `generalises` · `serves` | **0 each** |
 
 **The manifest itself is the largest thing in the repository.**
-`APPLY-MANIFEST.md` is **1.21 MB, 18,126 lines, 471 entries**. Every session reads it
+`APPLY-MANIFEST.md` is **1.25 MB, 18,142 lines, 479 entries**. Every session reads it
 to take a revision number.
 
 | Root | Dossiers |
 |---|---:|
-| `docs/session-management-findings/` | 19 |
+| `docs/session-management-findings/` | 21 |
 | `docs/cross-cutting-findings/` | 17 |
 | `docs/runbook-findings/restore-repos/` | 7 |
 | `docs/instruction-set-findings/` | 3 |
-| `docs/runbook-findings/restore-docker/` | 1 |
 | `docs/runbook-findings/backup-repos/` | 1 |
-| `docs/runbook-findings/restore-runtime/` | 1 |
-| `docs/runbook-findings/restore-access/` | 1 |
 | `docs/runbook-findings/restore-apps/` | 1 |
-| `docs/runbook-findings/restore-git/` | 1 |
+| `docs/runbook-findings/restore-docker/` | 1 |
 | `docs/runbook-findings/reimage-prep-checks/` | 1 |
-| `docs/runbook-findings/capture-office-stability/` | 1 |
+| `docs/runbook-findings/restore-access/` | 1 |
+| `docs/runbook-findings/restore-git/` | 1 |
 | `docs/runbook-findings/stage-loose-secrets/` | 1 |
+| `docs/runbook-findings/restore-runtime/` | 1 |
+| `docs/runbook-findings/capture-office-stability/` | 1 |
 <!-- /MEASURED:RECORD -->
 
 [&#8593; Contents](#contents)
@@ -157,17 +157,16 @@ down. Today it filters 191 findings to 29 and stops.
 consulted. [schema.md](schema.md) sections 6 and 7.
 
 <!-- MEASURED:NULLS -->
-**6 fields are `null` on every record that carries them.** Populations differ
-— 55 dossiers, 217 members, 161 decisions — so each is stated against its own:
+**5 fields are `null` on every record that carries them.** Populations differ
+— 57 dossiers, 229 members, 165 decisions — so each is stated against its own:
 
 | Field | Null on | In [schema.md](schema.md) §6's list |
 |---|---|---|
-| `members[].statusReason` | 217 of 217 | yes |
-| `members[].statusNote` | 217 of 217 | **no** |
-| `members[].reopened` | 217 of 217 | yes |
-| `members[].withdrawn` | 217 of 217 | yes |
-| `decisions[].voidedReason` | 161 of 161 | yes |
-| `subKind` | 55 of 55 | yes |
+| `members[].statusReason` | 229 of 229 | yes |
+| `members[].reopened` | 229 of 229 | yes |
+| `members[].withdrawn` | 229 of 229 | yes |
+| `decisions[].voidedReason` | 165 of 165 | yes |
+| `subKind` | 57 of 57 | yes |
 <!-- /MEASURED:NULLS -->
 
 `statusReason` is the sharpest: `0039` D7–D12 named four reason fields, and **the
