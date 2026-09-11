@@ -501,6 +501,28 @@ the direction of making the tree look worse**, and every one was caught the same
 way — by reading the rows rather than the total. Eighth instrument in this
 repository to fail loudly on first contact and the third caught before shipping.
 
+### D7's precondition is built, at Revision 306
+
+**`0043` D3's ruling names the order**: *"the fixture set first, because it is what
+makes either a checker or a generator trustworthy … then a report-only checker."*
+The fixture set is in the suite; the checker is not built.
+
+**It is an enumeration rather than a set of chosen bundles.** `derivation_table`
+reads only set membership, so the presence set is the whole input and a six-value
+vocabulary has 63 of them. **Hand-picked fixtures pin the cases somebody thought
+of; this needed nobody to think of them.**
+
+**And it answered `0043` F7 on the way** — the else branch does assert something:
+`analyzing` holds exactly when there is a `framing` or `decided` member, or an
+`un-started` member beside one that is not. **This session's first attempt at
+stating it was wrong on seven of the 63**, which is F7's claim arriving on the
+session answering it. The measurement is contributed to that bundle; the wording of
+the legend's row is not proposed here.
+
+**Shown to fire, not only to pass**: three derivation mutations in a throwaway fail
+**4, 3 and 4** tests, and the first is F7's stated failure mode — a bug landing in
+`analyzing`, where it looks plausible. **Suite 69 → 73, all passing.**
+
 <!-- historical: bin/verify-findings-headers.sh -->
 <!-- historical: bin/verify-findings-structure.sh -->
 <!-- proposed: bin/verify-index-tables.sh -->

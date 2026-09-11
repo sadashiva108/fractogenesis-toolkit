@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-10T08:00:00-04:00",
+  "updatedAt": "2026-09-11T00:00:00-04:00",
   "bundleName": "instruments-and-blind-spots-20260909-220203",
   "createdOn": "2026-09-09",
   "owners": [
@@ -48,7 +48,7 @@
       "number": "0041",
       "path": "docs/session-management-findings/0041-index-and-manifest-tables-have-a-shape-nothing-checks/",
       "assignedOn": "2026-09-09",
-      "notes": "Assigned at the owner's direction, Revision 286; unclaimed since Revision 264. D6 carried out at Revision 288 and F6 resolved -- the count check now sums the prose total beneath a table, and its first run corrected this tree's own index total, 113 against 120. Four members still stand decided, three of them D1's question. F7 recorded at Revision 299: section 6's patch recipe drops a deletion before git apply sees it, measured on that revision's own patch. F8 and D7 at Revision 304: section 6.1's projected surface measured at 5 disagreements in 612 rows, all five in classes nothing compares, none in the 329 rows something checks. D7 adds the two cheapest to verify-findings-structure.sh."
+      "notes": "Assigned at the owner's direction, Revision 286; unclaimed since Revision 264. D6 carried out at Revision 288 and F6 resolved -- the count check now sums the prose total beneath a table, and its first run corrected this tree's own index total, 113 against 120. Four members still stand decided, three of them D1's question. F7 recorded at Revision 299: section 6's patch recipe drops a deletion before git apply sees it, measured on that revision's own patch. F8 and D7 at Revision 304: section 6.1's projected surface measured at 5 disagreements in 612 rows, all five in classes nothing compares, none in the 329 rows something checks. D7 adds the two cheapest to verify-findings-structure.sh. D7's precondition built at Revision 306: the derivation fixture set as an enumeration over all 63 presence-combinations, which answered 0043 F7. Suite 69 to 73."
     },
     {
       "number": "0050",
@@ -63,10 +63,16 @@
       "member": "F13",
       "on": "2026-09-10",
       "what": "A measured instance: generalises is given opposite directions by iris/vocabulary.md and the conformant prompt, is absent from docs/legend.md, and is undirected in the code, so the stated tiebreak cannot settle it. Found while trying to assert one."
+    },
+    {
+      "bundle": "0043",
+      "member": "F7",
+      "on": "2026-09-11",
+      "what": "Answered by enumeration: derivation_table reads only set membership, so the presence set is the whole input and the table is provable over all 63 non-empty combinations. analyzing holds exactly when there is a framing or decided member, or an un-started member beside one that is not -- 48 and 7. The first characterisation attempted was wrong on seven, which is F7's own claim on the session answering it."
     }
   ],
   "declaredState": null,
-  "indexNotes": "**The instruments session.** `0050` and `0041` assigned from `unclaimed` at the owner's direction. Between them they answer *how do I know this framework works*: one bundle is instruments that cannot fire, the other a required shape nothing checks and a check released unbuilt. **First write Revision 288**: `0041` D6 built, F6 `resolved`, and the check's first run corrected an index total that had been hand-incremented across three revisions. `0050` F7 recorded. **Revision 289**: `0050` D3 retires the extraction half of `extract-metadata.py` rather than guarding it, on a re-measurement of 740 values destroyed and 620 irrecoverable. **Revision 292**: `0050` F8 and F9 \u2014 an instrument that is correct, fires, and is run by nothing, recorded after this session reported its condition as undetected and was wrong. **Revision 294**: `0050` F10, and F7 and F9 extended \u2014 the metric that argues against its own prescribed repair, and the two halves of a commit message the subject test cannot reach. **Revision 297**: `docs/ledgers/instrument-firing.md` \u2014 the written answer this session owed \u2014 plus `0050` F1 settled and a contribution to `0043` F13. **Revision 299**: D3 carried out \u2014 the extractor is deleted, the completeness check is its own file, and `0050` F3 and F6 are `resolved`.",
+  "indexNotes": "**The instruments session.** `0050` and `0041` assigned from `unclaimed` at the owner's direction. Between them they answer *how do I know this framework works*: one bundle is instruments that cannot fire, the other a required shape nothing checks and a check released unbuilt. **First write Revision 288**: `0041` D6 built, F6 `resolved`, and the check's first run corrected an index total that had been hand-incremented across three revisions. `0050` F7 recorded. **Revision 289**: `0050` D3 retires the extraction half of `extract-metadata.py` rather than guarding it, on a re-measurement of 740 values destroyed and 620 irrecoverable. **Revision 292**: `0050` F8 and F9 \u2014 an instrument that is correct, fires, and is run by nothing, recorded after this session reported its condition as undetected and was wrong. **Revision 294**: `0050` F10, and F7 and F9 extended \u2014 the metric that argues against its own prescribed repair, and the two halves of a commit message the subject test cannot reach. **Revision 297**: `docs/ledgers/instrument-firing.md` \u2014 the written answer this session owed \u2014 plus `0050` F1 settled and a contribution to `0043` F13. **Revision 299**: D3 carried out \u2014 the extractor is deleted, the completeness check is its own file, and `0050` F3 and F6 are `resolved`. **Revision 306**: D7's precondition \u2014 the derivation fixture set, and `0043` F7 answered by enumeration.",
   "ended": {
     "on": null,
     "reason": null,

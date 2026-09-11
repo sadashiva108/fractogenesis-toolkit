@@ -83,6 +83,88 @@ class TestLadder(unittest.TestCase):
         self.assertEqual(derivation_table(["framing", "resolved"]), "analyzing")
         self.assertEqual(derivation_table(["decided"]), "analyzing")
 
+    # ------------------------------------------------------------------
+    # The exhaustive partition -- 0041 D7's precondition, and 0043 F7's
+    # answer.
+    #
+    # F7: "the derived bundle status has an else branch that asserts
+    # nothing, so a derivation bug always lands there." state-as-data.md
+    # section 7 says the fixtures must be bundles that each land on a NAMED
+    # row, plus at least one landing on `analyzing` FOR A STATED REASON
+    # rather than by falling through.
+    #
+    # Hand-picked fixtures pin the cases somebody thought of. This does not
+    # need anybody to think of them: `derivation_table` reads only set
+    # membership -- all() and `in`, never a count -- so the presence set IS
+    # the whole input, and a six-value vocabulary has 63 non-empty ones.
+    # Enumerating them proves the table over its entire domain.
+    #
+    # THE ELSE BRANCH DOES ASSERT SOMETHING AND NOBODY HAD WRITTEN IT DOWN.
+    # Measured here: `analyzing` holds exactly when there is a `framing` or
+    # `decided` member, OR an `un-started` member beside one that is not.
+    # 48 combinations by the first clause and 7 by the second, 55 in all.
+    #
+    # The second clause is why this is enumerated rather than argued. The
+    # first characterisation attempted was "a live member, and nothing
+    # else" -- plausible, tidy, and wrong on seven combinations, caught in
+    # seconds by this loop. That is F7's own claim demonstrated on the
+    # session writing its answer.
+    # ------------------------------------------------------------------
+    STATUSES = ("un-started", "framing", "decided",
+                "resolved", "reopened", "withdrawn")
+
+    def _combinations(self):
+        import itertools
+        for r in range(1, len(self.STATUSES) + 1):
+            for c in itertools.combinations(self.STATUSES, r):
+                yield c
+
+    def test_the_derivation_partitions_every_presence_combination(self):
+        # Pinning the SHAPE of the partition. A derivation bug moves a
+        # combination from one row to another and these counts move with it,
+        # including one that lands in `analyzing` and looks plausible there.
+        from collections import Counter
+        got = Counter(derivation_table(list(c)) for c in self._combinations())
+        self.assertEqual(dict(got), {
+            "untouched": 1,
+            "retired": 1,
+            "answered": 2,
+            "revisited": 4,
+            "analyzing": 55,
+        })
+        self.assertEqual(sum(got.values()), 63)
+
+    def test_analyzing_is_a_positive_condition_with_two_witnesses(self):
+        # 0043 F7 answered. Not "anything else" -- this, over the whole
+        # domain. A bug that sends a combination into `analyzing` fails here
+        # because no witness is present for it.
+        live = {"framing", "decided"}
+        for c in self._combinations():
+            s = set(c)
+            witness = bool(s & live) or ("un-started" in s and s != {"un-started"})
+            self.assertEqual(derivation_table(list(c)) == "analyzing", witness, c)
+
+    def test_each_named_row_holds_over_the_whole_domain(self):
+        # The four rows that already state a positive condition, asserted
+        # against every combination rather than one example each.
+        inert = {"resolved", "withdrawn"}
+        for c in self._combinations():
+            s, got = set(c), derivation_table(list(c))
+            if s == {"un-started"}:
+                self.assertEqual(got, "untouched", c)
+            elif s == {"withdrawn"}:
+                self.assertEqual(got, "retired", c)
+            elif s <= inert and "resolved" in s:
+                self.assertEqual(got, "answered", c)
+            elif "reopened" in s and (s - {"reopened"}) <= inert:
+                self.assertEqual(got, "revisited", c)
+
+    def test_an_empty_member_list_is_untouched_and_that_is_deliberate(self):
+        # A bundle with no members at all. `untouched` rather than
+        # `analyzing`, which the enumeration above cannot reach because it
+        # starts at one status, so it is pinned separately.
+        self.assertEqual(derivation_table([]), "untouched")
+
     def test_progress_is_never_stored(self):
         # state-as-data.md 4.4: progress is derived, ownership and lineage declared.
         g = graph_of(F.bundle("0100", ("framing",)))

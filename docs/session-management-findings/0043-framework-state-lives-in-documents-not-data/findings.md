@@ -30,6 +30,7 @@ should record here rather than open a near-duplicate beside it.**
 | `typed-bundles-architecture-20260908-204724` | 2026-09-09 | Added F10, from its own handoff: the `ended` lists are populated on no session, and the prose standing in for them misattributed two revisions in this session's own record |
 | `typed-bundles-architecture-20260908-204724` | 2026-09-09 | Sharpened F3 with a third and fourth instance: four table header rows captured as `resources` entries across three session records, and two `owners.until` values missing from the home while a copy carried them
 | `instruments-and-blind-spots-20260909-220203` | 2026-09-10 | Sharpened F13 with a measured instance: `generalises` is given opposite directions by `iris/vocabulary.md` and the conformant prompt, is absent from `docs/legend.md`, and is undirected in the code, so the tiebreak cannot settle it — found while trying to assert one |
+| `instruments-and-blind-spots-20260909-220203` | 2026-09-11 | Answered F7 by measurement: the else branch does assert something. `analyzing` holds exactly when there is a `framing` or `decided` member, or an `un-started` member beside one that is not — 48 combinations and 7, exhaustive over all 63 |
 
 ## Findings
 
@@ -272,6 +273,58 @@ reason** rather than by falling through.
 than a *composition*. **That is F8's subject and is not a defect** — it is
 structural, and F8 records why.
 
+
+### Answered by enumeration, 2026-09-11
+
+**Contributed by `instruments-and-blind-spots-20260909-220203`** while building
+`0041` D7's precondition. **F7's premise is false as stated, and the reason nobody
+noticed is that the row was written as a fall-through rather than as the condition
+it computes.**
+
+**`derivation_table` reads only set membership** — `all()` and `in`, never a count
+— so **the presence set is the whole input**, and a six-value vocabulary has 63
+non-empty ones. The table is therefore provable over its entire domain rather than
+sampled.
+
+| Row | Combinations |
+|---|---:|
+| `untouched` | 1 |
+| `retired` | 1 |
+| `answered` | 2 |
+| `revisited` | 4 |
+| **`analyzing`** | **55** |
+
+**And the 55 have a positive statement with two witnesses:**
+
+> `analyzing` holds exactly when there is a **`framing` or `decided`** member, **or
+> an `un-started` member beside one that is not.**
+
+48 combinations by the first clause, 7 by the second. **Exhaustive: zero
+counterexamples across all 63.**
+
+**The second clause is why this is enumerated rather than argued.** The first
+characterisation attempted was *"a live member, and nothing else"* — plausible,
+tidy, and **wrong on seven combinations**, caught in seconds by the loop. **That is
+F7's own claim demonstrated on the session writing its answer**: a derivation
+statement that lands in `analyzing` looks entirely plausible, and the only thing
+that separated a correct one from a wrong one was enumerating the domain instead of
+reasoning about it.
+
+**Pinned in the suite at Revision 306**, four tests: the partition's shape, the
+positive condition over the whole domain, each named row over the whole domain, and
+the empty member list, which the enumeration cannot reach because it starts at one
+status.
+
+**Shown to fire, not only to pass.** Three mutations in a throwaway — `answered`
+narrowed by a length test, `revisited` widened by dropping one clause, `untouched`
+and `retired` swapped — fail **4, 3 and 4** tests. **The first is F7's stated
+failure mode exactly**: a bug that sends one combination into `analyzing`, where it
+looks plausible.
+
+**What this does not decide.** Whether the row in `docs/legend.md` and
+`iris/lifecycles.md` should be rewritten to state the condition positively is this
+bundle's, and those two documents are its session's. **The measurement is handed
+over; the wording is not proposed.**
 ## F8 — one activity-named status per vocabulary, and the thing a name cannot carry
 
 **Recorded 2026-09-07**, from the owner's account of designing the vocabulary:
