@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-10T08:00:00-04:00",
+  "updatedAt": "2026-09-11",
   "number": "0041",
   "bundleName": "0041-index-and-manifest-tables-have-a-shape-nothing-checks",
   "genus": "findings",
@@ -128,8 +128,8 @@
       "statement": "Eleven classes of output are declared projections, nothing generates them, and the drift sits only where nothing checks",
       "status": "framing",
       "statusReason": null,
-      "statusNote": null,
-      "updatedAt": "2026-09-10",
+      "statusNote": "D7 is built at Revision 308 and covers two of the three unchecked classes. F8 stays framing: the third, per-member status inside findings.md, is deliberately not structure's subject, and the finding's claim is about the surface rather than about the two classes now watched.",
+      "updatedAt": "2026-09-11",
       "sectionHeading": "F8 \u2014 the projected surface is hand-maintained, and the drift is exactly where nothing looks",
       "reopened": null,
       "withdrawn": null,

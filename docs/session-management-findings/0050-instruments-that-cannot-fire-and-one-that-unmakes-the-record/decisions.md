@@ -1,8 +1,8 @@
 # Decisions — instruments that cannot fire, and one that unmakes the record
 
 **Bundle:** `0050-instruments-that-cannot-fire-and-one-that-unmakes-the-record`  
-**Session:** `assurance-coverage-20260908-204724`, and `instruments-and-blind-spots-20260909-220203` for D3  
-**Decided:** 2026-09-09, and 2026-09-10 for D3
+**Session:** `assurance-coverage-20260908-204724`, and `instruments-and-blind-spots-20260909-220203` for D3 and D4  
+**Decided:** 2026-09-09, 2026-09-10 for D3, and 2026-09-11 for D4
 
 Assigned by the owner on 2026-09-09 and read on assignment. **F5 was decided on
 that day and F3 and F6 on 2026-09-10**, by the session this bundle was assigned
@@ -16,6 +16,7 @@ whose members are still arriving, and F7 is its newest.
 | D1 | The coverage sweep derives its roots from `docs/INDEX.md` instead of keeping a second copy, and reports the repository-root runbooks and `references/` explicitly | F5 | 2026-09-09 | `replaced → D2` |
 | D2 | Derive the roots, **default in and explicitly out**: a directory in `docs/INDEX.md` is swept from the moment it appears, and excluding one is a declaration in `doc-currency.json` carrying its reason | F5 | 2026-09-09 | `accepted` |
 | D3 | **The extraction half of `extract-metadata.py` is retired and the `--check` half is separated from it.** The parser is not made safe; it is removed, because every way of making it safe is an enumeration of what to protect, and the enumeration is already one schema behind | F3, F6 | 2026-09-10 | `accepted` |
+| D4 | **The fourth copy of the standing derivation is deleted rather than corrected**, and the ordering it got wrong is asserted in the suite, which could not observe an ordering at all | F11 | 2026-09-11 | `accepted` |
 
 ---
 
@@ -258,3 +259,60 @@ is the next one.
 <!-- Deleted at Revision 299, carrying out D3. This document is the record of
      that decision and its carrying-out, so the citation is evidence and is not
      repaired. The check half is now check-metadata-completeness.py. -->
+
+---
+
+## D4 — delete the copy rather than correct it, and assert the ordering instead
+
+F11 found a fourth implementation of `bundle_standing` inside
+`verify-findings-structure.sh`, disagreeing with the original on **128 of 384**
+enumerated cases.
+
+**The decision is not which ordering is right.** That was never in question: the
+module's ordering is the one `stamp` writes with, so it is the one the whole tree
+is already stamped against, and the copy is wrong by definition rather than by
+argument.
+
+**The decision is what to do with the copy**, and it is D3's answer to the same
+shape one bundle earlier: **remove it, do not guard it.**
+
+### Why not correct it in place
+
+**Because the fix does not survive.** Swapping two `if` statements makes the copy
+right today and leaves a copy, and a copy of a derivation is wrong again the next
+time the derivation grows an override. There have been two overrides since
+Revision 222 and the second — lineage — is what this copy predates. **The next
+one will find the copy the same way, or not at all.**
+
+**And it was already silently wrong for four revisions of clean runs**, which is
+the measurement that matters: correctness of a copy is not observable from its
+output while the differing branch is unreachable.
+
+### What replaces it
+
+**An import.** `verify-findings-structure.sh` loads `plan_findings_work` once,
+emits `bundle_standing` for every bundle and `session_state` for every session
+into a table, and looks answers up. The markdown parsing stays in shell; **no
+rule about what a standing or a state *is* remains in this file.**
+
+**A failure to run is fatal, not skipped.** Three sections compare against that
+table, and a comparison whose right-hand side is missing is not a weaker check —
+it is silence that reads like assent, which is this bundle's subject. Exit 2, with
+the reason.
+
+### And the assertion that was missing
+
+**Deleting the copy does not stop the next one**, so the ordering is now stated
+where a change to it is felt. `TestLadder` tested a superseded bundle and an
+unclaimed bundle and never both on one, so **no test in the suite could observe an
+ordering at all.** It now tests both overrides on one bundle across both ownership
+values and four status shapes, plus each override alone so that neither wins by
+accident. Suite 73 → 74; inverting the two `if` statements in the module fails two
+tests.
+
+### What this does not decide
+
+**Not F4's question.** Nothing checks that a derivation has one implementation.
+Three copies have now been found by hand — Revision 299 by deleting a file,
+Revision 308 twice by needing one thing twice — and **none by a check.** That
+stays open in F4, where the class lives.

@@ -35,6 +35,7 @@ writes, and the bundle type for those does not exist yet.
 | F8 | The instrument that catches a revision number taken and never written is correct, fires, and is run by nothing | `framing` |
 | F9 | When it fires, nothing says who owes the missing entry or how a late one is written | `framing` |
 | F10 | Clearing a `MISSING` requires creating a permanent `ORPHANED`, so the count moves the wrong way when someone does the right thing | `framing` |
+| F11 | An instrument carried a fourth copy of the standing derivation with the two overrides in the wrong order, disagreeing on 128 of 384 enumerated cases, and no bundle in the tree reaches the branch | `resolved` |
 
 ## F1 — the guard does not run where the writing happens
 
@@ -719,6 +720,92 @@ rejecting the same idea: *"adding the marker alone would install exactly what
 behind F8's, and F8's sits behind F9's.
 
 <!-- historical: .internal/ai-scripts/session-management/extract-metadata.py -->
+
+## F11 — an instrument carried its own copy of a derivation, and the copy was wrong
+
+**Class.** This bundle's subject is instruments that are correct and cannot do
+their job. **This one is not correct.** It is a fourth copy of a derivation that
+disagrees with the original on a third of its input domain, and it has been
+reporting `OK` since Revision 222.
+
+**Found by building `0041` D7**, which needed the standing derivation a second
+time inside `verify-findings-structure.sh` — and looking at what was already
+there. **Not found by running anything.** That is `0050` F8's class again: the
+third copy was found at Revision 299 by *deleting* a file, and this one by
+*needing* something twice. Neither was found by a check.
+
+### The defect
+
+`plan_findings_work.bundle_standing` tests lineage, then ownership:
+
+```python
+if (b.get("lineage") or {}).get("supersededBy"):
+    return "superseded"
+if b.get("ownership"):
+    return b["ownership"]
+```
+
+The copy in `verify-findings-structure.sh` tested ownership, then lineage. **The
+docstring of the original says which way round it goes and why** — *"a superseded
+reading is no longer authoritative whatever it concluded"* — and the copy carried
+no reasoning at all, which is what a copy is.
+
+### Measured, not estimated
+
+**Enumerated over every ownership × lineage × presence-combination of the six
+finding statuses — 384 cases.**
+
+| | |
+|---|---:|
+| cases enumerated | 384 |
+| disagreements | **128** |
+| disagreements outside *released **and** superseded* | 0 |
+| bundles in this tree that are both | **0** |
+
+**Every disagreement is one shape**: a bundle released to `unclaimed` or
+`transferred` that a later bundle then supersedes. The original derives
+`superseded`; the copy derived the ownership value.
+
+### What it would have done
+
+**Failed a correct row.** Such a bundle carries `superseded` in `metadata.json`,
+because that is what `stamp` writes; the index row displays it, because that is
+what the row is a copy of. The check would have derived `unclaimed` and reported
+the row as drifted.
+
+**Demonstrated rather than argued.** Adding one `ownership` field to `0009` — a
+bundle already superseded by `0030` — makes a record that `plan-findings-work
+stamp --dry-run` calls fully conformant, *"every derived field already agrees
+with what it derives from"*. Against that tree the Revision 307 script reports
+`FAIL 0009`; the Revision 308 script reports `OK 120, FAIL 0`.
+
+### Why four revisions of clean runs said nothing
+
+**No bundle in this tree is both released and superseded.** Seven are superseded,
+eighteen carry an ownership value, and the sets do not intersect. The wrong
+branch has never been reached.
+
+**And nothing asserted the ordering.** The suite tested a superseded bundle
+(`0047` F9) and an unclaimed bundle (`0047` F1) and **never both on one bundle**,
+which is the only place an ordering is observable. A derivation with two
+independent overrides has an ordering whether or not anyone writes it down, and
+this one was written down in exactly one place: a docstring.
+
+### Carried out in the same revision
+
+Not left as framing, because the repair is a deletion and the deletion is the
+decision. **The copy is gone**; `verify-findings-structure.sh` imports the module
+that owns the derivation and reads answers out of a table. **Three copies became
+one** — the second went at Revision 299 with `extract-metadata.py`.
+**`TestLadder` gained the assertion that would have caught it**, over both
+ownership values and four status shapes, plus the two single-override cases so
+that neither outranks the other by accident. Suite 73 → 74, and inverting the
+ordering in the module now fails two of them.
+
+**What stays open is not this instance.** It is the question F4 asks: there is no
+check that a derivation has one implementation. Three have now been found by
+hand, at Revisions 299, 308 and 308.
+
 <!-- The path above was deleted at Revision 299, carrying out D3. This bundle is
      the reading that decided it, so its citations are evidence and are not
      repaired: the marker is what makes them read as DECAYED rather than as a

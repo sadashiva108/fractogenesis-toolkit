@@ -47,7 +47,7 @@ and reading its exit status and its output, not by reading its source.
 |---|---|---|---|
 | `… counts` | **yes** — in `all` | **yes** | FAIL 0. Fired twice tonight on the session that built its newest section |
 | `… headers` | **yes** — in `all` | **yes** | FAIL 11, the standing baseline in `0030` and `0035` |
-| `… structure` | **yes** — in `all` | **yes** | FAIL 0 |
+| `… structure` | **yes** — in `all` | **yes** | FAIL 0. **OK 71 → 120 at Revision 308**, carrying out `0041` D7: 49 comparisons added, all silent on first run. **And it was itself one of the six** until this revision — see below |
 | `… completeness` | **yes** — in `all` | **yes** | 0 problems. Fired tonight on a `—` written where `null` belongs |
 | `… manifest-revision` | **partly** — in the dispatch table, **excluded from `all`**, group `report` | **no** — a report; always exits 0 | Reports 297. Its one warning about a number taken in the log prints **on stderr under `--verbose` only** |
 | `bin/verify-manifest-coverage.sh` | **NO** — not in the table, not in `all`, **no executing caller anywhere in the tree** | **yes**, and correctly | MISSING 0, ORPHANED 6, DUPLICATE 1 against a baseline of 0/3/1 |
@@ -159,3 +159,41 @@ records cite the deleted path, one of which is marked here and two of which
 belong to other sessions and are flagged rather than edited. Linux VM, Bash
 5.1.16, **not the macOS Bash 3.2 target**.
 
+---
+
+## A fourth entry for the list above, found at Revision 308
+
+`0050` F11. **`… structure` was carrying its own copy of the standing
+derivation** — the fourth — with the two overrides tested in the opposite order
+to the module that owns it.
+
+| | |
+|---|---:|
+| cases enumerated (ownership × lineage × presence-combination) | 384 |
+| disagreements with the module | **128** |
+| bundles in this tree that reach the differing branch | **0** |
+
+**This is a fifth category, and the table above has no column for it.** Every
+other row answers *reached?* and *firable?*. This instrument was **reached,
+firable, and wrong** — and its wrongness was unobservable from its output,
+because the branch it got wrong is not reachable by any record in the tree. Four
+revisions of `FAIL 0` said nothing about it, and `FAIL 0` was the correct output
+the whole time.
+
+**What it would have done is worse than not firing.** A bundle both released and
+superseded carries `superseded` in `metadata.json`, because that is what `stamp`
+writes; the copy derived the ownership value and would have **failed the row for
+being right.** Demonstrated: one added `ownership` field on `0009` makes a record
+`stamp --dry-run` calls fully conformant, which the Revision 307 script fails and
+the Revision 308 script passes.
+
+**Found by needing the derivation twice in one file**, while building D7 — not by
+running anything. That is this ledger's own subject arriving inside it: the third
+copy went at Revision 299 by *deleting* a file, this one at Revision 308 by
+*needing* one thing twice, and **none of the three was found by a check.**
+
+**Numbers after the repair.** `counts` FAIL 0; `headers` FAIL 11, unmoved;
+`structure` **OK 120, FAIL 0**; completeness 0 problems; suite **74** passing;
+`stamp --dry-run` writes nothing. Linux VM, Bash 5.1.16, **not the macOS Bash 3.2
+target** — `verify-script-portability.sh` reports WARN 0 / FAIL 0 on the changed
+script.

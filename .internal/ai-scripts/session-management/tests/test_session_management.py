@@ -165,6 +165,40 @@ class TestLadder(unittest.TestCase):
         # starts at one status, so it is pinned separately.
         self.assertEqual(derivation_table([]), "untouched")
 
+    def test_lineage_outranks_ownership_and_nothing_asserted_it(self):
+        # 0050 F11. `bundle_standing` tests lineage BEFORE ownership, on the
+        # reasoning in its own docstring: a superseded reading is no longer
+        # authoritative whatever it concluded, and whoever does or does not
+        # hold it. Until Revision 308 nothing said so. The suite tested the two
+        # separately -- 0047 F9 for a superseded bundle, 0047 F1 for an
+        # unclaimed one -- and never once on the same bundle, which is the only
+        # place an ORDERING can be observed.
+        #
+        # It was not a hypothetical gap. verify-findings-structure.sh carried a
+        # second copy of this derivation with the two tests in the other order.
+        # Enumerated over every ownership x lineage x presence-combination --
+        # 384 cases -- the two copies disagreed on 128, every one of them a
+        # bundle that is both released and superseded. No bundle in the tree is
+        # currently both, so four revisions of clean runs said nothing, and the
+        # copy would have failed such a bundle's index row for being right.
+        # The copy is gone; this is what would have caught it.
+        sup = {"supersededBy": "0101", "on": "2026-09-01"}
+        for own in ("unclaimed", "transferred"):
+            for statuses in (("un-started",), ("framing",), ("resolved",),
+                             ("reopened", "withdrawn")):
+                b = F.bundle("0100", statuses, ownership=own, lineage=sup)
+                self.assertEqual(bundle_standing(b), "superseded",
+                                 (own, statuses))
+        # and neither outranks the other by accident: with one of the two
+        # absent, the other still decides.
+        self.assertEqual(
+            bundle_standing(F.bundle("0100", ("framing",), ownership="unclaimed")),
+            "unclaimed")
+        self.assertEqual(
+            bundle_standing(F.bundle("0100", ("framing",), ownership=None,
+                                     lineage=sup)),
+            "superseded")
+
     def test_progress_is_never_stored(self):
         # state-as-data.md 4.4: progress is derived, ownership and lineage declared.
         g = graph_of(F.bundle("0100", ("framing",)))

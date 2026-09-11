@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-10T06:00:00-04:00",
+  "updatedAt": "2026-09-11",
   "number": "0050",
   "bundleName": "0050-instruments-that-cannot-fire-and-one-that-unmakes-the-record",
   "genus": "findings",
@@ -173,6 +173,23 @@
       "reopened": null,
       "withdrawn": null,
       "resolution": null
+    },
+    {
+      "id": "F11",
+      "statement": "An instrument carried a fourth copy of the standing derivation with the two overrides in the wrong order, disagreeing on 128 of 384 enumerated cases, and no bundle in the tree reaches the branch",
+      "status": "resolved",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-11",
+      "sectionHeading": "F11 \u2014 an instrument carried its own copy of a derivation, and the copy was wrong",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": {
+        "resolvedBy": "D4",
+        "what": "The copy is deleted; verify-findings-structure.sh imports plan_findings_work and reads the derivation from a table. TestLadder gains the ordering assertion, which nothing made before. Suite 73 -> 74.",
+        "revision": "308",
+        "commit": null
+      }
     }
   ],
   "decisions": [
@@ -212,6 +229,18 @@
       "answersAsOf": "777f468",
       "voidedReason": null,
       "sectionHeading": "D3 \u2014 retire the parser, keep the check, and do not build a guard"
+    },
+    {
+      "id": "D4",
+      "decision": "The fourth copy of bundle_standing, in verify-findings-structure.sh, is deleted rather than corrected: the script imports plan_findings_work and reads the derivation from a table, and a failure to run it is fatal rather than skipped. The ordering the copy got wrong is asserted in TestLadder, which tested the two overrides separately and never on one bundle.",
+      "members": [
+        "F11"
+      ],
+      "decided": "2026-09-11",
+      "outcome": "accepted",
+      "answersAsOf": "c0001b5",
+      "voidedReason": null,
+      "sectionHeading": "D4 \u2014 delete the copy rather than correct it, and assert the ordering instead"
     }
   ],
   "contributions": [],

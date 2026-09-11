@@ -245,6 +245,79 @@ seven conformant `superseded` rows as broken, and a header-index lookup against
 that, the check is wrong and the tree is not — which is D1's own instruction,
 applied to the sweep that produced the finding.
 
+
+### Built at Revision 308, and its acceptance criterion had expired
+
+**The criterion above cannot be met any more, and the reason is good news.**
+*"Hold the implementation to 3 / 3 / 0 on this tree"* was written at Revision 303
+against three live disagreements. **Revision 307 cleared the last of them by
+hand.** The check as built raises **0 on this tree**, which is the number a
+correct check returns against a correct tree and is indistinguishable from the
+number a check that does nothing returns against anything.
+
+**So the first run reports nothing, and that is not evidence that it works.**
+Stated here rather than in a commit message because it is the sentence a later
+reader needs when they find a check with no firing history and wonder whether to
+trust it. D6 predicted a silent first run and was wrong — it raised one the tree
+had carried for three revisions. **D7 predicts a silent first run and is right,
+and that is the weaker outcome**, because a check that has never fired on real
+input has never been shown to be reachable by real input.
+
+**The reason to build it anyway is the finding's own measurement.** Every
+instance of this class found so far was found by a person who happened to look.
+`0050` F5's display stood wrong from Revision 255 to Revision 304 — forty-nine
+revisions — and the run-index row cleared at 307 had stood wrong since the
+session that owned it stopped. **Nothing was going to find the next one either.**
+
+**What was held to instead**, both directions of §6 and both recorded:
+
+| | What was required | What was measured |
+|---|---|---|
+| **A** — does not fire on correct work | every qualifying row passes | **49 comparisons, 0 raised**: 37 manifest rows across ten sessions, 12 session rows. `OK` 71 → 120 |
+| **B** — fires on a case it should catch | raised = real, 0 false | **4 raised, 4 real, 0 false** on constructed input |
+
+**Direction B is synthetic because the tree is clean**, which is the honest
+version of what happened rather than a claim about coverage. Three defects were
+constructed and produced four verdicts: a manifest `Standing` cell made stale, a
+session `State` cell made stale, and — the one worth keeping — **one member's
+status moved in `metadata.json` with both displays left alone**, which raised in
+`structure`'s existing assertion *and* in the new one. **Two projections of one
+derived value, disagreeing with it in two files, from one edit.** That is the
+shape D7 exists for, and until this revision half of it was invisible.
+
+### What building it turned up: the fourth copy of the derivation
+
+**The script already had its own derivation.** Fifteen lines of python in a
+heredoc, reimplementing `plan_findings_work.bundle_standing`, added when the
+`STATUS-` tag files were retired. Needing the derivation a second time in one
+file is what made anyone look at it.
+
+**It tested ownership before lineage. The module tests lineage before
+ownership**, for the reason its docstring gives: *a superseded reading is no
+longer authoritative whatever it concluded* — and whoever does or does not hold
+it. **Enumerated over every ownership × lineage × presence-combination of the six
+finding statuses: 384 cases, 128 disagreements**, every one of them a bundle that
+is both released and superseded.
+
+**Such a bundle would have failed its index row for being right.** It carries
+`superseded` in `metadata.json`, where `stamp` wrote it; the copy derived
+`unclaimed`. Demonstrated rather than argued: one added `ownership` field on
+`0009` makes a record that `stamp --dry-run` calls fully conformant, and the
+Revision 307 script fails it while the Revision 308 script passes it.
+
+**No bundle in the tree is currently both, which is the whole of why four
+revisions of clean runs said nothing.** Recorded as **`0050` F11** — an
+instrument that is incorrect, in a class that bundle already owns for instruments
+that are correct.
+
+**The derivation is not reimplemented here any more.** It is imported once from
+the module that owns it and the answers are read from a table; what stays in
+shell is the markdown parsing, and what left is every rule about what a standing
+or a state *is*. **Three copies became one, and the suite gained the assertion
+that would have caught it** — `TestLadder` tested ownership and lineage
+separately and never on the same bundle, which is the only place an ordering can
+be observed. Suite 73 → 74; inverting the ordering in the module now fails it.
+
 ### Rejected
 
 **A third assertion over `findings.md` member statuses**, which is F8's remaining

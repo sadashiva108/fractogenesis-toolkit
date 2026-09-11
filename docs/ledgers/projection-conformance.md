@@ -190,3 +190,70 @@ and still unwatched**, which is exactly the state it was in before any of this �
 
 **Nothing here is a baseline to quote forward.** Re-run the sweep.
 
+---
+
+## 2026-09-11 — commit to be taken, Revision 308
+
+**This entry is not a re-measurement.** Revision 307's figures stand and should be
+re-run rather than quoted. What changed is **who is watching**, and two of this
+ledger's own row counts, because this revision added a finding, a decision and a
+resolution of its own.
+
+### `0041` D7 is built
+
+| §6.1 class | Checked by, before | Checked by, now | Rows |
+|---|---|---|---:|
+| `<tree>/INDEX.md` Standing | `structure` | `structure` | 56 |
+| **`<session>/findings-manifest.md` Standing** | **nothing** | **`structure`** | **37** |
+| **`docs/sessions/INDEX.md` State** | **nothing** | **`structure`** | **12** |
+| `<session>/metadata.md` Owners | nothing | nothing | 12 |
+| `findings.md` member status | nothing | nothing | — |
+
+**`structure` compares 105 rows of §6.1 where it compared 56.** Its own total goes
+71 → 120: the 49 new comparisons, all passing.
+
+**Three of the four classes this ledger found drift in are now watched.** The
+fourth — per-member status inside `findings.md` — is not `structure`'s subject and
+is a separate decision against a separate script, per D7's Rejected section. It is
+also the class holding the one row left standing.
+
+### The first run is silent, and that is the weaker outcome
+
+**0 raised.** Revision 307 cleared the last disagreement in both classes by hand
+four revisions ago, so the check arrives after its own evidence. **A silent first
+run is not evidence that a check works** — it is the same output a check that does
+nothing produces.
+
+**What was held to instead**: 49 comparisons passing on this tree (Direction A),
+and 4 raised / 4 real / 0 false on constructed input (Direction B). D7's original
+criterion, *3 / 3 / 0 on this tree*, expired when the rows it named were cleared.
+The construction is recorded in D7.
+
+### How to read these counts when the sweep is re-run
+
+**The distinction Revision 307 drew is the one that makes the numbers mean
+something, and it cuts in opposite directions.** Stated here because this ledger
+grouped the two classes in its first table and the grouping is what made the
+reading wrong.
+
+| If the count that stays flat is | Then | Because |
+|---|---|---|
+| **UNCLEARABLE** | **the framework is working** | Nobody may move the row. `0049` F6 sits in an `unclaimed` bundle and moving a member to `resolved` is the owner's act, so a flat count is the rule holding, not a defect ageing |
+| **UNATTENDED** | **the framework is failing** | Somebody may move the row and has not. A flat count means the display drifted, the drift is clearable, and nothing and no one reached it |
+
+**The two numbers must be reported separately or neither is readable.** A single
+total conflates a rule being obeyed with a rule going unenforced, and this ledger
+made exactly that mistake for four revisions — which is `0047` F9's shape
+appearing inside the ledger built to watch for it.
+
+**The test applies to this entry too.** The unattended count in the two newly
+watched classes is now **structurally** zero rather than **incidentally** zero:
+before, a disagreement waited for a person; now it fails a check a session runs.
+**That is the whole of what D7 bought**, and it bought nothing at all for the two
+classes still compared to nothing.
+
+### Row counts moved by this revision's own writing
+
+`0050` gained F11 and D4, and F11 a resolution row. **A ledger that measures the
+tree is part of the tree**, so the arithmetic in the entries above is not carried
+forward here; re-run the sweep rather than adjusting it.
