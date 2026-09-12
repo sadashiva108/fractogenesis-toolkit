@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-10T16:40:00-04:00",
+  "updatedAt": "2026-09-12T09:30:00-05:00",
   "number": "0052",
   "bundleName": "0052-a-change-that-invalidates-earlier-work-has-no-plan-and-no-check",
   "genus": "findings",
@@ -64,6 +64,23 @@
         "revision": 277,
         "commit": null
       }
+    },
+    {
+      "id": "F3",
+      "statement": "Rolling a record file over to a fresh one is a format change that leaves every instrument reading the old path, and there is no rule requiring the readers to be named before the roll",
+      "status": "resolved",
+      "statusReason": null,
+      "statusNote": null,
+      "updatedAt": "2026-09-12T09:30:00-05:00",
+      "sectionHeading": "F3 \u2014 a rollover is a format change, and its readers are not named",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": {
+        "resolvedBy": "D3",
+        "whatWasDone": "`bin/verify-manifest-coverage.sh` reads every `APPLY-MANIFEST*.md` rather than the current file, and the `git log` pathspec matches the set. Verified both directions: MISSING 0 against the tree, identical to the pre-rollover figures, and MISSING 1 with one archived entry removed",
+        "revision": 311,
+        "commit": null
+      }
     }
   ],
   "decisions": [
@@ -90,6 +107,18 @@
       "answersAsOf": "2026-09-10T16:40:00-04:00",
       "voidedReason": null,
       "sectionHeading": "D2 \u2014 the signal was already being computed and half of it was mislabelled"
+    },
+    {
+      "id": "D3",
+      "decision": "Coverage reads the manifest SET, `APPLY-MANIFEST*.md`, rather than the current file; and a rollover owes the same naming of readers that a format change owes of records",
+      "members": [
+        "F3"
+      ],
+      "decided": "2026-09-12",
+      "outcome": "accepted",
+      "answersAsOf": "2026-09-12T09:30:00-05:00",
+      "voidedReason": null,
+      "sectionHeading": "D3 \u2014 read the set, and name the readers before the roll"
     }
   ],
   "contributions": [],

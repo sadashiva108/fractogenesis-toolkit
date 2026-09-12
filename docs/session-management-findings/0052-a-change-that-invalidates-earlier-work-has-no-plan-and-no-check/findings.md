@@ -25,6 +25,7 @@ recording is not owning.
 |---:|---|---|
 | F1 | Nothing re-verifies that a resolution still holds, and one refactor reverted seven without anything noticing | `resolved` |
 | F2 | A breaking change to a record format has no migration-plan requirement, so what happens to what predates it is decided per change or not at all | `resolved` |
+| F3 | Rolling a record file over to a fresh one is a format change that leaves every instrument reading the old path, and there is no rule requiring the readers to be named before the roll | `resolved` |
 
 ## F1 — a resolution is written once and never checked again
 
@@ -184,3 +185,39 @@ to read six resolutions against the tree and judge each; **two held as written,
 three named a home that had moved, one had never been written down at all.** Only
 the middle three are mechanical. The rest is a reading, and D2 says so rather
 than implying the checker covers it.
+
+## F3 — a rollover is a format change, and its readers are not named
+
+**Revision 310 rolled `APPLY-MANIFEST.md` over**: 1,312,633 bytes and 468 entries
+timestamped to `APPLY-MANIFEST-09-11-2026.md`, a fresh file started in its place.
+The reason was sound — `0055` F1 measured the file growing 8,162 bytes a revision
+on every session's read path — and **the roll is not the defect.**
+
+**The defect is that two instruments read that filename and only one survived.**
+
+| | reads | after the roll |
+|---|---|---|
+| `.share/check-manifest-revision.sh` | the manifest, the log, **and** the working tree | **correct** — returned 311 |
+| `bin/verify-manifest-coverage.sh` | `APPLY-MANIFEST.md` only | **MISSING 0 → 79** |
+
+Every entry that moved to the archive read as *a revision number taken in the log
+and written nowhere*. **The instrument was not wrong about anything it could see**;
+its subject had been split in two and it was told about neither half.
+
+**`check-manifest-revision.sh` survived by accident of an earlier widening.**
+Revision 278 gave it the commit log as a third place, for `0047` F12 — a number
+taken in a commit message. That widening had nothing to do with rollovers and is
+the only reason numbering still worked five minutes after the roll.
+
+**This is F2's own subject with the plan missing rather than the rule.** F2 built
+§6's migration-plan gate: a write that makes existing records non-conformant is
+gated on a plan naming five things. A rollover makes no record non-conformant —
+every entry is still valid, still in the tree, still where it was written — **so
+the gate does not fire, and the thing that breaks is not a record but a reader.**
+The gate asks *what happens to what predates this*; it does not ask *who reads
+this path*.
+
+**Measured, and the repair reproduces the prior figures rather than merely lowering
+them**: `MISSING 0, ORPHANED 6, DUPLICATE 1` after the fix, identical to the last
+measurement before the roll.
+

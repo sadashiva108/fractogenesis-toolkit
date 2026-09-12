@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-10T22:15:00-04:00",
+  "updatedAt": "2026-09-12T09:30:00-05:00",
   "number": "0038",
   "bundleName": "0038-sessions-write-into-the-tree-the-owner-commits-from",
   "genus": "findings",
@@ -25,8 +25,8 @@
     "\u00a7\u00a74b\u20134d, in `.github/copilot-instructions.md`",
     "all 27 existing findings bundles, checked for overlap"
   ],
-  "standing": "analyzing",
-  "progress": "analyzing",
+  "standing": "answered",
+  "progress": "answered",
   "ownership": null,
   "lineage": {
     "supersedes": "0028",
@@ -223,14 +223,19 @@
     {
       "id": "F12",
       "statement": "`verify-doc-paths.sh --all` reads untracked files, so it returns a different verdict in the owner's checkout than in the scratch clone \u00a70 step 2 requires every verification to be run in",
-      "status": "framing",
+      "status": "resolved",
       "statusReason": null,
       "statusNote": null,
-      "updatedAt": "2026-09-10T22:15:00-04:00",
+      "updatedAt": "2026-09-12T09:30:00-05:00",
       "sectionHeading": "F12 \u2014 an instrument answers differently in the checkout and in the clone",
       "reopened": null,
       "withdrawn": null,
-      "resolution": null
+      "resolution": {
+        "resolvedBy": "D11",
+        "whatWasDone": "Nothing written. `0012` D2 was accepted 2026-09-04 and carried out by the owner at Revision 310: `.internal/restore/` removed locally, which D2 states is not a repository change. The checkout and a clone now both read `MISSING: 24`, where they read 10 against 20",
+        "revision": 311,
+        "commit": null
+      }
     }
   ],
   "decisions": [
@@ -355,6 +360,18 @@
       "answersAsOf": "2026-09-10T22:15:00-04:00",
       "voidedReason": null,
       "sectionHeading": "D10 \u2014 `git diff HEAD`, because the short form is never better"
+    },
+    {
+      "id": "D11",
+      "decision": "`0012` D2 is adopted as F12's answer rather than cited as it: the empty directory is removed locally, that is not a repository change, and it was carried out at Revision 310",
+      "members": [
+        "F12"
+      ],
+      "decided": "2026-09-12",
+      "outcome": "accepted",
+      "answersAsOf": "2026-09-12T09:30:00-05:00",
+      "voidedReason": null,
+      "sectionHeading": "D11 \u2014 adopt the other bundle's decision, do not borrow it"
     }
   ],
   "contributions": [],

@@ -15,6 +15,7 @@ method `0038` used: read what the tree does before writing what it should.
 | # | Decision | Members | Decided | Outcome |
 |---|---|---|---|---|
 | D2 | The instrument is the resolver that already exists, corrected — `HISTORICAL` moves below the resolution fallbacks and becomes `DECAYED`, meaning *cited by a record and no longer there*. No second checker, and the reading half is declared irreducible rather than implied covered | F1 | 2026-09-10 | `accepted` |
+| D3 | Coverage reads the manifest SET, `APPLY-MANIFEST*.md`, rather than the current file; and a rollover owes the same naming of readers that a format change owes of records | F3 | 2026-09-12 | `accepted` |
 | D1 | A write that makes existing records non-conformant is gated on a **migration plan** as well as on the finding. The test is whether a checker would report existing records as failures — not whether the author calls it a format change. A plan names five things, and one format change goes per revision | F2 | 2026-09-10 | `accepted` |
 
 ## D1 — the gate, the test, and the five things
@@ -178,3 +179,32 @@ version of the new one; it was measuring the document instead of the tree.
 resolution names the path as it stood; that is the record of what was done, and
 `0038` D5 refused the same move for the same reason — **moving a working tool to
 make a retained document accurate inverts which of the two is authoritative.**
+
+## D3 — read the set, and name the readers before the roll
+
+**The instrument half is a glob.** `bin/verify-manifest-coverage.sh` collects every
+`APPLY-MANIFEST*.md` under the repository root, greps the set rather than one file,
+and passes the same pattern to the `git log` pathspec that finds which commit
+introduced an entry. **An entry never leaves the set, only the current file**, which
+is the sentence the script now carries at the top of the change.
+
+**Verified in both directions, as §6 requires of anything that can fail loudly.**
+Against the whole tree it reports **MISSING 0, ORPHANED 6, DUPLICATE 1** — not
+merely fewer than 79 but **identical to the last figures taken before the roll**,
+which is the stronger claim and the one that distinguishes a fix from a
+suppression. Against a case it should catch — one entry removed from the archive in
+a throwaway copy — **MISSING goes to 1**.
+
+**Rejected: pointing the script at the archive by name.** It would work today and
+fail at the second rollover, which is the same defect with a later date on it.
+**Rejected: keeping a pointer file naming the current manifest**, which is a second
+copy of a fact the filesystem already holds. **Rejected: treating this as `0050`'s**
+— that bundle is about instruments that cannot fire; this one fired correctly on a
+subject that had been halved underneath it.
+
+**The rule half is recorded and not built.** A format change is gated on a
+migration plan naming what happens to existing records. **A rollover needs the
+complementary question — who reads this path — and nothing asks it.** The two are
+not the same: the gate protects records, and what broke here was a reader. Naming
+it is §6's and §7's, and neither is decided here.
+

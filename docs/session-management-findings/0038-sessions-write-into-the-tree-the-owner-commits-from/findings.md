@@ -47,7 +47,7 @@ and that is not what was found.
 | F9 | Two of the three hooks are annotators that cannot refuse anything, and both are scoped to the one directory a session must never write in — so they can only speak about a write the third hook refuses | `resolved` |
 | F10 | §0 step 1 places no condition on the checkout it copies and keeps no record of its state, so a patch composed from a dirty copy silently includes another session's work and step 2's promise about the numbers is inverted | `resolved` |
 | F11 | §0's patch recipe drops a deletion: `git add -N .` stages a removal, and bare `git diff` then compares the working tree against the index and reports nothing, so the patch omits the file silently and `git apply` exits 0 | `resolved` |
-| F12 | `verify-doc-paths.sh --all` reads untracked files, so it returns a different verdict in the owner's checkout than in the scratch clone §0 step 2 requires every verification to be run in | `framing` |
+| F12 | `verify-doc-paths.sh --all` reads untracked files, so it returns a different verdict in the owner's checkout than in the scratch clone §0 step 2 requires every verification to be run in | `resolved` |
 
 **Read as a re-verification on 2026-09-09, at Revision 269**, by
 `drift-and-the-write-boundary-20260909-053548`. `0028`, which this bundle
@@ -489,4 +489,38 @@ the filesystem, or both is a question about what a citation means, and
 recorded so that two sessions quoting different baselines can find out why**, which
 is what happened on 2026-09-10: one session reported `MISSING 10` against a
 baseline of 8 while this one measured 20 for the same commit.
+
+### F12, read and resolved 2026-09-12 at Revision 311
+
+**The remedy was accepted 115 revisions before the finding was written.** `0012`
+D2, 2026-09-04: *"The empty directory is removed locally, and that is not a
+repository change."* `0012` F1 resolved against D1, the bundle went `answered`,
+and **D2 was never carried out** — invisible for 115 revisions, because the only
+tree in which it mattered was one person's.
+
+**`.internal/restore/` was empty, untracked and not gitignored.** Ten citations
+resolved for the owner and broke for everyone who cloned, which is what made the
+two trees disagree. **The owner removed it at Revision 310**, and the trees now
+agree: `verify-doc-paths.sh --all` reads **`MISSING: 24` in the checkout and 24 in
+a clone**, where it read 10 against 20 when F12 was recorded.
+
+**The disagreement was compounding while it stood.** Citations of that path went
+from **10 rows when F12 was written to 17 four revisions later**, across five
+documents — `time-machine-run-index.md`, `iris-conformance.md`,
+`IRIS-COORDINATION.md` and two indexes. **Every document written about the defect
+added citations to the path that did not exist**, this session's §6 rule among
+them, which is `0041` D1's matcher problem in its sixth form: describing an
+unresolvable path creates one.
+
+**Removing it repaired nothing and revealed everything, which is the correct
+outcome.** The citations were already broken; the leftover directory hid that from
+the one person who could see it. `MISSING` rose in the checkout because the
+checkout stopped being exceptional.
+
+**D11 exists so this can resolve at all.** F12's answer is another bundle's
+decision, and §9b requires `Resolved by` to name a decision in the finding's own
+bundle. **A resolution row pointing at another bundle's decision is a citation
+dressed as ownership**, so `0038` adopts `0012` D2 as its own answer rather than
+borrowing it — the same disposal this session recommended to `0041` for F7, now
+with a worked instance.
 

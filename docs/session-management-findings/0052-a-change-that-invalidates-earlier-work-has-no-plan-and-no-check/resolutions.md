@@ -10,6 +10,7 @@
 |---|---|---|---|---|
 | F1 | D2 | `bin/verify-doc-paths.sh` moves its historical branch below the resolution fallbacks and renames the count `DECAYED`, so it means *cited by a record and no longer there*. Round trip over 271 documents: OK 2271 → 2305, HISTORICAL 70 → DECAYED 36, PROPOSED and MISSING identical. **36 decayed citations, six relocations accounting for nearly all** | 284 | — |
 | F2 | D1 | `.github/session-management-instructions.md` §6 gains the migration-plan gate: the conformance test with its six-row table of what needs a plan and what does not, the five things a plan names, and the one-format-change-per-revision rule. Each clause names the revision that already did it | 277 | — |
+| F3 | D3 | `bin/verify-manifest-coverage.sh` reads every `APPLY-MANIFEST*.md` rather than the current file, and the `git log` pathspec matches the set. Verified both directions: MISSING 0 against the tree, identical to the pre-rollover figures, and MISSING 1 with one archived entry removed | 311 | — |
 
 **Both members are `resolved` and the bundle derives `answered`.** F2 at
 Revision 277, F1 here.

@@ -24,6 +24,7 @@ and what `0047` D4 established. Only F1 and F4 are carried out here.
 | F9 | D8 | §3.0's third route, with Revision 282's measurement; and the installed set is corrected in §4 to one guard and two annotators | 283 | — |
 | F10 | D9 | §0 step 1 records `git status --porcelain` at copy time, step 3 compares the patch's file list against it, and step 2's promise is qualified to the clean case. Recorded as `0049` F8 by another session, which named §0 as the owner of the fix | 300 | — |
 | F11 | D10 | §0 step 3's recipe is `git diff HEAD`, with the reason recorded in the step: `git add -N` stages a deletion out of a bare `git diff`, and the two forms are byte-identical wherever no deletion is present | 300 | — |
+| F12 | D11 | Nothing written. `0012` D2 was accepted 2026-09-04 and carried out by the owner at Revision 310: `.internal/restore/` removed locally, not a repository change. `verify-doc-paths.sh --all` now reads MISSING 24 in the checkout and 24 in a clone, where it read 10 against 20 | 311 | — |
 
 **All nine members are `resolved` and the bundle derives `answered`.** Six were
 carried out before this bundle was read, in revisions that answered `0028`; F1

@@ -29,6 +29,7 @@ which is the thing `0039` F12 asks for.
 | D8 | A fourth test goes into `docs/rules/rule-enforcement-avenues.md` §3, **first**, and it asks whether the instrument can observe the act at all. All four candidates in §4 are re-scored against it and **all four fail**, by three routes. The installed set is corrected: one guard, two annotators | F7, F8, F9 | 2026-09-10 | `accepted` |
 | D9 | Record the dirt rather than require a clean copy: `git status --porcelain` captured at step 1, compared against the patch's file list at step 3, and step 2's promise qualified | F10 | 2026-09-10 | `accepted` |
 | D10 | §0 step 3's recipe becomes `git diff HEAD`, the two forms being byte-identical wherever no deletion is present, so the correct one is never worse | F11 | 2026-09-10 | `accepted` |
+| D11 | `0012` D2 is adopted as F12's answer rather than cited as it: the empty directory is removed locally, that is not a repository change, and it was carried out at Revision 310 | F12 | 2026-09-12 | `accepted` |
 | D7 | Of the four guards F7 names, the manifest-entry guard is built first, warn-only until a clean pass. **Nothing is built in this revision** and F7 stays `decided` | F7 | 2026-09-09 | `accepted` |
 
 ## D1 — the collision is not prevented, it is made visible
@@ -374,4 +375,30 @@ prefers not reporting what cannot happen.
 **Rejected: writing the rule into §6 or §7**, which is where `0041` F7 put it.
 Those are `entity-model-and-vocabulary-20260909-053548`'s, and the recipe is §0
 step 3's own sentence.
+
+## D11 — adopt the other bundle's decision, do not borrow it
+
+**F12's remedy already existed and had been accepted for 115 revisions.** `0012`
+D2 says the empty directory is removed locally and that this is not a repository
+change. Nothing needed deciding; something needed doing, and the doing was the
+owner's on their own machine, so **no patch could have contained it.**
+
+**Adopted rather than cited, and the distinction is §9b's.** A resolution names a
+decision in its own bundle. Pointing F12's row at `0012` D2 would let `0038` reach
+`answered` on a remedy it never wrote, which is the tidier of two readings and the
+one that costs the record its meaning. **This session argued exactly that to
+`0041` about F7 and `0038` D10**; D11 is the same argument applied to itself, in
+the direction that costs it something.
+
+**Rejected: leaving F12 `framing` with the remedy recorded as landing elsewhere.**
+That is the right disposal when the finding's bundle cannot make the decision —
+`0041` F7's case, where the remedy is another session's section. Here the decision
+is available and the act is done, so the honest state is `resolved`.
+
+**Rejected: reopening `0012`.** Its F1 is correctly resolved against D1 and its
+standing is right. The gap was never in that bundle's reading; it was that an
+accepted decision requiring an act outside the repository had nothing tracking
+whether the act happened. **That absence is `0052` F3's neighbour** and is named
+here rather than opened: a decision whose remedy is not a write leaves no trace of
+its own completion.
 

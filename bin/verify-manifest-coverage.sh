@@ -88,6 +88,15 @@ set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+# The manifest rolls over: when APPLY-MANIFEST.md grows past what a session
+# can read, it is timestamped and a fresh one started -- Revision 310 did this
+# at 1.25 MB and 468 entries. An entry never moves out of the SET, only out of
+# the current file, so coverage reads the set. Reading only the current file
+# reported 79 revisions as written nowhere the moment the rollover landed.
+MANIFESTS=""
+for _m in "$REPO_ROOT"/APPLY-MANIFEST*.md; do
+  [ -f "$_m" ] && MANIFESTS="$MANIFESTS $_m"
+done
 MANIFEST="$REPO_ROOT/APPLY-MANIFEST.md"
 SINCE=""
 VERBOSE=false
@@ -106,7 +115,7 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-[ -f "$MANIFEST" ] || { echo "ERROR: manifest not found: $MANIFEST" >&2; exit 2; }
+[ -n "$MANIFESTS" ] || { echo "ERROR: no APPLY-MANIFEST*.md under $REPO_ROOT" >&2; exit 2; }
 command -v git >/dev/null 2>&1 || { echo "ERROR: git is required" >&2; exit 2; }
 git -C "$REPO_ROOT" --no-optional-locks rev-parse --git-dir >/dev/null 2>&1 \
   || { echo "ERROR: not a git repository: $REPO_ROOT" >&2; exit 2; }
@@ -147,13 +156,13 @@ cut -f1 "$work/claimed" | sort -n -u | while read -r n; do
   shas="${shas% }"
   count="$(printf '%s\n' "$shas" | wc -w | tr -d ' ')"
 
-  if ! grep -q "^\*\*Revision $n\*\*" "$MANIFEST" \
-     && ! grep -q "^## Revisions\{0,1\} $n\([^0-9]\|$\)" "$MANIFEST"; then
+  if ! grep -q "^\*\*Revision $n\*\*" $MANIFESTS \
+     && ! grep -q "^## Revisions\{0,1\} $n\([^0-9]\|$\)" $MANIFESTS; then
     printf 'MISSING\t%s\t%s\t-\n' "$n" "$shas" >> "$work/report"
     continue
   fi
 
-  intro="$(g log --format=%h -S "**Revision $n**" -- APPLY-MANIFEST.md | tail -1)"
+  intro="$(g log --format=%h -S "**Revision $n**" -- "APPLY-MANIFEST*.md" | tail -1)"
   if [ -n "$intro" ] && ! printf ' %s ' "$shas" | grep -q " $intro "; then
     printf 'ORPHANED\t%s\t%s\t%s\n' "$n" "$shas" "$intro" >> "$work/report"
   elif [ "$count" -gt 1 ]; then
@@ -169,7 +178,7 @@ dup="$(grep -c '^DUPLICATE' "$work/report" 2>/dev/null || true)";    dup="${dup:
 clean="$(grep -c '^CLEAN' "$work/report" 2>/dev/null || true)";      clean="${clean:-0}"
 total=$((miss + orph + dup + clean))
 
-printf '\n  Manifest coverage — the commit log against APPLY-MANIFEST.md\n'
+printf '\n  Manifest coverage — the commit log against APPLY-MANIFEST*.md\n'
 printf '  %s\n' "----------------------------------------------------------"
 printf '  Repository: %s\n' "$REPO_ROOT"
 printf '  Commits   : %s over %s\n' "$(g rev-list --count "$RANGE")" "$RANGE"
