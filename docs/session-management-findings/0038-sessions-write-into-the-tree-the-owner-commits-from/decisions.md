@@ -402,3 +402,26 @@ whether the act happened. **That absence is `0052` F3's neighbour** and is named
 here rather than opened: a decision whose remedy is not a write leaves no trace of
 its own completion.
 
+### Amended 2026-09-13 by the owning session, after Revision 312 read it back
+
+**One sentence of D11's reasoning is wrong and the decision is not.** D11 rejected
+leaving F12 `framing` on the ground that that disposal is right *"when the
+finding's bundle cannot make the decision"*. **Revision 312 showed the sentence
+conflates two abilities**: `0041` could not write §0 or §6, but it owned F7, and
+**deciding is the one thing an owner may always do.** Inability to carry out a
+remedy is not inability to decide, and D11 wrote them as though they were the
+same.
+
+**The conclusion stands and was reused.** *Adopt the other bundle's decision, do
+not borrow it* is what `0041` D8 applied to F7, with the measurement D11 lacked:
+**117 resolution rows across the tree — 97 name a local `D<n>`, 19 an em dash,
+one a range, and not one cites another bundle's decision.** §11's rule turns out
+to be a dangling-citation rule rather than an ownership rule, which is a better
+reason for the same act than the one written here.
+
+**Amended rather than rewritten.** The wrong sentence stays above, because a
+decision's reasoning is the record of what was thought at the time and **an
+amendment that erases its own occasion leaves a reader unable to tell a decision
+that was always right from one that was corrected.** This bundle is `answered`
+and the amendment is a record write, which is ungated; **no override was used for
+it.**

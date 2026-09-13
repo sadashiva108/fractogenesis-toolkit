@@ -137,6 +137,126 @@ H. What happens when detection is unavailable? **A check that cannot observe its
 - **Describing a defect can create one.** Citations of that directory grew from 10
   to 17 across four revisions, because every document written *about* it cited it.
 
+### Dispositions — one shape for the three, and the fields that are missing
+
+*Settled with the owner 2026-09-11 to 09-13. The vocabulary is approved; the
+schema change is not built and needs the migration plan §6 requires.*
+
+#### The vocabulary
+
+| term | means |
+|---|---|
+| **disposition** | the class: `status` (member) · `standing` (dossier) · `state` (session) |
+| **transition** | any change in a disposition |
+| **crossing** | a transition a **derivation** produced — silent, must be detected |
+| **declaration** | a transition an **actor** produced — self-announcing, carries its obligations inline |
+| **band** | a named subset of one disposition's values — not a disposition and not a value |
+
+Bands in use: **`inert`** = `resolved` · `withdrawn` (a band of `status`);
+**`terminal`** = `answered` · `retired` · `superseded` (of `standing`);
+**`assignable`** = `available` · `active` (of `state`). **`un-started` is not
+inert** — `inert` means *no work remains here* and `un-started` means *all of it
+does*; including it would price six dossiers at zero and drop 31 of 116 open
+members from the allocator's count.
+
+#### The shape
+
+```json
+"status":   { "value": "resolved", "by": "declaration", "on": "2026-09-12" }
+"standing": { "value": "answered", "by": "crossing",    "on": "2026-09-12" }
+"progress": { "value": "answered", "by": "crossing",    "on": "2026-09-12" }
+"state":    { "value": "closed",   "by": "crossing",    "on": "2026-09-13" }
+```
+
+**Why one field and not two.** `state` was a pure output and `declaredState` a
+pure input, which works but reads as clutter — `declaredState` is null in **9 of
+12** records. Merging them naively breaks `stamp`: **a field that is both input
+and output cannot be safely recomputed**, because nothing can tell a declaration
+that must be preserved from a stale derivation that must be corrected. `by`
+solves it — `stamp` recomputes where `by` is `crossing` and leaves declarations
+alone, which is what the two fields do today, stated instead of inferred from a
+null.
+
+**And it makes provenance visible.** Today `state: closed` says nothing about how
+it got there. That is exactly why a crossing produced a terminal state with an
+empty `ended` block and nothing looked wrong. Under this shape it reads
+`by: crossing` and the missing latch is a question anyone would ask.
+
+**`updatedAt` cannot serve as `on`.** It answers *when was this record last
+written* and moves when prose is edited. One field cannot answer both questions.
+
+#### Every transition records a date
+
+Including `lineage.on` for supersession and a date for transfer. Measured, the
+gap is not confined to supersession:
+
+| | populated | missing |
+|---|---:|---|
+| member `status` transition date | 114/207 via `updatedAt` | **93 have none**, and the field is wrong anyway |
+| dossier `standing` / `progress` date | **0/41** | no field exists |
+| `lineage.on` | **0/14** | field exists, never written, both directions |
+| session `state` date | **0/12** | no field exists |
+
+**Historical values are recoverable once.** The commit that introduced each value
+is findable with `git log -S` over the record, so `on` can be reconstructed at
+migration rather than left null or guessed — and recorded, not recomputed on
+every read. Where the log is genuinely ambiguous the honest value is null with
+the reason beside it.
+
+#### One open question, for the review rather than for here
+
+**`by: declaration` may become the rare case at member level.** Nothing derives a
+member status today, but `un-started → framing` looks derivable from a reading
+existing, `framing → decided` from an `accepted` decision citing the member, and
+`decided → resolved` from a resolution row. If that holds, member status is
+mostly crossings and the uniform shape earns itself twice over.
+
+#### Migration
+
+~260 records — 12 sessions, 41 dossiers × 2 dispositions, 207 members — every one
+non-conformant the moment the shape changes. **§6's migration-plan gate fires**,
+and the plan is a prerequisite rather than a follow-up.
+
+---
+
+### Fields that exist and are never populated
+
+*Measured across the whole tree, 2026-09-13.*
+
+| record | field | n | reading |
+|---|---|---:|---|
+| MEMBER | `statusReason` | 0/207 | `0041` F9: a member's disposition lives in prose while the field is null, so `stamp` and every checker read a bare status |
+| MEMBER | `reopened` | 0/207 | §9a fully specifies it — nine reasons, exit table, required SHA — and it has never run |
+| MEMBER | `withdrawn` | 0/207 | the abandonment path at member level, never used |
+| DOSSIER | `subKind` | 0/41 | the rollup in `runbook-findings/INDEX.md` groups by it |
+| DECISION | `voidedReason` | 0/152 | `voided` is in `OUTCOMES` and has never been used |
+
+### Fields with a value and no date
+
+Covered by the disposition triple above, and listed here because they are the
+measurement that motivates it: **93 member statuses undated, 0 of 41 dossier
+standings, 0 of 14 supersessions, 0 of 12 session states.**
+
+### Partial, where the gap looks like a defect rather than an option
+
+| record | field | filled | note |
+|---|---|---:|---|
+| RESOLUTION | `commit` | 33/107 | **74 resolutions name no commit**, which §9b requires |
+| RESOLUTION | `revision` | 71/107 | 36 name no revision |
+| RESOLUTION | `resolvedBy` | 97/107 | 10 resolve against nothing — `0041` D8's dangling-citation rule |
+| DECISION | `members` | 131/152 | **21 cite no member** — this is `check`'s standing `UNCITED-DECISION (21)`; the row and the null are one fact |
+| DECISION | `answersAsOf` | 39/152 | |
+| EDGE | `why` | 50/79 | **29 edges assert a relation and do not say why**; `basis` splits 48 asserted / 31 derived |
+| OWNER ROW | `until` | 5/12 | seven open, some of which should be closed |
+| OWNER ROW | `environmentNotes` | 4/11 | §8 calls the environment field *not decoration* |
+| SESSION | `transcript` | 11/12 | |
+
+**Three of these are already conformance rows rather than unseen gaps.**
+`UNCITED-DECISION` *is* the 21 decisions with an empty `members` array — so part
+of what reads as missing data is a row nobody has cleared, and part is genuinely
+unwatched. Telling those apart is the Detection layer's job and nothing does it
+today.
+
 ### Versioned Layers
 APPLY-MANIFEST.md is growing too large and not maintainable in its current state.
 Instead, adapt to a rolling manifest that is timestamped with older ones compressed similar to logs.

@@ -25,7 +25,7 @@ from plan_findings_work import (                              # noqa: E402
     ordering_exemptions, RE_READING,
     FINDING_STATUSES, BUNDLE_STANDINGS, BUNDLE_PROGRESS, OUTCOMES,
     POINTER_OUTCOMES, SESSION_STATES, VOCABULARIES, DECLARED_OVERLAPS,
-    undeclared_overlaps, KINDS, INERT, quality,
+    undeclared_overlaps, KINDS, INERT, TERMINAL, ASSIGNABLE, DECLARABLE, quality,
     GENERA, SHAPE, MEMBER_PREFIX, shape,
     bundle_standing, bundle_progress, session_state, stamp_derived)
 
@@ -594,18 +594,58 @@ class TestRegressions(unittest.TestCase):
         """Revision 197 found four `resolved` bundles whose rows never moved."""
         self.assertEqual(derivation_table(["resolved", "resolved", "framing"]), "analyzing")
 
-    def test_R229_a_session_with_ended_on_null_is_live(self):
+    def test_R229_a_session_with_ended_on_null_is_assignable(self):
         """`ended` is always present as an object. `if ended:` saw zero of seven."""
         t = F.Tree()
         t.add_session(F.session("live-20260908-000000", ended_on=None))
         t.add_session(F.session("done-20260908-000001", ended_on="2026-09-01"))
         t.add_session(F.session("gone-20260908-000002", declared="handoff"))
         g = Graph(t.root)
-        live = g.live_sessions()
+        live = g.assignable_sessions()
         self.assertIn("live-20260908-000000", live)
         self.assertNotIn("done-20260908-000001", live)
         self.assertNotIn("gone-20260908-000002", live)
         t.close()
+
+    def test_a_session_closed_by_crossing_is_not_assignable(self):
+        """The case the old filter could not see, and the reason for the rename.
+
+        Every owned dossier terminal, `ended.on` null, `declaredState` null: the
+        session reads `closed` and the pre-Revision-313 filter kept it in the
+        pool, because it tested two of the five inputs rather than the state.
+        """
+        t = F.Tree()
+        t.add_bundle(F.bundle("0900", ("resolved", "resolved"), ownership=None))
+        t.add_session(F.session("crossed-20260908-000000", owned=("0900",)))
+        g = Graph(t.root)
+        s = g.sessions["crossed-20260908-000000"]
+        self.assertEqual(session_state(g, s), "closed")
+        self.assertIsNone((s.get("ended") or {}).get("on"))
+        self.assertIsNone(s.get("declaredState"))
+        self.assertNotIn("crossed-20260908-000000", g.assignable_sessions())
+        t.close()
+
+    def test_an_undeclarable_state_is_refused_not_passed(self):
+        """`available` and `active` are derived; declaring one forces the band."""
+        t = F.Tree()
+        t.add_session(F.session("forced-20260908-000000", declared="active"))
+        g = Graph(t.root)
+        with self.assertRaises(ValueError):
+            session_state(g, g.sessions["forced-20260908-000000"])
+        t.close()
+
+    def test_the_three_bands_are_disjoint_from_nothing_and_named(self):
+        """A band is a subset of one disposition's values -- assert membership.
+
+        `un-started` is deliberately NOT inert: INERT means no work remains, and
+        `un-started` means all of it does.
+        """
+        self.assertEqual(INERT, {"resolved", "withdrawn"})
+        self.assertNotIn("un-started", INERT)
+        self.assertTrue(TERMINAL <= set(BUNDLE_STANDINGS))
+        self.assertTrue(ASSIGNABLE <= set(SESSION_STATES))
+        self.assertTrue(DECLARABLE <= set(SESSION_STATES))
+        self.assertEqual(ASSIGNABLE & DECLARABLE, set())
 
     def test_R229_capacity_is_respected_after_local_search(self):
         """Greedy alone claimed eight new sessions, used two, left four over."""

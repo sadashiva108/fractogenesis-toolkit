@@ -96,12 +96,42 @@ once work where earlier attempts did not.**
 
    **Applying is a response, never an initiation.** The instruction refers to a
    patch already handed over. *Write it*, *apply it* and *land it* name that
-   artifact. An instruction naming work **not yet composed** — *do step 1*,
-   *proceed with X*, *go ahead* — is an instruction to compose, and it ends at
-   step 5. **Where an instruction could be either, compose and ask**: composing
-   when an apply was wanted costs one exchange; applying when a review was wanted
-   writes into the checkout without consent. **`do it` is not the ask** — it
-   names a task as readily as a deliverable. `0049` F6 and D7.
+   artifact. **`do it` is not the ask** — it names a task as readily as a
+   deliverable. `0049` F6 and D7.
+
+   **There are TWO gates and they are separate.** A session may not begin
+   composing until the owner says so, and may not apply until the owner says so.
+   Neither is implied by the other and neither is implied by a discussion,
+   however detailed. **Wait at both.**
+
+   **The composing gate is the one that used to be missing.** This step read
+   *where an instruction could be either, compose and ask*, on the reasoning that
+   *composing when an apply was wanted costs one exchange*. **That cost is
+   understated and the bias is backwards.** Composing early does not cost an
+   exchange; it costs the owner the ability to add to the revision, and it
+   produces a patch built against a specification that was still being given —
+   which then has to be rebuilt, with the risk that the rebuild carries a
+   sentence from the abandoned version. **An owner still talking is not an owner
+   who has finished asking.**
+
+   Neither gate is satisfied by inference. A revision fully described, agreed
+   line by line and approved in every part is still not composed until the owner
+   says compose, and still not applied until the owner says apply. **Say what is
+   ready and wait.**
+
+   **A `closed` session may not write.** Not to its own record, not to a
+   dossier, not to the toolkit. Its work is finished by definition of the state,
+   and a state that can still change the tree is not terminal. **The exception is
+   the owner's override, section 6** — a retroactive amendment to its own record,
+   named as an override in the revision that carries it. That case is real and
+   has occurred: a session closed by CROSSING records nothing of its own closing,
+   so `ended`, `owners[].until` and `final-summary.md` were left empty by a
+   session that had no act of closing to hang them on.
+
+   **The remedy is ordering, not permission.** Everything closing owes must be
+   written while the session is still open — which means before the last member
+   resolves, because that resolution is what closes it. **A final summary written
+   after the crossing is already an override.**
 
    **First, assert the checkout is clean**, and refuse if it is not:
 
@@ -1036,7 +1066,15 @@ the row IS the release and `unclaimed` follows from it.
 3.  **Decrement the session's `Bundles` and `Findings`** in
     `docs/sessions/INDEX.md`.
 4.  **Record the disposal in the session** -- `final-summary.md` on closing, the
-    handoff document otherwise -- naming each bundle and why it was released.
+    handoff document otherwise -- naming each bundle, **the date**, and why it was
+    released.
+
+**The date is not optional and is not `updatedAt`.** Every transition of a
+disposition records when it happened, and a release is the transition that leaves
+the least behind: the manifest row is gone and the index row names nobody, so
+without a date the reading's history has no last timestamp at all. `updatedAt`
+cannot serve -- it moves when prose is edited, and would report a release that
+never happened.
 
 **Step 4 is not optional.** A released bundle leaves no trace in the session that
 held it: the manifest row is gone and the index row names nobody. Without the

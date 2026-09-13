@@ -9,7 +9,20 @@ import json, io, os, sys, glob, itertools, datetime, argparse
 from collections import Counter, defaultdict
 
 # ---------------------------------------------------------------- 3. the graph
+# A BAND is a named subset of one disposition's values -- not a disposition and
+# not a value. `inert` is a band of `status`, `terminal` a band of `standing`,
+# `assignable` a band of `state`. Named at Revision 313 because rules,
+# checks and documents kept needing a handle for the subset and had none.
+#
+# `un-started` is NOT inert. INERT means "no work remains here"; `un-started`
+# means "all of it does". Including it would price six dossiers at zero in
+# `cost()` and drop 31 of 116 open members from the allocator's count.
 INERT = {"resolved", "withdrawn"}
+TERMINAL = {"answered", "retired", "superseded"}
+ASSIGNABLE = {"available", "active"}
+# What a session may DECLARE. `closed` is in both sets deliberately: the owner
+# may close a session with work outstanding, which no derivation can produce.
+DECLARABLE = {"handoff", "dissolved", "closed"}
 HARD = {"blocks", "evidences", "co-decides", "contradicts", "duplicates"}
 W = {"co-decides": 6, "contradicts": 6, "duplicates": 6, "blocks": 4, "evidences": 4,
      "constrains": 3, "generalises": 3, "successor": 3, "carried": 2,
@@ -87,14 +100,30 @@ class Graph(object):
                     return name
         return None
 
-    def live_sessions(self):
+    def assignable_sessions(self):
+        """Sessions that may be given work: `state` in the ASSIGNABLE band.
+
+        Named for the question it answers rather than for a rollup of `state`,
+        because it is not one -- `available` owns nothing and is not "ongoing",
+        yet it is exactly who a new dossier should go to.
+
+        **It computes the state; it does not read a field and does not read the
+        stored value.** Until Revision 313 it tested `ended.on` and
+        `declaredState` -- two of the five inputs `session_state()` uses -- so
+        any state reachable without touching those two was invisible to it. That
+        is not one bug but a class, and the instance that occurred was a session
+        closed by CROSSING: every owned dossier terminal, no latch set, no
+        declaration made. It stayed in the pool while reading `closed`.
+
+        Reading the STORED `state` would be correct in content and wrong in
+        dependency: `allocate` does not stamp, so an unstamped tree would
+        mis-allocate silently. Computing needs no `stamp` to have run and uses
+        all five rows, so `stamp` and `allocate` agree by construction rather
+        than by a convention nobody wrote down.
+        """
         out = {}
         for name, s in self.sessions.items():
-            # `ended` is always present as an object; `ended.on` is what says so.
-            if (s.get("ended") or {}).get("on"):
-                continue
-            # a session that has handed off or closed takes no new work
-            if s.get("declaredState") in ("handoff", "closed", "dissolved"):
+            if session_state(self, s) not in ASSIGNABLE:
                 continue
             owned = [self.bundles[str(ob.get("number"))[:4]]
                      for ob in (s.get("ownedBundles") or [])
@@ -190,7 +219,7 @@ def allocate(g, new_sessions=0, cap=DEFAULT_CAPACITY, queue=None, only_new=False
     queue = queue if queue is not None else select(g)
     held = holds(g, queue)
     free = sorted(n for n in queue if n not in held)
-    sess = {} if only_new else dict(g.live_sessions())
+    sess = {} if only_new else dict(g.assignable_sessions())
     for i in range(new_sessions):
         sess["<new-%d>" % (i + 1)] = {"_open": 0, "_bundles": 0, "ownedBundles": []}
     names = sorted(sess)
@@ -318,8 +347,14 @@ def bundle_progress(b):
     return derivation_table([x.get("status") for x in (b.get("members") or [])])
 
 
-def bundle_is_terminal(b):
-    return (bundle_standing(b) in ("answered", "retired", "superseded"))
+def dossier_is_terminal(b):
+    """Whether this dossier's standing is in the TERMINAL band.
+
+    `bundle` until Revision 313; the word described how a dossier is stored
+    rather than what it is, and the rename follows the vocabulary the tree has
+    used since Revision 271.
+    """
+    return (bundle_standing(b) in TERMINAL)
 
 
 def session_state(g, s):
@@ -330,8 +365,20 @@ def session_state(g, s):
     effective value, which is the declaration where there is one and the
     derivation where there is not.
     """
-    if s.get("declaredState"):
-        return s["declaredState"]
+    declared = s.get("declaredState")
+    if declared:
+        # DECLARABLE is the set a session may declare. `available` and `active`
+        # are derivable-only: both follow from what a session owns, so declaring
+        # one would store a derivable value AND force assignability regardless of
+        # the dossiers -- and `stamp` would then copy it into `state` as though it
+        # had been derived. Refuse rather than pass: every silent fallback to less
+        # information in this tree has cost more than a loud failure.
+        if declared not in DECLARABLE:
+            raise ValueError(
+                "%s declares state %r; only %s may be declared -- `available` "
+                "and `active` are derived from what the session owns"
+                % (s.get("_dir", "?"), declared, sorted(DECLARABLE)))
+        return declared
     owned = [g.bundles[str(ob.get("number"))[:4]]
              for ob in (s.get("ownedBundles") or [])
              if str(ob.get("number"))[:4] in g.bundles]
@@ -339,7 +386,7 @@ def session_state(g, s):
         return "closed"
     if not owned:
         return "available"
-    return "closed" if all(bundle_is_terminal(b) for b in owned) else "active"
+    return "closed" if all(dossier_is_terminal(b) for b in owned) else "active"
 
 
 def stamp_derived(g, write=True):
@@ -740,7 +787,7 @@ def cmd_graph(g, a):
     q = [b for b in g.bundles.values() if b.get("ownership") == "unclaimed"]
     print("GRAPH  %d bundles  %d findings  %d edges  %d live sessions"
           % (len(g.bundles), sum(len(b["_members"]) for b in g.bundles.values()),
-             len(g.edges), len(g.live_sessions())))
+             len(g.edges), len(g.assignable_sessions())))
     print("  edge kinds: %s" % dict(Counter(e.get("kind") for e in g.edges)))
     print("  unclaimed:  %d bundles, %d findings, %.1f cost units"
           % (len(q), sum(len(b["_members"]) for b in q), sum(g.cost(b) for b in q)))

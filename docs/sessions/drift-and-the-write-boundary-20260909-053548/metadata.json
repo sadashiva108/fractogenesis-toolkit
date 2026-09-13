@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T11:20:00-04:00",
+  "updatedAt": "2026-09-13T10:00:00-05:00",
   "bundleName": "drift-and-the-write-boundary-20260909-053548",
   "createdOn": "2026-09-09",
   "owners": [
     {
       "from": "2026-09-09",
-      "until": null,
+      "until": "2026-09-13",
       "assistant": "Claude",
       "sessionId": "session_01H9nWPECCmRoZDipJSYA2iS",
       "model": "claude-opus-5",
@@ -77,11 +77,67 @@
   "declaredState": null,
   "indexNotes": "**The instruments session.** The tree's own state and the tree the owner commits from. The boundary with `entity-model-and-vocabulary-20260909-053548` is the three rule documents, which are that session's; sections 0 and 6 of the instruction set are writable here and announced in review.",
   "ended": {
-    "on": null,
-    "reason": null,
-    "revisions": [],
-    "commits": [],
-    "disposals": []
+    "on": "2026-09-13",
+    "reason": "closed by crossing at Revision 311, when 0038 F12 resolved and every owned dossier reached a terminal standing; latched at Revision 313 under the owner's override, the crossing having recorded nothing of itself",
+    "revisions": [
+      "270",
+      "268",
+      "272",
+      "276",
+      "277",
+      "278",
+      "280",
+      "281",
+      "282",
+      "283",
+      "295",
+      "298",
+      "300",
+      "302",
+      "305",
+      "311",
+      "313"
+    ],
+    "commits": [
+      "636eba0",
+      "6ddb823",
+      "94afe37",
+      "a05ad67",
+      "7dd3f05",
+      "cb1ac97",
+      "dc54614",
+      "f7ce252",
+      "569b458",
+      "560ebcf",
+      "aea2006",
+      "328ea34",
+      "d952ca4",
+      "506ba2b",
+      "422e823",
+      "4b0c95f"
+    ],
+    "disposals": [
+      {
+        "number": "0038",
+        "to": "answered",
+        "why": "\u00a70 steps 1-3 rewritten; the copy's dirt is recorded and compared, and the patch recipe is `git diff HEAD`"
+      },
+      {
+        "number": "0047",
+        "to": "answered",
+        "why": "every ordering comparison repaired, exempted with a counted reason, or shown to be the rule working; no row cleared by editing a record"
+      },
+      {
+        "number": "0052",
+        "to": "answered",
+        "why": "\u00a76's migration-plan gate, the re-verification instrument, and F3 \u2014 a rollover's casualty is a reader, not a record"
+      },
+      {
+        "number": "0055",
+        "to": "unclaimed",
+        "why": "recorded not owned; the manifest measured with no remedy proposed, \u00a77 being another session's"
+      }
+    ]
   },
   "state": "closed"
 }
