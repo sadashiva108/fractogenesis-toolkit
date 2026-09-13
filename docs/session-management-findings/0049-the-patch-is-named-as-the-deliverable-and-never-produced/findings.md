@@ -27,7 +27,7 @@ failure**; the reading is offered so it can be checked rather than believed.
 | F3 | `git diff` in a session copy omits every untracked file, so the prescribed patch would have carried 9 of 14 paths | `resolved` |
 | F4 | Nothing detects a write into the owner's checkout, and the signal that used to exist was removed by `0038` | `decided` |
 | F5 | An index write leaves no trace in the working tree, so the tree comparison this bundle prescribes cannot see it | `decided` |
-| F6 | The phrase that authorizes an apply has two definitions, the broader is in the copy, and neither has a precondition on the checkout | `decided` |
+| F6 | The phrase that authorizes an apply has two definitions, the broader is in the copy, and neither has a precondition on the checkout | `resolved` |
 | F7 | `git add -N` is required to produce the patch and empties every new file the next `checkout -f` touches | `framing` |
 | F8 | §0 step 1 never says the copy must be clean, so a patch built from a dirty one carries another session's work — the inclusion half of F3's omission | `framing` |
 

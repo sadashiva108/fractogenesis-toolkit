@@ -184,6 +184,7 @@ for `handoff`, which is a **declaration**: a session says it handed on, where
 
   "progress": null,
   "ownership": null,
+  "ownershipOn": null,
   "lineage": null,
 
   "members": [
@@ -303,7 +304,25 @@ for one slot. The legend already says two of the three are not progress at all.
 | `standing` | where this bundle stands — the one value a reader wants | **derived and STORED** — the three fields below, in that precedence |
 | `progress` | how far the reading has been taken, ownership aside | **derived and STORED** — `un-started`, `withdrawn`, `resolved`, `reopened`, `analyzing` |
 | `ownership` | who owns this | `null` when owned per the manifest, else `unclaimed` or `transferred` |
+| `ownershipOn` | **when ownership last changed** | `null`, or an ISO date. Written by the act, never derived — §10a requires a release to record its date and there was nowhere to put it |
 | `lineage` | is this reading still authoritative | `null`, or `{ "supersededBy": "0041", "on": "2026-09-06" }` on the predecessor; `{ "supersedes": "0032", "on": "…" }` on the successor, whose provenance edges carry the per-finding accounting |
+
+**`ownershipOn` is additive and deliberately not an object.** `lineage` is the
+tree's idiom for a dated transition — `{ "supersededBy": "0041", "on": "…" }` —
+and the consistent move would be to give `ownership` the same shape. **It was
+rejected as breaking**: `bundle_standing` returns `ownership` directly, `OWNERSHIP`
+is a closed set of strings, and 24 records carry one, so the change is a rename
+with no migration plan, which is `0052` F2's own example. A sibling field costs
+nothing, breaks nothing, and **folds into `standing.on` when §6's disposition
+retrofit runs** — the design in `docs/ideas/big-picture.md`, still gated on a
+migration plan over 358 records.
+
+**It is populated where the act happened and nowhere else.** `0041` and `0050`
+carry it because this session released them; **the other 22 bundles standing
+`unclaimed` do not, and this session may not add it** — `unclaimed` is closed to
+everyone, which is the rule that also gated `0049` F6. Their dates are recoverable
+once, from the commit that introduced each `ownership` value, and belong to
+whoever claims them.
 
 **Derived, and written down anyway.** This table read *derived, never stored*
 until Revision 232. The owner reversed it on 2026-09-08: a reader should not have
