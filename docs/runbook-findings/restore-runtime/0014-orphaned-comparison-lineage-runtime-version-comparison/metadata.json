@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T16:32:42+00:00",
+  "updatedAt": "2026-09-13T00:00:00+00:00",
   "number": "0014",
   "bundleName": "0014-orphaned-comparison-lineage-runtime-version-comparison",
   "genus": "findings",
@@ -17,9 +17,9 @@
   "feltAt": [],
   "scope": null,
   "read": [],
-  "standing": "assigned",
+  "standing": "unclaimed",
   "progress": "untouched",
-  "ownership": null,
+  "ownership": "unclaimed",
   "lineage": null,
   "members": [
     {

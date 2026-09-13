@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T16:32:42+00:00",
+  "updatedAt": "2026-09-13T00:00:00+00:00",
   "bundleName": "run-index-design-20260901-000000",
   "createdOn": "2026-09-03",
   "owners": [
@@ -15,17 +15,38 @@
     },
     {
       "from": "2026-09-04",
-      "until": null,
+      "until": "2026-09-13",
       "assistant": "Claude",
       "sessionId": "session_01KcZvrKMgfenhrT9DvxW9Jk",
       "model": "claude-opus-5",
       "environment": "Linux, Bash 5.x, cloud container; the repository and the artifact volume reached through the desktop bridge",
-      "environmentNotes": null
+      "environmentNotes": "Not the macOS Bash 3.2 target. Both ownership periods ran on Linux with Bash 5.x, where `mapfile`, `declare -A`, `sed -i` and `stat -c` all work and the target has none of them. `/bin/bash -n` under stock 3.2 is owed for everything this session wrote and cannot be run from here: the shell reached through the desktop bridge is a Linux VM, not the Mac host."
     }
   ],
-  "transcript": null,
-  "scratchPath": null,
-  "resources": [],
+  "transcript": "https://claude.ai/code/session_01KcZvrKMgfenhrT9DvxW9Jk",
+  "scratchPath": "/sessions/rcw-01kczvrkmgfenhrt9dvxw9jk/scratch/fgt",
+  "resources": [
+    {
+      "what": "Repository checkout",
+      "path": "/Users/dkittrell/workspace/shiva/fractogenesis-toolkit",
+      "notes": null
+    },
+    {
+      "what": "Scratch copy",
+      "path": "/sessions/rcw-01kczvrkmgfenhrt9dvxw9jk/scratch/fgt",
+      "notes": "refreshed from the live tree before each patch; last refreshed at 4242395"
+    },
+    {
+      "what": "Commit copied from",
+      "path": "4242395",
+      "notes": null
+    },
+    {
+      "what": "Artifact root",
+      "path": "/Volumes/Data/reimage-CVG-0002160-500-20260816-open",
+      "notes": "mounted and written once, under a grant for seven writes on 2026-09-04"
+    }
+  ],
   "ownedBundles": [
     {
       "number": "0003",
@@ -44,15 +65,7 @@
       "notes": null
     },
     {
-      "number": "0014",
-      "notes": null
-    },
-    {
       "number": "0018",
-      "notes": null
-    },
-    {
-      "number": "0021",
       "notes": null
     },
     {
@@ -66,21 +79,70 @@
     {
       "number": "0026",
       "notes": null
-    },
-    {
-      "number": "0034",
-      "notes": null
     }
   ],
   "contributions": [],
-  "declaredState": "handoff",
+  "declaredState": "closed",
   "indexNotes": null,
   "ended": {
-    "on": null,
-    "reason": null,
-    "revisions": [],
-    "commits": [],
-    "disposals": []
+    "on": "2026-09-13",
+    "reason": "Closed at the owner's direction. Eight of the eleven owned dossiers are terminal -- six `answered`, `0009` and `0026` `superseded` -- and the three that were not, `0014`, `0021` and `0034`, were released to `unclaimed` on the same day, each with its single member still `un-started`. What it built: the shared run index -- `artifact_run_begin`/`finalize`, the append-only `MANIFEST.md`, the computed `official/` pointer -- and the conversion of the producers onto it, across Revisions 116-134. What it returned for on 2026-09-04: `entry` and `initial` became first-wins, which is the rule that catches a bookend recorded after its phase; `0012`'s premise was corrected while it was still open, having claimed a directory was tracked that git cannot track; and the seven evidence writes that rule and `0030` D7 owed were made under a grant -- four pins on `bookends/` and three retroactive `rename` rows. What it got wrong and what corrected it: `0030` D7's closing claim that every member then carried a decision was false and this session did not notice, `pre-image-capture-conformance-20260903-194532` caught it and added D8; the claim that an unpinned rebuild would flip four pointers silently was disproved by running it, Revision 193's own reporting fires on each; and an early reading of `restore-git-entry`'s FAILs as the honest entry state was wrong, which the owner corrected and which became `0034`. It stood `handoff` from 2026-09-02 to 2026-09-13 without ever satisfying the precondition: no successor existed and nothing was transferred.",
+    "revisions": [
+      116,
+      117,
+      118,
+      119,
+      120,
+      121,
+      122,
+      123,
+      124,
+      125,
+      126,
+      127,
+      128,
+      129,
+      130,
+      131,
+      132,
+      133,
+      134,
+      141,
+      192,
+      193,
+      197
+    ],
+    "commits": [
+      "cde3765",
+      "30ef24b",
+      "4b130a9"
+    ],
+    "disposals": [
+      {
+        "number": "0014",
+        "disposition": "released",
+        "on": "2026-09-13",
+        "standingAtRelease": "assigned",
+        "openMembers": 1,
+        "note": "Released to `unclaimed`, no successor named. F1 is `un-started`: nothing was decided and nothing was built. `reimaged-system/comparisons/official/restore-runtime-version-comparison.txt` still points at the orphaned lineage, and the former name is now recoverable from that category's manifest -- a `rename` row was written there at Revision 197 -- so whoever takes this can read what it used to be called instead of guessing."
+      },
+      {
+        "number": "0021",
+        "disposition": "released",
+        "on": "2026-09-13",
+        "standingAtRelease": "assigned",
+        "openMembers": 1,
+        "note": "Released to `unclaimed`, no successor named. F1 is `un-started`. It is the same shape as `0005` -- a boundary run dated well after the state it records -- and `0005` is `answered`, so its decisions are the place to start rather than a fresh reading."
+      },
+      {
+        "number": "0034",
+        "disposition": "released",
+        "on": "2026-09-13",
+        "standingAtRelease": "assigned",
+        "openMembers": 1,
+        "note": "Released to `unclaimed`, no successor named. F1 is `un-started`. This session recorded it on 2026-09-04 and deliberately left it unowned, because `restore-git.md` is the owner's active work; a retrofit since then put a row in this manifest and ownership derives from that row, so it was owned without anyone deciding to own it. Its index row already named no session, so the release also ends a projection disagreement rather than creating one."
+      }
+    ]
   },
-  "state": "handoff"
+  "state": "closed"
 }
