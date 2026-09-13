@@ -32,10 +32,16 @@ for, which is the only thing the session can state as fact.
 | Artifact root | `/Volumes/Data/reimage-CVG-0002160-500-20260816-open` — not mounted, not read |
 
 The scratch copy dies with this session. It was taken while
-`session-management-re-evaluation-20260906-110105` had uncommitted work in the
-checkout, so it carries that session's five modified paths and its unapplied
-`0043` bundle. Every patch derived from this copy is checked against that file
-list before it is handed over.
+`session-management-re-evaluation-20260906-110105` had **uncommitted work sitting
+in the checkout** — five modified paths and a `0043` bundle not yet committed to
+git. The copy therefore carried another session's work in progress, and every
+patch derived from it was checked against that file list before hand-over so this
+session did not ship their changes inside its own.
+
+**This says nothing about ownership.** *Unapplied* means not yet committed, not
+unassigned. `0043` was owned by `session-management-re-evaluation-20260906-110105`
+throughout and was never transferred here. The wording misled a reader on
+2026-09-13 and is corrected rather than left standing.
 
 ## Contributions
 
@@ -47,7 +53,14 @@ list before it is handed over.
 | `0039` | 2026-09-07 | Recorded D6 against F8, the first decision that finding has had |
 | `0046` | 2026-09-07 | Recorded the bundle. Not owned |
 | `0047` | 2026-09-07 | Recorded the bundle from a conformance sweep. Not owned |
+| `0045` | 2026-09-07 | Recorded the bundle — a session whose output is not a findings bundle has no state that fits. This session is its live instance. Not owned |
+| `0048` | 2026-09-08 | Recorded the bundle after the capacity derivation reported that the evidence points the other way. Not owned |
+| `0049` | 2026-09-08 | Recorded the bundle — **this session's account of its own failure**, seven revisions that named a patch as the deliverable and never produced one. Not owned |
+| `0039` | 2026-09-09 | Verified F22 independently against the tree and corrected a false claim this session had written into Revision 236's manifest entry. Routed F21 and F22 to the architecture session; recorded neither |
+| `0050` | 2026-09-09 | Verified both defects for the assurance session — the dead `STATUS-superseded` exemption and the guard blind to `device_bash` — and reproduced its 8/8/0 link measurement independently. Recorded neither |
 
-This session owns no findings bundle and is `available` by the letter of
-`docs/legend.md`. Its output is an architecture record, three contributions and
-one decision. `0045` records that the state vocabulary cannot say that.
+This session owned no findings bundle for its whole life and was `available` by
+the letter of `docs/legend.md` until it closed. Its output is three architecture
+records, two session bundles, eleven contributions, six findings bundles recorded
+and not owned, and nineteen revisions. **`0045` records that the state vocabulary
+cannot say any of that**, and this session is the instance the finding is about.

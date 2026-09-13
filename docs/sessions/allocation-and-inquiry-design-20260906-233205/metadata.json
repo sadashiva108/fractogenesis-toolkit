@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T16:32:42+00:00",
+  "updatedAt": "2026-09-13T00:00:00+00:00",
   "bundleName": "allocation-and-inquiry-design-20260906-233205",
   "createdOn": "2026-09-07",
   "owners": [
@@ -41,13 +41,50 @@
   "ownedBundles": [],
   "contributions": [],
   "declaredState": null,
-  "indexNotes": null,
+  "indexNotes": "Owned nothing for its whole life. `0045` is the finding about exactly that, and this session is its instance.",
   "ended": {
-    "on": null,
-    "reason": null,
-    "revisions": [],
-    "commits": [],
+    "on": "2026-09-13",
+    "reason": "The owner closed it. Its work was done and its remaining items were routed to the sessions that own them.",
+    "revisions": [
+      211,
+      214,
+      218,
+      220,
+      230,
+      231,
+      232,
+      233,
+      234,
+      235,
+      236,
+      237,
+      238,
+      241,
+      242,
+      243,
+      244,
+      245,
+      246,
+      247
+    ],
+    "commits": [
+      "4549a2f",
+      "ab9b58d",
+      "89ee928",
+      "3828d19",
+      "c331906",
+      "c1da011",
+      "d0e6d7d",
+      "e5b2068",
+      "34f8bc0",
+      "25e8e8d",
+      "52a4376",
+      "dc9ab80",
+      "d2f53bf",
+      "d2ea1f7",
+      "d1e5f96"
+    ],
     "disposals": []
   },
-  "state": "available"
+  "state": "closed"
 }
