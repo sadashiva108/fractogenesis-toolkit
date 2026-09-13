@@ -17,9 +17,10 @@
   "feltAt": [],
   "scope": "cross-cutting. Felt in `.internal/artifact-runs.sh`, in every category manifest, and in dated artifacts across the volume.",
   "read": [],
-  "standing": "analyzing",
+  "standing": "unclaimed",
   "progress": "analyzing",
-  "ownership": null,
+  "ownership": "unclaimed",
+  "ownershipOn": "2026-09-13",
   "lineage": {
     "supersedes": "0009",
     "on": null

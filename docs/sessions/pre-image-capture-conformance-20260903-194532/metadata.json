@@ -1,21 +1,21 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T16:32:42+00:00",
+  "updatedAt": "2026-09-13",
   "bundleName": "pre-image-capture-conformance-20260903-194532",
   "createdOn": "2026-09-03",
   "owners": [
     {
       "from": "2026-09-03",
-      "until": null,
+      "until": "2026-09-13",
       "assistant": "Claude",
       "sessionId": "session_01PcgHu9kz9Hm5RatLQuFR8H",
       "model": "configured claude-opus-5",
       "environment": "Linux VM on the owner's Mac, Ubuntu 22.04, Bash 5.1.16, GNU coreutils, aarch64",
-      "environmentNotes": null
+      "environmentNotes": "Not macOS. Every command, check and patch ran in that VM through the desktop bridge, against a scratch copy outside the checkout; the assistant itself runs in a cloud container with no access to the owner's filesystem except through that bridge. Bash 5.1 and GNU coreutils here, Bash 3.2 and BSD userland where the scripts run, so bin/verify-script-portability.sh reads the portability floor from source and nothing in this session ever executed a script under 3.2. The debt is extended, not paid."
     }
   ],
   "transcript": "https://claude.ai/code/session_01PcgHu9kz9Hm5RatLQuFR8H",
-  "scratchPath": null,
+  "scratchPath": "/sessions/rcw-01pcghu9kz9hm5ratlqufr8h/scratch/fractogenesis-toolkit",
   "resources": [
     {
       "what": "Repository",
@@ -51,14 +51,6 @@
       "notes": "Closed 2026-09-03. Both directories opened on the volume; nothing is restored and no producer change is owed"
     },
     {
-      "number": "0030",
-      "notes": "Closed 2026-09-04. Finding 3 decided by run-index-design-20260901-000000 under an owner override; finding 1 deferred on a measurement"
-    },
-    {
-      "number": "0035",
-      "notes": "Closed 2026-09-04. Recorded and resolved in one sitting; the missing step was retiring the former lineage"
-    },
-    {
       "number": "0031",
       "notes": "superseded by 0040; retained here, reading unchanged"
     },
@@ -67,15 +59,95 @@
       "notes": "superseded by 0041; retained here, reading unchanged"
     }
   ],
-  "contributions": [],
-  "declaredState": null,
+  "contributions": [
+    {
+      "bundle": "0033",
+      "date": "2026-09-04",
+      "contribution": "F7 \u2014 `.internal/style.sh` is copied into evidence by every script that sources it, so the styling travels into the artifact root as a second copy. Recorded into a bundle this session does not own, while `0033` was still unclaimed and the rules allowed it."
+    }
+  ],
+  "declaredState": "closed",
   "indexNotes": null,
   "ended": {
-    "on": null,
-    "reason": null,
-    "revisions": [],
-    "commits": [],
-    "disposals": []
+    "on": "2026-09-13",
+    "reason": "Closed at the owner's direction. The four pre-image readings it was created to answer are answered and two instruction-set bundles it recorded are superseded and retained; `0030` and `0035` were released to `unclaimed` rather than held, neither being terminal. Both had been stamped `resolved` while members were still open \u2014 the defect run-index-design-20260901-000000 found across four bundles \u2014 so they leave with five and three live members respectively. final-summary.md carries the disposal record and what is still owed. The eleven standing `headers` failures in this tree are all inside these two bundles: every decision row in both cites no finding. Pre-existing at HEAD and released with them; `verify-session-findings.sh` still describes that baseline as \u201csix bundles owned by other sessions\u201d, which it is not.",
+    "revisions": [
+      178,
+      183,
+      184,
+      185,
+      187,
+      191,
+      194,
+      195,
+      196
+    ],
+    "commits": [
+      "7b8695c",
+      "cf251ab",
+      "6a53bf5",
+      "132432b",
+      "5197268",
+      "f4159da",
+      "92a4f79",
+      "3604743"
+    ],
+    "disposals": [
+      {
+        "number": "0007",
+        "disposition": "answered",
+        "on": "2026-09-03",
+        "note": "Inherited already answered; closed by Revision 141. Retained by this session."
+      },
+      {
+        "number": "0013",
+        "disposition": "answered",
+        "on": "2026-09-03",
+        "note": "Closed by Revisions 137 and 138 and this session's own; the two office-stability lineages were named in the runbook glossary at Revision 187. Retained by this session."
+      },
+      {
+        "number": "0019",
+        "disposition": "answered",
+        "on": "2026-09-03",
+        "note": "Inherited already answered; closed by Revision 129 before the reassignment. Retained by this session."
+      },
+      {
+        "number": "0025",
+        "disposition": "answered",
+        "on": "2026-09-03",
+        "note": "Closed at Revision 185; both staged bundles opened on the volume, the named producer corrected to stage-selected-patterns.py, no producer change owed. Retained by this session."
+      },
+      {
+        "number": "0031",
+        "disposition": "superseded",
+        "on": "2026-09-06",
+        "supersededBy": "0040",
+        "note": "Superseded by `0040` in the ground-up re-evaluation of the findings architecture. The reading is retained here unchanged and was brought onto the schema in Revision 203. Retained by this session."
+      },
+      {
+        "number": "0032",
+        "disposition": "superseded",
+        "on": "2026-09-06",
+        "supersededBy": "0041",
+        "note": "Superseded by `0041` in the same re-evaluation. Reading retained here unchanged, brought onto the schema in Revision 203. Carries the malformed-row defect this session caused, and F4 contributed by restore-apps-outstanding-20260903-000000. Retained by this session."
+      },
+      {
+        "number": "0030",
+        "disposition": "released",
+        "on": "2026-09-13",
+        "standingAtRelease": "analyzing",
+        "openMembers": 5,
+        "note": "Released to `unclaimed`, no successor named. Stamped `resolved` at Revision 194 over open members. F3 was decided by run-index-design-20260901-000000 under an owner override; F1 is deferred on a measurement \u2014 naive detection gives 167 false positives, context-filtered gives zero and is structurally blind because the rename deletes the key it needs, which is why detection is downstream of the `rename` row. Carries 8 of the tree's 11 standing `headers` failures \u2014 every decision row D1-D8 cites no finding \u2014 pre-existing at HEAD, not caused by the release."
+      },
+      {
+        "number": "0035",
+        "disposition": "released",
+        "on": "2026-09-13",
+        "standingAtRelease": "assigned",
+        "openMembers": 3,
+        "note": "Released to `unclaimed`, no successor named. Recorded and stamped `resolved` at Revision 196 in one sitting, over open members. artifact_run_rename_lineage was written and the missing step \u2014 retiring the former lineage \u2014 identified and included; the members that document why it was missed were never closed. Carries the other 3 standing `headers` failures, D1-D3, same defect."
+      }
+    ]
   },
-  "state": "active"
+  "state": "closed"
 }
