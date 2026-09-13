@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-11",
+  "updatedAt": "2026-09-12",
   "number": "0041",
   "bundleName": "0041-index-and-manifest-tables-have-a-shape-nothing-checks",
   "genus": "findings",
@@ -114,14 +114,19 @@
     {
       "id": "F7",
       "statement": "Section 6's own patch recipe drops a deletion before git apply ever sees it",
-      "status": "framing",
+      "status": "resolved",
       "statusReason": null,
-      "statusNote": null,
-      "updatedAt": "2026-09-10",
+      "statusNote": "Adopted rather than written here. The remedy landed in two documents this bundle does not own -- section 0 step 3 under 0038 D10 and section 6's recipe block under 0039 D28 -- and D8 is this bundle's judgement that it is adequate and verified present. Reverses the Revision 304 disposal, which left the bundle unable to reach any terminal standing.",
+      "updatedAt": "2026-09-12",
       "sectionHeading": "F7 \u2014 the recipe drops the deletion before `git apply` can under-apply it",
       "reopened": null,
       "withdrawn": null,
-      "resolution": null
+      "resolution": {
+        "resolvedBy": "D8",
+        "what": "The recipe fix was verified present at 4b0c95f rather than taken from the decisions claiming it: section 0 step 3 and section 6's recipe block both read `git add -N .` then `git diff HEAD`, and the superseded form survives nowhere. D8 adopts it as F7's answer.",
+        "revision": "312",
+        "commit": null
+      }
     },
     {
       "id": "F8",
@@ -131,6 +136,18 @@
       "statusNote": "D7 is built at Revision 308 and covers two of the three unchecked classes. F8 stays framing: the third, per-member status inside findings.md, is deliberately not structure's subject, and the finding's claim is about the surface rather than about the two classes now watched.",
       "updatedAt": "2026-09-11",
       "sectionHeading": "F8 \u2014 the projected surface is hand-maintained, and the drift is exactly where nothing looks",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
+    },
+    {
+      "id": "F9",
+      "statement": "A bundle could be barred from every terminal standing by a member correctly disposed of, and no instrument could report it",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": "The instance is repaired by D8. The condition is not: nothing asserts that a bundle can reach a terminal standing, and it is not fully derivable. The detectable half is a member carrying its disposition in prose while statusNote and statusReason are null, which is what F7 did for eight revisions.",
+      "updatedAt": "2026-09-12",
+      "sectionHeading": "F9 \u2014 a bundle could be barred from every terminal standing, and nothing could say so",
       "reopened": null,
       "withdrawn": null,
       "resolution": null
@@ -220,6 +237,18 @@
       "answersAsOf": "a91b451",
       "voidedReason": null,
       "sectionHeading": "D7 \u2014 check the two tables that display a derived value and are compared to nothing"
+    },
+    {
+      "id": "D8",
+      "decision": "The remedy carried out under 0038 D10 and 0039 D28 is adopted as F7's answer, this bundle judging it adequate and verified present rather than citing another bundle's decision in the Resolved by column. Reverses the Revision 304 disposal, which left 0041 unable to reach any terminal standing.",
+      "members": [
+        "F7"
+      ],
+      "decided": "2026-09-12",
+      "outcome": "accepted",
+      "answersAsOf": "4b0c95f",
+      "voidedReason": null,
+      "sectionHeading": "D8 \u2014 adopt the remedy that landed, because a bundle that cannot terminate is a wrong reading"
     }
   ],
   "contributions": [],

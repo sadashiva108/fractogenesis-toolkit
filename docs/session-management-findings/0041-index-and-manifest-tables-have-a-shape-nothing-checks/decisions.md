@@ -2,7 +2,7 @@
 
 **Bundle:** `0041-index-and-manifest-tables-have-a-shape-nothing-checks`  
 **Session:** `assurance-coverage-20260908-204724`  
-**Decided:** 2026-09-09, and 2026-09-10 for D7
+**Decided:** 2026-09-09, 2026-09-10 for D7, and 2026-09-12 for D8
 
 **D1 is the coverage answer for this whole session.** `0041/F2` co-decides
 `0044/F1` and `0042/F1` reads on it; it is stated once, here, and the other
@@ -17,6 +17,7 @@ bundles cite it rather than restating it.
 | D5 | A resolution names a **verifiable referent** — a file and a construct in it — never a section number | F5 | 2026-09-09 | `accepted` |
 | D6 | A total is summed from the rows it describes, or it is not written. The count check gains the one assertion it has always been read as making | F6 | 2026-09-09 | `accepted` |
 | D7 | `verify-findings-structure.sh` gains the two projected values nothing compares — a session manifest's `Standing` and a session's `State` in `docs/sessions/INDEX.md` — measured against the data each derives from | F8 | 2026-09-10 | `accepted` |
+| D8 | **The remedy carried out under `0038` D10 and `0039` D28 is adopted as F7's answer**, this bundle judging it adequate and verified present rather than citing another bundle's decision. **Reverses the Revision 304 disposal**, which left `0041` unable to reach any terminal standing | F7 | 2026-09-12 | `accepted` |
 
 ---
 
@@ -336,3 +337,101 @@ because `structure` already fails on the equivalent comparison for a tree index
 and a session manifest is not a lesser record. **A row here is always clearable**:
 the data is authoritative and the display is a copy, so unlike `0047` F9's class
 there is no permanent failure to install.
+
+---
+
+## D8 — adopt the remedy that landed, because a bundle that cannot terminate is a wrong reading
+
+**This reverses the disposal recorded at Revision 304.** F7 was settled then as
+staying `framing` with its remedy "recorded as having landed elsewhere", and
+`drift-and-the-write-boundary-20260909-053548` proposed it and this bundle agreed.
+**Both were wrong, and the owner named the test that shows it.**
+
+### The test
+
+**A findings bundle must be able to reach a terminal standing.** If a bundle
+cannot, the reading that made it so is wrong — not the framework, and not the
+finding.
+
+Measured on this bundle under the Revision 304 disposal: resolve **every** other
+member and `bundle_standing` still derives `analyzing`, because `framing` is not
+inert and F7 could never leave it. `0041` was permanently barred from `answered`,
+`retired` and every other terminal value, **by a member that was correct,
+complete, and settled.**
+
+Nothing in the tree could have reported that. It is not a drifted display, a
+wrong count or a failed check — it is a bundle in a state the derivation can
+express and the process can never leave.
+
+### What the rule actually says
+
+**Section 11, and it is a dangling-citation rule rather than an ownership rule:**
+*"every `D<n>` a resolution resolves by exists in `decisions.md`"*, because *"a
+citation that resolves to nothing is how a table stops being a record and becomes
+decoration."* **The concern is a pointer into nothing, not a claim about who did
+the thinking.**
+
+Revision 304 read it as forbidding this bundle from answering F7 at all. It
+forbids one thing: writing `0038` D10 in the `Resolved by` column. **Measured
+across the tree: 117 resolution rows — 97 name a local `D<n>`, 19 carry `—`, one
+names a range. Not one cites another bundle's decision.** The convention is
+universal and this decision does not break it.
+
+### The move, and its precedent
+
+**`0038` D11 is the worked case**, one day old: *"`0012` D2 is adopted as F12's
+answer rather than cited as it."* That bundle could not perform `0012` D2's act
+either — it was the owner's, on their own machine, and **no patch could have
+contained it** — and it adopted anyway, writing its own decision whose content is
+the judgement that the remedy is adequate and has landed.
+
+**D11's own text carves this bundle out**, saying leaving `framing` is right *"when
+the finding's bundle cannot make the decision — `0041` F7's case, where the remedy
+is another session's section."* **That sentence conflates two abilities.** `0041`
+cannot write §0 or §6. `0041` can absolutely decide whether F7 is answered — it
+owns F7, and deciding is the one thing an owner may always do. `0038` was in the
+identical position and did not treat it as disqualifying.
+
+**So: `0041` adopts as F7's answer the remedy carried out in `0038` D10 (§0 step 3)
+and `0039` D28 (§6's recipe block), both `git add -N .` → `git diff HEAD`.** The
+judgement this bundle is making, and is accountable for, is that **the remedy is
+adequate, complete, and verified present** — not that this bundle wrote it.
+
+### Verified before adopting, because adopting an unverified remedy is the failure mode
+
+Adoption is only honest if the thing adopted is actually there. Checked at this
+commit rather than taken from the decisions that claim it:
+
+| Where | Reads |
+|---|---|
+| `.github/session-management-instructions.md` §0 step 3 | `git diff HEAD` |
+| `.github/session-management-instructions.md` §6 recipe block | `git diff HEAD` |
+
+**And the property that makes the fix free is reproducible**: on a change set
+carrying no deletion the two forms are byte-identical, so the correct form is
+never worse. Measured independently twice — by `0038`'s session in a throwaway,
+and by this session on Revision 299's own 17-file change set, where the recipe
+carried 16 files and zero deletions.
+
+### Rejected
+
+**`Resolved by: 0038 D10`.** Section 11 forbids it, 117 rows agree, and it is the
+thing Revision 304 correctly called *a citation dressed as ownership*. **That
+objection was right and it is not what this decision does.**
+
+**Leaving F7 `framing`, the Revision 304 disposal.** Rejected on the owner's test.
+It also produced a second harm nobody named: **a settled disposition that lives
+only in prose.** F7's `statusNote` was `null`, so every instrument, every
+projection and every index read a bare `framing` — indistinguishable from
+unworked — while the paragraph three screens down said the matter was closed.
+**The record said one thing and the data said another for eight revisions**, which
+is this bundle's own subject.
+
+**Withdrawing F7.** `withdrawn` means retracted. F7 is true, was reproduced twice
+independently, and changed two rule documents. Withdrawing it to reach a terminal
+standing would buy the standing with a lie.
+
+**Proposing a seventh finding status for *complete, but not by us*.** Refused
+here. The vocabulary is `0043`'s, `0043` D3 has already ruled on maps versus
+plans, and a value invented in the bundle that hurts from its absence is a value
+shaped like one instance. **F9 records the condition instead.**

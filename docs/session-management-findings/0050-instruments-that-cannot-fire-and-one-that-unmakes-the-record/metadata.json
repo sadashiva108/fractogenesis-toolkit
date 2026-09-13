@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-11",
+  "updatedAt": "2026-09-12",
   "number": "0050",
   "bundleName": "0050-instruments-that-cannot-fire-and-one-that-unmakes-the-record",
   "genus": "findings",
@@ -190,6 +190,18 @@
         "revision": "308",
         "commit": null
       }
+    },
+    {
+      "id": "F12",
+      "statement": "verify-findings-headers.sh reads any F<n> token in a resolutions row as a citation of a local finding, so a row may not record which other bundle's finding a remedy came from; measured in three forms, and handed to this bundle at Revision 301 without ever being recorded",
+      "status": "framing",
+      "statusReason": null,
+      "statusNote": "Live at 4b0c95f. Baseline FAIL 11; each of three prose forms naming another bundle's finding gives FAIL 12. Decisions in prose are unaffected. 0041 D8's resolution row applies the workaround in the same revision that records the defect.",
+      "updatedAt": "2026-09-12",
+      "sectionHeading": "F12 \u2014 a resolutions row may not mention another bundle's finding, and this was handed here and lost",
+      "reopened": null,
+      "withdrawn": null,
+      "resolution": null
     }
   ],
   "decisions": [

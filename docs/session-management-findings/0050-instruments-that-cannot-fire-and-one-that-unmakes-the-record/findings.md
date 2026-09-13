@@ -36,6 +36,7 @@ writes, and the bundle type for those does not exist yet.
 | F9 | When it fires, nothing says who owes the missing entry or how a late one is written | `framing` |
 | F10 | Clearing a `MISSING` requires creating a permanent `ORPHANED`, so the count moves the wrong way when someone does the right thing | `framing` |
 | F11 | An instrument carried a fourth copy of the standing derivation with the two overrides in the wrong order, disagreeing on 128 of 384 enumerated cases, and no bundle in the tree reaches the branch | `resolved` |
+| F12 | `verify-findings-headers.sh` reads any `F<n>` in a resolutions row as a local citation, so a row may not say where a remedy came from; handed here at Revision 301 and never recorded | `framing` |
 
 ## F1 — the guard does not run where the writing happens
 
@@ -805,6 +806,62 @@ ordering in the module now fails two of them.
 **What stays open is not this instance.** It is the question F4 asks: there is no
 check that a derivation has one implementation. Three have now been found by
 hand, at Revisions 299, 308 and 308.
+
+## F12 — a resolutions row may not mention another bundle's finding, and this was handed here and lost
+
+**Recorded 2026-09-12.** Revision 301's manifest entry states it plainly:
+`verify-findings-headers.sh` *"cannot tell a cross-bundle citation from a local
+one"* — a `resolutions.md` row reading another bundle's finding number failed as
+*cites F22, which findings.md does not have* — and says it was **"handed to
+`0050`"**. **It was never written into this bundle.** Eleven revisions later the
+defect stands and nothing recorded it.
+
+**So this finding is two things**: a live checker defect, and an instance of a
+hand-off announced in a commit message and landing nowhere.
+
+### Measured, in three forms
+
+Constructed in a copy of the tree at `4b0c95f` by adding a reference to another
+bundle's finding to the prose column of one `resolutions.md` row. Baseline is
+`FAIL 11`.
+
+| The prose says | Result |
+|---|---|
+| `that bundle F22 records` | **FAIL 12** — fires |
+| a backticked bundle number, then `F22 records` | **FAIL 12** — fires |
+| a bare bundle number, then `F22 records` | **FAIL 12** — fires |
+
+**All three.** The bundle prefix makes no difference; the checker reads any `F<n>`
+token anywhere in the row as a citation of a local finding.
+
+**Decisions are not affected.** The same test naming two other bundles' decisions
+in prose held the baseline at `FAIL 11`. **The defect is specific to `F<n>`** —
+which is the token a resolution most needs when the remedy came from elsewhere.
+
+### Why it belongs in this bundle
+
+**The checker is correct to scan and wrong to assume the bundle**, which is
+`0041` D1's matcher problem a fifth time. But the reason it is `0050`'s is what it
+does to the record: **it fires on correct work**, so the response is to reword the
+row, and the tree then has no row saying where a remedy came from. **An instrument
+that is wrong in a way that is cheaper to work around than to fix stops being
+detected at all** — every past instance was silently reworded, which is why this
+one needed a manifest entry to be visible and still got lost.
+
+### Live today, and it shaped this revision
+
+`0041` D8's resolution row describes a remedy carried out under two other bundles'
+decisions. **It names their decisions and deliberately does not name their
+findings**, because doing so would fail the checker. That is the workaround being
+applied in the same revision that records it.
+
+### Not decided
+
+The fix is scoping the scan to the `Finding` column, or teaching it that a token
+preceded by a bundle number is not local. Both are one-line changes to a script
+this bundle does not own outright, and **`0050` F4's standing warning applies**:
+the instruments in this class keep being repaired ahead of a decision about what
+they are responsible for seeing.
 
 <!-- The path above was deleted at Revision 299, carrying out D3. This bundle is
      the reading that decided it, so its citations are evidence and are not

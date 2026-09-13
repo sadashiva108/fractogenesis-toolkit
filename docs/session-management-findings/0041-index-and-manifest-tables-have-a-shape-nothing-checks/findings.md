@@ -22,8 +22,9 @@ and `pre-image-capture-conformance-20260903-194532` still owns it.
 | F4 | A patch containing a deletion under-applies silently, and every check passes | `decided` |
 | F5 | Nothing compares a resolution's claim against the tree | `decided` |
 | F6 | The prose total under an index is wrong in both directions, and the count check passes over it | `resolved` |
-| F7 | Section 6's own patch recipe drops a deletion before `git apply` ever sees it | `framing` |
+| F7 | Section 6's own patch recipe drops a deletion before `git apply` ever sees it | `resolved` |
 | F8 | Eleven classes of output are declared projections, nothing generates them, and the drift sits only where nothing checks | `framing` |
+| F9 | A bundle could be barred from every terminal standing by a member correctly disposed of, and no instrument could report it | `framing` |
 
 ---
 
@@ -407,18 +408,96 @@ one.
 rather than borrowing this finding, because §6 gates a toolkit write on a
 `decided` member and F7 is not theirs to decide.
 
-**F7 therefore stays `framing`, with the remedy recorded as having landed
-elsewhere.** Drift proposed it and this bundle agrees: **a resolution row pointing
-at another bundle's decision is a citation dressed as ownership**, and `0041`
-reaching `answered` on a remedy it did not write is the tidiness that costs the
-record its meaning. §9b requires `Resolved by` to name a decision in this bundle,
-and there is none to name.
+**This paragraph recorded the disposal at Revision 304 and it was reversed at
+Revision 312 by D8. It is left standing because the reasoning is the finding.**
+It read: *F7 therefore stays `framing`, with the remedy recorded as having landed
+elsewhere* — on the grounds that **a resolution row pointing at another bundle's
+decision is a citation dressed as ownership**, and that `0041` reaching `answered`
+on a remedy it did not write is the tidiness that costs the record its meaning.
+
+**That objection is correct and it is not what D8 does.** Section 11 forbids
+naming another bundle's `D<n>` in the `Resolved by` column, and D8 does not: it
+writes this bundle's own decision, whose content is the judgement that the remedy
+is adequate and verified present. **The two were run together, and the paragraph
+above concluded from the first that this bundle could not answer F7 at all.**
+
+**What showed the error was a structural test rather than a better argument**:
+under this disposal `0041` could not reach any terminal standing, ever — resolve
+every other member and the derivation still returns `analyzing`, because `framing`
+is not inert and F7 could never leave it. **A findings bundle that cannot
+terminate means the reading is wrong.** `0038` D11 is the worked precedent and its
+own carve-out naming this case conflates *cannot write the remedy* with *cannot
+decide the finding*. **F9 records the condition**, which D8 does not repair.
 
 **Drift reproduced it independently before writing the rule**, in a throwaway repo
 with one edit, one addition and one deletion: `git add -N . && git diff` yields two
 files and **zero** deletions; `git diff HEAD` yields three and one. **On a change
 set with no deletion the two are byte-identical, 345 bytes each** — so the correct
 form is never worse and there is no trade-off to argue.
+
+## F9 — a bundle could be barred from every terminal standing, and nothing could say so
+
+**Recorded 2026-09-12**, from the owner's reading of this bundle's own F7. The
+instance is repaired by D8; **the condition that let it happen is not.**
+
+### The instance
+
+Under the disposal recorded at Revision 304, F7 was settled, correct and
+permanently `framing`. Because `framing` is not inert, `bundle_standing` derives
+`analyzing` while it stands. Measured: set **every other member of `0041` to
+`resolved`** and the standing is still `analyzing`.
+
+**`0041` could not reach `answered`, `retired`, or any terminal value, ever** — not
+because work was outstanding, but because a member had been correctly disposed of
+in a way the vocabulary cannot express.
+
+### Why no instrument could have reported it
+
+**Every checker in this tree compares a value against a value.** This is not a
+disagreement. The data was internally consistent, `stamp --dry-run` wrote nothing,
+every projection agreed with its source, and `conformance` was clean. **The defect
+is that a reachable state was unreachable** — a property of the process over the
+data, not of the data.
+
+**Nothing in the tree asserts reachability, and it is not fully derivable.**
+Whether a member can leave `framing` depends on whether a decision may be written,
+which is a fact about who owns what and what the rules permit — not a field.
+
+### The half that *is* detectable, and is the sharper finding
+
+**F7's disposition existed only as prose.** `statusNote` was `null` for eight
+revisions. So:
+
+| What read F7 | What it saw |
+|---|---|
+| `stamp`, `conformance`, every checker | `framing` |
+| `findings.md`'s own table | `framing` |
+| the bundle's `INDEX.md` row, the session manifest | a bundle mid-flight |
+| the paragraph under F7 | *"F7 therefore stays `framing`"* — settled, closed, agreed by two sessions |
+
+**A settled disposition that lives only in prose is invisible to everything that
+reads state**, and it is indistinguishable from a finding nobody has touched.
+`statusNote` and `statusReason` exist in the schema for exactly this and were
+empty. **That is checkable**: a member carrying a non-default disposition in prose
+and `null` in its status fields is a detectable shape, and it is the one this
+finding recommends looking at first.
+
+### What this does not claim
+
+**Not that a seventh finding status is needed.** *Complete, but not by us* is one
+candidate reading and a vocabulary question belongs to `0043`. **Not that the
+Revision 304 reasoning was careless** — it was argued carefully by two sessions and
+agreed by both, and the error survived precisely because it was well argued. **And
+not that D8 generalises**: adopting is right where the remedy is verified present
+and the adopting bundle owns the finding. Neither condition is automatic.
+
+### Why it is `framing`
+
+The instance is closed and the condition is not. No decision is proposed here: the
+detectable half touches the schema's status fields and the undetectable half is a
+vocabulary question, and both are other bundles' subjects. **Recorded so that the
+next bundle that cannot terminate is found by someone reading this rather than by
+someone noticing.**
 
 ## F8 — the projected surface is hand-maintained, and the drift is exactly where nothing looks
 
