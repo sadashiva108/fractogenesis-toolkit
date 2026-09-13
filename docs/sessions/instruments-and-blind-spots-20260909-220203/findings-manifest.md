@@ -99,3 +99,5 @@ migration plan, which is `0052` F2's own example. The sibling folds into
 `unclaimed` have no date and this session did not add one: `unclaimed` is closed to
 everyone. Their dates are recoverable once, from the commit that introduced each
 value, and belong to whoever claims them.
+
+**This session closed at Revision 320**, both dossiers having been released. The disposal record above is the durable one; [`final-summary.md`](final-summary.md) carries what was built, what was got wrong, and what is still owed and by whom.

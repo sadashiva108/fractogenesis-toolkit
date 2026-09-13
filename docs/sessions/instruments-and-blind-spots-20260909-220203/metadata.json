@@ -6,7 +6,7 @@
   "owners": [
     {
       "from": "2026-09-10",
-      "until": null,
+      "until": "2026-09-13",
       "assistant": "Claude",
       "sessionId": "session_01Fo6sBeux1JTyDzgKhCx2KU",
       "model": "claude-opus-5",
@@ -58,14 +58,58 @@
       "what": "Answered by enumeration: derivation_table reads only set membership, so the presence set is the whole input and the table is provable over all 63 non-empty combinations. analyzing holds exactly when there is a framing or decided member, or an un-started member beside one that is not -- 48 and 7. The first characterisation attempted was wrong on seven, which is F7's own claim on the session answering it."
     }
   ],
-  "declaredState": null,
+  "declaredState": "closed",
   "indexNotes": "**The instruments session.** `0050` and `0041` assigned from `unclaimed` at the owner's direction. Between them they answer *how do I know this framework works*: one bundle is instruments that cannot fire, the other a required shape nothing checks and a check released unbuilt. **First write Revision 288**: `0041` D6 built, F6 `resolved`, and the check's first run corrected an index total that had been hand-incremented across three revisions. `0050` F7 recorded. **Revision 289**: `0050` D3 retires the extraction half of `extract-metadata.py` rather than guarding it, on a re-measurement of 740 values destroyed and 620 irrecoverable. **Revision 292**: `0050` F8 and F9 \u2014 an instrument that is correct, fires, and is run by nothing, recorded after this session reported its condition as undetected and was wrong. **Revision 294**: `0050` F10, and F7 and F9 extended \u2014 the metric that argues against its own prescribed repair, and the two halves of a commit message the subject test cannot reach. **Revision 297**: `docs/ledgers/instrument-firing.md` \u2014 the written answer this session owed \u2014 plus `0050` F1 settled and a contribution to `0043` F13. **Revision 299**: D3 carried out \u2014 the extractor is deleted, the completeness check is its own file, and `0050` F3 and F6 are `resolved`. **Revision 306**: D7's precondition \u2014 the derivation fixture set, and `0043` F7 answered by enumeration. **Revision 307**: the last unattended projection row re-derived and the ledger's unclearable/unattended conflation corrected, at Drift's prompting.",
   "ended": {
-    "on": null,
-    "reason": null,
-    "revisions": [],
-    "commits": [],
-    "disposals": []
+    "on": "2026-09-13",
+    "reason": "Closed at the owner's direction after both owned dossiers were released. This session was given two bundles about instruments -- 0041, a required shape nothing checks, and 0050, instruments that are correct and cannot fire -- and answered six of their nineteen members. Neither bundle reached a terminal standing, so both went back to the queue at Revision 317 rather than waiting on a session that had stopped advancing them; final-summary.md carries the disposal record and what each leaves open. What it built: the prose-total check (0041 D6), the derivation fixture set over all 63 presence-combinations, the two projection assertions (0041 D7), and the removal of a fourth copy of the standing derivation that disagreed with the original on 128 of 384 enumerated cases (0050 D4). What it got wrong and corrected in the record: the 0041 F7 disposal, reversed at Revision 312 on the owner's test that a bundle must be able to reach a terminal standing; and the UNCLEARABLE classification of 0049 F6, whose verdict was right and whose stated reason was wrong. Revision 289 has a manifest entry and no commit of its own -- its content landed inside 15069fe, whose trailer names another session -- which is 0050 F7's defect recorded in this session's own bundle.",
+    "revisions": [
+      288,
+      289,
+      292,
+      294,
+      297,
+      299,
+      304,
+      306,
+      307,
+      308,
+      309,
+      312,
+      317
+    ],
+    "commits": [
+      "8b45285",
+      "905beed",
+      "c929a00",
+      "99674ae",
+      "d127b0e",
+      "b6e105f",
+      "730d8ba",
+      "c0001b5",
+      "fc2836b",
+      "a16ad3d",
+      "7ca00b6",
+      "6c915f8"
+    ],
+    "disposals": [
+      {
+        "number": "0041",
+        "disposition": "released",
+        "on": "2026-09-13",
+        "standingAtRelease": "analyzing",
+        "openMembers": 6,
+        "note": "Released to `unclaimed`, no successor named. Answered F1 (D2, Revision 195), F6 (D6, Revision 288) and F7 (D8, Revision 312). F2-F5 stand `decided` with the remedies unbuilt; F5 specifies a checker that does not exist -- nothing compares a resolution's claim against the tree. F8 has two of its three projection classes checked by D7 since Revision 308; the third, per-member status inside findings.md, is deliberately not structure's subject. F9 is the newest and has no decision. Supersedes 0032, which pre-image-capture-conformance-20260903-194532 retains."
+      },
+      {
+        "number": "0050",
+        "disposition": "released",
+        "on": "2026-09-13",
+        "standingAtRelease": "analyzing",
+        "openMembers": 8,
+        "note": "Released to `unclaimed`, no successor named. Answered F3 and F6 (D3, Revision 299), F5 (D2, Revision 255) and F11 (D4, Revision 308). The eight that remain are the bundle's actual subject and none is blocked on measurement -- each is measured and waiting on a decision. F8, F9 and F10 are one cluster and should be decided together. F12 is a hand-off that vanished, announced at Revision 301 and recorded here at Revision 312 after no bundle took it."
+      }
+    ]
   },
-  "state": "available"
+  "state": "closed"
 }
