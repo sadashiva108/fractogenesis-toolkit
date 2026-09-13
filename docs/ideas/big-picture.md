@@ -1417,3 +1417,95 @@ Then:
   kinds that are barely populated — `generalises` has **0 edges**, `constrains`
   has 5. They are blocked on a populated graph rather than on a layer, and
   populating that graph is ordinary work no tier gates.
+
+---
+
+## The commission shape — settled 2026-09-13
+
+*Design settled with the owner over three sittings and written up in full at
+[`docs/architecture/commissions-bays-and-blueprints.md`](../architecture/commissions-bays-and-blueprints.md).
+That document is authoritative; this section is the register and the pointers.
+**Not built** — no code reads any field in it.*
+
+**It answers the kind this page said had no name.** Tier 0 records that a
+commission starting from a system already far along *"is a distinct commission
+kind and the vocabulary has no word for it."* The word is `mode`: `brownfield` or
+`greenfield`, orthogonal to `kind`, and enforceable — a `brownfield`
+commission's specifications must name what they displace, and a `greenfield`
+one has nothing to point at.
+
+### The chain
+
+```
+commission ── bay ──┬── concerns        C1..Cn   what matters
+                    ├── specifications  S1..Sn   what shall be
+                    └── blueprint.md             what it looks like
+```
+
+A commission holds **bays**; `master-plan.md` indexes them. A bay is a dossier of
+genus `bay`, which makes a commission the first **compound dossier** — one whose
+members are dossiers. That buys the commission's standing off the same derivation
+crank a dossier's runs on, rather than a second copy of it.
+
+**Not `layer`.** This page defines a layer as a behaviour of the running system
+and records that its own first pass got that wrong. A bay is a unit of design
+work. One bay may design one layer, and the words may not be the same.
+
+### The register
+
+| level | disposition | determination |
+|---|---|---|
+| session | `state` | — |
+| dossier | `standing` · `progress` | — |
+| **bay** | **`course`** | — |
+| finding | `status` | `outcome` |
+| **concern** | **`stage`** | — |
+| **specification** | — | **`adoption`** |
+
+**`determination` is the new class name**, standing to `outcome` and `adoption`
+as `disposition` stands to `status`, `standing`, `state` and `stage`.
+
+| set | values |
+|---|---|
+| `stage` | `unscoped` · `raised` · `exploring` · `settled` · `designed` · `descoped` · `reexamined` |
+| `course` | `outlined` · `gathering` · `specifying` · `drawn` · `parked` · `folded` · `dropped` · `reexamined` |
+| `adoption` | `drafted` · `adopted` · `declined` · `amended → Sn` · `rescinded` |
+
+**Every value is unused in every closed set today**, so `VOCABULARIES` gains
+three entries and the disjointness guard needs no declared overlap. That was a
+constraint on the naming rather than a property of it.
+
+### Three things it rules, which the sections above assume
+
+**Inputs are concerns, not questions.** ISO 42010's word: anything that matters
+to a stakeholder and bears on the architecture. *"We want X, what shape?"* is a
+third of what arrives; the rest is constraints, trade-offs, requirements and
+scope calls, and `questions.md` holds those only by mislabelling them.
+
+**Concerns and specifications are many-to-many.** One specification settles
+several concerns; one concern needs several. So a concern is `designed` only when
+**every** specification citing it is terminal — not when one is. Collapsing them
+into a single member would make a concern simultaneously finished and unfinished
+the moment two rulings touched it.
+
+**Current-versus-future is a pointer, not two documents.** Current state is a
+baseline **commit**, recorded per bay when that bay enters drafting. Future state
+is the union of adopted specifications — derived, not written. Every
+specification names what it displaces. A future-state document would be a copy,
+and the *Fields that exist and are never populated* table below is what copies
+nobody re-derives look like after a while.
+
+### What it adds to the migration this page already scopes
+
+Three closed sets and a polymorphic `members[]`, landing in a schema **mid-
+retrofit**. The `{value, by, on}` disposition triple is designed, unbuilt and
+gated on a migration plan over 358 records. **Taking `stage`, `course` and
+`adoption` before that retrofit converts them with everything else; after it,
+they are two more record types to convert.** Cheaper before — and a decision to
+make deliberately rather than by timing.
+
+<!-- proposed: master-plan.md -->
+<!-- proposed: concerns.md -->
+<!-- proposed: specifications.md -->
+<!-- proposed: blueprint.md -->
+<!-- proposed: questions.md -->
