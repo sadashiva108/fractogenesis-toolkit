@@ -439,6 +439,38 @@ rather than a special case for one tree.
 bundle. That preserves the existing rule — `findings-manifest.md` is
 authoritative for ownership — and makes the two sides unable to disagree.
 
+**Every column above that renders a disposition renders one field of three.**
+`status`, `standing`, `progress` and `state` each carry a value, how it got
+there, and when:
+
+```json
+"status":   { "value": "resolved", "by": "declaration", "on": "2026-09-12" }
+"standing": { "value": "answered", "by": "crossing",    "on": "2026-09-12" }
+"progress": { "value": "answered", "by": "crossing",    "on": "2026-09-12" }
+"state":    { "value": "closed",   "by": "crossing",    "on": "2026-09-13" }
+```
+
+**`by` is what makes one field safe to recompute.** `state` was a pure output and
+`declaredState` a pure input; merging them naively breaks `stamp`, because
+nothing could tell a declaration that must be preserved from a stale derivation
+that must be corrected. **`stamp` recomputes where `by` is `crossing` and leaves
+`declaration` alone** — which is what the two fields do today, stated instead of
+inferred from a null.
+
+**And it makes provenance renderable.** A table showing `closed` says nothing
+about how it got there. Under this shape a reader sees `by: crossing` beside an
+empty `ended` block and asks the question that went unasked at Revision 313.
+
+**`on` is not `updatedAt`.** That field answers *when was this record last
+written* and moves when prose is edited. One field cannot answer both.
+
+**Which columns this touches:** derived state in `docs/sessions/INDEX.md`,
+derived status in both manifest and tree INDEX rows, and `status` in the
+`findings.md` Findings table — **every table in the map that shows a
+disposition.** The design is recorded in `docs/ideas/big-picture.md` and is
+**not built**; § 6's migration-plan gate fires over 358 records, and the
+verifications are written before the retrofit, not after.
+
 ### 6.2 Markers
 
 Every generated region is fenced so a reader can see what is authored and a

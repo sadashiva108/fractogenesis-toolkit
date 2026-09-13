@@ -425,6 +425,42 @@ D1, which restores the rule §4d carried until `1c48deb` deleted it.
 `docs/legend.md` carries how a session begins — created, cloned, or handoff — and
 exactly what transfers at a handoff. This file does not restate it.
 
+### What a session may declare about itself, and what it owes first
+
+**Three states may be declared: `handoff`, `dissolved`, `closed`.** `available`
+and `active` are **derived only** — both follow from what the session owns, so
+declaring one would store a derivable value and force assignability regardless of
+the dossiers. `session_state()` raises on either since Revision 313.
+
+**`closed` is in both sets deliberately.** It is derivable — every owned dossier
+terminal — *and* declarable, because the owner may close a session with work
+outstanding and no derivation produces that.
+
+A declaration is not free. Each one has a precondition that must hold **before**
+the declaration is written, because the declaration is what ends the session's
+authority to write:
+
+| Declared | Precondition | Owes |
+|---|---|---|
+| `handoff` | **a named successor that exists and is assignable** — see section 10's rule; a `handoff` naming nobody is a release, and that is section 10a | `handoff-<stamp>.md`, and every owned dossier appears in the successor's `findings-manifest.md` |
+| `closed` | every owned dossier is terminal **or has been released**; nothing the session owes is unwritten | `final-summary.md`, `ended.on`, `owners[].until` |
+| `dissolved` | **every owned dossier is `retired`** — that is, every member of each is `withdrawn`. A dossier with one `resolved` member makes the session `closed`, not `dissolved` | `final-summary.md`, `ended.on`, and the reason |
+
+**`dissolved` requires withdrawing every member, and that is the answer to the
+question this table was written for.** It is the terminal for *this was shut down,
+no further work ever*, and a session holding one resolved member did work that
+stands. `docs/legend.md` currently phrases it as a derivation — *"every bundle it
+owns is `withdrawn`"* — which is wrong twice: `withdrawn` is a member status and
+the dossier standing it produces is `retired`, and **no derivation returns
+`dissolved` at all.** It is declared or it does not occur.
+
+**Order, and it is the same rule as section 9c.** *Everything the session owes is
+written before the declaration, not after.* A `closed` session may not write —
+not its own record, not a dossier, not the toolkit — so a final summary composed
+after the latch is already an override. **A session that closes by crossing owes
+the same things and gets no prompt**, which is exactly how one closed at Revision
+313 with an empty `ended` block and nothing looked wrong.
+
 ## 6. Writing
 
 **The record covers this repository, and the rules governing it live in this
@@ -854,7 +890,18 @@ Superseding is not inheriting.
     file to re-affirm or drop each of them; that asked a fresh bundle to answer
     the old bundle's questions. The accounting it protected has moved to the
     finding layer, below, where coverage makes a silent loss impossible.
-9.  One `APPLY-MANIFEST.md` revision covers the whole supersession.
+9.  **Set `lineage.on` to the date of the supersession, on both sides** — the
+    predecessor's `supersededBy` and the successor's `supersedes`. **Measured: it
+    is null on all 14 records, in both directions**, so the tree records that a
+    replacement happened and never when. The predecessor is not edited *after*
+    the tag; this is part of applying it, in the same revision.
+10. One `APPLY-MANIFEST.md` revision covers the whole supersession.
+
+**A supersession names a successor that exists.** The tag in step 4 derives
+`superseded` from `lineage`, so a `supersededBy` pointing at a dossier that was
+never created leaves the predecessor terminal and the reading nowhere. **Where
+the reading is dropped and nothing replaces it, the value is `withdrawn`, not
+`superseded`** — which this section already says, and the date makes checkable.
 
 ### Provenance, and the gate on the tag
 
@@ -991,8 +1038,23 @@ section exists because that sentence has been true and unwritten.
     `withdrawn`. **If `stamp` does not move the bundle, it is not closed** — and
     the reason is in the members, not in the standing.
 3.  **Refresh the projections**, as section 9b step 4.
-4.  **Record it in the manifest entry** with what closed and against which
+4.  **Write the note last.** The index Notes cell, the manifest row and the
+    session's own prose all describe a closure, and **none of them may be written
+    before step 1 has moved the members.** `0047` D12 states the shape: *"move the
+    members, then write the note."*
+5.  **Record it in the manifest entry** with what closed and against which
     decisions.
+
+**Why the order is a rule and not a preference.** A note written first is a
+statement about work that has not happened, and it reads afterwards exactly like
+one about work that has. **The tree carries three such rows today**:
+`0035` F1, F2 and F3 are each `un-started` and each carries a resolution — the
+note was written, the members never moved, and `check` has reported
+`RESOLUTION-AHEAD-OF-FINDING` on all three since. **They are a true positive
+whose owner may clear them**, which is why they stay visible rather than being
+exempted. `0030` has the same shape and is licensed, because a clone's members
+are reset while the re-reading is open — so the exemption is part of the rule
+rather than a hole in it.
 
 **What closing does not do.** It does not release ownership — that is section
 10a — and it does not make the bundle unreadable: a `resolved` member is read
@@ -1012,8 +1074,18 @@ level lower** and was written five revisions before anyone noticed it generalise
 session holds and is a property of the session; a transfer moves one bundle and
 is a property of the bundle.
 
-**The target session must already exist** — created, cloned, or long running.
-A handoff creates its destination; a transfer names one.
+**The target session must already exist and must be assignable** — `available`
+or `active`. Created, cloned, or long running; a handoff creates its destination,
+a transfer names one.
+
+**Assignable, not merely `available`.** `available` is one of the two assignable
+values and naming it alone excludes `active`, which is the ordinary case — a
+session already holding work is exactly who a transfer usually goes to. The band
+is what the rule means: **a session in `handoff`, `closed` or `dissolved` may not
+be a transfer target**, because each of those says the session takes no new work,
+and a transfer into one produces a dossier owned by something that has stopped.
+`assignable_sessions()` computes the same set, so the rule and the allocator
+cannot disagree.
 
 A bundle may be transferred while it is `un-started`, `reopened` or `analyzing`.
 The terminal statuses have nothing to move, and `unclaimed` has no owner to move
@@ -1030,7 +1102,11 @@ it from — assign it instead.
     change; it moved, it did not split.
 4.  Record it in `metadata.md` on **both** sessions: a transfer is a change of
     ownership and that file is authoritative for who held what, and when.
-5.  One `APPLY-MANIFEST.md` revision covers the transfer.
+5.  **Record the date the transfer was made.** Every disposition transition
+    records when it happened, and a transfer leaves the least behind of any of
+    them — the outgoing manifest row is gone and `ownership` is a bare string —
+    so without a date the only trace is a `metadata.md` row on each side.
+6.  One `APPLY-MANIFEST.md` revision covers the transfer.
 
 **The transfer ends on the target session's first write to the bundle as owner.** At that point
 `transferred` stops applying, the findings awaiting a first read become

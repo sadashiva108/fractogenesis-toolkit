@@ -18,6 +18,7 @@ restates a definition from it.
 
 ## Contents
 
+- [0. Dispositions, transitions, and bands](#0-dispositions-transitions-and-bands)
 - [1. The rule that governs all of it](#1-the-rule-that-governs-all-of-it)
 - [2. Genus and shape](#2-genus-and-shape)
 - [3. Member statuses](#3-member-statuses)
@@ -34,6 +35,65 @@ restates a definition from it.
 - [14. How to cite one of these in writing](#14-how-to-cite-one-of-these-in-writing)
 
 ---
+
+## 0. Dispositions, transitions, and bands
+
+**The words for the things the rest of this file lists, and for how they move.**
+Sections 3, 4 and 6 each give a closed set of values; this section gives the
+class those sets belong to, the name for a change in one, and the name for a
+subset of one.
+
+| Term | Means |
+|---|---|
+| **disposition** | the class — a member's `status`, a dossier's `standing` and `progress`, a session's `state` |
+| **transition** | any change in a disposition |
+| **crossing** | a transition a **derivation** produced. Silent: nothing announces it, so it must be detected |
+| **declaration** | a transition an **actor** produced. Self-announcing, and it carries its obligations inline |
+| **band** | a named subset of **one disposition's** values, classifying a **record by its condition** |
+
+**Why `crossing` and `declaration` are worth two words.** A crossing has no
+moment — the value changes because something else did, and no actor was present
+to owe anything. **A session ended that way at Revision 313**: every owned dossier
+reached a terminal standing, `state` derived `closed`, and no latch was set and no
+final summary written, because nothing had to happen. A declaration is an act, and
+an act is where an obligation can attach.
+
+### 0.1 The bands
+
+Named in `plan_findings_work.py`, so a rule, a check and a document can refer to
+the same subset by the same word.
+
+| Band | Of | Values |
+|---|---|---|
+| `INERT` | `status` § 3 | `resolved` · `withdrawn` |
+| `TERMINAL` | `standing` § 4 | `answered` · `retired` · `superseded` |
+| `ASSIGNABLE` | `state` § 6 | `available` · `active` |
+
+**`un-started` is not inert.** `INERT` means *no work remains here*; `un-started`
+means *all of it does*. Including it would price six dossiers at zero in `cost()`
+and drop 31 of 116 open members from the allocator's count.
+
+**`terminal`, not `terminated`.** The band names a condition a record is in, not
+something performed on it — a dossier reaches `answered` because its members did.
+
+**One band exists and does not carry the word:** `RE_READING` = `un-started` ·
+`framing`, a band of `status` meaning *no judgement has been recorded for this
+member yet* — the exact complement of `INERT`. It is the clone exemption's set.
+**Proposed name `UNJUDGED`**, not yet decided.
+
+### 0.2 Two subsets that are not bands
+
+**`HARD`** is a subset of **edge kind** § 8, and an edge kind is not a
+disposition. It is a *subset* — the general construct of which a band is one case.
+
+**`DECLARABLE`** = `handoff` · `dissolved` · `closed` **is** a subset of `state`'s
+values, so the definition above admits it on shape. It is not a band, because it
+classifies **a write by who may make it** rather than a record by its condition.
+What a session may declare, and what each declaration owes first, is
+`instructions §5`; § 6 below carries which values are declarable and which are
+derived.
+
+[&#8593; Contents](#contents)
 
 ## 1. The rule that governs all of it
 
@@ -184,12 +244,21 @@ bundle is **readable by any session and writable by none**, including its owner.
 |---|---|---|
 | `available` | Created, owning no bundle yet | `metadata.md` |
 | `active` | Owns at least one bundle that is not finished | `manifest.md` |
-| `handoff` | Passed its qualifying bundles to a successor. **Declared** | `handoff-<stamp>.md` |
-| `closed` | Every bundle it owns is terminal or released | `final-summary.md` |
-| `dissolved` | Every bundle it owns is `withdrawn` | `final-summary.md` |
+| `handoff` | Passed its qualifying bundles to a named successor. **Declared only** | `handoff-<stamp>.md` |
+| `closed` | Every bundle it owns is terminal or released. **Derived or declared** | `final-summary.md` |
+| `dissolved` | Shut down, no further work ever; every bundle it owns stands `retired`. **Declared only** | `final-summary.md` |
 
-`handoff` is the only state a session declares; the rest follow from what it
-owns.
+**Declarable: `handoff` · `dissolved` · `closed`. Derivable: `available` ·
+`active` · `closed`.** `session_state()` **raises** on a declared `available` or
+`active` — declaring one would store a derivable value and force assignability
+regardless of what is owned. **`closed` is in both sets deliberately**: the owner
+may close a session with work outstanding, and no derivation produces that.
+**No derivation returns `dissolved`** — it is declared or it does not occur.
+
+**This paragraph read *`handoff` is the only state a session declares* until
+Revision 315**, which was one of four disagreeing answers across four documents;
+the one that ran accepted all five. `instructions §5` carries the precondition
+each declaration must meet before it is written.
 
 **`dissolved` and not `withdrawn`.** A session's terminal shutdown and a member's
 carry the same idea and may not carry the same word. The member sense stayed

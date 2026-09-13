@@ -679,9 +679,14 @@ the refusal as a bug.
   records what that session was told, and **editing it is what supersession spends
   three prohibitions preventing.**
 - **How a session begins and exactly what transfers at a handoff is
-  [lifecycles.md § 4](lifecycles.md#4-the-session-lifecycle).** A session that hands
-  off declares it; every other state follows from what it owns. **Terminal shutdown
-  is `dissolved`.**
+  [lifecycles.md § 4](lifecycles.md#4-the-session-lifecycle).** **Three states may
+  be declared — `handoff`, `dissolved`, `closed`** — and `available` and `active`
+  are derived only; `session_state()` raises on a declaration of either.
+  **Terminal shutdown is `dissolved`, and it is declared or it does not occur** —
+  no derivation returns it. What each declaration owes before it is written is
+  `instructions §5`. **This line implied that only a handoff is declared until
+  Revision 315**, which is `0039` F6 in one sentence: state names and state
+  requirements live in different files, and the files disagreed.
 
 [&#8593; Contents](#contents)
 

@@ -150,11 +150,23 @@ so a bare value says which layer it came from.
 | 2 | `retired` | every member is `withdrawn` |
 | 3 | `answered` | every member is inert, and at least one is `resolved` |
 | 4 | `revisited` | at least one member is `reopened`, and every other is inert |
-| 5 | `analyzing` | anything else |
+| 5 | `analyzing` | anything else — **positively: a `framing` or `decided` member, or an `un-started` member beside one that is not** |
 
 **Row 5 is the fallthrough, and that is the hazard:** a derivation bug lands in
-`analyzing` looking plausible, because `analyzing` asserts nothing. Order makes
-the answer single-valued — rows 2 and 3 both match an all-`withdrawn` bundle, and
+`analyzing` looking plausible, because a fallthrough asserts nothing.
+
+**So the positive statement is given beside it, and both are kept.** `analyzing`
+holds exactly when there is a `framing` or `decided` member, or an `un-started`
+member beside one that is not — **enumerated over the whole domain**, since
+`derivation_table` reads only set membership and a six-value vocabulary has 63
+non-empty presence sets: **48 combinations by the first clause, 7 by the second,
+zero counterexamples.** The residual form stays because it is what the code does
+and this table renders the code in order; the positive form stays because it is
+the only one a reader can check. **The first characterisation attempted was *a
+live member, and nothing else* — plausible, tidy, and wrong on seven
+combinations**, caught by enumerating the domain rather than reasoning about it.
+
+Order makes the answer single-valued — rows 2 and 3 both match an all-`withdrawn` bundle, and
 `retired` wins because nothing in such a bundle was carried through.
 
 **Measured: `analyzing` 18, `answered` 20, `untouched` 16, `revisited` 0,
@@ -224,15 +236,35 @@ the eight arrows in [§2](#2-the-member-lifecycle) is performed by hand.
 
 ## 4. The session lifecycle
 
-**Five states. One is declared; the rest follow from what the session owns.**
+**Five states. Three may be declared; two are derived only; `closed` is both.**
 
 ```text
-                                    ┌──▶ handoff   declared — the session
-                                    │              says it handed on
-  available ───▶ active ────────────┤
-  owns nothing   owns at least one  └──▶ closed    every owned bundle is
-                 non-terminal bundle                terminal, or released
+                                    ┌──▶ handoff    DECLARED ONLY — the session
+                                    │               says it handed on
+  available ───▶ active ────────────┼──▶ closed     DECLARED or DERIVED — every
+  owns nothing   owns at least one  │               owned dossier terminal, or
+                 non-terminal       │               released, or the owner says so
+                 dossier            └──▶ dissolved  DECLARED ONLY — shut down, no
+                                                    further work ever
+  ▲                ▲
+  └── derived only ┘   `available` and `active` follow from what is owned and
+                       may never be declared
 ```
+
+**Declarable: `handoff` · `dissolved` · `closed`. Derivable: `available` ·
+`active` · `closed`.** Since Revision 313 `session_state()` **raises** on a
+declared `available` or `active` rather than passing it through: declaring one
+would store a derivable value, force assignability regardless of the dossiers,
+and `stamp` would then copy it into `state` as though it had been derived.
+**`closed` is in both sets deliberately** — the owner may close a session with
+work outstanding, and no derivation produces that.
+
+**This paragraph said *one is declared* until Revision 315**, which was true of
+the diagram and of nothing else: `dissolved` was absent from it entirely,
+`procedure.md` implied two, the old assignability filter named three, and
+`session_state()` accepted all five. **Four documents, four answers** — and the
+one that ran was the most permissive. `.github/session-management-instructions.md`
+§5 carries the preconditions each declaration must meet before it is written.
 
 `session_state(g, s)` reads in this order:
 
@@ -252,9 +284,12 @@ member write can close a session without anyone touching it.
 what a session holds: one that passed everything on and one that never held
 anything look identical from outside.
 
-**Measured: 11 sessions — 4 `closed`, 3 `active`, 3 `handoff`, 1 `available`.**
-All three `handoff` values are declared; the other eight carry a null
-`declaredState`. `typed-bundles-architecture` carries both a `handoff`
+**Measured 2026-09-13: 12 sessions — 5 `closed`, 3 `active`, 3 `handoff`, 1
+`available`.** All three `handoff` values are declared; the other nine carry a
+null `declaredState`, **including a session that closed by crossing** — every
+owned dossier terminal, no latch set, no declaration made. It read `closed` and
+stayed in the assignment pool until Revision 313, because the filter tested two
+of the five inputs above. `typed-bundles-architecture` carries both a `handoff`
 declaration and an `ended.on` of 2026-09-09 and reads `handoff` — row 1 beating
 row 2, the order working.
 
@@ -447,8 +482,16 @@ The cause was two derivation functions with one job and two vocabularies:
 `derive_progress` in `extract-metadata.py` returned `un-started`, `withdrawn`,
 `resolved`, `reopened`, `analyzing` — **member statuses used as bundle
 progress**, the collision Revision 233 separated. **Revision 299 retired that
-file, so the defective copy is gone and one derivation remains.** The identical guard in
-that file is live; this one is dead. Same two words, opposite behaviour.
+file, so the defective copy is gone and one derivation remains.** The identical
+guard in that file was **reachable**; this one is **unreachable**. Same two words,
+opposite behaviour.
+
+**Said *live* and *dead* until Revision 315.** `live` already means *not inert* —
+a live member is one that is neither `resolved` nor `withdrawn`, and the phrase
+*live findings inside unclaimed bundles* is a counted class. A code path that
+executes is a third thing, and the rule this file states first is that no word
+belongs to two vocabularies. **`reachable` and `unreachable` for code; `live`
+stays with members.**
 
 ### The honest state of this file
 

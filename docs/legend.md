@@ -266,6 +266,19 @@ derivation table as overrides because there was nowhere else to put them.
 | 4 | `revisited` | at least one finding is `reopened`, and every other finding is **inert** — `resolved` or `withdrawn` |
 | 5 | `analyzing` | any other combination |
 
+**Row 5 says what it is, as well as what it is not.** `analyzing` holds exactly
+when there is a **`framing` or `decided` finding**, or an **`un-started` finding
+beside one that is not**. Enumerated over the whole domain — a six-value
+vocabulary has 63 non-empty presence sets, and `derivation_table` reads only set
+membership — **48 combinations by the first clause, 7 by the second, zero
+counterexamples.**
+
+**Both statements are kept, and the residual one is the implementation.** The
+code is a fall-through and this table renders it in order; saying only *any other
+combination* asserts nothing, so a derivation bug lands there and looks entirely
+plausible. Saying only the positive form would claim the code tests a condition
+it does not test. **The first characterisation attempted was *a live finding, and
+nothing else* — plausible, tidy, and wrong on seven combinations.**
 **`standing` — `progress` with ownership and lineage put back in:**
 
 | If | Then `standing` is |
@@ -490,6 +503,48 @@ because it is never silent, and a reader can always tell a change that followed
 from a finding from one the owner simply directed. An override that goes
 unrecorded is indistinguishable from a rule nobody agreed to.
 
+## Dispositions, transitions, and bands
+
+**A disposition is the class of the three.** A member has a `status`, a dossier
+has a `standing` and a `progress`, a session has a `state`. Named because rules,
+checks and documents kept needing a word for *the thing that moves* and had none.
+
+| Term | Means |
+|---|---|
+| **disposition** | the class — `status` · `standing` · `progress` · `state` |
+| **transition** | any change in a disposition |
+| **crossing** | a transition a **derivation** produced. **Silent** — nothing announces it, so it must be detected |
+| **declaration** | a transition an **actor** produced. **Self-announcing**, and it carries its obligations inline |
+| **band** | a named subset of **one disposition's** values that classifies a **record by its condition** |
+
+**A crossing is why a session can end without saying so.** One did: every owned
+dossier reached a terminal standing, which derived `state: closed`, and no latch
+was set and no final summary written, because nothing had to happen for the state
+to change. **A declaration cannot do that** — it is an act, and the act is where
+the obligation attaches.
+
+**The bands, and they are named in code.**
+
+| Band | Of | Values |
+|---|---|---|
+| `INERT` | `status` | `resolved` · `withdrawn` |
+| `TERMINAL` | `standing` | `answered` · `retired` · `superseded` |
+| `ASSIGNABLE` | `state` | `available` · `active` |
+
+**`un-started` is not inert.** `INERT` means *no work remains here* and
+`un-started` means *all of it does*. Including it would price six dossiers at zero
+in `cost()` and drop 31 of 116 open members from the allocator's count — silencing
+exactly the rows the drift findings exist for.
+
+**`terminal`, never `terminated`.** The band names a condition a record is in, not
+something done to it; a dossier reaches `answered` because its members did.
+
+**Two things that look like bands and are not.** `HARD` is a subset of **edge
+kind**, which is not a disposition — it is a subset, the general construct of
+which a band is one case. `DECLARABLE` is a subset of `state`'s values, but it
+classifies **a write by who may make it** rather than a record by its condition;
+what a session may declare is `instructions §5`.
+
 ## Session states
 
 **`dissolved`, not `withdrawn`.** A session ends shut down, no further work ever
@@ -510,10 +565,16 @@ from the findings bundles it owns.
 |---|---|---|
 | `available` | Created or cloned, owning no findings bundle yet. | `metadata.md` |
 | `active` | Owns at least one bundle that is not `resolved` or `withdrawn`. | `findings-manifest.md` |
-| `handoff` | It has passed its qualifying bundles to a successor. No longer working. | `handoff-<stamp>.md`, one per handover |
-| `closed` | Every bundle it owns is terminal — `resolved`, `superseded` or `withdrawn` — and any that is not has been released to `unclaimed`. | `final-summary.md` |
-| `dissolved` | Every bundle it owns is `withdrawn`. | `final-summary.md` |
+| `handoff` | **Declared only.** It has passed its qualifying bundles to a named successor. No longer working. | `handoff-<stamp>.md`, one per handover |
+| `closed` | **Derived or declared.** Every bundle it owns has a terminal standing — `answered`, `retired` or `superseded` — and any that does not has been released to `unclaimed`. The owner may also declare it with work outstanding. | `final-summary.md` |
+| `dissolved` | **Declared only.** Shut down, no further work ever. Every bundle it owns stands `retired` — every member `withdrawn`. **No derivation returns this**; it is declared or it does not occur. | `final-summary.md` |
 
+**`available` and `active` are derived only** and may not be declared;
+`session_state()` raises on either. **The `closed` row said *`resolved`,
+`superseded` or `withdrawn`* until Revision 315** — two member statuses and one
+dossier standing in a list of dossier standings, which is the collision Revision
+233 separated. **The `dissolved` row was phrased as a derivation** and no
+derivation produces it.
 ```text
 available ──▶ active ──┬─▶ closed       every bundle resolved
                        ├─▶ handoff      bundles carried to a successor
