@@ -4,7 +4,7 @@
 
 | From | Until | Assistant | Session id | Model | Environment |
 |---|---|---|---|---|---|
-| 2026-09-09 | — | Claude | `session_01LSgzo7EtPPVJ1gG8s4NVNW` | `claude-opus-5` | Linux VM on the owner's Mac, aarch64, Bash 5.1.16, GNU coreutils 8.32, Python 3.10.12 |
+| 2026-09-09 | 2026-09-13 | Claude | `session_01LSgzo7EtPPVJ1gG8s4NVNW` | `claude-opus-5` | Linux VM on the owner's Mac, aarch64, Bash 5.1.16, GNU coreutils 8.32, Python 3.10.12 |
 
 **Filled on this session's first write**, which is `0037` F8. **`claude-opus-5` is
 the model this session was configured for**, which is what the field asks; the
@@ -65,6 +65,19 @@ Nothing here was assigned. All four arrived by **transfer**.
 | [`0045`](../../session-management-findings/0045-a-session-whose-output-is-not-a-bundle-has-no-state/) | in | `typed-bundles-architecture-20260908-204724` | 2026-09-09 | 261 |
 | [`0048`](../../session-management-findings/0048-the-session-capacity-limit-has-no-datum/) | in | `typed-bundles-architecture-20260908-204724` | 2026-09-09 | 261 |
 | [`0043`](../../session-management-findings/0043-framework-state-lives-in-documents-not-data/) | in | `session-management-re-evaluation-20260906-110105` | 2026-09-09 | — |
+
+| [`0039`](../../session-management-findings/0039-the-instruction-set-lags-the-rules-it-governs/) | out | released to `unclaimed`, no successor | 2026-09-13 | 316 |
+| [`0043`](../../session-management-findings/0043-framework-state-lives-in-documents-not-data/) | out | released to `unclaimed`, no successor | 2026-09-13 | 316 |
+| [`0045`](../../session-management-findings/0045-a-session-whose-output-is-not-a-bundle-has-no-state/) | out | released to `unclaimed`, no successor | 2026-09-13 | 316 |
+| [`0048`](../../session-management-findings/0048-the-session-capacity-limit-has-no-datum/) | out | released to `unclaimed`, no successor | 2026-09-13 | 316 |
+
+**A release is not a transfer and is recorded here anyway.** A transfer names a
+target and this file is authoritative for who held what and when; a release names
+none, so the outgoing half is the only half there is — which is exactly why §10a
+step 4 requires the disposal to be written somewhere the history survives.
+`0048` is the one to read twice: it arrived by transfer on 2026-09-09, `progress`
+never left `untouched`, so **this session never wrote to it as owner and the
+transfer never cleared.** It is released from the state it arrived in.
 
 A transfer is a change of ownership and this file is authoritative for who held
 what and when, which is why it is recorded on both sides. **`0043`'s revision is

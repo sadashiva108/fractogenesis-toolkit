@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-09T07:30:00-04:00",
+  "updatedAt": "2026-09-13",
   "bundleName": "entity-model-and-vocabulary-20260909-053548",
   "createdOn": "2026-09-09",
   "owners": [
     {
       "from": "2026-09-09",
-      "until": null,
+      "until": "2026-09-13",
       "assistant": "Claude",
       "sessionId": "session_01LSgzo7EtPPVJ1gG8s4NVNW",
       "model": "claude-opus-5",
@@ -49,41 +49,87 @@
       "path": "docs/session-management-findings/0037-findings-architecture-conformance/",
       "assignedOn": "2026-09-09",
       "notes": "Transferred in from typed-bundles-architecture-20260908-204724 at Revision 261. Not an assignment. Arrived with all seven findings `resolved` and one reading owed: the legend never says a finding may record a fact established rather than a defect."
-    },
-    {
-      "number": "0039",
-      "path": "docs/session-management-findings/0039-the-instruction-set-lags-the-rules-it-governs/",
-      "assignedOn": "2026-09-09",
-      "notes": "Transferred in at Revision 261, its second transfer. It reached typed-bundles-architecture-20260908-204724 from session-management-re-evaluation-20260906-110105 at Revision 248. D23 is decided and deliberately not carried out."
-    },
-    {
-      "number": "0045",
-      "path": "docs/session-management-findings/0045-a-session-whose-output-is-not-a-bundle-has-no-state/",
-      "assignedOn": "2026-09-09",
-      "notes": "Transferred in at Revision 261. This session bundle is F1's second live instance: created before its session, it derives `active` on day zero over four bundles nobody has opened."
-    },
-    {
-      "number": "0048",
-      "path": "docs/session-management-findings/0048-the-session-capacity-limit-has-no-datum/",
-      "assignedOn": "2026-09-09",
-      "notes": "Transferred in at Revision 261. Untouched; every finding is `un-started`."
-    },
-    {
-      "number": "0043",
-      "path": "docs/session-management-findings/0043-framework-state-lives-in-documents-not-data/",
-      "assignedOn": "2026-09-09",
-      "notes": "Transferred in at the owner's direction from session-management-re-evaluation-20260906-110105, which stands handoff with no successor and could not close the deciding on it. Deliberately open and stays so: transfer moves who may decide, not who may read or record."
     }
   ],
   "contributions": [],
-  "declaredState": null,
+  "declaredState": "closed",
   "indexNotes": "**The entity-model session, and the critical path.** `0039` D23 and the relocation proposed in `docs/ideas/the-collection-and-the-project.md` are both parked behind its vocabulary and entity work, on the owner's ordering: vocabulary and entities, then structure, then D23, then build.",
   "ended": {
-    "on": null,
-    "reason": null,
-    "revisions": [],
-    "commits": [],
-    "disposals": []
+    "on": "2026-09-13",
+    "reason": "Closed at the owner's direction after the architecture review, the current-state census and the design strategy were recorded in docs/ideas/big-picture.md, and after the handover from drift-and-the-write-boundary-20260909-053548 was carried out. Four bundles this session had not answered were released to unclaimed rather than held.",
+    "revisions": [
+      269,
+      271,
+      273,
+      274,
+      275,
+      279,
+      285,
+      287,
+      290,
+      293,
+      296,
+      301,
+      303,
+      314,
+      315
+    ],
+    "commits": [
+      "cfd78ff",
+      "636eba0",
+      "412107b",
+      "3cb12c9",
+      "b82359e",
+      "889b8ac",
+      "777f468",
+      "eb8b6de",
+      "c9f586b",
+      "853179d",
+      "2b079c9",
+      "a91b451",
+      "ccef065",
+      "d9f70d2"
+    ],
+    "disposals": [
+      {
+        "number": "0037",
+        "disposition": "answered",
+        "on": "2026-09-11",
+        "note": "Closed at Revision 301; F8 and F9 resolved and stamp derived answered. Retained by this session."
+      },
+      {
+        "number": "0039",
+        "disposition": "released",
+        "on": "2026-09-13",
+        "standingAtRelease": "analyzing",
+        "openMembers": 20,
+        "note": "Released to unclaimed, no successor named. D23 decided and deliberately not carried out; F6 and F21 live and never decided."
+      },
+      {
+        "number": "0043",
+        "disposition": "released",
+        "on": "2026-09-13",
+        "standingAtRelease": "analyzing",
+        "openMembers": 11,
+        "note": "Released to unclaimed, no successor named. F14 resolved at Revision 303; section 11.3, who may assert an edge, is unresolved and gates the edge work. Still named in session-management-re-evaluation-20260906-110105 ownedBundles, whose own manifest records the transfer away."
+      },
+      {
+        "number": "0045",
+        "disposition": "released",
+        "on": "2026-09-13",
+        "standingAtRelease": "analyzing",
+        "openMembers": 5,
+        "note": "Released to unclaimed, no successor named. Never opened; all five members live."
+      },
+      {
+        "number": "0048",
+        "disposition": "released",
+        "on": "2026-09-13",
+        "standingAtRelease": "transferred",
+        "openMembers": 3,
+        "note": "Released to unclaimed, no successor named. Transferred in 2026-09-09 and never taken up: progress still reads untouched, so this session never wrote to it as owner and the transfer never cleared."
+      }
+    ]
   },
-  "state": "active"
+  "state": "closed"
 }
