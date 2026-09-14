@@ -53,6 +53,12 @@
 #   # Point at a specific pre-image audit run instead of the latest.
 #   ./bin/restore-repos.sh --input-run pre-image-YYYYMMDD-HHMMSS
 #
+#   # Add one repository to the plan, moving it off the excluded list if it
+#   # is on one. Then review, then clone just that one.
+#   ./bin/restore-repos.sh select-repo my-service
+#   ./bin/restore-repos.sh
+#   ./bin/restore-repos.sh --hydrate --stage clone --repo my-service
+#
 #   # Seed the durable clone plan into $REIMAGE_WORKSPACE_ROOT/repo-plan/.
 #   # Existing files are kept; --force overwrites them.
 #   ./bin/restore-repos.sh init-repo-plan-config
@@ -70,6 +76,19 @@
 #                          that is already there is kept, because it holds your
 #                          answers; --force overwrites. The workspace copy is
 #                          what a run reads, and it survives the reimage.
+#   select-repo NAME       Add one repository to the workspace plan and exit.
+#                          Writes the entry this run would have proposed --
+#                          same remote, same host routing, same destination --
+#                          so the plan and the report cannot disagree about it.
+#                          A repository on the excluded list is moved: the
+#                          exclusion is removed in the same write that adds the
+#                          selection, and its reason is carried onto the new
+#                          entry, because half a move leaves the plan failing
+#                          `both selected and excluded` and a plan that does
+#                          not load is a phase that cannot report. Already
+#                          selected is a no-op, not a second entry. Composes
+#                          with --path, --remote and --dry-run; refused with
+#                          every option that belongs to a run.
 #
 # Options:
 #   --artifact-root PATH   Override REIMAGE_ARTIFACT_ROOT from shared config.
@@ -112,6 +131,12 @@
 #                          one entry per repository, routed the way this run
 #                          routed it. It is a proposal, not the plan — the
 #                          workspace copy is never written by a run.
+#   --path DIR             With select-repo only: the entry's LOCAL_REPO_PATH,
+#                          instead of the routed default. Use it when the
+#                          repository is already cloned somewhere else.
+#   --remote NAME          With select-repo only: the entry's REMOTE_NAME,
+#                          instead of origin or the only remote recorded. Must
+#                          be a remote the audit carries for that repository.
 #   --force                With init-repo-plan-config only: overwrite plan
 #                          fragments that already exist in the workspace.
 #   --open                 Reveal the generated report in Finder on completion.
@@ -218,6 +243,10 @@ OPEN_RESULT=false
 INIT_PLAN_CONFIG=false
 FORCE_INIT=false
 EMIT_PLAN=false
+SELECT_REPO_CMD=false
+SELECT_REPO_NAME=""
+SELECT_REPO_PATH=""
+SELECT_REPO_REMOTE=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -232,6 +261,22 @@ while [[ $# -gt 0 ]]; do
     --emit-plan)
       EMIT_PLAN=true
       shift
+      ;;
+    select-repo)
+      SELECT_REPO_CMD=true
+      require_option_value "$1" "${2:-}"
+      SELECT_REPO_NAME="$2"
+      shift 2
+      ;;
+    --path)
+      require_option_value "$1" "${2:-}"
+      SELECT_REPO_PATH="$2"
+      shift 2
+      ;;
+    --remote)
+      require_option_value "$1" "${2:-}"
+      SELECT_REPO_REMOTE="$2"
+      shift 2
       ;;
     --artifact-root)
       require_option_value "$1" "${2:-}"
@@ -297,6 +342,24 @@ fi
 if [[ "$DRY_RUN" == true && "$EMIT_PLAN" == true ]]; then
   echo "ERROR: --dry-run writes nothing, and --emit-plan exists to write a file." >&2
   echo "Run --emit-plan on its own; it never touches the workspace plan." >&2
+  exit 2
+fi
+
+# select-repo writes the plan and exits; it never produces a run. An option that
+# only means something to a run is refused rather than ignored, for the reason
+# the two refusals above exist -- a flag that appears to have been honoured and
+# was not is the failure this phase keeps meeting.
+if [[ "$SELECT_REPO_CMD" == true ]]; then
+  if [[ "$HYDRATE" == true || -n "$STAGES" || -n "$REPO_FILTER" \
+        || "$EMIT_PLAN" == true || -n "$OUTPUT_DIR" || "$OPEN_RESULT" == true \
+        || "$INIT_PLAN_CONFIG" == true ]]; then
+    echo "ERROR: select-repo writes the plan and exits; it does not produce a run." >&2
+    echo "Run it on its own, then rerun the script to see the report." >&2
+    exit 2
+  fi
+elif [[ -n "$SELECT_REPO_PATH" || -n "$SELECT_REPO_REMOTE" ]]; then
+  echo "ERROR: --path and --remote describe the entry select-repo writes, and nothing else." >&2
+  usage >&2
   exit 2
 fi
 
@@ -454,96 +517,15 @@ fi
 
 STAGED_LIVE="$REIMAGE_ARTIFACT_ROOT/staged-ignored-files/live"
 
-# A default-located run is staged and indexed through the shared run index; an
-# --output run is not, because it lives outside runs/ and the index resolves
-# relative to the category root. `post-image-restore` is its own lineage, so
-# advancing it never disturbs `official/pre-image.txt`.
-OUTPUT_DIR_DEFAULTED=false
-DRY_RUN_TMP=""
-if [[ "$DRY_RUN" == true ]]; then
-  # The report is still composed, because a dry run whose output you cannot read
-  # tells you nothing. It is composed somewhere the operator's evidence is not:
-  # no run is staged, so no run id is consumed and no pointer moves.
-  DRY_RUN_TMP="$(mktemp -d "${TMPDIR:-/tmp}/restore-repos-dryrun.XXXXXX")" || {
-    echo "ERROR: could not create a scratch directory for --dry-run." >&2
-    exit 2
-  }
-  trap 'rm -rf "$DRY_RUN_TMP"' EXIT
-  OUTPUT_DIR="$DRY_RUN_TMP"
-elif [[ -z "$OUTPUT_DIR" ]]; then
-  if ! artifact_run_begin "$AUDIT_ROOT" "post-image-restore"; then
-    echo "ERROR: could not stage a run under: $AUDIT_ROOT" >&2
-    exit 2
-  fi
-  OUTPUT_DIR="$ARTIFACT_RUN_DIR"
-  # The run id owns the stamp from here on, so the sign-off and the run name
-  # cannot drift apart by a second.
-  STAMP="${ARTIFACT_RUN_ID#post-image-restore-}"
-  OUTPUT_DIR_DEFAULTED=true
-fi
-
-# Resolve before the checkout guard below: a relative --output would otherwise
-# slip past a prefix comparison against the absolute REPO_ROOT.
-OUTPUT_DIR="$(absolute_path "$OUTPUT_DIR")"
-
-# Safety invariant: refuse to write generated output under the repo checkout.
-if [[ -n "${REPO_ROOT:-}" && ( "$OUTPUT_DIR" == "$REPO_ROOT" || "$OUTPUT_DIR" == "$REPO_ROOT"/* ) ]]; then
-  echo "ERROR: refusing to write output under the repo checkout: $OUTPUT_DIR" >&2
-  exit 2
-fi
-
-OUT="$OUTPUT_DIR"
-RAW_DIR="$OUT/raw"
-mkdir -p "$RAW_DIR"
-
-# The sign-off is named for this run, which is what lets a carried answer say
-# which run it was answered against. It sits outside runs/ rather than inside
-# one, because a run directory is replaced and an answered row must not be.
-#
-# It lives under reimaged-system/ rather than beside the category it reports on.
-# Phase 11B is a post-image phase, and every post-image answered row is in
-# reimaged-system/sign-offs/ -- the bookend recorders', the first-boot bundles',
-# the Phase 12 plan-notes'. repo-audit-reports/ is shared with the PRE-image
-# audit, so a sign-off there would be the one post-image answer a reader has to
-# know to look for somewhere else.
-#
-# A dry run does not open one. A sign-off carries answers forward across runs,
-# so one opened by a rehearsal would ask the operator to answer for work that
-# did not happen.
-SIGNOFF_ROOT="$REIMAGE_ARTIFACT_ROOT/reimaged-system/sign-offs"
-if [[ "$DRY_RUN" != true ]]; then
-  if ! signoff_begin "$SIGNOFF_ROOT" "post-image-restore" "post-image-restore-$STAMP"; then
-    echo "ERROR: cannot open a sign-off under: $SIGNOFF_ROOT" >&2
-    exit 2
-  fi
-fi
-
-# Preserve the pre-image inputs alongside the report for provenance.
-cp -p "$REPOS_TSV" "$RAW_DIR/repos-input.tsv" 2>/dev/null || true
-[[ -f "$COMMITS_TSV" ]] && cp -p "$COMMITS_TSV" "$RAW_DIR/local-only-commits-input.tsv" 2>/dev/null || true
-[[ -f "$STASHES_TSV" ]] && cp -p "$STASHES_TSV" "$RAW_DIR/stashes-input.tsv" 2>/dev/null || true
-[[ -f "$TRACKED_TSV" ]] && cp -p "$TRACKED_TSV" "$RAW_DIR/tracked-changes-input.tsv" 2>/dev/null || true
-
-STATUS_TSV="$RAW_DIR/status.tsv"
-REPORT_MD="$OUT/restore-status.md"
-
-printf "repo_path\tlabel\tpath_present\tremote_url\tclone_host\tclone_target_root\tignored_files_available\tignored_files_applied\tcarry_forward_rows\n" > "$STATUS_TSV"
-
 # ---------------------------------------------------------------------------
-# Proposal staging
+# Everything a run and `select-repo` share, resolved before either acts
 #
-# A proposal is written into the RUN, never into the workspace. The workspace
-# copy holds the operator's answers; a run that could overwrite it would make
-# every answer provisional.
+# The routing helpers, the plan, the audit's labels and select-repo itself sit
+# here -- ahead of run staging -- because select-repo needs all four and must
+# not stage a run to get them. It writes the plan and exits; a run id consumed
+# and a bundle left behind by a command that produced no report is evidence of
+# something that never happened.
 # ---------------------------------------------------------------------------
-PROPOSED_DIR="$OUT/plan-proposed"
-PROPOSED_SELECTED="$PROPOSED_DIR/.selected.body"
-PROPOSED_EXCLUDED="$PROPOSED_DIR/.excluded.body"
-if [[ "$EMIT_PLAN" == true ]]; then
-  mkdir -p "$PROPOSED_DIR"
-  : > "$PROPOSED_SELECTED"
-  : > "$PROPOSED_EXCLUDED"
-fi
 
 # ---------------------------------------------------------------------------
 # Per-repo classification
@@ -782,78 +764,40 @@ emit_extra_remotes() {
 }
 
 # ---------------------------------------------------------------------------
-# Iterate repos.tsv and build the per-repo status report
-# ---------------------------------------------------------------------------
-TOTAL=0
-PRESENT_COUNT=0
-NEEDS_CLONE_COUNT=0
-IGN_AVAILABLE_COUNT=0
-IGN_APPLIED_COUNT=0
-CARRY_FORWARD_TOTAL=0
-# Carry-forward split by whether this run is restoring the repository, and by
-# kind. The lump sum answers no question a person can act on: an unpushed commit
-# needs a rescue branch, an uncommitted tracked change was never going to have
-# one, and neither matters at all for a repository the plan excluded.
-CARRY_FORWARD_PLANNED=0
-CARRY_FORWARD_COMMITS=0
-CARRY_FORWARD_STASHES=0
-CARRY_FORWARD_TRACKED=0
-CARRY_FORWARD_PLANNED_REPOS=0
-
-# ---------------------------------------------------------------------------
-# Duplicate-basename guard
+# The audit's labels, and --repo: which repositories this run acts on
 #
-# Staged bundles are keyed by `basename "$repo_path"`. Two repos sharing a
-# basename across the work and personal roots collapse to one
-# staged-ignored-files/live/<label>/ and one repos-gitignored/<label>/, and the
-# emitted commands would rsync that single bundle into BOTH working trees --
-# which can put work credentials into a repo that gets pushed publicly.
-# Detect it up front and name the offenders rather than failing quietly.
-# ---------------------------------------------------------------------------
-DUPLICATE_LABELS="$(
-  tail -n +2 "$REPOS_TSV" | cut -f1 | while IFS= read -r rp; do
-    [[ -n "$rp" ]] && basename "$rp"
-  done | sort | uniq -d
-)"
-DUPLICATE_LABEL_COUNT=0
-if [[ -n "$DUPLICATE_LABELS" ]]; then
-  DUPLICATE_LABEL_COUNT="$(printf '%s\n' "$DUPLICATE_LABELS" | grep -c .)"
-  echo "" >&2
-  echo "WARNING: $DUPLICATE_LABEL_COUNT repo basename(s) appear more than once." >&2
-  echo "Staged bundles are keyed by basename, so these share one bundle:" >&2
-  printf '%s\n' "$DUPLICATE_LABELS" | sed 's/^/  - /' >&2
-  echo "Reconcile these by hand before hydrating: one bundle cannot serve two." >&2
-  echo "" >&2
-fi
-
-# ---------------------------------------------------------------------------
-# --repo: which repositories this run acts on
-#
-# The twin of --stage. --stage narrows the run to one kind of work; --repo
-# narrows it to one repository, so "put this repo's ignored files back" is one
-# command rather than a full pass that walks every other clone on the way.
+# --repo is the twin of --stage. --stage narrows the run to one kind of work;
+# --repo narrows it to one repository, so "put this repo's ignored files back"
+# is one command rather than a full pass that walks every other clone on the
+# way.
 #
 # Validated against the audit up front. A typo'd name would otherwise match
 # nothing and produce a run that hydrated nothing, reported no error, and read
 # exactly like a run that found nothing to do -- which is the failure this
-# phase keeps meeting.
+# phase keeps meeting. select-repo validates the same way, through the same
+# two functions: one reader of the audit, not two that can drift.
 # ---------------------------------------------------------------------------
+audit_labels() {
+  tail -n +2 "$REPOS_TSV" | cut -f1 | while IFS= read -r rp; do
+    [[ -n "$rp" ]] && basename "$rp"
+  done | LC_ALL=C sort -u
+}
+
+audit_carries_label() {
+  audit_labels | grep -qxF -- "$1"
+}
+
 REPO_SCOPE_LABEL="all"
 if [[ -n "$REPO_FILTER" ]]; then
-  AUDIT_LABELS="$(
-    tail -n +2 "$REPOS_TSV" | cut -f1 | while IFS= read -r rp; do
-      [[ -n "$rp" ]] && basename "$rp"
-    done | LC_ALL=C sort -u
-  )"
   while IFS= read -r repo_want; do
     [[ -n "$repo_want" ]] || continue
-    if ! printf '%s\n' "$AUDIT_LABELS" | grep -qxF -- "$repo_want"; then
+    if ! audit_carries_label "$repo_want"; then
       echo "ERROR: --repo names a repository the pre-image audit does not carry: $repo_want" >&2
       case "$repo_want" in
         */*) echo "A repository is named by its label -- the basename of its path, not the path." >&2 ;;
       esac
       echo "Repositories in $INPUT_RUN:" >&2
-      printf '%s\n' "$AUDIT_LABELS" | sed 's/^/  - /' >&2
+      audit_labels | sed 's/^/  - /' >&2
       exit 2
     fi
   done <<< "$REPO_FILTER"
@@ -900,6 +844,424 @@ while [[ "$plan_w" -lt "${#REPO_PLAN_WARNINGS[@]}" ]]; do
   echo "WARNING: ${REPO_PLAN_WARNINGS[$plan_w]}" >&2
   plan_w=$((plan_w + 1))
 done
+
+# ---------------------------------------------------------------------------
+# select-repo
+#
+# Adds one repository to the workspace plan and exits. It does the whole move
+# rather than half of it: a repository on the excluded list is taken off it in
+# the same write that puts it on the selected one. Half a move leaves the plan
+# failing repo_plan_validate's `both selected and excluded` check, and a plan
+# that does not load is a phase that cannot report.
+#
+# The entry it writes is the entry this run would have proposed -- same remote
+# resolution, same host routing, same destination -- because the plan deciding
+# one thing and the report describing another is the disagreement this phase
+# exists to prevent.
+#
+# The exclusion is removed, not commented out, and its reason moves onto the
+# selected entry. The reason is worth keeping; a second copy of it is not. Two
+# records of one decision is how they start disagreeing.
+#
+# It runs here, after the plan has loaded, because "is it already selected" and
+# "what was the exclusion's reason" are questions only the loaded plan answers,
+# and because a plan that does not load is not one to append to.
+# ---------------------------------------------------------------------------
+plan_strip_exclude() {
+  # Print $1 with the repo_plan_exclude declaration for $2 removed. A
+  # declaration is the `repo_plan_exclude` line plus every line its predecessor
+  # continued with a trailing backslash -- the only multi-line form valid shell
+  # allows here. Every other line, comment and blank included, is passed
+  # through: the file is the operator's, and one entry is all that is ours.
+  awk -v want="$2" -v q="'" '
+    function emit(  k) {
+      if (!drop) { for (k = 0; k < nb; k++) print blk[k] }
+      in_block = 0; nb = 0; drop = 0
+    }
+    {
+      if (!in_block && $0 ~ /^[ \t]*repo_plan_exclude([ \t]|$)/) {
+        in_block = 1; nb = 0; drop = 0
+      }
+      if (in_block) {
+        blk[nb++] = $0
+        if (match($0, /REPO_NAME=[^ \t\\]+/)) {
+          v = substr($0, RSTART + 10, RLENGTH - 10)
+          gsub(/"/, "", v); gsub(q, "", v)
+          if (v == want) { drop = 1 }
+        }
+        if ($0 !~ /\\[ \t]*$/) { emit() }
+        next
+      }
+      print
+    }
+    END { if (in_block) { emit() } }
+  ' "$1"
+}
+
+select_repo_entry() {
+  # The entry, composed once and used twice: appended by a real run of the
+  # command, printed by --dry-run. A preview built by a second printf block is
+  # a preview that can stop matching what gets written.
+  printf '\n'
+  printf '# Added by `restore-repos.sh select-repo` on %s.\n' "$REPORT_GENERATED"
+  printf '# Routed from pre-image audit run %s.\n' "$INPUT_RUN"
+  if [[ -n "$SELECT_PREV_REASON" ]]; then
+    printf '# Moved off repo-candidates-excluded.conf.sh, where the reason was:\n'
+    printf '#   %s\n' "$SELECT_PREV_REASON"
+  fi
+  if [[ -n "$ROUTE_REVIEW" ]]; then
+    printf '# REVIEW: %s\n' "$ROUTE_REVIEW"
+  fi
+  printf 'repo_plan_add \\\n'
+  printf '  REPO_NAME=%s \\\n' "$SELECT_REPO_NAME"
+  printf '  REMOTE_NAME=%s \\\n' "${SEL_REMOTE_NAME:-origin}"
+  printf '  REMOTE_FETCH_URL=%s \\\n' "$SEL_URL"
+  printf '  LOCAL_REPO_PATH="%s"\n' "$SEL_DEST"
+}
+
+if [[ "$SELECT_REPO_CMD" == true ]]; then
+  if [[ -z "${REPO_PLAN_WORKSPACE_DIR:-}" ]]; then
+    echo "ERROR: REIMAGE_WORKSPACE_ROOT is not set, so there is no durable plan to add to." >&2
+    echo "The plan is a declaration, not evidence: it lives in the workspace so it survives the reimage." >&2
+    echo "Record the workspace root in reimage.env, then rerun." >&2
+    exit 2
+  fi
+  if [[ "${REPO_PLAN_SOURCE_DIR:-}" != "$REPO_PLAN_WORKSPACE_DIR" ]]; then
+    # The committed templates are not a place to put an operator's answer: the
+    # next checkout would carry it, and the workspace copy -- the one a run
+    # reads -- would still not have it.
+    echo "ERROR: the plan being read is not the workspace copy: ${REPO_PLAN_SOURCE_DIR:-<unresolved>}" >&2
+    echo "Seed the workspace copy first: ./bin/restore-repos.sh init-repo-plan-config" >&2
+    exit 2
+  fi
+
+  if ! audit_carries_label "$SELECT_REPO_NAME"; then
+    echo "ERROR: select-repo names a repository the pre-image audit does not carry: $SELECT_REPO_NAME" >&2
+    case "$SELECT_REPO_NAME" in
+      */*) echo "A repository is named by its label -- the basename of its path, not the path." >&2 ;;
+    esac
+    echo "Repositories in $INPUT_RUN:" >&2
+    audit_labels | sed 's/^/  - /' >&2
+    exit 2
+  fi
+
+  # Already selected: say so and write nothing. Rerunning a command that has
+  # already done its work should cost nothing, not add a second entry that
+  # trips the duplicate-REPO_NAME check on the next run.
+  if repo_plan_index "$SELECT_REPO_NAME" >/dev/null 2>&1; then
+    echo "$SELECT_REPO_NAME is already selected in:"
+    echo "  $REPO_PLAN_WORKSPACE_DIR/repo-candidates-selected.conf.sh"
+    echo "Nothing was written. Edit that entry by hand to change where it comes from or lands."
+    exit 0
+  fi
+
+  # The exclusion this move reverses, if there is one. Read before anything is
+  # written, because the reason is what moves onto the selected entry.
+  SELECT_PREV_REASON=""
+  excl_i=0
+  while [[ "$excl_i" -lt "${#REPO_EXCL_NAME[@]}" ]]; do
+    if [[ "${REPO_EXCL_NAME[$excl_i]}" == "$SELECT_REPO_NAME" ]]; then
+      SELECT_PREV_REASON="${REPO_EXCL_REASON[$excl_i]}"
+      break
+    fi
+    excl_i=$((excl_i + 1))
+  done
+
+  # The audit row, read with the same field order every other reader uses.
+  SEL_ROW_COUNT=0
+  SEL_REPO_PATH=""
+  SEL_REMOTES=""
+  SEL_COMMITS=0
+  SEL_STASHES=0
+  SEL_TRACKED=0
+  sel_first=true
+  while IFS=$'\t' read -r r_path r_branch r_head r_remotes r_status \
+    r_commits r_stashes r_tracked r_untracked r_ignored
+  do
+    if [[ "$sel_first" == true ]]; then sel_first=false; continue; fi
+    [[ -n "$r_path" ]] || continue
+    [[ "$(basename "$r_path")" == "$SELECT_REPO_NAME" ]] || continue
+    SEL_ROW_COUNT=$((SEL_ROW_COUNT + 1))
+    SEL_REPO_PATH="$r_path"
+    SEL_REMOTES="$r_remotes"
+    SEL_COMMITS="$r_commits"
+    SEL_STASHES="$r_stashes"
+    SEL_TRACKED="$r_tracked"
+  done < "$REPOS_TSV"
+
+  # A duplicate basename is a warning for a whole run, because the run can still
+  # report on both. Here it is fatal: the entry would name a label that cannot
+  # say which of the two repositories it means.
+  if [[ "$SEL_ROW_COUNT" -gt 1 ]]; then
+    echo "ERROR: $SELECT_REPO_NAME is the basename of $SEL_ROW_COUNT repositories in $INPUT_RUN." >&2
+    echo "One plan entry cannot name both. Reconcile them by hand in:" >&2
+    echo "  $REPO_PLAN_WORKSPACE_DIR/repo-candidates-selected.conf.sh" >&2
+    exit 2
+  fi
+
+  # classify_repo reads these from the caller's scope, so they are set here for
+  # the same reason the main loop sets them: one routing implementation, used by
+  # the command that writes the plan and the run that reads it back.
+  label="$SELECT_REPO_NAME"
+  local_commit_count="$SEL_COMMITS"
+  stash_count="$SEL_STASHES"
+  tracked_change_count="$SEL_TRACKED"
+
+  if [[ -n "$SELECT_REPO_REMOTE" ]]; then
+    SEL_URL="$(extract_remote_url_named "$SEL_REMOTES" "$SELECT_REPO_REMOTE")"
+    if [[ -z "$SEL_URL" ]]; then
+      echo "ERROR: --remote $SELECT_REPO_REMOTE is not a remote the audit recorded for $SELECT_REPO_NAME." >&2
+      echo "Recorded: ${SEL_REMOTES:-<none>}" >&2
+      exit 2
+    fi
+    SEL_REMOTE_NAME="$SELECT_REPO_REMOTE"
+  else
+    SEL_URL="$(extract_remote_url "$SEL_REMOTES")"
+    SEL_REMOTE_NAME="$(extract_remote_name "$SEL_REMOTES")"
+  fi
+
+  if [[ -z "$SEL_URL" ]]; then
+    echo "ERROR: the audit recorded no remote for $SELECT_REPO_NAME, so nothing can clone it." >&2
+    echo "Recover it from a backup and adopt it by hand, or leave it excluded with a reason." >&2
+    exit 2
+  fi
+
+  classify_repo "$SEL_REPO_PATH" "$SEL_URL"
+  SEL_DEST="${SELECT_REPO_PATH:-$CLONE_DEST}"
+
+  # Composed in a temp copy of the plan and loaded there before anything is
+  # installed, so a plan that would not load never reaches the workspace. This
+  # is also what checks the exclusion removal: had the strip missed the entry,
+  # the temp plan would hold the repository as both selected and excluded, and
+  # repo_plan_validate refuses that by name.
+  PLAN_TMP="$(mktemp -d "${TMPDIR:-/tmp}/restore-repos-plan.XXXXXX")" || {
+    echo "ERROR: could not create a scratch directory to compose the plan in." >&2
+    exit 2
+  }
+  for fragment in $REPO_PLAN_FRAGMENTS; do
+    if ! cp "$REPO_PLAN_WORKSPACE_DIR/$fragment" "$PLAN_TMP/$fragment"; then
+      echo "ERROR: could not read plan fragment: $REPO_PLAN_WORKSPACE_DIR/$fragment" >&2
+      rm -rf "$PLAN_TMP"
+      exit 2
+    fi
+  done
+
+  if [[ -n "$SELECT_PREV_REASON" ]]; then
+    if ! plan_strip_exclude "$REPO_PLAN_WORKSPACE_DIR/repo-candidates-excluded.conf.sh" \
+         "$SELECT_REPO_NAME" > "$PLAN_TMP/repo-candidates-excluded.conf.sh"; then
+      echo "ERROR: could not compose the excluded fragment without $SELECT_REPO_NAME." >&2
+      rm -rf "$PLAN_TMP"
+      exit 2
+    fi
+  fi
+  select_repo_entry >> "$PLAN_TMP/repo-candidates-selected.conf.sh"
+
+  # In a subshell: repo_plan_load resets the plan arrays, and the messages below
+  # still need the plan this script loaded from the workspace.
+  if ! ( repo_plan_load "$PLAN_TMP" ); then
+    echo "ERROR: the plan this would write does not load. Nothing was changed." >&2
+    echo "The composed copy is at $PLAN_TMP for comparison." >&2
+    exit 2
+  fi
+
+  if [[ "$DRY_RUN" == true ]]; then
+    echo ""
+    echo "--dry-run: nothing written. This entry would be appended to"
+    echo "  $REPO_PLAN_WORKSPACE_DIR/repo-candidates-selected.conf.sh"
+    select_repo_entry
+    if [[ -n "$SELECT_PREV_REASON" ]]; then
+      echo ""
+      echo "and this exclusion would be removed from"
+      echo "  $REPO_PLAN_WORKSPACE_DIR/repo-candidates-excluded.conf.sh"
+      echo ""
+      printf 'repo_plan_exclude REPO_NAME=%s REASON="%s"\n' \
+        "$SELECT_REPO_NAME" "$SELECT_PREV_REASON"
+    fi
+    echo ""
+    echo "(--dry-run: the composed plan loaded cleanly)"
+    rm -rf "$PLAN_TMP"
+    exit 0
+  fi
+
+  # Removal first, addition second. Should the second write fail, the
+  # repository is in neither fragment -- unreviewed, which every run reports and
+  # none acts on. The other order would leave it in both, which is the one state
+  # that stops the plan loading at all.
+  if [[ -n "$SELECT_PREV_REASON" ]]; then
+    if ! cp "$PLAN_TMP/repo-candidates-excluded.conf.sh" \
+         "$REPO_PLAN_WORKSPACE_DIR/repo-candidates-excluded.conf.sh"; then
+      echo "ERROR: could not write: $REPO_PLAN_WORKSPACE_DIR/repo-candidates-excluded.conf.sh" >&2
+      rm -rf "$PLAN_TMP"
+      exit 2
+    fi
+  fi
+  if ! cp "$PLAN_TMP/repo-candidates-selected.conf.sh" \
+       "$REPO_PLAN_WORKSPACE_DIR/repo-candidates-selected.conf.sh"; then
+    echo "ERROR: could not write: $REPO_PLAN_WORKSPACE_DIR/repo-candidates-selected.conf.sh" >&2
+    echo "$SELECT_REPO_NAME is now in neither fragment, so runs will report it unreviewed." >&2
+    rm -rf "$PLAN_TMP"
+    exit 2
+  fi
+  rm -rf "$PLAN_TMP"
+
+  echo ""
+  echo "Selected $SELECT_REPO_NAME."
+  echo "  From remote:  ${SEL_REMOTE_NAME:-origin}  $SEL_URL"
+  echo "  Clone into:   $SEL_DEST"
+  if [[ -n "$ROUTE_REVIEW" ]]; then
+    echo "  REVIEW:       $ROUTE_REVIEW"
+  fi
+  if [[ -n "$SELECT_PREV_REASON" ]]; then
+    echo "  Was excluded: $SELECT_PREV_REASON"
+    echo "                That entry is gone from repo-candidates-excluded.conf.sh and the"
+    echo "                reason is now a comment on the selected entry, so the decision"
+    echo "                has one record rather than two that can disagree."
+  fi
+  echo "  Plan:         $REPO_PLAN_WORKSPACE_DIR"
+  echo ""
+  echo "Next:"
+  echo "  ./bin/restore-repos.sh"
+  echo "  ./bin/restore-repos.sh --hydrate --stage clone --repo $SELECT_REPO_NAME --dry-run"
+  echo "  ./bin/restore-repos.sh --hydrate --stage clone --repo $SELECT_REPO_NAME"
+  exit 0
+fi
+
+
+# A default-located run is staged and indexed through the shared run index; an
+# --output run is not, because it lives outside runs/ and the index resolves
+# relative to the category root. `post-image-restore` is its own lineage, so
+# advancing it never disturbs `official/pre-image.txt`.
+OUTPUT_DIR_DEFAULTED=false
+DRY_RUN_TMP=""
+if [[ "$DRY_RUN" == true ]]; then
+  # The report is still composed, because a dry run whose output you cannot read
+  # tells you nothing. It is composed somewhere the operator's evidence is not:
+  # no run is staged, so no run id is consumed and no pointer moves.
+  DRY_RUN_TMP="$(mktemp -d "${TMPDIR:-/tmp}/restore-repos-dryrun.XXXXXX")" || {
+    echo "ERROR: could not create a scratch directory for --dry-run." >&2
+    exit 2
+  }
+  trap 'rm -rf "$DRY_RUN_TMP"' EXIT
+  OUTPUT_DIR="$DRY_RUN_TMP"
+elif [[ -z "$OUTPUT_DIR" ]]; then
+  if ! artifact_run_begin "$AUDIT_ROOT" "post-image-restore"; then
+    echo "ERROR: could not stage a run under: $AUDIT_ROOT" >&2
+    exit 2
+  fi
+  OUTPUT_DIR="$ARTIFACT_RUN_DIR"
+  # The run id owns the stamp from here on, so the sign-off and the run name
+  # cannot drift apart by a second.
+  STAMP="${ARTIFACT_RUN_ID#post-image-restore-}"
+  OUTPUT_DIR_DEFAULTED=true
+fi
+
+# Resolve before the checkout guard below: a relative --output would otherwise
+# slip past a prefix comparison against the absolute REPO_ROOT.
+OUTPUT_DIR="$(absolute_path "$OUTPUT_DIR")"
+
+# Safety invariant: refuse to write generated output under the repo checkout.
+if [[ -n "${REPO_ROOT:-}" && ( "$OUTPUT_DIR" == "$REPO_ROOT" || "$OUTPUT_DIR" == "$REPO_ROOT"/* ) ]]; then
+  echo "ERROR: refusing to write output under the repo checkout: $OUTPUT_DIR" >&2
+  exit 2
+fi
+
+OUT="$OUTPUT_DIR"
+RAW_DIR="$OUT/raw"
+mkdir -p "$RAW_DIR"
+
+# The sign-off is named for this run, which is what lets a carried answer say
+# which run it was answered against. It sits outside runs/ rather than inside
+# one, because a run directory is replaced and an answered row must not be.
+#
+# It lives under reimaged-system/ rather than beside the category it reports on.
+# Phase 11B is a post-image phase, and every post-image answered row is in
+# reimaged-system/sign-offs/ -- the bookend recorders', the first-boot bundles',
+# the Phase 12 plan-notes'. repo-audit-reports/ is shared with the PRE-image
+# audit, so a sign-off there would be the one post-image answer a reader has to
+# know to look for somewhere else.
+#
+# A dry run does not open one. A sign-off carries answers forward across runs,
+# so one opened by a rehearsal would ask the operator to answer for work that
+# did not happen.
+SIGNOFF_ROOT="$REIMAGE_ARTIFACT_ROOT/reimaged-system/sign-offs"
+if [[ "$DRY_RUN" != true ]]; then
+  if ! signoff_begin "$SIGNOFF_ROOT" "post-image-restore" "post-image-restore-$STAMP"; then
+    echo "ERROR: cannot open a sign-off under: $SIGNOFF_ROOT" >&2
+    exit 2
+  fi
+fi
+
+# Preserve the pre-image inputs alongside the report for provenance.
+cp -p "$REPOS_TSV" "$RAW_DIR/repos-input.tsv" 2>/dev/null || true
+[[ -f "$COMMITS_TSV" ]] && cp -p "$COMMITS_TSV" "$RAW_DIR/local-only-commits-input.tsv" 2>/dev/null || true
+[[ -f "$STASHES_TSV" ]] && cp -p "$STASHES_TSV" "$RAW_DIR/stashes-input.tsv" 2>/dev/null || true
+[[ -f "$TRACKED_TSV" ]] && cp -p "$TRACKED_TSV" "$RAW_DIR/tracked-changes-input.tsv" 2>/dev/null || true
+
+STATUS_TSV="$RAW_DIR/status.tsv"
+REPORT_MD="$OUT/restore-status.md"
+
+printf "repo_path\tlabel\tpath_present\tremote_url\tclone_host\tclone_target_root\tignored_files_available\tignored_files_applied\tcarry_forward_rows\n" > "$STATUS_TSV"
+
+# ---------------------------------------------------------------------------
+# Proposal staging
+#
+# A proposal is written into the RUN, never into the workspace. The workspace
+# copy holds the operator's answers; a run that could overwrite it would make
+# every answer provisional.
+# ---------------------------------------------------------------------------
+PROPOSED_DIR="$OUT/plan-proposed"
+PROPOSED_SELECTED="$PROPOSED_DIR/.selected.body"
+PROPOSED_EXCLUDED="$PROPOSED_DIR/.excluded.body"
+if [[ "$EMIT_PLAN" == true ]]; then
+  mkdir -p "$PROPOSED_DIR"
+  : > "$PROPOSED_SELECTED"
+  : > "$PROPOSED_EXCLUDED"
+fi
+
+# ---------------------------------------------------------------------------
+# Iterate repos.tsv and build the per-repo status report
+# ---------------------------------------------------------------------------
+TOTAL=0
+PRESENT_COUNT=0
+NEEDS_CLONE_COUNT=0
+IGN_AVAILABLE_COUNT=0
+IGN_APPLIED_COUNT=0
+CARRY_FORWARD_TOTAL=0
+# Carry-forward split by whether this run is restoring the repository, and by
+# kind. The lump sum answers no question a person can act on: an unpushed commit
+# needs a rescue branch, an uncommitted tracked change was never going to have
+# one, and neither matters at all for a repository the plan excluded.
+CARRY_FORWARD_PLANNED=0
+CARRY_FORWARD_COMMITS=0
+CARRY_FORWARD_STASHES=0
+CARRY_FORWARD_TRACKED=0
+CARRY_FORWARD_PLANNED_REPOS=0
+
+# ---------------------------------------------------------------------------
+# Duplicate-basename guard
+#
+# Staged bundles are keyed by `basename "$repo_path"`. Two repos sharing a
+# basename across the work and personal roots collapse to one
+# staged-ignored-files/live/<label>/ and one repos-gitignored/<label>/, and the
+# emitted commands would rsync that single bundle into BOTH working trees --
+# which can put work credentials into a repo that gets pushed publicly.
+# Detect it up front and name the offenders rather than failing quietly.
+# ---------------------------------------------------------------------------
+DUPLICATE_LABELS="$(
+  tail -n +2 "$REPOS_TSV" | cut -f1 | while IFS= read -r rp; do
+    [[ -n "$rp" ]] && basename "$rp"
+  done | sort | uniq -d
+)"
+DUPLICATE_LABEL_COUNT=0
+if [[ -n "$DUPLICATE_LABELS" ]]; then
+  DUPLICATE_LABEL_COUNT="$(printf '%s\n' "$DUPLICATE_LABELS" | grep -c .)"
+  echo "" >&2
+  echo "WARNING: $DUPLICATE_LABEL_COUNT repo basename(s) appear more than once." >&2
+  echo "Staged bundles are keyed by basename, so these share one bundle:" >&2
+  printf '%s\n' "$DUPLICATE_LABELS" | sed 's/^/  - /' >&2
+  echo "Reconcile these by hand before hydrating: one bundle cannot serve two." >&2
+  echo "" >&2
+fi
 
 # `clone` is a stage like any source, so "run only the cloner" and "run only one
 # source" are one mechanism rather than two flags.

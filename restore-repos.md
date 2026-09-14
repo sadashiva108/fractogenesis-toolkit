@@ -36,6 +36,7 @@ Consume the pre-image repository audit produced by Phase 2A to re-clone the trac
 - [[#Decisions|Decisions]]
 - [[#Troubleshooting|Troubleshooting]]
 - [[#Supplemental Reference|Supplemental Reference]]
+    - [[#Restoring a Single Repository|Restoring a Single Repository]]
     - [[#Per-Repo Status Categories|Per-Repo Status Categories]]
     - [[#Hydration Outcomes|Hydration Outcomes]]
     - [[#Reading the Pre-Image TSVs|Reading the Pre-Image TSVs]]
@@ -427,6 +428,10 @@ This writes `repo-candidates-selected.conf.sh`,
 `repo-candidates-excluded.conf.sh`, `repo-rehydration-sources.conf.sh` and
 `repo-rehydration-map.conf.sh` into `$REIMAGE_WORKSPACE_ROOT/repo-plan/`.
 
+To add one repository to a plan that already exists — rather than reopening all
+four fragments — use `select-repo`, which is covered in
+[[#Restoring a Single Repository|Restoring a Single Repository]].
+
 Init skips files that already exist and will not overwrite your entries unless
 you pass `--force`. If the fragments are already there from a prior reimage, skip
 this step — Step 1 proposes a filled-in plan from the audit for you to copy
@@ -578,6 +583,8 @@ For each repository, decide:
 - **Reroute** — the report's `Clone host` is a host that matched neither routing host, or matched the personal routing host under somebody else's owner. Decide the root by hand and set `LOCAL_REPO_PATH` on the selected entry.
 
 `--emit-plan` fills a proposal in from the audit rather than leaving you to type it — see Step 0d. A proposal is written into the run bundle under `plan-proposed/` and never into the workspace, so adopting one is a copy you perform deliberately.
+
+For a single repository — one you find `unreviewed` here, or one you excluded and have since changed your mind about — `select-repo` makes the whole edit in one command, including taking it back off the excluded list. See [[#Restoring a Single Repository|Restoring a Single Repository]].
 
 > [!warning] Pitfall
 > The script only rewrites `git@github.com:` when routing to the personal host. It leaves HTTPS URLs and non-github remotes alone, so a pre-image HTTPS clone URL produces a clone that authenticates from the OS keychain rather than your restored SSH key.
@@ -1026,6 +1033,49 @@ Confirm SSH actually reaches that host first; an unreachable SSH remote produces
 ## Supplemental Reference
 
 Longer material most runs will not need, kept out of the main flow.
+
+### Restoring a Single Repository
+
+For when the main flow is already behind you and one repository needs to come back: you excluded it and changed your mind, or it was `unreviewed` and nobody noticed until the report said so. The plan decides what a run may act on, so the first command is a plan edit, not a clone.
+
+`select-repo` writes the entry a run would have proposed — same remote, same host routing, same destination — so the plan and the report cannot disagree about where the repository comes from or where it lands. If the repository is on the excluded list, it is taken off it in the same write: an entry in both fragments fails the plan's `both selected and excluded` check, and a plan that does not load is a phase that cannot report. The exclusion's reason is not lost — it is carried onto the new selected entry as a comment, so the decision keeps one record rather than two that can drift apart.
+
+`select-repo` reads the pre-image audit, so it needs the artifact volume attached — unlike `init-repo-plan-config`, which only seeds the workspace. It also refuses to write into the committed templates: if the workspace plan does not exist yet, seed it with `init-repo-plan-config` first.
+
+Rehearse it first. `--dry-run` prints the entry it would append and the exclusion it would remove, loads the composed plan to prove it is valid, and writes nothing:
+
+```bash
+./bin/restore-repos.sh select-repo carrier-services-storage --dry-run
+```
+
+Then write it:
+
+```bash
+./bin/restore-repos.sh select-repo carrier-services-storage
+```
+
+The command stages no run and writes no bundle — it edits the plan and exits. Rerunning it on a repository that is already selected reports that and writes nothing, so it is safe to repeat.
+
+Two options describe the entry, and only this command accepts them. Use `--path` when the repository is already cloned somewhere other than the routed default, and `--remote` to clone from a remote other than `origin`:
+
+```bash
+./bin/restore-repos.sh select-repo carrier-services-storage \
+  --path "$LOCAL_WORK_REPO_ROOT/carrier-services-storage"
+```
+
+Then run the ordinary flow, narrowed to that repository with `--repo`:
+
+```bash
+./bin/restore-repos.sh
+./bin/restore-repos.sh --hydrate --stage clone --repo carrier-services-storage --dry-run
+./bin/restore-repos.sh --hydrate --stage clone --repo carrier-services-storage
+./bin/restore-repos.sh --hydrate --stage ignored-files --repo carrier-services-storage
+./bin/restore-repos.sh --hydrate --stage repo-secrets --repo carrier-services-storage
+```
+
+Read the `clone` row in `hydrated.md` before running the source stages. A repository already on disk reports `present` when its `origin` matches the plan and `conflict` when it does not — and a `conflict` quarantines it for every later stage, so nothing is merged into a working tree the plan does not describe. If you cloned it by hand into a different directory, `--path` on the `select-repo` entry is what reconciles the two.
+
+Steps 7 and 8 still apply to a repository restored this way: cloning brings back the mainline, and rescue branches, stashes and uncommitted tracked changes are reconciled per repository.
 
 ### Per-Repo Status Categories
 
