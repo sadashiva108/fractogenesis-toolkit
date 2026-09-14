@@ -41,6 +41,12 @@
 #   ./bin/restore-repos.sh --hydrate --stage clone
 #   ./bin/restore-repos.sh --hydrate --stage ignored-files
 #
+#   # Just one repository, instead of every repository the plan selected.
+#   ./bin/restore-repos.sh --hydrate --repo my-service
+#
+#   # One stage, one repository: this repo's ignored files and nothing else.
+#   ./bin/restore-repos.sh --hydrate --stage ignored-files --repo my-service
+#
 #   # Override the artifact root for this invocation.
 #   ./bin/restore-repos.sh --artifact-root /path/to/reimage-artifact-root
 #
@@ -83,6 +89,16 @@
 #   --stage NAME           Repeatable. Run only the named stage: `clone`, or any
 #                          ARTIFACT_TYPE from repo-rehydration-sources.conf.sh.
 #                          Omitted, every stage runs.
+#   --repo NAME            Repeatable. Act only on the named repository, where
+#                          NAME is its label -- the basename of the repo path
+#                          the pre-image audit recorded, not the path. Omitted,
+#                          every repository the plan selected is acted on.
+#                          Narrows what is acted on, not what is reported: the
+#                          status report still covers the whole inventory, and
+#                          only the hydration rows narrow, because nothing was
+#                          attempted for the rest. A name the audit does not
+#                          carry is an error, not a run that quietly does
+#                          nothing.
 #   --output DIR           Exact output directory for the generated report.
 #                          A relative value is resolved against the current
 #                          directory, and a destination inside the repo
@@ -197,6 +213,7 @@ INPUT_RUN=""
 HYDRATE=false
 DRY_RUN=false
 STAGES=""
+REPO_FILTER=""
 OPEN_RESULT=false
 INIT_PLAN_CONFIG=false
 FORCE_INIT=false
@@ -237,6 +254,15 @@ while [[ $# -gt 0 ]]; do
     --stage)
       require_option_value "$1" "${2:-}"
       STAGES="${STAGES}${STAGES:+ }$2"
+      shift 2
+      ;;
+    --repo)
+      require_option_value "$1" "${2:-}"
+      # Newline-delimited, not space-delimited like STAGES: a stage name is a
+      # controlled vocabulary, a repo label is whatever basename the audit
+      # recorded, and word-splitting one containing a space would select two
+      # repositories nobody named.
+      REPO_FILTER="${REPO_FILTER}${REPO_FILTER:+$'\n'}$2"
       shift 2
       ;;
     --output)
@@ -801,6 +827,49 @@ if [[ -n "$DUPLICATE_LABELS" ]]; then
 fi
 
 # ---------------------------------------------------------------------------
+# --repo: which repositories this run acts on
+#
+# The twin of --stage. --stage narrows the run to one kind of work; --repo
+# narrows it to one repository, so "put this repo's ignored files back" is one
+# command rather than a full pass that walks every other clone on the way.
+#
+# Validated against the audit up front. A typo'd name would otherwise match
+# nothing and produce a run that hydrated nothing, reported no error, and read
+# exactly like a run that found nothing to do -- which is the failure this
+# phase keeps meeting.
+# ---------------------------------------------------------------------------
+REPO_SCOPE_LABEL="all"
+if [[ -n "$REPO_FILTER" ]]; then
+  AUDIT_LABELS="$(
+    tail -n +2 "$REPOS_TSV" | cut -f1 | while IFS= read -r rp; do
+      [[ -n "$rp" ]] && basename "$rp"
+    done | LC_ALL=C sort -u
+  )"
+  while IFS= read -r repo_want; do
+    [[ -n "$repo_want" ]] || continue
+    if ! printf '%s\n' "$AUDIT_LABELS" | grep -qxF -- "$repo_want"; then
+      echo "ERROR: --repo names a repository the pre-image audit does not carry: $repo_want" >&2
+      case "$repo_want" in
+        */*) echo "A repository is named by its label -- the basename of its path, not the path." >&2 ;;
+      esac
+      echo "Repositories in $INPUT_RUN:" >&2
+      printf '%s\n' "$AUDIT_LABELS" | sed 's/^/  - /' >&2
+      exit 2
+    fi
+  done <<< "$REPO_FILTER"
+  REPO_SCOPE_LABEL="${REPO_FILTER//$'\n'/ }"
+fi
+
+repo_selected() {
+  local want="$1" have
+  [[ -n "$REPO_FILTER" ]] || return 0
+  while IFS= read -r have; do
+    [[ "$want" == "$have" ]] && return 0
+  done <<< "$REPO_FILTER"
+  return 1
+}
+
+# ---------------------------------------------------------------------------
 # The plan, and the stages this run will run
 #
 # The plan is read at run time and this script does the work. A bundle holds a
@@ -875,6 +944,15 @@ elif [[ "$DRY_RUN" == true ]]; then
   HYDRATE_MODE_LABEL="report --dry-run"
 else
   HYDRATE_MODE_LABEL="report"
+fi
+
+if [[ -n "$REPO_FILTER" ]]; then
+  # repo-restore-index.md is one row per run and its header is written once, so
+  # a scope column cannot be added without breaking every index already on an
+  # artifact volume. Mode carries it instead: a run restricted to one
+  # repository that reads there as a full pass is the same lie as a partial run
+  # that reads as one that found nothing to do.
+  HYDRATE_MODE_LABEL="$HYDRATE_MODE_LABEL (repo: $REPO_SCOPE_LABEL)"
 fi
 
 PLANNED_COUNT=0
@@ -1031,7 +1109,13 @@ do
 
   # Only a planned repository is acted on. Excluded and unreviewed ones are
   # recorded with the reason and left alone.
-  if [[ "$plan_state" != "planned" ]]; then
+  if ! repo_selected "$label"; then
+    # Out of scope for this run. No stage is attempted, so no hydration row is
+    # written -- the row would claim an outcome for work nobody asked for. It
+    # still appears in the status report below, which is an inventory of what
+    # exists rather than a record of what this run touched.
+    :
+  elif [[ "$plan_state" != "planned" ]]; then
     if [[ "$plan_state" == "excluded" ]]; then
       hyd_detail="excluded: ${REPO_EXCL_REASON[$excl_i]}"
     else
@@ -1465,6 +1549,7 @@ HYDRATED_MD="$OUT/hydrated.md"
     done
     printf '\n'
   fi
+  printf 'Repositories: %s\n' "$REPO_SCOPE_LABEL"
   printf '\n## Summary\n\n| | Count |\n|---|---:|\n'
   printf '| Repositories in the audit | %s |\n' "$TOTAL"
   printf '| Planned | %s |\n' "$PLANNED_COUNT"
@@ -1546,6 +1631,7 @@ echo "  Conflicts (untouched):    $CONFLICT_COUNT"
 echo "  Carry-forward rows total: $CARRY_FORWARD_TOTAL"
 echo "  Mode:                     $HYDRATE_MODE_LABEL"
 echo "  Stages:                   $STAGES"
+echo "  Repositories:             $REPO_SCOPE_LABEL"
 if [[ "$UNREVIEWED_COUNT" -gt 0 ]]; then
   echo ""
   echo "  $UNREVIEWED_COUNT repository/repositories are in the audit and in neither plan fragment."

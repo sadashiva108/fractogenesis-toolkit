@@ -2,7 +2,7 @@
 
 # Restore Repositories
 
-**Last updated:** 2026-09-03
+**Last updated:** 2026-09-14
 
 Consume the pre-image repository audit produced by Phase 2A to re-clone the tracked repositories onto the reimaged Mac, rsync the reviewed kept ignored files back into each working tree, and reconcile every pre-image carry-forward row (local-only commits, stashes, tracked changes) against the state of the freshly cloned repos. Runs after Phase 11A has wired up the dual-identity `~/.gitconfig` and `~/.ssh/config`, so every clone this phase performs already routes through the correct SSH key.
 
@@ -97,6 +97,8 @@ What it may act on is not the inventory — it is the clone plan you wrote in St
 
 A run has **stages**. `clone` is one; each rehydration source in the plan — the reviewed kept ignored files, the gitignored secrets in the encrypted image, IDE project metadata — is another. `--stage NAME` repeats and restricts the run to what you name; omitted, every stage runs. Cloning restores what Git tracked, and each stage puts back one class of thing Git ignored.
 
+A run also has **scope**. `--repo NAME` repeats and restricts the run to the repositories you name, by label; omitted, every repository the plan selected is acted on. Stage and scope compose: `--hydrate --stage ignored-files --repo my-service` merges one source into one working tree. Scope narrows what a run *acts on*, not what it reports — `restore-status.md` is the whole inventory either way, and `hydrated.md` is what this run touched, so a repository outside the scope gets no row rather than a row claiming an outcome nobody asked for. A name the audit does not carry is an error that lists the names it does, because a filter that matches nothing would otherwise read exactly like a run that found nothing to do.
+
 Every destination is the same routed clone path, computed once, and every stage guards on it: a source whose repository is not cloned yet reports `pending` rather than letting `rsync -a` create the directory and drop the bundle outside any repository. A repository already on disk whose `origin` disagrees with the plan is a `conflict` — nothing is written into it by any stage.
 
 ### Carry-Forward Model
@@ -114,7 +116,7 @@ Restoring is then a two-step reconciliation: `git clone` gets the mainline back,
 | Clone plan | The four fragments under `$REIMAGE_WORKSPACE_ROOT/repo-plan/`: which repositories are selected, which are excluded and why, where content comes back from after cloning, and per-repository overrides. Seeded by `init-repo-plan-config` in Step 0d and read by every run. It lives in the workspace, not in a bundle, because it survives the reimage and no run may write over your answers. |
 | Stage | One unit of restoring work, named by `--hydrate --stage`. `clone` is a stage; so is each `ARTIFACT_TYPE` in the plan's rehydration sources — `ignored-files`, `repo-secrets`, `project-metadata`. |
 | Hydration | Cloning a repository and merging each declared source into its working tree. Recorded in `hydrated.md`, one row per repository per stage. |
-| Label | The basename of a repo path — `basename $REPO_PATH` — used by `backup-repos.md` as the directory name under `staged-ignored-files/live/`. |
+| Label | The basename of a repo path — `basename $REPO_PATH` — used by `backup-repos.md` as the directory name under `staged-ignored-files/live/`. It is also what `--repo` names. |
 | Carry-forward row | A row in `local-only-commits.tsv`, `stashes.tsv`, or `tracked-changes.tsv` from the pre-image run. Each row represents a change the remote does not carry and that must be preserved via a rescue branch or explicitly discarded. |
 | Rescue branch | A `reimage/YYYYMMDD/*` branch created and pushed pre-image by Phase 2A to preserve carry-forward material. Restored by fetching `refs/heads/reimage/*` after clone. |
 | Staged ignored bundle | A `staged-ignored-files/live/<label>/` directory containing the reviewed kept ignored files for one repo, rsynced back into the cloned working tree. |
@@ -292,7 +294,7 @@ A short pre-flight: confirm you are set up, then confirm what you intend this ru
 
 - Are you doing a **full first-time restore** (Steps 1 through 8 in order) or a **rerun** to update the status table after cloning some repos by hand? Both are safe; a rerun writes a fresh timestamped bundle and shows fewer `Needs clone` rows.
 - Which **subset of repositories** do you actually want back? That question is the clone plan, and Step 0d is where you answer it. A repository in the audit and in neither plan fragment is `unreviewed` and is not cloned, so "I have not decided yet" is a state the run reports rather than one it acts on.
-- Do you want to do the whole restore in **one pass** (`--hydrate`) or **one stage at a time** (`--hydrate --stage clone`, then a stage per source)? One pass is fewer commands; stage-at-a-time lets you confirm the clones landed under the right roots before anything is merged into them, and is the safer order the first time through.
+- Do you want to do the whole restore in **one pass** (`--hydrate`) or **one stage at a time** (`--hydrate --stage clone`, then a stage per source)? One pass is fewer commands; stage-at-a-time lets you confirm the clones landed under the right roots before anything is merged into them, and is the safer order the first time through. Either can be narrowed to a single repository with `--repo` — useful when one clone came back wrong and you want to redo just that one.
 - Do you want to **see what a run would do before it does it**? `--dry-run` composes the report and `hydrated.md`, prints both, and writes nothing anywhere — no run, no sign-off, no pointer moved.
 
 > [!warning] Pitfall
@@ -512,6 +514,7 @@ Restore repositories report complete.
   Carry-forward rows total: 315
   Mode:                     report
   Stages:                   clone ignored-files repo-secrets project-metadata
+  Repositories:             all
 
   7 repository/repositories are in the audit and in neither plan fragment.
   They were not cloned. Select them, or exclude them with a reason:
@@ -730,6 +733,14 @@ Then run it:
 ```bash
 ./bin/restore-repos.sh --hydrate --stage ignored-files
 ```
+
+To rehydrate one repository rather than all of them — the rest are already done, or you want to confirm the merge on one before the others — name it with `--repo`, by label:
+
+```bash
+./bin/restore-repos.sh --hydrate --stage ignored-files --repo my-service
+```
+
+`hydrated.md` then carries rows for that repository alone, and its `Repositories:` header says which. `restore-status.md` still reports the whole inventory, because the report is what exists rather than what this run touched.
 
 Read the per-repository table in `hydrated.md` afterwards. `applied` is the merge; `pending` means that repository is not cloned yet, so there was nowhere to merge into; `skipped` means no bundle exists for it, or the clone stage reported a conflict for it.
 

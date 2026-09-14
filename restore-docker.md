@@ -251,15 +251,15 @@ Restore resource settings from the pre-image performance-audit / system-inventor
 
 **Settings → Resources** — target values:
 
-| Setting | Typical dev value | Notes |
-|---|---|---|
-| CPUs | 4–6 | Reduce if Office / Outlook is sluggish. |
-| Memory | 8–12 GB | MarkLogic alone needs ≥4 GB. |
-| Swap | 1–2 GB |  |
-| Disk image size | 64–100 GB | Increase only if `docker system df` shows pressure. |
-| Disk image location | `~/Library/Containers/com.docker.docker/…` | Default is fine; change only for space reasons. |
-| File sharing | Add project roots, e.g. `~/Development` | Required for bind mounts. |
-| Kubernetes | Disabled unless actively needed | Saves ~1 GB RAM. |
+| Setting             | Typical dev value                          | Notes                                               |
+| ------------------- | ------------------------------------------ | --------------------------------------------------- |
+| CPUs                | 4–6                                        | Reduce if Office / Outlook is sluggish.             |
+| Memory              | 8–12 GB                                    | MarkLogic alone needs ≥4 GB.                        |
+| Swap                | 1–2 GB                                     |                                                     |
+| Disk image size     | 64–100 GB                                  | Increase only if `docker system df` shows pressure. |
+| Disk image location | `~/Library/Containers/com.docker.docker/…` | Default is fine; change only for space reasons.     |
+| File sharing        | Add project roots, e.g. `~/Development`    | Required for bind mounts.                           |
+| Kubernetes          | Disabled unless actively needed            | Saves ~1 GB RAM.                                    |
 
 Restart Docker Desktop after changes, then re-run `docker info` to confirm the values took effect.
 
