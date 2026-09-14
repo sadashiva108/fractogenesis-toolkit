@@ -1070,8 +1070,24 @@ Then run the ordinary flow, narrowed to that repository with `--repo`:
 ./bin/restore-repos.sh --hydrate --stage clone --repo carrier-services-storage --dry-run
 ./bin/restore-repos.sh --hydrate --stage clone --repo carrier-services-storage
 ./bin/restore-repos.sh --hydrate --stage ignored-files --repo carrier-services-storage
-./bin/restore-repos.sh --hydrate --stage repo-secrets --repo carrier-services-storage
 ```
+
+`repo-secrets` is the one stage that needs more than the plan. Its source root is inside the encrypted image, and `DMG_MOUNT` is not in `reimage.env` — it is set in the shell for that stage alone, so a session returning to this later starts without it and records the repository `blocked` rather than failing. Attach the image and export the mount point first, as [[#Step 6 — Restore Per-Repo Gitignored Secrets from the DMG|Step 6]] does:
+
+```bash
+DMG="$(ls -1 "$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/"all-secrets-*.dmg | sort | tail -1)"
+export DMG_MOUNT="$(hdiutil attach "$DMG" | awk -F'\t' '/\/Volumes\//{print $NF}' | tail -1)"
+echo "$DMG_MOUNT"
+```
+
+Confirm the printed path is the image and not another mounted volume, then run the stage and detach — these are live credentials on a mounted volume:
+
+```bash
+./bin/restore-repos.sh --hydrate --stage repo-secrets --repo carrier-services-storage
+hdiutil detach "$DMG_MOUNT"
+```
+
+A restored `.envrc` still needs `direnv allow` in that repository; Step 6 says why.
 
 Read the `clone` row in `hydrated.md` before running the source stages. A repository already on disk reports `present` when its `origin` matches the plan and `conflict` when it does not — and a `conflict` quarantines it for every later stage, so nothing is merged into a working tree the plan does not describe. If you cloned it by hand into a different directory, `--path` on the `select-repo` entry is what reconciles the two.
 
