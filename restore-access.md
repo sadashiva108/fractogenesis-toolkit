@@ -2,7 +2,7 @@
 
 # Restore Access
 
-**Last updated:** 2026-09-03
+**Last updated:** 2026-10-12
 
 Restore the identity, trust, and credential layer on the reimaged Mac after the runtime toolchain is in place — SSH keys and Git access, certificates and keychains, Java trust overrides pinned to the JDK from Phase 10A, shell and CLI configuration, and license or activation material. Everything here comes out of the encrypted secrets DMG and the reviewed dotfiles bundle built during the pre-image phases. Most of it is manual — small copies, `security` commands, and Keychain Access actions — but four steps are scripted: Step 0 and the closing step run the bookend recorders in `bin/`, Step 2 runs `bin/restore-staged-loose.sh`, and `bin/restore-access.sh` can drive the whole phase.
 
@@ -446,8 +446,10 @@ rather than trusting the assignment to have worked.
 ```
 
 It selects the newest `all-secrets-*.dmg` under
-`$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/`, prompts for the Phase 3C passphrase,
-and prints the mount point it actually got.
+`$REIMAGE_ARTIFACT_ROOT/secrets-encrypted/`, asks for the Phase 3C passphrase on
+the terminal — a `Passphrase for all-secrets-….dmg:` line, with nothing echoed as
+you type — and prints the mount point it actually got. Checksum verification of a
+large image can hold the step for a minute after the passphrase is accepted.
 
 **Re-running is safe.** An image already attached is detected and reported rather
 than attached a second time, so if you are resuming and cannot recall whether

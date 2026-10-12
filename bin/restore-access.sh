@@ -531,15 +531,38 @@ step_mount() {
   info "image: $dmg"
 
   if $DRY_RUN; then
-    would "hdiutil attach '$dmg'  (prompts for the Phase 3C passphrase)"
+    would "prompt for the Phase 3C passphrase, then hdiutil attach -stdinpass '$dmg'"
     return 0
   fi
 
-  gate "The passphrase is deliberately absent from reimage.env — it is about to be asked for."
+  # The passphrase is read here, from the terminal, and handed to hdiutil on
+  # stdin. Letting hdiutil ask for it hung the step: its stdout is the pipe into
+  # awk, so the console prompt was swallowed, and with no terminal on stdout it
+  # can fall back to a SecurityAgent dialog that opens behind other windows or
+  # not at all over SSH. The run sat silently waiting for input nobody could
+  # see. It went unnoticed while the passphrase was saved in the login keychain,
+  # because then hdiutil never asked. `printf` is a builtin, so the passphrase
+  # never appears in a process list.
+  gate "The passphrase is deliberately absent from reimage.env — enter it now."
   GATES=$((GATES + 1))
-  MNT="$(hdiutil attach "$dmg" | awk -F'\t' '/\/Volumes\//{print $NF}' | tail -1)"
+  local pass=""
+  printf "    Passphrase for %s: " "$(basename "$dmg")" > /dev/tty
+  IFS= read -rs pass < /dev/tty || pass=""
+  printf '\n' > /dev/tty
+  if [[ -z "$pass" ]]; then
+    fail "no passphrase entered"
+    FAILURES=$((FAILURES + 1)); return 1
+  fi
+
+  # `|| true` keeps a refused attach inside this step: under `set -Eeuo pipefail`
+  # a wrong passphrase otherwise trips the ERR trap and ends the whole run
+  # instead of being counted as a Step 1 failure.
+  info "attaching — checksum verification of a large image can take a minute"
+  MNT="$(printf '%s' "$pass" | hdiutil attach -stdinpass "$dmg" \
+          | awk -F'\t' '/\/Volumes\//{print $NF}' | tail -1 || true)"
+  pass=""
   if [[ -z "$MNT" || ! -d "$MNT" ]]; then
-    fail "attach did not yield a mount point"
+    fail "attach did not yield a mount point — wrong passphrase, or a corrupt image"
     FAILURES=$((FAILURES + 1)); return 1
   fi
   ok "mounted at $MNT"
